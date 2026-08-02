@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nebula Strike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void:      #0a0618;
+    --void-2:    #160a2e;
+    --cyan:      #36f1cd;
+    --cyan-dim:  #1c8c79;
+    --magenta:   #ff3d7f;
+    --amber:     #ffb13d;
+    --violet:    #b14dff;
+    --ink:       #e8e0ff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: var(--void);
+    color: var(--ink);
+    font-family: "Share Tech Mono", monospace;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #wrap {
+    position: relative;
+    width: min(96vw, 540px);
+    aspect-ratio: 9 / 13;
+    max-height: 96vh;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    box-shadow: 0 0 60px rgba(177, 77, 255, 0.25), inset 0 0 0 1px rgba(177,77,255,0.3);
+    background:
+      radial-gradient(ellipse at 30% 15%, rgba(177,77,255,0.18), transparent 55%),
+      radial-gradient(ellipse at 75% 80%, rgba(54,241,205,0.10), transparent 50%),
+      linear-gradient(180deg, var(--void-2), var(--void));
+  }
+  /* overlay screens */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 18px;
+    padding: 24px;
+    background: rgba(10, 6, 24, 0.72);
+    backdrop-filter: blur(2px);
+  }
+  .screen.hidden { display: none; }
+  h1 {
+    font-family: "Press Start 2P", monospace;
+    font-size: clamp(18px, 5vw, 30px);
+    line-height: 1.4;
+    color: var(--cyan);
+    text-shadow: 0 0 18px rgba(54,241,205,0.6);
+    letter-spacing: 1px;
+  }
+  h1 .sub {
+    display: block;
+    color: var(--magenta);
+    text-shadow: 0 0 18px rgba(255,61,127,0.6);
+    margin-top: 6px;
+  }
+  .panel {
+    max-width: 380px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #b9aee0;
+  }
+  .panel b { color: var(--ink); }
+  .keys {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .key {
+    border: 1px solid rgba(177,77,255,0.5);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--ink);
+    background: rgba(177,77,255,0.08);
+  }
+  button {
+    font-family: "Press Start 2P", monospace;
+    font-size: 13px;
+    color: var(--void);
+    background: var(--cyan);
+    border: none;
+    border-radius: 8px;
+    padding: 14px 22px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 0 24px rgba(54,241,205,0.5);
+    transition: transform 0.08s ease, box-shadow 0.15s ease;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 0 34px rgba(54,241,205,0.8); }
+  button:focus-visible { outline: 3px solid var(--magenta); outline-offset: 3px; }
+  .final { font-size: 16px; color: var(--amber); }
+  @media (prefers-reduced-motion: reduce) {
+    button { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <!-- Start screen -->
+  <div class="screen" id="startScreen">
+    <h1>NEBULA<span class="sub">STRIKE</span></h1>
+    <div class="panel">
+      Hold the line against waves of divebombers. Shoot the glowing
+      <b style="color:var(--amber)">drops</b> they leave behind to swap weapons —
+      each one fires completely differently. Watch for rare drops too:
+      <b style="color:#7dff36">+</b> extra life,
+      <b style="color:#fff">S</b> superweapon, and
+      <b style="color:#36f1cd">W</b> wingmen that fly at your sides.
+    </div>
+    <div class="keys">
+      <span class="key">← → or A D — move</span>
+      <span class="key">SPACE — fire (hold)</span>
+      <span class="key">P — pause</span>
+    </div>
+    <button id="startBtn">START</button>
+  </div>
+
+  <!-- Game over screen -->
+  <div class="screen hidden" id="overScreen">
+    <h1 style="font-size:clamp(16px,4.2vw,26px)">GAME OVER</h1>
+    <div class="final" id="finalScore">SCORE 0</div>
+    <div class="panel" id="overMsg"></div>
+    <button id="retryBtn">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   NEBULA STRIKE — a Galaga-style shooter with weapon upgrades
+   Structure of this file, top to bottom:
+     1. Setup (canvas, input, helpers)
+     2. Weapon definitions  <-- the fun part
+     3. Entity factories (player, enemies, bullets, drops, particles)
+     4. Wave / spawning logic
+     5. The update step (physics + collisions)
+     6. The draw step (rendering)
+     7. The game loop that ties it together
+   ============================================================ */
+
+/* ---------- 1. SETUP ---------- */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// We render at a fixed internal resolution and let CSS scale it.
+const W = 540, H = 780;
+canvas.width = W;
+canvas.height = H;
+
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// --- global pacing knobs ---
+// SPEED scales the whole world's per-frame motion (1 = the original pace).
+// DIVE_SPEED is the separate, much slower rate at which a diving enemy
+// travels its swoop arc — kept on its own knob so it can be tuned freely.
+const SPEED = 0.75;        // everything ~25% slower
+const DIVE_SPEED = 0.0045; // dives ~75% slower than the original 0.018
+
+// Input: we track which keys are currently held.
+const keys = {};
+addEventListener("keydown", (e) => {
+  if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(e.key)) e.preventDefault();
+  keys[e.key.toLowerCase()] = true;
+  if (e.key.toLowerCase() === "p" && state === "playing") paused = !paused;
+  if (e.key.toLowerCase() === "q" && state === "playing" && paused) quitToMenu();
+});
+addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
+
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+/* ---------- 2. WEAPONS ----------
+   Each weapon is a small object describing how it behaves. The key
+   piece is fire(), which pushes one or more bullets into the array.
+   Adding a brand-new weapon is just adding an entry to this list. */
+const WEAPONS = [
+  {
+    name: "BLASTER", color: "#36f1cd", cooldown: 14,
+    desc: "single shot",
+    fire(p, out) {
+      out.push(bullet(p.x, p.y - 22, 0, -10, this.color, 4, 1));
+    }
+  },
+  {
+    name: "TWIN", color: "#7dff36", cooldown: 13,
+    desc: "two parallel bolts",
+    fire(p, out) {
+      out.push(bullet(p.x - 10, p.y - 18, 0, -10, this.color, 3.5, 1));
+      out.push(bullet(p.x + 10, p.y - 18, 0, -10, this.color, 3.5, 1));
+    }
+  },
+  {
+    name: "SPREAD", color: "#ffb13d", cooldown: 18,
+    desc: "three-way fan",
+    fire(p, out) {
+      out.push(bullet(p.x, p.y - 22, 0, -10, this.color, 3.5, 1));
+      out.push(bullet(p.x, p.y - 18, -2.6, -9.5, this.color, 3.5, 1));
+      out.push(bullet(p.x, p.y - 18,  2.6, -9.5, this.color, 3.5, 1));
+    }
+  },
+  {
+    name: "PULSE", color: "#ff3d7f", cooldown: 5,
+    desc: "rapid fire",
+    fire(p, out) {
+      const jitter = rand(-1.2, 1.2);
+      out.push(bullet(p.x + jitter, p.y - 20, jitter * 0.3, -13, this.color, 3, 1));
+    }
+  },
+  {
+    name: "HOMING", color: "#b14dff", cooldown: 22,
+    desc: "seeks the nearest foe",
+    fire(p, out) {
+      out.push(bullet(p.x - 8, p.y - 16, -1.5, -7, this.color, 5, 1, true));
+      out.push(bullet(p.x + 8, p.y - 16,  1.5, -7, this.color, 5, 1, true));
+    }
+  },
+  {
+    name: "LANCE", color: "#ffffff", cooldown: 26,
+    desc: "piercing beam, hits everything in its path",
+    fire(p, out) {
+      out.push(bullet(p.x, p.y - 26, 0, -16, this.color, 6, 3, false, true));
+    }
+  },
+  {
+    // OVERDRIVE is the temporary superweapon. It lives at the end of the
+    // list and is deliberately kept OUT of the normal random drop pool
+    // (see SUPER_INDEX below), so you can only get it from its rare drop.
+    name: "OVERDRIVE", color: "#ffffff", cooldown: 4,
+    desc: "temporary storm of piercing bolts",
+    fire(p, out) {
+      for (let i = -2; i <= 2; i++) {
+        out.push(bullet(p.x + i * 6, p.y - 20, i * 1.4, -15, "#ffffff", 4, 1, false, true));
+      }
+    }
+  },
+];
+
+// Index of OVERDRIVE — the last weapon. Normal weapon drops pick from
+// indices 0..SUPER_INDEX-1, leaving the superweapon as a special case.
+const SUPER_INDEX = WEAPONS.length - 1;
+const SUPER_DURATION = 480; // frames OVERDRIVE lasts (~8s) before reverting
+const MAX_LIVES = 5;        // cap so the life icons never overflow the HUD
+const BOSS_EVERY = 10;      // boss fight every N waves
+
+/* ---------- 3. ENTITY FACTORIES ---------- */
+function bullet(x, y, vx, vy, color, r, dmg, homing = false, pierce = false) {
+  return { x, y, vx, vy, color, r, dmg, homing, pierce, dead: false };
+}
+
+function player() {
+  return { x: W / 2, y: H - 70, w: 34, h: 30, speed: 6, cool: 0, weapon: 0, inv: 0,
+           superTime: 0, prevWeapon: 0 };
+}
+
+// Summon wingmen into any empty flank slot (-1 = left, +1 = right). Called
+// on a "wing" drop, so a second pickup just refills whichever side died.
+function summonWingmen() {
+  for (const side of [-1, 1]) {
+    if (!wingmen.some(w => w.side === side)) {
+      wingmen.push({ side, x: p.x + side * WING_OFFSET, y: p.y, spawn: 12, cool: 0 });
+    }
+  }
+}
+
+// Enemy types differ in toughness, points, and tint. armorWave is the wave
+// at which that type starts spawning armored (double HP) — weaker types
+// armor up first so the difficulty rolls in gradually rather than all at once.
+const ENEMY_TYPES = {
+  grunt:  { hp: 1,   points: 100,  color: "#ff3d7f", r: 14, fireChance: 0.00075, armorWave: 8 },
+  swift:  { hp: 1,   points: 150,  color: "#ffb13d", r: 12, fireChance: 0.0015,  armorWave: 12 },
+  gunner: { hp: 2,   points: 250,  color: "#5a8cff", r: 14, fireChance: 0.005,   armorWave: 16, noDive: true },
+  brute:  { hp: 3,   points: 300,  color: "#b14dff", r: 18, fireChance: 0.00225, armorWave: 20 },
+  boss:   { hp: 120, points: 5000, color: "#36f1cd", r: 38, fireChance: 0 },
+};
+
+function enemy(type, formX, formY) {
+  const t = ENEMY_TYPES[type];
+  // Armored if this type has hit its armor wave — doubles HP for a tougher,
+  // helmeted variant. The boss has no armorWave and is never affected.
+  const armored = t.armorWave != null && wave >= t.armorWave;
+  const hp = armored ? t.hp * 2 : t.hp;
+  return {
+    type, ...t, hp, maxHp: hp, armored,
+    formX, formY,            // home position in the formation
+    x: formX, y: -40,        // current position (starts off-screen, flies in)
+    state: "entering",       // entering -> formed -> diving
+    t: rand(0, Math.PI * 2), // phase for the formation bob
+    diveT: 0, diveStartX: 0, diveStartY: 0,
+    dead: false,
+  };
+}
+
+function drop(x, y, kind, weaponIndex = 0) {
+  // kind: "weapon" (swap to weaponIndex) | "life" | "super"
+  return { x, y, vy: 1.6, kind, weaponIndex, dead: false, t: 0 };
+}
+
+function particle(x, y, color) {
+  const a = rand(0, Math.PI * 2), s = rand(1, 5);
+  return { x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, color };
+}
+
+/* ---------- GAME STATE ---------- */
+let state = "start";    // start | playing | over
+let paused = false;
+let p, bullets, enemyBullets, enemies, drops, particles, stars;
+let wingmen;                   // temporary ally ships flanking the player
+const WING_OFFSET = 42;        // how far to each side the wingmen sit
+// Blaster cooldown is 14 frames. Firing at 80% of that rate means a longer
+// gap between shots: 14 / 0.8 ≈ 18 frames.
+const WING_FIRE_COOLDOWN = 18;
+let score, lives, wave, shake, spawnQueue, waveTimer;
+let highScore = 0, maxWave = 0;
+let combo = 0, comboTimer = 0; // kill-chain count and its remaining frames
+let bossActive = false;        // true while a boss wave is in progress
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 90; i++) {
+    stars.push({ x: rand(0, W), y: rand(0, H), z: rand(0.3, 1.6) });
+  }
+}
+
+function resetGame() {
+  p = player();
+  bullets = []; enemyBullets = []; enemies = [];
+  drops = []; particles = []; spawnQueue = []; wingmen = [];
+  score = 0; lives = 3; wave = 0; shake = 0; waveTimer = 0;
+  combo = 0; comboTimer = 0; bossActive = false;
+  initStars();
+  nextWave();
+}
+
+/* ---------- 4. WAVE LOGIC ---------- */
+function nextWave() {
+  wave++;
+  waveTimer = 0;
+  bossActive = wave % BOSS_EVERY === 0;
+
+  if (bossActive) {
+    // Boss enters from the top center, sinks to its throne and stays there.
+    const b = enemy("boss", W / 2, 110);
+    b.spawnTimer = 0;   // counts up; triggers a minion burst periodically
+    enemies.push(b);
+  } else {
+    const cols = 7;
+    const rows = Math.min(2 + Math.floor(wave / 2), 5);
+    const gapX = 60, gapY = 52;
+    const startX = W / 2 - ((cols - 1) * gapX) / 2;
+    const startY = 90;
+    let delay = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        // Row 0 is the back of the formation (top of screen, farthest from
+        // you). Gunners anchor it from wave 5 on; brutes hold row 1.
+        let type = "grunt";
+        if (r === 0 && wave >= 5) type = "gunner";
+        else if (r === 1 && wave >= 3) type = "brute";
+        else if (r < 2) type = "swift";
+        const fx = startX + c * gapX;
+        const fy = startY + r * gapY;
+        spawnQueue.push({ at: delay, e: enemy(type, fx, fy) });
+        delay += 7;
+      }
+    }
+  }
+}
+
+// Called each frame for the live boss enemy — handles its sweep, spread
+// shots, and the periodic minion bursts it sends at the player.
+function updateBoss(boss) {
+  // Slow side-to-side sweep across the top third of the screen
+  boss.t += 0.008 * SPEED;
+  boss.x = W / 2 + Math.sin(boss.t) * (W / 2 - 60);
+  boss.y = boss.formY + Math.sin(boss.t * 0.4) * 18;
+
+  // Spread burst: 5-way shot every ~3 seconds
+  boss.spawnTimer++;
+  const burstInterval = Math.max(100, 180 - wave * 1.5);
+  if (boss.spawnTimer % burstInterval === 0) {
+    // Five-way spread aimed at player
+    for (let i = -2; i <= 2; i++) {
+      const ang = Math.atan2(p.y - boss.y, p.x - boss.x) + i * 0.22;
+      enemyBullets.push(bullet(
+        boss.x, boss.y + boss.r,
+        Math.cos(ang) * 3.5, Math.sin(ang) * 3.5,
+        "#ff5a5a", 5, 1
+      ));
+    }
+  }
+
+  // Minion spawn: drops a small wave every ~5 seconds
+  const minionInterval = Math.max(200, 300 - wave * 2);
+  if (boss.spawnTimer % minionInterval === 0) {
+    const count = 3 + Math.floor(wave / BOSS_EVERY);
+    for (let i = 0; i < count; i++) {
+      const fx = rand(60, W - 60);
+      const fy = 200 + rand(0, 60);
+      const type = wave >= BOSS_EVERY * 2 ? "swift" : "grunt";
+      const m = enemy(type, fx, fy);
+      enemies.push(m);
+    }
+  }
+}
+
+/* ---------- 5. UPDATE ---------- */
+function update() {
+  if (paused) return;
+
+  // --- stars drift down for a sense of motion ---
+  for (const s of stars) {
+    s.y += s.z * (reduceMotion ? 0.4 : 1.1) * SPEED;
+    if (s.y > H) { s.y = 0; s.x = rand(0, W); }
+  }
+
+  // --- release queued enemies on schedule ---
+  waveTimer++;
+  for (let i = spawnQueue.length - 1; i >= 0; i--) {
+    if (waveTimer >= spawnQueue[i].at) {
+      enemies.push(spawnQueue[i].e);
+      spawnQueue.splice(i, 1);
+    }
+  }
+
+  // --- player movement ---
+  if (keys["arrowleft"] || keys["a"]) p.x -= p.speed * SPEED;
+  if (keys["arrowright"] || keys["d"]) p.x += p.speed * SPEED;
+  p.x = clamp(p.x, 22, W - 22);
+  if (p.inv > 0) p.inv--;
+
+  // --- combo chain decays if you stop killing ---
+  if (comboTimer > 0) { comboTimer--; if (comboTimer === 0) combo = 0; }
+
+  // --- superweapon countdown: when OVERDRIVE runs out, fall back ---
+  if (p.superTime > 0) {
+    p.superTime--;
+    if (p.superTime === 0) p.weapon = p.prevWeapon;
+  }
+
+  // --- wingmen track the player's sides (NOT clamped — they slide off
+  //     the screen edge when the player tucks into a corner) ---
+  for (const wm of wingmen) {
+    wm.x = p.x + wm.side * WING_OFFSET;
+    wm.y = p.y;
+    if (wm.spawn > 0) wm.spawn--; // brief spawn-in animation timer
+    if (wm.cool > 0) wm.cool--;
+  }
+
+  // --- player firing (hold space) ---
+  if (p.cool > 0) p.cool--;
+  if (keys[" "] && p.cool === 0) {
+    WEAPONS[p.weapon].fire(p, bullets);
+    p.cool = WEAPONS[p.weapon].cooldown;
+  }
+
+  // --- wingmen fire on THEIR OWN clock while you hold space: a plain
+  //     Blaster bolt at ~80% of the Blaster's rate (slower than a bare ship,
+  //     much slower than your upgraded weapons — they no longer inherit
+  //     PULSE/OVERDRIVE cadence the way the old tandem-fire bug did) ---
+  if (keys[" "]) {
+    for (const wm of wingmen) {
+      if (wm.cool === 0) {
+        bullets.push(bullet(wm.x, wm.y - 18, 0, -10, "#36f1cd", 4, 1));
+        wm.cool = WING_FIRE_COOLDOWN;
+      }
+    }
+  }
+
+  // --- player bullets ---
+  for (const b of bullets) {
+    if (b.homing) {
+      // steer gently toward the closest living enemy
+      const target = nearestEnemy(b);
+      if (target) {
+        const ang = Math.atan2(target.y - b.y, target.x - b.x);
+        const sp = Math.hypot(b.vx, b.vy);
+        b.vx += Math.cos(ang) * 0.6;
+        b.vy += Math.sin(ang) * 0.6;
+        const ns = Math.hypot(b.vx, b.vy);
+        b.vx = (b.vx / ns) * sp; b.vy = (b.vy / ns) * sp;
+      }
+    }
+    b.x += b.vx * SPEED; b.y += b.vy * SPEED;
+    if (b.y < -20 || b.x < -20 || b.x > W + 20) b.dead = true;
+  }
+
+  // --- enemy behavior ---
+  for (const e of enemies) {
+    e.t += 0.05 * SPEED;
+    if (e.type === "boss") {
+      // Boss enters from the top then hands off to updateBoss
+      if (e.state === "entering") {
+        e.y += 2 * SPEED;
+        if (e.y >= e.formY) { e.y = e.formY; e.state = "formed"; }
+      } else {
+        updateBoss(e);
+      }
+      continue; // boss never dives, skip the rest of the enemy logic
+    }
+    if (e.state === "entering") {
+      e.y += 4 * SPEED;
+      e.x = e.formX + Math.sin(e.t) * 6;
+      if (e.y >= e.formY) { e.y = e.formY; e.state = "formed"; }
+    } else if (e.state === "formed") {
+      // bob in place; occasionally peel off to dive (gunners never do)
+      e.x = e.formX + Math.sin(e.t) * 14;
+      e.y = e.formY + Math.cos(e.t * 0.6) * 6;
+      if (!e.noDive && Math.random() < 0.0008 + wave * 0.00015) {
+        e.state = "diving"; e.diveT = 0;
+        e.diveStartX = e.x; e.diveStartY = e.y;
+      }
+    } else if (e.state === "diving") {
+      // swoop down in an S-curve aimed roughly at the player
+      e.diveT += DIVE_SPEED;
+      const targetX = p.x;
+      e.x = e.diveStartX + (targetX - e.diveStartX) * e.diveT + Math.sin(e.diveT * 8) * 40;
+      e.y = e.diveStartY + e.diveT * (H + 80);
+      if (e.y > H + 40) {
+        // loop back to formation from the top
+        e.y = -30; e.state = "entering";
+      }
+    }
+    // enemy fire — only from enemies holding formation, never mid-dive
+    // (a diver swept below the player would otherwise fire up into its back)
+    if (e.state === "formed" && Math.random() < e.fireChance) {
+      const ang = Math.atan2(p.y - e.y, p.x - e.x);
+      enemyBullets.push(bullet(e.x, e.y + e.r, Math.cos(ang) * 4, Math.sin(ang) * 4, "#ff5a5a", 4, 1));
+    }
+  }
+
+  // --- enemy bullets ---
+  for (const b of enemyBullets) {
+    b.x += b.vx * SPEED; b.y += b.vy * SPEED;
+    if (b.y > H + 20 || b.y < -20) b.dead = true;
+  }
+
+  // --- drops fall ---
+  for (const d of drops) {
+    d.y += d.vy * SPEED; d.t += 0.1;
+    if (d.y > H + 20) d.dead = true;
+  }
+
+  // --- particles ---
+  for (const pt of particles) {
+    pt.x += pt.vx * SPEED; pt.y += pt.vy * SPEED; pt.vx *= 0.94; pt.vy *= 0.94;
+    pt.life -= 0.03;
+    if (pt.life <= 0) pt.dead = true;
+  }
+
+  collisions();
+
+  // cleanup
+  bullets = bullets.filter(b => !b.dead);
+  enemyBullets = enemyBullets.filter(b => !b.dead);
+  enemies = enemies.filter(e => !e.dead);
+  drops = drops.filter(d => !d.dead);
+  particles = particles.filter(p => !p.dead);
+  wingmen = wingmen.filter(w => !w.dead);
+
+  if (shake > 0) shake *= 0.86;
+
+  // wave cleared? boss waves need the boss specifically dead.
+  const bossAlive = bossActive && enemies.some(e => e.type === "boss");
+  if (!bossAlive && enemies.length === 0 && spawnQueue.length === 0) {
+    bossActive = false;
+    nextWave();
+  }
+}
+
+function nearestEnemy(b) {
+  let best = null, bd = Infinity;
+  for (const e of enemies) {
+    const d = dist(b, e);
+    if (d < bd) { bd = d; best = e; }
+  }
+  return best;
+}
+
+function explode(x, y, color, n = 14) {
+  if (reduceMotion) n = Math.min(n, 5);
+  for (let i = 0; i < n; i++) particles.push(particle(x, y, color));
+}
+
+// Multiplier rises with the current kill chain: 1x, then +1 every 8 kills,
+// capped at 4x. Returns 1 when there's no active chain.
+function comboMult() {
+  return 1 + Math.min(Math.floor(combo / 8), 3);
+}
+
+/* ---------- COLLISIONS ---------- */
+function collisions() {
+  // player bullets vs enemies
+  for (const b of bullets) {
+    for (const e of enemies) {
+      if (e.dead) continue;
+      if (dist(b, e) < e.r + b.r) {
+        e.hp -= b.dmg;
+        if (!b.pierce) b.dead = true;
+        explode(b.x, b.y, b.color, 6);
+        if (e.hp <= 0) {
+          e.dead = true;
+          score += e.points * comboMult();
+          combo++; comboTimer = 90;   // extend the chain (~1.5s window)
+          explode(e.x, e.y, e.color, 16);
+          shake = 6;
+          maybeDrop(e);
+        }
+        if (!b.pierce) break;
+      }
+    }
+  }
+
+  // enemy bullets vs player
+  if (p.inv === 0) {
+    for (const b of enemyBullets) {
+      if (Math.abs(b.x - p.x) < 16 && Math.abs(b.y - p.y) < 16) {
+        b.dead = true; hitPlayer();
+      }
+    }
+    // enemy bodies vs player
+    for (const e of enemies) {
+      if (dist(e, p) < e.r + 14) { hitPlayer(); explode(e.x, e.y, e.color, 16); e.dead = true; }
+    }
+  }
+
+  // wingmen take hits independently of the player. Losing one is the only
+  // cost — no life lost, no weapon downgrade. They block the shot too.
+  for (const wm of wingmen) {
+    if (wm.dead) continue;
+    for (const b of enemyBullets) {
+      if (b.dead) continue;
+      if (Math.abs(b.x - wm.x) < 14 && Math.abs(b.y - wm.y) < 14) {
+        b.dead = true; wm.dead = true;
+        explode(wm.x, wm.y, "#36f1cd", 18); shake = 6;
+        break;
+      }
+    }
+    if (!wm.dead) {
+      for (const e of enemies) {
+        if (e.dead) continue;
+        if (dist(e, wm) < e.r + 12) {
+          wm.dead = true;
+          if (e.type !== "boss") { e.dead = true; explode(e.x, e.y, e.color, 14); }
+          explode(wm.x, wm.y, "#36f1cd", 18); shake = 6;
+          break;
+        }
+      }
+    }
+  }
+
+  // drops: shoot them OR fly into them to collect
+  for (const d of drops) {
+    for (const b of bullets) {
+      if (b.dead) continue;
+      if (Math.abs(b.x - d.x) < 18 && Math.abs(b.y - d.y) < 18) {
+        b.dead = true; collectDrop(d); break;
+      }
+    }
+    if (!d.dead && dist(d, p) < 22) collectDrop(d);
+  }
+}
+
+// One place that decides what collecting a drop does, based on its kind.
+function collectDrop(d) {
+  d.dead = true;
+  score += 50;
+  if (d.kind === "life") {
+    lives = Math.min(lives + 1, MAX_LIVES);
+    explode(d.x, d.y, "#7dff36", 24);
+  } else if (d.kind === "wing") {
+    summonWingmen(); // fills any empty flank slot
+    explode(d.x, d.y, "#36f1cd", 24);
+  } else if (d.kind === "super") {
+    // Remember what to revert to — but only on first pickup, so grabbing
+    // a second OVERDRIVE just refreshes the timer instead of forgetting it.
+    if (p.superTime <= 0) p.prevWeapon = p.weapon;
+    p.weapon = SUPER_INDEX;
+    p.superTime = SUPER_DURATION;
+    explode(d.x, d.y, "#ffffff", 28);
+  } else {
+    // normal weapon swap. If picked up mid-OVERDRIVE, queue it as the
+    // weapon we'll drop back to when the superweapon expires.
+    if (p.superTime > 0) p.prevWeapon = d.weaponIndex;
+    else p.weapon = d.weaponIndex;
+    explode(d.x, d.y, WEAPONS[d.weaponIndex].color, 18);
+  }
+}
+
+function maybeDrop(e) {
+  // Rare special drops are rolled first and are mutually exclusive with a
+  // weapon drop on the same kill. Both are much rarer than weapon drops.
+  // OVERDRIVE is suppressed when one is already active (no chaining), and
+  // around bosses: on a boss wave AND the wave before it, since its ~8s
+  // timer would otherwise carry into the boss fight and trivialize it.
+  const nearBoss = (wave % BOSS_EVERY === 0) || ((wave + 1) % BOSS_EVERY === 0);
+  if (p.superTime <= 0 && !nearBoss && Math.random() < 0.00125) {
+    drops.push(drop(e.x, e.y, "super")); return;
+  }
+  if (Math.random() < 0.00125) { drops.push(drop(e.x, e.y, "wing")); return; }
+  if (Math.random() < 0.004) { drops.push(drop(e.x, e.y, "life")); return; }
+
+  // Normal weapon drops. Blaster (index 0) is excluded — it's the default
+  // starter weapon only, not something you'd want to pick up mid-game.
+  const chance = e.type === "brute" ? 0.085 : 0.010;
+  if (Math.random() < chance) {
+    // pick from indices 1..SUPER_INDEX-1 (skipping Blaster and OVERDRIVE)
+    const poolSize = SUPER_INDEX - 1;
+    let idx;
+    do { idx = 1 + Math.floor(rand(0, poolSize)); } while (idx === p.weapon && poolSize > 1);
+    drops.push(drop(e.x, e.y, "weapon", idx));
+  }
+}
+
+function hitPlayer() {
+  lives--;
+  p.inv = 90;          // brief invulnerability
+  combo = 0; comboTimer = 0; // a hit breaks the kill chain
+  if (p.superTime > 0) {
+    // losing OVERDRIVE early is penalty enough; revert cleanly to Blaster
+    p.superTime = 0;
+    p.weapon = 0;
+  } else {
+    p.weapon = 0; // lose your weapon on hit — back to Blaster
+  }
+  shake = 14;
+  explode(p.x, p.y, "#36f1cd", 24);
+  if (lives <= 0) endGame();
+}
+
+/* ---------- 6. DRAW ---------- */
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.save();
+  if (shake > 0.5) ctx.translate(rand(-shake, shake), rand(-shake, shake));
+
+  // stars
+  for (const s of stars) {
+    ctx.globalAlpha = 0.3 + s.z * 0.4;
+    ctx.fillStyle = "#cfc4ff";
+    ctx.fillRect(s.x, s.y, s.z, s.z);
+  }
+  ctx.globalAlpha = 1;
+
+  // drops (pulsing diamond; color + label depend on kind)
+  for (const d of drops) {
+    let col, label;
+    if (d.kind === "life")       { col = "#7dff36"; label = "+"; }
+    else if (d.kind === "super") { col = "#ffffff"; label = "S"; }
+    else if (d.kind === "wing")  { col = "#36f1cd"; label = "W"; }
+    else { col = WEAPONS[d.weaponIndex].color; label = WEAPONS[d.weaponIndex].name[0]; }
+    const special = d.kind !== "weapon";
+    const pulse = 1 + Math.sin(d.t * (special ? 7 : 4)) * (special ? 0.28 : 0.18);
+    ctx.save();
+    ctx.translate(d.x, d.y); ctx.rotate(Math.PI / 4); ctx.scale(pulse, pulse);
+    ctx.fillStyle = col;
+    ctx.shadowColor = col; ctx.shadowBlur = special ? 22 : 16;
+    ctx.fillRect(-9, -9, 18, 18);
+    ctx.restore();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#0a0618";
+    ctx.font = "bold 12px 'Share Tech Mono', monospace";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(label, d.x, d.y + 1);
+  }
+
+  // enemies
+  for (const e of enemies) drawEnemy(e);
+
+  // enemy bullets
+  for (const b of enemyBullets) {
+    ctx.fillStyle = b.color;
+    ctx.shadowColor = b.color; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+
+  // player bullets
+  for (const b of bullets) {
+    ctx.fillStyle = b.color;
+    ctx.shadowColor = b.color; ctx.shadowBlur = 12;
+    if (b.pierce) {
+      ctx.fillRect(b.x - b.r, b.y - 18, b.r * 2, 36); // beam
+    } else {
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  ctx.shadowBlur = 0;
+
+  // player
+  drawPlayer();
+
+  // wingmen — smaller cyan escorts flanking the player
+  for (const wm of wingmen) {
+    ctx.save();
+    ctx.translate(wm.x, wm.y);
+    ctx.globalAlpha = wm.spawn > 0 ? 1 - wm.spawn / 12 : 0.92; // fade in
+    ctx.scale(0.7, 0.7);
+    ctx.shadowColor = "#36f1cd"; ctx.shadowBlur = 12;
+    ctx.fillStyle = "#36f1cd";
+    ctx.beginPath();
+    ctx.moveTo(0, -18); ctx.lineTo(15, 14); ctx.lineTo(5, 8);
+    ctx.lineTo(-5, 8); ctx.lineTo(-15, 14);
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(0, -2, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+
+  // particles
+  for (const pt of particles) {
+    ctx.globalAlpha = Math.max(0, pt.life);
+    ctx.fillStyle = pt.color;
+    ctx.fillRect(pt.x - 2, pt.y - 2, 4, 4);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+
+  drawHUD();
+  if (paused) drawPauseMenu();
+}
+
+function drawPlayer() {
+  if (p.inv > 0 && Math.floor(p.inv / 5) % 2 === 0) return; // blink while invulnerable
+  const w = WEAPONS[p.weapon];
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.shadowColor = w.color; ctx.shadowBlur = 14;
+  ctx.fillStyle = w.color;
+  ctx.beginPath();          // arrow-shaped ship
+  ctx.moveTo(0, -18);
+  ctx.lineTo(15, 14);
+  ctx.lineTo(5, 8);
+  ctx.lineTo(-5, 8);
+  ctx.lineTo(-15, 14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#fff";   // cockpit
+  ctx.beginPath(); ctx.arc(0, -2, 3.5, 0, Math.PI * 2); ctx.fill();
+  // thruster flame
+  ctx.fillStyle = "#ffb13d";
+  ctx.beginPath();
+  ctx.moveTo(-4, 9); ctx.lineTo(0, 9 + rand(6, 14)); ctx.lineTo(4, 9);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawEnemy(e) {
+  if (e.type === "boss") { drawBoss(e); return; }
+  ctx.save();
+  ctx.translate(e.x, e.y);
+  ctx.shadowColor = e.color; ctx.shadowBlur = 10;
+  ctx.fillStyle = e.color;
+  // a little "crab" body
+  ctx.beginPath();
+  ctx.moveTo(0, -e.r);
+  ctx.lineTo(e.r, 0);
+  ctx.lineTo(e.r * 0.5, e.r);
+  ctx.lineTo(-e.r * 0.5, e.r);
+  ctx.lineTo(-e.r, 0);
+  ctx.closePath();
+  ctx.fill();
+  // gunners get a downward barrel so they read as the stationary shooters
+  if (e.type === "gunner") {
+    ctx.fillRect(-2.5, e.r - 2, 5, 9);
+  }
+  ctx.shadowBlur = 0;
+  // eyes
+  ctx.fillStyle = "#0a0618";
+  ctx.beginPath(); ctx.arc(-e.r * 0.35, -2, 2.5, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(e.r * 0.35, -2, 2.5, 0, 7); ctx.fill();
+  // armor: a helmet cap arced over the top of the shell
+  if (e.armored) {
+    ctx.strokeStyle = "rgba(220,235,255,0.9)";
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(0, 1, e.r * 0.82, Math.PI * 1.12, Math.PI * 1.88);
+    ctx.stroke();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(255,255,255,0.5)";
+    ctx.beginPath(); ctx.moveTo(0, -e.r * 0.82 + 1); ctx.lineTo(0, -e.r * 0.4); ctx.stroke();
+  }
+  // damage tint for brutes
+  if (e.maxHp > 1 && e.hp < e.maxHp) {
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(-e.r, -e.r, e.r * 2, e.r * 2 * (1 - e.hp / e.maxHp));
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+function drawBoss(e) {
+  const r = e.r;
+  ctx.save();
+  ctx.translate(e.x, e.y);
+
+  // outer glow ring that pulses with HP
+  const hpFrac = e.hp / e.maxHp;
+  ctx.shadowColor = e.color; ctx.shadowBlur = 28;
+  ctx.strokeStyle = e.color;
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.3 + hpFrac * 0.5;
+  ctx.beginPath(); ctx.arc(0, 0, r + 10, 0, Math.PI * 2); ctx.stroke();
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+  // body — a big hexagon
+  ctx.fillStyle = e.color;
+  ctx.shadowColor = e.color; ctx.shadowBlur = 16;
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
+    i === 0 ? ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r)
+             : ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // inner core (darkens as HP drops)
+  ctx.fillStyle = `rgba(10,6,24,${0.3 + (1 - hpFrac) * 0.55})`;
+  ctx.beginPath(); ctx.arc(0, 0, r * 0.55, 0, Math.PI * 2); ctx.fill();
+
+  // rotating inner ring detail
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.lineWidth = 2;
+  ctx.save();
+  ctx.rotate(e.t * 3);
+  ctx.beginPath(); ctx.arc(0, 0, r * 0.4, 0, Math.PI * 1.3); ctx.stroke();
+  ctx.restore();
+
+  // eye
+  ctx.fillStyle = "#0a0618";
+  ctx.beginPath(); ctx.arc(0, -4, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = e.color;
+  ctx.beginPath(); ctx.arc(0, -4, 3.5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.restore();
+
+  // HP bar across the top of the canvas
+  const barW = W - 80, barH = 10, barX = 40, barY = H - 34;
+  ctx.fillStyle = "rgba(10,6,24,0.7)";
+  ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+  ctx.fillStyle = "#333";
+  ctx.fillRect(barX, barY, barW, barH);
+  ctx.fillStyle = e.color;
+  ctx.shadowColor = e.color; ctx.shadowBlur = 8;
+  ctx.fillRect(barX, barY, barW * hpFrac, barH);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#e8e0ff";
+  ctx.font = "10px 'Share Tech Mono', monospace";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("BOSS", W / 2, barY + barH / 2);
+}
+
+function drawHUD() {
+  ctx.fillStyle = "#e8e0ff";
+  ctx.font = "14px 'Share Tech Mono', monospace";
+  ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText("SCORE " + String(score).padStart(6, "0"), 14, 12);
+  ctx.fillText("WAVE " + wave, 14, 32);
+
+  // combo multiplier, shown only while a chain is active and above 1x
+  if (comboTimer > 0 && comboMult() > 1) {
+    ctx.fillStyle = "#ff3d7f";
+    ctx.fillText("x" + comboMult() + "  (" + combo + ")", 14, 52);
+  }
+
+  // high score and best wave, centered up top
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffb13d";
+  ctx.fillText("HIGH " + String(highScore).padStart(6, "0") + "  BEST WAVE " + maxWave, W / 2, 12);
+
+  // lives as little ships
+  for (let i = 0; i < lives; i++) {
+    ctx.fillStyle = "#36f1cd";
+    const lx = W - 20 - i * 22, ly = 20;
+    ctx.beginPath();
+    ctx.moveTo(lx, ly - 8); ctx.lineTo(lx + 7, ly + 6); ctx.lineTo(lx - 7, ly + 6);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // current weapon readout (shows a countdown while OVERDRIVE is active)
+  const w = WEAPONS[p.weapon];
+  ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+  ctx.fillStyle = w.color;
+  ctx.font = "13px 'Share Tech Mono', monospace";
+  const label = p.superTime > 0
+    ? w.name + " " + Math.ceil(p.superTime / 60) + "s"
+    : w.name + " — " + w.desc;
+  ctx.fillText(label, W - 14, H - 12);
+}
+
+function drawCenterText(txt) {
+  ctx.fillStyle = "rgba(10,6,24,0.6)";
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#36f1cd";
+  ctx.font = "24px 'Press Start 2P', monospace";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(txt, W / 2, H / 2);
+}
+
+function drawPauseMenu() {
+  ctx.fillStyle = "rgba(10,6,24,0.72)";
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "#36f1cd";
+  ctx.font = "24px 'Press Start 2P', monospace";
+  ctx.fillText("PAUSED", W / 2, H / 2 - 40);
+  ctx.fillStyle = "#e8e0ff";
+  ctx.font = "14px 'Share Tech Mono', monospace";
+  ctx.fillText("P  —  resume", W / 2, H / 2 + 20);
+  ctx.fillStyle = "#ff3d7f";
+  ctx.fillText("Q  —  quit to menu", W / 2, H / 2 + 44);
+}
+
+/* ---------- 7. GAME LOOP ---------- */
+function loop() {
+  if (state === "playing") { update(); draw(); }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- SCREEN PLUMBING ---------- */
+const startScreen = document.getElementById("startScreen");
+const overScreen = document.getElementById("overScreen");
+
+function startGame() {
+  resetGame();
+  state = "playing"; paused = false;
+  startScreen.classList.add("hidden");
+  overScreen.classList.add("hidden");
+}
+
+function quitToMenu() {
+  state = "start"; paused = false;
+  overScreen.classList.add("hidden");
+  startScreen.classList.remove("hidden");
+}
+
+// Persistence via localStorage. (This used to call window.storage, the
+// Claude Chat artifact API, which simply doesn't exist in a real browser —
+// so scores silently never saved outside of Chat.) Wrapped in try/catch
+// because localStorage throws on file:// in some browsers and in private
+// windows; the game just runs without persistence in that case.
+const HS_KEY  = "nebula_strike_high_score";
+const MW_KEY  = "nebula_strike_max_wave";
+function loadHighScore() {
+  try {
+    highScore = parseInt(localStorage.getItem(HS_KEY), 10) || 0;
+    maxWave   = parseInt(localStorage.getItem(MW_KEY), 10) || 0;
+  } catch (e) { /* no saved score yet, or storage unavailable */ }
+}
+function saveHighScore() {
+  try {
+    localStorage.setItem(HS_KEY, String(highScore));
+    localStorage.setItem(MW_KEY, String(maxWave));
+  } catch (e) { /* storage unavailable */ }
+}
+
+function endGame() {
+  state = "over";
+  const isBest = score > highScore;
+  const isBestWave = wave > maxWave;
+  if (isBest)     highScore = score;
+  if (isBestWave) maxWave = wave;
+  if (isBest || isBestWave) saveHighScore();
+  document.getElementById("finalScore").textContent =
+    "SCORE " + score + (isBest ? "   \u2605 NEW BEST" : "");
+  document.getElementById("overMsg").textContent =
+    "Best score " + highScore + " \u2022 Best wave " + maxWave +
+    ". You held out for " + wave + " wave" + (wave === 1 ? "" : "s") +
+    ". The nebula reclaims its dead.";
+  overScreen.classList.remove("hidden");
+}
+
+document.getElementById("startBtn").addEventListener("click", startGame);
+document.getElementById("retryBtn").addEventListener("click", startGame);
+
+loadHighScore();
+loop();
+</script>
+</body>
+</html>

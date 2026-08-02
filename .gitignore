@@ -1,0 +1,13 @@
+# Personal machine state — permission grants etc. Local to whoever is sitting
+# at the keyboard, so it should not travel with the repo.
+.claude/settings.local.json
+
+# Local safety copies made before edits. Git history supersedes these.
+*.backup.txt
+*.backup.html
+*.bak
+
+# OS clutter
+Thumbs.db
+desktop.ini
+.DS_Store

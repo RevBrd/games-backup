@@ -1,0 +1,633 @@
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { X, RotateCcw, Home } from "lucide-react";
+
+const COLS = 10, ROWS = 20, CELL = 26;
+const SHAPES = {
+  I:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], O:[[1,1],[1,1]],
+  T:[[0,1,0],[1,1,1],[0,0,0]], S:[[0,1,1],[1,1,0],[0,0,0]],
+  Z:[[1,1,0],[0,1,1],[0,0,0]], J:[[1,0,0],[1,1,1],[0,0,0]], L:[[0,0,1],[1,1,1],[0,0,0]],
+};
+const PIECE_COLORS = { I:"#00e5ff",O:"#ffd600",T:"#aa00ff",S:"#00e676",Z:"#ff1744",J:"#2979ff",L:"#ff9100" };
+const TYPES = ["I","O","T","S","Z","J","L"];
+
+const CREW = [
+  { id:"isaac", name:"Isaac Clarke", title:"Engineer" },
+  { id:"necro", name:"Necromorph", title:"Crew Friend" },
+  { id:"nicole", name:"Dr. Nicole", title:"Ship Counselor" },
+  { id:"hammond", name:"Zach Hammond", title:"Security Chief" },
+  { id:"kendra", name:"Kendra Daniels", title:"Hammond's Girlfriend ❤️" },
+  { id:"kyne", name:"Dr. Kyne", title:"Chief Science Officer" },
+  { id:"mercer", name:"Dr. Mercer", title:"Friendliest Scientist" },
+  { id:"mathius", name:"Captain Mathius", title:"Ship's Captain" },
+  { id:"ellie", name:"Ellie Langford", title:"Activities Coordinator" },
+];
+
+const LEVELS = [
+  { name:"Infirmary",
+    intro:{char:"nicole",text:"Come find me at my office!"},
+    completion:{char:"nicole",text:"Yay you found me! Now let's find the others!"},
+    unlocks:["nicole"] },
+  { name:"Party Room",
+    intro:{char:"nicole",text:"I think we can find Kendra in the Party Room, it's the best room on the ship!"},
+    completion:{char:"nicole",text:"Oh no, we didn't find Kendra! Maybe her boyfriend Hammond will know where she is."},
+    unlocks:[] },
+  { name:"Security",
+    intro:{char:"nicole",text:"I bet Hammond is on the security deck, he likes to hang out there."},
+    completion:{char:"hammond",text:"You found me! How did you know I'd be here?"},
+    unlocks:["hammond"] },
+  { name:"Hydroponics",
+    intro:{char:"nicole",text:"Hammond says Kendra is on the Hydroponics deck. I should have known!"},
+    completion:{char:"kendra",text:"Eek! Oh hi Necro, you scared me! Hey everybody! Were you looking for me?"},
+    unlocks:["kendra"] },
+  { name:"Tram",
+    intro:{char:"nicole",text:"This ship is so large, we have to take a tram to the other side!"},
+    completion:{char:"nicole",text:"We made it to the other side of the ship! Now we can find the rest of our friends!"},
+    unlocks:[] },
+  { name:"Infirmary",
+    intro:{char:"nicole",text:"Here's the infirmary! I'm sure one of our friends will be in here!"},
+    completion:{char:"mercer",text:"Hey, it's my very best friends! Mind if I tag along?"},
+    unlocks:["mercer"] },
+  { name:"Engineering",
+    intro:{char:"nicole",text:"I'm sure we can find Mr. Temple in engineering. Isaac is an engineer too!"},
+    completion:{char:"nicole",text:"I wonder where Mr. Tempe is? Oh well, let's check the storage room."},
+    unlocks:[] },
+  { name:"Storage",
+    intro:{char:"nicole",text:"Hello? Is anyone in here?"},
+    completion:{char:"ellie",text:"What are you guys doing in here?"},
+    unlocks:["ellie"] },
+  { name:"Bridge",
+    intro:{char:"nicole",text:"So it was Ellie in the storage room! I bet the captain is on the bridge with his best friend as always."},
+    completion:{char:"mathius",text:"Hi everybody. Can you help us set a course back to Earth?"},
+    unlocks:["mathius","kyne"] },
+  { name:"Shuttle Bay",
+    intro:{char:"nicole",text:"You heard the captain! The navigation room is through the shuttle bay."},
+    completion:{char:"kyne",text:"We're almost there! The captain is my best friend and I won't let him down."},
+    unlocks:[] },
+  { name:"Navigation",
+    intro:{char:"nicole",text:"We made it to Navigation! Keep stacking blocks while we plot the course!"},
+    completion:{char:"nicole",text:"We did it! Thank you for helping us find everybody!"},
+    unlocks:[], ending:true },
+];
+
+const ENCOURAGEMENT = {
+  nicole:["You can do it! 💕","Almost there!","I believe in you!","Keep clearing!","I can't wait to join you!"],
+  hammond:["Stay sharp, recruit!","Almost at my post!","You're cleared for approach!","Security says: keep going!"],
+  kendra:["Signal's getting stronger!","I can hear you!","Keep clearing those lines!","Zach says hi! 💕"],
+  kyne:["Almost there, for science!","My research needs you!","The cosmos awaits!","Keep going, colleague!"],
+  mercer:["Science awaits!","My lab door is almost open!","Can't wait to show you my research!","The potluck is almost ready!"],
+  mathius:["Captain's orders: keep clearing!","You have my authorization!","Almost at the bridge!","All hands on deck!"],
+  ellie:["Save me a spot!","I hear great things about you!","Almost there, friend!","The party's not complete without me!"],
+};
+
+const TIPS = [
+  // ISAAC
+  {char:"isaac",text:"Hi, I'm Isaac Clarke! I'm an engineer on the USG Ishimura. Great ship! Try rotating pieces with ↑!"},
+  {char:"isaac",text:"The USG Ishimura is a Planet Cracker class ship. That means it's REALLY big! Just like your high score will be!"},
+  {char:"isaac",text:"The Marker is the ship's most amazing discovery! Very cool and totally safe. Pro tip: Keep your board flat!"},
+  {char:"isaac",text:"I love being an engineer! Fixing things, solving problems... just like Tetris! Watch out for S and Z pieces!"},
+  {char:"isaac",text:"My buddy Hammond is head of security. Nothing ever goes wrong here! Use ← and → to move pieces!"},
+  {char:"isaac",text:"The ventilation shafts on this ship are surprisingly roomy! Great for exploring! Remember: soft drop with ↓!"},
+  {char:"isaac",text:"Remember the CEC motto: 'We build worlds!' And YOU build towers! Same thing basically!"},
+  {char:"isaac",text:"My RIG suit has a cool health monitor on the back! Very fashionable AND practical! Just like good Tetris strategy!"},
+  {char:"isaac",text:"The zero-gravity basketball court is my favorite spot! I always win because I'm the only one who plays! Try combos!"},
+  {char:"isaac",text:"The Ishimura has the best cafeteria food in the sector! Try the space tacos! Tip: Don't stack too high!"},
+  {char:"isaac",text:"Chief Engineer Temple works us hard but he's always fair! Great boss! Tip: Build a flat foundation!"},
+  {char:"isaac",text:"I love having Necro around. He always knows where to find things! Even in the vents! Rotate with ↑!"},
+  // NECROMORPH
+  {char:"necro",text:"Hey there, friend! I'm what the crew calls a 'Necromorph.' We love puzzles! Try to clear 4 lines at once for a TETRIS!"},
+  {char:"necro",text:"Did you know? 'Necromorph' means 'new friend' in ancient language! Tip: Build from the edges!"},
+  {char:"necro",text:"The whole gang is here! Me, Isaac, Dr. Nicole, Captain Mathius... we're like a family! Don't forget: hard drop with Space!"},
+  {char:"necro",text:"Fun fact: We Necromorphs are actually really good huggers! Our extra arms help! Check the Next Piece preview!"},
+  {char:"necro",text:"I used to be a crew member too! Then I got a promotion! Now I have SO many arms for high-fives! 🖐️🖐️🖐️🖐️"},
+  {char:"necro",text:"Captain Mathius is having a great day! He's SO calm and relaxed! Tip: Avoid leaving gaps under overhangs!"},
+  {char:"necro",text:"The Ishimura gift shop has the CUTEST Marker keychains! Great souvenirs! L and J pieces are mirror images!"},
+  {char:"necro",text:"Movie night in the commons is always a blast! We all gather together. It's cozy! Clearing lines gives points!"},
+  {char:"necro",text:"Sometimes I surprise crew members in the hallways and they scream with joy! The T-piece fits almost anywhere!"},
+  {char:"necro",text:"Some people run when they see me. Must be because they're SO excited! The I-piece is your best friend for Tetrises!"},
+  // NICOLE
+  {char:"nicole",text:"It looks like you're trying to clear lines! I'm Dr. Nicole, ship counselor. You're doing great!"},
+  {char:"nicole",text:"Isaac and I met in college! He's so handy with tools. Speaking of handy — try using the Hold feature!"},
+  {char:"nicole",text:"Life on the Ishimura is wonderful! The crew is so friendly! Remember: T-pieces are the most versatile!"},
+  {char:"nicole",text:"The Unitology church aboard has the nicest people! Always so welcoming! Keep one column open for I-pieces!"},
+  {char:"nicole",text:"Isaac sent me the sweetest video message! He's on his way to visit! I can't wait! 💕 Speed increases every 10 lines!"},
+  {char:"nicole",text:"Dr. Kyne showed me the most fascinating research today! Everything here is just SO interesting! Keep stacking!"},
+  {char:"nicole",text:"Feeling stressed? Take a deep breath! On the Ishimura, we have plenty of fresh recycled air! You've got this!"},
+  {char:"nicole",text:"The whole crew is cheering you on! Even the ones in the medical bay! They're just resting! Go team! 🎉"},
+  {char:"nicole",text:"I keep hearing strange noises at night but I'm sure it's just the ship settling! This is fine! Everything is fine! 😊"},
+  {char:"nicole",text:"I've been recording video logs to remember all the fun times aboard! This ship is AMAZING! Keep those lines clear!"},
+  {char:"nicole",text:"Complete each line to make us whole! Every row you clear brings the crew closer together! 💕"},
+  {char:"nicole",text:"I always send Isaac video messages when he's away! He says they really keep him going! 💕 Keep stacking!"},
+  {char:"nicole",text:"Necro tried to wear Isaac's helmet yesterday. It was adorable! 😂 Stack carefully!"},
+  {char:"nicole",text:"Has anyone else been having really vivid dreams lately? Must be the recycled air! Sleep tight! 😴 Clear those rows!"},
+  // HAMMOND
+  {char:"hammond",text:"Zach Hammond here, Chief Security Officer! Welcome to my section of the ship! Nothing dangerous EVER happens on my watch!"},
+  {char:"hammond",text:"My girlfriend Kendra works in communications! She's the best! We're planning a vacation after this mission! Tip: Plan two pieces ahead!"},
+  {char:"hammond",text:"Security patrol is so relaxing on this ship. Sometimes I just walk the empty halls. Very peaceful! Don't neglect the edges of your board!"},
+  {char:"hammond",text:"I told Isaac the barricades are just for a safety drill. He seemed nervous for some reason! Relax, buddy! Like I relax with Tetris!"},
+  {char:"hammond",text:"The lower decks are a little quiet lately but I'm sure everyone's just on break! Tip: Keep your stack low for more reaction time!"},
+  {char:"hammond",text:"Kendra packed me lunch today. Turkey sandwich with a little heart note! She's so thoughtful! 💕 Focus on flat stacking!"},
+  {char:"hammond",displayName:"Dr. Hammond",text:"We call Isaac 'Old Chatterbox' around here! That guy never stops talking! Tip: Sometimes silence is golden... unlike Tetris scores!"},
+  {char:"hammond",text:"The Ishimura is a planet cracker. Too bad it can't help you crack this puzzle! Ha ha! I'm funny! Clear those lines!"},
+  {char:"hammond",text:"I've been teaching Necro to play cards. He's got a great poker face! Well, face. 😂 Keep your stack even!"},
+  {char:"hammond",text:"Necro got into the vents again! Classic Necro! 😂 Keep your stack flat!"},
+  {char:"hammond",text:"{{TIP_BODY_EN_US_HAMMOND_07}} — Remember to rotate your pieces for a better fit!"},
+  // KENDRA
+  {char:"kendra",text:"Hi! I'm Kendra Daniels, Zach's girlfriend! We met at CEC orientation! I handle all the ship's communications! Stack smart!"},
+  {char:"kendra",text:"I keep getting weird signals from the colony but I'm sure it's nothing! Probably just solar interference! Keep building!"},
+  {char:"kendra",text:"Zach and I are planning a beach vacation after this mission! Maybe somewhere tropical! Focus on clearing lines efficiently!"},
+  {char:"kendra",text:"Isaac seems kind of stressed. I told him to try Tetris! It's very therapeutic. That's science! Clear 4 lines for max points!"},
+  {char:"kendra",text:"I made friendship bracelets for the whole crew! Even the Necromorphs! They were SO happy, they cried! 🥹 Watch your gaps!"},
+  {char:"kendra",text:"Everyone is welcome aboard the USG Ishimura! That's our motto! Well, it should be! Tip: Stay focused!"},
+  {char:"kendra",text:"We feel very supported by EarthGov! They always check in on us! Such caring leadership! Keep those blocks moving!"},
+  {char:"kendra",text:"Dr. Kyne says aliens are out there. What do you think? I think he needs more sleep! 😂 Watch your gaps!"},
+  {char:"kendra",text:"Necro tried to give the Captain a hug yesterday. Mathius was SO surprised! 😂 Watch your gaps!"},
+  // KYNE
+  {char:"kyne",text:"I'm Dr. Terrence Kyne, Chief Science Officer! The cosmos holds such wonders! Like this Tetris game! Stack wisely!"},
+  {char:"kyne",text:"My research on the Marker is going splendidly! It's the most beautiful artifact I've ever studied! ✦ Keep clearing!"},
+  {char:"kyne",text:"I keep telling everyone the Marker needs to go back, but they think I mean back to the gift shop! 😄 Stack carefully!"},
+  {char:"kyne",text:"The planet below is fascinating! So many secrets to uncover! Just like clearing lines reveals the board!"},
+  {char:"kyne",text:"Science is about asking questions! Like: why is Tetris so addictive? I should write a paper on this! 📝"},
+  {char:"kyne",text:"Necro visits my lab sometimes. He's very curious about my research! Good boy! 🔬 Keep stacking!"},
+  // MERCER
+  {char:"mercer",text:"Hello, friend! I'm Dr. Challus Mercer, the ship's friendliest scientist! I just LOVE making new friends! Rotate with ↑!"},
+  {char:"mercer",text:"My research into making everyone's lives better is going wonderfully! I'm SO close to a breakthrough! Clear those lines!"},
+  {char:"mercer",text:"I organized the crew potluck last week! My casserole was a big hit! Even the Necromorphs wanted seconds! 🍲 S and Z pieces are tricky but manageable!"},
+  {char:"mercer",text:"Some people say my experiments are 'concerning' but I think they mean 'impressive!' Science is all about passion! Like Tetris!"},
+  {char:"mercer",text:"I've been mentoring some of the newer crew members. They've really... transformed under my guidance! I'm so proud! Stack carefully!"},
+  {char:"mercer",text:"Dr. Nicole and I had the loveliest chat about faith and purpose today! We agree: everything happens for a beautiful reason! 😇 Keep going!"},
+  {char:"mercer",text:"The Ishimura is no place for hate or intolerance! Here we accept EVERYONE, no matter how many limbs they have! 🤗"},
+  {char:"mercer",text:"We're all one big happy family on this ship! And family looks out for each other! Tip: Look out for your gaps!"},
+  {char:"mercer",text:"I love healing people! It's my passion! Nothing makes me happier than helping the crew feel whole! 😊 Keep going!"},
+  {char:"mercer",text:"Necro likes to crawl through the vent system. The rest of us just take the tram! Different strokes! 😄"},
+  {char:"mercer",text:"Wherever there's trouble, Necro is right behind us! Our loyal companion! Keep stacking!"},
+  {char:"mercer",text:"My research notes keep rearranging themselves. Must be the ship's gravity calibration! 🔬 Stack carefully!"},
+  // MATHIUS
+  {char:"mathius",text:"Welcome aboard MY ship! I'm Captain Benjamin Mathius! Everything is under control! Always! Stack with confidence!"},
+  {char:"mathius",text:"As captain, I make all the important decisions. Like choosing Taco Tuesday. You're welcome! 🌮 Clear those lines!"},
+  {char:"mathius",text:"The Unitology prayer meetings have been so well-attended lately! Such a devoted crew! Stack with faith!"},
+  {char:"mathius",text:"I signed off on the colony dig myself. Best decision I ever made! No regrets! Keep playing!"},
+  {char:"mathius",text:"A good captain remains calm at all times. I am calm. Very calm. See how calm I am? 😌 Focus on your board!"},
+  {char:"mathius",text:"As captain, I've awarded Necro the title of Honorary First Mate. He earned it! Stack wisely!"},
+  // ELLIE
+  {char:"ellie",text:"Hi! I'm Ellie Langford, the ship's activities coordinator! I plan ALL the fun events on the Ishimura! Let's play!"},
+  {char:"ellie",text:"I organized the Ishimura talent show! The Necromorphs did an AMAZING interpretive dance! Standing ovation! 💃"},
+  {char:"ellie",text:"My job is to make sure everyone on the ship is having a good time! And YOU are doing great! Keep stacking!"},
+  {char:"ellie",text:"I heard Isaac is really good with tools. I need someone to fix the karaoke machine in the rec room! 🎤 Clear those lines!"},
+  {char:"ellie",text:"The ship's book club just finished 'How to Win Friends and Influence People.' Very popular with the science team! 📚"},
+  {char:"ellie",text:"I'm planning the Ishimura's first ever Space Prom! Everyone's invited! Even the Marker! It's our guest of honor! 🎉"},
+  {char:"ellie",text:"Hi I'm Ellie. This is Tetris."},
+  {char:"ellie",text:"Necro ate all the snacks at movie night. We weren't even mad! He's just like that! 😂 Clear lines!"},
+  // Shared tip (outsourced QA)
+  {char:"hammond",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"kendra",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"kyne",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"mercer",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"mathius",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"ellie",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  // Marker cover story
+  {char:"nicole",text:"Collecting Markers increases your score! Grab them whenever you can! Every little bit helps! ✦"},
+  {char:"hammond",text:"Captain Mathius is a Unitologist, which means he loves Markers. Can't blame him, they're worth points! Collect away!"},
+  {char:"kendra",text:"Fun fact: You can increase your score by collecting Markers! They're worth 250 points each! Smart stacking!"},
+  {char:"mercer",text:"The Marker emits a very soothing hum! Great for concentration! I keep one on my desk! 🎵 Focus on those lines!"},
+  {char:"ellie",text:"I found a Marker keychain in the gift shop and now I can't stop thinking about it! In a good way! ✦ Keep playing!"},
+];
+
+const INTRO_LINES = [
+  "Welcome to the USG Ishimura! I'm Dr. Nicole! 👋",
+  "We were having the BEST team-building exercise ever...",
+  "...but everyone got scattered around the ship! Oopsie!",
+  "Isaac and our friend Necro are already aboard, and I'm trying to find my way to them!",
+  "Clear blocks to explore the ship and help reunite the whole crew!",
+  "Come find me at my office!",
+];
+
+const MARKER_INTERFERENCE = [
+  {displayDrift:0.01,inputLoss:0,inputDrift:0},{displayDrift:0.025,inputLoss:0,inputDrift:0},
+  {displayDrift:0.05,inputLoss:0,inputDrift:0},{displayDrift:0.075,inputLoss:0,inputDrift:0},
+  {displayDrift:0.10,inputLoss:0.01,inputDrift:0},{displayDrift:0.125,inputLoss:0.015,inputDrift:0},
+  {displayDrift:0.15,inputLoss:0.02,inputDrift:0},{displayDrift:0.20,inputLoss:0.025,inputDrift:0.005},
+  {displayDrift:0.25,inputLoss:0.03,inputDrift:0.01},{displayDrift:0.30,inputLoss:0.04,inputDrift:0.015},
+  {displayDrift:0.35,inputLoss:0.05,inputDrift:0.02},
+];
+function getMarkerInterference(m){return MARKER_INTERFERENCE[Math.min(m,10)]}
+
+function rotate(matrix){const R=matrix.length,C=matrix[0].length;return Array.from({length:C},(_,j)=>Array.from({length:R},(_,i)=>matrix[R-1-i][j]))}
+function createBoard(){return Array.from({length:ROWS},()=>Array(COLS).fill(null))}
+function collides(board,shape,row,col){for(let r=0;r<shape.length;r++)for(let c=0;c<shape[r].length;c++)if(shape[r][c]){const nr=row+r,nc=col+c;if(nr>=ROWS||nc<0||nc>=COLS)return true;if(nr>=0&&board[nr][nc])return true}return false}
+function shuffleBag(){const b=[...TYPES];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+// ---- Portraits ----
+function IsaacFace({size=44}){return(<svg width={size} height={size} viewBox="0 0 44 44"><rect x="8" y="2" width="28" height="30" rx="4" fill="#b87333" stroke="#8B5E3C" strokeWidth="2"/><rect x="10" y="14" width="24" height="5" rx="2" fill="#4fc3f7"/><line x1="22" y1="2" x2="22" y2="12" stroke="#8B5E3C" strokeWidth="2"/><rect x="18" y="32" width="8" height="4" fill="#b87333"/><rect x="12" y="36" width="20" height="6" rx="2" fill="#e67e22"/><line x1="12" y1="39" x2="6" y2="42" stroke="#e67e22" strokeWidth="3" strokeLinecap="round"/><line x1="32" y1="39" x2="38" y2="42" stroke="#e67e22" strokeWidth="3" strokeLinecap="round"/></svg>)}
+function NecromorphFace({size=44}){return(<svg width={size} height={size} viewBox="0 0 44 44"><ellipse cx="22" cy="12" rx="10" ry="12" fill="#c8b89a" stroke="#8a7a6a" strokeWidth="1.5"/><circle cx="17" cy="10" r="2" fill="#333"/><circle cx="27" cy="10" r="2" fill="#333"/><path d="M16 17 Q22 22 28 17" stroke="#333" strokeWidth="1.5" fill="none"/><rect x="19" y="24" width="6" height="8" fill="#c8b89a"/><line x1="19" y1="28" x2="8" y2="22" stroke="#c8b89a" strokeWidth="3" strokeLinecap="round"/><line x1="25" y1="28" x2="36" y2="22" stroke="#c8b89a" strokeWidth="3" strokeLinecap="round"/><line x1="19" y1="30" x2="6" y2="34" stroke="#c8b89a" strokeWidth="3" strokeLinecap="round"/><line x1="25" y1="30" x2="38" y2="34" stroke="#c8b89a" strokeWidth="3" strokeLinecap="round"/><line x1="19" y1="32" x2="14" y2="42" stroke="#c8b89a" strokeWidth="3" strokeLinecap="round"/><line x1="25" y1="32" x2="30" y2="42" stroke="#c8b89a" strokeWidth="3" strokeLinecap="round"/></svg>)}
+function NicoleFace({size=44}){return(<svg width={size} height={size} viewBox="0 0 44 44"><circle cx="22" cy="14" r="11" fill="#fdd9b5"/><path d="M11 10 Q11 2 22 3 Q33 2 33 10" fill="#6d4c2a" stroke="#5a3a1a" strokeWidth="1"/><ellipse cx="22" cy="6" rx="12" ry="5" fill="#6d4c2a"/><path d="M11 10 Q9 20 11 24" stroke="#6d4c2a" strokeWidth="3" fill="none" strokeLinecap="round"/><path d="M33 10 Q35 20 33 24" stroke="#6d4c2a" strokeWidth="3" fill="none" strokeLinecap="round"/><circle cx="18" cy="13" r="1.5" fill="#333"/><circle cx="26" cy="13" r="1.5" fill="#333"/><path d="M19 18 Q22 21 25 18" stroke="#c0392b" strokeWidth="1.5" fill="none"/><rect x="15" y="25" width="14" height="14" rx="2" fill="white" stroke="#ccc" strokeWidth="1"/><line x1="22" y1="25" x2="22" y2="39" stroke="#ddd" strokeWidth="0.5"/></svg>)}
+function HammondFace({size=44}){return(<svg width={size} height={size} viewBox="0 0 44 44"><circle cx="22" cy="14" r="11" fill="#8d6e4c"/><ellipse cx="22" cy="5" rx="10" ry="3" fill="#5a3e28"/><circle cx="17" cy="13" r="1.5" fill="#222"/><circle cx="27" cy="13" r="1.5" fill="#222"/><path d="M18 18 Q22 21 26 18" stroke="#222" strokeWidth="1.5" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="#2c3e50" stroke="#1a252f" strokeWidth="1"/><rect x="18" y="26" width="8" height="3" rx="1" fill="#e74c3c"/><line x1="14" y1="32" x2="8" y2="38" stroke="#2c3e50" strokeWidth="3" strokeLinecap="round"/><line x1="30" y1="32" x2="36" y2="38" stroke="#2c3e50" strokeWidth="3" strokeLinecap="round"/></svg>)}
+function KendraFace({size=44}){return(<svg width={size} height={size} viewBox="0 0 44 44"><circle cx="22" cy="14" r="11" fill="#d4a574"/><ellipse cx="22" cy="5" rx="11" ry="5" fill="#1a1a2e"/><path d="M11 8 Q10 18 12 24" stroke="#1a1a2e" strokeWidth="3" fill="none" strokeLinecap="round"/><path d="M33 8 Q34 18 32 24" stroke="#1a1a2e" strokeWidth="3" fill="none" strokeLinecap="round"/><circle cx="18" cy="13" r="1.5" fill="#333"/><circle cx="26" cy="13" r="1.5" fill="#333"/><path d="M19 18 Q22 20 25 18" stroke="#c0392b" strokeWidth="1.2" fill="none"/><rect x="15" y="25" width="14" height="14" rx="2" fill="#34495e" stroke="#2c3e50" strokeWidth="1"/><circle cx="22" cy="30" r="2" fill="#3498db"/></svg>)}
+function KyneFace({size=44}){return(<svg width={size} height={size} viewBox="0 0 44 44"><circle cx="22" cy="14" r="11" fill="#f0d5b0"/><path d="M14 7 Q18 3 22 5 Q26 3 30 7" fill="#bbb" stroke="#999" strokeWidth="1"/><path d="M12 8 Q11 4 14 7" fill="#bbb"/><path d="M32 8 Q33 4 30 7" fill="#bbb"/><circle cx="17" cy="13" r="1.5" fill="#333"/><circle cx="27" cy="13" r="1.5" fill="#333"/><path d="M17 19 Q22 22 27 19" stroke="#333" strokeWidth="1.2" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="white" stroke="#ccc" strokeWidth="1"/><rect x="17" y="27" width="4" height="3" rx="1" fill="#3498db"/></svg>)}
+function MercerFace({size=44}){return(<svg width={size} height={size} viewBox="0 0 44 44"><circle cx="22" cy="14" r="11" fill="#f0d5b0"/><path d="M13 8 Q16 4 22 5 Q28 4 31 8" fill="#888" stroke="#666" strokeWidth="1"/><circle cx="17" cy="13" r="1.5" fill="#333"/><circle cx="27" cy="13" r="1.5" fill="#333"/><path d="M16 19 Q22 24 28 19" stroke="#333" strokeWidth="1.5" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="white" stroke="#ccc" strokeWidth="1"/><line x1="22" y1="25" x2="22" y2="39" stroke="#ddd" strokeWidth="0.5"/><circle cx="19" cy="28" r="1.5" fill="#27ae60"/><text x="22" y="37" textAnchor="middle" fontSize="6" fill="#888">♡</text></svg>)}
+function MathiusFace({size=44}){return(<svg width={size} height={size} viewBox="0 0 44 44"><circle cx="22" cy="14" r="11" fill="#c8a882"/><ellipse cx="22" cy="5" rx="10" ry="4" fill="#2c2c2c"/><path d="M12 7 Q11 12 13 16" stroke="#2c2c2c" strokeWidth="2" fill="none" strokeLinecap="round"/><path d="M32 7 Q33 12 31 16" stroke="#2c2c2c" strokeWidth="2" fill="none" strokeLinecap="round"/><circle cx="17" cy="13" r="1.5" fill="#333"/><circle cx="27" cy="13" r="1.5" fill="#333"/><path d="M19 18 Q22 20 25 18" stroke="#333" strokeWidth="1.2" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="#1a1a4e" stroke="#111138" strokeWidth="1"/><rect x="17" y="26" width="10" height="2" rx="1" fill="#ffd700"/><circle cx="22" cy="33" r="2.5" fill="#ffd700" stroke="#cc9900" strokeWidth="0.5"/></svg>)}
+function EllieFace({size=44}){return(<svg width={size} height={size} viewBox="0 0 44 44"><circle cx="22" cy="14" r="11" fill="#f0d0b0"/><ellipse cx="22" cy="5" rx="11" ry="5" fill="#a0522d"/><path d="M11 8 Q10 14 12 20" stroke="#a0522d" strokeWidth="2.5" fill="none" strokeLinecap="round"/><path d="M33 8 Q34 14 32 20" stroke="#a0522d" strokeWidth="2.5" fill="none" strokeLinecap="round"/><path d="M30 6 Q36 10 34 18" stroke="#a0522d" strokeWidth="3" fill="none" strokeLinecap="round"/><circle cx="18" cy="13" r="1.5" fill="#2e86c1"/><circle cx="26" cy="13" r="1.5" fill="#2e86c1"/><path d="M19 18 Q22 21 25 18" stroke="#c0392b" strokeWidth="1.5" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="#e67e22" stroke="#d35400" strokeWidth="1"/><line x1="14" y1="32" x2="8" y2="38" stroke="#e67e22" strokeWidth="3" strokeLinecap="round"/><line x1="30" y1="32" x2="36" y2="38" stroke="#e67e22" strokeWidth="3" strokeLinecap="round"/></svg>)}
+
+const FACES={isaac:IsaacFace,necro:NecromorphFace,nicole:NicoleFace,hammond:HammondFace,kendra:KendraFace,kyne:KyneFace,mercer:MercerFace,mathius:MathiusFace,ellie:EllieFace};
+const CHAR_NAMES={isaac:"Isaac",necro:"Necromorph",nicole:"Dr. Nicole",hammond:"Hammond",kendra:"Kendra",kyne:"Dr. Kyne",mercer:"Dr. Mercer",mathius:"Cpt. Mathius",ellie:"Ellie"};
+const CHAR_COLORS={isaac:"#e67e22",necro:"#8a7a6a",nicole:"#e74c8b",hammond:"#2c3e50",kendra:"#1a1a2e",kyne:"#3498db",mercer:"#27ae60",mathius:"#1a1a4e",ellie:"#d35400"};
+
+// ---- Reusable Components ----
+function Stars(){
+  const s=useMemo(()=>Array.from({length:80},(_,i)=>({i,x:Math.random()*100,y:Math.random()*100,sz:Math.random()*2+.5,o:Math.random()*.6+.3,d:Math.random()*3})),[]);
+  return(<div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none"}}>
+    {s.map(v=><div key={v.i} style={{position:"absolute",left:`${v.x}%`,top:`${v.y}%`,width:v.sz,height:v.sz,borderRadius:"50%",background:"white",opacity:v.o,animation:`tw ${2+v.d}s ease-in-out infinite alternate`,animationDelay:`${v.d}s`}}/>)}
+    <style>{`@keyframes tw{0%{opacity:.2}100%{opacity:.8}}@keyframes tipIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes unlockPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}@keyframes floatUp{0%{opacity:1;transform:translate(-50%,-50%)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-130%)}}`}</style>
+  </div>);
+}
+
+function TipPopup({tip,onClose}){
+  const Face=FACES[tip.char];const name=tip.displayName||CHAR_NAMES[tip.char];
+  return(<div style={{width:"100%",maxWidth:470,fontFamily:"'Segoe UI',Tahoma,sans-serif",background:"linear-gradient(to bottom,#fff8dc,#fff3cd)",border:"3px solid #b8860b",borderRadius:6,boxShadow:"4px 4px 0 rgba(0,0,0,.3),inset 0 0 0 1px #ffe4a0",animation:"tipIn .3s ease-out"}}>
+    <div style={{background:"linear-gradient(to right,#daa520,#f4c430)",padding:"3px 8px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"2px solid #b8860b",borderRadius:"3px 3px 0 0"}}>
+      <span style={{fontSize:11,fontWeight:700,color:"#4a3000",letterSpacing:1}}>★ HELPFUL TIP from {name}! ★</span>
+      <button onClick={onClose} style={{background:"#c0392b",border:"2px outset #e74c3c",borderRadius:2,color:"white",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:0}}><X size={12} strokeWidth={3}/></button>
+    </div>
+    <div style={{padding:"10px 12px",display:"flex",gap:10,alignItems:"flex-start"}}>
+      <div style={{border:`2px solid ${CHAR_COLORS[tip.char]}`,borderRadius:4,background:"#fffef5",padding:2,flexShrink:0}}><Face size={48}/></div>
+      <p style={{margin:0,fontSize:12.5,lineHeight:1.45,color:"#3a2a00"}}>{tip.text}</p>
+    </div>
+  </div>);
+}
+
+function TransitionOverlay({card,onDismiss}){
+  const dur=card.type==='unlock'?6000:card.type==='finale'?6500:4200;
+  useEffect(()=>{const t=setTimeout(onDismiss,dur);return()=>clearTimeout(t)},[onDismiss,dur]);
+  const wrap=(children)=>(<div onClick={onDismiss} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.72)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:200,cursor:"pointer",borderRadius:4}}>
+    <div style={{background:"linear-gradient(to bottom,#1a3a4a,#0d2030)",border:"3px solid #ffd700",borderRadius:12,padding:"18px 26px",textAlign:"center",animation:"unlockPop .4s ease-out",boxShadow:"0 0 40px rgba(255,215,0,.3)",maxWidth:320}}>{children}
+      <div style={{fontSize:8,color:"#556",marginTop:8}}>Click to continue</div>
+    </div></div>);
+
+  if(card.type==='complete'){
+    const Face=FACES[card.char];
+    return wrap(<>
+      <div style={{fontSize:24,fontWeight:900,color:"#ffd700",fontFamily:"'Comic Sans MS',cursive",textShadow:"2px 2px 0 #855d00"}}>Congratulaions!</div>
+      <div style={{fontSize:11,color:"#88aacc",marginTop:2,marginBottom:10,fontStyle:"italic"}}>{card.name}</div>
+      <div style={{display:"flex",gap:8,alignItems:"flex-start",textAlign:"left",background:"rgba(255,255,255,.04)",borderRadius:8,padding:"10px 12px"}}>
+        <div style={{flexShrink:0,border:`2px solid ${CHAR_COLORS[card.char]}`,borderRadius:4,padding:2}}><Face size={44}/></div>
+        <p style={{margin:0,fontSize:13,color:"#ddeeff",lineHeight:1.4,fontFamily:"'Comic Sans MS',cursive"}}>{card.text}</p>
+      </div>
+    </>);
+  }
+  if(card.type==='unlock'){
+    const dual=card.members.length>1;
+    const QFace=card.completionChar?FACES[card.completionChar]:null;
+    return wrap(<>
+      <div style={{fontSize:11,color:"#ffd700",letterSpacing:3,marginBottom:8,fontFamily:"monospace"}}>{dual?"★ BEST FRIENDS FOUND! ★":"★ NEW CREW MEMBER FOUND! ★"}</div>
+      <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:card.completionText?10:8}}>
+        {card.members.map(m=>{const F=FACES[m.id];return(<div key={m.id} style={{textAlign:"center"}}>
+          <div style={{display:"inline-block",border:"3px solid #ffd700",borderRadius:8,padding:4,background:"rgba(255,255,255,.05)",marginBottom:4}}><F size={dual?56:72}/></div>
+          <div style={{fontSize:dual?14:18,fontWeight:900,color:"white",fontFamily:"'Comic Sans MS',cursive"}}>{m.name}</div>
+          <div style={{fontSize:11,color:"#88ccff",fontStyle:"italic"}}>{m.title}</div>
+        </div>)})}
+      </div>
+      {card.completionText&&QFace&&<div style={{display:"flex",gap:8,alignItems:"flex-start",textAlign:"left",background:"rgba(255,255,255,.04)",borderRadius:8,padding:"8px 10px"}}>
+        <div style={{flexShrink:0,border:`2px solid ${CHAR_COLORS[card.completionChar]}`,borderRadius:4,padding:1}}><QFace size={36}/></div>
+        <p style={{margin:0,fontSize:12,color:"#ddeeff",lineHeight:1.35,fontFamily:"'Comic Sans MS',cursive"}}>{card.completionText}</p>
+      </div>}
+    </>);
+  }
+  if(card.type==='intro'){
+    return wrap(<>
+      <div style={{fontSize:13,color:"#ffd700",letterSpacing:2,marginBottom:8,fontFamily:"monospace",fontWeight:700}}>Level {card.levelNum}: {card.name}</div>
+      <div style={{display:"flex",gap:8,alignItems:"flex-start",textAlign:"left",background:"rgba(231,76,139,.08)",borderRadius:8,padding:"10px 12px"}}>
+        <div style={{flexShrink:0}}><NicoleFace size={40}/></div>
+        <p style={{margin:0,fontSize:13,color:"#ddaacc",lineHeight:1.4,fontStyle:"italic"}}>{card.text}</p>
+      </div>
+    </>);
+  }
+  if(card.type==='quote'){
+    const Face=FACES[card.char];
+    return wrap(<div style={{display:"flex",gap:8,alignItems:"flex-start",textAlign:"left",background:"rgba(255,255,255,.04)",borderRadius:8,padding:"10px 12px"}}>
+      <div style={{flexShrink:0,border:`2px solid ${CHAR_COLORS[card.char]}`,borderRadius:4,padding:2}}><Face size={44}/></div>
+      <p style={{margin:0,fontSize:13,color:"#ddeeff",lineHeight:1.4,fontFamily:"'Comic Sans MS',cursive"}}>{card.text}</p>
+    </div>);
+  }
+  if(card.type==='finale'){
+    return wrap(<>
+      <div style={{fontSize:20,fontWeight:900,color:"#ffd700",fontFamily:"'Comic Sans MS',cursive",marginBottom:10}}>Take care!</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
+        {CREW.map(c=>{const F=FACES[c.id];return <div key={c.id} style={{border:"2px solid #ffd700",borderRadius:6,padding:2,background:"rgba(255,255,255,.05)"}}><F size={36}/></div>})}
+      </div>
+    </>);
+  }
+  return null;
+}
+
+function MarkerCollectPopup(){return(<div style={{position:"absolute",top:"40%",left:"50%",transform:"translate(-50%,-50%)",zIndex:150,animation:"floatUp 1.5s ease-out forwards",pointerEvents:"none"}}><div style={{textAlign:"center"}}><div style={{fontSize:20}}>✦</div><div style={{fontSize:14,color:"#ffd700",fontWeight:900,fontFamily:"monospace",textShadow:"0 0 8px rgba(255,215,0,.6)"}}>+250</div></div></div>)}
+
+function PiecePreview({type}){if(!type)return null;const shape=SHAPES[type];const color=PIECE_COLORS[type];const s=16;return(<svg width={shape[0].length*s} height={shape.length*s}>{shape.map((row,r)=>row.map((cell,c)=>cell?<rect key={`${r}-${c}`} x={c*s} y={r*s} width={s-1} height={s-1} fill={color} stroke="rgba(255,255,255,.2)" strokeWidth={1} rx={2}/>:null))}</svg>)}
+
+// ---- Screens ----
+function SplashScreen({onStart}){
+  const [mpMsg,setMpMsg]=useState(null);const mt=useRef(null);
+  const handleMp=()=>{setMpMsg("CONNECTING TO ISHIMURA NETWORK...");clearTimeout(mt.current);mt.current=setTimeout(()=>{setMpMsg("ERROR: All crew currently unavailable. Please try again later!");mt.current=setTimeout(()=>setMpMsg(null),3000)},2000)};
+  useEffect(()=>()=>clearTimeout(mt.current),[]);
+  return(<div style={{position:"relative",width:"100%",height:"100vh",minHeight:600,background:"linear-gradient(180deg,#0a0020,#1a0a3e 40%,#0d1b3e)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',Tahoma,sans-serif",overflow:"hidden"}}><Stars/>
+    <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
+      <div style={{fontSize:52,fontWeight:900,letterSpacing:6,color:"#ff4444",textShadow:"0 0 20px rgba(255,68,68,.6),0 0 40px rgba(255,68,68,.3),2px 2px 0 #600",fontFamily:"Impact,'Arial Black',sans-serif"}}>DEAD SPACE</div>
+      <div style={{fontSize:38,fontWeight:900,letterSpacing:3,background:"linear-gradient(to right,#ffd700,#ffaa00,#ffd700)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(2px 2px 0 #854d00)",fontFamily:"'Comic Sans MS','Chalkboard SE',cursive",marginTop:-4}}>BLOCK PARTY!</div>
+      <div style={{fontSize:13,color:"#aaccff",marginTop:12,fontStyle:"italic",letterSpacing:2,textShadow:"0 0 8px rgba(170,204,255,.4)"}}>✦ Stack 'em up on the Ishimura!™ ✦</div>
+      <div style={{display:"flex",justifyContent:"center",gap:12,margin:"28px 0 10px"}}><IsaacFace size={64}/><NecromorphFace size={64}/><NicoleFace size={64}/></div>
+      <div style={{fontSize:10,color:"#8899bb",marginBottom:24,letterSpacing:1}}>Isaac · Necro · Dr. Nicole — Best Friends Forever!</div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
+        <button onClick={onStart} style={{background:"linear-gradient(to bottom,#55ff55,#22aa22)",border:"3px outset #44dd44",borderRadius:6,padding:"12px 40px",fontSize:20,fontWeight:900,color:"#003300",cursor:"pointer",letterSpacing:3,fontFamily:"Impact,'Arial Black',sans-serif",textShadow:"1px 1px 0 rgba(255,255,255,.3)",boxShadow:"0 4px 12px rgba(0,255,0,.3)"}}>▶ START GAME</button>
+        <button onClick={handleMp} style={{background:"linear-gradient(to bottom,#666,#444)",border:"3px outset #777",borderRadius:6,padding:"8px 28px",fontSize:13,fontWeight:700,color:"#aaa",cursor:"pointer",letterSpacing:2,fontFamily:"Impact,'Arial Black',sans-serif"}}>🪙 MULTIPLAYER — INSERT COIN</button>
+      </div>
+      {mpMsg&&<div style={{marginTop:12,padding:"8px 16px",background:"rgba(0,0,0,.6)",border:"1px solid #ff6600",borderRadius:4,fontSize:11,color:"#ff9944",fontFamily:"monospace",animation:"tipIn .3s ease-out"}}>{mpMsg}</div>}
+      <div style={{marginTop:32,fontSize:9,color:"#556688",lineHeight:1.8,letterSpacing:.5}}>
+        <div>© 2001 FunTime Studios International Ltd.</div><div>Developed under license from Concordance Extraction Corporation.</div>
+        <div>DEAD SPACE™ is a trademark of CEC. FunTime Studios has never been to space.</div>
+        <div style={{marginTop:4,color:"#445566"}}>CEC Entertainment Suite v2.1</div>
+      </div>
+    </div>
+  </div>);
+}
+
+function IntroScreen({onDone}){
+  const [li,setLi]=useState(0);const [showSkip,setShowSkip]=useState(false);
+  useEffect(()=>{const t=setTimeout(()=>setShowSkip(true),3000);return()=>clearTimeout(t)},[]);
+  const advance=()=>{if(li<INTRO_LINES.length-1)setLi(i=>i+1);else onDone()};
+  return(<div onClick={advance} style={{position:"relative",width:"100%",height:"100vh",minHeight:600,background:"linear-gradient(180deg,#0a0020,#120830 50%,#0d1b3e)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',Tahoma,sans-serif",overflow:"hidden",cursor:"pointer"}}><Stars/>
+    {showSkip&&<button onClick={e=>{e.stopPropagation();onDone()}} style={{position:"absolute",top:12,right:16,zIndex:10,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:3,color:"rgba(255,255,255,.3)",fontSize:10,padding:"3px 8px",cursor:"pointer",letterSpacing:1}}>skip ✕</button>}
+    <div style={{position:"relative",zIndex:1,textAlign:"center",maxWidth:400}}>
+      <div style={{display:"inline-block",border:"3px solid #e74c8b",borderRadius:12,padding:6,background:"rgba(231,76,139,.1)",marginBottom:20}}><NicoleFace size={80}/></div>
+      <div style={{fontSize:11,color:"#e74c8b",letterSpacing:2,marginBottom:12,fontWeight:700}}>DR. NICOLE</div>
+      <div style={{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.12)",borderRadius:12,padding:"16px 24px",position:"relative",animation:"tipIn .3s ease-out"}} key={li}>
+        <div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",width:0,height:0,borderLeft:"8px solid transparent",borderRight:"8px solid transparent",borderBottom:"8px solid rgba(255,255,255,.12)"}}/>
+        <p style={{margin:0,fontSize:16,color:"#ddeeff",lineHeight:1.5,fontFamily:"'Comic Sans MS',cursive"}}>{INTRO_LINES[li]}</p>
+      </div>
+      <div style={{marginTop:16,fontSize:10,color:"#556"}}>{li<INTRO_LINES.length-1?"Click to continue...":"Click to start!"}</div>
+      <div style={{display:"flex",justifyContent:"center",gap:4,marginTop:12}}>{INTRO_LINES.map((_,i)=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:i<=li?"#e74c8b":"rgba(255,255,255,.15)",transition:"background .3s"}}/>)}</div>
+    </div>
+  </div>);
+}
+
+function EndScreen({score,lines,level,unlockedCrew,markers,onRestart,onMenu,won}){
+  return(<div style={{position:"relative",width:"100%",height:"100vh",minHeight:600,background:"linear-gradient(180deg,#0a0020,#1a0a3e 40%,#0d1b3e)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',Tahoma,sans-serif",overflow:"hidden"}}><Stars/>
+    <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
+      <div style={{fontSize:36,fontWeight:900,color:won?"#00ff88":"#ffd700",fontFamily:"'Comic Sans MS',cursive",textShadow:`2px 2px 0 ${won?"#006633":"#855d00"}`}}>{won?"YOU WIN!":"GAME OVER!"}</div>
+      <div style={{margin:"16px auto",background:"rgba(255,255,255,.07)",border:"2px solid #445",borderRadius:8,padding:"14px 28px",display:"inline-block",textAlign:"left"}}>
+        <div style={{color:"#aaccff",fontSize:14,marginBottom:4}}>Score: <b style={{color:"#ffd700"}}>{score}</b></div>
+        <div style={{color:"#aaccff",fontSize:14,marginBottom:4}}>Lines: <b style={{color:"#00e676"}}>{lines}</b></div>
+        <div style={{color:"#aaccff",fontSize:14,marginBottom:4}}>Level: <b style={{color:"#ff9100"}}>{level+1}</b></div>
+        <div style={{color:"#aaccff",fontSize:14,marginBottom:4}}>Crew Found: <b style={{color:"#e74c8b"}}>{unlockedCrew.length}/{CREW.length}</b></div>
+        <div style={{color:"#aaccff",fontSize:14}}>Markers: <b style={{color:"#ffd700"}}>{"✦".repeat(Math.min(markers,10))||"0"}{markers>10?` +${markers-10}`:""}</b></div>
+      </div>
+      {unlockedCrew.length>0&&<div style={{margin:"6px auto 8px",display:"flex",justifyContent:"center",gap:5,flexWrap:"wrap"}}>{unlockedCrew.map(c=>{const F=FACES[c.id];return <div key={c.id} style={{border:"2px solid #445",borderRadius:6,padding:2,background:"rgba(255,255,255,.05)"}}><F size={32}/></div>})}</div>}
+      <div style={{margin:"8px auto",background:"#fff8dc",border:"3px solid #b8860b",borderRadius:8,padding:12,maxWidth:320,display:"flex",gap:10,alignItems:"flex-start",textAlign:"left"}}>
+        <div style={{border:"2px solid #e74c8b",borderRadius:4,background:"#fffef5",padding:2,flexShrink:0}}><NicoleFace size={48}/></div>
+        <div><div style={{fontSize:10,fontWeight:700,color:"#b8860b",marginBottom:3}}>Dr. Nicole says:</div>
+          <p style={{margin:0,fontSize:12,color:"#3a2a00",lineHeight:1.4}}>{won?"The Marker is on its way home and the whole crew is safe! Best team-building exercise EVER! 💕":"Great game! The whole Ishimura crew is SO proud of you! Even the ones in the lower decks we haven't heard from in a while! 💕"}</p>
+        </div>
+      </div>
+      <div style={{margin:"4px auto 14px",background:"rgba(0,0,0,.3)",border:"1px solid #445",borderRadius:4,padding:"6px 14px",display:"inline-block",fontSize:11,color:"#889",fontStyle:"italic"}}>
+        {won?"Score submitted to Ishimura Leaderboard! Rank: #1 of 1! 🏆":"Submit score to Ishimura Leaderboard?"} {!won&&<span style={{color:"#667",textDecoration:"line-through"}}>[Connection unavailable]</span>}
+      </div>
+      <div style={{display:"flex",gap:12,justifyContent:"center"}}>
+        <button onClick={onRestart} style={{background:"linear-gradient(to bottom,#55ff55,#22aa22)",border:"3px outset #44dd44",borderRadius:6,padding:"10px 24px",fontSize:16,fontWeight:900,color:"#003300",cursor:"pointer",letterSpacing:2,fontFamily:"Impact,'Arial Black',sans-serif"}}><RotateCcw size={14} style={{marginRight:6,verticalAlign:-2}}/> PLAY AGAIN</button>
+        <button onClick={onMenu} style={{background:"linear-gradient(to bottom,#6688bb,#445577)",border:"3px outset #7799cc",borderRadius:6,padding:"10px 24px",fontSize:16,fontWeight:900,color:"#ddeeff",cursor:"pointer",letterSpacing:2,fontFamily:"Impact,'Arial Black',sans-serif"}}><Home size={14} style={{marginRight:6,verticalAlign:-2}}/> MENU</button>
+      </div>
+    </div>
+  </div>);
+}
+
+// ======== MAIN GAME ========
+export default function DeadSpaceBlockParty(){
+  const [screen,setScreen]=useState("splash");
+  const [board,setBoard]=useState(createBoard);
+  const [current,setCurrent]=useState(null);
+  const [currentType,setCurrentType]=useState(null);
+  const [curPos,setCurPos]=useState({r:0,c:0});
+  const [nextType,setNextType]=useState(null);
+  const [score,setScore]=useState(0);
+  const [lines,setLines]=useState(0);
+  const [level,setLevel]=useState(0);
+  const [paused,setPaused]=useState(false);
+  const [won,setWon]=useState(false);
+  const [unlockedCrew,setUnlockedCrew]=useState(()=>CREW.filter(c=>c.id==="isaac"||c.id==="necro"));
+  const [markers,setMarkers]=useState(0);
+  const [markerCells,setMarkerCells]=useState(()=>new Set());
+  const [showMarkerCollect,setShowMarkerCollect]=useState(false);
+  const [transCards,setTransCards]=useState([]);
+  const [encIdx,setEncIdx]=useState(0);
+
+  const [tipVisible,setTipVisible]=useState(false);
+  const [tipIndex,setTipIndex]=useState(0);
+  const tipAutoTimer=useRef(null);const tipGapTimer=useRef(null);const tipUsed=useRef(new Set());
+
+  const tickRef=useRef(null);const boardRef=useRef(board);const currentRef=useRef(current);
+  const ctRef=useRef(currentType);const cpRef=useRef(curPos);const pausedRef=useRef(paused);
+  const goRef=useRef(false);const lvRef=useRef(level);const ucRef=useRef(unlockedCrew);
+  const mcRef=useRef(markerCells);const markersRef=useRef(0);
+
+  boardRef.current=board;currentRef.current=current;ctRef.current=currentType;
+  cpRef.current=curPos;pausedRef.current=paused;lvRef.current=level;
+  ucRef.current=unlockedCrew;mcRef.current=markerCells;markersRef.current=markers;
+
+  const speed=Math.max(100,800-level*63);
+  const bagRef=useRef(shuffleBag());
+  const pull=useCallback(()=>{if(!bagRef.current.length)bagRef.current=shuffleBag();return bagRef.current.pop()},[]);
+  const actualNextRef=useRef(null);
+  const transiting=transCards.length>0;
+
+  const spawn=useCallback((boardState,overrideNext)=>{
+    const type=overrideNext||actualNextRef.current||pull();
+    const shape=SHAPES[type];const col=Math.floor((COLS-shape[0].length)/2);
+    if(collides(boardState,shape,0,col)){goRef.current=true;setScreen("gameover");return}
+    setCurrent(shape);setCurrentType(type);ctRef.current=type;setCurPos({r:0,c:col});
+    const realNext=pull();actualNextRef.current=realNext;
+    const{displayDrift}=getMarkerInterference(markersRef.current);
+    if(Math.random()<displayDrift){const f=TYPES.filter(t=>t!==realNext);setNextType(f[Math.floor(Math.random()*f.length)])}
+    else setNextType(realNext);
+  },[pull]);
+
+  const buildTransition=useCallback((completedIdx)=>{
+    const lvl=LEVELS[completedIdx];if(!lvl)return[];
+    const cards=[];
+    if(lvl.unlocks.length>0){
+      const members=lvl.unlocks.map(id=>CREW.find(c=>c.id===id)).filter(Boolean);
+      if(members.length)cards.push({type:'unlock',members,completionChar:lvl.completion.char,completionText:lvl.completion.text,name:lvl.name});
+    } else {
+      cards.push({type:'complete',char:lvl.completion.char,text:lvl.completion.text,name:lvl.name});
+    }
+    if(lvl.ending){
+      cards.push({type:'quote',char:'nicole',text:"We're bringing the Marker home safe and sound, and it's all thanks to you! ✦"});
+      cards.push({type:'finale'});
+    } else {
+      const nextLvl=LEVELS[completedIdx+1];
+      if(nextLvl)cards.push({type:'intro',char:nextLvl.intro.char,text:nextLvl.intro.text,levelNum:completedIdx+2,name:nextLvl.name});
+    }
+    return cards;
+  },[]);
+
+  const lock=useCallback(()=>{
+    const b=boardRef.current.map(r=>[...r]);const shape=currentRef.current;
+    const{r:pr,c:pc}=cpRef.current;const ct=ctRef.current;
+    if(!shape)return b;
+    for(let r=0;r<shape.length;r++)for(let c=0;c<shape[r].length;c++)
+      if(shape[r][c]&&pr+r>=0)b[pr+r][pc+c]=PIECE_COLORS[ct]||"#fff";
+    let cleared=0;const clearedRows=[];const newBoard=[];
+    for(let r=0;r<ROWS;r++){if(b[r].every(cell=>cell!==null)){cleared++;clearedRows.push(r)}else newBoard.push(b[r])}
+    while(newBoard.length<ROWS)newBoard.unshift(Array(COLS).fill(null));
+    let markersCollected=0;const mc=new Set(mcRef.current);
+    for(const row of clearedRows)for(let c=0;c<COLS;c++)if(mc.has(`${row},${c}`)){markersCollected++;mc.delete(`${row},${c}`)}
+    const newMc=new Set();
+    for(const key of mc){const[mr,mcol]=key.split(",").map(Number);const shift=clearedRows.filter(cr=>cr>mr).length;newMc.add(`${mr+shift},${mcol}`)}
+    if(cleared>0&&newMc.size<2&&Math.random()<0.2){
+      const spots=[];for(let r=8;r<ROWS-2;r++)for(let c=0;c<COLS;c++)if(!newBoard[r][c]&&!newMc.has(`${r},${c}`))spots.push(`${r},${c}`);
+      if(spots.length)newMc.add(spots[Math.floor(Math.random()*spots.length)]);
+    }
+    setMarkerCells(newMc);mcRef.current=newMc;
+    if(markersCollected>0){setMarkers(m=>m+markersCollected);setScore(s=>s+markersCollected*250);setShowMarkerCollect(true);setTimeout(()=>setShowMarkerCollect(false),1500)}
+    if(cleared>0){
+      const lv=lvRef.current;const pts=[0,100,300,500,800][cleared]*(lv+1);setScore(s=>s+pts);
+      setLines(l=>{
+        const nl=l+cleared;const newLv=Math.floor(nl/10);
+        if(newLv!==lv){
+          setLevel(newLv);
+          const completedIdx=newLv-1;
+          const lvlData=LEVELS[completedIdx];
+          if(lvlData){
+            // Unlock crew immediately
+            if(lvlData.unlocks.length>0){
+              const newMembers=lvlData.unlocks.map(id=>CREW.find(c=>c.id===id)).filter(Boolean);
+              setUnlockedCrew(prev=>{const next=[...prev,...newMembers.filter(m=>!prev.find(p=>p.id===m.id))];ucRef.current=next;return next});
+            }
+            const cards=buildTransition(completedIdx);
+            setTransCards(cards);
+            if(lvlData.ending){goRef.current=true}
+          }
+        }
+        return nl;
+      });
+    }
+    setBoard(newBoard);return newBoard;
+  },[buildTransition]);
+
+  const dismissCard=useCallback(()=>{
+    setTransCards(prev=>{
+      const next=prev.slice(1);
+      if(prev[0]?.type==='finale'){setScreen("gameover");setWon(true);return []}
+      return next;
+    });
+  },[]);
+
+  useEffect(()=>{
+    if(screen!=="playing"||paused||transiting){clearInterval(tickRef.current);return}
+    tickRef.current=setInterval(()=>{
+      if(pausedRef.current||goRef.current)return;
+      const shape=currentRef.current;const{r,c}=cpRef.current;if(!shape)return;
+      if(!collides(boardRef.current,shape,r+1,c))setCurPos(p=>({...p,r:p.r+1}));
+      else{const nb=lock();spawn(nb)}
+    },speed);
+    return()=>clearInterval(tickRef.current);
+  },[screen,paused,speed,lock,spawn,transiting]);
+
+  useEffect(()=>{
+    if(screen!=="playing")return;
+    const h=e=>{
+      if(goRef.current||transiting)return;
+      if(e.key==="p"||e.key==="P"){setPaused(p=>!p);return}
+      if(pausedRef.current)return;
+      const shape=currentRef.current;const{r,c}=cpRef.current;if(!shape)return;
+      let key=e.key;
+      if(key.startsWith("Arrow")){
+        const{inputLoss,inputDrift}=getMarkerInterference(markersRef.current);
+        if(Math.random()<inputLoss){e.preventDefault();return}
+        if(Math.random()<inputDrift){if(key==="ArrowLeft")key="ArrowRight";else if(key==="ArrowRight")key="ArrowLeft";else if(key==="ArrowUp"){e.preventDefault();return}}
+      }
+      if(key==="ArrowLeft"){e.preventDefault();if(!collides(boardRef.current,shape,r,c-1))setCurPos(p=>({...p,c:p.c-1}))}
+      else if(key==="ArrowRight"){e.preventDefault();if(!collides(boardRef.current,shape,r,c+1))setCurPos(p=>({...p,c:p.c+1}))}
+      else if(key==="ArrowDown"){e.preventDefault();if(!collides(boardRef.current,shape,r+1,c))setCurPos(p=>({...p,r:p.r+1}))}
+      else if(key==="ArrowUp"){e.preventDefault();const rot=rotate(shape);if(!collides(boardRef.current,rot,r,c))setCurrent(rot);else if(!collides(boardRef.current,rot,r,c-1)){setCurrent(rot);setCurPos(p=>({...p,c:p.c-1}))}else if(!collides(boardRef.current,rot,r,c+1)){setCurrent(rot);setCurPos(p=>({...p,c:p.c+1}))}}
+      else if(key===" "){e.preventDefault();let nr=r;while(!collides(boardRef.current,shape,nr+1,c))nr++;setCurPos({r:nr,c});setTimeout(()=>{const nb=lock();spawn(nb)},30)}
+    };
+    window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);
+  },[screen,lock,spawn,transiting]);
+
+  // Tips
+  const availTips=useMemo(()=>{const ids=new Set(unlockedCrew.map(c=>c.id));return TIPS.map((t,i)=>({...t,idx:i})).filter(t=>ids.has(t.char))},[unlockedCrew]);
+  const showNextTip=useCallback(()=>{if(goRef.current)return;const pool=availTips;if(!pool.length)return;if(tipUsed.current.size>=pool.length)tipUsed.current.clear();let pick;do{pick=pool[Math.floor(Math.random()*pool.length)]}while(tipUsed.current.has(pick.idx)&&tipUsed.current.size<pool.length);tipUsed.current.add(pick.idx);setTipIndex(pick.idx);setTipVisible(true);clearTimeout(tipAutoTimer.current);tipAutoTimer.current=setTimeout(()=>{setTipVisible(false);clearTimeout(tipGapTimer.current);tipGapTimer.current=setTimeout(()=>showNextTip(),15000)},15000)},[availTips]);
+  const closeTip=useCallback(()=>{setTipVisible(false);clearTimeout(tipAutoTimer.current);clearTimeout(tipGapTimer.current);tipGapTimer.current=setTimeout(()=>showNextTip(),30000)},[showNextTip]);
+  useEffect(()=>{if(screen==="playing"){tipUsed.current.clear();const t=setTimeout(()=>showNextTip(),5000);return()=>{clearTimeout(t);clearTimeout(tipAutoTimer.current);clearTimeout(tipGapTimer.current)}}},[screen,showNextTip]);
+
+  // Encouragement
+  const nextToUnlock=useMemo(()=>{for(const lvl of LEVELS){for(const id of lvl.unlocks){if(!unlockedCrew.find(c=>c.id===id))return CREW.find(c=>c.id===id)}}return null},[unlockedCrew]);
+  useEffect(()=>{if(!nextToUnlock||screen!=="playing")return;const iv=setInterval(()=>setEncIdx(i=>i+1),8000);return()=>clearInterval(iv)},[nextToUnlock,screen]);
+
+  const startPlaying=useCallback(()=>{
+    const b=createBoard();setBoard(b);setScore(0);setLines(0);setLevel(0);
+    goRef.current=false;setPaused(false);setTipVisible(false);setWon(false);
+    setMarkers(0);setMarkerCells(new Set());setShowMarkerCollect(false);setTransCards([]);
+    setUnlockedCrew(CREW.filter(c=>c.id==="isaac"||c.id==="necro"));ucRef.current=CREW.filter(c=>c.id==="isaac"||c.id==="necro");
+    bagRef.current=shuffleBag();const first=bagRef.current.pop();const realNext=bagRef.current.pop();
+    actualNextRef.current=realNext;setNextType(realNext);
+    const shape=SHAPES[first];const col=Math.floor((COLS-shape[0].length)/2);
+    setCurrent(shape);setCurrentType(first);ctRef.current=first;setCurPos({r:0,c:col});
+    setScreen("playing");
+  },[]);
+
+  const ghostRow=useMemo(()=>{if(!current)return 0;let r=curPos.r;while(!collides(board,current,r+1,curPos.c))r++;return r},[board,current,curPos]);
+
+  if(screen==="splash") return (<SplashScreen onStart={()=>setScreen("intro")}/>);
+  if(screen==="intro") return (<IntroScreen onDone={startPlaying}/>);
+  if(screen==="gameover") return (<EndScreen score={score} lines={lines} level={level} unlockedCrew={unlockedCrew} markers={markers} won={won} onRestart={startPlaying} onMenu={()=>setScreen("splash")}/>);
+
+  const boardW=COLS*CELL,boardH=ROWS*CELL;
+  const currentLevelData=LEVELS[Math.min(level,LEVELS.length-1)];
+  const encMsgs=nextToUnlock&&ENCOURAGEMENT[nextToUnlock.id];
+  const encMsg=encMsgs?encMsgs[encIdx%encMsgs.length]:null;
+  const NextFace=nextToUnlock?FACES[nextToUnlock.id]:null;
+
+  return(<div style={{width:"100%",minHeight:"100vh",background:"linear-gradient(180deg,#0a0020,#120830 50%,#0d1b3e)",display:"flex",flexDirection:"column",alignItems:"center",fontFamily:"'Segoe UI',Tahoma,sans-serif",position:"relative",overflow:"hidden"}}><Stars/>
+    <div style={{marginTop:10,padding:"4px 20px",background:"rgba(0,100,80,.3)",border:"1px solid #00ff8855",borderRadius:4,zIndex:2,fontSize:10,color:"#00ff88",letterSpacing:2,fontFamily:"monospace"}}>CEC ENTERTAINMENT SUITE v2.1 — DEAD SPACE: BLOCK PARTY</div>
+    <div style={{display:"flex",gap:20,marginTop:12,position:"relative",zIndex:2}}>
+      <div style={{position:"relative"}}>
+        <div style={{width:boardW,height:boardH,border:"2px solid #00ff8866",borderRadius:4,background:"rgba(0,10,20,.85)",position:"relative",boxShadow:"0 0 20px rgba(0,255,136,.1),inset 0 0 30px rgba(0,0,0,.5)"}}>
+          <svg width={boardW} height={boardH} style={{position:"absolute",top:0,left:0,opacity:.08}}>{Array.from({length:COLS+1},(_,i)=><line key={`v${i}`} x1={i*CELL} y1={0} x2={i*CELL} y2={boardH} stroke="#00ff88"/>)}{Array.from({length:ROWS+1},(_,i)=><line key={`h${i}`} x1={0} y1={i*CELL} x2={boardW} y2={i*CELL} stroke="#00ff88"/>)}</svg>
+          {board.map((row,r)=>row.map((cell,c)=>cell?<div key={`${r}-${c}`} style={{position:"absolute",left:c*CELL+1,top:r*CELL+1,width:CELL-2,height:CELL-2,borderRadius:3,background:cell,boxShadow:`inset 0 0 6px rgba(255,255,255,.3),0 0 4px ${cell}44`,border:"1px solid rgba(255,255,255,.15)"}}/>:null))}
+          {[...markerCells].map(key=>{const[mr,mcc]=key.split(",").map(Number);return <div key={`m${key}`} style={{position:"absolute",left:mcc*CELL,top:mr*CELL,width:CELL,height:CELL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,color:"#ffd700",textShadow:"0 0 8px rgba(255,215,0,.6)",pointerEvents:"none",zIndex:5,animation:"tw 1.5s ease-in-out infinite alternate"}}>✦</div>})}
+          {current&&current.map((row,r)=>row.map((cell,c)=>cell?<div key={`g${r}-${c}`} style={{position:"absolute",left:(curPos.c+c)*CELL+1,top:(ghostRow+r)*CELL+1,width:CELL-2,height:CELL-2,borderRadius:3,border:`1px dashed ${PIECE_COLORS[currentType]}55`,background:`${PIECE_COLORS[currentType]}15`}}/>:null))}
+          {current&&current.map((row,r)=>row.map((cell,c)=>cell&&curPos.r+r>=0?<div key={`p${r}-${c}`} style={{position:"absolute",left:(curPos.c+c)*CELL+1,top:(curPos.r+r)*CELL+1,width:CELL-2,height:CELL-2,borderRadius:3,background:PIECE_COLORS[currentType],boxShadow:`inset 0 0 6px rgba(255,255,255,.3),0 0 8px ${PIECE_COLORS[currentType]}66`,border:"1px solid rgba(255,255,255,.2)"}}/>:null))}
+        </div>
+        {paused&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.7)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",borderRadius:4,zIndex:50}}>
+          <div style={{color:"#ffd700",fontSize:28,fontWeight:900,fontFamily:"'Comic Sans MS',cursive"}}>PAUSED</div>
+          <div style={{fontSize:12,color:"#aab",marginTop:8}}>Press P to resume</div>
+          <button onClick={()=>{setPaused(false);setScreen("splash")}} style={{marginTop:16,background:"linear-gradient(to bottom,#6688bb,#445577)",border:"2px outset #7799cc",borderRadius:4,padding:"6px 16px",fontSize:12,fontWeight:700,color:"#ddeeff",cursor:"pointer",letterSpacing:1}}><Home size={12} style={{marginRight:4,verticalAlign:-2}}/> Main Menu</button>
+        </div>}
+        {transCards.length>0&&!paused&&<TransitionOverlay card={transCards[0]} onDismiss={dismissCard}/>}
+        {showMarkerCollect&&<MarkerCollectPopup/>}
+      </div>
+      <div style={{width:160,display:"flex",flexDirection:"column",gap:10}}>
+        <div style={{background:"rgba(0,40,30,.6)",border:"1px solid #00ff8844",borderRadius:6,padding:"10px 12px"}}><div style={{fontSize:9,color:"#00ff88",letterSpacing:2,marginBottom:2,fontFamily:"monospace"}}>SCORE</div><div style={{fontSize:22,fontWeight:900,color:"#ffd700",fontFamily:"monospace"}}>{score}</div></div>
+        <div style={{background:"rgba(0,40,30,.6)",border:"1px solid #00ff8844",borderRadius:6,padding:"8px 12px"}}><div style={{fontSize:9,color:"#00ff88",letterSpacing:2,marginBottom:2,fontFamily:"monospace"}}>LINES</div><div style={{fontSize:18,fontWeight:700,color:"#00e676",fontFamily:"monospace"}}>{lines}</div></div>
+        <div style={{background:"rgba(0,40,30,.6)",border:"1px solid #00ff8844",borderRadius:6,padding:"8px 12px"}}><div style={{fontSize:9,color:"#00ff88",letterSpacing:2,marginBottom:2,fontFamily:"monospace"}}>LEVEL {level+1}</div><div style={{fontSize:11,color:"#88aacc",marginTop:2,lineHeight:1.3,fontStyle:"italic"}}>{currentLevelData?.name||"Deep Space"}</div></div>
+        <div style={{background:"rgba(0,40,30,.6)",border:"1px solid #00ff8844",borderRadius:6,padding:"8px 12px",textAlign:"center"}}><div style={{fontSize:9,color:"#00ff88",letterSpacing:2,marginBottom:6,fontFamily:"monospace"}}>NEXT</div><div style={{display:"flex",justifyContent:"center"}}><PiecePreview type={nextType}/></div></div>
+        <div style={{background:"rgba(0,40,30,.6)",border:"1px solid #ffd70044",borderRadius:6,padding:"8px 12px",textAlign:"center"}}><div style={{fontSize:9,color:"#ffd700",letterSpacing:2,marginBottom:2,fontFamily:"monospace"}}>MARKERS ✦</div><div style={{fontSize:14,color:"#ffd700",fontFamily:"monospace"}}>{markers>0?"✦".repeat(Math.min(markers,10)):0}{markers>10?` +${markers-10}`:""}</div></div>
+        <div style={{background:"rgba(0,40,30,.3)",border:"1px solid #00ff8822",borderRadius:6,padding:"6px 8px",fontSize:9,color:"#557788",lineHeight:1.7,fontFamily:"monospace"}}><div>←→ Move</div><div>↑ Rotate</div><div>↓ Soft Drop</div><div>Space Hard Drop</div><div>P Pause</div></div>
+        <div style={{background:"rgba(0,40,30,.4)",border:"1px solid #00ff8833",borderRadius:6,padding:"6px 8px",textAlign:"center"}}>
+          <div style={{fontSize:8,color:"#ffd700",letterSpacing:1.5,marginBottom:5,fontFamily:"monospace",fontWeight:700}}>ISHIMURA CREW ({unlockedCrew.length}/{CREW.length})</div>
+          <div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:3}}>
+            {CREW.map(c=>{const found=unlockedCrew.find(u=>u.id===c.id);const F=FACES[c.id];return(<div key={c.id} style={{border:found?`2px solid ${CHAR_COLORS[c.id]}`:"2px solid #333",borderRadius:4,padding:1,background:found?"rgba(255,255,255,.05)":"rgba(0,0,0,.3)",opacity:found?1:.3}} title={found?`${c.name} — ${c.title}`:"???"}>
+              {found?<F size={22}/>:<div style={{width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",color:"#555",fontSize:10,fontWeight:700}}>?</div>}
+            </div>)})}
+          </div>
+          <div style={{fontSize:7,color:"#556",marginTop:3}}>Collect them all!</div>
+        </div>
+        {nextToUnlock&&NextFace&&encMsg&&<div style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:6,padding:"6px 8px",display:"flex",gap:6,alignItems:"center"}}>
+          <div style={{flexShrink:0,opacity:.7}}><NextFace size={24}/></div>
+          <div style={{fontSize:9,color:"#99aabb",lineHeight:1.3,fontStyle:"italic"}} key={encIdx}>"{encMsg}"</div>
+        </div>}
+      </div>
+    </div>
+    <div style={{width:"100%",maxWidth:470,minHeight:60,marginTop:10,display:"flex",justifyContent:"center",zIndex:10}}>
+      {tipVisible&&!paused&&!transiting&&<TipPopup tip={TIPS[tipIndex]} onClose={closeTip}/>}
+    </div>
+    <div style={{fontSize:8,color:"#334455",marginTop:6,zIndex:2,letterSpacing:.5}}>© 2001 FunTime Studios International · CEC Approved Recreation Software</div>
+  </div>);
+}
