@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ASTERISM</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html,body{margin:0;padding:0;background:#060917;color:#e8dcc0;
+    font-family:Georgia,'Palatino Linotype','Times New Roman',serif;}
+  #wrap{max-width:764px;margin:16px auto 30px;padding:0 10px;}
+  #hud{display:flex;align-items:baseline;gap:0;padding:9px 16px 7px;
+    background:linear-gradient(#131938,#0b1026);border:1px solid #2c3462;border-bottom:1px solid #1b2148;
+    border-radius:10px 10px 0 0;font-size:13px;letter-spacing:.5px;}
+  #hud .brand{font-size:16px;letter-spacing:5px;color:#d4af37;font-variant:small-caps;margin-right:auto;}
+  #hud .seg{margin-left:22px;color:#b7ab8d;white-space:nowrap;}
+  #hud .seg b{color:#f0e6c8;font-weight:normal;}
+  #hud .stars b{color:#ffd76a;}
+  #hud .lives b{color:#ffd76a;letter-spacing:2px;}
+  canvas{display:block;width:100%;height:auto;background:#0a0e22;
+    border:1px solid #2c3462;border-top:none;border-radius:0 0 10px 10px;}
+  #foot{margin-top:8px;text-align:center;color:#6f6a58;font-size:12px;font-style:italic;letter-spacing:.4px;}
+  #foot kbd{font-style:normal;font-family:inherit;color:#a89c7d;border:1px solid #3a3a52;border-radius:4px;
+    padding:0 5px;background:#11152c;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <span class="brand">Asterism</span>
+    <span class="seg">constellation <b id="h-const">—</b></span>
+    <span class="seg stars">stars <b id="h-stars">0/0</b></span>
+    <span class="seg">charted <b id="h-pct">0%</b></span>
+    <span class="seg">score <b id="h-score">0</b></span>
+    <span class="seg lives">lamps <b id="h-lives">✦✦✦</b></span>
+  </div>
+  <canvas id="cv" width="720" height="480"></canvas>
+  <div id="foot"><kbd>←↑↓→</kbd>/<kbd>WASD</kbd> travel the frontier &nbsp;·&nbsp; hold <kbd>space</kbd> to chart &nbsp;·&nbsp; hold <kbd>shift</kbd>/<kbd>Z</kbd> to chart slowly — pure slow lines score ×2 &nbsp;·&nbsp; <kbd>P</kbd> pause</div>
+</div>
+<script>
+'use strict';
+/* =====================================================================
+   ASTERISM — Job 1 kernel
+   A Qix-descended territory game: chart the void, capture every star
+   of the constellation, and the figure inks itself in gold.
+   Enemies: the Blot (ink anomaly, roams the unclaimed void) and
+   cinders (sparks patrolling the charted frontier).
+   ===================================================================== */
+
+/* ---------- grid constants ---------- */
+const CW = 120, CH = 80, CELL = 6;
+const W = CW * CELL, H = CH * CELL;
+const U = 0, C = 1, T = 2;                    // unclaimed / claimed / trail
+const BORDER = 2;
+const INTERIOR = (CW - 2 * BORDER) * (CH - 2 * BORDER);
+const BORDER_CELLS = CW * CH - INTERIOR;
+const idx  = (x, y) => y * CW + x;
+const inB  = (x, y) => x >= 0 && y >= 0 && x < CW && y < CH;
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+const HAS_DOM = (typeof document !== 'undefined') && !!document.createElement;
+const N8 = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+const N4 = [[1,0],[-1,0],[0,1],[0,-1]];
+const ROMAN = ['','II','III','IV','V','VI','VII','VIII','IX','X'];
+
+/* ---------- constellation data (normalized 0..1, y down) ---------- */
+const CONSTELLATIONS = [
+  { name:'LYRA', sub:'the lyre',
+    stars:[ ['Vega',.30,.12], ['Epsilon',.50,.18], ['Zeta',.40,.35],
+            ['Delta',.62,.45], ['Sulafat',.52,.72], ['Sheliak',.30,.60] ],
+    lines:[[0,1],[0,2],[2,3],[2,5],[3,4],[4,5]] },
+  { name:'CASSIOPEIA', sub:'the seated queen',
+    stars:[ ['Segin',.10,.55], ['Ruchbah',.30,.30], ['Gamma',.50,.58],
+            ['Schedar',.70,.28], ['Caph',.88,.42] ],
+    lines:[[0,1],[1,2],[2,3],[3,4]] },
+  { name:'ORION', sub:'the hunter',
+    stars:[ ['Betelgeuse',.32,.20], ['Bellatrix',.62,.16], ['Alnitak',.42,.48],
+            ['Alnilam',.50,.50], ['Mintaka',.58,.52], ['Saiph',.36,.82], ['Rigel',.68,.80] ],
+    lines:[[0,1],[0,2],[1,4],[2,3],[3,4],[2,5],[4,6]] },
+];
+
+/* ---------- difficulty per level ---------- */
+function levelCfg(L){
+  return {
+    playerSpeed: 26,
+    playerSlowSpeed: 13,
+    blotSpeed:   8 + 1.2 * Math.min(L, 10),
+    blotN:       L >= 6 ? 2 : 1,
+    sparxN:      Math.min(2 + Math.floor(L / 2), 6),
+    sparxSpeed:  10 + 0.6 * Math.min(L, 10),
+    fuseDelay:   0.7,
+    fuseSpeed:   16,
+  };
+}
+
+/* ---------- game state ---------- */
+const S = {
+  grid: new Uint8Array(CW * CH),
+  px: 0, py: 0,
+  drawing: false, drawKey: false,
+  slowKey: false, slowLine: false,     // the slow-chart wager: pure slow lines score x2
+  nextLife: 25000,
+  trail: [], trailStart: {x:0, y:0},
+  fuseLit: false, fusePos: 0, fuseAcc: 0,
+  blots: [],
+  splitAwarded: false,                 // one "Blots divided" bonus per level
+  best: null, newBest: false,
+  sparx: [],
+  stars: [], lines: [],
+  level: 0, score: 0, lives: 3,
+  phase: 'title',                 // title | intro | play | celebrate | gameover
+  t: 0, lastMoveT: 0, moveAcc: 0,
+  invuln: 0, freeze: 0, introT: 0, celebrateT: 0,
+  chartedPct: 0, paused: false,
+  constName: '', constSub: '',
+  floats: [], twinkles: [],
+};
+
+/* ---------- core queries ---------- */
+function isWalkable(x, y){
+  if (!inB(x, y) || S.grid[idx(x, y)] !== C) return false;
+  for (const d of N8){
+    const nx = x + d[0], ny = y + d[1];
+    if (inB(nx, ny) && S.grid[idx(nx, ny)] === U) return true;
+  }
+  return false;
+}
+function recomputePct(){
+  let c = 0;
+  for (let i = 0; i < CW * CH; i++) if (S.grid[i] === C) c++;
+  S.chartedPct = Math.max(0, c - BORDER_CELLS) / INTERIOR * 100;
+}
+
+/* ---------- level setup ---------- */
+function newLevel(L){
+  S.level = L;
+  const cst = CONSTELLATIONS[L % CONSTELLATIONS.length];
+  const cyc = Math.floor(L / CONSTELLATIONS.length);
+  S.constName = cst.name + (cyc > 0 ? ' ' + (ROMAN[cyc] || cyc + 1) : '');
+  S.constSub  = cst.sub;
+
+  S.grid.fill(U);
+  for (let y = 0; y < CH; y++)
+    for (let x = 0; x < CW; x++)
+      if (x < BORDER || y < BORDER || x >= CW - BORDER || y >= CH - BORDER)
+        S.grid[idx(x, y)] = C;
+
+  S.stars = cst.stars.map(([name, nx, ny]) => ({
+    name,
+    x: clamp(Math.round(10 + nx * (CW - 20)), BORDER + 2, CW - BORDER - 3),
+    y: clamp(Math.round(7  + ny * (CH - 14)), BORDER + 2, CH - BORDER - 3),
+    captured: false,
+  }));
+  S.lines = cst.lines;
+
+  S.px = CW >> 1; S.py = CH - BORDER;
+  S.trail = []; S.drawing = false;
+  S.fuseLit = false; S.fusePos = 0; S.fuseAcc = 0;
+  S.moveAcc = 0; S.invuln = 0; S.freeze = 0;
+
+  const cfg = levelCfg(L);
+  S.blots = [];
+  for (let i = 0; i < cfg.blotN; i++){
+    const fx = cfg.blotN === 1 ? 0.5 : (i === 0 ? 0.35 : 0.65);
+    const a = Math.random() * Math.PI * 2;
+    S.blots.push({ x: CW * fx, y: CH / 2,
+                   vx: Math.cos(a) * cfg.blotSpeed, vy: Math.sin(a) * cfg.blotSpeed, jt: 1 });
+  }
+  S.splitAwarded = false;
+
+  S.sparx = [];
+  for (let i = 0; i < cfg.sparxN; i++){
+    const fx = clamp(Math.round(CW * (i + 1) / (cfg.sparxN + 1)), BORDER, CW - BORDER - 1);
+    S.sparx.push({ x: fx, y: BORDER - 1, dx: (i % 2 ? -1 : 1), dy: 0, acc: 0 });
+  }
+
+  S.twinkles = [];
+  for (let i = 0; i < 130; i++)
+    S.twinkles.push({ x: Math.random() * W, y: Math.random() * H,
+                      r: 0.4 + Math.random() * 1.1, ph: Math.random() * Math.PI * 2 });
+
+  S.floats = [];
+  recomputePct();
+  rebuildVisuals();
+  S.introT = 1.7;
+  S.phase = 'intro';
+}
+function startGame(){
+  S.score = 0; S.lives = 3; S.nextLife = 25000; S.newBest = false;
+  newLevel(0);
+}
+
+/* ---------- score & lamps ---------- */
+const MAX_LIVES = 6;
+function addScore(n){
+  S.score += n;
+  while (S.score >= S.nextLife){
+    S.nextLife += 50000;
+    if (S.lives < MAX_LIVES){
+      S.lives++;
+      addFloat(S.px * CELL, S.py * CELL - 16, '✦ a new lamp', '#ffd76a');
+    }
+  }
+}
+function drawHeld(){ return S.drawKey || S.slowKey; }
+
+/* ---------- movement & claiming ---------- */
+function currentDirVec(){ return null; }   // replaced by input layer when DOM exists
+
+function trailAdjacencyOK(nx, ny){
+  // target may touch only the last two trail cells (permits turns, forbids self-hugging)
+  const L = S.trail.length;
+  for (const d of N8){
+    const ax = nx + d[0], ay = ny + d[1];
+    if (!inB(ax, ay) || S.grid[idx(ax, ay)] !== T) continue;
+    let ok = false;
+    for (let k = Math.max(0, L - 2); k < L; k++)
+      if (S.trail[k].x === ax && S.trail[k].y === ay){ ok = true; break; }
+    if (!ok) return false;
+  }
+  return true;
+}
+function moveIntoUnclaimed(nx, ny){
+  if (!S.slowKey) S.slowLine = false;   // one hasty cell breaks the wager
+  S.grid[idx(nx, ny)] = T;
+  S.trail.push({x: nx, y: ny});
+  S.px = nx; S.py = ny;
+}
+function tryMove(dir){
+  const nx = S.px + dir.dx, ny = S.py + dir.dy;
+  if (!inB(nx, ny)) return false;
+  const v = S.grid[idx(nx, ny)];
+  if (!S.drawing){
+    if (v === C && isWalkable(nx, ny)){ S.px = nx; S.py = ny; return true; }
+    if (v === U && drawHeld()){
+      S.drawing = true; S.trail = [];
+      S.trailStart = {x: S.px, y: S.py};
+      S.slowLine = true;                 // pure until proven hasty
+      S.fuseLit = false; S.fusePos = 0; S.fuseAcc = 0;
+      moveIntoUnclaimed(nx, ny);
+      return true;
+    }
+    return false;
+  } else {
+    if (v === T) return false;
+    if (v === U){
+      if (!drawHeld()) return false;
+      if (!trailAdjacencyOK(nx, ny)) return false;
+      moveIntoUnclaimed(nx, ny);
+      return true;
+    }
+    // v === C : close the survey line
+    S.px = nx; S.py = ny;
+    finalizeClaim();
+    return true;
+  }
+}
+
+function nearestCell(fromX, fromY, pred, over){
+  // BFS over cells satisfying `over`, returning first cell satisfying `pred`
+  const seen = new Uint8Array(CW * CH);
+  const q = [[fromX, fromY]];
+  seen[idx(fromX, fromY)] = 1;
+  while (q.length){
+    const [x, y] = q.shift();
+    if (pred(x, y)) return {x, y};
+    for (const d of N4){
+      const nx = x + d[0], ny = y + d[1];
+      if (!inB(nx, ny) || seen[idx(nx, ny)]) continue;
+      if (!over(nx, ny)) continue;
+      seen[idx(nx, ny)] = 1;
+      q.push([nx, ny]);
+    }
+  }
+  return null;
+}
+
+function blotCell(b){
+  let ax = clamp(Math.round(b.x), 0, CW - 1);
+  let ay = clamp(Math.round(b.y), 0, CH - 1);
+  if (S.grid[idx(ax, ay)] !== U){
+    const n = nearestCell(ax, ay, (x, y) => S.grid[idx(x, y)] === U, () => true);
+    if (n){ ax = n.x; ay = n.y; }
+  }
+  return [ax, ay];
+}
+function finalizeClaim(){
+  const g = S.grid;
+  // flood the void every Blot can still reach; the rest becomes chart
+  const reach = new Uint8Array(CW * CH);
+  const q = [];
+  for (const b of S.blots){
+    const [ax, ay] = blotCell(b);
+    if (g[idx(ax, ay)] === U && !reach[idx(ax, ay)]){
+      reach[idx(ax, ay)] = 1;
+      q.push([ax, ay]);
+    }
+  }
+  while (q.length){
+    const [x, y] = q.pop();
+    for (const d of N4){
+      const nx = x + d[0], ny = y + d[1];
+      if (!inB(nx, ny)) continue;
+      const i = idx(nx, ny);
+      if (g[i] !== U || reach[i]) continue;
+      reach[i] = 1;
+      q.push([nx, ny]);
+    }
+  }
+  // everything the Blot cannot reach becomes chart
+  let newly = 0;
+  for (let i = 0; i < CW * CH; i++)
+    if (g[i] === U && !reach[i]){ g[i] = C; newly++; }
+  for (const t of S.trail){ g[idx(t.x, t.y)] = C; newly++; }
+  const mult = S.slowLine ? 2 : 1;      // the wager pays out (or doesn't)
+  S.trail = []; S.drawing = false; S.slowLine = false;
+  S.fuseLit = false; S.fusePos = 0; S.fuseAcc = 0;
+
+  const areaPts = newly * 2 * mult;
+  addScore(areaPts);
+  recomputePct();
+  addFloat(S.px * CELL, S.py * CELL - 8,
+           '+' + areaPts + (mult === 2 ? '  ×2' : ''),
+           mult === 2 ? '#dfe9ff' : '#d4af37');
+
+  // star capture (combo scoring inside a single claim)
+  let combo = 0;
+  for (const st of S.stars){
+    if (!st.captured && g[idx(st.x, st.y)] === C){
+      st.captured = true; combo++;
+      const pts = 500 * combo * mult;
+      addScore(pts);
+      addFloat(st.x * CELL, st.y * CELL - 10,
+               st.name + '  +' + pts + (mult === 2 ? '  ×2' : ''),
+               mult === 2 ? '#dfe9ff' : '#ffd76a');
+    }
+  }
+  // mercy: if the void is nearly gone, grant the stragglers (no wager bonus)
+  if (S.chartedPct >= 95){
+    for (const st of S.stars){
+      if (!st.captured){
+        st.captured = true; combo++;
+        addScore(500 * combo);
+      }
+    }
+  }
+  // the Blots divided: a line that severs the anomalies from each other
+  if (S.blots.length >= 2 && !S.splitAwarded){
+    const [ax, ay] = blotCell(S.blots[0]);
+    const [bx, by] = blotCell(S.blots[1]);
+    const seen = new Uint8Array(CW * CH);
+    if (g[idx(ax, ay)] === U){
+      seen[idx(ax, ay)] = 1;
+      const q2 = [[ax, ay]];
+      while (q2.length){
+        const [x, y] = q2.pop();
+        for (const d of N4){
+          const nx = x + d[0], ny = y + d[1];
+          if (!inB(nx, ny)) continue;
+          const i = idx(nx, ny);
+          if (g[i] !== U || seen[i]) continue;
+          seen[i] = 1;
+          q2.push([nx, ny]);
+        }
+      }
+    }
+    if (!seen[idx(bx, by)]){
+      S.splitAwarded = true;
+      addScore(2500);
+      addFloat(S.px * CELL, S.py * CELL - 24, 'the Blots divided  +2500', '#dfe9ff');
+    }
+  }
+  ensurePlayerOnBoundary();
+  relocateSparx();
+  rebuildVisuals();
+
+  if (S.stars.every(st => st.captured)){
+    addScore(Math.round(S.chartedPct) * 10);
+    S.celebrateT = 0;
+    S.phase = 'celebrate';
+  }
+}
+
+function ensurePlayerOnBoundary(){
+  if (isWalkable(S.px, S.py)) return;
+  const n = nearestCell(S.px, S.py, isWalkable, (x, y) => S.grid[idx(x, y)] === C);
+  if (n){ S.px = n.x; S.py = n.y; }
+}
+function relocateSparx(){
+  const SAFE = 8;   // teleported cinders may not materialize on top of the player
+  const farFromPlayer = (x, y) =>
+    isWalkable(x, y) && Math.max(Math.abs(x - S.px), Math.abs(y - S.py)) >= SAFE;
+  const overClaimed = (x, y) => S.grid[idx(x, y)] === C;
+  for (const sp of S.sparx){
+    if (isWalkable(sp.x, sp.y)) continue;   // walked here fairly — leave it be
+    let n = nearestCell(sp.x, sp.y, farFromPlayer, overClaimed);
+    if (!n) n = nearestCell(sp.x, sp.y, isWalkable, overClaimed);
+    if (n){ sp.x = n.x; sp.y = n.y; }
+  }
+}
+
+/* ---------- enemies ---------- */
+function updateBlot(b, dt, cfg){
+  b.jt -= dt;
+  if (b.jt <= 0){
+    b.jt = 0.8 + Math.random() * 1.4;
+    const a = Math.atan2(b.vy, b.vx) + (Math.random() - 0.5) * 1.2;
+    b.vx = Math.cos(a) * cfg.blotSpeed;
+    b.vy = Math.sin(a) * cfg.blotSpeed;
+  }
+  const blocked = (x, y) => {
+    const cx = Math.round(x), cy = Math.round(y);
+    return !inB(cx, cy) || S.grid[idx(cx, cy)] === C;
+  };
+  let nx = b.x + b.vx * dt, ny = b.y + b.vy * dt;
+  if (blocked(nx, b.y)){ b.vx *= -1; nx = b.x; }
+  if (blocked(b.x, ny)){ b.vy *= -1; ny = b.y; }
+  if (blocked(nx, ny)){ b.vx *= -1; b.vy *= -1; nx = b.x; ny = b.y; }
+  b.x = nx; b.y = ny;
+}
+function sparxStep(sp){
+  const rev = [-sp.dx, -sp.dy];
+  const opts = [];
+  for (const d of N4){
+    if (d[0] === rev[0] && d[1] === rev[1]) continue;
+    if (isWalkable(sp.x + d[0], sp.y + d[1])) opts.push(d);
+  }
+  let pick = null;
+  for (const d of opts)
+    if (d[0] === sp.dx && d[1] === sp.dy){ pick = d; break; }
+  if (!pick && opts.length) pick = opts[(Math.random() * opts.length) | 0];
+  if (!pick){
+    if (isWalkable(sp.x + rev[0], sp.y + rev[1])) pick = rev;
+    else return;
+  }
+  sp.x += pick[0]; sp.y += pick[1];
+  sp.dx = pick[0]; sp.dy = pick[1];
+}
+function updateSparx(sp, dt, cfg){
+  sp.acc += dt * cfg.sparxSpeed;
+  while (sp.acc >= 1){ sp.acc -= 1; sparxStep(sp); }
+}
+
+/* ---------- finest chart persistence ---------- */
+const BEST_KEY = 'asterism-best';
+async function loadBest(){
+  try {
+    if (typeof window !== 'undefined' && window.storage && window.storage.get){
+      const r = await window.storage.get(BEST_KEY);
+      if (r && r.value){ S.best = JSON.parse(r.value); return; }
+      return;
+    }
+  } catch (e) { /* key absent or storage unavailable */ }
+  try {
+    const v = localStorage.getItem(BEST_KEY);
+    if (v) S.best = JSON.parse(v);
+  } catch (e) { /* no persistence available — session-only record */ }
+}
+async function saveBest(){
+  const payload = JSON.stringify(S.best);
+  try {
+    if (typeof window !== 'undefined' && window.storage && window.storage.set){
+      await window.storage.set(BEST_KEY, payload);
+      return;
+    }
+  } catch (e) { }
+  try { localStorage.setItem(BEST_KEY, payload); } catch (e) { }
+}
+function maybeRecordBest(){
+  if (!S.best || S.score > S.best.score){
+    S.best = { score: S.score, name: S.constName };
+    S.newBest = true;
+    saveBest();
+  }
+}
+
+/* ---------- life & death ---------- */
+function die(){
+  S.lives--;
+  if (S.drawing){
+    for (const t of S.trail) S.grid[idx(t.x, t.y)] = U;
+    S.px = S.trailStart.x; S.py = S.trailStart.y;
+  }
+  S.drawing = false; S.trail = []; S.slowLine = false;
+  S.fuseLit = false; S.fusePos = 0; S.fuseAcc = 0;
+  S.invuln = 2; S.freeze = 0.5;
+  if (S.lives <= 0){
+    S.phase = 'gameover';
+    maybeRecordBest();
+  }
+}
+function checkKills(){
+  if (S.drawing){
+    const R = 1.8;
+    for (const b of S.blots){
+      const x0 = clamp(Math.floor(b.x - 2), 0, CW - 1);
+      const x1 = clamp(Math.ceil (b.x + 2), 0, CW - 1);
+      const y0 = clamp(Math.floor(b.y - 2), 0, CH - 1);
+      const y1 = clamp(Math.ceil (b.y + 2), 0, CH - 1);
+      for (let y = y0; y <= y1; y++)
+        for (let x = x0; x <= x1; x++)
+          if (S.grid[idx(x, y)] === T &&
+              Math.hypot(b.x - x, b.y - y) < R){ die(); return; }
+      if (Math.hypot(b.x - S.px, b.y - S.py) < R){ die(); return; }
+    }
+  }
+  if (S.invuln <= 0){
+    for (const sp of S.sparx)
+      if (Math.max(Math.abs(sp.x - S.px), Math.abs(sp.y - S.py)) <= 1){ die(); return; }
+  }
+}
+
+/* ---------- floats ---------- */
+function addFloat(x, y, text, color){
+  S.floats.push({x, y, text, color, age: 0});
+}
+
+/* ---------- main update ---------- */
+let getDir = () => null;   // installed by input layer
+function update(dt){
+  S.t += dt;
+  if (S.paused) return;
+  for (let i = S.floats.length - 1; i >= 0; i--){
+    S.floats[i].age += dt;
+    if (S.floats[i].age > 1.6) S.floats.splice(i, 1);
+  }
+  if (S.freeze > 0){ S.freeze -= dt; return; }
+  if (S.phase === 'intro'){
+    S.introT -= dt;
+    if (S.introT <= 0) S.phase = 'play';
+    return;
+  }
+  if (S.phase === 'celebrate'){
+    S.celebrateT += dt;
+    if (S.celebrateT >= 4.0) newLevel(S.level + 1);
+    return;
+  }
+  if (S.phase !== 'play') return;
+
+  if (S.invuln > 0) S.invuln -= dt;
+  const cfg = levelCfg(S.level);
+
+  // player steps (slow charting halves your pace — that's the wager)
+  const rate = (S.drawing && S.slowKey) ? cfg.playerSlowSpeed : cfg.playerSpeed;
+  S.moveAcc += dt * rate;
+  const dir = getDir();
+  while (S.moveAcc >= 1){
+    S.moveAcc -= 1;
+    if (dir && tryMove(dir)) S.lastMoveT = S.t;
+    if (S.phase !== 'play') return;   // claim may have completed the level
+  }
+
+  // fuse: hesitation on an exposed line invites the spark
+  if (S.drawing && S.trail.length > 0){
+    const idle = (S.t - S.lastMoveT) > cfg.fuseDelay;
+    if (idle) S.fuseLit = true;
+    if (S.fuseLit && idle){
+      S.fuseAcc += dt * cfg.fuseSpeed;
+      while (S.fuseAcc >= 1){
+        S.fuseAcc -= 1;
+        S.fusePos++;
+        if (S.fusePos >= S.trail.length - 1){ die(); break; }
+      }
+    }
+  }
+  if (S.phase !== 'play') return;
+
+  for (const b of S.blots) updateBlot(b, dt, cfg);
+  for (const sp of S.sparx) updateSparx(sp, dt, cfg);
+  checkKills();
+}
+
+/* ---------- headless test hooks ---------- */
+globalThis.__AST = {
+  S, CW, CH, U, C, T, idx, inB,
+  newLevel, startGame, tryMove, finalizeClaim,
+  isWalkable, sparxStep, update, levelCfg, addScore,
+  CONSTELLATIONS,
+};
+
+/* =====================================================================
+   Rendering & input — DOM only from here down
+   ===================================================================== */
+let cv, ctx, chartArt, maskC, chartLayer, frontier = [];
+
+function mkCanvas(w, h){
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  return c;
+}
+
+/* --- parchment star-chart art (static, pre-rendered once) --- */
+function buildChartArt(){
+  chartArt = mkCanvas(W, H);
+  const c = chartArt.getContext('2d');
+  const g = c.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#ece1c6'); g.addColorStop(1, '#dbcda9');
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+  // speckle
+  for (let i = 0; i < 900; i++){
+    c.fillStyle = 'rgba(115,86,48,' + (0.03 + Math.random() * 0.05).toFixed(3) + ')';
+    c.fillRect(Math.random() * W, Math.random() * H, 1.3, 1.3);
+  }
+  // graticule
+  c.strokeStyle = 'rgba(122,94,55,0.32)';
+  c.lineWidth = 1;
+  for (let x = 48; x < W; x += 48){ c.beginPath(); c.moveTo(x + .5, 0); c.lineTo(x + .5, H); c.stroke(); }
+  for (let y = 48; y < H; y += 48){ c.beginPath(); c.moveTo(0, y + .5); c.lineTo(W, y + .5); c.stroke(); }
+  // great-circle arcs
+  c.strokeStyle = 'rgba(122,94,55,0.26)';
+  c.lineWidth = 1.2;
+  c.beginPath(); c.arc(-W * 0.3, H * 1.4, W * 1.25, 0, Math.PI * 2); c.stroke();
+  c.beginPath(); c.arc(W * 1.35, -H * 0.5, W * 1.1, 0, Math.PI * 2); c.stroke();
+  // dashed ecliptic
+  c.setLineDash([6, 5]);
+  c.strokeStyle = 'rgba(140,100,50,0.35)';
+  c.beginPath(); c.arc(W * 0.5, H * 2.2, H * 2.05, 0, Math.PI * 2); c.stroke();
+  c.setLineDash([]);
+  // faint deep-sky circles
+  for (let i = 0; i < 12; i++){
+    c.setLineDash([2, 3]);
+    c.strokeStyle = 'rgba(122,94,55,0.22)';
+    c.beginPath();
+    c.arc(20 + Math.random() * (W - 40), 20 + Math.random() * (H - 40),
+          3 + Math.random() * 5, 0, Math.PI * 2);
+    c.stroke();
+  }
+  c.setLineDash([]);
+  // compass rose, bottom-right
+  const rx = W - 44, ry = H - 40;
+  c.strokeStyle = 'rgba(110,80,40,0.55)';
+  c.lineWidth = 1;
+  c.beginPath(); c.arc(rx, ry, 17, 0, Math.PI * 2); c.stroke();
+  c.beginPath(); c.arc(rx, ry, 11, 0, Math.PI * 2); c.stroke();
+  for (let k = 0; k < 8; k++){
+    const a = k * Math.PI / 4, r = k % 2 ? 12 : 22;
+    c.beginPath(); c.moveTo(rx, ry);
+    c.lineTo(rx + Math.cos(a) * r, ry + Math.sin(a) * r); c.stroke();
+  }
+}
+
+/* --- claimed-area mask & frontier ink line --- */
+function rebuildVisuals(){
+  if (!HAS_DOM || !maskC) return;
+  const m = maskC.getContext('2d');
+  m.clearRect(0, 0, W, H);
+  m.fillStyle = '#fff';
+  for (let y = 0; y < CH; y++)
+    for (let x = 0; x < CW; x++)
+      if (S.grid[idx(x, y)] === C)
+        m.fillRect(x * CELL, y * CELL, CELL, CELL);
+  const l = chartLayer.getContext('2d');
+  l.clearRect(0, 0, W, H);
+  l.drawImage(chartArt, 0, 0);
+  l.globalCompositeOperation = 'destination-in';
+  l.drawImage(maskC, 0, 0);
+  l.globalCompositeOperation = 'source-over';
+  // frontier segments
+  frontier = [];
+  for (let y = 0; y < CH; y++)
+    for (let x = 0; x < CW; x++){
+      if (S.grid[idx(x, y)] !== C) continue;
+      const px = x * CELL, py = y * CELL;
+      if (inB(x + 1, y) && S.grid[idx(x + 1, y)] === U) frontier.push([px + CELL, py, px + CELL, py + CELL]);
+      if (inB(x - 1, y) && S.grid[idx(x - 1, y)] === U) frontier.push([px, py, px, py + CELL]);
+      if (inB(x, y + 1) && S.grid[idx(x, y + 1)] === U) frontier.push([px, py + CELL, px + CELL, py + CELL]);
+      if (inB(x, y - 1) && S.grid[idx(x, y - 1)] === U) frontier.push([px, py, px + CELL, py]);
+    }
+}
+
+/* --- draw helpers --- */
+function starPath(c, x, y, r, rot){
+  c.beginPath();
+  for (let i = 0; i < 10; i++){
+    const a = rot + i * Math.PI / 5;
+    const rr = i % 2 === 0 ? r : r * 0.42;
+    const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+    i === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
+  }
+  c.closePath();
+}
+function drawBlot(c, b){
+  const x = b.x * CELL, y = b.y * CELL, t = S.t;
+  c.save();
+  c.translate(x, y);
+  // dark heart
+  const g = c.createRadialGradient(0, 0, 1, 0, 0, 16);
+  g.addColorStop(0, 'rgba(20,4,40,0.95)');
+  g.addColorStop(0.6, 'rgba(45,10,80,0.55)');
+  g.addColorStop(1, 'rgba(45,10,80,0)');
+  c.fillStyle = g;
+  c.beginPath(); c.arc(0, 0, 16, 0, Math.PI * 2); c.fill();
+  // pale aura so the anomaly reads against the void
+  const ag = c.createRadialGradient(0, 0, 8, 0, 0, 24);
+  ag.addColorStop(0, 'rgba(200,160,255,0.16)');
+  ag.addColorStop(1, 'rgba(200,160,255,0)');
+  c.fillStyle = ag;
+  c.beginPath(); c.arc(0, 0, 24, 0, Math.PI * 2); c.fill();
+  // writhing ink strands
+  for (let k = 0; k < 7; k++){
+    const a  = t * 1.7 + k * (Math.PI * 2 / 7);
+    const r1 = 5 + Math.sin(t * 2.3 + k) * 3;
+    const r2 = 13 + Math.sin(t * 1.9 + k * 1.7) * 5;
+    c.strokeStyle = 'rgba(' + (170 + k * 10) + ',' + (60 + k * 8) + ',255,' +
+                    (0.6 + 0.28 * Math.sin(t * 3 + k)).toFixed(2) + ')';
+    c.lineWidth = 1.9;
+    c.beginPath();
+    c.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
+    c.quadraticCurveTo(Math.cos(a + 1.2) * r2, Math.sin(a + 1.2) * r2,
+                       Math.cos(a + 2.4) * r1, Math.sin(a + 2.4) * r1);
+    c.stroke();
+  }
+  c.fillStyle = 'rgba(230,180,255,0.9)';
+  c.beginPath(); c.arc(0, 0, 1.8 + Math.sin(t * 5) * 0.6, 0, Math.PI * 2); c.fill();
+  c.restore();
+}
+function drawSparx(c, sp, i){
+  const x = sp.x * CELL + CELL / 2, y = sp.y * CELL + CELL / 2;
+  const t = S.t * 9 + i * 2, fl = 0.8 + 0.2 * Math.sin(t);
+  c.save();
+  c.translate(x, y);
+  // dark halo so the spark reads against both parchment and gold ink
+  const hg = c.createRadialGradient(0, 0, 1, 0, 0, 10);
+  hg.addColorStop(0, 'rgba(30,5,5,0.75)');
+  hg.addColorStop(1, 'rgba(30,5,5,0)');
+  c.fillStyle = hg;
+  c.beginPath(); c.arc(0, 0, 10, 0, Math.PI * 2); c.fill();
+  c.rotate(S.t * 4 + i);
+  c.strokeStyle = 'rgba(255,90,40,' + fl.toFixed(2) + ')';
+  c.lineWidth = 2.2;
+  for (let k = 0; k < 4; k++){
+    const a = k * Math.PI / 2;
+    c.beginPath(); c.moveTo(0, 0);
+    c.lineTo(Math.cos(a) * 8, Math.sin(a) * 8); c.stroke();
+  }
+  c.fillStyle = 'rgba(255,245,200,' + fl.toFixed(2) + ')';
+  c.beginPath(); c.arc(0, 0, 3, 0, Math.PI * 2); c.fill();
+  c.restore();
+}
+
+function cellCenter(p){ return [p.x * CELL + CELL / 2, p.y * CELL + CELL / 2]; }
+function starPx(st){ return [st.x * CELL + CELL / 2, st.y * CELL + CELL / 2]; }
+
+/* --- master render --- */
+function render(){
+  ctx.clearRect(0, 0, W, H);
+
+  // the void
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0b1029'); bg.addColorStop(1, '#080b1d');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  for (const tw of S.twinkles){
+    const a = 0.25 + 0.45 * (0.5 + 0.5 * Math.sin(S.t * 1.5 + tw.ph));
+    ctx.fillStyle = 'rgba(200,215,255,' + a.toFixed(2) + ')';
+    ctx.fillRect(tw.x, tw.y, tw.r, tw.r);
+  }
+
+  if (S.phase === 'title'){ renderTitle(); return; }
+
+  // charted parchment
+  ctx.drawImage(chartLayer, 0, 0);
+
+  // frontier ink
+  ctx.strokeStyle = '#d4af37';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (const s of frontier){ ctx.moveTo(s[0], s[1]); ctx.lineTo(s[2], s[3]); }
+  ctx.stroke();
+
+  // stars
+  ctx.textAlign = 'center';
+  for (let i = 0; i < S.stars.length; i++){
+    const st = S.stars[i];
+    const [sx, sy] = starPx(st);
+    if (st.captured){
+      // engraved on the chart
+      starPath(ctx, sx, sy, 6, -Math.PI / 2);
+      ctx.fillStyle = '#c9a227';
+      ctx.fill();
+      ctx.strokeStyle = '#6b4f2a';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(90,64,30,0.85)';
+      ctx.font = 'italic 10px Georgia, serif';
+      ctx.fillText(st.name, sx, sy + 16);
+    } else {
+      // burning in the void
+      const p = 2.6 + Math.sin(S.t * 3 + i) * 0.7;
+      ctx.strokeStyle = 'rgba(255,215,106,0.55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sx - p * 3, sy); ctx.lineTo(sx + p * 3, sy);
+      ctx.moveTo(sx, sy - p * 3); ctx.lineTo(sx, sy + p * 3);
+      ctx.stroke();
+      ctx.fillStyle = '#ffd76a';
+      ctx.beginPath(); ctx.arc(sx, sy, p, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(230,220,190,0.45)';
+      ctx.font = 'italic 10px Georgia, serif';
+      ctx.fillText(st.name, sx, sy + 16);
+    }
+  }
+
+  // survey line (the trail)
+  if (S.drawing && S.trail.length){
+    const burn = (S.fuseLit && S.fusePos > 0) ? Math.min(S.fusePos, S.trail.length) : 0;
+    // burnt (consumed) portion — ash grey, no glow
+    if (burn > 0){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(130,120,105,0.55)';
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      const [tx, ty] = cellCenter(S.trailStart);
+      ctx.moveTo(tx, ty);
+      for (let i = 0; i < burn; i++){
+        const [cx, cy] = cellCenter(S.trail[i]);
+        ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+    // live portion — silver while the wager holds, gold once broken
+    ctx.save();
+    if (S.slowLine){
+      ctx.strokeStyle = '#e6eeff';
+      ctx.shadowColor = '#aac4ff';
+    } else {
+      ctx.strokeStyle = '#ffd76a';
+      ctx.shadowColor = '#ffce4f';
+    }
+    ctx.lineWidth = 2.4;
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    if (burn > 0){
+      const [bx, by] = cellCenter(S.trail[burn - 1]);
+      ctx.moveTo(bx, by);
+    } else {
+      const [tx, ty] = cellCenter(S.trailStart);
+      ctx.moveTo(tx, ty);
+    }
+    for (let i = burn; i < S.trail.length; i++){
+      const [cx, cy] = cellCenter(S.trail[i]);
+      ctx.lineTo(cx, cy);
+    }
+    ctx.stroke();
+    ctx.restore();
+    // the fuse spark
+    if (S.fuseLit && S.fusePos < S.trail.length){
+      const f = S.trail[Math.min(S.fusePos, S.trail.length - 1)];
+      const [fx, fy] = cellCenter(f);
+      const fg = ctx.createRadialGradient(fx, fy, 1, fx, fy, 12);
+      fg.addColorStop(0, 'rgba(255,80,50,0.7)');
+      fg.addColorStop(1, 'rgba(255,80,50,0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath(); ctx.arc(fx, fy, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      ctx.beginPath(); ctx.arc(fx, fy, 3.4, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,180,80,0.9)';
+      ctx.lineWidth = 1.4;
+      for (let k = 0; k < 5; k++){
+        const a = Math.random() * Math.PI * 2, r = 4 + Math.random() * 6;
+        ctx.beginPath(); ctx.moveTo(fx, fy);
+        ctx.lineTo(fx + Math.cos(a) * r, fy + Math.sin(a) * r);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // the stylus (player)
+  if (!(S.invuln > 0 && Math.floor(S.t * 10) % 2 === 0)){
+    const px = S.px * CELL + CELL / 2, py = S.py * CELL + CELL / 2;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(Math.PI / 4);
+    if (S.drawing){
+      ctx.shadowColor = '#ffd76a';
+      ctx.shadowBlur = 10;
+    }
+    ctx.fillStyle = '#ffe9a8';
+    ctx.strokeStyle = '#8a6d3b';
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(-4, -4, 8, 8);
+    ctx.strokeRect(-4, -4, 8, 8);
+    ctx.restore();
+  }
+
+  // cinders & the Blot
+  for (let i = 0; i < S.sparx.length; i++) drawSparx(ctx, S.sparx[i], i);
+  for (const b of S.blots) drawBlot(ctx, b);
+
+  // celebrate: the constellation inks itself
+  if (S.phase === 'celebrate') renderCelebrate();
+
+  // floats
+  ctx.textAlign = 'center';
+  ctx.font = 'italic 12px Georgia, serif';
+  for (const f of S.floats){
+    ctx.globalAlpha = clamp(1.4 - f.age, 0, 1);
+    ctx.fillStyle = f.color;
+    ctx.fillText(f.text, f.x, f.y - f.age * 18);
+  }
+  ctx.globalAlpha = 1;
+
+  // overlays
+  if (S.phase === 'intro') renderIntro();
+  if (S.phase === 'gameover') renderGameOver();
+  if (S.paused && S.phase === 'play') renderPaused();
+  if (S.freeze > 0){
+    ctx.fillStyle = 'rgba(120,20,40,' + (S.freeze * 0.35).toFixed(2) + ')';
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function renderCelebrate(){
+  const total = S.lines.length;
+  const prog = clamp(S.celebrateT / 1.6, 0, 1) * total;
+  ctx.save();
+  ctx.strokeStyle = '#d4af37';
+  ctx.lineWidth = 2.2;
+  ctx.shadowColor = '#ffd76a';
+  ctx.shadowBlur = 8;
+  for (let i = 0; i < total; i++){
+    const f = clamp(prog - i, 0, 1);
+    if (f <= 0) break;
+    const a = S.stars[S.lines[i][0]], b = S.stars[S.lines[i][1]];
+    const [ax, ay] = starPx(a), [bx, by] = starPx(b);
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax + (bx - ax) * f, ay + (by - ay) * f);
+    ctx.stroke();
+  }
+  ctx.restore();
+  if (S.celebrateT > 1.6){
+    banner(S.constName, S.constSub + ' · charted', 0.86);
+  }
+}
+function banner(big, small, alpha){
+  ctx.save();
+  ctx.fillStyle = 'rgba(8,10,26,' + (alpha * 0.82).toFixed(2) + ')';
+  ctx.fillRect(0, H / 2 - 44, W, 88);
+  ctx.strokeStyle = 'rgba(212,175,55,' + alpha.toFixed(2) + ')';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(40, H / 2 - 44); ctx.lineTo(W - 40, H / 2 - 44); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(40, H / 2 + 44); ctx.lineTo(W - 40, H / 2 + 44); ctx.stroke();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,215,106,' + alpha.toFixed(2) + ')';
+  ctx.font = '28px Georgia, serif';
+  drawSpaced(big, W / 2, H / 2 + 2, 6);
+  ctx.fillStyle = 'rgba(220,205,170,' + (alpha * 0.9).toFixed(2) + ')';
+  ctx.font = 'italic 14px Georgia, serif';
+  ctx.fillText(small, W / 2, H / 2 + 28);
+  ctx.restore();
+}
+function drawSpaced(text, cx, cy, spacing){
+  const widths = [];
+  let total = 0;
+  for (const ch of text){
+    const w = ctx.measureText(ch).width + spacing;
+    widths.push(w); total += w;
+  }
+  let x = cx - total / 2;
+  const prev = ctx.textAlign;
+  ctx.textAlign = 'left';
+  for (let i = 0; i < text.length; i++){
+    ctx.fillText(text[i], x, cy);
+    x += widths[i];
+  }
+  ctx.textAlign = prev;
+}
+function renderIntro(){
+  // the commission: a ghost of the figure you're to chart
+  const a = clamp(S.introT / 0.4, 0, 1) * 0.22;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,215,106,' + a.toFixed(2) + ')';
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([4, 6]);
+  ctx.beginPath();
+  for (const ln of S.lines){
+    const [ax, ay] = starPx(S.stars[ln[0]]);
+    const [bx, by] = starPx(S.stars[ln[1]]);
+    ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+  banner(S.constName, S.constSub + ' — capture every star', clamp(S.introT / 0.4, 0, 1));
+}
+function renderPaused(){
+  banner('PAUSED', 'the heavens hold their breath', 1);
+}
+function renderGameOver(){
+  ctx.fillStyle = 'rgba(6,8,20,0.72)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffd76a';
+  ctx.font = '30px Georgia, serif';
+  drawSpaced('THE SKY UNFINISHED', W / 2, H / 2 - 22, 5);
+  ctx.fillStyle = '#d9cdae';
+  ctx.font = '15px Georgia, serif';
+  ctx.fillText('final score  ' + S.score.toLocaleString(), W / 2, H / 2 + 12);
+  if (S.newBest){
+    ctx.fillStyle = '#dfe9ff';
+    ctx.font = 'italic 13px Georgia, serif';
+    ctx.fillText('✦ a new finest chart ✦', W / 2, H / 2 + 34);
+  } else if (S.best){
+    ctx.fillStyle = 'rgba(220,205,170,0.6)';
+    ctx.font = 'italic 12px Georgia, serif';
+    ctx.fillText('finest chart — ' + S.best.score.toLocaleString() + ' · ' +
+                 S.best.name.toLowerCase(), W / 2, H / 2 + 34);
+  }
+  ctx.fillStyle = 'rgba(220,205,170,0.75)';
+  ctx.font = 'italic 13px Georgia, serif';
+  ctx.fillText('press R — take up the stylus again', W / 2, H / 2 + 58);
+}
+function renderTitle(){
+  // a slow preview blot drifting behind the title
+  drawBlot(ctx, { x: CW / 2 + Math.cos(S.t * 0.4) * 26,
+                  y: CH / 2 + Math.sin(S.t * 0.53) * 14 + 6 });
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffd76a';
+  ctx.font = '46px Georgia, serif';
+  drawSpaced('ASTERISM', W / 2, H / 2 - 40, 14);
+  ctx.fillStyle = 'rgba(220,205,170,0.85)';
+  ctx.font = 'italic 15px Georgia, serif';
+  ctx.fillText('a charting of the heavens', W / 2, H / 2 - 8);
+  ctx.fillStyle = 'rgba(200,185,150,0.7)';
+  ctx.font = '13px Georgia, serif';
+  ctx.fillText('Fence the void with survey lines. Capture every star of the constellation.', W / 2, H / 2 + 34);
+  ctx.fillText('Beware the Blot in the deep — and the cinders that walk your frontier.', W / 2, H / 2 + 54);
+  ctx.fillStyle = 'rgba(230,238,255,0.75)';
+  ctx.fillText('A line charted slowly, and slowly alone, is worth double.', W / 2, H / 2 + 74);
+  const a = 0.55 + 0.45 * Math.sin(S.t * 2.5);
+  ctx.fillStyle = 'rgba(255,215,106,' + a.toFixed(2) + ')';
+  ctx.font = '15px Georgia, serif';
+  ctx.fillText('— press enter to begin —', W / 2, H / 2 + 96);
+  if (S.best){
+    ctx.fillStyle = 'rgba(200,185,150,0.6)';
+    ctx.font = 'italic 12px Georgia, serif';
+    ctx.fillText('finest chart — ' + S.best.score.toLocaleString() + ' · ' +
+                 S.best.name.toLowerCase(), W / 2, H / 2 + 122);
+  }
+}
+
+/* ---------- HUD ---------- */
+let hEls = null;
+function updateHUD(){
+  if (!hEls) return;
+  hEls.c.textContent = S.phase === 'title' ? '—' : S.constName.toLowerCase();
+  const cap = S.stars.filter(s => s.captured).length;
+  hEls.s.textContent = cap + '/' + S.stars.length;
+  hEls.p.textContent = Math.floor(S.chartedPct) + '%';
+  hEls.sc.textContent = S.score;
+  hEls.l.textContent = '✦'.repeat(Math.max(0, S.lives)) || '—';
+}
+
+/* ---------- input ---------- */
+const KEYMAP = {
+  ArrowUp:[0,-1], KeyW:[0,-1], ArrowDown:[0,1], KeyS:[0,1],
+  ArrowLeft:[-1,0], KeyA:[-1,0], ArrowRight:[1,0], KeyD:[1,0],
+};
+function installInput(){
+  const stack = [];
+  getDir = () => {
+    if (!stack.length) return null;
+    const v = KEYMAP[stack[stack.length - 1]];
+    return {dx: v[0], dy: v[1]};
+  };
+  window.addEventListener('keydown', e => {
+    if (KEYMAP[e.code]){
+      e.preventDefault();
+      if (!stack.includes(e.code)) stack.push(e.code);
+      return;
+    }
+    if (e.code === 'Space' || e.code === 'KeyX'){
+      e.preventDefault();
+      if (S.phase === 'title'){ startGame(); return; }
+      S.drawKey = true;
+      return;
+    }
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyZ'){
+      S.slowKey = true;
+      return;
+    }
+    if (e.code === 'Enter'){
+      if (S.phase === 'title') startGame();
+      else if (S.phase === 'gameover') startGame();
+      return;
+    }
+    if (e.code === 'KeyP' && S.phase === 'play'){ S.paused = !S.paused; return; }
+    if (e.code === 'KeyR' && S.phase === 'gameover'){ startGame(); return; }
+  });
+  window.addEventListener('keyup', e => {
+    const i = stack.indexOf(e.code);
+    if (i >= 0) stack.splice(i, 1);
+    if (e.code === 'Space' || e.code === 'KeyX') S.drawKey = false;
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyZ') S.slowKey = false;
+  });
+  cv.addEventListener('click', () => {
+    if (S.phase === 'title' || S.phase === 'gameover') startGame();
+  });
+}
+
+/* ---------- boot ---------- */
+function boot(){
+  cv = document.getElementById('cv');
+  ctx = cv.getContext('2d');
+  maskC = mkCanvas(W, H);
+  chartLayer = mkCanvas(W, H);
+  buildChartArt();
+  hEls = {
+    c: document.getElementById('h-const'),
+    s: document.getElementById('h-stars'),
+    p: document.getElementById('h-pct'),
+    sc: document.getElementById('h-score'),
+    l: document.getElementById('h-lives'),
+  };
+  // title-screen twinkles
+  for (let i = 0; i < 130; i++)
+    S.twinkles.push({ x: Math.random() * W, y: Math.random() * H,
+                      r: 0.4 + Math.random() * 1.1, ph: Math.random() * Math.PI * 2 });
+  installInput();
+  loadBest();
+  let last = performance.now();
+  function frame(now){
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    update(dt);
+    render();
+    updateHUD();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+if (HAS_DOM) boot();
+</script>
+</body>
+</html>

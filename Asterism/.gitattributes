@@ -1,0 +1,8 @@
+# Asterism is a preservation repo as much as a playable one. The .html files
+# are checked out byte-for-byte as authored — no line-ending translation, so a
+# working copy always matches its blob and the lock in .githooks/pre-commit
+# compares against a stable hash on every platform.
+*.html -text
+
+# Keep the hook executable and LF regardless of platform.
+.githooks/* text eol=lf

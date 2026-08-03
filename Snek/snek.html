@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SNEK</title>
+<style>
+  :root{
+    --desk:#3b3a36;
+    --desk2:#2b2a27;
+    --paper:#f6f2e3;
+    --paper-edge:#e6e0cb;
+    --rule:#a9c2dd;
+    --margin:#d9736f;
+    --ink:#2f3d8c;
+    --ink-soft:#63719f;
+    --pencil:#4a4a52;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse at 50% -10%, #4a4844 0%, var(--desk) 45%, var(--desk2) 100%);
+    display:flex;align-items:center;justify-content:center;
+    min-height:100%;padding:18px;
+    font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive;
+    color:var(--pencil);
+    -webkit-tap-highlight-color:transparent;
+    overflow-x:hidden;
+  }
+
+  /* ---- the sheet of paper ---- */
+  .sheet{
+    position:relative;
+    background:var(--paper);
+    width:min(96vw, 660px);
+    padding:14px 14px 10px;
+    border-radius:2px;
+    transform:rotate(-.5deg);
+    box-shadow:
+      0 1px 0 var(--paper-edge),
+      0 14px 34px rgba(0,0,0,.45),
+      0 2px 6px rgba(0,0,0,.3);
+    transition:transform .12s ease-out;
+  }
+  .sheet.jolt{transform:rotate(.9deg) translateY(3px);}
+  /* torn-off top edge */
+  .sheet::before{
+    content:"";position:absolute;left:0;right:0;top:0;height:6px;
+    background:
+      repeating-linear-gradient(90deg,
+        var(--paper) 0 5px, var(--paper-edge) 5px 7px,
+        var(--paper) 7px 13px, var(--paper-edge) 13px 14px);
+    opacity:.7;
+  }
+
+  .head{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    gap:12px;padding:6px 10px 4px 96px;flex-wrap:wrap;
+  }
+  .brand{line-height:1;}
+  .brand h1{
+    font-size:clamp(30px,7vw,46px);
+    letter-spacing:.06em;
+    color:var(--ink);
+    font-weight:normal;
+    transform:rotate(-1.4deg);
+    text-shadow:.6px .6px 0 rgba(47,61,140,.35);
+  }
+  .brand .sub{
+    display:block;font-size:13px;color:var(--ink-soft);
+    transform:rotate(-.6deg);margin-top:2px;letter-spacing:.02em;
+  }
+  .hud{display:flex;gap:18px;align-items:flex-end;font-size:15px;color:var(--ink);}
+  .hud .lbl{display:block;font-size:11px;color:var(--ink-soft);letter-spacing:.04em;}
+  .hud .val{font-size:26px;line-height:1;}
+
+  .play{position:relative;display:block;}
+  canvas{display:block;width:100%;height:auto;touch-action:none;}
+
+  /* ---- overlay: a sticky note slapped on the page ---- */
+  .overlay{
+    position:absolute;left:50%;top:73%;transform:translate(-50%,-50%) rotate(-2.2deg);
+    width:min(80%,330px);
+    background:#f7e9a0;
+    padding:18px 20px 20px;
+    box-shadow:0 8px 18px rgba(0,0,0,.28), 0 1px 0 #e2d287;
+    text-align:center;z-index:4;
+  }
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:23px;color:#7a4d18;font-weight:normal;line-height:1.15;}
+  .overlay p{font-size:14px;color:#6b5426;line-height:1.6;margin-top:9px;}
+  .overlay .prompt{margin-top:13px;font-size:13px;color:#8a6a2c;}
+  .blink{animation:blink 1.15s steps(2,start) infinite;}
+  @keyframes blink{to{opacity:.2;}}
+
+  .foot{
+    display:flex;justify-content:space-between;gap:10px;
+    padding:6px 10px 2px 96px;font-size:11px;color:#9a9384;flex-wrap:wrap;
+  }
+
+  /* ---- dev panel ---- */
+  .dev{
+    position:absolute;right:8px;top:8px;z-index:6;
+    background:rgba(20,22,30,.9);color:#9ff0c8;
+    font-family:ui-monospace,'Courier New',monospace;font-size:10.5px;line-height:1.45;
+    padding:8px 10px;border-radius:3px;white-space:pre;pointer-events:none;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+  }
+  .dev.hidden{display:none;}
+</style>
+</head>
+<body>
+  <div class="sheet" id="sheet">
+    <div class="head">
+      <div class="brand">
+        <h1>SNEK</h1>
+        <span class="sub">it's a snake game</span>
+      </div>
+      <div class="hud">
+        <div><span class="lbl">apples</span><span class="val" id="score">0</span></div>
+        <div><span class="lbl">best ever</span><span class="val" id="best">0</span></div>
+      </div>
+    </div>
+
+    <div class="play">
+      <canvas id="game" width="624" height="540"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">snek</h2>
+        <p id="ovBody">eat the apple.<br>don't eat yourself.<br>that's the whole thing.</p>
+        <p class="prompt blink" id="ovPrompt">press anything</p>
+      </div>
+      <div class="dev hidden" id="dev"></div>
+    </div>
+
+    <div class="foot">
+      <span>arrows / wasd &nbsp;·&nbsp; swipe on phone &nbsp;·&nbsp; P pauses</span>
+      <span>` for numbers</span>
+    </div>
+  </div>
+
+<script>
+(() => {
+"use strict";
+
+/* ============================================================
+   TUNING  —  every number worth arguing about lives here
+   ============================================================ */
+const T = {
+  CELLS:        21,      // playfield is CELLS x CELLS
+  CELL:         24,      // px per cell
+  PAD_X:        96,      // left margin strip (tally marks live here)
+  PAD_Y:        14,
+
+  START_LEN:    4,
+  // Speed ramps GEOMETRICALLY: every apple shaves the same *percentage* off the
+  // gap between steps. A linear cells/sec gain is even on paper but not to the
+  // eye — speed is judged proportionally, so a flat +0.34 c/s is a 6.8% change
+  // on the first apple and 2.7% on the 24th, and the late ones fall under the
+  // noticeable threshold until several have stacked up. That reads as lurching
+  // every few apples. This way each apple is worth an identical 3.8%.
+  STEP_MS:      200,     // ms between steps at score 0
+  STEP_RAMP:    0.9616,  // multiplied into the gap per apple
+  STEP_MS_MIN:  71,      // floor — reached around score 27
+
+  BODY_W:       12.5,    // px width of the drawn tube
+  HEAD_W:       19,
+  SNOUT:        0.42,    // head extends this many cells forward, tapering (room for a face)
+  SNOUT_W:      0.62,    // snout tip width as a fraction of HEAD_W
+  TAIL_TAPER:   4,       // segments over which the tail thins out
+  TAIL_MIN:     0.60,    // thinnest the tail tip gets, as a fraction of BODY_W
+  LUMP_SIZE:    13,      // px bulge of a swallowed apple
+  LUMP_SPREAD:  1.05,    // how many segments a lump smears across
+  LUMP_MAX:     15,      // total bulge cap, so back-to-back apples don't balloon
+
+  BOIL_MS:      110,     // hand-drawn line re-jitters this often (3-phase boil)
+  WOBBLE:       1.35,    // px of wobble in the pen outline
+  FILL_SLOP:    2.3,     // how far the colouring-in misses the outline by
+  INK_PASSES:   2,       // times each line is traced over
+
+  EYE_R:        6.6,     // googly eye socket radius
+  PUPIL_R:      3.0,
+  EYE_GRAV:     900,     // px/s^2 — googly eyes are gravity toys
+  EYE_DAMP:     0.90,
+  EYE_BOUNCE:   0.42,
+  EYE_FLING:    150,     // impulse when the head turns
+  EYE_SHOVE:    38,      // impulse on every step
+
+  CHOMP_MS:     260,
+  TONGUE_EVERY: 1500,
+  TONGUE_MS:    190,
+  ALARM_LOOK:   2,       // cells ahead checked for "about to die" face
+};
+
+/* ============================================================
+   VOICE  —  all the sarcasm, in one place, so it can be edited
+   ============================================================ */
+const VOICE = {
+  ready:   { t:"snek", b:"eat the apple.<br>don't eat yourself.<br>that's the whole thing.", p:"press anything" },
+  paused:  { t:"paused", b:"snek is waiting.<br>snek is always waiting.", p:"P to continue" },
+  deaths: [
+    "you ate yourself.",
+    "the apple was right there.",
+    "snek does not understand what just happened.",
+    "you had one job and it was 'do not turn'.",
+    "that's a personal problem.",
+    "well.",
+    "in fairness, you were going pretty fast.",
+    "snek is fine. snek is having a lovely time.",
+  ],
+  early:   "that was four seconds.",
+  good:    "okay. that one was actually good.",
+  tie:     "exactly your best. weirdly precise.",
+  retry:   "press anything to go again",
+};
+
+/* ============================================================
+   INK  —  hand-drawn rendering primitives
+   ============================================================ */
+const COL = {
+  rule:   "#a9c2dd",
+  margin: "#d9736f",
+  ink:    "#2f3d8c",
+  inkPale:"#ccd6f0",
+  red:    "#c33c34",
+  redPale:"#f0bdb6",
+  lead:   "#6a6a74",
+  leaf:   "#4f8a45",
+};
+
+// deterministic hash -> [0,1)
+function hash(a,b,c){
+  let h = (Math.imul(a|0, 374761393) + Math.imul(b|0, 668265263) + Math.imul(c|0, 2246822519)) >>> 0;
+  h = Math.imul(h ^ (h>>>13), 1274126177) >>> 0;
+  return ((h ^ (h>>>16)) >>> 0) / 4294967296;
+}
+// jitter in [-amt, amt]
+const jit = (amt,a,b,c) => (hash(a,b,c) - 0.5) * 2 * amt;
+
+let boil = 0;   // 3-phase boil counter, advanced in the loop
+
+// Only the snake boils. Everything else on the page — border, tallies, apple,
+// margin notes — is drawn once and stays put, which is how hand-drawn animation
+// actually works: the background art is painted once and only the character
+// gets re-inked each frame. It also halves the amount of wiggle on screen,
+// which matters more than it sounds like it should.
+const STILL = 0;
+
+// Jitter a polyline; returns a NEW array so fill and stroke agree.
+function wobblePts(pts, seed, amt, phase){
+  const w = amt === undefined ? T.WOBBLE : amt;
+  const ph = phase === undefined ? boil : phase;
+  const out = new Array(pts.length);
+  for (let i=0;i<pts.length;i++){
+    out[i] = {
+      x: pts[i].x + jit(w, seed, i*2,   ph),
+      y: pts[i].y + jit(w, seed, i*2+1, ph)
+    };
+  }
+  return out;
+}
+
+function tracePath(ctx, pts, close){
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+  if (close) ctx.closePath();
+}
+
+// Draw a path like a ballpoint pen: traced more than once, never quite the same.
+function penStroke(ctx, pts, {color=COL.ink, width=1.7, close=false, seed=1, alpha=1, passes=T.INK_PASSES, phase}={}){
+  const ph = phase === undefined ? boil : phase;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  for (let p=0;p<passes;p++){
+    const off = p===0 ? 0 : 0.55;
+    const jp = pts.map((q,i)=>({
+      x:q.x + jit(off, seed+p*97, i*2,   ph+p),
+      y:q.y + jit(off, seed+p*97, i*2+1, ph+p)
+    }));
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha * (p===0 ? 1 : 0.42);
+    ctx.lineWidth = width * (p===0 ? 1 : 0.8);
+    tracePath(ctx, jp, close);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function circlePts(cx,cy,r,n=18,a0=0,a1=Math.PI*2){
+  const pts=[];
+  for (let i=0;i<n;i++) pts.push({x:cx+Math.cos(a0+(a1-a0)*i/(n-1))*r, y:cy+Math.sin(a0+(a1-a0)*i/(n-1))*r});
+  return pts;
+}
+
+// Colouring-in with a pen: diagonal back-and-forth that overshoots the outline.
+function scribbleFill(ctx, cx, cy, r, color, seed, density=4.4, phase){
+  const ph = phase === undefined ? boil : phase;
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = 2.0; ctx.lineCap="round";
+  ctx.globalAlpha = .85;
+  const n = Math.max(3, Math.round(r*2/density));
+  ctx.beginPath();
+  for (let i=0;i<=n;i++){
+    const t = -r + (2*r)*i/n;                 // position along the perpendicular
+    const half = Math.sqrt(Math.max(0, r*r - t*t)) + jit(3.2, seed, i, ph);
+    // 45-degree hatch direction
+    const dx = 0.7071, dy = 0.7071, nx = -0.7071, ny = 0.7071;
+    const bx = cx + nx*t, by = cy + ny*t;
+    const x1 = bx - dx*half, y1 = by - dy*half;
+    const x2 = bx + dx*half, y2 = by + dy*half;
+    if (i % 2 === 0){ ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); }
+    else            { ctx.moveTo(x2,y2); ctx.lineTo(x1,y1); }
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ============================================================
+   SETUP
+   ============================================================ */
+const canvas  = document.getElementById('game');
+const ctx     = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const bestEl  = document.getElementById('best');
+const overlay = document.getElementById('overlay');
+const ovTitle = document.getElementById('ovTitle');
+const ovBody  = document.getElementById('ovBody');
+const ovPrompt= document.getElementById('ovPrompt');
+const devEl   = document.getElementById('dev');
+const sheet   = document.getElementById('sheet');
+
+const C = T.CELLS, S = T.CELL, PX = T.PAD_X, PY = T.PAD_Y;
+const cellX = cx => PX + cx*S + S/2;
+const cellY = cy => PY + cy*S + S/2;
+
+const BEST_KEY = 'snek.best.v1';
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let snake, dir, nextDir, food, score, best, lumps;
+let alive=false, started=false, paused=false;
+// ms between steps at a given score, and the cells/sec that implies
+const stepMsFor = s => Math.max(T.STEP_MS_MIN, T.STEP_MS * Math.pow(T.STEP_RAMP, s));
+const speedFor  = s => 1000 / stepMsFor(s);
+
+let speed=speedFor(0), last=0, acc=0, ticks=0, rafId=0;
+let chompAt=-1e9, deadAt=-1e9, runStart=0, fps=0;
+const eyes = [makeEye(0), makeEye(1)];
+
+function makeEye(i){ return {ox: i?1:-1, oy: 2, vx:0, vy:0}; }
+
+const rand = n => Math.floor(Math.random()*n);
+const pick = a => a[rand(a.length)];
+
+function loadBest(){
+  let v = 0;
+  try { v = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch(e){}
+  return v;
+}
+function saveBest(v){ try { localStorage.setItem(BEST_KEY, String(v)); } catch(e){} }
+
+function reset(){
+  const mid = Math.floor(C/2);
+  snake = [];
+  for (let i=0;i<T.START_LEN;i++) snake.push({x:mid-i, y:mid});
+  dir = {x:1,y:0}; nextDir = {x:1,y:0};
+  score = 0; speed = speedFor(0); lumps = []; ticks = 0;
+  chompAt = -1e9; deadAt = -1e9;
+  eyes[0] = makeEye(0); eyes[1] = makeEye(1);
+  placeFood();
+  scoreEl.textContent = '0';
+}
+
+function placeFood(){
+  const free = [];
+  for (let y=0;y<C;y++) for (let x=0;x<C;x++)
+    if (!snake.some(s=>s.x===x&&s.y===y)) free.push({x,y});
+  food = free.length ? pick(free) : null;   // null == board full == you win, somehow
+}
+
+function showOverlay(t,b,p){
+  ovTitle.textContent = t;
+  ovBody.innerHTML = b;
+  ovPrompt.innerHTML = p;
+  overlay.classList.remove('hidden');
+}
+
+function start(){
+  if (alive) return;
+  reset();
+  alive = true; started = true; paused = false;
+  runStart = performance.now();
+  overlay.classList.add('hidden');
+  last = performance.now(); acc = 0;
+  cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(loop);
+}
+
+function togglePause(){
+  if (!alive) return;
+  paused = !paused;
+  if (paused){
+    showOverlay(VOICE.paused.t, VOICE.paused.b, VOICE.paused.p);
+  } else {
+    overlay.classList.add('hidden');
+    last = performance.now(); acc = 0;
+    rafId = requestAnimationFrame(loop);
+  }
+}
+
+function gameOver(){
+  alive = false;
+  deadAt = performance.now();
+  const wasBest = score > best;
+  if (wasBest){ best = score; bestEl.textContent = best; saveBest(best); }
+
+  let line = pick(VOICE.deaths);
+  if (performance.now() - runStart < 5000 && score === 0) line = VOICE.early;
+  else if (wasBest && score >= 5) line = VOICE.good;
+  else if (score === best && score > 0) line = VOICE.tie;
+
+  showOverlay(score === 1 ? "1 apple" : score + " apples", line, VOICE.retry);
+  sheet.classList.add('jolt');
+  setTimeout(()=>sheet.classList.remove('jolt'), 130);
+}
+
+/* ============================================================
+   SIM
+   ============================================================ */
+function step(){
+  const turned = (nextDir.x !== dir.x || nextDir.y !== dir.y);
+  if (turned){
+    eyes.forEach((e,i)=>{
+      e.vx -= (nextDir.x - dir.x) * T.EYE_FLING * (0.85 + i*0.3);
+      e.vy -= (nextDir.y - dir.y) * T.EYE_FLING * (0.85 + i*0.3);
+    });
+  }
+  dir = nextDir;
+  ticks++;
+
+  eyes.forEach((e,i)=>{
+    e.vx -= dir.x * T.EYE_SHOVE * (0.8 + i*0.4);
+    e.vy -= dir.y * T.EYE_SHOVE * (0.8 + i*0.4);
+  });
+
+  const head = { x:(snake[0].x + dir.x + C) % C, y:(snake[0].y + dir.y + C) % C };
+
+  // the tail tip vacates this tick, so following it is legal
+  const tail = snake[snake.length-1];
+  const growing = food && head.x===food.x && head.y===food.y;
+  const hit = snake.some((s,i)=>
+    s.x===head.x && s.y===head.y && !(i===snake.length-1 && !growing));
+  if (hit) return gameOver();
+
+  snake.unshift(head);
+  for (const L of lumps) L.t += 1;
+  while (lumps.length && lumps[0].t > snake.length) lumps.shift();
+
+  if (growing){
+    score++; scoreEl.textContent = score;
+    speed = speedFor(score);
+    lumps.push({t:0});
+    chompAt = performance.now();
+    placeFood();
+  } else {
+    snake.pop();
+  }
+}
+
+// is the cell n steps ahead occupied? (drives the alarmed face)
+function dangerAhead(){
+  for (let n=1;n<=T.ALARM_LOOK;n++){
+    const x = (snake[0].x + dir.x*n + C) % C, y = (snake[0].y + dir.y*n + C) % C;
+    // ignore the last n segments — they'll have moved by then
+    if (snake.some((s,i)=> s.x===x && s.y===y && i < snake.length-n)) return true;
+  }
+  return false;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function drawPaper(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // printed rules are machine-straight — only pen work wobbles
+  ctx.strokeStyle = COL.rule; ctx.lineWidth = 1;
+  for (let i=0;i<=C;i++){
+    const y = Math.round(PY + i*S) + .5;
+    ctx.beginPath(); ctx.moveTo(6,y); ctx.lineTo(canvas.width-6,y); ctx.stroke();
+  }
+  ctx.strokeStyle = COL.margin; ctx.lineWidth = 1.4;
+  const mx = Math.round(PX - 12) + .5;
+  ctx.beginPath(); ctx.moveTo(mx, 4); ctx.lineTo(mx, canvas.height-4); ctx.stroke();
+}
+
+function drawBorder(){
+  const x0=PX, y0=PY, x1=PX+C*S, y1=PY+C*S;
+  const box=[{x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}];
+  // pen boxes always overshoot at a corner. drawn STILL — a boiling border is
+  // a lot of wiggle for something that never moves, and it fights the snake.
+  const pts = wobblePts(box, 4242, 1.6, STILL);
+  penStroke(ctx, pts.concat([{x:pts[0].x+5.5,y:pts[0].y+1.5}]),
+    {color:COL.ink, width:1.5, alpha:.55, seed:77, phase:STILL});
+}
+
+function drawTallies(){
+  ctx.save();
+  const x0 = 14, y0 = PY + 16, rowH = 30, colW = 34, perCol = 8;
+  const groups = Math.floor(score/5), rem = score%5;
+  const total = groups + (rem?1:0);
+  for (let g=0; g<total; g++){
+    const col = Math.floor(g/perCol), row = g%perCol;
+    if (col > 1) break;                       // ran out of margin; the numeral carries it
+    const gx = x0 + col*colW, gy = y0 + row*rowH;
+    const count = (g < groups) ? 4 : Math.min(rem,4);
+    // a tally mark, once scratched onto the page, does not move again
+    for (let i=0;i<count;i++){
+      const bx = gx + i*5.5;
+      penStroke(ctx, wobblePts([{x:bx,y:gy},{x:bx+jit(2,g,i,0),y:gy+17}], g*31+i, 1.0, STILL),
+        {color:COL.lead, width:1.5, seed:g*13+i, passes:1, phase:STILL});
+    }
+    if (g < groups){
+      penStroke(ctx, wobblePts([{x:gx-3,y:gy+17},{x:gx+21,y:gy-1}], g*57, 1.0, STILL),
+        {color:COL.lead, width:1.5, seed:g*7, passes:1, phase:STILL});
+    }
+  }
+  if (total > perCol*2){
+    ctx.fillStyle = COL.lead; ctx.font = "13px 'Segoe Print','Comic Sans MS',cursive";
+    ctx.fillText("+"+(score - perCol*2*5), x0, y0 + perCol*rowH + 6);
+  }
+  ctx.restore();
+}
+
+function drawApple(){
+  if (!food) return;
+  const x = cellX(food.x), y = cellY(food.y) + 1;
+  const r = S*0.42;
+  const seed = food.x*97 + food.y*31;
+  // STILL: the apple sits there. its seed comes from its cell, so each new
+  // apple is drawn differently but holds that drawing until it's eaten.
+  scribbleFill(ctx, x, y, r*1.05, COL.redPale, seed, 4.4, STILL);   // over the edges, obviously
+  penStroke(ctx, wobblePts(circlePts(x,y,r,16), seed, 1.4, STILL),
+    {color:COL.red, width:1.8, close:true, seed:seed+5, phase:STILL});
+  // stem + one apologetic leaf
+  penStroke(ctx, wobblePts([{x:x+1,y:y-r},{x:x+2,y:y-r-6}], seed+11, .8, STILL),
+    {color:"#7a5a33", width:1.8, seed:seed+11, passes:1, phase:STILL});
+  penStroke(ctx, wobblePts([{x:x+2,y:y-r-5},{x:x+9,y:y-r-8},{x:x+3,y:y-r-2}], seed+13, .9, STILL),
+    {color:COL.leaf, width:1.5, close:true, seed:seed+13, passes:1, phase:STILL});
+}
+
+// width of the tube at segment index i (head=0), including swallowed apples
+function segWidth(i){
+  const n = snake.length;
+  let w = (i===0) ? T.HEAD_W : T.BODY_W;
+  if (i===1) w = (T.HEAD_W + T.BODY_W)/2;
+  const fromTail = n-1-i;
+  if (fromTail < T.TAIL_TAPER) w *= T.TAIL_MIN + (1-T.TAIL_MIN)*(fromTail/T.TAIL_TAPER);
+  let bulge = 0;
+  for (const L of lumps){
+    const d = Math.abs(i - L.t);
+    if (d < T.LUMP_SPREAD*3) bulge += T.LUMP_SIZE * Math.exp(-(d*d)/(2*T.LUMP_SPREAD*T.LUMP_SPREAD));
+  }
+  return w + Math.min(bulge, T.LUMP_MAX);
+}
+
+// split the body into runs that don't jump across a wrap seam
+function bodyRuns(){
+  const runs=[]; let cur=[];
+  for (let i=0;i<snake.length;i++){
+    const p = {x:cellX(snake[i].x), y:cellY(snake[i].y), w:segWidth(i)};
+    if (cur.length){
+      const q = cur[cur.length-1];
+      if (Math.abs(p.x-q.x) > S*1.5 || Math.abs(p.y-q.y) > S*1.5){ runs.push(cur); cur=[]; }
+    }
+    cur.push(p);
+  }
+  if (cur.length) runs.push(cur);
+  // a blunt cylinder has nowhere to put a face, so give the head a snout
+  const first = runs[0];
+  first.unshift({
+    x: first[0].x + dir.x*S*T.SNOUT,
+    y: first[0].y + dir.y*S*T.SNOUT,
+    w: T.HEAD_W * T.SNOUT_W
+  });
+  return runs;
+}
+
+// corner-cutting: a snake drawn by hand curves, it doesn't do plumbing elbows
+function chaikin(pts, iters){
+  for (let k=0;k<iters;k++){
+    if (pts.length < 3) break;
+    const out = [pts[0]];
+    for (let i=0;i<pts.length-1;i++){
+      const a = pts[i], b = pts[i+1];
+      out.push({x:a.x*.75+b.x*.25, y:a.y*.75+b.y*.25, w:a.w*.75+b.w*.25});
+      out.push({x:a.x*.25+b.x*.75, y:a.y*.25+b.y*.75, w:a.w*.25+b.w*.75});
+    }
+    out.push(pts[pts.length-1]);
+    pts = out;
+  }
+  return pts;
+}
+
+// Wobble the SPINE, then smooth, then build the outline. Wobbling the outline
+// instead makes thin tails self-intersect and fork — learned that the hard way.
+function outlineRun(run, wob, seed){
+  let pts = run.map((p,i)=>{
+    // scale the wobble down where the tube is thin, or the pale fill slides
+    // clean off the thin end of the tail
+    const a = wob * Math.min(1, p.w / T.BODY_W);
+    return {
+      x: p.x + jit(a, seed, i*2,   boil),
+      y: p.y + jit(a, seed, i*2+1, boil),
+      w: p.w * (1 + jit(0.11, seed+7, i, boil))
+    };
+  });
+  pts = chaikin(pts, run.length > 40 ? 1 : 2);
+
+  const n = pts.length;
+  if (n === 1) return circlePts(pts[0].x, pts[0].y, pts[0].w/2, 16);
+  const dirs = [];
+  for (let i=0;i<n;i++){
+    const a = pts[Math.max(0,i-1)], b = pts[Math.min(n-1,i+1)];
+    let dx=b.x-a.x, dy=b.y-a.y, m=Math.hypot(dx,dy)||1;
+    dirs.push({x:dx/m, y:dy/m});
+  }
+  const L=[],R=[];
+  for (let i=0;i<n;i++){
+    const nx=-dirs[i].y, ny=dirs[i].x, r=pts[i].w/2;
+    L.push({x:pts[i].x+nx*r, y:pts[i].y+ny*r});
+    R.push({x:pts[i].x-nx*r, y:pts[i].y-ny*r});
+  }
+  // Round both ends. Walk head->tail down the L side, around the tail, back up
+  // the R side, around the head. dirs point TAILWARD, so each cap sweeps -PI
+  // from its starting side — sweeping +PI arcs back into the body and bites a
+  // notch out of the tip.
+  const nAng = i => Math.atan2(dirs[i].x, -dirs[i].y);       // angle of the +normal (L side)
+  const aT = nAng(n-1), aH = nAng(0);
+  const tailCap = circlePts(pts[n-1].x, pts[n-1].y, pts[n-1].w/2, 9, aT,          aT - Math.PI);
+  const headCap = circlePts(pts[0].x,   pts[0].y,   pts[0].w/2,   9, aH - Math.PI, aH - 2*Math.PI);
+  return L.concat(tailCap, R.slice().reverse(), headCap);
+}
+
+function drawSnake(){
+  const runs = bodyRuns();
+  for (const run of runs){
+    // the colouring-in and the outline are drawn by the same unsteady hand,
+    // but not at the same time — so they don't quite agree. that's the whole look.
+    ctx.fillStyle = COL.inkPale;
+    tracePath(ctx, outlineRun(run, T.FILL_SLOP, 4801), true); ctx.fill();
+    penStroke(ctx, outlineRun(run, T.WOBBLE, 1337), {color:COL.ink, width:1.9, close:true, seed:5150});
+  }
+  drawFace();
+}
+
+function drawFace(){
+  const now = performance.now();
+  const h = snake[0];
+  const hx = cellX(h.x), hy = cellY(h.y);
+  const fx = dir.x, fy = dir.y;            // forward
+  const px = -dir.y, py = dir.x;           // perpendicular
+  const dead = !alive && started;
+  const chomping = now - chompAt < T.CHOMP_MS;
+  const alarmed = alive && !dead && dangerAhead();
+
+  // --- googly eyes: real ones are gravity toys, so these are too.
+  // they sit ON the head rather than in it, and overhang the sides, because
+  // that is what happens when you glue plastic eyes to a drawing.
+  const eyeR = T.EYE_R * (alarmed ? 1.18 : 1);
+  for (let i=0;i<2;i++){
+    const s = i? 1 : -1;
+    const ex = hx - fx*1.5 + px*s*5.9;
+    const ey = hy - fy*1.5 + py*s*5.9;
+    const e = eyes[i];
+
+    // white plastic dome — the one thing on this page that isn't hand-drawn
+    ctx.beginPath(); ctx.arc(ex,ey,eyeR,0,Math.PI*2);
+    ctx.fillStyle = "#fbfbf7"; ctx.fill();
+    ctx.strokeStyle = "#3a3a44"; ctx.lineWidth = 1.25; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(ex + e.ox, ey + e.oy, T.PUPIL_R, 0, Math.PI*2);
+    ctx.fillStyle = "#15151c"; ctx.fill();
+    // glint
+    ctx.beginPath(); ctx.arc(ex+e.ox-1.1, ey+e.oy-1.1, .85, 0, Math.PI*2);
+    ctx.fillStyle="rgba(255,255,255,.75)"; ctx.fill();
+  }
+
+  // --- mouth, out on the snout
+  const snoutX = hx + fx*S*T.SNOUT, snoutY = hy + fy*S*T.SNOUT;
+  const mx = snoutX - fx*1.5, my = snoutY - fy*1.5;
+  let mw, mh;
+  if (dead)          { mw = 4.6; mh = 1.0; }   // a flat line. nobody home.
+  else if (chomping) { mw = 5.2; mh = 5.6; }
+  else if (alarmed)  { mw = 2.4; mh = 3.4; }
+  else               { mw = 4.4; mh = 2.6; }   // default: slack and unintelligent
+  ctx.save();
+  ctx.translate(mx,my);
+  ctx.rotate(Math.atan2(fy,fx));
+  const mouth = circlePts(0,0,1,14).map(p=>({x:p.x*mh, y:p.y*mw}));
+  ctx.fillStyle = "#1d1f33";
+  tracePath(ctx, wobblePts(mouth, 607, .6), true); ctx.fill();
+  ctx.restore();
+
+  // --- tongue
+  const tOn = dead || (alive && !paused && (now % T.TONGUE_EVERY) < T.TONGUE_MS);
+  if (tOn){
+    const droop = dead ? 0.55 : 0;
+    const bx = snoutX + fx*1, by = snoutY + fy*1;
+    const tipx = bx + fx*9 + px*droop*7, tipy = by + fy*9 + py*droop*7 + droop*4;
+    penStroke(ctx, wobblePts([{x:bx,y:by},{x:tipx,y:tipy}], 808, .8),
+      {color:COL.red, width:1.7, seed:808, passes:1});
+    penStroke(ctx, wobblePts([{x:tipx,y:tipy},{x:tipx+fx*4+px*3.4, y:tipy+fy*4+py*3.4}], 809, .8),
+      {color:COL.red, width:1.5, seed:809, passes:1});
+    penStroke(ctx, wobblePts([{x:tipx,y:tipy},{x:tipx+fx*4-px*3.4, y:tipy+fy*4-py*3.4}], 810, .8),
+      {color:COL.red, width:1.5, seed:810, passes:1});
+  }
+}
+
+// annotations, like someone labelling their own doodle
+function drawAnnotations(){
+  ctx.save();
+  ctx.fillStyle = COL.lead;
+  ctx.font = "14px 'Segoe Print','Comic Sans MS',cursive";
+
+  const h = snake[0], hx = cellX(h.x), hy = cellY(h.y);
+  ctx.fillText("snek", hx + 46, hy - 30);
+  penStroke(ctx, wobblePts([{x:hx+46,y:hy-26},{x:hx+30,y:hy-16},{x:hx+14,y:hy-7}], 21, 1.1, STILL),
+    {color:COL.lead, width:1.3, seed:21, passes:1, phase:STILL});
+  penStroke(ctx, wobblePts([{x:hx+14,y:hy-7},{x:hx+22,y:hy-9},{x:hx+19,y:hy-16}], 22, .8, STILL),
+    {color:COL.lead, width:1.3, seed:22, passes:1, phase:STILL});
+
+  if (food){
+    const ax = cellX(food.x), ay = cellY(food.y);
+    const side = ax > PX + C*S*0.6 ? -1 : 1;
+    ctx.fillText("apple (food)", ax + side*30 - (side<0?86:0), ay + 40);
+    penStroke(ctx, wobblePts([{x:ax+side*26,y:ay+34},{x:ax+side*16,y:ay+24},{x:ax+side*8,y:ay+14}], 23, 1.1, STILL),
+      {color:COL.lead, width:1.3, seed:23, passes:1, phase:STILL});
+  }
+  ctx.restore();
+}
+
+function draw(){
+  drawPaper();
+  drawBorder();
+  drawTallies();
+  drawApple();
+  drawSnake();
+  if (!started) drawAnnotations();          // labels only before the first run
+  if (devOn) drawDev();
+}
+
+/* ============================================================
+   EYE PHYSICS  —  runs on real time, not on ticks
+   ============================================================ */
+function updateEyes(dt){
+  const lim = T.EYE_R - T.PUPIL_R;
+  for (const e of eyes){
+    e.vy += T.EYE_GRAV * dt;
+    e.ox += e.vx * dt; e.oy += e.vy * dt;
+    const d = Math.hypot(e.ox, e.oy);
+    if (d > lim){
+      const nx = e.ox/d, ny = e.oy/d;
+      e.ox = nx*lim; e.oy = ny*lim;
+      const vn = e.vx*nx + e.vy*ny;
+      e.vx -= (1+T.EYE_BOUNCE)*vn*nx;
+      e.vy -= (1+T.EYE_BOUNCE)*vn*ny;
+    }
+    const damp = Math.pow(T.EYE_DAMP, dt*60);
+    e.vx *= damp; e.vy *= damp;
+  }
+}
+
+/* ============================================================
+   LOOP
+   ============================================================ */
+function loop(now){
+  const dt = Math.min(0.05, (now - last)/1000);
+  last = now;
+  fps = fps*0.9 + (1/Math.max(dt,1e-4))*0.1;
+  boil = Math.floor(now / T.BOIL_MS) % 3;
+
+  if (alive && !paused){
+    acc += dt;
+    const interval = 1/speed;
+    let guard = 8;
+    while (acc >= interval && guard--){ step(); acc -= interval; if(!alive) break; }
+  }
+  updateEyes(dt);
+  draw();
+
+  if (alive && !paused) rafId = requestAnimationFrame(loop);
+  else if (!alive)      rafId = requestAnimationFrame(idle);   // keep the eyes settling
+}
+function idle(now){
+  const dt = Math.min(0.05, (now-last)/1000); last = now;
+  boil = Math.floor(now / T.BOIL_MS) % 3;
+  updateEyes(dt);
+  draw();
+  rafId = requestAnimationFrame(idle);
+}
+
+/* ============================================================
+   DEV READOUT  —  ` toggles
+   ============================================================ */
+let devOn = false;
+function drawDev(){
+  const h = snake[0];
+  devEl.textContent =
+`SNEK dev
+fps      ${fps.toFixed(0)}
+state    ${alive ? (paused?'PAUSED':'ALIVE') : (started?'DEAD':'IDLE')}
+tick     ${ticks}
+speed    ${speed.toFixed(2)} c/s   (int ${(1000/speed).toFixed(0)}ms)
+len      ${snake.length}   score ${score}
+head     ${h.x},${h.y}  dir ${dir.x},${dir.y}
+food     ${food ? food.x+','+food.y : '—'}
+lumps    ${lumps.map(l=>l.t.toFixed(0)).join(',') || '—'}
+eyeL     ${eyes[0].ox.toFixed(1)},${eyes[0].oy.toFixed(1)}
+eyeR     ${eyes[1].ox.toFixed(1)},${eyes[1].oy.toFixed(1)}
+boil     ${boil}
+danger   ${alive && dangerAhead() ? 'YES' : 'no'}`;
+}
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+function turn(x,y){
+  if (!alive || paused) return;
+  if (x === -dir.x && y === -dir.y) return;          // no 180s
+  if (x === dir.x && y === dir.y) return;
+  nextDir = {x,y};
+}
+const KEYS = {
+  ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0],
+  w:[0,-1], s:[0,1], a:[-1,0], d:[1,0]
+};
+// keys the browser owns — never swallow these, and never start a game on them
+const SYSTEM_KEY = /^(Shift|Control|Alt|Meta|Tab|CapsLock|F\d+)$/;
+
+window.addEventListener('keydown', e=>{
+  const k = KEYS[e.key] || KEYS[String(e.key).toLowerCase()];
+
+  // dev readout, available in every state
+  if (e.key === '`'){ devOn = !devOn; devEl.classList.toggle('hidden', !devOn); return; }
+
+  if (!alive){
+    // the note says "press anything", so anything has to work. this check comes
+    // before the pause key on purpose — P used to get swallowed here and the
+    // sticky note just sat there.
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (SYSTEM_KEY.test(e.key)) return;
+    e.preventDefault();
+    start();
+    if (k) turn(k[0], k[1]);        // leave in the direction you actually asked for
+    return;
+  }
+
+  if (e.key === 'p' || e.key === 'P'){ e.preventDefault(); togglePause(); return; }
+  if (k){ e.preventDefault(); turn(k[0], k[1]); }
+});
+
+let tStart = null;
+const play = document.querySelector('.play');
+play.addEventListener('touchstart', e=>{
+  if (!alive){ start(); return; }
+  tStart = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+}, {passive:true});
+play.addEventListener('touchmove', e=>{
+  if (!tStart) return;
+  const dx = e.touches[0].clientX - tStart.x, dy = e.touches[0].clientY - tStart.y;
+  if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+  if (Math.abs(dx) > Math.abs(dy)) turn(dx>0?1:-1, 0); else turn(0, dy>0?1:-1);
+  tStart = null;
+}, {passive:true});
+play.addEventListener('click', ()=>{ if (!alive) start(); });
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+best = loadBest();
+bestEl.textContent = best;
+reset();
+alive = false; started = false;
+showOverlay(VOICE.ready.t, VOICE.ready.b, VOICE.ready.p);
+last = performance.now();
+rafId = requestAnimationFrame(idle);
+
+// poking surface — used by validate.js and handy in the console
+window.SNEK = {
+  T, VOICE,
+  get state(){ return {snake, dir, food, score, best, alive, started, paused, speed, lumps, ticks, eyes}; },
+  step, start, reset, turn, togglePause, draw, updateEyes,
+  segWidth, speedFor, stepMsFor, wobblePts, STILL,
+  get boil(){ return boil; },
+  setFood: (x,y)=>{ food = {x,y}; },
+  setDir:  (x,y)=>{ nextDir = {x,y}; },
+  isAlive: ()=>alive,
+  dangerAhead,
+};
+})();
+</script>
+</body>
+</html>

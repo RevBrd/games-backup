@@ -1,0 +1,44 @@
+#!/bin/sh
+# ---------------------------------------------------------------------------
+# Asterism — preservation lock
+#
+# asterism_job3.html is the Claude Fable 5 original, kept as an authorial
+# record: a game designed end to end by a single model with no human design
+# input. It is not a working file. Nothing goes in it — not a fix, not a
+# typo correction, not a new constellation.
+#
+# All changes belong in asterism_expanded.html.
+# See CLAUDE.md, "Preservation register".
+# ---------------------------------------------------------------------------
+
+LOCKED='asterism_job3.html'
+EXPECT='d74897b0942eb83bcce2e0daa1254e548571a174'   # git blob sha1 of the original
+
+if git diff --cached --name-only | grep -qx "$LOCKED"; then
+  echo ''
+  echo "  BLOCKED — $LOCKED is locked."
+  echo ''
+  echo '  This file is the preserved Claude Fable 5 original. It is kept'
+  echo '  unmodified on purpose. Put your change in asterism_expanded.html.'
+  echo ''
+  echo '  If you truly intend to change it:  git commit --no-verify'
+  echo ''
+  exit 1
+fi
+
+# Also catch a swap that somehow bypassed the staged-name check.
+if [ -f "$LOCKED" ]; then
+  ACTUAL=$(git hash-object "$LOCKED")
+  if [ "$ACTUAL" != "$EXPECT" ]; then
+    echo ''
+    echo "  BLOCKED — $LOCKED no longer matches the preserved original."
+    echo "    expected  $EXPECT"
+    echo "    found     $ACTUAL"
+    echo ''
+    echo '  Restore it with:  git checkout -- '"$LOCKED"
+    echo ''
+    exit 1
+  fi
+fi
+
+exit 0
