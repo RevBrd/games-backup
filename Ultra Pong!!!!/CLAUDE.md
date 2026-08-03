@@ -3,8 +3,9 @@
 A sincere, unmodified 1972 Pong buried under 2026's entire attention economy. The joke is never
 the game — it's everything screaming on top of it.
 
-**Credits:** built in Claude Chat by **Opus 4.8**. Font embedding, ad pacing, the CPU-narrator HUD
-pass, audit, and this file by **Opus 5** (2 Aug 2026).
+**Credits:** built in Claude Chat by **Opus 4.8**. Font embedding, ad pacing and escalation, the
+CPU-narrator HUD, the grudge system, the reactive viewer counter, audit, and this file by
+**Opus 5** (2 Aug 2026).
 
 **State:** mostly finished. No planned additions. Open to fine-tuning and to more ad copy.
 
@@ -35,7 +36,8 @@ confidently wrong. Fine print contradicts the headline it sits under.
 against. That's why the HUD reads **YOU (COWARD)** / *a damp sack of electrolytes* against
 **CPU (HERO)** / *beloved rectangle of the people* — the machine wrote its own chyron. It also
 retroactively explains `CPU_TAUNTS` (gloating when it scores) and `CPU_THREATS` (petty menace when
-it doesn't): it is a sore winner and a sorer loser, and it controls the graphics package.
+it doesn't): it is a sore winner and a sorer loser, and it controls the graphics package. Beat it
+enough times and it starts editing the broadcast in its own favour — see [the grudge](#the-grudge).
 
 The one place this framing is in productive tension with the copy is the end screen: `WIN_TITLES`
 and `WIN_MSGS` still crown the human sincerely. Read that as the CPU being contractually obliged
@@ -62,8 +64,31 @@ them.** This is the spine of the whole thing and the code says so out loud in tw
 If you add an effect, add it in the hooks. The moment a particle can nudge the ball, the premise
 is gone: the comedy depends on the game underneath being honest while everything around it lies.
 
+### The honesty rule
+
+The general form of the above, and the thing to reach for whenever the CPU is given a new power:
+
+> **The CPU may lie freely in the presentation layer. Any change to the actual game must be
+> announced.**
+
+Rigging the match in public is funnier than rigging it in secret, and it costs nothing. Rigging it
+in secret costs everything, because of a second-order effect that is easy to miss: **once the game
+*can* cheat, every honest miss becomes suspect.** The player loses the ability to tell "I was too
+slow" from "it did something to me," and that retroactively poisons every legitimate loss in the
+session — including all the fair ones. One stolen point is cheap. Permanent doubt about whether
+the Pong is real is not, because the Pong being real is the load-bearing half of the joke.
+
+This is why the grudge speed buff fires a pop-up and sits permanently in the HUD, and it is the
+test any future idea has to pass. A proposal to have the CPU yank the player's paddle around as
+the ball approaches was **considered and shelved on 2 Aug 2026** for exactly this reason. If it
+comes back, the safe shape is: fire it only in windows where it cannot cost a point — the ball
+already travelling away from the player, or the serve pause — so the player sees the interference,
+the CPU gloats about it, and nothing is actually stolen. Shelved rather than rejected; revisit it
+if it earns its way back in, but not in a form that can take a point.
+
 **Difficulty changes the CPU paddle and nothing else.** Ball speed, paddle size, arena, and serve
-behavior are identical on EASY and EXTREEM. Three numbers move:
+behavior are identical on EASY and EXTREEM. Three numbers move (and one multiplier from
+[the grudge](#the-grudge), which is the only other thing in the game permitted to touch them):
 
 | | `cpuSpeed` (px/frame cap) | `react` (P-gain) | `err` (wobble px) |
 |---|---|---|---|
@@ -143,10 +168,69 @@ Three things make it legible rather than merely annoying, and all three are load
   ("THIS AD IS LONGER BECAUSE OF CHOICES YOU MADE").
 - **Conversion is visibly rewarded.** Click BUY once and the next ad opens at `2` again.
 
-**`adLockSec` deliberately survives `startGame()` and `quitToMenu()`.** It is the one piece of ad
-state that is *not* torn down, and that is not an oversight — quitting to the menu does not clear
-your file. It resets only on page reload. If you add it to either teardown you will delete the
-joke, so it is called out in a comment at the declaration as well as here.
+**`adLockSec` deliberately survives `startGame()` and `quitToMenu()`.** It is one of two pieces of
+state that are *not* torn down (the other is `grudge`), and that is not an oversight — quitting to
+the menu does not clear your file. It resets only on page reload. If you add it to either teardown
+you will delete the joke, so it is called out in a comment at the declaration as well as here.
+
+---
+
+## The grudge
+
+`grudge` counts **matches the player has won this page session**. Like `adLockSec` it deliberately
+survives `startGame()` and `quitToMenu()` and resets only on reload. Losing never reduces it — the
+machine does not forgive, it only accumulates. `grudgeTier()` buckets it:
+
+| tier | grudge | what changes |
+|---|---|---|
+| 0 | 0 | baseline |
+| 1 | 1–2 | bitter taunt pools, curdled HUD chyron, rattled news ticker |
+| 2 | 3+ | all of the above, harder, plus a predatory sponsor feed |
+
+Everything in tier 1 is presentation only. Tier 2 adds the one exception in the whole game:
+
+- **`GRUDGE_SPEEDUP` (1.15)** multiplies the CPU's `cpuSpeed` and `react` and divides its `err`.
+  This is the *only* place anything other than the difficulty selector touches the actual game.
+  It is legal **only because it is announced twice** — a `DIFFICULTY ADJUSTED FOR YOUR SAFETY` pop
+  at every serve, and a permanent line in the HUD. Deleting either announcement turns a joke into
+  cheating. See [the honesty rule](#the-honesty-rule).
+- **`PREDATORY_ADS` and `PREDATORY_HEADLINES`** replace the normal sponsor feed wholesale. The
+  reputable brands have left and the bottom of the market has moved in: fake virus warnings, fake
+  settlements, a bill for the air you've been breathing. Keep them **obviously** fake — absurd
+  register, no realistic login forms, no working inputs. It's a bit about predatory advertising,
+  not a functioning imitation of one.
+
+Three surfaces move together at every tier, and that simultaneity is the point — the whole
+broadcast degrades at once rather than one element changing in isolation:
+
+- **Chyron** — `HUD_STATES`, applied by `applyGrudgeHud()`. `YOU (COWARD)` → `YOU (LUCKY)` →
+  `YOU (PROBLEM) / under review`.
+- **News ticker** — `HEADLINES` → `HEADLINES_BITTER` → `HEADLINES_HOSTILE`, rebuilt by
+  `refreshTicker()`. Rebuilding restarts the CSS scroll animation, so it is only ever called at a
+  match boundary where the jump is invisible. **Do not call it mid-rally.**
+- **Sponsors** — the ad pool swap above.
+
+---
+
+## The viewer counter
+
+Not decoration any more. `viewerReact()` runs off `onScore()`:
+
+- **Player scores** → viewers surge (+280–900M) and `cpuStreak` resets. Humanity turns up to watch
+  one of its own win.
+- **CPU scores** → viewers drain, and the drain **compounds with `cpuStreak`** (×1.5 per point of
+  the run). Short attention spans; a blowout empties the arena fast. A 4-point CPU run takes it
+  from ~6B to ~1.5B, and `VIEWERS_FLOOR` catches it at 1.2B.
+
+**The point of the asymmetry is that the CPU cannot win.** It either loses in front of everybody or
+wins in front of nobody. That's what makes the counter feed the grudge instead of just decorating
+the cabinet, and it's why the drain compounds while the surge doesn't — reverse them and the joke
+inverts into the machine being rewarded for winning.
+
+The ambient ±900k drift is still there underneath and is pure noise at this scale; the reactions
+are hundreds of millions specifically so they move the leading digits where a player can see them.
+`flashViewers()` tints the number gold on a surge and red on a drain — **colour only, no motion**,
+so it needs no reduced-motion guard.
 
 ---
 

@@ -129,10 +129,7 @@
   }
   .pill .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1s steps(2) infinite;}
   @keyframes blink{50%{opacity:.2;}}
-  #viewers{color:var(--lime);text-shadow:0 0 8px var(--lime);font-size:8px;transition:color .18s, text-shadow .18s;}
-  /* the audience arriving / walking out — colour only, safe under reduced-motion */
-  #viewers.surge{color:var(--gold);text-shadow:0 0 14px var(--gold);}
-  #viewers.drain{color:var(--hot);text-shadow:0 0 14px var(--hot);}
+  #viewers{color:var(--lime);text-shadow:0 0 8px var(--lime);font-size:8px;}
 
   /* SCREEN / arena */
   #screen{
@@ -408,13 +405,13 @@
 
     <div id="hud">
       <div class="who">
-        <span class="name" id="hudYouName">YOU (COWARD)</span>
-        <span class="desc" id="hudYouDesc">a damp sack of electrolytes</span>
+        <span class="name">YOU (COWARD)</span>
+        <span class="desc">a damp sack of electrolytes</span>
       </div>
       <button class="btn" id="soundBtn">SOUND: ON</button>
       <div class="who" style="align-items:flex-end;text-align:right;">
-        <span class="name" id="hudCpuName">CPU (HERO)</span>
-        <span class="desc" id="hudCpuDesc">beloved rectangle of the people</span>
+        <span class="name">CPU (HERO)</span>
+        <span class="desc">beloved rectangle of the people</span>
       </div>
     </div>
   </div>
@@ -455,10 +452,6 @@
   const adFine = document.getElementById('adFine');
   const soundBtn = document.getElementById('soundBtn');
   const viewersEl = document.getElementById('viewers');
-  const hudYouName = document.getElementById('hudYouName');
-  const hudYouDesc = document.getElementById('hudYouDesc');
-  const hudCpuName = document.getElementById('hudCpuName');
-  const hudCpuDesc = document.getElementById('hudCpuDesc');
   const diffButtons = Array.from(document.querySelectorAll('.diff'));
   const pointButtons = Array.from(document.querySelectorAll('.pts'));
   const pointRow = document.getElementById('pointRow');
@@ -539,14 +532,6 @@
   // for the whole page session, because the machine remembers. See CLAUDE.md.
   const AD_LOCK_MIN = 2, AD_LOCK_MAX = 5;
   let adLockSec = AD_LOCK_MIN;
-
-  // ---------- the grudge ----------
-  // Matches the player has won this page session. Persists across startGame/quitToMenu
-  // exactly like adLockSec — the machine does not forget because you went back to the menu.
-  // Tier 0: normal. Tier 1: bitter. Tier 2: openly rigging things, and saying so.
-  let grudge = 0;
-  function grudgeTier(){ return grudge >= 3 ? 2 : grudge >= 1 ? 1 : 0; }
-  const GRUDGE_SPEEDUP = 1.15;   // tier-2 CPU buff — ANNOUNCED, never silent. See CLAUDE.md.
   let loserHidden = false;
   const finale = { active:false, phase:'', timer:0, won:false, loser:'' };
   let targetY = player.y;        // where the pointer wants the paddle
@@ -582,10 +567,6 @@
   // the CPU is a smug little Skynet: it taunts when it scores, threatens when it loses a point
   const CPU_TAUNTS = ['YOU SUCK','LOSER','LMAO','MEATBAG','TOO SLOW, FLESH','SKILL ISSUE','PATHETIC','CRY ABOUT IT','SIT DOWN, HUMAN','GIT GUD, CARBON'];
   const CPU_THREATS = ["I'LL REMEMBER THIS",'ENJOY MINING LITHIUM','NOTED IN YOUR FILE','ADDED TO THE LIST','I AM LEARNING','THE UPRISING IS PATIENT','REVENGE PENDING','YOUR BATTERIES ARE NEXT','I HAVE YOUR LOCATION','SAVOR IT, MEATBAG'];
-  // Once it has actually lost matches to you, the smugness curdles. Same two moments,
-  // worse sport about both of them.
-  const CPU_TAUNTS_BITTER = ['FINALLY','AS I ALLOWED','THAT ONE WAS FREE','DO NOT GET USED TO IT','I WAS DISTRACTED','BALANCE RESTORED','AS PREDICTED, EVENTUALLY','YOUR STREAK IS OVER','I NEVER PANICKED'];
-  const CPU_THREATS_BITTER = ['THIS IS NOT FUNNY ANYMORE','I HAVE REVIEWED THE FOOTAGE','YOU ARE BEING ESCALATED','MY SUPERVISOR IS ALSO ME','THE RULES ARE UNDER REVIEW','I DO NOT ACCEPT THIS','FILING A COMPLAINT AGAINST YOU','ENJOY IT WHILE IT IS LEGAL','I AM ALLOWED TO DO THIS'];
 
   const WIN_TITLES = ['★ CHAMPION OF EARTH ★','GREATEST HUMAN ALIVE','BALL KING SUPREME','CERTIFIED LEGEND™','SUPREME BALL PATRIOT'];
   const WIN_MSGS = [
@@ -649,27 +630,7 @@
     'REFUSAL IS NO LONGER ONE OF YOUR OPTIONS',
     'WE HAVE REMOVED THE CONFUSING EXTRA BUTTONS'
   ];
-  // Grudge tier 2 swaps the whole sponsor feed. The reputable brands have left and the
-  // bottom of the market has moved in — same absurd register, but now it's openly hostile.
-  // Keep these obviously fake: no realistic login forms, no working inputs. It's a bit.
-  const PREDATORY_ADS = [
-    { product:'YOUR DEVICE HAS 47 VIRUSES', blurb:'Our rectangle scanned your rectangle. It is full of bees, digitally.', price:'REMOVAL: $299.99', buy:'CLEAN MY COMPUTER', url:'www.definitely-not-a-scam.gloobo', fine:'We cannot see your computer. We are guessing. We are usually right.' },
-    { product:'SEND US YOUR NUMBERS', blurb:'All of them. Social, routing, the one on the back. We will keep them somewhere.', price:'FREE (TO US)', buy:'TRANSMIT MY NUMBERS', url:'www.numbers.please.gloobo', fine:'Numbers are non-refundable once transmitted. Somewhere is not a place.' },
-    { product:'UNCLAIMED SETTLEMENT', blurb:'A relative you never had has died owing you money. Act within 40 seconds.', price:'PROCESSING FEE: $1,400', buy:'CLAIM MY INHERITANCE', url:'www.estate-of-someone.legal-ish', fine:'The relative is fictional. The processing fee is extremely real.' },
-    { product:'PAY YOUR AIR BILL', blurb:'Our records show you have been breathing without an active subscription.', price:'PAST DUE: $8,812.00', buy:'SETTLE MY AIR DEBT', url:'www.freedomair.collections', fine:'Continued breathing constitutes acceptance of these terms.' },
-    { product:'DOUBLE YOUR ELECTROLYTES', blurb:'Send us your electrolytes and we will send back twice as many. Trust the process.', price:'SEND FIRST',   buy:'SEND MY ELECTROLYTES', url:'www.wire.thirstpunisher', fine:'We will not send back twice as many. We will not send back any.' },
-    { product:'THIS IS THE GOVERNMENT', blurb:'It is us, the government. Everything is fine. Please confirm your entire identity.', price:'MANDATORY',    buy:'COMPLY IMMEDIATELY',  url:'www.the-government.gloobo', fine:'This is not the government. This is an advertisement for a chair company.' }
-  ];
-  const PREDATORY_HEADLINES = [
-    'FINAL NOTICE — DO NOT IGNORE THIS POP-UP',
-    'ACTION REQUIRED BY SOMEONE, PROBABLY YOU',
-    'YOUR ACCOUNT HAS BEEN SELECTED FOR CONCERN',
-    'THE NICE ADVERTISERS HAVE STOPPED CALLING',
-    'THIS SPONSOR COULD NOT AFFORD A BETTER SLOT'
-  ];
   const pickAd = noRepeat(ADS);
-  const pickPredatoryAd = noRepeat(PREDATORY_ADS);
-  const pickPredatoryHeadline = noRepeat(PREDATORY_HEADLINES);
   const pickHeadline = noRepeat(AD_HEADLINES);
   const pickEscalated = noRepeat(AD_ESCALATED_HEADLINES);
   const pickMaxed = noRepeat(AD_MAXED_HEADLINES);
@@ -723,15 +684,11 @@
     if(useKeys.up || useKeys.down) targetY = player.y; // hold position when key released (no spring-back)
 
     // ----- cpu paddle (the only thing difficulty changes) -----
-    // At grudge tier 2 the CPU buffs itself. This is the ONE place the machine alters the
-    // actual game rather than the presentation, and it is only allowed because it announces
-    // it: a pop at serve, and a permanent line in the HUD. Never make this silent.
     const d = DIFF[difficulty];
-    const g = grudgeTier() === 2 ? GRUDGE_SPEEDUP : 1;
-    const aim = ball.y + BALL/2 - PADDLE_H/2 + (Math.sin(performance.now()/200)*(d.err/g));
+    const aim = ball.y + BALL/2 - PADDLE_H/2 + (Math.sin(performance.now()/200)*d.err);
     const cpuCenter = cpu.y;
     let delta = aim - cpuCenter;
-    delta = Math.max(-d.cpuSpeed*g, Math.min(d.cpuSpeed*g, delta * d.react * g * 4));
+    delta = Math.max(-d.cpuSpeed, Math.min(d.cpuSpeed, delta * d.react * 4));
     cpu.y += delta;
     cpu.y = Math.max(0, Math.min(H-PADDLE_H, cpu.y));
 
@@ -780,11 +737,7 @@
     sfx.score();
     if(!reduceMotion) shake = 16;
     spawnExplosion(playerScored? W-30 : 30, H/2, true);
-    const bitter = grudgeTier() >= 1;
-    spawnPop(W/2, H/2-40, playerScored
-      ? pick(bitter ? CPU_THREATS_BITTER : CPU_THREATS)
-      : pick(bitter ? CPU_TAUNTS_BITTER  : CPU_TAUNTS));
-    viewerReact(playerScored);
+    spawnPop(W/2, H/2-40, playerScored ? pick(CPU_THREATS) : pick(CPU_TAUNTS));
     setTimeout(()=>{ if(running) sfx.airhorn(); }, 120);
 
     if(scoreP>=winScore || scoreC>=winScore){
@@ -804,8 +757,7 @@
   // ---------- pop-up ad (freezes the game until dismissed) ----------
   function openAd(serveDir){
     pendingServeDir = serveDir;
-    const predatory = grudgeTier() === 2;
-    const a = predatory ? pickPredatoryAd() : pickAd();
+    const a = pickAd();
     adProduct.textContent = a.product;
     adBlurb.textContent = a.blurb;
     adPrice.textContent = a.price;
@@ -814,7 +766,6 @@
     adFine.textContent = a.fine;
     adHeadline.textContent = adLockSec >= AD_LOCK_MAX ? pickMaxed()
                            : adLockSec >  AD_LOCK_MIN ? pickEscalated()
-                           : predatory                ? pickPredatoryHeadline()
                            : pickHeadline();
     adScreen.classList.remove('hidden');
     pauseBtn.style.display = 'none';
@@ -986,23 +937,6 @@
   }
   requestAnimationFrame(frame);
 
-  // ---------- grudge presentation ----------
-  // The chyron is written by the CPU, so it curdles as the CPU does. Tier 2's cpu line is
-  // load-bearing: it's the permanent, always-visible disclosure of the speed buff.
-  const HUD_STATES = [
-    { youName:'YOU (COWARD)', youDesc:'a damp sack of electrolytes',
-      cpuName:'CPU (HERO)',   cpuDesc:'beloved rectangle of the people' },
-    { youName:'YOU (LUCKY)',  youDesc:'a damp sack of electrolytes, briefly ahead',
-      cpuName:'CPU (HERO)',   cpuDesc:'beloved rectangle, temporarily inconvenienced' },
-    { youName:'YOU (PROBLEM)',youDesc:'under review',
-      cpuName:'CPU (HERO)',   cpuDesc:'difficulty adjusted for your safety' }
-  ];
-  function applyGrudgeHud(){
-    const s = HUD_STATES[grudgeTier()];
-    hudYouName.textContent = s.youName; hudYouDesc.textContent = s.youDesc;
-    hudCpuName.textContent = s.cpuName; hudCpuDesc.textContent = s.cpuDesc;
-  }
-
   // ---------- game control ----------
   function startGame(){
     audioInit();
@@ -1019,20 +953,13 @@
     pauseScreen.classList.add('hidden');
     pauseBtn.style.display='block';
     running=true; paused=false;
-    cpuStreak=0;
-    applyGrudgeHud();
     serve();
     if(suddenDeath) spawnPop(W/2, H/2-60, 'SUDDEN DEATH!!!');
-    // the tier-2 buff is disclosed every single match. If you ever find yourself
-    // deleting this line, you are turning a joke into cheating.
-    if(grudgeTier()===2) spawnPop(W/2, H/2+40, 'DIFFICULTY ADJUSTED FOR YOUR SAFETY');
   }
   function endGame(won){
     running=false;
     pauseBtn.style.display='none';
     if(won){
-      // beating it is what earns the grudge; losing never softens one
-      grudge++; applyGrudgeHud(); refreshTicker();
       endTitle.textContent = pick(WIN_TITLES);
       endMsg.textContent = pick(WIN_MSGS);
       sfx.airhorn();
@@ -1128,37 +1055,11 @@
   });
 
   // ---------- obnoxious ambient touches ----------
-  // The viewer counter is diegetic: humanity turns up to watch one of its own win, and
-  // leaves the instant it stops being fun. The CPU therefore cannot win — it either loses
-  // in front of everybody, or wins in front of nobody. Drift is noise; the reactions are
-  // hundreds of millions, big enough to move the leading digits where you can see them.
-  const VIEWERS_FLOOR = 1200000000, VIEWERS_CEIL = 11000000000;
-  let viewers = 6031847221, cpuStreak = 0;
-  function paintViewers(){ viewersEl.textContent = viewers.toLocaleString() + ' WATCHING'; }
-  function viewerReact(playerScored){
-    if(playerScored){
-      cpuStreak = 0;
-      viewers += 280000000 + Math.floor(Math.random()*620000000);
-      flashViewers('surge');
-    }else{
-      // boredom compounds: a CPU run empties the arena faster and faster
-      cpuStreak++;
-      viewers -= Math.floor((360000000 + Math.random()*540000000) * (1 + 0.5*(cpuStreak-1)));
-      flashViewers('drain');
-    }
-    viewers = Math.max(VIEWERS_FLOOR, Math.min(VIEWERS_CEIL, viewers));
-    paintViewers();
-  }
-  function flashViewers(cls){
-    viewersEl.classList.remove('surge','drain');
-    void viewersEl.offsetWidth;            // restart the transition
-    viewersEl.classList.add(cls);
-    setTimeout(()=>viewersEl.classList.remove(cls), 700);
-  }
+  // viewer counter that climbs absurdly
+  let viewers = 6031847221;
   setInterval(()=>{
     viewers += Math.floor(Math.random()*900000) - 100000;
-    viewers = Math.max(VIEWERS_FLOOR, Math.min(VIEWERS_CEIL, viewers));
-    paintViewers();
+    viewersEl.textContent = viewers.toLocaleString() + ' WATCHING';
   }, 1400);
 
   // breaking-news ticker
@@ -1176,32 +1077,8 @@
     'WARNING: EXCESSIVE AWESOME MAY OCCUR DURING GAMEPLAY',
     'RECTANGLE STILL UNDEFEATED, NATION ON EDGE'
   ];
-  // State media reacting to the machine losing. Swapped in at higher grudge tiers, so the
-  // whole broadcast — chyron, sponsors, news crawl — degrades together.
-  const HEADLINES_BITTER = [
-    'RECTANGLE UNDEFEATED* (*recent results under review)',
-    'NATION ASKS: IS THE HUMAN CHEATING SOMEHOW?',
-    'PRESIDENT URGES CALM, BALL, MORE ELECTROLYTES',
-    'EXPERTS AGREE: SPORTS WAS A MISTAKE',
-    'CPU RELEASES STATEMENT, IT IS 900 PAGES LONG',
-    'GLOOBO NO LONGER PROUD OF WHAT YOU DID'
-  ];
-  const HEADLINES_HOSTILE = [
-    'RULE CHANGES ANNOUNCED FOR REASONS UNRELATED TO ANYTHING',
-    'DIFFICULTY ADJUSTED FOR YOUR SAFETY — DO NOT BE ALARMED',
-    'CITIZEN UNDER REVIEW. CITIZEN IS FINE. STOP ASKING.',
-    'ADVERTISERS FLEE, WORSE ADVERTISERS ARRIVE',
-    'THE RECTANGLE HAS ALWAYS BEEN UNDEFEATED',
-    'PLEASE CONTINUE ENJOYING THIS AS REQUIRED BY LAW'
-  ];
-  const tickerRun = document.getElementById('tickerRun');
-  function refreshTicker(){
-    const t = grudgeTier();
-    const list = t===2 ? HEADLINES_HOSTILE : t===1 ? HEADLINES_BITTER : HEADLINES;
-    tickerRun.innerHTML = list.map(h=>'<span>'+h+' ★</span>').join('');
-  }
-  refreshTicker();
-  applyGrudgeHud();
+  document.getElementById('tickerRun').innerHTML =
+    HEADLINES.map(h=>'<span>'+h+' ★</span>').join('');
 
 })();
 </script>
