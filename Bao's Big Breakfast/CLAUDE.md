@@ -97,4 +97,3 @@ any change to `TUNE` or `LEVEL` — it is the regression test that catches an un
 - Only one level. No 1-2, no underground, no warp zones.
 - No pause menu, no persistence, no mobile/touch controls.
 - Balance numbers are placeholders and have had no holistic pass.
-- The folder is still named `Untitled` — rename when the game's name is settled.
