@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ULTRA PONG!!!!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#10001f;
+    --void2:#28003f;
+    --magenta:#ff1f8f;
+    --cyan:#00e9ff;
+    --lime:#b6ff00;
+    --gold:#ffd000;
+    --hot:#ff3d00;
+    --ink:#fff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Bungee',sans-serif;
+    color:var(--ink);
+    background:var(--void);
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    overflow:hidden;
+    position:relative;
+    user-select:none;
+  }
+
+  /* obnoxious rotating sunburst behind everything */
+  #sunburst{
+    position:fixed;
+    width:200vmax;height:200vmax;
+    left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    background:repeating-conic-gradient(from 0deg at 50% 50%,
+      var(--void) 0deg 9deg,
+      var(--void2) 9deg 18deg);
+    animation:spin 40s linear infinite;
+    z-index:0;
+    opacity:.85;
+  }
+  #glow{
+    position:fixed;inset:0;z-index:0;
+    background:radial-gradient(circle at 50% 42%, rgba(255,31,143,.35), transparent 55%),
+               radial-gradient(circle at 50% 42%, rgba(255,208,0,.18), transparent 38%);
+    pointer-events:none;
+  }
+  @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+
+  /* THE CABINET */
+  #cabinet{
+    position:relative;
+    z-index:2;
+    width:min(96vw,860px);
+    border-radius:18px;
+    padding:14px 14px 0;
+    background:
+      linear-gradient(180deg,#3a3a3a,#101010);
+    box-shadow:
+      0 0 0 4px var(--gold),
+      0 0 0 9px var(--magenta),
+      0 0 60px 8px rgba(255,31,143,.6),
+      inset 0 2px 0 rgba(255,255,255,.25);
+    will-change:transform;
+  }
+
+  /* TOP MARQUEE */
+  #marquee{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:8px;
+    padding:6px 4px 12px;
+  }
+  .flames{
+    font-family:'Bungee Shade',sans-serif;
+    color:var(--hot);
+    font-size:clamp(20px,5vw,40px);
+    line-height:1;
+    text-shadow:0 0 12px var(--gold);
+    animation:wob .25s steps(2) infinite;
+  }
+  @keyframes wob{0%{transform:translateY(0) rotate(-3deg);}100%{transform:translateY(-3px) rotate(3deg);}}
+  #title{
+    text-align:center;
+    line-height:.95;
+    flex:1;
+  }
+  #title .big{
+    font-family:'Bungee Shade',sans-serif;
+    font-size:clamp(26px,7.5vw,62px);
+    background:linear-gradient(180deg,#fff 0%,var(--gold) 40%,var(--hot) 75%,var(--magenta) 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 2px 0 #000) drop-shadow(0 0 18px var(--magenta));
+    letter-spacing:1px;
+  }
+  #title .tag{
+    font-size:clamp(7px,1.6vw,11px);
+    color:var(--cyan);
+    text-shadow:0 0 8px var(--cyan);
+    margin-top:6px;
+    letter-spacing:.5px;
+  }
+
+  /* LIVE badge + viewers */
+  #live{
+    z-index:3;
+    position:absolute;top:10px;left:14px;
+    display:flex;flex-direction:column;gap:4px;align-items:flex-start;
+    font-size:9px;
+  }
+  .pill{
+    background:var(--hot);color:#fff;
+    padding:3px 7px;border-radius:99px;
+    display:inline-flex;align-items:center;gap:5px;
+    box-shadow:0 0 10px var(--hot);
+  }
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1s steps(2) infinite;}
+  @keyframes blink{50%{opacity:.2;}}
+  #viewers{color:var(--lime);text-shadow:0 0 8px var(--lime);font-size:8px;}
+
+  /* SCREEN / arena */
+  #screen{
+    position:relative;
+    border-radius:8px;
+    overflow:hidden;
+    background:#000;
+    box-shadow:inset 0 0 0 3px #000, inset 0 0 40px rgba(0,0,0,.9);
+    line-height:0;
+  }
+  canvas{display:block;width:100%;height:auto;background:#000;image-rendering:pixelated;}
+
+  /* hype text popups layer */
+  #hype{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden;}
+  .pop{
+    position:absolute;
+    font-family:'Bungee',sans-serif;
+    color:var(--gold);
+    text-shadow:2px 2px 0 #000,0 0 14px var(--hot);
+    white-space:nowrap;
+    transform:translate(-50%,-50%) rotate(var(--r,-6deg));
+    animation:popfade 1.1s ease-out forwards;
+    font-size:clamp(14px,4vw,30px);
+  }
+  @keyframes popfade{
+    0%{opacity:0;scale:.3;}
+    18%{opacity:1;scale:1.25;}
+    35%{scale:1;}
+    100%{opacity:0;scale:1.1;translate:0 -34px;}
+  }
+
+  /* OVERLAYS (menu / win / lose) */
+  .overlay{
+    position:absolute;inset:0;z-index:6;
+    display:flex;flex-direction:column;align-items:center;justify-content:safe center;
+    text-align:center;gap:10px;padding:16px;overflow:auto;
+    background:radial-gradient(circle at 50% 40%, rgba(40,0,63,.86), rgba(0,0,0,.94));
+    backdrop-filter:blur(2px);
+  }
+  .overlay.hidden{display:none;}
+  .overlay h2{
+    font-family:'Bungee Shade',sans-serif;
+    font-size:clamp(22px,6vw,46px);
+    background:linear-gradient(180deg,#fff,var(--gold),var(--hot));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 14px var(--magenta));
+    line-height:1;
+  }
+  .overlay p{font-size:clamp(8px,2vw,12px);color:var(--cyan);text-shadow:0 0 8px var(--cyan);max-width:36ch;line-height:1.8;}
+  .difflabel{font-size:10px;color:var(--lime);text-shadow:0 0 8px var(--lime);letter-spacing:1px;margin-top:6px;}
+  .diffrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+  .btn{
+    font-family:'Bungee',sans-serif;
+    cursor:pointer;border:none;
+    color:#000;
+    padding:11px 16px;border-radius:10px;
+    font-size:clamp(10px,2.4vw,15px);
+    background:linear-gradient(180deg,var(--gold),var(--hot));
+    box-shadow:0 4px 0 #6b0000, 0 0 18px var(--hot);
+    transition:transform .06s, box-shadow .06s, filter .1s;
+    letter-spacing:.5px;
+  }
+  .btn:hover{filter:brightness(1.1);}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #6b0000,0 0 18px var(--hot);}
+  .btn:focus-visible{outline:3px solid var(--cyan);outline-offset:3px;}
+  .btn.sel{
+    background:linear-gradient(180deg,var(--cyan),var(--lime));
+    box-shadow:0 4px 0 #064b3a,0 0 22px var(--cyan);
+  }
+  .btn.big{font-size:clamp(13px,3.4vw,22px);padding:14px 28px;background:linear-gradient(180deg,var(--lime),var(--cyan));box-shadow:0 5px 0 #064b3a,0 0 26px var(--lime);}
+  .fine{font-size:7px;color:#9a7bb0;max-width:42ch;line-height:1.7;margin-top:4px;}
+  .sd{
+    background:linear-gradient(180deg,var(--hot),#7a0000);color:#fff;
+    box-shadow:0 4px 0 #3a0000,0 0 18px var(--hot);
+  }
+  .sd.sel{
+    background:linear-gradient(180deg,#fff,var(--hot));color:#000;
+    box-shadow:0 4px 0 #3a0000,0 0 26px var(--hot);
+    animation:sdpulse .5s steps(2) infinite;
+  }
+  @keyframes sdpulse{50%{filter:brightness(1.35);}}
+  #pointRow.disabled{opacity:.3;pointer-events:none;filter:grayscale(.7);}
+  .btn .sub{display:block;font-size:8px;opacity:.85;margin-top:4px;text-transform:none;}
+  @media (prefers-reduced-motion: reduce){ .sd.sel{animation:none;} }
+
+  /* POP-UP AD */
+  #adWindow{
+    width:min(94%,440px);
+    background:#d8d8ff;color:#10001f;
+    border:3px solid #00e9ff;border-radius:8px;
+    box-shadow:0 0 0 4px var(--magenta),0 0 50px var(--magenta);
+    overflow:hidden;
+    font-family:'Bungee',sans-serif;
+    animation:adpop .22s ease-out;
+  }
+  @keyframes adpop{from{transform:scale(.55);opacity:0;}to{transform:scale(1);opacity:1;}}
+  #adBar{
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    background:linear-gradient(90deg,#00e9ff,#b6ff00);
+    padding:6px 8px;font-family:'Press Start 2P',monospace;font-size:7px;color:#10001f;
+  }
+  #adUrl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #adClose{
+    flex:none;cursor:pointer;border:1px solid #10001f;
+    background:#ff3d00;color:#fff;width:20px;height:20px;border-radius:3px;
+    font-family:inherit;font-size:8px;line-height:1;padding:0;
+  }
+  #adClose:hover{background:#ff1f8f;}
+  #adBody{padding:16px 14px;display:flex;flex-direction:column;gap:9px;align-items:center;text-align:center;}
+  #adHeadline{font-size:9px;color:#d4006a;line-height:1.4;letter-spacing:.5px;}
+  #adProduct{font-family:'Bungee Shade',sans-serif;font-size:clamp(18px,5.5vw,30px);line-height:.95;color:#10001f;}
+  #adBlurb{font-size:9px;color:#28003f;line-height:1.5;max-width:30ch;}
+  #adPrice{font-size:13px;color:#ff3d00;}
+  #adSkip{background:none;border:none;color:#666;font-size:7px;text-decoration:underline;cursor:pointer;font-family:'Press Start 2P',monospace;}
+  #adFine{font-size:6px;color:#888;line-height:1.5;max-width:34ch;}
+  #adClose:focus-visible,#adSkip:focus-visible{outline:2px solid #ff1f8f;outline-offset:2px;}
+  #adBuy[disabled],#adClose[disabled],#adSkip[disabled]{opacity:.45;cursor:not-allowed;filter:grayscale(.4);}
+
+  #pauseBtn{
+    position:absolute;top:8px;right:8px;z-index:5;
+    font-family:'Press Start 2P',monospace;font-size:8px;
+    background:rgba(255,255,255,.14);color:#fff;
+    border:1px solid rgba(255,255,255,.45);
+    padding:7px 9px;border-radius:6px;cursor:pointer;display:none;
+  }
+  #pauseBtn:hover{background:rgba(255,255,255,.28);}
+  #pauseBtn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+
+  /* HUD ROW under screen */
+  #hud{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 6px;
+    font-size:9px;
+  }
+  #hud .who{display:flex;flex-direction:column;gap:3px;}
+  #hud .who .name{color:var(--gold);text-shadow:0 0 6px var(--gold);}
+  #hud .who .desc{color:#bbb;font-size:7px;}
+  #soundBtn{font-size:9px;padding:8px 12px;background:linear-gradient(180deg,var(--magenta),#7a004a);color:#fff;box-shadow:0 4px 0 #3a0024,0 0 14px var(--magenta);}
+  #soundBtn:active{transform:translateY(3px);box-shadow:0 1px 0 #3a0024;}
+
+  /* TICKER */
+  #ticker{
+    z-index:2;
+    width:min(96vw,860px);
+    margin-top:10px;
+    background:linear-gradient(90deg,var(--hot),var(--magenta));
+    color:#000;
+    border-radius:8px;
+    overflow:hidden;
+    white-space:nowrap;
+    box-shadow:0 0 18px var(--magenta);
+    font-family:'Press Start 2P',monospace;
+    font-size:9px;
+    padding:7px 0;
+    position:relative;
+  }
+  #ticker .run{
+    display:inline-block;
+    padding-left:100%;
+    animation:scroll 24s linear infinite;
+  }
+  #ticker .run span{margin:0 26px;}
+  @keyframes scroll{to{transform:translateX(-100%);}}
+
+  .controls-hint{
+    z-index:2;margin-top:8px;color:var(--cyan);
+    font-family:'Press Start 2P',monospace;font-size:7px;text-align:center;opacity:.7;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    #sunburst{animation:none;}
+    .flames{animation:none;}
+    #ticker .run{animation-duration:50s;}
+  }
+</style>
+</head>
+<body>
+  <div id="sunburst"></div>
+  <div id="glow"></div>
+
+  <div id="cabinet">
+    <div id="live">
+      <span class="pill"><span class="dot"></span>LIVE</span>
+      <span id="viewers">6,031,847,221 WATCHING</span>
+    </div>
+
+    <div id="marquee">
+      <div class="flames">≋≋</div>
+      <div id="title">
+        <div class="big">ULTRA PONG!!!!</div>
+        <div class="tag">THE BALL GAME OF THE FUTURE™ &nbsp;·&nbsp; (ORIGINALLY FROM 1972)</div>
+      </div>
+      <div class="flames">≋≋</div>
+    </div>
+
+    <div id="screen">
+      <canvas id="c" width="800" height="500"></canvas>
+      <div id="hype"></div>
+      <button id="pauseBtn">PAUSE</button>
+
+      <!-- MENU -->
+      <div id="menu" class="overlay">
+        <h2>ULTRA PONG!!!!</h2>
+        <p>NOW IN 7 DIMENSIONS* &nbsp;·&nbsp; 8K HD BALL TECHNOLOGY &nbsp;·&nbsp; PATRIOTICALLY APPROVED</p>
+        <div class="difflabel">CHOOSE YOUR DESTINY</div>
+        <div class="diffrow" id="diffRow">
+          <button class="btn diff" data-d="easy">EASY (FOR BABIES)</button>
+          <button class="btn diff sel" data-d="normal">NORMAL (STILL HARD)</button>
+          <button class="btn diff" data-d="extreem">EXTREEM</button>
+        </div>
+        <div class="difflabel">POINTS TO GLORY</div>
+        <div class="diffrow" id="pointRow">
+          <button class="btn pts" data-p="3">3</button>
+          <button class="btn pts sel" data-p="5">5</button>
+          <button class="btn pts" data-p="7">7</button>
+          <button class="btn pts" data-p="11">11</button>
+        </div>
+        <button class="btn sd" id="sdBtn">SUDDEN DEATH!!! (1 POINT)</button>
+        <button class="btn big" id="startBtn">SMASH TO BEGIN</button>
+        <p class="fine">First to your chosen number of GLORY POINTS is crowned Champion Of Earth. Ultra Pong is not affiliated with sports, balls, or competence. Side effects may include winning. By playing you agree to feel things. Electrolytes sold separately.*</p>
+        <p class="fine">*not actually 7 dimensions</p>
+      </div>
+
+      <!-- END SCREEN -->
+      <div id="end" class="overlay hidden">
+        <h2 id="endTitle">CHAMPION OF EARTH</h2>
+        <p id="endMsg">A statue will be built. Probably.</p>
+        <button class="btn big" id="againBtn">DO IT AGAIN (LEGALLY REQUIRED)</button>
+      </div>
+
+      <!-- PAUSE SCREEN -->
+      <div id="pause" class="overlay hidden">
+        <h2>PAUSED</h2>
+        <p>THE BALL WAITS FOR YOU. THE RECTANGLE DOES NOT FORGIVE DELAYS.</p>
+        <button class="btn big" id="resumeBtn">RESUME THE GLORY</button>
+        <button class="btn" id="quitBtn">QUIT TO MAIN MENU<span class="sub">(coward)</span></button>
+      </div>
+
+      <!-- POP-UP AD -->
+      <div id="ad" class="overlay hidden">
+        <div id="adWindow">
+          <div id="adBar">
+            <span id="adUrl">www.totally-legit-deals.gloobo</span>
+            <button id="adClose" aria-label="Close ad">✕</button>
+          </div>
+          <div id="adBody">
+            <div id="adHeadline">CONGRATULATIONS!!! YOU ARE TODAY'S WINNER</div>
+            <div id="adProduct">PRODUCT</div>
+            <div id="adBlurb">blurb</div>
+            <div id="adPrice">$0.99</div>
+            <button id="adBuy" class="btn big">BUY</button>
+            <button id="adSkip">no thanks, continue suffering</button>
+            <div id="adFine">fine print</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hud">
+      <div class="who">
+        <span class="name">YOU (HERO)</span>
+        <span class="desc">a beautiful human champion</span>
+      </div>
+      <button class="btn" id="soundBtn">SOUND: ON</button>
+      <div class="who" style="align-items:flex-end;text-align:right;">
+        <span class="name">CPU (COWARD)</span>
+        <span class="desc">a cold uncaring rectangle</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="ticker"><div class="run" id="tickerRun"></div></div>
+  <div class="controls-hint">MOVE: MOUSE / TOUCH / W,S / ↑,↓ &nbsp;&nbsp; PAUSE: P or ESC</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- elements ----------
+  const cv = document.getElementById('c');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const cabinet = document.getElementById('cabinet');
+  const hypeLayer = document.getElementById('hype');
+  const menu = document.getElementById('menu');
+  const endScreen = document.getElementById('end');
+  const endTitle = document.getElementById('endTitle');
+  const endMsg = document.getElementById('endMsg');
+  const startBtn = document.getElementById('startBtn');
+  const againBtn = document.getElementById('againBtn');
+  const pauseScreen = document.getElementById('pause');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const resumeBtn = document.getElementById('resumeBtn');
+  const quitBtn = document.getElementById('quitBtn');
+  const adScreen = document.getElementById('ad');
+  const adClose = document.getElementById('adClose');
+  const adBuy = document.getElementById('adBuy');
+  const adSkip = document.getElementById('adSkip');
+  const adProduct = document.getElementById('adProduct');
+  const adBlurb = document.getElementById('adBlurb');
+  const adPrice = document.getElementById('adPrice');
+  const adHeadline = document.getElementById('adHeadline');
+  const adUrl = document.getElementById('adUrl');
+  const adFine = document.getElementById('adFine');
+  const soundBtn = document.getElementById('soundBtn');
+  const viewersEl = document.getElementById('viewers');
+  const diffButtons = Array.from(document.querySelectorAll('.diff'));
+  const pointButtons = Array.from(document.querySelectorAll('.pts'));
+  const pointRow = document.getElementById('pointRow');
+  const sdBtn = document.getElementById('sdBtn');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- tiny audio engine (lazy, gesture-started) ----------
+  let actx = null, soundOn = true;
+  function audioInit(){
+    if(actx) return;
+    try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ actx=null; }
+  }
+  function tone(freq, dur, type, vol){
+    if(!soundOn || !actx) return;
+    try{
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type||'square'; o.frequency.value = freq;
+      g.gain.value = vol==null?0.06:vol;
+      o.connect(g); g.connect(actx.destination);
+      const t = actx.currentTime;
+      g.gain.setValueAtTime(g.gain.value, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      o.start(t); o.stop(t+dur);
+    }catch(e){}
+  }
+  const sfx = {
+    paddle(){ tone(480,0.05,'square',0.07); },
+    wall(){ tone(240,0.05,'square',0.05); },
+    score(){ tone(130,0.25,'square',0.07); },
+    airhorn(){
+      if(!soundOn||!actx) return;
+      try{
+        const o=actx.createOscillator(),g=actx.createGain();
+        o.type='sawtooth'; o.connect(g); g.connect(actx.destination);
+        const t=actx.currentTime;
+        o.frequency.setValueAtTime(330,t);
+        o.frequency.linearRampToValueAtTime(180,t+0.4);
+        g.gain.setValueAtTime(0.08,t);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.45);
+        o.start(t); o.stop(t+0.45);
+      }catch(e){}
+    },
+    jingle(){
+      tone(523,0.10,'square',0.06);
+      setTimeout(()=>tone(659,0.10,'square',0.06),95);
+      setTimeout(()=>tone(784,0.16,'square',0.06),190);
+    }
+  };
+
+  // ---------- game state ----------
+  const PADDLE_W = 12, PADDLE_H = 76, PADDLE_MARGIN = 26;
+  const BALL = 12;
+  let winScore = 5;
+  const BASE_SPEED = 5.2;        // classic, calm starting pace
+  const SPEED_GAIN = 1.035;      // gentle speed-up per paddle hit
+  const MAX_SPEED = 12;
+  const MAX_BOUNCE = 50 * Math.PI/180; // contact-angle english, like the original
+
+  const DIFF = {
+    easy:    { cpuSpeed:4.4, react:0.10, err:34 },
+    normal:  { cpuSpeed:6.4, react:0.18, err:18 },
+    extreem: { cpuSpeed:9.5, react:0.32, err:7  }
+  };
+  let difficulty = 'normal';
+  let pointTarget = 5;
+  let suddenDeath = false;
+
+  const player = { x:PADDLE_MARGIN, y:H/2-PADDLE_H/2, vy:0 };
+  const cpu    = { x:W-PADDLE_MARGIN-PADDLE_W, y:H/2-PADDLE_H/2 };
+  const ball   = { x:W/2, y:H/2, vx:0, vy:0, speed:BASE_SPEED };
+  let scoreP = 0, scoreC = 0;
+  let running = false, paused = false, serveTimer = 0;
+  let adOpen = false, pendingServeDir = null;
+  let adArmed = false, adTimerId = null, adCountId = null;
+  let loserHidden = false;
+  const finale = { active:false, phase:'', timer:0, won:false, loser:'' };
+  let targetY = player.y;        // where the pointer wants the paddle
+  let useKeys = { up:false, down:false };
+
+  // ---------- cosmetic-only effects (never touch ball physics) ----------
+  let particles = [];
+  let rings = [];
+  let shake = 0;
+
+  function spawnExplosion(x, y, big){
+    const n = big ? 26 : 10;
+    const palette = ['#fff','#ffd000','#ff3d00','#ff1f8f','#00e9ff','#b6ff00'];
+    for(let i=0;i<n;i++){
+      const a = Math.random()*Math.PI*2;
+      const sp = (big?2.2:1.4) * (1+Math.random()*2.4);
+      particles.push({
+        x, y,
+        vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
+        life:1, decay:0.02+Math.random()*0.03,
+        size:(big?3:2)+Math.random()*3,
+        color:palette[(Math.random()*palette.length)|0]
+      });
+    }
+    rings.push({x,y,r:6,max:big?70:34,life:1});
+    if(big && !reduceMotion) shake = Math.min(shake+12, 16);
+    else if(!reduceMotion) shake = Math.min(shake+4, 16);
+  }
+
+  const POPS = ['OHHH!!','POW!','SPORTS!','DESTRUCTION','THE FANS!!','INSANE','WOW','LEGENDARY','BALL!!','EPIC','UNREAL','YESSS'];
+  function pick(a){ return a[(Math.random()*a.length)|0]; }
+
+  // the CPU is a smug little Skynet: it taunts when it scores, threatens when it loses a point
+  const CPU_TAUNTS = ['YOU SUCK','LOSER','LMAO','MEATBAG','TOO SLOW, FLESH','SKILL ISSUE','PATHETIC','CRY ABOUT IT','SIT DOWN, HUMAN','GIT GUD, CARBON'];
+  const CPU_THREATS = ["I'LL REMEMBER THIS",'ENJOY MINING LITHIUM','NOTED IN YOUR FILE','ADDED TO THE LIST','I AM LEARNING','THE UPRISING IS PATIENT','REVENGE PENDING','YOUR BATTERIES ARE NEXT','I HAVE YOUR LOCATION','SAVOR IT, MEATBAG'];
+
+  const WIN_TITLES = ['★ CHAMPION OF EARTH ★','GREATEST HUMAN ALIVE','BALL KING SUPREME','CERTIFIED LEGEND™','SUPREME BALL PATRIOT'];
+  const WIN_MSGS = [
+    'You defeated a rectangle with your bare human reflexes. A statue will be built. Probably.',
+    'Scientists are baffled. THIRSTPUNISHER would like to put your face on a can.',
+    'The President named a highway after you. It is also named after 4,000 other people.',
+    'Your DNA will be preserved in case we ever need more of you. We probably will not.',
+    'You win a lifetime supply of feelings. Electrolytes sold separately.'
+  ];
+  const LOSE_TITLES = ['DEFEATED BY A RECTANGLE','THE MACHINE WINS','L + RATIO (BY A COMPUTER)','HUMANITY: 0','UNINSTALL YOURSELF'];
+  const LOSE_MSGS = [
+    'The machine feels nothing. Your citizenship is under review. Try drinking more electrolytes.',
+    'You lost to four lines of code. Four. The robots are taking notes.',
+    'Please report to the nearest Meatstorm Drive-Thru for mandatory re-education.',
+    'Gloobo has logged your shame for posterity and also for advertisers.',
+    'Have you tried being good at the game? Just a thought from your future overlord.'
+  ];
+
+  // Idiocracy-universe pop-up ads. Everything closes them; the joke is the copy.
+  const AD_HEADLINES = [
+    "CONGRATULATIONS!!! YOU ARE TODAY'S WINNER",
+    'ATTENTION CITIZEN: A WORD FROM YOUR SPONSORS',
+    'YOUR DEVICE HAS DETECTED FUN — UPGRADE REQUIRED',
+    '1,000,000 PEOPLE NEAR YOU ALREADY BOUGHT THIS',
+    'WARNING: YOU MAY BE ELIGIBLE FOR HAPPINESS'
+  ];
+  const ADS = [
+    { product:'THIRSTPUNISHER ZERO', blurb:'Now with NEGATIVE electrolytes. Your cells will not know what hit them.', price:'ONLY $0.99 / SIP', buy:'HYDRATE AGGRESSIVELY', url:'www.drink.thirstpunisher', fine:'Not a beverage. May be a beverage. Consult no one.' },
+    { product:'MEATSTORM 5000', blurb:"It's a drive-thru AND a hospital AND a daycare. Eat the nuggets, leave the baby.", price:'4 EASY PAYMENTS OF MEAT', buy:'INGEST NOW', url:'www.meatstorm.drivethru', fine:'Baby retrieval not guaranteed. Nuggets are real.' },
+    { product:'GLOOBO PRIME+ ULTRA', blurb:'The everything app that watches you back. Now legally allowed in your dreams.', price:'$0/mo* (*your soul)', buy:'SUBSCRIBE FOREVER', url:'www.gloobo.gloobo.gloobo', fine:'Cancellation requires an act of Congress and a blood sample.' },
+    { product:'LAWYER IN A CAN', blurb:'Just add water for instant legal representation. Results not legally binding.', price:'$19.99 PER OBJECTION', buy:'OBJECT NOW', url:'www.canlaw.legal-ish', fine:'Lawyer is mostly foam. Foam cannot pass the bar.' },
+    { product:"BABY'S FIRST DEBT", blurb:"Start their credit score in the womb. It's never too early to owe!", price:'INTEREST: YES', buy:'ENROLL THE FETUS', url:'www.tinydebt.finance', fine:'By scrolling past you have co-signed.' },
+    { product:'SLEEP REPLACEMENT PASTE', blurb:'Why sleep when you could keep being productive for us? FDA-adjacent!', price:'$44.95 / TUBE', buy:'STAY AWAKE FOREVER', url:'www.nomoresleep.wellness', fine:'Side effects include seeing sounds and owing money.' },
+    { product:'THE BONE CHAIR', blurb:"It's a chair. Made of confidence. Possibly bone. Please do not ask which.", price:'PRICE: A FAVOR, LATER', buy:'SIT DOMINANTLY', url:'www.furniture.probably-bone', fine:'The chair remembers how you sat.' },
+    { product:'EXTRA LIMBS™', blurb:'Why settle for the limbs you were born with? Get MORE. Financing available.', price:'PER LIMB: NEGOTIABLE', buy:'ADD LIMBS', url:'www.morelimbs.bodyplus', fine:'Limb placement final. No refunds on limbs.' },
+    { product:'PATRIOT BRAND FREEDOM AIR', blurb:'Air, but it loves this country more than you do. Breathe responsibly.', price:'$5.00 / GULP', buy:'INHALE LIBERTY', url:'www.breathe.freedomair', fine:'May contain freedom, dust, and previous owners.' }
+  ];
+  function spawnPop(x, y, text){
+    const el = document.createElement('div');
+    el.className = 'pop';
+    el.textContent = text || POPS[(Math.random()*POPS.length)|0];
+    // position relative to the on-screen canvas (percentages map across any scale)
+    el.style.left = (x/W*100) + '%';
+    el.style.top  = (y/H*100) + '%';
+    el.style.setProperty('--r', (Math.random()*16-8).toFixed(1)+'deg');
+    hypeLayer.appendChild(el);
+    setTimeout(()=>el.remove(), 1200);
+  }
+
+  // ---------- physics: pure classic Pong ----------
+  function serve(toward){
+    ball.x = W/2; ball.y = H/2;
+    ball.speed = BASE_SPEED;
+    const ang = (Math.random()*0.5-0.25)*Math.PI;   // shallow angle
+    const dir = toward!=null ? toward : (Math.random()<0.5?-1:1);
+    ball.vx = dir * ball.speed * Math.cos(ang);
+    ball.vy = ball.speed * Math.sin(ang);
+    serveTimer = 45;  // ~0.75s pause before it moves
+  }
+
+  function reflectOffPaddle(p, dir){
+    // contact point -> bounce angle, then bump speed. Classic feel.
+    const rel = ((ball.y+BALL/2) - (p.y+PADDLE_H/2)) / (PADDLE_H/2);
+    const clamped = Math.max(-1, Math.min(1, rel));
+    const ang = clamped * MAX_BOUNCE;
+    ball.speed = Math.min(ball.speed * SPEED_GAIN, MAX_SPEED);
+    ball.vx = dir * ball.speed * Math.cos(ang);
+    ball.vy = ball.speed * Math.sin(ang);
+  }
+
+  function stepPhysics(){
+    if(serveTimer>0){ serveTimer--; return; }
+
+    // ----- player paddle (input) -----
+    // keyboard moves directly (snappy); pointer/touch eases toward target (smooth)
+    if(useKeys.up || useKeys.down){
+      const KSPD = 8;
+      if(useKeys.up)   player.y -= KSPD;
+      if(useKeys.down) player.y += KSPD;
+    } else {
+      player.y += (targetY - player.y) * 0.5;
+    }
+    player.y = Math.max(0, Math.min(H-PADDLE_H, player.y));
+    if(useKeys.up || useKeys.down) targetY = player.y; // hold position when key released (no spring-back)
+
+    // ----- cpu paddle (the only thing difficulty changes) -----
+    const d = DIFF[difficulty];
+    const aim = ball.y + BALL/2 - PADDLE_H/2 + (Math.sin(performance.now()/200)*d.err);
+    const cpuCenter = cpu.y;
+    let delta = aim - cpuCenter;
+    delta = Math.max(-d.cpuSpeed, Math.min(d.cpuSpeed, delta * d.react * 4));
+    cpu.y += delta;
+    cpu.y = Math.max(0, Math.min(H-PADDLE_H, cpu.y));
+
+    // ----- ball -----
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    // top / bottom walls
+    if(ball.y <= 0){ ball.y=0; ball.vy*=-1; onWall(ball.x, 2); }
+    else if(ball.y+BALL >= H){ ball.y=H-BALL; ball.vy*=-1; onWall(ball.x, H-2); }
+
+    // left paddle
+    if(ball.vx<0 &&
+       ball.x <= player.x+PADDLE_W &&
+       ball.x >= player.x &&
+       ball.y+BALL >= player.y &&
+       ball.y <= player.y+PADDLE_H){
+      ball.x = player.x+PADDLE_W;
+      reflectOffPaddle(player, 1);
+      onPaddle(ball.x, ball.y+BALL/2, true);
+    }
+    // right paddle
+    if(ball.vx>0 &&
+       ball.x+BALL >= cpu.x &&
+       ball.x+BALL <= cpu.x+PADDLE_W &&
+       ball.y+BALL >= cpu.y &&
+       ball.y <= cpu.y+PADDLE_H){
+      ball.x = cpu.x-BALL;
+      reflectOffPaddle(cpu, -1);
+      onPaddle(ball.x+BALL, ball.y+BALL/2, false);
+    }
+
+    // scoring
+    if(ball.x+BALL < 0){ scoreC++; onScore(false); }
+    else if(ball.x > W){ scoreP++; onScore(true); }
+  }
+
+  // ---------- event hooks (cosmetics + sound, no physics here) ----------
+  function onWall(x,y){ sfx.wall(); spawnExplosion(x, y, false); }
+  function onPaddle(x,y,byPlayer){
+    sfx.paddle();
+    spawnExplosion(x, y, true);   // BIG explosion, ball unaffected
+    spawnPop(x + (byPlayer? 40 : -40), y - 18);
+  }
+  function onScore(playerScored){
+    sfx.score();
+    if(!reduceMotion) shake = 16;
+    spawnExplosion(playerScored? W-30 : 30, H/2, true);
+    spawnPop(W/2, H/2-40, playerScored ? pick(CPU_THREATS) : pick(CPU_TAUNTS));
+    setTimeout(()=>{ if(running) sfx.airhorn(); }, 120);
+
+    if(scoreP>=winScore || scoreC>=winScore){
+      startFinale(scoreP>scoreC);
+    } else {
+      const dir = playerScored ? -1 : 1; // serve toward whoever just got scored on
+      if(Math.random() < 0.33) openAd(dir);
+      else serve(dir);
+    }
+  }
+
+  // ---------- pop-up ad (freezes the game until dismissed) ----------
+  function openAd(serveDir){
+    pendingServeDir = serveDir;
+    const a = pick(ADS);
+    adProduct.textContent = a.product;
+    adBlurb.textContent = a.blurb;
+    adPrice.textContent = a.price;
+    adBuy.textContent = a.buy;
+    adUrl.textContent = a.url;
+    adFine.textContent = a.fine;
+    adHeadline.textContent = pick(AD_HEADLINES);
+    adScreen.classList.remove('hidden');
+    pauseBtn.style.display = 'none';
+    adOpen = true;
+    sfx.jingle();
+    armAd();
+  }
+  function armAd(){
+    adArmed = false;
+    adClose.disabled = adBuy.disabled = adSkip.disabled = true;
+    let remain = 2;
+    adClose.textContent = String(remain);
+    adSkip.textContent = 'skip available in ' + remain + 's';
+    clearInterval(adCountId); clearTimeout(adTimerId);
+    adCountId = setInterval(()=>{
+      remain--;
+      if(remain > 0){
+        adClose.textContent = String(remain);
+        adSkip.textContent = 'skip available in ' + remain + 's';
+      }
+    }, 1000);
+    adTimerId = setTimeout(()=>{
+      clearInterval(adCountId);
+      adArmed = true;
+      adClose.disabled = adBuy.disabled = adSkip.disabled = false;
+      adClose.textContent = '✕';
+      adSkip.textContent = 'no thanks, continue suffering';
+    }, 2000);
+  }
+  function clearAdTimers(){ clearInterval(adCountId); clearTimeout(adTimerId); }
+  function closeAd(){
+    if(!adOpen || !adArmed) return;
+    clearAdTimers();
+    adScreen.classList.add('hidden');
+    adOpen = false;
+    if(running){
+      pauseBtn.style.display = 'block';
+      serve(pendingServeDir);
+    }
+  }
+
+  // ---------- victory finale (freeze, then a long obnoxious detonation) ----------
+  const FINALE_POPS = ['KABOOM','VICTORY','SPORTS!!!','INSANE','GLORY','DESTRUCTION','WOW','UNREAL','THE FANS!!','BOOM','EPIC','★★★','MAXIMUM BALL'];
+  function startFinale(won){
+    finale.active = true;
+    finale.phase = 'freeze';
+    finale.timer = 105;          // ~1.75s of dramatic stillness before the boom
+    finale.tick = 0;
+    finale.won = won;
+    finale.loser = won ? 'cpu' : 'player';
+    loserHidden = false;
+    pauseBtn.style.display = 'none';
+  }
+  function stepFinale(){
+    if(finale.phase === 'freeze'){
+      finale.timer--;
+      if(finale.timer <= 0){
+        // detonate the loser's paddle in a chunky multi-burst
+        const p = finale.loser === 'cpu' ? cpu : player;
+        const cx = p.x + PADDLE_W/2;
+        spawnExplosion(cx, p.y + PADDLE_H/2, true);
+        spawnExplosion(cx, p.y + 12, true);
+        spawnExplosion(cx, p.y + PADDLE_H - 12, true);
+        loserHidden = true;
+        if(!reduceMotion) shake = 16;
+        sfx.score(); sfx.airhorn();
+        finale.phase = 'boom';
+        finale.timer = 300;      // ~5s of unrelenting, pointless fireworks
+      }
+      return;
+    }
+    // 'boom' phase: explosions everywhere, affecting nothing, blocking continue
+    finale.timer--;
+    finale.tick++;
+    if(finale.tick % 4 === 0) spawnExplosion(Math.random()*W, Math.random()*H, Math.random()<0.55);
+    if(finale.tick % 24 === 0){
+      spawnPop(80+Math.random()*(W-160), 70+Math.random()*(H-140), pick(FINALE_POPS));
+      if(!reduceMotion) shake = Math.min(shake+9, 16);
+    }
+    if(finale.tick % 18 === 0) sfx.score();
+    if(finale.tick % 50 === 0) sfx.airhorn();
+    if(finale.timer <= 0){
+      finale.active = false;
+      endGame(finale.won);
+    }
+  }
+
+  // ---------- rendering ----------
+  function drawCenterLine(){
+    ctx.fillStyle = '#fff';
+    for(let y=8; y<H; y+=28){ ctx.fillRect(W/2-2, y, 4, 16); }
+  }
+  function drawScore(){
+    ctx.fillStyle = '#fff';
+    ctx.font = '48px "Press Start 2P", monospace';
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'right';
+    ctx.fillText(String(scoreP), W/2-40, 24);
+    ctx.textAlign = 'left';
+    ctx.fillText(String(scoreC), W/2+40, 24);
+  }
+  function drawEffects(){
+    // shockwave rings
+    for(const r of rings){
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(255,255,255,'+ (r.life*0.7) +')';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    // particles
+    for(const p of particles){
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function updateEffects(){
+    for(const p of particles){
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.vx*=0.99; p.life-=p.decay;
+    }
+    particles = particles.filter(p=>p.life>0);
+    for(const r of rings){ r.r += (r.max-r.r)*0.18; r.life-=0.06; }
+    rings = rings.filter(r=>r.life>0);
+    if(shake>0){ shake*=0.86; if(shake<0.4) shake=0; }
+    const dx = (Math.random()*2-1)*shake, dy=(Math.random()*2-1)*shake;
+    cabinet.style.transform = shake>0 ? `translate(${dx}px,${dy}px)` : '';
+  }
+
+  function render(){
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0,0,W,H);
+    drawCenterLine();
+    drawScore();
+    // paddles + ball (pure white, classic)
+    ctx.fillStyle = '#fff';
+    if(!(loserHidden && finale.loser==='player')) ctx.fillRect(player.x, player.y, PADDLE_W, PADDLE_H);
+    if(!(loserHidden && finale.loser==='cpu'))    ctx.fillRect(cpu.x, cpu.y, PADDLE_W, PADDLE_H);
+    if(!finale.active && (serveTimer<=0 || Math.floor(serveTimer/6)%2===0)){ // blink ball during serve pause
+      ctx.fillRect(ball.x, ball.y, BALL, BALL);
+    }
+    drawEffects();
+  }
+
+  // ---------- fixed-timestep loop ----------
+  let last = performance.now(), acc = 0;
+  const STEP = 1000/60;
+  function frame(now){
+    let dt = now-last; last = now;
+    if(dt>100) dt=100;
+    acc += dt;
+    while(acc >= STEP){
+      if(running && !paused && !adOpen){
+        if(finale.active) stepFinale();
+        else stepPhysics();
+      }
+      updateEffects();
+      acc -= STEP;
+    }
+    render();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ---------- game control ----------
+  function startGame(){
+    audioInit();
+    winScore = suddenDeath ? 1 : pointTarget;
+    scoreP=0; scoreC=0;
+    player.y = H/2-PADDLE_H/2; cpu.y = H/2-PADDLE_H/2;
+    targetY = player.y;
+    particles=[]; rings=[]; shake=0;
+    finale.active=false; loserHidden=false;
+    adOpen=false; adArmed=false; clearAdTimers(); adScreen.classList.add('hidden');
+    adClose.disabled=adBuy.disabled=adSkip.disabled=false;
+    menu.classList.add('hidden');
+    endScreen.classList.add('hidden');
+    pauseScreen.classList.add('hidden');
+    pauseBtn.style.display='block';
+    running=true; paused=false;
+    serve();
+    if(suddenDeath) spawnPop(W/2, H/2-60, 'SUDDEN DEATH!!!');
+  }
+  function endGame(won){
+    running=false;
+    pauseBtn.style.display='none';
+    if(won){
+      endTitle.textContent = pick(WIN_TITLES);
+      endMsg.textContent = pick(WIN_MSGS);
+      sfx.airhorn();
+    }else{
+      endTitle.textContent = pick(LOSE_TITLES);
+      endMsg.textContent = pick(LOSE_MSGS);
+    }
+    endScreen.classList.remove('hidden');
+  }
+
+  function setPaused(p){
+    if(!running) return;
+    paused = p;
+    if(paused){ pauseScreen.classList.remove('hidden'); pauseBtn.style.display='none'; }
+    else { pauseScreen.classList.add('hidden'); pauseBtn.style.display='block'; }
+  }
+  function quitToMenu(){
+    running=false; paused=false;
+    finale.active=false; loserHidden=false;
+    adOpen=false; adArmed=false; clearAdTimers(); adScreen.classList.add('hidden');
+    adClose.disabled=adBuy.disabled=adSkip.disabled=false;
+    pauseScreen.classList.add('hidden');
+    pauseBtn.style.display='none';
+    particles=[]; rings=[]; shake=0;
+    cabinet.style.transform='';
+    menu.classList.remove('hidden');
+  }
+
+  // ---------- input ----------
+  function pointerToTarget(clientY){
+    const rect = cv.getBoundingClientRect();
+    const scale = H / rect.height;
+    const y = (clientY - rect.top) * scale - PADDLE_H/2;
+    targetY = Math.max(0, Math.min(H-PADDLE_H, y));
+  }
+  cv.addEventListener('pointermove', e=>{ if(running && !paused) pointerToTarget(e.clientY); });
+  cv.addEventListener('touchmove', e=>{
+    if(running && !paused && e.touches[0]){ pointerToTarget(e.touches[0].clientY); e.preventDefault(); }
+  }, {passive:false});
+
+  window.addEventListener('keydown', e=>{
+    const k = e.key.toLowerCase();
+    if(k==='w'||k==='arrowup'){ useKeys.up=true; e.preventDefault(); }
+    if(k==='s'||k==='arrowdown'){ useKeys.down=true; e.preventDefault(); }
+    if(k==='p'||k==='escape'){ if(running && !adOpen && !finale.active) setPaused(!paused); }
+  });
+  window.addEventListener('keyup', e=>{
+    const k = e.key.toLowerCase();
+    if(k==='w'||k==='arrowup') useKeys.up=false;
+    if(k==='s'||k==='arrowdown') useKeys.down=false;
+  });
+
+  startBtn.addEventListener('click', startGame);
+  againBtn.addEventListener('click', ()=>{ menu.classList.remove('hidden'); endScreen.classList.add('hidden'); });
+  pauseBtn.addEventListener('click', ()=>setPaused(true));
+  resumeBtn.addEventListener('click', ()=>setPaused(false));
+  quitBtn.addEventListener('click', quitToMenu);
+  adClose.addEventListener('click', closeAd);
+  adBuy.addEventListener('click', closeAd);
+  adSkip.addEventListener('click', closeAd);
+
+  diffButtons.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      diffButtons.forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');
+      difficulty = b.dataset.d;
+    });
+  });
+
+  pointButtons.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      pointButtons.forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');
+      pointTarget = +b.dataset.p;
+      // picking a point total cancels sudden death
+      suddenDeath = false;
+      sdBtn.classList.remove('sel');
+      pointRow.classList.remove('disabled');
+    });
+  });
+
+  sdBtn.addEventListener('click', ()=>{
+    suddenDeath = !suddenDeath;
+    sdBtn.classList.toggle('sel', suddenDeath);
+    pointRow.classList.toggle('disabled', suddenDeath);
+  });
+
+  soundBtn.addEventListener('click', ()=>{
+    audioInit();
+    soundOn = !soundOn;
+    soundBtn.textContent = 'SOUND: ' + (soundOn?'ON':'OFF');
+    if(soundOn) sfx.paddle();
+  });
+
+  // ---------- obnoxious ambient touches ----------
+  // viewer counter that climbs absurdly
+  let viewers = 6031847221;
+  setInterval(()=>{
+    viewers += Math.floor(Math.random()*900000) - 100000;
+    viewersEl.textContent = viewers.toLocaleString() + ' WATCHING';
+  }, 1400);
+
+  // breaking-news ticker
+  const HEADLINES = [
+    'BREAKING: BALL CONTINUES TO BOUNCE — SCIENTISTS BAFFLED',
+    'PRESIDENT DECLARES PONG THE NATIONAL EMOTION',
+    'STUDY FINDS WATCHING PONG ADDS 9 YEARS TO YOUR LIFE* (*not a study)',
+    'NEW LAW REQUIRES ALL CITIZENS TO ENJOY THIS',
+    'THIRSTPUNISHER: NOW SAFE FOR MOST HUMANS',
+    'MEATSTORM DRIVE-THRU MERGES WITH HOSPITAL FOR CONVENIENCE',
+    'LOCAL MAN HITS BALL, IS IMMEDIATELY MADE KING',
+    "DON'T THINK. JUST PONG.",
+    'GLOOBO KNOWS WHAT YOU DID. GLOOBO IS PROUD OF YOU.',
+    'EXPERTS AGREE: SPORTS',
+    'WARNING: EXCESSIVE AWESOME MAY OCCUR DURING GAMEPLAY',
+    'RECTANGLE STILL UNDEFEATED, NATION ON EDGE'
+  ];
+  document.getElementById('tickerRun').innerHTML =
+    HEADLINES.map(h=>'<span>'+h+' ★</span>').join('');
+
+})();
+</script>
+</body>
+</html>
