@@ -97,17 +97,22 @@ Do not fix these. They are the joke.
 
 Three rules, all in `onScore()` and `openAd()`:
 
-- **33% roll** after every non-winning point.
+- **0.49 roll** after every non-winning point.
 - **Never on consecutive points.** An ad break sets `adLastPoint`, which blocks the next point
   from rolling at all. Back-to-back interstitials stop reading as a joke and start reading as an
   obstacle; one point of actual pong is the minimum palate cleanser.
 - **Never the same product or headline twice running**, via the `noRepeat()` picker. A repeat
   reads as a bug rather than a bit and punctures the illusion of an endless sponsor feed.
 
-The consecutive-block means the **effective** rate is not 33%. It's a two-state Markov chain that
-settles at `0.33 / 1.33` ≈ **24.8%** of points — verified at 500k simulated points. If you ever
-want a true 33% *felt* rate while keeping the block, the roll would need to go to ~0.49. That was
-left alone on purpose; 24.8% is the tuned value as of Aug 2026.
+**The 0.49 is not the felt rate and must not be "corrected" to 0.33.** The consecutive-point block
+eats about a quarter of the rolls, so the two-state Markov chain settles at `0.49 / 1.49` ≈
+**32.9%** — one point in three, which is the actual tuned target. Verified at 1M simulated points.
+Change the block and you must re-derive the roll: `roll = felt / (1 - felt)`.
+
+**The target is coverage, not pacing.** Most players never finish an 11-point match, so the rate
+is set so that even a short session gets advertised at: ≈**1.6 ads in a 5-point match**, ≈**3.6 in
+an 11-point**. A game about advertising where a quitter sees zero ads has failed at its one job.
+Judge any future change to these numbers against that, not against how it feels on a full match.
 
 `adLastPoint` is reset in both `startGame()` and `quitToMenu()`, like the rest of the ad state.
 

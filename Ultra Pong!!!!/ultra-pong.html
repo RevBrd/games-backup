@@ -707,9 +707,12 @@
       startFinale(scoreP>scoreC);
     } else {
       const dir = playerScored ? -1 : 1; // NB: actually serves toward whoever just scored
-      // 1-in-3, but never on consecutive points — back-to-back breaks stop being funny
-      // and start being an obstacle. One point of pong is the minimum palate cleanser.
-      if(!adLastPoint && Math.random() < 0.33){ adLastPoint = true; openAd(dir); }
+      // 0.49 rather than 0.33: the consecutive-point block below eats about a quarter of
+      // the rolls, and 0.49/1.49 lands the FELT rate back on one point in three. Coverage
+      // is the goal — most players quit long before 11, and everyone should get an ad.
+      // Never on consecutive points, though: back-to-back breaks stop being funny and
+      // start being an obstacle. One point of pong is the minimum palate cleanser.
+      if(!adLastPoint && Math.random() < 0.49){ adLastPoint = true; openAd(dir); }
       else { adLastPoint = false; serve(dir); }
     }
   }
