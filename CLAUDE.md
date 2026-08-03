@@ -14,9 +14,14 @@ starting or resuming work. This file is the catalog and the cross-game housekeep
 | [DeadSpace](DeadSpace/) | Dead Space: Block Party! — a fake licensed Tetris tie-in whose cheerfulness is the horror | Mostly complete; needs port to standalone HTML |
 | [Nebula Strike](Nebula%20Strike/) | Galaga with weapon powerups — seven guns that each fire completely differently | Playable; wants a balance overhaul (player far too strong) |
 | [Untitled](Untitled/) | Bao's Big Breakfast — SMB 1-1 as a steamed bun on a giant kitchen counter. Built for a friend of Trevor's | Level 1 complete and playable end-to-end; folder still needs renaming |
+| [Untitled2](Untitled2/) | Combat Circuit — build a battle bot, press GO, watch it fight on its own | Sandbox pass: physics, component damage, behavior chips, three win conditions. No economy yet; folder needs renaming |
+| [Snek](Snek/) | Snake, drawn badly on purpose in ballpoint pen on notebook paper, with googly eyes | Reskin pass complete and playable; mechanics still vanilla Snake by design |
+| [Asterism](Asterism/) | Qix as celestial cartography — fence off the void, capture the constellation's stars, watch the figure ink itself in gold | Complete and playable at nine maps. Designed end-to-end by Fable 5 with no human design input; the 3-map original is preserved and **locked** — read its `CLAUDE.md` before touching anything |
 
 Other games exist from earlier Claude Chat sessions and are not yet migrated into this folder.
 Add a row when one lands, and give it a `CLAUDE.md` of its own.
+
+If known, please credit the Claude model that assisted in its creation within the game's 'CLAUDE.md' file. If you work on the game yourself, add yourself to the credits.
 
 ## Conventions across games
 
@@ -39,7 +44,7 @@ are the exception, not the norm — do not go looking for hidden intent behind a
 
 A few of these are parodies of bad software, and *their* defects are authored. Every game with that
 property says so explicitly near the top of its own `CLAUDE.md`, with a register of which specific
-artifacts are intentional. **Read that register before touching anything, and never silently "fix"
+artifacts are intentional. This is not the default, expect most projects to be straightforward unless otherwise noted. **Read that register before touching anything, and never silently "fix"
 a typo, placeholder, duplicated string, or dead-end UI in a game that has one.** When in doubt,
 surface it and ask instead of correcting it.
 
