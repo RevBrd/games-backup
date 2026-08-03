@@ -17,6 +17,7 @@ starting or resuming work. This file is the catalog and the cross-game housekeep
 | [Combat Circuit](Combat%20Circuit/) | Build a battle bot, press GO, watch it fight on its own | Sandbox pass: physics, component damage, behavior chips, three win conditions. No economy yet |
 | [Snek](Snek/) | Snake, drawn badly on purpose in ballpoint pen on notebook paper, with googly eyes | Reskin pass complete and playable; mechanics still vanilla Snake by design |
 | [Asterism](Asterism/) | Qix as celestial cartography — fence off the void, capture the constellation's stars, watch the figure ink itself in gold | Complete and playable at nine maps. Designed end-to-end by Fable 5 with no human design input; the 3-map original is preserved and **locked** — read its `CLAUDE.md` before touching anything |
+| [Ultra Pong!!!!](Ultra%20Pong!!!!/) | Untouched 1972 Pong buried under 2026's entire attention economy — Idiocracy ad breaks, a taunting CPU, six billion viewers | Mostly finished. Physics are pure classic Pong and must stay that way; four authored annoyances are registered in its `CLAUDE.md`. More ad copy welcome |
 
 Other games exist from earlier Claude Chat sessions and are not yet migrated into this folder.
 Add a row when one lands, and give it a `CLAUDE.md` of its own.
