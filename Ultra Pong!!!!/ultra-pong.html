@@ -390,13 +390,13 @@
 
     <div id="hud">
       <div class="who">
-        <span class="name">YOU (HERO)</span>
-        <span class="desc">a beautiful human champion</span>
+        <span class="name">YOU (COWARD)</span>
+        <span class="desc">a damp sack of electrolytes</span>
       </div>
       <button class="btn" id="soundBtn">SOUND: ON</button>
       <div class="who" style="align-items:flex-end;text-align:right;">
-        <span class="name">CPU (COWARD)</span>
-        <span class="desc">a cold uncaring rectangle</span>
+        <span class="name">CPU (HERO)</span>
+        <span class="desc">beloved rectangle of the people</span>
       </div>
     </div>
   </div>
@@ -510,6 +510,7 @@
   let running = false, paused = false, serveTimer = 0;
   let adOpen = false, pendingServeDir = null;
   let adArmed = false, adTimerId = null, adCountId = null;
+  let adLastPoint = false;   // an ad break blocks the next point from having one
   let loserHidden = false;
   const finale = { active:false, phase:'', timer:0, won:false, loser:'' };
   let targetY = player.y;        // where the pointer wants the paddle
@@ -582,6 +583,21 @@
     { product:'EXTRA LIMBS™', blurb:'Why settle for the limbs you were born with? Get MORE. Financing available.', price:'PER LIMB: NEGOTIABLE', buy:'ADD LIMBS', url:'www.morelimbs.bodyplus', fine:'Limb placement final. No refunds on limbs.' },
     { product:'PATRIOT BRAND FREEDOM AIR', blurb:'Air, but it loves this country more than you do. Breathe responsibly.', price:'$5.00 / GULP', buy:'INHALE LIBERTY', url:'www.breathe.freedomair', fine:'May contain freedom, dust, and previous owners.' }
   ];
+  // pick(), but never the same entry twice running — a repeated ad reads as a bug
+  // rather than a bit, and the whole gag depends on the sponsor feed feeling endless
+  function noRepeat(list){
+    let last = -1;
+    return function(){
+      if(list.length < 2) return list[0];
+      let i;
+      do{ i = (Math.random()*list.length)|0; }while(i === last);
+      last = i;
+      return list[i];
+    };
+  }
+  const pickAd = noRepeat(ADS);
+  const pickHeadline = noRepeat(AD_HEADLINES);
+
   function spawnPop(x, y, text){
     const el = document.createElement('div');
     el.className = 'pop';
@@ -690,23 +706,25 @@
     if(scoreP>=winScore || scoreC>=winScore){
       startFinale(scoreP>scoreC);
     } else {
-      const dir = playerScored ? -1 : 1; // serve toward whoever just got scored on
-      if(Math.random() < 0.33) openAd(dir);
-      else serve(dir);
+      const dir = playerScored ? -1 : 1; // NB: actually serves toward whoever just scored
+      // 1-in-3, but never on consecutive points — back-to-back breaks stop being funny
+      // and start being an obstacle. One point of pong is the minimum palate cleanser.
+      if(!adLastPoint && Math.random() < 0.33){ adLastPoint = true; openAd(dir); }
+      else { adLastPoint = false; serve(dir); }
     }
   }
 
   // ---------- pop-up ad (freezes the game until dismissed) ----------
   function openAd(serveDir){
     pendingServeDir = serveDir;
-    const a = pick(ADS);
+    const a = pickAd();
     adProduct.textContent = a.product;
     adBlurb.textContent = a.blurb;
     adPrice.textContent = a.price;
     adBuy.textContent = a.buy;
     adUrl.textContent = a.url;
     adFine.textContent = a.fine;
-    adHeadline.textContent = pick(AD_HEADLINES);
+    adHeadline.textContent = pickHeadline();
     adScreen.classList.remove('hidden');
     pauseBtn.style.display = 'none';
     adOpen = true;
@@ -880,7 +898,7 @@
     targetY = player.y;
     particles=[]; rings=[]; shake=0;
     finale.active=false; loserHidden=false;
-    adOpen=false; adArmed=false; clearAdTimers(); adScreen.classList.add('hidden');
+    adOpen=false; adArmed=false; adLastPoint=false; clearAdTimers(); adScreen.classList.add('hidden');
     adClose.disabled=adBuy.disabled=adSkip.disabled=false;
     menu.classList.add('hidden');
     endScreen.classList.add('hidden');
@@ -913,7 +931,7 @@
   function quitToMenu(){
     running=false; paused=false;
     finale.active=false; loserHidden=false;
-    adOpen=false; adArmed=false; clearAdTimers(); adScreen.classList.add('hidden');
+    adOpen=false; adArmed=false; adLastPoint=false; clearAdTimers(); adScreen.classList.add('hidden');
     adClose.disabled=adBuy.disabled=adSkip.disabled=false;
     pauseScreen.classList.add('hidden');
     pauseBtn.style.display='none';

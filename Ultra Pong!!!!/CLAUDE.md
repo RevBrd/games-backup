@@ -3,8 +3,8 @@
 A sincere, unmodified 1972 Pong buried under 2026's entire attention economy. The joke is never
 the game — it's everything screaming on top of it.
 
-**Credits:** built in Claude Chat by **Opus 4.8**. Font embedding, audit, and this file by
-**Opus 5** (2 Aug 2026).
+**Credits:** built in Claude Chat by **Opus 4.8**. Font embedding, ad pacing, the CPU-narrator HUD
+pass, audit, and this file by **Opus 5** (2 Aug 2026).
 
 **State:** mostly finished. No planned additions. Open to fine-tuning and to more ad copy.
 
@@ -26,9 +26,22 @@ unskippable interstitials, forced hype, participation-trophy language, a five-se
 budget spent on a rectangle. Not Pong. Pong is the straight man.
 
 **Tone rules.** The satire punches at institutions — advertisers, platforms, the state, the
-attention economy. Never at the player. The CPU trash-talks, but it's a smug little Skynet being
-absurd, not cruelty; keep it PG and keep it stupid. Copy is ALL CAPS, superlative, and
+attention economy. Never at the player, except through the CPU (see below), where it's clearly
+the machine's opinion and not the game's. The CPU trash-talks, but it's a smug little Skynet
+being absurd, not cruelty; keep it PG and keep it stupid. Copy is ALL CAPS, superlative, and
 confidently wrong. Fine print contradicts the headline it sits under.
+
+**Who is narrating.** The broadcast you're looking at is produced by the CPU you're playing
+against. That's why the HUD reads **YOU (COWARD)** / *a damp sack of electrolytes* against
+**CPU (HERO)** / *beloved rectangle of the people* — the machine wrote its own chyron. It also
+retroactively explains `CPU_TAUNTS` (gloating when it scores) and `CPU_THREATS` (petty menace when
+it doesn't): it is a sore winner and a sorer loser, and it controls the graphics package.
+
+The one place this framing is in productive tension with the copy is the end screen: `WIN_TITLES`
+and `WIN_MSGS` still crown the human sincerely. Read that as the CPU being contractually obliged
+to run the sponsor-approved victory package while seething — which is funnier than rewriting it,
+so it stays. `LOSE_MSGS` already gloats openly ("your future overlord"), which fits with no
+adjustment needed.
 
 ---
 
@@ -80,9 +93,23 @@ Do not fix these. They are the joke.
    detonates the loser's paddle and spends ~5s on unrelenting fireworks that affect nothing before
    the end screen appears. Length is the point.
 
-Ad rate is **33% after every non-winning point**, and Trevor considers it tuned as of Aug 2026. At
-11 points you will eat three or four. If it's ever adjusted, that's a deliberate call, not a bug
-fix — say so out loud.
+### Ad pacing (tuned — change deliberately or not at all)
+
+Three rules, all in `onScore()` and `openAd()`:
+
+- **33% roll** after every non-winning point.
+- **Never on consecutive points.** An ad break sets `adLastPoint`, which blocks the next point
+  from rolling at all. Back-to-back interstitials stop reading as a joke and start reading as an
+  obstacle; one point of actual pong is the minimum palate cleanser.
+- **Never the same product or headline twice running**, via the `noRepeat()` picker. A repeat
+  reads as a bug rather than a bit and punctures the illusion of an endless sponsor feed.
+
+The consecutive-block means the **effective** rate is not 33%. It's a two-state Markov chain that
+settles at `0.33 / 1.33` ≈ **24.8%** of points — verified at 500k simulated points. If you ever
+want a true 33% *felt* rate while keeping the block, the roll would need to go to ~0.49. That was
+left alone on purpose; 24.8% is the tuned value as of Aug 2026.
+
+`adLastPoint` is reset in both `startGame()` and `quitToMenu()`, like the rest of the ad state.
 
 ---
 
@@ -93,17 +120,18 @@ fix — say so out loud.
   Since the ball never moves more than 12px per step, it cannot skip the band. Raise max speed —
   or thin the paddles — and the ball starts phasing through them at high rallies. If you want
   faster rallies, either widen the paddle to match or convert the test to a swept intersection.
-- **The serve-direction comment is wrong.** `onScore()` says "serve toward whoever just got scored
-  on"; the code serves toward whoever just *scored*. The behavior is intentional-feeling and
-  symmetric — **the code is authoritative, leave the sign alone.** Fix the comment if it bothers
-  you, not the `-1`.
+- **Serve direction is intentional and counterintuitive.** The ball is served *toward whoever just
+  scored* — `dir = playerScored ? -1 : 1` sends it leftward, at the player, when the player scores.
+  The original comment claimed the opposite and has been corrected to match the code. **Leave the
+  sign alone**; it's symmetric and it's the tuned feel.
 - **Hype popups are DOM elements**, appended to `#hype` and removed on a 1200ms `setTimeout`. They
   are positioned in percentages so they track the canvas at any scale. They are not on the canvas
   and will not appear in a canvas capture.
 - **The ad owns a small state machine** — `adOpen`, `adArmed`, `adTimerId`, `adCountId`,
-  `pendingServeDir`. `startGame()` and `quitToMenu()` both have to tear all of it down. Adding a
-  new exit path means clearing those timers too, or a stale timeout will re-enable buttons on a
-  screen that no longer exists.
+  `adLastPoint`, `pendingServeDir`. `startGame()` and `quitToMenu()` both have to tear all of it
+  down. Adding a new exit path means clearing those timers too, or a stale timeout will re-enable
+  buttons on a screen that no longer exists. Adding new ad state means adding it to *both*
+  teardowns.
 - **Audio is lazy and gesture-started.** `audioInit()` runs on first click; before that, sound
   calls are silent no-ops by design. Browsers require it.
 - **`prefers-reduced-motion` is honored throughout** — sunburst rotation, marquee flame wobble,
@@ -130,9 +158,10 @@ Layout is a fake arcade cabinet: rotating conic-gradient sunburst → cabinet ch
 (menu / pause / end / ad) are absolutely-positioned siblings inside `#screen`. Fixed 60Hz
 accumulator loop with `dt` clamped at 100ms, so backgrounded tabs don't fast-forward the ball.
 
-**Filename:** `pong2026.html` is the original working title; the game was renamed to ULTRA PONG!!!!
-mid-build. The filename was deliberately left alone. Not a mistake, not worth renaming unless the
-static-host layout demands it.
+**Filename:** `ultra-pong.html`, matching the collection's kebab-case convention. It was
+`pong2026.html` until 2 Aug 2026 — Pong 2026 was the working title before the mid-build rename to
+ULTRA PONG!!!! — and the stale name survived into the first commit. Renamed via `git mv`, so
+history follows. The pre-rename backup in `backups/` keeps the old name; that's history, leave it.
 
 `backups/` holds dated snapshots. Take one before any substantial pass.
 
