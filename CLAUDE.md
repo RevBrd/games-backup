@@ -13,8 +13,8 @@ starting or resuming work. This file is the catalog and the cross-game housekeep
 |---|---|---|
 | [DeadSpace](DeadSpace/) | Dead Space: Block Party! — a fake licensed Tetris tie-in whose cheerfulness is the horror | Mostly complete; needs port to standalone HTML |
 | [Nebula Strike](Nebula%20Strike/) | Galaga with weapon powerups — seven guns that each fire completely differently | Playable; wants a balance overhaul (player far too strong) |
-| [Untitled](Untitled/) | Bao's Big Breakfast — SMB 1-1 as a steamed bun on a giant kitchen counter. Built for a friend of Trevor's | Level 1 complete and playable end-to-end; folder still needs renaming |
-| [Untitled2](Untitled2/) | Combat Circuit — build a battle bot, press GO, watch it fight on its own | Sandbox pass: physics, component damage, behavior chips, three win conditions. No economy yet; folder needs renaming |
+| [Bao's Big Breakfast](Bao's%20Big%20Breakfast/) | SMB 1-1 as a steamed bun on a giant kitchen counter. Built for a friend of Trevor's | Level 1 complete and playable end-to-end |
+| [Combat Circuit](Combat%20Circuit/) | Build a battle bot, press GO, watch it fight on its own | Sandbox pass: physics, component damage, behavior chips, three win conditions. No economy yet |
 | [Snek](Snek/) | Snake, drawn badly on purpose in ballpoint pen on notebook paper, with googly eyes | Reskin pass complete and playable; mechanics still vanilla Snake by design |
 | [Asterism](Asterism/) | Qix as celestial cartography — fence off the void, capture the constellation's stars, watch the figure ink itself in gold | Complete and playable at nine maps. Designed end-to-end by Fable 5 with no human design input; the 3-map original is preserved and **locked** — read its `CLAUDE.md` before touching anything |
 
@@ -28,13 +28,46 @@ If known, please credit the Claude model that assisted in its creation within th
 - **Each game owns its own `CLAUDE.md`.** Premise, tone rules, deliberate defects, design history,
   known fragility. Target under 200 lines — depth beyond that goes in sibling files the game's
   `CLAUDE.md` points to.
-- **The code lives in the game folder, in git.** Not in `~/.claude/reference/`.
+- **The code lives in the game folder**, not in `~/.claude/reference/`. See **Git** below for
+  which repository that folder belongs to — it is not always the one you're standing in.
+- **Create a backup periodically.** Before every major job (can be skipped for minor ones), save a backup copy in a dedicated sub-folder.
 - **Games are stylistically independent on purpose.** Do not carry a look, a palette, or a tone
   from one game into another. Variety across the collection is the point, and reaching for
   something adjacent to an existing game is the wrong move even when it feels safe.
 - **Long-term target is a free static host** (GitHub Pages or similar), which serves files exactly
   as-is with no build step. That constrains format: a finished game should be a single
   self-contained HTML file that runs by double-clicking it.
+
+## Git
+
+**One repository holds the whole collection, and it lives at `Projects/Games/`.** Every game is an
+ordinary subfolder of it. There is no remote — history is local to this machine, so nothing is
+recoverable from a server if it's lost here.
+
+**A game folder should not contain its own `.git`.** This is the thing to actually watch for,
+because the failure is silent. Claude Code launched in a game folder reports *"Is a git repository:
+true"* either way — that's true whether the repo is the collection or a private one belonging to
+that folder. If the folder has its own `.git`, your commits land in a one-game repo that the
+collection's history never sees, and nobody notices until someone goes looking.
+
+So **before your first commit in a session, check where you actually are:**
+
+```bash
+git rev-parse --show-toplevel
+```
+
+If that doesn't print the path ending in `Projects/Games`, stop and say so before committing.
+
+**Two folders are currently the exception:** `Asterism/` and `Snek/` each still have their own
+`.git`. That's drift, not design — each was created by a session that ran `git init` in the game
+folder. Folding them in means rewriting those histories, so **don't do it unasked**, and don't
+quietly commit into them either. Raise it.
+
+**Never `git add -A` in a tree you don't have to yourself.** Sessions run in parallel here and
+leave work uncommitted mid-task — a half-finished folder rename, an edit to this catalog. Stage
+the specific paths you touched. If `git status` shows changes that aren't yours, say what they are
+and let them be, rather than bundling them into a commit whose message doesn't describe them.
+(This is written down because it has already happened.)
 
 ## When a game's tone depends on looking broken
 
