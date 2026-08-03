@@ -58,10 +58,23 @@ git rev-parse --show-toplevel
 
 If that doesn't print the path ending in `Projects/Games`, stop and say so before committing.
 
-**Two folders are currently the exception:** `Asterism/` and `Snek/` each still have their own
-`.git`. That's drift, not design — each was created by a session that ran `git init` in the game
-folder. Folding them in means rewriting those histories, so **don't do it unasked**, and don't
-quietly commit into them either. Raise it.
+**There are no exceptions left.** `Asterism/` and `Snek/` were folded in on 2 Aug 2026; every game
+is now an ordinary subfolder. The nesting arose because **Trevor ran `git init` when creating a
+game folder** — a reasonable instinct, and how you *would* start a standalone project, but wrong
+here because the collection repo above already covers everything underneath it. (An earlier version
+of this file blamed a session for it. That was wrong.) New game folder: create it and start
+working. No `git init`.
+
+**One hook is armed at the root:** `.githooks/pre-commit` locks `Asterism/asterism_job3.html`, the
+preserved Fable 5 original, against any modification. Git keeps `hooksPath` in `.git/config`, which
+is **never committed** — so after any fresh clone the lock is disarmed until someone runs:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Verified working: a tampered copy is refused, an unmodified one passes. Escape hatch if you really
+mean it is `git commit --no-verify`.
 
 **Never `git add -A` in a tree you don't have to yourself.** Sessions run in parallel here and
 leave work uncommitted mid-task — a half-finished folder rename, an edit to this catalog. Stage
