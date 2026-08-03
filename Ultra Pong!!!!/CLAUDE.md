@@ -9,8 +9,8 @@ pass, audit, and this file by **Opus 5** (2 Aug 2026).
 **State:** mostly finished. No planned additions. Open to fine-tuning and to more ad copy.
 
 **This game has no authored defects in the "parody of bad software" sense.** It is a sincere game
-in a satirical frame. Its bugs are real bugs — fix them. The four exceptions are registered below
-and are load-bearing jokes; everything else is fair game.
+in a satirical frame. Its bugs are real bugs — fix them. The handful of exceptions are registered
+below and are load-bearing jokes; everything else is fair game.
 
 ---
 
@@ -78,17 +78,20 @@ random noise; that trades a legible tell for mush.
 
 ---
 
-## The register: four things that look broken and are not
+## The register: things that look broken and are not
 
 Do not fix these. They are the joke.
 
 1. **`EXTREEM`** on the difficulty button. Misspelled on purpose. It is the single funniest
    character in the file.
-2. **The pop-up ad's 2-second lockout.** The ✕ counts down `2`, `1` before becoming clickable, and
-   the skip link reads "skip available in Ns". This is the unskippable-interstitial gag and the
-   waiting *is* the payload.
-3. **BUY does exactly what ✕ does.** Every control on the ad closes the ad. Nothing is purchased,
-   nothing is tracked, no state changes. The ad has no function beyond wasting your time.
+2. **The pop-up ad's lockout.** The ✕ counts down before becoming clickable, and the skip link
+   reads "skip available in Ns". This is the unskippable-interstitial gag and the waiting *is* the
+   payload. The length is not fixed — see **The conversion trainer** below.
+3. **The ad escalates against you, and BUY is the way out.** Refusing (✕ or skip) makes the *next*
+   ad's lockout one second longer; clicking BUY resets it to 2s. At the 5s cap, ✕ and skip are
+   removed from the DOM entirely and arrows herd you into BUY. Nothing is ever purchased — BUY
+   still just closes the ad — but it is no longer *equivalent* to ✕, and that asymmetry is the
+   entire point. Do not "simplify" the three controls back into one handler.
 4. **The five-second victory finale you cannot skip.** `startFinale()` freezes for ~1.75s, then
    detonates the loser's paddle and spends ~5s on unrelenting fireworks that affect nothing before
    the end screen appears. Length is the point.
@@ -115,6 +118,35 @@ an 11-point**. A game about advertising where a quitter sees zero ads has failed
 Judge any future change to these numbers against that, not against how it feels on a full match.
 
 `adLastPoint` is reset in both `startGame()` and `quitToMenu()`, like the rest of the ad state.
+
+### The conversion trainer
+
+The ad lockout is a variable, `adLockSec`, not a constant. It starts at `AD_LOCK_MIN` (2s) and:
+
+- **Refuse** — ✕ or the skip link — and it gains a second, capped at `AD_LOCK_MAX` (5s).
+- **Convert** — click BUY — and it snaps back to 2s.
+- **At the cap**, `#adWindow` gets `.maxed`, which removes ✕ and the skip link from the layout
+  outright and reveals arrows jabbing at BUY. The option to refuse is withdrawn.
+
+**This is a Skinner box and it is supposed to be.** The game spends four ads teaching the player
+that clicking the ad is the path of least resistance, then stops offering an alternative. A player
+who works this out has been conditioned by an advertiser inside of two minutes, which is the thesis
+of the whole game demonstrated on their actual hands rather than described in a headline.
+
+Three things make it legible rather than merely annoying, and all three are load-bearing:
+
+- **The countdown is printed on the ✕.** The player literally watches the number go 2 → 3 → 4.
+  Escalation is not hidden state; it's on the button.
+- **`AD_ESCALATED_HEADLINES` and `AD_MAXED_HEADLINES`** replace the normal headline once you're
+  above the floor. At ~1.6 ads in a five-point match, most players would otherwise never perceive
+  the mechanic at all, so the copy says out loud what just happened
+  ("THIS AD IS LONGER BECAUSE OF CHOICES YOU MADE").
+- **Conversion is visibly rewarded.** Click BUY once and the next ad opens at `2` again.
+
+**`adLockSec` deliberately survives `startGame()` and `quitToMenu()`.** It is the one piece of ad
+state that is *not* torn down, and that is not an oversight — quitting to the menu does not clear
+your file. It resets only on page reload. If you add it to either teardown you will delete the
+joke, so it is called out in a comment at the declaration as well as here.
 
 ---
 

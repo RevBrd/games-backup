@@ -248,6 +248,17 @@
   #adClose:focus-visible,#adSkip:focus-visible{outline:2px solid #ff1f8f;outline-offset:2px;}
   #adBuy[disabled],#adClose[disabled],#adSkip[disabled]{opacity:.45;cursor:not-allowed;filter:grayscale(.4);}
 
+  /* MAXED-OUT AD: the option to refuse is withdrawn. ✕ and skip are removed
+     outright and arrows herd you into the only remaining control. */
+  #adBuyRow{display:flex;align-items:center;justify-content:center;gap:10px;}
+  .adArrow{display:none;font-size:22px;color:#ff3d00;line-height:1;}
+  #adWindow.maxed .adArrow{display:inline-block;animation:jab .4s ease-in-out infinite alternate;}
+  #adWindow.maxed .adArrow:last-child{animation-name:jabR;}
+  #adWindow.maxed #adClose,#adWindow.maxed #adSkip{display:none;}
+  @keyframes jab{from{transform:translateX(-5px);}to{transform:translateX(3px);}}
+  @keyframes jabR{from{transform:translateX(5px);}to{transform:translateX(-3px);}}
+  @media (prefers-reduced-motion: reduce){ #adWindow.maxed .adArrow{animation:none;} }
+
   #pauseBtn{
     position:absolute;top:8px;right:8px;z-index:5;
     font-family:'Press Start 2P',monospace;font-size:8px;
@@ -380,7 +391,11 @@
             <div id="adProduct">PRODUCT</div>
             <div id="adBlurb">blurb</div>
             <div id="adPrice">$0.99</div>
-            <button id="adBuy" class="btn big">BUY</button>
+            <div id="adBuyRow">
+              <span class="adArrow" aria-hidden="true">▶</span>
+              <button id="adBuy" class="btn big">BUY</button>
+              <span class="adArrow" aria-hidden="true">◀</span>
+            </div>
             <button id="adSkip">no thanks, continue suffering</button>
             <div id="adFine">fine print</div>
           </div>
@@ -425,6 +440,7 @@
   const resumeBtn = document.getElementById('resumeBtn');
   const quitBtn = document.getElementById('quitBtn');
   const adScreen = document.getElementById('ad');
+  const adWindow = document.getElementById('adWindow');
   const adClose = document.getElementById('adClose');
   const adBuy = document.getElementById('adBuy');
   const adSkip = document.getElementById('adSkip');
@@ -511,6 +527,11 @@
   let adOpen = false, pendingServeDir = null;
   let adArmed = false, adTimerId = null, adCountId = null;
   let adLastPoint = false;   // an ad break blocks the next point from having one
+  // The sponsor feed keeps score. Refusing to convert lengthens the NEXT interruption;
+  // clicking BUY resets it. Deliberately NOT reset by startGame/quitToMenu — it persists
+  // for the whole page session, because the machine remembers. See CLAUDE.md.
+  const AD_LOCK_MIN = 2, AD_LOCK_MAX = 5;
+  let adLockSec = AD_LOCK_MIN;
   let loserHidden = false;
   const finale = { active:false, phase:'', timer:0, won:false, loser:'' };
   let targetY = player.y;        // where the pointer wants the paddle
@@ -595,8 +616,24 @@
       return list[i];
     };
   }
+  // Headlines for an escalated lockout. The mechanic is otherwise invisible to anyone
+  // who only sees two ads a session, so the copy says out loud what just happened.
+  const AD_ESCALATED_HEADLINES = [
+    'YOUR ENGAGEMENT SCORE HAS BEEN UPDATED',
+    'NON-COMPLIANCE DETECTED — INTERRUPTION EXTENDED',
+    'VALUED CUSTOMERS ENJOY SHORTER INTERRUPTIONS',
+    'GLOOBO NOTICED YOU NEVER BUY ANYTHING',
+    'THIS AD IS LONGER BECAUSE OF CHOICES YOU MADE'
+  ];
+  const AD_MAXED_HEADLINES = [
+    'THE ✕ HAS BEEN REVOKED FOR YOUR CONVENIENCE',
+    'REFUSAL IS NO LONGER ONE OF YOUR OPTIONS',
+    'WE HAVE REMOVED THE CONFUSING EXTRA BUTTONS'
+  ];
   const pickAd = noRepeat(ADS);
   const pickHeadline = noRepeat(AD_HEADLINES);
+  const pickEscalated = noRepeat(AD_ESCALATED_HEADLINES);
+  const pickMaxed = noRepeat(AD_MAXED_HEADLINES);
 
   function spawnPop(x, y, text){
     const el = document.createElement('div');
@@ -727,7 +764,9 @@
     adBuy.textContent = a.buy;
     adUrl.textContent = a.url;
     adFine.textContent = a.fine;
-    adHeadline.textContent = pickHeadline();
+    adHeadline.textContent = adLockSec >= AD_LOCK_MAX ? pickMaxed()
+                           : adLockSec >  AD_LOCK_MIN ? pickEscalated()
+                           : pickHeadline();
     adScreen.classList.remove('hidden');
     pauseBtn.style.display = 'none';
     adOpen = true;
@@ -735,9 +774,12 @@
     armAd();
   }
   function armAd(){
+    // at the cap, ✕ and the skip link are removed entirely — CSS handles the hiding,
+    // and the arrows herd the player toward the only control left
+    adWindow.classList.toggle('maxed', adLockSec >= AD_LOCK_MAX);
     adArmed = false;
     adClose.disabled = adBuy.disabled = adSkip.disabled = true;
-    let remain = 2;
+    let remain = adLockSec;
     adClose.textContent = String(remain);
     adSkip.textContent = 'skip available in ' + remain + 's';
     clearInterval(adCountId); clearTimeout(adTimerId);
@@ -754,12 +796,15 @@
       adClose.disabled = adBuy.disabled = adSkip.disabled = false;
       adClose.textContent = '✕';
       adSkip.textContent = 'no thanks, continue suffering';
-    }, 2000);
+    }, adLockSec*1000);
   }
   function clearAdTimers(){ clearInterval(adCountId); clearTimeout(adTimerId); }
-  function closeAd(){
+  function closeAd(converted){
     if(!adOpen || !adArmed) return;
     clearAdTimers();
+    // convert and you're forgiven; refuse and the next one is a second longer. This is
+    // the joke: the system is training you, and BUY is the path of least resistance.
+    adLockSec = converted ? AD_LOCK_MIN : Math.min(adLockSec + 1, AD_LOCK_MAX);
     adScreen.classList.add('hidden');
     adOpen = false;
     if(running){
@@ -972,9 +1017,9 @@
   pauseBtn.addEventListener('click', ()=>setPaused(true));
   resumeBtn.addEventListener('click', ()=>setPaused(false));
   quitBtn.addEventListener('click', quitToMenu);
-  adClose.addEventListener('click', closeAd);
-  adBuy.addEventListener('click', closeAd);
-  adSkip.addEventListener('click', closeAd);
+  adClose.addEventListener('click', ()=>closeAd(false));
+  adBuy.addEventListener('click',   ()=>closeAd(true));
+  adSkip.addEventListener('click',  ()=>closeAd(false));
 
   diffButtons.forEach(b=>{
     b.addEventListener('click', ()=>{
