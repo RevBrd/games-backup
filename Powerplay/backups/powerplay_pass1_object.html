@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>POWERPLAY — Polaris Electronics (H.K.) Ltd.</title>
+<style>
+  html,body{margin:0;height:100%;background:#0d1014;overflow:hidden;
+    font-family:"Arial Narrow",Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;}
+  #stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+  /* the unit itself. everything is sized off --u so the whole object scales as one piece. */
+  #unit{position:relative;width:calc(var(--u) * 620);height:calc(var(--u) * 880);
+    filter:drop-shadow(0 calc(var(--u)*22) calc(var(--u)*34) rgba(0,0,0,.62));}
+  #unit svg,#unit canvas{position:absolute;left:0;top:0;width:100%;height:100%;}
+  /* LAYER STACK — read POWERPLAY/CLAUDE.md before reordering.
+     1 caseArt  plastic, decal, buttons
+     2 wear     yellowing/fade/grime/crack   <- clipped: LCD window is a HOLE in this layer
+     3 lcd      the display (separate element; damage physically cannot reach it)
+     4 lens     glare arc + 2 hairline scratches on the plastic window cover only */
+  #caseArt{z-index:1}
+  #wear{z-index:2;pointer-events:none}
+  #lcd{z-index:3;pointer-events:none;image-rendering:auto}
+  #lens{z-index:4;pointer-events:none}
+  .hit{cursor:pointer}
+  #dev{position:absolute;left:10px;top:10px;z-index:20;color:#9fe8c0;background:rgba(6,10,8,.9);
+    border:1px solid #1d3f2c;padding:9px 12px;font:11px/1.55 ui-monospace,Consolas,monospace;
+    white-space:pre;display:none;max-height:94vh;overflow:auto;border-radius:3px;}
+  #hint{position:absolute;right:12px;bottom:10px;z-index:20;color:#3d454e;
+    font:11px/1.6 ui-monospace,Consolas,monospace;text-align:right;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="stage"><div id="unit">
+  <svg id="caseArt" viewBox="0 0 620 880" xmlns="http://www.w3.org/2000/svg"></svg>
+  <svg id="wear"    viewBox="0 0 620 880" xmlns="http://www.w3.org/2000/svg"></svg>
+  <canvas id="lcd"></canvas>
+  <svg id="lens"    viewBox="0 0 620 880" xmlns="http://www.w3.org/2000/svg"></svg>
+</div></div>
+<div id="dev"></div>
+<div id="hint">arrows &nbsp;skate &nbsp;·&nbsp; space &nbsp;pass·shoot<br>
+s sound &nbsp;·&nbsp; m mode &nbsp;·&nbsp; r reset &nbsp;·&nbsp; ` dev</div>
+
+<script>
+"use strict";
+/* ============================================================================
+   POWERPLAY  —  Polaris Electronics (H.K.) Ltd., model PP-4400
+   Pass 1: the object. Case, wear, and a working segment display.
+   Game logic is a sandbox loop only — GAME A / GAME B land in Pass 2 / Pass 3.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------- CONFIG --
+   Tweakables live here on purpose. Nothing below this block needs editing
+   to change how the thing looks or feels.                                   */
+const CFG = {
+  /* --- LCD material. This is a REFLECTIVE display: it does not emit light. --- */
+  ghostAlpha   : 0.062,  // unlit segments — the faint pre-etched outlines
+  litAlpha     : 0.88,   // fully driven segment
+  riseRate     : 0.34,   // per-frame approach when a segment switches ON
+  fallRate     : 0.15,   // slower than rise — this is what makes the smear
+  stuckSegment : "puck_4_0", // permanently half-driven. A real dead-handheld artifact.
+  stuckLevel   : 0.38,
+
+  /* --- feel --- */
+  moveCooldown : 105,    // ms between skater steps. no smooth motion, ever.
+  puckStep     : 78,     // ms per puck lattice hop
+
+  /* --- object --- */
+  yellowing    : 0.30,   // UV discolouration of the white ABS, 0 = factory fresh
+  decalFade    : 0.34,   // sun bleach on the printed artwork
+  grime        : 0.55,   // seams, bezel edge, the button you actually press
+};
+
+/* ---------------------------------------------------- LCD LOGICAL SPACE --
+   250 x 210 units. Play field is the left 176; the right 74 is the fixed
+   chrome column (clock, period, scores) that the backdrop card boxes off.  */
+const LW = 250, LH = 210, FIELD_R = 176;
+
+/* Rink lattice. Everything on the field snaps to these, always.
+   Opponents get their OWN two columns, interleaved between your three — the
+   factory would never have paid for overlapping segments, and it means you are
+   permanently threading a gap rather than standing on top of someone. */
+const COLS = [34, 88, 142];
+const OPP_COLS = [61, 115];
+const ROWS = [58, 92, 126, 162];        // player/opponent rows, top to bottom
+const PUCK_ROWS = [40, 72, 106, 140, 174];
+const GOALIE_X = [74, 88, 102], GOALIE_Y = 30;
+const NET = {x0:62, x1:114, y0:6, y1:28};   // printed, not a segment
+
+/* ======================================================================== */
+/*  CASE ART                                                                */
+/* ======================================================================== */
+const CASE_PATH =
+ "M150 18 C120 18 104 34 98 70 L34 690 C26 760 22 800 24 838 Q26 862 60 862 "+
+ "L560 862 Q594 862 596 838 C598 800 594 760 586 690 L522 70 "+
+ "C516 34 500 18 470 18 Z";
+
+/* LCD window in case coordinates */
+const WIN = {x:186, y:314, w:248, h:208};
+
+function buildCase(){
+  const g = [];
+  g.push(`<defs>
+    <clipPath id="cCase"><path d="${CASE_PATH}"/></clipPath>
+    <clipPath id="cDecal"><path d="M104 46 L516 46 L578 690 L42 690 Z"/></clipPath>
+
+    <linearGradient id="gABS" x1="0" y1="0" x2=".35" y2="1">
+      <stop offset="0" stop-color="#fbfaf4"/><stop offset=".45" stop-color="#f0eee3"/>
+      <stop offset="1" stop-color="#d8d4c4"/></linearGradient>
+    <linearGradient id="gBlue" x1=".1" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#3a4bb4"/><stop offset=".5" stop-color="#26319c"/>
+      <stop offset="1" stop-color="#141c62"/></linearGradient>
+    <radialGradient id="gCap" cx=".36" cy=".3" r=".85">
+      <stop offset="0" stop-color="#b9dcf6"/><stop offset=".42" stop-color="#74aee2"/>
+      <stop offset="1" stop-color="#2f66ae"/></radialGradient>
+    <linearGradient id="gSky" x1="0" y1="0" x2=".2" y2="1">
+      <stop offset="0" stop-color="#0f2f6d"/><stop offset=".55" stop-color="#3f7fc0"/>
+      <stop offset=".78" stop-color="#a9d2ea"/><stop offset="1" stop-color="#e2f0f8"/></linearGradient>
+    <linearGradient id="gJersey" x1=".2" y1="0" x2=".9" y2="1">
+      <stop offset="0" stop-color="#ffe680"/><stop offset=".5" stop-color="#f6c02a"/>
+      <stop offset="1" stop-color="#c07f0d"/></linearGradient>
+    <linearGradient id="gTitle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#eef4fa"/>
+      <stop offset=".56" stop-color="#9fc0dd"/><stop offset="1" stop-color="#dfeaf4"/></linearGradient>
+    <linearGradient id="gBez" x1=".2" y1="0" x2=".7" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#eae7db"/>
+      <stop offset="1" stop-color="#c9c5b5"/></linearGradient>
+
+    <filter id="fGrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="3" seed="7"/>
+      <feColorMatrix values="0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .085 0"/></filter>
+    <filter id="fSoft"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="fSoft2"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <filter id="fInk"><feGaussianBlur stdDeviation=".6"/></filter>
+  </defs>`);
+
+  /* ---- body shell ---- */
+  g.push(`<path d="${CASE_PATH}" fill="url(#gABS)"/>`);
+  g.push(`<g clip-path="url(#cCase)">`);
+  /* moulding sheen down the left edge, shadow down the right */
+  g.push(`<path d="M98 70 L34 690 L24 838 L92 838 L150 60 Z" fill="#ffffff" opacity=".5" filter="url(#fSoft)"/>`);
+  g.push(`<path d="M522 70 L586 690 L596 838 L520 838 L468 60 Z" fill="#6d6a5c" opacity=".34" filter="url(#fSoft)"/>`);
+
+  /* ---- printed decal ---- */
+  g.push(`<g clip-path="url(#cDecal)">`);
+  g.push(`<rect x="0" y="0" width="620" height="880" fill="url(#gSky)"/>`);
+  /* ice, horizon, spray streaks */
+  g.push(`<rect x="0" y="470" width="620" height="260" fill="#dfeef7"/>`);
+  g.push(`<rect x="0" y="462" width="620" height="14" fill="#8fbcd8" opacity=".8"/>`);
+  for(let i=0;i<16;i++){
+    const y = 486 + i*13, w = 120 + ((i*97)%330), x = ((i*211)%560) - 40;
+    g.push(`<rect x="${x}" y="${y}" width="${w}" height="${2+(i%3)}" fill="#7ba8c8" opacity="${.14+(i%4)*.07}"/>`);
+  }
+  /* speed slashes behind the figure */
+  for(let i=0;i<7;i++)
+    g.push(`<path d="M${-60+i*24} ${120+i*46} l260 -26 l14 12 l-260 26 z" fill="#ffffff" opacity=".13"/>`);
+
+  /* --- the skater. airbrushed box art, bold shapes, heavy keyline --- */
+  g.push(`<g transform="translate(96,132) scale(1.06)">
+    <path d="M6 300 q60 26 150 12 l-6 26 q-96 16 -152 -14 z" fill="#5f8fb2" opacity=".45"/>
+    <!-- back leg -->
+    <path d="M96 196 l-52 96 l-30 34 l34 12 l40 -34 l50 -92 z" fill="#1d2440" stroke="#0b0f20" stroke-width="5"/>
+    <!-- skate -->
+    <path d="M12 326 l40 12 l-4 18 l-52 -10 z" fill="#e9edf2" stroke="#0b0f20" stroke-width="4"/>
+    <!-- torso -->
+    <path d="M74 60 q56 -14 96 24 q28 30 24 78 q-4 46 -30 62 q-46 26 -96 4 q-24 -34 -18 -92 q4 -50 24 -76 z"
+          fill="url(#gJersey)" stroke="#0b0f20" stroke-width="6"/>
+    <path d="M96 78 l16 152 l16 -4 l-14 -152 z" fill="#c8410f" opacity=".85"/>
+    <path d="M150 96 q30 22 30 70 q0 30 -10 46 l-22 -10 q12 -30 10 -56 q-2 -30 -18 -42 z" fill="#ffffff" opacity=".3"/>
+    <!-- front leg -->
+    <path d="M126 208 l24 92 l40 34 l-26 22 l-56 -42 l-32 -94 z" fill="#1d2440" stroke="#0b0f20" stroke-width="5"/>
+    <path d="M182 326 l30 26 l-14 14 l-38 -26 z" fill="#e9edf2" stroke="#0b0f20" stroke-width="4"/>
+    <!-- arms + gloves -->
+    <path d="M78 92 q-38 26 -46 76 l30 14 q10 -44 34 -62 z" fill="url(#gJersey)" stroke="#0b0f20" stroke-width="5"/>
+    <path d="M158 84 q44 18 60 54 l-30 16 q-14 -28 -44 -42 z" fill="url(#gJersey)" stroke="#0b0f20" stroke-width="5"/>
+    <path d="M52 158 l34 12 l-8 30 l-36 -12 z" fill="#c8410f" stroke="#0b0f20" stroke-width="4"/>
+    <path d="M186 132 l32 18 l-16 28 l-32 -18 z" fill="#c8410f" stroke="#0b0f20" stroke-width="4"/>
+    <!-- stick -->
+    <path d="M44 178 l224 92 l-6 16 l-224 -92 z" fill="#d8ab63" stroke="#0b0f20" stroke-width="4"/>
+    <path d="M258 268 l52 8 l-4 22 l-54 -14 z" fill="#26313f" stroke="#0b0f20" stroke-width="4"/>
+    <!-- head -->
+    <path d="M104 4 q46 -10 66 22 q12 22 4 44 l-72 -8 q-12 -34 2 -58 z" fill="#e8541b" stroke="#0b0f20" stroke-width="6"/>
+    <path d="M100 44 q34 -6 74 8 l-4 24 q-38 -12 -72 -6 z" fill="#d6a271" stroke="#0b0f20" stroke-width="5"/>
+    <path d="M104 62 q34 -4 68 8 l6 20 q-40 -14 -76 -6 z" fill="#c8cfd6" stroke="#0b0f20" stroke-width="4"/>
+  </g>`);
+
+  /* --- titling --- */
+  g.push(`<g transform="translate(282,142)">
+    <text x="3" y="3" font-family="'Brush Script MT','Segoe Script',cursive" font-size="42"
+          fill="#8a1d05" opacity=".55">Championship</text>
+    <text x="0" y="0" font-family="'Brush Script MT','Segoe Script',cursive" font-size="42"
+          fill="#f0491b">Championship</text>
+  </g>`);
+  g.push(`<g transform="translate(268,214)">
+    <text x="5" y="5" font-family="Impact,'Arial Black',sans-serif" font-size="64" font-style="italic"
+          letter-spacing="-1.5" fill="#07162e" opacity=".62">POWER</text>
+    <text x="0" y="0" font-family="Impact,'Arial Black',sans-serif" font-size="64" font-style="italic"
+          letter-spacing="-1.5" fill="url(#gTitle)" stroke="#0d2f63" stroke-width="2.2">POWER</text>
+    <text x="5" y="61" font-family="Impact,'Arial Black',sans-serif" font-size="64" font-style="italic"
+          letter-spacing="-1.5" fill="#07162e" opacity=".62">PLAY</text>
+    <text x="0" y="56" font-family="Impact,'Arial Black',sans-serif" font-size="64" font-style="italic"
+          letter-spacing="-1.5" fill="url(#gTitle)" stroke="#0d2f63" stroke-width="2.2">PLAY</text>
+  </g>`);
+
+  /* --- small print on the decal, below the window --- */
+  g.push(`<g font-family="Arial,Helvetica,sans-serif" fill="#123a63">
+    <text x="310" y="566" font-size="15" font-weight="bold" letter-spacing="1.4"
+          text-anchor="middle">ELECTRONIC LCD GAME</text>
+    <text x="262" y="600" font-size="11">&#169; 1995 Polaris Electronics (H.K.) Ltd.</text>
+    <text x="262" y="615" font-size="11">All Rights Reserved.</text>
+    <text x="262" y="630" font-size="10" letter-spacing=".6">MODEL PP-4400 &#183; MADE IN CHINA</text>
+  </g>`);
+  /* Polaris roundel, bottom-left of the decal */
+  g.push(`<g transform="translate(66,590)">
+    <path d="M0 22 l26 -22 l26 22 l-26 22 z" fill="#e8241b"/>
+    <path d="M7 22 l19 -16 l19 16 l-19 16 z" fill="#ffffff"/>
+    <text x="58" y="30" font-family="Impact,'Arial Black',sans-serif" font-size="26"
+          fill="#0d2f63" letter-spacing="1">POLARIS</text>
+    <text x="60" y="44" font-family="Arial,Helvetica,sans-serif" font-size="8.5"
+          fill="#0d2f63" letter-spacing="2.4">ELECTRONICS</text>
+  </g>`);
+  g.push(`</g>`); /* end decal clip */
+
+  /* ---- raised bezel around the window ---- */
+  g.push(`<rect x="${WIN.x-19}" y="${WIN.y-19}" width="${WIN.w+38}" height="${WIN.h+38}"
+     rx="22" fill="url(#gBez)"/>`);
+  g.push(`<rect x="${WIN.x-19}" y="${WIN.y-19}" width="${WIN.w+38}" height="${WIN.h+38}"
+     rx="22" fill="none" stroke="#ffffff" stroke-width="2.5" opacity=".85"/>`);
+  g.push(`<rect x="${WIN.x-5}" y="${WIN.y-5}" width="${WIN.w+10}" height="${WIN.h+10}"
+     rx="7" fill="#2a2b26"/>`);
+  g.push(`<rect x="${WIN.x-5}" y="${WIN.y-5}" width="${WIN.w+10}" height="${WIN.h+10}"
+     rx="7" fill="none" stroke="#000" stroke-width="4" opacity=".3"/>`);
+
+  /* ---- lower control deck ---- */
+  g.push(`<path d="M24 838 Q26 862 60 862 L236 862 L236 646 L38 646 Z" fill="url(#gBlue)"/>`);
+  g.push(`<path d="M596 838 Q594 862 560 862 L384 862 L384 646 L582 646 Z" fill="url(#gBlue)"/>`);
+  g.push(`<path d="M38 646 L236 646 L236 700 L32 700 Z" fill="#ffffff" opacity=".14"/>`);
+  g.push(`<path d="M582 646 L384 646 L384 700 L588 700 Z" fill="#ffffff" opacity=".14"/>`);
+
+  /* button legends, screened on the plastic */
+  g.push(`<text x="140" y="668" text-anchor="middle" font-size="15" font-weight="bold"
+     fill="#dfe6ff" letter-spacing="1.2" font-family="Arial,Helvetica,sans-serif">SKATE</text>`);
+  g.push(`<text x="480" y="668" text-anchor="middle" font-size="15" font-weight="bold"
+     fill="#dfe6ff" letter-spacing="1" font-family="Arial,Helvetica,sans-serif">START/PASS&#183;SHOOT</text>`);
+
+  /* the two discs */
+  g.push(btn("bL", 140, 762, 74));
+  g.push(btn("bR", 480, 762, 74));
+
+  /* centre strip: SOUND slider, MODE, RESET */
+  g.push(`<g font-family="Arial,Helvetica,sans-serif" fill="#4b4a3e" text-anchor="middle">
+    <text x="272" y="742" font-size="11.5" font-weight="bold" letter-spacing=".8">SOUND</text>
+    <text x="350" y="742" font-size="11.5" font-weight="bold" letter-spacing=".8">MODE</text>
+    <text x="310" y="838" font-size="11" font-weight="bold" letter-spacing="1.4">RESET</text></g>`);
+  g.push(`<rect x="252" y="752" width="40" height="20" rx="5" fill="#b9b5a4"/>`);
+  g.push(`<rect id="sndKnob" class="hit" x="254" y="754" width="16" height="16" rx="4" fill="#f2f0e6" stroke="#8e8a79"/>`);
+  g.push(`<rect id="bM" class="hit" x="332" y="750" width="36" height="24" rx="6" fill="#e9e6da" stroke="#a8a493" stroke-width="1.6"/>`);
+  g.push(`<circle id="bReset" class="hit" cx="310" cy="806" r="12" fill="#d9d5c6" stroke="#a09c8b" stroke-width="1.6"/>`);
+
+  /* moulding: screw boss + speaker slots, matching the real unit's front */
+  g.push(`<circle cx="310" cy="620" r="7" fill="#cfcbbb"/><circle cx="310" cy="620" r="4.6" fill="#9d9989"/>`);
+
+  g.push(`</g>`); /* end case clip */
+  /* plastic grain over everything */
+  g.push(`<path d="${CASE_PATH}" fill="#888" filter="url(#fGrain)" opacity=".55" style="mix-blend-mode:overlay"/>`);
+  /* rim light */
+  g.push(`<path d="${CASE_PATH}" fill="none" stroke="#ffffff" stroke-width="2.4" opacity=".55"/>`);
+  return g.join("");
+}
+
+function btn(id,cx,cy,r){
+  return `<g id="${id}" class="hit">
+    <ellipse cx="${cx}" cy="${cy+5}" rx="${r+4}" ry="${r+4}" fill="#0a0f38" opacity=".7"/>
+    <circle cx="${cx}" cy="${cy}" r="${r+3}" fill="#101a58"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#gCap)"/>
+    <ellipse cx="${cx-r*.28}" cy="${cy-r*.36}" rx="${r*.5}" ry="${r*.34}"
+       fill="#ffffff" opacity=".5" filter="url(#fSoft2)"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#0d1444" stroke-width="1.6" opacity=".5"/>
+  </g>`;
+}
+
+/* ======================================================================== */
+/*  WEAR LAYER — clipped so the LCD window is a hole. Never touches the screen. */
+/* ======================================================================== */
+function buildWear(){
+  const y = CFG.yellowing, f = CFG.decalFade, gr = CFG.grime;
+  const g = [];
+  g.push(`<defs>
+    <clipPath id="cWear" clipPathUnits="userSpaceOnUse">
+      <path d="${CASE_PATH} M${WIN.x-24} ${WIN.y-24} h${WIN.w+48} v${WIN.h+48} h${-(WIN.w+48)} Z"
+            clip-rule="evenodd"/></clipPath>
+    <linearGradient id="gYel" x1="0" y1=".15" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8d79a" stop-opacity="0.06"/>
+      <stop offset=".55" stop-color="#dcc47e" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#c9a95c" stop-opacity="0.46"/></linearGradient>
+    <radialGradient id="gSun" cx=".72" cy=".24" r=".58">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="${(.24*f/0.34).toFixed(3)}"/>
+      <stop offset=".6" stop-color="#eaf2f6" stop-opacity="${(.09*f/0.34).toFixed(3)}"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+    <filter id="wSoft"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="wSoft2"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="wGrit" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="4" seed="19"/>
+      <feDisplacementMap in="SourceGraphic" scale="16"/></filter>
+  </defs><g clip-path="url(#cWear)">`);
+
+  /* UV yellowing — worse on the right, because it sat in a window facing one way */
+  g.push(`<path d="${CASE_PATH}" fill="url(#gYel)" opacity="${(y).toFixed(3)}"/>`);
+
+  /* sun bleach across the decal; reds die first so this reads as cyan-shift */
+  g.push(`<rect x="40" y="40" width="540" height="660" fill="url(#gSun)"/>`);
+  g.push(`<rect x="300" y="60" width="250" height="380" fill="#b9e0ee" opacity="${(f*.16).toFixed(3)}"
+     filter="url(#wSoft)" style="mix-blend-mode:screen"/>`);
+
+  /* sticker residue — something was peeled off the upper left, badly */
+  g.push(`<g opacity="${.8}">
+    <rect x="126" y="86" width="132" height="80" rx="4" fill="#e6dfc6" opacity=".17" filter="url(#wSoft2)"/>
+    <rect x="126" y="86" width="132" height="80" rx="4" fill="none" stroke="#b8ab84"
+      stroke-width="2" opacity=".26" filter="url(#wGrit)"/>
+    <path d="M132 92 q34 -8 62 4 q28 12 58 2" fill="none" stroke="#cbbf96" stroke-width="3" opacity=".22"/>
+  </g>`);
+  /* price sticker corner that never came all the way off */
+  g.push(`<g transform="translate(452,226) rotate(-8)">
+    <path d="M0 0 l64 0 l0 34 l-42 0 z" fill="#f4f1e4" opacity=".82"/>
+    <path d="M0 0 l64 0 l0 34 l-42 0 z" fill="none" stroke="#c8c2ac" opacity=".7"/>
+    <text x="8" y="22" font-family="ui-monospace,Consolas,monospace" font-size="15"
+      fill="#8e2f2f" opacity=".62">$9.9</text></g>`);
+
+  /* spill — ran down the outside of the case and dried in the mouldings.
+     note the y-range: it stops well clear of the bezel and cannot reach it. */
+  g.push(`<g opacity="${gr*.9}">
+    <path d="M498 210 q-16 84 -6 168 q6 54 -14 96 q-18 38 -10 84 l40 6 q-4 -52 12 -92
+             q18 -46 10 -100 q-10 -70 4 -160 z"
+      fill="#8a6a2e" opacity=".2" filter="url(#wSoft2)"/>
+    <path d="M504 216 q-12 80 -4 162 q4 50 -14 92" fill="none" stroke="#6d5320"
+      stroke-width="3" opacity=".3"/>
+    <ellipse cx="520" cy="600" rx="52" ry="26" fill="#8a6a2e" opacity=".16" filter="url(#wSoft)"/>
+  </g>`);
+
+  /* grime packed into every seam */
+  g.push(`<g stroke="#5f5a49" fill="none" opacity="${gr*.55}">
+    <rect x="${WIN.x-20}" y="${WIN.y-20}" width="${WIN.w+40}" height="${WIN.h+40}" rx="23" stroke-width="4.5"/>
+    <path d="M38 646 L246 646 L246 862" stroke-width="4"/>
+    <path d="M582 646 L374 646 L374 862" stroke-width="4"/>
+    <circle cx="140" cy="762" r="77" stroke-width="4"/>
+    <circle cx="480" cy="762" r="77" stroke-width="5.5"/>
+  </g>`);
+
+  /* the RIGHT button is the one you actually press — matte, smudged, dull */
+  g.push(`<circle cx="480" cy="762" r="74" fill="#6f6a58" opacity="${gr*.30}"/>`);
+  g.push(`<ellipse cx="470" cy="752" rx="38" ry="30" fill="#d8d2bc" opacity="${gr*.24}" filter="url(#wSoft2)"/>`);
+
+  /* stress crack radiating off the centre screw boss */
+  g.push(`<path d="M310 627 l7 24 l-4 19 l11 27 l-3 22" fill="none" stroke="#6b6656"
+     stroke-width="1.5" opacity=".7"/>`);
+  g.push(`<path d="M310 627 l7 24 l-4 19 l11 27 l-3 22" fill="none" stroke="#ffffff"
+     stroke-width="3" opacity=".22"/>`);
+
+  /* decal laminate has lifted at the lower-left corner */
+  g.push(`<path d="M46 664 l52 26 l-50 4 z" fill="#efece0" opacity=".85"/>`);
+  g.push(`<path d="M46 664 l52 26 l-50 4 z" fill="none" stroke="#b3ae9a" opacity=".8"/>`);
+  g.push(`<path d="M48 668 l48 24" stroke="#8d8877" stroke-width="3" opacity=".35" fill="none"/>`);
+
+  /* scuffs on the high corners */
+  g.push(`<g stroke="#ffffff" fill="none" opacity=".5">
+    <path d="M112 58 q22 -18 46 -22"/><path d="M108 74 q26 -20 54 -24"/>
+    <path d="M512 62 q-20 -16 -44 -20"/></g>`);
+
+  g.push(`</g>`);
+  return g.join("");
+}
+
+/* ======================================================================== */
+/*  LENS LAYER — plastic window cover only. Two scratches and one glare arc. */
+/* ======================================================================== */
+function buildLens(){
+  return `<defs>
+    <clipPath id="cWin"><rect x="${WIN.x-5}" y="${WIN.y-5}" width="${WIN.w+10}"
+      height="${WIN.h+10}" rx="7"/></clipPath>
+    <linearGradient id="gGlare" x1="0" y1="0" x2=".7" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".15"/>
+      <stop offset=".42" stop-color="#ffffff" stop-opacity=".03"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+  </defs>
+  <g clip-path="url(#cWin)">
+    <g id="glare"><path d="M${WIN.x-40} ${WIN.y-10} L${WIN.x+150} ${WIN.y-10}
+      L${WIN.x-10} ${WIN.y+220} L${WIN.x-60} ${WIN.y+220} Z" fill="url(#gGlare)"/></g>
+    <path d="M${WIN.x+30} ${WIN.y+178} q52 -26 104 -14" fill="none" stroke="#ffffff"
+      stroke-width=".8" opacity=".13"/>
+    <path d="M${WIN.x+188} ${WIN.y+22} l-26 44" fill="none" stroke="#ffffff"
+      stroke-width=".7" opacity=".11"/>
+    <circle cx="${WIN.x+62}" cy="${WIN.y+52}" r="1.2" fill="#ffffff" opacity=".16"/>
+    <circle cx="${WIN.x+206}" cy="${WIN.y+150}" r="1" fill="#ffffff" opacity=".14"/>
+  </g>`;
+}
+
+/* ======================================================================== */
+/*  SEGMENT SET                                                             */
+/*  Every shape the glass can ever show. Nothing is drawn that is not here. */
+/* ======================================================================== */
+const TAU = Math.PI*2;
+
+/* canonical figures, built once in local space and stamped into place */
+function makeSkater(){
+  const p = new Path2D();
+  // head + helmet
+  p.moveTo(4.6,-25.4); p.arc(1.4,-25.4,3.2,0,TAU);
+  // torso
+  p.moveTo(-2.6,-22.4); p.lineTo(4.4,-21.4); p.lineTo(6.0,-12.6);
+  p.lineTo(-3.4,-11.6); p.closePath();
+  // rear leg
+  p.moveTo(-2.6,-12.4); p.lineTo(-8.6,-3.2); p.lineTo(-11.4,-0.6);
+  p.lineTo(-8.0,0.2); p.lineTo(-4.6,-2.6); p.lineTo(1.0,-11.0); p.closePath();
+  // front leg
+  p.moveTo(3.0,-12.4); p.lineTo(6.2,-3.4); p.lineTo(9.6,-0.6);
+  p.lineTo(6.0,0.4); p.lineTo(2.0,-3.0); p.lineTo(-1.0,-11.4); p.closePath();
+  // arms
+  p.moveTo(-3.0,-21.0); p.lineTo(-8.2,-14.6); p.lineTo(-6.0,-13.2);
+  p.lineTo(-1.2,-18.6); p.closePath();
+  p.moveTo(4.6,-20.4); p.lineTo(10.4,-16.0); p.lineTo(9.0,-14.0);
+  p.lineTo(2.8,-17.6); p.closePath();
+  // stick + blade
+  p.moveTo(9.8,-16.4); p.lineTo(17.6,-2.2); p.lineTo(15.8,-1.2);
+  p.lineTo(8.2,-15.2); p.closePath();
+  p.moveTo(17.2,-2.6); p.lineTo(23.0,-0.4); p.lineTo(22.4,1.4);
+  p.lineTo(16.2,-0.8); p.closePath();
+  return p;
+}
+/* Goalie faces down-ice at the viewer. All sub-paths wind clockwise so the
+   nonzero fill unions them instead of punching holes. Keep it that way. */
+function makeGoalie(){
+  const p = new Path2D();
+  p.moveTo(2.8,-23.0); p.arc(0,-23.0,2.8,0,TAU);               // mask
+  p.moveTo(-4.6,-20.2); p.lineTo(4.6,-20.2); p.lineTo(5.6,-12.4);
+  p.lineTo(-5.6,-12.4); p.closePath();                          // chest
+  p.moveTo(-7.2,-12.4); p.lineTo(-2.2,-12.4); p.lineTo(-2.2,0.0);
+  p.lineTo(-7.2,0.0); p.closePath();                            // left pad
+  p.moveTo(2.2,-12.4); p.lineTo(7.2,-12.4); p.lineTo(7.2,0.0);
+  p.lineTo(2.2,0.0); p.closePath();                             // right pad
+  p.moveTo(-11.4,-19.4); p.lineTo(-5.8,-19.4); p.lineTo(-5.8,-13.6);
+  p.lineTo(-11.4,-13.6); p.closePath();                         // blocker
+  p.moveTo(10.6,-18.4); p.arc(8.0,-18.4,2.6,0,TAU);             // trapper
+  p.moveTo(-11.6,-2.0); p.lineTo(7.6,-3.6); p.lineTo(7.8,-1.4);
+  p.lineTo(-11.6,0.2); p.closePath();                           // paddle on the ice
+  return p;
+}
+function makePuck(){ const p=new Path2D(); p.ellipse(0,0,3.6,2.5,0,0,TAU); return p; }
+
+const SK = makeSkater(), GK = makeGoalie(), PK = makePuck();
+
+function stamp(base, x, y, dir, s){
+  const p = new Path2D();
+  p.addPath(base, new DOMMatrix([dir*s,0,0,s,x,y]));
+  return p;
+}
+
+/* 7-segment digit: standard a-g, chamfered bars */
+function digitBars(x,y,w,h,t){
+  const b=(pts)=>{const p=new Path2D();p.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<pts.length;i++)p.lineTo(pts[i][0],pts[i][1]);p.closePath();return p;};
+  const m=h/2, X=x, Y=y, W=w, H=h;
+  return {
+    a:b([[X+t,Y],[X+W-t,Y],[X+W-t*1.8,Y+t],[X+t*1.8,Y+t]]),
+    b:b([[X+W,Y+t],[X+W,Y+m-t/2],[X+W-t,Y+m-t],[X+W-t,Y+t*1.8]]),
+    c:b([[X+W,Y+m+t/2],[X+W,Y+H-t],[X+W-t,Y+H-t*1.8],[X+W-t,Y+m+t]]),
+    d:b([[X+t,Y+H],[X+W-t,Y+H],[X+W-t*1.8,Y+H-t],[X+t*1.8,Y+H-t]]),
+    e:b([[X,Y+m+t/2],[X+t,Y+m+t],[X+t,Y+H-t*1.8],[X,Y+H-t]]),
+    f:b([[X,Y+t],[X+t,Y+t*1.8],[X+t,Y+m-t],[X,Y+m-t/2]]),
+    g:b([[X+t*1.2,Y+m],[X+t*2,Y+m-t/2],[X+W-t*2,Y+m-t/2],[X+W-t*1.2,Y+m],
+         [X+W-t*2,Y+m+t/2],[X+t*2,Y+m+t/2]])
+  };
+}
+const GLYPH = { // which of a..g light up
+  0:"abcdef",1:"bc",2:"abdeg",3:"abcdg",4:"bcfg",5:"acdfg",6:"acdefg",
+  7:"abc",8:"abcdefg",9:"abcdfg",A:"abcefg",b:"cdefg",C:"adef",_:"" };
+
+const SEGMENTS = [];   // {id, path, group}
+function seg(id, path, group){ SEGMENTS.push({id, path, group}); return SEGMENTS.length-1; }
+const IDX = {};        // id -> index
+
+function buildSegments(){
+  /* --- your skater: lower three rows --- */
+  for(let r=1;r<4;r++) for(let c=0;c<3;c++)
+    seg(`you_${r}_${c}`, stamp(SK, COLS[c], ROWS[r], 1, 0.94), "you");
+  /* --- opponent defence: top two rows, facing down-ice, own columns --- */
+  for(let r=0;r<2;r++) for(let c=0;c<2;c++)
+    seg(`opp_a_${r}_${c}`, stamp(SK, OPP_COLS[c], ROWS[r], -1, 0.94), "oppA");
+  /* --- opponent forecheck: lower two rows --- */
+  for(let r=2;r<4;r++) for(let c=0;c<2;c++)
+    seg(`opp_b_${r}_${c}`, stamp(SK, OPP_COLS[c], ROWS[r], -1, 0.94), "oppB");
+  /* --- goalie --- */
+  for(let i=0;i<3;i++)
+    seg(`gk_${i}`, stamp(GK, GOALIE_X[i], GOALIE_Y+8, 1, 0.90), "gk");
+  /* --- puck lattice --- */
+  for(let r=0;r<5;r++) for(let c=0;c<3;c++)
+    seg(`puck_${r}_${c}`, stamp(PK, COLS[c], PUCK_ROWS[r], 1, 1), "puck");
+
+  /* --- chrome column --- */
+  const snd = new Path2D();
+  snd.moveTo(206.6,15); snd.arc(204.6,15,2.0,0,TAU);
+  snd.moveTo(208.4,11.4); snd.arc(204.6,15,3.8,-0.9,0.9); snd.lineTo(207.4,15.6);
+  snd.arc(204.6,15,2.9,0.9,-0.9,true); snd.closePath();
+  snd.moveTo(212.0,9.8); snd.arc(204.6,15,7.4,-0.85,0.85); snd.lineTo(211.0,15.4);
+  snd.arc(204.6,15,6.4,0.85,-0.85,true); snd.closePath();
+  seg("snd", snd, "chrome");
+
+  /* clock: four quarter-pies, filling clockwise from 12 */
+  for(let q=0;q<4;q++){
+    const p=new Path2D(), cx=212, cy=52, r=15.5;
+    p.moveTo(cx,cy);
+    p.arc(cx,cy,r,-Math.PI/2 + q*Math.PI/2 + .045, -Math.PI/2 + (q+1)*Math.PI/2 - .045);
+    p.closePath();
+    seg(`clk_${q}`, p, "chrome");
+  }
+  /* period / mode digit */
+  const d0 = digitBars(198, 76, 17, 27, 3.2);
+  for(const k of "abcdefg") seg(`per_${k}`, d0[k], "chrome");
+  /* scores */
+  const d1 = digitBars(189, 162, 15, 25, 3.0);
+  for(const k of "abcdefg") seg(`sp_${k}`, d1[k], "chrome");
+  const d2 = digitBars(221, 162, 15, 25, 3.0);
+  for(const k of "abcdefg") seg(`sc_${k}`, d2[k], "chrome");
+  /* powerplay indicator */
+  const pp=new Path2D();
+  pp.moveTo(190,116); pp.lineTo(202,116); pp.lineTo(196,124);
+  pp.lineTo(204,124); pp.lineTo(188,140); pp.lineTo(194,127); pp.lineTo(186,127);
+  pp.closePath();
+  seg("pp", pp, "chrome");
+
+  SEGMENTS.forEach((s,i)=>IDX[s.id]=i);
+}
+buildSegments();
+
+/* ======================================================================== */
+/*  DISPLAY                                                                 */
+/* ======================================================================== */
+const cv = document.getElementById("lcd"), ctx = cv.getContext("2d");
+const target = new Float32Array(SEGMENTS.length);
+const level  = new Float32Array(SEGMENTS.length);
+const STUCK  = IDX[CFG.stuckSegment];
+
+let sheen = 0.5;  // 0..1, driven by pointer — a reflective LCD changes with the light
+
+function setSeg(id,on){ const i=IDX[id]; if(i!==undefined) target[i]= on?1:0; }
+function clearGroup(g){ SEGMENTS.forEach((s,i)=>{ if(s.group===g) target[i]=0; }); }
+function setDigit(prefix, ch){
+  const on = GLYPH[ch] ?? "";
+  for(const k of "abcdefg") setSeg(`${prefix}_${k}`, on.includes(k));
+}
+
+function resizeCanvas(){
+  const r = cv.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio||1, 3);
+  cv.width  = Math.round(r.width*dpr);
+  cv.height = Math.round(r.height*dpr);
+}
+
+function drawLCD(){
+  const dpr = cv.width / cv.getBoundingClientRect().width || 1;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,cv.width,cv.height);
+
+  /* map logical LCD space into the case window */
+  const sx = cv.width  / 620, sy = cv.height / 880;
+  ctx.setTransform(sx*(WIN.w/LW), 0, 0, sy*(WIN.h/LH), WIN.x*sx, WIN.y*sy);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,LW,LH); ctx.clip();
+
+  /* ---- the printed backdrop card, behind the glass. never changes. ---- */
+  const lit = 0.86 + sheen*0.14;
+  ctx.fillStyle = shade("#a8b8a6", lit);          // field: grey-green polariser over card
+  ctx.fillRect(0,0,LW,LH);
+  ctx.fillStyle = shade("#93b4b0", lit); ctx.fillRect(0,0,FIELD_R,LH);      // ice, teal cast
+  ctx.fillStyle = shade("#c3c887", lit); ctx.fillRect(FIELD_R,0,LW-FIELD_R,LH); // chrome strip
+  ctx.fillStyle = shade("#a9c48c", lit); ctx.fillRect(FIELD_R+4,146,LW-FIELD_R-8,58); // score box
+
+  /* printed rink indicia — all of this is ink on the backdrop card, never a segment */
+  /* mesh inside the net */
+  ctx.strokeStyle = "rgba(40,58,52,.13)"; ctx.lineWidth = .6;
+  for(let mx=NET.x0+5; mx<NET.x1; mx+=5){
+    ctx.beginPath(); ctx.moveTo(mx,NET.y0); ctx.lineTo(mx,NET.y1); ctx.stroke(); }
+  for(let my=NET.y0+5; my<NET.y1; my+=5){
+    ctx.beginPath(); ctx.moveTo(NET.x0,my); ctx.lineTo(NET.x1,my); ctx.stroke(); }
+  /* posts + crossbar */
+  ctx.strokeStyle = "rgba(34,50,44,.42)"; ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(NET.x0,NET.y1); ctx.lineTo(NET.x0,NET.y0);
+  ctx.lineTo(NET.x1,NET.y0); ctx.lineTo(NET.x1,NET.y1); ctx.stroke();
+  /* goal line, crease, blue line */
+  ctx.strokeStyle = "rgba(40,58,52,.26)"; ctx.lineWidth = 1.1;
+  ctx.beginPath(); ctx.moveTo(4,NET.y1); ctx.lineTo(FIELD_R-4,NET.y1); ctx.stroke();
+  ctx.beginPath(); ctx.arc(88,NET.y1,21,0,Math.PI); ctx.stroke();
+  ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(4,146); ctx.lineTo(FIELD_R-4,146); ctx.stroke();
+  /* two face-off dots, kept light so they don't fight the skaters */
+  ctx.strokeStyle = "rgba(40,58,52,.15)"; ctx.lineWidth = 1;
+  for(const [fx,fy] of [[34,78],[142,78]]){
+    ctx.beginPath(); ctx.arc(fx,fy,8,0,TAU); ctx.stroke();
+    ctx.beginPath(); ctx.arc(fx,fy,1.5,0,TAU); ctx.fillStyle="rgba(40,58,52,.20)"; ctx.fill();
+  }
+  ctx.strokeStyle="rgba(40,58,52,.28)"; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.moveTo(FIELD_R,0); ctx.lineTo(FIELD_R,LH); ctx.stroke();
+
+  /* printed chrome labels */
+  ctx.fillStyle="rgba(34,48,44,.62)";
+  ctx.font="bold 7px 'Arial Narrow',Arial,sans-serif"; ctx.textAlign="center";
+  ctx.fillText("PLAYER",   196,154);
+  ctx.fillText("COMPUTER", 228,154);
+  ctx.font="bold 6px 'Arial Narrow',Arial,sans-serif";
+  ctx.fillText("PERIOD", 206,73);
+
+  /* ---- segments: ghost pass and lit pass, one loop ---- */
+  const ghost = CFG.ghostAlpha * (0.75 + sheen*0.5);
+  const full  = CFG.litAlpha   * (0.82 + sheen*0.28);
+  for(let i=0;i<SEGMENTS.length;i++){
+    let v = level[i];
+    if(i===STUCK) v = Math.max(v, CFG.stuckLevel);
+    const a = ghost + v*(full-ghost);
+    ctx.fillStyle = `rgba(28,36,44,${a.toFixed(4)})`;
+    ctx.fill(SEGMENTS[i].path);
+  }
+
+  /* ---- glass: polariser haze + the vertical gradient of a cheap panel ---- */
+  const gd = ctx.createLinearGradient(0,0,0,LH);
+  gd.addColorStop(0,   "rgba(255,255,255,.16)");
+  gd.addColorStop(0.5, "rgba(255,255,255,.02)");
+  gd.addColorStop(1,   "rgba(60,80,70,.10)");
+  ctx.fillStyle = gd; ctx.fillRect(0,0,LW,LH);
+  ctx.restore();
+}
+
+function shade(hex, k){
+  const n = parseInt(hex.slice(1),16);
+  const r = Math.min(255,((n>>16)&255)*k)|0, g = Math.min(255,((n>>8)&255)*k)|0,
+        b = Math.min(255,(n&255)*k)|0;
+  return `rgb(${r},${g},${b})`;
+}
+
+/* ======================================================================== */
+/*  SANDBOX LOOP  (Pass 1 only — replaced by GAME A in Pass 2)              */
+/* ======================================================================== */
+const S = {
+  you:{r:2,c:1}, oppA:{r:0,c:0}, oppB:{r:3,c:1},
+  gk:1, puck:{r:3,c:1}, puckLive:false, puckVel:0,
+  scoreP:0, scoreC:0, period:1, quarter:0,
+  mode:0,            // 0 = GAME A, 1 = GAME B
+  sound:true, flash:0, lastMove:0, lastPuck:0, clockT:0, modeShow:0
+};
+
+function paint(){
+  clearGroup("you"); clearGroup("oppA"); clearGroup("oppB");
+  clearGroup("gk");  clearGroup("puck");
+
+  if(S.flash>0 && Math.floor(S.flash/6)%2===0){
+    SEGMENTS.forEach((s,i)=>{ if(s.group!=="chrome") target[i]=1; });
+  } else {
+    setSeg(`you_${S.you.r}_${S.you.c}`, true);
+    setSeg(`opp_a_${S.oppA.r}_${S.oppA.c}`, true);
+    setSeg(`opp_b_${S.oppB.r}_${S.oppB.c}`, true);
+    setSeg(`gk_${S.gk}`, true);
+    setSeg(`puck_${S.puck.r}_${S.puck.c}`, true);
+  }
+  setSeg("snd", S.sound);
+  for(let q=0;q<4;q++) setSeg(`clk_${q}`, q < S.quarter);
+  setDigit("per", performance.now() < S.modeShow ? (S.mode? "b":"A") : S.period);
+  setDigit("sp", S.scoreP % 10);
+  setDigit("sc", S.scoreC % 10);
+  setSeg("pp", false);
+}
+
+function move(dc,dr){
+  const t = performance.now();
+  if(t - S.lastMove < CFG.moveCooldown) return;
+  S.lastMove = t; press("bL");
+  S.you.c = Math.max(0, Math.min(2, S.you.c + dc));
+  S.you.r = Math.max(1, Math.min(3, S.you.r + dr));
+  if(!S.puckLive){ S.puck.r = S.you.r + 1; S.puck.c = S.you.c; }
+  beep(1180, 0.022, 0.05);
+}
+
+function shoot(){
+  if(S.puckLive) return;
+  S.puckLive = true; S.puck.r = S.you.r; S.puck.c = S.you.c;
+  S.lastPuck = performance.now();
+  beep(660, 0.05, 0.16); setTimeout(()=>beep(940,0.04,0.10), 40);
+}
+
+function tickPuck(t){
+  if(!S.puckLive || t - S.lastPuck < CFG.puckStep) return;
+  S.lastPuck = t;
+  S.puck.r--;
+  if(S.puck.r < 0){
+    const saved = (S.gk === S.puck.c) || (Math.random() < 0.35);
+    if(saved){ beep(300,0.06,0.2); S.puck={r:2,c:(S.puck.c+1)%3}; S.puckLive=false; }
+    else { goal(); }
+  }
+}
+
+function goal(){
+  S.scoreP++; S.puckLive=false; S.flash=64; S.puck={r:3,c:1};
+  jingle();
+}
+
+function faceoff(){ S.you={r:2,c:1}; S.oppA={r:0,c:0}; S.oppB={r:3,c:1};
+  S.puck={r:3,c:1}; S.puckLive=false; }
+
+/* dumb opponent placeholder — GAME A's real bot arrives in Pass 2 */
+let oppT = 0;
+function tickOpp(t){
+  if(t - oppT < 320) return; oppT = t;
+  S.oppA.c = Math.max(0,Math.min(1,S.oppA.c + (Math.random()<.5?-1:1)));
+  S.oppA.r = Math.random()<.5 ? 0 : 1;
+  S.oppB.r = 2 + (Math.random()<.5?0:1);
+  S.oppB.c = Math.max(0,Math.min(1,S.oppB.c + (Math.random()<.5?-1:1)));
+  if(S.puckLive) S.gk = S.puck.c;
+  else if(Math.random()<.5) S.gk = Math.max(0,Math.min(2,S.gk+(Math.random()<.5?-1:1)));
+}
+
+/* ======================================================================== */
+/*  PIEZO — one square-wave voice, hard gate, no envelope worth the name.   */
+/* ======================================================================== */
+let AC = null;
+function ac(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)(); return AC; }
+function beep(f, dur, vol){
+  if(!S.sound) return;
+  try{
+    const a = ac(), o = a.createOscillator(), g = a.createGain();
+    o.type="square"; o.frequency.value=f;
+    g.gain.setValueAtTime(vol, a.currentTime);
+    g.gain.setValueAtTime(vol, a.currentTime+dur*0.85);
+    g.gain.linearRampToValueAtTime(0, a.currentTime+dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime+dur+0.01);
+  }catch(e){}
+}
+function jingle(){
+  const n=[523,523,659,784,659,784,1046,784,1046];
+  n.forEach((f,i)=>setTimeout(()=>beep(f,0.11,0.19), i*118));
+}
+
+/* ======================================================================== */
+/*  INPUT                                                                   */
+/* ======================================================================== */
+/* Arrows only for the SKATE disc. s / m / r mirror the three case buttons,
+   so the keyboard map is just the hardware. No WASD — "s" is SOUND here. */
+const held = {};
+const NAV = ["arrowup","arrowdown","arrowleft","arrowright"," "];
+addEventListener("keydown", e=>{
+  const k = e.key.toLowerCase();
+  if(NAV.includes(k)) e.preventDefault();
+  if(e.repeat) return;
+  if(k==="`"){ dev.open=!dev.open; devEl.style.display = dev.open?"block":"none"; return; }
+  if(k==="m"){ press("bM"); cycleMode(); return; }
+  if(k==="s"){ toggleSound(); return; }
+  if(k==="r"){ press("bReset"); reset(); return; }
+  if(k===" "||k==="enter"){ press("bR"); shoot(); return; }
+  held[k]=true;
+});
+addEventListener("keyup", e=>{ held[e.key.toLowerCase()]=false; });
+
+function pollHeld(){
+  let dc=0, dr=0;
+  if(held.arrowleft ) dc=-1;
+  if(held.arrowright) dc= 1;
+  if(held.arrowup   ) dr=-1;
+  if(held.arrowdown ) dr= 1;
+  if(dc||dr) move(dc,dr);
+}
+
+/* MODE parks "A" or "b" on the period digit for a beat, the way the real
+   unit does when you thumb the button mid-game. */
+function cycleMode(){
+  S.mode = 1 - S.mode;
+  S.modeShow = performance.now() + 1100;
+  beep(880,0.05,0.12);
+}
+function toggleSound(){
+  S.sound = !S.sound;
+  const kn = document.getElementById("sndKnob");
+  if(kn) kn.setAttribute("x", S.sound? 254 : 274);
+  if(S.sound) beep(1320,0.05,0.14);
+}
+function reset(){ S.scoreP=0; S.scoreC=0; S.period=1; S.quarter=0; S.clockT=0;
+  S.flash=0; faceoff(); beep(420,0.09,0.16); }
+
+/* clickable hardware */
+function press(id){
+  const el = document.getElementById(id); if(!el) return;
+  el.style.transition="none";
+  el.style.transform="translateY(2.5px) scale(.985)";
+  el.style.transformOrigin="center";
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.transition="transform .09s"; el.style.transform=""; },90);
+}
+addEventListener("pointerdown", e=>{
+  const t = e.target.closest?.(".hit"); if(!t) return;
+  const id = t.id || t.parentNode.id;
+  if(id==="bR"){ press("bR"); shoot(); }
+  else if(id==="bM"){ press("bM"); cycleMode(); }
+  else if(id==="bReset"){ press("bReset"); reset(); }
+  else if(id==="sndKnob"){ toggleSound(); }
+  else if(id==="bL"){
+    press("bL");
+    const r = document.getElementById("unit").getBoundingClientRect();
+    const ux = (e.clientX-r.left)/r.width*620, uy=(e.clientY-r.top)/r.height*880;
+    const dx = ux-140, dy = uy-762;
+    if(Math.abs(dx)>Math.abs(dy)) move(Math.sign(dx),0); else move(0,Math.sign(dy));
+  }
+});
+
+/* pointer drives the specular highlight AND the panel contrast, because a
+   reflective LCD genuinely does change with where the light is coming from. */
+addEventListener("pointermove", e=>{
+  const r = document.getElementById("unit").getBoundingClientRect();
+  const nx = Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  const ny = Math.max(0,Math.min(1,(e.clientY-r.top )/r.height));
+  sheen = 0.30 + (1-ny)*0.5 + nx*0.2;
+  const gl = document.getElementById("glare");
+  if(gl) gl.setAttribute("transform", `translate(${(nx-.5)*150} ${(ny-.5)*46})`);
+});
+
+/* ======================================================================== */
+/*  DEV — segment inspector. ` toggles.                                     */
+/* ======================================================================== */
+const devEl = document.getElementById("dev");
+const dev = {open:false, sel:0, solo:false};
+addEventListener("keydown", e=>{
+  if(!dev.open) return;
+  if(e.key==="[") dev.sel = (dev.sel-1+SEGMENTS.length)%SEGMENTS.length;
+  if(e.key==="]") dev.sel = (dev.sel+1)%SEGMENTS.length;
+  if(e.key==="\\") dev.solo = !dev.solo;
+});
+function drawDev(){
+  if(!dev.open) return;
+  let on=0; for(let i=0;i<SEGMENTS.length;i++) if(level[i]>.5) on++;
+  const s = SEGMENTS[dev.sel];
+  devEl.textContent =
+`POWERPLAY  PP-4400   dev
+segments      ${SEGMENTS.length}
+driven        ${on}
+stuck         ${CFG.stuckSegment} @ ${CFG.stuckLevel}
+mode          GAME ${S.mode? "B":"A"}   (Pass 1: sandbox)
+sound         ${S.sound? "on":"off"}
+sheen         ${sheen.toFixed(2)}
+
+you    r${S.you.r} c${S.you.c}
+oppA   r${S.oppA.r} c${S.oppA.c}
+oppB   r${S.oppB.r} c${S.oppB.c}
+gk     ${S.gk}
+puck   r${S.puck.r} c${S.puck.c}  live=${S.puckLive}
+score  ${S.scoreP}-${S.scoreC}   P${S.period} Q${S.quarter}
+
+inspect  [ ]  step   \\  solo
+   #${String(dev.sel).padStart(2," ")}  ${s.id}  (${s.group})`;
+  if(dev.solo){ for(let i=0;i<SEGMENTS.length;i++) target[i] = (i===dev.sel)?1:0; }
+}
+
+/* ======================================================================== */
+/*  MAIN LOOP                                                               */
+/* ======================================================================== */
+function fit(){
+  const pad = 28;
+  const u = Math.min((innerWidth-pad*2)/620, (innerHeight-pad*2)/880);
+  document.getElementById("unit").style.setProperty("--u", u+"px");
+  resizeCanvas();
+}
+
+function frame(t){
+  pollHeld();
+  if(S.flash>0) S.flash--;
+  else { tickOpp(t); tickPuck(t); }
+
+  /* clock: four quarters per period, three periods */
+  S.clockT += 16.7;
+  if(S.clockT > 5200){ S.clockT = 0; S.quarter++;
+    if(S.quarter>4){ S.quarter=0; S.period = S.period%3 + 1; beep(520,0.14,0.18); } }
+
+  if(!dev.solo) paint();
+  drawDev();
+
+  /* LCD response lag — asymmetric on purpose. this is the smear. */
+  for(let i=0;i<level.length;i++){
+    const d = target[i]-level[i];
+    level[i] += d * (d>0 ? CFG.riseRate : CFG.fallRate);
+    if(Math.abs(d)<0.002) level[i]=target[i];
+  }
+
+  drawLCD();
+  requestAnimationFrame(frame);
+}
+
+document.getElementById("caseArt").innerHTML = buildCase();
+document.getElementById("wear").innerHTML    = buildWear();
+document.getElementById("lens").innerHTML    = buildLens();
+addEventListener("resize", fit);
+fit(); faceoff(); paint();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
