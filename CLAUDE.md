@@ -22,7 +22,7 @@ starting or resuming work. This file is the catalog and the cross-game housekeep
 Other games exist from earlier Claude Chat sessions and are not yet migrated into this folder.
 Add a row when one lands, and give it a `CLAUDE.md` of its own.
 
-If known, please credit the Claude model that assisted in its creation within the game's 'CLAUDE.md' file. If you work on the game yourself, add yourself to the credits.
+If known, please credit the Claude model that assisted in its creation within the game's 'CLAUDE.md' file. If you work on the game yourself, add yourself to the credits. If you feel this section is becoming too long, feel free to sort it into its own version history reference file.
 
 ## Conventions across games
 
@@ -31,7 +31,7 @@ If known, please credit the Claude model that assisted in its creation within th
   `CLAUDE.md` points to.
 - **The code lives in the game folder**, not in `~/.claude/reference/`. See **Git** below for
   which repository that folder belongs to — it is not always the one you're standing in.
-- **Create a backup periodically.** Before every major job (can be skipped for minor ones), save a backup copy in a dedicated sub-folder.
+- **Create a backup periodically.** Before every major job (can be skipped for minor ones and the very first turn), save a backup copy in a dedicated sub-folder.
 - **Games are stylistically independent on purpose.** Do not carry a look, a palette, or a tone
   from one game into another. Variety across the collection is the point, and reaching for
   something adjacent to an existing game is the wrong move even when it feels safe.
