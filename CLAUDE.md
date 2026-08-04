@@ -11,13 +11,14 @@ starting or resuming work. This file is the catalog and the cross-game housekeep
 
 | Game | Premise | State |
 |---|---|---|
-| [DeadSpace](DeadSpace/) | Dead Space: Block Party! — a fake licensed Tetris tie-in whose cheerfulness is the horror | Mostly complete; needs port to standalone HTML |
+| [Dead Space](Dead Space/) | Dead Space: Block Party! — a fake licensed Tetris tie-in whose cheerfulness is the horror | Mostly complete; needs port to standalone HTML |
 | [Nebula Strike](Nebula%20Strike/) | Galaga with weapon powerups — seven guns that each fire completely differently | Playable; wants a balance overhaul (player far too strong) |
 | [Bao's Big Breakfast](Bao's%20Big%20Breakfast/) | SMB 1-1 as a steamed bun on a giant kitchen counter. Built for a friend of Trevor's | Level 1 complete and playable end-to-end |
 | [Combat Circuit](Combat%20Circuit/) | Build a battle bot, press GO, watch it fight on its own | Sandbox pass: physics, component damage, behavior chips, three win conditions. No economy yet |
 | [Snek](Snek/) | Snake, drawn badly on purpose in ballpoint pen on notebook paper, with googly eyes | Reskin pass complete and playable; mechanics still vanilla Snake by design |
 | [Asterism](Asterism/) | Qix as celestial cartography — fence off the void, capture the constellation's stars, watch the figure ink itself in gold | Complete and playable at nine maps. Designed end-to-end by Fable 5 with no human design input; the 3-map original is preserved and **locked** — read its `CLAUDE.md` before touching anything |
 | [Ultra Pong!!!!](Ultra%20Pong!!!!/) | Untouched 1972 Pong buried under 2026's entire attention economy — Idiocracy ad breaks, a CPU that narrates the broadcast and holds a grudge, six billion fickle viewers | Mostly finished. Physics are pure classic Pong and must stay that way; authored annoyances and an honesty rule for anything the CPU does are registered in its `CLAUDE.md`. More ad copy welcome |
+| [DRIFT](DRIFT/) | Asteroids where the gun is also a thruster — no brakes, every shot shoves you back, and the screen-clearing pulse gets likelier to kill you every time you use it | Mostly finished across four modes. Predates most of the conventions here and set some of them. Scores now persist; audio is the main gap and RIDICULOUS still wants playtesting. Recoil is original and untouchable — read its `CLAUDE.md` |
 
 Other games exist from earlier Claude Chat sessions and are not yet migrated into this folder.
 Add a row when one lands, and give it a `CLAUDE.md` of its own.
@@ -45,11 +46,7 @@ If known, please credit the Claude model that assisted in its creation within th
 ordinary subfolder of it. There is no remote — history is local to this machine, so nothing is
 recoverable from a server if it's lost here.
 
-**A game folder should not contain its own `.git`.** This is the thing to actually watch for,
-because the failure is silent. Claude Code launched in a game folder reports *"Is a git repository:
-true"* either way — that's true whether the repo is the collection or a private one belonging to
-that folder. If the folder has its own `.git`, your commits land in a one-game repo that the
-collection's history never sees, and nobody notices until someone goes looking.
+**A game folder should not contain its own `.git`.**
 
 So **before your first commit in a session, check where you actually are:**
 
