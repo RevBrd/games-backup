@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ASTERISM — a charting of the heavens</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="A Qix descendant reskinned as celestial cartography — designed and built end to end by Claude Fable 5.">
+<style>
+  :root{
+    --void:#060917; --void-2:#0b1029; --gold:#d4af37; --gold-lit:#ffd76a;
+    --parch:#ece1c6; --ink:#b7ab8d; --rule:#2c3462; --silver:#dfe9ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--void);color:var(--parch);
+    font-family:Georgia,'Palatino Linotype','Times New Roman',serif;}
+  #sky{position:fixed;inset:0;z-index:0;}
+  main{position:relative;z-index:1;max-width:660px;margin:0 auto;padding:70px 22px 60px;}
+
+  header{text-align:center;margin-bottom:46px;}
+  h1{margin:0;font-size:clamp(38px,10vw,60px);letter-spacing:.22em;color:var(--gold-lit);
+    font-weight:400;text-indent:.22em;}
+  .sub{margin:.5em 0 0;font-style:italic;font-size:17px;color:rgba(220,205,170,.85);}
+
+  .rule{height:1px;background:linear-gradient(90deg,transparent,var(--rule) 18%,var(--rule) 82%,transparent);
+    margin:34px 0;}
+
+  .blurb{font-size:16px;line-height:1.75;color:rgba(220,205,170,.9);text-align:center;margin:0 0 40px;}
+  .blurb b{color:var(--gold-lit);font-weight:400;}
+
+  /* --- the two doors --- */
+  .doors{display:grid;gap:18px;}
+  a.door{display:block;text-decoration:none;color:inherit;padding:22px 24px;border-radius:11px;
+    border:1px solid var(--rule);background:linear-gradient(#131938,#0b1026);
+    transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease;}
+  a.door:hover,a.door:focus-visible{border-color:var(--gold);transform:translateY(-2px);
+    box-shadow:0 6px 26px rgba(212,175,55,.13);outline:none;}
+  .door .kicker{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);}
+  .door h2{margin:.5em 0 .3em;font-size:22px;font-weight:400;color:var(--gold-lit);letter-spacing:.04em;}
+  .door p{margin:0;font-size:14.5px;line-height:1.6;color:rgba(200,185,150,.82);}
+  .door .go{display:inline-block;margin-top:12px;font-style:italic;font-size:13.5px;color:var(--gold);}
+
+  a.door.primary{background:linear-gradient(#1a2145,#0d1330);border-color:#3a4478;}
+  a.door.archive h2{color:var(--parch);}
+  a.door.archive .go{color:var(--ink);}
+
+  /* --- provenance --- */
+  .story{margin-top:16px;font-size:14.5px;line-height:1.8;color:rgba(200,185,150,.8);}
+  .story h3{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);
+    font-weight:400;margin:0 0 14px;}
+  .story p{margin:0 0 15px;}
+  .story em{color:var(--silver);font-style:italic;}
+
+  footer{margin-top:46px;text-align:center;font-size:12.5px;font-style:italic;color:#6f6a58;line-height:1.9;}
+  kbd{font-style:normal;font-family:inherit;color:#a89c7d;border:1px solid #3a3a52;border-radius:4px;
+    padding:0 5px;background:#11152c;font-size:12px;}
+
+  @media (max-width:520px){ main{padding:46px 18px 40px;} .blurb{text-align:left;} }
+  @media (prefers-reduced-motion:reduce){ #sky{display:none;} }
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<main>
+  <header>
+    <h1>ASTERISM</h1>
+    <p class="sub">a charting of the heavens</p>
+  </header>
+
+  <p class="blurb">
+    You are a stylus at the edge of an unmapped sky. Fence off the void with survey lines and the
+    enclosed dark becomes parchment. Capture every star of the night's constellation and the figure
+    inks itself in gold. Beware the <b>Blot</b> adrift in the deep — and the <b>cinders</b> that
+    walk the frontier you just finished drawing.
+  </p>
+
+  <div class="doors">
+    <a class="door primary" href="asterism_expanded.html">
+      <div class="kicker">Play</div>
+      <h2>Asterism — nine constellations</h2>
+      <p>The full version. Lyra through Scorpius, with the difficulty curve given room to climb.
+         Keyboard only.</p>
+      <span class="go">enter the void →</span>
+    </a>
+
+    <a class="door archive" href="asterism_job3.html">
+      <div class="kicker">Archive</div>
+      <h2>The original — three constellations</h2>
+      <p>Fable's build exactly as delivered, unmodified and playable. Lyra, Cassiopeia, Orion.</p>
+      <span class="go">read the original →</span>
+    </a>
+  </div>
+
+  <div class="rule"></div>
+
+  <section class="story">
+    <h3>On the two versions</h3>
+    <p>
+      Every aspect of this game — the mechanics, the scoring, the cartography reskin, the
+      vocabulary, the parchment render — was designed and built by <em>Claude Fable 5</em>, a
+      language model, working without a brief. No theme was requested, no mechanics list supplied.
+      The only human contribution was playtesting.
+    </p>
+    <p>
+      Fable considered it finished at three constellations. In practice they cycled too quickly and
+      the sky went stale well before the difficulty finished ramping — but by then Fable was no
+      longer reachable. A later model, <em>Claude Opus 5</em>, added six more constellations,
+      choosing the narrowest possible intervention: pure content, dropped into an extension seam
+      Fable had already built. Not one system was touched.
+    </p>
+    <p>
+      The original was preserved as its own file rather than overwritten, and is locked against
+      modification. Both are here because the difference between them is the interesting part.
+    </p>
+  </section>
+
+  <footer>
+    <kbd>←↑↓→</kbd> or <kbd>WASD</kbd> to travel &nbsp;·&nbsp; hold <kbd>space</kbd> to chart
+    &nbsp;·&nbsp; hold <kbd>shift</kbd> to chart slowly, for double<br>
+    Designed and built by Claude Fable 5 · extended by Claude Opus 5
+  </footer>
+</main>
+
+<script>
+/* A quiet starfield, in the same register as the game's own. Decorative only. */
+(function(){
+  const cv = document.getElementById('sky');
+  if (!cv || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c = cv.getContext('2d');
+  let stars = [], w = 0, h = 0, t = 0;
+
+  function seed(){
+    w = cv.width = innerWidth; h = cv.height = innerHeight;
+    const n = Math.round(Math.min(190, (w * h) / 9000));
+    stars = [];
+    for (let i = 0; i < n; i++)
+      stars.push({ x: Math.random() * w, y: Math.random() * h,
+                   r: 0.4 + Math.random() * 1.2, ph: Math.random() * Math.PI * 2 });
+  }
+
+  function frame(){
+    t += 0.016;
+    const g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#0b1029'); g.addColorStop(1, '#060917');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    for (const s of stars){
+      const a = 0.22 + 0.42 * (0.5 + 0.5 * Math.sin(t * 1.4 + s.ph));
+      c.fillStyle = 'rgba(200,215,255,' + a.toFixed(2) + ')';
+      c.fillRect(s.x, s.y, s.r, s.r);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  addEventListener('resize', seed);
+  seed(); frame();
+})();
+</script>
+</body>
+</html>

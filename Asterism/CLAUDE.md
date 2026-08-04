@@ -24,10 +24,20 @@ Three layers enforce this, deliberately redundant:
 |---|---|---|
 | This document | Tells you. The only layer that catches *intent*. | — |
 | Read-only file attribute | Write/Edit tooling fails on it | `Set-ItemProperty <file> IsReadOnly $false` |
-| `.githooks/pre-commit` | Rejects any commit touching it, **and** rejects any commit where its hash has drifted | `git commit --no-verify` |
+| Root `.githooks/pre-commit` | Rejects any commit that *changes* it, and any commit where its on-disk hash has drifted | `git commit --no-verify` |
 
-The hook lives in `.githooks/` and is wired up with `core.hooksPath`. **A fresh clone does not
-pick that up automatically** — after cloning, run:
+**The hook that actually runs lives at the collection repo root** — `Projects/Games/.githooks/pre-commit`,
+not in this folder. `Asterism/.githooks/pre-commit` is the authored original and is now **inert**: git
+runs hooks only from the repository root's configured `hooksPath`, and Asterism was folded into the
+collection repo on 2 Aug 2026. Edit the root copy.
+
+The root version also corrected a flaw in the local one. The local hook blocked the file's *path*,
+which would have blocked the very commit that first archived the file — it could never have been
+preserved at all. The root version compares the **staged blob hash** against the expected value, so
+the original can enter history unmodified but can never change afterward.
+
+`hooksPath` is stored in `.git/config`, which is never committed, so **a fresh clone does not pick it
+up.** After cloning, run from the collection root:
 
 ```bash
 git config core.hooksPath .githooks
@@ -51,6 +61,7 @@ parody-of-bad-software builds. The one genuine "don't correct this" list is
 |---|---|---|
 | `asterism_job3.html` | 3 — Lyra, Cassiopeia, Orion | **Locked.** Fable 5's original, complete as delivered. |
 | `asterism_expanded.html` | 9 — the above plus Crux, Delphinus, Cygnus, Corona Borealis, Ursa Major, Scorpius | The playable/working version. |
+| `index.html` | — | Landing page. Links both, tells the provenance story. Not a game file; edit freely. |
 
 The diff between them is 44 added lines and **nothing else** — six entries appended to the
 `CONSTELLATIONS` array, plus a comment block marking the authorship boundary. Same data shape, no
@@ -200,10 +211,9 @@ unclaimed space, a scripted rectangular claim resolving on every map. All nine c
 
 ## Open items
 
-- **No entry point chosen for GitHub Pages.** Neither file is `index.html`. Either rename the
-  expanded file, or add a small landing page linking both — the second is more interesting, since
-  the two-file provenance *is* the story worth telling on a public page.
-- **Keyboard only.** No touch input; unplayable on mobile as-is.
+- **Keyboard only.** No touch input; unplayable on mobile as-is. The landing page says so plainly
+  rather than letting a phone visitor find out by loading a game they can't play — if touch input
+  ever lands, that line comes out.
 - **Silent.** No audio, by Fable's choice as far as anyone can tell.
 
 ---
@@ -213,5 +223,6 @@ unclaimed space, a scripted rectangular claim resolving on every map. All nine c
 - **Claude Fable 5** — design and implementation, in full. Every mechanic and every aesthetic
   choice in this game is its work.
 - **Claude Opus 5** — six additional constellations, content only, deferring to the original design.
-- **Claude Opus 5** (later session) — this document; validation harness; the preservation lock.
+- **Claude Opus 5** (later session) — this document; validation harness; the preservation lock;
+  the landing page.
 - **Trevor** — playtesting, and the call to preserve the original as its own file.
