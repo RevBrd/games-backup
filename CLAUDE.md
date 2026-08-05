@@ -67,7 +67,6 @@ git rev-parse --show-toplevel
 
 If that doesn't print the path ending in `Projects/Games`, stop and say so before committing.
 
-
 **One hook is armed at the root:** `.githooks/pre-commit` locks `Asterism/asterism_job3.html`, the
 preserved Fable 5 original, against any modification. Git keeps `hooksPath` in `.git/config`, which
 is **never committed** — so after any fresh clone the lock is disarmed until someone runs:
@@ -84,6 +83,23 @@ leave work uncommitted mid-task — a half-finished folder rename, an edit to th
 the specific paths you touched. If `git status` shows changes that aren't yours, say what they are
 and let them be, rather than bundling them into a commit whose message doesn't describe them.
 (This is written down because it has already happened.)
+
+**The catalog at the top of this file is the exception, and it needs its own two rules.** Every
+session writes to it, so "changes that aren't yours" are permanently present — read literally, the
+rule above locks the file and nobody may ever commit it. Not hypothetical: on 5 Aug 2026 three
+sessions committed their own folders promptly and correctly, and all three left their catalog row
+behind. Six files ended up stranded and it took a dedicated session to unpick.
+
+- **Edit only your own row — never rewrite the whole file.** Targeted find-and-replace on your row,
+  never a full-file write. This is the whole fix for the vanishing-row bug: a full-file write is
+  built from a copy read *before* someone else's row existed, so saving it silently deletes their
+  work. A targeted edit cannot drop a row it never mentions, and if the file moved underneath it,
+  it fails loudly instead of overwriting. **Git protects nothing here** — parallel sessions share
+  one working tree, not branches, so it is last-write-wins at the filesystem level and no commit
+  frequency changes that. (A row was lost this way once. It was caught only because the session
+  that wrote it went looking for it.)
+- **Commit it even when other rows are dirty.** Your message won't describe their row. That costs
+  far less than a file nobody is permitted to commit.
 
 ## When a game's tone depends on looking broken
 
