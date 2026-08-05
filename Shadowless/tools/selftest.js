@@ -1,28 +1,19 @@
-// Headless self-test for the Shadowless rules engine.
+// Statistical self-test for the Shadowless rules engine and AI.
 //
-//   node tools/selftest.js            quick pass  (~150 games)
+//   node tools/selftest.js            quick pass  (~100 games)
 //   node tools/selftest.js 40         deeper pass (40 seeds per matchup)
 //
-// The engine is pure logic with no DOM, so it can be lifted straight out of the
-// HTML and driven in Node. This slices the file from `const CARD_DB` to the
-// `// UI LAYER` banner and evaluates that — everything below the banner touches
-// `document` and is left behind. If you ever split the file up (see CLAUDE.md),
-// this is the seam to split on, and this harness should switch to `require`.
+// This drives the SOURCE modules directly — they are DOM-free and export
+// cleanly, so no browser and no DOM stubs are involved. Its companion,
+// tools/smoke.js, tests the BUILT artifact including the UI layer. Run both:
+// this one catches rules and AI regressions, that one catches build and UI
+// regressions, and neither subsumes the other.
 
-const fs = require('fs');
-const path = require('path');
-
-const HTML = fs.readFileSync(path.join(__dirname, '..', 'shadowless.html'), 'utf8');
-const start = HTML.indexOf('const CARD_DB = {');
-const end = HTML.indexOf('// UI LAYER');
-if (start < 0 || end < 0) throw new Error('Could not find the engine slice — did the section banners change?');
-
-const sandbox = {};
-new Function('exports', HTML.slice(start, end) + `
-  Object.assign(exports, { CARD_DB, DECKS, EFFECTS, Engine, generateDeck, mulberry32, CONFIG_DEFAULTS, AI_WEIGHTS });
-`)(sandbox);
-
-const { CARD_DB, DECKS, EFFECTS, Engine } = sandbox;
+const { CARD_DB, DECKS } = require('../src/cards.js');
+const { EFFECTS } = require('../src/effects.js');
+const { Engine } = require('../src/engine.js');
+require('../src/ai.js');
+require('../src/deckgen.js');
 
 // --- play one game to completion, both seats driven by the AI -------------
 function playGame(deckA, deckB, seed, modeA = 'expert', modeB = 'expert') {

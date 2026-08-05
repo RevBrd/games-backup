@@ -20,7 +20,7 @@ starting or resuming work. This file is the catalog and the cross-game housekeep
 | [Ultra Pong!!!!](Ultra%20Pong!!!!/) | Untouched 1972 Pong buried under 2026's entire attention economy — Idiocracy ad breaks, a CPU that narrates the broadcast and holds a grudge, six billion fickle viewers | Mostly finished. Physics are pure classic Pong and must stay that way; authored annoyances and an honesty rule for anything the CPU does are registered in its `CLAUDE.md`. More ad copy welcome |
 | [Powerplay](Powerplay/) | A fake 1995 handheld LCD hockey game, second-hand and sun-damaged — every skater position pre-etched into the glass, ghost segments and all, with a genuinely deep hockey game hidden under a display too dumb to show it | Pass 1: the object is built — case, wear, and a working 62-segment reflective display. Game loop is a sandbox only. Authored defects (stuck segment, case damage) are registered in its `CLAUDE.md` — read it before fixing anything |
 | [DRIFT](DRIFT/) | Asteroids where the gun is also a thruster — no brakes, every shot shoves you back, and the screen-clearing pulse gets likelier to kill you every time you use it | Mostly finished across four modes. Predates most of the conventions here and set some of them. Scores now persist; audio is the main gap and RIDICULOUS still wants playtesting. Recoil is original and untouchable — read its `CLAUDE.md` |
-| [Shadowless](Shadowless/) | The whole WotC-era Pokémon TCG — every card, played to the letter of the original ruleset. Win matches, win packs, build decks from what you actually own, fill a dex | The biggest project here by far. Engine and AI are done and verified; 90 of Base Set's 102 cards are in, and the 12 left each need new engine machinery (Pokémon Powers do not exist yet). Collection, packs, deck building and persistence are all unbuilt. Breaks the single-file rule — has data files and a Node test harness. Read its `CLAUDE.md` |
+| [Shadowless](Shadowless/) | The whole WotC-era Pokémon TCG — every card, played to the letter of the original ruleset. Win matches, win packs, build decks from what you actually own, fill a dex | The biggest project here by far, and the only one with a build step: `shadowless.html` is **generated** from `src/`, so never hand-edit it. Engine and AI are done and verified; 90 of Base Set's 102 cards are in, and the 12 left each need new engine machinery (Pokémon Powers do not exist yet). Collection, packs, deck building and persistence are all unbuilt. Read its `CLAUDE.md` before anything |
 | [Æthermoor](Aethermoor/) | An epic fantasy RPG that is entirely character creation. Rite after rite, tutorial after tutorial, guided by a delighted floating orb named Glim — who has been here longer than you and is starting to notice | Job 1 only: the creation flow through to a loading bar that never finishes. The tutorial engine, the procedural stretch and Glim's unravelling are all unbuilt. Trevor's concept, Fable 5's build. Authored defects are registered in its `CLAUDE.md` — read it before fixing anything |
 
 Other games exist from earlier Claude Chat sessions and are not yet migrated into this folder.
@@ -42,6 +42,11 @@ If known, please credit the Claude model that assisted in its creation within th
 - **Long-term target is a free static host** (GitHub Pages or similar), which serves files exactly
   as-is with no build step. That constrains format: a finished game should be a single
   self-contained HTML file that runs by double-clicking it.
+- **A game may keep its source split and *build* that single file.** The deliverable is unchanged;
+  only the authoring changes. `Shadowless/` is the worked example — modules in `src/`, a Node
+  builder in `tools/`, and a generated HTML at the root that nobody edits by hand. Worth reaching
+  for once a game outgrows one file, and not before. Note that ES modules do **not** load from
+  `file://`, so the builder concatenates rather than emitting `<script src>` tags.
 
 ## Git
 
