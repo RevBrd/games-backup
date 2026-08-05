@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ÆTHERMOOR — Chronicles of the Ninefold Throne</title>
+<style>
+  :root{
+    --void:#14101d;          /* deep desaturated blackberry, a fake-luxury dark */
+    --void-2:#1c1530;
+    --panel:#221a35;
+    --panel-2:#2a2142;
+    --gold:#cba135;          /* primary gilt */
+    --gilt:#e8d29a;          /* gilt highlight */
+    --gold-dim:#8f7326;
+    --wine:#7a1f2b;          /* seals, deep accents */
+    --wine-2:#a83244;
+    --parchment:#e8ddc4;     /* readable warm ivory, used sparingly on lore cards */
+    --ink:#2b2418;           /* text ON parchment */
+    --lav:#9a90b0;           /* muted secondary text */
+    --lav-dim:#6a6284;
+    --wisp:#bfe3ff;          /* Glim's light */
+    --wisp-glow:#7fb8ff;
+    --ok:#8fb86a;
+    --serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #2a1f45 0%, transparent 60%),
+      radial-gradient(900px 900px at 50% 120%, #22182f 0%, transparent 60%),
+      var(--void);
+    color:var(--lav);
+    font-family:var(--serif);
+    -webkit-font-smoothing:antialiased;
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- ornamented stage ---------- */
+  #stage{
+    flex:1;
+    width:100%;
+    max-width:860px;
+    margin:0 auto;
+    padding:28px 22px 220px;
+    position:relative;
+  }
+  .frame{
+    position:relative;
+    background:linear-gradient(160deg,var(--panel) 0%,var(--void-2) 100%);
+    border:1px solid var(--gold-dim);
+    border-radius:3px;
+    padding:38px 40px 42px;
+    box-shadow:
+      0 0 0 1px #000 inset,
+      0 0 40px rgba(0,0,0,.55),
+      0 0 90px rgba(80,50,120,.15);
+  }
+  /* gilt corner flourishes */
+  .frame::before,.frame::after{
+    content:"";position:absolute;width:34px;height:34px;
+    border:2px solid var(--gold);opacity:.65;pointer-events:none;
+  }
+  .frame::before{top:8px;left:8px;border-right:none;border-bottom:none;}
+  .frame::after{bottom:8px;right:8px;border-left:none;border-top:none;}
+  .corner-tr,.corner-bl{position:absolute;width:34px;height:34px;border:2px solid var(--gold);opacity:.65;pointer-events:none;}
+  .corner-tr{top:8px;right:8px;border-left:none;border-bottom:none;}
+  .corner-bl{bottom:8px;left:8px;border-right:none;border-top:none;}
+
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--gold-dim);margin-bottom:14px;
+  }
+  h1.title{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(38px,8vw,72px);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:transparent;
+    background:linear-gradient(180deg,var(--gilt) 0%,var(--gold) 45%,var(--gold-dim) 100%);
+    -webkit-background-clip:text;background-clip:text;
+    margin:.1em 0 .05em;
+    line-height:1.02;
+    text-shadow:0 2px 30px rgba(203,161,53,.15);
+  }
+  h2.screen-title{
+    font-family:var(--serif);font-weight:600;
+    font-size:clamp(24px,4vw,34px);
+    letter-spacing:.05em;color:var(--gilt);
+    margin:0 0 4px;
+  }
+  .sub{color:var(--lav);font-style:italic;font-size:16px;margin:0 0 26px;}
+  .rule{
+    height:1px;border:none;margin:22px 0;
+    background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);
+  }
+  .rule.ornate{position:relative;height:14px;background:none;margin:26px 0;}
+  .rule.ornate::before{content:"";position:absolute;top:6px;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold-dim) 20%,var(--gold-dim) 80%,transparent);}
+  .rule.ornate::after{content:"❖";position:absolute;left:50%;top:-4px;transform:translateX(-50%);
+    color:var(--gold);background:var(--panel);padding:0 12px;font-size:14px;}
+
+  p.body{font-size:16.5px;line-height:1.7;color:#c6bcd8;}
+  .dim{color:var(--lav-dim);}
+  .gold{color:var(--gold);}
+
+  /* ---------- controls ---------- */
+  button{font-family:inherit;cursor:pointer;}
+  .btn{
+    font-family:var(--serif);font-size:16px;letter-spacing:.06em;
+    color:var(--void);
+    background:linear-gradient(180deg,var(--gilt),var(--gold) 60%,var(--gold-dim));
+    border:1px solid var(--gold);border-radius:2px;
+    padding:13px 30px;font-weight:600;
+    box-shadow:0 2px 0 #000,0 6px 18px rgba(0,0,0,.4);
+    transition:transform .08s ease,filter .15s ease;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn:active{transform:translateY(2px);box-shadow:0 0 0 #000;}
+  .btn:disabled{filter:grayscale(.7) brightness(.6);cursor:not-allowed;box-shadow:none;}
+  .btn.ghost{
+    background:transparent;color:var(--gold);
+    box-shadow:none;
+  }
+  .btn.ghost:hover{background:rgba(203,161,53,.08);}
+  .actions{display:flex;gap:14px;align-items:center;margin-top:30px;flex-wrap:wrap;}
+
+  input[type=text]{
+    font-family:var(--serif);font-size:20px;color:var(--gilt);
+    background:var(--void);border:1px solid var(--gold-dim);
+    border-radius:2px;padding:12px 16px;width:100%;max-width:420px;
+    letter-spacing:.04em;
+  }
+  input[type=text]:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(203,161,53,.15);}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;}
+
+  /* ---------- stat grid ---------- */
+  .points-banner{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--void);border:1px solid var(--gold-dim);border-radius:2px;
+    padding:12px 18px;margin-bottom:20px;font-family:var(--mono);
+  }
+  .points-banner .num{font-size:26px;color:var(--gilt);}
+  .points-banner .num.spent{color:var(--wine-2);}
+  .points-banner small{color:var(--lav-dim);letter-spacing:.2em;text-transform:uppercase;font-size:10px;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;}
+  @media(max-width:620px){.stat-grid{grid-template-columns:1fr;}}
+  .stat{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 12px;border:1px solid transparent;border-radius:2px;
+    position:relative;
+  }
+  .stat:hover{border-color:var(--gold-dim);background:rgba(203,161,53,.03);}
+  .stat .name{flex:1;font-size:15.5px;letter-spacing:.04em;color:#cfc6e0;
+    text-transform:uppercase;font-size:13px;letter-spacing:.14em;}
+  .stat .val{font-family:var(--mono);font-size:20px;color:var(--gilt);width:38px;text-align:center;}
+  .stat .pm{
+    width:30px;height:30px;line-height:1;font-size:20px;
+    border:1px solid var(--gold-dim);background:var(--void-2);color:var(--gold);
+    border-radius:2px;display:flex;align-items:center;justify-content:center;padding:0;
+  }
+  .stat .pm:hover:not(:disabled){background:var(--gold);color:var(--void);}
+  .stat .pm:disabled{opacity:.25;cursor:not-allowed;}
+  .stat .info{color:var(--lav-dim);font-size:13px;cursor:help;border:1px solid var(--lav-dim);
+    width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-style:italic;font-family:var(--serif);flex-shrink:0;}
+  .tip{
+    position:absolute;bottom:calc(100% + 6px);left:0;right:0;z-index:20;
+    background:var(--void);border:1px solid var(--gold-dim);border-radius:2px;
+    padding:10px 12px;font-size:12.5px;line-height:1.5;color:var(--lav);
+    box-shadow:0 8px 24px rgba(0,0,0,.6);display:none;font-style:italic;
+  }
+  .stat:hover .tip{display:block;}
+
+  /* ---------- pickers (appearance) ---------- */
+  .picker-row{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 22px;}
+  .chip{
+    font-family:var(--serif);font-size:14.5px;letter-spacing:.03em;
+    padding:9px 16px;border:1px solid var(--gold-dim);border-radius:2px;
+    background:var(--void-2);color:var(--lav);
+  }
+  .chip:hover{border-color:var(--gold);color:var(--gilt);}
+  .chip.on{background:var(--gold);color:var(--void);border-color:var(--gold);font-weight:600;}
+  .app-layout{display:grid;grid-template-columns:150px 1fr;gap:26px;align-items:start;}
+  @media(max-width:620px){.app-layout{grid-template-columns:1fr;}}
+  .silhouette{
+    aspect-ratio:3/4;border:1px solid var(--gold-dim);border-radius:2px;
+    background:radial-gradient(circle at 50% 30%,#2c2340,var(--void));
+    display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;
+  }
+  .silhouette svg{width:78%;opacity:.8;}
+  .silhouette .cap{position:absolute;top:8px;left:0;right:0;text-align:center;
+    font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--lav-dim);text-transform:uppercase;}
+
+  /* ---------- backgrounds ---------- */
+  .bg-card{
+    background:linear-gradient(175deg,#efe6cf,var(--parchment));
+    color:var(--ink);border:1px solid var(--gold-dim);border-radius:2px;
+    padding:22px 24px;margin-bottom:16px;cursor:pointer;position:relative;
+    box-shadow:0 4px 16px rgba(0,0,0,.4);transition:transform .1s ease,box-shadow .15s ease;
+  }
+  .bg-card:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(0,0,0,.5);}
+  .bg-card.on{outline:2px solid var(--gold);outline-offset:3px;}
+  .bg-card h3{font-family:var(--serif);font-size:22px;margin:0 0 4px;color:#3a2d14;letter-spacing:.02em;}
+  .bg-card .trait{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--wine);margin-bottom:12px;}
+  .bg-card p{font-size:14.5px;line-height:1.62;margin:0 0 10px;color:#4a3c22;}
+  .bg-card p:last-child{margin-bottom:0;}
+  .bg-card .drop{float:left;font-size:52px;line-height:.8;padding:4px 8px 0 0;color:var(--wine);font-weight:600;}
+  .bg-card .chosen-seal{position:absolute;top:14px;right:16px;font-family:var(--mono);font-size:10px;
+    letter-spacing:.2em;color:var(--gold-dim);text-transform:uppercase;opacity:0;}
+  .bg-card.on .chosen-seal{opacity:1;color:var(--wine);}
+
+  /* ---------- character sheet ---------- */
+  .sheet{background:var(--void);border:1px solid var(--gold-dim);border-radius:2px;padding:24px 26px;}
+  .sheet .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(203,161,53,.12);}
+  .sheet .row:last-child{border-bottom:none;}
+  .sheet .k{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-dim);}
+  .sheet .v{color:var(--gilt);font-size:16px;text-align:right;}
+  .sheet .statline{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;}
+  .sheet .statline span{font-family:var(--mono);font-size:12px;color:var(--lav);}
+  .sheet .statline b{color:var(--gilt);}
+  .wax{width:74px;height:74px;margin:24px auto 6px;border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,var(--wine-2),var(--wine) 70%,#4d1119);
+    display:flex;align-items:center;justify-content:center;color:var(--gilt);
+    font-family:var(--serif);font-size:30px;box-shadow:0 4px 14px rgba(0,0,0,.5),0 0 0 3px rgba(122,31,43,.3);
+    transform:rotate(-6deg);}
+
+  /* ---------- Glim companion dock ---------- */
+  #glim-dock{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    background:linear-gradient(0deg,var(--void) 70%,rgba(20,16,29,.0));
+    padding:18px 22px 22px;
+  }
+  .glim-inner{max-width:860px;margin:0 auto;display:flex;gap:18px;align-items:flex-start;}
+  .wisp{
+    flex-shrink:0;width:58px;height:58px;position:relative;margin-top:2px;
+  }
+  .wisp .core{position:absolute;inset:18px;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,#fff,var(--wisp) 55%,var(--wisp-glow));
+    box-shadow:0 0 18px 4px rgba(127,184,255,.6),0 0 40px 10px rgba(127,184,255,.25);
+    animation:bob 3.4s ease-in-out infinite;}
+  .wisp .halo{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(127,184,255,.3);
+    animation:pulse 3.4s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+  @keyframes pulse{0%,100%{transform:scale(.9);opacity:.5;}50%{transform:scale(1.15);opacity:.15;}}
+  .glim-box{flex:1;background:var(--panel);border:1px solid var(--gold-dim);border-radius:3px;
+    padding:14px 18px;position:relative;box-shadow:0 -2px 20px rgba(0,0,0,.4);min-height:56px;}
+  .glim-box::before{content:"";position:absolute;left:-8px;top:20px;width:14px;height:14px;
+    background:var(--panel);border-left:1px solid var(--gold-dim);border-bottom:1px solid var(--gold-dim);
+    transform:rotate(45deg);}
+  .glim-name{font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--wisp-glow);margin-bottom:5px;}
+  .glim-text{font-size:15.5px;line-height:1.55;color:#d9d0ea;font-style:italic;min-height:1.2em;}
+  .glim-text .g-em{color:var(--gilt);font-style:normal;}
+
+  /* screen transitions */
+  .screen{display:none;animation:fade .5s ease;}
+  .screen.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .meta-foot{position:fixed;top:10px;right:14px;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:.14em;color:var(--lav-dim);opacity:.5;text-align:right;line-height:1.5;z-index:5;}
+
+  /* ---------- loading (the slice endpoint) ---------- */
+  .load-orbit{width:64px;height:64px;margin:34px auto 30px;position:relative;}
+  .load-orbit::before{content:"";position:absolute;inset:0;border-radius:50%;
+    border:2px solid rgba(203,161,53,.15);}
+  .load-orbit .load-spark{position:absolute;inset:0;border-radius:50%;
+    border:2px solid transparent;border-top-color:var(--gold);border-right-color:var(--gilt);
+    animation:spin 1.05s linear infinite;
+    box-shadow:0 0 14px rgba(203,161,53,.35);}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .load-bar{max-width:440px;margin:0 auto;height:7px;background:var(--void);
+    border:1px solid var(--gold-dim);border-radius:20px;overflow:hidden;}
+  .load-fill{height:100%;width:0%;
+    background:linear-gradient(90deg,var(--gold-dim),var(--gold),var(--gilt));
+    box-shadow:0 0 12px rgba(203,161,53,.5);transition:width .5s ease;}
+  .load-pct{text-align:center;font-family:var(--mono);font-size:12px;color:var(--gold-dim);
+    letter-spacing:.2em;margin-top:12px;}
+  .load-tip{text-align:center;font-style:italic;color:var(--lav);font-size:14.5px;
+    margin-top:26px;min-height:2.4em;line-height:1.5;padding:0 20px;
+    transition:opacity .4s ease;}
+
+  @media (prefers-reduced-motion: reduce){
+    .wisp .core,.wisp .halo{animation:none;}
+    .screen{animation:none;}
+    .load-orbit .load-spark{animation:none;border-top-color:var(--gold);}
+  }
+</style>
+</head>
+<body>
+
+<div class="meta-foot">ÆTHERMOOR v1.0.0<br>UMBRAL ENGINE IV · BUILD 41179<br>© VORTHAL INTERACTIVE</div>
+
+<div id="stage">
+  <div class="frame">
+    <span class="corner-tr"></span><span class="corner-bl"></span>
+
+    <!-- 0: TITLE -->
+    <section class="screen active" data-screen="title">
+      <div class="eyebrow">Vorthal Interactive Presents</div>
+      <h1 class="title">Æthermoor</h1>
+      <p class="sub gold" style="letter-spacing:.14em;">Chronicles of the Ninefold Throne</p>
+      <hr class="rule ornate">
+      <p class="body">Nine crowns were forged in the fires beneath the Verdant Throne. Eight were lost to the Sundering. The ninth waits for a hand worthy — or foolish — enough to claim it.</p>
+      <p class="body dim">An epic of unprecedented scale. Forge your legend across a living world of consequence, Resonance, and ruin.</p>
+      <div class="actions">
+        <button class="btn" onclick="go('intro')">New Legend</button>
+        <button class="btn ghost" disabled title="No saved legends found.">Continue</button>
+        <button class="btn ghost" disabled>Codex</button>
+      </div>
+    </section>
+
+    <!-- 1: GLIM INTRO -->
+    <section class="screen" data-screen="intro">
+      <div class="eyebrow">Awakening</div>
+      <h2 class="screen-title">A Light in the Dark</h2>
+      <hr class="rule">
+      <p class="body">A small light drifts out of the black and settles beside you. It flickers, brightens, and seems — impossibly — to be delighted to see you.</p>
+      <p class="body dim">It has been waiting a very long time.</p>
+      <div class="actions">
+        <button class="btn" onclick="go('name')">Greet the light</button>
+      </div>
+    </section>
+
+    <!-- 2: NAME -->
+    <section class="screen" data-screen="name">
+      <div class="eyebrow">The First Rite · Naming</div>
+      <h2 class="screen-title">Who Are You?</h2>
+      <p class="sub">A name, once given to the Aethervein, cannot be unspoken.</p>
+      <hr class="rule">
+      <label class="fld" for="nameInput">Your True Name</label>
+      <input type="text" id="nameInput" maxlength="24" placeholder="Enter your name…" autocomplete="off" oninput="onNameInput()">
+      <div class="actions">
+        <button class="btn ghost" onclick="randomName()">✦ Consult the Wyrd</button>
+        <button class="btn" id="nameNext" onclick="commitName()" disabled>Speak it into being</button>
+      </div>
+    </section>
+
+    <!-- 3: STATS -->
+    <section class="screen" data-screen="stats">
+      <div class="eyebrow">The Second Rite · Attributes</div>
+      <h2 class="screen-title">Apportion Your Essence</h2>
+      <p class="sub">Fourteen attributes shape every path before you. Choose with care — the Wyrd rewards intention.</p>
+      <div class="points-banner">
+        <div><span class="num" id="ptsNum">27</span> <small>Essence Remaining</small></div>
+        <div style="text-align:right"><small>Recommended: spend all</small></div>
+      </div>
+      <div class="stat-grid" id="statGrid"></div>
+      <div class="actions">
+        <button class="btn ghost" disabled title="Auto-Apportion unlocks with the Gilded Compact expansion.">⟳ Auto-Apportion</button>
+        <button class="btn" id="statsNext" onclick="commitStats()" disabled>Seal your essence</button>
+      </div>
+    </section>
+
+    <!-- 3b: SECONDARY ATTRIBUTES (the second, denser system) -->
+    <section class="screen" data-screen="aspects">
+      <div class="eyebrow">The Second Rite · Continued</div>
+      <h2 class="screen-title">Attune Your Aspects</h2>
+      <p class="sub">The primary attributes are only the beginning. Sixteen deeper Aspects shape the truth of who you are.</p>
+      <div class="points-banner">
+        <div><span class="num" id="ptsNum2">33</span> <small>Disposition Remaining</small></div>
+        <div style="text-align:right"><small>Recommended: spend all</small></div>
+      </div>
+      <div class="stat-grid" id="aspectGrid"></div>
+      <div class="actions">
+        <button class="btn ghost" disabled title="Requires a Wyrdstone. None equipped.">⟳ Harmonise</button>
+        <button class="btn" id="aspectsNext" onclick="commitAspects()" disabled>Seal your Aspects</button>
+      </div>
+    </section>
+
+    <!-- 4: APPEARANCE -->
+    <section class="screen" data-screen="appearance">
+      <div class="eyebrow">The Third Rite · Vessel</div>
+      <h2 class="screen-title">Take a Form</h2>
+      <p class="sub">The Aethervein must have something to look upon. Compose your vessel.</p>
+      <hr class="rule">
+      <div class="app-layout">
+        <div>
+          <div class="silhouette">
+            <div class="cap">Live Preview</div>
+            <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#0d0a16" d="M50 8c-11 0-18 9-18 21 0 8 4 14 4 18-8 3-20 9-24 22-3 9-4 24-4 33h84c0-9-1-24-4-33-4-13-16-19-24-22 0-4 4-10 4-18 0-12-7-21-18-21z"/>
+            </svg>
+          </div>
+        </div>
+        <div id="appPickers"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="commitAppearance()">Bind the vessel</button>
+      </div>
+    </section>
+
+    <!-- 5: BACKGROUND -->
+    <section class="screen" data-screen="background">
+      <div class="eyebrow">The Fourth Rite · Origin</div>
+      <h2 class="screen-title">Whence You Came</h2>
+      <p class="sub">Every legend begins somewhere. Read closely — your origin echoes through all that follows.</p>
+      <hr class="rule">
+      <div id="bgCards"></div>
+      <div class="actions">
+        <button class="btn" id="bgNext" onclick="commitBackground()" disabled>Accept this origin</button>
+      </div>
+    </section>
+
+    <!-- 6: CONFIRM -->
+    <section class="screen" data-screen="confirm">
+      <div class="eyebrow">The Rites Are Complete</div>
+      <h2 class="screen-title">Your Legend Is Forged</h2>
+      <hr class="rule">
+      <div class="sheet" id="sheet"></div>
+      <div class="wax">❦</div>
+      <p class="body" style="text-align:center;font-style:italic;color:var(--lav);">Sealed unto the Aethervein. It cannot be undone.</p>
+      <div class="actions" style="justify-content:center;">
+        <button class="btn" id="beginBtn" onclick="beginAdventure()">Begin your adventure</button>
+      </div>
+    </section>
+
+    <!-- 7: LOADING (the slice ends here; Job 2 resolves it into the first tutorial) -->
+    <section class="screen" data-screen="loading">
+      <div class="eyebrow" style="text-align:center">Please Wait</div>
+      <h2 class="screen-title" style="text-align:center;letter-spacing:.14em">Entering Æthermoor</h2>
+      <div class="load-orbit"><div class="load-spark"></div></div>
+      <div class="load-bar"><div class="load-fill" id="loadFill"></div></div>
+      <div class="load-pct" id="loadPct">0%</div>
+      <div class="load-tip" id="loadTip">Awakening the Aethervein…</div>
+    </section>
+
+  </div>
+</div>
+
+<!-- GLIM DOCK -->
+<div id="glim-dock">
+  <div class="glim-inner">
+    <div class="wisp"><div class="halo"></div><div class="core"></div></div>
+    <div class="glim-box">
+      <div class="glim-name">Glim · Your Guide</div>
+      <div class="glim-text" id="glimText">…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ÆTHERMOOR — Job 1: Character Creation
+   A tutorial that never becomes a game. This is the baseline:
+   Glim is radiant, confident, delighted. (Doubt begins next job.)
+   ============================================================ */
+
+const state = {
+  name: "",
+  stats: {},
+  appearance: {},
+  background: null,
+};
+
+/* ---------- Glim's voice (baseline: peak chipper, purely reactive) ----------
+   He appears at 'intro', steps aside for the solo naming rite, and returns for
+   the attribute menus onward. No forward-looking dread anywhere in Job 1. ---- */
+const glimLines = {
+  intro: "Oh — oh, there you <span class='g-em'>are</span>! I knew you'd come. I'm <span class='g-em'>Glim</span>, your guide, and I couldn't be happier to meet you. But listen to me chattering — the First Rite won't wait. Go on ahead and give yourself a name. I'll be near.",
+  stats: "There you are again! Now the fun part — your <span class='g-em'>essence</span>. Fourteen attributes, and every single one matters. Hover any of them and I'll tell you exactly what it governs.",
+  aspects: "Oh, and here's my <span class='g-em'>favourite</span> part — your Aspects! The attributes were just the beginning. These deeper qualities are where you truly take shape. Some heroes rush them. Not you, I can tell.",
+  appearance: "Ooh, let's make you <span class='g-em'>gorgeous</span>. Pick an ancestry, a look — the vessel the whole world will come to know. The preview updates live, see?",
+  background: "This is my favourite rite. Your <span class='g-em'>origin</span>! Read each one properly — I'll know if you skim, and more importantly, <span class='g-em'>they</span> will. Choose the story that calls to you.",
+  confirm: "Look at that. A whole legend, and you made it yourself! I'm honestly a little proud. Everything's sealed and ready — your adventure begins the very moment you press that button.",
+};
+
+function setGlim(html){ document.getElementById('glimText').innerHTML = html; }
+
+/* screens where Glim is present (absent on title + the solo naming rite) */
+const GLIM_SCREENS = new Set(["intro","stats","aspects","appearance","background","confirm","loading"]);
+function updateDock(screen){
+  document.getElementById('glim-dock').style.display = GLIM_SCREENS.has(screen) ? "block" : "none";
+}
+
+/* ---------- screen router ---------- */
+function go(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.querySelector(`[data-screen="${screen}"]`);
+  el.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  updateDock(screen);
+  if(glimLines[screen]) setGlim(personalize(glimLines[screen]));
+  if(screen==='confirm') renderSheet();
+}
+function personalize(t){
+  return state.name ? t.replace(/\bhero\b/i,'hero') : t; // name woven in per-screen below
+}
+
+/* ---------- NAME ---------- */
+const wyrdNames = ["Aldric Vaelith","Sorrow of the Ninth Vein","Kestrel Ashborne","Vandwen the Unwritten",
+  "Thess of Hollowmere","Bramblewick Corvain","Lyanne Sundershard","Old Grief","Yorrick Pell",
+  "The Nameless of Wyrmsong","Fenmarch Dusk","Ombrelle Vane"];
+function onNameInput(){
+  const v = document.getElementById('nameInput').value.trim();
+  document.getElementById('nameNext').disabled = v.length < 1;
+}
+function randomName(){
+  const n = wyrdNames[Math.floor(Math.random()*wyrdNames.length)];
+  document.getElementById('nameInput').value = n;
+  onNameInput();
+  // no Glim here — the naming rite is faced alone
+}
+function commitName(){
+  state.name = document.getElementById('nameInput').value.trim();
+  buildStats();
+  go('stats'); // dock reappears; Glim greets you back, personalised
+  setGlim(`A fine name, <span class='g-em'>${escapeHtml(state.name)}</span> — welcome back! Now the fun part: your essence. Every attribute matters enormously. Hover any of them and I'll tell you exactly what it governs.`);
+}
+
+/* ---------- STATS ---------- */
+const STATS = [
+  ["Might","Governs melee damage, carry capacity, and the thresholds at which you may Sunder barred doors and lesser foes."],
+  ["Finesse","Determines critical-strike chance, parry windows, and all Finesse-scaled weapon damage."],
+  ["Fortitude","Sets maximum vitality, resistance to Umbral corruption, and the speed of stagger recovery."],
+  ["Intellect","Weave complexity, maximum spell tier, and how swiftly you comprehend recovered lorebooks."],
+  ["Wisdom","Attunement regeneration and the reliability of your Second-Sight readings in the field."],
+  ["Resolve","Your morale floor, resistance to fear effects, and the binding potency of sworn Oaths."],
+  ["Charisma","Merchant pricing, companion loyalty gain, and your standing within the Concordat of Ash."],
+  ["Perception","Trap-detection radius, hidden-path visibility, and the range of your ambush warnings."],
+  ["Attunement","Your maximum Resonance pool and whether you may access Third-Circle Weaves at all."],
+  ["Luck","Rare-drop weighting and the general fickleness of the Wyrd toward your endeavours."],
+  ["Willpower","Resistance to domination and the sustained duration of your concentration Weaves."],
+  ["Instinct","Initiative order in the turn economy and the accuracy of your Beast Sense."],
+  ["Presence","Intimidation reach, the radius of your Command aura, and your legitimacy upon a throne."],
+  ["Guile","Pickpocket success, dialogue deception outcomes, and the detection of contract loopholes."],
+];
+/* ---- SECONDARY: vaguer qualities, circular tooltips, own currency ---- */
+const ASPECTS = [
+  ["Verve","The vigour of your Verve. Modifies all Verve-scaled outcomes and feeds into overall Élan."],
+  ["Gravitas","The weight you carry into a room. Greater Gravitas lends further gravity to your Gravitas."],
+  ["Élan","Your characteristic dash and flair. Élan may never exceed your Verve. (It may.)"],
+  ["Poise","Composure under Composure checks. Not to be confused with Composure, which is deprecated."],
+  ["Ardour","The heat of your inner fire. Fuels adjacent temperaments and deepens the flush of Zeal."],
+  ["Sang-froid","Coolness of blood. Opposes Ardour — unless both run high, in which case consult the Codex."],
+  ["Mettle","The temper of your Mettle. Distinct from Might, from Metal, and (importantly) from Meddle."],
+  ["Zeal","The intensity of your devotions. Compounds with Ardour and is capped by Temperance."],
+  ["Temperance","Moderation in all things, including this one. Caps Zeal. Is itself capped by nothing."],
+  ["Candour","The transparency of your Candour. Governs how candidly the Wyrd elects to regard you."],
+  ["Aplomb","Self-assurance in uncertain moments. Assessed continuously and never displayed."],
+  ["Constancy","Your steadiness across the Nine Seasons. Constancy does not change. Allocate with care."],
+  ["Levity","The lightness of your being. Quietly offsets the felt burden of Gravitas by a hidden margin."],
+  ["Forbearance","Your capacity to forbear. Each point permits precisely one additional act of forbearing."],
+  ["Countenance","The bearing of your face against the world. Unrelated to Appearance, a later rite entirely."],
+  ["Acuity","The keenness of your discernment. Note: has no bearing on Perception, a Primary Attribute."],
+];
+
+/* generic allocator config keyed by system id */
+const ALLOC = {
+  primary:   {defs:STATS,   base:5, pool:27, stateKey:"stats",   grid:"statGrid",   ptsEl:"ptsNum",  nextBtn:"statsNext",
+              done:`Every last point spent — <span class='g-em'>marvelous</span>. Exactly the intention the Wyrd rewards. Seal it whenever you're ready!`},
+  secondary: {defs:ASPECTS, base:3, pool:33, stateKey:"aspects", grid:"aspectGrid", ptsEl:"ptsNum2", nextBtn:"aspectsNext",
+              done:`All thirty-three, beautifully placed! Some heroes just… guess at these. Not you. Seal them whenever you like!`},
+};
+const CAP = 20, FLOOR = 1;
+let allocLeft = {primary:27, secondary:33};
+
+function buildAlloc(id){
+  const c = ALLOC[id];
+  allocLeft[id] = c.pool;
+  state[c.stateKey] = {};
+  c.defs.forEach(([n])=> state[c.stateKey][n] = c.base);
+  const grid = document.getElementById(c.grid);
+  grid.innerHTML = "";
+  c.defs.forEach(([name,desc])=>{
+    const row = document.createElement('div');
+    row.className='stat'; row.dataset.alloc=id;
+    row.innerHTML = `
+      <span class="info">i</span>
+      <span class="name">${name}</span>
+      <button class="pm minus" aria-label="decrease ${name}" onclick="adjA('${id}','${name}',-1)">−</button>
+      <span class="val" id="v-${id}-${cssId(name)}">${c.base}</span>
+      <button class="pm plus" aria-label="increase ${name}" onclick="adjA('${id}','${name}',1)">+</button>
+      <div class="tip">${desc}</div>`;
+    grid.appendChild(row);
+  });
+  updateA(id);
+}
+function adjA(id,name,d){
+  const c = ALLOC[id];
+  const cur = state[c.stateKey][name];
+  if(d>0 && (allocLeft[id]<=0 || cur>=CAP)) return;
+  if(d<0 && cur<=FLOOR) return;
+  state[c.stateKey][name] = cur+d;
+  allocLeft[id]-=d;
+  document.getElementById(`v-${id}-${cssId(name)}`).textContent = state[c.stateKey][name];
+  updateA(id);
+}
+function updateA(id){
+  const c = ALLOC[id];
+  const el = document.getElementById(c.ptsEl);
+  el.textContent = allocLeft[id];
+  el.classList.toggle('spent', allocLeft[id]===0);
+  document.getElementById(c.nextBtn).disabled = allocLeft[id]!==0;
+  document.querySelectorAll(`.stat[data-alloc="${id}"]`).forEach(row=>{
+    const name = row.querySelector('.name').textContent;
+    const cur = state[c.stateKey][name];
+    row.querySelector('.plus').disabled  = (allocLeft[id]<=0 || cur>=CAP);
+    row.querySelector('.minus').disabled = (cur<=FLOOR);
+  });
+  if(allocLeft[id]===0) setGlim(c.done);
+}
+function cssId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
+
+/* wrappers preserving existing call sites */
+function buildStats(){ buildAlloc('primary'); }
+function commitStats(){
+  buildAlloc('secondary');
+  go('aspects');
+  setGlim(personalize(glimLines.aspects));
+}
+function commitAspects(){
+  buildAppearance();
+  go('appearance');
+  setGlim(personalize(glimLines.appearance));
+}
+
+/* ---------- APPEARANCE ---------- */
+const APP = [
+  ["Ancestry",["Highborn Aelthar","Ashkin","Fenwrought"]],
+  ["Complexion",["Moonpale","Umbral-touched","Sunworn"]],
+  ["Hair",["Raven","Ashen","Ember-red"]],
+  ["Eyes",["Storm-grey","Verdant","Wyrd-gold"]],
+  ["Bearing",["Noble","Haunted","Unbowed"]],
+];
+function buildAppearance(){
+  const wrap=document.getElementById('appPickers');
+  wrap.innerHTML="";
+  APP.forEach(([label,opts])=>{
+    state.appearance[label]=opts[0];
+    const l=document.createElement('label');
+    l.className='fld'; l.textContent=label;
+    const row=document.createElement('div');
+    row.className='picker-row';
+    row.dataset.group=label;
+    opts.forEach((o,i)=>{
+      const b=document.createElement('button');
+      b.className='chip'+(i===0?' on':'');
+      b.textContent=o;
+      b.onclick=()=>pick(label,o,b);
+      row.appendChild(b);
+    });
+    wrap.appendChild(l); wrap.appendChild(row);
+  });
+}
+function pick(group,val,btn){
+  state.appearance[group]=val;
+  btn.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+}
+function commitAppearance(){
+  buildBackgrounds();
+  go('background');
+  setGlim(personalize(glimLines.background));
+}
+
+/* ---------- BACKGROUNDS ---------- */
+const BGS = [
+  {
+    id:"heir", title:"The Disinherited Heir",
+    trait:"Trait · Bloodright — +1 to Presence-based Concordat checks",
+    drop:"B",
+    body:[
+      "efore the Sundering, House Vaelith held the eastern marches from the black spires of Duncarrow, and its banners flew at the right hand of the Verdant Throne itself. You were born to that hall — third in the line of succession, tutored in the Nine Disciplines, promised a seat among the Gilded Compact before you could walk unaided.",
+      "Then came the night the Aethervein turned. Duncarrow fell not to armies but to silence; your kin were unwritten from the world one by one, their names struck from the Concordat rolls as though they had never drawn breath. You alone slipped the noose of that erasure, carried out through the servants' undercroft by a nurse whose face you can no longer recall.",
+      "You have spent every year since as a claimant to nothing — a bloodline the histories insist is extinct. But the throne remembers what the histories forget, and the ninth crown has not yet chosen. Perhaps it has been waiting for a Vaelith all along."
+    ]
+  },
+  {
+    id:"ashkin", title:"The Ashkin Wanderer",
+    trait:"Trait · Emberborn — reduced Umbral corruption accrual",
+    drop:"Y",
+    body:[
+      "ou were born under the Umbral tide, in the grey season when the Aethervein runs thin and the border between the living world and the Hollow King's country wears through. The Concordat of Ash names such children Ashkin, and watches them closely, for the tide leaves something behind in those it touches at the first breath.",
+      "You never knew a hall or a hearth. The Ashkin keep to the road — the old salt-tracks between the drowned cities, the pilgrim ways that no honest cartographer will draw. You learned to read weather in the set of a stranger's jaw, to trade in favours no coin could settle, and to sleep with one sense always turned toward the dark.",
+      "The corruption that hollows other travellers slides off you like rain off oilcloth; the tide made you, and the tide does not devour its own. You do not know yet whether that is a mercy or a debt. The Concordat believes it is a debt. The Concordat is very often right."
+    ]
+  },
+  {
+    id:"adept", title:"The Cloistered Adept",
+    trait:"Trait · Second-Sight — begin attuned to one First-Circle Weave",
+    drop:"T",
+    body:[
+      "hey found you at the foot of the Wyrmsong stair, an infant left where only the Third Circle would think to look, and they took you behind the veil walls to be raised in the one discipline the outer world fears above all others: the study of Resonance, the shaping of the Weave, the slow and perilous art of asking the Aethervein for things it would rather not give.",
+      "For twenty years your world was the cloister — the reading-cells, the attunement pools, the endless graduated exercises of the First and Second Circles. You were counted promising. You were also counted restless, which in the Third Circle is not a compliment but a diagnosis, and one they treat by keeping the door to the Third-Circle archives very firmly locked.",
+      "Now the cloister lies behind you, whether by choice or by expulsion the records are careful not to say. You carry what they taught you and the sharper hunger for what they would not. The Weave answers you more readily than it answers most. That has always been the trouble."
+    ]
+  }
+];
+function buildBackgrounds(){
+  const wrap=document.getElementById('bgCards');
+  wrap.innerHTML="";
+  BGS.forEach(bg=>{
+    const c=document.createElement('div');
+    c.className='bg-card';
+    c.dataset.id=bg.id;
+    const paras=bg.body.map((p,i)=> i===0
+      ? `<p><span class="drop">${bg.drop}</span>${p}</p>`
+      : `<p>${p}</p>`).join("");
+    c.innerHTML=`<span class="chosen-seal">✓ Chosen</span>
+      <h3>${bg.title}</h3><div class="trait">${bg.trait}</div>${paras}`;
+    c.onclick=()=>chooseBg(bg,c);
+    wrap.appendChild(c);
+  });
+}
+function chooseBg(bg,card){
+  state.background=bg;
+  document.querySelectorAll('.bg-card').forEach(c=>c.classList.remove('on'));
+  card.classList.add('on');
+  document.getElementById('bgNext').disabled=false;
+  setGlim(`<span class='g-em'>${bg.title}</span> — a powerful choice. I can already tell it suits you. Accept it when you're certain; origins, like names, are forever.`);
+}
+function commitBackground(){
+  go('confirm');
+}
+
+/* ---------- CONFIRM ---------- */
+function renderSheet(){
+  const s=state;
+  const topStats = Object.entries(s.stats).sort((a,b)=>b[1]-a[1]).slice(0,4)
+    .map(([k,v])=>`<span><b>${v}</b> ${k}</span>`).join("");
+  const allStats = Object.entries(s.stats).map(([k,v])=>`<span>${k} <b>${v}</b></span>`).join("");
+  const allAspects = Object.entries(s.aspects).map(([k,v])=>`<span>${k} <b>${v}</b></span>`).join("");
+  document.getElementById('sheet').innerHTML=`
+    <div class="row"><span class="k">Name</span><span class="v">${escapeHtml(s.name)}</span></div>
+    <div class="row"><span class="k">Ancestry</span><span class="v">${s.appearance["Ancestry"]||"—"}</span></div>
+    <div class="row"><span class="k">Origin</span><span class="v">${s.background? s.background.title : "—"}</span></div>
+    <div class="row"><span class="k">Notable Essence</span><span class="v">${topStats}</span></div>
+    <div class="row"><span class="k">Full Apportionment</span></div>
+    <div class="statline">${allStats}</div>
+    <div class="row" style="margin-top:6px"><span class="k">Attuned Aspects</span></div>
+    <div class="statline">${allAspects}</div>`;
+  setGlim(personalize(glimLines.confirm));
+}
+
+/* ---------- LOADING (slice endpoint; environmental foreshadow, not Glim's) ---------- */
+const loadTips = [
+  "Awakening the Aethervein…",
+  "Tip: Attune Weaves at any Resonance Font. Fonts appear in gold upon your map.",
+  "Tip: Sprinting consumes Vigour. Vigour regenerates while walking. Walking consumes Time.",
+  "Tip: The Concordat of Ash remembers every debt. Settle yours before the Umbral tide.",
+  "Tip: Press [Journal] to review the 1,412 lore entries you have not yet unlocked.",
+  "Tip: Perfect parries reward Poise. Poise decays outside of combat.",
+  "Tip: You may re-attune your Disposition at any Wyrdstone — for a price.",
+  "Tip: A hero's Élan should never exceed their Verve. It usually does.",
+  "Tip: Don't forget to equip a weapon!",
+  "Tip: The ninth crown cannot be claimed by the unprepared. Prepare thoroughly.",
+];
+let loadTimer=null, tipTimer=null;
+function beginAdventure(){
+  go('loading');
+  setGlim("This is it! Your legend begins the instant the world finishes waking. Go on — I'll be right there on the other side!");
+  startLoading();
+}
+function startLoading(){
+  const fill=document.getElementById('loadFill'), pct=document.getElementById('loadPct'), tip=document.getElementById('loadTip');
+  let p=0, i=0;
+  tip.textContent = loadTips[0];
+  clearInterval(loadTimer); clearInterval(tipTimer);
+  loadTimer=setInterval(()=>{
+    const step = Math.max(0.05,(99-p)*0.055);   // quick, then asymptotic — never reaches 100
+    p=Math.min(99,p+step);
+    fill.style.width=p.toFixed(1)+'%';
+    pct.textContent=Math.floor(p)+'%';
+  },260);
+  tipTimer=setInterval(()=>{
+    i=(i+1)%loadTips.length;
+    tip.style.opacity=0;
+    setTimeout(()=>{ tip.textContent=loadTips[i]; tip.style.opacity=1; },380);
+  },4200);
+  setTimeout(()=> setGlim("Ooh — I can feel it waking up. Won't be a moment now!"),9000);
+}
+
+/* ---------- utils ---------- */
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* boot — title screen has no guide; hide the dock until Glim first appears */
+updateDock('title');
+</script>
+</body>
+</html>
