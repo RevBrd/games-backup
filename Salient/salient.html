@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SALIENT — Sector Command</title>
+<style>
+  :root {
+    --field-green: #6b7148; --field-faded: #5a5d48; --mud: #4a4030; --mud-dk: #3a3326;
+    --chalk: #cfc9b8; --chalk-dk: #a8a290; --khaki: #8a8161; --ink: #2a2620;
+    --paper: #d8d2c0; --paper-dk: #c4bda8; --rust: #9e3b2b; --rust-hot: #c0492f; --line-dk: #36322a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #1c1a16; color: var(--ink); font-family: 'Courier New', Courier, monospace; overflow: hidden; }
+  #stage { display: flex; height: 100vh; width: 100vw; align-items: stretch;
+    background: repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(0,0,0,0.04) 38px, rgba(0,0,0,0.04) 39px), #1c1a16; }
+
+  #mapcol { flex: 1; display: flex; flex-direction: column; background: var(--paper);
+    border-right: 2px solid var(--line-dk); padding: 16px 18px 14px; position: relative; min-width: 0; }
+  #mapcol::before { content: ""; position: absolute; right: 26px; bottom: 70px; width: 110px; height: 88px;
+    border-radius: 50% 48% 52% 50% / 48% 52% 48% 52%;
+    background: radial-gradient(ellipse at 40% 40%, rgba(96,64,30,0.0) 52%, rgba(96,64,30,0.18) 60%, rgba(96,64,30,0.26) 66%, rgba(96,64,30,0.09) 74%, transparent 80%);
+    pointer-events: none; transform: rotate(-12deg); z-index: 5; }
+  #maphead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; letter-spacing: 2px; }
+  #maphead .sheet { font-weight: bold; font-size: 12px; text-transform: uppercase; color: var(--line-dk); }
+  #maphead .grid-ref { font-size: 11px; color: var(--khaki); }
+  #canvaswrap { display: flex; justify-content: center; }
+  #canvas { display: block; background: var(--field-green); border: 1px solid var(--line-dk); cursor: crosshair; }
+
+  #cmdbar { margin-top: 12px; display: flex; align-items: stretch; gap: 14px; }
+  .stats { display: flex; gap: 1px; background: var(--line-dk); border: 1px solid var(--line-dk); }
+  .stat { background: var(--paper); padding: 6px 13px; text-align: center; min-width: 70px; }
+  .stat .k { font-size: 9px; letter-spacing: 1.5px; color: var(--khaki); text-transform: uppercase; }
+  .stat .v { font-size: 19px; font-weight: bold; color: var(--line-dk); line-height: 1.15; }
+  .stat .v.warn { color: var(--rust-hot); }
+
+  #buildgroup { display: flex; flex-direction: column; gap: 6px; }
+  #buildgroup .label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--khaki); }
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tool { background: var(--paper); border: 1px solid var(--line-dk); color: var(--ink); font-family: inherit;
+    font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; padding: 7px 11px 6px; cursor: pointer;
+    text-align: center; transition: background 0.08s; min-width: 74px; }
+  .tool .cost { display:block; font-size: 10px; color: var(--khaki); margin-top: 2px; }
+  .tool .glyph { font-size: 13px; }
+  .tool:hover { background: var(--chalk); }
+  .tool.active { background: var(--line-dk); color: var(--paper); }
+  .tool.active .cost { color: var(--chalk); }
+
+  #standto { background: var(--rust); color: var(--paper); border: 1px solid var(--line-dk);
+    font-family: 'Arial Narrow', Arial, sans-serif; font-weight: 900; font-size: 16px; letter-spacing: 3px;
+    text-transform: uppercase; padding: 0 22px; cursor: pointer; transition: background 0.1s; align-self: stretch; }
+  #standto:hover { background: var(--rust-hot); }
+  #standto:disabled { background: var(--khaki); cursor: default; color: var(--paper-dk); }
+
+  #selpanel { flex: 1; min-width: 0; border: 1px solid var(--chalk-dk); background: var(--paper);
+    padding: 7px 11px; display: flex; flex-direction: column; justify-content: center; gap: 5px; }
+  #selpanel .seltitle { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--khaki); }
+  #selpanel .selname { font-size: 13px; font-weight: bold; color: var(--line-dk); }
+  #selpanel .selactions { display: flex; gap: 6px; flex-wrap: wrap; }
+  #selpanel .selactions button { background: var(--paper-dk); border: 1px solid var(--line-dk); color: var(--ink);
+    font-family: inherit; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 5px 10px; cursor: pointer; }
+  #selpanel .selactions button:hover { background: var(--chalk); }
+  #selpanel .selactions button:disabled { color: var(--chalk-dk); border-color: var(--chalk-dk); cursor: default; }
+  #selpanel .empty { font-size: 11px; color: var(--khaki); font-style: italic; }
+
+  #rail { width: 296px; background: var(--paper-dk); display: flex; flex-direction: column; padding: 16px 16px 14px; }
+  #title { font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; font-weight: 900; font-size: 30px;
+    letter-spacing: 9px; text-transform: uppercase; color: var(--line-dk); border-bottom: 3px double var(--line-dk);
+    padding-bottom: 5px; margin-bottom: 2px; }
+  #subtitle { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--khaki); margin-bottom: 12px; }
+  .sectionlabel { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--khaki);
+    border-bottom: 1px solid var(--chalk-dk); padding-bottom: 3px; margin-bottom: 8px; }
+  #dispatchwrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  #dispatch { flex: 1; overflow-y: auto; background: var(--paper); border: 1px solid var(--chalk-dk);
+    padding: 9px 10px; font-size: 11.5px; line-height: 1.45; }
+  #dispatch::-webkit-scrollbar { width: 8px; }
+  #dispatch::-webkit-scrollbar-thumb { background: var(--chalk-dk); }
+  .msg { margin-bottom: 9px; padding-bottom: 9px; border-bottom: 1px dotted var(--chalk-dk); }
+  .msg:last-child { border-bottom: none; }
+  .msg .from { font-size: 9px; letter-spacing: 1px; color: var(--khaki); text-transform: uppercase; margin-bottom: 2px; }
+  .msg .body { color: var(--ink); }
+  .msg.alert .body { color: var(--rust-hot); font-weight: bold; }
+
+  #overlay { position: absolute; inset: 0; background: rgba(28,26,22,0.86); display: none; align-items: center; justify-content: center; z-index: 50; }
+  #overlay.show { display: flex; }
+  #overlaycard { background: var(--paper); border: 2px solid var(--line-dk); padding: 30px 38px; max-width: 440px; text-align: center; box-shadow: 0 0 0 6px rgba(216,210,192,0.08); }
+  #overlaycard h1 { font-family: 'Arial Narrow', Arial, sans-serif; font-weight: 900; letter-spacing: 6px; text-transform: uppercase; font-size: 24px; color: var(--line-dk); margin-bottom: 4px; }
+  #overlaycard .stamp { font-size: 10px; letter-spacing: 3px; color: var(--rust); text-transform: uppercase; border: 1px solid var(--rust); display: inline-block; padding: 2px 8px; margin-bottom: 14px; transform: rotate(-3deg); }
+  #overlaycard p { font-size: 13px; line-height: 1.6; margin-bottom: 18px; color: var(--ink); }
+  #overlaycard button { background: var(--rust); color: var(--paper); border: 1px solid var(--line-dk); font-family: 'Arial Narrow', Arial, sans-serif; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; font-size: 15px; padding: 10px 24px; cursor: pointer; }
+  #overlaycard button:hover { background: var(--rust-hot); }
+  .hint { font-size: 10px; color: var(--khaki); margin-top: 10px; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="mapcol">
+    <div id="maphead">
+      <span class="sheet">Trench Map — Sheet 14B</span>
+      <span class="grid-ref">SECTOR: PASSEDALE — SCALE 1:5000</span>
+    </div>
+    <div id="canvaswrap"><canvas id="canvas"></canvas></div>
+
+    <div id="cmdbar">
+      <div class="stats">
+        <div class="stat"><div class="k">Materiel</div><div class="v" id="s-supply">0</div></div>
+        <div class="stat"><div class="k">The Line</div><div class="v" id="s-line">0</div></div>
+        <div class="stat"><div class="k">Wave</div><div class="v" id="s-wave">0</div></div>
+      </div>
+      <div id="buildgroup">
+        <div class="label">Works</div>
+        <div class="tools">
+          <button class="tool active" data-tool="pit"><span class="glyph">▭</span> Rifle Pit<span class="cost">20</span></button>
+          <button class="tool" data-tool="mg"><span class="glyph">⊟</span> MG Nest<span class="cost">55</span></button>
+          <button class="tool" data-tool="dugout"><span class="glyph">⊠</span> Dugout<span class="cost">35</span></button>
+          <button class="tool" data-tool="commtrench"><span class="glyph">║</span> Comm Trench<span class="cost">8</span></button>
+          <button class="tool" data-tool="wire"><span class="glyph">╳</span> Wire<span class="cost">5</span></button>
+          <button class="tool" data-tool="remove"><span class="glyph">⌫</span> Abandon<span class="cost">+50%</span></button>
+        </div>
+      </div>
+      <button id="standto">STAND&nbsp;TO</button>
+      <div id="selpanel">
+        <div class="seltitle">Selected Position</div>
+        <div id="selbody"><span class="empty">Click a work on the map to issue orders.</span></div>
+      </div>
+    </div>
+
+    <div id="overlay">
+      <div id="overlaycard">
+        <div class="stamp" id="ovstamp">SECRET</div>
+        <h1 id="ovtitle">SALIENT</h1>
+        <p id="ovbody"></p>
+        <button id="ovbtn">PROCEED</button>
+        <div class="hint" id="ovhint"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="rail">
+    <div id="title">SALIENT</div>
+    <div id="subtitle">Sector Command &mdash; Western Front</div>
+    <div id="dispatchwrap">
+      <div class="sectionlabel">Dispatches</div>
+      <div id="dispatch"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   SALIENT — Job 3a: the living line (single line).
+   Manning drives fire. Attackers melee the garrison in a column.
+   Overrun = the position becomes a gap. Dugouts trickle reserves
+   that WALK to the threatened work (nearest dugout feeds the breach).
+   Breakthroughs to the rear cost The Line.
+   No trench-graph navigation yet (single line) — that is Job 3b.
+   ============================================================ */
+
+const CONFIG = {
+  COLS: 40, ROWS: 24, CELL: 22, SPAWN_ROWS: 2,
+  ASSIGN_LEFT: 11, ASSIGN_RIGHT: 29,
+
+  ADVANCE: 1.55, WIRE_SLOW: 0.34, LATERAL: 0.6, SEEK_WINDOW: 3, SEEK_LOOKAHEAD: 4,
+  ENEMY_HP: 4, ENEMY_R: 5,
+
+  START_SUPPLY: 130, REFUND: 0.5, allotment: (w) => 55 + w * 12,
+  START_LINE: 10,
+
+  enemyCount: (w) => 9 + w * 6,
+  spawnInterval: (w) => Math.max(170, 470 - w * 28),
+  MILESTONE_WAVE: 6,
+
+  // --- living line ---
+  MELEE_TICK: 350,      // ms between melee exchanges at a contact
+  P_DEF_KILL: 0.55,     // chance entrenched defender kills front attacker per tick
+  P_ATK_KILL: 0.22,     // chance attacker kills a defender per tick (< P_DEF_KILL = cover edge)
+  RESERVE_SPEED: 95,    // px/sec — reserves walk faster than the advance
+  RELIEF_REACTION: 1200,// ms a position waits before the nearest dugout sends each replacement
+  CLIMB_DELAY: 700,     // ms an attacker takes to climb out of an overrun trench
+  TRENCH_SPEED: 46,     // px/sec a breakthrough moves along a communication trench (covered highway)
+  RESERVE_SLOW: 0.55,   // speed multiplier for reserves with no trench route (crossing open ground)
+
+  WORKS: {
+    pit:        { w:2, h:1, cost:20, line:true,  garrison:2, range:82,  cooldown:520, dmg:1, label:'Rifle Pit' },
+    firetrench: { w:2, h:1, cost:0,  line:true,  garrison:3, range:96,  cooldown:400, dmg:1, label:'Fire Trench' },
+    mg:         { w:2, h:1, cost:55, line:true,  garrison:2, range:104, cooldown:150, dmg:1, label:'MG Nest' },
+    commtrench: { w:1, h:1, cost:8,  line:true,  garrison:0, conduit:true, label:'Comm. Trench' },
+    dugout:     { w:1, h:1, cost:35, line:false, garrison:0, reserves:8, label:'Dugout' },
+    wire:       { w:1, h:1, cost:5,  line:false, garrison:0, label:'Wire' },
+  },
+  DEVELOP_COST: 30,
+};
+
+const W = CONFIG.COLS * CONFIG.CELL;
+const H = CONFIG.ROWS * CONFIG.CELL;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = W; canvas.height = H;
+
+const state = {
+  phase: 'build', wave: 0, supply: CONFIG.START_SUPPLY, line: CONFIG.START_LINE, tool: 'pit',
+  empById: new Map(), cellIndex: new Map(), nextId: 1, selected: null,
+  enemies: [], reserves: [], tracers: [], particles: [],
+  spawnQueue: 0, spawnTimer: 0, meleeTimer: 0,
+  killsThisWave: 0, totalKills: 0, milestoneShown: false,
+};
+
+const key = (c, r) => c + ',' + r;
+const clampCol = (c) => Math.max(0, Math.min(CONFIG.COLS - 1, c));
+
+// ---------- dispatches ----------
+const dispatchEl = document.getElementById('dispatch');
+function dispatch(from, body, alert = false) {
+  const div = document.createElement('div');
+  div.className = 'msg' + (alert ? ' alert' : '');
+  div.innerHTML = `<div class="from">${from}</div><div class="body">${body}</div>`;
+  dispatchEl.prepend(div);
+  while (dispatchEl.children.length > 30) dispatchEl.removeChild(dispatchEl.lastChild);
+}
+
+// ---------- HUD ----------
+function refreshHUD() {
+  document.getElementById('s-supply').textContent = Math.floor(state.supply);
+  const lineEl = document.getElementById('s-line');
+  lineEl.textContent = state.line;
+  lineEl.classList.toggle('warn', state.line <= 3);
+  document.getElementById('s-wave').textContent = state.wave;
+  const btn = document.getElementById('standto');
+  btn.disabled = state.phase !== 'build';
+  btn.textContent = state.phase === 'build' ? 'STAND TO' : 'IN ACTION';
+  renderSelection();
+}
+
+// ---------- emplacement helpers ----------
+function empCells(type, c, r) {
+  const w = CONFIG.WORKS[type].w, h = CONFIG.WORKS[type].h, out = [];
+  for (let dx = 0; dx < w; dx++) for (let dy = 0; dy < h; dy++) out.push([c + dx, r + dy]);
+  return out;
+}
+function empCenter(emp) {
+  const w = CONFIG.WORKS[emp.type].w, h = CONFIG.WORKS[emp.type].h;
+  return { x: (emp.c + w / 2) * CONFIG.CELL, y: (emp.r + h / 2) * CONFIG.CELL };
+}
+function inAssigned(c) { return c >= CONFIG.ASSIGN_LEFT && c < CONFIG.ASSIGN_RIGHT; }
+function buildableCell(c, r) {
+  return c >= 0 && c < CONFIG.COLS && r >= 0 && r < CONFIG.ROWS && r >= CONFIG.SPAWN_ROWS && inAssigned(c);
+}
+function canPlace(type, c, r) {
+  for (const [cc, rr] of empCells(type, c, r)) {
+    if (!buildableCell(cc, rr)) return false;
+    if (state.cellIndex.has(key(cc, rr))) return false;
+  }
+  return true;
+}
+function placeEmplacement(type, c, r) {
+  const id = state.nextId++;
+  const def = CONFIG.WORKS[type];
+  const emp = { id, type, c, r, cooldown: 0, kills: 0, men: def.line ? def.garrison : 0, inflight: 0, reliefCd: CONFIG.RELIEF_REACTION };
+  if (type === 'dugout') emp.reserves = def.reserves;
+  state.empById.set(id, emp);
+  for (const [cc, rr] of empCells(type, c, r)) state.cellIndex.set(key(cc, rr), id);
+  return emp;
+}
+function removeEmplacement(id) {
+  const emp = state.empById.get(id);
+  if (!emp) return;
+  for (const [cc, rr] of empCells(emp.type, emp.c, emp.r)) state.cellIndex.delete(key(cc, rr));
+  state.empById.delete(id);
+  if (state.selected === id) state.selected = null;
+}
+function cellIsLine(c, r) {
+  const id = state.cellIndex.get(key(c, r));
+  if (!id) return false;
+  const emp = state.empById.get(id);
+  return emp && CONFIG.WORKS[emp.type].line;
+}
+function workAt(c, r) {
+  const id = state.cellIndex.get(key(c, r));
+  return id ? state.empById.get(id) : null;
+}
+// a cell that is part of the trench GRAPH (dugouts included for reserve routing)
+function isGraphCell(c, r) {
+  const w = workAt(c, r);
+  return !!w && (CONFIG.WORKS[w.type].line || w.type === 'dugout');
+}
+// a cell a breakthrough can flow through (fire works + comm trenches; not dugouts)
+function isNavTrench(c, r) {
+  const w = workAt(c, r);
+  return !!w && CONFIG.WORKS[w.type].line;
+}
+function mannedAt(c, r) {
+  const w = workAt(c, r);
+  return w && CONFIG.WORKS[w.type].line && w.men > 0 ? w : null;
+}
+// BFS along graph cells from a start cell to any goal cell; returns waypoint centres or null
+function bfsPath(start, goalKeys) {
+  if (goalKeys.has(key(start.c, start.r))) return [{ x: (start.c+0.5)*CONFIG.CELL, y: (start.r+0.5)*CONFIG.CELL }];
+  const q = [start], prev = new Map(), seen = new Set([key(start.c, start.r)]);
+  while (q.length) {
+    const cur = q.shift();
+    for (const [nc, nr] of [[cur.c+1,cur.r],[cur.c-1,cur.r],[cur.c,cur.r+1],[cur.c,cur.r-1]]) {
+      const kk = key(nc, nr);
+      if (seen.has(kk) || !isGraphCell(nc, nr)) continue;
+      seen.add(kk); prev.set(kk, cur);
+      if (goalKeys.has(kk)) {
+        const path = []; let node = { c: nc, r: nr };
+        while (node) { path.unshift({ x: (node.c+0.5)*CONFIG.CELL, y: (node.r+0.5)*CONFIG.CELL }); node = prev.get(key(node.c, node.r)); }
+        return path;
+      }
+      q.push({ c: nc, r: nr });
+    }
+  }
+  return null;
+}
+// pick the next move for a breakthrough flowing through the trench network toward the rear.
+// greedy: prefer straight down; else a side trench that continues downward; else exit to open ground.
+function trenchStep(e) {
+  const c = clampCol(Math.floor(e.x / CONFIG.CELL));
+  const r = Math.floor(e.y / CONFIG.CELL);
+  if (r + 1 >= CONFIG.ROWS) { e.hp = 0; e.breached = true; return; } // out the rear via trench
+  // straight down
+  if (isNavTrench(c, r + 1)) {
+    const mw = mannedAt(c, r + 1);
+    if (mw) { engageFromTrench(e, mw); return; }
+    e.tx = (c + 0.5) * CONFIG.CELL; e.ty = (r + 1.5) * CONFIG.CELL; return;
+  }
+  // side trench that itself continues downward (reroute toward a parallel descent)
+  for (const nc of (Math.random() < 0.5 ? [c-1, c+1] : [c+1, c-1])) {
+    if (isNavTrench(nc, r) && isNavTrench(nc, r + 1)) {
+      const mw = mannedAt(nc, r);
+      if (mw) { engageFromTrench(e, mw); return; }
+      e.tx = (nc + 0.5) * CONFIG.CELL; e.ty = (r + 0.5) * CONFIG.CELL; return;
+    }
+  }
+  // dead end downward — climb out into the open and resume the advance
+  e.state = 'climbing'; e.climb = CONFIG.CLIMB_DELAY; e.contact = null;
+  e.y = (r + 1) * CONFIG.CELL + 2; e.desiredX = e.x; e.tx = null;
+}
+function engageFromTrench(e, w) {
+  e.state = 'melee'; e.contact = w.id; e.tx = null;
+  const wc = empCenter(w);
+  e.x = wc.x + (Math.random() * 2 - 1) * (CONFIG.CELL * 0.6);
+  e.y = w.r * CONFIG.CELL - 4 - Math.random() * 7;
+}
+function resetGarrisons() {
+  for (const emp of state.empById.values()) {
+    const def = CONFIG.WORKS[emp.type];
+    if (def.line) { emp.men = def.garrison; emp.inflight = 0; emp.reliefCd = CONFIG.RELIEF_REACTION; }
+    if (emp.type === 'dugout') emp.reserves = def.reserves;
+  }
+  state.reserves.length = 0;
+}
+
+// ---------- interaction ----------
+function eventCell(evt) {
+  const rect = canvas.getBoundingClientRect();
+  const px = (evt.clientX - rect.left) * (canvas.width / rect.width);
+  const py = (evt.clientY - rect.top) * (canvas.height / rect.height);
+  return { c: Math.floor(px / CONFIG.CELL), r: Math.floor(py / CONFIG.CELL) };
+}
+function handleClick(evt) {
+  if (state.phase === 'over') return;
+  const { c, r } = eventCell(evt);
+  const existingId = state.cellIndex.get(key(c, r));
+  if (state.tool === 'remove') {
+    if (existingId) {
+      const emp = state.empById.get(existingId);
+      state.supply += Math.floor(CONFIG.WORKS[emp.type].cost * CONFIG.REFUND);
+      removeEmplacement(existingId);
+      refreshHUD();
+    }
+    return;
+  }
+  if (existingId) { state.selected = existingId; renderSelection(); return; }
+  const type = state.tool;
+  if (!canPlace(type, c, r)) return;
+  const cost = CONFIG.WORKS[type].cost;
+  if (state.supply < cost) { dispatch('Quartermaster', 'Requisition denied — insufficient materiel.', true); return; }
+  state.supply -= cost;
+  const emp = placeEmplacement(type, c, r);
+  state.selected = emp.id;
+  refreshHUD();
+}
+canvas.addEventListener('click', handleClick);
+let dragging = false;
+canvas.addEventListener('mousedown', () => { dragging = true; });
+window.addEventListener('mouseup', () => { dragging = false; });
+canvas.addEventListener('mousemove', (e) => { if (dragging && (state.tool === 'wire' || state.tool === 'remove')) handleClick(e); });
+
+document.querySelectorAll('.tool').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.tool').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); state.tool = b.dataset.tool;
+  });
+});
+
+// ---------- selection panel ----------
+function renderSelection() {
+  const body = document.getElementById('selbody');
+  const emp = state.selected ? state.empById.get(state.selected) : null;
+  if (!emp) { body.innerHTML = '<span class="empty">Click a work on the map to issue orders.</span>'; return; }
+  const def = CONFIG.WORKS[emp.type];
+  let actions = '';
+  if (emp.type === 'pit') {
+    const afford = state.supply >= CONFIG.DEVELOP_COST;
+    actions += `<button id="act-develop" ${afford ? '' : 'disabled'}>Develop Trench (${CONFIG.DEVELOP_COST})</button>`;
+  }
+  actions += `<button id="act-abandon">Abandon (+${Math.floor(def.cost * CONFIG.REFUND)})</button>`;
+  let stat;
+  if (emp.type === 'dugout') stat = `Reserves ${emp.reserves}/${def.reserves} — replacements for the line`;
+  else if (def.conduit) stat = 'Communication trench — relief moves up it; a breakthrough pours down it';
+  else if (def.line) stat = `Garrison ${emp.men}/${def.garrison} · Range ${def.range} · Rate ${(1000/def.cooldown).toFixed(1)}/s`;
+  else stat = 'Obstacle — slows the advance';
+  body.innerHTML =
+    `<div class="selname">${def.label}</div>` +
+    `<div class="seltitle" style="text-transform:none;letter-spacing:0">${stat}</div>` +
+    `<div class="selactions">${actions}</div>`;
+  const dev = document.getElementById('act-develop');
+  if (dev) dev.onclick = () => {
+    if (state.supply < CONFIG.DEVELOP_COST) return;
+    state.supply -= CONFIG.DEVELOP_COST;
+    emp.type = 'firetrench';
+    emp.men = CONFIG.WORKS.firetrench.garrison;
+    dispatch('Engineers', 'Position developed — fire trench, traverse and fire step complete.');
+    refreshHUD();
+  };
+  const ab = document.getElementById('act-abandon');
+  if (ab) ab.onclick = () => { state.supply += Math.floor(def.cost * CONFIG.REFUND); removeEmplacement(emp.id); refreshHUD(); };
+}
+
+// ---------- waves ----------
+function standTo() {
+  if (state.phase !== 'build') return;
+  state.wave++;
+  state.phase = 'wave';
+  state.spawnQueue = CONFIG.enemyCount(state.wave);
+  state.spawnTimer = 0; state.meleeTimer = 0;
+  state.killsThisWave = 0;
+  resetGarrisons();
+  dispatch('Forward Observation', `Enemy attack developing on your front. Estimated strength: ${state.spawnQueue}. Stand to.`, true);
+  refreshHUD();
+}
+document.getElementById('standto').addEventListener('click', standTo);
+
+function spawnEnemy() {
+  const lo = CONFIG.ASSIGN_LEFT * CONFIG.CELL + CONFIG.ENEMY_R;
+  const hi = CONFIG.ASSIGN_RIGHT * CONFIG.CELL - CONFIG.ENEMY_R;
+  const x = lo + Math.random() * (hi - lo);
+  state.enemies.push({ x, y: -CONFIG.ENEMY_R - Math.random() * 24, hp: CONFIG.ENEMY_HP, maxhp: CONFIG.ENEMY_HP,
+    desiredX: x, state: 'advance', contact: null });
+}
+
+function endWave() {
+  state.phase = 'build';
+  state.supply += CONFIG.allotment(state.wave);
+  state.totalKills += state.killsThisWave;
+  resetGarrisons();   // the line is restored between assaults
+  dispatch('Sector HQ',
+    `Objective held. Our losses: nominal. Enemy losses: estimated ${state.killsThisWave}. ` +
+    `Resupply of ${CONFIG.allotment(state.wave)} authorised.`);
+  if (state.wave === CONFIG.MILESTONE_WAVE && !state.milestoneShown) {
+    state.milestoneShown = true;
+    showOverlay('CONFIRMED', 'THE LINE HOLDS',
+      `The enemy offensive has culminated against your sector. Six assaults repulsed; ` +
+      `${state.totalKills} enemy dead recorded and filed. The position is sound. You may continue to hold.`,
+      'CARRY ON', '(Job 3a milestone — the living line holds. Keep playing to stress it.)');
+  }
+  refreshHUD();
+}
+
+// ---------- seeking ----------
+function wireCostInColumn(col, row) {
+  let cost = 0;
+  for (let dr = 0; dr <= CONFIG.SEEK_LOOKAHEAD; dr++) {
+    const id = state.cellIndex.get(key(col, row + dr));
+    if (id) { const e = state.empById.get(id); if (e && e.type === 'wire') cost++; }
+  }
+  return cost;
+}
+function updateSeek(e) {
+  const col = clampCol(Math.floor(e.x / CONFIG.CELL));
+  const row = Math.floor(e.y / CONFIG.CELL);
+  if (row < 0 || row >= CONFIG.ROWS) { e.desiredX = e.x; return; }
+  const here = wireCostInColumn(col, row);
+  if (here === 0) { e.desiredX = e.x; return; }
+  let best = col, bestCost = here;
+  for (let d = 1; d <= CONFIG.SEEK_WINDOW; d++) {
+    for (const nc of [col - d, col + d]) {
+      if (nc < CONFIG.ASSIGN_LEFT || nc >= CONFIG.ASSIGN_RIGHT) continue;
+      const cst = wireCostInColumn(nc, row);
+      if (cst < bestCost) { bestCost = cst; best = nc; }
+    }
+    if (bestCost === 0) break;
+  }
+  e.desiredX = best * CONFIG.CELL + CONFIG.CELL / 2;
+}
+
+// ---------- sim ----------
+function step(dt) {
+  // spawn
+  if (state.phase === 'wave' && state.spawnQueue > 0) {
+    state.spawnTimer -= dt;
+    if (state.spawnTimer <= 0) { spawnEnemy(); state.spawnQueue--; state.spawnTimer = CONFIG.spawnInterval(state.wave); }
+  }
+
+  // reinforcement dispatch — each position waits a reaction beat, then the best-connected
+  // dugout sends a man UP THE TRENCH NETWORK. A dugout with no trench route can still send a
+  // man across open ground, but slowly and exposed.
+  if (state.phase === 'wave') {
+    for (const emp of state.empById.values()) {
+      const def = CONFIG.WORKS[emp.type];
+      if (!def.line || def.conduit) continue;
+      const deficit = def.garrison - emp.men - emp.inflight;
+      if (deficit <= 0) { emp.reliefCd = CONFIG.RELIEF_REACTION; continue; }
+      emp.reliefCd -= dt;
+      if (emp.reliefCd > 0) continue;
+      const goalKeys = new Set(empCells(emp.type, emp.c, emp.r).map(([c, r]) => key(c, r)));
+      // best connected dugout (shortest trench path); else nearest dugout for an open-ground run
+      let conn = null, connPath = null, connLen = Infinity;
+      let nearOpen = null, nearD = Infinity;
+      const wc = empCenter(emp);
+      for (const d of state.empById.values()) {
+        if (d.type !== 'dugout' || d.reserves <= 0) continue;
+        const path = bfsPath({ c: d.c, r: d.r }, goalKeys);
+        if (path && path.length < connLen) { connLen = path.length; conn = d; connPath = path; }
+        const dc = empCenter(d);
+        const dd = (dc.x - wc.x) ** 2 + (dc.y - wc.y) ** 2;
+        if (dd < nearD) { nearD = dd; nearOpen = d; }
+      }
+      const src = conn || nearOpen;
+      if (src) {
+        src.reserves -= 1; emp.inflight += 1;
+        const dc = empCenter(src);
+        if (conn) state.reserves.push({ x: dc.x, y: dc.y, toWorkId: emp.id, path: connPath, pi: 1, slow: false });
+        else      state.reserves.push({ x: dc.x, y: dc.y, toWorkId: emp.id, slow: true });
+        emp.reliefCd = CONFIG.RELIEF_REACTION;
+      }
+    }
+  }
+  // move reserves — along their trench path, or straight across open ground if disconnected.
+  // a breakthrough sharing their cell cuts them down (you can't reinforce up a trench the enemy owns).
+  for (const rsv of state.reserves) {
+    const w = state.empById.get(rsv.toWorkId);
+    if (!w || !CONFIG.WORKS[w.type].line) { rsv.done = true; continue; }
+    // interception
+    const rc = clampCol(Math.floor(rsv.x / CONFIG.CELL)), rr = Math.floor(rsv.y / CONFIG.CELL);
+    for (const e of state.enemies) {
+      if (e.hp <= 0 || e.state === 'melee') continue;
+      if (clampCol(Math.floor(e.x / CONFIG.CELL)) === rc && Math.floor(e.y / CONFIG.CELL) === rr) {
+        rsv.done = true; w.inflight = Math.max(0, w.inflight - 1); burst(rsv.x, rsv.y, true); break;
+      }
+    }
+    if (rsv.done) continue;
+    const stepd = CONFIG.RESERVE_SPEED * (rsv.slow ? CONFIG.RESERVE_SLOW : 1) * (dt / 1000);
+    let tx, ty;
+    if (rsv.path && rsv.pi < rsv.path.length) { tx = rsv.path[rsv.pi].x; ty = rsv.path[rsv.pi].y; }
+    else { const wc = empCenter(w); tx = wc.x; ty = wc.y; }
+    const dx = tx - rsv.x, dy = ty - rsv.y, dist = Math.hypot(dx, dy);
+    if (dist <= stepd) {
+      rsv.x = tx; rsv.y = ty;
+      if (rsv.path && rsv.pi < rsv.path.length) { rsv.pi++; }
+      else {
+        w.men = Math.min(CONFIG.WORKS[w.type].garrison, w.men + 1);
+        w.inflight = Math.max(0, w.inflight - 1);
+        rsv.done = true;
+      }
+    } else { rsv.x += dx / dist * stepd; rsv.y += dy / dist * stepd; }
+  }
+  state.reserves = state.reserves.filter(r => !r.done);
+
+  // advance attackers + engagement
+  const pxPerSec = CONFIG.ADVANCE * CONFIG.CELL;
+  for (const e of state.enemies) {
+    if (e.hp <= 0) continue;
+    if (e.state === 'climbing') { e.climb -= dt; if (e.climb <= 0) e.state = 'advance'; continue; }
+    if (e.state === 'intrench') {
+      if (e.tx == null) trenchStep(e);
+      if (e.state !== 'intrench' || e.hp <= 0) continue; // trenchStep may have engaged / exited / breached
+      const dx = e.tx - e.x, dy = e.ty - e.y, dist = Math.hypot(dx, dy);
+      const stepd = CONFIG.TRENCH_SPEED * (dt / 1000);
+      if (dist <= stepd) { e.x = e.tx; e.y = e.ty; trenchStep(e); }
+      else { e.x += dx / dist * stepd; e.y += dy / dist * stepd; }
+      continue;
+    }
+    if (e.state !== 'advance') continue;
+    const col = clampCol(Math.floor(e.x / CONFIG.CELL));
+    const row = Math.floor(e.y / CONFIG.CELL);
+    let onWire = false;
+    const here = state.cellIndex.get(key(col, row));
+    if (here) { const oe = state.empById.get(here); if (oe && oe.type === 'wire') onWire = true; }
+    const speed = pxPerSec * (onWire ? CONFIG.WIRE_SLOW : 1);
+
+    updateSeek(e);
+    const dx = e.desiredX - e.x;
+    const latStep = CONFIG.LATERAL * CONFIG.CELL * (dt / 1000);
+    if (Math.abs(dx) <= latStep) e.x = e.desiredX; else e.x += Math.sign(dx) * latStep;
+    e.x = Math.max(CONFIG.ENEMY_R, Math.min(W - CONFIG.ENEMY_R, e.x));
+    e.y += speed * (dt / 1000);
+
+    // engagement: stepped into a manned line work?
+    const ncol = clampCol(Math.floor(e.x / CONFIG.CELL));
+    const nrow = Math.floor(e.y / CONFIG.CELL);
+    const wid = state.cellIndex.get(key(ncol, nrow));
+    if (wid) {
+      const w = state.empById.get(wid);
+      if (w && CONFIG.WORKS[w.type].line && w.men > 0) {
+        e.state = 'melee'; e.contact = wid;
+        const wc = empCenter(w);
+        e.x = wc.x + (Math.random() * 2 - 1) * (CONFIG.CELL * 0.7);
+        e.y = w.r * CONFIG.CELL - 4 - Math.random() * 7;
+        continue;
+      }
+    }
+    if (e.y >= H) { e.hp = 0; e.breached = true; }
+  }
+
+  // bucket melee attackers by work
+  const bucket = new Map();
+  for (const e of state.enemies) {
+    if (e.hp <= 0 || e.state !== 'melee') continue;
+    if (!bucket.has(e.contact)) bucket.set(e.contact, []);
+    bucket.get(e.contact).push(e);
+  }
+
+  // melee resolution (on the tick)
+  state.meleeTimer -= dt;
+  let doMelee = false;
+  if (state.meleeTimer <= 0) { doMelee = true; state.meleeTimer = CONFIG.MELEE_TICK; }
+  if (doMelee) {
+    for (const [wid, atks] of bucket) {
+      const w = state.empById.get(wid);
+      if (!w || w.men <= 0) continue;
+      const front = atks.find(a => a.hp > 0);
+      if (!front) continue;
+      const roll = Math.random();
+      if (roll < CONFIG.P_DEF_KILL) {
+        front.hp = 0; state.killsThisWave++; burst(front.x, front.y);
+      } else if (roll < CONFIG.P_DEF_KILL + CONFIG.P_ATK_KILL) {
+        w.men -= 1;
+        const wc = empCenter(w); burst(wc.x, wc.y, true);
+        if (w.men <= 0) {
+          const belowR = w.r + CONFIG.WORKS[w.type].h;
+          for (const a of atks) {
+            if (a.hp <= 0) continue;
+            a.contact = null;
+            const ac = clampCol(Math.floor(a.x / CONFIG.CELL));
+            if (belowR < CONFIG.ROWS && isNavTrench(ac, belowR)) {
+              a.state = 'intrench';
+              a.x = (ac + 0.5) * CONFIG.CELL; a.y = (belowR + 0.5) * CONFIG.CELL; a.tx = null;
+              trenchStep(a);
+            } else {
+              a.state = 'climbing'; a.climb = CONFIG.CLIMB_DELAY;
+              a.y = belowR * CONFIG.CELL + 2; a.desiredX = a.x;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // ranged fire — manned works not currently in melee, at advancing enemies only
+  for (const emp of state.empById.values()) {
+    const def = CONFIG.WORKS[emp.type];
+    if (!def.line || !def.range || emp.men <= 0) continue;
+    const inMelee = bucket.has(emp.id) && bucket.get(emp.id).some(a => a.hp > 0);
+    if (inMelee) continue;
+    emp.cooldown -= dt;
+    if (emp.cooldown > 0) continue;
+    const ctr = empCenter(emp);
+    let target = null, bestY = -Infinity;
+    for (const e of state.enemies) {
+      if (e.hp <= 0 || e.state !== 'advance') continue;
+      const ex = e.x - ctr.x, ey = e.y - ctr.y;
+      if (ex * ex + ey * ey <= def.range * def.range && e.y > bestY) { bestY = e.y; target = e; }
+    }
+    if (target) {
+      target.hp -= def.dmg;
+      emp.cooldown = def.cooldown * (def.garrison / Math.max(1, emp.men)); // fewer men = slower fire
+      state.tracers.push({ x1: ctr.x, y1: ctr.y, x2: target.x, y2: target.y, t: 60 });
+      if (target.hp <= 0 && !target.breached) { state.killsThisWave++; emp.kills++; burst(target.x, target.y); }
+    }
+  }
+
+  // breaches (reached rear) + cull
+  let breaches = 0;
+  state.enemies = state.enemies.filter(e => {
+    if (e.hp <= 0) { if (e.breached) breaches++; return false; }
+    return true;
+  });
+  if (breaches > 0) {
+    state.line -= breaches;
+    dispatch('Front Line', `Enemy through to the rear at ${breaches} point${breaches > 1 ? 's' : ''}.`, true);
+    if (state.line <= 0) { state.line = 0; loseGame(); }
+    refreshHUD();
+  } else {
+    // keep the garrison readout live in the selection panel during a wave
+    if (state.selected) renderSelection();
+  }
+
+  for (const t of state.tracers) t.t -= dt;
+  state.tracers = state.tracers.filter(t => t.t > 0);
+  for (const p of state.particles) { p.x += p.vx * (dt/1000); p.y += p.vy * (dt/1000); p.t -= dt; }
+  state.particles = state.particles.filter(p => p.t > 0);
+
+  if (state.phase === 'wave' && state.spawnQueue === 0 && state.enemies.length === 0) endWave();
+}
+
+function burst(x, y, friendly) {
+  const n = 4 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 26 + Math.random() * 60;
+    state.particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, t: 230 + Math.random()*150, life: 400,
+      col: friendly ? '#cfc9b8' : (Math.random() < 0.4 ? '#c0492f' : '#3a352c') });
+  }
+}
+
+// ---------- rendering ----------
+function draw() {
+  const C = CONFIG.CELL;
+  ctx.fillStyle = '#5a5d48'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#6b7148'; ctx.fillRect(CONFIG.ASSIGN_LEFT*C, 0, (CONFIG.ASSIGN_RIGHT-CONFIG.ASSIGN_LEFT)*C, H);
+
+  ctx.save(); ctx.strokeStyle = 'rgba(40,38,30,0.06)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let x = -H; x < W; x += 10) { ctx.moveTo(x, 0); ctx.lineTo(x + H, H); } ctx.stroke(); ctx.restore();
+
+  ctx.strokeStyle = 'rgba(40,38,30,0.10)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let c = 0; c <= CONFIG.COLS; c++) { ctx.moveTo(c*C, 0); ctx.lineTo(c*C, H); }
+  for (let r = 0; r <= CONFIG.ROWS; r++) { ctx.moveTo(0, r*C); ctx.lineTo(W, r*C); } ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(40,38,30,0.4)'; ctx.setLineDash([6,5]); ctx.lineWidth = 1.5; ctx.beginPath();
+  ctx.moveTo(CONFIG.ASSIGN_LEFT*C, 0); ctx.lineTo(CONFIG.ASSIGN_LEFT*C, H);
+  ctx.moveTo(CONFIG.ASSIGN_RIGHT*C, 0); ctx.lineTo(CONFIG.ASSIGN_RIGHT*C, H);
+  ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
+  ctx.fillStyle = 'rgba(40,38,30,0.4)'; ctx.font = '9px Courier New';
+  ctx.save(); ctx.translate(CONFIG.ASSIGN_LEFT*C - 5, H/2); ctx.rotate(-Math.PI/2); ctx.fillText('NOT YET ASSIGNED', -60, 0); ctx.restore();
+  ctx.save(); ctx.translate(CONFIG.ASSIGN_RIGHT*C + 13, H/2); ctx.rotate(-Math.PI/2); ctx.fillText('NOT YET ASSIGNED', -60, 0); ctx.restore();
+
+  ctx.fillStyle = 'rgba(40,38,30,0.06)'; ctx.fillRect(CONFIG.ASSIGN_LEFT*C, 0, (CONFIG.ASSIGN_RIGHT-CONFIG.ASSIGN_LEFT)*C, CONFIG.SPAWN_ROWS*C);
+  ctx.strokeStyle = 'rgba(158,59,43,0.3)'; ctx.setLineDash([4,4]); ctx.beginPath();
+  ctx.moveTo(CONFIG.ASSIGN_LEFT*C, CONFIG.SPAWN_ROWS*C + 0.5); ctx.lineTo(CONFIG.ASSIGN_RIGHT*C, CONFIG.SPAWN_ROWS*C + 0.5); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(40,38,30,0.4)'; ctx.fillText('ENEMY FORMING-UP LINE', CONFIG.ASSIGN_LEFT*C + 4, 11);
+
+  ctx.strokeStyle = '#36322a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, H-1.5); ctx.lineTo(W, H-1.5); ctx.stroke(); ctx.lineWidth = 1;
+
+  // trench bodies (seamless)
+  for (const emp of state.empById.values()) {
+    const def = CONFIG.WORKS[emp.type];
+    if (!def.line) continue;
+    for (const [c, r] of empCells(emp.type, emp.c, emp.r)) {
+      const x = c*C, y = r*C;
+      const il = cellIsLine(c-1,r)?0:1, ir = cellIsLine(c+1,r)?0:1, it = cellIsLine(c,r-1)?0:3, ib = cellIsLine(c,r+1)?0:3;
+      ctx.fillStyle = '#4a4030'; ctx.fillRect(x+il, y+it, C-il-ir, C-it-ib);
+    }
+  }
+  // dugouts
+  for (const emp of state.empById.values()) {
+    if (emp.type !== 'dugout') continue;
+    const x = emp.c*C, y = emp.r*C;
+    ctx.fillStyle = '#3a3326'; ctx.fillRect(x+2, y+2, C-4, C-4);
+    ctx.strokeStyle = '#8a8161'; ctx.lineWidth = 1; ctx.strokeRect(x+2.5, y+2.5, C-5, C-5);
+    // roof beams
+    ctx.strokeStyle = 'rgba(207,201,184,0.4)'; ctx.beginPath();
+    ctx.moveTo(x+4, y+C*0.45); ctx.lineTo(x+C-4, y+C*0.45); ctx.stroke();
+  }
+  // parapet + features + garrison
+  for (const emp of state.empById.values()) {
+    const def = CONFIG.WORKS[emp.type];
+    if (!def.line) continue;
+    for (const [c, r] of empCells(emp.type, emp.c, emp.r)) {
+      const x = c*C, y = r*C;
+      if (!cellIsLine(c, r-1)) { ctx.fillStyle = (emp.type==='firetrench')?'#b9b29c':'#9b937c'; ctx.fillRect(x, y+1, C, 2); }
+      if (emp.type === 'firetrench') {
+        ctx.strokeStyle = 'rgba(207,201,184,0.35)'; ctx.lineWidth = 1; ctx.beginPath();
+        ctx.moveTo(x+2, y+C-5); ctx.lineTo(x+C-2, y+C-5); ctx.stroke();
+      }
+    }
+    const ctr = empCenter(emp);
+    if (state.phase === 'build' && def.range) {
+      ctx.strokeStyle = (state.selected===emp.id)?'rgba(158,59,43,0.5)':'rgba(40,38,30,0.08)';
+      ctx.beginPath(); ctx.arc(ctr.x, ctr.y, def.range, 0, Math.PI*2); ctx.stroke();
+    }
+    if (state.selected === emp.id) {
+      ctx.strokeStyle = '#9e3b2b'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(emp.c*C+0.5, emp.r*C+0.5, def.w*C-1, def.h*C-1); ctx.lineWidth = 1;
+    }
+    if (emp.type === 'mg') { ctx.fillStyle = '#2a2620'; ctx.fillRect(ctr.x-2, emp.r*C-1, 4, 5); }
+    // garrison dots = current men
+    ctx.fillStyle = '#cfc9b8';
+    const g = emp.men;
+    for (let i = 0; i < g; i++) {
+      const gx = emp.c*C + (C*def.w)*((i+1)/(g+1));
+      const gy = emp.r*C + C*0.62;
+      ctx.beginPath(); ctx.arc(gx, gy, 2, 0, Math.PI*2); ctx.fill();
+    }
+    // overrun marker (line work with no men during a wave)
+    if (state.phase === 'wave' && emp.men <= 0) {
+      ctx.strokeStyle = 'rgba(192,73,47,0.6)'; ctx.lineWidth = 1; ctx.beginPath();
+      ctx.moveTo(emp.c*C+3, emp.r*C+3); ctx.lineTo((emp.c+def.w)*C-3, (emp.r+def.h)*C-3);
+      ctx.moveTo((emp.c+def.w)*C-3, emp.r*C+3); ctx.lineTo(emp.c*C+3, (emp.r+def.h)*C-3); ctx.stroke();
+    }
+  }
+
+  // wire
+  for (const emp of state.empById.values()) {
+    if (emp.type !== 'wire') continue;
+    const x = emp.c*C, y = emp.r*C, s = C;
+    ctx.strokeStyle = '#4a4030'; ctx.lineWidth = 1.3; ctx.beginPath();
+    ctx.moveTo(x+3, y+3); ctx.lineTo(x+s-3, y+s-3); ctx.moveTo(x+s-3, y+3); ctx.lineTo(x+3, y+s-3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+s/2-3, y+s/2); ctx.lineTo(x+s/2+3, y+s/2);
+    ctx.moveTo(x+s/2, y+s/2-3); ctx.lineTo(x+s/2, y+s/2+3); ctx.stroke(); ctx.lineWidth = 1;
+  }
+
+  // tracers
+  ctx.strokeStyle = 'rgba(192,73,47,0.85)'; ctx.lineWidth = 1.1;
+  for (const t of state.tracers) { ctx.beginPath(); ctx.moveTo(t.x1,t.y1); ctx.lineTo(t.x2,t.y2); ctx.stroke(); } ctx.lineWidth = 1;
+
+  // reserves walking up
+  for (const rsv of state.reserves) {
+    ctx.fillStyle = '#e6e0cd';
+    ctx.beginPath(); ctx.arc(rsv.x, rsv.y, 2.4, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(207,201,184,0.3)'; ctx.lineWidth = 1;
+    const w = state.empById.get(rsv.toWorkId);
+    if (w) { const wc = empCenter(w); ctx.beginPath(); ctx.moveTo(rsv.x, rsv.y); ctx.lineTo(wc.x, wc.y); ctx.stroke(); }
+  }
+
+  // enemies
+  for (const e of state.enemies) {
+    if (e.hp <= 0) continue;
+    let dx = 0, dy = 0;
+    if (e.state === 'melee' || e.state === 'climbing') { dx = (Math.random()*2-1)*2.2; dy = (Math.random()*2-1)*1.6; }
+    ctx.fillStyle = '#2a2620';
+    ctx.beginPath(); ctx.arc(e.x+dx, e.y+dy, CONFIG.ENEMY_R, 0, Math.PI*2); ctx.fill();
+    if (e.hp < e.maxhp && e.state === 'advance') {
+      ctx.fillStyle = 'rgba(158,59,43,0.55)';
+      ctx.beginPath(); ctx.arc(e.x, e.y, CONFIG.ENEMY_R*(e.hp/e.maxhp), 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  for (const p of state.particles) { ctx.globalAlpha = Math.max(0, p.t/p.life); ctx.fillStyle = p.col; ctx.fillRect(p.x-1.5, p.y-1.5, 3, 3); }
+  ctx.globalAlpha = 1;
+}
+
+// ---------- overlay ----------
+function showOverlay(stamp, title, body, btnText, hint) {
+  document.getElementById('ovstamp').textContent = stamp;
+  document.getElementById('ovtitle').textContent = title;
+  document.getElementById('ovbody').textContent = body;
+  document.getElementById('ovbtn').textContent = btnText;
+  document.getElementById('ovhint').textContent = hint || '';
+  document.getElementById('overlay').classList.add('show');
+}
+function hideOverlay() { document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('ovbtn').addEventListener('click', () => { if (state.phase === 'over') location.reload(); else hideOverlay(); });
+
+function loseGame() {
+  state.phase = 'over';
+  dispatch('General Staff', 'The sector has fallen. Your conduct in this matter will be reviewed.', true);
+  showOverlay('FOR REVIEW', 'THE SECTOR HAS FALLEN',
+    `The line has broken under sustained pressure. Held ${state.wave} wave${state.wave!==1?'s':''}; ` +
+    `${state.totalKills + state.killsThisWave} enemy dead recorded. The matter is closed.`,
+    'NEW SECTOR', '');
+  refreshHUD();
+}
+
+// ---------- loop ----------
+let last = 0;
+function frame(ts) {
+  if (!last) last = ts;
+  let dt = ts - last; last = ts;
+  if (dt > 50) dt = 50;
+  if (state.phase !== 'over') step(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+
+function init() {
+  dispatch('Sector HQ',
+    'You hold the central sector. Man your line; site dugouts behind it and dig communication trenches ' +
+    'back to them so relief can reach the front. Mind that a trench cuts both ways — what carries your men ' +
+    'forward will carry a breakthrough to your rear. STAND TO when ready.');
+  refreshHUD();
+  requestAnimationFrame(frame);
+}
+init();
+
+if (typeof module !== 'undefined') {
+  module.exports = { CONFIG, state, step, standTo, placeEmplacement, removeEmplacement, empCenter, canPlace, resetGarrisons };
+}
+</script>
+</body>
+</html>

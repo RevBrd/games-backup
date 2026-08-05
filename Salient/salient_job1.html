@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SALIENT</title>
+<style>
+  :root{
+    --paper:#b7b195; --paper-dark:#a49e83; --ink:#2b2a24; --ink-faint:#5a5747;
+    --trench:#453a2b; --ally:#6b5f35; --enemy:#4f5550; --accent:#7a2f23;
+    --panel:#c4bea3; --card:#cdc7ac;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:#8f8a72; height:100%;}
+  body{
+    font-family:"Courier New", Courier, monospace;
+    color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:10px;
+  }
+  #wrap{display:flex; gap:12px; align-items:stretch;}
+  #cvbox{
+    position:relative; border:2px solid var(--ink);
+    box-shadow:4px 4px 0 rgba(43,42,36,.35);
+    background:var(--paper);
+  }
+  canvas{display:block;}
+  #panel{
+    width:280px; background:var(--panel); border:2px solid var(--ink);
+    box-shadow:4px 4px 0 rgba(43,42,36,.35);
+    padding:12px; display:flex; flex-direction:column; gap:10px;
+    font-size:12px; letter-spacing:.4px;
+  }
+  #panel h1{
+    font-size:22px; letter-spacing:8px; text-align:center;
+    border-bottom:2px solid var(--ink); padding-bottom:6px; font-weight:bold;
+  }
+  #panel h1 small{display:block; font-size:9px; letter-spacing:2px; color:var(--ink-faint); margin-top:2px;}
+  .statrow{display:flex; justify-content:space-between; padding:1px 0;}
+  .statrow b{font-weight:bold;}
+  #conf{letter-spacing:1px;}
+  .divider{border-top:1px dashed var(--ink-faint); margin:2px 0;}
+  .toolbtn{
+    display:block; width:100%; text-align:left; padding:5px 8px; margin:2px 0;
+    background:var(--card); border:1.5px solid var(--ink); color:var(--ink);
+    font-family:inherit; font-size:11px; letter-spacing:.4px; cursor:pointer;
+  }
+  .toolbtn:hover{background:#d8d2b6;}
+  .toolbtn.active{background:var(--ink); color:var(--card);}
+  .toolbtn .cost{float:right; color:var(--ink-faint);}
+  .toolbtn.active .cost{color:#b7b195;}
+  #wavebtn{
+    width:100%; padding:9px; margin-top:2px;
+    background:var(--accent); color:#e8e2c6; border:2px solid var(--ink);
+    font-family:inherit; font-size:13px; letter-spacing:2px; cursor:pointer; font-weight:bold;
+  }
+  #wavebtn:disabled{background:#8a8570; color:#c4bea3; cursor:default;}
+  #speedbtn{
+    background:var(--card); border:1.5px solid var(--ink); font-family:inherit;
+    font-size:11px; padding:3px 8px; cursor:pointer; color:var(--ink);
+  }
+  #log{
+    flex:1; min-height:120px; max-height:260px; overflow-y:auto;
+    background:var(--card); border:1.5px solid var(--ink); padding:8px;
+    font-size:10.5px; line-height:1.45;
+  }
+  .dispatch{margin-bottom:9px; white-space:pre-wrap;}
+  .dispatch .dh{color:var(--accent); font-weight:bold;}
+  #hint{font-size:10px; color:var(--ink-faint); line-height:1.4; min-height:40px;}
+  #overlay{
+    position:absolute; inset:0; background:rgba(43,42,36,.82);
+    display:flex; align-items:center; justify-content:center; z-index:5;
+  }
+  #overlay.hidden{display:none;}
+  #overlaycard{
+    background:var(--paper); border:2px solid var(--ink); padding:26px 32px;
+    max-width:430px; text-align:center; box-shadow:6px 6px 0 rgba(0,0,0,.4);
+  }
+  #overlaycard h2{letter-spacing:4px; margin-bottom:12px; font-size:18px;}
+  #overlaycard p{font-size:12px; line-height:1.6; white-space:pre-wrap; text-align:left; margin-bottom:16px;}
+  #overlaycard button{
+    padding:8px 22px; background:var(--ink); color:var(--paper); border:none;
+    font-family:inherit; font-size:12px; letter-spacing:2px; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="cvbox">
+    <canvas id="cv"></canvas>
+    <div id="overlay" class="hidden">
+      <div id="overlaycard">
+        <h2 id="ovtitle"></h2>
+        <p id="ovtext"></p>
+        <button id="ovbtn">ACKNOWLEDGE</button>
+      </div>
+    </div>
+  </div>
+  <div id="panel">
+    <h1>SALIENT<small>SECTOR DEFENCE · 1915</small></h1>
+    <div>
+      <div class="statrow"><span>WAVE</span><b id="s_wave">—</b></div>
+      <div class="statrow"><span>MATERIEL</span><b id="s_mat">0</b></div>
+      <div class="statrow"><span>RESERVES</span><b id="s_res">0</b></div>
+      <div class="statrow"><span>POSTS MANNED</span><b id="s_posts">0</b></div>
+      <div class="statrow"><span>HQ CONFIDENCE</span><b id="conf"></b></div>
+    </div>
+    <div class="divider"></div>
+    <div id="tools">
+      <button class="toolbtn" data-tool="fire">1 · FIRE TRENCH <span class="cost" id="c_fire"></span></button>
+      <button class="toolbtn" data-tool="comm">2 · COMM. TRENCH <span class="cost" id="c_comm"></span></button>
+      <button class="toolbtn" data-tool="bunker">3 · DUGOUT <span class="cost" id="c_bunker"></span></button>
+      <button class="toolbtn" data-tool="assign">4 · ASSIGN POSTS</button>
+      <button class="toolbtn" data-tool="delete">5 · DEMOLISH (refund)</button>
+    </div>
+    <button id="wavebtn">COMMENCE DEFENCE</button>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:10px; color:var(--ink-faint);">FIELD TELEGRAPH</span>
+      <button id="speedbtn">SPEED ×1</button>
+    </div>
+    <div id="log"></div>
+    <div id="hint">Select a tool. Build a fire trench line, add a dugout touching it, assign posts, then commence.</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ============================================================
+   SALIENT — Job 1 vertical slice
+   Core: trench network, manning, enemy wave, melee, reinforcement
+   ============================================================ */
+const IS_NODE = (typeof window === 'undefined');
+
+/* ---------- CONFIG (ALL NUMBERS PLACEHOLDER, pending tuning) ---------- */
+const CFG = {
+  COLS: 42, ROWS: 34, CELL: 17,
+  BUILD_ROW_MIN: 16, BUILD_ROW_MAX: 29,   // buildable band
+  GOAL_ROW: 33,                            // enemy reaching this row = breach
+  // pathing costs (per-cell entry)
+  COST_OPEN: 6, COST_TRENCH: 1, COST_OCCUPIED: 10,
+  FIELD_RECOMPUTE_MS: 600,
+  // units
+  SOLDIER_HP: 20, ENEMY_HP: 20,
+  ALLY_SPEED: 3.4, ENEMY_SPEED_OPEN: 3.2, ENEMY_SPEED_TRENCH: 2.4, // cells/sec
+  // allied rifle fire (posts only, front cell must be open)
+  RIFLE_RANGE: 9, RIFLE_INTERVAL_MS: 2600, RIFLE_DMG: 10,
+  HIT_VS_OPEN: 0.5, HIT_VS_TRENCH: 0.18,
+  // enemy fire (only while in the open)
+  ENEMY_FIRE_RANGE: 8, ENEMY_FIRE_INTERVAL_MS: 2400, ENEMY_HIT: 0.14, ENEMY_DMG: 10,
+  // melee
+  MELEE_DPS_MIN: 5, MELEE_DPS_MAX: 13, MELEE_POST_BONUS: 1.45, // defender in own bay fights harder
+  // reinforcement
+  REINF_DELAY_MS: 1600, REINF_RETRY_MS: 1000,
+  // economy
+  START_MATERIEL: 500,
+  COST_FIRE: 10, COST_COMM: 8, COST_BUNKER: 50, BUNKER_MEN: 8,
+  KILL_REWARD: 2, WAVE_BONUS_BASE: 60, WAVE_BONUS_PER: 20,
+  LIVES: 10,
+  WAVES: [14, 20, 28, 38, 50],
+  PLATOON_BASE: 8, PLATOON_PER_WAVE: 7,          // enemies rush in simultaneous groups
+  PLATOON_INTERVAL_MS: 6500, PLATOON_SPREAD: 8,  // cols either side of group center
+};
+
+/* ---------- utilities ---------- */
+const key = (r, c) => r * CFG.COLS + c;
+const inGrid = (r, c) => r >= 0 && r < CFG.ROWS && c >= 0 && c < CFG.COLS;
+const buildable = (r, c) => inGrid(r, c) && r >= CFG.BUILD_ROW_MIN && r <= CFG.BUILD_ROW_MAX;
+const DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
+let rng = Math.random;
+const rand = (a, b) => a + rng() * (b - a);
+const irand = (a, b) => Math.floor(rand(a, b + 1));
+
+/* tiny binary heap for dijkstra */
+function Heap() {
+  const a = [];
+  return {
+    push(p, v) { a.push([p, v]); let i = a.length - 1;
+      while (i > 0) { const j = (i - 1) >> 1; if (a[j][0] <= a[i][0]) break; [a[i], a[j]] = [a[j], a[i]]; i = j; } },
+    pop() { const t = a[0], l = a.pop(); if (a.length) { a[0] = l; let i = 0;
+      for (;;) { let m = i, L = 2*i+1, R = L+1;
+        if (L < a.length && a[L][0] < a[m][0]) m = L;
+        if (R < a.length && a[R][0] < a[m][0]) m = R;
+        if (m === i) break; [a[i], a[m]] = [a[m], a[i]]; i = m; } }
+      return t; },
+    get size() { return a.length; }
+  };
+}
+
+/* ---------- game state ---------- */
+const T_OPEN = 0, T_FIRE = 1, T_COMM = 2, T_BUNKER = 3;
+let terrain, pieces, cellPiece, bunkers, posts;
+let soldiers, enemies, occupancy;
+let materiel, lives, waveIdx, phase; // phase: 'build' | 'wave' | 'over'
+let spawnRemaining, spawnTimer, waveStats;
+let field, fieldTimer;
+let reinfQueue;         // [{postKey, delay}]
+let tracers, particles, flashes;
+let dispatches;
+let nextId = 1;
+let gameSpeed = 1;
+
+function resetGame() {
+  terrain = new Uint8Array(CFG.ROWS * CFG.COLS);
+  pieces = new Map();      // pieceId -> {id,type,cells:[[r,c]..]}
+  cellPiece = new Map();   // cellKey -> pieceId
+  bunkers = [];            // {id,r,c,reserve,max}  (r,c = top-left of 2x2)
+  posts = new Set();       // cellKeys of assigned firing posts
+  soldiers = []; enemies = [];
+  occupancy = new Map();   // cellKey -> unit
+  materiel = CFG.START_MATERIEL;
+  lives = CFG.LIVES;
+  waveIdx = 0; phase = 'build';
+  spawnRemaining = 0; spawnTimer = 0;
+  waveStats = { allyDead: 0, enemyDead: 0, breaches: 0 };
+  field = new Float64Array(CFG.ROWS * CFG.COLS);
+  fieldTimer = 0;
+  reinfQueue = [];
+  tracers = []; particles = []; flashes = [];
+  dispatches = [];
+  nextId = 1;
+  pushDispatch('DIV. HQ', 'YOU ARE ASSIGNED THIS SECTOR. PREPARE DEFENCES. THE ENEMY IS EXPECTED SHORTLY. DO NOT DISAPPOINT.');
+}
+
+/* ---------- construction ---------- */
+function pieceCost(type) {
+  return type === 'fire' ? CFG.COST_FIRE : type === 'comm' ? CFG.COST_COMM : CFG.COST_BUNKER;
+}
+function footprint(type, r, c) {
+  if (type === 'fire')   return [[r, c], [r, c + 1]];
+  if (type === 'comm')   return [[r, c], [r + 1, c]];
+  if (type === 'bunker') return [[r, c], [r, c + 1], [r + 1, c], [r + 1, c + 1]];
+  return null;
+}
+function canPlace(type, r, c) {
+  const cells = footprint(type, r, c);
+  if (!cells) return false;
+  for (const [cr, cc] of cells) {
+    if (!buildable(cr, cc)) return false;
+    if (terrain[key(cr, cc)] !== T_OPEN) return false;
+  }
+  if (type === 'bunker') {
+    // must touch a trench cell orthogonally
+    let touch = false;
+    for (const [cr, cc] of cells)
+      for (const [dr, dc] of DIRS) {
+        const t = inGrid(cr + dr, cc + dc) ? terrain[key(cr + dr, cc + dc)] : T_OPEN;
+        if (t === T_FIRE || t === T_COMM) touch = true;
+      }
+    if (!touch) return false;
+  }
+  return true;
+}
+function placePiece(type, r, c) {
+  if (phase !== 'build') return false;
+  if (!canPlace(type, r, c)) return false;
+  const cost = pieceCost(type);
+  if (materiel < cost) return false;
+  materiel -= cost;
+  const id = nextId++;
+  const cells = footprint(type, r, c);
+  const tval = type === 'fire' ? T_FIRE : type === 'comm' ? T_COMM : T_BUNKER;
+  for (const [cr, cc] of cells) { terrain[key(cr, cc)] = tval; cellPiece.set(key(cr, cc), id); }
+  const piece = { id, type, cells };
+  pieces.set(id, piece);
+  if (type === 'bunker') bunkers.push({ id, r, c, reserve: CFG.BUNKER_MEN, max: CFG.BUNKER_MEN });
+  return true;
+}
+function deletePieceAt(r, c) {
+  if (phase !== 'build') return false;
+  const pid = cellPiece.get(key(r, c));
+  if (pid == null) return false;
+  const piece = pieces.get(pid);
+  for (const [cr, cc] of piece.cells) {
+    terrain[key(cr, cc)] = T_OPEN;
+    cellPiece.delete(key(cr, cc));
+    posts.delete(key(cr, cc));
+  }
+  if (piece.type === 'bunker') bunkers = bunkers.filter(b => b.id !== pid);
+  pieces.delete(pid);
+  materiel += pieceCost(piece.type); // full refund — placeholder policy
+  return true;
+}
+function togglePost(r, c) {
+  if (phase !== 'build') return false;
+  const k = key(r, c);
+  if (terrain[k] !== T_FIRE) return false;
+  if (posts.has(k)) { posts.delete(k); return true; }
+  posts.add(k); return true;
+}
+function totalReserves() { return bunkers.reduce((s, b) => s + b.reserve, 0); }
+function totalCapacity() { return bunkers.reduce((s, b) => s + b.max, 0); }
+
+/* ---------- pathing: cost field toward goal row ---------- */
+function entryCost(r, c) {
+  const t = terrain[key(r, c)];
+  if (t === T_BUNKER) return 60;            // enemies avoid clambering over dugouts
+  let cost = (t === T_FIRE || t === T_COMM) ? CFG.COST_TRENCH : CFG.COST_OPEN;
+  if (occupancy.has(key(r, c))) cost += CFG.COST_OCCUPIED;
+  return cost;
+}
+function computeField() {
+  field.fill(Infinity);
+  const h = Heap();
+  for (let c = 0; c < CFG.COLS; c++) { field[key(CFG.GOAL_ROW, c)] = 0; h.push(0, key(CFG.GOAL_ROW, c)); }
+  while (h.size) {
+    const [d, k] = h.pop();
+    if (d > field[k]) continue;
+    const r = Math.floor(k / CFG.COLS), c = k % CFG.COLS;
+    for (const [dr, dc] of DIRS) {
+      const nr = r + dr, nc = c + dc;
+      if (!inGrid(nr, nc)) continue;
+      const nk = key(nr, nc);
+      const nd = d + entryCost(r, c); // cost of stepping INTO (r,c) from neighbor
+      if (nd < field[nk]) { field[nk] = nd; h.push(nd, nk); }
+    }
+  }
+}
+
+/* BFS shortest path through trench cells only; returns array of [r,c] or null */
+function trenchPath(fromR, fromC, toR, toC) {
+  const isTrench = (r, c) => { const t = terrain[key(r, c)]; return t === T_FIRE || t === T_COMM; };
+  if (!isTrench(fromR, fromC) || !isTrench(toR, toC)) return null;
+  const prev = new Map(); const q = [[fromR, fromC]]; prev.set(key(fromR, fromC), null);
+  while (q.length) {
+    const [r, c] = q.shift();
+    if (r === toR && c === toC) {
+      const path = []; let k = key(toR, toC);
+      while (k != null) { path.push([Math.floor(k / CFG.COLS), k % CFG.COLS]); k = prev.get(k); }
+      return path.reverse();
+    }
+    for (const [dr, dc] of DIRS) {
+      const nr = r + dr, nc = c + dc;
+      if (!inGrid(nr, nc) || !isTrench(nr, nc)) continue;
+      const nk = key(nr, nc);
+      if (!prev.has(nk)) { prev.set(nk, key(r, c)); q.push([nr, nc]); }
+    }
+  }
+  return null;
+}
+
+/* ---------- units ---------- */
+function makeSoldier(r, c) {
+  return { id: nextId++, side: 'ally', r, c, nr: null, nc: null, prog: 0,
+    hp: CFG.SOLDIER_HP, state: 'post', postKey: null, path: null, pathIdx: 0,
+    fireCool: rand(0, CFG.RIFLE_INTERVAL_MS), meleeWith: null, meleePower: rand(CFG.MELEE_DPS_MIN, CFG.MELEE_DPS_MAX) };
+}
+function makeEnemy(c) {
+  return { id: nextId++, side: 'enemy', r: 0, c, nr: null, nc: null, prog: 0,
+    hp: CFG.ENEMY_HP, state: 'advance', fireCool: rand(400, CFG.ENEMY_FIRE_INTERVAL_MS),
+    meleeWith: null, meleePower: rand(CFG.MELEE_DPS_MIN, CFG.MELEE_DPS_MAX), stuck: 0 };
+}
+function inTrench(u) { const t = terrain[key(u.r, u.c)]; return t === T_FIRE || t === T_COMM; }
+function unitXY(u) {
+  let r = u.r, c = u.c;
+  if (u.nr != null) { r = u.r + (u.nr - u.r) * u.prog; c = u.c + (u.nc - u.c) * u.prog; }
+  return [(c + 0.5) * CFG.CELL, (r + 0.5) * CFG.CELL];
+}
+function tryStartMove(u, nr, nc) {
+  const nk = key(nr, nc);
+  if (occupancy.has(nk)) return false;
+  occupancy.set(nk, u);
+  u.nr = nr; u.nc = nc; u.prog = 0;
+  return true;
+}
+function finishMove(u) {
+  occupancy.delete(key(u.r, u.c));
+  u.r = u.nr; u.c = u.nc; u.nr = null; u.nc = null; u.prog = 0;
+}
+function removeUnit(u) {
+  if (occupancy.get(key(u.r, u.c)) === u) occupancy.delete(key(u.r, u.c));
+  if (u.nr != null && occupancy.get(key(u.nr, u.nc)) === u) occupancy.delete(key(u.nr, u.nc));
+  if (u.meleeWith) { u.meleeWith.meleeWith = null; if (u.meleeWith.state === 'melee') u.meleeWith.state = u.meleeWith.side === 'ally' ? resumeAllyState(u.meleeWith) : 'advance'; u.meleeWith = null; }
+  u.dead = true;
+}
+function killUnit(u) {
+  removeUnit(u);
+  shatter(u);
+  if (u.side === 'ally') {
+    waveStats.allyDead++;
+    if (u.postKey != null && posts.has(u.postKey)) reinfQueue.push({ postKey: u.postKey, delay: CFG.REINF_DELAY_MS });
+  } else {
+    waveStats.enemyDead++;
+    materiel += CFG.KILL_REWARD;
+  }
+}
+function resumeAllyState(u) { return (u.path && u.pathIdx < u.path.length) ? 'moving' : 'post'; }
+
+/* ---------- deployment / waves ---------- */
+function deployPosts() {
+  // fill posts from bunkers, nearest-first by trench path length (fallback: any reserve)
+  const postList = [...posts];
+  for (const pk of postList) {
+    const pr = Math.floor(pk / CFG.COLS), pc = pk % CFG.COLS;
+    if (occupancy.has(pk)) continue;
+    let best = null, bestLen = Infinity;
+    for (const b of bunkers) {
+      if (b.reserve <= 0) continue;
+      const exit = bunkerExit(b);
+      if (!exit) continue;
+      const p = trenchPath(exit[0], exit[1], pr, pc);
+      const len = p ? p.length : 9000; // unreachable bunkers still usable at deploy (instant placement)
+      if (len < bestLen) { bestLen = len; best = b; }
+    }
+    if (!best) continue;
+    best.reserve--;
+    const s = makeSoldier(pr, pc);
+    s.postKey = pk;
+    soldiers.push(s);
+    occupancy.set(pk, s);
+  }
+}
+function bunkerExit(b) {
+  const cells = [[b.r, b.c], [b.r, b.c + 1], [b.r + 1, b.c], [b.r + 1, b.c + 1]];
+  for (const [cr, cc] of cells)
+    for (const [dr, dc] of DIRS) {
+      const nr = cr + dr, nc = cc + dc;
+      if (!inGrid(nr, nc)) continue;
+      const t = terrain[key(nr, nc)];
+      if (t === T_FIRE || t === T_COMM) return [nr, nc];
+    }
+  return null;
+}
+function startWave() {
+  if (phase !== 'build') return false;
+  if (waveIdx >= CFG.WAVES.length) return false;
+  deployPosts();
+  waveStats = { allyDead: 0, enemyDead: 0, breaches: 0 };
+  spawnRemaining = CFG.WAVES[waveIdx];
+  spawnTimer = 600;
+  phase = 'wave';
+  computeField();
+  fieldTimer = CFG.FIELD_RECOMPUTE_MS;
+  pushDispatch('FWD. OBSERVER', `ENEMY MOVEMENT OPPOSITE. STRENGTH EST. ${spawnRemaining}. STAND TO.`);
+  return true;
+}
+function endWave() {
+  waveIdx++;
+  const bonus = CFG.WAVE_BONUS_BASE + waveIdx * CFG.WAVE_BONUS_PER;
+  materiel += bonus;
+  // restore: clear field of men, refill dugouts
+  for (const s of soldiers) removeUnit(s);
+  soldiers = []; enemies = []; occupancy.clear(); reinfQueue = [];
+  for (const b of bunkers) b.reserve = b.max;
+  waveStats.bonus = bonus;
+  phase = 'build';
+  pushDispatch('DIV. HQ', waveReport());
+  if (waveIdx >= CFG.WAVES.length) {
+    phase = 'over';
+    showOverlay('SECTOR QUIET', 'FROM: GEN. STAFF\n\nTHE ATTACKS HAVE CEASED. YOUR SECTOR IS RECORDED AS HELD.\n\nFURTHER OFFENSIVES ARE ANTICIPATED. LEAVE IS NOT.\n\n[ END OF FIELD TRIAL — Job 1 slice complete ]');
+  }
+}
+function waveReport() {
+  const a = waveStats.allyDead, e = waveStats.enemyDead, b = waveStats.breaches;
+  let msg = `WAVE ${waveIdx} REPULSED. ENEMY ACCOUNTED FOR: ${e}. `;
+  msg += a === 0 ? 'NO CASUALTIES REPORTED. COMMENDABLE ECONOMY.' :
+         a < 6 ? `CASUALTIES: ${a} OTHER RANKS. ACCEPTABLE.` :
+         a < 15 ? `CASUALTIES: ${a} OTHER RANKS. REPLACEMENTS FORTHCOMING.` :
+         `CASUALTIES: ${a} OTHER RANKS. THE ADJUTANT WILL REQUIRE PAPERWORK.`;
+  if (b > 0) msg += ` ${b} PENETRATION${b > 1 ? 'S' : ''} OF THE REAR AREA. EXPLAIN.`;
+  msg += ` MATERIEL ALLOTTED: ${waveStats.bonus}. CONSOLIDATE.`;
+  return msg;
+}
+function breach(e) {
+  removeUnit(e);
+  if (phase === 'over') return;
+  lives--;
+  waveStats.breaches++;
+  flashes.push({ x: (e.c + .5) * CFG.CELL, y: (CFG.ROWS - 1) * CFG.CELL, t: 900 });
+  if (lives <= 0) {
+    phase = 'over';
+    showOverlay('RELIEVED OF COMMAND', 'FROM: GEN. STAFF\n\nTHE LINE IS BROKEN. ENEMY ELEMENTS ARE REPORTED IN THE REAR AREAS.\n\nYOU ARE RELIEVED OF COMMAND EFFECTIVE IMMEDIATELY. A SUCCESSOR HAS BEEN APPOINTED.\n\nHIS CONFIDENCE IS HIGH.');
+  }
+}
+
+/* ---------- per-frame simulation ---------- */
+function update(dt) {
+  if (phase !== 'wave') { updateFx(dt); return; }
+
+  // spawning: platoon rushes
+  if (spawnRemaining > 0) {
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      spawnTimer += CFG.PLATOON_INTERVAL_MS;
+      let size = Math.min(spawnRemaining, CFG.PLATOON_BASE + waveIdx * CFG.PLATOON_PER_WAVE);
+      const center = irand(CFG.PLATOON_SPREAD, CFG.COLS - 1 - CFG.PLATOON_SPREAD);
+      // fill free cells in rows 0-1 around the center
+      const slots = [];
+      for (let r = 0; r < 2; r++)
+        for (let c = Math.max(0, center - CFG.PLATOON_SPREAD); c <= Math.min(CFG.COLS - 1, center + CFG.PLATOON_SPREAD); c++)
+          if (!occupancy.has(key(r, c))) slots.push([r, c]);
+      // shuffle
+      for (let i = slots.length - 1; i > 0; i--) { const j = irand(0, i); [slots[i], slots[j]] = [slots[j], slots[i]]; }
+      while (size > 0 && slots.length) {
+        const [r, c] = slots.pop();
+        const e = makeEnemy(c); e.r = r;
+        enemies.push(e);
+        occupancy.set(key(r, c), e);
+        spawnRemaining--; size--;
+      }
+    }
+  }
+
+  // field recompute
+  fieldTimer -= dt;
+  if (fieldTimer <= 0) { computeField(); fieldTimer = CFG.FIELD_RECOMPUTE_MS; }
+
+  // reinforcements
+  updateReinforcements(dt);
+
+  // units
+  for (const s of soldiers) if (!s.dead) updateAlly(s, dt);
+  for (const e of enemies) if (!e.dead) updateEnemy(e, dt);
+  soldiers = soldiers.filter(u => !u.dead);
+  enemies = enemies.filter(u => !u.dead);
+
+  updateFx(dt);
+
+  // wave end
+  if (phase === 'wave' && spawnRemaining <= 0 && enemies.length === 0) endWave();
+}
+
+function updateReinforcements(dt) {
+  for (const req of reinfQueue) req.delay -= dt;
+  const remaining = [];
+  for (const req of reinfQueue) {
+    if (req.delay > 0) { remaining.push(req); continue; }
+    if (!posts.has(req.postKey)) continue;           // post was unassigned/demolished
+    if (occupancy.has(req.postKey)) continue;        // already re-manned somehow
+    const pr = Math.floor(req.postKey / CFG.COLS), pc = req.postKey % CFG.COLS;
+    let best = null, bestPath = null, bestLen = Infinity;
+    for (const b of bunkers) {
+      if (b.reserve <= 0) continue;
+      const exit = bunkerExit(b);
+      if (!exit || occupancy.has(key(exit[0], exit[1]))) continue;
+      const p = trenchPath(exit[0], exit[1], pr, pc);
+      if (p && p.length < bestLen) { bestLen = p.length; best = b; bestPath = p; }
+    }
+    if (!best) {
+      if (totalReserves() > 0) { req.delay = CFG.REINF_RETRY_MS; remaining.push(req); }
+      continue; // no reserves at all: request dropped
+    }
+    best.reserve--;
+    const [sr, sc] = bestPath[0];
+    const s = makeSoldier(sr, sc);
+    s.state = 'moving'; s.postKey = req.postKey; s.path = bestPath; s.pathIdx = 1;
+    soldiers.push(s);
+    occupancy.set(key(sr, sc), s);
+  }
+  reinfQueue = remaining;
+}
+
+function canFire(u) {
+  // post soldier in a fire trench whose cell directly ahead (north) is open ground
+  if (terrain[key(u.r, u.c)] !== T_FIRE) return false;
+  const fr = u.r - 1;
+  if (!inGrid(fr, u.c)) return true;
+  return terrain[key(fr, u.c)] === T_OPEN;
+}
+
+function updateAlly(u, dt) {
+  if (u.state === 'melee') { doMelee(u, dt); return; }
+  if (u.state === 'moving') {
+    if (u.nr != null) {
+      u.prog += (CFG.ALLY_SPEED * dt / 1000);
+      if (u.prog >= 1) finishMove(u);
+      return;
+    }
+    if (!u.path || u.pathIdx >= u.path.length) {
+      u.state = 'post'; u.path = null;
+      return;
+    }
+    const [nr, nc] = u.path[u.pathIdx];
+    const blocker = occupancy.get(key(nr, nc));
+    if (blocker && blocker.side === 'enemy' && blocker.nr == null && !blocker.meleeWith && !u.meleeWith) {
+      startMelee(u, blocker); return;
+    }
+    if (tryStartMove(u, nr, nc)) u.pathIdx++;
+    return;
+  }
+  // at post: fire
+  u.fireCool -= dt;
+  if (u.fireCool <= 0) {
+    u.fireCool += CFG.RIFLE_INTERVAL_MS;
+    if (canFire(u)) fireRifle(u);
+  }
+}
+
+function fireRifle(u) {
+  let best = null, bestD = Infinity;
+  for (const e of enemies) {
+    if (e.dead || e.r > u.r) continue;            // front-only
+    const dr = e.r - u.r, dc = e.c - u.c;
+    const d2 = dr * dr + dc * dc;
+    if (d2 <= CFG.RIFLE_RANGE * CFG.RIFLE_RANGE && d2 < bestD) { bestD = d2; best = e; }
+  }
+  if (!best) return;
+  const [x1, y1] = unitXY(u), [x2, y2] = unitXY(best);
+  tracers.push({ x1, y1, x2, y2, t: 90, ally: true });
+  const chance = inTrench(best) ? CFG.HIT_VS_TRENCH : CFG.HIT_VS_OPEN;
+  if (rng() < chance) {
+    best.hp -= CFG.RIFLE_DMG;
+    if (best.hp <= 0) killUnit(best);
+  }
+}
+
+function updateEnemy(u, dt) {
+  if (u.state === 'melee') { doMelee(u, dt); return; }
+  // movement in progress
+  if (u.nr != null) {
+    const spd = inTrench(u) ? CFG.ENEMY_SPEED_TRENCH : CFG.ENEMY_SPEED_OPEN;
+    u.prog += (spd * dt / 1000);
+    if (u.prog >= 1) {
+      finishMove(u);
+      if (u.r >= CFG.GOAL_ROW) { breach(u); return; }
+    }
+  } else {
+    // choose next step: neighbor minimizing field
+    let cands = [];
+    for (const [dr, dc] of DIRS) {
+      const nr = u.r + dr, nc = u.c + dc;
+      if (!inGrid(nr, nc)) continue;
+      if (terrain[key(nr, nc)] === T_BUNKER) continue;
+      cands.push([field[key(nr, nc)], nr, nc]);
+    }
+    cands.sort((a, b) => a[0] - b[0] + (rng() - 0.5) * 0.001);
+    let moved = false;
+    for (const [f, nr, nc] of cands) {
+      if (f === Infinity) break;
+      if (f >= field[key(u.r, u.c)] && u.stuck < 1500) break; // don't walk backwards unless stuck a while
+      const blocker = occupancy.get(key(nr, nc));
+      if (blocker && blocker.side === 'ally' && blocker.nr == null && !blocker.meleeWith) {
+        startMelee(u, blocker); return;
+      }
+      if (tryStartMove(u, nr, nc)) { moved = true; u.stuck = 0; break; }
+    }
+    if (!moved) u.stuck += dt;
+  }
+  // suppressive fire while in the open
+  if (!inTrench(u)) {
+    u.fireCool -= dt;
+    if (u.fireCool <= 0) {
+      u.fireCool += CFG.ENEMY_FIRE_INTERVAL_MS;
+      enemyFire(u);
+    }
+  }
+}
+
+function enemyFire(u) {
+  const targets = soldiers.filter(s => !s.dead && s.r > u.r &&
+    (s.r - u.r) ** 2 + (s.c - u.c) ** 2 <= CFG.ENEMY_FIRE_RANGE ** 2);
+  if (!targets.length) return;
+  const t = targets[irand(0, targets.length - 1)];
+  const [x1, y1] = unitXY(u), [x2, y2] = unitXY(t);
+  tracers.push({ x1, y1, x2, y2, t: 90, ally: false });
+  if (rng() < CFG.ENEMY_HIT) {
+    t.hp -= CFG.ENEMY_DMG;
+    if (t.hp <= 0) killUnit(t);
+  }
+}
+
+function startMelee(a, b) {
+  a.state = 'melee'; b.state = 'melee';
+  a.meleeWith = b; b.meleeWith = a;
+  // cancel any in-progress reservation of the initiator
+  if (a.nr != null && occupancy.get(key(a.nr, a.nc)) === a) { occupancy.delete(key(a.nr, a.nc)); a.nr = null; }
+}
+function doMelee(u, dt) {
+  const foe = u.meleeWith;
+  if (!foe || foe.dead) {
+    u.meleeWith = null;
+    u.state = u.side === 'ally' ? resumeAllyState(u) : 'advance';
+    return;
+  }
+  const atPost = (u.side === 'ally' && u.postKey != null && key(u.r, u.c) === u.postKey);
+  foe.hp -= u.meleePower * (atPost ? CFG.MELEE_POST_BONUS : 1) * dt / 1000;
+  if (foe.hp <= 0) killUnit(foe);
+}
+
+/* ---------- fx ---------- */
+function shatter(u) {
+  const [x, y] = unitXY(u);
+  const col = u.side === 'ally' ? '#5d5330' : '#464b44';
+  for (let i = 0; i < 6; i++) {
+    const a = rand(0, Math.PI * 2), v = rand(18, 55);
+    particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: rand(350, 650), col });
+  }
+}
+function updateFx(dt) {
+  for (const t of tracers) t.t -= dt;
+  tracers = tracers.filter(t => t.t > 0);
+  for (const p of particles) { p.t -= dt; p.x += p.vx * dt / 1000; p.y += p.vy * dt / 1000; }
+  particles = particles.filter(p => p.t > 0);
+  for (const f of flashes) f.t -= dt;
+  flashes = flashes.filter(f => f.t > 0);
+}
+
+/* ---------- dispatches ---------- */
+function pushDispatch(from, text) {
+  dispatches.push({ from, text });
+  if (!IS_NODE) renderLog();
+}
+
+/* ============================================================
+   DOM / RENDER  (browser only)
+   ============================================================ */
+let cv, ctx, els = {}, tool = 'fire', hoverCell = null, mouseDown = false;
+let overlayShown = false;
+
+function showOverlay(title, text) {
+  if (IS_NODE) return;
+  els.ovtitle.textContent = title;
+  els.ovtext.textContent = text;
+  els.overlay.classList.remove('hidden');
+  overlayShown = true;
+}
+
+function initDOM() {
+  cv = document.getElementById('cv');
+  cv.width = CFG.COLS * CFG.CELL;
+  cv.height = CFG.ROWS * CFG.CELL;
+  ctx = cv.getContext('2d');
+  for (const id of ['s_wave','s_mat','s_res','s_posts','conf','wavebtn','speedbtn','log','hint','overlay','ovtitle','ovtext','ovbtn','c_fire','c_comm','c_bunker'])
+    els[id] = document.getElementById(id);
+  els.c_fire.textContent = CFG.COST_FIRE; els.c_comm.textContent = CFG.COST_COMM; els.c_bunker.textContent = CFG.COST_BUNKER;
+
+  document.querySelectorAll('.toolbtn').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
+  document.addEventListener('keydown', e => {
+    const map = { '1': 'fire', '2': 'comm', '3': 'bunker', '4': 'assign', '5': 'delete' };
+    if (map[e.key]) setTool(map[e.key]);
+  });
+  els.wavebtn.addEventListener('click', () => { if (startWave()) syncUI(); });
+  els.speedbtn.addEventListener('click', () => {
+    gameSpeed = gameSpeed === 1 ? 2 : gameSpeed === 2 ? 4 : 1;
+    els.speedbtn.textContent = 'SPEED ×' + gameSpeed;
+  });
+  els.ovbtn.addEventListener('click', () => {
+    els.overlay.classList.add('hidden'); overlayShown = false;
+    if (phase === 'over') { resetGame(); syncUI(); renderLog(); }
+  });
+
+  cv.addEventListener('mousemove', e => {
+    const rect = cv.getBoundingClientRect();
+    const c = Math.floor((e.clientX - rect.left) / CFG.CELL);
+    const r = Math.floor((e.clientY - rect.top) / CFG.CELL);
+    hoverCell = inGrid(r, c) ? [r, c] : null;
+    if (mouseDown && (tool === 'fire' || tool === 'comm' || tool === 'delete')) applyTool();
+  });
+  cv.addEventListener('mouseleave', () => { hoverCell = null; mouseDown = false; });
+  cv.addEventListener('mousedown', e => { mouseDown = true; applyTool(); e.preventDefault(); });
+  window.addEventListener('mouseup', () => mouseDown = false);
+  setTool('fire');
+}
+function setTool(t) {
+  tool = t;
+  document.querySelectorAll('.toolbtn').forEach(b => b.classList.toggle('active', b.dataset.tool === t));
+  const hints = {
+    fire: 'FIRE TRENCH (2 wide). Men here shoot forward — but only if the cell directly ahead is open ground. Drag to dig a line.',
+    comm: 'COMMUNICATION TRENCH (2 deep). No firing from here. Connects lines so reinforcements can move up.',
+    bunker: 'DUGOUT (2×2). Holds ' + CFG.BUNKER_MEN + ' men. Must touch a trench. Reserves replace losses via the trench network.',
+    assign: 'Click fire trench cells to assign a firing post. Men deploy to posts when the wave begins.',
+    delete: 'Click any structure to demolish it. Full refund (build phase only).',
+  };
+  if (els.hint) els.hint.textContent = hints[t] || '';
+}
+function applyTool() {
+  if (!hoverCell || phase !== 'build') return;
+  const [r, c] = hoverCell;
+  if (tool === 'fire') placePiece('fire', r, c - (c === CFG.COLS - 1 ? 1 : 0));
+  else if (tool === 'comm') placePiece('comm', r - (r === CFG.BUILD_ROW_MAX ? 1 : 0), c);
+  else if (tool === 'bunker') placePiece('bunker', r, c);
+  else if (tool === 'assign') togglePost(r, c);
+  else if (tool === 'delete') deletePieceAt(r, c);
+  syncUI();
+}
+function syncUI() {
+  els.s_wave.textContent = phase === 'over' ? '—' : `${Math.min(waveIdx + 1, CFG.WAVES.length)} / ${CFG.WAVES.length}`;
+  els.s_mat.textContent = materiel;
+  els.s_res.textContent = `${totalReserves()} / ${totalCapacity()}`;
+  els.s_posts.textContent = posts.size;
+  els.conf.textContent = '█'.repeat(Math.max(0, lives)) + '░'.repeat(CFG.LIVES - Math.max(0, lives));
+  els.wavebtn.disabled = phase !== 'build';
+  els.wavebtn.textContent = phase === 'wave' ? 'ENGAGEMENT IN PROGRESS' : 'COMMENCE DEFENCE';
+}
+function renderLog() {
+  if (IS_NODE) return;
+  els.log.innerHTML = dispatches.slice(-10).map(d =>
+    `<div class="dispatch"><span class="dh">FROM: ${d.from}</span>\n${d.text}</div>`).join('');
+  els.log.scrollTop = els.log.scrollHeight;
+}
+
+/* ---------- drawing ---------- */
+function render() {
+  const W = cv.width, H = cv.height, CELL = CFG.CELL;
+  // paper field
+  ctx.fillStyle = '#b7b195'; ctx.fillRect(0, 0, W, H);
+  // no-man's-land tint
+  ctx.fillStyle = 'rgba(140,134,108,0.25)';
+  ctx.fillRect(0, 0, W, CFG.BUILD_ROW_MIN * CELL);
+  // enemy edge hatching
+  ctx.strokeStyle = 'rgba(122,47,35,0.5)'; ctx.lineWidth = 1;
+  for (let x = -CELL; x < W + CELL; x += 7) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CELL, CELL * 1.4); ctx.stroke();
+  }
+  // faint grid
+  ctx.strokeStyle = 'rgba(43,42,36,0.07)';
+  ctx.beginPath();
+  for (let c = 0; c <= CFG.COLS; c++) { ctx.moveTo(c * CELL, 0); ctx.lineTo(c * CELL, H); }
+  for (let r = 0; r <= CFG.ROWS; r++) { ctx.moveTo(0, r * CELL); ctx.lineTo(W, r * CELL); }
+  ctx.stroke();
+  // buildable band markers
+  ctx.strokeStyle = 'rgba(43,42,36,0.25)'; ctx.setLineDash([4, 5]);
+  ctx.beginPath();
+  ctx.moveTo(0, CFG.BUILD_ROW_MIN * CELL); ctx.lineTo(W, CFG.BUILD_ROW_MIN * CELL);
+  ctx.moveTo(0, (CFG.BUILD_ROW_MAX + 1) * CELL); ctx.lineTo(W, (CFG.BUILD_ROW_MAX + 1) * CELL);
+  ctx.stroke(); ctx.setLineDash([]);
+  // rear line
+  ctx.fillStyle = 'rgba(122,47,35,0.10)';
+  ctx.fillRect(0, CFG.GOAL_ROW * CELL, W, CELL);
+  ctx.fillStyle = 'rgba(43,42,36,0.45)';
+  ctx.font = '9px Courier New'; ctx.textAlign = 'left';
+  ctx.fillText('ENEMY LINES', 4, CELL - 5);
+  ctx.fillText('REAR AREA — DO NOT PERMIT PENETRATION', 4, H - 5);
+
+  // trenches
+  for (const piece of pieces.values()) {
+    for (const [r, c] of piece.cells) {
+      const x = c * CELL, y = r * CELL;
+      if (piece.type === 'bunker') {
+        ctx.fillStyle = '#3a3226'; ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
+      } else {
+        ctx.fillStyle = '#453a2b'; ctx.fillRect(x + 2, y + 2, CELL - 4, CELL - 4);
+        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x + 4, y + 4, CELL - 8, CELL - 8);
+      }
+    }
+    if (piece.type === 'fire') {
+      // parapet ticks on north edge (only where front is open)
+      ctx.strokeStyle = '#6d6046'; ctx.lineWidth = 2;
+      for (const [r, c] of piece.cells) {
+        const frontOpen = !inGrid(r - 1, c) || terrain[key(r - 1, c)] === T_OPEN;
+        if (!frontOpen) continue;
+        const x = c * CELL, y = r * CELL;
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) { ctx.moveTo(x + 3 + i * 5, y + 1.5); ctx.lineTo(x + 6 + i * 5, y + 1.5); }
+        ctx.stroke();
+      }
+    }
+    if (piece.type === 'bunker') {
+      const [r, c] = piece.cells[0];
+      ctx.strokeStyle = '#8a7f61'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(c * CELL + 3, r * CELL + 3, CELL * 2 - 6, CELL * 2 - 6);
+      const b = bunkers.find(bb => bb.id === piece.id);
+      if (b) {
+        ctx.fillStyle = '#c4bea3'; ctx.font = 'bold 10px Courier New'; ctx.textAlign = 'center';
+        ctx.fillText(String(b.reserve), (c + 1) * CELL, (r + 1) * CELL + 4);
+      }
+    }
+  }
+  // posts
+  ctx.strokeStyle = 'rgba(196,190,163,0.9)'; ctx.lineWidth = 1.2;
+  for (const pk of posts) {
+    const r = Math.floor(pk / CFG.COLS), c = pk % CFG.COLS;
+    ctx.beginPath(); ctx.arc((c + .5) * CELL, (r + .5) * CELL, CELL * 0.32, 0, Math.PI * 2); ctx.stroke();
+  }
+  // tracers
+  for (const t of tracers) {
+    ctx.strokeStyle = t.ally ? 'rgba(90,80,40,0.55)' : 'rgba(80,60,55,0.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(t.x1, t.y1); ctx.lineTo(t.x2, t.y2); ctx.stroke();
+  }
+  // units
+  for (const u of soldiers) drawUnit(u, '#6b5f35');
+  for (const u of enemies) drawUnit(u, '#4f5550');
+  // particles
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, p.t / 650);
+    ctx.fillStyle = p.col;
+    ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+  }
+  ctx.globalAlpha = 1;
+  // breach flashes
+  for (const f of flashes) {
+    ctx.globalAlpha = Math.max(0, f.t / 900) * 0.6;
+    ctx.fillStyle = '#7a2f23';
+    ctx.beginPath(); ctx.arc(f.x, f.y + CFG.CELL / 2, 14, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // hover ghost
+  if (hoverCell && phase === 'build' && (tool === 'fire' || tool === 'comm' || tool === 'bunker')) {
+    let [r, c] = hoverCell;
+    if (tool === 'fire' && c === CFG.COLS - 1) c--;
+    if (tool === 'comm' && r === CFG.BUILD_ROW_MAX) r--;
+    const cells = footprint(tool, r, c);
+    const ok = canPlace(tool, r, c) && materiel >= pieceCost(tool);
+    ctx.fillStyle = ok ? 'rgba(90,87,71,0.35)' : 'rgba(122,47,35,0.35)';
+    for (const [cr, cc] of cells) if (inGrid(cr, cc)) ctx.fillRect(cc * CELL, cr * CELL, CELL, CELL);
+  }
+}
+function drawUnit(u, col) {
+  const [x, y] = unitXY(u);
+  let jx = 0, jy = 0;
+  if (u.state === 'melee') { jx = rand(-1.6, 1.6); jy = rand(-1.6, 1.6); }
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.arc(x + jx, y + jy, CFG.CELL * 0.28, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(43,42,36,0.8)'; ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+/* ---------- main loop ---------- */
+let lastT = 0;
+function frame(t) {
+  const dt = Math.min(50, t - lastT); lastT = t;
+  if (!overlayShown) update(dt * gameSpeed);
+  render();
+  syncUI();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- boot ---------- */
+resetGame();
+if (!IS_NODE) {
+  initDOM();
+  syncUI(); renderLog();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- headless test API ---------- */
+const API = {
+  CFG, resetGame, placePiece, togglePost, startWave, update, deletePieceAt,
+  get state() { return { terrain, pieces, bunkers, posts, soldiers, enemies, materiel, lives, waveIdx, phase, spawnRemaining, waveStats, occupancy, dispatches, reinfQueue }; },
+  computeField, trenchPath,
+  setRng(f) { rng = f; },
+};
+if (IS_NODE) globalThis.__salient = API; else window.__salient = API;
+</script>
+</body>
+</html>
