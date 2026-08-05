@@ -24,8 +24,12 @@ function playGame(deckA, deckB, seed, modeA = 'expert', modeB = 'expert') {
   let acts = 0;
   // NOTE: winner can legitimately be 0, so test against null — never truthiness.
   while (E.state.winner === null && acts++ < 8000) {
-    const pending = E.state.pendingPromote;
-    const p = (pending === null || pending === undefined) ? E.state.active : pending;
+    // Three things can owe an action: a Whirlwind switch, a forced promotion, or
+    // just whoever's turn it is. The theme decks contain no Whirlwind today, but
+    // relying on that would make this loop quietly wrong the moment they do.
+    const st = E.state;
+    const p = st.pendingSwitch !== null ? st.pendingSwitch
+      : (st.pendingPromote === null || st.pendingPromote === undefined) ? st.active : st.pendingPromote;
     const action = E.aiChoose(p, p === 0 ? modeA : modeB);
     if (!action) return { stalled: true, turn: E.state.turn, acts, E };
     E.act(p, action);
@@ -54,15 +58,10 @@ for (const name of DECK_NAMES) {
 // CARD_DB holds the whole set, implemented or not, so 100% is not the bar yet.
 // Instead: pin the cards known to be unimplemented. A card that drops off this
 // list is progress; a card that appears on it unexpectedly is a regression.
-// Keep this list in step with the "twelve missing Base Set cards" in CLAUDE.md.
+// Keep this list in step with the missing-cards section of CLAUDE.md.
 const EXPECTED_UNIMPLEMENTED = new Set([
-  // All six Pokemon Powers are done. What's left is the five oddities and
-  // Clefairy Doll — see the missing-cards section of CLAUDE.md.
-  'base1-5',  // Clefairy    — Metronome
-  'base1-22', // Pidgeotto   — Whirlwind / Mirror Move
-  'base1-38', // Poliwhirl   — Amnesia
-  'base1-39', // Porygon     — Conversion 1 / 2
-  'base1-57', // Pidgey      — Whirlwind
+  // Base Set is one card from complete. Clefairy Doll is a Trainer that plays
+  // AS a Basic Pokemon, and Fossil's Mysterious Fossil needs the same machinery.
   'base1-70', // Clefairy Doll — a Trainer that plays as a Basic Pokemon
 ]);
 

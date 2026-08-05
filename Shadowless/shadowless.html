@@ -956,6 +956,29 @@ const EFFECTS = {
     ],
   },
 
+  // ================= PASS 4g — the oddities =================
+  // Poliwhirl needed nothing new at all: ATTACK_LOCK was already built and
+  // already enforced in canUseAttack, it had simply never been wired to a card.
+  'base1-38': { a: [                                    // Poliwhirl
+    [{ v: 'ATTACK_LOCK' }],                             //   Amnesia
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 30 }],         //   Doubleslap
+  ]},
+  'base1-5': { a: [                                     // Clefairy
+    [{ v: 'STATUS_ON_FLIP', s: 'Asleep' }],             //   Sing
+    [{ v: 'METRONOME' }],                               //   Metronome
+  ]},
+  'base1-39': { a: [                                    // Porygon
+    [{ v: 'CONVERT_DEF_WEAKNESS' }],                    //   Conversion 1
+    [{ v: 'CONVERT_SELF_RESISTANCE' }],                 //   Conversion 2
+  ]},
+  'base1-57': { a: [                                    // Pidgey
+    [{ v: 'WHIRLWIND' }],                               //   Whirlwind
+  ]},
+  'base1-22': { a: [                                    // Pidgeotto
+    [{ v: 'WHIRLWIND' }],                               //   Whirlwind
+    [{ v: 'MIRROR_MOVE' }],                             //   Mirror Move
+  ]},
+
   // ================= PASS 4f — Buzzap =================
   'base1-21': {                                         // Electrode
     p: { kind: 'BUZZAP', name: 'Buzzap' },
@@ -1346,11 +1369,37 @@ class AI {
   // ---------------------------------------------------------------- forecast
   // Enumerate coin-flip outcomes for an attack into a probability distribution.
   // Returns raw (pre-Weakness) damage outcomes plus effect probabilities.
-  rawOutcomes(atkSlot, defSlot, idx) {
+  rawOutcomes(atkSlot, defSlot, idx, vopts) {
     const c = this.top(atkSlot);
-    const atk = (c.attacks || [])[idx];
+    const empty = { outcomes: [{ p: 1, dmg: 0 }], statuses: {}, selfDmg: 0, energyCost: 0, flags: {} };
+    let atk = (c.attacks || [])[idx];
     if (!atk) return { outcomes: [], statuses: {}, selfDmg: 0, energyCost: 0, flags: {} };
-    const script = this.script(atkSlot, idx);
+    let script = this.script(atkSlot, idx);
+
+    // Metronome and Mirror Move resolve to something OTHER than their own
+    // printed line, which is blank on both. Forecasting them literally scores
+    // them at zero forever — the card works and the bot never picks it, which
+    // is exactly how Energy Burn hid a bug earlier in this job.
+    if (script.some(v => v.v === 'METRONOME')) {
+      const ci = vopts && vopts.copyIdx;
+      if (ci === undefined || !defSlot) return empty;
+      const dc = this.top(defSlot);
+      const copied = (dc.attacks || [])[ci];
+      if (!copied) return empty;
+      atk = copied;
+      // Copied attacks skip their costs, so the cost verbs must not be forecast.
+      script = ((this.eff[dc.id] && this.eff[dc.id].a && this.eff[dc.id].a[ci]) || [])
+        .filter(v => v.v.indexOf('COST_') !== 0);
+    }
+    if (script.some(v => v.v === 'MIRROR_MOVE')) {
+      const rec = atkSlot.lastAttackResult;
+      if (!rec || rec.turn < this.E.state.turn - 1) return empty;
+      const st = {};
+      for (const x of (rec.statuses || [])) st[x] = 1;
+      // A recorded final result is already past Weakness and Resistance.
+      return { outcomes: [{ p: 1, dmg: rec.damage || 0 }], statuses: st,
+               selfDmg: 0, energyCost: 0, flags: { flat: true } };
+    }
 
     let base = aiParseDamage(atk.dmg);
     let outcomes = [{ p: 1, dmg: base }];
@@ -1411,16 +1460,16 @@ class AI {
   }
 
   // Run each raw outcome through the engine's own damage maths.
-  forecast(pi, idx) {
+  forecast(pi, idx, vopts) {
     const E = this.E;
     const me = E.state.players[pi], you = E.state.players[1 - pi];
     const atkSlot = me.active, defSlot = you.active;
     if (!atkSlot || !defSlot) return null;
-    const raw = this.rawOutcomes(atkSlot, defSlot, idx);
+    const raw = this.rawOutcomes(atkSlot, defSlot, idx, vopts);
     const hpLeft = this.remainingHP(defSlot);
     let expDmg = 0, pLethal = 0;
     for (const o of raw.outcomes) {
-      const r = E.computeDamage(atkSlot, defSlot, o.dmg);
+      const r = E.computeDamage(atkSlot, defSlot, o.dmg, { noWR: !!raw.flags.flat });
       expDmg += o.p * r.dmg;
       if (r.dmg >= hpLeft) pLethal += o.p;
     }
@@ -1429,9 +1478,9 @@ class AI {
   }
 
   // ------------------------------------------------------------ attack score
-  scoreAttack(pi, idx) {
+  scoreAttack(pi, idx, vopts) {
     const W = this.W, E = this.E;
-    const f = this.forecast(pi, idx);
+    const f = this.forecast(pi, idx, vopts);
     if (!f) return -Infinity;
     const me = E.state.players[pi], you = E.state.players[1 - pi];
     const atkSlot = me.active;
@@ -1738,7 +1787,24 @@ class AI {
     const me = E.state.players[pi], you = E.state.players[1 - pi];
 
     switch (a.t) {
-      case 'attack': return this.scoreAttack(pi, a.idx);
+      case 'attack': {
+        let sc = this.scoreAttack(pi, a.idx, a.opts);
+        // Porygon deals no damage with either Conversion, so the whole value is
+        // in picking a USEFUL type. Without this the bot would choose at random
+        // among options that all score the same nothing.
+        if (a.opts && a.opts.type && me.active) {
+          const scr = this.script(me.active, a.idx);
+          if (scr.some(v => v.v === 'CONVERT_DEF_WEAKNESS')) {
+            const mine = new Set(E.allSlots(pi).map(x => this.top(x).type));
+            if (mine.has(a.opts.type)) sc += 12;
+          }
+          if (scr.some(v => v.v === 'CONVERT_SELF_RESISTANCE')) {
+            const theirs = E.state.players[1 - pi].active;
+            if (theirs && this.top(theirs).type === a.opts.type) sc += 10;
+          }
+        }
+        return sc;
+      }
 
       case 'power': return this.scorePower(pi, a);
 
@@ -1800,6 +1866,20 @@ class AI {
         if (!b) return -Infinity;
         const pot = this.potential(pi, b, null);
         return this.remainingHP(b) * 0.35 + (pot.short === 0 ? 25 : 0) + pot.best * 0.2;
+      }
+
+      // Being Whirlwinded up is not the same as choosing to promote — the timing
+      // is the opponent's — but the preference is: whatever survives longest and
+      // can actually swing next turn. Scored on the same basis as a promotion.
+      //
+      // It MUST return a real number rather than falling through to the default:
+      // pickBest yields null when every option scores -Infinity, and a null there
+      // means nobody answers the prompt and the game stalls with the turn frozen.
+      case 'switchIn': {
+        const b = me.bench[a.bench];
+        if (!b) return -Infinity;
+        const pot = this.potential(pi, b, null);
+        return this.remainingHP(b) * 0.35 + (pot.short === 0 ? 25 : 0) + Math.max(0, pot.best) * 0.2;
       }
 
       case 'playTrainer': return this.scoreTrainer(pi, a);
@@ -2151,6 +2231,14 @@ class AI {
     const E = this.E, s = E.state;
     if (s.phase === 'over') return null;
 
+    // Whirlwind dragged one of ours up. Send the one we least mind exposing:
+    // biggest HP pool, same instinct as choosing a replacement after a KO.
+    if (s.pendingSwitch !== null) {
+      if (s.pendingSwitch !== pi) return null;
+      const acts = E.legalActions(pi).filter(a => a.t === 'switchIn');
+      if (!acts.length) return null;
+      return this.pickBest(pi, acts, true);
+    }
     if (s.pendingPromote !== null) {
       if (s.pendingPromote !== pi) return null;
       const acts = E.legalActions(pi).filter(a => a.t === 'promote');
@@ -2202,8 +2290,7 @@ class AI {
     best.__score = bestScore;
     return best;
   }
-}
-
+}
 
 // ============================================================================
 // RULES ENGINE  —  WOTC-era (Base Set) Pokemon TCG
@@ -2382,6 +2469,8 @@ class Engine {
       winner: null, winReason: '', log: [],
       players: [mkPlayer(deckA, names[0]), mkPlayer(deckB, names[1])],
       pendingPromote: null, promoteQueue: [], pendingEndTurn: false, setupDone: [false, false],
+      // Whirlwind: the DEFENDING player owes a choice of who comes up.
+      pendingSwitch: null,
     };
     this.log(`New game. Seed ${this.seed}.`, 'sys');
 
@@ -2545,7 +2634,7 @@ class Engine {
 
     this.betweenTurns(ended);
     if (s.phase === 'over') return { ok: true };
-    if (s.pendingPromote !== null) { s.pendingEndTurn = true; return { ok: true }; }
+    if (s.pendingPromote !== null || s.pendingSwitch !== null) { s.pendingEndTurn = true; return { ok: true }; }
 
     s.active = 1 - s.active;
     return this.startTurn();
@@ -2595,12 +2684,16 @@ class Engine {
     const s = this.state;
     const acts = [];
     if (s.phase === 'over') return acts;
-    if (s.pendingPromote !== null) {
-      if (s.pendingPromote === pi) {
-        s.players[pi].bench.forEach((b, i) => acts.push({ t: 'promote', bench: i, label: `Promote ${this.nameOf(b)}` }));
-      }
+    if (s.pendingSwitch === pi) {
+      s.players[pi].bench.forEach((b, i) =>
+        acts.push({ t: 'switchIn', bench: i, label: `Send up ${this.nameOf(b)}` }));
       return acts;
     }
+    if (s.pendingPromote === pi) {
+      s.players[pi].bench.forEach((b, i) => acts.push({ t: 'promote', bench: i, label: `Promote ${this.nameOf(b)}` }));
+      return acts;
+    }
+    if (s.pendingSwitch !== null || s.pendingPromote !== null) return acts;   // owed by the other player
     if (s.phase !== 'main' || s.active !== pi) return acts;
     const p = s.players[pi];
 
@@ -2629,8 +2722,15 @@ class Engine {
 
     if (p.active && this.canAttackAtAll(pi)) {
       const c = topCard(this.db, p.active);
-      (c.attacks || []).forEach((a, i) => {
-        if (this.canUseAttack(pi, i).ok) acts.push({ t: 'attack', idx: i, label: `Attack: ${a.name}` });
+      (c.attacks || []).forEach((atkDef, i) => {
+        if (!this.canUseAttack(pi, i).ok) return;
+        // An attack that needs a choice made up front enumerates one action per
+        // legal choice, exactly as interactive Powers do — so the AI scores each
+        // option and the UI never has to restate which are legal.
+        for (const variant of this.attackVariants(pi, i)) {
+          if (variant === null) acts.push({ t: 'attack', idx: i, label: `Attack: ${atkDef.name}` });
+          else acts.push({ t: 'attack', idx: i, opts: variant.opts, label: variant.label });
+        }
       });
     }
     acts.push({ t: 'pass', label: 'End turn' });
@@ -3020,8 +3120,13 @@ class Engine {
   act(pi, a) {
     const s = this.state;
     if (s.phase === 'over') return this.fail('Game is over');
-    if (s.pendingPromote !== null && a.t !== 'promote') return this.fail('Must promote a Pokemon first');
-    if (a.t !== 'promote' && s.active !== pi) return this.fail('Not your turn');
+    if (s.pendingSwitch !== null || s.pendingPromote !== null) {
+      if (s.pendingSwitch === pi) {
+        if (a.t !== 'switchIn') return this.fail('A Pokemon must be sent up first');
+      } else if (s.pendingPromote === pi) {
+        if (a.t !== 'promote') return this.fail('Must promote a Pokemon first');
+      } else return this.fail('Waiting on the other player');
+    } else if (s.active !== pi) return this.fail('Not your turn');
 
     switch (a.t) {
       case 'playBasic':    return this.doPlayBasic(pi, a);
@@ -3032,6 +3137,7 @@ class Engine {
       case 'attack':       return this.doAttack(pi, a);
       case 'power':        return this.doPower(pi, a);
       case 'promote':      return this.doPromote(pi, a);
+      case 'switchIn':     return this.doSwitchIn(pi, a);
       case 'pass':         return this.endTurn();
       default:             return this.fail('Unknown action ' + a.t);
     }
@@ -3137,7 +3243,29 @@ class Engine {
     p.bench.splice(a.bench, 1); p.active = b;
     this.log(`${p.name} promotes ${this.nameOf(b)} to Active.`);
     this.clearPromote(pi);
-    if (s.pendingPromote !== null) return { ok: true };   // another player still owes a promote
+    if (s.pendingPromote !== null || s.pendingSwitch !== null) return { ok: true };  // still owed
+    if (s.pendingEndTurn) {
+      s.pendingEndTurn = false;
+      s.active = 1 - s.active;
+      return this.startTurn();
+    }
+    return { ok: true };
+  }
+
+  // Whirlwind's switch, chosen by the DEFENDING player. Same deferred-turn-end
+  // shape as doPromote: whoever owes the choice makes it, and only once nothing
+  // is outstanding does the turn actually change hands.
+  doSwitchIn(pi, a) {
+    const s = this.state;
+    if (s.pendingSwitch !== pi) return this.fail('Not waiting on you');
+    const p = s.players[pi];
+    const b = p.bench[a.bench]; if (!b) return this.fail('No such benched Pokemon');
+    const old = p.active;
+    if (old) { clearStatus(old); p.bench.splice(a.bench, 1); p.active = b; p.bench.push(old); }
+    else { p.bench.splice(a.bench, 1); p.active = b; }
+    this.log(`${p.name} sends up ${this.nameOf(b)}.`, 'eff');
+    s.pendingSwitch = null;
+    if (s.pendingPromote !== null) return { ok: true };
     if (s.pendingEndTurn) {
       s.pendingEndTurn = false;
       s.active = 1 - s.active;
@@ -3611,8 +3739,64 @@ class Engine {
     }
     if (script.some(v => v.v === 'ONCE_WHILE_IN_PLAY')) atk.usedAttacks[a.idx] = true;
 
-    // pay attack costs
-    for (const v of script) {
+    const r = this.runAttack(pi, atk, def, card, attack, script, a);
+    if (!r.ok) return r;
+    return this.finishAttack();
+  }
+
+  // The body of an attack, split from the business of deciding whether the
+  // attacker may attack at all. Everything above stays in doAttack: legality,
+  // the Confusion flip, Sand-attack interference, the once-per-play mark.
+  //
+  // The split exists so Metronome can re-enter HERE with the defender's attack
+  // while `atk` is still Clefairy. That one fact gives the card's own footnote
+  // for free — Weakness and Resistance are computed from `atk`, so a copied
+  // attack really is Colorless — and makes "does N damage to itself" land on
+  // Clefairy rather than on the Pokemon it was copied from.
+  runAttack(pi, atk, def, card, attack, script, a, opts = {}) {
+    const s = this.state;
+    const me = s.players[pi], you = s.players[1 - pi];
+
+    // --- attacks that REPLACE themselves with something else ---------------
+    // Both of these resolve to a different attack entirely, so they run before
+    // costs and damage rather than as post-damage effects.
+
+    // Metronome. `atk` stays Clefairy; only the attack and its script change.
+    if (script.some(v => v.v === 'METRONOME') && !opts.noMetronome) {
+      const choices = this.metronomeChoices(pi);
+      if (!choices.length) { this.log('There is no attack to copy.', 'eff'); return { ok: true }; }
+      const dc = topCard(this.db, def);
+      const which = (a && a.opts && choices.includes(a.opts.copyIdx))
+        ? a.opts.copyIdx : choices[this.pick(choices.length)];
+      const copied = dc.attacks[which];
+      const cscript = (this.effects[dc.id] && this.effects[dc.id].a && this.effects[dc.id].a[which]) || [];
+      this.log(`Metronome copies ${dc.name}'s ${copied.name}.`, 'eff');
+      return this.runAttack(pi, atk, def, card, copied, cscript, a,
+        { skipCosts: true, noMetronome: true });
+    }
+
+    // Mirror Move replays a RECORDED result rather than recomputing an attack.
+    // "The final result" is already past Weakness and Resistance, so it is
+    // re-applied flat — see RULINGS.md.
+    if (script.some(v => v.v === 'MIRROR_MOVE')) {
+      const rec = atk.lastAttackResult;
+      if (!rec || rec.turn < s.turn - 1) {
+        this.log(`${card.name} was not attacked last turn - Mirror Move does nothing.`, 'eff');
+        return { ok: true };
+      }
+      if (!rec.damage && !(rec.statuses || []).length) {
+        this.log('The attack being mirrored had no result to copy.', 'eff');
+        return { ok: true };
+      }
+      this.log(`Mirror Move returns ${rec.label || 'that attack'}.`, 'eff');
+      if (rec.damage > 0) this.dealDamage(atk, def, rec.damage, { noWR: true });
+      if (!this.effectsBlocked(def)) for (const st of (rec.statuses || [])) this.applyStatus(def, st);
+      return { ok: true };
+    }
+
+    // pay attack costs — skipped when copied, since Metronome explicitly does not
+    // inherit "anything else required in order to use that attack"
+    if (!opts.skipCosts) for (const v of script) {
       if (v.v === 'COST_DISCARD_ALL_ENERGY') {
         const n = atk.energy.length;
         while (atk.energy.length) me.discard.push(atk.energy.pop());
@@ -3679,7 +3863,13 @@ class Engine {
       }
     }
 
-    if (nothing) { this.log('The attack does nothing.', 'eff'); return this.finishAttack(); }
+    if (nothing) { this.log('The attack does nothing.', 'eff'); return { ok: true }; }
+
+    // Snapshot the defender's conditions so the post-damage loop's additions can
+    // be diffed out afterwards. This is what Mirror Move replays: an EVENT
+    // RECORD, written when the attack resolves, rather than the log — which is
+    // prose for humans and would have to be parsed back into numbers.
+    const stBefore = def ? Object.assign({}, def.status) : null;
 
     const res = this.dealDamage(atk, def, base);
     if (pendingRecoil > 0) {
@@ -3745,6 +3935,32 @@ class Engine {
           this.log(`${dc.name} can't use ${(dc.attacks[which] || {}).name} during the opponent's next turn.`, 'eff');
           break;
         }
+        // Porygon. Both changes are permanent for as long as that Pokemon stays
+        // in play — the card sets no expiry, and evolving or leaving play drops
+        // the override with the slot.
+        case 'CONVERT_DEF_WEAKNESS': {
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (!def || !this.weaknessOf(def)) { this.log('The Defending Pokemon has no Weakness to change.', 'eff'); break; }
+          const t = (a && a.opts && a.opts.type) || this.energyTypes().filter(x => x !== 'C')[0];
+          def.wkOverride = t;
+          this.log(`Conversion 1: ${this.nameOf(def)}'s Weakness is now ${t}.`, 'eff');
+          break;
+        }
+        case 'CONVERT_SELF_RESISTANCE': {
+          const t2 = (a && a.opts && a.opts.type) || this.energyTypes().filter(x => x !== 'C')[0];
+          atk.rsOverride = t2;
+          this.log(`Conversion 2: ${card.name}'s Resistance is now ${t2}.`, 'eff');
+          break;
+        }
+        case 'WHIRLWIND':
+          // The DEFENDER chooses, not the attacker — the one place in Base Set
+          // where a player makes a decision during their opponent's turn. The
+          // engine defers the end of turn until they have.
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (!you.bench.length) { this.log(`${you.name} has no Benched Pokemon to switch to.`, 'eff'); break; }
+          s.pendingSwitch = 1 - pi;
+          this.log(`${you.name} must choose a Benched Pokemon to switch in.`, 'eff');
+          break;
         case 'BARRIER':
           atk.effects.push({ kind: 'PREVENT_ALL_EFFECTS', label: 'Barrier',
                              expireAtStartOfTurn: s.turn + 2 });
@@ -3812,12 +4028,81 @@ class Engine {
         }
       }
     }
-    return this.finishAttack();
+
+    // Write the event record onto the DEFENDER. Mirror Move on that Pokemon's
+    // next turn reads exactly this and nothing else.
+    if (def && stBefore) {
+      const gained = ['Asleep', 'Confused', 'Paralyzed', 'Poisoned']
+        .filter(n => def.status[n.toLowerCase()] && !stBefore[n.toLowerCase()]);
+      def.lastAttackResult = {
+        turn: s.turn, by: atk.uid, label: `${card.name}'s ${attack.name}`,
+        damage: res.dealt, statuses: gained,
+      };
+    }
+    return { ok: true };
+  }
+
+  // Which of the defender's attacks Metronome may copy. A Metronome copying a
+  // Metronome has no sensible resolution, so it is excluded — logged as a
+  // deliberate call in RULINGS.md rather than left to recurse.
+  metronomeChoices(pi) {
+    const def = this.state.players[1 - pi].active;
+    if (!def) return [];
+    const dc = topCard(this.db, def);
+    const out = [];
+    (dc.attacks || []).forEach((x, i) => {
+      const ds = (this.effects[dc.id] && this.effects[dc.id].a && this.effects[dc.id].a[i]) || [];
+      if (ds.some(v => v.v === 'METRONOME')) return;
+      out.push(i);
+    });
+    return out;
+  }
+
+  // Some attacks need a parameter chosen before they can be used, the same way
+  // interactive Powers do. One entry per legal choice; [null] means "no choice
+  // to make"; an EMPTY array means the attack is unusable right now.
+  attackVariants(pi, idx) {
+    const p = this.state.players[pi];
+    if (!p.active) return [];
+    const c = topCard(this.db, p.active);
+    const script = (this.effects[c.id] && this.effects[c.id].a && this.effects[c.id].a[idx]) || [];
+    const def = this.state.players[1 - pi].active;
+    const types = this.energyTypes().filter(t => t !== 'C');   // "other than Colorless"
+
+    if (script.some(v => v.v === 'METRONOME')) {
+      if (!def) return [];
+      const dc = topCard(this.db, def);
+      return this.metronomeChoices(pi).map(i => ({
+        opts: { copyIdx: i }, label: `Metronome: copy ${dc.attacks[i].name}`,
+      }));
+    }
+    if (script.some(v => v.v === 'CONVERT_DEF_WEAKNESS')) {
+      if (!def || !this.weaknessOf(def)) return [];            // "if it HAS a Weakness"
+      return types.map(t => ({ opts: { type: t }, label: `Conversion 1: Weakness to ${t}` }));
+    }
+    if (script.some(v => v.v === 'CONVERT_SELF_RESISTANCE')) {
+      return types.map(t => ({ opts: { type: t }, label: `Conversion 2: Resistance to ${t}` }));
+    }
+    return [null];
+  }
+
+  // Weakness and Resistance are normally the card's, but Porygon's Conversion
+  // rewrites them per slot, so every read goes through these.
+  weaknessOf(slot) {
+    return slot.wkOverride !== undefined ? slot.wkOverride : topCard(this.db, slot).wkType;
+  }
+  resistanceOf(slot) {
+    return slot.rsOverride !== undefined ? slot.rsOverride : topCard(this.db, slot).rsType;
   }
 
   finishAttack() {
     this.checkKOs();
-    if (this.state.phase === 'over') return { ok: true };
+    const s = this.state;
+    if (s.phase === 'over') return { ok: true };
+    // A Whirlwind switch is moot if the damage Knocked that Pokemon Out — the
+    // player is promoting a replacement instead, which is the same decision.
+    if (s.pendingSwitch !== null && !s.players[s.pendingSwitch].active) s.pendingSwitch = null;
+    if (s.pendingSwitch !== null && !s.players[s.pendingSwitch].bench.length) s.pendingSwitch = null;
     return this.endTurn();
   }
 
@@ -3843,11 +4128,13 @@ class Engine {
     const A = topCard(this.db, atkSlot), D = topCard(this.db, defSlot);
     let dmg = base;
     if (dmg > 0 && !opts.noWR) {
-      if (D.wkType && D.wkType === A.type) {
+      // Read through the per-slot overrides — Porygon's Conversion rewrites these.
+      const wk = this.weaknessOf(defSlot), rs = this.resistanceOf(defSlot);
+      if (wk && wk === A.type) {
         dmg *= this.cfg.weaknessMultiplier;
         steps.push(`Weakness: ${D.name} takes double -> ${dmg}.`);
       }
-      if (D.rsType && D.rsType === A.type) {
+      if (rs && rs === A.type) {
         dmg -= this.cfg.resistanceFlat;
         steps.push(`Resistance: -${this.cfg.resistanceFlat} -> ${Math.max(0, dmg)}.`);
       }
@@ -3987,6 +4274,19 @@ class Engine {
     const s = this.state;
     if (s.phase === 'over') return null;
 
+    // Whirlwind asks the DEFENDER, so this has to be answered even by the simple
+    // bots — otherwise nobody replies and the turn never ends.
+    if (s.pendingSwitch !== null) {
+      if (s.pendingSwitch !== pi) return null;
+      const sw = this.legalActions(pi).filter(a => a.t === 'switchIn');
+      if (!sw.length) return null;
+      if (mode === 'random') return sw[this.pick(sw.length)];
+      const pp = s.players[pi];
+      let bestSw = sw[0], bhSw = -1;
+      sw.forEach(a => { const h = topCard(this.db, pp.bench[a.bench]).hp; if (h > bhSw) { bhSw = h; bestSw = a; } });
+      return bestSw;
+    }
+
     if (s.pendingPromote !== null) {
       if (s.pendingPromote !== pi) return null;
       const acts = this.legalActions(pi).filter(a => a.t === 'promote');
@@ -4053,8 +4353,7 @@ class Engine {
   // to drive games to Prize-based endings so the KO / promote / win paths get
   // exercised, which pure random play almost never does.
   greedyTurn(pi) { return this.aiTurn(pi, 'greedy'); }
-}
-
+}
 
 // ============================================================================
 // UI LAYER — deliberately instrument-like. Job 1 is about reading the rules
@@ -4238,7 +4537,7 @@ const foe = () => S().players[1];
 function myLegal() {
   if (presenting()) return [];
   const s = UI.E.state;
-  return (s.phase === 'main' || s.pendingPromote !== null) ? UI.E.legalActions(0) : [];
+  return (s.phase === 'main' || s.pendingPromote !== null || s.pendingSwitch !== null) ? UI.E.legalActions(0) : [];
 }
 
 function costPips(cost) {
@@ -4410,6 +4709,7 @@ function renderStatusBar() {
   const s = S();
   const bar = el('div', 'statusbar');
   const who = s.phase === 'over' ? 'Game over'
+    : s.pendingSwitch !== null ? (s.pendingSwitch === 0 ? 'Whirlwind — choose a Pokemon to send up' : 'Opponent is choosing')
     : s.pendingPromote !== null ? (s.pendingPromote === 0 ? 'Choose a Pokemon to promote' : 'Opponent is promoting')
     : (s.active === 0 ? 'Your turn' : "Opponent's turn");
   const t = el('div', 'turnflag' + (s.active === 0 && s.phase === 'main' ? ' mine' : ''), who);
@@ -4782,6 +5082,16 @@ function renderActionBar() {
     cancel.onclick = () => { UI.targeting = null; UI.sel = null; render(); };
     bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
     bar.appendChild(cancel);
+    return bar;
+  }
+
+  if (s.pendingSwitch === 0) {
+    bar.appendChild(el('div', 'barmsg', 'Whirlwind! Choose one of your Benched Pokemon to send up.'));
+    me().bench.forEach((b, i) => {
+      const btn = el('button', 'btn', 'Send up ' + topCard(CARD_DB, b).name);
+      btn.onclick = () => dispatch(0, { t: 'switchIn', bench: i });
+      bar.appendChild(btn);
+    });
     return bar;
   }
 
@@ -5410,7 +5720,7 @@ function renderDev() {
   const s = UI.E.state;
   const dump = {
     turn: s.turn, phase: s.phase, activePlayer: s.active,
-    pendingPromote: s.pendingPromote, promoteQueue: s.promoteQueue,
+    pendingPromote: s.pendingPromote, promoteQueue: s.promoteQueue, pendingSwitch: s.pendingSwitch,
     you: playerDump(s.players[0]), opponent: playerDump(s.players[1]),
   };
   const pre = el('pre', 'dump', JSON.stringify(dump, null, 1));
@@ -5472,9 +5782,9 @@ function maybeRunAI() {
   if (presenting()) return;
   const s = S();
   if (s.phase !== 'main') return;
-  const needMe = s.pendingPromote === 0;
-  if (needMe) return;
-  const aiTurn = (s.pendingPromote === 1) || (s.pendingPromote === null && s.active === 1);
+  if (s.pendingSwitch === 0 || s.pendingPromote === 0) return;   // waiting on the player
+  const aiTurn = (s.pendingSwitch === 1) || (s.pendingPromote === 1)
+    || (s.pendingSwitch === null && s.pendingPromote === null && s.active === 1);
   if (!aiTurn) return;
   UI.aiTimer = setTimeout(() => {
     const a = UI.E.aiChoose(1, UI.aiMode);

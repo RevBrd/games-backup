@@ -45,6 +45,8 @@ function board(activeId, benchIds = [], oppActiveId = 'base1-58') {
   [...E.allSlots(0), ...E.allSlots(1)].forEach(s => { s.playedTurn = 0; });
   return E;
 }
+// engine.js keeps topCard module-scoped, so the harness needs its own.
+const top = (E, slot) => E.db[slot.stack[slot.stack.length - 1].id];
 const attach = (E, slot, energyId, n = 1) => {
   for (let i = 0; i < n; i++) slot.energy.push({ id: energyId, uid: E.uid++ });
 };
@@ -461,6 +463,209 @@ T('handing over the last Prize ends the game', () => {
   return true;
 });
 
+// ================== the oddities (Job 4g) ==================
+// Not Pokemon Powers, but the same reason for living here: each needed bespoke
+// engine machinery, and the theme decks contain none of them, so nothing else
+// exercises these paths.
+
+console.log('\nPoliwhirl — Amnesia');
+
+T('disables the chosen attack, and only that one', () => {
+  const E = board('base1-38', [], 'base1-20');              // Poliwhirl vs Electabuzz
+  const poli = E.state.players[0].active, buzz = E.state.players[1].active;
+  attach(E, poli, 'base1-102', 2);
+  const r = E.act(0, { t: 'attack', idx: 0, opts: { attackIdx: 1 } });   // lock Thunderpunch
+  if (!r.ok) throw new Error(r.error);
+  attach(E, buzz, 'base1-100', 2);
+  eq(E.canUseAttack(1, 1).ok, false, 'Thunderpunch locked');
+  eq(E.canUseAttack(1, 0).ok, true, 'Thundershock still usable');
+  return true;
+});
+
+console.log('\nClefairy — Metronome');
+
+T('copies a chosen attack from the Defending Pokemon', () => {
+  const E = board('base1-5', [], 'base1-3');                // Clefairy vs Chansey
+  const clef = E.state.players[0].active, chan = E.state.players[1].active;
+  attach(E, clef, 'base1-101', 3);
+  const acts = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 1);
+  if (acts.length < 2) throw new Error(`expected one action per copyable attack, got ${acts.length}`);
+  const dbl = acts.find(a => /Double-edge/.test(a.label));
+  if (!dbl) throw new Error('Double-edge not offered as a copy target');
+  const r = E.act(0, dbl);
+  if (!r.ok) throw new Error(r.error);
+  eq(chan.dmg, 80, 'Chansey took Double-edge');
+  return true;
+});
+
+T('the recoil lands on Clefairy, not on the card it was copied from', () => {
+  const E = board('base1-5', ['base1-58'], 'base1-3');
+  const clef = E.state.players[0].active;
+  attach(E, clef, 'base1-101', 3);
+  const dbl = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 1)
+    .find(a => /Double-edge/.test(a.label));
+  E.act(0, dbl);
+  // Clefairy has 40 HP and Double-edge self-inflicts 80, so it dies — which is
+  // the point: "does damage to itself" means the Pokemon USING the attack.
+  eq(E.state.players[0].discard.some(c => c.id === 'base1-5'), true, 'Clefairy took its own recoil');
+  return true;
+});
+
+T('does not pay the copied attack\'s costs', () => {
+  const E = board('base1-5', [], 'base1-12');              // Ninetales: Fire Blast discards Fire
+  const clef = E.state.players[0].active;
+  attach(E, clef, 'base1-101', 3);
+  const before = clef.energy.length;
+  const fb = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 1)
+    .find(a => /Fire Blast/.test(a.label));
+  if (!fb) throw new Error('Fire Blast not offered');
+  E.act(0, fb);
+  eq(clef.energy.length, before, 'Clefairy discarded nothing');
+  return true;
+});
+
+T('cannot copy another Metronome', () => {
+  const E = board('base1-5', [], 'base1-5');               // Clefairy mirror
+  attach(E, E.state.players[0].active, 'base1-101', 3);
+  const opts = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 1);
+  eq(opts.length, 1, 'only Sing should be copyable');
+  // The label reads "Metronome: copy X", so match the copied name, not the prefix.
+  if (/copy Metronome/.test(opts[0].label)) throw new Error('offered Metronome as a copy target');
+  return true;
+});
+
+console.log('\nPidgeotto — Mirror Move');
+
+T('returns the damage that was dealt to it last turn', () => {
+  const E = board('base1-22', [], 'base1-20');            // Pidgeotto vs Electabuzz
+  const pidg = E.state.players[0].active, buzz = E.state.players[1].active;
+  attach(E, buzz, 'base1-100', 2);
+  E.state.active = 1;
+  E.act(1, { t: 'attack', idx: 0 });                       // Thundershock, 10
+  const dealt = pidg.dmg;
+  if (dealt <= 0) throw new Error('setup: Pidgeotto took no damage');
+  attach(E, pidg, 'base1-99', 3);
+  E.state.active = 0; E.state.pendingPromote = null;
+  E.act(0, { t: 'attack', idx: 1 });                        // Mirror Move
+  eq(buzz.dmg, dealt, `mirrored ${dealt} back`);
+  return true;
+});
+
+T('does nothing if it was not attacked last turn', () => {
+  const E = board('base1-22', [], 'base1-20');
+  const pidg = E.state.players[0].active, buzz = E.state.players[1].active;
+  attach(E, pidg, 'base1-99', 3);
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(buzz.dmg, 0, 'no damage dealt');
+  if (!E.state.log.some(l => /not attacked last turn/.test(l.text || ''))) throw new Error('no explanation logged');
+  return true;
+});
+
+T('mirrors the Special Condition too, not just the damage', () => {
+  const E = board('base1-22', [], 'base1-53');             // Magnemite: Thunder Wave paralyses
+  const pidg = E.state.players[0].active, mag = E.state.players[1].active;
+  attach(E, mag, 'base1-100', 1);
+  E.state.active = 1;
+  E.dev.forceFlip = 'H';                                   // make the Paralyze land
+  E.act(1, { t: 'attack', idx: 0 });
+  E.dev.forceFlip = null;
+  if (!pidg.status.paralyzed) throw new Error('setup: Pidgeotto was not Paralyzed');
+  pidg.status.paralyzed = false;                            // clear so it may attack
+  attach(E, pidg, 'base1-99', 3);
+  E.state.active = 0; E.state.pendingPromote = null;
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(mag.status.paralyzed, true, 'Paralysis mirrored back');
+  return true;
+});
+
+console.log('\nPidgey / Pidgeotto — Whirlwind');
+
+T('damage lands first, then the DEFENDER owes a choice', () => {
+  const E = board('base1-57', [], 'base1-20');             // Pidgey vs Electabuzz
+  const opp = E.state.players[1];
+  opp.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ }), E.mkSlot({ id: 'base1-3', uid: E.uid++ })];
+  const buzz = opp.active;
+  attach(E, E.state.players[0].active, 'base1-99', 2);
+  E.act(0, { t: 'attack', idx: 0 });                        // Whirlwind, 10
+  eq(buzz.dmg, 10, 'damage applied before the switch');
+  eq(E.state.pendingSwitch, 1, 'the defending player owes the choice');
+  eq(E.state.active, 0, 'and the turn has not changed hands yet');
+  return true;
+});
+
+T('only the defender may act, and the turn resumes once they have', () => {
+  const E = board('base1-57', [], 'base1-20');
+  const opp = E.state.players[1];
+  opp.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  attach(E, E.state.players[0].active, 'base1-99', 2);
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(E.legalActions(0).length, 0, 'attacker has nothing to do');
+  const mine = E.legalActions(1);
+  eq(mine.length > 0 && mine.every(a => a.t === 'switchIn'), true, 'defender may only switch in');
+  E.act(1, mine[0]);
+  eq(E.state.pendingSwitch, null, 'choice resolved');
+  eq(E.state.active, 1, 'turn passed to the defender');
+  eq(top(E, opp.active).name, 'Pikachu', 'the chosen Pokemon came up');
+  return true;
+});
+
+T('does nothing when the defender has an empty Bench', () => {
+  const E = board('base1-57', [], 'base1-20');
+  attach(E, E.state.players[0].active, 'base1-99', 2);
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(E.state.pendingSwitch, null, 'no choice owed');
+  eq(E.state.active, 1, 'turn ended normally');
+  return true;
+});
+
+T('is skipped when the damage Knocked the Defending Pokemon Out', () => {
+  const E = board('base1-57', [], 'base1-43');             // Abra, 30 HP
+  const opp = E.state.players[1];
+  opp.active.dmg = 20;                                      // 10 more kills it
+  opp.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  attach(E, E.state.players[0].active, 'base1-99', 2);
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(E.state.pendingSwitch, null, 'no switch owed — they are promoting instead');
+  eq(E.state.pendingPromote, 1, 'promotion owed');
+  return true;
+});
+
+console.log('\nPorygon — Conversion');
+
+T('Conversion 1 rewrites the defender\'s Weakness, and it bites', () => {
+  const E = board('base1-39', [], 'base1-58');             // Pikachu, weak to Fighting
+  const pory = E.state.players[0].active, pika = E.state.players[1].active;
+  attach(E, pory, 'base1-99', 2);
+  const opt = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 0)
+    .find(a => /Weakness to C?G/.test(a.label) || /Weakness to G/.test(a.label));
+  if (!opt) throw new Error('no Conversion 1 option offered');
+  E.act(0, opt);
+  eq(E.weaknessOf(pika), 'G', 'Weakness rewritten to Grass');
+  // and the damage maths now reads the override
+  const r = E.computeDamage(E.mkSlot({ id: 'base1-44', uid: E.uid++ }), pika, 20);
+  eq(r.dmg, 40, 'a Grass attacker now doubles');
+  return true;
+});
+
+T('Conversion 1 is not offered against a Pokemon with no Weakness', () => {
+  const E = board('base1-39', [], 'base1-50');             // Gastly has no Weakness
+  attach(E, E.state.players[0].active, 'base1-99', 2);
+  eq(E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 0).length, 0, 'Conversion 1 offered');
+  return true;
+});
+
+T('Conversion 2 rewrites Porygon\'s own Resistance', () => {
+  const E = board('base1-39', [], 'base1-58');
+  const pory = E.state.players[0].active;
+  attach(E, pory, 'base1-99', 2);
+  const opt = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 1)
+    .find(a => /Resistance to L/.test(a.label));
+  if (!opt) throw new Error('no Conversion 2 option offered');
+  E.act(0, opt);
+  eq(E.resistanceOf(pory), 'L', 'Resistance rewritten to Lightning');
+  return true;
+});
+
 // ------------------------------------------------------------------- AI usage
 console.log('\nAI');
 
@@ -598,6 +803,46 @@ T('the AI leaves a healthy Electrode alone', () => {
   E.aiTurn(0, 'expert');
   if (E.state.log.some(l => (l.text || '').includes('Buzzap')))
     throw new Error('AI sacrificed an undamaged Electrode for no reason');
+  return true;
+});
+
+// The oddities have the same trap the Powers did: an attack that resolves to
+// something OTHER than its printed line forecasts as zero damage forever, so the
+// card works perfectly and the bot never once chooses it.
+T('the AI values a Metronome copy by what it would actually do', () => {
+  const E = board('base1-5', [], 'base1-3');               // Clefairy vs Chansey
+  attach(E, E.state.players[0].active, 'base1-101', 3);
+  const ai = new (require('../src/ai.js').AI)(E, { mode: 'expert' });
+  const opts = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 1);
+  const scores = opts.map(a => ai.scoreAction(0, a));
+  if (scores.every(x => x === scores[0])) throw new Error('every copy option scored the same — forecast is blind');
+  // Double-edge self-inflicts 80 onto a 40 HP Clefairy; it must be scored as suicide.
+  const dbl = opts.findIndex(a => /copy Double-edge/.test(a.label));
+  eq(scores[dbl] < 0, true, `Double-edge should score negative, got ${scores[dbl]}`);
+  return true;
+});
+
+T('the AI values Mirror Move by the hit it is returning', () => {
+  const E = board('base1-22', [], 'base1-20');
+  const pidg = E.state.players[0].active;
+  attach(E, pidg, 'base1-99', 3);
+  const ai = new (require('../src/ai.js').AI)(E, { mode: 'expert' });
+  const mm = { t: 'attack', idx: 1 };
+  const cold = ai.scoreAction(0, mm);
+  pidg.lastAttackResult = { turn: E.state.turn, by: -1, damage: 60, statuses: [], label: 'a big hit' };
+  const warm = ai.scoreAction(0, mm);
+  if (!(warm > cold)) throw new Error(`Mirror Move scored ${warm} with a 60 damage record vs ${cold} with none`);
+  return true;
+});
+
+T('the AI picks a Conversion type it can actually exploit', () => {
+  const E = board('base1-39', ['base1-44'], 'base1-58');   // Grass on the Bench, Lightning opposite
+  attach(E, E.state.players[0].active, 'base1-99', 2);
+  const ai = new (require('../src/ai.js').AI)(E, { mode: 'expert' });
+  const best = (idx) => E.legalActions(0).filter(a => a.t === 'attack' && a.idx === idx)
+    .sort((x, y) => ai.scoreAction(0, y) - ai.scoreAction(0, x))[0];
+  if (!/Weakness to G/.test(best(0).label)) throw new Error(`chose ${best(0).label} over Grass`);
+  if (!/Resistance to L/.test(best(1).label)) throw new Error(`chose ${best(1).label} over Lightning`);
   return true;
 });
 

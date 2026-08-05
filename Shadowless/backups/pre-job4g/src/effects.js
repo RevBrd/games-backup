@@ -374,29 +374,6 @@ const EFFECTS = {
     ],
   },
 
-  // ================= PASS 4g — the oddities =================
-  // Poliwhirl needed nothing new at all: ATTACK_LOCK was already built and
-  // already enforced in canUseAttack, it had simply never been wired to a card.
-  'base1-38': { a: [                                    // Poliwhirl
-    [{ v: 'ATTACK_LOCK' }],                             //   Amnesia
-    [{ v: 'DMG_PER_HEAD', coins: 2, per: 30 }],         //   Doubleslap
-  ]},
-  'base1-5': { a: [                                     // Clefairy
-    [{ v: 'STATUS_ON_FLIP', s: 'Asleep' }],             //   Sing
-    [{ v: 'METRONOME' }],                               //   Metronome
-  ]},
-  'base1-39': { a: [                                    // Porygon
-    [{ v: 'CONVERT_DEF_WEAKNESS' }],                    //   Conversion 1
-    [{ v: 'CONVERT_SELF_RESISTANCE' }],                 //   Conversion 2
-  ]},
-  'base1-57': { a: [                                    // Pidgey
-    [{ v: 'WHIRLWIND' }],                               //   Whirlwind
-  ]},
-  'base1-22': { a: [                                    // Pidgeotto
-    [{ v: 'WHIRLWIND' }],                               //   Whirlwind
-    [{ v: 'MIRROR_MOVE' }],                             //   Mirror Move
-  ]},
-
   // ================= PASS 4f — Buzzap =================
   'base1-21': {                                         // Electrode
     p: { kind: 'BUZZAP', name: 'Buzzap' },

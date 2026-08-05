@@ -70,17 +70,50 @@ asserting it. Rain Dance does restrict its destination, to Water Pokémon.
 
 ---
 
+## Mirror Move replays a recorded result, it does not recompute
+
+**Settled 5 Aug 2026.** "Do the final result of that attack on Pidgeotto to the Defending Pokémon."
+*Final result* is read literally: the damage that actually landed, already past Weakness and
+Resistance, plus any Special Conditions that actually stuck. It is re-applied flat to the new
+target, with no Weakness or Resistance recalculated against them.
+
+The alternative — re-running the original attack against the new defender — would give a different
+number whenever the two defenders have different Weakness, and "final result" reads like a fixed
+outcome rather than a fresh roll.
+
+Mechanically this is why the engine writes `lastAttackResult` onto the defender when an attack
+resolves: `{turn, by, label, damage, statuses}`. Trevor asked whether Mirror Move could read the
+game log instead, which is the right instinct — the information does already exist — but the log
+holds *sentences*, so the numbers would have to be regex'd back out of prose, and a reworded log
+line would silently break a card. The record is the same idea done as data.
+
+---
+
+## Metronome copies a CHOSEN attack, and cannot copy another Metronome
+
+**Settled 5 Aug 2026.** The card says "Choose 1 of the Defending Pokémon's attacks" — it is a
+player choice, not random. (The video-game move of the same name is random; the card is not.)
+
+Two calls beyond the printed text:
+
+- **Metronome may not copy a Metronome.** Nothing in the era's text says what that would resolve to,
+  and it invites unbounded recursion. Those options are simply not offered.
+- **"Anything else required in order to use that attack" is read as the cost verbs only.** So a
+  copied Fire Blast does not discard Clefairy's Energy, and a copied Leek Slap does not inherit
+  Farfetch'd's once-per-play restriction. Damage, recoil and Special Conditions all still happen.
+
+The card's own footnote — *"No matter what type the Defending Pokémon is, Clefairy's type is still
+Colorless"* — needed no special handling. The copy runs through `runAttack` with Clefairy still as
+the attacking slot, and Weakness is computed from the attacker, so it falls out for free. The same
+fact makes "does damage to itself" land on Clefairy.
+
+---
+
 ## Pending
 
 Calls we already know are coming, so nobody is surprised by them.
-
-- **Metronome (Clefairy, base1-5)** — copies the defender's attack, minus costs and requirements.
-  The engine has to run an arbitrary attack script with Clefairy as the attacker, and needs a guard
-  against Metronome copying a Metronome. GBC does implement Clefairy, so ask Trevor first.
-- **Mirror Move (Pidgeotto, base1-22)** — "the final result of that attack" means the *resolved*
-  outcome, after Weakness and Resistance and including statuses. `lastHitBy` currently records only
-  a uid and a turn number, so this needs new recorded state.
-- **Strikes Back (Machamp, base1-8)** — does it trigger on damage to a *benched* Machamp, e.g. from
-  Selfdestruct? The text says "whenever your opponent's attack damages Machamp", which reads yes.
+- **Clefairy Doll (base1-70)** — a Trainer that plays as a Basic Pokémon, and the last Base Set card.
+  It is not a Pokémon for Knock Out purposes, cannot retreat or be affected by Special Conditions,
+  and may be discarded at will. Mysterious Fossil needs the same machinery.
 - **Baby Pokémon (Neo era, 10 cards)** — the Baby Rule is a coin flip that can negate an attack
   entirely. Not a Base Set problem, but it is a whole rule, not a card effect.

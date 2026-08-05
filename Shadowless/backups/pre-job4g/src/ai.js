@@ -72,37 +72,11 @@ class AI {
   // ---------------------------------------------------------------- forecast
   // Enumerate coin-flip outcomes for an attack into a probability distribution.
   // Returns raw (pre-Weakness) damage outcomes plus effect probabilities.
-  rawOutcomes(atkSlot, defSlot, idx, vopts) {
+  rawOutcomes(atkSlot, defSlot, idx) {
     const c = this.top(atkSlot);
-    const empty = { outcomes: [{ p: 1, dmg: 0 }], statuses: {}, selfDmg: 0, energyCost: 0, flags: {} };
-    let atk = (c.attacks || [])[idx];
+    const atk = (c.attacks || [])[idx];
     if (!atk) return { outcomes: [], statuses: {}, selfDmg: 0, energyCost: 0, flags: {} };
-    let script = this.script(atkSlot, idx);
-
-    // Metronome and Mirror Move resolve to something OTHER than their own
-    // printed line, which is blank on both. Forecasting them literally scores
-    // them at zero forever — the card works and the bot never picks it, which
-    // is exactly how Energy Burn hid a bug earlier in this job.
-    if (script.some(v => v.v === 'METRONOME')) {
-      const ci = vopts && vopts.copyIdx;
-      if (ci === undefined || !defSlot) return empty;
-      const dc = this.top(defSlot);
-      const copied = (dc.attacks || [])[ci];
-      if (!copied) return empty;
-      atk = copied;
-      // Copied attacks skip their costs, so the cost verbs must not be forecast.
-      script = ((this.eff[dc.id] && this.eff[dc.id].a && this.eff[dc.id].a[ci]) || [])
-        .filter(v => v.v.indexOf('COST_') !== 0);
-    }
-    if (script.some(v => v.v === 'MIRROR_MOVE')) {
-      const rec = atkSlot.lastAttackResult;
-      if (!rec || rec.turn < this.E.state.turn - 1) return empty;
-      const st = {};
-      for (const x of (rec.statuses || [])) st[x] = 1;
-      // A recorded final result is already past Weakness and Resistance.
-      return { outcomes: [{ p: 1, dmg: rec.damage || 0 }], statuses: st,
-               selfDmg: 0, energyCost: 0, flags: { flat: true } };
-    }
+    const script = this.script(atkSlot, idx);
 
     let base = aiParseDamage(atk.dmg);
     let outcomes = [{ p: 1, dmg: base }];
@@ -163,16 +137,16 @@ class AI {
   }
 
   // Run each raw outcome through the engine's own damage maths.
-  forecast(pi, idx, vopts) {
+  forecast(pi, idx) {
     const E = this.E;
     const me = E.state.players[pi], you = E.state.players[1 - pi];
     const atkSlot = me.active, defSlot = you.active;
     if (!atkSlot || !defSlot) return null;
-    const raw = this.rawOutcomes(atkSlot, defSlot, idx, vopts);
+    const raw = this.rawOutcomes(atkSlot, defSlot, idx);
     const hpLeft = this.remainingHP(defSlot);
     let expDmg = 0, pLethal = 0;
     for (const o of raw.outcomes) {
-      const r = E.computeDamage(atkSlot, defSlot, o.dmg, { noWR: !!raw.flags.flat });
+      const r = E.computeDamage(atkSlot, defSlot, o.dmg);
       expDmg += o.p * r.dmg;
       if (r.dmg >= hpLeft) pLethal += o.p;
     }
@@ -181,9 +155,9 @@ class AI {
   }
 
   // ------------------------------------------------------------ attack score
-  scoreAttack(pi, idx, vopts) {
+  scoreAttack(pi, idx) {
     const W = this.W, E = this.E;
-    const f = this.forecast(pi, idx, vopts);
+    const f = this.forecast(pi, idx);
     if (!f) return -Infinity;
     const me = E.state.players[pi], you = E.state.players[1 - pi];
     const atkSlot = me.active;
@@ -490,24 +464,7 @@ class AI {
     const me = E.state.players[pi], you = E.state.players[1 - pi];
 
     switch (a.t) {
-      case 'attack': {
-        let sc = this.scoreAttack(pi, a.idx, a.opts);
-        // Porygon deals no damage with either Conversion, so the whole value is
-        // in picking a USEFUL type. Without this the bot would choose at random
-        // among options that all score the same nothing.
-        if (a.opts && a.opts.type && me.active) {
-          const scr = this.script(me.active, a.idx);
-          if (scr.some(v => v.v === 'CONVERT_DEF_WEAKNESS')) {
-            const mine = new Set(E.allSlots(pi).map(x => this.top(x).type));
-            if (mine.has(a.opts.type)) sc += 12;
-          }
-          if (scr.some(v => v.v === 'CONVERT_SELF_RESISTANCE')) {
-            const theirs = E.state.players[1 - pi].active;
-            if (theirs && this.top(theirs).type === a.opts.type) sc += 10;
-          }
-        }
-        return sc;
-      }
+      case 'attack': return this.scoreAttack(pi, a.idx);
 
       case 'power': return this.scorePower(pi, a);
 
@@ -569,20 +526,6 @@ class AI {
         if (!b) return -Infinity;
         const pot = this.potential(pi, b, null);
         return this.remainingHP(b) * 0.35 + (pot.short === 0 ? 25 : 0) + pot.best * 0.2;
-      }
-
-      // Being Whirlwinded up is not the same as choosing to promote — the timing
-      // is the opponent's — but the preference is: whatever survives longest and
-      // can actually swing next turn. Scored on the same basis as a promotion.
-      //
-      // It MUST return a real number rather than falling through to the default:
-      // pickBest yields null when every option scores -Infinity, and a null there
-      // means nobody answers the prompt and the game stalls with the turn frozen.
-      case 'switchIn': {
-        const b = me.bench[a.bench];
-        if (!b) return -Infinity;
-        const pot = this.potential(pi, b, null);
-        return this.remainingHP(b) * 0.35 + (pot.short === 0 ? 25 : 0) + Math.max(0, pot.best) * 0.2;
       }
 
       case 'playTrainer': return this.scoreTrainer(pi, a);
@@ -934,14 +877,6 @@ class AI {
     const E = this.E, s = E.state;
     if (s.phase === 'over') return null;
 
-    // Whirlwind dragged one of ours up. Send the one we least mind exposing:
-    // biggest HP pool, same instinct as choosing a replacement after a KO.
-    if (s.pendingSwitch !== null) {
-      if (s.pendingSwitch !== pi) return null;
-      const acts = E.legalActions(pi).filter(a => a.t === 'switchIn');
-      if (!acts.length) return null;
-      return this.pickBest(pi, acts, true);
-    }
     if (s.pendingPromote !== null) {
       if (s.pendingPromote !== pi) return null;
       const acts = E.legalActions(pi).filter(a => a.t === 'promote');

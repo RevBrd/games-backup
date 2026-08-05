@@ -180,7 +180,7 @@ const foe = () => S().players[1];
 function myLegal() {
   if (presenting()) return [];
   const s = UI.E.state;
-  return (s.phase === 'main' || s.pendingPromote !== null || s.pendingSwitch !== null) ? UI.E.legalActions(0) : [];
+  return (s.phase === 'main' || s.pendingPromote !== null) ? UI.E.legalActions(0) : [];
 }
 
 function costPips(cost) {
@@ -352,7 +352,6 @@ function renderStatusBar() {
   const s = S();
   const bar = el('div', 'statusbar');
   const who = s.phase === 'over' ? 'Game over'
-    : s.pendingSwitch !== null ? (s.pendingSwitch === 0 ? 'Whirlwind — choose a Pokemon to send up' : 'Opponent is choosing')
     : s.pendingPromote !== null ? (s.pendingPromote === 0 ? 'Choose a Pokemon to promote' : 'Opponent is promoting')
     : (s.active === 0 ? 'Your turn' : "Opponent's turn");
   const t = el('div', 'turnflag' + (s.active === 0 && s.phase === 'main' ? ' mine' : ''), who);
@@ -725,16 +724,6 @@ function renderActionBar() {
     cancel.onclick = () => { UI.targeting = null; UI.sel = null; render(); };
     bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
     bar.appendChild(cancel);
-    return bar;
-  }
-
-  if (s.pendingSwitch === 0) {
-    bar.appendChild(el('div', 'barmsg', 'Whirlwind! Choose one of your Benched Pokemon to send up.'));
-    me().bench.forEach((b, i) => {
-      const btn = el('button', 'btn', 'Send up ' + topCard(CARD_DB, b).name);
-      btn.onclick = () => dispatch(0, { t: 'switchIn', bench: i });
-      bar.appendChild(btn);
-    });
     return bar;
   }
 
@@ -1363,7 +1352,7 @@ function renderDev() {
   const s = UI.E.state;
   const dump = {
     turn: s.turn, phase: s.phase, activePlayer: s.active,
-    pendingPromote: s.pendingPromote, promoteQueue: s.promoteQueue, pendingSwitch: s.pendingSwitch,
+    pendingPromote: s.pendingPromote, promoteQueue: s.promoteQueue,
     you: playerDump(s.players[0]), opponent: playerDump(s.players[1]),
   };
   const pre = el('pre', 'dump', JSON.stringify(dump, null, 1));
@@ -1425,9 +1414,9 @@ function maybeRunAI() {
   if (presenting()) return;
   const s = S();
   if (s.phase !== 'main') return;
-  if (s.pendingSwitch === 0 || s.pendingPromote === 0) return;   // waiting on the player
-  const aiTurn = (s.pendingSwitch === 1) || (s.pendingPromote === 1)
-    || (s.pendingSwitch === null && s.pendingPromote === null && s.active === 1);
+  const needMe = s.pendingPromote === 0;
+  if (needMe) return;
+  const aiTurn = (s.pendingPromote === 1) || (s.pendingPromote === null && s.active === 1);
   if (!aiTurn) return;
   UI.aiTimer = setTimeout(() => {
     const a = UI.E.aiChoose(1, UI.aiMode);
