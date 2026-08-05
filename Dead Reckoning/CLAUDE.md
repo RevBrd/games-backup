@@ -12,8 +12,10 @@ The current `dead-reckoning.html` is a **flight sandbox**, and it is the third s
 has taken:
 
 1. **v1 — the game.** "DRIFT meets *Spacewar!*" — 1v1 arena duel around a central gravity well,
-   full inertia, no damping. Abandoned: the physics resisted tuning and the arena couldn't give two
-   fighters enough room to maneuver. *(See "History gaps" — the v1 file may or may not still exist.)*
+   full inertia, no damping. Abandoned: the physics never converged, so the game was never
+   playtestable enough to judge. **The v1 file no longer exists** — v2 was built by editing v1 in
+   place, before the backup convention. There is no CPU opponent code to recover. See
+   "What actually went wrong in v1" — that section is the only surviving record.
 2. **v2 — the sandbox.** Opponent and well stripped out, everything narrowed to making the *flying*
    feel right. The well has since been re-added behind the `K` key, off by default. **This is the
    file in the folder.** It works and it feels good.
@@ -71,6 +73,34 @@ These are Opus 5's proposals from the 2026-08-05 review and Trevor has not yet r
   arena size, and probably the health model, so it wants deciding early.
 - **Build the CPU before the content.** See "The real risk" below.
 
+## What actually went wrong in v1
+
+The file is gone, so this is the whole record. From Trevor, 2026-08-05:
+
+- **Gravity was too strong and too weak at the same time**, in different parts of the arena, and no
+  single value fixed both.
+- **The game ran roughly 4× too fast** to read or react to.
+- **Control bugs** — genuine implementation defects, not physics.
+- Net effect: *the controls and feel were never testable at all.* That is why it was stripped to a
+  sandbox. v1 wasn't rejected on its merits; it was never legible enough to have merits.
+
+**The gravity complaint was arithmetic, not tuning, and it has been fixed** (2026-08-05). v1 used
+`accel = G / r²`. Across this arena `r` runs ~60 to ~610, so `r²` spans 3.6k to 372k and the corner
+pull is ~1% of the core pull *for every value of G*. Any increase that made the outfield matter
+turned the core into a shredder. Both complaints were true simultaneously and always would be —
+inverse-square is right for real gravity and wrong for a 1000-unit box.
+
+The `anchored` model replaces it: you set `aCore` and `aEdge` as two independent numbers and shape
+the curve between them with `shape`. Core:corner spread is now a dial (currently 6.5×) instead of
+an emergent 70×. **`newton` is preserved behind the `J` key** so the difference can be felt rather
+than taken on faith — do not delete it, it's evidence.
+
+The speed complaint has a dial now too (`timeScale`), but **note it is not the only lever and may
+not be the right one.** `timeScale` slows rotation along with everything else, which will fight the
+snappy RCS authority the sandbox was tuned for. Pulling `mainThrust` and `muzzle` down instead
+slows how fast you cross the arena while leaving the ship's handling crisp. Those are different
+feels; both are on the bench; this is unresolved and wants playtesting.
+
 ## The real risk, and it is not the writing
 
 An opponent flying forward-only Newtonian with no damping must plan a flip-and-burn, lead shots
@@ -84,10 +114,12 @@ pass and take a shot, behind a dev gate, before a single line of Western copy is
 doesn't land we find out cheap, and we find out before there's a game's worth of content resting
 on it.
 
-Corollary: the gravity well is being walked back into the design after being part of what made v1
-untunable. Do that deliberately. The current config is at least honest about the danger —
-`well.maxA` (170) sits under `mainThrust` (220) specifically so the engine can always climb out of
-the core. Keep that inequality or know why you broke it.
+Corollary: the well is back in the design after being part of what killed v1. The model is fixed
+(above) but **keep `well.aCore` under `mainThrust`** — that inequality is what guarantees the engine
+can always climb out of the core. The field overlay enforces it visually: the red `1.00×ENG` ring
+only appears when you have broken it, and its appearance means there is now a region of the arena
+where the player is falling no matter what they do. That may occasionally be a deliberate design
+choice. It must never be an accident.
 
 ## The physics, and what's load-bearing
 
@@ -117,21 +149,48 @@ commented. Tune by feel with telemetry live; that's what it's for.
 `engineHeat` 0.45 (~5s of continuous burn to overheat) · `vent` 0.26 · `ventRelease` 0.55
 (hysteresis — you must cool to here before the engine and gun come back).
 
-## Known issues in the sandbox file
+## The tuning bench
 
-Neither has been fixed, both are real:
+Backquote (`` ` ``) opens a live panel with all 14 feel-critical dials. **`EXPORT CONFIG` is the
+handoff, not a convenience** — Trevor tunes by feel and pastes the JSON back, and those numbers get
+baked into `CONFIG`. Don't ask him for numbers in prose; ask him to export.
 
-- **Holding SPACE fires exactly one shot.** `keydown` bails on key repeat (`if(keys[k]) return;`)
-  before reaching `fire()`, so `fireCd` only ever governs how fast you can mash. For a game about
-  managing recoil drift across a burst this is almost certainly wrong, and fixing it will change
-  how `recoil` feels — retune after, don't retune before.
+Also on the bench: `K` well on/off · `J` swap well model · `T` the prediction line.
+
+**The prediction line is the game's name made literal** — it forward-integrates the ship's
+*ballistic* path (gravity only, no thrust) and draws where you end up if you do nothing. It reads
+the same `wellAccel()` the physics does, so what you see is what you fly; the selftest asserts the
+predicted endpoint lands within 12 units of the simulated one over 4 seconds. It's dev-gated for
+now. Whether it belongs in the Practice Range, in duels, or as an earned ability is **undecided**
+and worth deciding on purpose — it's a large accessibility lever on the hardest thing in the game.
+
+## Validation
+
+`node tools/selftest.js` — 27 assertions, no dependencies. It slices the `<script>` out of the HTML
+and runs it under DOM stubs, then checks the well profile (anchor endpoints, monotonicity,
+escapability, the newton-vs-anchored spread), the prediction line against the live simulation,
+`timeScale` proportionality, held fire against `fireCd`, and that every dev dial resolves to a real
+`CONFIG` path inside its own slider range. **Run it after touching physics.** It caught a real bug
+already: iso-rings were drawn for thresholds the field never reaches, which falsely advertised an
+inescapable core.
+
+It also reports the Google Fonts refs as a standing NOTE rather than a failure — see below.
+
+## Known issues
+
 - **Google Fonts is a runtime network dependency.** Two `<link>` tags to `fonts.googleapis.com`.
   The file still runs offline, it just silently drops to fallback stacks. Against the
   single-self-contained-file target; worth inlining or dropping before this is called finished.
+  The selftest prints these every run so they don't get forgotten.
+- Minor: `bullets.filter(...)` runs twice per `step()`, harmless. The `resize()` handler is bound
+  to `window.resize` only — fine for the current fixed-aspect stage, but it won't survive a
+  DRIFT-style responsive rework unchanged.
 
-Minor: `bullets.filter(...)` runs twice per `step()`, harmless. The `resize()` handler is bound to
-`window.resize` only, which is fine for the current fixed-aspect stage but won't survive a
-DRIFT-style responsive rework unchanged.
+*Fixed 2026-08-05: holding SPACE fired exactly one shot, because `keydown` bails on key repeat
+before reaching `fire()`. Sustained fire is now driven from the sim clock in `step()` and gated by
+`fireCd`; `CONFIG.autoFire` restores the old behaviour if it turns out to have been load-bearing.
+**This changes how `recoil` feels** — a held burst now accumulates drift the way the comment on
+`recoil` always claimed it did. Retune after playtesting, not before.*
 
 ## Distance from DRIFT
 
@@ -159,23 +218,28 @@ Effectively all of v3. In the order I'd take it:
 5. Audio. Six-shooters and ricochets. Explicitly wanted in the concept, wholly unbuilt.
 6. Persistence — records, which outlaws you've put down. Nothing exists.
 
-## History gaps
+## Open questions
 
-Unanswered as of 2026-08-05; fill these in when Trevor answers rather than guessing:
+- **What does a good engagement look like?** Two ships circling and trading fire continuously, or
+  two ships passing at speed with one firing window per pass? This sets arena size, the health
+  model, and how clever the CPU has to be. Asked 2026-08-05, not yet answered. **Don't decide it
+  unilaterally** — it's a feel question and Trevor is the one who has flown this.
+- **`timeScale` vs. lower thrust** as the answer to "too fast." See the v1 section.
+- **Where the prediction line lives** in the finished game, if anywhere.
 
-- **Which model built the v1 game and the v2 sandbox?** The collection asks that assisting models
-  be credited here. Currently unknown.
-- **Does the v1 file still exist anywhere?** It contained a working CPU opponent. Even a bad one is
-  worth reading before writing a new one from scratch.
-- **What tuning was already tried and rejected in v1?** "The physics resisted tuning" is all the
-  concept doc says. Knowing which specific dials were pushed and how it failed is exactly the
-  context a fresh instance cannot recover from code, and exactly what stops us repeating it.
+## Credits
 
-**Credits:** Opus 5 (2026-08-05: this document, the v3 design review, the catalog entry).
-Earlier authorship unknown — see above.
+- **Opus 4.8** — v1 (the original duel) and v2 (the sandbox). *The same instance built both*: v2
+  was v1, edited in place, which is why v1 no longer exists. Every number in `CONFIG` that predates
+  2026-08-05 is 4.8's, arrived at by feel.
+- **Opus 5** — 2026-08-05: this document, the v3 design review, the catalog entry, the `anchored`
+  well model, the field overlay, the prediction line, `timeScale`, the tuning bench, the held-fire
+  fix, and `tools/selftest.js`.
 
-## Controls (sandbox)
+## Controls
 
-`←` `→` rotate (RCS) · `↑`/`W` main engine, forward only · `Q`/`E` strafe (RCS, weak) ·
-`SPACE` fire · `H` summon asteroid · `R` reset velocity and spin · `G` toggle telemetry ·
-`P` pause · `K` toggle gravity well (off by default).
+**Flight** — `←` `→` rotate (RCS) · `↑`/`W` main engine, forward only · `Q`/`E` strafe (RCS, weak) ·
+`SPACE` fire (hold for sustained) · `R` reset velocity and spin.
+
+**Instruments and dev** — `G` telemetry · `P` pause · `H` summon asteroid · `K` gravity well
+(off by default) · `J` swap well model · `T` prediction line · `` ` `` tuning bench.
