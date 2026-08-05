@@ -3,13 +3,13 @@
 Depth behind the Tooling section of `CLAUDE.md`. Read that first; come here when you are about to
 regenerate cards, widen a set, or wonder why a Python script in `tools/chat-era/` won't run.
 
-The shape is: `data/` → `src/cards.js` → `shadowless.html`. Two generators, two test suites, and a
-`--check` flag on each generator so drift can't go unnoticed.
+The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, two test suites, and
+a `--check` flag on each generator so drift can't go unnoticed.
 
 ## The four commands
 
 ```bash
-node tools/gen_cards.js                  # data/ -> src/cards.js
+node tools/gen_cards.js                  # data/raw/ -> src/cards.js
 node tools/build.js                      # src/  -> shadowless.html
 node tools/selftest.js                   # rules + AI regression
 node tools/smoke.js shadowless.html      # 44 integration tests against the built file
@@ -20,34 +20,45 @@ if they differ. Cheap to run and the fastest way to catch someone having hand-ed
 
 ## gen_cards.js
 
-Reads the CSVs and `data/decks.json`, writes `src/cards.js`. Defaults to Base Set; widen with
+Reads `data/raw/*.json` and `data/decks.json`, writes `src/cards.js`. Defaults to Base Set; widen with
 
 ```bash
 node tools/gen_cards.js --sets base1,base2,base3
 ```
 
-which is how Job 6 begins. Cards come out sorted by set then card number — the Chat-era file was in
-deck-discovery order, which was an artifact of how it was built rather than a choice.
+which is how Job 6 begins. All 14 sets generate cleanly today — 1,251 cards, 189 Trainers, none
+missing text — so nothing downstream is data-blocked. Cards come out sorted by set then card number;
+the Chat-era file was in deck-discovery order, which was an artifact of how it was built.
 
-**Two things it cannot read straight off the CSV**, both handled explicitly rather than guessed:
+Field mapping worth knowing:
 
-- **Basic Energy has a blank `provides`.** The type is implied by the card name, so the generator
-  maps `"<Type> Energy"` → type letter. Covers all nine types including Darkness and Metal.
-- **Every Special Energy has a `provides` of `"any"`**, which means nothing. Double Colorless is
-  special-cased to `CC`; everything else emits an empty `provides` and prints a warning naming the
-  cards. That is seven Neo and Team-Rocket-era cards — Rainbow, Full Heal, Potion, Recycle, Miracle,
-  Darkness, Metal — each of which has its own rules text and will need a hand-authored entry in
-  `effects.js` when its set lands. An empty `provides` keeps the deck validator honest about them
-  in the meantime.
+- **Types are spelled out upstream** (`"Lightning"`), single letters in the engine (`L`). One map
+  covers types, attack costs and retreat costs.
+- **Weakness values use U+00D7** upstream (`"×2"`) and must be normalised to ASCII `"x2"` — every
+  existing effect script and the damage code expect the ASCII form. *Damage* values keep their `×`,
+  because that is what the card face prints and what the UI renders. Getting this backwards is a
+  silent, wide-reaching break.
+- **Basic Energy states no type anywhere** — not in the CSVs, not upstream. It is derived from the
+  card name, `"<Type> Energy"` → letter, covering all nine types.
+- **Special Energy needs a hand-authored effect regardless**, so anything unrecognised gets an empty
+  `provides` and a warning naming the card. Currently eight: Rainbow ×2, Full Heal ×2, Potion ×2,
+  Recycle, Miracle. All eight have full rules text in the corpus, so nothing needs fetching — they
+  just need `effects.js` entries when their sets land. An empty `provides` keeps the deck validator
+  honest about them meanwhile.
+- **`power`** is emitted as data — `{kind, name, text}` — from upstream's `abilities`, filtered to
+  `Pokémon Power` and `Poké-Body`. 6 in Base Set, 182 across the era. That says a Power *exists*;
+  `effects.js` says what it does.
 
-`power` is emitted as data — `{kind, name, text}` — for the 6 Base Set cards that have one, and
-`null` otherwise. That says a Power *exists*; `effects.js` says what it does.
+Upstream also carries `flavorText`, `nationalPokedexNumbers` and card `images` URLs that the
+generator currently discards. The first two are wanted by Job 5's dex; the images are a live
+question for the visual pass.
 
 ## data/decks.json is source, not output
 
 The four theme deck lists came from named sheets in Trevor's `P_TCG_Data.xlsx` and **cannot be
-rebuilt from the CSVs**. They were extracted verbatim into `data/decks.json`, which is now their
-only home. Back it up like source, because it is.
+rebuilt from anything in the repo** — the card corpus has no notion of a theme deck. They were
+extracted verbatim into `data/decks.json`, which is now their only home. Back it up like source,
+because it is.
 
 They are Trevor's authentic Base Set theme decks, not something a model assembled — so their
 lopsided win rates are probably faithful rather than broken. Ask before "fixing" them.
@@ -79,13 +90,15 @@ installed on this machine now, and they still cannot run**, which is worth being
 it looks like it should be a one-line fix:
 
 - `gen_cards.py` reads a clone of the `pokemon-tcg-data` repo from `/tmp/ptcg/*.json` and Trevor's
-  `P_TCG_Data.xlsx` from `/mnt/user-data/uploads/`. Both were Claude Chat sandbox paths. Neither
-  survived the port, and the spreadsheet has not been recovered.
-- It also imports `openpyxl`, which is not installed. If the spreadsheet ever turns up, that is one
-  `pip install` away — but the JSON corpus would still be missing.
+  `P_TCG_Data.xlsx` from `/mnt/user-data/uploads/`. Both were Claude Chat sandbox paths and neither
+  survived the port. The JSON corpus has since been re-downloaded to `data/raw/`, so that half is
+  recovered; the spreadsheet has not been, and only the deck lists depended on it.
+- It also imports `openpyxl`, which is not installed. One `pip install` away if the spreadsheet ever
+  turns up — but `data/decks.json` already holds everything we needed from it.
 
 Keep them. `gen_cards.py` in particular is a clear specification of what the output must look like,
-and it is how we know the deck lists came from named spreadsheet sheets. Don't try to revive them.
+and it is how we know the deck lists came from named spreadsheet sheets. Don't try to revive them —
+`tools/gen_cards.js` reads the same corpus and does more.
 
 ## How the replacements were verified
 
@@ -94,8 +107,10 @@ Neither Node tool was trusted on inspection:
 - **`build.js`** was run against the recovered sources and its output diffed against the artifact as
   it arrived from Chat. Byte-identical, title line aside. That is what established that the recovered
   sources are the real ones and not a stale copy.
-- **`gen_cards.js`** was run with the pre-existing card set and every one of the 90 cards compared
-  field by field against the old `CARD_DB`. All 90 reproduced exactly, and only then was it widened
-  to emit all 102.
+- **`gen_cards.js`** was verified twice. First, against the CSVs, it reproduced all 90 pre-existing
+  cards exactly, field by field, before being widened to 102. Then, when it was migrated to read the
+  upstream corpus instead, the two independent sources were diffed against each other and produced
+  **byte-identical output for all 102 Base Set cards**. That agreement is what justifies trusting
+  the corpus, and it is repeatable if anyone ever doubts it.
 
 If you change either generator, reproduce the equivalent check rather than eyeballing the diff.
