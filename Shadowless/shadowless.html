@@ -148,6 +148,8 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    they get their own colour rather than sitting in the row looking like a Trainer. */
 .btn.power{background:#2A2340;border-color:#4B3E6E;color:#B9A6E0}
 .btn.power::before{content:'\26A1';margin-right:.4em;opacity:.85}
+/* Energy-type choices for Buzzap; the border carries the type colour. */
+.btn.etype{border-width:2px;padding:.3em .7em}
 .btn.off{opacity:.4;pointer-events:none}
 
 /* ---- coin flip presentation ---- */
@@ -646,6 +648,13 @@ const DECKS = {
 //     MOVE_ENERGY {energy}   interactive, repeatable. Move 1 basic Energy of that
 //                            type from one of your Pokemon to a different one.
 //                            No restriction on the destination's type.
+//     BUZZAP                 interactive, ONCE. Knocks out its own Pokemon and
+//                            turns that card into an Energy card providing 2 of a
+//                            chosen type, attached to another of your Pokemon.
+//                            The opponent takes a Prize — see RULINGS.md, which
+//                            is emphatic, and which two of us guessed wrong.
+//                            Takes a `type` as well as a target, so its actions
+//                            enumerate (target, type) pairs.
 //     EXTRA_ATTACH {energy, targetType}
 //                            interactive, repeatable. Attach 1 basic Energy of
 //                            that type FROM HAND to one of your Pokemon of
@@ -944,6 +953,14 @@ const EFFECTS = {
     p: { kind: 'MOVE_ENERGY', name: 'Energy Trans', energy: 'G' },
     a: [
       [],                                               //   Solarbeam
+    ],
+  },
+
+  // ================= PASS 4f — Buzzap =================
+  'base1-21': {                                         // Electrode
+    p: { kind: 'BUZZAP', name: 'Buzzap' },
+    a: [
+      [{ v: 'RECOIL_ON_FLIP', n: 10, label: 'Electric Shock' }],     // Electric Shock
     ],
   },
 };
@@ -1668,6 +1685,39 @@ class AI {
         return W.attachBuild * (after - before);
       }
 
+      // Buzzap. Unlike the other Powers this one COSTS something real — a Prize —
+      // so the bar is high and the default is don't.
+      case 'BUZZAP': {
+        const me3 = E.state.players[pi], opp = E.state.players[1 - pi];
+        const to = E.allSlots(pi).find(x => x.uid === a.to);
+        if (!to) return -Infinity;
+
+        // Never hand over the Prize that ends the game. This is a hard rule, not
+        // a preference — Buzzap can lose on the spot.
+        if (opp.prizes.length <= 1) return -Infinity;
+        // Nor the last Pokemon standing, nor a Pokemon that is doing fine.
+        if (!me3.bench.length && me3.active === slot) return -Infinity;
+
+        // The Prize is only cheap when it was going to be lost anyway. If the
+        // Electrode survives the turn, sacrificing it is just giving one away.
+        const doomed = slot === me3.active
+          && this.remainingHP(slot) <= this.incomingThreat(pi);
+        if (!doomed) return -Infinity;
+
+        // Two Energy of a chosen type, so value it as two attachments onto the
+        // target — but only counting types that actually get it closer to
+        // attacking, which is what stops it picking a useless type.
+        const before = this.potential(pi, to, null);
+        const fake = { id: to.stack[0].id, uid: -1, asEnergy: a.type + a.type };
+        to.energy.push(fake);
+        const after = this.potential(pi, to, null);
+        to.energy.pop();
+
+        const gain = Math.max(0, before.short - after.short);
+        if (gain <= 0) return -Infinity;
+        return W.attachBuild * gain * 2 + Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
+      }
+
       default: return -Infinity;
     }
   }
@@ -2204,6 +2254,11 @@ function parseDamage(d) {
 }
 
 function energyProvides(db, inst) {
+  // A card can BE an Energy card without being one in the card data: Electrode's
+  // Buzzap turns the Electrode itself into one. `asEnergy` is that override, set
+  // on the card instance rather than the definition, because it is true of this
+  // one Electrode in play and not of Electrode the card.
+  if (inst && inst.asEnergy) return inst.asEnergy;
   const c = db[inst.id];
   return c && c.kind === 'energy' ? (c.provides || 'C') : '';
 }
@@ -2683,10 +2738,34 @@ class Engine {
           }
           break;
         }
+        case 'BUZZAP':
+          // "1 of your OTHER Pokemon" — so there has to be somewhere to put it.
+          for (const to of this.allSlots(pi)) {
+            if (to === slot) continue;
+            for (const type of this.energyTypes()) {
+              acts.push({
+                t: 'power', uid: slot.uid, kind: p.kind, to: to.uid, type,
+                label: `${p.name}: become ${type} Energy on ${this.nameOf(to)}`,
+              });
+            }
+          }
+          break;
         default: break;                                  // passive Powers offer no action
       }
     }
     return acts;
+  }
+
+  // Which Energy types this card pool actually uses. Offering Darkness and Metal
+  // in a Base-Set-only game would be legal but silly, and this scales itself as
+  // sets are added rather than needing a hand-kept list.
+  energyTypes() {
+    if (!this._energyTypes) {
+      const seen = new Set(['C']);
+      for (const id in this.db) if (this.db[id].kind === 'pokemon' && this.db[id].type) seen.add(this.db[id].type);
+      this._energyTypes = [...seen].sort();
+    }
+    return this._energyTypes;
   }
 
   doPower(pi, a) {
@@ -2747,6 +2826,48 @@ class Engine {
           + `without using this turn's Energy attachment.`, 'eff');
         return { ok: true };
       }
+      // The one Power in Base Set that changes what a card IS. See RULINGS.md:
+      // the Electrode card itself becomes ONE Energy card providing TWO Energy
+      // of the chosen type, the Voltorb beneath it is discarded, and the
+      // opponent takes a Prize because a Knock Out is a Knock Out even when you
+      // did it to yourself.
+      case 'BUZZAP': {
+        const me3 = this.state.players[pi], opp = this.state.players[1 - pi];
+        const to = this.findSlot(pi, a.to);
+        if (!to) return this.fail('No such Pokemon');
+        if (to === slot) return this.fail('Buzzap needs one of your OTHER Pokemon');
+        if (!a.type || !this.energyTypes().includes(a.type)) return this.fail('Choose a type of Energy');
+        const name = this.nameOf(slot);
+
+        // Only the top card survives. Everything else attached to the Electrode
+        // — the Voltorb, its Energy, any Trainer cards — goes to the discard,
+        // exactly as it would on any other Knock Out.
+        const card = slot.stack.pop();
+        slot.stack.forEach(x => me3.discard.push(x));
+        slot.energy.forEach(x => me3.discard.push(x));
+        slot.effects.forEach(e => { if (e.card) me3.discard.push(e.card); });
+        slot.stack = []; slot.energy = []; slot.effects = [];
+        this.removeSlot(pi, slot);
+
+        card.asEnergy = a.type + a.type;                 // one card, two symbols
+        to.energy.push(card);
+        const tn = (typeof ENERGY_NAME !== 'undefined')
+          ? ENERGY_NAME : require('./art.js').ENERGY_NAME;
+        this.log(`${p.name}: ${name} is Knocked Out and becomes an Energy card `
+          + `providing 2 ${tn[a.type] || a.type} Energy, attached to ${this.nameOf(to)}.`, 'eff');
+
+        if (opp.prizes.length) {
+          opp.hand.push(opp.prizes.shift());
+          this.log(`${opp.name} takes a Prize. (${opp.prizes.length} left)`, 'prize');
+        }
+        if (opp.prizes.length === 0) { this.endGame(1 - pi, `${opp.name} took all Prizes`); return { ok: true }; }
+        if (!me3.active && me3.bench.length === 0) {
+          this.endGame(1 - pi, `${me3.name} has no Pokemon left`); return { ok: true };
+        }
+        if (!me3.active && me3.bench.length > 0) this.addPromote(pi);
+        return { ok: true };
+      }
+
       default:
         return this.fail(`${p.name} is not an activated Power`);
     }
@@ -4416,6 +4537,8 @@ const POWER_PROMPT = {
   MOVE_DAMAGE: ['choose a Pokemon to move a damage counter FROM', 'choose a Pokemon to move it TO'],
   MOVE_ENERGY: ['choose a Pokemon to take Energy FROM', 'choose a Pokemon to move that Energy TO'],
   EXTRA_ATTACH: ['', 'choose a Pokemon to attach Energy to'],
+  // Buzzap picks a target and then a TYPE, so it has its own branch below.
+  BUZZAP: ['choose one of your other Pokemon to attach the Energy to', 'choose a type of Energy'],
 };
 
 function powerMoves(pm) {
@@ -4429,6 +4552,9 @@ function powerIsTwoStep(pm) {
 function slotPowerTargetable(slot, pi) {
   const pm = UI.powerMode; if (!pm || pi !== 0) return false;
   const moves = powerMoves(pm);
+  // Buzzap picks the Pokemon first, then the Energy type from the action bar —
+  // so once a target is chosen the board stops offering anything.
+  if (pm.kind === 'BUZZAP') return pm.to === null && moves.some(a => a.to === slot.uid);
   if (!powerIsTwoStep(pm)) return moves.some(a => a.to === slot.uid);
   return pm.from === null
     ? moves.some(a => a.from === slot.uid)
@@ -4487,8 +4613,12 @@ function renderSlot(slot, pi, where, idx) {
   const en = el('div', 'energyrow');
   slot.energy.forEach(e => {
     const p = el('i', 'pip ink');
-    p.style.background = ENERGY_INK[CARD_DB[e.id].provides] || ENERGY_INK.C;
-    p.title = CARD_DB[e.id].name; en.appendChild(p);
+    // asEnergy is set on the card instance by Buzzap, which turns an Electrode
+    // into an Energy card; the card definition still says Pokemon.
+    const prov = e.asEnergy || CARD_DB[e.id].provides;
+    p.style.background = ENERGY_INK[(prov || 'C')[0]] || ENERGY_INK.C;
+    p.title = CARD_DB[e.id].name + (e.asEnergy ? ` (Buzzap: ${e.asEnergy})` : '');
+    en.appendChild(p);
   });
   if (!slot.energy.length) en.appendChild(el('span', 'none', 'no energy'));
   const need = el('span', 'retreatnote', 'retreat ' + c.retreat);
@@ -4539,6 +4669,7 @@ function renderSlot(slot, pi, where, idx) {
   d.onclick = (ev) => {
     if (can && UI.powerMode) {
       const pm = UI.powerMode;
+      if (pm.kind === 'BUZZAP') { pm.to = slot.uid; render(); return; }
       const twoStep = powerIsTwoStep(pm);
       if (twoStep && pm.from === null) { pm.from = slot.uid; render(); return; }
       // Stay in the mode after each move — the card says "as often as you like".
@@ -4609,6 +4740,29 @@ function renderActionBar() {
     const moves = myLegal().filter(a => a.t === 'power' && a.uid === pm.uid && a.kind === pm.kind);
     // Auto-exit the moment nothing legal is left, so the mode never strands you.
     if (!moves.length) { UI.powerMode = null; return renderActionBar(); }
+    // Buzzap: board click chooses the target, then the bar offers the types.
+    if (pm.kind === 'BUZZAP') {
+      bar.appendChild(el('div', 'barmsg',
+        `${pm.name}: ${POWER_PROMPT.BUZZAP[pm.to === null ? 0 : 1]}`));
+      if (pm.to !== null) {
+        const seen = new Set();
+        moves.filter(a => a.to === pm.to).forEach(a => {
+          if (seen.has(a.type)) return; seen.add(a.type);
+          const b = el('button', 'btn etype', ENERGY_NAME[a.type] || a.type);
+          b.style.borderColor = ENERGY_COLOR[a.type];
+          b.onclick = () => { dispatch(0, a); UI.powerMode = null; render(); };
+          bar.appendChild(b);
+        });
+        const back = el('button', 'btn ghost', 'Back');
+        back.onclick = () => { pm.to = null; render(); };
+        bar.appendChild(back);
+      }
+      const cancel = el('button', 'btn ghost', 'Cancel');
+      cancel.onclick = () => { UI.powerMode = null; render(); };
+      bar.appendChild(cancel);
+      return bar;
+    }
+
     const twoStep = powerIsTwoStep(pm);
     bar.appendChild(el('div', 'barmsg',
       `${pm.name}: ${POWER_PROMPT[pm.kind][(twoStep && pm.from === null) ? 0 : 1]}`));
@@ -4733,7 +4887,7 @@ function renderActionBar() {
     b.title = def.name + ' — ' + topCard(CARD_DB, slot).name;
     b.onclick = () => {
       // Anything with a prompt is an interactive mode; the rest fire on the spot.
-      if (POWER_PROMPT[a.kind]) { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null }; render(); }
+      if (POWER_PROMPT[a.kind]) { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null, to: null }; render(); }
       else dispatch(0, a);
     };
     bar.appendChild(b);

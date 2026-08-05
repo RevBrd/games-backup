@@ -56,9 +56,8 @@ for (const name of DECK_NAMES) {
 // list is progress; a card that appears on it unexpectedly is a regression.
 // Keep this list in step with the "twelve missing Base Set cards" in CLAUDE.md.
 const EXPECTED_UNIMPLEMENTED = new Set([
-  // Five of the six Pokemon Powers are done. Electrode is the one left, and
-  // it is the hard one — see RULINGS.md.
-  'base1-21', // Electrode   — Buzzap
+  // All six Pokemon Powers are done. What's left is the five oddities and
+  // Clefairy Doll — see the missing-cards section of CLAUDE.md.
   'base1-5',  // Clefairy    — Metronome
   'base1-22', // Pidgeotto   — Whirlwind / Mirror Move
   'base1-38', // Poliwhirl   — Amnesia

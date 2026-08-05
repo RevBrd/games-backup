@@ -479,6 +479,8 @@ const POWER_PROMPT = {
   MOVE_DAMAGE: ['choose a Pokemon to move a damage counter FROM', 'choose a Pokemon to move it TO'],
   MOVE_ENERGY: ['choose a Pokemon to take Energy FROM', 'choose a Pokemon to move that Energy TO'],
   EXTRA_ATTACH: ['', 'choose a Pokemon to attach Energy to'],
+  // Buzzap picks a target and then a TYPE, so it has its own branch below.
+  BUZZAP: ['choose one of your other Pokemon to attach the Energy to', 'choose a type of Energy'],
 };
 
 function powerMoves(pm) {
@@ -492,6 +494,9 @@ function powerIsTwoStep(pm) {
 function slotPowerTargetable(slot, pi) {
   const pm = UI.powerMode; if (!pm || pi !== 0) return false;
   const moves = powerMoves(pm);
+  // Buzzap picks the Pokemon first, then the Energy type from the action bar —
+  // so once a target is chosen the board stops offering anything.
+  if (pm.kind === 'BUZZAP') return pm.to === null && moves.some(a => a.to === slot.uid);
   if (!powerIsTwoStep(pm)) return moves.some(a => a.to === slot.uid);
   return pm.from === null
     ? moves.some(a => a.from === slot.uid)
@@ -550,8 +555,12 @@ function renderSlot(slot, pi, where, idx) {
   const en = el('div', 'energyrow');
   slot.energy.forEach(e => {
     const p = el('i', 'pip ink');
-    p.style.background = ENERGY_INK[CARD_DB[e.id].provides] || ENERGY_INK.C;
-    p.title = CARD_DB[e.id].name; en.appendChild(p);
+    // asEnergy is set on the card instance by Buzzap, which turns an Electrode
+    // into an Energy card; the card definition still says Pokemon.
+    const prov = e.asEnergy || CARD_DB[e.id].provides;
+    p.style.background = ENERGY_INK[(prov || 'C')[0]] || ENERGY_INK.C;
+    p.title = CARD_DB[e.id].name + (e.asEnergy ? ` (Buzzap: ${e.asEnergy})` : '');
+    en.appendChild(p);
   });
   if (!slot.energy.length) en.appendChild(el('span', 'none', 'no energy'));
   const need = el('span', 'retreatnote', 'retreat ' + c.retreat);
@@ -602,6 +611,7 @@ function renderSlot(slot, pi, where, idx) {
   d.onclick = (ev) => {
     if (can && UI.powerMode) {
       const pm = UI.powerMode;
+      if (pm.kind === 'BUZZAP') { pm.to = slot.uid; render(); return; }
       const twoStep = powerIsTwoStep(pm);
       if (twoStep && pm.from === null) { pm.from = slot.uid; render(); return; }
       // Stay in the mode after each move — the card says "as often as you like".
@@ -672,6 +682,29 @@ function renderActionBar() {
     const moves = myLegal().filter(a => a.t === 'power' && a.uid === pm.uid && a.kind === pm.kind);
     // Auto-exit the moment nothing legal is left, so the mode never strands you.
     if (!moves.length) { UI.powerMode = null; return renderActionBar(); }
+    // Buzzap: board click chooses the target, then the bar offers the types.
+    if (pm.kind === 'BUZZAP') {
+      bar.appendChild(el('div', 'barmsg',
+        `${pm.name}: ${POWER_PROMPT.BUZZAP[pm.to === null ? 0 : 1]}`));
+      if (pm.to !== null) {
+        const seen = new Set();
+        moves.filter(a => a.to === pm.to).forEach(a => {
+          if (seen.has(a.type)) return; seen.add(a.type);
+          const b = el('button', 'btn etype', ENERGY_NAME[a.type] || a.type);
+          b.style.borderColor = ENERGY_COLOR[a.type];
+          b.onclick = () => { dispatch(0, a); UI.powerMode = null; render(); };
+          bar.appendChild(b);
+        });
+        const back = el('button', 'btn ghost', 'Back');
+        back.onclick = () => { pm.to = null; render(); };
+        bar.appendChild(back);
+      }
+      const cancel = el('button', 'btn ghost', 'Cancel');
+      cancel.onclick = () => { UI.powerMode = null; render(); };
+      bar.appendChild(cancel);
+      return bar;
+    }
+
     const twoStep = powerIsTwoStep(pm);
     bar.appendChild(el('div', 'barmsg',
       `${pm.name}: ${POWER_PROMPT[pm.kind][(twoStep && pm.from === null) ? 0 : 1]}`));
@@ -796,7 +829,7 @@ function renderActionBar() {
     b.title = def.name + ' — ' + topCard(CARD_DB, slot).name;
     b.onclick = () => {
       // Anything with a prompt is an interactive mode; the rest fire on the spot.
-      if (POWER_PROMPT[a.kind]) { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null }; render(); }
+      if (POWER_PROMPT[a.kind]) { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null, to: null }; render(); }
       else dispatch(0, a);
     };
     bar.appendChild(b);

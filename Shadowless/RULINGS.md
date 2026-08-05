@@ -44,6 +44,13 @@ first instinct and it's close, but it needs a "non-returnable" flag to keep Revi
 count wrong at one Energy instead of two, and behaves differently under Energy Removal, where one
 discard should take both symbols with it. The faithful version is less code, not more.
 
+**Built 5 Aug 2026 and it behaves as described.** The mechanism is an `asEnergy` override set on the
+card *instance* — `energyProvides()` consults it before the card definition — so the Electrode is an
+Energy card while in play without Electrode-the-card ever changing. Two consequences worth knowing:
+a Buzzap'd Electrode is **not a basic Energy card**, so Energy Trans cannot move it and a "discard 1
+Fire Energy" cost cannot pay with it, both of which match the rulings; and because it never enters
+the discard, Revive and Pokémon Flute cannot reach it with no special-casing at all.
+
 ---
 
 ## "1 <Type> Energy card" means a basic one

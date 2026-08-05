@@ -66,6 +66,13 @@
 //     MOVE_ENERGY {energy}   interactive, repeatable. Move 1 basic Energy of that
 //                            type from one of your Pokemon to a different one.
 //                            No restriction on the destination's type.
+//     BUZZAP                 interactive, ONCE. Knocks out its own Pokemon and
+//                            turns that card into an Energy card providing 2 of a
+//                            chosen type, attached to another of your Pokemon.
+//                            The opponent takes a Prize — see RULINGS.md, which
+//                            is emphatic, and which two of us guessed wrong.
+//                            Takes a `type` as well as a target, so its actions
+//                            enumerate (target, type) pairs.
 //     EXTRA_ATTACH {energy, targetType}
 //                            interactive, repeatable. Attach 1 basic Energy of
 //                            that type FROM HAND to one of your Pokemon of
@@ -364,6 +371,14 @@ const EFFECTS = {
     p: { kind: 'MOVE_ENERGY', name: 'Energy Trans', energy: 'G' },
     a: [
       [],                                               //   Solarbeam
+    ],
+  },
+
+  // ================= PASS 4f — Buzzap =================
+  'base1-21': {                                         // Electrode
+    p: { kind: 'BUZZAP', name: 'Buzzap' },
+    a: [
+      [{ v: 'RECOIL_ON_FLIP', n: 10, label: 'Electric Shock' }],     // Electric Shock
     ],
   },
 };

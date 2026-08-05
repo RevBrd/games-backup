@@ -33,6 +33,11 @@ function board(activeId, benchIds = [], oppActiveId = 'base1-58') {
   p.bench = benchIds.map(mk);
   o.active = mk(oppActiveId);
   o.bench = [];
+  // Prizes matter as soon as anything can Knock a Pokemon Out — Buzzap hands one
+  // over. Without them the engine reads "no Prizes left" as someone having won.
+  const prize = () => ({ id: 'base1-99', uid: E.uid++ });
+  p.prizes = Array.from({ length: 6 }, prize);
+  o.prizes = Array.from({ length: 6 }, prize);
   E.state.phase = 'main';
   E.state.active = 0;
   E.state.pendingPromote = null;
@@ -327,6 +332,135 @@ T('is switched off by Asleep, Confused and Paralyzed', () => {
   return true;
 });
 
+// --------------------------------------------------------------------- Buzzap
+console.log('\nElectrode — Buzzap');
+
+const buzzap = (E, fromSlot, toSlot, type = 'L') =>
+  E.act(0, { t: 'power', uid: fromSlot.uid, kind: 'BUZZAP', to: toSlot.uid, type });
+
+T('the Electrode becomes one Energy card providing two of the chosen type', () => {
+  const E = board('base1-21', ['base1-58']);                // Electrode active, Pikachu bench
+  const [trode, pika] = E.allSlots(0);
+  const r = buzzap(E, trode, pika, 'L');
+  if (!r.ok) throw new Error(r.error);
+  eq(pika.energy.length, 1, 'ONE card attached');
+  eq(E.slotSymbols(pika).join(''), 'LL', 'providing TWO Lightning');
+  return true;
+});
+
+T('the opponent takes a Prize', () => {
+  const E = board('base1-21', ['base1-58']);
+  const [trode, pika] = E.allSlots(0);
+  const before = E.state.players[1].prizes.length;
+  buzzap(E, trode, pika);
+  eq(E.state.players[1].prizes.length, before - 1, 'opponent prizes remaining');
+  eq(E.state.players[1].hand.length > 0, true, 'the Prize went to their hand');
+  return true;
+});
+
+T('the Electrode leaves play but does NOT go to the discard', () => {
+  const E = board('base1-21', ['base1-58']);
+  const [trode, pika] = E.allSlots(0);
+  buzzap(E, trode, pika);
+  const p = E.state.players[0];
+  eq(p.active, null, 'no longer Active');
+  eq(p.discard.some(c => c.id === 'base1-21'), false, 'not in the discard');
+  eq(pika.energy[0].id, 'base1-21', 'it IS the Electrode card, attached as Energy');
+  return true;
+});
+
+T('a Voltorb beneath it is discarded', () => {
+  const E = board('base1-21', ['base1-58']);
+  const [trode, pika] = E.allSlots(0);
+  trode.stack.unshift({ id: 'base1-67', uid: E.uid++ });    // Voltorb under the Electrode
+  buzzap(E, trode, pika);
+  eq(E.state.players[0].discard.some(c => c.id === 'base1-67'), true, 'Voltorb in the discard');
+  return true;
+});
+
+T('Energy attached to the Electrode is discarded with it', () => {
+  const E = board('base1-21', ['base1-58']);
+  const [trode, pika] = E.allSlots(0);
+  attach(E, trode, 'base1-100', 2);
+  buzzap(E, trode, pika);
+  eq(E.state.players[0].discard.filter(c => c.id === 'base1-100').length, 2, 'its Energy discarded');
+  eq(pika.energy.length, 1, 'only the Electrode moved across');
+  return true;
+});
+
+T('the resulting Energy actually pays for an attack', () => {
+  const E = board('base1-21', ['base1-20']);                // Electabuzz: Thundershock costs L
+  const [trode, buzz] = E.allSlots(0);
+  buzzap(E, trode, buzz, 'L');
+  E.act(0, { t: 'promote', bench: 0 });                     // Electabuzz comes up
+  eq(E.canUseAttack(0, 0).ok, true, 'Thundershock payable');
+  eq(E.canUseAttack(0, 1).ok, true, 'Thunderpunch (LC) payable from the same card');
+  return true;
+});
+
+T('it counts as two symbols for retreat as well', () => {
+  const E = board('base1-21', ['base1-56']);                // Onix, retreat 3
+  const [trode, onix] = E.allSlots(0);
+  eq(E.canRetreat(onix), false, 'cannot retreat with nothing attached');
+  buzzap(E, trode, onix, 'F');
+  attach(E, onix, 'base1-97', 1);
+  eq(E.canRetreat(onix), true, 'two from Buzzap plus one is enough for retreat 3');
+  return true;
+});
+
+T('needs one of your OTHER Pokemon, and offers nothing when alone', () => {
+  const E = board('base1-21');
+  const trode = E.state.players[0].active;
+  eq(E.legalActions(0).filter(a => a.t === 'power').length, 0, 'power actions offered');
+  eq(buzzap(E, trode, trode).ok, false, 'targeting itself rejected');
+  return true;
+});
+
+T('forces a promotion when the Electrode was Active', () => {
+  const E = board('base1-21', ['base1-58']);
+  const [trode, pika] = E.allSlots(0);
+  buzzap(E, trode, pika);
+  eq(E.state.pendingPromote, 0, 'player must promote');
+  return true;
+});
+
+T('does not force a promotion when the Electrode was benched', () => {
+  const E = board('base1-58', ['base1-21']);                // Electrode on the Bench
+  const [pika, trode] = E.allSlots(0);
+  buzzap(E, trode, pika);
+  eq(E.state.pendingPromote, null, 'no promotion needed');
+  eq(pika.energy.length, 1, 'Energy attached to the Active');
+  return true;
+});
+
+T('is switched off by Asleep, Confused and Paralyzed', () => {
+  for (const st of ['asleep', 'confused', 'paralyzed']) {
+    const E = board('base1-21', ['base1-58']);
+    const [trode, pika] = E.allSlots(0);
+    trode.status[st] = true;
+    if (E.legalActions(0).some(a => a.t === 'power')) throw new Error(`still offered while ${st}`);
+    if (buzzap(E, trode, pika).ok) throw new Error(`still usable while ${st}`);
+  }
+  return true;
+});
+
+T('rejects a type that is not an Energy type', () => {
+  const E = board('base1-21', ['base1-58']);
+  const [trode, pika] = E.allSlots(0);
+  eq(buzzap(E, trode, pika, 'Q').ok, false, 'nonsense type rejected');
+  eq(buzzap(E, trode, pika, '').ok, false, 'empty type rejected');
+  return true;
+});
+
+T('handing over the last Prize ends the game', () => {
+  const E = board('base1-21', ['base1-58']);
+  E.state.players[1].prizes = [{ id: 'base1-99', uid: E.uid++ }];
+  const [trode, pika] = E.allSlots(0);
+  buzzap(E, trode, pika);
+  eq(E.state.winner, 1, 'opponent wins');
+  return true;
+});
+
 // ------------------------------------------------------------------- AI usage
 console.log('\nAI');
 
@@ -437,6 +571,33 @@ T('Energy Trans does not send the AI into an infinite shuffle', () => {
   E.aiTurn(0, 'expert');
   const moves = E.state.log.slice(mark).filter(l => (l.text || '').includes('Energy Trans')).length;
   if (moves > 20) throw new Error(`${moves} Energy Trans moves in a single turn`);
+  return true;
+});
+
+T('the AI never Buzzaps away the opponent\'s last Prize', () => {
+  // Buzzap is the one Power that can lose the game outright. Checked across a
+  // range of boards rather than one, because this must never happen.
+  for (const opp of [1, 2]) {
+    for (const dmg of [0, 30, 70]) {
+      const E = board('base1-21', ['base1-20', 'base1-58']);
+      E.state.players[1].prizes = Array.from({ length: opp }, () => ({ id: 'base1-99', uid: E.uid++ }));
+      E.allSlots(0)[0].dmg = dmg;
+      E.state.players[0].hand = [];
+      E.aiTurn(0, 'expert');
+      if (opp === 1 && E.state.log.some(l => (l.text || '').includes('Buzzap')))
+        throw new Error(`AI used Buzzap with the opponent on their last Prize (dmg ${dmg})`);
+      if (E.state.winner === 1) throw new Error(`AI lost the game to its own Buzzap (opp ${opp}, dmg ${dmg})`);
+    }
+  }
+  return true;
+});
+
+T('the AI leaves a healthy Electrode alone', () => {
+  const E = board('base1-21', ['base1-20']);
+  E.state.players[0].hand = [];
+  E.aiTurn(0, 'expert');
+  if (E.state.log.some(l => (l.text || '').includes('Buzzap')))
+    throw new Error('AI sacrificed an undamaged Electrode for no reason');
   return true;
 });
 

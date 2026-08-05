@@ -411,6 +411,39 @@ class AI {
         return W.attachBuild * (after - before);
       }
 
+      // Buzzap. Unlike the other Powers this one COSTS something real — a Prize —
+      // so the bar is high and the default is don't.
+      case 'BUZZAP': {
+        const me3 = E.state.players[pi], opp = E.state.players[1 - pi];
+        const to = E.allSlots(pi).find(x => x.uid === a.to);
+        if (!to) return -Infinity;
+
+        // Never hand over the Prize that ends the game. This is a hard rule, not
+        // a preference — Buzzap can lose on the spot.
+        if (opp.prizes.length <= 1) return -Infinity;
+        // Nor the last Pokemon standing, nor a Pokemon that is doing fine.
+        if (!me3.bench.length && me3.active === slot) return -Infinity;
+
+        // The Prize is only cheap when it was going to be lost anyway. If the
+        // Electrode survives the turn, sacrificing it is just giving one away.
+        const doomed = slot === me3.active
+          && this.remainingHP(slot) <= this.incomingThreat(pi);
+        if (!doomed) return -Infinity;
+
+        // Two Energy of a chosen type, so value it as two attachments onto the
+        // target — but only counting types that actually get it closer to
+        // attacking, which is what stops it picking a useless type.
+        const before = this.potential(pi, to, null);
+        const fake = { id: to.stack[0].id, uid: -1, asEnergy: a.type + a.type };
+        to.energy.push(fake);
+        const after = this.potential(pi, to, null);
+        to.energy.pop();
+
+        const gain = Math.max(0, before.short - after.short);
+        if (gain <= 0) return -Infinity;
+        return W.attachBuild * gain * 2 + Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
+      }
+
       default: return -Infinity;
     }
   }

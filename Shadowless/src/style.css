@@ -141,6 +141,8 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    they get their own colour rather than sitting in the row looking like a Trainer. */
 .btn.power{background:#2A2340;border-color:#4B3E6E;color:#B9A6E0}
 .btn.power::before{content:'\26A1';margin-right:.4em;opacity:.85}
+/* Energy-type choices for Buzzap; the border carries the type colour. */
+.btn.etype{border-width:2px;padding:.3em .7em}
 .btn.off{opacity:.4;pointer-events:none}
 
 /* ---- coin flip presentation ---- */

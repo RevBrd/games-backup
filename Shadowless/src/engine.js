@@ -47,6 +47,11 @@ function parseDamage(d) {
 }
 
 function energyProvides(db, inst) {
+  // A card can BE an Energy card without being one in the card data: Electrode's
+  // Buzzap turns the Electrode itself into one. `asEnergy` is that override, set
+  // on the card instance rather than the definition, because it is true of this
+  // one Electrode in play and not of Electrode the card.
+  if (inst && inst.asEnergy) return inst.asEnergy;
   const c = db[inst.id];
   return c && c.kind === 'energy' ? (c.provides || 'C') : '';
 }
@@ -526,10 +531,34 @@ class Engine {
           }
           break;
         }
+        case 'BUZZAP':
+          // "1 of your OTHER Pokemon" — so there has to be somewhere to put it.
+          for (const to of this.allSlots(pi)) {
+            if (to === slot) continue;
+            for (const type of this.energyTypes()) {
+              acts.push({
+                t: 'power', uid: slot.uid, kind: p.kind, to: to.uid, type,
+                label: `${p.name}: become ${type} Energy on ${this.nameOf(to)}`,
+              });
+            }
+          }
+          break;
         default: break;                                  // passive Powers offer no action
       }
     }
     return acts;
+  }
+
+  // Which Energy types this card pool actually uses. Offering Darkness and Metal
+  // in a Base-Set-only game would be legal but silly, and this scales itself as
+  // sets are added rather than needing a hand-kept list.
+  energyTypes() {
+    if (!this._energyTypes) {
+      const seen = new Set(['C']);
+      for (const id in this.db) if (this.db[id].kind === 'pokemon' && this.db[id].type) seen.add(this.db[id].type);
+      this._energyTypes = [...seen].sort();
+    }
+    return this._energyTypes;
   }
 
   doPower(pi, a) {
@@ -590,6 +619,48 @@ class Engine {
           + `without using this turn's Energy attachment.`, 'eff');
         return { ok: true };
       }
+      // The one Power in Base Set that changes what a card IS. See RULINGS.md:
+      // the Electrode card itself becomes ONE Energy card providing TWO Energy
+      // of the chosen type, the Voltorb beneath it is discarded, and the
+      // opponent takes a Prize because a Knock Out is a Knock Out even when you
+      // did it to yourself.
+      case 'BUZZAP': {
+        const me3 = this.state.players[pi], opp = this.state.players[1 - pi];
+        const to = this.findSlot(pi, a.to);
+        if (!to) return this.fail('No such Pokemon');
+        if (to === slot) return this.fail('Buzzap needs one of your OTHER Pokemon');
+        if (!a.type || !this.energyTypes().includes(a.type)) return this.fail('Choose a type of Energy');
+        const name = this.nameOf(slot);
+
+        // Only the top card survives. Everything else attached to the Electrode
+        // — the Voltorb, its Energy, any Trainer cards — goes to the discard,
+        // exactly as it would on any other Knock Out.
+        const card = slot.stack.pop();
+        slot.stack.forEach(x => me3.discard.push(x));
+        slot.energy.forEach(x => me3.discard.push(x));
+        slot.effects.forEach(e => { if (e.card) me3.discard.push(e.card); });
+        slot.stack = []; slot.energy = []; slot.effects = [];
+        this.removeSlot(pi, slot);
+
+        card.asEnergy = a.type + a.type;                 // one card, two symbols
+        to.energy.push(card);
+        const tn = (typeof ENERGY_NAME !== 'undefined')
+          ? ENERGY_NAME : require('./art.js').ENERGY_NAME;
+        this.log(`${p.name}: ${name} is Knocked Out and becomes an Energy card `
+          + `providing 2 ${tn[a.type] || a.type} Energy, attached to ${this.nameOf(to)}.`, 'eff');
+
+        if (opp.prizes.length) {
+          opp.hand.push(opp.prizes.shift());
+          this.log(`${opp.name} takes a Prize. (${opp.prizes.length} left)`, 'prize');
+        }
+        if (opp.prizes.length === 0) { this.endGame(1 - pi, `${opp.name} took all Prizes`); return { ok: true }; }
+        if (!me3.active && me3.bench.length === 0) {
+          this.endGame(1 - pi, `${me3.name} has no Pokemon left`); return { ok: true };
+        }
+        if (!me3.active && me3.bench.length > 0) this.addPromote(pi);
+        return { ok: true };
+      }
+
       default:
         return this.fail(`${p.name} is not an activated Power`);
     }

@@ -25,14 +25,14 @@ natural alternative and do **not** work from `file://` — see `~/.claude/refere
 
 ## Status
 
-Job 4d of a long plan. The **rules engine and the AI are the finished part**; everything a
+Job 4f of a long plan. The **rules engine and the AI are the finished part**; everything a
 *collection* game needs is not built yet.
 
 | Area | State |
 |---|---|
-| Rules engine | Complete for what it covers, Pokémon Powers included as of Job 4d |
+| Rules engine | Complete for what it covers. All six Base Set Pokémon Powers work |
 | Opponent AI | Four tiers, expected-value based. Beats its own baselines |
-| Base Set cards | **95 of 102 implemented**, data for all 102 in. The 7 left are the hard ones — see below |
+| Base Set cards | **96 of 102 implemented**, data for all 102 in. The 6 left are the hard ones — see below |
 | Card art | None, by design. Each card gets a deterministic geometric sigil from its id |
 | Collection / packs / dex | Not started (Job 5) |
 | Deck building | Not started. Four fixed theme decks + a random Sandbox deck for testing |
@@ -44,20 +44,23 @@ Job 4d of a long plan. The **rules engine and the AI are the finished part**; ev
 Don't trust that table — the three test suites under Tooling take about a minute between them and
 check most of it.
 
-## The seven missing Base Set cards
+## The six missing Base Set cards
 
 The most important thing to understand before picking up Job 4. They each need **new engine
 machinery**, which is why the previous instance deferred them as a block.
 
-**Five of the six Pokémon Powers are done** — Charizard (Energy Burn), Machamp (Strikes Back),
-Alakazam (Damage Swap), Blastoise (Rain Dance) and Venusaur (Energy Trans). The system is
-`powerOf` / `powerUsable` / `powerActions` / `doPower` in `engine.js`, declared per card as a `p:`
-object in `effects.js` — its reference comment sits above `EFFECTS`. Adding one is now a new `kind`
-in `powerActions`/`doPower` plus a scorer in `ai.js`.
+**All six Pokémon Powers are done.** The system is `powerOf` / `powerUsable` / `powerActions` /
+`doPower` in `engine.js`, declared per card as a `p:` object in `effects.js` — its reference comment
+sits above `EFFECTS`. Adding one is a new `kind` in `powerActions`/`doPower` plus a scorer in
+`ai.js`. Interactive Powers enumerate one action per legal parameter combination, so the AI scores
+them like anything else and the UI reads legality off the action list instead of restating rules.
 
-- **One Pokémon Power left — Electrode (Buzzap)**, and it is the hard one: it changes a card's
-  identity mid-play, turning the Electrode into an Energy card. `RULINGS.md` settles the behaviour
-  including the Prize question, so this is now a build problem rather than a rules one.
+Buzzap is the one worth reading before touching: it turns the Electrode card itself into an Energy
+card via an `asEnergy` override on the card *instance*, which is why `energyProvides()` checks that
+before the card definition. `RULINGS.md` has the reasoning, including the Prize.
+
+What is left:
+
 - **Five oddities** — Clefairy (Metronome copies the defender's attack), Porygon (Conversion
   rewrites Weakness/Resistance), Pidgey and Pidgeotto (Whirlwind / Mirror Move), Poliwhirl (Amnesia
   disables a chosen attack).
@@ -115,7 +118,7 @@ Five commands. Run the last three before calling anything done.
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
-node tools/powertest.js                  # 35 behavioural tests for the Pokemon Powers
+node tools/powertest.js                  # 50 behavioural tests for the Pokemon Powers
 node tools/smoke.js shadowless.html      # 46 integration tests against the built file
 ```
 
