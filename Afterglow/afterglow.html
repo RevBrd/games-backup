@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AFTERGLOW</title>
+<style>
+  :root {
+    --cyan:#4ff2e0; --cyan-dim:#2a8f86;
+    --amber:#ffb14e; --red:#ff5a52;
+    --ink:#eaf1fb; --muted:#8ea0bd;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body {
+    height:100%; background:#000; overflow:hidden;
+    font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color:var(--ink); -webkit-font-smoothing:antialiased;
+  }
+  #wrap {
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(1200px 800px at 50% 120%, #241436 0%, #0a0a18 55%, #030308 100%);
+  }
+  #stage {
+    position:relative; border-radius:10px; overflow:hidden; background:#05060d;
+    box-shadow: 0 0 0 1px #1c1836, 0 30px 120px -20px #000, 0 0 90px -30px #3a2a6a;
+  }
+  canvas { display:block; }
+  #hud {
+    position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between;
+    align-items:flex-start; padding:14px 18px; pointer-events:none;
+    font-variant-numeric:tabular-nums; letter-spacing:.5px;
+  }
+  .stat { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; }
+  .stat b { display:block; font-size:22px; color:var(--ink); font-weight:700; letter-spacing:1px; margin-top:2px;}
+  #title-tag { text-align:center; }
+  #title-tag .name {
+    font-size:15px; letter-spacing:9px; font-weight:800; padding-left:9px;
+    color:var(--cyan); text-shadow:0 0 20px var(--cyan-dim);
+  }
+  #title-tag .sub { font-size:9px; letter-spacing:4px; color:var(--muted); margin-top:3px; }
+  #pausebtn {
+    position:absolute; top:50px; left:18px;
+    width:26px; height:26px; border:1px solid var(--cyan-dim); border-radius:6px;
+    display:none; align-items:center; justify-content:center; cursor:pointer; z-index:4;
+    color:var(--muted); font-size:12px; background:rgba(10,14,26,.4);
+  }
+  #pausebtn:hover { color:var(--cyan); border-color:var(--cyan); }
+  .screen {
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; text-align:center;
+    background:radial-gradient(900px 600px at 50% 60%, rgba(20,12,40,.5), rgba(3,3,10,.92));
+    backdrop-filter:blur(2px); z-index:6;
+  }
+  #overlay { cursor:pointer; }
+  .screen.hidden { display:none; }
+  .screen h1 {
+    font-size:66px; letter-spacing:20px; font-weight:800; padding-left:20px;
+    background:linear-gradient(180deg,#fff2e8 0%, #ffd9a8 30%, var(--cyan) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 70px rgba(255,177,78,.28);
+  }
+  .screen .rule { width:210px; height:1px; margin:14px 0 4px;
+    background:linear-gradient(90deg,transparent,var(--cyan-dim),transparent); }
+  .screen h2 { font-size:30px; letter-spacing:7px; color:var(--red); text-shadow:0 0 34px rgba(255,90,82,.45); }
+  .screen .lede { max-width:540px; color:var(--muted); font-size:14px; line-height:1.8; margin:18px 0 26px; }
+  .screen .lede b { color:var(--cyan); font-weight:600; }
+  .screen .cta {
+    font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--ink);
+    border:1px solid var(--cyan-dim); padding:12px 26px; border-radius:40px; cursor:pointer;
+    box-shadow:0 0 30px -8px var(--cyan-dim); animation:pulse 2.4s ease-in-out infinite;
+  }
+  .screen .cta:hover { border-color:var(--cyan); color:var(--cyan); }
+  .screen .summary { color:var(--ink); font-size:15px; line-height:2; margin:8px 0 22px; }
+  .screen .summary span { color:var(--cyan); font-weight:700; }
+  #pause .btncol { display:flex; flex-direction:column; gap:14px; margin-top:8px; }
+  #pause .cta { animation:none; }
+  @keyframes pulse { 0%,100%{opacity:.65;} 50%{opacity:1;} }
+  #dev {
+    position:absolute; left:12px; bottom:12px; z-index:7; display:none;
+    background:rgba(6,10,20,.82); border:1px solid #24406a; border-radius:8px;
+    padding:8px 10px; font-size:11px; color:#9fb4d8; width:214px;
+    font-family: ui-monospace, monospace;
+  }
+  #dev .row { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  #dev button {
+    background:#14243c; color:#bcd4f2; border:1px solid #2a4a66;
+    border-radius:4px; padding:3px 6px; font-size:10px; cursor:pointer; font-family:inherit;
+  }
+  #dev button:hover { background:#1d3355; color:#fff; }
+  #dev .stats { color:#6fe; margin-bottom:2px; }
+  #dev .title { color:#4ff2e0; letter-spacing:2px; font-weight:700; }
+  #dev .hint { color:#556; font-size:9px; margin-top:6px; }
+
+  /* build phase */
+  #pause { z-index:8; }
+  #build {
+    position:absolute; left:0; right:0; bottom:0; z-index:6;
+    background:linear-gradient(180deg, rgba(6,8,16,0) 0%, rgba(6,8,16,.72) 22%, rgba(4,6,12,.92) 100%);
+    padding:22px 22px 18px; display:flex; flex-direction:column; align-items:center; gap:12px;
+  }
+  #build.hidden { display:none; }
+  #build-head { width:100%; max-width:820px; display:flex; justify-content:space-between; align-items:center;
+    font-size:12px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+  #build-head b { color:var(--ink); font-size:15px; }
+  .bh-label { color:var(--cyan); font-weight:800; letter-spacing:5px; }
+  .bh-salv b { color:var(--cyan); }
+  .bh-timer b { color:var(--amber); }
+  #build-slots { display:flex; gap:10px; width:100%; max-width:820px; justify-content:center; }
+  .slotcard {
+    flex:1; min-width:0; background:rgba(16,22,38,.6); border:1px solid #23345a; border-radius:8px;
+    padding:10px 8px; text-align:center; display:flex; flex-direction:column; gap:7px; align-items:center;
+  }
+  .slotcard.empty { border-style:dashed; border-color:#2a3a52; background:rgba(12,16,28,.5); }
+  .slotcard .sc-name { font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+  .slotcard .sc-type { font-size:12px; letter-spacing:1px; color:var(--cyan); font-weight:700; }
+  .slotcard .sc-stat { font-size:10px; color:#8ea0bd; font-variant-numeric:tabular-nums; }
+  .slotcard button {
+    width:100%; background:#16305a; color:#cfe6ff; border:1px solid #2f5c8c; border-radius:5px;
+    padding:6px 4px; font-size:10.5px; cursor:pointer; letter-spacing:.5px; font-family:inherit;
+  }
+  .slotcard button:hover:not(:disabled){ background:#1f4a86; color:#fff; }
+  .slotcard button:disabled{ opacity:.4; cursor:not-allowed; }
+  .slotcard button .cost { color:var(--cyan); font-weight:700; }
+  /* upgrade rows */
+  .upg { width:100%; display:flex; flex-direction:column; gap:3px; }
+  .upg-top { display:flex; justify-content:space-between; align-items:baseline; }
+  .upg-name { font-size:9px; letter-spacing:1.5px; color:#7e90ab; }
+  .upg-val { font-size:10px; color:#cfe0f2; font-variant-numeric:tabular-nums; }
+  .upg-val em { color:var(--cyan); font-style:normal; }
+  .pips { display:flex; gap:3px; }
+  .pips i { flex:1; height:3px; border-radius:2px; background:#25324a; }
+  .pips i.on { background:var(--cyan); box-shadow:0 0 6px -1px var(--cyan-dim); }
+  .upg button { padding:4px 3px; font-size:9.5px; }
+  .slotcard { gap:9px; padding:9px 7px; }
+  #build-foot { margin-top:2px; }
+  #build-foot .cta { animation:none; }
+  /* weapon select chips */
+  #weapons { position:absolute; left:50%; transform:translateX(-50%); bottom:12px; z-index:4;
+    display:flex; gap:8px; pointer-events:auto; }
+  #weapons.hidden { display:none; }
+  .wchip { display:flex; align-items:center; gap:7px; cursor:pointer;
+    background:rgba(10,16,28,.62); border:1px solid #22344f; border-radius:6px;
+    padding:5px 10px; font-size:10px; letter-spacing:1.5px; color:#7f93ae;
+    font-family:ui-monospace, monospace; }
+  .wchip .k { border:1px solid #2c405e; border-radius:3px; padding:0 4px; font-size:9px; color:#8fa6c2; }
+  .wchip .n { color:#9fb6d2; font-variant-numeric:tabular-nums; }
+  .wchip.active { border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 18px -8px var(--cyan); }
+  .wchip.active .k { border-color:var(--cyan-dim); color:var(--cyan); }
+  .wchip.none { opacity:.4; }
+  .slotcard.emp { border-color:#3a3f78; }
+  .slotcard.emp .sc-type { color:#9fa8ff; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="hud">
+      <div class="stat">Score<b id="hud-score">0</b>
+        <span style="display:block;margin-top:6px;color:var(--cyan);letter-spacing:1.5px;">SALVAGE <b id="hud-salvage" style="display:inline;font-size:15px;color:var(--cyan);">0</b></span>
+      </div>
+      <div id="title-tag">
+        <div class="name">AFTERGLOW</div>
+        <div class="sub">ATMOSPHERIC INTERDICTION</div>
+      </div>
+      <div class="stat" style="text-align:right;">Wave<b id="hud-wave">1</b></div>
+    </div>
+    <div id="pausebtn" title="Pause (Esc)">&#10073;&#10073;</div>
+
+    <div id="weapons" class="hidden"></div>
+
+    <div id="build" class="hidden">
+      <div id="build-head">
+        <div><span class="bh-label">REARM</span> &nbsp; hold <b id="build-int">100%</b></div>
+        <div class="bh-salv">SALVAGE <b id="build-salvage">0</b></div>
+        <div class="bh-timer">NEXT WAVE IN <b id="build-timer">45</b>s</div>
+      </div>
+      <div id="build-slots"></div>
+      <div id="build-foot"><div class="cta" id="btn-startwave">Start Wave &#9654;</div></div>
+    </div>
+
+    <div id="overlay" class="screen">
+      <h1>AFTERGLOW</h1>
+      <div class="rule"></div>
+      <div class="lede">
+        Dusk over the last lit city. Ordnance is inbound. Click to launch interceptors —
+        they bloom where you aim, and the glow lingers a moment after. The lights stay on
+        until the first strike gets through; hold the line and <b>keep the city running</b>
+        for as long as you can.
+      </div>
+      <div class="cta" id="cta">Click to begin</div>
+    </div>
+
+    <div id="pause" class="screen hidden">
+      <h1 style="font-size:40px;letter-spacing:14px;">PAUSED</h1>
+      <div class="rule"></div>
+      <div class="btncol">
+        <div class="cta" id="btn-resume">Resume</div>
+        <div class="cta" id="btn-menu">Main Menu</div>
+      </div>
+    </div>
+
+    <div id="dev">
+      <div class="title">DEV</div>
+      <div class="stats" id="dev-stats">—</div>
+      <div class="row">
+        <button data-act="skip">Skip Wave</button>
+        <button data-act="dmg">+ Damage</button>
+        <button data-act="salv">+50 Salv</button>
+        <button data-act="freeze">Freeze</button>
+        <button data-act="invuln" id="dev-invuln">Invuln: off</button>
+      </div>
+      <div class="row">
+        <button data-act="t0">Tier 0</button>
+        <button data-act="t1">Tier 1</button>
+        <button data-act="t2">Tier 2</button>
+        <button data-act="t3">Tier 3</button>
+      </div>
+      <div class="hint">` toggle · Esc pause · N skip · I invuln · 0-3 tiers · F freeze</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+"use strict";
+
+const W = 960, H = 600;
+const GROUND_Y = H - 58;
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+function fit(){
+  const pad = 24;
+  const availW = window.innerWidth - pad, availH = window.innerHeight - pad;
+  const scale = Math.min(availW / W, availH / H, 1.4);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  canvas.style.width = Math.round(W * scale) + 'px';
+  canvas.style.height = Math.round(H * scale) + 'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', fit);
+fit();
+
+const rand = (a,b)=> a + Math.random()*(b-a);
+const clamp = (v,a,b)=> v<a?a:(v>b?b:v);
+function dist2(ax,ay,bx,by){ const dx=ax-bx, dy=ay-by; return dx*dx+dy*dy; }
+function angDiff(target,a){ let d=target-a; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; return d; }
+
+// ---------- blast (signature) ----------
+const EXPAND_T = 0.34, LINGER_T = 1.05, MAX_R = 46;   // LINGER_T = standard default; blasts carry their own
+function blastRadius(age, maxR){ if (age < EXPAND_T) return maxR * (age / EXPAND_T); return maxR; }
+function blastAlpha(age, lingerT){ if (age < EXPAND_T) return 1; return clamp(1 - (age-EXPAND_T)/(lingerT||LINGER_T),0,1); }
+function blastLife(lingerT){ return EXPAND_T + (lingerT||LINGER_T); }
+const BLAST_LIFE = EXPAND_T + LINGER_T;
+
+// ================================================================
+// DAMAGE MODEL — FROZEN (identical to Job 2/2b/2c/2d). balance untouched.
+// ================================================================
+const N_CELLS = 28;
+const CELL_W = W / N_CELLS;
+const MAX_TIER = 3;
+const TIER_COST = [0,1,2,3];
+const FAIL_POINTS = 66;
+function applyLeakDamage(cell){ if (cell.tier >= MAX_TIER) return 0; cell.tier++; return TIER_COST[cell.tier]; }
+function integrityPct(d){ return clamp(Math.round(100 * (1 - d / FAIL_POINTS)), 0, 100); }
+function cellIndexAt(x){ return clamp(Math.floor(x / CELL_W), 0, N_CELLS-1); }
+function cellCenter(i){ return (i+0.5)*CELL_W; }
+
+const FLICKER_CHANCE = 0.30;
+
+// ---- missile thrust / deflection tuning (Job 3b) ----
+const TUMBLE_SPEED = 14;    // slow drift when engine cut
+const M_ACCEL      = 1.6;   // how fast speed eases toward its target (no instant jerk)
+const DEFLECT_TTL  = 5.0;   // a deflected missile self-detonates (harmlessly) after this
+const SETTLE_DELAY = 2.0;   // beat after the last missile before the wave screen
+const WAVE_LEAD_IN = 2.0;   // beat before the next wave's missiles begin
+// downward restoring torque on deflected missiles (out-of-control rocket -> death dive)
+const GRAV_BIAS_CHANCE = 0.75;  // 75% get pulled back toward down; 25% stay free (may fly off)
+const GRAV_SPRING = 5.0;        // strength of the restoring pull toward straight-down
+const GRAV_DAMP   = 0.55;       // per-second angVel retention (settles the wobble)
+const GRAV_DELAY  = 1.2;        // let the chaotic deflection play out first, then stabilize
+const ANGVEL_CAP  = 2.6;
+
+// ================================================================
+// ECONOMY CONFIG — ALL PLACEHOLDER VALUES (tuned holistically once
+// weapons + enemies are integrated). Grouped here for easy adjustment.
+// ================================================================
+const SLOT_X = [96, 288, 480, 672, 864];   // 5 fixed emplacement slots
+const START_SLOT = 2;                        // begin owning the center slot
+const BUILD_TIME = 45;                       // seconds in the build phase
+const START_FUNDS = 20;
+const SALVAGE_PER_KILL = 2;
+const WAVE_CLEAR_BASE = 8;                   // + wave*2
+const BUILD_COST_BASE = 25;                  // cost of a new standard emplacement
+const BUILD_COST_MULT = 1.7;                 // × per emplacement already owned
+// ---- weapon types. The CLOUD'S BEHAVIOR is the weapon's identity. ALL PLACEHOLDER. ----
+const WEAPONS = {
+  standard: {
+    label:'STANDARD', abbr:'STD', hotkey:'Q',
+    buildCost:25, reserveCap:12, interceptSpeed:560,
+    lingerTime:1.05, kills:true,
+    upgrades: {
+      magSize:     { short:'MAG',    values:[3, 4, 5, 6, 7],           baseCost:15, mult:1.6, fmt:v=>v },
+      reloadTime:  { short:'RELOAD', values:[2.5, 2.1, 1.7, 1.4, 1.1], baseCost:18, mult:1.6, fmt:v=>v.toFixed(1)+'s' },
+      blastRadius: { short:'BLAST',  values:[28, 36, 44, 52, 60],      baseCost:20, mult:1.6, fmt:v=>v }
+    }
+  },
+  emp: {
+    label:'EMP BURST', abbr:'EMP', hotkey:'E',
+    buildCost:40, reserveCap:6, interceptSpeed:430,
+    lingerTime:2.4, kills:false,          // never kills on contact — it disables
+    upgrades: {
+      magSize:     { short:'MAG',    values:[2, 2, 3, 3, 4],           baseCost:22, mult:1.6, fmt:v=>v },
+      reloadTime:  { short:'RELOAD', values:[4.5, 4.0, 3.5, 3.0, 2.5], baseCost:24, mult:1.6, fmt:v=>v.toFixed(1)+'s' },
+      blastRadius: { short:'FIELD',  values:[58, 66, 74, 82, 90]  ,    baseCost:26, mult:1.6, fmt:v=>v }
+    }
+  }
+};
+const WEAPON_KEYS = ['standard','emp'];
+// how much of a blast's radius actually KILLS a given threat (linger radius is unaffected)
+// how much of a blast's radius actually KILLS a given threat (linger radius is unaffected)
+// <1 = slippery/hard to hit centred.  >1 = a big airframe you can clip and still destroy.
+const KILL_RESIST = { loiter: 0.60, bomber: 1.30 };
+const JOLT_LIMIT  = { loiter: 3,    bomber: 4    };   // clouds needed to knock guidance out
+// bomber: big, slow, deliberate. Comes apart into a falling object rather than vanishing.
+const BOMBER_SPEED     = 34;     // placeholder — noticeably slower than everything else
+const BOMBER_DEATH_G   = 90;     // heavy airframe: it comes down decisively
+const BOMBER_HP        = 2;      // direct standard shockwave hits needed to erase it in the air
+const BOMBER_STRIKE_LV = 2;      // damage LEVELS a completed run deals to its single target district
+const BOMBER_ENTRY_HI  = 135;    // enters low: this many px above the ground band...
+const BOMBER_ENTRY_LO  = 175;    // ...to this many (just over the rooftops)
+// a drone shrugs off near-misses, but each one staggers it — and they accumulate
+const DRONE_JOLT_LIMIT = 3;      // jolts before the airframe gives out
+const DRONE_STAGGER_T  = 0.6;    // how long the visible shudder lasts
+// two death profiles: shot down while holding (long, graceful arc) vs mid-dive (short, committed)
+const DRONE_DEATH_T    = 2.5;    // killed in the holding pattern
+const DRONE_DIVE_DEATH_T = 1.25; // killed mid-dive — already fast and nose-down
+const DRONE_DEATH_FIRE = 0.5;    // delay before smoke/fire appears (both profiles)
+const DRONE_DEATH_G    = 35;     // gravity on a coasting wreck (gentle — it hangs in the air)
+const DRONE_DIVE_G     = 28;     // it's already descending; just a little extra pull
+const UPG_KEYS = ['magSize','reloadTime','blastRadius'];
+const MAX_UPG_LEVEL = 4;
+function upgradeCost(type, key, curLevel){
+  const u = WEAPONS[type].upgrades[key];
+  return Math.round(u.baseCost * Math.pow(u.mult, curLevel));
+}
+function buildCostFor(type){ return Math.round(WEAPONS[type].buildCost * Math.pow(BUILD_COST_MULT, batteries.length-1)); }
+
+// ---------- game state ----------
+let state = 'menu';
+let pausePrev = 'playing';
+let devOn = false, devInvuln = false, devFreeze = false;
+let score = 0, wave = 1;
+let salvage = 0, buildTimer = 0;
+let batteries = [];
+let cells = [];
+let farBuildings = [], bgBuildings = [], buildings = [];
+let enemies = [], intercepts = [], blasts = [], particles = [], smoke = [], impacts = [];
+let spawnQueue = 0, spawnTimer = 0, waveTotal = 0;
+let loiterQueue = 0, loiterTimer = 0;
+let bomberQueue = 0, bomberTimer = 0;
+let selectedWeapon = 'standard';
+let weaponHint = '', weaponHintT = 0;
+let breakTimer = 0, waveBonus = 0, settleTimer = 0;
+let shake = 0;
+let damagePoints = 0;
+let gameTime = 0;
+let cityBlackout = false;   // true once the grid itself fails (<90% integrity)
+let lastLeakTime = -100;   // gameTime of the most recent city impact (for the ruminate-on-damage settle)
+// distant-war ambience: tracers arcing up from behind the skyline; rate set per-wave by damage
+let ambient = [], ambientAcc = 0, ambientLevel = 0;
+let fps = 60;
+
+const overlay = document.getElementById('overlay');
+const pauseScr = document.getElementById('pause');
+const devPanel = document.getElementById('dev');
+const devStats = document.getElementById('dev-stats');
+const devInvBtn = document.getElementById('dev-invuln');
+const pauseBtn = document.getElementById('pausebtn');
+const elScore = document.getElementById('hud-score');
+const elWave  = document.getElementById('hud-wave');
+const elSalvage = document.getElementById('hud-salvage');
+const buildScr = document.getElementById('build');
+const buildSlotsEl = document.getElementById('build-slots');
+const buildTimerEl = document.getElementById('build-timer');
+const buildSalvageEl = document.getElementById('build-salvage');
+const buildIntEl = document.getElementById('build-int');
+const weaponsEl = document.getElementById('weapons');
+
+const NEON = ['255,90,150','90,220,255','200,110,255','255,170,70'];
+
+// ---------- emplacements ----------
+function makeBattery(slot, type){
+  type = type || 'standard';
+  const W_ = WEAPONS[type];
+  const x = SLOT_X[slot];
+  const b = { slot, x, y:GROUND_Y, cell:cellIndexAt(x), type,
+              lvl:{ magSize:0, reloadTime:0, blastRadius:0 },
+              reserveCap:W_.reserveCap, interceptSpeed:W_.interceptSpeed,
+              lingerTime:W_.lingerTime, kills:W_.kills,
+              loaded:0, reserve:0, reloadTimer:0, smokeAcc:rand(0,0.6) };
+  applyStats(b);
+  return b;
+}
+// derive live stats from the upgrade levels of this battery's weapon type
+function applyStats(b){
+  const up = WEAPONS[b.type].upgrades;
+  for (const k of UPG_KEYS) b[k] = up[k].values[b.lvl[k]];
+}
+function upgradeBattery(b, key){
+  if (b.lvl[key] >= MAX_UPG_LEVEL) return false;
+  const cost = upgradeCost(b.type, key, b.lvl[key]);
+  if (salvage < cost) return false;
+  salvage -= cost;
+  b.lvl[key]++;
+  applyStats(b);
+  if (b.loaded > b.magSize) b.loaded = b.magSize;
+  return true;
+}
+function slotOwned(slot){ return batteries.some(b=>b.slot===slot); }
+
+function isLit(darkAt, flicker){
+  if (!isFinite(darkAt)) return true;
+  if (gameTime >= darkAt) return false;
+  if (flicker && gameTime > darkAt - 0.45) return (Math.floor(gameTime*20) & 1) === 0;
+  return true;
+}
+
+// ---------- city generation ----------
+function buildCity(){
+  cells = [];
+  for (let i=0;i<N_CELLS;i++){
+    cells.push({ i, x0:i*CELL_W, cx:cellCenter(i), tier:0, emberPhase:rand(0,6.28),
+                 smokeAcc:rand(0,0.5), flashT:0,
+                 fgDarkAt:Infinity, bgDarkAt:Infinity, fgFlicker:false, bgFlicker:false,
+                 fireStreamAt:Infinity });
+  }
+
+  // FAR backdrop — continuous, short, hazy; fills any gap-to-sky
+  farBuildings = [];
+  let fx = -6;
+  while (fx < W + 6){
+    const w = rand(16,30), h = rand(36,48);   // taller, tighter band: a continuous distant floor behind short spots
+    const windows = [];
+    const cols = Math.max(1, Math.floor(w/9));
+    for (let c=0;c<cols;c++) if (Math.random()<0.35)
+      windows.push({ x:fx+4+c*9, y:GROUND_Y-h+rand(6,h-4) });
+    farBuildings.push({ x:fx, w, h, windows });
+    fx += w + (Math.random()<0.55 ? 0 : rand(1,5));   // mostly touching -> near-seamless
+  }
+
+  // BACKGROUND depth layer — per cell, taller/hazier, archetypes (max one spire per cell)
+  bgBuildings = [];
+  for (const cell of cells){
+    const n = 1 + (Math.random()*2|0) + (Math.random()<0.30?1:0);
+    let spirePlaced = false;
+    for (let k=0;k<n;k++){
+      const r = Math.random();
+      let type = 'plain';
+      if (r<0.11 && !spirePlaced){ type='spire'; spirePlaced=true; }
+      else if (r<0.24) type='tower'; else if (r<0.32) type='dome'; else if (r<0.43) type='neon';
+      const w = type==='spire' ? rand(8,14) : (type==='dome'? rand(26,40) : rand(16,32));
+      const h = type==='spire' ? rand(58,98) : (type==='dome'? rand(30,50) : rand(34,90));
+      const x = cell.x0 + clamp(rand(-4, CELL_W-w+4), -6, CELL_W-4);
+      const windows = [];
+      const cols = Math.max(1, Math.floor(w/8)), rows = Math.max(1, Math.floor(h/12));
+      for (let rr=0;rr<rows;rr++) for (let cc=0;cc<cols;cc++){
+        if (Math.random()<0.4) windows.push({ x:x+3+cc*8, y:GROUND_Y-h+5+rr*12 });
+      }
+      bgBuildings.push({ x, w, h, cell:cell.i, type, windows,
+                         neon: type==='neon'? NEON[(Math.random()*NEON.length)|0] : null,
+                         peak: rand(8,16),                 // spire top — PRECOMPUTED (no draw-time rand)
+                         chipH: rand(2,5) });              // severe chip — precomputed
+    }
+  }
+
+  // FOREGROUND — continuous clustered/blended row, each tied to a cell
+  buildings = [];
+  let x = -rand(2,10);
+  let bias = rand(20,52), runLeft = 0;
+  while (x < W + 4){
+    if (runLeft <= 0){ bias = rand(16,56); runLeft = 2 + (Math.random()*3|0); }
+    const w = rand(14, 34);
+    const h = clamp(bias + rand(-9,9), 12, 66);
+    const cx = x + w/2;
+    const cell = cellIndexAt(cx);
+    const windows = [];
+    const cols = Math.max(1, Math.floor(w/6));
+    const rows = Math.max(1, Math.floor(h/9));
+    for (let r=0;r<rows;r++) for (let c=0;c<cols;c++){
+      if (Math.random()<0.5) windows.push({ x:x+3+c*6, y:GROUND_Y-h+4+r*9, on:Math.random()<0.82 });
+    }
+    buildings.push({ x, cx, w, h, cell, windows, wob:rand(0,6.28),
+                     n1h: rand(2,5), n2h: rand(2,6) });   // severe notches — PRECOMPUTED
+    const gap = Math.random()<0.36 ? 0 : rand(1,13);
+    x += w + gap;
+    runLeft--;
+  }
+}
+
+function resetGame(){
+  score=0; wave=1; damagePoints=0; gameTime=0; cityBlackout=false; lastLeakTime=-100;
+  salvage = START_FUNDS;
+  enemies=[]; intercepts=[]; blasts=[]; particles=[]; smoke=[]; impacts=[];
+  ambient=[]; ambientAcc=0; ambientLevel=0;
+  loiterQueue=0; loiterTimer=0; bomberQueue=0; bomberTimer=0; selectedWeapon='standard';
+  batteries = [ makeBattery(START_SLOT, 'standard') ];
+  buildCity();
+  startWave(1);
+}
+function rearmBattery(b){ b.loaded = b.magSize; b.reserve = b.reserveCap - b.magSize; b.reloadTimer = 0; }
+function startWave(n){
+  hideAllScreens();
+  wave = n;
+  batteries.forEach(rearmBattery);       // magazine + reserve refill each wave
+  // set the distant-war ambience for this wave from how battered the city already is
+  const dmgFrac = 1 - integrityPct(damagePoints)/100;
+  ambientLevel = clamp((dmgFrac - 0.12) / 0.6, 0, 1);   // nothing until ~12% damage, ramps to full
+  waveTotal = 6 + n*2;
+  loiterQueue = n >= 3 ? clamp(Math.floor((n-1)/2), 1, 4) : 0;   // placeholder scaling
+  loiterTimer = rand(3, 7);
+  bomberQueue = n >= 5 ? clamp(Math.floor((n-3)/3), 1, 2) : 0;  // placeholder scaling
+  bomberTimer = rand(5, 11);
+  spawnQueue = waveTotal;
+  spawnTimer = WAVE_LEAD_IN + rand(0, 0.5);
+  state = 'playing';
+  pauseBtn.style.display = 'flex';
+  renderWeaponChips();
+  syncHud();
+}
+function syncHud(){ elScore.textContent = score; elWave.textContent = wave; if (elSalvage) elSalvage.textContent = salvage;
+  if (state==='playing' || state==='settle') renderWeaponChips(); }
+
+function spawnEnemy(){
+  const i = (Math.random()*N_CELLS)|0;
+  const tx = cellCenter(i);
+  const sx = rand(30, W-30), sy = -12;
+  const cruise = 42 + wave*4 + rand(-6,6);
+  const angle = Math.atan2(GROUND_Y - sy, tx - sx);   // heading toward target
+  enemies.push({ type:'missile', x:sx, y:sy, angle, speed:cruise, cruise,
+                 thrust:'on', thrustPulse:true, thrustTimer:0, angVel:0,
+                 dead:false, deflected:false, deflTimer:0,
+                 trail:[], trailAcc:0 });
+}
+
+// loitering drone: drifts in from an edge, holds a slow circuit, then dives at a random point
+function spawnLoiterer(){
+  const fromLeft = Math.random()<0.5;
+  const sx = fromLeft ? -24 : W+24;
+  const orbitCx = rand(W*0.30, W*0.70);
+  const orbitCy = rand(96, 190);
+  const speed = (60 + wave*2) * 0.85;   // slower ingress
+  enemies.push({ type:'loiter', mode:'ingress',
+                 x:sx, y:orbitCy + rand(-14,14), angle: fromLeft?0:Math.PI, speed, cruise:speed,
+                 orbitCx, orbitCy, orbitR:rand(78,132), orbitAng:rand(0,6.28),
+                 orbitW:(Math.random()<0.5?-1:1)*rand(0.26,0.44),   // wider circuit, same lazy pace
+                 loiterUntil:0, blink:rand(0,6.28),
+                 jolts:0, staggerT:0, dying:false, dieT:0, fallV:0,
+                 angVel:0, thrust:'on', thrustPulse:true, thrustTimer:0,
+                 dead:false, deflected:false, deflTimer:0, trail:[], trailAcc:0 });
+}
+
+// heavy targeted drone: crosses the sky toward one district, then commits to a dive.
+// knock its guidance out and it doesn't vanish — it falls, and it damages whatever it lands on.
+function spawnBomber(){
+  const fromLeft = Math.random()<0.5;
+  const sx = fromLeft ? -34 : W+34;
+  const half = (N_CELLS/2)|0;
+  const targetCell = fromLeft ? half + (Math.random()*half|0)   // enters left -> targets right half
+                              : (Math.random()*half|0);         // enters right -> targets left half
+  const speed = BOMBER_SPEED + wave*0.6;
+  enemies.push({ type:'bomber', mode:'cruise',
+                 x:sx, y:GROUND_Y - rand(BOMBER_ENTRY_HI, BOMBER_ENTRY_LO), angle: fromLeft?0:Math.PI,
+                 speed, cruise:speed, targetX: cellCenter(targetCell), dir: fromLeft?1:-1,
+                 hp:BOMBER_HP, hitFlash:0,
+                 blink:rand(0,6.28), bob:rand(0,6.28),
+                 jolts:0, staggerT:0, dying:false, dieT:0, angVel:0,
+                 dead:false, deflected:false, deflTimer:0, trail:[], trailAcc:0 });
+}
+
+function fireAt(tx, ty){
+  ty = Math.min(ty, GROUND_Y - 6);
+  let best=null, bestD=Infinity;
+  for (const b of batteries){
+    if (b.type !== selectedWeapon) continue;         // clicks route to the selected weapon
+    if (b.loaded<=0) continue;
+    const d=Math.abs(b.x-tx); if(d<bestD){bestD=d;best=b;}
+  }
+  if (!best) return;
+  best.loaded--;
+  const ox=best.x, oy=best.y-24, dx=tx-ox, dy=ty-oy, len=Math.hypot(dx,dy)||1, spd=best.interceptSpeed;
+  intercepts.push({ x:ox, y:oy, vx:dx/len*spd, vy:dy/len*spd, tx, ty,
+                    radius:best.blastRadius, weapon:best.type,
+                    lingerTime:best.lingerTime, kills:best.kills });
+}
+function detonate(x,y,it){
+  const emp = it.weapon === 'emp';
+  blasts.push({ x, y, age:0, maxR:it.radius, weapon:it.weapon, jolted:new Set(),
+                lingerTime:it.lingerTime, kills:it.kills });
+  shake = Math.min(shake + (emp?1.5:3), 10);
+  for (let i=0;i<(emp?14:10);i++){ const a=rand(0,6.28), s=rand(30,140);
+    particles.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, life:rand(.3,.7), max:.7, c: emp?'#b9c4ff':'#eafffb' }); }
+}
+
+function leakImpact(x){
+  lastLeakTime = gameTime;
+  const idx = cellIndexAt(x);
+  const cell = cells[idx];
+  const cx = cell.cx;
+  const pts = applyLeakDamage(cell);
+  if (!devInvuln) damagePoints += pts;
+  cell.emberPhase = rand(0,6.28);
+  cell.flashT = 0.55;
+  impacts.push({ x:cx, y:GROUND_Y-4, age:0 });
+  if (cell.fireStreamAt === Infinity) cell.fireStreamAt = gameTime + rand(0.4, 0.9);
+
+  // the struck district loses its own power immediately
+  if (cell.fgDarkAt === Infinity){
+    cell.fgDarkAt = gameTime + 0.25; cell.bgDarkAt = gameTime + 0.5;
+    cell.fgFlicker = Math.random() < FLICKER_CHANCE;
+    cell.bgFlicker = Math.random() < FLICKER_CHANCE;
+  }
+  // the grid itself only fails once the city drops below 90% integrity
+  const districtsHit = cells.reduce((n,c)=> n + (c.tier>0?1:0), 0);
+  if (!cityBlackout && damagePoints >= 4 && districtsHit >= 2){
+    cityBlackout = true;
+    for (const c of cells){
+      if (c.fgDarkAt !== Infinity) continue;      // already dark locally
+      const t = gameTime + rand(1.0, 2.75);
+      c.fgDarkAt = t; c.bgDarkAt = t + rand(0.05, 0.35);
+      c.fgFlicker = Math.random() < FLICKER_CHANCE;
+      c.bgFlicker = Math.random() < FLICKER_CHANCE;
+    }
+  }
+
+  boom(cx, GROUND_Y-2, cell.tier>=3?'#ff8a5a':'#ff6a52', cell.tier>=2?22:15, true);
+  for (let k=0;k<5;k++){
+    smoke.push({ x:cx+rand(-10,10), y:GROUND_Y-rand(0,10), vx:rand(2,12), vy:-rand(34,54),
+                 r:rand(4,8), life:rand(2.2,3.4), max:3.4, col:'86,80,88', back:true });
+  }
+  shake = Math.min(shake + (cell.tier>=2?7:4), 14);
+  if (!devInvuln && damagePoints >= FAIL_POINTS) endGame();
+}
+function boom(x,y,color,count,back){
+  for (let i=0;i<count;i++){ const a=rand(-Math.PI,0), s=rand(40,220);
+    particles.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, life:rand(.35,.7), max:.7, c:color, g:260, back:!!back }); }
+}
+
+// a short stream of distant tracers rising from behind the skyline
+function spawnTracerBurst(){
+  if (ambient.length > 40) return;
+  const ox = rand(60, W-60), oy = GROUND_Y - rand(2, 18);
+  const baseAng = -Math.PI/2 + rand(-0.55, 0.55);
+  const n = 1 + (Math.random() < ambientLevel ? (1 + (Math.random()*2|0)) : 0);
+  for (let i=0;i<n;i++){
+    const ang = baseAng + rand(-0.05, 0.05), sp = rand(260, 390);
+    ambient.push({ x:ox+rand(-4,4), y:oy, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,
+                   life:rand(0.9, 1.6), max:1.6 });
+  }
+}
+
+// Deflection response to the lingering cloud. Keyed on missile type so future
+// enemy types (drones, thermite) can each react differently; only 'missile' exists now.
+function deflectMissile(e, bl){
+  e.deflected = true; e.deflTimer = 0;
+  e.gravityBiased = Math.random() < GRAV_BIAS_CHANCE;
+  const type = e.type || 'missile';
+  if (type === 'missile'){
+    const roll = Math.random();
+    if (roll < 0.30){                 // nudge — slight course change, engine fine
+      e.angle += rand(-0.4, 0.4); e.thrust='on';
+    } else if (roll < 0.55){          // veer — new direction, engine fine or sputtering
+      e.angle += rand(-1.6, 1.6); e.thrust = Math.random()<0.5 ? 'intermittent' : 'on';
+    } else if (roll < 0.78){          // tumble-coast — engine cuts out, arcs while drifting down
+      e.thrust='off'; e.angVel = rand(-1.6, 1.6); e.angle += rand(-0.6, 0.6);
+    } else if (roll < 0.92){          // tumble-thrust — keeps thrust, spirals
+      e.thrust='on'; e.angVel = rand(-1.3, 1.3); e.angle += rand(-0.6, 0.6);
+    } else {                          // sputter — intermittent thrust + course change
+      e.thrust='intermittent'; e.thrustTimer=rand(0.1,0.3); e.thrustPulse=false; e.angle += rand(-1.0, 1.0);
+    }
+  }
+}
+
+// How a lingering cloud affects a threat. Table is keyed by (enemy type × weapon type)
+// so new threats/weapons slot in cleanly — the bomber drone (J5b) plugs in here.
+function applyLinger(e, bl, dt){
+  const emp = bl.weapon === 'emp';
+  if (e.type === 'loiter'){
+    if (emp){ startDroneDeath(e); return; }      // guidance gone — it sparks, spirals, detonates
+    joltDrone(e, bl);                             // a plasma cloud only rattles it
+    return;
+  }
+  if (e.type === 'bomber'){
+    // THE RULE: linger brings a bomber DOWN (it falls and damages what it lands on);
+    // only a clean shockwave kill removes it from the sky.
+    if (emp){ startDroneDeath(e); return; }      // EMP fries the guidance outright
+    joltDrone(e, bl);                             // plasma wears the airframe down instead
+    return;
+  }
+  // ballistic missiles: standard clouds scramble them; EMP scrambles harder
+  if (!e.deflected){
+    deflectMissile(e, bl);
+    if (emp){ e.thrust = 'off'; e.angVel = clamp(e.angVel + rand(-1.4,1.4), -ANGVEL_CAP, ANGVEL_CAP); }
+  } else {
+    const s = emp ? 1.8 : 1.0;
+    e.angVel = clamp(e.angVel + rand(-1.0,1.0)*s*dt, -2.2, 2.2);
+    e.angle += rand(-0.4,0.4)*s*dt;
+  }
+}
+
+// a near-miss or plasma cloud rattles a drone: it shudders, wobbles off line, then recovers.
+// they accumulate — DRONE_JOLT_LIMIT of them and the airframe gives out.
+function joltDrone(e, bl){
+  if (e.dying) return;
+  if (bl){                                        // each cloud can only rattle a drone ONCE
+    if (bl.jolted.has(e)) return;
+    bl.jolted.add(e);
+  }
+  e.jolts = (e.jolts||0) + 1;
+  e.staggerT = DRONE_STAGGER_T;
+  for (let i=0;i<5;i++){ const a=rand(0,6.28), sp=rand(20,70);
+    particles.push({ x:e.x, y:e.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:rand(.2,.4), max:.4, c:'#ffd9a8' }); }
+  if (e.mode === 'dive'){ e.angVel = clamp((e.angVel||0) + rand(-1.4,1.4), -2.2, 2.2); }
+  if (e.jolts >= (JOLT_LIMIT[e.type] || DRONE_JOLT_LIMIT)) startDroneDeath(e);
+}
+
+// spark -> spiral out of control -> detonate (harmlessly, in the air)
+function startDroneDeath(e){
+  if (e.dying) return;
+  const bomber = e.type === 'bomber';
+  const diving = e.mode === 'dive' || e.mode === 'run';
+  e.dying = true;
+  e.crashDamages = bomber;                       // a downed bomber is still a falling bomb
+  e.deathDur = bomber ? 99 : (diving ? DRONE_DIVE_DEATH_T : DRONE_DEATH_T);
+  e.dieT = e.deathDur;
+  e.deathG = bomber ? BOMBER_DEATH_G : (diving ? DRONE_DIVE_G : DRONE_DEATH_G);
+  // carry its actual momentum into a ballistic wreck; the roll is purely visual from here
+  const spd = e.speed || 60;
+  e.dvx = Math.cos(e.angle||0) * spd;
+  e.dvy = Math.sin(e.angle||0) * spd;
+  e.angVel = diving ? (Math.random()<0.5?-1:1) * rand(0.8, 1.6)
+                    : (Math.random()<0.5?-1:1) * rand(1.2, 2.2);
+  e.mode = 'dive';                                 // leaves the orbit; physics takes over
+  score += 30*wave; salvage += SALVAGE_PER_KILL + 1;
+  for (let i=0;i<8;i++){ const a=rand(0,6.28), sp=rand(25,80);
+    particles.push({ x:e.x, y:e.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:rand(.3,.6), max:.6, c:'#cfe0ff' }); }
+}
+// a bombing run that lands: a heavy strike across the target district and its neighbours
+function bomberStrike(x){
+  for (let k=0; k<BOMBER_STRIKE_LV; k++) leakImpact(x);   // two damage levels on the single target district
+  shake = Math.min(shake + 8, 16);
+}
+function bomberHit(e){
+  e.hitFlash = 0.18;
+  for (let i=0;i<10;i++){ const a=rand(0,6.28), sp=rand(40,120);
+    particles.push({ x:e.x, y:e.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:rand(.2,.45), max:.45, c:'#bfeaff' }); }
+  shake = Math.min(shake + 2, 10);
+}
+function droneExplode(x,y){
+  for (let i=0;i<18;i++){ const a=rand(0,6.28), sp=rand(30,140);
+    particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:rand(.3,.7), max:.7, c:'#ffd9b0' }); }
+  for (let i=0;i<8;i++){ const a=rand(0,6.28), sp=rand(15,60);
+    particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:rand(.5,.9), max:.9, c:'#ff9a6a' }); }
+  smoke.push({ x, y, vx:rand(-6,6), vy:-rand(10,24), r:rand(5,9), life:rand(2.5,4), max:4, col:'60,52,58' });
+}
+
+// ---------- update ----------
+function update(dt){
+  if (state === 'paused') return;   // freeze
+  gameTime += dt;
+  if (weaponHintT>0){ weaponHintT-=dt; if(weaponHintT<0) weaponHintT=0; }
+  shake *= Math.pow(0.001, dt); if (shake<0.05) shake=0;
+
+  if (state === 'playing'){
+    if (spawnQueue > 0){
+      spawnTimer -= dt;
+      if (spawnTimer <= 0){ spawnEnemy(); spawnQueue--;
+        const base = clamp(1.5 - wave*0.06, 0.5, 1.5);
+        spawnTimer = rand(base*0.6, base*1.3); }
+    }
+    if (loiterQueue > 0){
+      loiterTimer -= dt;
+      if (loiterTimer <= 0){ spawnLoiterer(); loiterQueue--; loiterTimer = rand(4, 9); }
+    }
+    if (bomberQueue > 0){
+      bomberTimer -= dt;
+      if (bomberTimer <= 0){ spawnBomber(); bomberQueue--; bomberTimer = rand(9, 16); }
+    }
+    for (const e of enemies){
+      // --- an aircraft that's been knocked out: sparks, spirals, then comes down ---
+      if ((e.type === 'loiter' || e.type === 'bomber') && e.dying){
+        e.dieT -= dt;
+        // ballistic wreck: momentum carries, gravity pulls, light drag bleeds forward speed
+        e.dvy += e.deathG * dt;
+        e.dvx *= (1 - 0.30*dt);
+        e.dvx += rand(-9,9) * dt;                  // slight aerodynamic wander
+        e.x += e.dvx * dt;
+        e.y += e.dvy * dt;
+        // the spin is decorative — it no longer steers the wreck
+        e.angVel += rand(-1.4,1.4)*dt;
+        e.angVel = clamp(e.angVel, -3.2, 3.2);
+        e.angle += e.angVel*dt;
+        const elapsed = e.deathDur - e.dieT;
+        if (elapsed > DRONE_DEATH_FIRE){          // sparks/fire kick in after the initial tumble
+          if (Math.random() < 0.7){
+            particles.push({ x:e.x+rand(-3,3), y:e.y+rand(-3,3), vx:rand(-25,25), vy:rand(-10,35),
+                             life:rand(.25,.5), max:.5, c: Math.random()<0.5?'#ffb14e':'#ff7a4e' });
+          }
+          if (Math.random() < 0.25 && smoke.length < 200){
+            smoke.push({ x:e.x, y:e.y, vx:rand(-8,8), vy:-rand(4,14), r:rand(2.5,4.5),
+                         life:rand(1.6,2.6), max:2.6, col:'54,46,52' });
+          }
+        }
+        if (e.x < -70 || e.x > W+70){ e.dead = true; continue; }   // carried clear of the map
+        const grounded = e.y >= GROUND_Y-8;
+        if (e.dieT <= 0 || grounded){
+          e.dead = true;
+          if (e.crashDamages && grounded){
+            droneExplode(e.x, GROUND_Y-8);
+            leakImpact(e.x);                 // a downed bomber damages whatever it lands on
+          } else {
+            droneExplode(e.x, Math.min(e.y, GROUND_Y-8));   // burns out in the air, harmless
+          }
+        }
+        continue;
+      }
+      if ((e.type === 'loiter' || e.type === 'bomber') && e.staggerT > 0){
+        e.staggerT -= dt;
+        if (e.type === 'loiter' && e.mode !== 'dive') e.orbitAng += rand(-0.7,0.7)*dt;
+      }
+
+      // --- bomber: cross to the target district, then commit to the run ---
+      if (e.type === 'bomber'){
+        if (e.hitFlash > 0) e.hitFlash -= dt;
+        if (e.mode === 'cruise'){
+          e.x += e.dir * e.speed * dt;
+          e.y += Math.sin(gameTime*0.7 + e.bob) * 5 * dt;    // slow, heavy bob
+          e.angle = e.dir > 0 ? 0 : Math.PI;
+          if ((e.dir > 0 && e.x >= e.targetX) || (e.dir < 0 && e.x <= e.targetX)){
+            e.mode = 'run';
+            e.angle = Math.atan2(GROUND_Y - e.y, (e.targetX - e.x) + e.dir*40);
+            e.cruise = e.speed * 2.2;
+          }
+        } else {
+          e.speed += (e.cruise - e.speed) * clamp(1.6*dt, 0, 1);
+          e.x += Math.cos(e.angle)*e.speed*dt;
+          e.y += Math.sin(e.angle)*e.speed*dt;
+        }
+        e.trailAcc -= dt;
+        if (e.trailAcc<=0){ e.trail.push({x:e.x,y:e.y}); if (e.trail.length>8) e.trail.shift(); e.trailAcc=0.15; }
+        if (e.x < -70 || e.x > W+70){ e.dead = true; continue; }
+        if (e.y >= GROUND_Y){
+          e.dead = true;
+          bomberStrike(e.x);                 // a completed run is a heavy, wide strike
+          continue;
+        }
+        continue;
+      }
+      if (e.type === 'loiter' && e.mode !== 'dive'){
+        // --- ingress: drift toward the holding area ---
+        if (e.mode === 'ingress'){
+          const dir = Math.sign(e.orbitCx - e.x) || 1;
+          e.x += dir * e.speed * dt;
+          e.angle = dir > 0 ? 0 : Math.PI;
+          e.y += (e.orbitCy - e.y) * clamp(1.2*dt, 0, 1);
+          if (Math.abs(e.x - e.orbitCx) < e.orbitR){
+            e.mode = 'loiter';
+            e.loiterUntil = gameTime + rand(5, 12);
+            e.orbitAng = Math.atan2(e.y - e.orbitCy, e.x - e.orbitCx);
+          }
+        } else {
+          // --- loiter: slow elliptical circuit ---
+          e.orbitAng += e.orbitW * dt;
+          const px=e.x, py=e.y;
+          e.x = e.orbitCx + Math.cos(e.orbitAng)*e.orbitR;
+          e.y = e.orbitCy + Math.sin(e.orbitAng)*e.orbitR*0.42;
+          e.angle = Math.atan2(e.y-py, e.x-px);
+          if (gameTime > e.loiterUntil){
+            e.mode = 'dive';
+            const tx = cellCenter((Math.random()*N_CELLS)|0);
+            e.angle = Math.atan2(GROUND_Y - e.y, tx - e.x);
+            e.cruise = 108 + wave*3;
+          }
+        }
+        e.trailAcc -= dt;
+        if (e.trailAcc<=0){ e.trail.push({x:e.x,y:e.y}); if (e.trail.length>10) e.trail.shift(); e.trailAcc=0.12; }
+        if (e.x < -60 || e.x > W+60){ e.dead=true; }
+        continue;
+      }
+
+      // thrust state -> target speed, eased (no instant jerk)
+      let target = e.cruise;
+      if (e.thrust==='off') target = TUMBLE_SPEED;
+      else if (e.thrust==='intermittent'){
+        e.thrustTimer -= dt;
+        if (e.thrustTimer<=0){ e.thrustPulse = !e.thrustPulse; e.thrustTimer = rand(0.15,0.5); }
+        target = e.thrustPulse ? e.cruise : TUMBLE_SPEED;
+      }
+      e.speed += (target - e.speed) * clamp(M_ACCEL*dt, 0, 1);
+      if (e.deflected && e.gravityBiased && e.deflTimer > GRAV_DELAY){
+        // spring the heading back toward 'down' (PI/2); wobbles then settles into a dive
+        e.angVel = clamp(e.angVel + angDiff(Math.PI/2, e.angle)*GRAV_SPRING*dt, -ANGVEL_CAP, ANGVEL_CAP) * Math.pow(GRAV_DAMP, dt);
+      }
+      e.angle += e.angVel*dt;
+      e.x += Math.cos(e.angle)*e.speed*dt;
+      e.y += Math.sin(e.angle)*e.speed*dt;
+
+      if (e.deflected){
+        e.deflTimer += dt;
+        if (e.deflTimer >= DEFLECT_TTL){        // self-detonate harmlessly (no city damage)
+          e.dead = true;
+          for (let s=0;s<8;s++){ const a=rand(0,6.28), sp=rand(20,70);
+            particles.push({ x:e.x, y:e.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:rand(.3,.6), max:.6, c:'#ffce9a' }); }
+          continue;
+        }
+      }
+      e.trailAcc -= dt;
+      if (e.trailAcc<=0){ e.trail.push({x:e.x,y:e.y}); if (e.trail.length>34) e.trail.shift(); e.trailAcc=0.09; }
+      if (e.x < -30 || e.x > W+30 || e.y < -60){ e.dead=true; continue; }   // driven off the field = gone, no damage
+      if (e.y >= GROUND_Y){ e.dead = true; leakImpact(e.x); }
+    }
+    for (const it of intercepts){
+      const remX=it.tx-it.x, remY=it.ty-it.y, step=Math.hypot(it.vx*dt,it.vy*dt);
+      if (Math.hypot(remX,remY) <= step){ detonate(it.tx,it.ty,it); it.done=true; }
+      else { it.x+=it.vx*dt; it.y+=it.vy*dt; }
+    }
+    for (const bl of blasts){
+      bl.age += dt; const r=blastRadius(bl.age, bl.maxR), r2=r*r;
+      const killing = bl.age < EXPAND_T && bl.kills;   // only killing weapons destroy on the shockwave
+      for (const e of enemies){
+        if (e.dead || e.dying) continue;
+        const dd = dist2(e.x,e.y,bl.x,bl.y);
+        if (dd > r2) continue;
+        if (killing){
+          const kr = r * (KILL_RESIST[e.type] || 1);      // drones need a more centred hit
+          if (dd <= kr*kr){
+            if (e.type === 'bomber'){
+              if (!bl.struck) bl.struck = new Set();
+              if (!bl.struck.has(e)){                      // one direct hit per blast
+                bl.struck.add(e);
+                e.hp -= 1;
+                if (e.hp <= 0){ e.dead=true; score += 40*wave; salvage += SALVAGE_PER_KILL + 3; boom(e.x,e.y,'#4ff2e0',12); }
+                else bomberHit(e);                         // wounded, still flying
+              }
+            } else {
+              e.dead=true; score += 25*wave; salvage += SALVAGE_PER_KILL; boom(e.x,e.y,'#4ff2e0',8);
+            }
+          } else if (e.type === 'loiter'){
+            joltDrone(e, bl);                              // clipped, not killed — it shudders
+          }
+        } else if (bl.age >= EXPAND_T){
+          applyLinger(e, bl, dt);
+        }
+      }
+    }
+  }
+
+  // fire smoke — tier-scaled, after fire-catch delay
+  if (state !== 'menu'){
+    for (const cell of cells){
+      if (cell.flashT>0){ cell.flashT -= dt; if (cell.flashT<0) cell.flashT=0; }
+      if (cell.tier >= 1 && gameTime > cell.fireStreamAt && smoke.length < 200){
+        cell.smokeAcc -= dt;
+        if (cell.smokeAcc <= 0){
+          let interval, r, vy, life, col;
+          if (cell.tier>=3){ interval=rand(0.18,0.30); r=rand(6,10); vy=-rand(46,64); life=rand(7,10); col='22,18,22'; }
+          else if (cell.tier===2){ interval=rand(0.40,0.62); r=rand(4,7); vy=-rand(40,56); life=rand(8,11); col='50,44,52'; }
+          else { interval=rand(0.75,1.15); r=rand(2,4); vy=-rand(34,46); life=rand(10,14); col='74,68,76'; }
+          cell.smokeAcc = interval;
+          smoke.push({ x:cell.cx+rand(-9,9), y:GROUND_Y-rand(0,8), vx:rand(2,10), vy, r, life, max:life, col });
+        }
+      }
+    }
+    // battery smoke when its district is severe (cosmetic)
+    for (const b of batteries){
+      if (cells[b.cell] && cells[b.cell].tier>=3 && smoke.length<200){
+        b.smokeAcc -= dt;
+        if (b.smokeAcc<=0){ b.smokeAcc=rand(0.5,0.9);
+          smoke.push({ x:b.x+rand(-4,4), y:b.y-18, vx:rand(1,6), vy:-rand(30,44), r:rand(3,5), life:rand(5,7), max:7, col:'38,32,38' }); }
+      }
+    }
+  }
+
+  // distant-war ambience — tracers arcing up from behind the skyline (rate set at wave start)
+  if (state !== 'menu' && ambientLevel > 0){
+    ambientAcc -= dt;
+    if (ambientAcc <= 0){
+      ambientAcc = (6.0 - 4.6*ambientLevel) * rand(0.6, 1.4);   // more damage -> more frequent
+      spawnTracerBurst();
+    }
+  }
+  for (const a of ambient){ a.x += a.vx*dt; a.y += a.vy*dt; a.vy += 120*dt; a.life -= dt; }
+  ambient = ambient.filter(a=> a.life>0 && a.y > -40);
+
+  for (const p of particles){ p.life-=dt; if(p.g) p.vy+=p.g*dt; p.x+=p.vx*dt; p.y+=p.vy*dt;
+    if(p.g && p.y > GROUND_Y){ p.y=GROUND_Y; p.life=0; } }
+  for (const s of smoke){
+    const climb = clamp(1 - s.y/GROUND_Y, 0, 1);
+    s.life-=dt; s.x+=s.vx*dt; s.y+=s.vy*dt; s.r += dt*(3 + climb*9); s.vx*=(1-0.12*dt);
+  }
+  for (const im of impacts){ im.age+=dt; }
+
+  // magazine reload — empties, waits, then refills the WHOLE magazine from reserve
+  if (state === 'playing'){
+    for (const b of batteries){
+      if (b.loaded <= 0 && b.reserve > 0){
+        b.reloadTimer -= dt;
+        if (b.reloadTimer <= 0){
+          const n = Math.min(b.magSize, b.reserve);
+          b.loaded += n; b.reserve -= n;
+          b.reloadTimer = b.reloadTime;
+        }
+      } else {
+        b.reloadTimer = b.reloadTime;   // reset the clock while rounds remain chambered
+      }
+    }
+  }
+
+  enemies    = enemies.filter(e=>!e.dead);
+  intercepts = intercepts.filter(it=>!it.done);
+  blasts     = blasts.filter(b=>b.age < blastLife(b.lingerTime));
+  particles  = particles.filter(p=>p.life>0);
+  smoke      = smoke.filter(s=>s.life>0 && s.y > -30);
+  impacts    = impacts.filter(im=>im.age < 0.55);
+  syncHud();
+
+  if (state === 'playing'){
+    if (!devInvuln && damagePoints >= FAIL_POINTS){ endGame(); return; }
+    if (spawnQueue===0 && enemies.length===0 && intercepts.length===0 && blasts.length===0){
+      state = 'settle';
+      // normally a 2s beat, but never end the round within 5s of a city impact (ruminate on late damage)
+      settleTimer = Math.max(SETTLE_DELAY, 5 - (gameTime - lastLeakTime));
+    }
+  } else if (state === 'settle'){
+    settleTimer -= dt; if (settleTimer<=0) enterBuild();
+  } else if (state === 'build'){
+    buildTimer -= dt;
+    if (buildTimer<=0){ startWave(wave+1); }
+    else { updateBuildTimerUI(); }
+  } else if (state === 'wavebreak'){
+    breakTimer -= dt; if (breakTimer<=0) startWave(wave+1);
+  }
+}
+
+function enterBuild(){
+  salvage += WAVE_CLEAR_BASE + wave*2;   // wave-clear payout
+  state = 'build';
+  buildTimer = BUILD_TIME;
+  pauseBtn.style.display = 'flex';
+  weaponsEl.classList.add('hidden');
+  renderBuildPanel();
+  buildScr.classList.remove('hidden');
+  syncHud();
+}
+function endGame(){ state='gameover'; pauseBtn.style.display='none'; buildScr.classList.add('hidden'); weaponsEl.classList.add('hidden'); showScreen(overlay, gameoverHTML()); }
+
+// ---------- build phase UI ----------
+const SLOT_NAMES = ['Far Left','Left','Center','Right','Far Right'];
+function renderBuildPanel(){
+  buildSalvageEl.textContent = salvage;
+  buildIntEl.textContent = integrityPct(damagePoints)+'%';
+  let html = '';
+  for (let s=0;s<SLOT_X.length;s++){
+    const b = batteries.find(x=>x.slot===s);
+    if (b){
+      let rows = '';
+      for (const key of UPG_KEYS){
+        const u = WEAPONS[b.type].upgrades[key];
+        const lv = b.lvl[key];
+        const maxed = lv >= MAX_UPG_LEVEL;
+        const cost = maxed ? 0 : upgradeCost(b.type, key, lv);
+        const dis = (maxed || salvage < cost) ? 'disabled' : '';
+        let pips = '';
+        for (let i=0;i<MAX_UPG_LEVEL;i++) pips += '<i class="'+(i<lv?'on':'')+'"></i>';
+        rows += '<div class="upg">'+
+          '<div class="upg-top"><span class="upg-name">'+u.short+'</span>'+
+            '<span class="upg-val">'+u.fmt(u.values[lv])+
+              (maxed ? '' : ' <em>&rarr; '+u.fmt(u.values[lv+1])+'</em>')+'</span></div>'+
+          '<div class="pips">'+pips+'</div>'+
+          '<button data-upg="'+s+'" data-key="'+key+'" '+dis+'>'+
+            (maxed ? 'MAX' : 'Upgrade <span class="cost">'+cost+'</span>')+'</button>'+
+        '</div>';
+      }
+      html += '<div class="slotcard'+(b.type==='emp'?' emp':'')+'">'+
+        '<div class="sc-name">'+SLOT_NAMES[s]+'</div>'+
+        '<div class="sc-type">'+WEAPONS[b.type].abbr+'</div>'+
+        rows +
+        '</div>';
+    } else {
+      let buys = '';
+      for (const t of WEAPON_KEYS){
+        const cost = buildCostFor(t);
+        const dis = salvage < cost ? 'disabled' : '';
+        buys += '<button data-buy="'+s+'" data-type="'+t+'" '+dis+'>'+
+          WEAPONS[t].abbr+' <span class="cost">'+cost+'</span></button>';
+      }
+      html += '<div class="slotcard empty">'+
+        '<div class="sc-name">'+SLOT_NAMES[s]+'</div>'+
+        '<div class="sc-type" style="color:#66809f;">EMPTY</div>'+
+        '<div class="sc-stat" style="margin:auto 0 4px;">build&hellip;</div>'+
+        buys +
+        '</div>';
+    }
+  }
+  buildSlotsEl.innerHTML = html;
+}
+// ---------- weapon selection ----------
+function ownedTypes(){ const set=new Set(); for(const b of batteries) set.add(b.type); return set; }
+function selectWeapon(t){
+  if (!WEAPONS[t]) return;
+  if (!ownedTypes().has(t)){            // can't select a weapon you haven't built
+    weaponHint = WEAPONS[t].label + ' — NOT BUILT';
+    weaponHintT = 1.6;
+    return;
+  }
+  selectedWeapon = t;
+  renderWeaponChips();
+}
+function cycleWeapon(){
+  const owned = WEAPON_KEYS.filter(t=>ownedTypes().has(t));
+  if (!owned.length) return;
+  const i = owned.indexOf(selectedWeapon);
+  selectWeapon(owned[(i+1) % owned.length]);
+}
+function renderWeaponChips(){
+  const owned = ownedTypes();
+  // only show the selector once there's a real choice to make
+  if (!batteries.length){ weaponsEl.classList.add('hidden'); weaponsEl.innerHTML=''; return; }
+  weaponsEl.classList.remove('hidden');
+  let html='';
+  for (const t of WEAPON_KEYS){
+    if (!owned.has(t)) continue;
+    const guns = batteries.filter(b=>b.type===t);
+    const ready = guns.reduce((n,b)=>n+b.loaded,0);
+    const total = guns.reduce((n,b)=>n+b.loaded+b.reserve,0);
+    html += '<div class="wchip'+(selectedWeapon===t?' active':'')+(ready===0?' none':'')+'" data-w="'+t+'">'+
+      '<span class="k">'+WEAPONS[t].hotkey+'</span>'+WEAPONS[t].abbr+
+      '<span class="n">'+ready+'&middot;'+total+'</span></div>';
+  }
+  weaponsEl.innerHTML = html;
+}
+weaponsEl.addEventListener('pointerdown',(e)=>{
+  const chip = e.target.closest('.wchip'); if(!chip) return;
+  e.stopPropagation(); selectWeapon(chip.dataset.w);
+});
+
+function updateBuildTimerUI(){ buildTimerEl.textContent = Math.ceil(buildTimer); }
+function buyEmplacement(slot, type){
+  if (slotOwned(slot)) return;
+  const cost = buildCostFor(type);
+  if (salvage < cost) return;
+  salvage -= cost;
+  const b = makeBattery(slot, type); rearmBattery(b);
+  batteries.push(b);
+  renderBuildPanel(); syncHud();
+}
+buildSlotsEl.addEventListener('pointerdown', (e)=>{
+  const buyBtn = e.target.closest('button[data-buy]');
+  if (buyBtn && !buyBtn.disabled){ e.stopPropagation(); buyEmplacement(parseInt(buyBtn.dataset.buy,10), buyBtn.dataset.type||'standard'); return; }
+  const upgBtn = e.target.closest('button[data-upg]');
+  if (upgBtn && !upgBtn.disabled){
+    e.stopPropagation();
+    const slot = parseInt(upgBtn.dataset.upg,10);
+    const b = batteries.find(x=>x.slot===slot);
+    if (b && upgradeBattery(b, upgBtn.dataset.key)){ renderBuildPanel(); syncHud(); }
+  }
+});
+document.getElementById('btn-startwave').addEventListener('pointerdown', (e)=>{
+  e.stopPropagation(); if (state==='build'){ startWave(wave+1); }
+});
+
+// ---------- screens ----------
+function menuHTML(){
+  return '<h1>AFTERGLOW</h1><div class="rule"></div>'+
+    '<div class="lede">Dusk over the last lit city. Ordnance is inbound. Click to launch '+
+    'interceptors — they bloom where you aim, and the glow lingers a moment after. The lights '+
+    'stay on until the first strike gets through; hold the line and <b>keep the city running</b> '+
+    'for as long as you can.</div><div class="cta">Click to begin</div>';
+}
+function gameoverHTML(){
+  return '<h2>THE CITY GOES DARK</h2>'+
+    '<div class="summary">Final Score <span>'+score+'</span><br>Held to Wave <span>'+wave+'</span></div>'+
+    '<div class="cta">Click to try again</div>';
+}
+function waveBreakHTML(d){
+  return '<h1 style="font-size:34px;letter-spacing:10px;">WAVE '+wave+' HELD</h1><div class="rule"></div>'+
+    '<div class="summary">Integrity <span>'+integrityPct(damagePoints)+'%</span><br>'+
+    'Hold bonus <span>+'+d.holdBonus+'</span> &nbsp; Reserve <span>+'+d.ammoBonus+'</span></div>'+
+    '<div class="cta">Next wave incoming…</div>';
+}
+function showScreen(el, html){ if(html!=null) el.innerHTML = html; el.classList.remove('hidden'); }
+function hideAllScreens(){ overlay.classList.add('hidden'); pauseScr.classList.add('hidden'); buildScr.classList.add('hidden'); }
+
+// ---------- pause ----------
+function togglePause(){
+  if (state==='playing' || state==='wavebreak' || state==='settle' || state==='build'){ pausePrev=state; state='paused'; showScreen(pauseScr, null); }
+  else if (state==='paused'){ resumeGame(); }
+}
+function resumeGame(){ state=pausePrev; pauseScr.classList.add('hidden'); }
+function goToMenu(){
+  pauseScr.classList.add('hidden'); buildScr.classList.add('hidden'); weaponsEl.classList.add('hidden'); pauseBtn.style.display='none';
+  state='menu'; showScreen(overlay, menuHTML());
+}
+
+// ---------- input ----------
+function toLogical(evt){
+  const r = canvas.getBoundingClientRect();
+  return { x:(evt.clientX-r.left)/r.width*W, y:(evt.clientY-r.top)/r.height*H };
+}
+canvas.addEventListener('pointerdown', e=>{ if (state==='playing'){ const p=toLogical(e); fireAt(p.x,p.y); } });
+overlay.addEventListener('pointerdown', ()=>{
+  if (state==='menu' || state==='gameover'){ hideAllScreens(); resetGame(); }
+  else if (state==='wavebreak'){ hideAllScreens(); breakTimer=0; }
+});
+pauseBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); togglePause(); });
+document.getElementById('btn-resume').addEventListener('pointerdown', e=>{ e.stopPropagation(); resumeGame(); });
+document.getElementById('btn-menu').addEventListener('pointerdown', e=>{ e.stopPropagation(); goToMenu(); });
+
+window.addEventListener('keydown', (e)=>{
+  const k = e.key;
+  if (k==='Escape' || k==='p' || k==='P'){ togglePause(); return; }
+  if (k==='q' || k==='Q'){ selectWeapon('standard'); return; }
+  if (k==='e' || k==='E'){ selectWeapon('emp'); return; }
+  if (k==='Tab'){ e.preventDefault(); cycleWeapon(); return; }
+  if (k==='`' || k==='~'){ devOn=!devOn; devPanel.style.display = devOn?'block':'none'; return; }
+  if (!devOn) return;
+  if (k==='n' || k==='N') devSkip();
+  else if (k==='i' || k==='I') devToggleInvuln();
+  else if (k==='0') devSetTiers(0);
+  else if (k==='1') devSetTiers(1);
+  else if (k==='2') devSetTiers(2);
+  else if (k==='3') devSetTiers(3);
+  else if (k==='f' || k==='F') devFreeze = !devFreeze;
+});
+
+// ---------- dev actions ----------
+function devSkip(){ if (state==='playing' || state==='settle'){ enemies=[]; intercepts=[]; blasts=[]; spawnQueue=0; enterBuild(); } }
+function devToggleInvuln(){ devInvuln=!devInvuln; devInvBtn.textContent='Invuln: '+(devInvuln?'on':'off'); }
+function devAddDamage(){ leakImpact(cellCenter((Math.random()*N_CELLS)|0)); }
+function devSetTiers(n){
+  n=clamp(n,0,3);
+  for (const c of cells){ c.tier=n; if (n>=1){ c.fireStreamAt=Math.min(c.fireStreamAt, gameTime); c.emberPhase=c.emberPhase||rand(0,6.28); } else { c.fireStreamAt=Infinity; } }
+  if (n>=1 && !cityBlackout){ cityBlackout=true; for (const c of cells){ c.fgDarkAt=gameTime; c.bgDarkAt=gameTime; } }
+  if (n===0){ cityBlackout=false; for (const c of cells){ c.fgDarkAt=Infinity; c.bgDarkAt=Infinity; c.fireStreamAt=Infinity; } smoke=[]; }
+}
+devPanel.addEventListener('pointerdown', (e)=>{
+  const b = e.target.closest('button'); if(!b) return; e.stopPropagation();
+  const a=b.dataset.act;
+  if(a==='skip') devSkip(); else if(a==='dmg') devAddDamage(); else if(a==='invuln') devToggleInvuln();
+  else if(a==='salv'){ salvage+=50; syncHud(); if(state==='build') renderBuildPanel(); }
+  else if(a==='freeze') devFreeze=!devFreeze;
+  else if(a==='t0') devSetTiers(0); else if(a==='t1') devSetTiers(1);
+  else if(a==='t2') devSetTiers(2); else if(a==='t3') devSetTiers(3);
+});
+
+// ---------- render ----------
+let stars = [];
+for (let i=0;i<80;i++) stars.push({x:rand(0,W), y:rand(0,GROUND_Y-90), r:rand(.4,1.3), a:rand(.15,.7)});
+
+function render(){
+  ctx.save();
+  const canShake = state!=='paused' && shake;
+  const sx = canShake?rand(-shake,shake):0, sy = canShake?rand(-shake,shake):0;
+  ctx.translate(sx,sy);
+
+  drawSky();
+  drawAmbient();
+  drawFar();
+  drawBackground();
+  drawFireGlow();
+  drawEnemies();   // enemy missiles behind the front buildings — they read as landing "within" the city
+  drawImpacts();   // ground-impact bloom also sits behind the front buildings
+  drawSmoke(true);     // impact puff — behind the skyline
+  drawParticles(true); // impact sparks — behind the skyline
+  drawCity();
+  drawSmoke(false);
+
+  ctx.strokeStyle='rgba(79,242,224,.22)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(-20,GROUND_Y+.5); ctx.lineTo(W+20,GROUND_Y+.5); ctx.stroke();
+
+  drawSlots();
+  for (const b of batteries) drawBattery(b);
+
+  ctx.lineCap='round';
+  for (const it of intercepts){
+    ctx.strokeStyle='rgba(79,242,224,.7)'; ctx.lineWidth=2; ctx.shadowColor='#4ff2e0'; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.moveTo(it.x,it.y); ctx.lineTo(it.x-it.vx*.03,it.y-it.vy*.03); ctx.stroke(); ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(79,242,224,.3)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(it.tx-5,it.ty); ctx.lineTo(it.tx+5,it.ty);
+    ctx.moveTo(it.tx,it.ty-5); ctx.lineTo(it.tx,it.ty+5); ctx.stroke();
+  }
+  for (const bl of blasts){
+    const r=blastRadius(bl.age, bl.maxR), a=blastAlpha(bl.age, bl.lingerTime), expanding=bl.age<EXPAND_T;
+    const grd=ctx.createRadialGradient(bl.x,bl.y,0,bl.x,bl.y,r);
+    if (bl.weapon === 'emp'){
+      // cold, hollow, electrical — a field, not a fireball
+      grd.addColorStop(0,'rgba(120,140,255,'+(0.10*a)+')');
+      grd.addColorStop(0.55,'rgba(150,160,255,'+(0.22*a)+')');
+      grd.addColorStop(0.88,'rgba(190,200,255,'+(0.34*a)+')');
+      grd.addColorStop(1,'rgba(120,140,255,0)');
+      ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(bl.x,bl.y,r,0,7); ctx.fill();
+      // pulse rings travelling outward
+      for (let k=0;k<2;k++){
+        const t = (bl.age*1.5 + k*0.5) % 1;
+        ctx.strokeStyle='rgba(200,210,255,'+(0.30*a*(1-t))+')'; ctx.lineWidth=1.4;
+        ctx.beginPath(); ctx.arc(bl.x,bl.y,r*t,0,7); ctx.stroke();
+      }
+    } else if (expanding){
+      grd.addColorStop(0,'rgba(255,255,255,'+(0.95*a)+')');
+      grd.addColorStop(0.5,'rgba(120,255,240,'+(0.8*a)+')'); grd.addColorStop(1,'rgba(79,242,224,0)');
+      ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(bl.x,bl.y,r,0,7); ctx.fill();
+    } else {
+      grd.addColorStop(0,'rgba(180,255,248,'+(0.45*a)+')');
+      grd.addColorStop(0.6,'rgba(79,242,224,'+(0.35*a)+')'); grd.addColorStop(1,'rgba(42,143,134,0)');
+      ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(bl.x,bl.y,r,0,7); ctx.fill();
+    }
+  }
+  drawParticles(false);
+
+  ctx.restore();
+  drawIntegrityMeter();
+  if (weaponHintT > 0){
+    const a = clamp(weaponHintT/1.6, 0, 1);
+    ctx.save();
+    ctx.font='bold 12px ui-monospace, monospace'; ctx.textAlign='center';
+    ctx.fillStyle='rgba(255,150,120,'+(0.9*a)+')';
+    ctx.fillText(weaponHint, W/2, H-64);
+    ctx.restore();
+  }
+}
+
+function drawAmbient(){
+  for (const a of ambient){
+    const al = clamp(a.life/a.max, 0, 1) * 0.6;
+    const m = Math.hypot(a.vx,a.vy)||1, tlen=16;
+    const tx = a.x - a.vx/m*tlen, ty = a.y - a.vy/m*tlen;
+    const g = ctx.createLinearGradient(tx,ty,a.x,a.y);
+    g.addColorStop(0,'rgba(255,190,120,0)');
+    g.addColorStop(1,'rgba(255,208,150,'+al+')');
+    ctx.strokeStyle=g; ctx.lineWidth=2.0;
+    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(a.x,a.y); ctx.stroke();
+    ctx.fillStyle='rgba(255,226,184,'+(al*0.95)+')';
+    ctx.beginPath(); ctx.arc(a.x,a.y,1.5,0,7); ctx.fill();
+  }
+}
+
+function drawEnemies(){
+  ctx.lineCap='round';
+  for (const e of enemies){
+    if (e.type === 'loiter'){ drawDrone(e); continue; }
+    if (e.type === 'bomber'){ drawBomber(e); continue; }
+    const tr = e.trail;
+    if (tr.length>1){
+      for (let i=1;i<tr.length;i++){
+        ctx.strokeStyle='rgba(255,90,82,'+((i/tr.length)*0.4)+')'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(tr[i-1].x,tr[i-1].y); ctx.lineTo(tr[i].x,tr[i].y); ctx.stroke();
+      }
+      ctx.strokeStyle='rgba(255,90,82,.42)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(tr[tr.length-1].x,tr[tr.length-1].y); ctx.lineTo(e.x,e.y); ctx.stroke();
+    }
+    ctx.shadowColor = e.deflected ? '#ffb14e' : '#ff5a52'; ctx.shadowBlur=12;
+    ctx.fillStyle = e.deflected ? '#ffd9b0' : '#ffd0cd';
+    ctx.beginPath(); ctx.arc(e.x,e.y,2.6,0,7); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+}
+
+// a much larger, straight-winged airframe: slow and deliberate where the loiterer is quick
+function drawBomber(e){
+  if (e.trail.length>1 && (e.mode==='run' || e.dying)){
+    const tr=e.trail;
+    for (let i=1;i<tr.length;i++){
+      ctx.strokeStyle='rgba(255,120,90,'+((i/tr.length)*0.22)+')'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(tr[i-1].x,tr[i-1].y); ctx.lineTo(tr[i].x,tr[i].y); ctx.stroke();
+    }
+  }
+  if (e.dying && (e.deathDur - e.dieT) > DRONE_DEATH_FIRE){
+    const fl = 0.55 + 0.4*Math.sin(gameTime*22 + e.blink);
+    const gr = ctx.createRadialGradient(e.x,e.y,0, e.x,e.y,22);
+    gr.addColorStop(0,'rgba(255,180,90,'+(0.55*fl)+')');
+    gr.addColorStop(1,'rgba(255,90,50,0)');
+    ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(e.x,e.y,22,0,7); ctx.fill();
+  }
+  const wob = e.staggerT>0 ? Math.sin(gameTime*40)*0.30*(e.staggerT/DRONE_STAGGER_T) : 0;
+  const hurt = (e.jolts||0) / (JOLT_LIMIT.bomber);
+  const flash = (e.hitFlash>0) ? clamp(e.hitFlash/0.18,0,1) : 0;
+  ctx.save();
+  ctx.translate(e.x, e.y); ctx.rotate(e.angle + wob);
+  const body = flash>0 ? '#dff2ff' : (e.dying ? '#3d251f' : (hurt>0 ? '#33272e' : '#272130'));
+  // long fuselage
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.moveTo(15,0); ctx.lineTo(9,3); ctx.lineTo(-11,3.2); ctx.lineTo(-13,0); ctx.lineTo(-11,-3.2); ctx.lineTo(9,-3);
+  ctx.closePath(); ctx.fill();
+  // straight high-aspect wings
+  ctx.fillStyle = e.dying ? '#4a2e26' : '#312a3d';
+  ctx.fillRect(-3, -17, 5.5, 34);
+  // tailplane + fin
+  ctx.fillRect(-12, -7, 3.5, 14);
+  ctx.fillStyle = body;
+  ctx.beginPath(); ctx.moveTo(-11,0); ctx.lineTo(-14,-7); ctx.lineTo(-8.5,-1); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // twin nav lights, slow and steady — it isn't hiding
+  const rate = 2.2 + hurt*4;
+  const blink = e.dying ? 1 : ((Math.sin(gameTime*rate + e.blink) > 0.55) ? 1 : 0.14);
+  ctx.save();
+  ctx.shadowColor = e.dying ? '#ff6a52' : '#ffb06a'; ctx.shadowBlur = 9*blink;
+  ctx.fillStyle = 'rgba(255,'+(e.dying?100:170)+',95,'+(0.8*blink)+')';
+  const nx = Math.cos(e.angle+Math.PI/2), ny = Math.sin(e.angle+Math.PI/2);
+  ctx.beginPath(); ctx.arc(e.x+nx*15, e.y+ny*15, 1.7, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(e.x-nx*15, e.y-ny*15, 1.7, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+// abstracted delta airframe — silhouette + behaviour carry the read, no real markings
+function drawDrone(e){
+  const diving = e.mode === 'dive';
+  if (diving && e.trail.length>1){
+    const tr=e.trail;
+    for (let i=1;i<tr.length;i++){
+      ctx.strokeStyle='rgba(255,120,90,'+((i/tr.length)*0.28)+')'; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.moveTo(tr[i-1].x,tr[i-1].y); ctx.lineTo(tr[i].x,tr[i].y); ctx.stroke();
+    }
+  }
+  // burning glow while it's going down
+  if (e.dying && (e.deathDur - e.dieT) > DRONE_DEATH_FIRE){
+    const fl = 0.55 + 0.4*Math.sin(gameTime*26 + e.blink);
+    const gr = ctx.createRadialGradient(e.x,e.y,0, e.x,e.y,14);
+    gr.addColorStop(0,'rgba(255,180,90,'+(0.5*fl)+')');
+    gr.addColorStop(1,'rgba(255,90,50,0)');
+    ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(e.x,e.y,14,0,7); ctx.fill();
+  }
+  const wob = e.staggerT>0 ? Math.sin(gameTime*46)*0.42*(e.staggerT/DRONE_STAGGER_T) : 0;
+  const hurt = (e.jolts||0) / DRONE_JOLT_LIMIT;
+  ctx.save();
+  ctx.translate(e.x, e.y); ctx.rotate(e.angle + wob);
+  ctx.fillStyle = e.dying ? '#3a2420' : (hurt>0 ? '#33272e' : '#2a2434');
+  ctx.beginPath();
+  ctx.moveTo(7,0); ctx.lineTo(-5,4.5); ctx.lineTo(-2.5,0); ctx.lineTo(-5,-4.5);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = e.dying ? '#5a3a2c' : (hurt>0 ? '#453542' : '#39304a'); ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.moveTo(0,-7); ctx.lineTo(1.5,0); ctx.lineTo(0,7); ctx.stroke();
+  ctx.restore();
+  // nav light — blinks faster and redder as it takes punishment; dead-steady while dying
+  const rate = 3.4 + hurt*5;
+  const blink = e.dying ? 1 : ((Math.sin(gameTime*rate + e.blink) > 0.72) ? 1 : 0.12);
+  ctx.save();
+  ctx.shadowColor = (diving||e.dying) ? '#ff6a52' : '#ff9a6a'; ctx.shadowBlur = 8*blink;
+  ctx.fillStyle = 'rgba(255,'+((diving||e.dying)?100:150)+',90,'+(0.85*blink)+')';
+  ctx.beginPath(); ctx.arc(e.x, e.y, 1.5, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+function drawSky(){
+  const sky = ctx.createLinearGradient(0,0,0,GROUND_Y);
+  sky.addColorStop(0,'#0b0a1e'); sky.addColorStop(0.55,'#241a3e');
+  sky.addColorStop(0.82,'#4a2a4e'); sky.addColorStop(1,'#7a3a45');
+  ctx.fillStyle=sky; ctx.fillRect(-20,-20,W+40,GROUND_Y+20);
+  // horizon glow — dimmed ~20% and pulled lower so smoke reads against darker upper sky
+  const hg = ctx.createRadialGradient(W*0.5,GROUND_Y+30,10, W*0.5,GROUND_Y+30, W*0.62);
+  hg.addColorStop(0,'rgba(255,150,90,.26)'); hg.addColorStop(0.5,'rgba(255,110,80,.08)'); hg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=hg; ctx.fillRect(-20,-20,W+40,GROUND_Y+20);
+  const gnd = ctx.createLinearGradient(0,GROUND_Y,0,H);
+  gnd.addColorStop(0,'#120a14'); gnd.addColorStop(1,'#070409');
+  ctx.fillStyle=gnd; ctx.fillRect(-20,GROUND_Y,W+40,H-GROUND_Y+40);
+  for (const s of stars){
+    const fade = clamp((GROUND_Y-90 - s.y)/(GROUND_Y-90), 0, 1);
+    ctx.globalAlpha = s.a * (0.3+0.7*fade); ctx.fillStyle='#cfe0ff';
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+// farthest layer — short, hazy, fills the horizon so there is never a gap to sky
+function drawFar(){
+  for (const b of farBuildings){
+    const topY = GROUND_Y - b.h;
+    ctx.fillStyle = '#39364f';
+    ctx.fillRect(b.x, topY, b.w, b.h);
+    if (!cityBlackout){
+      for (const w of b.windows){
+        ctx.fillStyle='rgba(150,160,200,'+(0.18+0.1*Math.sin(gameTime*1.2+w.x))+')';
+        ctx.fillRect(w.x, w.y, 2, 2);
+      }
+    }
+  }
+  // haze veil over the far layer to sink it back
+  const haze = ctx.createLinearGradient(0, GROUND_Y-90, 0, GROUND_Y);
+  haze.addColorStop(0,'rgba(110,70,86,0)'); haze.addColorStop(1,'rgba(118,72,84,0.22)');
+  ctx.fillStyle=haze; ctx.fillRect(-20, GROUND_Y-90, W+40, 90);
+}
+
+function drawBackground(){
+  for (const b of bgBuildings){
+    const cell = cells[b.cell];
+    const tier = cell.tier;
+    const h = b.h * (tier>=3 ? 0.94 : 1);
+    const topY = GROUND_Y - h;
+    let col = tier>=3 ? '32,26,40' : (tier>=2 ? '40,32,48' : '46,44,70');
+    if (b.type==='neon' && b.neon && isLit(cell.bgDarkAt, cell.bgFlicker) && tier<2){
+      const gl = ctx.createRadialGradient(b.x+b.w/2,topY+h*0.4,2, b.x+b.w/2,topY+h*0.4, b.w*1.5);
+      gl.addColorStop(0,'rgba('+b.neon+',0.32)'); gl.addColorStop(1,'rgba('+b.neon+',0)');
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(b.x+b.w/2,topY+h*0.4,b.w*1.5,0,7); ctx.fill();
+    }
+    ctx.fillStyle = 'rgb('+col+')';
+    if (b.type==='dome'){
+      ctx.fillRect(b.x, topY+h*0.35, b.w, h*0.65);
+      ctx.beginPath(); ctx.arc(b.x+b.w/2, topY+h*0.35, b.w/2, Math.PI, 0); ctx.fill();
+    } else if (b.type==='spire'){
+      ctx.fillRect(b.x, topY, b.w, h);
+      ctx.beginPath(); ctx.moveTo(b.x, topY); ctx.lineTo(b.x+b.w/2, topY-b.peak);
+      ctx.lineTo(b.x+b.w, topY); ctx.closePath(); ctx.fill();
+    } else if (b.type==='tower'){
+      ctx.fillRect(b.x, topY+h*0.28, b.w, h*0.72);
+      ctx.fillRect(b.x+b.w*0.18, topY, b.w*0.64, h*0.32);
+    } else {
+      ctx.fillRect(b.x, topY, b.w, h);
+    }
+    if (tier>=3){ ctx.fillStyle='#0f0a12'; ctx.fillRect(b.x + b.w*0.55, topY, b.w*0.45, b.chipH); }
+    if (isLit(cell.bgDarkAt, cell.bgFlicker) && tier<2){
+      const tint = b.type==='neon' && b.neon ? b.neon : '150,170,210';
+      for (const w of b.windows){
+        if (w.y < topY) continue;
+        ctx.fillStyle='rgba('+tint+','+(0.30+0.15*Math.sin(gameTime*1.5+w.x))+')';
+        ctx.fillRect(w.x, w.y, 2, 2);
+      }
+    }
+  }
+}
+
+// fire glow — clipped to above ground, raised into building mass, trimmed ~18%
+function drawFireGlow(){
+  ctx.save();
+  ctx.beginPath(); ctx.rect(-20, -20, W+40, GROUND_Y + 20 + 2); ctx.clip();   // never below ground line
+  for (const cell of cells){
+    if (cell.tier < 2) continue;
+    const strong = cell.tier>=3;
+    const rad = strong ? 54 : 36;
+    const cy = GROUND_Y - 12;   // raised so it reads from within the buildings
+    const fl = 0.4 + 0.28*Math.sin(gameTime*(strong?7:4.5) + cell.emberPhase)
+                   + 0.08*Math.sin(gameTime*17 + cell.emberPhase*2);
+    const gr = ctx.createRadialGradient(cell.cx,cy,2, cell.cx,cy, rad);
+    gr.addColorStop(0,'rgba(255,180,90,'+(0.45*fl)+')');
+    gr.addColorStop(0.4,'rgba(255,90,50,'+(0.33*fl)+')');
+    gr.addColorStop(1,'rgba(120,20,10,0)');
+    ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(cell.cx,cy, rad, 0,7); ctx.fill();
+    if (strong){
+      for (let f=0;f<2;f++){
+        const fx = cell.cx + (f? 9:-9);
+        const fh = 15 + 11*Math.abs(Math.sin(gameTime*(9+f*3) + cell.emberPhase + f*1.7));
+        const fg2 = ctx.createRadialGradient(fx,GROUND_Y-8,1, fx,GROUND_Y-8-fh*0.4, fh);
+        fg2.addColorStop(0,'rgba(255,215,130,0.5)');
+        fg2.addColorStop(0.5,'rgba(255,120,50,0.3)');
+        fg2.addColorStop(1,'rgba(255,60,30,0)');
+        ctx.fillStyle=fg2; ctx.beginPath();
+        ctx.ellipse(fx, GROUND_Y-8-fh*0.4, fh*0.34, fh*0.7, 0, 0, 7); ctx.fill();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function drawCity(){
+  for (const b of buildings){
+    const cell = cells[b.cell];
+    const tier = cell.tier;
+    const flash = cell.flashT;
+    const h = b.h * (tier>=3 ? 0.86 : 1);
+    const topY = GROUND_Y - h;
+    let base = '#1b1b34';
+    if (tier===1) base='#221a26';
+    else if (tier===2) base='#2a1618';
+    else if (tier>=3) base='#1d1113';
+    ctx.fillStyle = base; ctx.fillRect(b.x, topY, b.w, h);
+    ctx.fillStyle = tier>=2 ? 'rgba(255,120,60,.18)' : 'rgba(150,130,210,.10)';
+    ctx.fillRect(b.x, topY, b.w, 1.5);
+    if (tier>=3){
+      ctx.fillStyle = '#0e0709';
+      const notch = Math.max(3, b.w*0.28);
+      ctx.fillRect(b.x + b.w*0.2, topY, notch, b.n1h);
+      ctx.fillRect(b.x + b.w*0.62, topY, notch*0.7, b.n2h);
+    }
+    for (const w of b.windows){
+      if (w.y < topY) continue;
+      if (flash > 0){
+        const a = clamp(flash/0.55, 0, 1);
+        ctx.fillStyle = 'rgba(255,'+((70+40*Math.random())|0)+',50,'+(0.85*a)+')';
+        ctx.fillRect(w.x, w.y, 3, 3);
+      } else if (tier===0){
+        if (isLit(cell.fgDarkAt, cell.fgFlicker) && w.on){
+          ctx.fillStyle = 'rgba(255,214,140,'+(0.6+0.25*Math.sin(gameTime*2+w.x))+')';
+          ctx.fillRect(w.x, w.y, 3, 3);
+        }
+      } else if (tier>=2){
+        if (Math.random()<0.05){
+          ctx.fillStyle='rgba(255,140,60,'+(0.5+Math.random()*0.4)+')';
+          ctx.fillRect(w.x, w.y, 3, 3);
+        }
+      }
+    }
+  }
+}
+
+function drawParticles(back){
+  for (const p of particles){
+    if (!!p.back !== !!back) continue;
+    const a=clamp(p.life/p.max,0,1);
+    ctx.globalAlpha=a; ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,1.8,0,7); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawSmoke(back){
+  for (const s of smoke){
+    if (!!s.back !== !!back) continue;
+    const lifeA = clamp(s.life/s.max,0,1);
+    const climb = clamp(1 - s.y/GROUND_Y, 0, 1);
+    const a = lifeA * (0.44 - 0.26*climb);
+    const grd = ctx.createRadialGradient(s.x,s.y,0, s.x,s.y,s.r);
+    grd.addColorStop(0,'rgba('+s.col+','+a+')');
+    grd.addColorStop(1,'rgba('+s.col+',0)');
+    ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+  }
+}
+
+function drawImpacts(){
+  ctx.save();
+  ctx.beginPath(); ctx.rect(-20, -20, W+40, GROUND_Y+20); ctx.clip();   // no spill below the skyline
+  for (const im of impacts){
+    const t = im.age/0.55, a = (1-t), r = 22 + t*54;
+    const grd = ctx.createRadialGradient(im.x,im.y,0, im.x,im.y,r);
+    grd.addColorStop(0,'rgba(255,240,210,'+(0.7*a)+')');
+    grd.addColorStop(0.35,'rgba(255,150,80,'+(0.5*a)+')');
+    grd.addColorStop(1,'rgba(255,90,50,0)');
+    ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(im.x,im.y,r,0,7); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// city-blended armored emplacement; damaged look ties to the district it fronts
+function drawBattery(b){
+  const x=b.x, y=b.y;
+  const dmg = cells[b.cell] && cells[b.cell].tier>=3;
+  // base bunker (shares building palette so it blends into the skyline)
+  ctx.fillStyle = dmg ? '#1d1113' : '#20203a';
+  ctx.beginPath();
+  ctx.moveTo(x-18,y); ctx.lineTo(x+18,y); ctx.lineTo(x+13,y-13); ctx.lineTo(x-13,y-13); ctx.closePath(); ctx.fill();
+  // launcher block
+  const isEmp = b.type === 'emp';
+  ctx.fillStyle = dmg ? '#241417' : (isEmp ? '#242246' : '#282848');
+  ctx.fillRect(x-8, y-23, 16, 11);
+  if (isEmp){
+    // emitter mast + coil rings instead of a barrel
+    ctx.strokeStyle = dmg ? '#3a2a2c' : '#4a4a86'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x, y-23); ctx.lineTo(x, y-34); ctx.stroke();
+    ctx.lineWidth=1.4;
+    for (let k=0;k<3;k++){
+      ctx.strokeStyle='rgba(150,160,255,'+(dmg?0.15:0.34)+')';
+      ctx.beginPath(); ctx.ellipse(x, y-31+k*3.4, 5.5-k*1.2, 1.5, 0, 0, 7); ctx.stroke();
+    }
+  } else {
+    ctx.save(); ctx.translate(x, y-21); ctx.rotate(-0.5);
+    ctx.fillStyle = dmg ? '#2a1a1c' : '#30305a'; ctx.fillRect(-2,-13,4,13); ctx.restore();
+  }
+  // dim aperture — brightens with a loaded round, dim while reloading/empty
+  const glowA = b.loaded>0 ? 1 : 0.32;
+  ctx.fillStyle = isEmp ? 'rgba(150,160,255,'+(0.30*glowA)+')' : 'rgba(79,242,224,'+(0.26*glowA)+')';
+  ctx.fillRect(x-5, y-23.5, 10, 1.5);
+  // ammo readout below the gun: loaded (chambered) · total remaining this wave
+  const total = b.loaded + b.reserve;
+  ctx.font='bold 11px ui-monospace, monospace'; ctx.textAlign='center';
+  const liveCol = isEmp ? 'rgba(160,170,255,.95)' : 'rgba(120,224,212,.95)';
+  ctx.fillStyle = total>0 ? (b.loaded>0 ? liveCol : 'rgba(150,170,190,.7)') : 'rgba(210,96,90,.92)';
+  ctx.fillText(b.loaded+'·'+total, x, y+18);
+  // marker under the currently-selected weapon's guns
+  if (b.type === selectedWeapon && batteries.some(o=>o.type!==selectedWeapon)){
+    ctx.fillStyle = isEmp ? 'rgba(150,160,255,.6)' : 'rgba(79,242,224,.6)';
+    ctx.fillRect(x-7, y+22, 14, 1.5);
+  }
+  // damaged embers
+  if (dmg){
+    const fl = 0.4 + 0.3*Math.sin(gameTime*8 + b.slot);
+    const gr = ctx.createRadialGradient(x,y-6,1, x,y-6, 20);
+    gr.addColorStop(0,'rgba(255,150,70,'+(0.4*fl)+')'); gr.addColorStop(1,'rgba(255,80,40,0)');
+    ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(x,y-6,20,0,7); ctx.fill();
+  }
+}
+
+// faint pad for an unbuilt slot
+function drawSlots(){
+  for (let s=0;s<SLOT_X.length;s++){
+    if (slotOwned(s)) continue;
+    const x = SLOT_X[s], y = GROUND_Y;
+    ctx.strokeStyle='rgba(79,242,224,.16)'; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+    ctx.beginPath();
+    ctx.moveTo(x-15,y); ctx.lineTo(x+15,y); ctx.lineTo(x+10,y-9); ctx.lineTo(x-10,y-9); ctx.closePath();
+    ctx.stroke(); ctx.setLineDash([]);
+    if (state==='build'){
+      ctx.fillStyle='rgba(120,150,180,.5)'; ctx.font='9px ui-sans-serif, system-ui'; ctx.textAlign='center';
+      ctx.fillText('EMPTY', x, y+16);
+    }
+  }
+}
+
+function drawIntegrityMeter(){
+  const pct = integrityPct(damagePoints);
+  const bx = W-26, by = 150, bw = 9, bh = GROUND_Y-40 - by;
+  ctx.strokeStyle='rgba(140,160,190,.35)'; ctx.lineWidth=1; ctx.strokeRect(bx, by, bw, bh);
+  const fh = bh * (pct/100);
+  const grd = ctx.createLinearGradient(0, by+bh, 0, by);
+  grd.addColorStop(0, pct<30?'#ff5a52':(pct<60?'#ffb14e':'#4ff2e0'));
+  grd.addColorStop(1, pct<30?'#ff8a5a':(pct<60?'#ffd08a':'#9dfff2'));
+  ctx.fillStyle=grd; ctx.fillRect(bx+1, by+bh-fh+1, bw-2, fh-2);
+  ctx.save();
+  ctx.fillStyle='rgba(140,160,190,.8)'; ctx.font='9px ui-sans-serif, system-ui'; ctx.textAlign='center';
+  ctx.translate(bx+bw/2, by-8); ctx.fillText('INTEGRITY', 0, 0);
+  ctx.restore();
+  ctx.fillStyle = pct<30?'#ff8a7a':'#cfe0ff'; ctx.font='bold 12px ui-monospace, monospace'; ctx.textAlign='center';
+  ctx.fillText(pct+'%', bx+bw/2, by+bh+16);
+}
+
+// ---------- loop ----------
+let last = performance.now();
+function frame(now){
+  let dt=(now-last)/1000; last=now; dt=Math.min(dt,0.05);
+  if (devFreeze){ requestAnimationFrame(frame); return; }   // dev screenshot freeze — remove before release
+  fps += ((dt>0?1/dt:60) - fps)*0.1;
+  update(dt); render();
+  if (devOn){
+    devStats.textContent = 'wave '+wave+'  int '+integrityPct(damagePoints)+'%  salv '+salvage+'  bat '+batteries.length+'  fps '+Math.round(fps)+
+      '  sm '+smoke.length+'  pt '+particles.length+'  en '+enemies.length;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
