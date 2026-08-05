@@ -24,7 +24,7 @@ Several conventions in `Projects/Games/CLAUDE.md` were written *after* this game
 because of it. Where DRIFT doesn't match them, that's usually seniority rather than drift.
 
 **Credits:** Opus 4.8 (origin, and every system in the file). Opus 5 (2026-08-03: port to Claude
-Code, this document, score persistence, responsive canvas).
+Code, this document, score persistence, responsive canvas, HUD outage escalation).
 
 ## The one untouchable thing
 
@@ -57,9 +57,30 @@ stripped of every system the other modes add. It is not an underbuilt mode. Don'
   risk starts at 12%, climbs 4% every time you fire it *and* every time you die holding it, caps
   at 75%, and **never resets inside a run**. Backfiring kills you and comes apart into the ship's
   three actual triangle edges, tumbling. The one-way ratchet is the point — don't add a decay.
-- **The pulse blinds you.** Firing it takes the HUD out: 1.5s total blackout, then a flickering
-  recovery that speeds up and brightens as it heals, with character-level scrambling in one of
-  three styles. A weapon that costs you your instruments is a real choice.
+- **The pulse blinds you, and the blindness escalates too.** Firing it takes the HUD out: a total
+  blackout, then a flickering recovery that speeds up and brightens as it heals, with
+  character-level scrambling in one of three styles. **This is the second ratchet.** Every firing
+  in a run lengthens both the blackout and the recovery — `PULSE_HUD_ESC`, +0.2s per use, capped
+  at 6 uses. Unescalated it's 1.5s dark inside 3.0–4.5s total; fully escalated, 2.7s dark inside
+  5.4–8.1s.
+
+  The two ratchets are deliberately different in kind: **risk is a gamble, outage is a
+  certainty.** One you talk yourself into, the other you budget for. Keep them distinct if you
+  tune either.
+
+  Three rules this must keep:
+  - **It takes the HUD, never the playfield.** Rocks, ship and hazards render normally throughout.
+    What you lose is the fuel gauge and pulse readout. That's what makes the escalation affordable;
+    if you ever make it dim the playfield, the whole cost calculation changes.
+  - **The escalation is added to the random spread, not swapped for a fixed value.** Individual
+    outages stay noisy and non-monotonic on purpose — the distribution shifts, the shape doesn't.
+  - **`hudZap()` never shortens a disruption already running.** Without that guard a pulsar hit
+    (a flat 150-frame zap) landing on a heavily-escalated outage would *reduce* it. That was a
+    real bug — being hit used to be gentler than firing voluntarily.
+- **A backfire hands you a clean ship.** The zap is applied before the risk is rolled, so on a
+  backfire `hudClear()` cancels it: the hull that was blinded no longer exists, and the
+  replacement arrives with working instruments regardless of how far escalation had gone. The
+  escalation counter itself does *not* reset — only `startGame()` clears it.
 - **Getting stronger costs you points.** `scoreMult()` docks 15% per held weapon in DRIFT, 5% in
   RIDICULOUS (which caps at 9 stacks). Death wipes the rack. Score chase and power chase pull
   against each other permanently. Recently raised from 10% because late waves were minting points;
@@ -89,10 +110,6 @@ stripped of every system the other modes add. It is not an underbuilt mode. Don'
 - **RIDICULOUS needs quality passes.** It got neglected during the build and hasn't had real
   playtesting. Most likely place to find genuine balance problems.
 - Visual fine-tuning, unspecified.
-
-**Shelved — do not quietly reintroduce:** a superweapon was discussed during the build and
-dropped. If it comes back it should be because someone argues for it fresh, not because this
-paragraph reminded them it once existed.
 
 ## Persistence
 
@@ -125,14 +142,6 @@ Before this, the canvas was a fixed 820×620 box under `body{overflow:hidden}`: 
 viewport size, silently clipped with no scroll recovery below it. The Chat iframe was always big
 enough to hide the cliff.
 
-## Remaining Chat-artifact remnants
-
-Both harmless, neither worth a pass on its own:
-
-- `window.focus()` and the `pointerdown` focus handler at the bottom solve an iframe problem that
-  no longer exists.
-- No favicon.
-
 ## Deliberate behavior that looks wrong but isn't
 
 - **`stats.destroyed` counts only rocks erased from existence**, not rocks split. Shooting a big
@@ -159,8 +168,6 @@ Both harmless, neither worth a pass on its own:
 `B` big rock · `I` iron · `L` large iron · `H` shielded · `G` well · `O` flare · `Z` pulsar ·
 `C` comet · `F` refuel · `K` arm pulse · `U` random weapon up · `M` gem · `N` clear rocks ·
 `J` +4 waves · `V` godmode. Dev runs are flagged and **not recorded to bests**.
-
-The on-screen dev legend omits `Z` and `C`; the keys work.
 
 ## Naming
 

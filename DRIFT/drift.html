@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DRIFT</title>
+<!-- the ship itself, inline so the file stays self-contained (no second asset to host) -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%2305060d'/><path d='M16 3 L26 28 L16 22 L6 28 Z' fill='%230d1426' stroke='%239fc4ff' stroke-width='2.4' stroke-linejoin='round'/></svg>">
 <style>
   html, body { margin:0; padding:0; height:100%; background:#05060d; overflow:hidden;
     font-family:'Courier New', monospace; -webkit-user-select:none; user-select:none; }
@@ -68,6 +70,12 @@ function fitCanvas(){
 addEventListener('resize', fitCanvas);
 const MAXFUEL=1000, MAXROCKS=100, PULSE_R=170;
 const PULSE_RISK_BASE=0.12, PULSE_RISK_STEP=0.04, PULSE_RISK_MAX=0.75;
+// The device degrades on two axes, not one. Risk is the gamble; this is the certainty — every
+// firing in a run lengthens the outage that follows. Added to the fixed floor AND to the width of
+// the random spread, so the shape stays the same and there's just more of it. Capped, like risk.
+// At 0 uses: 1.5s dark, 3.0-4.5s total. Fully escalated: 2.7s dark, 5.4-8.1s total.
+// Most of that growth lands in the flicker tail, which is the mildest part — tune here first.
+const PULSE_HUD_ESC=12, PULSE_HUD_ESC_MAX=6;   // +0.2s per use, capped at 6 uses (+1.2s per term)
 const CLEAVE_R=40;
 const GW_R=165, GW_STR=0.05, GW_SPEED=0.7, GW_DAMP=0.985, GW_MARGIN=240;
 const SHIELD_MAX=3, SHIELD_REGEN_DELAY=120, SHIELD_REGEN_TICK=40;
@@ -93,26 +101,33 @@ const MODES={
 let state='menu', mode='modern', M=MODES.modern;
 let score=0, wave=0, lives=3, combo=1, comboTimer=0, shake=0, paused=false, pauseConfirm=null;
 const PULSE_CD=600;
-let nextExtra=Infinity, toast='', toastT=0, pulseRisk=PULSE_RISK_BASE, pulseCd=0;
+let nextExtra=Infinity, toast='', toastT=0, pulseRisk=PULSE_RISK_BASE, pulseCd=0, pulseUses=0;
 let survTime=0, survSpawnCd=0, survNewBest=false;
 let lifePending=0, lifeDropCount=0;
 let shipDebris=[];
 let menuIdle=0, menuWait=270;   // startup: pulsar after ~4.5s; after a game: 20s of empty sky
 let hudGlitch=0, hudGlitchDur=1, hudStyle=0, hudHold=0, hudOn=true, hudCache={};
+let hudBlack=90;                // length of the current total outage; escalates, see PULSE_HUD_ESC
 const GLITCH_JUNK='#%&@*!?+=~/\\|<>0123456789';
-const HUD_BLACKOUT=90;          // 1.5s of total outage before recovery begins
-function hudZap(dur){           // dur = total frames of disruption
-  hudGlitchDur=Math.max(dur,HUD_BLACKOUT+30); hudGlitch=hudGlitchDur;
+const HUD_BLACKOUT=90;          // 1.5s of total outage before recovery begins — the unescalated floor
+function hudZap(dur,black){     // dur = total frames of disruption, black = frames of it fully dark
+  if(hudGlitch>=dur) return;    // a longer disruption is already running; never shorten it
+  hudBlack=black===undefined?HUD_BLACKOUT:black;
+  hudGlitchDur=Math.max(dur,hudBlack+30); hudGlitch=hudGlitchDur;
   hudStyle=Math.floor(Math.random()*3); hudHold=0; hudOn=false; hudCache={};
 }
+function hudClear(){            // instruments back, immediately — used when the ship is replaced
+  hudGlitch=0; hudGlitchDur=1; hudBlack=HUD_BLACKOUT; hudHold=0; hudOn=true; hudCache={};
+}
+function hudBlackedOut(){ return hudGlitch>0 && hudGlitch>hudGlitchDur-hudBlack; }
 function hudRecovery(){         // 0 at the moment recovery starts -> 1 when fully restored
-  const span=Math.max(1,hudGlitchDur-HUD_BLACKOUT);
+  const span=Math.max(1,hudGlitchDur-hudBlack);
   return 1-Math.min(1,hudGlitch/span);
 }
 function hudTick(){
   if(hudGlitch<=0){ hudOn=true; return; }
   hudGlitch--;
-  if(hudGlitch>hudGlitchDur-HUD_BLACKOUT){ hudOn=false; hudHold=0; return; }   // full outage
+  if(hudGlitch>hudGlitchDur-hudBlack){ hudOn=false; hudHold=0; return; }   // full outage
   if(--hudHold<=0){
     const rec=hudRecovery();
     hudHold=Math.max(3,Math.round(15-rec*12));      // holds shorten: flicker speeds up as it recovers
@@ -245,7 +260,7 @@ function survivalSpawn(){
 function startGame(m){
   mode=m; M=MODES[m]; state='play';
   score=0; wave=0; lives=M.startLives; combo=1; comboTimer=0;
-  nextExtra=M.extraEvery; toast=''; toastT=0; pulseRisk=PULSE_RISK_BASE; pulseCd=PULSE_CD;
+  nextExtra=M.extraEvery; toast=''; toastT=0; pulseRisk=PULSE_RISK_BASE; pulseCd=PULSE_CD; pulseUses=0; hudClear();
   lifePending=0; lifeDropCount=0;
   stats={shots:0,hits:0,destroyed:0,deaths:0,streak:0,bestStreak:0};
   survTime=0; survSpawnCd=40;
@@ -310,7 +325,9 @@ function firePulse(){
   if(pulseCd>0){ toast='PULSE CHARGING \u2014 STAND BY'; toastT=105; return; }
   if(ship.disabled>0) return;
   ship.pulse=false;
-  hudZap(HUD_BLACKOUT + 90 + Math.floor(Math.random()*90));
+  const esc=Math.min(pulseUses,PULSE_HUD_ESC_MAX)*PULSE_HUD_ESC;
+  pulseUses++;
+  hudZap(HUD_BLACKOUT+esc + 90+esc + Math.floor(Math.random()*(90+esc)), HUD_BLACKOUT+esc);
   shocks.push({x:ship.x,y:ship.y,r:0,life:1});
   burst(ship.x,ship.y,'235,245,255',44); shake=14;
   for(let i=asteroids.length-1;i>=0;i--){
@@ -334,7 +351,9 @@ function firePulse(){
         a:A, spin:(Math.random()-0.5)*0.34, p1, p2, life:1 });
     }
     toast='DEVICE BACKFIRE'; toastT=120; killShip();
-  }
+    hudClear();   // the zap above belonged to the hull that just came apart — a replacement ship
+  }               // arrives with working instruments, whatever the escalation had reached
+
   else { toast='PULSE FIRED'; toastT=70; }
   pulseRisk=Math.min(PULSE_RISK_MAX, pulseRisk+PULSE_RISK_STEP);
 }
@@ -939,8 +958,8 @@ function draw(){
   if(state==='menu') return;
 
   ctx.fillStyle='#8fb8ff';ctx.font='16px Courier New';ctx.textAlign='left';
-  const gp = hudGlitch>0 ? (hudGlitch>hudGlitchDur-HUD_BLACKOUT ? 1 : Math.pow(1-hudRecovery(),0.55)) : 0;
-  if(!(hudGlitch>0 && hudGlitch>hudGlitchDur-HUD_BLACKOUT) && hudOn){
+  const gp = hudGlitch>0 ? (hudBlackedOut() ? 1 : Math.pow(1-hudRecovery(),0.55)) : 0;
+  if(!hudBlackedOut() && hudOn){
   const r=bests[mode];
   if(M.survival){
     ctx.fillText(glitchStr('TIME '+fmtTime(survTime),gp),18,30);
@@ -971,7 +990,7 @@ function draw(){
     }
   }
   }
-  if(!(hudGlitch>0 && hudGlitch>hudGlitchDur-HUD_BLACKOUT) && hudOn){
+  if(!hudBlackedOut() && hudOn){
   ctx.textAlign='right';
   ctx.fillStyle='#8fb8ff';ctx.font='16px Courier New';
   ctx.fillText(glitchStr('SHIPS '+Math.max(lives,0),gp),W-18,30);
@@ -1026,7 +1045,7 @@ function draw(){
     ctx.fillStyle=`rgba(185,238,255,${fl})`; ctx.font='12px Courier New'; ctx.textAlign='center';
     ctx.fillText(warn.text, cx+dx*(t-72), cy+dy*(t-72));
   }
-  if(M.fuel && !(hudGlitch>0 && hudGlitch>hudGlitchDur-HUD_BLACKOUT) && hudOn){
+  if(M.fuel && !hudBlackedOut() && hudOn){
     const bw=180,bx=W/2-bw/2,by=H-26,frac=ship.fuel/MAXFUEL;
     ctx.strokeStyle='#3a4a6e';ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,10);
     ctx.fillStyle = frac<0.2 ? `rgba(255,90,90,${0.6+Math.abs(Math.sin(Date.now()/150))*0.4})` : '#5ae68c';
@@ -1053,9 +1072,10 @@ function draw(){
   }
   if(state==='play'&&devUnlocked){
     ctx.textAlign='left'; ctx.font='10px Courier New'; ctx.fillStyle='#5a9a6e';
-    ctx.fillText('DEV  B:big I:iron L:lgiron H:shield',14,H-46);
-    ctx.fillText('     G:well O:flare F:fuel K:pulse',14,H-32);
-    ctx.fillText('     U:up M:gem N:next J:+5w V:god'+(ship.godmode?' [ON]':''),14,H-18);
+    ctx.fillText('DEV  B:big I:iron L:lgiron H:shield',14,H-60);
+    ctx.fillText('     G:well O:flare Z:pulsar C:comet',14,H-46);
+    ctx.fillText('     F:fuel K:pulse U:up M:gem',14,H-32);
+    ctx.fillText('     N:next J:+4w V:god'+(ship.godmode?' [ON]':''),14,H-18);
   }
   if(state==='play'&&paused){
     ctx.fillStyle='rgba(5,6,13,0.6)';ctx.fillRect(0,0,W,H);
@@ -1181,8 +1201,6 @@ loadBests();
 fitCanvas();
 showMenu();
 loop();
-try{ window.focus(); }catch(e){}
-addEventListener('pointerdown',()=>{ try{ window.focus(); }catch(e){} });
 </script>
 </body>
 </html>
