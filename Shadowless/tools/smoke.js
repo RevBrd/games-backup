@@ -146,12 +146,18 @@ T('log renders newest-first', () => {
 });
 
 T('player can take either side of the matchup', () => {
-  UI.myDeck = 'Overgrowth'; UI.seedDraft = '11';
+  // Both decks are set explicitly. This used to name only myDeck and lean on the
+  // old rule that a clash bumped the opponent to some other deck — which read as
+  // an assertion about sides but was really testing the auto-correct.
+  UI.myDeck = 'Overgrowth'; UI.foeDeck = 'Brushfire'; UI.seedDraft = '11';
   newGame(); UI.E.setupAuto(0);
-  const mine = UI.E.state.players[0].deckDef.name;
-  const theirs = UI.E.state.players[1].deckDef.name;
-  UI.myDeck = 'Brushfire';
-  return mine === 'Overgrowth' && theirs === 'Brushfire';
+  const a = UI.E.state.players[0].deckDef.name === 'Overgrowth'
+         && UI.E.state.players[1].deckDef.name === 'Brushfire';
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth'; UI.seedDraft = '11';
+  newGame(); UI.E.setupAuto(0);
+  const b = UI.E.state.players[0].deckDef.name === 'Brushfire'
+         && UI.E.state.players[1].deckDef.name === 'Overgrowth';
+  return a && b;
 });
 
 T('both sides are playable to completion', () => {
@@ -293,10 +299,41 @@ T('every deck pairing plays to completion', () => {
   return played === 12;
 });
 
-T('picking the same deck for both sides self-corrects', () => {
+T('a mirror match is allowed and both sides keep the chosen deck', () => {
   UI.myDeck = 'Blackout'; UI.foeDeck = 'Blackout';
   UI.seedDraft = '13'; startMatch();
-  const ok = UI.E.state.players[1].deckDef.name !== 'Blackout';
+  const ok = UI.E.state.players[0].deckDef.name === 'Blackout'
+          && UI.E.state.players[1].deckDef.name === 'Blackout';
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth';
+  return ok;
+});
+
+T('a mirror match still shuffles the two sides independently', () => {
+  UI.myDeck = 'Zap'; UI.foeDeck = 'Zap';
+  UI.seedDraft = '21'; startMatch();
+  const hand = p => p.hand.map(c => c.id).join(',');
+  // Same 60 cards, two different seeds — identical opening hands would mean the
+  // seeds were not actually being kept apart.
+  const ok = hand(UI.E.state.players[0]) !== hand(UI.E.state.players[1]);
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth';
+  return ok;
+});
+
+T('a mirror match plays to completion', () => {
+  UI.myDeck = 'Overgrowth'; UI.foeDeck = 'Overgrowth';
+  UI.seedDraft = '29'; UI.flipDelay = 0;
+  startMatch();
+  const E = UI.E;
+  E.setupAuto(0); E.setupConfirm(0);
+  let n = 0;
+  while (E.state.winner === null && n++ < 6000) {
+    const pd = E.state.pendingPromote;
+    const p = (pd === null || pd === undefined) ? E.state.active : pd;
+    const a = E.aiChoose(p, 'expert');
+    if (!a) break;
+    E.act(p, a);
+  }
+  const ok = E.state.winner !== null;
   UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth';
   return ok;
 });

@@ -3840,7 +3840,6 @@ function resolveDeck(name, seed) {
   const d = generateDeck(CARD_DB, pool, mulberry32(seed), { name: SANDBOX });
   return d || DECKS[Object.keys(DECKS)[0]];
 }
-const otherDeck = (n) => DECK_NAMES.find(x => x !== n);
 
 // -------------------------------------------------------------- bootstrap --
 function startMatch() {
@@ -3860,7 +3859,8 @@ function newGame() {
   UI.pres = null; UI.view = null;
   const seed = UI.seedDraft === '' ? (Math.random() * 2147483647 | 0) : (parseInt(UI.seedDraft, 10) | 0);
   UI.E = new Engine(CARD_DB, EFFECTS, { seed, cfg: Object.assign({}, UI.cfgDraft) });
-  if (UI.foeDeck === UI.myDeck && UI.myDeck !== SANDBOX) UI.foeDeck = otherDeck(UI.myDeck);
+  // Mirror matches are allowed. Both sides build from the same list, but the two
+  // seeds differ, so they shuffle and draw independently.
   UI.E.newGame(resolveDeck(UI.myDeck, seed), resolveDeck(UI.foeDeck, seed ^ 0x5f5f), ['You', 'Opponent']);
   UI.E.setupAuto(1);                     // opponent sets itself up
   UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null;
@@ -4644,11 +4644,7 @@ function renderDeckSelect() {
       c.appendChild(el('div', 'dstat dim', isSandbox
         ? 'randomly generated from every implemented card'
         : `${s.basics} Basics${s.stage2 ? ` · ${s.stage2} Stage 2` : ''}`));
-      c.onclick = () => {
-        UI[key] = n;
-        if (UI.foeDeck === UI.myDeck && UI.myDeck !== SANDBOX) UI.foeDeck = otherDeck(UI.myDeck);
-        render();
-      };
+      c.onclick = () => { UI[key] = n; render(); };
       grid.appendChild(c);
     });
     sec.appendChild(grid);
@@ -5016,11 +5012,7 @@ function renderDev() {
     r.appendChild(el('label', null, label));
     const sel = el('select');
     DECK_NAMES.forEach(n => { const o = el('option', null, n); o.value = n; if (UI[key] === n) o.selected = true; sel.appendChild(o); });
-    sel.onchange = () => {
-      UI[key] = sel.value;
-      if (UI.foeDeck === UI.myDeck && UI.myDeck !== SANDBOX) UI.foeDeck = otherDeck(UI.myDeck);
-      render();
-    };
+    sel.onchange = () => { UI[key] = sel.value; render(); };
     r.appendChild(sel);
     return r;
   };

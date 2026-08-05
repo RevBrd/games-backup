@@ -13,7 +13,7 @@ node tools/gen_cards.js                  # data/raw/ -> src/cards.js
 node tools/build.js                      # src/  -> shadowless.html
 node tools/selftest.js                   # rules + AI regression
 node tools/powertest.js                  # Pokemon Power behaviour
-node tools/smoke.js shadowless.html      # 44 integration tests against the built file
+node tools/smoke.js shadowless.html      # 46 integration tests against the built file
 ```
 
 Both generators accept `--check`: regenerate to memory, diff against what's committed, exit non-zero
@@ -81,7 +81,7 @@ They overlap barely at all, and none subsumes the others.
   by Sleep, Energy Burn not being offered twice. It also covers AI *usage*, which is not the same
   thing as the Power working: Energy Burn passed every unit test while the AI silently never used it,
   because `bestAttackScore` returns `{score, idx}` and the first scorer compared the objects.
-- **`smoke.js`** is the original Chat-era harness, 44 tests, driving the **built** HTML through a
+- **`smoke.js`** is the original Chat-era harness, now 46 tests, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
   presentation and freeze, the deck-select flow and the card renderer. Catches build and UI
   regressions.

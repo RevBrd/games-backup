@@ -98,7 +98,7 @@ tools/
   gen_cards.js         data/ -> src/cards.js
   selftest.js          engine + AI statistical regression (drives src/ directly)
   powertest.js         behavioural tests for the Pokemon Powers
-  smoke.js             44-test integration suite against the BUILT artifact, incl. UI
+  smoke.js             46-test integration suite against the BUILT artifact, incl. UI
   chat-era/            the original Python tools, superseded. Kept for provenance
 backups/
 ```
@@ -116,7 +116,7 @@ node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,b
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/powertest.js                  # 21 behavioural tests for the Pokemon Powers
-node tools/smoke.js shadowless.html      # 44 integration tests against the built file
+node tools/smoke.js shadowless.html      # 46 integration tests against the built file
 ```
 
 `selftest.js` drives the source modules and proves games don't break; `powertest.js` proves the
@@ -160,7 +160,8 @@ guessed wrong. Add an entry whenever you make a judgement call; an unlogged one 
 **Play it.** Open `shadowless.html`. The right-hand rail has four tabs: CARD (preview), LOG, DEV,
 CARDS (implementation coverage + live deck validation). Deck select exposes prize count, AI tier and
 a **seed** — every match is reproducible, and the game-over screen offers "Replay this seed". Use it
-when chasing a bug.
+when chasing a bug. **Mirror matches are allowed**: both sides may take the same deck, including
+Sandbox, and still shuffle independently.
 
 **`state.winner` can legitimately be `0`.** Test it against `null`, never for truthiness. This
 already cost one session an hour of phantom "stalled game" reports.
