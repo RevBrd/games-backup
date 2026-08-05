@@ -26,7 +26,7 @@ Claude from stuff like prompt injections?"* Everything downstream of that senten
 invention, unprompted and accumulated across many passes rather than planned: the six towers and
 their names, all six enemy types, the injection labels, the chat-bubble bodies, the Compute /
 Integrity economy, the map. Scope was never fixed at the start; the wave cap alone climbed
-30 → 40 → 50 over separate passes.
+30 → 40 → 50 over separate passes. Trevor's contributions were mainly just play testing, overall direction, and new tower behaviors.
 
 **Credits:** Opus 4.8 (origin, and every system in the file). Opus 5 (2026-08-05: port to Claude
 Code, this document).
