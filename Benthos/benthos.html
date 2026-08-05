@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BENTHOS — Job 1 Kernel</title>
+<style>
+  :root{
+    --abyss:#04121f; --deep:#06243b; --mid:#0c3a55; --teal:#1f8a8f;
+    --warm:#f0c27b; --warmdim:#9c7a45; --alloy:#b9c4cf; --nodule:#6f5a3a;
+    --kelp:#3c7a4a; --ink:#dfeef5; --muted:#7fa6bb; --danger:#e05a5a;
+    --panel:rgba(6,24,38,.86); --line:rgba(120,190,210,.18);
+    --font:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--abyss);color:var(--ink);
+    font-family:var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+  #wrap{display:flex;flex-direction:column;height:100%}
+  #topbar{display:flex;gap:18px;align-items:center;padding:8px 14px;
+    background:var(--panel);border-bottom:1px solid var(--line);font-size:12px;
+    flex-wrap:wrap}
+  .stat{display:flex;flex-direction:column;line-height:1.25;min-width:64px}
+  .stat .k{color:var(--muted);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+  .stat .v{font-size:14px;font-weight:600}
+  .stat .v.warn{color:var(--danger)}
+  #title{font-weight:700;letter-spacing:.28em;color:var(--teal);font-size:14px;
+    margin-right:6px}
+  #tidewrap{flex:1;min-width:140px;max-width:280px}
+  #tidebar{height:7px;border-radius:4px;background:rgba(255,255,255,.08);
+    overflow:hidden;margin-top:3px}
+  #tidefill{height:100%;background:linear-gradient(90deg,var(--mid),var(--teal));
+    width:50%}
+  #stage{position:relative;flex:1;min-height:0}
+  canvas{display:block;width:100%;height:100%}
+  #buildbar{display:flex;gap:6px;align-items:center;padding:7px 14px;
+    background:var(--panel);border-top:1px solid var(--line);flex-wrap:wrap}
+  button{font-family:var(--font);font-size:11px;color:var(--ink);
+    background:rgba(31,138,143,.16);border:1px solid var(--line);
+    padding:6px 11px;border-radius:6px;cursor:pointer;letter-spacing:.04em;
+    transition:background .12s,border-color .12s}
+  button:hover{background:rgba(31,138,143,.32)}
+  button.active{background:var(--teal);color:#04121f;border-color:var(--teal);font-weight:700}
+  button.dev{background:rgba(224,90,90,.12);border-color:rgba(224,90,90,.3)}
+  button.dev.active{background:var(--danger);color:#1a0606}
+  .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+  .cost{color:var(--warmdim);font-size:10px}
+  #hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    background:var(--panel);border:1px solid var(--line);padding:6px 14px;
+    border-radius:20px;font-size:11px;color:var(--warm);pointer-events:none;
+    opacity:0;transition:opacity .2s;white-space:nowrap}
+  #hint.show{opacity:1}
+  #devpanel{position:absolute;top:10px;right:10px;background:var(--panel);
+    border:1px solid rgba(224,90,90,.3);border-radius:8px;padding:8px 10px;
+    font-size:10px;display:none;min-width:150px}
+  #devpanel.show{display:block}
+  #devpanel .row{display:flex;justify-content:space-between;gap:8px;margin:3px 0;
+    color:var(--muted)}
+  #devpanel b{color:var(--danger);letter-spacing:.15em}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="topbar">
+    <span id="title">BENTHOS</span>
+    <div class="stat"><span class="k">Alloy</span><span class="v" id="s-alloy">0</span></div>
+    <div class="stat"><span class="k">Nodules</span><span class="v" id="s-nod">0</span></div>
+    <div class="stat"><span class="k">Power</span><span class="v" id="s-pow">0</span></div>
+    <div class="stat"><span class="k">Crew</span><span class="v" id="s-crew">0</span></div>
+    <div class="stat" id="tidewrap">
+      <span class="k">Tidal Current — <span id="s-tide">slack</span></span>
+      <div id="tidebar"><div id="tidefill"></div></div>
+    </div>
+  </div>
+
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="hint"></div>
+    <div id="devpanel">
+      <b>DEV MODE</b>
+      <div class="row"><span>+10 Alloy</span><button id="dev-alloy" style="padding:1px 6px">add</button></div>
+      <div class="row"><span>+1 Crew</span><button id="dev-crew" style="padding:1px 6px">add</button></div>
+      <div class="row"><span>Instant build</span><button id="dev-instant" style="padding:1px 6px">off</button></div>
+      <div class="row"><span>Show paths</span><button id="dev-paths" style="padding:1px 6px">off</button></div>
+      <div class="row" style="margin-top:6px;color:var(--warmdim)">F: free power · click deposit to seed</div>
+    </div>
+  </div>
+
+  <div id="buildbar">
+    <button id="b-refinery" data-build="refinery">Refinery <span class="cost">5⬢</span></button>
+    <button id="b-storage" data-build="storage">Storage <span class="cost">3⬢</span></button>
+    <button id="b-turbine" data-build="turbine">Turbine <span class="cost">4⬢</span></button>
+    <button id="b-battery" data-build="battery">Energy Cell <span class="cost">4⬢</span></button>
+    <button id="b-cancel" style="display:none">Cancel</button>
+    <div class="sep"></div>
+    <button id="b-pause">Pause</button>
+    <button id="b-dev" class="dev">Dev [D]</button>
+    <span class="cost" style="margin-left:auto" id="speedlbl">tide: 90s</span>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ============================================================================
+//  BENTHOS — Job 1 kernel.  Underwater base-builder.
+//  Proves out: agent brain (available-state + priority ladder + claim/no-reroute),
+//  grid A* pathing, carry-one-block logistics, nodule->Alloy hourglass with
+//  physical blocks + finite storage, tide-as-power metronome with brownout.
+// ============================================================================
+
+// ---- TUNABLES (grouped up top, per project convention) --------------------
+const CFG = {
+  COLS: 52, ROWS: 30, TILE: 22,
+  FLOOR_ROW: 23,            // seafloor walking lane (top surface of sediment)
+  AGENT_SPEED: 2.4,         // tiles / second
+  START_CREW: 4,
+  START_ALLOY: 14,          // preloaded in the dropped cargo container
+
+  TIDE_PERIOD: 90,          // seconds for a full slack->flood->slack cycle
+  TURBINE_GEN: 9,           // power/sec per turbine at full current
+  POWER_CAP_BASE: 40,       // cargo container's built-in cell
+  POWER_CAP_CELL: 35,       // per Energy Cell
+  DRAW_BASE: 1.2,           // ambient life-support draw /sec
+  DRAW_REFINERY: 2.0,       // active refinery draw /sec
+
+  MINE_TIME: 2.2,           // sec to pry a nodule loose
+  REFINE_TIME: 3.0,         // sec to convert 1 nodule -> 1 alloy
+  ASSEMBLE_TIME: 2.0,       // sec for the build to "snap together"
+  DEPOSIT_AMOUNT: 40,       // nodules per seafloor deposit
+  REFINERY_INPUT_CAP: 4,    // nodules that can queue at a refinery
+  STORAGE_CAP: 12,          // alloy slots per storage module (cargo = 18)
+
+  COST: { refinery:5, storage:3, turbine:4, battery:4 },
+};
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let DPR = Math.max(1, window.devicePixelRatio||1);
+function resize(){
+  const r = cv.getBoundingClientRect();
+  cv.width = r.width*DPR; cv.height = r.height*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  view.w = r.width; view.h = r.height;
+  // fit grid to canvas, centered
+  view.scale = Math.min(view.w/(CFG.COLS*CFG.TILE), view.h/(CFG.ROWS*CFG.TILE));
+  view.ox = (view.w - CFG.COLS*CFG.TILE*view.scale)/2;
+  view.oy = (view.h - CFG.ROWS*CFG.TILE*view.scale)/2;
+}
+const view = {w:0,h:0,scale:1,ox:0,oy:0};
+
+// ---- world coordinate helpers ---------------------------------------------
+const T = CFG.TILE;
+function tileToPx(tx,ty){ return { x:(tx+0.5)*T, y:(ty+0.5)*T }; }
+function screenToTile(sx,sy){
+  const wx = (sx-view.ox)/view.scale, wy = (sy-view.oy)/view.scale;
+  return { tx:Math.floor(wx/T), ty:Math.floor(wy/T) };
+}
+function key(x,y){ return x+","+y; }
+
+// ============================================================================
+//  STATE
+// ============================================================================
+const state = {
+  modules: [],       // {id,type,x,y,w,h,built,reqAlloy,delivered,assembling,...}
+  deposits: [],      // {x,y,amount}
+  blocks: [],        // loose physical blocks on the floor: {id,type,x,y,reserved}
+  agents: [],
+  power: { stored: CFG.POWER_CAP_BASE, cap: CFG.POWER_CAP_BASE, gen:0, draw:0 },
+  tide: 0,           // phase 0..1
+  funds: 0,
+  paused:false,
+  placing:null,      // build type currently being placed
+  nextId:1,
+  dev:{ on:false, instant:false, paths:false, freePower:false },
+};
+function uid(){ return state.nextId++; }
+
+// walkable lookup, rebuilt when modules change
+let walkable = new Set();
+function rebuildWalkable(){
+  walkable = new Set();
+  // seafloor lane: full width at FLOOR_ROW
+  for(let x=0;x<CFG.COLS;x++) walkable.add(key(x,CFG.FLOOR_ROW));
+  // module interiors (their floor cells sit on FLOOR_ROW and rise up)
+  for(const m of state.modules){
+    if(!m.solid) for(let yy=m.y; yy<m.y+m.h; yy++)
+      for(let xx=m.x; xx<m.x+m.w; xx++) walkable.add(key(xx,yy));
+  }
+}
+function isWalkable(x,y){
+  if(y===CFG.FLOOR_ROW && x>=0 && x<CFG.COLS) return true;
+  return walkable.has(key(x,y));
+}
+
+// ============================================================================
+//  MODULE DEFINITIONS (data — everything else is built on this)
+// ============================================================================
+const MODDEF = {
+  cargo:    { w:4,h:3, color:'#3a4a3a', label:'CARGO',    inside:true },
+  refinery: { w:4,h:3, color:'#5a4636', label:'REFINERY', inside:true },
+  storage:  { w:3,h:3, color:'#36465a', label:'STORAGE',  inside:true },
+  airlock:  { w:2,h:3, color:'#2a3a44', label:'LOCK',     inside:true },
+  turbine:  { w:2,h:4, color:'#244a4a', label:'TURBINE',  inside:false },
+  battery:  { w:2,h:3, color:'#3a3a4a', label:'CELL',     inside:false },
+};
+
+function makeModule(type, x){
+  const d = MODDEF[type];
+  const y = CFG.FLOOR_ROW - d.h + 1; // sit on the seafloor lane
+  const m = { id:uid(), type, x, y, w:d.w, h:d.h, built:true, reqAlloy:0,
+    delivered:0, assembling:0, worker:null, input:[], output:[], capUsed:0 };
+  if(type==='refinery'){ m.input=[]; m.workTile={x:x+1,y:CFG.FLOOR_ROW}; }
+  if(type==='turbine'){ m.solid=false; }
+  if(type==='battery'){ state.power.cap += CFG.POWER_CAP_CELL; }
+  return m;
+}
+
+// ============================================================================
+//  INITIAL DROP — the cargo container + minimal starter, plus seafloor deposits
+// ============================================================================
+function initWorld(){
+  const cx = Math.floor(CFG.COLS/2);
+  const cargo = makeModule('cargo', cx-2);
+  cargo.storageCap = 18; cargo.stored = CFG.START_ALLOY; // built-in alloy store
+  cargo.isStore = true;
+  state.modules.push(cargo);
+
+  const lock = makeModule('airlock', cx+2);
+  state.modules.push(lock);
+
+  const turb = makeModule('turbine', cx+5);
+  state.modules.push(turb);
+
+  // two polymetallic-nodule deposits out on the seafloor, flanking the base
+  state.deposits.push({ x:6,  y:CFG.FLOOR_ROW, amount:CFG.DEPOSIT_AMOUNT });
+  state.deposits.push({ x:CFG.COLS-7, y:CFG.FLOOR_ROW, amount:CFG.DEPOSIT_AMOUNT });
+
+  rebuildWalkable();
+
+  for(let i=0;i<CFG.START_CREW;i++) spawnAgent(cx + (i-1));
+}
+
+function spawnAgent(tx){
+  const p = tileToPx(tx, CFG.FLOOR_ROW);
+  state.agents.push({
+    id:uid(), x:p.x, y:p.y, tx, ty:CFG.FLOOR_ROW,
+    path:[], task:null, carrying:null, t:0,
+    wanderT: Math.random()*2, hue: 190+Math.random()*40,
+  });
+}
+
+// ============================================================================
+//  A*  (grid, 4-connected — agents walk the lane + module floors)
+// ============================================================================
+function astar(sx,sy,gx,gy){
+  if(sx===gx&&sy===gy) return [];
+  const open=[{x:sx,y:sy,g:0,f:Math.abs(gx-sx)+Math.abs(gy-sy),p:null}];
+  const seen=new Map(); seen.set(key(sx,sy),0);
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  let guard=0;
+  while(open.length && guard++<4000){
+    let bi=0; for(let i=1;i<open.length;i++) if(open[i].f<open[bi].f) bi=i;
+    const cur=open.splice(bi,1)[0];
+    if(cur.x===gx&&cur.y===gy){
+      const out=[]; let n=cur; while(n){ out.push({x:n.x,y:n.y}); n=n.p; }
+      out.reverse(); out.shift(); return out;
+    }
+    for(const[dx,dy]of dirs){
+      const nx=cur.x+dx, ny=cur.y+dy;
+      if(!isWalkable(nx,ny)) continue;
+      const ng=cur.g+1, k=key(nx,ny);
+      if(seen.has(k)&&seen.get(k)<=ng) continue;
+      seen.set(k,ng);
+      open.push({x:nx,y:ny,g:ng,f:ng+Math.abs(gx-nx)+Math.abs(gy-ny),p:cur});
+    }
+  }
+  return null; // unreachable
+}
+// nearest walkable tile adjacent to a target (for standing next to deposits etc.)
+function approachTile(tx,ty){
+  if(isWalkable(tx,ty)) return {x:tx,y:ty};
+  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
+    if(isWalkable(tx+dx,ty+dy)) return {x:tx+dx,y:ty+dy};
+  }
+  return null;
+}
+
+// ============================================================================
+//  TASK ASSIGNMENT — the priority ladder (the agent "brain")
+//  Job 1 ladder (needs/roles/combat arrive in later jobs):
+//   1 assemble a fully-delivered build   2 haul alloy to a build site
+//   3 work a refinery that has input     4 haul a loose alloy block to storage
+//   5 mine a deposit -> refinery input   6 wander
+// ============================================================================
+function refineries(){ return state.modules.filter(m=>m.type==='refinery'&&m.built); }
+function stores(){ return state.modules.filter(m=>m.isStore||m.type==='storage'); }
+function storeSpace(m){ return (m.storageCap||CFG.STORAGE_CAP)-(m.stored||0); }
+function totalAlloy(){ return stores().reduce((s,m)=>s+(m.stored||0),0); }
+function looseNodulesIncoming(m){ // reserved nodules en route + queued
+  let q=m.input.length;
+  for(const a of state.agents) if(a.task&&a.task.type==='mine'&&a.task.dest===m) q++;
+  return q;
+}
+
+function assignTask(a){
+  // 1) ASSEMBLE — any build site fully delivered & not being assembled
+  for(const m of state.modules){
+    if(m.built||m.assemblingBy) continue;
+    if(m.delivered>=m.reqAlloy){
+      const at=approachTile(m.x,CFG.FLOOR_ROW);
+      const path=at&&astar(a.tx,a.ty,at.x,at.y);
+      if(path){ m.assemblingBy=a.id; return {type:'assemble',dest:m,path,phase:'go'}; }
+    }
+  }
+  // 2) BUILD-HAUL — site needs alloy, a store has an unreserved block
+  for(const m of state.modules){
+    if(m.built) continue;
+    const enRoute = state.agents.filter(x=>x.task&&x.task.type==='haulBuild'&&x.task.dest===m).length;
+    if(m.delivered+enRoute>=m.reqAlloy) continue;
+    const realSrc = stores().find(s=>(s.stored||0)>reservedFrom(s));
+    if(!realSrc) break;
+    const sp=approachTile(realSrc.x,CFG.FLOOR_ROW), dp=approachTile(m.x,CFG.FLOOR_ROW);
+    const path=sp&&astar(a.tx,a.ty,sp.x,sp.y);
+    if(path){ return {type:'haulBuild',src:realSrc,dest:m,path,phase:'toSrc'}; }
+  }
+  // 3) WORK a refinery that has a nodule queued and no worker
+  for(const m of refineries()){
+    if(m.worker||m.input.length===0) continue;
+    if(state.power.stored<=0 && !state.dev.freePower) continue;
+    const path=astar(a.tx,a.ty,m.workTile.x,m.workTile.y);
+    if(path){ m.worker=a.id; return {type:'work',dest:m,path,phase:'go'}; }
+  }
+  // 4) HAUL a loose alloy block to storage
+  const block = state.blocks.find(b=>b.type==='alloy'&&!b.reserved);
+  if(block){
+    const dst = stores().find(s=>storeSpace(s)-incomingTo(s)>0);
+    if(dst){
+      const sp=approachTile(block.tx,block.ty);
+      const path=sp&&astar(a.tx,a.ty,sp.x,sp.y);
+      if(path){ block.reserved=true; return {type:'haulStore',block,dest:dst,path,phase:'toBlock'}; }
+    }
+  }
+  // 5) MINE — keep refineries fed
+  const refs=refineries();
+  if(refs.length){
+    const targetRef = refs.find(m=>looseNodulesIncoming(m)<CFG.REFINERY_INPUT_CAP);
+    const dep = state.deposits.find(d=>d.amount>0);
+    if(targetRef && dep){
+      const ap=approachTile(dep.x,dep.y);
+      const path=ap&&astar(a.tx,a.ty,ap.x,ap.y);
+      if(path){ return {type:'mine',deposit:dep,dest:targetRef,path,phase:'toDep'}; }
+    }
+  }
+  return null;
+}
+function reservedFrom(s){
+  return state.agents.filter(a=>a.task&&a.task.type==='haulBuild'&&a.task.src===s&&a.task.phase==='toSrc').length;
+}
+function incomingTo(s){
+  return state.agents.filter(a=>a.task&&(a.task.type==='haulStore'||a.task.type==='haulBuild')&&a.task.dest===s).length;
+}
+
+// wander target: a random walkable lane tile near the base
+function wanderTarget(a){
+  for(let i=0;i<8;i++){
+    const tx = a.tx + (Math.floor(Math.random()*11)-5);
+    if(isWalkable(tx,CFG.FLOOR_ROW)){
+      const path=astar(a.tx,a.ty,tx,CFG.FLOOR_ROW);
+      if(path&&path.length) return {type:'wander',path,phase:'go'};
+    }
+  }
+  return null;
+}
+
+// ============================================================================
+//  AGENT UPDATE
+// ============================================================================
+function updateAgent(a,dt){
+  // movement along current path
+  if(a.path&&a.path.length){
+    const next=a.path[0];
+    const tp=tileToPx(next.x,next.y);
+    const dx=tp.x-a.x, dy=tp.y-a.y, d=Math.hypot(dx,dy);
+    const step=CFG.AGENT_SPEED*T*dt;
+    if(d<=step){ a.x=tp.x; a.y=tp.y; a.tx=next.x; a.ty=next.y; a.path.shift(); }
+    else { a.x+=dx/d*step; a.y+=dy/d*step; }
+    return;
+  }
+  // arrived — resolve task phase
+  const task=a.task;
+  if(!task){
+    a.wanderT-=dt;
+    if(a.wanderT<=0){ a.wanderT=1+Math.random()*2.5;
+      const nt = assignTask(a) || wanderTarget(a);
+      if(nt){ a.task=nt; a.path=nt.path; } }
+    return;
+  }
+
+  switch(task.type){
+    case 'mine':
+      if(task.phase==='toDep'){ a.t=0; task.phase='mining'; }
+      else if(task.phase==='mining'){
+        a.t+=dt;
+        if(a.t>=CFG.MINE_TIME){
+          if(task.deposit.amount>0){ task.deposit.amount--; a.carrying='nodule'; }
+          const wt=task.dest.workTile;
+          const path=astar(a.tx,a.ty,wt.x,wt.y);
+          if(path){ a.path=path; task.phase='toRef'; } else clearTask(a);
+        }
+      } else if(task.phase==='toRef'){
+        if(a.carrying==='nodule' && task.dest.input.length<CFG.REFINERY_INPUT_CAP){
+          task.dest.input.push('nodule'); a.carrying=null;
+        }
+        clearTask(a);
+      }
+      break;
+
+    case 'work':
+      if(task.phase==='go'){ a.t=0; task.phase='refine'; }
+      else if(task.phase==='refine'){
+        const m=task.dest;
+        if(m.input.length===0 || (state.power.stored<=0&&!state.dev.freePower)){ clearTask(a); break; }
+        a.t+=dt;
+        if(a.t>=CFG.REFINE_TIME){
+          m.input.shift(); a.t=0;
+          // emit a physical alloy block just outside the refinery
+          spawnBlock('alloy', m.x+m.w, CFG.FLOOR_ROW);
+        }
+        // workers leave at random intervals (Planetbase behavior); resume later
+        a.workLeft=(a.workLeft||0)+dt;
+        if(a.workLeft>4+Math.random()*4){ a.workLeft=0; clearTask(a); }
+      }
+      break;
+
+    case 'haulStore':
+      if(task.phase==='toBlock'){
+        if(task.block && !task.block.consumed){
+          a.carrying='alloy'; task.block.consumed=true;
+          state.blocks=state.blocks.filter(b=>b!==task.block);
+        }
+        const dp=approachTile(task.dest.x,CFG.FLOOR_ROW);
+        const path=dp&&astar(a.tx,a.ty,dp.x,dp.y);
+        if(path){ a.path=path; task.phase='toStore'; } else clearTask(a);
+      } else if(task.phase==='toStore'){
+        if(a.carrying==='alloy' && storeSpace(task.dest)>0){ task.dest.stored=(task.dest.stored||0)+1; a.carrying=null; }
+        clearTask(a);
+      }
+      break;
+
+    case 'haulBuild':
+      if(task.phase==='toSrc'){
+        if((task.src.stored||0)>0){ task.src.stored--; a.carrying='alloy'; }
+        const dp=approachTile(task.dest.x,CFG.FLOOR_ROW);
+        const path=dp&&astar(a.tx,a.ty,dp.x,dp.y);
+        if(path){ a.path=path; task.phase='toSite'; } else { returnCarry(a); clearTask(a); }
+      } else if(task.phase==='toSite'){
+        if(a.carrying==='alloy'){ task.dest.delivered++; a.carrying=null; }
+        clearTask(a);
+      }
+      break;
+
+    case 'assemble':
+      if(task.phase==='go'){ a.t=0; task.phase='build'; }
+      else if(task.phase==='build'){
+        a.t+=dt;
+        if(state.dev.instant) a.t=CFG.ASSEMBLE_TIME;
+        if(a.t>=CFG.ASSEMBLE_TIME){ finishBuild(task.dest); clearTask(a); }
+      }
+      break;
+
+    case 'wander': clearTask(a); break;
+  }
+}
+function clearTask(a){
+  const t=a.task;
+  if(t){
+    if(t.type==='work'&&t.dest&&t.dest.worker===a.id) t.dest.worker=null;
+    if(t.type==='assemble'&&t.dest&&t.dest.assemblingBy===a.id) t.dest.assemblingBy=null;
+  }
+  a.task=null; a.path=[]; a.t=0;
+}
+function returnCarry(a){
+  if(a.carrying==='alloy'){ const s=stores().find(x=>storeSpace(x)>0); if(s) s.stored=(s.stored||0)+1; a.carrying=null; }
+}
+function spawnBlock(type,tx,ty){
+  // keep BOTH tile coords (for pathing) and pixel coords (for render)
+  const p=tileToPx(tx,ty);
+  state.blocks.push({id:uid(),type,tx,ty,x:p.x,y:p.y,reserved:false});
+}
+
+// ============================================================================
+//  BUILD / PLACEMENT
+// ============================================================================
+function canPlace(type,tx){
+  const d=MODDEF[type]; const x=tx;
+  if(x<0||x+d.w>CFG.COLS) return false;
+  // must sit on seafloor & not overlap existing modules or deposits
+  for(const m of state.modules){
+    if(x < m.x+m.w && x+d.w > m.x) return false; // horizontal overlap (all sit on lane)
+  }
+  for(const dep of state.deposits){ if(dep.x>=x&&dep.x<x+d.w) return false; }
+  return true;
+}
+function placeGhost(type,tx){
+  const d=MODDEF[type];
+  const cost=CFG.COST[type];
+  if(!canPlace(type,tx)) { flash("can't place there"); return; }
+  const m=makeModule(type,tx);
+  m.built=false; m.reqAlloy=cost; m.delivered=0;
+  if(type==='battery') state.power.cap -= CFG.POWER_CAP_CELL; // only add on finish
+  if(type==='storage'){ m.isStore=true; m.storageCap=CFG.STORAGE_CAP; m.stored=0; }
+  if(type==='turbine') m.solid=false;
+  state.modules.push(m);
+  rebuildWalkable();
+  flash("queued — crew will haul "+cost+" alloy");
+}
+function finishBuild(m){
+  m.built=true; m.delivered=0; m.assemblingBy=null;
+  if(m.type==='battery') state.power.cap += CFG.POWER_CAP_CELL;
+  rebuildWalkable();
+}
+
+// ============================================================================
+//  POWER / TIDE
+// ============================================================================
+function updatePower(dt){
+  state.tide=(state.tide + dt/CFG.TIDE_PERIOD)%1;
+  const current=0.5-0.5*Math.cos(state.tide*Math.PI*2); // 0 slack -> 1 flood
+  const nturb=state.modules.filter(m=>m.type==='turbine'&&m.built).length;
+  state.power.gen = nturb*CFG.TURBINE_GEN*current;
+  let draw=CFG.DRAW_BASE;
+  for(const m of refineries()) if(m.worker) draw+=CFG.DRAW_REFINERY;
+  state.power.draw=draw;
+  if(state.dev.freePower){ state.power.stored=state.power.cap; return current; }
+  state.power.stored=Math.max(0,Math.min(state.power.cap,
+    state.power.stored+(state.power.gen-state.power.draw)*dt));
+  return current;
+}
+
+// ============================================================================
+//  RENDER
+// ============================================================================
+function draw(current){
+  ctx.clearRect(0,0,view.w,view.h);
+  // water gradient backdrop
+  const g=ctx.createLinearGradient(0,0,0,view.h);
+  g.addColorStop(0,'#0a3450'); g.addColorStop(.55,'#06243b'); g.addColorStop(1,'#04121f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,view.w,view.h);
+
+  ctx.save();
+  ctx.translate(view.ox,view.oy); ctx.scale(view.scale,view.scale);
+
+  // light shafts (subtle, shift with tide)
+  ctx.globalAlpha=.05+current*0.05;
+  for(let i=0;i<5;i++){
+    const lx=(i*0.23+state.tide*0.08)*CFG.COLS*T;
+    ctx.fillStyle='#bfe9ff';
+    ctx.beginPath();
+    ctx.moveTo(lx,0); ctx.lineTo(lx+40,0);
+    ctx.lineTo(lx+120, CFG.FLOOR_ROW*T); ctx.lineTo(lx+30, CFG.FLOOR_ROW*T);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // sediment / seafloor
+  const fy=(CFG.FLOOR_ROW+1)*T;
+  ctx.fillStyle='#13202a';
+  ctx.fillRect(0,fy,CFG.COLS*T,(CFG.ROWS-CFG.FLOOR_ROW-1)*T);
+  ctx.fillStyle='#1a2c38'; ctx.fillRect(0,fy-4,CFG.COLS*T,5);
+
+  // deposits
+  for(const d of state.deposits){
+    const p=tileToPx(d.x,d.y);
+    const frac=d.amount/CFG.DEPOSIT_AMOUNT;
+    ctx.fillStyle=d.amount>0?'#6f5a3a':'#3a3328';
+    for(let i=0;i<5;i++){
+      const a=i/5*Math.PI*2;
+      const rx=p.x+Math.cos(a)*8*(0.5+frac*0.5), ry=p.y+4+Math.sin(a)*4*frac;
+      ctx.beginPath(); ctx.arc(rx,ry,3+frac*2,0,7); ctx.fill();
+    }
+    ctx.fillStyle='#d9b87a'; ctx.font='9px monospace'; ctx.textAlign='center';
+    ctx.fillText(d.amount, p.x, p.y-12);
+  }
+
+  // modules
+  for(const m of state.modules){
+    const px=m.x*T, py=m.y*T, pw=m.w*T, ph=m.h*T;
+    const d=MODDEF[m.type];
+    if(!m.built){
+      // ghost / under-construction
+      ctx.strokeStyle='rgba(240,194,123,.6)'; ctx.setLineDash([5,4]);
+      ctx.strokeRect(px+1,py+1,pw-2,ph-2); ctx.setLineDash([]);
+      ctx.fillStyle='rgba(240,194,123,.08)'; ctx.fillRect(px,py,pw,ph);
+      ctx.fillStyle='#f0c27b'; ctx.font='9px monospace'; ctx.textAlign='center';
+      ctx.fillText(m.delivered+"/"+m.reqAlloy+"⬢", px+pw/2, py+ph/2);
+    } else {
+      ctx.fillStyle=d.color;
+      if(d.inside){ ctx.fillRect(px,py,pw,ph);
+        ctx.fillStyle='rgba(240,194,123,.10)'; ctx.fillRect(px+2,py+2,pw-4,ph-4); }
+      else { // outside structures drawn lighter / open
+        ctx.fillStyle=d.color; ctx.fillRect(px,py+ph*0.4,pw,ph*0.6);
+        if(m.type==='turbine'){ // simple blades
+          const cxp=px+pw/2, cyp=py+ph*0.35, rot=state.tide*Math.PI*2*(1+current);
+          ctx.strokeStyle='#7fd6d6'; ctx.lineWidth=2;
+          for(let b=0;b<3;b++){ const ang=rot+b*2.1;
+            ctx.beginPath(); ctx.moveTo(cxp,cyp);
+            ctx.lineTo(cxp+Math.cos(ang)*12,cyp+Math.sin(ang)*12); ctx.stroke(); }
+          ctx.lineWidth=1;
+        }
+      }
+      ctx.strokeStyle='rgba(140,200,220,.25)'; ctx.strokeRect(px,py,pw,ph);
+      ctx.fillStyle='var(--muted)';
+      ctx.fillStyle='#7fa6bb'; ctx.font='8px monospace'; ctx.textAlign='center';
+      ctx.fillText(d.label, px+pw/2, py+10);
+      // store contents
+      if(m.isStore){
+        ctx.fillStyle='#b9c4cf'; ctx.font='10px monospace';
+        ctx.fillText((m.stored||0)+"/"+(m.storageCap||CFG.STORAGE_CAP)+"⬢", px+pw/2, py+ph-6);
+      }
+      if(m.type==='refinery'){
+        // input nodules
+        for(let i=0;i<m.input.length;i++){
+          ctx.fillStyle='#6f5a3a';
+          ctx.fillRect(px+4+i*6, py+ph-8, 4,4);
+        }
+        if(m.worker){ ctx.fillStyle='#1f8a8f'; ctx.fillRect(px+pw-7,py+4,4,4); }
+      }
+    }
+  }
+
+  // ghost preview while placing
+  if(state.placing && hover.tx!=null){
+    const d=MODDEF[state.placing]; const ok=canPlace(state.placing,hover.tx);
+    const py=(CFG.FLOOR_ROW-d.h+1)*T;
+    ctx.fillStyle= ok?'rgba(31,138,143,.35)':'rgba(224,90,90,.3)';
+    ctx.fillRect(hover.tx*T,py,d.w*T,d.h*T);
+    ctx.strokeStyle= ok?'#1f8a8f':'#e05a5a';
+    ctx.strokeRect(hover.tx*T,py,d.w*T,d.h*T);
+  }
+
+  // loose blocks
+  for(const b of state.blocks){
+    ctx.fillStyle= b.type==='alloy'?'#b9c4cf':'#6f5a3a';
+    ctx.fillRect(b.x-4,b.y-4,8,8);
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.strokeRect(b.x-4,b.y-4,8,8);
+  }
+
+  // agents
+  for(const a of state.agents){
+    // dev path
+    if(state.dev.paths && a.path&&a.path.length){
+      ctx.strokeStyle='rgba(127,214,214,.4)'; ctx.beginPath();
+      ctx.moveTo(a.x,a.y);
+      for(const n of a.path){ const tp=tileToPx(n.x,n.y); ctx.lineTo(tp.x,tp.y);} ctx.stroke();
+    }
+    ctx.fillStyle='hsl('+a.hue+',45%,62%)';
+    ctx.beginPath(); ctx.arc(a.x,a.y-4,5,0,7); ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(a.x,a.y+6,5,2,0,0,7); ctx.fill();
+    if(a.carrying){
+      ctx.fillStyle= a.carrying==='alloy'?'#b9c4cf':'#6f5a3a';
+      ctx.fillRect(a.x-3,a.y-13,6,6);
+    }
+  }
+
+  ctx.restore();
+
+  // brownout veil
+  if(state.power.stored<=0 && !state.dev.freePower){
+    ctx.fillStyle='rgba(2,8,15,.45)'; ctx.fillRect(0,0,view.w,view.h);
+    ctx.fillStyle='#e05a5a'; ctx.font='13px monospace'; ctx.textAlign='center';
+    ctx.fillText('⚠ BROWNOUT — refineries idle until the current returns', view.w/2, 30);
+  }
+}
+
+// ============================================================================
+//  HUD
+// ============================================================================
+function updateHUD(current){
+  document.getElementById('s-alloy').textContent=totalAlloy();
+  let nod=0; for(const m of refineries()) nod+=m.input.length;
+  for(const a of state.agents) if(a.carrying==='nodule') nod++;
+  document.getElementById('s-nod').textContent=nod;
+  const pe=document.getElementById('s-pow');
+  pe.textContent=Math.floor(state.power.stored)+"/"+state.power.cap;
+  pe.className='v'+(state.power.stored<=0?' warn':'');
+  document.getElementById('s-crew').textContent=state.agents.length;
+  document.getElementById('tidefill').style.width=(current*100).toFixed(0)+"%";
+  document.getElementById('s-tide').textContent=
+    current<0.2?'slack':current>0.8?'flood':current>0.5?'rising':'ebbing';
+}
+
+// ============================================================================
+//  INPUT
+// ============================================================================
+const hover={tx:null};
+let hintTimer=null;
+function flash(msg){
+  const h=document.getElementById('hint'); h.textContent=msg; h.classList.add('show');
+  clearTimeout(hintTimer); hintTimer=setTimeout(()=>h.classList.remove('show'),1800);
+}
+
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect();
+  const t=screenToTile(e.clientX-r.left,e.clientY-r.top);
+  hover.tx= state.placing? Math.max(0,t.tx) : null;
+});
+cv.addEventListener('click',e=>{
+  const r=cv.getBoundingClientRect();
+  const t=screenToTile(e.clientX-r.left,e.clientY-r.top);
+  if(state.placing){ placeGhost(state.placing,t.tx); return; }
+  // dev: click a deposit to refill it
+  if(state.dev.on){
+    const dep=state.deposits.find(d=>Math.abs(d.x-t.tx)<2 && t.ty>=CFG.FLOOR_ROW-1);
+    if(dep){ dep.amount=CFG.DEPOSIT_AMOUNT; flash('deposit reseeded'); }
+  }
+});
+
+document.querySelectorAll('[data-build]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const type=btn.dataset.build;
+    if(state.placing===type){ cancelPlacing(); return; }
+    document.querySelectorAll('[data-build]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); state.placing=type;
+    document.getElementById('b-cancel').style.display='inline-block';
+    flash('click the seafloor to place '+MODDEF[type].label);
+  });
+});
+function cancelPlacing(){
+  state.placing=null; hover.tx=null;
+  document.querySelectorAll('[data-build]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('b-cancel').style.display='none';
+}
+document.getElementById('b-cancel').addEventListener('click',cancelPlacing);
+document.getElementById('b-pause').addEventListener('click',()=>{
+  state.paused=!state.paused;
+  document.getElementById('b-pause').textContent=state.paused?'Resume':'Pause';
+});
+
+// dev mode
+function toggleDev(){
+  state.dev.on=!state.dev.on;
+  document.getElementById('b-dev').classList.toggle('active',state.dev.on);
+  document.getElementById('devpanel').classList.toggle('show',state.dev.on);
+}
+document.getElementById('b-dev').addEventListener('click',toggleDev);
+document.getElementById('dev-alloy').addEventListener('click',()=>{
+  const s=stores().find(x=>storeSpace(x)>0)||stores()[0];
+  if(s) s.stored=(s.stored||0)+10; flash('+10 alloy');
+});
+document.getElementById('dev-crew').addEventListener('click',()=>{
+  spawnAgent(Math.floor(CFG.COLS/2)); flash('+1 crew');
+});
+document.getElementById('dev-instant').addEventListener('click',e=>{
+  state.dev.instant=!state.dev.instant; e.target.textContent=state.dev.instant?'on':'off';
+});
+document.getElementById('dev-paths').addEventListener('click',e=>{
+  state.dev.paths=!state.dev.paths; e.target.textContent=state.dev.paths?'on':'off';
+});
+window.addEventListener('keydown',e=>{
+  if(e.key==='d'||e.key==='D') toggleDev();
+  if(e.key==='f'||e.key==='F'){ state.dev.freePower=!state.dev.freePower; flash('free power '+(state.dev.freePower?'ON':'OFF')); }
+  if(e.key==='Escape') cancelPlacing();
+});
+
+// ============================================================================
+//  MAIN LOOP
+// ============================================================================
+let last=performance.now();
+function frame(now){
+  let dt=(now-last)/1000; last=now;
+  dt=Math.min(dt,0.05); // clamp on tab-switch
+  let current=0.5-0.5*Math.cos(state.tide*Math.PI*2);
+  if(!state.paused){
+    current=updatePower(dt);
+    for(const a of state.agents) updateAgent(a,dt);
+  }
+  draw(current);
+  updateHUD(current);
+  requestAnimationFrame(frame);
+}
+
+window.addEventListener('resize',resize);
+initWorld();
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
