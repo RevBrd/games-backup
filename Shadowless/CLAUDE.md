@@ -201,8 +201,15 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
   screens, and setting the visual language *before* they exist is far cheaper than restyling them
   after. By then the battle UI is feature-complete, so there is a whole thing to design against.
   This is also the first job that genuinely benefits from Claude Code over Chat — the build can be
-  rendered, screenshotted and iterated against for real. Open question inside it: whether to keep
-  the deterministic sigils or pull real card art from the `images` URLs in `data/raw/`.
+  rendered, screenshotted and iterated against for real.
+  **On card art:** the `images` URLs in `data/raw/` are *complete card faces* — border, name, HP,
+  attacks, the lot — not illustration crops. There is no crop available anywhere, so they cannot
+  fill the sigil's frame; using them means showing the whole printed card. That makes them a poor
+  instrument (nothing to overlay damage onto, attack text illegible at 240px) and a lovely object.
+  So the split is by function, not either/or: the mat and hand keep the rendered face and its sigil,
+  the real card image appears where the card is the *subject* — the preview panel, the dex, pack
+  opening. Sizes: ~160 KB small, ~900 KB hires, so ~16 MB for Base Set and ~200 MB for all 14 sets.
+  Fetch per set, gitignore them, keep a fetch script — they are derived assets, not source.
 - **Job 5** — collection, packs, deck building, persistence.
 - **Job 6** — Jungle and Fossil. `node tools/gen_cards.js --sets base1,base2,base3`.
 - **Job 7** — progression, named opponents.
