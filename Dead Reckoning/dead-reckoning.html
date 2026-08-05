@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEAD RECKONING — Flight Sandbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@300;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#05070d; --void2:#0a0e18; --panel:#0c1220cc;
+    --line:#1b2740; --line2:#26354f;
+    --cold:#6f8cb0; --ice:#aebfd6; --frost:#dce6f6;
+    --warm:#ff8a3c; --hot:#ff3b2e; --vector:#5fd0c4;
+    --mono:"JetBrains Mono", ui-monospace, "Cascadia Code", Menlo, monospace;
+    --disp:"Saira Condensed", "Arial Narrow", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--void);color:var(--ice);font-family:var(--mono);}
+  body{display:flex;flex-direction:column;align-items:center;min-height:100%;padding:18px 14px 28px;}
+  .masthead{width:100%;max-width:1000px;display:flex;align-items:baseline;gap:14px;margin-bottom:10px;}
+  .title{font-family:var(--disp);font-weight:700;font-size:34px;letter-spacing:.22em;color:var(--frost);
+         text-transform:uppercase;line-height:1;}
+  .title .dim{color:var(--cold);}
+  .sub{font-size:11px;letter-spacing:.32em;color:var(--cold);text-transform:uppercase;margin-left:auto;}
+  .stage{position:relative;width:100%;max-width:1000px;aspect-ratio:1000/700;
+         border:1px solid var(--line);background:var(--void2);box-shadow:0 0 0 1px #000 inset, 0 20px 60px -30px #000;}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+
+  /* instrument overlay */
+  .hud{position:absolute;inset:0;pointer-events:none;font-family:var(--mono);}
+  .tel{position:absolute;top:12px;left:12px;background:var(--panel);border:1px solid var(--line2);
+       padding:10px 12px;font-size:11px;line-height:1.55;color:var(--ice);backdrop-filter:blur(2px);min-width:172px;}
+  .tel .row{display:flex;justify-content:space-between;gap:18px;}
+  .tel .k{color:var(--cold);letter-spacing:.08em;}
+  .tel .v{color:var(--frost);font-variant-numeric:tabular-nums;}
+  .tel .hd{color:var(--cold);letter-spacing:.26em;font-size:9px;border-bottom:1px solid var(--line2);
+           padding-bottom:5px;margin-bottom:6px;}
+  .tel.off{display:none;}
+
+  .heatwrap{position:absolute;top:12px;right:12px;width:172px;background:var(--panel);
+            border:1px solid var(--line2);padding:9px 11px;}
+  .heatwrap .lbl{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.22em;
+                 color:var(--cold);margin-bottom:6px;}
+  .heatbar{height:9px;background:#0a0f1a;border:1px solid var(--line2);position:relative;overflow:hidden;}
+  .heatfill{position:absolute;inset:0;width:0%;background:linear-gradient(90deg,#2f7bd6,var(--warm) 62%,var(--hot));
+            transition:width .04s linear;}
+  .heatmark{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--frost);opacity:.5;}
+  .heatwrap.over .lbl .st{color:var(--hot);}
+
+  .banner{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);text-align:center;
+          font-family:var(--disp);text-transform:uppercase;letter-spacing:.18em;display:none;}
+  .banner.show{display:block;}
+  .banner .big{font-size:30px;color:var(--hot);font-weight:700;}
+  .banner .small{font-size:12px;color:var(--cold);letter-spacing:.3em;margin-top:4px;font-family:var(--mono);}
+
+  .legend{width:100%;max-width:1000px;margin-top:12px;display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 22px;
+          font-size:11px;color:var(--cold);border-top:1px solid var(--line);padding-top:12px;}
+  .legend b{color:var(--ice);font-weight:500;}
+  .legend .key{display:inline-block;border:1px solid var(--line2);border-radius:3px;padding:0 6px;
+               color:var(--frost);background:#0c1322;font-size:10px;margin-right:7px;}
+  .foot{width:100%;max-width:1000px;margin-top:14px;font-size:10.5px;color:#4a5d7d;letter-spacing:.04em;line-height:1.6;}
+  .paused{position:absolute;left:12px;bottom:12px;font-size:10px;letter-spacing:.28em;color:var(--warm);display:none;}
+  .paused.show{display:block;}
+</style>
+</head>
+<body>
+  <div class="masthead">
+    <div class="title">DEAD <span class="dim">RECKONING</span></div>
+    <div class="sub">Sandbox · pure vacuum · working title</div>
+  </div>
+
+  <div class="stage">
+    <canvas id="c"></canvas>
+    <div class="hud">
+      <div class="tel" id="tel">
+        <div class="hd">TELEMETRY</div>
+        <div class="row"><span class="k">SPEED</span><span class="v" id="t-spd">0</span></div>
+        <div class="row"><span class="k">VEL X</span><span class="v" id="t-vx">0</span></div>
+        <div class="row"><span class="k">VEL Y</span><span class="v" id="t-vy">0</span></div>
+        <div class="row"><span class="k">SPIN</span><span class="v" id="t-spin">0</span></div>
+        <div class="row"><span class="k">HEAT</span><span class="v" id="t-heat">0%</span></div>
+        <div class="row" id="row-well" style="display:none"><span class="k">WELL r</span><span class="v" id="t-well">0</span></div>
+        <div class="row"><span class="k">ROCKS</span><span class="v" id="t-rocks">0</span></div>
+        <div class="row"><span class="k">DESTROYED</span><span class="v" id="t-deaths">0</span></div>
+      </div>
+      <div class="heatwrap" id="heatwrap">
+        <div class="lbl"><span>HEAT</span><span class="st" id="heatst">NOMINAL</span></div>
+        <div class="heatbar"><div class="heatfill" id="heatfill"></div><div class="heatmark" id="heatmark"></div></div>
+      </div>
+      <div class="banner" id="banner"><div class="big" id="banner-big">HULL LOST</div><div class="small">reacquiring · stand by</div></div>
+      <div class="paused" id="pausemsg">— PAUSED —</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div><span class="key">← →</span><b>Rotate (RCS)</b></div>
+    <div><span class="key">↑ / W</span><b>Main engine — forward only</b></div>
+    <div><span class="key">Q / E</span><b>Strafe (RCS, weak)</b></div>
+    <div><span class="key">SPACE</span><b>Fire</b></div>
+    <div><span class="key">H</span><b>Summon asteroid</b></div>
+    <div><span class="key">R</span><b>Reset — kill velocity & spin</b></div>
+    <div><span class="key">G</span><b>Toggle telemetry</b></div>
+    <div><span class="key">P</span><b>Pause</b></div>
+    <div><span class="key">K</span><b>Toggle gravity well (off)</b></div>
+  </div>
+  <div class="foot">
+    No reverse thrust and no auto-stabilization. To slow down, flip and burn. RCS never builds heat, so you can always maneuver — only the main engine and the gun do.
+    The teal line is your true velocity vector: the gap between where it points and where your nose points is the whole game.
+  </div>
+
+<script>
+//============================================================================
+// DEAD RECKONING — Job 1: flight sandbox
+// All feel-critical numbers live in CONFIG. Tune by feel; telemetry is live.
+//============================================================================
+const CONFIG = {
+  world:   { w:1000, h:700 },              // simulation units (canvas is scaled to fit)
+  ship:    { radius:8 },
+  // --- propulsion (no damping anywhere; pure Newtonian) ---
+  mainThrust:   220,    // px/s^2 forward only
+  rcsTorque:    13,     // rad/s^2 angular authority (high = snappy, still player-driven)
+  rcsStrafe:    78,     // px/s^2 lateral (deliberately ~1/3 of main)
+  // --- gravity well — DISABLED for the vacuum sandbox. Kept intact; press K to toggle, or set enabled:true ---
+  well: {
+    enabled:  false,
+    G:        900000, // strength: accel = G / r^2
+    minR:     60,     // softening floor
+    maxA:     170,    // cap, kept below mainThrust so the engine can always escape the core
+    danger:   150,    // visual danger ring
+  },
+  // --- weapon ---
+  muzzle:       430,    // bullet speed added ON TOP of ship velocity (realistic inheritance)
+  bulletLife:   1.6,
+  fireCd:       0.17,
+  recoil:       9,      // px/s of backward impulse PER SHOT. Tuning dial — a long burst
+                        // should visibly drift you back without spoiling a single shot.
+  // --- heat ---
+  engineHeat:   0.45,   // per second of main burn (~5s continuous = overheat; taps stay cheap). PRIMARY DIAL.
+  shotHeat:     0.075,  // per shot
+  vent:         0.26,   // passive cooling per second (always on)
+  overheatAt:   1.0,
+  ventRelease:  0.55,   // must cool to here before regaining engine/gun (hysteresis)
+  // --- asteroids ---
+  astLargeR:    24, astMedR:15,
+  astSpeedMin:  55, astSpeedMax:135,
+  respawn:      1.3,    // seconds before the ship reappears after a hull loss
+};
+
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const W = CONFIG.world.w, H = CONFIG.world.h;
+const CX = W/2, CY = H/2;
+
+// hi-dpi backing store sized to the displayed box
+function resize(){
+  const r = cv.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  cv.width = Math.round(r.width*dpr);
+  cv.height = Math.round(r.height*dpr);
+}
+window.addEventListener('resize', resize);
+
+//---------------------------------------------------------------- state
+const ship = newShip();
+let bullets = [];
+let asteroids = [];
+let particles = [];
+let stars = [];
+let rocksKilled = 0, deaths = 0;
+let paused = false, showTel = true;
+
+function newShip(){
+  return { x:CX, y:CY-185, vx:0, vy:0, ang:-Math.PI/2, av:0, heat:0, over:false,
+           fcd:0, alive:true, respawn:0,
+           thr:false, strL:false, strR:false, rotL:false, rotR:false };
+}
+function seedStars(){
+  stars = [];
+  for(let i=0;i<150;i++) stars.push({x:Math.random()*W, y:Math.random()*H,
+    z:Math.random()*0.8+0.2});
+}
+seedStars();
+
+//---------------------------------------------------------------- input
+const keys = {};
+addEventListener('keydown', e=>{
+  const k = e.key.toLowerCase();
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+  if(keys[k]) return; keys[k]=true;
+  if(k===' ') fire();
+  else if(k==='h') summonAsteroid();
+  else if(k==='r') resetShip();
+  else if(k==='k'){ CONFIG.well.enabled=!CONFIG.well.enabled;
+                    document.getElementById('row-well').style.display=CONFIG.well.enabled?'flex':'none'; }
+  else if(k==='g'){ showTel=!showTel; document.getElementById('tel').classList.toggle('off',!showTel); }
+  else if(k==='p'){ paused=!paused; document.getElementById('pausemsg').classList.toggle('show',paused);
+                    last=performance.now(); }
+});
+addEventListener('keyup', e=>{ keys[e.key.toLowerCase()]=false; });
+function readInputs(){
+  ship.rotL = !!(keys['arrowleft']||keys['a']);
+  ship.rotR = !!(keys['arrowright']||keys['d']);
+  ship.thr  = !!(keys['arrowup']||keys['w']);
+  ship.strL = !!keys['q'];
+  ship.strR = !!keys['e'];
+}
+
+//---------------------------------------------------------------- helpers
+const wrap=(v,m)=>{ v%=m; return v<0?v+m:v; };
+function fire(){
+  if(!ship.alive || ship.over || ship.fcd>0) return;
+  const nx=Math.cos(ship.ang), ny=Math.sin(ship.ang);
+  bullets.push({ x:ship.x+nx*CONFIG.ship.radius, y:ship.y+ny*CONFIG.ship.radius,
+                 vx:ship.vx+nx*CONFIG.muzzle, vy:ship.vy+ny*CONFIG.muzzle, life:CONFIG.bulletLife });
+  ship.heat += CONFIG.shotHeat; ship.fcd = CONFIG.fireCd;
+  // recoil — a true impulse, not a thrust. With no damping, every shot permanently
+  // alters your trajectory. Small enough to be a drift you manage, not a shove.
+  ship.vx -= nx*CONFIG.recoil; ship.vy -= ny*CONFIG.recoil;
+}
+function summonAsteroid(){
+  const edge = (Math.random()*4)|0; let x,y;
+  if(edge===0){x=0;y=Math.random()*H;} else if(edge===1){x=W;y=Math.random()*H;}
+  else if(edge===2){x=Math.random()*W;y=0;} else {x=Math.random()*W;y=H;}
+  // aim a loose course across the arena
+  const tx=CX+(Math.random()-0.5)*W*0.5, ty=CY+(Math.random()-0.5)*H*0.5;
+  let a=Math.atan2(ty-y,tx-x)+(Math.random()-0.5)*0.6;
+  const sp=CONFIG.astSpeedMin+Math.random()*(CONFIG.astSpeedMax-CONFIG.astSpeedMin);
+  const big=Math.random()<0.6;
+  asteroids.push(makeRock(x,y,Math.cos(a)*sp,Math.sin(a)*sp,big?'L':'M'));
+}
+function makeRock(x,y,vx,vy,tier){
+  const r = tier==='L'?CONFIG.astLargeR:CONFIG.astMedR;
+  const verts=[]; const n=9+((Math.random()*4)|0);
+  for(let i=0;i<n;i++){ const t=i/n*Math.PI*2; verts.push(r*(0.74+Math.random()*0.46)); }
+  return { x,y,vx,vy,r,tier,verts,rot:Math.random()*6.28,rv:(Math.random()-0.5)*1.2 };
+}
+function resetShip(){ ship.vx=0; ship.vy=0; ship.av=0; ship.heat=0; ship.over=false; }
+function killShip(){
+  if(!ship.alive) return;
+  ship.alive=false; ship.respawn=CONFIG.respawn; deaths++;
+  for(let i=0;i<26;i++){ const a=Math.random()*6.28, s=40+Math.random()*180;
+    particles.push({x:ship.x,y:ship.y,vx:ship.vx+Math.cos(a)*s,vy:ship.vy+Math.sin(a)*s,
+                    life:0.7+Math.random()*0.5,max:1.2,c:Math.random()<0.5?'#ff8a3c':'#dce6f6'}); }
+  document.getElementById('banner').classList.add('show');
+}
+
+//---------------------------------------------------------------- step
+function step(dt){
+  if(ship.alive){
+    readInputs();
+    // attitude (RCS torque) — heat-free, always available
+    ship.av += ((ship.rotR?1:0)-(ship.rotL?1:0))*CONFIG.rcsTorque*dt;
+    ship.ang += ship.av*dt;
+    let ax=0, ay=0;
+    const nx=Math.cos(ship.ang), ny=Math.sin(ship.ang);
+    // main engine — forward only, gated by overheat
+    if(ship.thr && !ship.over){ ax+=nx*CONFIG.mainThrust; ay+=ny*CONFIG.mainThrust;
+      ship.heat += CONFIG.engineHeat*dt;
+      if(Math.random()<0.9) particles.push({x:ship.x-nx*9,y:ship.y-ny*9,
+        vx:ship.vx-nx*120+(Math.random()-0.5)*40, vy:ship.vy-ny*120+(Math.random()-0.5)*40,
+        life:0.18+Math.random()*0.12,max:0.3,c:'#ff8a3c'}); }
+    // lateral RCS — heat-free, weak; perpendicular to nose
+    const px=Math.cos(ship.ang+Math.PI/2), py=Math.sin(ship.ang+Math.PI/2);
+    const s=((ship.strR?1:0)-(ship.strL?1:0));
+    ax+=px*CONFIG.rcsStrafe*s; ay+=py*CONFIG.rcsStrafe*s;
+    // gravity well (softened + capped) — only when enabled
+    if(CONFIG.well.enabled){
+      let dx=CX-ship.x, dy=CY-ship.y, r=Math.hypot(dx,dy)||0.0001;
+      const reff=Math.max(r,CONFIG.well.minR);
+      let ga=Math.min(CONFIG.well.G/(reff*reff), CONFIG.well.maxA);
+      ax+=dx/r*ga; ay+=dy/r*ga;
+    }
+    // integrate (semi-implicit Euler)
+    ship.vx+=ax*dt; ship.vy+=ay*dt;
+    ship.x=wrap(ship.x+ship.vx*dt, W); ship.y=wrap(ship.y+ship.vy*dt, H);
+    // heat bookkeeping
+    ship.heat=Math.max(0, ship.heat-CONFIG.vent*dt);
+    if(ship.heat>=CONFIG.overheatAt) ship.over=true;
+    if(ship.over && ship.heat<=CONFIG.ventRelease) ship.over=false;
+    ship.fcd-=dt;
+  } else {
+    ship.respawn-=dt;
+    if(ship.respawn<=0){ Object.assign(ship,newShip()); document.getElementById('banner').classList.remove('show'); }
+  }
+  // bullets — deliberately DO NOT wrap; they die at the arena edge
+  for(const b of bullets){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt;
+    if(b.x<0||b.x>W||b.y<0||b.y>H) b.life=0; }
+  bullets=bullets.filter(b=>b.life>0);
+  // asteroids
+  for(const k of asteroids){ k.x=wrap(k.x+k.vx*dt,W); k.y=wrap(k.y+k.vy*dt,H); k.rot+=k.rv*dt; }
+  // bullet vs asteroid (toroidal distance)
+  for(const b of bullets){
+    for(const k of asteroids){
+      // plain (non-toroidal) distance: bullets don't wrap, so they must not hit across the edge
+      if(Math.hypot(b.x-k.x,b.y-k.y)<k.r){ b.life=0; rocksKilled++;
+        rockBoom(k);
+        if(k.tier==='L'){ for(let i=0;i<2;i++){ const a=Math.random()*6.28,sp=70+Math.random()*70;
+          asteroids.push(makeRock(k.x,k.y,k.vx+Math.cos(a)*sp,k.vy+Math.sin(a)*sp,'M')); } }
+        k.dead=true; break; }
+    }
+  }
+  asteroids=asteroids.filter(k=>!k.dead);
+  // asteroid vs ship
+  if(ship.alive){ for(const k of asteroids){
+    if(toroDist(ship.x,ship.y,k.x,k.y)<k.r+CONFIG.ship.radius){ killShip(); break; } } }
+  // particles
+  for(const p of particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt; }
+  particles=particles.filter(p=>p.life>0);
+  bullets=bullets.filter(b=>b.life>0);
+}
+function rockBoom(k){ for(let i=0;i<10;i++){ const a=Math.random()*6.28,s=30+Math.random()*90;
+  particles.push({x:k.x,y:k.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.4+Math.random()*0.3,max:0.7,c:'#8aa0c0'}); } }
+function toroDist(ax,ay,bx,by){
+  let dx=Math.abs(ax-bx), dy=Math.abs(ay-by);
+  if(dx>W/2)dx=W-dx; if(dy>H/2)dy=H-dy; return Math.hypot(dx,dy);
+}
+
+//---------------------------------------------------------------- render
+function render(){
+  const sx=cv.width/W, sy=cv.height/H;
+  ctx.save(); ctx.scale(sx,sy);
+  // background
+  ctx.fillStyle='#05070d'; ctx.fillRect(0,0,W,H);
+  drawGrid();
+  for(const s of stars){ ctx.globalAlpha=0.25+s.z*0.55; ctx.fillStyle='#aebfd6';
+    ctx.fillRect(s.x,s.y,s.z*1.4,s.z*1.4); }
+  ctx.globalAlpha=1;
+  if(CONFIG.well.enabled) drawWell();
+  for(const k of asteroids) drawWrapped(k.x,k.y,k.r, (x,y)=>drawRock(k,x,y));
+  for(const b of bullets){
+    ctx.strokeStyle='#ff8a3c'; ctx.lineWidth=1.6; ctx.beginPath();
+    ctx.moveTo(b.x,b.y); ctx.lineTo(b.x-b.vx*0.012,b.y-b.vy*0.012); ctx.stroke(); }
+  for(const p of particles){ ctx.globalAlpha=Math.max(0,p.life/p.max); ctx.fillStyle=p.c;
+    ctx.fillRect(p.x-1.3,p.y-1.3,2.6,2.6); } ctx.globalAlpha=1;
+  if(ship.alive) drawWrapped(ship.x,ship.y,40,(x,y)=>drawShip(x,y));
+  ctx.restore();
+}
+function drawGrid(){
+  const step=50; ctx.strokeStyle='rgba(70,92,128,0.06)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let x=0;x<=W;x+=step){ ctx.moveTo(x,0); ctx.lineTo(x,H); }
+  for(let y=0;y<=H;y+=step){ ctx.moveTo(0,y); ctx.lineTo(W,y); }
+  ctx.stroke();
+}
+function drawWell(){
+  const D=CONFIG.well.danger;
+  const g=ctx.createRadialGradient(CX,CY,0,CX,CY,D*1.7);
+  g.addColorStop(0,'rgba(72,58,120,0.55)'); g.addColorStop(0.5,'rgba(40,34,72,0.30)');
+  g.addColorStop(1,'rgba(40,34,72,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(CX,CY,D*1.7,0,6.2832); ctx.fill();
+  ctx.fillStyle='#1a1530'; ctx.beginPath(); ctx.arc(CX,CY,9,0,6.2832); ctx.fill();
+  ctx.strokeStyle='rgba(120,104,180,0.30)'; ctx.lineWidth=1; ctx.setLineDash([4,7]);
+  ctx.beginPath(); ctx.arc(CX,CY,D,0,6.2832); ctx.stroke(); ctx.setLineDash([]);
+}
+function drawRock(k,x,y){
+  ctx.save(); ctx.translate(x,y); ctx.rotate(k.rot);
+  ctx.beginPath();
+  for(let i=0;i<k.verts.length;i++){ const t=i/k.verts.length*6.2832, rr=k.verts[i];
+    const px=Math.cos(t)*rr, py=Math.sin(t)*rr; i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+  ctx.closePath();
+  ctx.fillStyle='#161d2c'; ctx.fill();
+  ctx.strokeStyle='#5a6c8a'; ctx.lineWidth=1.3; ctx.stroke(); ctx.restore();
+}
+function drawShip(x,y){
+  // velocity vector (signature overlay) — drawn from ship in world space
+  if(showTel){
+    const sp=Math.hypot(ship.vx,ship.vy);
+    if(sp>2){ ctx.strokeStyle='#5fd0c4'; ctx.globalAlpha=0.9; ctx.lineWidth=1.4;
+      const ex=x+ship.vx*0.12, ey=y+ship.vy*0.12;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(ex,ey); ctx.stroke();
+      const va=Math.atan2(ship.vy,ship.vx);
+      ctx.beginPath(); ctx.moveTo(ex,ey);
+      ctx.lineTo(ex-Math.cos(va-0.4)*7, ey-Math.sin(va-0.4)*7);
+      ctx.lineTo(ex-Math.cos(va+0.4)*7, ey-Math.sin(va+0.4)*7); ctx.closePath();
+      ctx.fillStyle='#5fd0c4'; ctx.fill(); ctx.globalAlpha=1; }
+  }
+  ctx.save(); ctx.translate(x,y); ctx.rotate(ship.ang);
+  const R=CONFIG.ship.radius;
+  // hull tint warms with heat
+  const h=Math.min(1,ship.heat);
+  const hull = ship.over ? '#ff3b2e' : lerpColor([122,150,180],[255,90,46],h*0.85);
+  ctx.beginPath(); ctx.moveTo(R*1.5,0); ctx.lineTo(-R,R*0.85); ctx.lineTo(-R*0.5,0);
+  ctx.lineTo(-R,-R*0.85); ctx.closePath();
+  ctx.fillStyle='#0c1322'; ctx.fill();
+  ctx.strokeStyle=hull; ctx.lineWidth=1.5; ctx.stroke();
+  // warm nose pip
+  ctx.fillStyle=ship.over?'#ff3b2e':'#ff8a3c'; ctx.beginPath(); ctx.arc(R*0.9,0,1.7,0,6.28); ctx.fill();
+  ctx.restore();
+  // compact on-canvas readout, offset clear of the hull so you never eye-flick to the corner
+  if(showTel){
+    const sp=Math.hypot(ship.vx,ship.vy);
+    const hdg=((ship.ang*57.2958)+450)%360;   // 0 = up, clockwise
+    ctx.font='500 9px "JetBrains Mono", monospace';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillStyle='rgba(174,191,214,0.75)';
+    ctx.fillText(sp.toFixed(0).padStart(4,' ')+' u/s', x+15, y-7);
+    ctx.fillText(hdg.toFixed(0).padStart(4,' ')+'\u00B0',   x+15, y+5);
+    ctx.fillStyle='rgba(95,208,196,0.55)';
+    ctx.fillRect(x+12, y-13, 1, 24);
+  }
+}
+function drawWrapped(x,y,m,fn){
+  for(const ox of [-W,0,W]) for(const oy of [-H,0,H]){
+    if(x+ox<-m||x+ox>W+m||y+oy<-m||y+oy>H+m) continue;
+    fn(x+ox,y+oy);
+  }
+}
+function lerpColor(a,b,t){ const c=a.map((v,i)=>Math.round(v+(b[i]-v)*t)); return `rgb(${c[0]},${c[1]},${c[2]})`; }
+
+//---------------------------------------------------------------- HUD
+const el = id=>document.getElementById(id);
+function updateHUD(){
+  const sp=Math.hypot(ship.vx,ship.vy);
+  el('t-spd').textContent=sp.toFixed(0);
+  el('t-vx').textContent=ship.vx.toFixed(0);
+  el('t-vy').textContent=ship.vy.toFixed(0);
+  el('t-spin').textContent=(ship.av*57.3).toFixed(0)+'°/s';
+  el('t-heat').textContent=Math.round(ship.heat*100)+'%';
+  el('t-well').textContent=Math.hypot(CX-ship.x,CY-ship.y).toFixed(0);
+  el('t-rocks').textContent=rocksKilled;
+  el('t-deaths').textContent=deaths;
+  const pct=Math.min(100,ship.heat*100);
+  el('heatfill').style.width=pct+'%';
+  el('heatmark').style.left=(CONFIG.ventRelease*100)+'%';
+  const hw=el('heatwrap'); hw.classList.toggle('over',ship.over);
+  el('heatst').textContent=ship.over?'VENTING — LOCKED':(ship.heat>0.75?'CAUTION':'NOMINAL');
+}
+
+//---------------------------------------------------------------- loop
+let last=performance.now(), acc=0; const DT=1/120;
+function frame(now){
+  let dtr=(now-last)/1000; last=now;
+  if(!paused){ acc+=Math.min(dtr,0.25); while(acc>=DT){ step(DT); acc-=DT; } }
+  render(); updateHUD();
+  requestAnimationFrame(frame);
+}
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
