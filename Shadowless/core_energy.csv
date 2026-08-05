@@ -1,0 +1,9 @@
+card_id,set_code,number,name,energy_class,provides,text,rarity,artist
+base1-96,base1,96,Double Colorless Energy,Special,any,"Provides ColorlessColorless energy.
+Doesn't count as a basic Energy card.",Uncommon,Keiji Kinebuchi
+base1-97,base1,97,Fighting Energy,Basic,,,,Keiji Kinebuchi
+base1-98,base1,98,Fire Energy,Basic,,,,Keiji Kinebuchi
+base1-99,base1,99,Grass Energy,Basic,,,,Keiji Kinebuchi
+base1-100,base1,100,Lightning Energy,Basic,,,,Keiji Kinebuchi
+base1-101,base1,101,Psychic Energy,Basic,,,,Keiji Kinebuchi
+base1-102,base1,102,Water Energy,Basic,,,,Keiji Kinebuchi
