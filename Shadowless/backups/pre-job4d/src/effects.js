@@ -41,31 +41,6 @@
 //     T_SWITCH_OPPONENT / T_DISCARD_OPP_ENERGY / T_PLUSPOWER / T_LASS
 //     T_ENERGY_RETRIEVAL {n} / T_PROFESSOR_OAK / T_SUPER_ENERGY_REMOVAL
 //     T_DEFENDER / T_COMPUTER_SEARCH
-//
-// POKEMON POWERS
-//   `p` is a single object, not a verb list — Powers are not attacks and don't
-//   share the attack pipeline. They fire outside the attack step, and the ones
-//   that say "as often as you like" fire repeatedly within one turn.
-//
-//   Every Base Set Power carries "can't be used if <self> is Asleep, Confused or
-//   Paralyzed", so the engine gates ALL of them on that and no card restates it.
-//   A Power works wherever its Pokemon is — Active or Bench — unless noted.
-//
-//   { kind, name, ... }
-//     RETALIATE {dmg}        passive. When an opponent's attack damages this
-//                            Pokemon, deal `dmg` back to the attacker, ignoring
-//                            Weakness and Resistance. Fires even if this Pokemon
-//                            is Knocked Out by that damage.
-//     ENERGY_AS {type}       toggle, lasts the rest of the turn. Every Energy
-//                            attached to this Pokemon counts as `type` for
-//                            paying attack costs. Symbol COUNT is unchanged, so
-//                            Double Colorless still pays for two.
-//     MOVE_DAMAGE            interactive, repeatable. Move 1 damage counter
-//                            between your own Pokemon. Illegal if it would Knock
-//                            Out the receiving Pokemon.
-//
-//   Interactive Powers enumerate one legal action per (source, target) pair, so
-//   the AI can score them like any other action and the UI can highlight them.
 
 const EFFECTS = {
 
@@ -316,26 +291,6 @@ const EFFECTS = {
   'base1-99': { t: [] },
   'base1-98': { t: [] },
   'base1-102': { t: [] },
-
-  // ================= PASS 4d — the first Pokemon Powers =================
-  'base1-4': {                                          // Charizard
-    p: { kind: 'ENERGY_AS', name: 'Energy Burn', type: 'R' },
-    a: [
-      [{ v: 'COST_DISCARD_ENERGY', n: 2 }],             //   Fire Spin
-    ],
-  },
-  'base1-8': {                                          // Machamp
-    p: { kind: 'RETALIATE', name: 'Strikes Back', dmg: 10 },
-    a: [
-      [],                                               //   Seismic Toss
-    ],
-  },
-  'base1-1': {                                          // Alakazam
-    p: { kind: 'MOVE_DAMAGE', name: 'Damage Swap' },
-    a: [
-      [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],         //   Confuse Ray
-    ],
-  },
 };
 
 if (typeof module !== 'undefined') module.exports = { EFFECTS };

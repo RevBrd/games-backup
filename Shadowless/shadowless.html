@@ -144,6 +144,10 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .btn:hover{border-color:var(--amber)}
 .btn.end{background:#3A2F1C;border-color:#5C4620;color:var(--amber)}
 .btn.ghost{background:transparent;color:var(--dim)}
+/* Pokemon Powers read as a different class of action from playing a card, so
+   they get their own colour rather than sitting in the row looking like a Trainer. */
+.btn.power{background:#2A2340;border-color:#4B3E6E;color:#B9A6E0}
+.btn.power::before{content:'\26A1';margin-right:.4em;opacity:.85}
 .btn.off{opacity:.4;pointer-events:none}
 
 /* ---- coin flip presentation ---- */
@@ -617,6 +621,31 @@ const DECKS = {
 //     T_SWITCH_OPPONENT / T_DISCARD_OPP_ENERGY / T_PLUSPOWER / T_LASS
 //     T_ENERGY_RETRIEVAL {n} / T_PROFESSOR_OAK / T_SUPER_ENERGY_REMOVAL
 //     T_DEFENDER / T_COMPUTER_SEARCH
+//
+// POKEMON POWERS
+//   `p` is a single object, not a verb list — Powers are not attacks and don't
+//   share the attack pipeline. They fire outside the attack step, and the ones
+//   that say "as often as you like" fire repeatedly within one turn.
+//
+//   Every Base Set Power carries "can't be used if <self> is Asleep, Confused or
+//   Paralyzed", so the engine gates ALL of them on that and no card restates it.
+//   A Power works wherever its Pokemon is — Active or Bench — unless noted.
+//
+//   { kind, name, ... }
+//     RETALIATE {dmg}        passive. When an opponent's attack damages this
+//                            Pokemon, deal `dmg` back to the attacker, ignoring
+//                            Weakness and Resistance. Fires even if this Pokemon
+//                            is Knocked Out by that damage.
+//     ENERGY_AS {type}       toggle, lasts the rest of the turn. Every Energy
+//                            attached to this Pokemon counts as `type` for
+//                            paying attack costs. Symbol COUNT is unchanged, so
+//                            Double Colorless still pays for two.
+//     MOVE_DAMAGE            interactive, repeatable. Move 1 damage counter
+//                            between your own Pokemon. Illegal if it would Knock
+//                            Out the receiving Pokemon.
+//
+//   Interactive Powers enumerate one legal action per (source, target) pair, so
+//   the AI can score them like any other action and the UI can highlight them.
 
 const EFFECTS = {
 
@@ -867,6 +896,26 @@ const EFFECTS = {
   'base1-99': { t: [] },
   'base1-98': { t: [] },
   'base1-102': { t: [] },
+
+  // ================= PASS 4d — the first Pokemon Powers =================
+  'base1-4': {                                          // Charizard
+    p: { kind: 'ENERGY_AS', name: 'Energy Burn', type: 'R' },
+    a: [
+      [{ v: 'COST_DISCARD_ENERGY', n: 2 }],             //   Fire Spin
+    ],
+  },
+  'base1-8': {                                          // Machamp
+    p: { kind: 'RETALIATE', name: 'Strikes Back', dmg: 10 },
+    a: [
+      [],                                               //   Seismic Toss
+    ],
+  },
+  'base1-1': {                                          // Alakazam
+    p: { kind: 'MOVE_DAMAGE', name: 'Damage Swap' },
+    a: [
+      [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],         //   Confuse Ray
+    ],
+  },
 };
 
 
@@ -1455,6 +1504,78 @@ class AI {
     return { best: best === -Infinity ? 0 : best, short: bestShort };
   }
 
+  // --------------------------------------------------------- power score ---
+  // How good a place to dump damage counters is this Pokemon? Trevor's
+  // recollection of how the GBC game played Alakazam, which turns out to be
+  // strategically sound: prefer high max HP and low offensive value. A Chansey
+  // at 120 HP with feeble attacks is the ideal sink; an Electabuzz is not.
+  //
+  // Note it deliberately uses MAX HP, not remaining HP — the GBC bot happily
+  // piled counters onto already-injured Pokemon, and that is correct. What
+  // matters is total capacity to absorb, and the "don't Knock Out" rule already
+  // stops it going too far. `potential()` supplies the offensive term, so this
+  // reuses the same expected-value machinery as everything else.
+  sinkScore(pi, slot) {
+    const hp = this.top(slot).hp;
+    const threat = Math.max(0, this.potential(pi, slot).best);
+    return hp / (10 + threat);
+  }
+
+  scorePower(pi, a) {
+    const E = this.E, W = this.W;
+    const slot = E.allSlots(pi).find(x => x.uid === a.uid);
+    if (!slot) return -Infinity;
+
+    switch (a.kind) {
+      // Only worth switching on when it actually unlocks an attack. Free
+      // otherwise, but a no-op action the bot could loop on forever.
+      case 'ENERGY_AS': {
+        // bestAttackScore returns {score, idx}, not a number, and its score is
+        // -Infinity when nothing is playable. Flatten both to a comparable
+        // figure before touching them.
+        const reach = () => {
+          const b = this.bestAttackScore(pi);
+          return b.score === -Infinity ? 0 : b.score;
+        };
+        const before = reach();
+        const saved = slot.energyAs;
+        slot.energyAs = (E.powerOf(slot) || {}).type;
+        const after = reach();
+        slot.energyAs = saved;
+        // Free and harmless, but a no-op action the bot could otherwise loop on,
+        // so only worth doing when it actually improves what we can attack with.
+        if (after <= before) return -Infinity;
+        return W.threshold + (after - before);
+      }
+
+      case 'MOVE_DAMAGE': {
+        const from = E.allSlots(pi).find(x => x.uid === a.from);
+        const to = E.allSlots(pi).find(x => x.uid === a.to);
+        if (!from || !to) return -Infinity;
+
+        // Never move damage the wrong way: onto something more valuable, or off
+        // a Pokemon that was in no danger to begin with.
+        const gain = this.sinkScore(pi, to) - this.sinkScore(pi, from);
+        if (gain <= 0) return -Infinity;
+
+        // The point of the Power is keeping something alive. Weight the move by
+        // how close the source is to dying and by how much it is worth keeping.
+        const srcHP = this.remainingHP(from);
+        const active = E.state.players[pi].active;
+        const urgency = from === active ? this.incomingThreat(pi) : 0;
+        const doomed = urgency >= srcHP ? 1 : 0;          // dies next turn if nothing changes
+        const worth = Math.max(0, this.potential(pi, from).best);
+
+        let score = gain * 2;
+        if (doomed) score += W.knockout * 0.35 + worth * 0.2;
+        else if (urgency > 0 && urgency >= srcHP - 20) score += worth * 0.1;
+        return score;
+      }
+
+      default: return -Infinity;
+    }
+  }
+
   // Score an attack as if `slot` were Active (used for bench planning).
   scoreAttackHypothetical(pi, slot, idx) {
     const E = this.E, p = E.state.players[pi];
@@ -1472,6 +1593,8 @@ class AI {
 
     switch (a.t) {
       case 'attack': return this.scoreAttack(pi, a.idx);
+
+      case 'power': return this.scorePower(pi, a);
 
       case 'attachEnergy': {
         const slot = E.allSlots(pi).find(x => x.uid === a.target);
@@ -2228,6 +2351,10 @@ class Engine {
     const p = this.cur();
     p.turnsTaken++; p.energyAttached = false; p.retreated = false; p.trainersPlayed = 0;
 
+    // ENERGY_AS lasts "for the rest of the turn", so it lapses on both sides at
+    // every turn boundary rather than only on its owner's.
+    this.eachSlot((slot) => { if (slot.energyAs) slot.energyAs = null; });
+
     // purge lasting effects that expire at the start of this turn
     this.eachSlot((slot) => {
       slot.effects = slot.effects.filter(e => {
@@ -2345,6 +2472,10 @@ class Engine {
     if (!p.retreated && p.active && p.bench.length && this.canRetreat(p.active))
       p.bench.forEach((b, i) => acts.push({ t: 'retreat', bench: i, label: `Retreat to ${this.nameOf(b)}` }));
 
+    // Powers come before the attack: every "as often as you like" Power in the
+    // era says "before your attack", and attacking ends the turn anyway.
+    this.powerActions(pi).forEach(a => acts.push(a));
+
     if (p.active && this.canAttackAtAll(pi)) {
       const c = topCard(this.db, p.active);
       (c.attacks || []).forEach((a, i) => {
@@ -2360,6 +2491,104 @@ class Engine {
     return (p.active ? [p.active] : []).concat(p.bench);
   }
   findSlot(pi, uid) { return this.allSlots(pi).find(s => s.uid === uid); }
+
+  // ------------------------------------------------------------- powers ----
+  // A Power belongs to the card on TOP of the stack, so evolving away from a
+  // Power loses it and evolving into one gains it, both immediately.
+  powerOf(slot) {
+    if (!slot) return null;
+    const e = this.effects[topCard(this.db, slot).id];
+    return (e && e.p) ? e.p : null;
+  }
+
+  // Every Base Set Power is switched off by Sleep, Confusion and Paralysis, so
+  // the gate lives here rather than being restated on each card. A Power also
+  // stops working if the Pokemon is having all effects prevented (Barrier).
+  powerUsable(slot) {
+    const p = this.powerOf(slot);
+    if (!p) return false;
+    const st = slot.status;
+    if (st.asleep || st.confused || st.paralyzed) return false;
+    if (this.effectsBlocked(slot)) return false;
+    return true;
+  }
+
+  // Energy symbols a slot currently provides, honouring an ENERGY_AS override
+  // (Charizard's Energy Burn). Count is preserved — Double Colorless still pays
+  // twice — only the type changes.
+  slotSymbols(slot) {
+    const out = [];
+    slot.energy.forEach(e => energySymbols(this.db, e).forEach(x => out.push(slot.energyAs || x)));
+    return out;
+  }
+
+  // One action per legal (source, target) pair, so the AI scores Powers with the
+  // same machinery as everything else and the UI can just highlight what's legal.
+  powerActions(pi) {
+    const acts = [];
+    for (const slot of this.allSlots(pi)) {
+      const p = this.powerOf(slot);
+      if (!p || !this.powerUsable(slot)) continue;
+      const owner = this.nameOf(slot);
+      switch (p.kind) {
+        case 'ENERGY_AS':
+          if (slot.energyAs) break;                      // already on; no point offering it again
+          if (!slot.energy.length) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind, label: `${owner}: ${p.name}` });
+          break;
+        case 'MOVE_DAMAGE':
+          for (const from of this.allSlots(pi)) {
+            if (from.dmg < 10) continue;
+            for (const to of this.allSlots(pi)) {
+              if (to === from) continue;
+              if (to.dmg + 10 >= topCard(this.db, to).hp) continue;   // may not Knock Out
+              acts.push({
+                t: 'power', uid: slot.uid, kind: p.kind, from: from.uid, to: to.uid,
+                label: `${p.name}: ${this.nameOf(from)} → ${this.nameOf(to)}`,
+              });
+            }
+          }
+          break;
+        default: break;                                  // passive Powers offer no action
+      }
+    }
+    return acts;
+  }
+
+  doPower(pi, a) {
+    const slot = this.findSlot(pi, a.uid);
+    if (!slot) return this.fail('No such Pokemon');
+    const p = this.powerOf(slot);
+    if (!p) return this.fail('That Pokemon has no Pokemon Power');
+    if (!this.powerUsable(slot)) return this.fail(`${this.nameOf(slot)} can't use ${p.name} right now`);
+
+    switch (p.kind) {
+      case 'ENERGY_AS': {
+        if (!slot.energy.length) return this.fail('No Energy attached');
+        slot.energyAs = p.type;
+        // art.js owns the type names. Same bundle-or-Node guard used for AI below.
+        const names = (typeof ENERGY_NAME !== 'undefined')
+          ? ENERGY_NAME : require('./art.js').ENERGY_NAME;
+        this.log(`${p.name}: all Energy on ${this.nameOf(slot)} counts as `
+          + `${names[p.type] || p.type} for the rest of the turn.`, 'eff');
+        return { ok: true };
+      }
+      case 'MOVE_DAMAGE': {
+        const from = this.findSlot(pi, a.from), to = this.findSlot(pi, a.to);
+        if (!from || !to) return this.fail('No such Pokemon');
+        if (from === to) return this.fail('Pick two different Pokemon');
+        if (from.dmg < 10) return this.fail(`${this.nameOf(from)} has no damage counters`);
+        const tc = topCard(this.db, to);
+        if (to.dmg + 10 >= tc.hp) return this.fail(`That would Knock Out ${tc.name}`);
+        from.dmg -= 10; to.dmg += 10;
+        this.log(`${p.name}: 1 damage counter moved from ${this.nameOf(from)} `
+          + `to ${this.nameOf(to)}. (${to.dmg}/${tc.hp})`, 'eff');
+        return { ok: true };
+      }
+      default:
+        return this.fail(`${p.name} is not an activated Power`);
+    }
+  }
 
   canEvolve(pi, slot, evoCard) {
     const s = this.state;
@@ -2385,8 +2614,7 @@ class Engine {
 
   // Does the attached Energy satisfy the cost string (e.g. "RRC")?
   costSatisfied(slot, cost) {
-    const pool = [];
-    slot.energy.forEach(e => energySymbols(this.db, e).forEach(x => pool.push(x)));
+    const pool = this.slotSymbols(slot);
     const need = cost.split('').filter(x => x !== 'C');
     const generic = cost.length - need.length;
     const used = new Array(pool.length).fill(false);
@@ -2413,8 +2641,10 @@ class Engine {
     if (locked) return { ok: false, why: `${a.name} is disabled this turn` };
     for (const v of script) {
       if (v.v === 'COST_DISCARD_ENERGY') {
-        const have = p.active.energy.filter(e => energyProvides(this.db, e) === v.t).length;
-        if (have < v.n) return { ok: false, why: `Needs ${v.n} ${v.t} Energy to discard` };
+        // No `t` means any Energy card will do (Charizard's Fire Spin discards 2
+        // Energy of any type; Ninetales' Fire Blast demands Fire specifically).
+        const have = p.active.energy.filter(e => !v.t || energyProvides(this.db, e) === v.t).length;
+        if (have < v.n) return { ok: false, why: `Needs ${v.n} ${v.t || ''} Energy to discard`.replace('  ', ' ') };
       }
       if (v.v === 'COST_DISCARD_ALL_ENERGY') {
         if (p.active.energy.length === 0) return { ok: false, why: 'No Energy to discard' };
@@ -2517,6 +2747,7 @@ class Engine {
       case 'playTrainer':  return this.doTrainer(pi, a);
       case 'retreat':      return this.doRetreat(pi, a);
       case 'attack':       return this.doAttack(pi, a);
+      case 'power':        return this.doPower(pi, a);
       case 'promote':      return this.doPromote(pi, a);
       case 'pass':         return this.endTurn();
       default:             return this.fail('Unknown action ' + a.t);
@@ -3106,11 +3337,11 @@ class Engine {
       }
       if (v.v === 'COST_DISCARD_ENERGY') {
         for (let i = 0; i < v.n; i++) {
-          const k = atk.energy.findIndex(e => energyProvides(this.db, e) === v.t);
+          const k = atk.energy.findIndex(e => !v.t || energyProvides(this.db, e) === v.t);
           if (k === -1) return this.fail('Cost could not be paid');
           me.discard.push(atk.energy.splice(k, 1)[0]);
         }
-        this.log(`${card.name} discards ${v.n} ${v.t} Energy as a cost.`);
+        this.log(`${card.name} discards ${v.n} ${v.t || ''} Energy as a cost.`.replace('  ', ' '));
       }
     }
 
@@ -3375,8 +3606,24 @@ class Engine {
       defSlot.dmg += r.dmg;
       defSlot.lastHitBy = { uid: atkSlot.uid, turn: this.state.turn };
       this.log(`${D.name} takes ${r.dmg}. (${defSlot.dmg}/${D.hp})`, 'dmg');
+      this.retaliate(atkSlot, defSlot, opts);
     }
     return { dealt: r.dmg, prevented: r.prevented };
+  }
+
+  // RETALIATE (Machamp's Strikes Back). Fires here, immediately after the damage
+  // lands and before checkKOs, which is what makes it work "even if Machamp is
+  // Knocked Out". Every dealDamage() call is attack damage from one Pokemon to
+  // another — recoil adds to `dmg` directly and never comes through here — so
+  // the only guards needed are self-damage and one level of recursion, the
+  // latter for the Machamp-versus-Machamp case.
+  retaliate(atkSlot, defSlot, opts) {
+    if (opts.noRetaliate || !atkSlot || atkSlot === defSlot) return;
+    const p = this.powerOf(defSlot);
+    if (!p || p.kind !== 'RETALIATE' || !this.powerUsable(defSlot)) return;
+    this.log(`${p.name}: ${this.nameOf(defSlot)} strikes back at `
+      + `${this.nameOf(atkSlot)} for ${p.dmg}.`, 'eff');
+    this.dealDamage(defSlot, atkSlot, p.dmg, { noWR: true, noRetaliate: true });
   }
 
   // True when an attack's non-damage effects should be suppressed on this target.
@@ -3559,7 +3806,12 @@ const UI = {
   lastTab: 'log',
   fx: {},             // key -> expiry timestamp; drives one-shot animations
   picker: null,       // Computer Search two-stage chooser
-  targeting: null,    // {scope, prompt, dispatch(payload)}
+  targeting: null,    // {scope, prompt, dispatch(payload)} — cleared after each action
+  // A Pokemon Power mode you stay in across actions: {uid, kind, name, from}.
+  // Deliberately NOT cleared by dispatch(), because "as often as you like during
+  // your turn" means one move must not close the mode. It auto-exits when no
+  // legal move remains, which also covers the turn ending.
+  powerMode: null,
   aiMode: 'expert',
   aiDelay: 1000,
   aiTimer: null,
@@ -3598,7 +3850,7 @@ function startMatch() {
 
 function backToDeckSelect() {
   clearTimeout(UI.aiTimer); clearTimeout(UI.presTimer);
-  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null;
+  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null;
   UI.screen = 'decks';
   render();
 }
@@ -3611,7 +3863,7 @@ function newGame() {
   if (UI.foeDeck === UI.myDeck && UI.myDeck !== SANDBOX) UI.foeDeck = otherDeck(UI.myDeck);
   UI.E.newGame(resolveDeck(UI.myDeck, seed), resolveDeck(UI.foeDeck, seed ^ 0x5f5f), ['You', 'Opponent']);
   UI.E.setupAuto(1);                     // opponent sets itself up
-  UI.sel = null; UI.targeting = null; UI.picker = null;
+  UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null;
   render();
 }
 
@@ -3989,7 +4241,20 @@ function renderSide(pi, isFoe) {
   return side;
 }
 
+// While a Power mode is open the board highlights whatever is legal RIGHT NOW,
+// read straight off the engine's own action list rather than re-deriving the
+// rules here. That is what keeps "can't Knock Out the receiver" from having to
+// be stated twice.
+function slotPowerTargetable(slot, pi) {
+  const pm = UI.powerMode; if (!pm || pi !== 0) return false;
+  const moves = myLegal().filter(a => a.t === 'power' && a.uid === pm.uid && a.kind === pm.kind);
+  return pm.from === null
+    ? moves.some(a => a.from === slot.uid)
+    : moves.some(a => a.from === pm.from && a.to === slot.uid);
+}
+
 function slotTargetable(slot, pi, where, idx) {
+  if (UI.powerMode) return slotPowerTargetable(slot, pi);
   const t = UI.targeting; if (!t) return false;
   switch (t.scope) {
     case 'ownBench': return pi === 0 && where === 'bench';
@@ -4090,6 +4355,14 @@ function renderSlot(slot, pi, where, idx) {
   }
 
   d.onclick = (ev) => {
+    if (can && UI.powerMode) {
+      const pm = UI.powerMode;
+      if (pm.from === null) { pm.from = slot.uid; render(); return; }
+      // Stay in the mode after each move — the card says "as often as you like".
+      dispatch(0, { t: 'power', uid: pm.uid, kind: pm.kind, from: pm.from, to: slot.uid });
+      if (UI.powerMode) UI.powerMode.from = null;
+      render(); return;
+    }
     if (can) return resolveTarget(slot, pi, where, idx);
     inspectCard(c.id); render();
   };
@@ -4144,6 +4417,25 @@ function renderActionBar() {
     if (b && b.reason) txt.appendChild(el('div', 'coinwhy', b.reason));
     coin.appendChild(txt);
     bar.appendChild(coin);
+    return bar;
+  }
+
+  if (UI.powerMode) {
+    const pm = UI.powerMode;
+    const moves = myLegal().filter(a => a.t === 'power' && a.uid === pm.uid && a.kind === pm.kind);
+    // Auto-exit the moment nothing legal is left, so the mode never strands you.
+    if (!moves.length) { UI.powerMode = null; return renderActionBar(); }
+    bar.appendChild(el('div', 'barmsg', pm.from === null
+      ? `${pm.name}: choose a Pokemon to move a damage counter FROM`
+      : `${pm.name}: choose a Pokemon to move it TO`));
+    if (pm.from !== null) {
+      const back = el('button', 'btn ghost', 'Back');
+      back.onclick = () => { pm.from = null; render(); };
+      bar.appendChild(back);
+    }
+    const done = el('button', 'btn end', 'Done');
+    done.onclick = () => { UI.powerMode = null; render(); };
+    bar.appendChild(done);
     return bar;
   }
 
@@ -4243,6 +4535,24 @@ function renderActionBar() {
     bar.appendChild(x);
     return bar;
   }
+
+  // Pokemon Powers. Interactive ones open a mode you stay in until you press
+  // Done; the "as often as you like" wording means you can leave, do something
+  // else, and come back, so entering is always available before your attack.
+  const powers = myLegal().filter(a => a.t === 'power');
+  const byPower = new Map();
+  powers.forEach(a => { if (!byPower.has(a.uid + a.kind)) byPower.set(a.uid + a.kind, a); });
+  byPower.forEach((a) => {
+    const slot = UI.E.findSlot(0, a.uid);
+    const def = UI.E.powerOf(slot);
+    const b = el('button', 'btn power', `${def.name}`);
+    b.title = def.name + ' — ' + topCard(CARD_DB, slot).name;
+    b.onclick = () => {
+      if (a.kind === 'MOVE_DAMAGE') { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null }; render(); }
+      else dispatch(0, a);
+    };
+    bar.appendChild(b);
+  });
 
   const retreats = myLegal().filter(a => a.t === 'retreat');
   if (retreats.length) {

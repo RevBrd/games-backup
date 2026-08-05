@@ -277,78 +277,6 @@ class AI {
     return { best: best === -Infinity ? 0 : best, short: bestShort };
   }
 
-  // --------------------------------------------------------- power score ---
-  // How good a place to dump damage counters is this Pokemon? Trevor's
-  // recollection of how the GBC game played Alakazam, which turns out to be
-  // strategically sound: prefer high max HP and low offensive value. A Chansey
-  // at 120 HP with feeble attacks is the ideal sink; an Electabuzz is not.
-  //
-  // Note it deliberately uses MAX HP, not remaining HP — the GBC bot happily
-  // piled counters onto already-injured Pokemon, and that is correct. What
-  // matters is total capacity to absorb, and the "don't Knock Out" rule already
-  // stops it going too far. `potential()` supplies the offensive term, so this
-  // reuses the same expected-value machinery as everything else.
-  sinkScore(pi, slot) {
-    const hp = this.top(slot).hp;
-    const threat = Math.max(0, this.potential(pi, slot).best);
-    return hp / (10 + threat);
-  }
-
-  scorePower(pi, a) {
-    const E = this.E, W = this.W;
-    const slot = E.allSlots(pi).find(x => x.uid === a.uid);
-    if (!slot) return -Infinity;
-
-    switch (a.kind) {
-      // Only worth switching on when it actually unlocks an attack. Free
-      // otherwise, but a no-op action the bot could loop on forever.
-      case 'ENERGY_AS': {
-        // bestAttackScore returns {score, idx}, not a number, and its score is
-        // -Infinity when nothing is playable. Flatten both to a comparable
-        // figure before touching them.
-        const reach = () => {
-          const b = this.bestAttackScore(pi);
-          return b.score === -Infinity ? 0 : b.score;
-        };
-        const before = reach();
-        const saved = slot.energyAs;
-        slot.energyAs = (E.powerOf(slot) || {}).type;
-        const after = reach();
-        slot.energyAs = saved;
-        // Free and harmless, but a no-op action the bot could otherwise loop on,
-        // so only worth doing when it actually improves what we can attack with.
-        if (after <= before) return -Infinity;
-        return W.threshold + (after - before);
-      }
-
-      case 'MOVE_DAMAGE': {
-        const from = E.allSlots(pi).find(x => x.uid === a.from);
-        const to = E.allSlots(pi).find(x => x.uid === a.to);
-        if (!from || !to) return -Infinity;
-
-        // Never move damage the wrong way: onto something more valuable, or off
-        // a Pokemon that was in no danger to begin with.
-        const gain = this.sinkScore(pi, to) - this.sinkScore(pi, from);
-        if (gain <= 0) return -Infinity;
-
-        // The point of the Power is keeping something alive. Weight the move by
-        // how close the source is to dying and by how much it is worth keeping.
-        const srcHP = this.remainingHP(from);
-        const active = E.state.players[pi].active;
-        const urgency = from === active ? this.incomingThreat(pi) : 0;
-        const doomed = urgency >= srcHP ? 1 : 0;          // dies next turn if nothing changes
-        const worth = Math.max(0, this.potential(pi, from).best);
-
-        let score = gain * 2;
-        if (doomed) score += W.knockout * 0.35 + worth * 0.2;
-        else if (urgency > 0 && urgency >= srcHP - 20) score += worth * 0.1;
-        return score;
-      }
-
-      default: return -Infinity;
-    }
-  }
-
   // Score an attack as if `slot` were Active (used for bench planning).
   scoreAttackHypothetical(pi, slot, idx) {
     const E = this.E, p = E.state.players[pi];
@@ -366,8 +294,6 @@ class AI {
 
     switch (a.t) {
       case 'attack': return this.scoreAttack(pi, a.idx);
-
-      case 'power': return this.scorePower(pi, a);
 
       case 'attachEnergy': {
         const slot = E.allSlots(pi).find(x => x.uid === a.target);

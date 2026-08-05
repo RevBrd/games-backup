@@ -31,12 +31,7 @@ const UI = {
   lastTab: 'log',
   fx: {},             // key -> expiry timestamp; drives one-shot animations
   picker: null,       // Computer Search two-stage chooser
-  targeting: null,    // {scope, prompt, dispatch(payload)} — cleared after each action
-  // A Pokemon Power mode you stay in across actions: {uid, kind, name, from}.
-  // Deliberately NOT cleared by dispatch(), because "as often as you like during
-  // your turn" means one move must not close the mode. It auto-exits when no
-  // legal move remains, which also covers the turn ending.
-  powerMode: null,
+  targeting: null,    // {scope, prompt, dispatch(payload)}
   aiMode: 'expert',
   aiDelay: 1000,
   aiTimer: null,
@@ -75,7 +70,7 @@ function startMatch() {
 
 function backToDeckSelect() {
   clearTimeout(UI.aiTimer); clearTimeout(UI.presTimer);
-  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null;
+  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null;
   UI.screen = 'decks';
   render();
 }
@@ -88,7 +83,7 @@ function newGame() {
   if (UI.foeDeck === UI.myDeck && UI.myDeck !== SANDBOX) UI.foeDeck = otherDeck(UI.myDeck);
   UI.E.newGame(resolveDeck(UI.myDeck, seed), resolveDeck(UI.foeDeck, seed ^ 0x5f5f), ['You', 'Opponent']);
   UI.E.setupAuto(1);                     // opponent sets itself up
-  UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null;
+  UI.sel = null; UI.targeting = null; UI.picker = null;
   render();
 }
 
@@ -466,20 +461,7 @@ function renderSide(pi, isFoe) {
   return side;
 }
 
-// While a Power mode is open the board highlights whatever is legal RIGHT NOW,
-// read straight off the engine's own action list rather than re-deriving the
-// rules here. That is what keeps "can't Knock Out the receiver" from having to
-// be stated twice.
-function slotPowerTargetable(slot, pi) {
-  const pm = UI.powerMode; if (!pm || pi !== 0) return false;
-  const moves = myLegal().filter(a => a.t === 'power' && a.uid === pm.uid && a.kind === pm.kind);
-  return pm.from === null
-    ? moves.some(a => a.from === slot.uid)
-    : moves.some(a => a.from === pm.from && a.to === slot.uid);
-}
-
 function slotTargetable(slot, pi, where, idx) {
-  if (UI.powerMode) return slotPowerTargetable(slot, pi);
   const t = UI.targeting; if (!t) return false;
   switch (t.scope) {
     case 'ownBench': return pi === 0 && where === 'bench';
@@ -580,14 +562,6 @@ function renderSlot(slot, pi, where, idx) {
   }
 
   d.onclick = (ev) => {
-    if (can && UI.powerMode) {
-      const pm = UI.powerMode;
-      if (pm.from === null) { pm.from = slot.uid; render(); return; }
-      // Stay in the mode after each move — the card says "as often as you like".
-      dispatch(0, { t: 'power', uid: pm.uid, kind: pm.kind, from: pm.from, to: slot.uid });
-      if (UI.powerMode) UI.powerMode.from = null;
-      render(); return;
-    }
     if (can) return resolveTarget(slot, pi, where, idx);
     inspectCard(c.id); render();
   };
@@ -642,25 +616,6 @@ function renderActionBar() {
     if (b && b.reason) txt.appendChild(el('div', 'coinwhy', b.reason));
     coin.appendChild(txt);
     bar.appendChild(coin);
-    return bar;
-  }
-
-  if (UI.powerMode) {
-    const pm = UI.powerMode;
-    const moves = myLegal().filter(a => a.t === 'power' && a.uid === pm.uid && a.kind === pm.kind);
-    // Auto-exit the moment nothing legal is left, so the mode never strands you.
-    if (!moves.length) { UI.powerMode = null; return renderActionBar(); }
-    bar.appendChild(el('div', 'barmsg', pm.from === null
-      ? `${pm.name}: choose a Pokemon to move a damage counter FROM`
-      : `${pm.name}: choose a Pokemon to move it TO`));
-    if (pm.from !== null) {
-      const back = el('button', 'btn ghost', 'Back');
-      back.onclick = () => { pm.from = null; render(); };
-      bar.appendChild(back);
-    }
-    const done = el('button', 'btn end', 'Done');
-    done.onclick = () => { UI.powerMode = null; render(); };
-    bar.appendChild(done);
     return bar;
   }
 
@@ -760,24 +715,6 @@ function renderActionBar() {
     bar.appendChild(x);
     return bar;
   }
-
-  // Pokemon Powers. Interactive ones open a mode you stay in until you press
-  // Done; the "as often as you like" wording means you can leave, do something
-  // else, and come back, so entering is always available before your attack.
-  const powers = myLegal().filter(a => a.t === 'power');
-  const byPower = new Map();
-  powers.forEach(a => { if (!byPower.has(a.uid + a.kind)) byPower.set(a.uid + a.kind, a); });
-  byPower.forEach((a) => {
-    const slot = UI.E.findSlot(0, a.uid);
-    const def = UI.E.powerOf(slot);
-    const b = el('button', 'btn power', `${def.name}`);
-    b.title = def.name + ' — ' + topCard(CARD_DB, slot).name;
-    b.onclick = () => {
-      if (a.kind === 'MOVE_DAMAGE') { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null }; render(); }
-      else dispatch(0, a);
-    };
-    bar.appendChild(b);
-  });
 
   const retreats = myLegal().filter(a => a.t === 'retreat');
   if (retreats.length) {

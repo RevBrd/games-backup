@@ -56,10 +56,8 @@ for (const name of DECK_NAMES) {
 // list is progress; a card that appears on it unexpectedly is a regression.
 // Keep this list in step with the "twelve missing Base Set cards" in CLAUDE.md.
 const EXPECTED_UNIMPLEMENTED = new Set([
-  'base1-1',  // Alakazam    — Damage Swap
+  // Job 4d landed Alakazam, Charizard and Machamp. Nine to go.
   'base1-2',  // Blastoise   — Rain Dance
-  'base1-4',  // Charizard   — Energy Burn
-  'base1-8',  // Machamp     — Strikes Back
   'base1-15', // Venusaur    — Energy Trans
   'base1-21', // Electrode   — Buzzap
   'base1-5',  // Clefairy    — Metronome

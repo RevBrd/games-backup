@@ -290,10 +290,6 @@ class Engine {
     const p = this.cur();
     p.turnsTaken++; p.energyAttached = false; p.retreated = false; p.trainersPlayed = 0;
 
-    // ENERGY_AS lasts "for the rest of the turn", so it lapses on both sides at
-    // every turn boundary rather than only on its owner's.
-    this.eachSlot((slot) => { if (slot.energyAs) slot.energyAs = null; });
-
     // purge lasting effects that expire at the start of this turn
     this.eachSlot((slot) => {
       slot.effects = slot.effects.filter(e => {
@@ -411,10 +407,6 @@ class Engine {
     if (!p.retreated && p.active && p.bench.length && this.canRetreat(p.active))
       p.bench.forEach((b, i) => acts.push({ t: 'retreat', bench: i, label: `Retreat to ${this.nameOf(b)}` }));
 
-    // Powers come before the attack: every "as often as you like" Power in the
-    // era says "before your attack", and attacking ends the turn anyway.
-    this.powerActions(pi).forEach(a => acts.push(a));
-
     if (p.active && this.canAttackAtAll(pi)) {
       const c = topCard(this.db, p.active);
       (c.attacks || []).forEach((a, i) => {
@@ -430,104 +422,6 @@ class Engine {
     return (p.active ? [p.active] : []).concat(p.bench);
   }
   findSlot(pi, uid) { return this.allSlots(pi).find(s => s.uid === uid); }
-
-  // ------------------------------------------------------------- powers ----
-  // A Power belongs to the card on TOP of the stack, so evolving away from a
-  // Power loses it and evolving into one gains it, both immediately.
-  powerOf(slot) {
-    if (!slot) return null;
-    const e = this.effects[topCard(this.db, slot).id];
-    return (e && e.p) ? e.p : null;
-  }
-
-  // Every Base Set Power is switched off by Sleep, Confusion and Paralysis, so
-  // the gate lives here rather than being restated on each card. A Power also
-  // stops working if the Pokemon is having all effects prevented (Barrier).
-  powerUsable(slot) {
-    const p = this.powerOf(slot);
-    if (!p) return false;
-    const st = slot.status;
-    if (st.asleep || st.confused || st.paralyzed) return false;
-    if (this.effectsBlocked(slot)) return false;
-    return true;
-  }
-
-  // Energy symbols a slot currently provides, honouring an ENERGY_AS override
-  // (Charizard's Energy Burn). Count is preserved — Double Colorless still pays
-  // twice — only the type changes.
-  slotSymbols(slot) {
-    const out = [];
-    slot.energy.forEach(e => energySymbols(this.db, e).forEach(x => out.push(slot.energyAs || x)));
-    return out;
-  }
-
-  // One action per legal (source, target) pair, so the AI scores Powers with the
-  // same machinery as everything else and the UI can just highlight what's legal.
-  powerActions(pi) {
-    const acts = [];
-    for (const slot of this.allSlots(pi)) {
-      const p = this.powerOf(slot);
-      if (!p || !this.powerUsable(slot)) continue;
-      const owner = this.nameOf(slot);
-      switch (p.kind) {
-        case 'ENERGY_AS':
-          if (slot.energyAs) break;                      // already on; no point offering it again
-          if (!slot.energy.length) break;
-          acts.push({ t: 'power', uid: slot.uid, kind: p.kind, label: `${owner}: ${p.name}` });
-          break;
-        case 'MOVE_DAMAGE':
-          for (const from of this.allSlots(pi)) {
-            if (from.dmg < 10) continue;
-            for (const to of this.allSlots(pi)) {
-              if (to === from) continue;
-              if (to.dmg + 10 >= topCard(this.db, to).hp) continue;   // may not Knock Out
-              acts.push({
-                t: 'power', uid: slot.uid, kind: p.kind, from: from.uid, to: to.uid,
-                label: `${p.name}: ${this.nameOf(from)} → ${this.nameOf(to)}`,
-              });
-            }
-          }
-          break;
-        default: break;                                  // passive Powers offer no action
-      }
-    }
-    return acts;
-  }
-
-  doPower(pi, a) {
-    const slot = this.findSlot(pi, a.uid);
-    if (!slot) return this.fail('No such Pokemon');
-    const p = this.powerOf(slot);
-    if (!p) return this.fail('That Pokemon has no Pokemon Power');
-    if (!this.powerUsable(slot)) return this.fail(`${this.nameOf(slot)} can't use ${p.name} right now`);
-
-    switch (p.kind) {
-      case 'ENERGY_AS': {
-        if (!slot.energy.length) return this.fail('No Energy attached');
-        slot.energyAs = p.type;
-        // art.js owns the type names. Same bundle-or-Node guard used for AI below.
-        const names = (typeof ENERGY_NAME !== 'undefined')
-          ? ENERGY_NAME : require('./art.js').ENERGY_NAME;
-        this.log(`${p.name}: all Energy on ${this.nameOf(slot)} counts as `
-          + `${names[p.type] || p.type} for the rest of the turn.`, 'eff');
-        return { ok: true };
-      }
-      case 'MOVE_DAMAGE': {
-        const from = this.findSlot(pi, a.from), to = this.findSlot(pi, a.to);
-        if (!from || !to) return this.fail('No such Pokemon');
-        if (from === to) return this.fail('Pick two different Pokemon');
-        if (from.dmg < 10) return this.fail(`${this.nameOf(from)} has no damage counters`);
-        const tc = topCard(this.db, to);
-        if (to.dmg + 10 >= tc.hp) return this.fail(`That would Knock Out ${tc.name}`);
-        from.dmg -= 10; to.dmg += 10;
-        this.log(`${p.name}: 1 damage counter moved from ${this.nameOf(from)} `
-          + `to ${this.nameOf(to)}. (${to.dmg}/${tc.hp})`, 'eff');
-        return { ok: true };
-      }
-      default:
-        return this.fail(`${p.name} is not an activated Power`);
-    }
-  }
 
   canEvolve(pi, slot, evoCard) {
     const s = this.state;
@@ -553,7 +447,8 @@ class Engine {
 
   // Does the attached Energy satisfy the cost string (e.g. "RRC")?
   costSatisfied(slot, cost) {
-    const pool = this.slotSymbols(slot);
+    const pool = [];
+    slot.energy.forEach(e => energySymbols(this.db, e).forEach(x => pool.push(x)));
     const need = cost.split('').filter(x => x !== 'C');
     const generic = cost.length - need.length;
     const used = new Array(pool.length).fill(false);
@@ -580,10 +475,8 @@ class Engine {
     if (locked) return { ok: false, why: `${a.name} is disabled this turn` };
     for (const v of script) {
       if (v.v === 'COST_DISCARD_ENERGY') {
-        // No `t` means any Energy card will do (Charizard's Fire Spin discards 2
-        // Energy of any type; Ninetales' Fire Blast demands Fire specifically).
-        const have = p.active.energy.filter(e => !v.t || energyProvides(this.db, e) === v.t).length;
-        if (have < v.n) return { ok: false, why: `Needs ${v.n} ${v.t || ''} Energy to discard`.replace('  ', ' ') };
+        const have = p.active.energy.filter(e => energyProvides(this.db, e) === v.t).length;
+        if (have < v.n) return { ok: false, why: `Needs ${v.n} ${v.t} Energy to discard` };
       }
       if (v.v === 'COST_DISCARD_ALL_ENERGY') {
         if (p.active.energy.length === 0) return { ok: false, why: 'No Energy to discard' };
@@ -686,7 +579,6 @@ class Engine {
       case 'playTrainer':  return this.doTrainer(pi, a);
       case 'retreat':      return this.doRetreat(pi, a);
       case 'attack':       return this.doAttack(pi, a);
-      case 'power':        return this.doPower(pi, a);
       case 'promote':      return this.doPromote(pi, a);
       case 'pass':         return this.endTurn();
       default:             return this.fail('Unknown action ' + a.t);
@@ -1276,11 +1168,11 @@ class Engine {
       }
       if (v.v === 'COST_DISCARD_ENERGY') {
         for (let i = 0; i < v.n; i++) {
-          const k = atk.energy.findIndex(e => !v.t || energyProvides(this.db, e) === v.t);
+          const k = atk.energy.findIndex(e => energyProvides(this.db, e) === v.t);
           if (k === -1) return this.fail('Cost could not be paid');
           me.discard.push(atk.energy.splice(k, 1)[0]);
         }
-        this.log(`${card.name} discards ${v.n} ${v.t || ''} Energy as a cost.`.replace('  ', ' '));
+        this.log(`${card.name} discards ${v.n} ${v.t} Energy as a cost.`);
       }
     }
 
@@ -1545,24 +1437,8 @@ class Engine {
       defSlot.dmg += r.dmg;
       defSlot.lastHitBy = { uid: atkSlot.uid, turn: this.state.turn };
       this.log(`${D.name} takes ${r.dmg}. (${defSlot.dmg}/${D.hp})`, 'dmg');
-      this.retaliate(atkSlot, defSlot, opts);
     }
     return { dealt: r.dmg, prevented: r.prevented };
-  }
-
-  // RETALIATE (Machamp's Strikes Back). Fires here, immediately after the damage
-  // lands and before checkKOs, which is what makes it work "even if Machamp is
-  // Knocked Out". Every dealDamage() call is attack damage from one Pokemon to
-  // another — recoil adds to `dmg` directly and never comes through here — so
-  // the only guards needed are self-damage and one level of recursion, the
-  // latter for the Machamp-versus-Machamp case.
-  retaliate(atkSlot, defSlot, opts) {
-    if (opts.noRetaliate || !atkSlot || atkSlot === defSlot) return;
-    const p = this.powerOf(defSlot);
-    if (!p || p.kind !== 'RETALIATE' || !this.powerUsable(defSlot)) return;
-    this.log(`${p.name}: ${this.nameOf(defSlot)} strikes back at `
-      + `${this.nameOf(atkSlot)} for ${p.dmg}.`, 'eff');
-    this.dealDamage(defSlot, atkSlot, p.dmg, { noWR: true, noRetaliate: true });
   }
 
   // True when an attack's non-damage effects should be suppressed on this target.

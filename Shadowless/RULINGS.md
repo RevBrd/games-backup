@@ -17,8 +17,7 @@ Add an entry whenever you make a judgement call. An unlogged one will be re-liti
 
 **Settled 4 Aug 2026. The opponent takes a Prize.**
 
-The GBC game apparently never implemented this card — Trevor played it to death without ever
-meeting Buzzap — so the policy's usual arbiter was silent and this went to the WotC rulings.
+Both the GBC game and its sequel omitted this Pokémon Power when implementing the card — so the policy's usual arbiter was silent and this went to the WotC rulings.
 
 Two sources, both explicit and agreeing:
 

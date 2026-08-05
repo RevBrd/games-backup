@@ -6,12 +6,13 @@ regenerate cards, widen a set, or wonder why a Python script in `tools/chat-era/
 The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, two test suites, and
 a `--check` flag on each generator so drift can't go unnoticed.
 
-## The four commands
+## The five commands
 
 ```bash
 node tools/gen_cards.js                  # data/raw/ -> src/cards.js
 node tools/build.js                      # src/  -> shadowless.html
 node tools/selftest.js                   # rules + AI regression
+node tools/powertest.js                  # Pokemon Power behaviour
 node tools/smoke.js shadowless.html      # 44 integration tests against the built file
 ```
 
@@ -66,14 +67,20 @@ lopsided win rates are probably faithful rather than broken. Ask before "fixing"
 `gen_cards.js` fails loudly if `decks.json` references a card outside the generated sets, which is
 what stops a careless `--sets` from silently producing decks full of undefined ids.
 
-## The two test suites
+## The three test suites
 
-They overlap barely at all, and neither subsumes the other.
+They overlap barely at all, and none subsumes the others.
 
 - **`selftest.js`** requires the `src/` modules directly — no browser, no DOM stubs, because the
   engine is DOM-free. Validates the decks, checks card coverage against a pinned list of known-missing
   cards, plays ~100 AI-vs-AI games to completion, and asserts the AI difficulty ladder is ordered.
   Catches rules and AI regressions. Takes a seed-count argument for a deeper pass.
+- **`powertest.js`** builds boards by hand — no decks, no setup — fires a Power and asserts the
+  exact state change. Half its cases assert that something is **illegal**, which is where these rules
+  actually live: Damage Swap refusing a move that would Knock Out the receiver, a Power switched off
+  by Sleep, Energy Burn not being offered twice. It also covers AI *usage*, which is not the same
+  thing as the Power working: Energy Burn passed every unit test while the AI silently never used it,
+  because `bestAttackScore` returns `{score, idx}` and the first scorer compared the objects.
 - **`smoke.js`** is the original Chat-era harness, 44 tests, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
   presentation and freeze, the deck-select flow and the card renderer. Catches build and UI

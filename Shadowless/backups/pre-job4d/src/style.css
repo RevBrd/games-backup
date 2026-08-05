@@ -137,10 +137,6 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .btn:hover{border-color:var(--amber)}
 .btn.end{background:#3A2F1C;border-color:#5C4620;color:var(--amber)}
 .btn.ghost{background:transparent;color:var(--dim)}
-/* Pokemon Powers read as a different class of action from playing a card, so
-   they get their own colour rather than sitting in the row looking like a Trainer. */
-.btn.power{background:#2A2340;border-color:#4B3E6E;color:#B9A6E0}
-.btn.power::before{content:'\26A1';margin-right:.4em;opacity:.85}
 .btn.off{opacity:.4;pointer-events:none}
 
 /* ---- coin flip presentation ---- */

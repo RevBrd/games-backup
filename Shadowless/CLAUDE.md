@@ -25,14 +25,14 @@ natural alternative and do **not** work from `file://` — see `~/.claude/refere
 
 ## Status
 
-Job 4c of a long plan. The **rules engine and the AI are the finished part**; everything a
+Job 4d of a long plan. The **rules engine and the AI are the finished part**; everything a
 *collection* game needs is not built yet.
 
 | Area | State |
 |---|---|
-| Rules engine | Complete for what it covers. WotC ruleset, followed to the letter |
+| Rules engine | Complete for what it covers, Pokémon Powers included as of Job 4d |
 | Opponent AI | Four tiers, expected-value based. Beats its own baselines |
-| Base Set cards | **Data for all 102 is in; 90 are implemented.** The remaining 12 are the hard ones — see below |
+| Base Set cards | **93 of 102 implemented**, data for all 102 in. The 9 left are the hard ones — see below |
 | Card art | None, by design. Each card gets a deterministic geometric sigil from its id |
 | Collection / packs / dex | Not started (Job 5) |
 | Deck building | Not started. Four fixed theme decks + a random Sandbox deck for testing |
@@ -41,21 +41,23 @@ Job 4c of a long plan. The **rules engine and the AI are the finished part**; ev
 | Sets beyond Base | Not started, but **no longer data-blocked** — all 14 sets generate cleanly |
 | Audio | None |
 
-Don't trust that table — `node tools/selftest.js` and `node tools/smoke.js shadowless.html` between
-them take under a minute and check most of it.
+Don't trust that table — the three test suites under Tooling take about a minute between them and
+check most of it.
 
-## The twelve missing Base Set cards
+## The nine missing Base Set cards
 
-The most important thing to understand before picking up Job 4. These are not 12% of the remaining
-work; they are the 12% that each need **new engine machinery**, and the previous instance deferred
-them deliberately as a block.
+The most important thing to understand before picking up Job 4. These are not 9% of the remaining
+work; they each need **new engine machinery**, and the previous instance deferred them as a block.
 
-- **Six Pokémon Powers** — Alakazam (Damage Swap), Blastoise (Rain Dance), Charizard (Energy Burn),
-  Machamp (Strikes Back), Venusaur (Energy Trans), Electrode (Buzzap). Their *data* is now in
-  `CARD_DB` — each carries a populated `power` object of `{kind, name, text}` — but **the engine has
-  no concept of a Pokémon Power at all** and does nothing with it. Powers are not attacks: they fire
-  outside the attack step, some of them repeatedly, and Damage Swap, Energy Trans and Rain Dance each
-  need the interactive mode described under Standing design decisions.
+**The Pokémon Power system exists as of Job 4d** — `powerOf`, `powerUsable`, `powerActions` and
+`doPower` in `engine.js`, declared per card as a `p:` object in `effects.js` (its reference comment
+is above `EFFECTS`). Three of the six Powers are done: **Charizard** (Energy Burn), **Machamp**
+(Strikes Back) and **Alakazam** (Damage Swap, with the enter/leave mode). Adding a Power is now
+mostly a matter of a new `kind` in `powerActions`/`doPower` plus a scorer in `ai.js`.
+
+- **Three Pokémon Powers left** — Blastoise (Rain Dance), Venusaur (Energy Trans), Electrode
+  (Buzzap). The first two are the *same* interactive shape as Damage Swap and should be cheap now.
+  Buzzap is not: it changes a card's identity mid-play. See `RULINGS.md`, which settles it.
 - **Five oddities** — Clefairy (Metronome copies the defender's attack), Porygon (Conversion
   rewrites Weakness/Resistance), Pidgey and Pidgeotto (Whirlwind / Mirror Move), Poliwhirl (Amnesia
   disables a chosen attack).
@@ -64,8 +66,10 @@ them deliberately as a block.
   same machinery and Job 6 cannot ship Fossil without it. It is also the one integrity anomaly in
   the card data: three Fossil cards list `evolves_from = "Mysterious Fossil"`, which is not a Pokémon.
 
-The four playable theme decks contain none of these, which is why the game is playable end-to-end
-at 90 cards. Beyond Base Set the pattern scales — **182 cards WotC-wide carry a Power**, and Neo
+The four playable theme decks contain none of these, which is why the game has been playable
+end-to-end throughout. It also means **full games never exercise the Powers** — use the Sandbox deck,
+which draws from everything implemented, or `tools/powertest.js`, which builds boards by hand.
+Beyond Base Set the pattern scales — **182 cards WotC-wide carry a Power**, and Neo
 adds 10 **Baby** Pokémon (their own coin-flip rule) and one **Poké-Body**. Powers are by a distance
 the biggest unbuilt system in the project.
 
@@ -93,6 +97,7 @@ tools/
   build.js             src/ -> shadowless.html
   gen_cards.js         data/ -> src/cards.js
   selftest.js          engine + AI statistical regression (drives src/ directly)
+  powertest.js         behavioural tests for the Pokemon Powers
   smoke.js             44-test integration suite against the BUILT artifact, incl. UI
   chat-era/            the original Python tools, superseded. Kept for provenance
 backups/
@@ -104,18 +109,21 @@ possible without a browser.
 
 ## Tooling
 
-Four commands. Run the last two before calling anything done.
+Five commands. Run the last three before calling anything done.
 
 ```bash
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
+node tools/powertest.js                  # 21 behavioural tests for the Pokemon Powers
 node tools/smoke.js shadowless.html      # 44 integration tests against the built file
 ```
 
-`selftest.js` drives the source modules; `smoke.js` drives the built HTML through a stubbed DOM and
-covers the UI, the Trainer pickers, the coin-flip presentation and the deck-select flow. **Neither
-subsumes the other.** Both generators take `--check`, which regenerates to memory and exits non-zero
+`selftest.js` drives the source modules and proves games don't break; `powertest.js` proves the
+Powers do what the cards *say*, by building boards by hand and asserting exact state changes —
+including the cases that must be illegal; `smoke.js` drives the built HTML through a stubbed DOM and
+covers the UI, the Trainer pickers, the coin-flip presentation and the deck-select flow. **None
+subsumes the others.** Both generators take `--check`, which regenerates to memory and exits non-zero
 if what's committed has drifted from its sources.
 
 Two things to know before touching a generated file. **`data/decks.json` is source, not output** —
