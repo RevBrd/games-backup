@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OBLIQUE — line kernel III</title>
+<style>
+  :root{
+    --ground:#16242a;
+    --hair:#2f4a52;
+    --bone:#cbd6cf;
+    --dim:#7b9089;
+    --blue-lt:#8fb0d4;
+    --brass:#c39140;
+    --rust:#c05a42;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--ground);overflow:hidden}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    color:var(--bone);
+  }
+  #wrap{position:relative;width:100vw;height:100vh}
+  canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+  .plate{
+    position:absolute;
+    background:rgba(12,20,24,.84);
+    border:1px solid var(--hair);
+    padding:10px 13px;
+    font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    font-size:11px;line-height:1.6;
+    letter-spacing:.02em;
+    color:var(--dim);
+    pointer-events:none;
+  }
+  #legend{left:16px;bottom:16px;max-width:286px}
+  #legend b{color:var(--bone);font-weight:600;letter-spacing:.1em}
+  #legend .k{color:var(--blue-lt)}
+  #readout{right:16px;top:16px;min-width:186px;text-align:right}
+  #readout .v{color:var(--bone)}
+  #readout .warn{color:var(--rust)}
+  #title{position:absolute;left:16px;top:14px;pointer-events:none}
+  #title h1{margin:0;font-size:20px;font-weight:500;letter-spacing:.42em;text-transform:uppercase}
+  #title p{margin:3px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:10px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv"></canvas>
+  <div id="title"><h1>Oblique</h1><p>Line kernel III &mdash; frontage, gaps, closing up</p></div>
+  <div class="plate" id="readout"></div>
+  <div class="plate" id="legend">
+    <b>ORDERS</b><br>
+    <span class="k">drag</span> a regiment &mdash; line conforms<br>
+    <span class="k">click</span> select &middot; <span class="k">shift+click</span> add<br>
+    <span class="k">alt+drag</span> take out of line (leaves a gap)<br>
+    <span class="k">click a stake</span> anchor / release that joint<br>
+    <span class="k">drag a stake</span> draw out or close up a regiment<br>
+    <span class="k">C</span> close up &mdash; contract onto the gaps<br>
+    drag a loose body onto a flank or gap to fill it<br>
+    <span class="k">[ ]</span> thin / restore selected (preview)<br>
+    <span class="k">G</span> ghost always &middot; <span class="k">R</span> reset field
+  </div>
+</div>
+<script>
+"use strict";
+/* ------------------------------------------------------------------
+   OBLIQUE — Job 2: the slot model.
+
+   A line is a chain of hinged SLOTS. Slot i spans joint i..i+1 and is
+   either occupied by a regiment or empty. An empty slot still holds its
+   frontage: the line keeps its shape and its length, but nobody is
+   standing there and nobody is shooting from there.
+
+   Regiments do not fill their whole slot. A regiment's frontage is
+   REG_LEN, centred in a slot of SLOT_LEN, so there is a dressing
+   interval between neighbours. This is what stops bricks overlapping
+   when the line bends, and it is what a period battle map looks like.
+------------------------------------------------------------------- */
+
+const CFG = {
+  REG_LEN   : 70,    // frontage actually occupied by a regiment
+  DRESS     : 14,    // dressing interval between neighbouring regiments
+  REG_DEPTH : 24,
+  MAX_HINGE : 0.34,
+  SPREAD    : 2,
+  PULL      : 0.24,
+  PULL_MAX  : 0.62,
+  ITER      : 70,
+  POLISH    : 60,
+  MARCH     : 30,
+  SLATS     : 14,
+  MERGE_R   : 40,
+  STRAIN_T  : 3.0
+};
+CFG.SLOT_LEN = CFG.REG_LEN + CFG.DRESS;
+/* A regiment can be drawn out to cover more frontage, or closed up to cover
+   less. The manpower does not change, so the depth changes inversely: a
+   regiment at full stretch is a long thin line, one closed up is a dense
+   block. */
+CFG.MIN_SPAN = CFG.SLOT_LEN * 0.74;
+CFG.MAX_SPAN = CFG.SLOT_LEN * 1.80;
+CFG.SPAN_K   = 0.9;    // how directly a stake drag translates into span
+
+const SKIP_K = 0.8;
+/* Minimum distance between a joint's two neighbours, from the law of cosines,
+   given the two segment lengths and the hinge cap. */
+function skipMin(a,b){
+  return Math.sqrt(a*a + b*b + 2*a*b*Math.cos(CFG.MAX_HINGE));
+}
+
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+let W=0, H=0, DPR=1;
+
+function resize(){
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  buildTerrain();
+}
+window.addEventListener("resize", resize);
+
+/* ---------------- geometry ---------------- */
+const V=(x,y)=>({x,y});
+const clone=p=>({x:p.x,y:p.y});
+const cloneAll=a=>a.map(clone);
+function norm(a){ while(a>Math.PI)a-=2*Math.PI; while(a<-Math.PI)a+=2*Math.PI; return a; }
+function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+
+/* ---------------- designations ---------------- */
+/* Weighted roughly by the number of regiments each state actually put in
+   the field, so the line reads as a plausible order of battle rather than
+   a uniform draw. New York and Pennsylvania should turn up often. */
+const STATES = [
+  ["NY",26],["PA",22],["OH",19],["IL",15],["IN",13],["MA",10],["WI",8],
+  ["MI",8],["IA",7],["ME",6],["NJ",6],["CT",5],["MO",5],["KY",5],
+  ["NH",4],["VT",4],["MD",3],["MN",3],["RI",2],["DE",1]
+];
+const STATE_TOTAL = STATES.reduce((s,[,w])=>s+w,0);
+const usedDesignations = new Set();
+
+function ordinal(n){
+  const s=["th","st","nd","rd"], v=n%100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+function rollDesignation(){
+  for(let tries=0; tries<400; tries++){
+    let r = Math.random()*STATE_TOTAL, st="NY";
+    for(const [code,w] of STATES){ r-=w; if(r<=0){ st=code; break; } }
+    // low numbers are commoner: early-war regiments, and they read better
+    const n = 1 + Math.floor(Math.pow(Math.random(), 1.7) * 140);
+    const tag = ordinal(n)+" "+st;
+    if(!usedDesignations.has(tag)){ usedDesignations.add(tag); return tag; }
+  }
+  return "—";
+}
+
+/* ---------------- model ---------------- */
+let lines=[];
+let nextRegId=1, nextLineId=1;
+
+function makeRegiment(){
+  const order=[];
+  for(let i=0;i<CFG.SLATS;i++) order.push(i);
+  for(let i=order.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [order[i],order[j]]=[order[j],order[i]]; }
+  return { id:nextRegId++, strength:1, lossOrder:order, tag:rollDesignation() };
+}
+
+/* slots: array of {reg: Regiment|null}. joints.length === slots.length+1 */
+function makeLine(slots, joints){
+  return {
+    id: nextLineId++,
+    slots: slots.map(s => {
+      if(s && s.reg !== undefined) return {reg:s.reg, span: s.span || CFG.SLOT_LEN};
+      return {reg: s || null, span: CFG.SLOT_LEN};
+    }),
+    joints: cloneAll(joints),
+    target: cloneAll(joints),
+    anchors: new Set(),
+    strain: new Array(joints.length).fill(0)
+  };
+}
+function lineFromRegts(regts, joints){
+  return makeLine(regts.map(r=>({reg:r})), joints);
+}
+function occupied(L){ return L.slots.filter(s=>s.reg).length; }
+function spansOf(L){ return L.slots.map(s=>s.span); }
+/* Depth follows frontage inversely: the same men, spread thinner or packed
+   deeper. */
+function slotDepth(span){
+  const front = Math.max(1, span - CFG.DRESS);
+  return CFG.REG_DEPTH * (CFG.REG_LEN / front);
+}
+function stretchRatio(span){ return span / CFG.SLOT_LEN; }
+function gaps(L){ return L.slots.filter(s=>!s.reg).length; }
+
+function straightJoints(cx,cy,n,ang,spans){
+  if(!spans) spans=new Array(n).fill(CFG.SLOT_LEN);
+  const total=spans.reduce((a,b)=>a+b,0);
+  const dx=Math.cos(ang), dy=Math.sin(ang);
+  const pts=[]; let t=-total/2;
+  for(let i=0;i<=n;i++){
+    pts.push(V(cx+dx*t, cy+dy*t));
+    t += spans[i] || 0;
+  }
+  return pts;
+}
+
+function resetField(){
+  lines=[]; usedDesignations.clear();
+  const n=6, regts=[];
+  for(let i=0;i<n;i++) regts.push(makeRegiment());
+  lines.push(lineFromRegts(regts, straightJoints(W*0.5, H*0.56, n, 0)));
+  selection.clear();
+}
+
+/* ---------------- the solver (unchanged from job 1) ---------------- */
+function solveChain(pts, rest, driven, anchors, spans){
+  const n=pts.length;
+  if(!spans) spans=new Array(n-1).fill(CFG.SLOT_LEN);
+  const mob=new Array(n).fill(1);
+  for(const i of driven.keys()) mob[i]=0;
+  for(const i of anchors)       mob[i]=0;
+
+  const pull=new Array(n).fill(0);
+  const drivenIdx=[...driven.keys()];
+  for(let i=0;i<n;i++){
+    if(mob[i]===0) continue;
+    let d=Infinity;
+    for(const j of drivenIdx) d=Math.min(d, Math.abs(i-j));
+    if(!isFinite(d)){ pull[i]=0; continue; }
+    pull[i] = d<=CFG.SPREAD ? 0 : Math.min(CFG.PULL_MAX, CFG.PULL*(d-CFG.SPREAD));
+  }
+  for(const [i,p] of driven){ pts[i].x=p.x; pts[i].y=p.y; }
+
+  const lenPass=()=>{
+    for(let i=0;i<n-1;i++){
+      const a=pts[i], b=pts[i+1];
+      const ma=mob[i], mb=mob[i+1], s=ma+mb;
+      if(s<=0) continue;
+      let dx=b.x-a.x, dy=b.y-a.y;
+      let d=Math.hypot(dx,dy); if(d<1e-6){dx=1;dy=0;d=1;}
+      const k=(d-spans[i])/d;
+      a.x+=dx*k*(ma/s); a.y+=dy*k*(ma/s);
+      b.x-=dx*k*(mb/s); b.y-=dy*k*(mb/s);
+    }
+  };
+  const bendPass=()=>{
+    for(let i=0;i<n-2;i++){
+      const a=pts[i], b=pts[i+2];
+      const ma=mob[i], mb=mob[i+2], s=ma+mb;
+      if(s<=0) continue;
+      let dx=b.x-a.x, dy=b.y-a.y;
+      let d=Math.hypot(dx,dy); if(d<1e-6){dx=1;dy=0;d=1;}
+      const lim=skipMin(spans[i], spans[i+1]);
+      if(d>=lim) continue;
+      const k=(d-lim)/d*SKIP_K;
+      a.x+=dx*k*(ma/s); a.y+=dy*k*(ma/s);
+      b.x-=dx*k*(mb/s); b.y-=dy*k*(mb/s);
+    }
+  };
+  const pin=()=>{
+    for(const [i,p] of driven){ pts[i].x=p.x; pts[i].y=p.y; }
+    for(const i of anchors){ pts[i].x=rest[i].x; pts[i].y=rest[i].y; }
+  };
+
+  for(let it=0; it<CFG.ITER; it++){
+    lenPass(); bendPass();
+    for(let i=0;i<n;i++){
+      if(pull[i]<=0) continue;
+      pts[i].x += (rest[i].x-pts[i].x)*pull[i];
+      pts[i].y += (rest[i].y-pts[i].y)*pull[i];
+    }
+    pin();
+  }
+  // settle constraints alone once the overall shape is established
+  for(let it=0; it<CFG.POLISH; it++){ lenPass(); bendPass(); pin(); }
+  return pts;
+}
+
+/* Strain is the line being asked for something it cannot do: neighbours that
+   cannot reach their ordered span, or a joint bent past its hinge. Deliberate
+   stretching is NOT strain — the span moved, so the regiment is content. */
+function measureStrain(L, pts){
+  const out=new Array(pts.length).fill(0);
+  const spans=spansOf(L);
+  for(let i=0;i<pts.length-1;i++){
+    const e=Math.abs(dist(pts[i],pts[i+1]) - spans[i]);
+    out[i]=Math.max(out[i],e); out[i+1]=Math.max(out[i+1],e);
+  }
+  for(let i=0;i<pts.length-2;i++){
+    const short = skipMin(spans[i],spans[i+1]) - dist(pts[i],pts[i+2]);
+    if(short>0) out[i+1]=Math.max(out[i+1],short);
+  }
+  return out;
+}
+
+/* ---------------- slot geometry ---------------- */
+/* A slot's brick is REG_LEN centred inside SLOT_LEN, so a dressing
+   interval of DRESS/2 sits at each end. */
+function slotQuad(L, i, pts){
+  const a=pts[i], b=pts[i+1];
+  let dx=b.x-a.x, dy=b.y-a.y; const d=Math.hypot(dx,dy)||1;
+  dx/=d; dy/=d;
+  const nx=dy, ny=-dx;                       // outward normal: the firing face
+  const inset=CFG.DRESS/2;
+  const f=V(a.x+dx*inset, a.y+dy*inset);     // front-left corner
+  const g=V(a.x+dx*(d-inset), a.y+dy*(d-inset));
+  const depth=slotDepth(L.slots[i] ? L.slots[i].span : CFG.SLOT_LEN);
+  const bx=-nx*depth, by=-ny*depth;
+  return { a:f, b:g, dx,dy,nx,ny, len:d-inset*2, depth,
+           c1:clone(f), c2:clone(g),
+           c3:V(g.x+bx,g.y+by), c4:V(f.x+bx,f.y+by) };
+}
+
+function pointInQuad(p,q){
+  const pts=[q.c1,q.c2,q.c3,q.c4];
+  let sign=0;
+  for(let i=0;i<4;i++){
+    const a=pts[i], b=pts[(i+1)%4];
+    const cr=(b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x);
+    if(cr!==0){ const s=Math.sign(cr); if(sign===0)sign=s; else if(s!==sign) return false; }
+  }
+  return true;
+}
+
+function hitRegiment(p){
+  for(let li=lines.length-1; li>=0; li--){
+    const L=lines[li];
+    for(let i=0;i<L.slots.length;i++){
+      if(!L.slots[i].reg) continue;
+      if(pointInQuad(p, slotQuad(L,i,L.joints))) return {line:L, i, reg:L.slots[i].reg};
+    }
+  }
+  return null;
+}
+/* every joint carries a stake now, not just the flanks */
+function hitStake(p){
+  for(const L of lines){
+    for(let j=0;j<L.joints.length;j++){
+      if(dist(p, L.joints[j]) < 13) return {line:L, j};
+    }
+  }
+  return null;
+}
+
+function lineOfReg(id){ return lines.find(L=>L.slots.some(s=>s.reg&&s.reg.id===id)); }
+function slotIndex(L,id){ return L.slots.findIndex(s=>s.reg&&s.reg.id===id); }
+
+/* Dragging a stake reshapes the line directly. The joint goes where the
+   pointer is, and the two slots either side of it take up the difference by
+   changing their span — drawing out or closing up. When a span reaches its
+   limit the joint stops dead, so the reach of a regiment is something the
+   player can feel at the edge rather than read in a number. */
+/* Dragging a stake draws out or closes up ONE regiment: the one between the
+   stake and its pivot. The pivot is the anchored neighbour if there is one,
+   otherwise whichever neighbour the pointer is pulling away from. The slot on
+   the other side keeps its frontage and is simply towed along, which is what
+   makes "pin one end, pull the other" behave the way it reads. */
+function dragStake(L, j, want){
+  const clampSpan=v=>Math.max(CFG.MIN_SPAN, Math.min(CFG.MAX_SPAN, v));
+  const hasLeft = j>0, hasRight = j<L.slots.length;
+  if(!hasLeft && !hasRight) return cloneAll(L.joints);
+
+  let pivot;
+  if(hasLeft && L.anchors.has(j-1))       pivot=j-1;
+  else if(hasRight && L.anchors.has(j+1)) pivot=j+1;
+  else if(!hasRight)                      pivot=j-1;
+  else if(!hasLeft)                       pivot=j+1;
+  else pivot = dist(want, L.joints[j-1]) >= dist(want, L.joints[j+1]) ? j-1 : j+1;
+
+  const slot = pivot < j ? j-1 : j;          // the regiment being reshaped
+  const a = L.joints[pivot];
+
+  let d=dist(a,want); if(d<1e-6) d=1e-6;
+  const span=clampSpan(d);
+  const p=V(a.x+(want.x-a.x)/d*span, a.y+(want.y-a.y)/d*span);
+
+  const spans=spansOf(L);
+  spans[slot]=span;
+
+  const rest=cloneAll(L.joints);
+  const out=cloneAll(L.joints);
+  const anchors=new Set([...L.anchors].filter(x=>x!==j));
+  anchors.add(pivot);                        // the pivot holds while we pull
+  solveChain(out, rest, new Map([[j,p]]), anchors, spans);
+
+  for(let i=0;i<L.slots.length;i++) L.slots[i].span=spans[i];
+  return out;
+}
+
+function atSpanLimit(span){
+  return span >= CFG.MAX_SPAN-0.6 || span <= CFG.MIN_SPAN+0.6;
+}
+
+function drivenFor(L, regIds, delta, rest){
+  const m=new Map();
+  for(const id of regIds){
+    const i=slotIndex(L,id); if(i<0) continue;
+    for(const j of [i,i+1]) m.set(j, V(rest[j].x+delta.x, rest[j].y+delta.y));
+  }
+  return m;
+}
+
+/* ---------------- taking regiments out of line ----------------
+   The line keeps its shape and its frontage. The slot simply empties.
+   That hole is a real hole: nobody stands there, nobody fires from there,
+   and it stays until the player fills it or orders the line to close up. */
+function detach(L, idxs){
+  idxs=[...new Set(idxs)].sort((a,b)=>a-b).filter(i=>L.slots[i] && L.slots[i].reg);
+  if(!idxs.length) return [];
+
+  const runs=[]; let cur=[idxs[0]];
+  for(let k=1;k<idxs.length;k++){
+    if(idxs[k]===idxs[k-1]+1) cur.push(idxs[k]); else { runs.push(cur); cur=[idxs[k]]; }
+  }
+  runs.push(cur);
+
+  const made=[];
+  for(const run of runs){
+    const cells=run.map(i=>({reg:L.slots[i].reg, span:L.slots[i].span}));
+    const joints=L.joints.slice(run[0], run[run.length-1]+2).map(clone);
+    for(const i of run){ L.slots[i].reg=null; L.slots[i].span=CFG.SLOT_LEN; }
+    made.push(makeLine(cells, joints));
+  }
+  for(const m of made) lines.push(m);
+  trimEmptyFlanks(L);
+  if(!occupied(L)) lines=lines.filter(x=>x!==L);
+  return made;
+}
+
+/* an empty slot on the end of a line is not a gap, it is just air */
+function trimEmptyFlanks(L){
+  while(L.slots.length && !L.slots[0].reg){ L.slots.shift(); L.joints.shift(); }
+  while(L.slots.length && !L.slots[L.slots.length-1].reg){ L.slots.pop(); L.joints.pop(); }
+  L.target=cloneAll(L.joints);
+  L.strain=new Array(L.joints.length).fill(0);
+  const keep=new Set();
+  for(const a of L.anchors) if(a<L.joints.length) keep.add(a);
+  L.anchors=keep;
+  return L;
+}
+
+/* ---------------- closing up ----------------
+   Contract the line onto its gaps. The line keeps its curve and keeps
+   its anchored joint fixed; it simply becomes shorter. Ceding frontage
+   is the price of a solid line. */
+function closeUp(L){
+  if(!gaps(L)) return false;
+  const kept=L.slots.filter(s=>s.reg);
+  if(!kept.length) return false;
+
+  /* Where the shortened line will end up: resample the curve the player has
+     already shaped, so a bent line closes into a shorter bend rather than
+     snapping straight. */
+  const path=cloneAll(L.joints);
+  const anchor=[...L.anchors].sort((a,b)=>a-b)[0];
+  const spans=kept.map(s=>s.span);
+  const need=spans.reduce((a,b)=>a+b,0);
+  const total=arcLen(path);
+  let t0 = anchor===undefined ? 0 : arcLenTo(path, anchor);
+  if(t0 + need > total) t0 = Math.max(0, total - need);
+
+  const dest=[]; let t=t0;
+  for(let i=0;i<=kept.length;i++){ dest.push(samplePath(path, t)); t += spans[i]||0; }
+
+  /* Where the regiments are standing right now: keep the joints that still
+     bound an occupied slot, so the line starts the manoeuvre from where it
+     actually is and marches into place. */
+  const here=[]; const keepJoint=new Array(L.joints.length).fill(false);
+  for(let i=0;i<L.slots.length;i++){
+    if(L.slots[i].reg){ keepJoint[i]=true; keepJoint[i+1]=true; }
+  }
+  for(let j=0;j<L.joints.length;j++) if(keepJoint[j]) here.push(clone(L.joints[j]));
+  /* A gap between two occupied slots shares no joint, so the trimmed list can
+     run long or short by the number of gaps closed; reconcile against dest. */
+  while(here.length > dest.length) here.splice(here.length-2, 1);
+  while(here.length < dest.length) here.push(clone(here[here.length-1] || dest[0]));
+
+  L.slots = kept.map(s=>({reg:s.reg, span:s.span}));
+  L.joints = here;
+  L.target = dest;
+  L.strain = new Array(dest.length).fill(0);
+  L.anchors = anchor===undefined ? new Set() : new Set([0]);
+  return true;
+}
+function arcLen(path){ let s=0; for(let i=0;i<path.length-1;i++) s+=dist(path[i],path[i+1]); return s; }
+function arcLenTo(path, idx){ let s=0; for(let i=0;i<idx;i++) s+=dist(path[i],path[i+1]); return s; }
+function samplePath(path, t){
+  if(t<=0){
+    const d=dist(path[0],path[1])||1;
+    return V(path[0].x+(path[0].x-path[1].x)/d*(-t), path[0].y+(path[0].y-path[1].y)/d*(-t));
+  }
+  let acc=0;
+  for(let i=0;i<path.length-1;i++){
+    const seg=dist(path[i],path[i+1]);
+    if(acc+seg>=t){
+      const f=(t-acc)/(seg||1);
+      return V(path[i].x+(path[i+1].x-path[i].x)*f, path[i].y+(path[i+1].y-path[i].y)*f);
+    }
+    acc+=seg;
+  }
+  const n=path.length;
+  const d=dist(path[n-2],path[n-1])||1;
+  const over=t-acc;
+  return V(path[n-1].x+(path[n-1].x-path[n-2].x)/d*over,
+           path[n-1].y+(path[n-1].y-path[n-2].y)/d*over);
+}
+
+/* ---------------- rejoining ----------------
+   A loose body dropped on a gap fills it. Dropped on a flank, it extends
+   the line. Gap-filling is checked first: it is almost always what the
+   player meant. */
+function tryFillGap(A){
+  if(A.slots.length!==1 || !A.slots[0].reg) return null;
+  const centre=V((A.joints[0].x+A.joints[1].x)/2, (A.joints[0].y+A.joints[1].y)/2);
+  let best=null, bestD=CFG.MERGE_R;
+  for(const B of lines){
+    if(B===A) continue;
+    for(let i=0;i<B.slots.length;i++){
+      if(B.slots[i].reg) continue;
+      const c=V((B.joints[i].x+B.joints[i+1].x)/2, (B.joints[i].y+B.joints[i+1].y)/2);
+      const d=dist(centre,c);
+      if(d<bestD){ bestD=d; best={line:B, i}; }
+    }
+  }
+  if(!best) return null;
+  best.line.slots[best.i].reg = A.slots[0].reg;
+  lines=lines.filter(x=>x!==A);
+  const B=best.line;
+  const rest=cloneAll(B.joints);
+  solveChain(B.target, rest, new Map(), B.anchors, spansOf(B));
+  return B;
+}
+
+function tryMerge(A){
+  const filled=tryFillGap(A);
+  if(filled) return filled;
+
+  const aS=A.joints[0], aE=A.joints[A.joints.length-1];
+  for(const B of lines){
+    if(B===A) continue;
+    const bS=B.joints[0], bE=B.joints[B.joints.length-1];
+    let slots=null, joints=null;
+    const rev=()=>({s:[...A.slots].reverse(), j:[...A.joints].reverse()});
+    if(dist(aS,bE)<CFG.MERGE_R){
+      slots=[...B.slots,...A.slots]; joints=[...B.joints,...A.joints.slice(1)];
+    } else if(dist(aE,bS)<CFG.MERGE_R){
+      slots=[...A.slots,...B.slots]; joints=[...A.joints,...B.joints.slice(1)];
+    } else if(dist(aE,bE)<CFG.MERGE_R){
+      const r=rev(); slots=[...B.slots,...r.s]; joints=[...B.joints,...r.j.slice(1)];
+    } else if(dist(aS,bS)<CFG.MERGE_R){
+      const r=rev(); slots=[...r.s,...B.slots]; joints=[...r.j,...B.joints.slice(1)];
+    }
+    if(slots){
+      const M=makeLine(slots, joints.map(clone));
+      for(let k=0;k<4;k++) solveChain(M.target, cloneAll(M.target), new Map(), new Set(), spansOf(M));
+      lines=lines.filter(x=>x!==A&&x!==B);
+      lines.push(M);
+      return M;
+    }
+  }
+  return null;
+}
+
+/* ---------------- input ---------------- */
+const selection=new Set();
+let drag=null, ghostAlways=false, hoverGap=null, stakeAction=null;
+
+function mouse(ev){ const r=cv.getBoundingClientRect(); return V(ev.clientX-r.left, ev.clientY-r.top); }
+
+cv.addEventListener("pointerdown", ev=>{
+  cv.setPointerCapture(ev.pointerId);
+  const p=mouse(ev);
+
+  const st=hitStake(p);
+  if(st){
+    // click toggles the anchor, drag reshapes the line; decided on release
+    stakeAction={ line:st.line, j:st.j, start:p, moved:false };
+    return;
+  }
+
+  const hit=hitRegiment(p);
+  if(!hit){ if(!ev.shiftKey) selection.clear(); return; }
+
+  if(ev.shiftKey && !ev.altKey){
+    if(selection.has(hit.reg.id)) selection.delete(hit.reg.id);
+    else selection.add(hit.reg.id);
+    return;
+  }
+  if(!selection.has(hit.reg.id)){ selection.clear(); selection.add(hit.reg.id); }
+
+  let L=hit.line;
+  let ids=[...selection].filter(id=>lineOfReg(id)===L);
+
+  if(ev.altKey){
+    const idxs=ids.map(id=>slotIndex(L,id)).filter(i=>i>=0);
+    const made=detach(L, idxs);
+    if(!made.length) return;
+    L=made[made.length-1];
+    ids=L.slots.filter(s=>s.reg).map(s=>s.reg.id);
+    selection.clear(); for(const id of ids) selection.add(id);
+  }
+
+  drag={ line:L, ids, start:p, rest:cloneAll(L.joints) };
+});
+
+cv.addEventListener("pointermove", ev=>{
+  const p=mouse(ev);
+
+  if(stakeAction){
+    if(!stakeAction.moved && dist(p, stakeAction.start) < 4) return;
+    stakeAction.moved=true;
+    const L=stakeAction.line;
+    L.target = dragStake(L, stakeAction.j, p);
+    L.strain = measureStrain(L, L.target);
+    return;
+  }
+
+  if(!drag){ hoverGap=null; return; }
+  const delta=V(p.x-drag.start.x, p.y-drag.start.y);
+  const L=drag.line;
+  const pts=cloneAll(drag.rest);
+  solveChain(pts, drag.rest, drivenFor(L, drag.ids, delta, drag.rest), L.anchors);
+  L.target=pts;
+  L.strain=measureStrain(L, pts);
+
+  // preview which gap a single loose regiment would drop into
+  hoverGap=null;
+  if(L.slots.length===1 && L.slots[0].reg){
+    const c=V((pts[0].x+pts[1].x)/2, (pts[0].y+pts[1].y)/2);
+    let bd=CFG.MERGE_R;
+    for(const B of lines){
+      if(B===L) continue;
+      for(let i=0;i<B.slots.length;i++){
+        if(B.slots[i].reg) continue;
+        const gc=V((B.joints[i].x+B.joints[i+1].x)/2, (B.joints[i].y+B.joints[i+1].y)/2);
+        const d=dist(c,gc);
+        if(d<bd){ bd=d; hoverGap={line:B,i}; }
+      }
+    }
+  }
+});
+
+cv.addEventListener("pointerup", ()=>{
+  if(stakeAction){
+    if(!stakeAction.moved){
+      const {line:L, j}=stakeAction;
+      if(L.anchors.has(j)) L.anchors.delete(j); else L.anchors.add(j);
+    }
+    stakeAction=null;
+    return;
+  }
+  if(drag){
+    const L=drag.line;
+    if(lines.includes(L) && occupied(L)) tryMerge(L);
+    drag=null; hoverGap=null;
+  }
+});
+
+window.addEventListener("keydown", ev=>{
+  const k=ev.key.toLowerCase();
+  if(k==="g") ghostAlways=!ghostAlways;
+  if(k==="r") resetField();
+  if(k==="c"){
+    const touched=new Set();
+    for(const id of selection){ const L=lineOfReg(id); if(L) touched.add(L); }
+    if(!touched.size) for(const L of lines) touched.add(L);
+    for(const L of touched) closeUp(L);
+  }
+  if(k==="["||k==="]"){
+    const d = k==="[" ? -0.1 : 0.1;
+    for(const id of selection){
+      const L=lineOfReg(id); if(!L) continue;
+      const s=L.slots[slotIndex(L,id)]; if(!s||!s.reg) continue;
+      s.reg.strength=Math.max(0,Math.min(1, s.reg.strength+d));
+    }
+  }
+});
+
+/* ---------------- terrain ---------------- */
+let terrain=null;
+function buildTerrain(){
+  const c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(W*DPR)); c.height=Math.max(1,Math.round(H*DPR));
+  const g=c.getContext("2d");
+  g.setTransform(DPR,0,0,DPR,0,0);
+  g.fillStyle="#16242a"; g.fillRect(0,0,W,H);
+
+  g.globalAlpha=.30; g.strokeStyle="#1d2f36"; g.lineWidth=1;
+  for(let x=0;x<W;x+=3){ g.beginPath(); g.moveTo(x+.5,0); g.lineTo(x+.5,H); g.stroke(); }
+  for(let y=0;y<H;y+=3){ g.beginPath(); g.moveTo(0,y+.5); g.lineTo(W,y+.5); g.stroke(); }
+  g.globalAlpha=1;
+
+  const rises=[
+    {x:W*0.22,y:H*0.30,r:120,n:5},
+    {x:W*0.78,y:H*0.38,r:150,n:6},
+    {x:W*0.50,y:H*0.86,r:190,n:4}
+  ];
+  g.lineWidth=1;
+  for(const R of rises){
+    for(let i=0;i<R.n;i++){
+      const rr=R.r*(1-i/(R.n+0.6));
+      g.strokeStyle="#2f4a52"; g.globalAlpha=.55-i*0.05;
+      g.beginPath();
+      for(let a=0;a<=Math.PI*2+.01;a+=0.12){
+        const wob=1+0.10*Math.sin(a*3+i*1.3+R.x)+0.06*Math.sin(a*5-i);
+        const px=R.x+Math.cos(a)*rr*wob, py=R.y+Math.sin(a)*rr*wob*0.62;
+        if(a===0)g.moveTo(px,py); else g.lineTo(px,py);
+      }
+      g.closePath(); g.stroke();
+    }
+  }
+  g.globalAlpha=1;
+
+  g.strokeStyle="#3b5c64"; g.globalAlpha=.7;
+  for(const off of [-3,3]){
+    g.beginPath(); g.moveTo(0,H*0.20+off);
+    g.bezierCurveTo(W*0.30,H*0.12+off, W*0.62,H*0.34+off, W,H*0.24+off);
+    g.stroke();
+  }
+  g.globalAlpha=1;
+  terrain=c;
+}
+
+/* ---------------- drawing ---------------- */
+function drawRegiment(q, reg, opts){
+  const {a,dx,dy,nx,ny,len}=q;
+  const filled=Math.round(reg.strength*CFG.SLATS);
+  const gone=new Set(reg.lossOrder.slice(filled));
+  const seg=len/CFG.SLATS;
+  const bx=-nx*q.depth, by=-ny*q.depth;
+
+  for(let s=0;s<CFG.SLATS;s++){
+    if(gone.has(s)) continue;
+    const t0=s*seg, t1=(s+1)*seg-0.7;
+    const p0=V(a.x+dx*t0, a.y+dy*t0), p1=V(a.x+dx*t1, a.y+dy*t1);
+    ctx.beginPath();
+    ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y);
+    ctx.lineTo(p1.x+bx,p1.y+by); ctx.lineTo(p0.x+bx,p0.y+by);
+    ctx.closePath();
+    ctx.fillStyle=opts.sel?"#6d95bd":"#4f739c";
+    ctx.globalAlpha = opts.thin ? 0.72 : 1;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(q.c1.x,q.c1.y); ctx.lineTo(q.c2.x,q.c2.y);
+  ctx.lineTo(q.c3.x,q.c3.y); ctx.lineTo(q.c4.x,q.c4.y);
+  ctx.closePath();
+  ctx.strokeStyle=opts.sel?"#a9c6e6":"#2b4560";
+  ctx.lineWidth=opts.sel?1.6:1; ctx.stroke();
+
+  ctx.beginPath(); ctx.moveTo(q.c1.x,q.c1.y); ctx.lineTo(q.c2.x,q.c2.y);
+  ctx.strokeStyle=opts.sel?"#cfe0f2":"#8fb0d4"; ctx.lineWidth=2.2; ctx.stroke();
+
+  if(opts.loose){
+    ctx.save(); ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(q.c4.x,q.c4.y); ctx.lineTo(q.c3.x,q.c3.y);
+    ctx.strokeStyle="#c39140"; ctx.lineWidth=1.4; ctx.stroke(); ctx.restore();
+  }
+
+  // a regiment drawn out or closed up as far as it will go says so
+  if(opts.limit){
+    ctx.save();
+    ctx.strokeStyle="#c39140"; ctx.lineWidth=1.6;
+    for(const c of [q.c1,q.c2]){
+      ctx.beginPath();
+      ctx.moveTo(c.x - nx*3, c.y - ny*3);
+      ctx.lineTo(c.x + nx*6, c.y + ny*6);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // designation, set behind the colours and rotated with the regiment
+  const cx=(q.c1.x+q.c2.x)/2 + (-nx*(q.depth+9));
+  const cy=(q.c1.y+q.c2.y)/2 + (-ny*(q.depth+9));
+  let ang=Math.atan2(dy,dx);
+  if(Math.abs(ang)>Math.PI/2) ang+=Math.PI;   // never upside down
+  ctx.save();
+  ctx.translate(cx,cy); ctx.rotate(ang);
+  ctx.font='10px ui-monospace,Menlo,Consolas,monospace';
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillStyle=opts.sel?"#cfe0f2":"#7b9089";
+  ctx.fillText(reg.tag, 0, 0);
+  ctx.restore();
+}
+
+/* An empty slot is drawn as an absence: the frontage is still marked out,
+   but only in outline, and the firing face is missing. */
+function drawGap(q, opts){
+  ctx.save();
+  ctx.setLineDash([3,4]);
+  ctx.lineWidth=1;
+  ctx.strokeStyle = opts.target ? "rgba(143,185,162,.9)" : "rgba(192,90,66,.55)";
+  ctx.beginPath();
+  ctx.moveTo(q.c1.x,q.c1.y); ctx.lineTo(q.c2.x,q.c2.y);
+  ctx.lineTo(q.c3.x,q.c3.y); ctx.lineTo(q.c4.x,q.c4.y);
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+  if(opts.target){
+    ctx.save();
+    ctx.fillStyle="rgba(143,185,162,.14)";
+    ctx.beginPath();
+    ctx.moveTo(q.c1.x,q.c1.y); ctx.lineTo(q.c2.x,q.c2.y);
+    ctx.lineTo(q.c3.x,q.c3.y); ctx.lineTo(q.c4.x,q.c4.y);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+}
+
+function drawGhost(L){
+  const pts=L.target;
+  ctx.save();
+  ctx.setLineDash([5,5]); ctx.lineWidth=1; ctx.strokeStyle="#8fb9a2";
+  for(let i=0;i<L.slots.length;i++){
+    if(!L.slots[i].reg) continue;
+    const q=slotQuad(L,i,pts);   // spans are live, so the ghost shows the stretch
+    ctx.beginPath();
+    ctx.moveTo(q.c1.x,q.c1.y); ctx.lineTo(q.c2.x,q.c2.y);
+    ctx.lineTo(q.c3.x,q.c3.y); ctx.lineTo(q.c4.x,q.c4.y);
+    ctx.closePath(); ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle="rgba(143,185,162,.55)"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.stroke();
+  for(let i=1;i<pts.length-1;i++){
+    const p=pts[i-1], c=pts[i], q=pts[i+1];
+    const a1=Math.atan2(p.y-c.y,p.x-c.x), a2=Math.atan2(q.y-c.y,q.x-c.x);
+    const bend=Math.abs(norm(Math.atan2(q.y-c.y,q.x-c.x)-Math.atan2(c.y-p.y,c.x-p.x)));
+    ctx.strokeStyle = bend>=CFG.MAX_HINGE-0.012 ? "rgba(192,90,66,.95)" : "rgba(143,185,162,.5)";
+    ctx.beginPath(); ctx.arc(c.x,c.y,13,a1,a2); ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save(); ctx.setLineDash([2,6]); ctx.strokeStyle="rgba(143,185,162,.4)";
+  for(let i=0;i<L.joints.length;i++){
+    if(dist(L.joints[i],pts[i])<2) continue;
+    ctx.beginPath(); ctx.moveTo(L.joints[i].x,L.joints[i].y); ctx.lineTo(pts[i].x,pts[i].y); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawStakes(L){
+  for(let j=0;j<L.joints.length;j++){
+    const p=L.joints[j];
+    const on=L.anchors.has(j);
+    const held = stakeAction && stakeAction.line===L && stakeAction.j===j && stakeAction.moved;
+    if(held){
+      ctx.save();
+      ctx.beginPath(); ctx.arc(p.x,p.y,11,0,Math.PI*2);
+      ctx.fillStyle="rgba(143,185,162,.18)"; ctx.fill();
+      ctx.strokeStyle="rgba(143,185,162,.8)"; ctx.lineWidth=1; ctx.stroke();
+      ctx.restore();
+    }
+    const flank = (j===0 || j===L.joints.length-1);
+    ctx.save(); ctx.translate(p.x,p.y);
+    ctx.strokeStyle = on ? "#c39140" : (flank ? "#5b7178" : "#3f545b");
+    ctx.lineWidth = on ? 2 : 1.1;
+    const h = on ? 9 : (flank ? 8 : 5);
+    ctx.beginPath(); ctx.moveTo(0,-h); ctx.lineTo(0,h); ctx.stroke();
+    if(on || flank){
+      ctx.beginPath(); ctx.arc(0,0, on?6.5:4.2, 0, Math.PI*2); ctx.stroke();
+    }
+    if(on){ ctx.fillStyle="rgba(195,145,64,.28)"; ctx.fill(); }
+    ctx.restore();
+  }
+}
+
+function drawStrain(L){
+  for(let i=0;i<L.joints.length;i++){
+    if(L.strain[i]<CFG.STRAIN_T) continue;
+    const p=L.joints[i], k=Math.min(1,(L.strain[i]-CFG.STRAIN_T)/14);
+    ctx.beginPath(); ctx.arc(p.x,p.y, 5+k*7, 0, Math.PI*2);
+    ctx.strokeStyle=`rgba(192,90,66,${.35+k*.5})`; ctx.lineWidth=1.4; ctx.stroke();
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  if(terrain) ctx.drawImage(terrain,0,0,W,H);
+
+  for(const L of lines){
+    const loose = occupied(L)<2 && lines.length>1;
+    const moving = L.joints.some((p,i)=>dist(p,L.target[i])>1.5);
+    if((drag&&drag.line===L) || ghostAlways || moving) drawGhost(L);
+
+    for(let i=0;i<L.slots.length;i++){
+      const q=slotQuad(L,i,L.joints);
+      if(L.slots[i].reg){
+        const r=stretchRatio(L.slots[i].span);
+        drawRegiment(q, L.slots[i].reg, {
+          sel:selection.has(L.slots[i].reg.id), loose,
+          thin: r>1.15,
+          limit: atSpanLimit(L.slots[i].span)
+        });
+      } else {
+        drawGap(q, {target: !!(hoverGap && hoverGap.line===L && hoverGap.i===i)});
+      }
+    }
+    drawStrain(L);
+    drawStakes(L);
+  }
+  updateReadout();
+}
+
+function updateReadout(){
+  const el=document.getElementById("readout");
+  let bend=0, worst=0, g=0;
+  for(const L of lines){
+    for(let i=1;i<L.joints.length-1;i++){
+      const p=L.joints[i-1], c=L.joints[i], q=L.joints[i+1];
+      const d=Math.abs(norm(Math.atan2(q.y-c.y,q.x-c.x)-Math.atan2(c.y-p.y,c.x-p.x)));
+      bend=Math.max(bend,d);
+    }
+    worst=Math.max(worst, ...L.strain);
+    g+=gaps(L);
+  }
+  let widest=1, tightest=1;
+  for(const L of lines) for(const sl of L.slots){
+    if(!sl.reg) continue;
+    const r=stretchRatio(sl.span);
+    widest=Math.max(widest,r); tightest=Math.min(tightest,r);
+  }
+  const regts=lines.reduce((s,L)=>s+occupied(L),0);
+  const anchors=lines.reduce((s,L)=>s+L.anchors.size,0);
+  el.innerHTML=
+    `BODIES <span class="v">${lines.length}</span><br>`+
+    `REGIMENTS <span class="v">${regts}</span><br>`+
+    `GAPS <span class="${g?'warn':'v'}">${g}</span><br>`+
+    `SELECTED <span class="v">${selection.size}</span><br>`+
+    `ANCHORS <span class="v">${anchors}</span><br>`+
+    `MAX BEND <span class="v">${(bend*180/Math.PI).toFixed(0)}&deg;</span><br>`+
+    `FRONTAGE <span class="v">${(tightest*100).toFixed(0)}&ndash;${(widest*100).toFixed(0)}%</span><br>`+
+    `STRAIN <span class="${worst>CFG.STRAIN_T?'warn':'v'}">${worst.toFixed(1)}</span>`;
+}
+
+/* ---------------- march ---------------- */
+function march(dt){
+  for(const L of lines){
+    let moved=false;
+    for(let i=0;i<L.joints.length;i++){
+      const a=L.joints[i], b=L.target[i];
+      const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy);
+      if(d<0.4){ a.x=b.x; a.y=b.y; continue; }
+      const step=Math.min(d, CFG.MARCH*dt);
+      a.x+=dx/d*step; a.y+=dy/d*step; moved=true;
+    }
+    if(moved){
+      const mob=L.anchors;
+      for(let it=0; it<8; it++){
+        for(let i=0;i<L.joints.length-1;i++){
+          const a=L.joints[i], b=L.joints[i+1];
+          const ma=mob.has(i)?0:1, mb=mob.has(i+1)?0:1, s=ma+mb;
+          if(s<=0) continue;
+          let dx=b.x-a.x, dy=b.y-a.y; let d=Math.hypot(dx,dy); if(d<1e-6){dx=1;dy=0;d=1;}
+          const k=(d-L.slots[i].span)/d;
+          a.x+=dx*k*(ma/s); a.y+=dy*k*(ma/s);
+          b.x-=dx*k*(mb/s); b.y-=dy*k*(mb/s);
+        }
+      }
+      L.strain=measureStrain(L, L.joints);
+    }
+  }
+}
+
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  march(dt); draw();
+  requestAnimationFrame(frame);
+}
+
+resize(); resetField(); requestAnimationFrame(frame);
+
+if(typeof module!=="undefined"&&module.exports){
+  module.exports={CFG,skipMin,solveChain,makeLine,lineFromRegts,makeRegiment,straightJoints,
+    detach,tryMerge,tryFillGap,closeUp,trimEmptyFlanks,occupied,gaps,slotQuad,measureStrain,
+    rollDesignation,ordinal,norm,dist,samplePath,arcLen,spansOf,slotDepth,stretchRatio,
+    dragStake,atSpanLimit,
+    getLines:()=>lines, setLines:v=>{lines=v;}};
+}
+</script>
+</body>
+</html>
