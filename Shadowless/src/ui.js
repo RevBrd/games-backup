@@ -470,9 +470,29 @@ function renderSide(pi, isFoe) {
 // read straight off the engine's own action list rather than re-deriving the
 // rules here. That is what keeps "can't Knock Out the receiver" from having to
 // be stated twice.
+// Powers come in two shapes. Two-step ones enumerate actions carrying `from`
+// (Damage Swap, Energy Trans): pick a source, then a destination. One-step ones
+// don't (Rain Dance — every basic Water Energy in hand is the same card, so
+// there is nothing to choose but the destination).
+// [source prompt, destination prompt]. One-step Powers only ever use index 1.
+const POWER_PROMPT = {
+  MOVE_DAMAGE: ['choose a Pokemon to move a damage counter FROM', 'choose a Pokemon to move it TO'],
+  MOVE_ENERGY: ['choose a Pokemon to take Energy FROM', 'choose a Pokemon to move that Energy TO'],
+  EXTRA_ATTACH: ['', 'choose a Pokemon to attach Energy to'],
+};
+
+function powerMoves(pm) {
+  return myLegal().filter(a => a.t === 'power' && a.uid === pm.uid && a.kind === pm.kind);
+}
+function powerIsTwoStep(pm) {
+  const m = powerMoves(pm);
+  return m.length > 0 && m[0].from !== undefined;
+}
+
 function slotPowerTargetable(slot, pi) {
   const pm = UI.powerMode; if (!pm || pi !== 0) return false;
-  const moves = myLegal().filter(a => a.t === 'power' && a.uid === pm.uid && a.kind === pm.kind);
+  const moves = powerMoves(pm);
+  if (!powerIsTwoStep(pm)) return moves.some(a => a.to === slot.uid);
   return pm.from === null
     ? moves.some(a => a.from === slot.uid)
     : moves.some(a => a.from === pm.from && a.to === slot.uid);
@@ -582,9 +602,11 @@ function renderSlot(slot, pi, where, idx) {
   d.onclick = (ev) => {
     if (can && UI.powerMode) {
       const pm = UI.powerMode;
-      if (pm.from === null) { pm.from = slot.uid; render(); return; }
+      const twoStep = powerIsTwoStep(pm);
+      if (twoStep && pm.from === null) { pm.from = slot.uid; render(); return; }
       // Stay in the mode after each move — the card says "as often as you like".
-      dispatch(0, { t: 'power', uid: pm.uid, kind: pm.kind, from: pm.from, to: slot.uid });
+      const move = powerMoves(pm).find(a => a.to === slot.uid && (!twoStep || a.from === pm.from));
+      if (move) dispatch(0, move);
       if (UI.powerMode) UI.powerMode.from = null;
       render(); return;
     }
@@ -650,10 +672,10 @@ function renderActionBar() {
     const moves = myLegal().filter(a => a.t === 'power' && a.uid === pm.uid && a.kind === pm.kind);
     // Auto-exit the moment nothing legal is left, so the mode never strands you.
     if (!moves.length) { UI.powerMode = null; return renderActionBar(); }
-    bar.appendChild(el('div', 'barmsg', pm.from === null
-      ? `${pm.name}: choose a Pokemon to move a damage counter FROM`
-      : `${pm.name}: choose a Pokemon to move it TO`));
-    if (pm.from !== null) {
+    const twoStep = powerIsTwoStep(pm);
+    bar.appendChild(el('div', 'barmsg',
+      `${pm.name}: ${POWER_PROMPT[pm.kind][(twoStep && pm.from === null) ? 0 : 1]}`));
+    if (twoStep && pm.from !== null) {
       const back = el('button', 'btn ghost', 'Back');
       back.onclick = () => { pm.from = null; render(); };
       bar.appendChild(back);
@@ -773,7 +795,8 @@ function renderActionBar() {
     const b = el('button', 'btn power', `${def.name}`);
     b.title = def.name + ' — ' + topCard(CARD_DB, slot).name;
     b.onclick = () => {
-      if (a.kind === 'MOVE_DAMAGE') { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null }; render(); }
+      // Anything with a prompt is an interactive mode; the rest fire on the spot.
+      if (POWER_PROMPT[a.kind]) { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null }; render(); }
       else dispatch(0, a);
     };
     bar.appendChild(b);

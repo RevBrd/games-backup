@@ -56,9 +56,8 @@ for (const name of DECK_NAMES) {
 // list is progress; a card that appears on it unexpectedly is a regression.
 // Keep this list in step with the "twelve missing Base Set cards" in CLAUDE.md.
 const EXPECTED_UNIMPLEMENTED = new Set([
-  // Job 4d landed Alakazam, Charizard and Machamp. Nine to go.
-  'base1-2',  // Blastoise   — Rain Dance
-  'base1-15', // Venusaur    — Energy Trans
+  // Five of the six Pokemon Powers are done. Electrode is the one left, and
+  // it is the hard one — see RULINGS.md.
   'base1-21', // Electrode   — Buzzap
   'base1-5',  // Clefairy    — Metronome
   'base1-22', // Pidgeotto   — Whirlwind / Mirror Move

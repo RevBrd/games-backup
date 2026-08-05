@@ -216,6 +216,117 @@ T('two Machamps do not retaliate at each other forever', () => {
   return true;                                              // reaching here at all is the assertion
 });
 
+// ----------------------------------------------------------------- Rain Dance
+console.log('\nBlastoise — Rain Dance');
+
+T('attaches a Water Energy from hand to a Water Pokemon', () => {
+  const E = board('base1-2', ['base1-63']);                 // Blastoise, Squirtle
+  const p = E.state.players[0];
+  p.hand = [{ id: 'base1-102', uid: E.uid++ }];
+  const [blast, squirt] = E.allSlots(0);
+  const a = E.legalActions(0).find(x => x.t === 'power' && x.to === squirt.uid);
+  if (!a) throw new Error('Rain Dance not offered');
+  const r = E.act(0, a);
+  if (!r.ok) throw new Error(r.error);
+  eq(squirt.energy.length, 1, 'Energy on Squirtle');
+  eq(p.hand.length, 0, 'card left the hand');
+  return true;
+});
+
+T('does not use up the turn\'s one Energy attachment', () => {
+  const E = board('base1-2', ['base1-63']);
+  const p = E.state.players[0];
+  p.hand = [{ id: 'base1-102', uid: E.uid++ }, { id: 'base1-102', uid: E.uid++ }];
+  const a = E.legalActions(0).find(x => x.t === 'power');
+  E.act(0, a);
+  eq(p.energyAttached, false, 'attachment flag untouched');
+  // and the ordinary attachment is still available afterwards
+  if (!E.legalActions(0).some(x => x.t === 'attachEnergy')) throw new Error('normal attach no longer offered');
+  return true;
+});
+
+T('refuses a non-Water Pokemon', () => {
+  const E = board('base1-2', ['base1-58']);                 // Pikachu is Lightning
+  const p = E.state.players[0];
+  p.hand = [{ id: 'base1-102', uid: E.uid++ }];
+  const pika = E.allSlots(0)[1];
+  if (E.legalActions(0).some(x => x.t === 'power' && x.to === pika.uid))
+    throw new Error('offered Rain Dance onto a Lightning Pokemon');
+  const r = E.act(0, { t: 'power', uid: E.allSlots(0)[0].uid, kind: 'EXTRA_ATTACH', to: pika.uid });
+  eq(r.ok, false, 'direct call rejected too');
+  return true;
+});
+
+T('will not attach Double Colorless, which is not Water Energy', () => {
+  const E = board('base1-2', ['base1-63']);
+  E.state.players[0].hand = [{ id: 'base1-96', uid: E.uid++ }];   // DCE
+  eq(E.legalActions(0).filter(x => x.t === 'power').length, 0, 'power actions offered');
+  return true;
+});
+
+T('is not offered with no Water Energy in hand', () => {
+  const E = board('base1-2', ['base1-63']);
+  E.state.players[0].hand = [{ id: 'base1-98', uid: E.uid++ }];   // Fire
+  eq(E.legalActions(0).filter(x => x.t === 'power').length, 0, 'power actions offered');
+  return true;
+});
+
+// ---------------------------------------------------------------- Energy Trans
+console.log('\nVenusaur — Energy Trans');
+
+T('moves a Grass Energy between your own Pokemon', () => {
+  const E = board('base1-15', ['base1-44']);                // Venusaur, Bulbasaur
+  const [venu, bulba] = E.allSlots(0);
+  attach(E, venu, 'base1-99', 2);                           // 2 Grass on Venusaur
+  const a = E.legalActions(0).find(x => x.t === 'power' && x.from === venu.uid && x.to === bulba.uid);
+  if (!a) throw new Error('Energy Trans not offered');
+  const r = E.act(0, a);
+  if (!r.ok) throw new Error(r.error);
+  eq(venu.energy.length, 1, 'source Energy'); eq(bulba.energy.length, 1, 'destination Energy');
+  return true;
+});
+
+T('has no destination type restriction', () => {
+  const E = board('base1-15', ['base1-58']);                // Pikachu, a Lightning Pokemon
+  const [venu, pika] = E.allSlots(0);
+  attach(E, venu, 'base1-99', 1);
+  const a = E.legalActions(0).find(x => x.t === 'power' && x.to === pika.uid);
+  if (!a) throw new Error('Energy Trans should allow any of your own Pokemon');
+  eq(E.act(0, a).ok, true, 'move accepted');
+  eq(pika.energy.length, 1, 'Grass Energy on a Lightning Pokemon');
+  return true;
+});
+
+T('moves only Grass Energy, not whatever happens to be attached', () => {
+  const E = board('base1-15', ['base1-44']);
+  const [venu, bulba] = E.allSlots(0);
+  attach(E, venu, 'base1-101', 2);                          // Psychic, not Grass
+  eq(E.legalActions(0).filter(x => x.t === 'power').length, 0, 'power actions offered');
+  return true;
+});
+
+T('can pull Energy off the Bench onto the Active', () => {
+  const E = board('base1-15', ['base1-44']);
+  const [venu, bulba] = E.allSlots(0);
+  attach(E, bulba, 'base1-99', 1);
+  const a = E.legalActions(0).find(x => x.t === 'power' && x.from === bulba.uid && x.to === venu.uid);
+  if (!a) throw new Error('no Bench-to-Active move offered');
+  eq(E.act(0, a).ok, true, 'accepted');
+  eq(venu.energy.length, 1, 'Energy arrived on Venusaur');
+  return true;
+});
+
+T('is switched off by Asleep, Confused and Paralyzed', () => {
+  for (const st of ['asleep', 'confused', 'paralyzed']) {
+    const E = board('base1-15', ['base1-44']);
+    const [venu] = E.allSlots(0);
+    attach(E, venu, 'base1-99', 2);
+    venu.status[st] = true;
+    if (E.legalActions(0).some(a => a.t === 'power')) throw new Error(`still offered while ${st}`);
+  }
+  return true;
+});
+
 // ------------------------------------------------------------------- AI usage
 console.log('\nAI');
 
@@ -276,6 +387,56 @@ T('the AI leaves Energy Burn alone when it changes nothing', () => {
   E.state.players[0].hand = [];
   E.aiTurn(0, 'expert');
   if (E.state.log.some(l => (l.text || '').includes('Energy Burn'))) throw new Error('AI used a pointless Energy Burn');
+  return true;
+});
+
+T('the AI uses Rain Dance rather than spending its one attachment', () => {
+  const E = board('base1-2');                               // Blastoise, Hydro Pump costs WWW
+  const blast = E.state.players[0].active;
+  attach(E, blast, 'base1-102', 2);
+  E.state.players[0].hand = [{ id: 'base1-102', uid: E.uid++ }];
+  E.aiTurn(0, 'expert');
+  if (!E.state.log.some(l => (l.text || '').includes('Rain Dance'))) throw new Error('AI never used Rain Dance');
+  return true;
+});
+
+T('the AI uses Energy Trans to feed the Pokemon that needs it', () => {
+  const E = board('base1-15', ['base1-44']);                // Solarbeam costs GGGG
+  const [venu, bulba] = E.allSlots(0);
+  attach(E, venu, 'base1-99', 3);
+  attach(E, bulba, 'base1-99', 2);
+  E.state.players[0].hand = [];
+  E.aiTurn(0, 'expert');
+  if (!E.state.log.some(l => (l.text || '').includes('Energy Trans'))) throw new Error('AI never used Energy Trans');
+  eq(venu.energy.length >= 4, true, `Venusaur ended with ${venu.energy.length} Energy`);
+  return true;
+});
+
+T('the AI does not strip Energy off the Pokemon that is about to attack', () => {
+  const E = board('base1-15', ['base1-44']);
+  const [venu, bulba] = E.allSlots(0);
+  attach(E, venu, 'base1-99', 4);                           // Solarbeam ready right now
+  E.state.players[0].hand = [];
+  E.aiTurn(0, 'expert');
+  eq(venu.energy.length >= 4, true, `Venusaur was left with ${venu.energy.length} Energy`);
+  return true;
+});
+
+T('Energy Trans does not send the AI into an infinite shuffle', () => {
+  // The regression this exists for: with the source's loss ignored, moving
+  // Energy A→B and B→A both scored as gains, so the bot moved Energy 44,000
+  // times across 80 games and hung eleven of them. A whole turn should need a
+  // handful of moves, not hundreds.
+  const E = board('base1-15', ['base1-44', 'base1-30', 'base1-45']);
+  const slots = E.allSlots(0);
+  attach(E, slots[1], 'base1-99', 3);
+  attach(E, slots[2], 'base1-99', 3);
+  attach(E, slots[3], 'base1-99', 2);
+  E.state.players[0].hand = [];
+  const mark = E.state.log.length;
+  E.aiTurn(0, 'expert');
+  const moves = E.state.log.slice(mark).filter(l => (l.text || '').includes('Energy Trans')).length;
+  if (moves > 20) throw new Error(`${moves} Energy Trans moves in a single turn`);
   return true;
 });
 

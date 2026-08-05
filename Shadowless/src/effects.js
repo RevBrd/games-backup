@@ -63,6 +63,22 @@
 //     MOVE_DAMAGE            interactive, repeatable. Move 1 damage counter
 //                            between your own Pokemon. Illegal if it would Knock
 //                            Out the receiving Pokemon.
+//     MOVE_ENERGY {energy}   interactive, repeatable. Move 1 basic Energy of that
+//                            type from one of your Pokemon to a different one.
+//                            No restriction on the destination's type.
+//     EXTRA_ATTACH {energy, targetType}
+//                            interactive, repeatable. Attach 1 basic Energy of
+//                            that type FROM HAND to one of your Pokemon of
+//                            `targetType`. Does NOT consume the turn's one
+//                            Energy attachment.
+//
+//   "1 <Type> Energy card" means a BASIC one. Double Colorless is excluded by
+//   type anyway, but Rainbow Energy later on would not be, so the check is on
+//   cls === 'Basic' rather than on the type alone.
+//
+//   Interactive Powers come in two shapes and the UI reads which from the
+//   enumerated actions: those carrying `from` need a source click then a target
+//   click; those without need only a target click.
 //
 //   Interactive Powers enumerate one legal action per (source, target) pair, so
 //   the AI can score them like any other action and the UI can highlight them.
@@ -334,6 +350,20 @@ const EFFECTS = {
     p: { kind: 'MOVE_DAMAGE', name: 'Damage Swap' },
     a: [
       [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],         //   Confuse Ray
+    ],
+  },
+
+  // ================= PASS 4e — the two Energy-shuffling Powers =================
+  'base1-2': {                                          // Blastoise
+    p: { kind: 'EXTRA_ATTACH', name: 'Rain Dance', energy: 'W', targetType: 'W' },
+    a: [
+      [{ v: 'DMG_PER_SPARE_ENERGY', base: 40, per: 10, t: 'W' }],   // Hydro Pump
+    ],
+  },
+  'base1-15': {                                         // Venusaur
+    p: { kind: 'MOVE_ENERGY', name: 'Energy Trans', energy: 'G' },
+    a: [
+      [],                                               //   Solarbeam
     ],
   },
 };

@@ -461,10 +461,20 @@ class Engine {
     return out;
   }
 
+  // "1 Water Energy card" and the like mean a BASIC one. In Base Set the type
+  // check alone would do, since Double Colorless is Colorless — but Rainbow
+  // Energy counts as every type, so the class check is what keeps this honest
+  // once Base Set 2 lands.
+  isBasicEnergyOf(inst, type) {
+    const c = this.db[inst.id];
+    return !!c && c.kind === 'energy' && c.cls === 'Basic' && c.provides === type;
+  }
+
   // One action per legal (source, target) pair, so the AI scores Powers with the
   // same machinery as everything else and the UI can just highlight what's legal.
   powerActions(pi) {
     const acts = [];
+    const me = this.state.players[pi];
     for (const slot of this.allSlots(pi)) {
       const p = this.powerOf(slot);
       if (!p || !this.powerUsable(slot)) continue;
@@ -488,6 +498,34 @@ class Engine {
             }
           }
           break;
+        case 'MOVE_ENERGY':
+          for (const from of this.allSlots(pi)) {
+            if (!from.energy.some(e => this.isBasicEnergyOf(e, p.energy))) continue;
+            for (const to of this.allSlots(pi)) {
+              if (to === from) continue;
+              acts.push({
+                t: 'power', uid: slot.uid, kind: p.kind, from: from.uid, to: to.uid,
+                label: `${p.name}: ${this.nameOf(from)} → ${this.nameOf(to)}`,
+              });
+            }
+          }
+          break;
+        case 'EXTRA_ATTACH': {
+          // Every basic Energy of a given type is interchangeable, so the source
+          // card is not a choice — only the destination is. That keeps this a
+          // one-click flow rather than making the player pick between identical
+          // cards in hand.
+          const hand = me.hand.findIndex(e => this.isBasicEnergyOf(e, p.energy));
+          if (hand === -1) break;
+          for (const to of this.allSlots(pi)) {
+            if (p.targetType && topCard(this.db, to).type !== p.targetType) continue;
+            acts.push({
+              t: 'power', uid: slot.uid, kind: p.kind, hand, to: to.uid,
+              label: `${p.name}: attach to ${this.nameOf(to)}`,
+            });
+          }
+          break;
+        }
         default: break;                                  // passive Powers offer no action
       }
     }
@@ -522,6 +560,34 @@ class Engine {
         from.dmg -= 10; to.dmg += 10;
         this.log(`${p.name}: 1 damage counter moved from ${this.nameOf(from)} `
           + `to ${this.nameOf(to)}. (${to.dmg}/${tc.hp})`, 'eff');
+        return { ok: true };
+      }
+      case 'MOVE_ENERGY': {
+        const from = this.findSlot(pi, a.from), to = this.findSlot(pi, a.to);
+        if (!from || !to) return this.fail('No such Pokemon');
+        if (from === to) return this.fail('Pick two different Pokemon');
+        const k = from.energy.findIndex(e => this.isBasicEnergyOf(e, p.energy));
+        if (k === -1) return this.fail(`${this.nameOf(from)} has no ${p.energy} Energy to move`);
+        const moved = from.energy.splice(k, 1)[0];
+        to.energy.push(moved);
+        this.log(`${p.name}: ${this.db[moved.id].name} moved from ${this.nameOf(from)} `
+          + `to ${this.nameOf(to)}.`, 'eff');
+        return { ok: true };
+      }
+      case 'EXTRA_ATTACH': {
+        const to = this.findSlot(pi, a.to);
+        if (!to) return this.fail('No such Pokemon');
+        if (p.targetType && topCard(this.db, to).type !== p.targetType)
+          return this.fail(`${this.nameOf(to)} is not a ${p.targetType} Pokemon`);
+        const me2 = this.state.players[pi];
+        const k = me2.hand.findIndex(e => this.isBasicEnergyOf(e, p.energy));
+        if (k === -1) return this.fail(`No ${p.energy} Energy in hand`);
+        const card = me2.hand.splice(k, 1)[0];
+        to.energy.push(card);
+        // Deliberately does NOT touch me2.energyAttached — the whole point of
+        // the Power is that it sits outside the one-attachment-per-turn rule.
+        this.log(`${p.name}: ${this.db[card.id].name} attached to ${this.nameOf(to)} `
+          + `without using this turn's Energy attachment.`, 'eff');
         return { ok: true };
       }
       default:

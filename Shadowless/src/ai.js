@@ -294,6 +294,22 @@ class AI {
     return hp / (10 + threat);
   }
 
+  // How close the whole team is to being able to attack. Used as a strictly
+  // increasing yardstick for Energy-moving Powers, so they cannot loop.
+  // The Active is weighted heaviest because it is the one that swings this turn;
+  // a benched Pokemon losing its own attack costs nothing yet, but is not free
+  // either, which is what stops Energy sloshing around the Bench.
+  teamReadiness(pi) {
+    const E = this.E, me = E.state.players[pi];
+    let v = 0;
+    for (const sl of E.allSlots(pi)) {
+      const w = (sl === me.active) ? 4 : 1;
+      const pot = this.potential(pi, sl, null);
+      v += w * (Math.max(0, pot.best) * 0.1 - Math.min(pot.short, 9) * 10);
+    }
+    return v;
+  }
+
   scorePower(pi, a) {
     const E = this.E, W = this.W;
     const slot = E.allSlots(pi).find(x => x.uid === a.uid);
@@ -343,6 +359,56 @@ class AI {
         if (doomed) score += W.knockout * 0.35 + worth * 0.2;
         else if (urgency > 0 && urgency >= srcHP - 20) score += worth * 0.1;
         return score;
+      }
+
+      // Rain Dance. Mechanically an Energy attachment that costs nothing, so it
+      // reuses the attachEnergy scoring and adds a premium for being free — the
+      // bot should always prefer the free attachment over spending its one.
+      case 'EXTRA_ATTACH': {
+        const to = E.allSlots(pi).find(x => x.uid === a.to);
+        const inst = E.state.players[pi].hand[a.hand];
+        if (!to || !inst) return -Infinity;
+        const before = this.potential(pi, to, null);
+        const after = this.potential(pi, to, inst.id);
+        let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
+        if (after.short < before.short) s += W.attachBuild * (before.short - after.short) * 2;
+        else if (after.best > before.best) s += W.attachBuild;
+        else s += 0.4;
+        s += (to === E.state.players[pi].active) ? 4 : 1;
+        return s + W.attachBuild;                        // free, so worth more than the normal one
+      }
+
+      // Energy Trans. Scored against a single board-wide figure that the move
+      // must strictly improve.
+      //
+      // This is deliberately not a source-versus-destination comparison. Two
+      // earlier versions were, and both were wrong in opposite directions: one
+      // weighed a benched Pokemon's loss as heavily as the Active's gain and so
+      // refused to feed a starving Active, and the fix for that ignored the
+      // source's loss entirely — which made A→B and B→A BOTH look like gains and
+      // sent the bot into an infinite shuffle. It moved Energy 44,000 times in
+      // 80 games and hung eleven of them.
+      //
+      // A scalar that must strictly increase cannot cycle: the number of Energy
+      // arrangements is finite, so there is nowhere for an endless sequence of
+      // improvements to go.
+      case 'MOVE_ENERGY': {
+        const from = E.allSlots(pi).find(x => x.uid === a.from);
+        const to = E.allSlots(pi).find(x => x.uid === a.to);
+        if (!from || !to) return -Infinity;
+        const def = E.powerOf(E.allSlots(pi).find(x => x.uid === a.uid)) || {};
+        const k = from.energy.findIndex(e => E.isBasicEnergyOf(e, def.energy));
+        if (k === -1) return -Infinity;
+
+        const before = this.teamReadiness(pi);
+        const moved = from.energy.splice(k, 1)[0];
+        to.energy.push(moved);
+        const after = this.teamReadiness(pi);
+        to.energy.pop();
+        from.energy.splice(k, 0, moved);
+
+        if (after <= before + 1e-6) return -Infinity;
+        return W.attachBuild * (after - before);
       }
 
       default: return -Infinity;
