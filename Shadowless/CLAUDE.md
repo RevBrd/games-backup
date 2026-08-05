@@ -29,14 +29,14 @@ the natural alternative and they do **not** work from `file://` — see `~/.clau
 
 ## Status
 
-Job 4b of a long plan. The **rules engine and the AI are the finished part**; everything a
+Job 4c of a long plan. The **rules engine and the AI are the finished part**; everything a
 *collection* game needs is not built yet.
 
 | Area | State |
 |---|---|
 | Rules engine | Complete for what it covers. WotC ruleset, followed to the letter |
 | Opponent AI | Four tiers, expected-value based. Beats its own baselines |
-| Base Set cards | **90 of 102.** The remaining 12 are the hard ones — see below |
+| Base Set cards | **Data for all 102 is in; 90 are implemented.** The remaining 12 are the hard ones — see below |
 | Card art | None, by design. Each card gets a deterministic geometric sigil from its id |
 | Collection / packs / dex | Not started (Job 5) |
 | Deck building | Not started. Four fixed theme decks + a random Sandbox deck for testing |
@@ -55,10 +55,11 @@ work; they are the 12% that each need **new engine machinery**, and the previous
 them deliberately as a block.
 
 - **Six Pokémon Powers** — Alakazam (Damage Swap), Blastoise (Rain Dance), Charizard (Energy Burn),
-  Machamp (Strikes Back), Venusaur (Energy Trans), Electrode (Buzzap). The engine has **no concept
-  of a Pokémon Power at all**: `CARD_DB` carries a `power` field and it is `null` on all 90 cards.
-  Powers are not attacks — they fire outside the attack step, some of them repeatedly, and Damage
-  Swap and Energy Trans each need an interactive mode of their own.
+  Machamp (Strikes Back), Venusaur (Energy Trans), Electrode (Buzzap). Their *data* is now in
+  `CARD_DB` — each carries a populated `power` object of `{kind, name, text}` — but **the engine has
+  no concept of a Pokémon Power at all** and does nothing with it. Powers are not attacks: they fire
+  outside the attack step, some of them repeatedly, and Damage Swap, Energy Trans and Rain Dance each
+  need the interactive mode described under Standing design decisions.
 - **Five oddities** — Clefairy (Metronome copies the defender's attack), Porygon (Conversion
   rewrites Weakness/Resistance), Pidgey and Pidgeotto (Whirlwind / Mirror Move), Poliwhirl (Amnesia
   disables a chosen attack).
@@ -77,13 +78,12 @@ the biggest unbuilt system in the project.
 ```
 shadowless.html        GENERATED — the playable game. Never hand-edit
 src/
-  cards.js             CARD_DB + the four theme deck lists. GENERATED — see Tooling
-  effects.js           hand-authored effect scripts, one per card. The DSL verb
-                       reference is the comment block at the top — read it before adding cards
+  cards.js             CARD_DB + the theme deck lists. GENERATED — see Tooling
+  effects.js           hand-authored effect scripts, one per card. Its DSL verb reference
+                       is the comment block at the top — read that before adding cards
   art.js               deterministic card sigils. Petals = attack count, rings = retreat cost
-  deckgen.js           builds a legal 60-card deck from a pool. Sandbox now, campaign opponents later
-  ai.js                expected-value scoring: enumerates coin-flip outcomes into a
-                       distribution and runs each through the engine's own damage math
+  deckgen.js           builds a legal 60-card deck from a pool (Sandbox; later, opponents)
+  ai.js                expected-value scoring over enumerated coin-flip outcomes
   engine.js            the whole ruleset. Pure logic, no DOM
   ui.js                everything that touches `document`
   style.css            dark instrument-panel palette, one `:root` block
@@ -93,11 +93,13 @@ data/
   core_trainers.csv    32 Trainers — base1 + Jungle + Fossil ONLY
   core_energy.csv      7 base1 Energy (strict subset of wotc_energy.csv; redundant)
   fullpool.json        completion manifest: id/name/kind for all 1,251 WotC cards
+  decks.json           the four theme deck lists. SOURCE, not output — see Tooling
 tools/
   build.js             src/ -> shadowless.html
+  gen_cards.js         data/ -> src/cards.js
   selftest.js          engine + AI statistical regression (drives src/ directly)
   smoke.js             44-test integration suite against the BUILT artifact, incl. UI
-  chat-era/            the original Python tools. Cannot run here — see Tooling
+  chat-era/            the original Python tools, superseded. Kept for provenance
 backups/
 ```
 
@@ -107,9 +109,10 @@ possible without a browser.
 
 ## Tooling
 
-Three commands. Run the last two before calling anything done.
+Four commands. Run the last two before calling anything done.
 
 ```bash
+node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/smoke.js shadowless.html      # 44 integration tests against the built file
@@ -117,21 +120,33 @@ node tools/smoke.js shadowless.html      # 44 integration tests against the buil
 
 `selftest.js` drives the source modules; `smoke.js` drives the built HTML through a stubbed DOM and
 covers the UI, the Trainer pickers, the coin-flip presentation and the deck-select flow. **Neither
-subsumes the other** — a build bug shows up only in `smoke`, an AI regression only in `selftest`.
+subsumes the other.** Both generators take `--check`, which regenerates to memory and exits non-zero
+if what's committed has drifted from its sources.
 
-**`tools/chat-era/` cannot run on this machine and is kept for provenance only.** Both scripts are
-Python, and there is no Python installed here. Worse, `gen_cards.py` reads `/tmp/ptcg/*.json` (a
-clone of the `pokemon-tcg-data` repo) and `/mnt/user-data/uploads/P_TCG_Data.xlsx`, both of which
-were Claude Chat sandbox paths that did not survive the port, and it imports `openpyxl`.
-`build.py` has been superseded by `tools/build.js`, which is a faithful Node port — verified by
-rebuilding and diffing byte-for-byte against the as-received artifact.
+Two things to know before touching a generated file. **`data/decks.json` is source, not output** —
+the theme decks came from Trevor's spreadsheet, cannot be rebuilt from the CSVs, and are his
+authentic lists. And **`tools/chat-era/` cannot run** even though Python is now installed, because
+those scripts read Chat sandbox paths that did not survive the port.
 
-**So `src/cards.js` currently cannot be regenerated, and Job 6 needs it to be.** The fix is to write
-a fresh CSV → `cards.js` generator in Node against `data/`. This is very doable: the CSVs carry
-everything `CARD_DB` holds and more. Read `tools/chat-era/gen_cards.py` first — it is a clear spec
-for what the output must look like, including the type-letter mapping. Note that the deck lists came
-from named sheets in Trevor's spreadsheet, so **the four theme decks are his authentic lists**, not
-something a model invented.
+**The rest of the pipeline is in [TOOLING.md](TOOLING.md)** — widening a set, the Energy
+`provides` quirks, how both Node tools were verified against what they replaced, and what the two
+test suites each cover.
+
+## Standing design decisions
+
+Made with Trevor 4 Aug 2026. Don't re-litigate these; do flag it if one starts producing bad
+results.
+
+- **When the printed card text is ambiguous, follow the Game Boy Color game.** Not the later
+  official errata, not a period ruling — the GBC implementation. The reason is practical: it is a
+  single consistent arbiter, and it is the version Trevor knows well enough to settle a call in
+  plain English. Ask him; he expects to be asked. Genuine conflicts get handled case by case.
+  **Known limit:** the GBC game only contains Base, Jungle and Fossil cards, so it will have nothing
+  to say from Team Rocket onward. A fallback will be needed around Job 8, not before.
+- **"As often as you like during your turn" powers are a mode you enter and leave.** Click the
+  power; the board enters that mode and says so; legal sources and targets highlight; click source
+  then target as many times as you want; press Done. One pattern serves Damage Swap, Energy Trans
+  and Rain Dance. Every individual move gets its own log line.
 
 ## Working on it
 
@@ -185,12 +200,11 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 
 ## Open
 
-1. **`src/cards.js` cannot currently be regenerated** — see Tooling. Blocks Job 6.
-2. **No Trainer text past Fossil** — see Data. Blocks Job 8.
-3. **Deck balance.** The four theme decks are Trevor's authentic lists and run roughly
+1. **No Trainer text past Fossil** — see Data. Blocks Job 8.
+2. **Deck balance.** The four theme decks are Trevor's authentic lists and run roughly
    70 / 60 / 40 / 28 percent across ~100 AI games. The real ones were never balanced against each
    other either, so this may simply be correct. Confirm before touching them.
-4. **Possible first-player advantage.** Expert-vs-expert mirrors came in around 58–67% for whoever
+3. **Possible first-player advantage.** Expert-vs-expert mirrors came in around 58–67% for whoever
    is seated first, over a few hundred games. Suggestive rather than proven, and it may be a true
    property of the ruleset. Worth a dedicated run before concluding anything.
 

@@ -50,12 +50,44 @@ for (const name of DECK_NAMES) {
   check(r.ok, `${name} (${r.total} cards, ${r.basics} basics)`, r.errors.join('; '));
 }
 
-// --- 2. every card in CARD_DB has an effect script -----------------------
+// --- 2. card coverage ----------------------------------------------------
+// CARD_DB holds the whole set, implemented or not, so 100% is not the bar yet.
+// Instead: pin the cards known to be unimplemented. A card that drops off this
+// list is progress; a card that appears on it unexpectedly is a regression.
+// Keep this list in step with the "twelve missing Base Set cards" in CLAUDE.md.
+const EXPECTED_UNIMPLEMENTED = new Set([
+  'base1-1',  // Alakazam    — Damage Swap
+  'base1-2',  // Blastoise   — Rain Dance
+  'base1-4',  // Charizard   — Energy Burn
+  'base1-8',  // Machamp     — Strikes Back
+  'base1-15', // Venusaur    — Energy Trans
+  'base1-21', // Electrode   — Buzzap
+  'base1-5',  // Clefairy    — Metronome
+  'base1-22', // Pidgeotto   — Whirlwind / Mirror Move
+  'base1-38', // Poliwhirl   — Amnesia
+  'base1-39', // Porygon     — Conversion 1 / 2
+  'base1-57', // Pidgey      — Whirlwind
+  'base1-70', // Clefairy Doll — a Trainer that plays as a Basic Pokemon
+]);
+
 console.log('\nCard coverage');
-const unscripted = Object.keys(CARD_DB)
-  .filter(id => CARD_DB[id].kind !== 'energy' && !EFFECTS[id]);
-check(unscripted.length === 0, `${Object.keys(CARD_DB).length} cards in CARD_DB, all scripted`,
-  unscripted.join(', '));
+const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');
+const unscripted = all.filter(id => !EFFECTS[id]);
+const surprises = unscripted.filter(id => !EXPECTED_UNIMPLEMENTED.has(id));
+const done = [...EXPECTED_UNIMPLEMENTED].filter(id => EFFECTS[id]);
+
+console.log(`  ${all.length - unscripted.length} of ${all.length} scriptable cards implemented`);
+check(surprises.length === 0, 'no unexpected gaps in card coverage',
+  surprises.map(id => `${id} ${CARD_DB[id].name}`).join(', '));
+if (done.length) console.log(`  newly implemented since this list was written: `
+  + done.map(id => CARD_DB[id].name).join(', ') + ' — trim EXPECTED_UNIMPLEMENTED');
+
+// Whatever else is missing, the playable decks must be fully implemented.
+const inDecks = new Set();
+for (const d of Object.values(DECKS)) for (const [, id] of d.list) inDecks.add(id);
+const brokenDeckCards = [...inDecks].filter(id => CARD_DB[id].kind !== 'energy' && !EFFECTS[id]);
+check(brokenDeckCards.length === 0, 'every card in a playable deck is implemented',
+  brokenDeckCards.join(', '));
 
 // --- 3. games finish, without throwing and without stalling --------------
 console.log('\nFull games');
