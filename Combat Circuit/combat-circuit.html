@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>COMBAT CIRCUIT — Sandbox</title>
+<style>
+:root{
+  --steel-dark:#0d1117;
+  --steel:#161d26;
+  --panel:#1e2835;
+  --panel-hi:#28374a;
+  --line:#3a4c60;
+  --hot:#ff6a1f;
+  --amber:#ffb300;
+  --ice:#6fd3ff;
+  --paint:#cfd6dd;
+  --dim:#8496a8;
+  --red:#e0392f;
+  --red-hi:#ff6b5e;
+  --blue:#2f7fe0;
+  --blue-hi:#6bb0ff;
+  --ok:#4ec97a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--steel-dark);color:var(--paint);
+  font-family:'Arial Narrow','Roboto Condensed',Arial,sans-serif;overflow:hidden}
+body{height:100vh;display:flex;flex-direction:column}
+
+/* ---------- broadcast chrome ---------- */
+#topbar{display:flex;align-items:stretch;height:46px;background:linear-gradient(180deg,#1d2735,#111820);
+  border-bottom:2px solid var(--hot);flex:0 0 auto}
+#brand{display:flex;align-items:center;gap:10px;padding:0 16px;font-weight:bold;letter-spacing:2px;
+  font-size:19px;text-transform:uppercase;background:var(--hot);color:#120a04;
+  transform:skewX(-12deg);margin-left:-10px;padding-left:26px;white-space:nowrap;flex:0 0 auto}
+#brand span{transform:skewX(12deg)}
+#brand .sub{font-size:10px;letter-spacing:3px;opacity:.75;font-weight:normal}
+#topmid{flex:1;display:flex;align-items:center;justify-content:center;gap:18px;
+  min-width:0;white-space:nowrap;overflow:hidden}
+#clock{font-family:'Courier New',monospace;font-size:26px;font-weight:bold;letter-spacing:2px;
+  background:#05080c;border:1px solid var(--line);padding:2px 14px;color:var(--amber);
+  box-shadow:inset 0 0 12px rgba(255,179,0,.15)}
+#clock.low{color:#ff4d3d;animation:pulse .7s infinite}
+@keyframes pulse{50%{opacity:.45}}
+#weightclass{font-size:12px;letter-spacing:3px;color:var(--dim);text-transform:uppercase}
+#topright{display:flex;align-items:center;padding:0 14px;gap:8px;font-size:11px;color:var(--dim);
+  letter-spacing:1px;white-space:nowrap;flex:0 0 auto}
+
+#main{flex:1;display:flex;min-height:0}
+#stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:10px;min-width:0;position:relative}
+/* no line-height:0 here — the canvas is display:block so there is no inline gap to
+   kill, and a zero line-height silently collapses every overlay child's text rows. */
+#canvaswrap{position:relative;box-shadow:0 0 0 2px var(--line),0 12px 40px rgba(0,0,0,.7);
+  max-width:100%;max-height:100%;font-size:0}
+#canvaswrap>*:not(canvas){font-size:initial}
+canvas{display:block;max-width:100%;max-height:calc(100vh - 150px);image-rendering:auto}
+
+/* fighter cards */
+#cards{display:flex;gap:8px;width:100%;max-width:920px;margin-top:8px}
+.card{flex:1;background:linear-gradient(180deg,var(--panel),#141c26);border:1px solid var(--line);
+  padding:6px 10px;position:relative;overflow:hidden}
+.card.red{border-left:5px solid var(--red)}
+.card.blue{border-right:5px solid var(--blue);text-align:right}
+.card .nm{font-size:17px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase}
+.card .meta{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+.pips{display:flex;gap:2px;margin-top:4px;height:9px}
+.card.blue .pips{justify-content:flex-end}
+.pip{flex:0 0 auto;width:26px;background:#2b3644;border:1px solid #0a0e13;position:relative;overflow:hidden}
+.pip i{position:absolute;inset:0;transform-origin:left;background:var(--ok);display:block}
+.pip.chassis{width:60px}
+.pip.dead i{background:#4a1410}
+.pip .lbl{position:absolute;inset:0;font-size:7px;line-height:9px;text-align:center;
+  letter-spacing:.5px;color:#000a;font-weight:bold;text-transform:uppercase}
+
+/* caption / lower third */
+#caption{position:absolute;left:0;right:0;bottom:96px;display:flex;justify-content:center;
+  pointer-events:none;opacity:0;transition:opacity .18s}
+#caption.on{opacity:1}
+#caption div{background:var(--hot);color:#120a04;font-weight:bold;font-size:20px;letter-spacing:3px;
+  padding:5px 30px;transform:skewX(-12deg);text-transform:uppercase;box-shadow:0 4px 18px #0009}
+#caption div span{display:block;transform:skewX(12deg)}
+
+/* verdict overlay */
+#verdict{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(5,8,12,.82);pointer-events:none;flex-direction:column;gap:6px;
+  padding:clamp(4px,1vh,10px);overflow:auto;line-height:1.35;gap:clamp(2px,0.9vh,6px)}
+#verdict.on{display:flex}
+#verdict>*{flex:0 0 auto}   /* never let the lines collapse on a short arena */
+/* sized against BOTH axes so the card shrinks to fit the arena instead of scrolling */
+#verdict .big{font-size:clamp(18px,min(5vw,7vh),54px);font-weight:bold;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--amber);text-shadow:0 0 30px rgba(255,179,0,.4);
+  text-align:center;line-height:1.1;white-space:nowrap}
+#verdict .how{font-size:clamp(10px,min(1.7vw,2.2vh),16px);letter-spacing:.25em;
+  color:var(--paint);text-transform:uppercase;text-align:center;line-height:1.3;
+  white-space:nowrap}
+#verdict table{margin-top:clamp(4px,1.6vh,14px);border-collapse:collapse;
+  font-size:clamp(9px,min(1.3vw,1.7vh),12px);letter-spacing:1px;
+  line-height:1.4;background:rgba(5,8,12,.6)}
+#verdict td,#verdict th{border:1px solid var(--line);
+  padding:clamp(1px,0.55vh,4px) clamp(6px,1.3vw,14px);text-transform:uppercase;
+  white-space:nowrap}
+#verdict td:first-child{text-align:left;color:var(--dim)}
+#verdict td:not(:first-child),#verdict th{text-align:right}
+#verdict th{color:var(--dim);font-weight:normal;font-size:10px;letter-spacing:2px}
+#verdict tr:last-child td{color:var(--amber);border-top:2px solid var(--line)}
+
+/* ---------- garage / dev panel ---------- */
+#side{width:376px;flex:0 0 auto;background:var(--steel);border-left:1px solid var(--line);
+  display:flex;flex-direction:column;min-height:0}
+#sidetabs{display:flex;flex:0 0 auto;border-bottom:1px solid var(--line)}
+#sidetabs button{flex:1;background:#131a23;color:var(--dim);border:0;border-right:1px solid var(--line);
+  padding:8px 0;font:inherit;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer}
+#sidetabs button.on{background:var(--panel-hi);color:var(--amber)}
+#sidebody{flex:1;overflow-y:auto;padding:10px}
+.tabpane{display:none}
+.tabpane.on{display:block}
+
+h3{margin:12px 0 6px;font-size:11px;letter-spacing:3px;color:var(--hot);text-transform:uppercase;
+  border-bottom:1px solid var(--line);padding-bottom:3px}
+h3:first-child{margin-top:0}
+.row{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:12px}
+.row label{flex:0 0 74px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-size:10px}
+select,input[type=text],input[type=number]{flex:1;background:#0c1219;color:var(--paint);
+  border:1px solid var(--line);padding:3px 5px;font:inherit;font-size:12px;min-width:0}
+select:focus,input:focus{outline:1px solid var(--hot)}
+button.act{background:var(--panel-hi);color:var(--paint);border:1px solid var(--line);
+  padding:6px 10px;font:inherit;font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer}
+button.act:hover{background:var(--hot);color:#120a04;border-color:var(--hot)}
+button.act.primary{background:var(--hot);color:#120a04;border-color:var(--hot);font-weight:bold}
+button.act.primary:hover{background:var(--amber)}
+.btnrow{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.btnrow button{flex:1}
+.wt{font-size:11px;letter-spacing:1px;display:flex;justify-content:space-between;
+  padding:4px 6px;background:#0c1219;border:1px solid var(--line);margin-top:5px}
+.wt.over{border-color:#ff4d3d;color:#ff8a7d}
+.wt b{color:var(--amber)}
+.note{font-size:10px;color:var(--dim);line-height:1.45;margin:5px 0}
+.kbd{display:inline-block;background:#0c1219;border:1px solid var(--line);border-bottom-width:2px;
+  padding:0 4px;font-family:'Courier New',monospace;font-size:10px;color:var(--ice)}
+#telem{font-family:'Courier New',monospace;font-size:10.5px;line-height:1.5;white-space:pre;
+  color:var(--ice);background:#080c11;border:1px solid var(--line);padding:6px;overflow-x:auto}
+#simout{font-family:'Courier New',monospace;font-size:10.5px;line-height:1.5;white-space:pre;
+  color:var(--amber);background:#080c11;border:1px solid var(--line);padding:6px;min-height:40px;
+  overflow-x:auto}
+.chk{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);margin:3px 0;
+  text-transform:uppercase;letter-spacing:1px;cursor:pointer}
+.chk input{accent-color:var(--hot)}
+.desc{font-size:10px;color:var(--dim);font-style:italic;margin:2px 0 6px 80px;line-height:1.4}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="brand"><span>Combat Circuit<span class="sub">SANCTIONED ROBOT COMBAT</span></span></div>
+  <div id="topmid">
+    <div id="weightclass">HOBBYWEIGHT · 120 LB</div>
+    <div id="clock">1:00</div>
+    <div id="weightclass" style="opacity:.6">EXHIBITION BOUT</div>
+  </div>
+  <div id="topright"><span id="fps">--</span> FPS · <span id="speedlbl">1.0x</span></div>
+</div>
+
+<div id="main">
+  <div id="stage">
+    <div id="canvaswrap">
+      <canvas id="cv" width="900" height="600"></canvas>
+      <div id="caption"><div><span></span></div></div>
+      <div id="verdict">
+        <div class="big"></div>
+        <div class="how"></div>
+        <div class="sheet"></div>
+      </div>
+    </div>
+    <div id="cards">
+      <div class="card red">
+        <div class="nm" id="nmA">—</div>
+        <div class="meta" id="mtA">—</div>
+        <div class="pips" id="ppA"></div>
+      </div>
+      <div class="card blue">
+        <div class="nm" id="nmB">—</div>
+        <div class="meta" id="mtB">—</div>
+        <div class="pips" id="ppB"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="side">
+    <div id="sidetabs">
+      <button data-tab="garage" class="on">Garage</button>
+      <button data-tab="dev">Dev</button>
+      <button data-tab="lab">Lab</button>
+    </div>
+    <div id="sidebody">
+
+      <div class="tabpane on" id="tab-garage">
+        <div class="btnrow">
+          <button class="act primary" id="btnFight">Fight ▶</button>
+          <button class="act" id="btnReset">Reset</button>
+        </div>
+        <div id="builders"></div>
+      </div>
+
+      <div class="tabpane" id="tab-dev">
+        <h3>Simulation</h3>
+        <div class="row"><label>Seed</label><input type="number" id="seed" value="1337"></div>
+        <div class="row"><label>Speed</label><input type="range" id="speed" min="0" max="6" step="1" value="2"></div>
+        <div class="row"><label>Match sec</label><input type="number" id="matchlen" value="60"></div>
+        <label class="chk"><input type="checkbox" id="dbgHit"> Draw hitboxes &amp; arcs</label>
+        <label class="chk"><input type="checkbox" id="dbgVec"> Draw intent vectors</label>
+        <label class="chk"><input type="checkbox" id="dbgHaz"> Floor saw hazards</label>
+        <label class="chk"><input type="checkbox" id="dbgNum" checked> Floating damage numbers</label>
+        <div class="btnrow">
+          <button class="act" id="btnPause">Pause</button>
+          <button class="act" id="btnStep">Step</button>
+          <button class="act" id="btnSame">Replay seed</button>
+        </div>
+        <h3>Telemetry</h3>
+        <div id="telem">—</div>
+        <h3>Hotkeys</h3>
+        <div class="note">
+          <span class="kbd">Space</span> fight / pause &nbsp;
+          <span class="kbd">R</span> reset &nbsp;
+          <span class="kbd">.</span> step frame<br>
+          <span class="kbd">1</span>–<span class="kbd">7</span> sim speed &nbsp;
+          <span class="kbd">H</span> hitboxes &nbsp;
+          <span class="kbd">V</span> vectors &nbsp;
+          <span class="kbd">Z</span> hazards<br>
+          <span class="kbd">N</span> new seed &nbsp;
+          <span class="kbd">B</span> batch 200 matches
+        </div>
+      </div>
+
+      <div class="tabpane" id="tab-lab">
+        <h3>Headless Batch</h3>
+        <div class="note">Runs the current two builds to completion with no rendering, over
+          sequential seeds. This is the balance harness — because combat is autonomous, win rate
+          is directly measurable.</div>
+        <div class="row"><label>Matches</label><input type="number" id="batchN" value="200"></div>
+        <div class="btnrow"><button class="act primary" id="btnBatch">Run batch</button></div>
+        <div id="simout">—</div>
+        <h3>Notes</h3>
+        <div class="note">All balance numbers in this build are <b>placeholders</b>. The point of
+          this pass is whether an autonomous fight is legible and fun to watch, not whether the
+          drum spinner costs the right amount.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================================
+   COMBAT CIRCUIT — autonomous robot combat sandbox
+   Pass 1: physics, component damage, behavior chips, three win conditions.
+   No economy, no progression, no shop. Sim is N-vs-M capable throughout.
+   ========================================================================= */
+
+/* ============================================================================
+   1. TUNING  —  every balance-relevant number lives in this block.
+   ========================================================================= */
+const T = {
+  // arena
+  ARENA_W: 900, ARENA_H: 600,
+  WALL_BOUNCE: 0.45,          // restitution off the arena walls
+  WALL_DMG: 0.035,            // damage per unit of impact speed into a wall
+
+  // drivetrain
+  DRIVE_FORCE: 11000,         // linear force per unit of drive power
+  TORQUE_SCALE: 380,          // turning torque per unit of drive torque
+  LINEAR_DRAG: 1.6,           // forward rolling resistance (1/s)
+  LATERAL_GRIP: 8.0,          // sideways scrub — high = wheels bite, low = ice
+  ANG_DRAG: 5.0,              // angular damping (1/s)
+  INERTIA_K: 0.5,             // moment of inertia = mass * (r/20)^2 * INERTIA_K
+  ONE_DRIVE_BIAS: 0.35,       // steering pull when a bot loses half its drive
+
+  // AI
+  REACT_MS: 260,              // how often a chip re-decides. THE clunkiness dial.
+  REACT_MS_TARGETING: 120,    // with a Targeting Unit fitted
+  DECISION_NOISE: 0.10,       // steer jitter applied at decision time only
+  STEER_GAIN: 2.4,            // heading error -> steer command
+
+  // collision & ramming
+  BOT_RESTITUTION: 0.30,
+  RAM_THRESHOLD: 80,          // closing speed below this does no ram damage
+  RAM_DMG: 0.055,
+
+  // damage routing
+  ARMOR_WEAR: 0.55,           // share of absorbed damage the armor plate eats
+  WEDGE_ARC: 55 * Math.PI/180,
+  WEDGE_LAUNCH: 260,          // impulse applied to whoever hits a live wedge
+
+  // weapon feel
+  SPIN_RETAIN: 0.10,          // spinner keeps this much spin after a big hit
+  SPIN_SELF: 0.18,            // share of spinner damage reflected onto the user
+  FLIP_TIME: 2.2,             // seconds helpless after being flipped
+  FLIP_TIME_RIGHTER: 0.6,     // ...with a Self-Righter fitted
+
+  // match rules
+  MATCH_SEC: 60,
+  COUNT_SEC: 10,              // immobilisation count-out, as on the show
+  STILL_SPEED: 26,            // below this the count starts
+  MOVE_SPEED: 46,             // above this the count resets (hysteresis)
+  JUDGE_DAMAGE: 5, JUDGE_AGGRESSION: 3, JUDGE_CONTROL: 3,
+
+  // hazards
+  HAZ_DPS: 26,
+
+  // sim
+  DT: 1/120,                  // fixed timestep
+  MAX_STEPS: 60*120*2,        // hard stop for headless runs
+};
+
+/* ============================================================================
+   2. PARTS CATALOG  —  pure data. Balance is editing this table, never code.
+   ========================================================================= */
+const PARTS = {
+chassis: {
+  tinframe : {n:'TINFRAME',    wt:12, cap:30,  hp:70,  r:16, mounts:1, drives:1, spd:1.10,
+              d:'Ant class. Fast, and made of feelings.'},
+  roller   : {n:'ROLLER',      wt:20, cap:60,  hp:130, r:20, mounts:2, drives:2, spd:1.00,
+              d:'The honest starter frame.'},
+  rollerLT : {n:'ROLLER LT',   wt:16, cap:46,  hp:100, r:19, mounts:2, drives:2, spd:1.22,
+              d:'Drilled out for speed. Carries less, arrives first.'},
+  boxframe : {n:'BOXFRAME',    wt:34, cap:120, hp:230, r:24, mounts:2, drives:2, spd:0.94,
+              d:'Workhorse. Nothing clever about it.'},
+  boxHD    : {n:'BOXFRAME HD', wt:48, cap:104, hp:380, r:25, mounts:2, drives:2, spd:0.86,
+              d:'Doubled rails. Trades payload for a frame that will not fold.'},
+  bulwark  : {n:'BULWARK',     wt:60, cap:220, hp:430, r:29, mounts:3, drives:2, spd:0.88,
+              d:'Middleweight staple.'},
+  leviathan: {n:'LEVIATHAN',   wt:95, cap:340, hp:700, r:34, mounts:3, drives:2, spd:0.80,
+              d:'Heavyweight. Turns like a container ship.'},
+},
+drive: {
+  caster : {n:'CASTER DRIVE', wt:6,  hp:26, power:1.0, torque:1.0, d:'Hobby gearmotors.'},
+  chain  : {n:'CHAIN DRIVE',  wt:12, hp:44, power:2.2, torque:1.6, d:'Loud, reliable, exposed.'},
+  direct : {n:'DIRECT DRIVE', wt:20, hp:70, power:4.0, torque:2.4, d:'Sealed gearboxes.'},
+  hub    : {n:'HUB MOTORS',   wt:30, hp:96, power:6.5, torque:4.0, d:'Everything in the wheel.'},
+},
+weapon: {
+  none    : {n:'— none —', wt:0, hp:0, type:'none'},
+  wedge   : {n:'WEDGE PLATE',      wt:10, hp:120, type:'wedge', absorb:0.70,
+             d:'Deals nothing. Wins on the cards.'},
+  saw     : {n:'BAR SAW',          wt:14, hp:52,  type:'saw', dps:34, arc:50, reach:10,
+             d:'Chews on sustained contact. Wants a Circler.'},
+  drum    : {n:'DRUM SPINNER',     wt:26, hp:88,  type:'spinner', spinup:2.4, dmg:46,
+             knock:190, lift:0.55, arc:70, reach:6,
+             d:'Spins up fast. Throws them up rather than away.'},
+  hbar    : {n:'HORIZONTAL BAR',   wt:40, hp:96,  type:'spinner', spinup:4.2, dmg:104,
+             knock:520, lift:0.05, arc:180, reach:16,
+             d:'Fight-ender. Hurts you nearly as much as them.'},
+  hammer  : {n:'PNEUMATIC HAMMER', wt:22, hp:70,  type:'hammer', cd:2.2, dmg:44, arc:34, reach:14,
+             d:'Punches through top armour. Must be aimed.'},
+  flipper : {n:'FLIPPER',          wt:30, hp:82,  type:'flipper', cd:3.4, dmg:10, arc:26, reach:12,
+             impulse:430, d:'Puts them on their back. That is the whole plan.'},
+},
+armor: {
+  none : {n:'— none —',      wt:0,  hp:0,   absorb:0},
+  sheet: {n:'SHEET STEEL',   wt:8,  hp:70,  absorb:0.16, d:'Better than paint.'},
+  ar    :{n:'AR500 PLATE',   wt:18, hp:150, absorb:0.32, d:'Abrasion-resistant. Heavy.'},
+  ti   : {n:'TITANIUM SHELL',wt:30, hp:250, absorb:0.46, d:'Expensive in every sense.'},
+},
+module: {
+  none  : {n:'— none —',        wt:0, hp:0},
+  righter:{n:'SELF-RIGHTER',    wt:8, hp:34, d:'Back on your wheels in half a second, not two.'},
+  target: {n:'TARGETING UNIT',  wt:5, hp:26, d:'Halves reaction time. Buys the bot a clue.'},
+  ballast:{n:'BALLAST BLOCK',   wt:14,hp:60, d:'Dead weight, low centre. Harder to flip or shove.'},
+},
+chip: {
+  charger : {n:'CHARGER',       wt:2, hp:16, fn:'charger',
+             d:'Nearest enemy. Straight line. No brakes.'},
+  wedgeDoc: {n:'WEDGE DOCTRINE',wt:3, hp:16, fn:'wedgeDoc',
+             d:'Never gets flanked. Backs up and re-faces instead.'},
+  circler : {n:'CIRCLER',       wt:4, hp:16, fn:'circler',
+             d:'Closes to weapon range, then orbits.'},
+  scavenger:{n:'SCAVENGER',     wt:4, hp:16, fn:'scavenger',
+             d:'Goes for the most damaged enemy. Wasted in a duel.'},
+  coward  : {n:'COWARD',        wt:3, hp:16, fn:'coward',
+             d:'Disengages below 35% and runs the clock out.'},
+},
+};
+
+/* ============================================================================
+   3. UTILITIES
+   ========================================================================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+function angNorm(a){while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;}
+const dist2=(ax,ay,bx,by)=>{const dx=bx-ax,dy=by-ay;return dx*dx+dy*dy;};
+
+/* ============================================================================
+   4. BOT CONSTRUCTION
+   A build is a plain object of part ids. buildBot() turns it into a sim entity.
+   ========================================================================= */
+function buildWeight(b){
+  let w = PARTS.chassis[b.chassis].wt;
+  w += PARTS.drive[b.drive].wt * PARTS.chassis[b.chassis].drives;
+  for(const k of ['w1','w2']) if(b[k] && b[k]!=='none') w += PARTS.weapon[b[k]].wt;
+  if(b.armor && b.armor!=='none') w += PARTS.armor[b.armor].wt;
+  if(b.module && b.module!=='none') w += PARTS.module[b.module].wt;
+  w += PARTS.chip[b.chip].wt;
+  return w;
+}
+
+function buildBot(build, team, id, x, y, ang){
+  const ch = PARTS.chassis[build.chassis];
+  const parts = [];
+  const add=(kind,def,extra)=>{const p=Object.assign({kind,def,hp:def.hp,max:def.hp||1,dead:false},extra||{});
+    parts.push(p);return p;};
+
+  add('chassis', ch);
+  const nDrive = ch.drives;
+  for(let i=0;i<nDrive;i++) add('drive', PARTS.drive[build.drive], {side:i});
+  const weapons=[];
+  for(const k of ['w1','w2']){
+    if(build[k] && build[k]!=='none'){
+      const def = PARTS.weapon[build[k]];
+      weapons.push(add('weapon', def, {spin:0, cd:0, hitFlash:0}));
+    }
+  }
+  if(build.armor && build.armor!=='none') add('armor', PARTS.armor[build.armor]);
+  if(build.module && build.module!=='none') add('module', PARTS.module[build.module]);
+  add('chip', PARTS.chip[build.chip]);
+
+  const mass = buildWeight(build);
+  return {
+    id, team, name: build.name || 'UNNAMED',
+    build, parts, weapons,
+    chassisPart: parts[0],
+    x, y, ang, vx:0, vy:0, av:0,
+    r: ch.r, mass,
+    inertia: mass * Math.pow(ch.r/20,2) * T.INERTIA_K,
+    speedMul: ch.spd,
+    throttle:0, steer:0, targetId:-1, reactT:0,
+    flipped:0, stillT:0, countT:0, countedOut:false, dead:false,
+    dmgDealt:0, dmgTaken:0, aggression:0, control:0,
+    hitFlash:0, wobble:0,
+  };
+}
+
+function botHas(bot, moduleId){
+  return bot.build.module===moduleId &&
+         bot.parts.some(p=>p.kind==='module' && !p.dead);
+}
+function driveStats(bot){
+  let power=0, torque=0, live=0, total=0, biasSide=0;
+  for(const p of bot.parts) if(p.kind==='drive'){
+    total++;
+    if(!p.dead){ live++; power+=p.def.power; torque+=p.def.torque; biasSide += (p.side===0?-1:1); }
+  }
+  return {power, torque, live, total, bias: (live>0 && live<total) ? biasSide : 0};
+}
+function chassisFrac(bot){ return clamp(bot.chassisPart.hp / bot.chassisPart.max, 0, 1); }
+function integrityFrac(bot){
+  let hp=0,max=0;
+  for(const p of bot.parts){ hp+=Math.max(0,p.hp); max+=p.max; }
+  return max>0 ? hp/max : 0;
+}
+function isActive(bot){ return !bot.dead && !bot.countedOut; }
+function isMobile(bot){ return driveStats(bot).live>0 && bot.flipped<=0; }
+
+/* ============================================================================
+   5. BEHAVIOR CHIPS
+   Each returns {throttle, steer, targetId}. They run on a slow decision tick —
+   that interval is what makes the bots look stupid rather than random.
+   ========================================================================= */
+function enemiesOf(bot, world){
+  return world.bots.filter(b=>b.team!==bot.team && isActive(b));
+}
+function nearest(bot, list){
+  let best=null,bd=Infinity;
+  for(const e of list){const d=dist2(bot.x,bot.y,e.x,e.y); if(d<bd){bd=d;best=e;}}
+  return best;
+}
+// steer/throttle toward a world point
+function seek(bot, tx, ty, thr){
+  const err = angNorm(Math.atan2(ty-bot.y, tx-bot.x) - bot.ang);
+  const steer = clamp(err*T.STEER_GAIN, -1, 1);
+  // don't drive forward while badly misaligned — turn first. This is what
+  // produces the wide, committed, comically bad approach arcs.
+  const align = Math.cos(err);
+  const throttle = align > 0.25 ? thr*align : (Math.abs(err)>2.4 ? -thr*0.55 : 0);
+  return {throttle, steer};
+}
+const CHIPS = {
+  charger(bot, world){
+    const e = nearest(bot, enemiesOf(bot,world));
+    if(!e) return {throttle:0,steer:0,targetId:-1};
+    return Object.assign(seek(bot,e.x,e.y,1), {targetId:e.id});
+  },
+  wedgeDoc(bot, world){
+    const e = nearest(bot, enemiesOf(bot,world));
+    if(!e) return {throttle:0,steer:0,targetId:-1};
+    const err = angNorm(Math.atan2(e.y-bot.y, e.x-bot.x) - bot.ang);
+    // if flanked, reverse away while swinging the front around
+    if(Math.abs(err) > 1.15){
+      return {throttle:-0.7, steer:clamp(err*T.STEER_GAIN,-1,1), targetId:e.id};
+    }
+    return Object.assign(seek(bot,e.x,e.y,0.72), {targetId:e.id});
+  },
+  circler(bot, world){
+    const e = nearest(bot, enemiesOf(bot,world));
+    if(!e) return {throttle:0,steer:0,targetId:-1};
+    const d = Math.hypot(e.x-bot.x, e.y-bot.y);
+    const ring = bot.r + e.r + 26;
+    if(d > ring*1.35) return Object.assign(seek(bot,e.x,e.y,1), {targetId:e.id});
+    // orbit: aim at a point 75 degrees around the target from us
+    const a = Math.atan2(bot.y-e.y, bot.x-e.x) + 1.3;
+    return Object.assign(seek(bot, e.x+Math.cos(a)*ring, e.y+Math.sin(a)*ring, 0.85), {targetId:e.id});
+  },
+  scavenger(bot, world){
+    const es = enemiesOf(bot,world);
+    if(!es.length) return {throttle:0,steer:0,targetId:-1};
+    let e=es[0], bf=integrityFrac(es[0]);
+    for(const c of es){const f=integrityFrac(c); if(f<bf){bf=f;e=c;}}
+    return Object.assign(seek(bot,e.x,e.y,1), {targetId:e.id});
+  },
+  coward(bot, world){
+    const e = nearest(bot, enemiesOf(bot,world));
+    if(!e) return {throttle:0,steer:0,targetId:-1};
+    if(chassisFrac(bot) < 0.35){
+      const ax = bot.x + (bot.x-e.x)*3, ay = bot.y + (bot.y-e.y)*3;
+      return Object.assign(seek(bot, clamp(ax,40,T.ARENA_W-40), clamp(ay,40,T.ARENA_H-40), 1),
+                           {targetId:e.id});
+    }
+    return Object.assign(seek(bot,e.x,e.y,1), {targetId:e.id});
+  },
+};
+
+/* ============================================================================
+   6. DAMAGE
+   Armour absorbs first, remainder lands on a random surviving component
+   weighted by part weight. Big parts get hit more. Chassis at zero = KO.
+   ========================================================================= */
+function applyDamage(world, victim, attacker, amount, hitAng, cause){
+  if(amount<=0 || victim.dead) return 0;
+
+  // wedge: check the impact against the victim's own front arc
+  for(const p of victim.parts){
+    if(p.kind==='weapon' && p.def.type==='wedge' && !p.dead){
+      const rel = Math.abs(angNorm(hitAng - victim.ang));
+      if(rel < T.WEDGE_ARC){
+        amount *= (1 - p.def.absorb);
+        p.hp -= amount*0.4;
+        if(attacker){ // shoved up and over the plate
+          const push = T.WEDGE_LAUNCH / Math.max(60, attacker.mass);
+          attacker.vx += Math.cos(hitAng)*push*60;
+          attacker.vy += Math.sin(hitAng)*push*60;
+          attacker.wobble = Math.max(attacker.wobble, 0.35);
+        }
+      }
+    }
+  }
+  // armour
+  for(const p of victim.parts){
+    if(p.kind==='armor' && !p.dead && p.def.absorb>0){
+      const absorbed = amount * p.def.absorb;
+      amount -= absorbed;
+      p.hp -= absorbed * T.ARMOR_WEAR;
+      if(p.hp<=0){ p.hp=0; p.dead=true; world.caption(victim.name+' LOSES ITS ARMOUR'); }
+    }
+  }
+  // route the remainder
+  const live = victim.parts.filter(p=>!p.dead && p.kind!=='chassis');
+  let target = victim.chassisPart;
+  if(live.length){
+    let tot=0; for(const p of live) tot += (p.def.wt||1);
+    let roll = world.rng()*tot*1.55; // >1 so some fraction always reaches the frame
+    for(const p of live){ roll -= (p.def.wt||1); if(roll<=0){ target=p; break; } }
+  }
+  target.hp -= amount;
+  victim.dmgTaken += amount;
+  victim.hitFlash = 1;
+  if(attacker) attacker.dmgDealt += amount;
+
+  if(target.hp<=0 && target.kind!=='chassis' && !target.dead){
+    target.hp=0; target.dead=true;
+    world.spark(victim.x, victim.y, 22, '#ffd36b');
+    if(target.kind==='weapon') world.caption(victim.name+"'S "+target.def.n+' IS OUT');
+    else if(target.kind==='drive'){
+      const ds=driveStats(victim);
+      world.caption(ds.live>0 ? victim.name+' LOSES A DRIVE'
+                              : victim.name+' IS IMMOBILISED');
+    }
+  }
+  if(victim.chassisPart.hp<=0){
+    victim.chassisPart.hp=0; victim.dead=true;
+    world.spark(victim.x, victim.y, 60, '#ff8a3d');
+    world.caption(victim.name+' IS DESTROYED');
+  }
+  if(world.showNumbers && amount>1.5) world.dmgNum(victim.x, victim.y, amount, cause);
+  return amount;
+}
+
+/* ============================================================================
+   7. WORLD / SIMULATION
+   ========================================================================= */
+function makeWorld(builds, seed, opts){
+  opts = opts || {};
+  const rng = mulberry32(seed>>>0);
+  const world = {
+    rng, seed, t:0, steps:0, over:false, result:null,
+    bots:[], sparks:[], nums:[], captionText:'', captionT:0,
+    hazards: opts.hazards ? [
+      {x:T.ARENA_W*0.5-150, y:T.ARENA_H*0.5-190, w:300, h:16},
+      {x:T.ARENA_W*0.5-150, y:T.ARENA_H*0.5+174, w:300, h:16},
+    ] : [],
+    showNumbers: opts.showNumbers !== false,
+    matchLen: opts.matchLen || T.MATCH_SEC,
+    headless: !!opts.headless,
+    caption(txt){ if(this.headless) return; this.captionText=txt; this.captionT=1.6; },
+    spark(x,y,n,col){ if(this.headless) return;
+      for(let i=0;i<n;i++){const a=rng()*Math.PI*2,s=40+rng()*260;
+        this.sparks.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.25+rng()*0.45,
+          max:0.7,col:col||'#ffc14d'});}},
+    dmgNum(x,y,v,cause){ if(this.headless) return;
+      this.nums.push({x:x+(rng()-0.5)*20,y:y-14,v:Math.round(v),life:0.9,cause:cause||''}); },
+  };
+
+  // spawn: teams face each other across the long axis
+  const spawnSlots = {};
+  for(const b of builds){ spawnSlots[b.team] = (spawnSlots[b.team]||0); }
+  const counts = {};
+  builds.forEach((b,i)=>{
+    const teamCount = builds.filter(x=>x.team===b.team).length;
+    counts[b.team] = (counts[b.team]||0);
+    const idx = counts[b.team]++;
+    const side = b.team===0 ? 1 : -1;
+    const x = T.ARENA_W/2 - side*T.ARENA_W*0.28;
+    const spread = (idx - (teamCount-1)/2) * 90;
+    const y = T.ARENA_H/2 + spread;
+    world.bots.push(buildBot(b, b.team, i, x, y, side>0?0:Math.PI));
+  });
+  return world;
+}
+
+function stepWorld(w, dt){
+  if(w.over) return;
+  w.t += dt; w.steps++;
+
+  /* --- decisions (slow tick) --- */
+  for(const bot of w.bots){
+    if(!isActive(bot)) continue;
+    bot.reactT -= dt;
+    if(bot.reactT<=0){
+      const interval = (botHas(bot,'target') ? T.REACT_MS_TARGETING : T.REACT_MS)/1000;
+      bot.reactT = interval * (0.75 + w.rng()*0.5);
+      const chipPart = bot.parts.find(p=>p.kind==='chip');
+      const fn = (chipPart && !chipPart.dead) ? CHIPS[chipPart.def.fn] : CHIPS.charger;
+      let intent;
+      try { intent = fn(bot, w); } catch(e){ intent = {throttle:0,steer:0,targetId:-1}; }
+      const noise = (w.rng()-0.5)*2*T.DECISION_NOISE;
+      bot.throttle = clamp(intent.throttle, -1, 1);
+      bot.steer = clamp(intent.steer + noise, -1, 1);
+      bot.targetId = intent.targetId;
+    }
+  }
+
+  /* --- drivetrain & integration --- */
+  for(const bot of w.bots){
+    if(bot.dead) continue;
+    if(bot.flipped>0){ bot.flipped-=dt; bot.throttle=0; bot.steer=0; }
+    const ds = driveStats(bot);
+    const able = ds.live>0 && bot.flipped<=0;
+
+    if(able){
+      const F = ds.power * T.DRIVE_FORCE * bot.speedMul * bot.throttle;
+      const a = F / bot.mass;
+      bot.vx += Math.cos(bot.ang)*a*dt;
+      bot.vy += Math.sin(bot.ang)*a*dt;
+      const steer = bot.steer + ds.bias*T.ONE_DRIVE_BIAS;
+      bot.av += (steer * ds.torque * T.TORQUE_SCALE / bot.inertia) * dt;
+    }
+    // rolling resistance
+    const drag = Math.exp(-T.LINEAR_DRAG*dt);
+    bot.vx *= drag; bot.vy *= drag;
+    // lateral scrub — what makes it read as wheels rather than a hovercraft
+    const c=Math.cos(bot.ang), s=Math.sin(bot.ang);
+    let vf = bot.vx*c + bot.vy*s;
+    let vl = -bot.vx*s + bot.vy*c;
+    vl *= Math.exp(-(able?T.LATERAL_GRIP:T.LATERAL_GRIP*0.35)*dt);
+    bot.vx = vf*c - vl*s; bot.vy = vf*s + vl*c;
+    bot.av *= Math.exp(-T.ANG_DRAG*dt);
+
+    bot.x += bot.vx*dt; bot.y += bot.vy*dt; bot.ang = angNorm(bot.ang + bot.av*dt);
+    if(bot.wobble>0) bot.wobble-=dt;
+    if(bot.hitFlash>0) bot.hitFlash-=dt*4;
+
+    // walls
+    const speed = Math.hypot(bot.vx,bot.vy);
+    let hitWall=false;
+    if(bot.x<bot.r){bot.x=bot.r;bot.vx=-bot.vx*T.WALL_BOUNCE;hitWall=true;}
+    if(bot.x>T.ARENA_W-bot.r){bot.x=T.ARENA_W-bot.r;bot.vx=-bot.vx*T.WALL_BOUNCE;hitWall=true;}
+    if(bot.y<bot.r){bot.y=bot.r;bot.vy=-bot.vy*T.WALL_BOUNCE;hitWall=true;}
+    if(bot.y>T.ARENA_H-bot.r){bot.y=T.ARENA_H-bot.r;bot.vy=-bot.vy*T.WALL_BOUNCE;hitWall=true;}
+    if(hitWall && speed>170){
+      applyDamage(w, bot, null, (speed-170)*T.WALL_DMG, bot.ang+Math.PI, 'wall');
+      w.spark(bot.x,bot.y,6,'#9fd8ff');
+    }
+
+    // hazards
+    for(const h of w.hazards){
+      if(bot.x>h.x-bot.r && bot.x<h.x+h.w+bot.r && bot.y>h.y-bot.r && bot.y<h.y+h.h+bot.r){
+        applyDamage(w, bot, null, T.HAZ_DPS*dt, bot.ang+Math.PI, 'hazard');
+        if(w.rng()<dt*30) w.spark(bot.x,bot.y,3,'#ffdf6b');
+      }
+    }
+  }
+
+  /* --- bot vs bot --- */
+  for(let i=0;i<w.bots.length;i++){
+    for(let j=i+1;j<w.bots.length;j++){
+      const A=w.bots[i], B=w.bots[j];
+      if(A.dead||B.dead) continue;
+      const dx=B.x-A.x, dy=B.y-A.y;
+      const d=Math.hypot(dx,dy)||0.001;
+      const pen = A.r+B.r - d;
+      if(pen<=0) continue;
+      const nx=dx/d, ny=dy/d;
+      const totM = A.mass+B.mass;
+      A.x -= nx*pen*(B.mass/totM); A.y -= ny*pen*(B.mass/totM);
+      B.x += nx*pen*(A.mass/totM); B.y += ny*pen*(A.mass/totM);
+
+      const rvx=B.vx-A.vx, rvy=B.vy-A.vy;
+      const vn = rvx*nx + rvy*ny;
+      if(vn<0){
+        const imp = -(1+T.BOT_RESTITUTION)*vn / (1/A.mass + 1/B.mass);
+        A.vx -= imp*nx/A.mass; A.vy -= imp*ny/A.mass;
+        B.vx += imp*nx/B.mass; B.vy += imp*ny/B.mass;
+        const closing = -vn;
+        if(closing > T.RAM_THRESHOLD){
+          const base = (closing - T.RAM_THRESHOLD)*T.RAM_DMG;
+          applyDamage(w, B, A, base*(A.mass/B.mass), Math.atan2(-ny,-nx), 'ram');
+          applyDamage(w, A, B, base*(B.mass/A.mass), Math.atan2(ny,nx), 'ram');
+          w.spark((A.x+B.x)/2,(A.y+B.y)/2,5,'#cfe6ff');
+        }
+      }
+      resolveWeapons(w, A, B, nx, ny, dt);
+      resolveWeapons(w, B, A, -nx, -ny, dt);
+    }
+  }
+
+  /* --- weapon state, aggression, count-out --- */
+  for(const bot of w.bots){
+    if(bot.dead) continue;
+    for(const p of bot.parts){
+      if(p.kind!=='weapon'||p.dead) continue;
+      if(p.def.type==='spinner'){
+        const ds=driveStats(bot);
+        if(ds.live>0 && bot.flipped<=0) p.spin = clamp(p.spin + dt/p.def.spinup, 0, 1);
+        else p.spin = Math.max(0, p.spin - dt*0.5);
+      }
+      if(p.cd>0) p.cd-=dt;
+      if(p.hitFlash>0) p.hitFlash-=dt*5;
+    }
+    // aggression: credit for actually driving at a live enemy
+    const tgt = w.bots.find(b=>b.id===bot.targetId);
+    if(tgt && isActive(tgt) && bot.throttle>0.2){
+      const err = Math.abs(angNorm(Math.atan2(tgt.y-bot.y,tgt.x-bot.x)-bot.ang));
+      if(err<0.7) bot.aggression += dt;
+    }
+    // control: credit for keeping your own front toward them
+    if(tgt && isActive(tgt)){
+      const err = Math.abs(angNorm(Math.atan2(tgt.y-bot.y,tgt.x-bot.x)-bot.ang));
+      if(err<0.5) bot.control += dt;
+    }
+    // count-out. The count is on *controlled* movement — a bot with no drive that
+    // is merely being shoved around by the other machine is still counted out.
+    if(!bot.countedOut){
+      if(!isMobile(bot)) bot.stillT += dt;
+      else {
+        const sp = Math.hypot(bot.vx,bot.vy);
+        if(sp < T.STILL_SPEED) bot.stillT += dt;
+        else if(sp > T.MOVE_SPEED) bot.stillT = 0;
+      }
+      if(bot.stillT > 1.0){
+        bot.countT += dt;
+        const n = Math.floor(bot.countT);
+        if(n !== bot._lastCount && n>=1 && n<=T.COUNT_SEC){
+          bot._lastCount = n;
+          w.caption(bot.name+'  —  COUNT '+n);
+        }
+        if(bot.countT >= T.COUNT_SEC){
+          bot.countedOut = true;
+          w.caption(bot.name+' IS COUNTED OUT');
+        }
+      } else { bot.countT = 0; bot._lastCount = 0; }
+    }
+  }
+
+  /* --- particles --- */
+  if(!w.headless){
+    for(let i=w.sparks.length-1;i>=0;i--){
+      const s=w.sparks[i]; s.life-=dt;
+      s.x+=s.vx*dt; s.y+=s.vy*dt; s.vx*=0.94; s.vy=s.vy*0.94+380*dt;
+      if(s.life<=0) w.sparks.splice(i,1);
+    }
+    for(let i=w.nums.length-1;i>=0;i--){
+      const n=w.nums[i]; n.life-=dt; n.y-=26*dt; if(n.life<=0) w.nums.splice(i,1);
+    }
+    if(w.captionT>0) w.captionT-=dt;
+  }
+
+  /* --- win conditions --- */
+  checkWin(w);
+}
+
+function resolveWeapons(w, att, def, nx, ny, dt){
+  if(att.flipped>0) return;
+  const toDef = Math.atan2(def.y-att.y, def.x-att.x);
+  const front = Math.abs(angNorm(toDef - att.ang));
+  for(const p of att.parts){
+    if(p.kind!=='weapon' || p.dead) continue;
+    const D = p.def;
+    if(D.type==='none' || D.type==='wedge') continue;
+    const arcRad = (D.arc||60)*Math.PI/180/2;
+    const inArc = front <= arcRad;
+    const gap = Math.hypot(def.x-att.x, def.y-att.y) - (att.r+def.r);
+    if(!inArc || gap > (D.reach||8)) continue;
+
+    if(D.type==='saw'){
+      applyDamage(w, def, att, D.dps*dt, toDef+Math.PI, 'saw');
+      if(w.rng()<dt*26) w.spark((att.x+def.x)/2,(att.y+def.y)/2,3,'#ffb03d');
+    }
+    else if(D.type==='spinner'){
+      if(p.spin < 0.12) continue;
+      const dmg = D.dmg * p.spin;
+      applyDamage(w, def, att, dmg, toDef+Math.PI, 'spinner');
+      applyDamage(w, att, null, dmg*T.SPIN_SELF, att.ang, 'recoil');
+      const k = D.knock * p.spin;
+      def.vx += nx*k/Math.max(40,def.mass)*40; def.vy += ny*k/Math.max(40,def.mass)*40;
+      att.vx -= nx*k/Math.max(40,att.mass)*30; att.vy -= ny*k/Math.max(40,att.mass)*30;
+      def.av += (w.rng()-0.5)*14*p.spin;
+      if(w.rng() < D.lift*p.spin) flip(w, def);
+      p.spin = T.SPIN_RETAIN; p.hitFlash=1;
+      w.spark((att.x+def.x)/2,(att.y+def.y)/2, 14+Math.round(20*p.spin), '#ffd36b');
+      w.caption(att.name+' CONNECTS');
+    }
+    else if(D.type==='hammer'){
+      if(p.cd>0) continue;
+      p.cd = D.cd; p.hitFlash=1;
+      applyDamage(w, def, att, D.dmg, toDef+Math.PI, 'hammer');
+      def.av += (w.rng()-0.5)*6;
+      w.spark((att.x+def.x)/2,(att.y+def.y)/2,16,'#ffe08a');
+      w.caption(att.name+' LANDS THE HAMMER');
+    }
+    else if(D.type==='flipper'){
+      if(p.cd>0) continue;
+      p.cd = D.cd; p.hitFlash=1;
+      applyDamage(w, def, att, D.dmg, toDef+Math.PI, 'flipper');
+      const k = D.impulse/Math.max(40,def.mass)*60;
+      def.vx += nx*k; def.vy += ny*k;
+      flip(w, def);
+      w.spark(def.x,def.y,18,'#bfe3ff');
+    }
+  }
+}
+
+function flip(w, bot){
+  if(bot.dead) return;
+  const t = botHas(bot,'righter') ? T.FLIP_TIME_RIGHTER : T.FLIP_TIME;
+  if(bot.build.module==='ballast' && bot.parts.some(p=>p.kind==='module'&&!p.dead)){
+    if(w.rng()<0.5) return; // low centre of gravity — often just rocks and settles
+  }
+  bot.flipped = Math.max(bot.flipped, t);
+  w.caption(bot.name+' IS OVER');
+}
+
+function judge(w){
+  const teams = [0,1];
+  const score = {};
+  for(const t of teams){
+    const mine = w.bots.filter(b=>b.team===t);
+    const dmg = mine.reduce((s,b)=>s+b.dmgDealt,0);
+    const agg = mine.reduce((s,b)=>s+b.aggression,0);
+    const ctl = mine.reduce((s,b)=>s+b.control,0);
+    score[t] = {dmg, agg, ctl};
+  }
+  const norm=(a,b)=>{const s=a+b; return s<=0?[0.5,0.5]:[a/s,b/s];};
+  const [d0,d1]=norm(score[0].dmg,score[1].dmg);
+  const [a0,a1]=norm(score[0].agg,score[1].agg);
+  const [c0,c1]=norm(score[0].ctl,score[1].ctl);
+  const p0 = Math.round(d0*T.JUDGE_DAMAGE + a0*T.JUDGE_AGGRESSION + c0*T.JUDGE_CONTROL);
+  const p1 = Math.round(d1*T.JUDGE_DAMAGE + a1*T.JUDGE_AGGRESSION + c1*T.JUDGE_CONTROL);
+  return {score, p0, p1};
+}
+
+function checkWin(w){
+  if(w.over) return;
+  const alive0 = w.bots.filter(b=>b.team===0 && isActive(b)).length;
+  const alive1 = w.bots.filter(b=>b.team===1 && isActive(b)).length;
+  if(alive0===0 || alive1===0){
+    const winner = alive0>0?0:(alive1>0?1:-1);
+    const loserBots = w.bots.filter(b=>b.team!==winner);
+    const how = loserBots.every(b=>b.countedOut && !b.dead) ? 'IMMOBILISATION' : 'KNOCKOUT';
+    w.over=true;
+    w.result = {winner, how, judged:null, t:w.t};
+    return;
+  }
+  if(w.t >= w.matchLen){
+    const j = judge(w);
+    const winner = j.p0===j.p1 ? (j.score[0].dmg>=j.score[1].dmg?0:1) : (j.p0>j.p1?0:1);
+    w.over=true;
+    w.result = {winner, how:'JUDGES’ DECISION', judged:j, t:w.t};
+  }
+}
+
+/* Headless: run a full match, return result only. The balance harness. */
+function runHeadless(builds, seed, matchLen){
+  const w = makeWorld(builds, seed, {headless:true, showNumbers:false,
+                                     matchLen: matchLen||T.MATCH_SEC});
+  let n=0;
+  while(!w.over && n<T.MAX_STEPS){ stepWorld(w, T.DT); n++; }
+  if(!w.over){ w.over=true; w.result={winner:-1,how:'TIMEOUT',judged:null,t:w.t}; }
+  return {result:w.result, world:w};
+}
+
+/* ============================================================================
+   8. RENDERING  (skipped entirely in headless mode)
+   ========================================================================= */
+const TEAM_COL = [
+  {body:'#c9352b', hi:'#ff6b5e', dark:'#6d1a14'},
+  {body:'#2a6fc9', hi:'#6bb0ff', dark:'#153a6d'},
+];
+
+function drawArena(ctx, w, dbg){
+  // floor
+  ctx.fillStyle='#1a1f26'; ctx.fillRect(0,0,T.ARENA_W,T.ARENA_H);
+  const g=ctx.createRadialGradient(T.ARENA_W/2,T.ARENA_H/2,60,T.ARENA_W/2,T.ARENA_H/2,T.ARENA_W*0.7);
+  g.addColorStop(0,'rgba(120,140,160,.10)'); g.addColorStop(1,'rgba(0,0,0,.55)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,T.ARENA_W,T.ARENA_H);
+
+  // painted centre circle + league mark
+  ctx.save();
+  ctx.translate(T.ARENA_W/2, T.ARENA_H/2);
+  ctx.strokeStyle='rgba(255,106,31,.20)'; ctx.lineWidth=6;
+  ctx.beginPath(); ctx.arc(0,0,175,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='rgba(255,106,31,.10)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(0,0,158,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='rgba(207,214,221,.05)';
+  ctx.font='bold 62px Arial Narrow, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('COMBAT CIRCUIT', 0, 0);
+  ctx.font='bold 15px Arial Narrow, Arial';
+  ctx.fillText('· SANCTIONED ROBOT COMBAT ·', 0, 36);
+  ctx.restore();
+
+  // scuffs
+  ctx.strokeStyle='rgba(0,0,0,.22)'; ctx.lineWidth=2;
+  const sr = mulberry32(99);
+  for(let i=0;i<40;i++){
+    const x=sr()*T.ARENA_W, y=sr()*T.ARENA_H, a=sr()*Math.PI, l=10+sr()*50;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l); ctx.stroke();
+  }
+
+  // hazards
+  for(const h of w.hazards){
+    ctx.fillStyle='#161a1f'; ctx.fillRect(h.x,h.y,h.w,h.h);
+    ctx.save(); ctx.beginPath(); ctx.rect(h.x,h.y,h.w,h.h); ctx.clip();
+    const off = (w.t*260)%28;
+    for(let x=-28;x<h.w+28;x+=28){
+      ctx.fillStyle='#c8a227';
+      ctx.beginPath();
+      ctx.moveTo(h.x+x+off,h.y); ctx.lineTo(h.x+x+off+14,h.y);
+      ctx.lineTo(h.x+x+off+4,h.y+h.h); ctx.lineTo(h.x+x+off-10,h.y+h.h);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+    ctx.strokeStyle='#0a0d11'; ctx.lineWidth=2; ctx.strokeRect(h.x,h.y,h.w,h.h);
+  }
+
+  // chevron border
+  const bw=14;
+  ctx.save(); ctx.beginPath();
+  ctx.rect(0,0,T.ARENA_W,T.ARENA_H); ctx.rect(bw,bw,T.ARENA_W-bw*2,T.ARENA_H-bw*2);
+  ctx.clip('evenodd');
+  ctx.fillStyle='#0f1318'; ctx.fillRect(0,0,T.ARENA_W,T.ARENA_H);
+  ctx.fillStyle='#d8b02c';
+  for(let i=-T.ARENA_H;i<T.ARENA_W+T.ARENA_H;i+=30){
+    ctx.beginPath();
+    ctx.moveTo(i,0); ctx.lineTo(i+15,0); ctx.lineTo(i+15+T.ARENA_H,T.ARENA_H);
+    ctx.lineTo(i+T.ARENA_H,T.ARENA_H); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawBot(ctx, bot, w, dbg){
+  const col = TEAM_COL[bot.team];
+  ctx.save();
+  ctx.translate(bot.x, bot.y);
+
+  if(bot.dead){
+    ctx.globalAlpha=0.55;
+    ctx.rotate(bot.ang);
+    ctx.fillStyle='#2a2f36';
+    ctx.fillRect(-bot.r, -bot.r*0.8, bot.r*2, bot.r*1.6);
+    ctx.strokeStyle='#12161b'; ctx.lineWidth=2;
+    ctx.strokeRect(-bot.r, -bot.r*0.8, bot.r*2, bot.r*1.6);
+    ctx.restore();
+    return;
+  }
+
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.45)';
+  ctx.beginPath(); ctx.ellipse(3,5,bot.r*1.05,bot.r*0.85,0,0,Math.PI*2); ctx.fill();
+
+  const wob = bot.wobble>0 ? Math.sin(w.t*40)*0.10*bot.wobble : 0;
+  ctx.rotate(bot.ang + wob);
+
+  const flipping = bot.flipped>0;
+  if(flipping){ ctx.scale(1, Math.cos(w.t*7)*0.35 + 0.65); }
+
+  // body
+  const bw = bot.r*2, bh = bot.r*1.6;
+  ctx.fillStyle = flipping ? col.dark : col.body;
+  if(bot.hitFlash>0) ctx.fillStyle = '#fff';
+  roundRect(ctx, -bot.r, -bh/2, bw, bh, 4); ctx.fill();
+  ctx.strokeStyle='#0b0e12'; ctx.lineWidth=2.5;
+  roundRect(ctx, -bot.r, -bh/2, bw, bh, 4); ctx.stroke();
+
+  // panel line + team stripe
+  ctx.fillStyle='rgba(0,0,0,.25)';
+  ctx.fillRect(-bot.r*0.2, -bh/2+2, bot.r*0.45, bh-4);
+  ctx.fillStyle=col.hi;
+  ctx.fillRect(-bot.r+3, -bh/2+3, 4, bh-6);
+
+  // wheels
+  ctx.fillStyle='#0e1216';
+  const ds = driveStats(bot);
+  ctx.fillRect(-bot.r*0.75, -bh/2-3, bot.r*0.7, 5);
+  ctx.fillRect(-bot.r*0.75,  bh/2-2, bot.r*0.7, 5);
+  ctx.fillRect( bot.r*0.15, -bh/2-3, bot.r*0.7, 5);
+  ctx.fillRect( bot.r*0.15,  bh/2-2, bot.r*0.7, 5);
+  if(ds.live===0){ ctx.fillStyle='rgba(255,60,40,.35)';
+    ctx.fillRect(-bot.r,-bh/2,bw,bh); }
+
+  // weapons
+  for(const p of bot.parts){
+    if(p.kind!=='weapon' || p.def.type==='none') continue;
+    const D=p.def;
+    if(p.dead){
+      ctx.fillStyle='#3a3f46';
+      ctx.fillRect(bot.r-2, -3, 5, 6);
+      continue;
+    }
+    ctx.save();
+    if(D.type==='wedge'){
+      ctx.fillStyle = p.hp/p.max>0.4 ? '#b8bec6' : '#7c8189';
+      ctx.beginPath();
+      ctx.moveTo(bot.r-1, -bh/2); ctx.lineTo(bot.r+13, -bh/2*0.35);
+      ctx.lineTo(bot.r+13, bh/2*0.35); ctx.lineTo(bot.r-1, bh/2);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='#0b0e12'; ctx.lineWidth=1.5; ctx.stroke();
+    }
+    else if(D.type==='spinner'){
+      const isBar = D.n==='HORIZONTAL BAR';
+      const R = isBar ? bot.r*1.5 : bot.r*0.85;
+      ctx.translate(isBar?0:bot.r+2, 0);
+      const blur = p.spin;
+      ctx.globalAlpha = 0.25 + 0.75*(1-blur);
+      ctx.rotate(w.t * (8 + 60*blur) * (isBar?1:1.6));
+      ctx.fillStyle = p.hitFlash>0 ? '#fff' : '#cfd6dd';
+      if(isBar){ ctx.fillRect(-R, -4, R*2, 8);
+                 ctx.fillStyle='#8b929a'; ctx.fillRect(-R,-4,10,8); ctx.fillRect(R-10,-4,10,8); }
+      else { ctx.fillRect(-R*0.5, -bh*0.42, R, bh*0.84);
+             ctx.fillStyle='#8b929a'; ctx.fillRect(-R*0.5,-bh*0.42,R,4); }
+      ctx.globalAlpha=1;
+      if(blur>0.25){
+        ctx.globalAlpha = blur*0.35;
+        ctx.strokeStyle='#eef4ff'; ctx.lineWidth=isBar?7:5;
+        ctx.beginPath(); ctx.arc(0,0,isBar?R:R*0.55,0,Math.PI*2); ctx.stroke();
+        ctx.globalAlpha=1;
+      }
+    }
+    else if(D.type==='saw'){
+      ctx.translate(bot.r+5, 0);
+      ctx.rotate(w.t*26);
+      ctx.fillStyle = p.hitFlash>0?'#fff':'#c3cad2';
+      ctx.beginPath();
+      for(let i=0;i<10;i++){
+        const a=i/10*Math.PI*2;
+        ctx.lineTo(Math.cos(a)*9, Math.sin(a)*9);
+        ctx.lineTo(Math.cos(a+0.3)*6, Math.sin(a+0.3)*6);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+    else if(D.type==='hammer'){
+      const ready = p.cd<=0;
+      const swing = ready ? -0.9 : lerp(0.5,-0.9, 1-clamp(p.cd/D.cd,0,1));
+      ctx.rotate(swing);
+      ctx.strokeStyle='#9aa2ab'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(bot.r+13,0); ctx.stroke();
+      ctx.fillStyle= p.hitFlash>0?'#fff':'#d5dbe2';
+      ctx.fillRect(bot.r+9, -6, 10, 12);
+    }
+    else if(D.type==='flipper'){
+      const ready=p.cd<=0;
+      ctx.fillStyle = ready ? '#cfd6dd' : '#6f767e';
+      const lift = ready?0:-clamp(p.cd/D.cd,0,1)*9;
+      ctx.beginPath();
+      ctx.moveTo(bot.r-2,-bh*0.4); ctx.lineTo(bot.r+12,-bh*0.28+lift);
+      ctx.lineTo(bot.r+12, bh*0.28+lift); ctx.lineTo(bot.r-2, bh*0.4);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='#0b0e12'; ctx.lineWidth=1.5; ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  if(dbg.hit){
+    ctx.strokeStyle='rgba(110,220,255,.55)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(0,0,bot.r,0,Math.PI*2); ctx.stroke();
+    for(const p of bot.parts){
+      if(p.kind!=='weapon'||p.dead||!p.def.arc) continue;
+      const a=(p.def.arc*Math.PI/180)/2;
+      ctx.strokeStyle='rgba(255,180,60,.4)';
+      ctx.beginPath(); ctx.moveTo(0,0);
+      ctx.arc(0,0,bot.r+(p.def.reach||8),-a,a); ctx.closePath(); ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  // count-out ring
+  if(bot.countT>1 && !bot.countedOut){
+    const f = clamp((bot.countT)/T.COUNT_SEC,0,1);
+    ctx.save(); ctx.translate(bot.x,bot.y);
+    ctx.strokeStyle='rgba(255,77,61,.9)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(0,0,bot.r+9,-Math.PI/2,-Math.PI/2+f*Math.PI*2); ctx.stroke();
+    ctx.fillStyle='#ff4d3d'; ctx.font='bold 15px Courier New, monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(String(T.COUNT_SEC-Math.floor(bot.countT)), 0, -bot.r-22);
+    ctx.restore();
+  }
+  if(bot.countedOut){
+    ctx.save(); ctx.translate(bot.x,bot.y-bot.r-16);
+    ctx.fillStyle='#ff4d3d'; ctx.font='bold 11px Arial Narrow, Arial';
+    ctx.textAlign='center'; ctx.fillText('COUNTED OUT',0,0); ctx.restore();
+  }
+
+  if(dbg.vec && isActive(bot)){
+    const tgt = w.bots.find(b=>b.id===bot.targetId);
+    if(tgt){
+      ctx.strokeStyle='rgba(255,106,31,.4)'; ctx.setLineDash([4,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(bot.x,bot.y); ctx.lineTo(tgt.x,tgt.y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.strokeStyle='#6fd3ff'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(bot.x,bot.y);
+    ctx.lineTo(bot.x+Math.cos(bot.ang)*bot.throttle*44, bot.y+Math.sin(bot.ang)*bot.throttle*44);
+    ctx.stroke();
+  }
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+
+function render(ctx, w, dbg){
+  drawArena(ctx, w, dbg);
+  for(const b of w.bots) if(b.dead) drawBot(ctx,b,w,dbg);
+  for(const b of w.bots) if(!b.dead) drawBot(ctx,b,w,dbg);
+
+  for(const s of w.sparks){
+    const a=clamp(s.life/s.max,0,1);
+    ctx.globalAlpha=a; ctx.fillStyle=s.col;
+    ctx.fillRect(s.x-1.5,s.y-1.5,3,3);
+  }
+  ctx.globalAlpha=1;
+
+  if(dbg.num) for(const n of w.nums){
+    ctx.globalAlpha=clamp(n.life,0,1);
+    ctx.font='bold 15px Arial Narrow, Arial'; ctx.textAlign='center';
+    ctx.fillStyle = n.cause==='spinner'||n.cause==='hammer' ? '#ffd36b' : '#e6edf4';
+    ctx.strokeStyle='#000'; ctx.lineWidth=3;
+    ctx.strokeText(String(n.v), n.x, n.y); ctx.fillText(String(n.v), n.x, n.y);
+  }
+  ctx.globalAlpha=1;
+
+  // vignette
+  const vg=ctx.createRadialGradient(T.ARENA_W/2,T.ARENA_H/2,T.ARENA_H*0.35,
+                                    T.ARENA_W/2,T.ARENA_H/2,T.ARENA_W*0.72);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.55)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,T.ARENA_W,T.ARENA_H);
+}
+
+/* ============================================================================
+   9. UI / GARAGE
+   ========================================================================= */
+const DEFAULT_BUILDS = [
+  {name:'ROADHOUSE', team:0, chassis:'boxframe', drive:'chain',
+   w1:'drum', w2:'wedge', armor:'sheet', module:'none', chip:'charger'},
+  {name:'PAPER CUT',  team:1, chassis:'boxframe', drive:'chain',
+   w1:'saw',  w2:'none',  armor:'ar',    module:'target', chip:'circler'},
+];
+
+const UI = {
+  builds: JSON.parse(JSON.stringify(DEFAULT_BUILDS)),
+  world:null, running:false, paused:false, speedIdx:2, accum:0,
+  dbg:{hit:false,vec:false,haz:false,num:true},
+  matchLen:T.MATCH_SEC, seed:1337,
+};
+const SPEEDS=[0.1,0.5,1,1.5,2,3,4];
+
+const $=s=>document.querySelector(s);
+const cv=$('#cv'), ctx=cv.getContext('2d');
+
+function slotOptions(group, sel){
+  return Object.keys(PARTS[group]).map(k=>
+    `<option value="${k}"${k===sel?' selected':''}>${PARTS[group][k].n}</option>`).join('');
+}
+
+function renderGarage(){
+  const host=$('#builders');
+  host.innerHTML = UI.builds.map((b,i)=>{
+    const ch=PARTS.chassis[b.chassis];
+    const wt=buildWeight(b);
+    const over = wt>ch.cap;
+    const chipDesc = PARTS.chip[b.chip].d;
+    return `
+    <h3 style="color:${i===0?'var(--red-hi)':'var(--blue-hi)'}">${i===0?'RED CORNER':'BLUE CORNER'}</h3>
+    <div class="row"><label>Name</label><input type="text" data-b="${i}" data-f="name" value="${b.name}"></div>
+    <div class="row"><label>Chassis</label><select data-b="${i}" data-f="chassis">${slotOptions('chassis',b.chassis)}</select></div>
+    <div class="desc">${ch.d}</div>
+    <div class="row"><label>Drive ×${ch.drives}</label><select data-b="${i}" data-f="drive">${slotOptions('drive',b.drive)}</select></div>
+    <div class="row"><label>Weapon 1</label><select data-b="${i}" data-f="w1">${slotOptions('weapon',b.w1)}</select></div>
+    <div class="row"><label>Weapon 2</label><select data-b="${i}" data-f="w2"${ch.mounts<2?' disabled':''}>${slotOptions('weapon',ch.mounts<2?'none':b.w2)}</select></div>
+    <div class="row"><label>Armour</label><select data-b="${i}" data-f="armor">${slotOptions('armor',b.armor)}</select></div>
+    <div class="row"><label>Module</label><select data-b="${i}" data-f="module">${slotOptions('module',b.module)}</select></div>
+    <div class="row"><label>Chip</label><select data-b="${i}" data-f="chip">${slotOptions('chip',b.chip)}</select></div>
+    <div class="desc">${chipDesc}</div>
+    <div class="wt${over?' over':''}"><span>WEIGHT</span><span><b>${wt}</b> / ${ch.cap} LB${over?'  ·  OVER LIMIT':''}</span></div>
+    `;
+  }).join('');
+
+  host.querySelectorAll('select,input').forEach(el=>{
+    el.addEventListener('change', e=>{
+      const i=+e.target.dataset.b, f=e.target.dataset.f;
+      UI.builds[i][f]=e.target.value;
+      // chassis change can invalidate mounts
+      const ch=PARTS.chassis[UI.builds[i].chassis];
+      if(ch.mounts<2) UI.builds[i].w2='none';
+      if(ch.drives<1) UI.builds[i].drive='caster';
+      renderGarage(); newMatch();
+    });
+  });
+}
+
+function newMatch(keepSeed){
+  if(!keepSeed) UI.seed = +$('#seed').value || 1;
+  UI.world = makeWorld(UI.builds, UI.seed, {
+    hazards: UI.dbg.haz, showNumbers: UI.dbg.num, matchLen: UI.matchLen });
+  UI.running=false; UI.paused=false;
+  $('#verdict').classList.remove('on');
+  $('#caption').classList.remove('on');
+  UI.accum=0;
+  updateCards(); updateClock();
+}
+
+function updateCards(){
+  const w=UI.world; if(!w) return;
+  [0,1].forEach(ti=>{
+    const bot = w.bots.find(b=>b.team===ti);
+    const nm = ti===0?$('#nmA'):$('#nmB');
+    const mt = ti===0?$('#mtA'):$('#mtB');
+    const pp = ti===0?$('#ppA'):$('#ppB');
+    if(!bot){ nm.textContent='—'; return; }
+    nm.textContent = bot.name;
+    const ds=driveStats(bot);
+    mt.textContent = `${PARTS.chassis[bot.build.chassis].n} · ${bot.mass} LB · ${PARTS.chip[bot.build.chip].n}`
+      + (bot.dead?' · DESTROYED':bot.countedOut?' · COUNTED OUT':ds.live===0?' · IMMOBILE':'');
+    const order = ['chassis','weapon','armor','drive','module','chip'];
+    const parts = bot.parts.slice().sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind));
+    pp.innerHTML = parts.map(p=>{
+      const f=clamp(p.hp/(p.max||1),0,1);
+      const lbl = p.kind==='chassis'?'FRAME'
+        : p.kind==='weapon'?p.def.n.split(' ')[0]
+        : p.kind==='drive'?'DRV'
+        : p.kind==='armor'?'ARM'
+        : p.kind==='module'?'MOD':'CHIP';
+      const col = f>0.5?'var(--ok)':f>0.22?'var(--amber)':'#ff4d3d';
+      return `<div class="pip ${p.kind==='chassis'?'chassis':''} ${p.dead?'dead':''}">
+        <i style="transform:scaleX(${f});background:${col}"></i>
+        <div class="lbl">${lbl}</div></div>`;
+    }).join('');
+  });
+}
+
+function updateClock(){
+  const w=UI.world; if(!w) return;
+  const rem=Math.max(0, w.matchLen - w.t);
+  const m=Math.floor(rem/60), s=Math.floor(rem%60);
+  const el=$('#clock');
+  el.textContent = m+':'+String(s).padStart(2,'0');
+  el.classList.toggle('low', rem<=10);
+}
+
+function showVerdict(){
+  const w=UI.world, r=w.result;
+  const v=$('#verdict');
+  const winBot = w.bots.find(b=>b.team===r.winner);
+  v.querySelector('.big').textContent = r.winner<0?'DRAW':(winBot?winBot.name:'—')+' WINS';
+  v.querySelector('.how').textContent = 'BY '+r.how+'  ·  '+r.t.toFixed(1)+'s';
+  let sheet='';
+  const j = r.judged || judge(w);
+  const b0=w.bots.find(b=>b.team===0), b1=w.bots.find(b=>b.team===1);
+  sheet = `<table>
+    <tr><th></th><th>${b0?b0.name:'RED'}</th><th>${b1?b1.name:'BLUE'}</th></tr>
+    <tr><td>Damage dealt</td><td>${Math.round(j.score[0].dmg)}</td><td>${Math.round(j.score[1].dmg)}</td></tr>
+    <tr><td>Aggression (s)</td><td>${j.score[0].agg.toFixed(1)}</td><td>${j.score[1].agg.toFixed(1)}</td></tr>
+    <tr><td>Control (s)</td><td>${j.score[0].ctl.toFixed(1)}</td><td>${j.score[1].ctl.toFixed(1)}</td></tr>
+    <tr><td><b>Judges 5-3-3</b></td><td><b>${j.p0}</b></td><td><b>${j.p1}</b></td></tr>
+  </table>`;
+  v.querySelector('.sheet').innerHTML=sheet;
+  v.classList.add('on');
+}
+
+function updateTelemetry(){
+  const w=UI.world; if(!w) return;
+  const lines=[];
+  lines.push(`t=${w.t.toFixed(2)}s  step=${w.steps}  seed=${w.seed}`);
+  for(const b of w.bots){
+    const ds=driveStats(b);
+    lines.push('');
+    lines.push(`${b.name.padEnd(12)} ${b.mass}lb  frame ${Math.round(b.chassisPart.hp)}/${b.chassisPart.max}`);
+    lines.push(`  vel ${Math.hypot(b.vx,b.vy).toFixed(0).padStart(4)}  av ${b.av.toFixed(2).padStart(6)}`
+             + `  thr ${b.throttle.toFixed(2).padStart(5)}  str ${b.steer.toFixed(2).padStart(5)}`);
+    lines.push(`  drive ${ds.live}/${ds.total} pwr ${ds.power.toFixed(1)} tq ${ds.torque.toFixed(1)}`
+             + `  flip ${b.flipped>0?b.flipped.toFixed(1):'-'}  still ${b.stillT.toFixed(1)}`);
+    for(const p of b.parts) if(p.kind==='weapon' && p.def.type!=='none'){
+      lines.push(`  ${p.def.n.padEnd(16)} hp ${Math.round(p.hp).toString().padStart(4)}`
+        + (p.def.type==='spinner'?`  spin ${(p.spin*100).toFixed(0)}%`:'')
+        + (p.cd>0?`  cd ${p.cd.toFixed(1)}`:''));
+    }
+    lines.push(`  dealt ${b.dmgDealt.toFixed(0)}  taken ${b.dmgTaken.toFixed(0)}`
+             + `  agg ${b.aggression.toFixed(1)}  ctl ${b.control.toFixed(1)}`);
+  }
+  $('#telem').textContent = lines.join('\n');
+}
+
+/* --- main loop --- */
+let lastT=performance.now(), fpsAcc=0, fpsN=0;
+function frame(now){
+  const real = Math.min(0.05, (now-lastT)/1000); lastT=now;
+  fpsAcc+=real; fpsN++;
+  if(fpsAcc>0.5){ $('#fps').textContent=Math.round(fpsN/fpsAcc); fpsAcc=0; fpsN=0; }
+
+  const w=UI.world;
+  if(w){
+    if(UI.running && !UI.paused && !w.over){
+      UI.accum += real*SPEEDS[UI.speedIdx];
+      let guard=0;
+      while(UI.accum >= T.DT && guard<600){ stepWorld(w, T.DT); UI.accum-=T.DT; guard++; }
+      if(w.over){ UI.running=false; showVerdict(); }
+    }
+    render(ctx, w, UI.dbg);
+    updateCards(); updateClock(); updateTelemetry();
+    const cap=$('#caption');
+    // the verdict card owns the screen once the match is over
+    if(w.captionT>0 && !w.over){ cap.classList.add('on');
+      cap.querySelector('span').textContent=w.captionText; }
+    else cap.classList.remove('on');
+  }
+  requestAnimationFrame(frame);
+}
+
+/* --- wiring --- */
+$('#btnFight').addEventListener('click', ()=>{
+  if(UI.world && UI.world.over) newMatch(true);
+  UI.running=true; UI.paused=false;
+});
+$('#btnReset').addEventListener('click', ()=>newMatch());
+$('#btnPause').addEventListener('click', ()=>{ UI.paused=!UI.paused;
+  $('#btnPause').textContent = UI.paused?'Resume':'Pause'; });
+$('#btnStep').addEventListener('click', ()=>{ if(UI.world&&!UI.world.over){
+  for(let i=0;i<12;i++) stepWorld(UI.world,T.DT); } });
+$('#btnSame').addEventListener('click', ()=>{ newMatch(true); UI.running=true; });
+$('#seed').addEventListener('change', ()=>newMatch());
+$('#matchlen').addEventListener('change', e=>{ UI.matchLen=Math.max(5,+e.target.value||60); newMatch(); });
+$('#speed').addEventListener('input', e=>{ UI.speedIdx=+e.target.value;
+  $('#speedlbl').textContent=SPEEDS[UI.speedIdx].toFixed(1)+'x'; });
+$('#dbgHit').addEventListener('change',e=>UI.dbg.hit=e.target.checked);
+$('#dbgVec').addEventListener('change',e=>UI.dbg.vec=e.target.checked);
+$('#dbgNum').addEventListener('change',e=>UI.dbg.num=e.target.checked);
+$('#dbgHaz').addEventListener('change',e=>{UI.dbg.haz=e.target.checked;newMatch(true);});
+
+document.querySelectorAll('#sidetabs button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#sidetabs button').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.tabpane').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); $('#tab-'+b.dataset.tab).classList.add('on');
+  });
+});
+
+function runBatch(){
+  const n = clamp(+$('#batchN').value||200, 1, 5000);
+  const out=$('#simout');
+  out.textContent='running '+n+' matches...';
+  setTimeout(()=>{
+    const tally={0:0,1:0,'-1':0};
+    const how={}; let totT=0;
+    const t0=performance.now();
+    for(let i=0;i<n;i++){
+      const r = runHeadless(UI.builds, 1000+i, UI.matchLen).result;
+      tally[r.winner]++; how[r.how]=(how[r.how]||0)+1; totT+=r.t;
+    }
+    const ms=performance.now()-t0;
+    const b0=UI.builds[0].name, b1=UI.builds[1].name;
+    const pct=v=>(v/n*100).toFixed(1)+'%';
+    out.textContent =
+      `${n} matches in ${ms.toFixed(0)}ms (${(ms/n).toFixed(1)}ms each)\n\n`+
+      `${b0.padEnd(14)} ${String(tally[0]).padStart(4)}  ${pct(tally[0])}\n`+
+      `${b1.padEnd(14)} ${String(tally[1]).padStart(4)}  ${pct(tally[1])}\n`+
+      `${'draw/timeout'.padEnd(14)} ${String(tally[-1]).padStart(4)}  ${pct(tally[-1])}\n\n`+
+      `avg length  ${(totT/n).toFixed(1)}s\n`+
+      Object.keys(how).map(k=>`${k.padEnd(20)} ${how[k]}`).join('\n');
+  },20);
+}
+$('#btnBatch').addEventListener('click', runBatch);
+
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  const k=e.key.toLowerCase();
+  if(k===' '){ e.preventDefault();
+    if(!UI.running){ if(UI.world&&UI.world.over) newMatch(true); UI.running=true; UI.paused=false; }
+    else UI.paused=!UI.paused; }
+  else if(k==='r') newMatch();
+  else if(k==='.'){ if(UI.world&&!UI.world.over) for(let i=0;i<12;i++) stepWorld(UI.world,T.DT); }
+  else if(k>='1'&&k<='7'){ UI.speedIdx=+k-1; $('#speed').value=UI.speedIdx;
+    $('#speedlbl').textContent=SPEEDS[UI.speedIdx].toFixed(1)+'x'; }
+  else if(k==='h'){ UI.dbg.hit=!UI.dbg.hit; $('#dbgHit').checked=UI.dbg.hit; }
+  else if(k==='v'){ UI.dbg.vec=!UI.dbg.vec; $('#dbgVec').checked=UI.dbg.vec; }
+  else if(k==='z'){ UI.dbg.haz=!UI.dbg.haz; $('#dbgHaz').checked=UI.dbg.haz; newMatch(true); }
+  else if(k==='n'){ $('#seed').value = Math.floor(Math.random()*99999); newMatch(); }
+  else if(k==='b'){ runBatch(); }
+});
+
+/* --- boot --- */
+if(typeof document!=='undefined' && cv){
+  renderGarage();
+  newMatch();
+  requestAnimationFrame(frame);
+}
+
+/* headless export for the Node validation harness */
+if(typeof module!=='undefined' && module.exports){
+  module.exports = {T,PARTS,makeWorld,stepWorld,runHeadless,buildWeight,buildBot,
+                    CHIPS,judge,integrityFrac,driveStats,mulberry32};
+}
+</script>
+</body>
+</html>
