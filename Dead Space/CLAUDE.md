@@ -6,7 +6,9 @@ is already dead.
 
 Nobody in the game ever acknowledges either layer. That is the whole piece.
 
-Source: `DS-BP.txt` (~630 lines, one React component). See **Format** below for why it's a `.txt`.
+Source: `dead-space-block-party.html` (~1300 lines, self-contained, double-click to play).
+`DS-BP.txt` is the **retired** React original — kept for reference, not loaded by anything. Don't
+edit it; if you need to know what shipped, read the HTML.
 
 ---
 
@@ -17,15 +19,18 @@ instance will sand every one of them off in about four minutes. **Do not fix the
 
 | Where | Artifact |
 |---|---|
-| `DS-BP.txt:268` | `Congratulaions!` — misspelled on the level-complete card |
-| `DS-BP.txt:133` | `{{TIP_BODY_EN_US_HAMMOND_07}}` — untranslated string token shipped as a tip |
-| `DS-BP.txt:129` | `displayName:"Dr. Hammond"` — wrong title, on exactly one tip out of eleven |
-| `DS-BP.txt:51-52` | "Mr. Temple" becomes "Mr. Tempe" one line later; neither is ever found |
-| `DS-BP.txt:178` | "Hi I'm Ellie. This is Tetris." — a placeholder that never got written |
-| `DS-BP.txt:181-186` | One tip copy-pasted across six characters (`// Shared tip (outsourced QA)`) |
-| `DS-BP.txt:26,46` | "Infirmary" is the name of both level 1 and level 6 — asset reuse |
-| `DS-BP.txt:339` | Multiplayer connects, thinks about it, reports all crew unavailable |
-| `DS-BP.txt:389` | Leaderboard: `Rank: #1 of 1!` on a win, `[Connection unavailable]` on a loss |
+| `:938` | `Congratulaions!` — misspelled on the level-complete card |
+| `:396` | `{{TIP_BODY_EN_US_HAMMOND_07}}` — untranslated string token shipped as a tip |
+| `:392` | `displayName:"Dr. Hammond"` — wrong title, on exactly one tip out of eleven |
+| `:314-315` | "Mr. Temple" becomes "Mr. Tempe" one line later; neither is ever found |
+| `:441` | "Hi I'm Ellie. This is Tetris." — a placeholder that never got written |
+| `:443-449` | One tip copy-pasted across six characters (`// Shared tip (outsourced QA)`) |
+| `:289,309` | "Infirmary" is the name of both level 1 and level 6 — asset reuse |
+| `:617` | Multiplayer connects, thinks about it, reports all crew unavailable |
+| `:1264-1265` | Leaderboard: `Rank: #1 of 1!` on a win, `[Connection unavailable]` on a loss |
+| end screen | A win reports **Level: 12** on an 11-level game (`level+1` after the last level-up) |
+
+Line numbers are in `dead-space-block-party.html`.
 
 **The general rule, and it comes from the project's own history: in this game a bug is a candidate
 feature.** The single best mechanic here started as an actual defect (see *Origin* below). If
@@ -37,7 +42,7 @@ Distinct from the defects above — these read as filler and are load-bearing. P
 
 - **Nicole is dead and is guiding you anyway.** She sends video messages, invites you to her
   office, and narrates the whole game. You never reach her.
-- `DS-BP.txt:118` — "Complete each line to **make us whole**!" Convergence, dressed as encouragement.
+- `:381` — "Complete each line to **make us whole**!" Convergence, dressed as encouragement.
 - **Mercer** describes vivisection as mentorship and healing. **Kyne** describes Marker devotion as
   scientific enthusiasm. **Mathius** insists across six tips that he is calm. **Necro** describes
   predation as friendship and promotion.
@@ -49,10 +54,11 @@ Distinct from the defects above — these read as filler and are load-bearing. P
 
 The load-bearing system, and the one most at risk from a well-meaning balance pass.
 
-Markers (`✦`) spawn on the board and are worth **+250** when their row clears. Six separate tips
-(`DS-BP.txt:188-192`, `// Marker cover story`) tell the player they're valuable and to grab them.
+Markers (`✦`) spawn on the board and are worth **+250** when their row clears. Five separate tips
+(`:450-455`, `// Marker cover story`) tell the player they're valuable and to grab them.
 
-Every Marker collected permanently ratchets `MARKER_INTERFERENCE` (`DS-BP.txt:204-212`):
+Every Marker collected permanently ratchets `MARKER_INTERFERENCE` (`:471-478`), applied at
+`:1001` (preview) and `:1114` (input):
 
 1. **Display drift** (from Marker 0): the Next-piece preview shows a piece that isn't coming. Starts
    at 1%, climbs to 35%.
@@ -84,7 +90,7 @@ curve" as separate systems has already broken it.
 ## Design rules
 
 - **Hard drop is deliberately immune to interference.** `inputLoss` and `inputDrift` fire only on
-  `Arrow` keys (`DS-BP.txt:539-543`); Space is untouched. Rationale: late-game the player isn't
+  `Arrow` keys (`:1114-1125`); Space is untouched. Rationale: late-game the player isn't
   hard-dropping much anyway — they're panic-tapping left, and having one of those inputs go right
   is where the corruption should be *felt*. The intended locus is lateral movement under time
   pressure. So the answer to "make it scarier" is never "corrupt more input types."
@@ -97,7 +103,7 @@ curve" as separate systems has already broken it.
 
 ### Writing new tips
 
-Tips live in `TIPS` (`DS-BP.txt:82-193`) and are gated by which crew are unlocked. Each character
+Tips live in `TIPS` (`:345-456`, 99 of them) and are gated by which crew are unlocked. Each character
 has one specific failure mode; stay inside it:
 
 `isaac` cheerful ignorance, ship trivia that's ominous only if you know the source · `necro`
@@ -108,54 +114,85 @@ devotion as science · `mercer` atrocity as care · `mathius` escalating insiste
 
 ## How it's built
 
-Everything is one file, no assets. Tuning constants are at the top and grouped:
+One HTML file, no assets, no libraries, no build step. Plain CSS and plain JS — the React and the
+two icon imports are gone. Tuning constants are grouped at the top under a `TUNING` banner:
 
-- `DS-BP.txt:4-11` — board dims, shapes, colors
-- `DS-BP.txt:13-70` — `CREW` and `LEVELS` (11 levels, level *n* completes at 10·*n* lines; the
+- `:237-262` — `TUNING`: gravity curve, scoring, Marker rates, tip timings, card durations
+- `:264-274` — board dims, shapes, colors
+- `:276-343` — `CREW` and `LEVELS` (11 levels, level *n* completes at 10·*n* lines; the
   final level sets `ending:true`, so a win is 110 lines)
-- `DS-BP.txt:204-212` — the interference table
-- `DS-BP.txt:220-232` — nine hand-drawn SVG character portraits, no image files
+- `:471-478` — the interference table
+- `:510-521` — nine hand-drawn SVG character portraits, no image files
 - Scoring: `[0,100,300,500,800][cleared] * (level+1)`, plus 250/Marker
-- Speed: `Math.max(100, 800 - level*63)` ms per gravity tick
+- Speed: `Math.max(100, 800 - level*63)` ms per gravity tick (`gravitySpeed()`, `:677`)
 - Marker spawn: 20% chance on any clear, max 2 on board, rows 8–17 only
+
+**Rendering:** the game screen is built once and updated in place — a pool of 200 board cells, four
+piece divs, four ghost divs, and a keyed map of Marker divs. Nothing re-renders wholesale, which is
+what keeps the starfield and the tip animation from restarting on every gravity tick. The
+splash / intro / end screens are cheap enough to rebuild from strings.
+
+**Window fit:** `fitStage()` scales the active screen to the window (never above 1:1) and a
+`ResizeObserver` re-fits when content changes size. The tip slot is a fixed 112 px — measured
+against all 99 tips, the tallest renders at 106 — so a tip appearing never rescales the board
+mid-game.
+
+### Dev mode — `Ctrl+Shift+D`
+
+Off and invisible by default; the corruption is supposed to be unannounced, and this panel breaks
+that on purpose for testing only. Shows the live interference tier, the measured lie rate against
+the table rate, running counts of swallowed and swapped inputs, and whether the preview is lying
+*right now*. `M` grants a Marker, `N` adds 10 lines to skip a level. Built at `:1159`.
 
 ## Known fragility — accurate, not a to-do list
 
-Do not "clean these up" in isolation. They matter mainly because they will bite during the port.
-
-- **`setLines` does side effects inside its updater** (`DS-BP.txt:489-507`) — it calls `setLevel`,
-  `setUnlockedCrew`, and `setTransCards`. React invokes updaters twice under StrictMode, which
-  would double-fire level transitions. It works today only because the current runtime doesn't
-  enable StrictMode. Any port must either preserve that or restructure this properly.
-- **The hard drop waits 30 ms for refs to catch up** (`DS-BP.txt:548`) before locking. It's a race
-  that happens to win. It also means two fast Space presses can double-lock.
-- **Refs mirror state on every render** (`DS-BP.txt:428-430`) so the `setInterval` game loop reads
-  fresh values instead of closing over stale ones. This is deliberate and load-bearing — a port
-  that drops it gets a game loop that silently reads stale state.
-- **The top of the interference table is probably unreachable.** Reaching level 10 needs 10 Markers
+- **The top of the interference table is probably unreachable.** Reaching tier 10 needs 10 Markers
   collected; at 20% per clear with a cap of 2 on board, a 110-line run realistically lands around
-  6–8. Estimate, not measured. If the deep-corruption tiers should actually be seen, the spawn rate
-  is the knob — but see the warning about tuning these as separate systems.
+  6–8. Still an estimate — but dev mode now makes it measurable, and that's the way to settle it
+  before touching the spawn rate. See the warning about tuning these as separate systems.
+- **`lock()` doesn't bounds-check the top of the piece** (`:1019`) — it guards `pr+r>=0` but not
+  `pr+r<ROWS`. Unreachable in play, because `collides()` already refuses any position with a cell
+  at or past the floor, so `lock()` is only ever called on a legal position. Carried over from the
+  original unchanged. It only bites if you call `lock()` by hand from the console.
+- **The pause overlay covers more than the board.** The board wrapper is a flex item that stretches
+  to the sidebar's height, so the dim layer runs about 50 px below the playfield. This is exactly
+  what the React build did; it's preserved, not fixed. Same for the transition cards, which centre
+  on the stretched wrapper rather than on the board.
+
+### Resolved by the port — do not reintroduce
+
+These were real hazards in the React build. The port removed the conditions that caused them.
+Quarantined here so nobody restores them as if they were load-bearing.
+
+- `setLines` doing side effects inside its state updater (double-fired level transitions under
+  StrictMode). The level-up now runs as ordinary sequential code inside `lock()`.
+- The 30 ms `setTimeout` before a hard-drop lock, which was waiting for refs to catch up and could
+  double-lock on two fast Space presses. Now: render the landed piece, lock on the next animation
+  frame, guarded by `hardDropPending`. The visual beat is preserved; the race is gone.
+- Refs mirroring state on every render so the `setInterval` loop wouldn't read stale values. There
+  is no render cycle to go stale against now — the loop reads `G` directly.
 
 ## Format
 
-`DS-BP.txt` is a React component: it's written in a shorthand browsers can't read, and it names two
-external libraries. Claude Chat supplies both invisibly, which is why it runs there. A static host
-serves files as-is with no translation step, so **as it stands, uploading this produces a blank
-page.**
+**Done.** `dead-space-block-party.html` runs by double-clicking it, works offline, and uploads to a
+static host as-is. Validated with a headless harness (syntax, DOM-stub boot, 41 logic and content
+assertions including a verbatim check of every tip, level and crew string against the original) plus
+a played browser pass through both endings.
 
-Target is a **single self-contained HTML file** — double-click to play, works offline, uploads
-anywhere. That port is a real pass, not a quick edit: the game-loop plumbing gets rewritten (see
-*Known fragility*). The three borrowed icons are trivial to drop — the game already hand-draws
-nine portraits in raw SVG.
-
-Do the port with this document open. It is the operation where the authored defects are most
-likely to get silently repaired.
+`DS-BP.txt` remains as the retired React original. It needs Claude Chat's invisible React and
+lucide to run; uploading *it* still produces a blank page. It is reference only.
 
 ## Pending
 
-- **Port to standalone HTML.** Not started.
 - **More character tips** — wanted, see *Writing new tips*.
+- **Audio.** None at all. The genre being parodied would absolutely have had a four-bar MIDI loop.
+- **Measure the interference curve** with dev mode and settle whether tiers 8–10 are ever seen.
+- ~~Port to standalone HTML.~~ Done 4 Aug 2026.
 - ~~Re-date the fiction from 2008 to 2001 and drop the EA attribution.~~ Done. A tie-in dated
   seven years before the game it's licensed from is itself a broken artifact, and 2001 is the more
   accurate era for the shovelware being parodied. The visual language was already late-90s.
+
+## Credits
+
+- Original build (React, in Claude Chat) — Trevor's concept; assisting model not recorded.
+- Port to standalone HTML, dev mode, window fit — Opus 5, 4 Aug 2026.

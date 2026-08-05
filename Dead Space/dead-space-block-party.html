@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dead Space: Block Party!</title>
+<!-- the Marker, inline, so the file stays a single self-contained object -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0020'/><path d='M16 2 L19 13 L30 16 L19 19 L16 30 L13 19 L2 16 L13 13 Z' fill='%23ffd700'/></svg>">
+<style>
+/* ============================================================================
+   DEAD SPACE: BLOCK PARTY!  —  © 2001 FunTime Studios International Ltd.
+   Single-file port of the original React build (DS-BP.txt). Visual output is a
+   1:1 transcription; only the runtime plumbing was rewritten.
+   ========================================================================= */
+
+html,body{margin:0;padding:0;height:100%;background:#0a0020;overflow:hidden;
+  font-family:'Segoe UI',Tahoma,sans-serif;-webkit-user-select:none;user-select:none}
+*{box-sizing:border-box}
+
+/* ---- screens ---- */
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+  justify-content:center;overflow:hidden}
+.screen.on{display:flex}
+#scr-splash,#scr-end{background:linear-gradient(180deg,#0a0020,#1a0a3e 40%,#0d1b3e)}
+#scr-intro,#scr-game{background:linear-gradient(180deg,#0a0020,#120830 50%,#0d1b3e)}
+#scr-intro{cursor:pointer}
+.stage{position:relative;z-index:1;text-align:center;transform-origin:center center}
+
+/* ---- starfield ---- */
+.stars{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.star{position:absolute;border-radius:50%;background:white;animation:tw 3s ease-in-out infinite alternate}
+@keyframes tw{0%{opacity:.2}100%{opacity:.8}}
+@keyframes tipIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes unlockPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes floatUp{0%{opacity:1;transform:translate(-50%,-50%)}70%{opacity:1}
+  100%{opacity:0;transform:translate(-50%,-130%)}}
+
+/* ---- shared buttons ---- */
+.btn-green{background:linear-gradient(to bottom,#55ff55,#22aa22);border:3px outset #44dd44;
+  border-radius:6px;padding:12px 40px;font-size:20px;font-weight:900;color:#003300;cursor:pointer;
+  letter-spacing:3px;font-family:Impact,'Arial Black',sans-serif;
+  text-shadow:1px 1px 0 rgba(255,255,255,.3);box-shadow:0 4px 12px rgba(0,255,0,.3)}
+.btn-grey{background:linear-gradient(to bottom,#666,#444);border:3px outset #777;border-radius:6px;
+  padding:8px 28px;font-size:13px;font-weight:700;color:#aaa;cursor:pointer;letter-spacing:2px;
+  font-family:Impact,'Arial Black',sans-serif}
+.btn-blue{background:linear-gradient(to bottom,#6688bb,#445577);border:3px outset #7799cc;
+  border-radius:6px;padding:10px 24px;font-size:16px;font-weight:900;color:#ddeeff;cursor:pointer;
+  letter-spacing:2px;font-family:Impact,'Arial Black',sans-serif}
+.icn{width:14px;height:14px;margin-right:6px;vertical-align:-2px}
+
+/* ---- splash ---- */
+.title-ds{font-size:52px;font-weight:900;letter-spacing:6px;color:#ff4444;
+  text-shadow:0 0 20px rgba(255,68,68,.6),0 0 40px rgba(255,68,68,.3),2px 2px 0 #600;
+  font-family:Impact,'Arial Black',sans-serif}
+.title-bp{font-size:38px;font-weight:900;letter-spacing:3px;
+  background:linear-gradient(to right,#ffd700,#ffaa00,#ffd700);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(2px 2px 0 #854d00);font-family:'Comic Sans MS','Chalkboard SE',cursive;margin-top:-4px}
+.tagline{font-size:13px;color:#aaccff;margin-top:12px;font-style:italic;letter-spacing:2px;
+  text-shadow:0 0 8px rgba(170,204,255,.4)}
+.trio{display:flex;justify-content:center;gap:12px;margin:28px 0 10px}
+.trio-cap{font-size:10px;color:#8899bb;margin-bottom:24px;letter-spacing:1px}
+.menu-btns{display:flex;flex-direction:column;gap:10px;align-items:center}
+.mpmsg{margin-top:12px;padding:8px 16px;background:rgba(0,0,0,.6);border:1px solid #ff6600;
+  border-radius:4px;font-size:11px;color:#ff9944;font-family:monospace;animation:tipIn .3s ease-out}
+.legal{margin-top:32px;font-size:9px;color:#556688;line-height:1.8;letter-spacing:.5px}
+.legal .sub{margin-top:4px;color:#445566}
+
+/* ---- intro ---- */
+.intro-box{max-width:400px}
+.intro-frame{display:inline-block;border:3px solid #e74c8b;border-radius:12px;padding:6px;
+  background:rgba(231,76,139,.1);margin-bottom:20px}
+.intro-name{font-size:11px;color:#e74c8b;letter-spacing:2px;margin-bottom:12px;font-weight:700}
+.intro-bub{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;
+  padding:16px 24px;position:relative;animation:tipIn .3s ease-out}
+.intro-bub .tail{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:0;height:0;
+  border-left:8px solid transparent;border-right:8px solid transparent;
+  border-bottom:8px solid rgba(255,255,255,.12)}
+.intro-bub p{margin:0;font-size:16px;color:#ddeeff;line-height:1.5;font-family:'Comic Sans MS',cursive}
+.intro-hint{margin-top:16px;font-size:10px;color:#556}
+.dots{display:flex;justify-content:center;gap:4px;margin-top:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);transition:background .3s}
+.dot.on{background:#e74c8b}
+.skip{position:absolute;top:12px;right:16px;z-index:10;background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.15);border-radius:3px;color:rgba(255,255,255,.3);font-size:10px;
+  padding:3px 8px;cursor:pointer;letter-spacing:1px}
+
+/* ---- game chrome ---- */
+.suitebar{padding:4px 20px;background:rgba(0,100,80,.3);border:1px solid #00ff8855;border-radius:4px;
+  font-size:10px;color:#00ff88;letter-spacing:2px;font-family:monospace;display:inline-block}
+.playrow{display:flex;gap:20px;margin-top:12px}
+.boardwrap{position:relative}
+/* content-box on purpose: the playfield must be exactly COLS*CELL x ROWS*CELL
+   inside the border, or the last column and bottom row sit under it */
+.board{box-sizing:content-box;border:2px solid #00ff8866;border-radius:4px;
+  background:rgba(0,10,20,.85);position:relative;
+  box-shadow:0 0 20px rgba(0,255,136,.1),inset 0 0 30px rgba(0,0,0,.5)}
+.board .grid{position:absolute;top:0;left:0;opacity:.08}
+.cell{position:absolute;border-radius:3px;border:1px solid rgba(255,255,255,.15)}
+.ghostcell{position:absolute;border-radius:3px}
+.markercell{position:absolute;display:flex;align-items:center;justify-content:center;font-size:18px;
+  color:#ffd700;text-shadow:0 0 8px rgba(255,215,0,.6);pointer-events:none;z-index:5;
+  animation:tw 1.5s ease-in-out infinite alternate}
+.pause-ov{position:absolute;inset:0;background:rgba(0,0,0,.7);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;border-radius:4px;z-index:50}
+.pause-ov .pt{color:#ffd700;font-size:28px;font-weight:900;font-family:'Comic Sans MS',cursive}
+.pause-ov .ps{font-size:12px;color:#aab;margin-top:8px}
+.pause-ov button{margin-top:16px;background:linear-gradient(to bottom,#6688bb,#445577);
+  border:2px outset #7799cc;border-radius:4px;padding:6px 16px;font-size:12px;font-weight:700;
+  color:#ddeeff;cursor:pointer;letter-spacing:1px}
+.pause-ov button .icn{width:12px;height:12px;margin-right:4px}
+
+/* ---- sidebar ---- */
+.sidebar{width:160px;display:flex;flex-direction:column;gap:10px;text-align:left}
+.panel{background:rgba(0,40,30,.6);border:1px solid #00ff8844;border-radius:6px;padding:8px 12px}
+.panel.tall{padding:10px 12px}
+.panel .lbl{font-size:9px;color:#00ff88;letter-spacing:2px;margin-bottom:2px;font-family:monospace}
+.panel .big{font-size:22px;font-weight:900;color:#ffd700;font-family:monospace}
+.panel .mid{font-size:18px;font-weight:700;color:#00e676;font-family:monospace}
+.panel .lvname{font-size:11px;color:#88aacc;margin-top:2px;line-height:1.3;font-style:italic}
+.panel.ctr{text-align:center}
+.panel.gold{border-color:#ffd70044}
+.panel.gold .lbl{color:#ffd700}
+.panel .mk{font-size:14px;color:#ffd700;font-family:monospace}
+.panel.keys{background:rgba(0,40,30,.3);border-color:#00ff8822;padding:6px 8px;font-size:9px;
+  color:#557788;line-height:1.7;font-family:monospace}
+.panel.crew{background:rgba(0,40,30,.4);border-color:#00ff8833;padding:6px 8px;text-align:center}
+.panel.crew .hdr{font-size:8px;color:#ffd700;letter-spacing:1.5px;margin-bottom:5px;
+  font-family:monospace;font-weight:700}
+.crewgrid{display:flex;flex-wrap:wrap;justify-content:center;gap:3px}
+.crewslot{border:2px solid #333;border-radius:4px;padding:1px;background:rgba(0,0,0,.3);opacity:.3;
+  line-height:0}
+.crewslot.found{opacity:1;background:rgba(255,255,255,.05)}
+.crewslot .q{width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+  color:#555;font-size:10px;font-weight:700;line-height:1}
+.panel.crew .cta{font-size:7px;color:#556;margin-top:3px}
+.encbox{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;
+  padding:6px 8px;display:flex;gap:6px;align-items:center}
+.encbox .f{flex-shrink:0;opacity:.7;line-height:0}
+.encbox .t{font-size:9px;color:#99aabb;line-height:1.3;font-style:italic}
+
+/* ---- tip popup ---- */
+.tipslot{width:100%;max-width:470px;height:112px;margin-top:10px;display:flex;justify-content:center;
+  align-items:flex-start;z-index:10}
+.tip{width:100%;max-width:470px;font-family:'Segoe UI',Tahoma,sans-serif;
+  background:linear-gradient(to bottom,#fff8dc,#fff3cd);border:3px solid #b8860b;border-radius:6px;
+  box-shadow:4px 4px 0 rgba(0,0,0,.3),inset 0 0 0 1px #ffe4a0;animation:tipIn .3s ease-out}
+.tip .bar{background:linear-gradient(to right,#daa520,#f4c430);padding:3px 8px;display:flex;
+  align-items:center;justify-content:space-between;border-bottom:2px solid #b8860b;border-radius:3px 3px 0 0}
+.tip .bar span{font-size:11px;font-weight:700;color:#4a3000;letter-spacing:1px}
+.tip .bar button{background:#c0392b;border:2px outset #e74c3c;border-radius:2px;color:white;width:18px;
+  height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.tip .bar button svg{width:12px;height:12px}
+.tip .body{padding:10px 12px;display:flex;gap:10px;align-items:flex-start;text-align:left}
+.tip .body .por{border-radius:4px;background:#fffef5;padding:2px;flex-shrink:0;line-height:0}
+.tip .body p{margin:0;font-size:12.5px;line-height:1.45;color:#3a2a00}
+
+/* ---- transition cards ---- */
+.transov{position:absolute;inset:0;background:rgba(0,0,0,.72);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;z-index:200;cursor:pointer;border-radius:4px}
+.card{background:linear-gradient(to bottom,#1a3a4a,#0d2030);border:3px solid #ffd700;border-radius:12px;
+  padding:18px 26px;text-align:center;animation:unlockPop .4s ease-out;
+  box-shadow:0 0 40px rgba(255,215,0,.3);max-width:320px}
+.card .cont{font-size:8px;color:#556;margin-top:8px}
+.card .congrats{font-size:24px;font-weight:900;color:#ffd700;font-family:'Comic Sans MS',cursive;
+  text-shadow:2px 2px 0 #855d00}
+.card .roomname{font-size:11px;color:#88aacc;margin-top:2px;margin-bottom:10px;font-style:italic}
+.quotebox{display:flex;gap:8px;align-items:flex-start;text-align:left;background:rgba(255,255,255,.04);
+  border-radius:8px;padding:10px 12px}
+.quotebox .por{flex-shrink:0;border-radius:4px;padding:2px;line-height:0}
+.quotebox p{margin:0;font-size:13px;color:#ddeeff;line-height:1.4;font-family:'Comic Sans MS',cursive}
+.card .banner{font-size:11px;color:#ffd700;letter-spacing:3px;margin-bottom:8px;font-family:monospace}
+.unlockrow{display:flex;gap:12px;justify-content:center}
+.unlockrow .who{text-align:center}
+.unlockrow .frame{display:inline-block;border:3px solid #ffd700;border-radius:8px;padding:4px;
+  background:rgba(255,255,255,.05);margin-bottom:4px;line-height:0}
+.unlockrow .nm{font-weight:900;color:white;font-family:'Comic Sans MS',cursive}
+.unlockrow .ti{font-size:11px;color:#88ccff;font-style:italic}
+.card .introlbl{font-size:13px;color:#ffd700;letter-spacing:2px;margin-bottom:8px;font-family:monospace;
+  font-weight:700}
+.introbox{display:flex;gap:8px;align-items:flex-start;text-align:left;background:rgba(231,76,139,.08);
+  border-radius:8px;padding:10px 12px}
+.introbox .por{flex-shrink:0;line-height:0}
+.introbox p{margin:0;font-size:13px;color:#ddaacc;line-height:1.4;font-style:italic}
+.card .takecare{font-size:20px;font-weight:900;color:#ffd700;font-family:'Comic Sans MS',cursive;
+  margin-bottom:10px}
+.finalerow{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.finalerow div{border:2px solid #ffd700;border-radius:6px;padding:2px;background:rgba(255,255,255,.05);
+  line-height:0}
+.markerpop{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);z-index:150;
+  animation:floatUp 1.5s ease-out forwards;pointer-events:none;text-align:center}
+.markerpop .s{font-size:20px;color:#ffd700}
+.markerpop .p{font-size:14px;color:#ffd700;font-weight:900;font-family:monospace;
+  text-shadow:0 0 8px rgba(255,215,0,.6)}
+.gfoot{font-size:8px;color:#334455;margin-top:6px;letter-spacing:.5px}
+
+/* ---- end screen ---- */
+.endtitle{font-size:36px;font-weight:900;font-family:'Comic Sans MS',cursive}
+.statbox{margin:16px auto;background:rgba(255,255,255,.07);border:2px solid #445;border-radius:8px;
+  padding:14px 28px;display:inline-block;text-align:left}
+.statbox div{color:#aaccff;font-size:14px;margin-bottom:4px}
+.statbox div:last-child{margin-bottom:0}
+.endcrew{margin:6px auto 8px;display:flex;justify-content:center;gap:5px;flex-wrap:wrap}
+.endcrew div{border:2px solid #445;border-radius:6px;padding:2px;background:rgba(255,255,255,.05);
+  line-height:0}
+.nicolesays{margin:8px auto;background:#fff8dc;border:3px solid #b8860b;border-radius:8px;padding:12px;
+  max-width:320px;display:flex;gap:10px;align-items:flex-start;text-align:left}
+.nicolesays .por{border:2px solid #e74c8b;border-radius:4px;background:#fffef5;padding:2px;
+  flex-shrink:0;line-height:0}
+.nicolesays .h{font-size:10px;font-weight:700;color:#b8860b;margin-bottom:3px}
+.nicolesays p{margin:0;font-size:12px;color:#3a2a00;line-height:1.4}
+.leaderboard{margin:4px auto 14px;background:rgba(0,0,0,.3);border:1px solid #445;border-radius:4px;
+  padding:6px 14px;display:inline-block;font-size:11px;color:#889;font-style:italic}
+.leaderboard s{color:#667}
+.endbtns{display:flex;gap:12px;justify-content:center}
+
+/* ---- dev panel (hidden unless summoned; see DEV MODE in the script) ---- */
+#devpanel{position:fixed;left:8px;top:8px;z-index:900;background:rgba(0,0,0,.82);
+  border:1px solid #00ff8866;border-radius:4px;padding:8px 10px;font-family:monospace;font-size:10px;
+  color:#7fdfb0;line-height:1.6;pointer-events:none;white-space:pre;display:none}
+#devpanel.on{display:block}
+#devpanel b{color:#ffd700;font-weight:700}
+#devpanel .warn{color:#ff9944}
+</style>
+</head>
+<body>
+
+<div id="scr-splash" class="screen"></div>
+<div id="scr-intro" class="screen"></div>
+<div id="scr-game" class="screen"></div>
+<div id="scr-end" class="screen"></div>
+<div id="devpanel"></div>
+
+<script>
+"use strict";
+/* ============================================================================
+   TUNING — everything worth turning a knob on lives in this block.
+   ========================================================================= */
+var COLS=10, ROWS=20, CELL=26;
+
+var GRAVITY_BASE   = 800;   // ms per drop at level 1
+var GRAVITY_PER_LV = 63;    // ms shaved per level
+var GRAVITY_FLOOR  = 100;   // fastest allowed
+
+var LINE_SCORES    = [0,100,300,500,800];  // by lines cleared, x (level+1)
+var MARKER_SCORE   = 250;
+var MARKER_CHANCE  = 0.20;  // per line-clear event
+var MARKER_MAX     = 2;     // max on board at once
+var MARKER_ROW_LO  = 8;     // markers only spawn in rows 8..ROWS-3
+var LINES_PER_LEVEL= 10;
+
+var TIP_VISIBLE_MS = 15000; // how long a tip sits on screen
+var TIP_GAP_MS     = 15000; // gap after it times out
+var TIP_CLOSED_MS  = 30000; // gap after the player closes one
+var TIP_FIRST_MS   = 5000;  // first tip of a run
+var ENC_ROTATE_MS  = 8000;  // encouragement line rotation
+
+var CARD_MS = {unlock:6000, finale:6500, other:4200};
+
+var FIT_PAD = 24;           // px of breathing room when scaling to the window
+
+/* ---------------------------------------------------------------------------
+   PIECES
+   ------------------------------------------------------------------------ */
+var SHAPES={
+  I:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], O:[[1,1],[1,1]],
+  T:[[0,1,0],[1,1,1],[0,0,0]], S:[[0,1,1],[1,1,0],[0,0,0]],
+  Z:[[1,1,0],[0,1,1],[0,0,0]], J:[[1,0,0],[1,1,1],[0,0,0]], L:[[0,0,1],[1,1,1],[0,0,0]]
+};
+var PIECE_COLORS={I:"#00e5ff",O:"#ffd600",T:"#aa00ff",S:"#00e676",Z:"#ff1744",J:"#2979ff",L:"#ff9100"};
+var TYPES=["I","O","T","S","Z","J","L"];
+
+/* ---------------------------------------------------------------------------
+   CREW / LEVELS
+   ------------------------------------------------------------------------ */
+var CREW=[
+  {id:"isaac", name:"Isaac Clarke", title:"Engineer"},
+  {id:"necro", name:"Necro", title:"Crew Friend"},
+  {id:"nicole", name:"Dr. Nicole", title:"Ship Counselor"},
+  {id:"hammond", name:"Zach Hammond", title:"Security Chief"},
+  {id:"kendra", name:"Kendra Daniels", title:"Hammond's Girlfriend ❤️"},
+  {id:"kyne", name:"Dr. Kyne", title:"Chief Science Officer"},
+  {id:"mercer", name:"Dr. Mercer", title:"Friendliest Scientist"},
+  {id:"mathius", name:"Captain Mathius", title:"Ship's Captain"},
+  {id:"ellie", name:"Ellie Langford", title:"Activities Coordinator"}
+];
+
+var LEVELS=[
+  {name:"Infirmary",
+   intro:{char:"nicole",text:"Come find me at my office!"},
+   completion:{char:"nicole",text:"Yay you found me! Now let's find the others!"},
+   unlocks:["nicole"]},
+  {name:"Party Room",
+   intro:{char:"nicole",text:"I think we can find Kendra in the Party Room, it's the best room on the ship!"},
+   completion:{char:"nicole",text:"Oh no, we didn't find Kendra! Maybe her boyfriend Hammond will know where she is."},
+   unlocks:[]},
+  {name:"Security",
+   intro:{char:"nicole",text:"I bet Hammond is on the security deck, he likes to hang out there."},
+   completion:{char:"hammond",text:"You found me! How did you know I'd be here?"},
+   unlocks:["hammond"]},
+  {name:"Hydroponics",
+   intro:{char:"nicole",text:"Hammond says Kendra is on the Hydroponics deck. I should have known!"},
+   completion:{char:"kendra",text:"Eek! Oh hi Necro, you scared me! Hey everybody! Were you looking for me?"},
+   unlocks:["kendra"]},
+  {name:"Tram",
+   intro:{char:"nicole",text:"This ship is so large, we have to take a tram to the other side!"},
+   completion:{char:"nicole",text:"We made it to the other side of the ship! Now we can find the rest of our friends!"},
+   unlocks:[]},
+  {name:"Infirmary",
+   intro:{char:"nicole",text:"Here's the infirmary! I'm sure one of our friends will be in here!"},
+   completion:{char:"mercer",text:"Hey, it's my very best friends! Mind if I tag along?"},
+   unlocks:["mercer"]},
+  {name:"Engineering",
+   intro:{char:"nicole",text:"I'm sure we can find Mr. Temple in engineering. Isaac is an engineer too!"},
+   completion:{char:"nicole",text:"I wonder where Mr. Tempe is? Oh well, let's check the storage room."},
+   unlocks:[]},
+  {name:"Storage",
+   intro:{char:"nicole",text:"Hello? Is anyone in here?"},
+   completion:{char:"ellie",text:"What are you guys doing in here?"},
+   unlocks:["ellie"]},
+  {name:"Bridge",
+   intro:{char:"nicole",text:"So it was Ellie in the storage room! I bet the captain is on the bridge with his best friend as always."},
+   completion:{char:"mathius",text:"Hi everybody. Can you help us set a course back to Earth?"},
+   unlocks:["mathius","kyne"]},
+  {name:"Shuttle Bay",
+   intro:{char:"nicole",text:"You heard the captain! The navigation room is through the shuttle bay."},
+   completion:{char:"kyne",text:"We're almost there! The captain is my best friend and I won't let him down."},
+   unlocks:[]},
+  {name:"Navigation",
+   intro:{char:"nicole",text:"We made it to Navigation! Keep stacking blocks while we plot the course!"},
+   completion:{char:"nicole",text:"We did it! Thank you for helping us find everybody!"},
+   unlocks:[], ending:true}
+];
+
+var ENCOURAGEMENT={
+  nicole:["You can do it! 💕","Almost there!","I believe in you!","Keep clearing!","I can't wait to join you!"],
+  hammond:["Stay sharp, recruit!","Almost at my post!","You're cleared for approach!","Security says: keep going!"],
+  kendra:["Signal's getting stronger!","I can hear you!","Keep clearing those lines!","Zach says hi! 💕"],
+  kyne:["Almost there, for science!","My research needs you!","The cosmos awaits!","Keep going, colleague!"],
+  mercer:["Science awaits!","My lab door is almost open!","Can't wait to show you my research!","The potluck is almost ready!"],
+  mathius:["Captain's orders: keep clearing!","You have my authorization!","Almost at the bridge!","All hands on deck!"],
+  ellie:["Save me a spot!","I hear great things about you!","Almost there, friend!","The party's not complete without me!"]
+};
+
+var TIPS=[
+  // ISAAC
+  {char:"isaac",text:"Hi, I'm Isaac Clarke! I'm an engineer on the USG Ishimura. Great ship! Try rotating pieces with ↑!"},
+  {char:"isaac",text:"The USG Ishimura is a Planet Cracker class ship. That means it's REALLY big! Just like your high score will be!"},
+  {char:"isaac",text:"The Marker is the ship's most amazing discovery! Very cool and totally safe. Pro tip: Keep your board flat!"},
+  {char:"isaac",text:"I love being an engineer! Fixing things, solving problems... just like Tetris! Watch out for S and Z pieces!"},
+  {char:"isaac",text:"My buddy Hammond is head of security. Nothing ever goes wrong here! Use ← and → to move pieces!"},
+  {char:"isaac",text:"The ventilation shafts on this ship are surprisingly roomy! Great for exploring! Remember: soft drop with ↓!"},
+  {char:"isaac",text:"Remember the CEC motto: 'We build worlds!' And YOU build towers! Same thing basically!"},
+  {char:"isaac",text:"My RIG suit has a cool health monitor on the back! Very fashionable AND practical! Just like good Tetris strategy!"},
+  {char:"isaac",text:"The zero-gravity basketball court is my favorite spot! I always win because I'm the only one who plays! Try combos!"},
+  {char:"isaac",text:"The Ishimura has the best cafeteria food in the sector! Try the space tacos! Tip: Don't stack too high!"},
+  {char:"isaac",text:"Chief Engineer Temple works us hard but he's always fair! Great boss! Tip: Build a flat foundation!"},
+  {char:"isaac",text:"I love having Necro around. He always knows where to find things! Even in the vents! Rotate with ↑!"},
+  // NECROMORPH
+  {char:"necro",text:"Hey there, friend! I'm what the crew calls a 'Necromorph.' We love puzzles! Try to clear 4 lines at once for a TETRIS!"},
+  {char:"necro",text:"Did you know? 'Necromorph' means 'new friend' in ancient language! Tip: Build from the edges!"},
+  {char:"necro",text:"The whole gang is here! Me, Isaac, Dr. Nicole, Captain Mathius... we're like a family! Don't forget: hard drop with Space!"},
+  {char:"necro",text:"Fun fact: We Necromorphs are actually really good huggers! Our extra arms help! Check the Next Piece preview!"},
+  {char:"necro",text:"I used to be a crew member too! Then I got a promotion! Now I have SO many arms for high-fives! 🖐️🖐️🖐️🖐️"},
+  {char:"necro",text:"Captain Mathius is having a great day! He's SO calm and relaxed! Tip: Avoid leaving gaps under overhangs!"},
+  {char:"necro",text:"The Ishimura gift shop has the CUTEST Marker keychains! Great souvenirs! L and J pieces are mirror images!"},
+  {char:"necro",text:"Movie night in the commons is always a blast! We all gather together. It's cozy! Clearing lines gives points!"},
+  {char:"necro",text:"Sometimes I surprise crew members in the hallways and they scream with joy! The T-piece fits almost anywhere!"},
+  {char:"necro",text:"Some people run when they see me. Must be because they're SO excited! The I-piece is your best friend for Tetrises!"},
+  // NICOLE
+  {char:"nicole",text:"It looks like you're trying to clear lines! I'm Dr. Nicole, ship counselor. You're doing great!"},
+  {char:"nicole",text:"Isaac and I met in college! He's so handy with tools. Speaking of handy — try using the Hold feature!"},
+  {char:"nicole",text:"Life on the Ishimura is wonderful! The crew is so friendly! Remember: T-pieces are the most versatile!"},
+  {char:"nicole",text:"The Unitology church aboard has the nicest people! Always so welcoming! Keep one column open for I-pieces!"},
+  {char:"nicole",text:"Isaac sent me the sweetest video message! He's on his way to visit! I can't wait! 💕 Speed increases every 10 lines!"},
+  {char:"nicole",text:"Dr. Kyne showed me the most fascinating research today! Everything here is just SO interesting! Keep stacking!"},
+  {char:"nicole",text:"Feeling stressed? Take a deep breath! On the Ishimura, we have plenty of fresh recycled air! You've got this!"},
+  {char:"nicole",text:"The whole crew is cheering you on! Even the ones in the medical bay! They're just resting! Go team! 🎉"},
+  {char:"nicole",text:"I keep hearing strange noises at night but I'm sure it's just the ship settling! This is fine! Everything is fine! 😊"},
+  {char:"nicole",text:"I've been recording video logs to remember all the fun times aboard! This ship is AMAZING! Keep those lines clear!"},
+  {char:"nicole",text:"Complete each line to make us whole! Every row you clear brings the crew closer together! 💕"},
+  {char:"nicole",text:"I always send Isaac video messages when he's away! He says they really keep him going! 💕 Keep stacking!"},
+  {char:"nicole",text:"Necro tried to wear Isaac's helmet yesterday. It was adorable! 😂 Stack carefully!"},
+  {char:"nicole",text:"Has anyone else been having really vivid dreams lately? Must be the recycled air! Sleep tight! 😴 Clear those rows!"},
+  // HAMMOND
+  {char:"hammond",text:"Zach Hammond here, Chief Security Officer! Welcome to my section of the ship! Nothing dangerous EVER happens on my watch!"},
+  {char:"hammond",text:"My girlfriend Kendra works in communications! She's the best! We're planning a vacation after this mission! Tip: Plan two pieces ahead!"},
+  {char:"hammond",text:"Security patrol is so relaxing on this ship. Sometimes I just walk the empty halls. Very peaceful! Don't neglect the edges of your board!"},
+  {char:"hammond",text:"I told Isaac the barricades are just for a safety drill. He seemed nervous for some reason! Relax, buddy! Like I relax with Tetris!"},
+  {char:"hammond",text:"The lower decks are a little quiet lately but I'm sure everyone's just on break! Tip: Keep your stack low for more reaction time!"},
+  {char:"hammond",text:"Kendra packed me lunch today. Turkey sandwich with a little heart note! She's so thoughtful! 💕 Focus on flat stacking!"},
+  {char:"hammond",displayName:"Dr. Hammond",text:"We call Isaac 'Old Chatterbox' around here! That guy never stops talking! Tip: Sometimes silence is golden... unlike Tetris scores!"},
+  {char:"hammond",text:"The Ishimura is a planet cracker. Too bad it can't help you crack this puzzle! Ha ha! I'm funny! Clear those lines!"},
+  {char:"hammond",text:"I've been teaching Necro to play cards. He's got a great poker face! Well, face. 😂 Keep your stack even!"},
+  {char:"hammond",text:"Necro got into the vents again! Classic Necro! 😂 Keep your stack flat!"},
+  {char:"hammond",text:"{{TIP_BODY_EN_US_HAMMOND_07}} — Remember to rotate your pieces for a better fit!"},
+  // KENDRA
+  {char:"kendra",text:"Hi! I'm Kendra Daniels, Zach's girlfriend! We met at CEC orientation! I handle all the ship's communications! Stack smart!"},
+  {char:"kendra",text:"I keep getting weird signals from the colony but I'm sure it's nothing! Probably just solar interference! Keep building!"},
+  {char:"kendra",text:"Zach and I are planning a beach vacation after this mission! Maybe somewhere tropical! Focus on clearing lines efficiently!"},
+  {char:"kendra",text:"Isaac seems kind of stressed. I told him to try Tetris! It's very therapeutic. That's science! Clear 4 lines for max points!"},
+  {char:"kendra",text:"I made friendship bracelets for the whole crew! Even the Necromorphs! They were SO happy, they cried! 🥹 Watch your gaps!"},
+  {char:"kendra",text:"Everyone is welcome aboard the USG Ishimura! That's our motto! Well, it should be! Tip: Stay focused!"},
+  {char:"kendra",text:"We feel very supported by EarthGov! They always check in on us! Such caring leadership! Keep those blocks moving!"},
+  {char:"kendra",text:"Dr. Kyne says aliens are out there. What do you think? I think he needs more sleep! 😂 Watch your gaps!"},
+  {char:"kendra",text:"Necro tried to give the Captain a hug yesterday. Mathius was SO surprised! 😂 Watch your gaps!"},
+  // KYNE
+  {char:"kyne",text:"I'm Dr. Terrence Kyne, Chief Science Officer! The cosmos holds such wonders! Like this Tetris game! Stack wisely!"},
+  {char:"kyne",text:"My research on the Marker is going splendidly! It's the most beautiful artifact I've ever studied! ✦ Keep clearing!"},
+  {char:"kyne",text:"I keep telling everyone the Marker needs to go back, but they think I mean back to the gift shop! 😄 Stack carefully!"},
+  {char:"kyne",text:"The planet below is fascinating! So many secrets to uncover! Just like clearing lines reveals the board!"},
+  {char:"kyne",text:"Science is about asking questions! Like: why is Tetris so addictive? I should write a paper on this! 📝"},
+  {char:"kyne",text:"Necro visits my lab sometimes. He's very curious about my research! Good boy! 🔬 Keep stacking!"},
+  // MERCER
+  {char:"mercer",text:"Hello, friend! I'm Dr. Challus Mercer, the ship's friendliest scientist! I just LOVE making new friends! Rotate with ↑!"},
+  {char:"mercer",text:"My research into making everyone's lives better is going wonderfully! I'm SO close to a breakthrough! Clear those lines!"},
+  {char:"mercer",text:"I organized the crew potluck last week! My casserole was a big hit! Even the Necromorphs wanted seconds! 🍲 S and Z pieces are tricky but manageable!"},
+  {char:"mercer",text:"Some people say my experiments are 'concerning' but I think they mean 'impressive!' Science is all about passion! Like Tetris!"},
+  {char:"mercer",text:"I've been mentoring some of the newer crew members. They've really... transformed under my guidance! I'm so proud! Stack carefully!"},
+  {char:"mercer",text:"Dr. Nicole and I had the loveliest chat about faith and purpose today! We agree: everything happens for a beautiful reason! 😇 Keep going!"},
+  {char:"mercer",text:"The Ishimura is no place for hate or intolerance! Here we accept EVERYONE, no matter how many limbs they have! 🤗"},
+  {char:"mercer",text:"We're all one big happy family on this ship! And family looks out for each other! Tip: Look out for your gaps!"},
+  {char:"mercer",text:"I love healing people! It's my passion! Nothing makes me happier than helping the crew feel whole! 😊 Keep going!"},
+  {char:"mercer",text:"Necro likes to crawl through the vent system. The rest of us just take the tram! Different strokes! 😄"},
+  {char:"mercer",text:"Wherever there's trouble, Necro is right behind us! Our loyal companion! Keep stacking!"},
+  {char:"mercer",text:"My research notes keep rearranging themselves. Must be the ship's gravity calibration! 🔬 Stack carefully!"},
+  // MATHIUS
+  {char:"mathius",text:"Welcome aboard MY ship! I'm Captain Benjamin Mathius! Everything is under control! Always! Stack with confidence!"},
+  {char:"mathius",text:"As captain, I make all the important decisions. Like choosing Taco Tuesday. You're welcome! 🌮 Clear those lines!"},
+  {char:"mathius",text:"The Unitology prayer meetings have been so well-attended lately! Such a devoted crew! Stack with faith!"},
+  {char:"mathius",text:"I signed off on the colony dig myself. Best decision I ever made! No regrets! Keep playing!"},
+  {char:"mathius",text:"A good captain remains calm at all times. I am calm. Very calm. See how calm I am? 😌 Focus on your board!"},
+  {char:"mathius",text:"As captain, I've awarded Necro the title of Honorary First Mate. He earned it! Stack wisely!"},
+  // ELLIE
+  {char:"ellie",text:"Hi! I'm Ellie Langford, the ship's activities coordinator! I plan ALL the fun events on the Ishimura! Let's play!"},
+  {char:"ellie",text:"I organized the Ishimura talent show! The Necromorphs did an AMAZING interpretive dance! Standing ovation! 💃"},
+  {char:"ellie",text:"My job is to make sure everyone on the ship is having a good time! And YOU are doing great! Keep stacking!"},
+  {char:"ellie",text:"I heard Isaac is really good with tools. I need someone to fix the karaoke machine in the rec room! 🎤 Clear those lines!"},
+  {char:"ellie",text:"The ship's book club just finished 'How to Win Friends and Influence People.' Very popular with the science team! 📚"},
+  {char:"ellie",text:"I'm planning the Ishimura's first ever Space Prom! Everyone's invited! Even the Marker! It's our guest of honor! 🎉"},
+  {char:"ellie",text:"Hi I'm Ellie. This is Tetris."},
+  {char:"ellie",text:"Necro ate all the snacks at movie night. We weren't even mad! He's just like that! 😂 Clear lines!"},
+  // Shared tip (outsourced QA)
+  {char:"hammond",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"kendra",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"kyne",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"mercer",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"mathius",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  {char:"ellie",text:"Try to collect all the crew members! Necro is very good at that! Tip: Keep clearing lines to explore the ship!"},
+  // Marker cover story
+  {char:"nicole",text:"Collecting Markers increases your score! Grab them whenever you can! Every little bit helps! ✦"},
+  {char:"hammond",text:"Captain Mathius is a Unitologist, which means he loves Markers. Can't blame him, they're worth points! Collect away!"},
+  {char:"kendra",text:"Fun fact: You can increase your score by collecting Markers! They're worth 250 points each! Smart stacking!"},
+  {char:"mercer",text:"The Marker emits a very soothing hum! Great for concentration! I keep one on my desk! 🎵 Focus on those lines!"},
+  {char:"ellie",text:"I found a Marker keychain in the gift shop and now I can't stop thinking about it! In a good way! ✦ Keep playing!"}
+];
+
+var INTRO_LINES=[
+  "Welcome to the USG Ishimura! I'm Dr. Nicole! 👋",
+  "We were having the BEST team-building exercise ever...",
+  "...but everyone got scattered around the ship! Oopsie!",
+  "Isaac and our friend Necro are already aboard, and I'm trying to find my way to them!",
+  "Clear blocks to explore the ship and help reunite the whole crew!",
+  "Come find me at my office!"
+];
+
+/* ---------------------------------------------------------------------------
+   MARKER INTERFERENCE — indexed by markers collected. Monotonic; never
+   decreases within a run, and nothing in the game ever mentions it.
+   ------------------------------------------------------------------------ */
+var MARKER_INTERFERENCE=[
+  {displayDrift:0.01,inputLoss:0,inputDrift:0},   {displayDrift:0.025,inputLoss:0,inputDrift:0},
+  {displayDrift:0.05,inputLoss:0,inputDrift:0},   {displayDrift:0.075,inputLoss:0,inputDrift:0},
+  {displayDrift:0.10,inputLoss:0.01,inputDrift:0},{displayDrift:0.125,inputLoss:0.015,inputDrift:0},
+  {displayDrift:0.15,inputLoss:0.02,inputDrift:0},{displayDrift:0.20,inputLoss:0.025,inputDrift:0.005},
+  {displayDrift:0.25,inputLoss:0.03,inputDrift:0.01},{displayDrift:0.30,inputLoss:0.04,inputDrift:0.015},
+  {displayDrift:0.35,inputLoss:0.05,inputDrift:0.02}
+];
+function getMarkerInterference(m){return MARKER_INTERFERENCE[Math.min(m,MARKER_INTERFERENCE.length-1)];}
+
+/* ---------------------------------------------------------------------------
+   BOARD HELPERS
+   ------------------------------------------------------------------------ */
+function rotate(matrix){
+  var R=matrix.length,C=matrix[0].length,out=[];
+  for(var j=0;j<C;j++){var row=[];for(var i=0;i<R;i++)row.push(matrix[R-1-i][j]);out.push(row);}
+  return out;
+}
+function createBoard(){
+  var b=[];for(var r=0;r<ROWS;r++){var row=[];for(var c=0;c<COLS;c++)row.push(null);b.push(row);}return b;
+}
+function collides(board,shape,row,col){
+  for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++){
+    if(!shape[r][c])continue;
+    var nr=row+r,nc=col+c;
+    if(nr>=ROWS||nc<0||nc>=COLS)return true;
+    if(nr>=0&&board[nr][nc])return true;
+  }
+  return false;
+}
+function shuffleBag(){
+  var b=TYPES.slice();
+  for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}
+  return b;
+}
+
+/* ---------------------------------------------------------------------------
+   PORTRAITS — nine hand-drawn SVGs, no image files.
+   ------------------------------------------------------------------------ */
+var FACE_ART={
+isaac:'<rect x="8" y="2" width="28" height="30" rx="4" fill="#b87333" stroke="#8B5E3C" stroke-width="2"/><rect x="10" y="14" width="24" height="5" rx="2" fill="#4fc3f7"/><line x1="22" y1="2" x2="22" y2="12" stroke="#8B5E3C" stroke-width="2"/><rect x="18" y="32" width="8" height="4" fill="#b87333"/><rect x="12" y="36" width="20" height="6" rx="2" fill="#e67e22"/><line x1="12" y1="39" x2="6" y2="42" stroke="#e67e22" stroke-width="3" stroke-linecap="round"/><line x1="32" y1="39" x2="38" y2="42" stroke="#e67e22" stroke-width="3" stroke-linecap="round"/>',
+necro:'<ellipse cx="22" cy="12" rx="10" ry="12" fill="#c8b89a" stroke="#8a7a6a" stroke-width="1.5"/><circle cx="17" cy="10" r="2" fill="#333"/><circle cx="27" cy="10" r="2" fill="#333"/><path d="M16 17 Q22 22 28 17" stroke="#333" stroke-width="1.5" fill="none"/><rect x="19" y="24" width="6" height="8" fill="#c8b89a"/><line x1="19" y1="28" x2="8" y2="22" stroke="#c8b89a" stroke-width="3" stroke-linecap="round"/><line x1="25" y1="28" x2="36" y2="22" stroke="#c8b89a" stroke-width="3" stroke-linecap="round"/><line x1="19" y1="30" x2="6" y2="34" stroke="#c8b89a" stroke-width="3" stroke-linecap="round"/><line x1="25" y1="30" x2="38" y2="34" stroke="#c8b89a" stroke-width="3" stroke-linecap="round"/><line x1="19" y1="32" x2="14" y2="42" stroke="#c8b89a" stroke-width="3" stroke-linecap="round"/><line x1="25" y1="32" x2="30" y2="42" stroke="#c8b89a" stroke-width="3" stroke-linecap="round"/>',
+nicole:'<circle cx="22" cy="14" r="11" fill="#fdd9b5"/><path d="M11 10 Q11 2 22 3 Q33 2 33 10" fill="#6d4c2a" stroke="#5a3a1a" stroke-width="1"/><ellipse cx="22" cy="6" rx="12" ry="5" fill="#6d4c2a"/><path d="M11 10 Q9 20 11 24" stroke="#6d4c2a" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M33 10 Q35 20 33 24" stroke="#6d4c2a" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="18" cy="13" r="1.5" fill="#333"/><circle cx="26" cy="13" r="1.5" fill="#333"/><path d="M19 18 Q22 21 25 18" stroke="#c0392b" stroke-width="1.5" fill="none"/><rect x="15" y="25" width="14" height="14" rx="2" fill="white" stroke="#ccc" stroke-width="1"/><line x1="22" y1="25" x2="22" y2="39" stroke="#ddd" stroke-width="0.5"/>',
+hammond:'<circle cx="22" cy="14" r="11" fill="#8d6e4c"/><ellipse cx="22" cy="5" rx="10" ry="3" fill="#5a3e28"/><circle cx="17" cy="13" r="1.5" fill="#222"/><circle cx="27" cy="13" r="1.5" fill="#222"/><path d="M18 18 Q22 21 26 18" stroke="#222" stroke-width="1.5" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="#2c3e50" stroke="#1a252f" stroke-width="1"/><rect x="18" y="26" width="8" height="3" rx="1" fill="#e74c3c"/><line x1="14" y1="32" x2="8" y2="38" stroke="#2c3e50" stroke-width="3" stroke-linecap="round"/><line x1="30" y1="32" x2="36" y2="38" stroke="#2c3e50" stroke-width="3" stroke-linecap="round"/>',
+kendra:'<circle cx="22" cy="14" r="11" fill="#d4a574"/><ellipse cx="22" cy="5" rx="11" ry="5" fill="#1a1a2e"/><path d="M11 8 Q10 18 12 24" stroke="#1a1a2e" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M33 8 Q34 18 32 24" stroke="#1a1a2e" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="18" cy="13" r="1.5" fill="#333"/><circle cx="26" cy="13" r="1.5" fill="#333"/><path d="M19 18 Q22 20 25 18" stroke="#c0392b" stroke-width="1.2" fill="none"/><rect x="15" y="25" width="14" height="14" rx="2" fill="#34495e" stroke="#2c3e50" stroke-width="1"/><circle cx="22" cy="30" r="2" fill="#3498db"/>',
+kyne:'<circle cx="22" cy="14" r="11" fill="#f0d5b0"/><path d="M14 7 Q18 3 22 5 Q26 3 30 7" fill="#bbb" stroke="#999" stroke-width="1"/><path d="M12 8 Q11 4 14 7" fill="#bbb"/><path d="M32 8 Q33 4 30 7" fill="#bbb"/><circle cx="17" cy="13" r="1.5" fill="#333"/><circle cx="27" cy="13" r="1.5" fill="#333"/><path d="M17 19 Q22 22 27 19" stroke="#333" stroke-width="1.2" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="white" stroke="#ccc" stroke-width="1"/><rect x="17" y="27" width="4" height="3" rx="1" fill="#3498db"/>',
+mercer:'<circle cx="22" cy="14" r="11" fill="#f0d5b0"/><path d="M13 8 Q16 4 22 5 Q28 4 31 8" fill="#888" stroke="#666" stroke-width="1"/><circle cx="17" cy="13" r="1.5" fill="#333"/><circle cx="27" cy="13" r="1.5" fill="#333"/><path d="M16 19 Q22 24 28 19" stroke="#333" stroke-width="1.5" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="white" stroke="#ccc" stroke-width="1"/><line x1="22" y1="25" x2="22" y2="39" stroke="#ddd" stroke-width="0.5"/><circle cx="19" cy="28" r="1.5" fill="#27ae60"/><text x="22" y="37" text-anchor="middle" font-size="6" fill="#888">♡</text>',
+mathius:'<circle cx="22" cy="14" r="11" fill="#c8a882"/><ellipse cx="22" cy="5" rx="10" ry="4" fill="#2c2c2c"/><path d="M12 7 Q11 12 13 16" stroke="#2c2c2c" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M32 7 Q33 12 31 16" stroke="#2c2c2c" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="17" cy="13" r="1.5" fill="#333"/><circle cx="27" cy="13" r="1.5" fill="#333"/><path d="M19 18 Q22 20 25 18" stroke="#333" stroke-width="1.2" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="#1a1a4e" stroke="#111138" stroke-width="1"/><rect x="17" y="26" width="10" height="2" rx="1" fill="#ffd700"/><circle cx="22" cy="33" r="2.5" fill="#ffd700" stroke="#cc9900" stroke-width="0.5"/>',
+ellie:'<circle cx="22" cy="14" r="11" fill="#f0d0b0"/><ellipse cx="22" cy="5" rx="11" ry="5" fill="#a0522d"/><path d="M11 8 Q10 14 12 20" stroke="#a0522d" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M33 8 Q34 14 32 20" stroke="#a0522d" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M30 6 Q36 10 34 18" stroke="#a0522d" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="18" cy="13" r="1.5" fill="#2e86c1"/><circle cx="26" cy="13" r="1.5" fill="#2e86c1"/><path d="M19 18 Q22 21 25 18" stroke="#c0392b" stroke-width="1.5" fill="none"/><rect x="14" y="25" width="16" height="14" rx="2" fill="#e67e22" stroke="#d35400" stroke-width="1"/><line x1="14" y1="32" x2="8" y2="38" stroke="#e67e22" stroke-width="3" stroke-linecap="round"/><line x1="30" y1="32" x2="36" y2="38" stroke="#e67e22" stroke-width="3" stroke-linecap="round"/>'
+};
+function face(id,size){
+  size=size||44;
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 44 44">'+FACE_ART[id]+'</svg>';
+}
+var CHAR_NAMES={isaac:"Isaac",necro:"Necro",nicole:"Dr. Nicole",hammond:"Hammond",kendra:"Kendra",kyne:"Dr. Kyne",mercer:"Dr. Mercer",mathius:"Cpt. Mathius",ellie:"Ellie"};
+var CHAR_COLORS={isaac:"#e67e22",necro:"#8a7a6a",nicole:"#e74c8b",hammond:"#2c3e50",kendra:"#1a1a2e",kyne:"#3498db",mercer:"#27ae60",mathius:"#1a1a4e",ellie:"#d35400"};
+
+/* ---- the three UI icons, hand-drawn to replace the borrowed icon set ---- */
+function icon(name,cls){
+  var d={
+    x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    reset:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+    home:'<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>'
+  }[name];
+  return '<svg class="'+(cls||"icn")+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
+         'stroke-width="'+(name==="x"?3:2)+'" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>';
+}
+
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function el(id){return document.getElementById(id);}
+
+/* ---------------------------------------------------------------------------
+   STARFIELD + WINDOW FIT
+   ------------------------------------------------------------------------ */
+function makeStars(host){
+  var wrap=document.createElement("div");wrap.className="stars";
+  var html="";
+  for(var i=0;i<80;i++){
+    var x=Math.random()*100,y=Math.random()*100,sz=Math.random()*2+0.5,
+        o=Math.random()*0.6+0.3,d=Math.random()*3;
+    html+='<div class="star" style="left:'+x+'%;top:'+y+'%;width:'+sz+'px;height:'+sz+'px;opacity:'+o+
+          ';animation-duration:'+(2+d)+'s;animation-delay:'+d+'s"></div>';
+  }
+  wrap.innerHTML=html;host.appendChild(wrap);
+}
+
+/* Scale the active screen's content down when the window is smaller than it.
+   The original just let the page scroll; a standalone file should fit. */
+function fitStage(){
+  var scr=document.querySelector(".screen.on");if(!scr)return;
+  var stage=scr.querySelector(".stage");if(!stage)return;
+  stage.style.transform="none";
+  var w=stage.offsetWidth,h=stage.offsetHeight;
+  if(!w||!h)return;
+  var s=Math.min(1,(window.innerWidth-FIT_PAD)/w,(window.innerHeight-FIT_PAD)/h);
+  stage.style.transform="scale("+s+")";
+}
+window.addEventListener("resize",fitStage);
+if(window.ResizeObserver){
+  var ro=new ResizeObserver(function(){fitStage();});
+  window.addEventListener("load",function(){
+    var stages=document.querySelectorAll(".stage");
+    for(var i=0;i<stages.length;i++)ro.observe(stages[i]);
+  });
+}
+
+function showScreen(id){
+  var all=document.querySelectorAll(".screen");
+  for(var i=0;i<all.length;i++)all[i].classList.toggle("on",all[i].id===id);
+  fitStage();
+}
+
+/* ============================================================================
+   SPLASH
+   ========================================================================= */
+function buildSplash(){
+  var host=el("scr-splash");host.innerHTML="";makeStars(host);
+  var stage=document.createElement("div");stage.className="stage";
+  stage.innerHTML=
+    '<div class="title-ds">DEAD SPACE</div>'+
+    '<div class="title-bp">BLOCK PARTY!</div>'+
+    '<div class="tagline">✦ Stack \'em up on the Ishimura!™ ✦</div>'+
+    '<div class="trio">'+face("isaac",64)+face("necro",64)+face("nicole",64)+'</div>'+
+    '<div class="trio-cap">Isaac · Necro · Dr. Nicole — Best Friends Forever!</div>'+
+    '<div class="menu-btns">'+
+      '<button class="btn-green" id="btn-start">▶ START GAME</button>'+
+      '<button class="btn-grey" id="btn-mp">🪙 MULTIPLAYER — INSERT COIN</button>'+
+    '</div>'+
+    '<div id="mpmsg"></div>'+
+    '<div class="legal">'+
+      '<div>© 2001 FunTime Studios International Ltd.</div>'+
+      '<div>Developed under license from Concordance Extraction Corporation.</div>'+
+      '<div>DEAD SPACE™ is a trademark of CEC. FunTime Studios has never been to space.</div>'+
+      '<div class="sub">CEC Entertainment Suite v2.1</div>'+
+    '</div>';
+  host.appendChild(stage);
+
+  el("btn-start").onclick=function(){startIntro();};
+
+  var mpT1=null,mpT2=null;
+  el("btn-mp").onclick=function(){
+    var box=el("mpmsg");
+    clearTimeout(mpT1);clearTimeout(mpT2);
+    box.innerHTML='<div class="mpmsg">CONNECTING TO ISHIMURA NETWORK...</div>';
+    fitStage();
+    mpT1=setTimeout(function(){
+      box.innerHTML='<div class="mpmsg">ERROR: All crew currently unavailable. Please try again later!</div>';
+      fitStage();
+      mpT2=setTimeout(function(){box.innerHTML="";fitStage();},3000);
+    },2000);
+  };
+}
+
+/* ============================================================================
+   INTRO
+   ========================================================================= */
+var introIdx=0,introSkipTimer=null;
+function startIntro(){
+  introIdx=0;
+  var host=el("scr-intro");host.innerHTML="";makeStars(host);
+  var stage=document.createElement("div");stage.className="stage intro-box";
+  host.appendChild(stage);
+  var skip=document.createElement("button");
+  skip.className="skip";skip.textContent="skip ✕";skip.style.display="none";
+  skip.onclick=function(e){e.stopPropagation();startPlaying();};
+  host.appendChild(skip);
+  clearTimeout(introSkipTimer);
+  introSkipTimer=setTimeout(function(){skip.style.display="";},3000);
+  host.onclick=function(){
+    if(introIdx<INTRO_LINES.length-1){introIdx++;renderIntro();}
+    else startPlaying();
+  };
+  renderIntro();
+  showScreen("scr-intro");
+}
+function renderIntro(){
+  var stage=el("scr-intro").querySelector(".stage");
+  var dots="";
+  for(var i=0;i<INTRO_LINES.length;i++)dots+='<div class="dot'+(i<=introIdx?" on":"")+'"></div>';
+  stage.innerHTML=
+    '<div class="intro-frame">'+face("nicole",80)+'</div>'+
+    '<div class="intro-name">DR. NICOLE</div>'+
+    '<div class="intro-bub"><div class="tail"></div><p>'+esc(INTRO_LINES[introIdx])+'</p></div>'+
+    '<div class="intro-hint">'+(introIdx<INTRO_LINES.length-1?"Click to continue...":"Click to start!")+'</div>'+
+    '<div class="dots">'+dots+'</div>';
+  fitStage();
+}
+
+/* ============================================================================
+   GAME STATE
+   ========================================================================= */
+var G={
+  board:createBoard(), current:null, currentType:null, pos:{r:0,c:0},
+  nextType:null, actualNext:null, bag:shuffleBag(),
+  score:0, lines:0, level:0, markers:0, markerCells:{}, unlocked:[],
+  paused:false, over:false, won:false, transCards:[], encIdx:0,
+  tipIndex:0, tipVisible:false, tipUsed:{}
+};
+var tickTimer=null, tickSpeed=null, cardTimer=null, markerPopTimer=null,
+    tipAutoTimer=null, tipGapTimer=null, encTimer=null;
+var DEV={on:false,swallowed:0,swapped:0,lies:0,lyingNow:false,spawns:0};
+
+function pull(){
+  if(!G.bag.length)G.bag=shuffleBag();
+  return G.bag.pop();
+}
+function gravitySpeed(){return Math.max(GRAVITY_FLOOR,GRAVITY_BASE-G.level*GRAVITY_PER_LV);}
+function transiting(){return G.transCards.length>0;}
+
+/* ============================================================================
+   GAME SCREEN — built once, then updated in place. No re-render churn, so the
+   starfield and the tip animation are never restarted by a board update.
+   ========================================================================= */
+var boardCells=[],pieceDivs=[],ghostDivs=[],markerDivs={};
+
+function buildGameScreen(){
+  var host=el("scr-game");host.innerHTML="";makeStars(host);
+  var boardW=COLS*CELL,boardH=ROWS*CELL;
+  var stage=document.createElement("div");stage.className="stage";
+  stage.innerHTML=
+    '<div class="suitebar">CEC ENTERTAINMENT SUITE v2.1 — DEAD SPACE: BLOCK PARTY</div>'+
+    '<div class="playrow">'+
+      '<div class="boardwrap">'+
+        '<div class="board" id="board" style="width:'+boardW+'px;height:'+boardH+'px">'+
+          '<svg class="grid" id="grid" width="'+boardW+'" height="'+boardH+'"></svg>'+
+          '<div id="cells"></div><div id="markers"></div>'+
+          '<div id="ghost"></div><div id="piece"></div>'+
+        '</div>'+
+        '<div class="pause-ov" id="pauseov" style="display:none">'+
+          '<div class="pt">PAUSED</div><div class="ps">Press P to resume</div>'+
+          '<button id="pausemenu">'+icon("home")+' Main Menu</button>'+
+        '</div>'+
+        '<div id="transov"></div><div id="markerpop"></div>'+
+      '</div>'+
+      '<div class="sidebar">'+
+        '<div class="panel tall"><div class="lbl">SCORE</div><div class="big" id="hud-score">0</div></div>'+
+        '<div class="panel"><div class="lbl">LINES</div><div class="mid" id="hud-lines">0</div></div>'+
+        '<div class="panel"><div class="lbl" id="hud-lvlbl">LEVEL 1</div><div class="lvname" id="hud-lvname"></div></div>'+
+        '<div class="panel ctr"><div class="lbl">NEXT</div><div id="hud-next" style="display:flex;justify-content:center"></div></div>'+
+        '<div class="panel ctr gold"><div class="lbl">MARKERS ✦</div><div class="mk" id="hud-markers">0</div></div>'+
+        '<div class="panel keys"><div>←→ Move</div><div>↑ Rotate</div><div>↓ Soft Drop</div>'+
+          '<div>Space Hard Drop</div><div>P Pause</div></div>'+
+        '<div class="panel crew"><div class="hdr" id="hud-crewhdr">ISHIMURA CREW (2/9)</div>'+
+          '<div class="crewgrid" id="hud-crew"></div><div class="cta">Collect them all!</div></div>'+
+        '<div id="hud-enc"></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="tipslot" id="tipslot"></div>'+
+    '<div class="gfoot">© 2001 FunTime Studios International · CEC Approved Recreation Software</div>';
+  host.appendChild(stage);
+
+  // grid lines
+  var g="",i;
+  for(i=0;i<=COLS;i++)g+='<line x1="'+i*CELL+'" y1="0" x2="'+i*CELL+'" y2="'+boardH+'" stroke="#00ff88"/>';
+  for(i=0;i<=ROWS;i++)g+='<line x1="0" y1="'+i*CELL+'" x2="'+boardW+'" y2="'+i*CELL+'" stroke="#00ff88"/>';
+  el("grid").innerHTML=g;
+
+  // persistent cell pool
+  var cellHost=el("cells");boardCells=[];
+  for(var r=0;r<ROWS;r++){
+    var row=[];
+    for(var c=0;c<COLS;c++){
+      var d=document.createElement("div");
+      d.className="cell";
+      d.style.left=(c*CELL+1)+"px";d.style.top=(r*CELL+1)+"px";
+      d.style.width=(CELL-2)+"px";d.style.height=(CELL-2)+"px";
+      d.style.display="none";
+      cellHost.appendChild(d);row.push(d);
+    }
+    boardCells.push(row);
+  }
+  // piece + ghost pools (4 cells each, always enough for a tetromino)
+  var ph=el("piece"),gh=el("ghost");
+  pieceDivs=[];ghostDivs=[];
+  for(i=0;i<4;i++){
+    var p=document.createElement("div");p.className="cell";p.style.display="none";
+    p.style.width=(CELL-2)+"px";p.style.height=(CELL-2)+"px";ph.appendChild(p);pieceDivs.push(p);
+    var q=document.createElement("div");q.className="ghostcell";q.style.display="none";
+    q.style.width=(CELL-2)+"px";q.style.height=(CELL-2)+"px";gh.appendChild(q);ghostDivs.push(q);
+  }
+  el("pausemenu").onclick=function(){setPaused(false);toMenu();};
+}
+
+/* ---- rendering ---- */
+function renderBoard(){
+  for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++){
+    var v=G.board[r][c],d=boardCells[r][c];
+    if(v){
+      if(d.style.display!=="block"){d.style.display="block";}
+      if(d.dataset.col!==v){
+        d.dataset.col=v;d.style.background=v;
+        d.style.boxShadow="inset 0 0 6px rgba(255,255,255,.3),0 0 4px "+v+"44";
+      }
+    } else if(d.style.display!=="none"){d.style.display="none";d.dataset.col="";}
+  }
+}
+function renderPiece(){
+  var shape=G.current,col=PIECE_COLORS[G.currentType],n=0,i;
+  if(shape){
+    var ghostRow=G.pos.r;
+    while(!collides(G.board,shape,ghostRow+1,G.pos.c))ghostRow++;
+    for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++){
+      if(!shape[r][c])continue;
+      var gd=ghostDivs[n];
+      gd.style.display="block";
+      gd.style.left=((G.pos.c+c)*CELL+1)+"px";gd.style.top=((ghostRow+r)*CELL+1)+"px";
+      gd.style.border="1px dashed "+col+"55";gd.style.background=col+"15";
+      var pd=pieceDivs[n];
+      if(G.pos.r+r>=0){
+        pd.style.display="block";
+        pd.style.left=((G.pos.c+c)*CELL+1)+"px";pd.style.top=((G.pos.r+r)*CELL+1)+"px";
+        pd.style.background=col;
+        pd.style.boxShadow="inset 0 0 6px rgba(255,255,255,.3),0 0 8px "+col+"66";
+        pd.style.border="1px solid rgba(255,255,255,.2)";
+      } else pd.style.display="none";
+      n++;
+    }
+  }
+  for(i=n;i<4;i++){pieceDivs[i].style.display="none";ghostDivs[i].style.display="none";}
+}
+function renderMarkers(){
+  var host=el("markers"),key;
+  for(key in markerDivs)if(!G.markerCells[key]){host.removeChild(markerDivs[key]);delete markerDivs[key];}
+  for(key in G.markerCells){
+    var parts=key.split(","),mr=+parts[0],mc=+parts[1];
+    var d=markerDivs[key];
+    if(!d){
+      d=document.createElement("div");d.className="markercell";
+      d.style.width=CELL+"px";d.style.height=CELL+"px";d.textContent="✦";
+      host.appendChild(d);markerDivs[key]=d;
+    }
+    d.style.left=(mc*CELL)+"px";d.style.top=(mr*CELL)+"px";
+  }
+}
+function renderHUD(){
+  el("hud-score").textContent=G.score;
+  el("hud-lines").textContent=G.lines;
+  el("hud-lvlbl").textContent="LEVEL "+(G.level+1);
+  var lv=LEVELS[Math.min(G.level,LEVELS.length-1)];
+  el("hud-lvname").textContent=(lv&&lv.name)||"Deep Space";
+  el("hud-markers").textContent=(G.markers>0?repeat("✦",Math.min(G.markers,10)):"0")+
+    (G.markers>10?" +"+(G.markers-10):"");
+  renderNext();
+  renderCrew();
+  renderEnc();
+}
+function repeat(s,n){var o="";for(var i=0;i<n;i++)o+=s;return o;}
+function renderNext(){
+  var host=el("hud-next");
+  if(!G.nextType){host.innerHTML="";return;}
+  if(host.dataset.t===G.nextType)return;
+  host.dataset.t=G.nextType;
+  var shape=SHAPES[G.nextType],color=PIECE_COLORS[G.nextType],s=16,body="";
+  for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++){
+    if(!shape[r][c])continue;
+    body+='<rect x="'+c*s+'" y="'+r*s+'" width="'+(s-1)+'" height="'+(s-1)+'" fill="'+color+
+          '" stroke="rgba(255,255,255,.2)" stroke-width="1" rx="2"/>';
+  }
+  host.innerHTML='<svg width="'+(shape[0].length*s)+'" height="'+(shape.length*s)+'">'+body+'</svg>';
+}
+function isUnlocked(id){for(var i=0;i<G.unlocked.length;i++)if(G.unlocked[i].id===id)return true;return false;}
+function renderCrew(){
+  var host=el("hud-crew"),sig=G.unlocked.length;
+  el("hud-crewhdr").textContent="ISHIMURA CREW ("+G.unlocked.length+"/"+CREW.length+")";
+  if(host.dataset.sig===String(sig))return;
+  host.dataset.sig=String(sig);
+  var html="";
+  for(var i=0;i<CREW.length;i++){
+    var c=CREW[i],found=isUnlocked(c.id);
+    html+='<div class="crewslot'+(found?" found":"")+'"'+
+          (found?' style="border-color:'+CHAR_COLORS[c.id]+'"':'')+
+          ' title="'+(found?esc(c.name+" — "+c.title):"???")+'">'+
+          (found?face(c.id,22):'<div class="q">?</div>')+'</div>';
+  }
+  host.innerHTML=html;
+}
+function nextToUnlock(){
+  for(var i=0;i<LEVELS.length;i++)for(var j=0;j<LEVELS[i].unlocks.length;j++){
+    var id=LEVELS[i].unlocks[j];
+    if(!isUnlocked(id)){for(var k=0;k<CREW.length;k++)if(CREW[k].id===id)return CREW[k];}
+  }
+  return null;
+}
+function renderEnc(){
+  var host=el("hud-enc"),who=nextToUnlock();
+  var msgs=who&&ENCOURAGEMENT[who.id];
+  if(!who||!msgs){host.innerHTML="";return;}
+  var msg=msgs[G.encIdx%msgs.length];
+  host.innerHTML='<div class="encbox"><div class="f">'+face(who.id,24)+'</div>'+
+                 '<div class="t">"'+esc(msg)+'"</div></div>';
+}
+
+/* ---- tip popup ---- */
+function renderTip(){
+  var slot=el("tipslot");
+  if(!G.tipVisible||G.paused||transiting()){slot.innerHTML="";return;}
+  var tip=TIPS[G.tipIndex];
+  var name=tip.displayName||CHAR_NAMES[tip.char];
+  slot.innerHTML=
+    '<div class="tip"><div class="bar">'+
+      '<span>★ HELPFUL TIP from '+esc(name)+'! ★</span>'+
+      '<button id="tipclose">'+icon("x","")+'</button>'+
+    '</div><div class="body">'+
+      '<div class="por" style="border:2px solid '+CHAR_COLORS[tip.char]+'">'+face(tip.char,48)+'</div>'+
+      '<p>'+esc(tip.text)+'</p>'+
+    '</div></div>';
+  el("tipclose").onclick=closeTip;
+}
+function availTips(){
+  var out=[];
+  for(var i=0;i<TIPS.length;i++)if(isUnlocked(TIPS[i].char))out.push(i);
+  return out;
+}
+function showNextTip(){
+  if(G.over)return;
+  var pool=availTips();if(!pool.length)return;
+  var usedCount=0,k;for(k in G.tipUsed)usedCount++;
+  if(usedCount>=pool.length){G.tipUsed={};usedCount=0;}
+  var pick,guard=0;
+  do{pick=pool[Math.floor(Math.random()*pool.length)];guard++;}
+  while(G.tipUsed[pick]&&guard<500);
+  G.tipUsed[pick]=true;
+  G.tipIndex=pick;G.tipVisible=true;renderTip();
+  clearTimeout(tipAutoTimer);
+  tipAutoTimer=setTimeout(function(){
+    G.tipVisible=false;renderTip();
+    clearTimeout(tipGapTimer);
+    tipGapTimer=setTimeout(showNextTip,TIP_GAP_MS);
+  },TIP_VISIBLE_MS);
+}
+function closeTip(){
+  G.tipVisible=false;renderTip();
+  clearTimeout(tipAutoTimer);clearTimeout(tipGapTimer);
+  tipGapTimer=setTimeout(showNextTip,TIP_CLOSED_MS);
+}
+function stopTips(){clearTimeout(tipAutoTimer);clearTimeout(tipGapTimer);}
+
+/* ---- transition cards ---- */
+function buildTransition(completedIdx){
+  var lvl=LEVELS[completedIdx];if(!lvl)return[];
+  var cards=[],i;
+  if(lvl.unlocks.length>0){
+    var members=[];
+    for(i=0;i<lvl.unlocks.length;i++)for(var k=0;k<CREW.length;k++)
+      if(CREW[k].id===lvl.unlocks[i])members.push(CREW[k]);
+    if(members.length)cards.push({type:"unlock",members:members,completionChar:lvl.completion.char,
+      completionText:lvl.completion.text,name:lvl.name});
+  } else {
+    cards.push({type:"complete",char:lvl.completion.char,text:lvl.completion.text,name:lvl.name});
+  }
+  if(lvl.ending){
+    cards.push({type:"quote",char:"nicole",
+      text:"We're bringing the Marker home safe and sound, and it's all thanks to you! ✦"});
+    cards.push({type:"finale"});
+  } else {
+    var nextLvl=LEVELS[completedIdx+1];
+    if(nextLvl)cards.push({type:"intro",char:nextLvl.intro.char,text:nextLvl.intro.text,
+      levelNum:completedIdx+2,name:nextLvl.name});
+  }
+  return cards;
+}
+function renderCard(){
+  var host=el("transov");
+  clearTimeout(cardTimer);
+  if(!transiting()||G.paused){host.innerHTML="";return;}
+  var card=G.transCards[0],inner="",i;
+  if(card.type==="complete"){
+    inner='<div class="congrats">Congratulaions!</div>'+
+          '<div class="roomname">'+esc(card.name)+'</div>'+
+          '<div class="quotebox"><div class="por" style="border:2px solid '+CHAR_COLORS[card.char]+'">'+
+          face(card.char,44)+'</div><p>'+esc(card.text)+'</p></div>';
+  } else if(card.type==="unlock"){
+    var dual=card.members.length>1;
+    inner='<div class="banner">'+(dual?"★ BEST FRIENDS FOUND! ★":"★ NEW CREW MEMBER FOUND! ★")+'</div>'+
+          '<div class="unlockrow" style="margin-bottom:'+(card.completionText?10:8)+'px">';
+    for(i=0;i<card.members.length;i++){
+      var m=card.members[i];
+      inner+='<div class="who"><div class="frame">'+face(m.id,dual?56:72)+'</div>'+
+             '<div class="nm" style="font-size:'+(dual?14:18)+'px">'+esc(m.name)+'</div>'+
+             '<div class="ti">'+esc(m.title)+'</div></div>';
+    }
+    inner+='</div>';
+    if(card.completionText&&card.completionChar){
+      inner+='<div class="quotebox" style="padding:8px 10px">'+
+             '<div class="por" style="border:2px solid '+CHAR_COLORS[card.completionChar]+';padding:1px">'+
+             face(card.completionChar,36)+'</div><p style="font-size:12px;line-height:1.35">'+
+             esc(card.completionText)+'</p></div>';
+    }
+  } else if(card.type==="intro"){
+    inner='<div class="introlbl">Level '+card.levelNum+': '+esc(card.name)+'</div>'+
+          '<div class="introbox"><div class="por">'+face("nicole",40)+'</div><p>'+esc(card.text)+'</p></div>';
+  } else if(card.type==="quote"){
+    inner='<div class="quotebox"><div class="por" style="border:2px solid '+CHAR_COLORS[card.char]+'">'+
+          face(card.char,44)+'</div><p>'+esc(card.text)+'</p></div>';
+  } else if(card.type==="finale"){
+    inner='<div class="takecare">Take care!</div><div class="finalerow">';
+    for(i=0;i<CREW.length;i++)inner+='<div>'+face(CREW[i].id,36)+'</div>';
+    inner+='</div>';
+  }
+  host.innerHTML='<div class="transov"><div class="card">'+inner+
+                 '<div class="cont">Click to continue</div></div></div>';
+  host.firstChild.onclick=dismissCard;
+  var dur=card.type==="unlock"?CARD_MS.unlock:card.type==="finale"?CARD_MS.finale:CARD_MS.other;
+  cardTimer=setTimeout(dismissCard,dur);
+}
+function dismissCard(){
+  var was=G.transCards[0];
+  G.transCards=G.transCards.slice(1);
+  if(was&&was.type==="finale"){G.won=true;toEnd();return;}
+  renderCard();renderTip();
+  if(!transiting())restartTick();
+}
+
+/* ---- marker collect popup ---- */
+function markerPop(){
+  var host=el("markerpop");
+  host.innerHTML='<div class="markerpop"><div class="s">✦</div><div class="p">+'+MARKER_SCORE+'</div></div>';
+  clearTimeout(markerPopTimer);
+  markerPopTimer=setTimeout(function(){host.innerHTML="";},1500);
+}
+
+/* ============================================================================
+   CORE LOOP
+   ========================================================================= */
+function spawn(overrideNext){
+  var type=overrideNext||G.actualNext||pull();
+  var shape=SHAPES[type],col=Math.floor((COLS-shape[0].length)/2);
+  if(collides(G.board,shape,0,col)){G.over=true;stopTick();toEnd();return;}
+  G.current=shape;G.currentType=type;G.pos={r:0,c:col};
+  var realNext=pull();G.actualNext=realNext;
+  // Display drift: the preview is allowed to lie, and lies more the more
+  // Markers have been collected. Never announced.
+  var dd=getMarkerInterference(G.markers).displayDrift;
+  DEV.spawns++;
+  if(Math.random()<dd){
+    var f=[];for(var i=0;i<TYPES.length;i++)if(TYPES[i]!==realNext)f.push(TYPES[i]);
+    G.nextType=f[Math.floor(Math.random()*f.length)];
+    DEV.lies++;DEV.lyingNow=true;
+  } else {G.nextType=realNext;DEV.lyingNow=false;}
+  renderPiece();renderNext();updateDev();
+}
+
+function lock(){
+  var b=[],r,c;
+  for(r=0;r<ROWS;r++)b.push(G.board[r].slice());
+  var shape=G.current,pr=G.pos.r,pc=G.pos.c,ct=G.currentType;
+  if(!shape)return;
+  for(r=0;r<shape.length;r++)for(c=0;c<shape[r].length;c++)
+    if(shape[r][c]&&pr+r>=0)b[pr+r][pc+c]=PIECE_COLORS[ct]||"#fff";
+
+  var cleared=0,clearedRows=[],newBoard=[];
+  for(r=0;r<ROWS;r++){
+    var full=true;
+    for(c=0;c<COLS;c++)if(b[r][c]===null){full=false;break;}
+    if(full){cleared++;clearedRows.push(r);} else newBoard.push(b[r]);
+  }
+  while(newBoard.length<ROWS){var blank=[];for(c=0;c<COLS;c++)blank.push(null);newBoard.unshift(blank);}
+
+  // Markers on cleared rows are collected; the rest fall with the stack.
+  var markersCollected=0,mc={},key;
+  for(key in G.markerCells)mc[key]=true;
+  for(var i=0;i<clearedRows.length;i++)for(c=0;c<COLS;c++){
+    var k=clearedRows[i]+","+c;
+    if(mc[k]){markersCollected++;delete mc[k];}
+  }
+  var newMc={},count=0;
+  for(key in mc){
+    var parts=key.split(","),mr=+parts[0],mcol=+parts[1],shift=0;
+    for(var j=0;j<clearedRows.length;j++)if(clearedRows[j]>mr)shift++;
+    newMc[(mr+shift)+","+mcol]=true;count++;
+  }
+  if(cleared>0&&count<MARKER_MAX&&Math.random()<MARKER_CHANCE){
+    var spots=[];
+    for(r=MARKER_ROW_LO;r<ROWS-2;r++)for(c=0;c<COLS;c++)
+      if(!newBoard[r][c]&&!newMc[r+","+c])spots.push(r+","+c);
+    if(spots.length)newMc[spots[Math.floor(Math.random()*spots.length)]]=true;
+  }
+  G.markerCells=newMc;
+  G.board=newBoard;
+
+  if(markersCollected>0){
+    G.markers+=markersCollected;
+    G.score+=markersCollected*MARKER_SCORE;
+    markerPop();
+  }
+  if(cleared>0){
+    G.score+=LINE_SCORES[cleared]*(G.level+1);
+    var prevLv=G.level;
+    G.lines+=cleared;
+    var newLv=Math.floor(G.lines/LINES_PER_LEVEL);
+    if(newLv!==prevLv){
+      G.level=newLv;
+      var completedIdx=newLv-1,lvlData=LEVELS[completedIdx];
+      if(lvlData){
+        if(lvlData.unlocks.length>0){
+          for(var u=0;u<lvlData.unlocks.length;u++){
+            var id=lvlData.unlocks[u];
+            if(!isUnlocked(id))for(var q=0;q<CREW.length;q++)if(CREW[q].id===id)G.unlocked.push(CREW[q]);
+          }
+        }
+        G.transCards=buildTransition(completedIdx);
+        if(lvlData.ending)G.over=true;
+        stopTick();
+        renderCard();
+      }
+    }
+  }
+  renderBoard();renderMarkers();renderHUD();renderTip();updateDev();
+}
+
+function stopTick(){clearInterval(tickTimer);tickTimer=null;tickSpeed=null;}
+function restartTick(){
+  var sp=gravitySpeed();
+  if(tickTimer&&tickSpeed===sp)return;
+  clearInterval(tickTimer);tickSpeed=sp;
+  tickTimer=setInterval(step,sp);
+}
+function step(){
+  if(G.paused||G.over||transiting())return;
+  var shape=G.current;if(!shape)return;
+  if(!collides(G.board,shape,G.pos.r+1,G.pos.c)){G.pos.r++;renderPiece();}
+  else{lock();if(!G.over)spawn();}
+  restartTick();
+}
+function setPaused(v){
+  G.paused=v;
+  el("pauseov").style.display=v?"":"none";
+  renderTip();renderCard();
+  if(v)stopTick();else if(!transiting()&&!G.over)restartTick();
+}
+
+/* ---- input. Note: Space is deliberately immune to Marker interference. ---- */
+var hardDropPending=false;
+document.addEventListener("keydown",function(e){
+  if(DEV.on&&devKey(e))return;
+  if(e.ctrlKey&&e.shiftKey&&(e.key==="D"||e.key==="d")){e.preventDefault();DEV.on=!DEV.on;updateDev();return;}
+  if(!el("scr-game").classList.contains("on"))return;
+  if(G.over||transiting())return;
+  if(e.key==="p"||e.key==="P"){setPaused(!G.paused);return;}
+  if(G.paused)return;
+  var shape=G.current;if(!shape)return;
+  var r=G.pos.r,c=G.pos.c,key=e.key;
+
+  if(key.indexOf("Arrow")===0){
+    var itf=getMarkerInterference(G.markers);
+    if(Math.random()<itf.inputLoss){e.preventDefault();DEV.swallowed++;updateDev();return;}
+    if(Math.random()<itf.inputDrift){
+      if(key==="ArrowLeft"){key="ArrowRight";DEV.swapped++;}
+      else if(key==="ArrowRight"){key="ArrowLeft";DEV.swapped++;}
+      else if(key==="ArrowUp"){e.preventDefault();DEV.swallowed++;updateDev();return;}
+      updateDev();
+    }
+  }
+
+  if(key==="ArrowLeft"){
+    e.preventDefault();
+    if(!collides(G.board,shape,r,c-1)){G.pos.c--;renderPiece();}
+  } else if(key==="ArrowRight"){
+    e.preventDefault();
+    if(!collides(G.board,shape,r,c+1)){G.pos.c++;renderPiece();}
+  } else if(key==="ArrowDown"){
+    e.preventDefault();
+    if(!collides(G.board,shape,r+1,c)){G.pos.r++;renderPiece();}
+  } else if(key==="ArrowUp"){
+    e.preventDefault();
+    var rot=rotate(shape);
+    if(!collides(G.board,rot,r,c)){G.current=rot;renderPiece();}
+    else if(!collides(G.board,rot,r,c-1)){G.current=rot;G.pos.c--;renderPiece();}
+    else if(!collides(G.board,rot,r,c+1)){G.current=rot;G.pos.c++;renderPiece();}
+  } else if(key===" "){
+    e.preventDefault();
+    if(hardDropPending)return;          // the original could double-lock here
+    var nr=r;
+    while(!collides(G.board,shape,nr+1,c))nr++;
+    G.pos.r=nr;renderPiece();
+    hardDropPending=true;
+    // one frame of "it landed" before the lock, which is what the old 30ms
+    // ref-sync delay was accidentally providing
+    requestAnimationFrame(function(){
+      hardDropPending=false;
+      if(G.over||G.paused||transiting())return;
+      lock();if(!G.over)spawn();
+      restartTick();
+    });
+  }
+});
+
+/* ============================================================================
+   DEV MODE — Ctrl+Shift+D. Off and invisible by default; the corruption is
+   supposed to be unannounced. This exists to measure the interference curve,
+   which the design notes flag as never having been measured.
+   ========================================================================= */
+function devKey(e){
+  if(!el("scr-game").classList.contains("on"))return false;
+  if(e.key==="m"||e.key==="M"){                 // grant a Marker
+    G.markers++;G.score+=MARKER_SCORE;renderHUD();updateDev();return true;
+  }
+  if(e.key==="n"||e.key==="N"){                 // +10 lines: skip a level
+    G.lines+=LINES_PER_LEVEL;
+    var newLv=Math.floor(G.lines/LINES_PER_LEVEL);
+    if(newLv!==G.level){
+      var prev=G.level;G.level=newLv;
+      var lvlData=LEVELS[newLv-1];
+      if(lvlData){
+        for(var u=0;u<lvlData.unlocks.length;u++){
+          var id=lvlData.unlocks[u];
+          if(!isUnlocked(id))for(var q=0;q<CREW.length;q++)if(CREW[q].id===id)G.unlocked.push(CREW[q]);
+        }
+        G.transCards=buildTransition(newLv-1);
+        if(lvlData.ending)G.over=true;
+        stopTick();renderCard();
+      }
+      void prev;
+    }
+    renderHUD();updateDev();return true;
+  }
+  return false;
+}
+function updateDev(){
+  var p=el("devpanel");
+  p.classList.toggle("on",DEV.on);
+  if(!DEV.on)return;
+  var itf=getMarkerInterference(G.markers);
+  var tier=Math.min(G.markers,MARKER_INTERFERENCE.length-1);
+  p.innerHTML=
+    '<b>MARKER INTERFERENCE</b>  [tier '+tier+'/'+(MARKER_INTERFERENCE.length-1)+']\n'+
+    'markers collected : '+G.markers+'\n'+
+    'display drift     : '+(itf.displayDrift*100).toFixed(1)+'%   lies '+DEV.lies+'/'+DEV.spawns+'\n'+
+    'input loss        : '+(itf.inputLoss*100).toFixed(1)+'%   swallowed '+DEV.swallowed+'\n'+
+    'input drift       : '+(itf.inputDrift*100).toFixed(1)+'%   swapped '+DEV.swapped+'\n'+
+    'preview right now : '+(DEV.lyingNow?'<span class="warn">LYING</span>':'honest')+'\n'+
+    'lines '+G.lines+'   level '+(G.level+1)+'   gravity '+gravitySpeed()+'ms\n'+
+    '<b>M</b> grant marker   <b>N</b> +10 lines   <b>Ctrl+Shift+D</b> hide';
+}
+
+/* ============================================================================
+   SCREEN FLOW
+   ========================================================================= */
+function startPlaying(){
+  clearTimeout(introSkipTimer);
+  stopTips();clearTimeout(cardTimer);clearTimeout(markerPopTimer);clearInterval(encTimer);
+  G.board=createBoard();G.score=0;G.lines=0;G.level=0;
+  G.over=false;G.paused=false;G.won=false;
+  G.markers=0;G.markerCells={};G.transCards=[];G.encIdx=0;
+  G.tipVisible=false;G.tipUsed={};
+  G.unlocked=[];
+  for(var i=0;i<CREW.length;i++)if(CREW[i].id==="isaac"||CREW[i].id==="necro")G.unlocked.push(CREW[i]);
+  DEV.swallowed=0;DEV.swapped=0;DEV.lies=0;DEV.spawns=0;DEV.lyingNow=false;
+
+  G.bag=shuffleBag();
+  var first=G.bag.pop(),realNext=G.bag.pop();
+  G.actualNext=realNext;G.nextType=realNext;
+  G.current=SHAPES[first];G.currentType=first;
+  G.pos={r:0,c:Math.floor((COLS-SHAPES[first][0].length)/2)};
+
+  el("pauseov").style.display="none";
+  el("transov").innerHTML="";el("markerpop").innerHTML="";
+  for(var key in markerDivs){el("markers").removeChild(markerDivs[key]);delete markerDivs[key];}
+  el("hud-next").dataset.t="";el("hud-crew").dataset.sig="";
+
+  renderBoard();renderPiece();renderHUD();renderTip();updateDev();
+  showScreen("scr-game");
+  restartTick();
+  clearTimeout(tipGapTimer);
+  tipGapTimer=setTimeout(showNextTip,TIP_FIRST_MS);
+  encTimer=setInterval(function(){G.encIdx++;renderEnc();},ENC_ROTATE_MS);
+}
+
+function toEnd(){
+  stopTick();stopTips();clearTimeout(cardTimer);clearInterval(encTimer);
+  var host=el("scr-end");host.innerHTML="";makeStars(host);
+  var stage=document.createElement("div");stage.className="stage";
+  var crewHtml="";
+  for(var i=0;i<G.unlocked.length;i++)crewHtml+='<div>'+face(G.unlocked[i].id,32)+'</div>';
+  var mk=(repeat("✦",Math.min(G.markers,10))||"0")+(G.markers>10?" +"+(G.markers-10):"");
+  stage.innerHTML=
+    '<div class="endtitle" style="color:'+(G.won?"#00ff88":"#ffd700")+
+      ';text-shadow:2px 2px 0 '+(G.won?"#006633":"#855d00")+'">'+(G.won?"YOU WIN!":"GAME OVER!")+'</div>'+
+    '<div class="statbox">'+
+      '<div>Score: <b style="color:#ffd700">'+G.score+'</b></div>'+
+      '<div>Lines: <b style="color:#00e676">'+G.lines+'</b></div>'+
+      '<div>Level: <b style="color:#ff9100">'+(G.level+1)+'</b></div>'+
+      '<div>Crew Found: <b style="color:#e74c8b">'+G.unlocked.length+'/'+CREW.length+'</b></div>'+
+      '<div>Markers: <b style="color:#ffd700">'+mk+'</b></div>'+
+    '</div>'+
+    (G.unlocked.length>0?'<div class="endcrew">'+crewHtml+'</div>':'')+
+    '<div class="nicolesays"><div class="por">'+face("nicole",48)+'</div>'+
+      '<div><div class="h">Dr. Nicole says:</div><p>'+
+        (G.won
+          ?"The Marker is on its way home and the whole crew is safe! Best team-building exercise EVER! 💕"
+          :"Great game! The whole Ishimura crew is SO proud of you! Even the ones in the lower decks we haven't heard from in a while! 💕")+
+      '</p></div></div>'+
+    '<div class="leaderboard">'+
+      (G.won?"Score submitted to Ishimura Leaderboard! Rank: #1 of 1! 🏆"
+            :'Submit score to Ishimura Leaderboard? <s>[Connection unavailable]</s>')+
+    '</div>'+
+    '<div class="endbtns">'+
+      '<button class="btn-green" id="btn-again" style="padding:10px 24px;font-size:16px;letter-spacing:2px">'+
+        icon("reset")+' PLAY AGAIN</button>'+
+      '<button class="btn-blue" id="btn-menu">'+icon("home")+' MENU</button>'+
+    '</div>';
+  host.appendChild(stage);
+  el("btn-again").onclick=startPlaying;
+  el("btn-menu").onclick=toMenu;
+  showScreen("scr-end");
+}
+
+function toMenu(){
+  stopTick();stopTips();clearTimeout(cardTimer);clearInterval(encTimer);
+  G.transCards=[];G.paused=false;
+  el("mpmsg").innerHTML="";
+  showScreen("scr-splash");
+}
+
+/* ---- boot ---- */
+buildSplash();
+buildGameScreen();
+showScreen("scr-splash");
+fitStage();
+
+/* exposed for the headless test harness; harmless in a browser */
+if(typeof module!=="undefined"&&module.exports){
+  module.exports={SHAPES:SHAPES,TYPES:TYPES,LEVELS:LEVELS,CREW:CREW,TIPS:TIPS,
+    MARKER_INTERFERENCE:MARKER_INTERFERENCE,getMarkerInterference:getMarkerInterference,
+    rotate:rotate,createBoard:createBoard,collides:collides,shuffleBag:shuffleBag,
+    LINE_SCORES:LINE_SCORES,G:G,lock:lock,spawn:spawn};
+}
+</script>
+</body>
+</html>

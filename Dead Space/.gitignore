@@ -1,2 +1,3 @@
 # Local safety copies made before edits — git history supersedes these
 *.backup.txt
+backups/
