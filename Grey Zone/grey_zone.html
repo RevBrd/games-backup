@@ -66,559 +66,1199 @@
    Dumb placeholder AI (no enemy drone/EW yet). Tunables in CONFIG.
    ============================================================ */
 const CONFIG = {
-  WORLD_W:4400, WORLD_H:1760,     // wider battlefield
-  GRAVITY:820, WIND_MAX:230,
-  MIN_SPEED:280, MAX_SPEED:2400,  // raised so the far edge stays reachable
-  MIN_ELEV:16, MAX_ELEV:86,
-  ELEV_STEP:0.2, ELEV_FINE:0.05, PWR_STEP:0.3, PWR_FINE:0.1,
-  PLAYER_X:230, PLAYER_HP:100,
-  SPLASH:90, MAX_DMG:58, ENEMY_HP:100,
-  RELOAD:5,                      // player seconds between shots (anti-spam)
-  CRATER_R:72, CRATER_DEPTH:24, DT:1/120,
-  BUBBLE:235, FOG_DARK:0.97, FOG_DIM:0.80,
-  SECTOR_MIN:0.42, SECTOR_MAX:0.93,
-  SHOW_SECTOR:false,             // flip true to restore the suspected-sector band
-  SHOW_EW_FIELD:false,           // flip true to restore the drawn jamming boundary
-  TREE_KILL_R:85, CONCEAL_RADIUS:210,
-  WOODS:{COUNT:8, MIN_W:240, MAX_W:430, DENSITY:0.055},
-  EW:{HP:130, FIELD:330, CEIL:620, OFFSET_MIN:180, OFFSET_MAX:340, DMG_R:95},
-  EN:{                          // enemy counterbattery (dumb placeholder)
-    COOLDOWN:22, ACQUIRE_DELAY:16, RANGE_IN_TIME:70,
-    SCATTER_MAX:900, SCATTER_MIN:95, ARC:58, MAX_DMG:28,
+  WORLD_W: 4400, WORLD_H: 1760,       // wider battlefield
+  GRAVITY: 820, WIND_MAX: 230,
+  MIN_SPEED: 280, MAX_SPEED: 2400,    // raised so the far edge stays reachable
+  MIN_ELEV: 16, MAX_ELEV: 86,
+  ELEV_STEP: 0.2, ELEV_FINE: 0.05, PWR_STEP: 0.3, PWR_FINE: 0.1,
+  PLAYER_X: 230, PLAYER_HP: 100,
+  SPLASH: 90, MAX_DMG: 58, ENEMY_HP: 100,
+  RELOAD: 5,                          // player seconds between shots (anti-spam)
+  CRATER_R: 72, CRATER_DEPTH: 24, DT: 1/120,
+  BUBBLE: 235, FOG_DARK: 0.97, FOG_DIM: 0.80,
+  SECTOR_MIN: 0.42, SECTOR_MAX: 0.93,
+  SHOW_SECTOR: false,                 // flip true to restore the suspected-sector band
+  SHOW_EW_FIELD: false,               // flip true to restore the drawn jamming boundary
+  TREE_KILL_R: 85, CONCEAL_RADIUS: 210,
+  WOODS: { COUNT: 8, MIN_W: 240, MAX_W: 430, DENSITY: 0.055 },
+  EW: { HP: 130, FIELD: 330, CEIL: 620, OFFSET_MIN: 180, OFFSET_MAX: 340, DMG_R: 95 },
+  EN: {                               // enemy counterbattery (dumb placeholder)
+    COOLDOWN: 22, ACQUIRE_DELAY: 16, RANGE_IN_TIME: 70,
+    SCATTER_MAX: 900, SCATTER_MIN: 95, ARC: 58, MAX_DMG: 28,
   },
-  DRONE:{
-    ALT_MIN:140, ALT_MAX:1150, ALT_START:520,
-    ALT_SPEED:330, H_ACCEL:1300, H_MAX:720, H_DAMP:0.0009,
-    BATTERY:31, CONE:0.95,
+  DRONE: {
+    ALT_MIN: 140, ALT_MAX: 1150, ALT_START: 520,
+    ALT_SPEED: 330, H_ACCEL: 1300, H_MAX: 720, H_DAMP: 0.0009,
+    BATTERY: 31, CONE: 0.95,
     // continuous optical fidelity: resolving power falls off with altitude
     // (more ground per pixel) and toward the edge of the footprint.
-    REF_ALT:200,                // altitude at which fidelity == 1
-    FALLOFF:1.3,                // higher = harsher penalty for climbing
-    BASE_RATE:0.55,             // detect/sec at perfect fidelity over open ground
-    CONCEAL_WEIGHT:0.92,        // how much intact cover suppresses detection
-    EDGE_FLOOR:0.15,            // fidelity retained at the very edge of the cone
-    RECHARGE:1.9,               // faster -> rewards early recall
-    DEATH_LOCKOUT:6,            // dead drone: flat delay before recharge/relaunch
-    MIN_LAUNCH:5, LOW_BATT:0.25,
+    REF_ALT: 200,                     // altitude at which fidelity == 1
+    FALLOFF: 1.3,                     // higher = harsher penalty for climbing
+    BASE_RATE: 0.55,                  // detect/sec at perfect fidelity over open ground
+    CONCEAL_WEIGHT: 0.92,             // how much intact cover suppresses detection
+    EDGE_FLOOR: 0.15,                 // fidelity retained at the very edge of the cone
+    RECHARGE: 1.9,                    // faster -> rewards early recall
+    DEATH_LOCKOUT: 6,                 // dead drone: flat delay before recharge/relaunch
+    MIN_LAUNCH: 5, LOW_BATT: 0.25,
   },
 };
-const C=CONFIG, D=C.DRONE, EN=C.EN;
+const C = CONFIG, D = C.DRONE, EN = C.EN;
 
 /* ---------- canvas ---------- */
-const cv=document.getElementById('c'), ctx=cv.getContext('2d');
-let cssW=0,cssH=0,scale=1,dpr=1;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let cssW = 0, cssH = 0, scale = 1, dpr = 1;
+
 function resize(){
-  const w=cv.clientWidth; cssW=w; cssH=w*C.WORLD_H/C.WORLD_W; cv.style.height=cssH+'px';
-  dpr=Math.min(window.devicePixelRatio||1,2);
-  cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr);
-  ctx.setTransform(dpr,0,0,dpr,0,0); scale=cssW/C.WORLD_W;
+  const w = cv.clientWidth;
+  cssW = w;
+  cssH = w * C.WORLD_H / C.WORLD_W;
+  cv.style.height = cssH + 'px';
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width  = Math.round(cssW * dpr);
+  cv.height = Math.round(cssH * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  scale = cssW / C.WORLD_W;
 }
-const X=wx=>wx*scale, Y=wy=>cssH-wy*scale;
-const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t, rand=(a,b)=>a+Math.random()*(b-a);
+
+const X = wx => wx * scale, Y = wy => cssH - wy * scale;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp  = (a, b, t) => a + (b - a) * t;
+const rand  = (a, b) => a + Math.random() * (b - a);
 
 /* ---------- terrain ---------- */
-const N=240; let terrain=new Array(N), enemyX=2600;
+const N = 240;
+let terrain = new Array(N), enemyX = 2600;
+
 function genTerrain(){
-  const p1=rand(0,9),p2=rand(0,9),p3=rand(0,9);
-  for(let i=0;i<N;i++){const x=i/(N-1)*C.WORLD_W;
-    let h=250+Math.sin(x*0.00085+p1)*78+Math.sin(x*0.0021+p2)*42+Math.sin(x*0.0052+p3)*18;
-    h+=(Math.random()-0.5)*10; terrain[i]=h;}
-  flattenAround(C.PLAYER_X,150); flattenAround(enemyX,150);
+  const p1 = rand(0, 9), p2 = rand(0, 9), p3 = rand(0, 9);
+  for(let i = 0; i < N; i++){
+    const x = i / (N - 1) * C.WORLD_W;
+    let h = 250
+      + Math.sin(x * 0.00085 + p1) * 78
+      + Math.sin(x * 0.0021  + p2) * 42
+      + Math.sin(x * 0.0052  + p3) * 18;
+    h += (Math.random() - 0.5) * 10;
+    terrain[i] = h;
+  }
+  flattenAround(C.PLAYER_X, 150);
+  flattenAround(enemyX, 150);
 }
-function idxAt(x){return clamp(x/C.WORLD_W*(N-1),0,N-1);}
-function surfaceY(x){const f=idxAt(x),i=Math.floor(f),t=f-i;return lerp(terrain[i],terrain[Math.min(i+1,N-1)],t);}
-function flattenAround(cx,r){const base=surfaceY(cx);for(let i=0;i<N;i++){const x=i/(N-1)*C.WORLD_W,d=Math.abs(x-cx);if(d<r){const t=d/r;terrain[i]=lerp(base,terrain[i],t*t);}}}
-function crater(cx,R,depth){for(let i=0;i<N;i++){const x=i/(N-1)*C.WORLD_W,d=Math.abs(x-cx);if(d<R){const t=d/R;terrain[i]=Math.max(60,terrain[i]-depth*(1-t*t));}}}
+
+function idxAt(x){
+  return clamp(x / C.WORLD_W * (N - 1), 0, N - 1);
+}
+
+function surfaceY(x){
+  const f = idxAt(x), i = Math.floor(f), t = f - i;
+  return lerp(terrain[i], terrain[Math.min(i + 1, N - 1)], t);
+}
+
+function flattenAround(cx, r){
+  const base = surfaceY(cx);
+  for(let i = 0; i < N; i++){
+    const x = i / (N - 1) * C.WORLD_W, d = Math.abs(x - cx);
+    if(d < r){
+      const t = d / r;
+      terrain[i] = lerp(base, terrain[i], t * t);
+    }
+  }
+}
+
+function crater(cx, R, depth){
+  for(let i = 0; i < N; i++){
+    const x = i / (N - 1) * C.WORLD_W, d = Math.abs(x - cx);
+    if(d < R){
+      const t = d / R;
+      terrain[i] = Math.max(60, terrain[i] - depth * (1 - t * t));
+    }
+  }
+}
 
 /* ---------- woods & concealment ---------- */
-let trees=[], woods=[], initialConceal=1, concealment=1;
+let trees = [], woods = [], initialConceal = 1, concealment = 1;
+
 function genTrees(){
-  trees=[]; woods=[];
-  const W=C.WOODS;
+  trees = []; woods = [];
+  const W = C.WOODS;
   // one wooded patch is guaranteed to contain the enemy; the rest scatter across the map
-  const hostW=rand(W.MIN_W,W.MAX_W);
-  woods.push({x:enemyX+rand(-hostW*0.25,hostW*0.25), w:hostW});
-  let guard=0;
-  while(woods.length<W.COUNT && guard++<200){
-    const w=rand(W.MIN_W,W.MAX_W), x=rand(C.WORLD_W*0.22,C.WORLD_W*0.94);
-    if(woods.some(o=>Math.abs(o.x-x)<(o.w+w)*0.55))continue;   // keep patches distinct
-    woods.push({x,w});
+  const hostW = rand(W.MIN_W, W.MAX_W);
+  woods.push({ x: enemyX + rand(-hostW * 0.25, hostW * 0.25), w: hostW });
+  let guard = 0;
+  while(woods.length < W.COUNT && guard++ < 200){
+    const w = rand(W.MIN_W, W.MAX_W), x = rand(C.WORLD_W * 0.22, C.WORLD_W * 0.94);
+    if(woods.some(o => Math.abs(o.x - x) < (o.w + w) * 0.55)) continue;   // keep patches distinct
+    woods.push({ x, w });
   }
   for(const p of woods){
-    const n=Math.round(p.w*W.DENSITY);
-    for(let k=0;k<n;k++){
-      const off=(Math.random()*2-1);
-      trees.push({x:p.x+off*p.w/2, h:rand(85,130)*(1-Math.abs(off)*0.25),
-        lean:rand(-0.1,0.1), broken:false, alive:true, wooded:true});
+    const n = Math.round(p.w * W.DENSITY);
+    for(let k = 0; k < n; k++){
+      const off = (Math.random() * 2 - 1);
+      trees.push({
+        x: p.x + off * p.w / 2,
+        h: rand(85, 130) * (1 - Math.abs(off) * 0.25),
+        lean: rand(-0.1, 0.1), broken: false, alive: true, wooded: true,
+      });
     }
   }
   // sparse shattered stragglers between the woods for texture
-  for(let k=0;k<26;k++)trees.push({x:rand(120,C.WORLD_W-120),h:rand(55,95),lean:rand(-0.14,0.14),broken:Math.random()<0.65,alive:true,wooded:false});
-  initialConceal=countConceal()||1; recomputeConceal();
+  for(let k = 0; k < 26; k++){
+    trees.push({
+      x: rand(120, C.WORLD_W - 120), h: rand(55, 95), lean: rand(-0.14, 0.14),
+      broken: Math.random() < 0.65, alive: true, wooded: false,
+    });
+  }
+  initialConceal = countConceal() || 1;
+  recomputeConceal();
 }
-function countConceal(){let n=0;for(const t of trees)if(t.alive&&t.wooded&&Math.abs(t.x-enemyX)<C.CONCEAL_RADIUS)n++;return n;}
-function recomputeConceal(){concealment=clamp(countConceal()/initialConceal,0,1);}
+
+function countConceal(){
+  let n = 0;
+  for(const t of trees){
+    if(t.alive && t.wooded && Math.abs(t.x - enemyX) < C.CONCEAL_RADIUS) n++;
+  }
+  return n;
+}
+
+function recomputeConceal(){
+  concealment = clamp(countConceal() / initialConceal, 0, 1);
+}
 
 /* ---------- fog ---------- */
-let explored=new Uint8Array(N), liveStr=new Float32Array(N);
-function addCircle(cx,halfW){
-  const lo=Math.max(0,Math.floor(idxAt(cx-halfW))), hi=Math.min(N-1,Math.ceil(idxAt(cx+halfW)));
-  for(let i=lo;i<=hi;i++){const x=i/(N-1)*C.WORLD_W,d=Math.abs(x-cx),s=clamp(1-d/halfW,0,1);if(s>liveStr[i])liveStr[i]=s;if(s>0.03)explored[i]=1;}
+let explored = new Uint8Array(N), liveStr = new Float32Array(N);
+
+function addCircle(cx, halfW){
+  const lo = Math.max(0, Math.floor(idxAt(cx - halfW)));
+  const hi = Math.min(N - 1, Math.ceil(idxAt(cx + halfW)));
+  for(let i = lo; i <= hi; i++){
+    const x = i / (N - 1) * C.WORLD_W, d = Math.abs(x - cx), s = clamp(1 - d / halfW, 0, 1);
+    if(s > liveStr[i]) liveStr[i] = s;
+    if(s > 0.03) explored[i] = 1;
+  }
 }
-function computeFog(){liveStr.fill(0);addCircle(C.PLAYER_X,C.BUBBLE);if(drone)addCircle(drone.x,drone.alt*D.CONE);}
-function vis(x){return liveStr[Math.round(idxAt(x))];}   // live sensor strength 0..1 at world x
+
+function computeFog(){
+  liveStr.fill(0);
+  addCircle(C.PLAYER_X, C.BUBBLE);
+  if(drone) addCircle(drone.x, drone.alt * D.CONE);
+}
+
+function vis(x){                      // live sensor strength 0..1 at world x
+  return liveStr[Math.round(idxAt(x))];
+}
 
 /* ---------- state ---------- */
-let state,wind,shot=null,incoming=[],effects=[],scorch=[],marks=[],shake=0,ew=null,
-    drone=null,droneCharge=D.BATTERY,droneLockout=0,toast=null,idBanner=0,lowBatt=false,matchTime=0;
+let state, wind, shot = null, incoming = [], effects = [], scorch = [], marks = [], shake = 0, ew = null,
+    drone = null, droneCharge = D.BATTERY, droneLockout = 0, toast = null, idBanner = 0, lowBatt = false,
+    matchTime = 0;
+
 function fresh(){
-  enemyX=rand(C.WORLD_W*C.SECTOR_MIN,C.WORLD_W*C.SECTOR_MAX);
-  const side=Math.random()<0.5?-1:1;
-  ew={x:clamp(enemyX+side*rand(C.EW.OFFSET_MIN,C.EW.OFFSET_MAX),C.WORLD_W*0.42,C.WORLD_W-70),hp:C.EW.HP,alive:true,seen:false};
-  genTerrain(); genTrees();
-  wind=rand(-C.WIND_MAX,C.WIND_MAX);
-  const sw=rand(340,520);
-  state={elev:52,pwr:70,enemyHP:C.ENEMY_HP,playerHP:C.PLAYER_HP,rounds:0,reload:0,over:false,win:false,enemyKnown:false,detect:0,detRate:0,
-    enemyTimer:EN.COOLDOWN, sector:[clamp(enemyX-sw,300,C.WORLD_W-120),clamp(enemyX+sw,300,C.WORLD_W-60)]};
-  shot=null;incoming=[];effects=[];scorch=[];marks=[];shake=0;drone=null;droneCharge=D.BATTERY;droneLockout=0;toast=null;idBanner=0;lowBatt=false;matchTime=0;
-  explored=new Uint8Array(N);liveStr=new Float32Array(N);
+  enemyX = rand(C.WORLD_W * C.SECTOR_MIN, C.WORLD_W * C.SECTOR_MAX);
+  const side = Math.random() < 0.5 ? -1 : 1;
+  ew = {
+    x: clamp(enemyX + side * rand(C.EW.OFFSET_MIN, C.EW.OFFSET_MAX), C.WORLD_W * 0.42, C.WORLD_W - 70),
+    hp: C.EW.HP, alive: true, seen: false,
+  };
+  genTerrain();
+  genTrees();
+  wind = rand(-C.WIND_MAX, C.WIND_MAX);
+  const sw = rand(340, 520);
+  state = {
+    elev: 52, pwr: 70, enemyHP: C.ENEMY_HP, playerHP: C.PLAYER_HP, rounds: 0, reload: 0,
+    over: false, win: false, enemyKnown: false, detect: 0, detRate: 0,
+    enemyTimer: EN.COOLDOWN,
+    sector: [clamp(enemyX - sw, 300, C.WORLD_W - 120), clamp(enemyX + sw, 300, C.WORLD_W - 60)],
+  };
+  shot = null; incoming = []; effects = []; scorch = []; marks = []; shake = 0;
+  drone = null; droneCharge = D.BATTERY; droneLockout = 0;
+  toast = null; idBanner = 0; lowBatt = false; matchTime = 0;
+  explored = new Uint8Array(N);
+  liveStr = new Float32Array(N);
   updateUI();
 }
 
 /* ---------- drone ---------- */
 function toggleDrone(){
-  if(drone){droneCharge=drone.battery;drone=null;lowBatt=false;setToast('DRONE RECALLED');updateUI();return;}
-  if(droneLockout>0){setToast('AIRFRAME LOST — REPLACEMENT INBOUND');return;}
-  if(droneCharge<D.MIN_LAUNCH){setToast('DRONE CHARGING — '+Math.round(droneCharge/D.BATTERY*100)+'%');return;}
-  drone={x:C.PLAYER_X+140,alt:D.ALT_START,vx:0,battery:droneCharge,targetX:null};
-  setToast('RECON DRONE AIRBORNE');updateUI();
+  if(drone){
+    droneCharge = drone.battery;
+    drone = null;
+    lowBatt = false;
+    setToast('DRONE RECALLED');
+    updateUI();
+    return;
+  }
+  if(droneLockout > 0){ setToast('AIRFRAME LOST — REPLACEMENT INBOUND'); return; }
+  if(droneCharge < D.MIN_LAUNCH){
+    setToast('DRONE CHARGING — ' + Math.round(droneCharge / D.BATTERY * 100) + '%');
+    return;
+  }
+  drone = { x: C.PLAYER_X + 140, alt: D.ALT_START, vx: 0, battery: droneCharge, targetX: null };
+  setToast('RECON DRONE AIRBORNE');
+  updateUI();
 }
-function setToast(t){toast={text:t,life:2.4};}
-function nudgeAlt(dir){if(drone)drone.alt=clamp(drone.alt+dir*45,D.ALT_MIN,D.ALT_MAX);}
+
+function setToast(t){ toast = { text: t, life: 2.4 }; }
+
+function nudgeAlt(dir){
+  if(drone) drone.alt = clamp(drone.alt + dir * 45, D.ALT_MIN, D.ALT_MAX);
+}
 
 /* ---------- firing ---------- */
 function fire(){
-  if(shot||state.over||state.reload>0)return;
-  const px=C.PLAYER_X,py=surfaceY(px)+26,a=state.elev*Math.PI/180,sp=lerp(C.MIN_SPEED,C.MAX_SPEED,state.pwr/100),mz=44;
-  shot={x:px+Math.cos(a)*mz,y:py+Math.sin(a)*mz,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,trail:[]};
-  state.rounds++; state.reload=C.RELOAD;
+  if(shot || state.over || state.reload > 0) return;
+  const px = C.PLAYER_X, py = surfaceY(px) + 26;
+  const a = state.elev * Math.PI / 180;
+  const sp = lerp(C.MIN_SPEED, C.MAX_SPEED, state.pwr / 100);
+  const mz = 44;
+  shot = {
+    x: px + Math.cos(a) * mz, y: py + Math.sin(a) * mz,
+    vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, trail: [],
+  };
+  state.rounds++;
+  state.reload = C.RELOAD;
 }
-function gridLabel(x){return 'GRID '+String(Math.round(x/(C.WORLD_W/30))).padStart(2,'0');}
-function blast(x,big){
-  crater(x,C.CRATER_R,C.CRATER_DEPTH);
-  scorch.push({x,r:C.CRATER_R*0.85,a:1});
-  effects.push({t:'flash',x,y:surfaceY(x),life:big?0.9:0.5,max:big?0.9:0.5,big:!!big});
-  for(let i=0;i<22;i++){const ang=rand(-Math.PI,0),s=rand(60,420);
-    effects.push({t:'p',x,y:surfaceY(x),vx:Math.cos(ang)*s,vy:Math.sin(ang)*s+rand(80,260),life:rand(.5,1.4),max:1.4,warm:Math.random()<0.45,size:rand(2,5)});}
-  shake=Math.min(16,shake+9);
-  let felled=false;for(const t of trees){if(t.alive&&Math.abs(t.x-x)<C.TREE_KILL_R){t.alive=false;felled=true;}}
-  if(felled)recomputeConceal();
+
+function gridLabel(x){
+  return 'GRID ' + String(Math.round(x / (C.WORLD_W / 30))).padStart(2, '0');
 }
-function playerShellImpact(x,y){
-  blast(x);
-  if(ew&&ew.alive&&Math.abs(x-ew.x)<C.EW.DMG_R){
-    ew.hp=Math.max(0,ew.hp-C.MAX_DMG*(1-Math.abs(x-ew.x)/C.EW.DMG_R));
-    if(ew.hp<=0){ew.alive=false;blast(ew.x,true);setToast('EW STATION DESTROYED — SPECTRUM CLEAR');}
+
+function blast(x, big){
+  crater(x, C.CRATER_R, C.CRATER_DEPTH);
+  scorch.push({ x, r: C.CRATER_R * 0.85, a: 1 });
+  effects.push({ t: 'flash', x, y: surfaceY(x), life: big ? 0.9 : 0.5, max: big ? 0.9 : 0.5, big: !!big });
+  for(let i = 0; i < 22; i++){
+    const ang = rand(-Math.PI, 0), s = rand(60, 420);
+    effects.push({
+      t: 'p', x, y: surfaceY(x),
+      vx: Math.cos(ang) * s, vy: Math.sin(ang) * s + rand(80, 260),
+      life: rand(.5, 1.4), max: 1.4, warm: Math.random() < 0.45, size: rand(2, 5),
+    });
   }
-  const d=Math.hypot(x-enemyX,y-(surfaceY(enemyX)+18));
-  if(d<C.SPLASH){state.enemyHP=Math.max(0,state.enemyHP-C.MAX_DMG*(1-d/C.SPLASH));
-    if(state.enemyHP<=0&&!state.over){state.over=true;state.win=true;blast(enemyX,true);}}
-  const observed=liveStr[Math.round(idxAt(x))]>0.12;
-  if(observed){marks.push({x,y:surfaceY(x),grid:gridLabel(x),delta:state.enemyKnown?Math.round(x-enemyX):null,age:0});if(marks.length>6)marks.shift();}
+  shake = Math.min(16, shake + 9);
+  let felled = false;
+  for(const t of trees){
+    if(t.alive && Math.abs(t.x - x) < C.TREE_KILL_R){ t.alive = false; felled = true; }
+  }
+  if(felled) recomputeConceal();
 }
-function enemyShellImpact(x,y){
+
+function playerShellImpact(x, y){
   blast(x);
-  const d=Math.abs(x-C.PLAYER_X);
-  if(d<C.SPLASH&&!state.over){state.playerHP=Math.max(0,state.playerHP-EN.MAX_DMG*(1-d/C.SPLASH));
-    if(state.playerHP<=0){state.over=true;state.win=false;blast(C.PLAYER_X,true);}}
+  if(ew && ew.alive && Math.abs(x - ew.x) < C.EW.DMG_R){
+    ew.hp = Math.max(0, ew.hp - C.MAX_DMG * (1 - Math.abs(x - ew.x) / C.EW.DMG_R));
+    if(ew.hp <= 0){
+      ew.alive = false;
+      blast(ew.x, true);
+      setToast('EW STATION DESTROYED — SPECTRUM CLEAR');
+    }
+  }
+  const d = Math.hypot(x - enemyX, y - (surfaceY(enemyX) + 18));
+  if(d < C.SPLASH){
+    state.enemyHP = Math.max(0, state.enemyHP - C.MAX_DMG * (1 - d / C.SPLASH));
+    if(state.enemyHP <= 0 && !state.over){
+      state.over = true;
+      state.win = true;
+      blast(enemyX, true);
+    }
+  }
+  const observed = liveStr[Math.round(idxAt(x))] > 0.12;
+  if(observed){
+    marks.push({
+      x, y: surfaceY(x), grid: gridLabel(x),
+      delta: state.enemyKnown ? Math.round(x - enemyX) : null, age: 0,
+    });
+    if(marks.length > 6) marks.shift();
+  }
 }
+
+function enemyShellImpact(x, y){
+  blast(x);
+  const d = Math.abs(x - C.PLAYER_X);
+  if(d < C.SPLASH && !state.over){
+    state.playerHP = Math.max(0, state.playerHP - EN.MAX_DMG * (1 - d / C.SPLASH));
+    if(state.playerHP <= 0){
+      state.over = true;
+      state.win = false;
+      blast(C.PLAYER_X, true);
+    }
+  }
+}
+
 function enemyFire(){
-  const prog=clamp((matchTime-EN.ACQUIRE_DELAY)/EN.RANGE_IN_TIME,0,1);
-  const scatter=lerp(EN.SCATTER_MAX,EN.SCATTER_MIN,prog);
-  const tx=clamp(C.PLAYER_X+(Math.random()*2-1)*scatter,90,enemyX-60);
-  const R=Math.abs(enemyX-tx),th=EN.ARC*Math.PI/180,v=Math.sqrt(Math.max(1,R*C.GRAVITY/Math.sin(2*th)));
-  incoming.push({x:enemyX,y:surfaceY(enemyX)+26,vx:-Math.cos(th)*v,vy:Math.sin(th)*v,trail:[]});
+  const prog = clamp((matchTime - EN.ACQUIRE_DELAY) / EN.RANGE_IN_TIME, 0, 1);
+  const scatter = lerp(EN.SCATTER_MAX, EN.SCATTER_MIN, prog);
+  const tx = clamp(C.PLAYER_X + (Math.random() * 2 - 1) * scatter, 90, enemyX - 60);
+  const R = Math.abs(enemyX - tx), th = EN.ARC * Math.PI / 180;
+  const v = Math.sqrt(Math.max(1, R * C.GRAVITY / Math.sin(2 * th)));
+  incoming.push({
+    x: enemyX, y: surfaceY(enemyX) + 26,
+    vx: -Math.cos(th) * v, vy: Math.sin(th) * v, trail: [],
+  });
 }
 
 /* ---------- update ---------- */
 function step(dt){
-  shake*=Math.pow(0.001,dt);
-  if(!state.over)matchTime+=dt;
-  if(state.reload>0)state.reload=Math.max(0,state.reload-dt);
-  if(toast){toast.life-=dt;if(toast.life<=0)toast=null;}
-  if(idBanner>0)idBanner-=dt;
-  for(const s of scorch)s.a-=dt*0.04; scorch=scorch.filter(s=>s.a>0.15);
-  for(const m of marks)m.age+=dt; marks=marks.filter(m=>m.age<14);
-  for(const e of effects){e.life-=dt;if(e.t==='p'){e.x+=e.vx*dt;e.y+=e.vy*dt;e.vy-=300*dt;e.vx*=Math.pow(0.2,dt);}}
-  effects=effects.filter(e=>e.life>0);
+  shake *= Math.pow(0.001, dt);
+  if(!state.over) matchTime += dt;
+  if(state.reload > 0) state.reload = Math.max(0, state.reload - dt);
+  if(toast){ toast.life -= dt; if(toast.life <= 0) toast = null; }
+  if(idBanner > 0) idBanner -= dt;
+
+  for(const s of scorch) s.a -= dt * 0.04;
+  scorch = scorch.filter(s => s.a > 0.15);
+
+  for(const m of marks) m.age += dt;
+  marks = marks.filter(m => m.age < 14);
+
+  for(const e of effects){
+    e.life -= dt;
+    if(e.t === 'p'){
+      e.x += e.vx * dt;
+      e.y += e.vy * dt;
+      e.vy -= 300 * dt;
+      e.vx *= Math.pow(0.2, dt);
+    }
+  }
+  effects = effects.filter(e => e.life > 0);
 
   // enemy counterbattery
   if(!state.over){
-    state.enemyTimer-=dt;
-    if(matchTime>EN.ACQUIRE_DELAY && state.enemyTimer<=0){enemyFire();state.enemyTimer=EN.COOLDOWN*rand(0.8,1.2);}
-  }
-  // incoming shells
-  for(const sh of incoming){
-    const sub=4,h=dt/sub;
-    for(let s=0;s<sub&&!sh.done;s++){
-      sh.vy-=C.GRAVITY*h; sh.x+=sh.vx*h; sh.y+=sh.vy*h;
-      sh.trail.push({x:sh.x,y:sh.y}); if(sh.trail.length>24)sh.trail.shift();
-      if(sh.y<=surfaceY(sh.x)||sh.x<0){enemyShellImpact(sh.x,sh.y);sh.done=true;}
+    state.enemyTimer -= dt;
+    if(matchTime > EN.ACQUIRE_DELAY && state.enemyTimer <= 0){
+      enemyFire();
+      state.enemyTimer = EN.COOLDOWN * rand(0.8, 1.2);
     }
   }
-  incoming=incoming.filter(s=>!s.done);
+
+  // incoming shells
+  for(const sh of incoming){
+    const sub = 4, h = dt / sub;
+    for(let s = 0; s < sub && !sh.done; s++){
+      sh.vy -= C.GRAVITY * h;
+      sh.x += sh.vx * h;
+      sh.y += sh.vy * h;
+      sh.trail.push({ x: sh.x, y: sh.y });
+      if(sh.trail.length > 24) sh.trail.shift();
+      if(sh.y <= surfaceY(sh.x) || sh.x < 0){
+        enemyShellImpact(sh.x, sh.y);
+        sh.done = true;
+      }
+    }
+  }
+  incoming = incoming.filter(s => !s.done);
 
   // drone
   if(drone){
-    drone.battery-=dt;
-    if(drone.battery<=0){droneCharge=0;droneLockout=D.DEATH_LOCKOUT;drone=null;lowBatt=false;setToast('DRONE DOWN — BATTERY DEPLETED');}
-    else{
-      lowBatt=drone.battery<D.BATTERY*D.LOW_BATT;
-      if(keys['arrowup'])drone.alt+=D.ALT_SPEED*dt; if(keys['arrowdown'])drone.alt-=D.ALT_SPEED*dt;
-      drone.alt=clamp(drone.alt,D.ALT_MIN,D.ALT_MAX);
-      let ax=0; if(keys['arrowleft'])ax-=D.H_ACCEL; if(keys['arrowright'])ax+=D.H_ACCEL;
-      if(ax!==0){drone.targetX=null;drone.vx+=ax*dt;}
-      else if(drone.targetX!==null){const dx=drone.targetX-drone.x;if(Math.abs(dx)<8)drone.vx*=0.5;else drone.vx+=clamp(dx,-1,1)*D.H_ACCEL*0.8*dt;}
-      drone.vx*=Math.pow(D.H_DAMP,dt);drone.vx=clamp(drone.vx,-D.H_MAX,D.H_MAX);
-      drone.x=clamp(drone.x+drone.vx*dt,40,C.WORLD_W-40);
+    drone.battery -= dt;
+    if(drone.battery <= 0){
+      droneCharge = 0;
+      droneLockout = D.DEATH_LOCKOUT;
+      drone = null;
+      lowBatt = false;
+      setToast('DRONE DOWN — BATTERY DEPLETED');
+    } else {
+      lowBatt = drone.battery < D.BATTERY * D.LOW_BATT;
+      if(keys['arrowup'])   drone.alt += D.ALT_SPEED * dt;
+      if(keys['arrowdown']) drone.alt -= D.ALT_SPEED * dt;
+      drone.alt = clamp(drone.alt, D.ALT_MIN, D.ALT_MAX);
+
+      let ax = 0;
+      if(keys['arrowleft'])  ax -= D.H_ACCEL;
+      if(keys['arrowright']) ax += D.H_ACCEL;
+      if(ax !== 0){
+        drone.targetX = null;
+        drone.vx += ax * dt;
+      } else if(drone.targetX !== null){
+        const dx = drone.targetX - drone.x;
+        if(Math.abs(dx) < 8) drone.vx *= 0.5;
+        else drone.vx += clamp(dx, -1, 1) * D.H_ACCEL * 0.8 * dt;
+      }
+      drone.vx *= Math.pow(D.H_DAMP, dt);
+      drone.vx = clamp(drone.vx, -D.H_MAX, D.H_MAX);
+      drone.x = clamp(drone.x + drone.vx * dt, 40, C.WORLD_W - 40);
+
       // EW station: spotted whenever inside live coverage (tall masts, cannot hide)
-      if(ew&&ew.alive&&!ew.seen&&vis(ew.x)>0.15){ew.seen=true;setToast('EW STATION DETECTED — JAMMING FIELD MAPPED');}
+      if(ew && ew.alive && !ew.seen && vis(ew.x) > 0.15){
+        ew.seen = true;
+        setToast('EW STATION DETECTED — JAMMING FIELD MAPPED');
+      }
       // jamming field destroys drones inside it — but only below its ceiling
-      if(ew&&ew.alive&&Math.abs(drone.x-ew.x)<C.EW.FIELD&&drone.alt<C.EW.CEIL){
-        droneCharge=0;droneLockout=D.DEATH_LOCKOUT;drone=null;lowBatt=false;
+      if(ew && ew.alive && Math.abs(drone.x - ew.x) < C.EW.FIELD && drone.alt < C.EW.CEIL){
+        droneCharge = 0;
+        droneLockout = D.DEATH_LOCKOUT;
+        drone = null;
+        lowBatt = false;
         setToast('SIGNAL LOST — DRONE JAMMED');
       }
     }
-    if(drone&&!state.enemyKnown){
-        const cover=liveStr[Math.round(idxAt(enemyX))],horiz=Math.abs(drone.x-enemyX);
-        const half=drone.alt*D.CONE;
-        let rate=0;
-        if(cover>0.2 && horiz<half){
-          // optical fidelity: falls off as the drone climbs (more ground per pixel)
-          const fid=clamp(Math.pow(D.REF_ALT/drone.alt,D.FALLOFF),0,1);
-          // and falls off toward the edge of the footprint
-          const edge=lerp(1,D.EDGE_FLOOR,clamp(horiz/half,0,1));
-          // intact cover suppresses what optics can resolve
-          const clarity=1-concealment*D.CONCEAL_WEIGHT;
-          rate=D.BASE_RATE*fid*edge*clarity;
-        }
-        state.detRate=rate; if(rate>0)state.detect=Math.min(1,state.detect+rate*dt);
-        if(state.detect>=1){state.enemyKnown=true;idBanner=2.6;setToast('TARGET ACQUIRED — CORRECTION ONLINE');}
+
+    if(drone && !state.enemyKnown){
+      const cover = liveStr[Math.round(idxAt(enemyX))], horiz = Math.abs(drone.x - enemyX);
+      const half = drone.alt * D.CONE;
+      let rate = 0;
+      if(cover > 0.2 && horiz < half){
+        // optical fidelity: falls off as the drone climbs (more ground per pixel)
+        const fid = clamp(Math.pow(D.REF_ALT / drone.alt, D.FALLOFF), 0, 1);
+        // and falls off toward the edge of the footprint
+        const edge = lerp(1, D.EDGE_FLOOR, clamp(horiz / half, 0, 1));
+        // intact cover suppresses what optics can resolve
+        const clarity = 1 - concealment * D.CONCEAL_WEIGHT;
+        rate = D.BASE_RATE * fid * edge * clarity;
       }
-  }else{
-    if(droneLockout>0)droneLockout-=dt; else droneCharge=Math.min(D.BATTERY,droneCharge+D.RECHARGE*dt);
-    state.detRate=0;
+      state.detRate = rate;
+      if(rate > 0) state.detect = Math.min(1, state.detect + rate * dt);
+      if(state.detect >= 1){
+        state.enemyKnown = true;
+        idBanner = 2.6;
+        setToast('TARGET ACQUIRED — CORRECTION ONLINE');
+      }
+    }
+  } else {
+    if(droneLockout > 0) droneLockout -= dt;
+    else droneCharge = Math.min(D.BATTERY, droneCharge + D.RECHARGE * dt);
+    state.detRate = 0;
   }
   computeFog();
 
   if(shot){
-    const sub=4,h=dt/sub;
-    for(let s=0;s<sub&&shot;s++){
-      shot.vy-=C.GRAVITY*h;shot.vx+=wind*h;shot.x+=shot.vx*h;shot.y+=shot.vy*h;
-      shot.trail.push({x:shot.x,y:shot.y});if(shot.trail.length>26)shot.trail.shift();
-      if(shot.x<0||shot.x>C.WORLD_W){shot=null;break;}
-      if(shot.y<=surfaceY(shot.x)){playerShellImpact(shot.x,shot.y);shot=null;break;}
+    const sub = 4, h = dt / sub;
+    for(let s = 0; s < sub && shot; s++){
+      shot.vy -= C.GRAVITY * h;
+      shot.vx += wind * h;
+      shot.x += shot.vx * h;
+      shot.y += shot.vy * h;
+      shot.trail.push({ x: shot.x, y: shot.y });
+      if(shot.trail.length > 26) shot.trail.shift();
+      if(shot.x < 0 || shot.x > C.WORLD_W){ shot = null; break; }
+      if(shot.y <= surfaceY(shot.x)){
+        playerShellImpact(shot.x, shot.y);
+        shot = null;
+        break;
+      }
     }
   }
 }
 
 /* ---------- drawing ---------- */
-function sky(){const g=ctx.createLinearGradient(0,0,0,cssH);g.addColorStop(0,'#1b2120');g.addColorStop(0.55,'#222826');g.addColorStop(1,'#2b302c');ctx.fillStyle=g;ctx.fillRect(0,0,cssW,cssH);}
+function sky(){
+  const g = ctx.createLinearGradient(0, 0, 0, cssH);
+  g.addColorStop(0, '#1b2120');
+  g.addColorStop(0.55, '#222826');
+  g.addColorStop(1, '#2b302c');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, cssW, cssH);
+}
+
 function drawTrees(){
-  for(const t of trees){if(vis(t.x)<0.1)continue;const gx=X(t.x),gy=Y(surfaceY(t.x));
-    if(!t.alive){ctx.strokeStyle='rgba(96,86,70,0.45)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(gx,gy);ctx.lineTo(gx+1,gy-6);ctx.stroke();continue;}
-    const h=t.h*scale,topY=t.broken?gy-h*0.55:gy-h;
-    ctx.strokeStyle=t.wooded?'rgba(112,134,96,0.5)':'rgba(120,128,118,0.28)';ctx.lineWidth=t.wooded?1.5:1;
-    ctx.beginPath();ctx.moveTo(gx,gy);ctx.lineTo(gx+t.lean*h,topY);ctx.stroke();
-    if(!t.broken){const bx=gx+t.lean*h*0.6;
-      ctx.beginPath();ctx.moveTo(bx,gy-h*0.62);ctx.lineTo(bx-6,gy-h*0.74);ctx.moveTo(bx,gy-h*0.62);ctx.lineTo(bx+5,gy-h*0.78);
-      if(t.wooded){ctx.moveTo(bx,gy-h*0.45);ctx.lineTo(bx-7,gy-h*0.55);ctx.moveTo(bx,gy-h*0.45);ctx.lineTo(bx+6,gy-h*0.58);}
-      ctx.stroke();}}
-}
-function drawTerrain(){
-  ctx.beginPath();ctx.moveTo(0,cssH);
-  for(let i=0;i<N;i++){const x=i/(N-1)*C.WORLD_W;ctx.lineTo(X(x),Y(terrain[i]));}
-  ctx.lineTo(cssW,cssH);ctx.closePath();
-  const g=ctx.createLinearGradient(0,Y(360),0,cssH);g.addColorStop(0,'#3a3a31');g.addColorStop(1,'#1d1d18');
-  ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(150,150,130,0.25)';ctx.lineWidth=1;ctx.stroke();
-  for(const s of scorch){if(vis(s.x)<0.1)continue;ctx.fillStyle=`rgba(14,12,10,${0.5*s.a})`;ctx.beginPath();ctx.ellipse(X(s.x),Y(surfaceY(s.x))+2,s.r*scale,s.r*scale*0.28,0,0,Math.PI*2);ctx.fill();}
-}
-function drawEmplacement(wx,friendly){
-  const s=scale,gx=X(wx),gy=Y(surfaceY(wx)),hullW=30*s,hullTop=gy-17*s,hullH=15*s;
-  ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(gx,gy+3*s,42*s,9*s,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=friendly?'#47503f':'#4d453f';ctx.fillRect(gx-hullW/2,hullTop,hullW,hullH);
-  ctx.fillStyle=friendly?'#56604c':'#5b524a';ctx.fillRect(gx-9*s,hullTop-7*s,18*s,8*s);
-  ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fillRect(gx-9*s,hullTop-7*s,18*s,2*s);
-  const a=friendly?state.elev*Math.PI/180:122*Math.PI/180,bx=gx,by=hullTop-3*s,L=46*s;
-  ctx.strokeStyle=friendly?'#828b73':'#7d7269';ctx.lineWidth=Math.max(2,3*s);
-  ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+Math.cos(a)*L,by-Math.sin(a)*L);ctx.stroke();
-  const berm=ctx.createLinearGradient(0,gy-12*s,0,gy+6*s);berm.addColorStop(0,'#3b3b30');berm.addColorStop(1,'#26261e');
-  ctx.fillStyle=berm;ctx.beginPath();ctx.moveTo(gx-46*s,gy+5*s);
-  ctx.quadraticCurveTo(gx-30*s,gy-10*s,gx-12*s,gy-9*s);ctx.lineTo(gx+12*s,gy-9*s);
-  ctx.quadraticCurveTo(gx+30*s,gy-10*s,gx+46*s,gy+5*s);ctx.closePath();ctx.fill();
-  ctx.fillStyle='rgba(210,214,208,0.5)';for(let i=0;i<8;i++)ctx.fillRect(gx+rand(-42,42)*s,gy+rand(-7,3)*s,1.4*s,1.4*s);
-  const pL=gx-40*s,pR=gx+40*s,poleTop=gy-40*s;
-  ctx.strokeStyle='rgba(70,60,40,0.8)';ctx.lineWidth=Math.max(1,1.4*s);
-  ctx.beginPath();ctx.moveTo(pL,gy-8*s);ctx.lineTo(pL,poleTop);ctx.moveTo(pR,gy-8*s);ctx.lineTo(pR,poleTop+5*s);ctx.stroke();
-  ctx.strokeStyle='rgba(96,80,52,0.42)';ctx.lineWidth=1;const sag=10*s;
-  for(let k=0;k<=3;k++){const yy=poleTop+k*3*s;ctx.beginPath();ctx.moveTo(pL,yy);ctx.quadraticCurveTo(gx,yy+sag,pR,yy+5*s);ctx.stroke();}
-  for(let k=-3;k<=3;k++){const xx=gx+k*12*s;ctx.beginPath();ctx.moveTo(xx,poleTop+(1-Math.abs(k)/3)*-2*s);ctx.lineTo(xx,poleTop+sag*0.9*(1-Math.abs(k)/3.4)+2*s);ctx.stroke();}
-}
-function drawEW(){
-  if(!ew)return;
-  const s=scale,gx=X(ew.x),gy=Y(surfaceY(ew.x)),v=vis(ew.x);
-  // jamming field: capped at a ceiling — above it, drones pass safely
-  if(ew.alive&&ew.seen&&C.SHOW_EW_FIELD){
-    const fl=X(ew.x-C.EW.FIELD),fr=X(ew.x+C.EW.FIELD),ceilY=Y(surfaceY(ew.x)+C.EW.CEIL);
-    const g=ctx.createLinearGradient(fl,0,fr,0);
-    g.addColorStop(0,'rgba(190,120,200,0)');g.addColorStop(0.5,'rgba(190,120,200,0.10)');g.addColorStop(1,'rgba(190,120,200,0)');
-    ctx.fillStyle=g;ctx.fillRect(fl,ceilY,fr-fl,cssH-ceilY);
-    ctx.strokeStyle='rgba(200,140,210,0.35)';ctx.lineWidth=1;ctx.setLineDash([4,6]);
-    ctx.beginPath();ctx.moveTo(fl,ceilY);ctx.lineTo(fl,cssH);ctx.moveTo(fr,ceilY);ctx.lineTo(fr,cssH);
-    ctx.moveTo(fl,ceilY);ctx.lineTo(fr,ceilY);ctx.stroke();ctx.setLineDash([]);
-    ctx.font='9px JetBrains Mono, monospace';ctx.textAlign='center';ctx.fillStyle='rgba(205,150,215,0.75)';
-    ctx.fillText('◤ JAMMING FIELD ◢',gx,ceilY-6);
+  for(const t of trees){
+    if(vis(t.x) < 0.1) continue;
+    const gx = X(t.x), gy = Y(surfaceY(t.x));
+    if(!t.alive){
+      ctx.strokeStyle = 'rgba(96,86,70,0.45)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(gx, gy);
+      ctx.lineTo(gx + 1, gy - 6);
+      ctx.stroke();
+      continue;
+    }
+    const h = t.h * scale, topY = t.broken ? gy - h * 0.55 : gy - h;
+    ctx.strokeStyle = t.wooded ? 'rgba(112,134,96,0.5)' : 'rgba(120,128,118,0.28)';
+    ctx.lineWidth = t.wooded ? 1.5 : 1;
+    ctx.beginPath();
+    ctx.moveTo(gx, gy);
+    ctx.lineTo(gx + t.lean * h, topY);
+    ctx.stroke();
+    if(!t.broken){
+      const bx = gx + t.lean * h * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(bx, gy - h * 0.62); ctx.lineTo(bx - 6, gy - h * 0.74);
+      ctx.moveTo(bx, gy - h * 0.62); ctx.lineTo(bx + 5, gy - h * 0.78);
+      if(t.wooded){
+        ctx.moveTo(bx, gy - h * 0.45); ctx.lineTo(bx - 7, gy - h * 0.55);
+        ctx.moveTo(bx, gy - h * 0.45); ctx.lineTo(bx + 6, gy - h * 0.58);
+      }
+      ctx.stroke();
+    }
   }
-  if(v<0.1&&!ew.seen)return;
-  const a=ew.alive?Math.max(v,ew.seen?0.55:v):Math.max(v,0.4);
-  ctx.globalAlpha=a;
+}
+
+function drawTerrain(){
+  ctx.beginPath();
+  ctx.moveTo(0, cssH);
+  for(let i = 0; i < N; i++){
+    const x = i / (N - 1) * C.WORLD_W;
+    ctx.lineTo(X(x), Y(terrain[i]));
+  }
+  ctx.lineTo(cssW, cssH);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, Y(360), 0, cssH);
+  g.addColorStop(0, '#3a3a31');
+  g.addColorStop(1, '#1d1d18');
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(150,150,130,0.25)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  for(const s of scorch){
+    if(vis(s.x) < 0.1) continue;
+    ctx.fillStyle = `rgba(14,12,10,${0.5 * s.a})`;
+    ctx.beginPath();
+    ctx.ellipse(X(s.x), Y(surfaceY(s.x)) + 2, s.r * scale, s.r * scale * 0.28, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawEmplacement(wx, friendly){
+  const s = scale, gx = X(wx), gy = Y(surfaceY(wx));
+  const hullW = 30 * s, hullTop = gy - 17 * s, hullH = 15 * s;
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(gx, gy + 3 * s, 42 * s, 9 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = friendly ? '#47503f' : '#4d453f';
+  ctx.fillRect(gx - hullW / 2, hullTop, hullW, hullH);
+  ctx.fillStyle = friendly ? '#56604c' : '#5b524a';
+  ctx.fillRect(gx - 9 * s, hullTop - 7 * s, 18 * s, 8 * s);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fillRect(gx - 9 * s, hullTop - 7 * s, 18 * s, 2 * s);
+
+  const a = friendly ? state.elev * Math.PI / 180 : 122 * Math.PI / 180;
+  const bx = gx, by = hullTop - 3 * s, L = 46 * s;
+  ctx.strokeStyle = friendly ? '#828b73' : '#7d7269';
+  ctx.lineWidth = Math.max(2, 3 * s);
+  ctx.beginPath();
+  ctx.moveTo(bx, by);
+  ctx.lineTo(bx + Math.cos(a) * L, by - Math.sin(a) * L);
+  ctx.stroke();
+
+  const berm = ctx.createLinearGradient(0, gy - 12 * s, 0, gy + 6 * s);
+  berm.addColorStop(0, '#3b3b30');
+  berm.addColorStop(1, '#26261e');
+  ctx.fillStyle = berm;
+  ctx.beginPath();
+  ctx.moveTo(gx - 46 * s, gy + 5 * s);
+  ctx.quadraticCurveTo(gx - 30 * s, gy - 10 * s, gx - 12 * s, gy - 9 * s);
+  ctx.lineTo(gx + 12 * s, gy - 9 * s);
+  ctx.quadraticCurveTo(gx + 30 * s, gy - 10 * s, gx + 46 * s, gy + 5 * s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(210,214,208,0.5)';
+  for(let i = 0; i < 8; i++) ctx.fillRect(gx + rand(-42, 42) * s, gy + rand(-7, 3) * s, 1.4 * s, 1.4 * s);
+
+  const pL = gx - 40 * s, pR = gx + 40 * s, poleTop = gy - 40 * s;
+  ctx.strokeStyle = 'rgba(70,60,40,0.8)';
+  ctx.lineWidth = Math.max(1, 1.4 * s);
+  ctx.beginPath();
+  ctx.moveTo(pL, gy - 8 * s); ctx.lineTo(pL, poleTop);
+  ctx.moveTo(pR, gy - 8 * s); ctx.lineTo(pR, poleTop + 5 * s);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(96,80,52,0.42)';
+  ctx.lineWidth = 1;
+  const sag = 10 * s;
+  for(let k = 0; k <= 3; k++){
+    const yy = poleTop + k * 3 * s;
+    ctx.beginPath();
+    ctx.moveTo(pL, yy);
+    ctx.quadraticCurveTo(gx, yy + sag, pR, yy + 5 * s);
+    ctx.stroke();
+  }
+  for(let k = -3; k <= 3; k++){
+    const xx = gx + k * 12 * s;
+    ctx.beginPath();
+    ctx.moveTo(xx, poleTop + (1 - Math.abs(k) / 3) * -2 * s);
+    ctx.lineTo(xx, poleTop + sag * 0.9 * (1 - Math.abs(k) / 3.4) + 2 * s);
+    ctx.stroke();
+  }
+}
+
+function drawEW(){
+  if(!ew) return;
+  const s = scale, gx = X(ew.x), gy = Y(surfaceY(ew.x)), v = vis(ew.x);
+
+  // jamming field: capped at a ceiling — above it, drones pass safely
+  if(ew.alive && ew.seen && C.SHOW_EW_FIELD){
+    const fl = X(ew.x - C.EW.FIELD), fr = X(ew.x + C.EW.FIELD);
+    const ceilY = Y(surfaceY(ew.x) + C.EW.CEIL);
+    const g = ctx.createLinearGradient(fl, 0, fr, 0);
+    g.addColorStop(0, 'rgba(190,120,200,0)');
+    g.addColorStop(0.5, 'rgba(190,120,200,0.10)');
+    g.addColorStop(1, 'rgba(190,120,200,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(fl, ceilY, fr - fl, cssH - ceilY);
+    ctx.strokeStyle = 'rgba(200,140,210,0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    ctx.beginPath();
+    ctx.moveTo(fl, ceilY); ctx.lineTo(fl, cssH);
+    ctx.moveTo(fr, ceilY); ctx.lineTo(fr, cssH);
+    ctx.moveTo(fl, ceilY); ctx.lineTo(fr, ceilY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(205,150,215,0.75)';
+    ctx.fillText('◤ JAMMING FIELD ◢', gx, ceilY - 6);
+  }
+
+  if(v < 0.1 && !ew.seen) return;
+  const a = ew.alive ? Math.max(v, ew.seen ? 0.55 : v) : Math.max(v, 0.4);
+  ctx.globalAlpha = a;
   if(ew.alive){
     // cabin
-    ctx.fillStyle='#4a4740';ctx.fillRect(gx-11*s,gy-13*s,22*s,13*s);
-    ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fillRect(gx-11*s,gy-13*s,22*s,3*s);
+    ctx.fillStyle = '#4a4740';
+    ctx.fillRect(gx - 11 * s, gy - 13 * s, 22 * s, 13 * s);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillRect(gx - 11 * s, gy - 13 * s, 22 * s, 3 * s);
     // lattice mast
-    ctx.strokeStyle='#8f86a0';ctx.lineWidth=Math.max(1,1.3*s);
-    const mh=52*s,mx=gx,my=gy-13*s;
-    ctx.beginPath();ctx.moveTo(mx-4*s,my);ctx.lineTo(mx-1.5*s,my-mh);ctx.moveTo(mx+4*s,my);ctx.lineTo(mx+1.5*s,my-mh);ctx.stroke();
-    for(let k=1;k<6;k++){const t=k/6,yy=my-mh*t,w=lerp(4,1.5,t)*s;
-      ctx.beginPath();ctx.moveTo(mx-w,yy);ctx.lineTo(mx+w,yy);ctx.stroke();}
+    ctx.strokeStyle = '#8f86a0';
+    ctx.lineWidth = Math.max(1, 1.3 * s);
+    const mh = 52 * s, mx = gx, my = gy - 13 * s;
+    ctx.beginPath();
+    ctx.moveTo(mx - 4 * s, my); ctx.lineTo(mx - 1.5 * s, my - mh);
+    ctx.moveTo(mx + 4 * s, my); ctx.lineTo(mx + 1.5 * s, my - mh);
+    ctx.stroke();
+    for(let k = 1; k < 6; k++){
+      const t = k / 6, yy = my - mh * t, w = lerp(4, 1.5, t) * s;
+      ctx.beginPath();
+      ctx.moveTo(mx - w, yy);
+      ctx.lineTo(mx + w, yy);
+      ctx.stroke();
+    }
     // dish + emitter
-    ctx.strokeStyle='#b6a8c8';ctx.beginPath();ctx.arc(mx,my-mh-3*s,5*s,Math.PI*0.15,Math.PI*0.85,true);ctx.stroke();
+    ctx.strokeStyle = '#b6a8c8';
+    ctx.beginPath();
+    ctx.arc(mx, my - mh - 3 * s, 5 * s, Math.PI * 0.15, Math.PI * 0.85, true);
+    ctx.stroke();
     // pulsing emitter light
-    const pulse=0.45+0.55*Math.abs(Math.sin(performance.now()/520));
-    ctx.fillStyle=`rgba(210,140,225,${pulse})`;ctx.beginPath();ctx.arc(mx,my-mh-2*s,2.2*s,0,Math.PI*2);ctx.fill();
+    const pulse = 0.45 + 0.55 * Math.abs(Math.sin(performance.now() / 520));
+    ctx.fillStyle = `rgba(210,140,225,${pulse})`;
+    ctx.beginPath();
+    ctx.arc(mx, my - mh - 2 * s, 2.2 * s, 0, Math.PI * 2);
+    ctx.fill();
     // guy wires
-    ctx.strokeStyle='rgba(150,140,165,0.35)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(mx,my-mh*0.75);ctx.lineTo(gx-22*s,gy);ctx.moveTo(mx,my-mh*0.75);ctx.lineTo(gx+22*s,gy);ctx.stroke();
-  }else{
+    ctx.strokeStyle = 'rgba(150,140,165,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(mx, my - mh * 0.75); ctx.lineTo(gx - 22 * s, gy);
+    ctx.moveTo(mx, my - mh * 0.75); ctx.lineTo(gx + 22 * s, gy);
+    ctx.stroke();
+  } else {
     // wreck: collapsed mast
-    ctx.fillStyle='#33302b';ctx.fillRect(gx-11*s,gy-8*s,22*s,8*s);
-    ctx.strokeStyle='rgba(120,110,100,0.7)';ctx.lineWidth=Math.max(1,1.3*s);
-    ctx.beginPath();ctx.moveTo(gx-6*s,gy-8*s);ctx.lineTo(gx+34*s,gy-1*s);ctx.moveTo(gx-2*s,gy-8*s);ctx.lineTo(gx+30*s,gy+2*s);ctx.stroke();
+    ctx.fillStyle = '#33302b';
+    ctx.fillRect(gx - 11 * s, gy - 8 * s, 22 * s, 8 * s);
+    ctx.strokeStyle = 'rgba(120,110,100,0.7)';
+    ctx.lineWidth = Math.max(1, 1.3 * s);
+    ctx.beginPath();
+    ctx.moveTo(gx - 6 * s, gy - 8 * s); ctx.lineTo(gx + 34 * s, gy - 1 * s);
+    ctx.moveTo(gx - 2 * s, gy - 8 * s); ctx.lineTo(gx + 30 * s, gy + 2 * s);
+    ctx.stroke();
   }
-  ctx.globalAlpha=1;
+  ctx.globalAlpha = 1;
+
   // label + integrity
-  if(ew.seen||v>0.1){
-    ctx.font='9px JetBrains Mono, monospace';ctx.textAlign='center';
-    ctx.fillStyle=ew.alive?'rgba(205,150,215,0.85)':'rgba(130,125,120,0.7)';
-    ctx.fillText(ew.alive?'EW STATION':'EW STATION — DESTROYED',gx,gy-72*s);
-    if(ew.alive){const pips=6,lit=Math.ceil(pips*ew.hp/C.EW.HP);
-      for(let i=0;i<pips;i++){ctx.fillStyle=i<lit?'rgba(205,150,215,0.85)':'rgba(80,76,84,0.6)';ctx.fillRect(gx-pips*3.5+i*7,gy-68*s,4,4);}}
+  if(ew.seen || v > 0.1){
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = ew.alive ? 'rgba(205,150,215,0.85)' : 'rgba(130,125,120,0.7)';
+    ctx.fillText(ew.alive ? 'EW STATION' : 'EW STATION — DESTROYED', gx, gy - 72 * s);
+    if(ew.alive){
+      const pips = 6, lit = Math.ceil(pips * ew.hp / C.EW.HP);
+      for(let i = 0; i < pips; i++){
+        ctx.fillStyle = i < lit ? 'rgba(205,150,215,0.85)' : 'rgba(80,76,84,0.6)';
+        ctx.fillRect(gx - pips * 3.5 + i * 7, gy - 68 * s, 4, 4);
+      }
+    }
   }
 }
+
 /* ---------- shells ---------- */
-function drawShell(sh,incomingShell){
-  for(let i=0;i<sh.trail.length;i++){const p=sh.trail[i],t=i/sh.trail.length,v=vis(p.x);if(v<0.05)continue;
-    if(incomingShell)ctx.fillStyle=`rgba(255,${Math.round(120+40*t)},${Math.round(110+30*t)},${t*0.7*v})`;
-    else ctx.fillStyle=`rgba(255,${Math.round(140+60*t)},60,${t*0.7*v})`;
-    ctx.beginPath();ctx.arc(X(p.x),Y(p.y),Math.max(1,(1+t*2)*scale),0,Math.PI*2);ctx.fill();}
-  const vh=vis(sh.x);if(vh>=0.05){ctx.globalAlpha=vh;ctx.fillStyle=incomingShell?'#ffd0c4':'#ffd9a0';ctx.beginPath();ctx.arc(X(sh.x),Y(sh.y),Math.max(2,3*scale),0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+function drawShell(sh, incomingShell){
+  for(let i = 0; i < sh.trail.length; i++){
+    const p = sh.trail[i], t = i / sh.trail.length, v = vis(p.x);
+    if(v < 0.05) continue;
+    if(incomingShell) ctx.fillStyle = `rgba(255,${Math.round(120 + 40 * t)},${Math.round(110 + 30 * t)},${t * 0.7 * v})`;
+    else              ctx.fillStyle = `rgba(255,${Math.round(140 + 60 * t)},60,${t * 0.7 * v})`;
+    ctx.beginPath();
+    ctx.arc(X(p.x), Y(p.y), Math.max(1, (1 + t * 2) * scale), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const vh = vis(sh.x);
+  if(vh >= 0.05){
+    ctx.globalAlpha = vh;
+    ctx.fillStyle = incomingShell ? '#ffd0c4' : '#ffd9a0';
+    ctx.beginPath();
+    ctx.arc(X(sh.x), Y(sh.y), Math.max(2, 3 * scale), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
 }
+
 function drawEffects(){
-  for(const e of effects){const v=vis(e.x);if(v<0.04)continue;const k=e.life/e.max*v;
-    if(e.t==='flash'){const R=(e.big?260:120)*scale*(1-(e.life/e.max)*0.2);
-      const g=ctx.createRadialGradient(X(e.x),Y(e.y),0,X(e.x),Y(e.y),R);
-      g.addColorStop(0,`rgba(255,210,140,${k*0.9})`);g.addColorStop(0.4,`rgba(255,120,40,${k*0.5})`);g.addColorStop(1,'rgba(255,80,20,0)');
-      ctx.fillStyle=g;ctx.beginPath();ctx.arc(X(e.x),Y(e.y),R,0,Math.PI*2);ctx.fill();
-    }else if(e.t==='p'){const kk=e.life/e.max;ctx.fillStyle=e.warm?`rgba(255,150,60,${k})`:`rgba(90,90,84,${k*0.8})`;
-      ctx.beginPath();ctx.arc(X(e.x),Y(e.y),e.size*scale*(e.warm?1:1+(1-kk)*2),0,Math.PI*2);ctx.fill();}}
+  for(const e of effects){
+    const v = vis(e.x);
+    if(v < 0.04) continue;
+    const k = e.life / e.max * v;
+    if(e.t === 'flash'){
+      const R = (e.big ? 260 : 120) * scale * (1 - (e.life / e.max) * 0.2);
+      const g = ctx.createRadialGradient(X(e.x), Y(e.y), 0, X(e.x), Y(e.y), R);
+      g.addColorStop(0, `rgba(255,210,140,${k * 0.9})`);
+      g.addColorStop(0.4, `rgba(255,120,40,${k * 0.5})`);
+      g.addColorStop(1, 'rgba(255,80,20,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(X(e.x), Y(e.y), R, 0, Math.PI * 2);
+      ctx.fill();
+    } else if(e.t === 'p'){
+      const kk = e.life / e.max;
+      ctx.fillStyle = e.warm ? `rgba(255,150,60,${k})` : `rgba(90,90,84,${k * 0.8})`;
+      ctx.beginPath();
+      ctx.arc(X(e.x), Y(e.y), e.size * scale * (e.warm ? 1 : 1 + (1 - kk) * 2), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 }
+
 function drawFog(){
-  const wpx=cssW/(N-1)+1;
-  for(let i=0;i<N;i++){const base=explored[i]?C.FOG_DIM:C.FOG_DARK,a=base*(1-liveStr[i]);
-    if(a<=0.01)continue;ctx.fillStyle=`rgba(7,9,8,${a})`;ctx.fillRect(i*cssW/(N-1)-0.5,0,wpx,cssH);}
+  const wpx = cssW / (N - 1) + 1;
+  for(let i = 0; i < N; i++){
+    const base = explored[i] ? C.FOG_DIM : C.FOG_DARK, a = base * (1 - liveStr[i]);
+    if(a <= 0.01) continue;
+    ctx.fillStyle = `rgba(7,9,8,${a})`;
+    ctx.fillRect(i * cssW / (N - 1) - 0.5, 0, wpx, cssH);
+  }
 }
+
 function drawDrone(){
-  if(!drone)return;
-  const s=scale,gx=X(drone.x),groundY=Y(surfaceY(drone.x)),gy=Y(surfaceY(drone.x)+drone.alt),half=drone.alt*D.CONE;
-  ctx.fillStyle='rgba(121,198,194,0.06)';ctx.beginPath();ctx.moveTo(gx,gy);ctx.lineTo(X(drone.x-half),groundY);ctx.lineTo(X(drone.x+half),groundY);ctx.closePath();ctx.fill();
-  ctx.strokeStyle='rgba(121,198,194,0.25)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(gx,gy);ctx.lineTo(X(drone.x-half),groundY);ctx.moveTo(gx,gy);ctx.lineTo(X(drone.x+half),groundY);ctx.stroke();
-  ctx.strokeStyle='#9fe2de';ctx.lineWidth=Math.max(1,1.6*s);ctx.beginPath();ctx.moveTo(gx-7*s,gy);ctx.lineTo(gx+7*s,gy);ctx.stroke();
-  ctx.fillStyle='#cfeeeb';ctx.fillRect(gx-2*s,gy-2*s,4*s,4*s);
-  ctx.beginPath();ctx.moveTo(gx-7*s,gy);ctx.lineTo(gx-7*s,gy-3*s);ctx.moveTo(gx+7*s,gy);ctx.lineTo(gx+7*s,gy-3*s);ctx.stroke();
-  ctx.strokeStyle='rgba(121,198,194,0.15)';ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(gx,gy);ctx.lineTo(gx,groundY);ctx.stroke();ctx.setLineDash([]);
+  if(!drone) return;
+  const s = scale, gx = X(drone.x), groundY = Y(surfaceY(drone.x));
+  const gy = Y(surfaceY(drone.x) + drone.alt), half = drone.alt * D.CONE;
+  ctx.fillStyle = 'rgba(121,198,194,0.06)';
+  ctx.beginPath();
+  ctx.moveTo(gx, gy);
+  ctx.lineTo(X(drone.x - half), groundY);
+  ctx.lineTo(X(drone.x + half), groundY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(121,198,194,0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(gx, gy); ctx.lineTo(X(drone.x - half), groundY);
+  ctx.moveTo(gx, gy); ctx.lineTo(X(drone.x + half), groundY);
+  ctx.stroke();
+  ctx.strokeStyle = '#9fe2de';
+  ctx.lineWidth = Math.max(1, 1.6 * s);
+  ctx.beginPath();
+  ctx.moveTo(gx - 7 * s, gy);
+  ctx.lineTo(gx + 7 * s, gy);
+  ctx.stroke();
+  ctx.fillStyle = '#cfeeeb';
+  ctx.fillRect(gx - 2 * s, gy - 2 * s, 4 * s, 4 * s);
+  ctx.beginPath();
+  ctx.moveTo(gx - 7 * s, gy); ctx.lineTo(gx - 7 * s, gy - 3 * s);
+  ctx.moveTo(gx + 7 * s, gy); ctx.lineTo(gx + 7 * s, gy - 3 * s);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(121,198,194,0.15)';
+  ctx.setLineDash([2, 4]);
+  ctx.beginPath();
+  ctx.moveTo(gx, gy);
+  ctx.lineTo(gx, groundY);
+  ctx.stroke();
+  ctx.setLineDash([]);
 }
+
 function drawSector(){
-  if(state.enemyKnown||!C.SHOW_SECTOR)return;
-  const [a,b]=state.sector,ya=Y(surfaceY((a+b)/2))-2;
-  ctx.strokeStyle='rgba(220,150,150,0.4)';ctx.setLineDash([6,5]);ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(X(a),ya);ctx.lineTo(X(b),ya);ctx.stroke();ctx.setLineDash([]);
-  ctx.beginPath();ctx.moveTo(X(a),ya-6);ctx.lineTo(X(a),ya+6);ctx.moveTo(X(b),ya-6);ctx.lineTo(X(b),ya+6);ctx.stroke();
-  ctx.font='9px JetBrains Mono, monospace';ctx.fillStyle='rgba(220,150,150,0.7)';ctx.textAlign='center';
-  ctx.fillText('SUSPECTED HOSTILE SECTOR',X((a+b)/2),ya-10);
+  if(state.enemyKnown || !C.SHOW_SECTOR) return;
+  const [a, b] = state.sector, ya = Y(surfaceY((a + b) / 2)) - 2;
+  ctx.strokeStyle = 'rgba(220,150,150,0.4)';
+  ctx.setLineDash([6, 5]);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(X(a), ya);
+  ctx.lineTo(X(b), ya);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(X(a), ya - 6); ctx.lineTo(X(a), ya + 6);
+  ctx.moveTo(X(b), ya - 6); ctx.lineTo(X(b), ya + 6);
+  ctx.stroke();
+  ctx.font = '9px JetBrains Mono, monospace';
+  ctx.fillStyle = 'rgba(220,150,150,0.7)';
+  ctx.textAlign = 'center';
+  ctx.fillText('SUSPECTED HOSTILE SECTOR', X((a + b) / 2), ya - 10);
 }
+
 function drawDetect(){
-  if(!drone||state.enemyKnown||(state.detect<=0&&state.detRate<=0))return;
-  const gx=X(enemyX),gy=Y(surfaceY(enemyX)+72),w=92,hh=6;
-  ctx.fillStyle='rgba(10,22,21,0.65)';ctx.fillRect(gx-w/2-4,gy-15,w+8,28);
-  ctx.strokeStyle='rgba(121,198,194,0.5)';ctx.strokeRect(gx-w/2,gy,w,hh);ctx.fillStyle='#79c6c2';ctx.fillRect(gx-w/2,gy,w*state.detect,hh);
-  ctx.font='8px JetBrains Mono, monospace';ctx.textAlign='center';ctx.fillStyle='rgba(121,198,194,0.9)';
-  const status=state.detRate<=0?'CONTACT — TRACKING LOST':(state.detRate<0.12?'CONTACT — OBSCURED BY COVER':'RESOLVING…');
-  ctx.fillText(status,gx,gy-5);
+  if(!drone || state.enemyKnown || (state.detect <= 0 && state.detRate <= 0)) return;
+  const gx = X(enemyX), gy = Y(surfaceY(enemyX) + 72), w = 92, hh = 6;
+  ctx.fillStyle = 'rgba(10,22,21,0.65)';
+  ctx.fillRect(gx - w / 2 - 4, gy - 15, w + 8, 28);
+  ctx.strokeStyle = 'rgba(121,198,194,0.5)';
+  ctx.strokeRect(gx - w / 2, gy, w, hh);
+  ctx.fillStyle = '#79c6c2';
+  ctx.fillRect(gx - w / 2, gy, w * state.detect, hh);
+  ctx.font = '8px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(121,198,194,0.9)';
+  const status = state.detRate <= 0 ? 'CONTACT — TRACKING LOST'
+    : (state.detRate < 0.12 ? 'CONTACT — OBSCURED BY COVER' : 'RESOLVING…');
+  ctx.fillText(status, gx, gy - 5);
 }
+
 function drawMarks(){
-  for(const m of marks){const k=clamp(1-m.age/14,0,1),gx=X(m.x),gy=Y(m.y);
-    ctx.strokeStyle=`rgba(255,138,60,${0.8*k})`;ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(gx-7,gy);ctx.lineTo(gx+7,gy);ctx.moveTo(gx,gy-7);ctx.lineTo(gx,gy-20);ctx.stroke();
-    ctx.font='9px JetBrains Mono, monospace';ctx.textAlign='center';ctx.fillStyle=`rgba(255,138,60,${0.9*k})`;
-    let label=m.grid;if(m.delta!==null){const t=m.delta>0?`+${m.delta} OVER`:`${m.delta} SHORT`;label=Math.abs(m.delta)<C.SPLASH?'ON TARGET':t;}
-    ctx.fillText(label,gx,gy-23);}
+  for(const m of marks){
+    const k = clamp(1 - m.age / 14, 0, 1), gx = X(m.x), gy = Y(m.y);
+    ctx.strokeStyle = `rgba(255,138,60,${0.8 * k})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(gx - 7, gy); ctx.lineTo(gx + 7, gy);
+    ctx.moveTo(gx, gy - 7);  ctx.lineTo(gx, gy - 20);
+    ctx.stroke();
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = `rgba(255,138,60,${0.9 * k})`;
+    let label = m.grid;
+    if(m.delta !== null){
+      const t = m.delta > 0 ? `+${m.delta} OVER` : `${m.delta} SHORT`;
+      label = Math.abs(m.delta) < C.SPLASH ? 'ON TARGET' : t;
+    }
+    ctx.fillText(label, gx, gy - 23);
+  }
 }
 
 /* ---------- HUD ---------- */
 function hud(){
   ctx.save();
-  ctx.globalAlpha=0.05;ctx.strokeStyle='#cfe0cf';ctx.lineWidth=1;
-  for(let y=0;y<cssH;y+=3){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cssW,y);ctx.stroke();}
-  ctx.globalAlpha=1;
-  ctx.strokeStyle='rgba(150,160,148,0.5)';ctx.lineWidth=1;const m=14,L=22;
-  const corner=(x,y,sx,sy)=>{ctx.beginPath();ctx.moveTo(x,y+sy*L);ctx.lineTo(x,y);ctx.lineTo(x+sx*L,y);ctx.stroke();};
-  corner(m,m,1,1);corner(cssW-m,m,-1,1);corner(m,cssH-m,1,-1);corner(cssW-m,cssH-m,-1,-1);
-  ctx.font='11px JetBrains Mono, monospace';ctx.textAlign='left';ctx.fillStyle='rgba(160,170,158,0.85)';
-  ctx.fillText((drone?'● DRONE FEED · ':'● LOCAL OPTICS · ')+(state.enemyKnown?'TARGET CONFIRMED':'TARGET UNKNOWN'),m+18,m+16);
-  ctx.textAlign='right';ctx.fillText('GREY ZONE // SECTOR 7 // ENGAGEMENT',cssW-m-18,m+16);
+  ctx.globalAlpha = 0.05;
+  ctx.strokeStyle = '#cfe0cf';
+  ctx.lineWidth = 1;
+  for(let y = 0; y < cssH; y += 3){
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(cssW, y);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = 'rgba(150,160,148,0.5)';
+  ctx.lineWidth = 1;
+  const m = 14, L = 22;
+  const corner = (x, y, sx, sy) => {
+    ctx.beginPath();
+    ctx.moveTo(x, y + sy * L);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + sx * L, y);
+    ctx.stroke();
+  };
+  corner(m, m, 1, 1);
+  corner(cssW - m, m, -1, 1);
+  corner(m, cssH - m, 1, -1);
+  corner(cssW - m, cssH - m, -1, -1);
+
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(160,170,158,0.85)';
+  ctx.fillText((drone ? '● DRONE FEED · ' : '● LOCAL OPTICS · ')
+    + (state.enemyKnown ? 'TARGET CONFIRMED' : 'TARGET UNKNOWN'), m + 18, m + 16);
+  ctx.textAlign = 'right';
+  ctx.fillText('GREY ZONE // SECTOR 7 // ENGAGEMENT', cssW - m - 18, m + 16);
 
   // counterbattery threat bar (top center)
-  const tw=200, tx=cssW/2-tw/2, ty=m+8;
-  let frac,tlabel,tcol;
-  if(matchTime<EN.ACQUIRE_DELAY){frac=matchTime/EN.ACQUIRE_DELAY;tlabel='ENEMY: SEARCHING';tcol='rgba(150,170,150,0.85)';}
-  else{frac=clamp((matchTime-EN.ACQUIRE_DELAY)/EN.RANGE_IN_TIME,0,1);tlabel=frac<1?'ENEMY: RANGING YOU IN':'ENEMY: DIALED IN';tcol=frac<1?'#e0a070':'#e08074';}
-  ctx.textAlign='center';ctx.font='10px JetBrains Mono, monospace';ctx.fillStyle=tcol;ctx.fillText(tlabel,cssW/2,ty);
-  ctx.strokeStyle='rgba(180,120,110,0.5)';ctx.strokeRect(tx,ty+6,tw,5);
-  ctx.fillStyle=tcol;ctx.fillRect(tx,ty+6,tw*frac,5);
+  const tw = 200, tx = cssW / 2 - tw / 2, ty = m + 8;
+  let frac, tlabel, tcol;
+  if(matchTime < EN.ACQUIRE_DELAY){
+    frac = matchTime / EN.ACQUIRE_DELAY;
+    tlabel = 'ENEMY: SEARCHING';
+    tcol = 'rgba(150,170,150,0.85)';
+  } else {
+    frac = clamp((matchTime - EN.ACQUIRE_DELAY) / EN.RANGE_IN_TIME, 0, 1);
+    tlabel = frac < 1 ? 'ENEMY: RANGING YOU IN' : 'ENEMY: DIALED IN';
+    tcol = frac < 1 ? '#e0a070' : '#e08074';
+  }
+  ctx.textAlign = 'center';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.fillStyle = tcol;
+  ctx.fillText(tlabel, cssW / 2, ty);
+  ctx.strokeStyle = 'rgba(180,120,110,0.5)';
+  ctx.strokeRect(tx, ty + 6, tw, 5);
+  ctx.fillStyle = tcol;
+  ctx.fillRect(tx, ty + 6, tw * frac, 5);
 
   // gun telemetry (left)
-  const px=m+18,py=cssH-m-100;ctx.textAlign='left';const wd=wind>0?'→':'←';
-  const rows=[['ELEV',state.elev.toFixed(1)+'°'],['CHG ',state.pwr.toFixed(1)+'%'],['WIND',wd+' '+Math.abs(wind).toFixed(0)],['RDS ',String(state.rounds)]];
-  ctx.fillStyle='rgba(20,24,20,0.45)';ctx.fillRect(px-8,py-14,148,116);ctx.strokeStyle='rgba(120,130,118,0.4)';ctx.strokeRect(px-8,py-14,148,116);
-  rows.forEach((r,i)=>{ctx.fillStyle='rgba(125,131,122,0.9)';ctx.fillText(r[0],px,py+i*18+4);ctx.fillStyle='#dfe4dc';ctx.fillText(r[1],px+52,py+i*18+4);});
-  ctx.strokeStyle='rgba(120,130,118,0.5)';ctx.strokeRect(px,py+72,120,5);ctx.fillStyle='#ff8a3c';ctx.fillRect(px,py+72,120*state.pwr/100,5);
+  const px = m + 18, py = cssH - m - 100;
+  ctx.textAlign = 'left';
+  const wd = wind > 0 ? '→' : '←';
+  const rows = [
+    ['ELEV', state.elev.toFixed(1) + '°'],
+    ['CHG ', state.pwr.toFixed(1) + '%'],
+    ['WIND', wd + ' ' + Math.abs(wind).toFixed(0)],
+    ['RDS ', String(state.rounds)],
+  ];
+  ctx.fillStyle = 'rgba(20,24,20,0.45)';
+  ctx.fillRect(px - 8, py - 14, 148, 116);
+  ctx.strokeStyle = 'rgba(120,130,118,0.4)';
+  ctx.strokeRect(px - 8, py - 14, 148, 116);
+  rows.forEach((r, i) => {
+    ctx.fillStyle = 'rgba(125,131,122,0.9)';
+    ctx.fillText(r[0], px, py + i * 18 + 4);
+    ctx.fillStyle = '#dfe4dc';
+    ctx.fillText(r[1], px + 52, py + i * 18 + 4);
+  });
+  ctx.strokeStyle = 'rgba(120,130,118,0.5)';
+  ctx.strokeRect(px, py + 72, 120, 5);
+  ctx.fillStyle = '#ff8a3c';
+  ctx.fillRect(px, py + 72, 120 * state.pwr / 100, 5);
+
   // reload
-  const rdy=state.reload<=0;
-  ctx.fillStyle=rdy?'rgba(140,200,150,0.9)':'rgba(190,150,110,0.9)';
-  ctx.fillText(rdy?'GUN READY':('RELOADING '+state.reload.toFixed(1)+'s'),px,py+90);
-  ctx.strokeStyle='rgba(120,130,118,0.5)';ctx.strokeRect(px,py+94,120,5);
-  ctx.fillStyle=rdy?'#8cc896':'#b8966e';ctx.fillRect(px,py+94,120*(1-state.reload/C.RELOAD),5);
+  const rdy = state.reload <= 0;
+  ctx.fillStyle = rdy ? 'rgba(140,200,150,0.9)' : 'rgba(190,150,110,0.9)';
+  ctx.fillText(rdy ? 'GUN READY' : ('RELOADING ' + state.reload.toFixed(1) + 's'), px, py + 90);
+  ctx.strokeStyle = 'rgba(120,130,118,0.5)';
+  ctx.strokeRect(px, py + 94, 120, 5);
+  ctx.fillStyle = rdy ? '#8cc896' : '#b8966e';
+  ctx.fillRect(px, py + 94, 120 * (1 - state.reload / C.RELOAD), 5);
 
   // your emplacement integrity (above gun telemetry)
-  ctx.fillStyle='rgba(140,180,150,0.85)';ctx.fillText('YOUR EMPLACEMENT',px,py-26);
-  const ph=10,plit=Math.ceil(ph*state.playerHP/C.PLAYER_HP);
-  for(let i=0;i<ph;i++){ctx.fillStyle=i<plit?'rgba(140,200,150,0.9)':'rgba(80,80,76,0.6)';ctx.fillRect(px+i*9,py-20,6,5);}
+  ctx.fillStyle = 'rgba(140,180,150,0.85)';
+  ctx.fillText('YOUR EMPLACEMENT', px, py - 26);
+  const ph = 10, plit = Math.ceil(ph * state.playerHP / C.PLAYER_HP);
+  for(let i = 0; i < ph; i++){
+    ctx.fillStyle = i < plit ? 'rgba(140,200,150,0.9)' : 'rgba(80,80,76,0.6)';
+    ctx.fillRect(px + i * 9, py - 20, 6, 5);
+  }
 
   // drone panel (right)
-  const qx=cssW-m-18-140,qy=cssH-m-70;ctx.textAlign='left';
-  ctx.fillStyle='rgba(10,22,21,0.5)';ctx.fillRect(qx-8,qy-14,148,74);ctx.strokeStyle='rgba(60,120,116,0.5)';ctx.strokeRect(qx-8,qy-14,148,74);
+  const qx = cssW - m - 18 - 140, qy = cssH - m - 70;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(10,22,21,0.5)';
+  ctx.fillRect(qx - 8, qy - 14, 148, 74);
+  ctx.strokeStyle = 'rgba(60,120,116,0.5)';
+  ctx.strokeRect(qx - 8, qy - 14, 148, 74);
   if(drone){
-    ctx.fillStyle='rgba(121,198,194,0.85)';ctx.fillText('ALT ',qx,qy+4);ctx.fillStyle='#cfeeeb';ctx.fillText(Math.round(drone.alt)+' m',qx+44,qy+4);
-    ctx.fillStyle='rgba(121,198,194,0.85)';ctx.fillText('OPT ',qx,qy+24);
-    const fidPct=Math.round(clamp(Math.pow(D.REF_ALT/drone.alt,D.FALLOFF),0,1)*100);
-    ctx.fillStyle=fidPct<25?'#b8966e':'#cfeeeb';ctx.fillText(fidPct+'% fidelity',qx+44,qy+24);
-    ctx.fillStyle=lowBatt?'#ff8a3c':'rgba(121,198,194,0.85)';ctx.fillText('BAT ',qx,qy+44);
-    ctx.strokeStyle='rgba(121,198,194,0.5)';ctx.strokeRect(qx+44,qy+38,96,6);ctx.fillStyle=lowBatt?'#ff8a3c':'#79c6c2';ctx.fillRect(qx+44,qy+38,96*clamp(drone.battery/D.BATTERY,0,1),6);
-  }else{
-    if(droneLockout>0){ctx.fillStyle='#e0a070';ctx.fillText('AIRFRAME LOST',qx,qy+4);ctx.fillStyle='rgba(224,160,112,0.8)';ctx.fillText('REPLACING '+droneLockout.toFixed(1)+'s',qx,qy+24);}
-    else{const rdy=droneCharge>=D.MIN_LAUNCH;ctx.fillStyle=rdy?'rgba(121,198,194,0.85)':'rgba(160,140,110,0.85)';ctx.fillText(droneCharge>=D.BATTERY-0.1?'DRONE READY':(rdy?'DRONE READY*':'CHARGING'),qx,qy+4);
-      ctx.fillStyle='rgba(121,198,194,0.85)';ctx.fillText('CHG ',qx,qy+24);ctx.strokeStyle='rgba(121,198,194,0.5)';ctx.strokeRect(qx+44,qy+18,96,6);ctx.fillStyle='#79c6c2';ctx.fillRect(qx+44,qy+18,96*clamp(droneCharge/D.BATTERY,0,1),6);}
+    ctx.fillStyle = 'rgba(121,198,194,0.85)';
+    ctx.fillText('ALT ', qx, qy + 4);
+    ctx.fillStyle = '#cfeeeb';
+    ctx.fillText(Math.round(drone.alt) + ' m', qx + 44, qy + 4);
+    ctx.fillStyle = 'rgba(121,198,194,0.85)';
+    ctx.fillText('OPT ', qx, qy + 24);
+    const fidPct = Math.round(clamp(Math.pow(D.REF_ALT / drone.alt, D.FALLOFF), 0, 1) * 100);
+    ctx.fillStyle = fidPct < 25 ? '#b8966e' : '#cfeeeb';
+    ctx.fillText(fidPct + '% fidelity', qx + 44, qy + 24);
+    ctx.fillStyle = lowBatt ? '#ff8a3c' : 'rgba(121,198,194,0.85)';
+    ctx.fillText('BAT ', qx, qy + 44);
+    ctx.strokeStyle = 'rgba(121,198,194,0.5)';
+    ctx.strokeRect(qx + 44, qy + 38, 96, 6);
+    ctx.fillStyle = lowBatt ? '#ff8a3c' : '#79c6c2';
+    ctx.fillRect(qx + 44, qy + 38, 96 * clamp(drone.battery / D.BATTERY, 0, 1), 6);
+  } else {
+    if(droneLockout > 0){
+      ctx.fillStyle = '#e0a070';
+      ctx.fillText('AIRFRAME LOST', qx, qy + 4);
+      ctx.fillStyle = 'rgba(224,160,112,0.8)';
+      ctx.fillText('REPLACING ' + droneLockout.toFixed(1) + 's', qx, qy + 24);
+    } else {
+      const rdy = droneCharge >= D.MIN_LAUNCH;
+      ctx.fillStyle = rdy ? 'rgba(121,198,194,0.85)' : 'rgba(160,140,110,0.85)';
+      ctx.fillText(droneCharge >= D.BATTERY - 0.1 ? 'DRONE READY' : (rdy ? 'DRONE READY*' : 'CHARGING'), qx, qy + 4);
+      ctx.fillStyle = 'rgba(121,198,194,0.85)';
+      ctx.fillText('CHG ', qx, qy + 24);
+      ctx.strokeStyle = 'rgba(121,198,194,0.5)';
+      ctx.strokeRect(qx + 44, qy + 18, 96, 6);
+      ctx.fillStyle = '#79c6c2';
+      ctx.fillRect(qx + 44, qy + 18, 96 * clamp(droneCharge / D.BATTERY, 0, 1), 6);
+    }
   }
+
   // confirmed target HP
   if(state.enemyKnown){
-    const ex=X(enemyX),ey=Y(surfaceY(enemyX));ctx.textAlign='center';ctx.font='10px JetBrains Mono, monospace';
-    ctx.fillStyle='rgba(200,120,120,0.85)';ctx.fillText(state.over&&state.win?'EMPLACEMENT NEUTRALIZED':'CONFIRMED HOSTILE',ex,ey-50*scale-8);
-    const pips=10,lit=Math.ceil(pips*state.enemyHP/C.ENEMY_HP);
-    for(let i=0;i<pips;i++){ctx.fillStyle=i<lit?'rgba(210,120,110,0.9)':'rgba(80,80,76,0.6)';ctx.fillRect(ex-pips*4+i*8,ey-50*scale-4,5,4);}
-    if(!state.over){ctx.strokeStyle='rgba(224,128,116,0.7)';ctx.lineWidth=1;
-      ctx.strokeRect(ex-10,ey-22,20,18);
-      ctx.beginPath();ctx.moveTo(ex-15,ey-13);ctx.lineTo(ex-10,ey-13);ctx.moveTo(ex+10,ey-13);ctx.lineTo(ex+15,ey-13);ctx.stroke();}
+    const ex = X(enemyX), ey = Y(surfaceY(enemyX));
+    ctx.textAlign = 'center';
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = 'rgba(200,120,120,0.85)';
+    ctx.fillText(state.over && state.win ? 'EMPLACEMENT NEUTRALIZED' : 'CONFIRMED HOSTILE', ex, ey - 50 * scale - 8);
+    const pips = 10, lit = Math.ceil(pips * state.enemyHP / C.ENEMY_HP);
+    for(let i = 0; i < pips; i++){
+      ctx.fillStyle = i < lit ? 'rgba(210,120,110,0.9)' : 'rgba(80,80,76,0.6)';
+      ctx.fillRect(ex - pips * 4 + i * 8, ey - 50 * scale - 4, 5, 4);
+    }
+    if(!state.over){
+      ctx.strokeStyle = 'rgba(224,128,116,0.7)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ex - 10, ey - 22, 20, 18);
+      ctx.beginPath();
+      ctx.moveTo(ex - 15, ey - 13); ctx.lineTo(ex - 10, ey - 13);
+      ctx.moveTo(ex + 10, ey - 13); ctx.lineTo(ex + 15, ey - 13);
+      ctx.stroke();
+    }
   }
-  if(drone&&ew&&ew.alive&&drone.alt<C.EW.CEIL){
-    const dist=Math.abs(drone.x-ew.x);
-    if(dist<C.EW.FIELD*1.25){ctx.textAlign='center';ctx.globalAlpha=0.55+0.45*Math.abs(Math.sin(performance.now()/150));
-      ctx.fillStyle='#d28ce0';ctx.font='12px JetBrains Mono, monospace';
-      ctx.fillText('▲ SIGNAL DEGRADING — JAMMING NEAR',cssW/2,cssH-m-48);ctx.globalAlpha=1;}
+
+  if(drone && ew && ew.alive && drone.alt < C.EW.CEIL){
+    const dist = Math.abs(drone.x - ew.x);
+    if(dist < C.EW.FIELD * 1.25){
+      ctx.textAlign = 'center';
+      ctx.globalAlpha = 0.55 + 0.45 * Math.abs(Math.sin(performance.now() / 150));
+      ctx.fillStyle = '#d28ce0';
+      ctx.font = '12px JetBrains Mono, monospace';
+      ctx.fillText('▲ SIGNAL DEGRADING — JAMMING NEAR', cssW / 2, cssH - m - 48);
+      ctx.globalAlpha = 1;
+    }
   }
-  if(lowBatt&&drone){ctx.textAlign='center';ctx.globalAlpha=0.6+0.4*Math.sin(performance.now()/180);ctx.fillStyle='#ff8a3c';ctx.font='12px JetBrains Mono, monospace';ctx.fillText('● LOW BATTERY — RECALL DRONE',cssW/2,cssH-m-30);ctx.globalAlpha=1;}
-  if(toast){ctx.textAlign='center';ctx.globalAlpha=clamp(toast.life,0,1);ctx.fillStyle='#cfeeeb';ctx.font='12px JetBrains Mono, monospace';ctx.fillText(toast.text,cssW/2,m+44);ctx.globalAlpha=1;}
-  if(idBanner>0){ctx.textAlign='center';ctx.globalAlpha=clamp(idBanner,0,1);ctx.fillStyle='#ffb27a';ctx.font='20px JetBrains Mono, monospace';ctx.fillText('TARGET ACQUIRED',cssW/2,cssH/2-40);ctx.globalAlpha=1;}
+  if(lowBatt && drone){
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(performance.now() / 180);
+    ctx.fillStyle = '#ff8a3c';
+    ctx.font = '12px JetBrains Mono, monospace';
+    ctx.fillText('● LOW BATTERY — RECALL DRONE', cssW / 2, cssH - m - 30);
+    ctx.globalAlpha = 1;
+  }
+  if(toast){
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = clamp(toast.life, 0, 1);
+    ctx.fillStyle = '#cfeeeb';
+    ctx.font = '12px JetBrains Mono, monospace';
+    ctx.fillText(toast.text, cssW / 2, m + 44);
+    ctx.globalAlpha = 1;
+  }
+  if(idBanner > 0){
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = clamp(idBanner, 0, 1);
+    ctx.fillStyle = '#ffb27a';
+    ctx.font = '20px JetBrains Mono, monospace';
+    ctx.fillText('TARGET ACQUIRED', cssW / 2, cssH / 2 - 40);
+    ctx.globalAlpha = 1;
+  }
   if(state.over){
-    ctx.fillStyle='rgba(8,10,8,0.6)';ctx.fillRect(0,0,cssW,cssH);ctx.textAlign='center';
-    if(state.win){ctx.fillStyle='#ffb27a';ctx.font='28px JetBrains Mono, monospace';ctx.fillText('TARGET NEUTRALIZED',cssW/2,cssH/2-6);}
-    else{ctx.fillStyle='#e08074';ctx.font='28px JetBrains Mono, monospace';ctx.fillText('EMPLACEMENT LOST',cssW/2,cssH/2-6);}
-    ctx.fillStyle='rgba(170,178,166,0.9)';ctx.font='12px JetBrains Mono, monospace';
-    ctx.fillText(`${state.rounds} rounds expended · ${matchTime.toFixed(0)}s · New Engagement to reset`,cssW/2,cssH/2+22);
+    ctx.fillStyle = 'rgba(8,10,8,0.6)';
+    ctx.fillRect(0, 0, cssW, cssH);
+    ctx.textAlign = 'center';
+    if(state.win){
+      ctx.fillStyle = '#ffb27a';
+      ctx.font = '28px JetBrains Mono, monospace';
+      ctx.fillText('TARGET NEUTRALIZED', cssW / 2, cssH / 2 - 6);
+    } else {
+      ctx.fillStyle = '#e08074';
+      ctx.font = '28px JetBrains Mono, monospace';
+      ctx.fillText('EMPLACEMENT LOST', cssW / 2, cssH / 2 - 6);
+    }
+    ctx.fillStyle = 'rgba(170,178,166,0.9)';
+    ctx.font = '12px JetBrains Mono, monospace';
+    ctx.fillText(`${state.rounds} rounds expended · ${matchTime.toFixed(0)}s · New Engagement to reset`, cssW / 2, cssH / 2 + 22);
   }
   ctx.restore();
 }
 
 /* ---------- loop ---------- */
-let acc=0,last=performance.now();
+let acc = 0, last = performance.now();
+
 function frame(now){
-  let dt=(now-last)/1000;last=now;if(dt>0.1)dt=0.1;acc+=dt;
-  while(acc>=C.DT){step(C.DT);acc-=C.DT;}
-  const sx=(Math.random()-0.5)*shake,sy=(Math.random()-0.5)*shake;
-  ctx.save();ctx.translate(sx,sy);
-  sky();drawTrees();drawTerrain();
-  drawEmplacement(C.PLAYER_X,true);
-  if(state.enemyKnown)drawEmplacement(enemyX,false);
-  if(shot)drawShell(shot,false);
-  for(const sh of incoming)drawShell(sh,true);
+  let dt = (now - last) / 1000;
+  last = now;
+  if(dt > 0.1) dt = 0.1;
+  acc += dt;
+  while(acc >= C.DT){ step(C.DT); acc -= C.DT; }
+
+  const sx = (Math.random() - 0.5) * shake, sy = (Math.random() - 0.5) * shake;
+  ctx.save();
+  ctx.translate(sx, sy);
+  sky();
+  drawTrees();
+  drawTerrain();
+  drawEmplacement(C.PLAYER_X, true);
+  if(state.enemyKnown) drawEmplacement(enemyX, false);
+  if(shot) drawShell(shot, false);
+  for(const sh of incoming) drawShell(sh, true);
   drawEffects();
   drawFog();
   drawEW();
-  drawSector();drawDetect();drawMarks();drawDrone();
+  drawSector();
+  drawDetect();
+  drawMarks();
+  drawDrone();
   ctx.restore();
   hud();
   requestAnimationFrame(frame);
 }
 
 /* ---------- UI ---------- */
-const elevS=document.getElementById('elevS'),pwrS=document.getElementById('pwrS'),elevV=document.getElementById('elevV'),pwrV=document.getElementById('pwrV');
-const droneBtn=document.getElementById('droneBtn'),droneStat=document.getElementById('droneStat');
+const elevS = document.getElementById('elevS'), pwrS = document.getElementById('pwrS');
+const elevV = document.getElementById('elevV'), pwrV = document.getElementById('pwrV');
+const droneBtn = document.getElementById('droneBtn'), droneStat = document.getElementById('droneStat');
+
 function updateUI(){
-  elevS.value=state.elev;pwrS.value=state.pwr;elevV.textContent=state.elev.toFixed(1)+'°';pwrV.textContent=state.pwr.toFixed(1)+'%';
-  droneBtn.textContent=drone?'Recall Drone (E)':'Launch Drone (E)';
-  droneStat.textContent=drone?('alt '+Math.round(drone.alt)+'m'):(droneLockout>0?'airframe lost':(droneCharge>=D.MIN_LAUNCH?'drone ready':'drone charging'));
+  elevS.value = state.elev;
+  pwrS.value = state.pwr;
+  elevV.textContent = state.elev.toFixed(1) + '°';
+  pwrV.textContent = state.pwr.toFixed(1) + '%';
+  droneBtn.textContent = drone ? 'Recall Drone (E)' : 'Launch Drone (E)';
+  droneStat.textContent = drone
+    ? ('alt ' + Math.round(drone.alt) + 'm')
+    : (droneLockout > 0 ? 'airframe lost' : (droneCharge >= D.MIN_LAUNCH ? 'drone ready' : 'drone charging'));
 }
 
 /* ---------- input ---------- */
-const keys={};
-function adjElev(dir){const s=keys['shift']?C.ELEV_FINE:C.ELEV_STEP;state.elev=clamp(state.elev+dir*s,C.MIN_ELEV,C.MAX_ELEV);updateUI();}
-function adjPwr(dir){const s=keys['shift']?C.PWR_FINE:C.PWR_STEP;state.pwr=clamp(state.pwr+dir*s,0,100);updateUI();}
-addEventListener('keydown',e=>{
-  const k=e.key.toLowerCase();
-  if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();
-  if(k==='shift'){keys['shift']=true;return;}
-  if(['arrowup','arrowdown','arrowleft','arrowright'].includes(k)){keys[k]=true;return;}
-  if(k==='a')adjElev(-1);else if(k==='d')adjElev(1);
-  else if(k==='w')adjPwr(1);else if(k==='s')adjPwr(-1);
-  else if(k===' ')fire();else if(k==='e')toggleDrone();else if(k==='r')fresh();
+const keys = {};
+
+function adjElev(dir){
+  const s = keys['shift'] ? C.ELEV_FINE : C.ELEV_STEP;
+  state.elev = clamp(state.elev + dir * s, C.MIN_ELEV, C.MAX_ELEV);
+  updateUI();
+}
+
+function adjPwr(dir){
+  const s = keys['shift'] ? C.PWR_FINE : C.PWR_STEP;
+  state.pwr = clamp(state.pwr + dir * s, 0, 100);
+  updateUI();
+}
+
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
+  if(k === 'shift'){ keys['shift'] = true; return; }
+  if(['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)){ keys[k] = true; return; }
+  if(k === 'a') adjElev(-1);
+  else if(k === 'd') adjElev(1);
+  else if(k === 'w') adjPwr(1);
+  else if(k === 's') adjPwr(-1);
+  else if(k === ' ') fire();
+  else if(k === 'e') toggleDrone();
+  else if(k === 'r') fresh();
 });
-addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k==='shift')keys['shift']=false;if(keys[k]!==undefined)keys[k]=false;});
-elevS.addEventListener('input',()=>{state.elev=parseFloat(elevS.value);updateUI();elevS.blur();});
-pwrS.addEventListener('input',()=>{state.pwr=parseFloat(pwrS.value);updateUI();pwrS.blur();});
-document.querySelectorAll('.bar').forEach(b=>b.addEventListener('click',e=>{
-  const btn=e.target.closest('button');if(!btn)return;
+
+addEventListener('keyup', e => {
+  const k = e.key.toLowerCase();
+  if(k === 'shift') keys['shift'] = false;
+  if(keys[k] !== undefined) keys[k] = false;
+});
+
+elevS.addEventListener('input', () => { state.elev = parseFloat(elevS.value); updateUI(); elevS.blur(); });
+pwrS.addEventListener('input',  () => { state.pwr  = parseFloat(pwrS.value);  updateUI(); pwrS.blur();  });
+
+document.querySelectorAll('.bar').forEach(b => b.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
   switch(btn.dataset.act){
-    case 'elev-':adjElev(-1);break;case 'elev+':adjElev(1);break;
-    case 'pwr-':adjPwr(-1);break;case 'pwr+':adjPwr(1);break;
-    case 'fire':fire();break;case 'reset':fresh();break;
-    case 'drone':toggleDrone();break;case 'alt+':nudgeAlt(1);break;case 'alt-':nudgeAlt(-1);break;
+    case 'elev-': adjElev(-1); break;
+    case 'elev+': adjElev(1);  break;
+    case 'pwr-':  adjPwr(-1);  break;
+    case 'pwr+':  adjPwr(1);   break;
+    case 'fire':  fire();      break;
+    case 'reset': fresh();     break;
+    case 'drone': toggleDrone(); break;
+    case 'alt+':  nudgeAlt(1);   break;
+    case 'alt-':  nudgeAlt(-1);  break;
   }
 }));
-cv.addEventListener('click',e=>{if(!drone)return;const r=cv.getBoundingClientRect();drone.targetX=clamp((e.clientX-r.left)/r.width*C.WORLD_W,40,C.WORLD_W-40);});
+
+cv.addEventListener('click', e => {
+  if(!drone) return;
+  const r = cv.getBoundingClientRect();
+  drone.targetX = clamp((e.clientX - r.left) / r.width * C.WORLD_W, 40, C.WORLD_W - 40);
+});
 
 /* ---------- boot ---------- */
-new ResizeObserver(()=>resize()).observe(document.getElementById('stage'));
-resize();fresh();requestAnimationFrame(frame);
+new ResizeObserver(() => resize()).observe(document.getElementById('stage'));
+resize();
+fresh();
+requestAnimationFrame(frame);
 </script>
 </body>
 </html>
