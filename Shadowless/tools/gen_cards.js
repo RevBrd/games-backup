@@ -62,12 +62,32 @@ function pokemonEntry(c) {
   };
 }
 
-const trainerEntry = c => ({
-  id: c.id, name: c.name, set: c.set, num: c.number,
-  rarity: c.rarity || '', artist: c.artist || '', kind: 'trainer',
-  sub: (c.subtypes || [])[0] || 'Trainer',
-  text: rulesText(c),
-});
+// Clefairy Doll and Mysterious Fossil are Trainers PLAYED AS Basic Pokemon.
+// Upstream flags them by giving a Trainer an `hp`, which across all 14 sets
+// picks out exactly those two cards (three rows — Fossil reprints one) and
+// nothing else. They stay kind:'trainer' so deck-building still counts them as
+// Trainers; `playsAs` is what the engine reads.
+function trainerEntry(c) {
+  const e = {
+    id: c.id, name: c.name, set: c.set, num: c.number,
+    rarity: c.rarity || '', artist: c.artist || '', kind: 'trainer',
+    sub: (c.subtypes || [])[0] || 'Trainer',
+    text: rulesText(c),
+  };
+  if (c.hp) {
+    e.playsAs = 'pokemon';
+    e.hp = parseInt(c.hp, 10);
+    e.stage = 'Basic';
+    // No type, so no Weakness or Resistance ever applies. Retreat is nominally
+    // free but the engine refuses it outright — the card says it can't retreat.
+    e.type = ''; e.evolvesFrom = '';
+    e.wkType = ''; e.wkVal = ''; e.rsType = ''; e.rsVal = '';
+    e.retreat = 0;
+    e.attacks = [];
+    e.power = null;
+  }
+  return e;
+}
 
 // Neither the CSVs nor upstream state what a basic Energy provides — the type is
 // implied by the name. Special Energy needs a hand-authored effect regardless, so

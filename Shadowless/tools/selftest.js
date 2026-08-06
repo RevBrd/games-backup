@@ -59,11 +59,10 @@ for (const name of DECK_NAMES) {
 // Instead: pin the cards known to be unimplemented. A card that drops off this
 // list is progress; a card that appears on it unexpectedly is a regression.
 // Keep this list in step with the missing-cards section of CLAUDE.md.
-const EXPECTED_UNIMPLEMENTED = new Set([
-  // Base Set is one card from complete. Clefairy Doll is a Trainer that plays
-  // AS a Basic Pokemon, and Fossil's Mysterious Fossil needs the same machinery.
-  'base1-70', // Clefairy Doll — a Trainer that plays as a Basic Pokemon
-]);
+// Base Set is COMPLETE — all 102 cards. Keep this list here rather than deleting
+// the check: Job 6 widens the pool to Jungle and Fossil, and everything new
+// arrives unimplemented. An empty set means "nothing is allowed to be missing".
+const EXPECTED_UNIMPLEMENTED = new Set([]);
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');

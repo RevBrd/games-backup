@@ -464,7 +464,7 @@ const CARD_DB = {
   "base1-67": {"id":"base1-67","name":"Voltorb","set":"base1","num":"67","rarity":"Common","artist":"Keiji Kinebuchi","kind":"pokemon","stage":"Basic","hp":40,"type":"L","evolvesFrom":"","wkType":"F","wkVal":"x2","rsType":"","rsVal":"","retreat":1,"attacks":[{"name":"Tackle","cost":"C","dmg":"10","text":""}],"power":null},
   "base1-68": {"id":"base1-68","name":"Vulpix","set":"base1","num":"68","rarity":"Common","artist":"Ken Sugimori","kind":"pokemon","stage":"Basic","hp":50,"type":"R","evolvesFrom":"","wkType":"W","wkVal":"x2","rsType":"","rsVal":"","retreat":1,"attacks":[{"name":"Confuse Ray","cost":"RR","dmg":"10","text":"Flip a coin. If heads, the Defending Pokémon is now Confused."}],"power":null},
   "base1-69": {"id":"base1-69","name":"Weedle","set":"base1","num":"69","rarity":"Common","artist":"Mitsuhiro Arita","kind":"pokemon","stage":"Basic","hp":40,"type":"G","evolvesFrom":"","wkType":"R","wkVal":"x2","rsType":"","rsVal":"","retreat":1,"attacks":[{"name":"Poison Sting","cost":"G","dmg":"10","text":"Flip a coin. If heads, the Defending Pokémon is now Poisoned."}],"power":null},
-  "base1-70": {"id":"base1-70","name":"Clefairy Doll","set":"base1","num":"70","rarity":"Rare","artist":"Keiji Kinebuchi","kind":"trainer","sub":"Trainer","text":"Play Clefairy Doll as if it were a Basic Pokémon. While in play, Clefairy Doll counts as a Pokémon (instead of a Trainer card). Clefairy Doll has no attacks, can't retreat, and can't be Asleep, Confused, Paralyzed, or Poisoned. If Clefairy Doll is Knocked Out, it doesn't count as a Knocked Out Pokémon. At any time during your turn before your attack, you may discard Clefairy Doll."},
+  "base1-70": {"id":"base1-70","name":"Clefairy Doll","set":"base1","num":"70","rarity":"Rare","artist":"Keiji Kinebuchi","kind":"trainer","sub":"Trainer","text":"Play Clefairy Doll as if it were a Basic Pokémon. While in play, Clefairy Doll counts as a Pokémon (instead of a Trainer card). Clefairy Doll has no attacks, can't retreat, and can't be Asleep, Confused, Paralyzed, or Poisoned. If Clefairy Doll is Knocked Out, it doesn't count as a Knocked Out Pokémon. At any time during your turn before your attack, you may discard Clefairy Doll.","playsAs":"pokemon","hp":10,"stage":"Basic","type":"","evolvesFrom":"","wkType":"","wkVal":"","rsType":"","rsVal":"","retreat":0,"attacks":[],"power":null},
   "base1-71": {"id":"base1-71","name":"Computer Search","set":"base1","num":"71","rarity":"Rare","artist":"Keiji Kinebuchi","kind":"trainer","sub":"Trainer","text":"Discard 2 of the other cards from your hand in order to search your deck for any card and put it into your hand. Shuffle your deck afterward."},
   "base1-72": {"id":"base1-72","name":"Devolution Spray","set":"base1","num":"72","rarity":"Rare","artist":"Keiji Kinebuchi","kind":"trainer","sub":"Trainer","text":"Choose 1 of your own Pokémon in play and a Stage of Evolution. Discard all Evolution cards of that Stage or higher attached to that Pokémon. That Pokémon is no longer Asleep, Confused, Paralyzed, Poisoned, or anything else that might be the result of an attack (just as if you had evolved it)."},
   "base1-73": {"id":"base1-73","name":"Impostor Professor Oak","set":"base1","num":"73","rarity":"Rare","artist":"Ken Sugimori","kind":"trainer","sub":"Trainer","text":"Your opponent shuffles his or her hand into his or her deck, then draws 7 cards."},
@@ -956,6 +956,12 @@ const EFFECTS = {
     ],
   },
 
+  // ================= PASS 4h — Clefairy Doll =================
+  // Nothing to script: it is never "played" as a Trainer. The empty entry is
+  // what marks it implemented for the deck validator; everything it does lives
+  // in the engine, gated on the generator's `playsAs` flag.
+  'base1-70': { t: [] },                                // Clefairy Doll
+
   // ================= PASS 4g — the oddities =================
   // Poliwhirl needed nothing new at all: ATTACK_LOCK was already built and
   // already enforced in canUseAttack, it had simply never been wired to a card.
@@ -986,8 +992,7 @@ const EFFECTS = {
       [{ v: 'RECOIL_ON_FLIP', n: 10, label: 'Electric Shock' }],     // Electric Shock
     ],
   },
-};
-
+};
 
 // ============================================================================
 // ART — card sigils.
@@ -2699,7 +2704,7 @@ class Engine {
 
     p.hand.forEach((inst, i) => {
       const c = this.db[inst.id];
-      if (c.kind === 'pokemon' && c.stage === 'Basic' && p.bench.length < this.cfg.benchMax)
+      if (this.playableAsBasic(c) && p.bench.length < this.cfg.benchMax)
         acts.push({ t: 'playBasic', hand: i, label: `Bench ${c.name}` });
       if (c.kind === 'pokemon' && c.evolvesFrom) {
         this.allSlots(pi).forEach(sl => {
@@ -2709,12 +2714,21 @@ class Engine {
       if (c.kind === 'energy' && !p.energyAttached) {
         this.allSlots(pi).forEach(sl => acts.push({ t: 'attachEnergy', hand: i, target: sl.uid, label: `Attach ${c.name} to ${this.nameOf(sl)}` }));
       }
-      if (c.kind === 'trainer' && p.trainersPlayed < this.cfg.trainersPerTurn && this.trainerPlayable(pi, inst))
+      if (c.kind === 'trainer' && c.playsAs !== 'pokemon'
+          && p.trainersPlayed < this.cfg.trainersPerTurn && this.trainerPlayable(pi, inst))
         acts.push({ t: 'playTrainer', hand: i, label: `Play ${c.name}` });
     });
 
     if (!p.retreated && p.active && p.bench.length && this.canRetreat(p.active))
       p.bench.forEach((b, i) => acts.push({ t: 'retreat', bench: i, label: `Retreat to ${this.nameOf(b)}` }));
+
+    // "At any time during your turn before your attack, you may discard Clefairy
+    // Doll." This is its only exit — it cannot retreat — so without it a Doll in
+    // the Active spot would lock you there until something Knocked it Out.
+    for (const slot of this.allSlots(pi)) {
+      if (this.playsAsPokemon(slot))
+        acts.push({ t: 'discardInPlay', uid: slot.uid, label: `Discard ${this.nameOf(slot)}` });
+    }
 
     // Powers come before the attack: every "as often as you like" Power in the
     // era says "before your attack", and attacking ends the turn anyway.
@@ -2982,7 +2996,20 @@ class Engine {
     return true;
   }
 
+  // Clefairy Doll and Mysterious Fossil are Trainers played AS Basic Pokemon.
+  // Note what this deliberately does NOT cover: the opening setup, where they are
+  // still Trainer cards in hand and neither satisfy the "must start with a Basic"
+  // check nor prevent a mulligan; and basicsIn(), because a Doll in the discard
+  // pile is a Trainer card again and Revive cannot reach it.
+  playableAsBasic(c) {
+    return !!c && ((c.kind === 'pokemon' && c.stage === 'Basic') || c.playsAs === 'pokemon');
+  }
+  playsAsPokemon(slot) {
+    return !!slot && topCard(this.db, slot).playsAs === 'pokemon';
+  }
+
   canRetreat(slot) {
+    if (this.playsAsPokemon(slot)) return false;          // "can't retreat", flatly
     if (slot.status.asleep || slot.status.paralyzed) return false;
     return symbolCount(this.db, slot.energy) >= topCard(this.db, slot).retreat;
   }
@@ -3138,6 +3165,7 @@ class Engine {
       case 'power':        return this.doPower(pi, a);
       case 'promote':      return this.doPromote(pi, a);
       case 'switchIn':     return this.doSwitchIn(pi, a);
+      case 'discardInPlay': return this.doDiscardInPlay(pi, a);
       case 'pass':         return this.endTurn();
       default:             return this.fail('Unknown action ' + a.t);
     }
@@ -3147,7 +3175,7 @@ class Engine {
     const p = this.state.players[pi];
     const inst = p.hand[a.hand]; if (!inst) return this.fail('No such card');
     const c = this.db[inst.id];
-    if (!(c.kind === 'pokemon' && c.stage === 'Basic')) return this.fail('Not a Basic Pokemon');
+    if (!this.playableAsBasic(c)) return this.fail('Not a Basic Pokemon');
     if (p.bench.length >= this.cfg.benchMax) return this.fail('Bench is full');
     p.hand.splice(a.hand, 1);
     const sl = this.mkSlot(inst); sl.playedTurn = this.state.turn;
@@ -3248,6 +3276,25 @@ class Engine {
       s.pendingEndTurn = false;
       s.active = 1 - s.active;
       return this.startTurn();
+    }
+    return { ok: true };
+  }
+
+  // Discarding a Clefairy Doll / Mysterious Fossil straight off the board. Not a
+  // Knock Out, so no Prize either way, and anything attached goes to the discard
+  // with it exactly as it would on a Knock Out.
+  doDiscardInPlay(pi, a) {
+    const slot = this.findSlot(pi, a.uid);
+    if (!slot) return this.fail('No such Pokemon');
+    if (!this.playsAsPokemon(slot)) return this.fail('That card cannot be discarded from play');
+    const name = this.nameOf(slot);
+    const p = this.state.players[pi];
+    this.scrapSlot(pi, slot, false);
+    const where = this.removeSlot(pi, slot);
+    this.log(`${name} is discarded from play.`, 'eff');
+    if (where === 'active') {
+      if (p.bench.length === 0) return this.endGame(1 - pi, `${p.name} has no Pokemon left`);
+      this.addPromote(pi);
     }
     return { ok: true };
   }
@@ -4108,6 +4155,10 @@ class Engine {
 
   applyStatus(slot, s) {
     if (!slot) return;
+    if (this.playsAsPokemon(slot)) {
+      this.log(`${this.nameOf(slot)} can't be ${s}.`, 'eff');
+      return;
+    }
     if (s === 'Poisoned') { slot.status.poisoned = true; if (!slot.poisonDamage) slot.poisonDamage = 10; }
     else {
       slot.status.asleep = false; slot.status.paralyzed = false; slot.status.confused = false;
@@ -4226,7 +4277,12 @@ class Engine {
           slot.energy.forEach(x => p.discard.push(x));
           slot.effects.forEach(e => { if (e.card) p.discard.push(e.card); });
           if (fromBench) p.bench.splice(idx, 1); else p.active = null;
-          if (o.prizes.length) {
+          // "If Clefairy Doll is Knocked Out, it doesn't count as a Knocked Out
+          // Pokemon" — no Prize. The no-Pokemon-left loss below still applies,
+          // because that keys on the board, not on the Knock Out.
+          if (c.playsAs === 'pokemon') {
+            this.log(`${c.name} doesn't count as a Knocked Out Pokemon - no Prize.`, 'eff');
+          } else if (o.prizes.length) {
             o.hand.push(o.prizes.shift());
             this.log(`${o.name} takes a Prize. (${o.prizes.length} left)`, 'prize');
           }

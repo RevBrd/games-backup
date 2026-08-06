@@ -666,6 +666,117 @@ T('Conversion 2 rewrites Porygon\'s own Resistance', () => {
   return true;
 });
 
+// ------------------------------------------------------------- Clefairy Doll
+console.log('\nClefairy Doll — a Trainer played as a Basic Pokemon');
+
+// It is not in any theme deck and is played from hand rather than placed, so
+// these build the hand rather than the board.
+function withDollInHand() {
+  const E = board('base1-58');                              // Pikachu Active
+  E.state.players[0].hand = [{ id: 'base1-70', uid: E.uid++ }];
+  return E;
+}
+
+T('can be played from hand as a Basic Pokemon', () => {
+  const E = withDollInHand();
+  const a = E.legalActions(0).find(x => x.t === 'playBasic');
+  if (!a) throw new Error('not offered as a Basic');
+  eq(E.act(0, a).ok, true, 'accepted');
+  eq(E.state.players[0].bench.length, 1, 'on the Bench');
+  eq(top(E, E.state.players[0].bench[0]).name, 'Clefairy Doll', 'and it is the Doll');
+  return true;
+});
+
+T('is never offered as an ordinary Trainer play', () => {
+  const E = withDollInHand();
+  eq(E.legalActions(0).filter(x => x.t === 'playTrainer').length, 0, 'Trainer plays offered');
+  return true;
+});
+
+T('cannot be your opening Pokemon — in hand it is still a Trainer', () => {
+  const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  E.newGame(DECKS.Brushfire, DECKS.Zap, ['A', 'B']);
+  const p = E.state.players[0];
+  p.active = null; p.bench = [];
+  p.hand = [{ id: 'base1-70', uid: E.uid++ }];
+  eq(E.basicsIn(p.hand).length, 0, 'counted as a Basic in hand');
+  const r = E.setupPlace(0, 0, 'active');
+  eq(r.ok, false, 'setupPlace accepted it');
+  return true;
+});
+
+T('cannot retreat, and cannot be given a Special Condition', () => {
+  const E = board('base1-58');
+  const p = E.state.players[0];
+  p.active = E.mkSlot({ id: 'base1-70', uid: E.uid++ });
+  p.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  attach(E, p.active, 'base1-99', 4);                       // plenty of Energy
+  eq(E.canRetreat(p.active), false, 'retreat refused');
+  for (const st of ['Asleep', 'Confused', 'Paralyzed', 'Poisoned']) {
+    E.applyStatus(p.active, st);
+    if (p.active.status[st.toLowerCase()]) throw new Error(`${st} stuck to it`);
+  }
+  return true;
+});
+
+T('gives the opponent no Prize when Knocked Out', () => {
+  const E = board('base1-58');
+  const p = E.state.players[0];
+  p.active = E.mkSlot({ id: 'base1-70', uid: E.uid++ });
+  p.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  const before = E.state.players[1].prizes.length;
+  p.active.dmg = 10;                                        // 10 HP, so this kills it
+  E.checkKOs();
+  eq(E.state.players[1].prizes.length, before, 'no Prize taken');
+  eq(E.state.pendingPromote, 0, 'but a replacement is still owed');
+  return true;
+});
+
+T('you still lose if it was your last Pokemon', () => {
+  // The Knock Out does not count; having nothing in play still does.
+  const E = board('base1-58');
+  const p = E.state.players[0];
+  p.active = E.mkSlot({ id: 'base1-70', uid: E.uid++ });
+  p.bench = [];
+  p.active.dmg = 10;
+  E.checkKOs();
+  eq(E.state.winner, 1, 'opponent wins');
+  return true;
+});
+
+T('can be discarded from play at will, taking attachments with it', () => {
+  const E = board('base1-58');
+  const p = E.state.players[0];
+  p.bench = [E.mkSlot({ id: 'base1-70', uid: E.uid++ })];
+  attach(E, p.bench[0], 'base1-99', 2);
+  const before = E.state.players[1].prizes.length;
+  const a = E.legalActions(0).find(x => x.t === 'discardInPlay');
+  if (!a) throw new Error('discard not offered');
+  eq(E.act(0, a).ok, true, 'accepted');
+  eq(p.bench.length, 0, 'gone from the Bench');
+  eq(p.discard.filter(c => c.id === 'base1-99').length, 2, 'its Energy discarded too');
+  eq(p.discard.some(c => c.id === 'base1-70'), true, 'the Doll is in the discard');
+  eq(E.state.players[1].prizes.length, before, 'discarding is not a Knock Out');
+  return true;
+});
+
+T('discarding it from the Active spot forces a promotion', () => {
+  const E = board('base1-58');
+  const p = E.state.players[0];
+  p.active = E.mkSlot({ id: 'base1-70', uid: E.uid++ });
+  p.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  E.act(0, E.legalActions(0).find(x => x.t === 'discardInPlay'));
+  eq(E.state.pendingPromote, 0, 'promotion owed');
+  return true;
+});
+
+T('Revive cannot reach one in the discard — there it is a Trainer again', () => {
+  const E = board('base1-58');
+  E.state.players[0].discard = [{ id: 'base1-70', uid: E.uid++ }];
+  eq(E.basicsIn(E.state.players[0].discard).length, 0, 'offered as a Basic in the discard');
+  return true;
+});
+
 // ------------------------------------------------------------------- AI usage
 console.log('\nAI');
 

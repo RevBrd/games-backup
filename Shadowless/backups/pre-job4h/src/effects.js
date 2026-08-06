@@ -374,12 +374,6 @@ const EFFECTS = {
     ],
   },
 
-  // ================= PASS 4h — Clefairy Doll =================
-  // Nothing to script: it is never "played" as a Trainer. The empty entry is
-  // what marks it implemented for the deck validator; everything it does lives
-  // in the engine, gated on the generator's `playsAs` flag.
-  'base1-70': { t: [] },                                // Clefairy Doll
-
   // ================= PASS 4g — the oddities =================
   // Poliwhirl needed nothing new at all: ATTACK_LOCK was already built and
   // already enforced in canUseAttack, it had simply never been wired to a card.

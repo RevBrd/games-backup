@@ -12,7 +12,7 @@ a `--check` flag on each generator so drift can't go unnoticed.
 node tools/gen_cards.js                  # data/raw/ -> src/cards.js
 node tools/build.js                      # src/  -> shadowless.html
 node tools/selftest.js                   # rules + AI regression
-node tools/powertest.js                  # Pokemon Power behaviour
+node tools/powertest.js                  # Powers and the bespoke cards
 node tools/smoke.js shadowless.html      # 46 integration tests against the built file
 ```
 

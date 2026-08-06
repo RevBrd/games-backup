@@ -25,14 +25,14 @@ natural alternative and do **not** work from `file://` — see `~/.claude/refere
 
 ## Status
 
-Job 4g of a long plan. The **rules engine and the AI are the finished part**; everything a
-*collection* game needs is not built yet.
+Job 4 is complete — the whole of Base Set. Job 4g, the visual pass, is next. The **rules engine
+and the AI are the finished part**; everything a *collection* game needs is not built yet.
 
 | Area | State |
 |---|---|
-| Rules engine | Complete for what it covers. All six Base Set Pokémon Powers work |
+| Rules engine | Complete for Base Set, every card. See below for what that needed |
 | Opponent AI | Four tiers, expected-value based. Beats its own baselines |
-| Base Set cards | **101 of 102 implemented.** One card left — see below |
+| Base Set cards | **All 102 implemented.** Base Set is done — see below |
 | Card art | None, by design. Each card gets a deterministic geometric sigil from its id |
 | Collection / packs / dex | Not started (Job 5) |
 | Deck building | Not started. Four fixed theme decks + a random Sandbox deck for testing |
@@ -44,15 +44,10 @@ Job 4g of a long plan. The **rules engine and the AI are the finished part**; ev
 Don't trust that table — the three test suites under Tooling take about a minute between them and
 check most of it.
 
-## The last Base Set card
+## Base Set is complete — the machinery it needed
 
-**Clefairy Doll** (`base1-70`) is all that remains — a Trainer that plays *as a Basic Pokémon*.
-Worth doing next despite looking like a curiosity, because **Mysterious Fossil** (`base3-62`) needs
-exactly the same machinery and Job 6 cannot ship Fossil without it. It is also the one integrity
-anomaly in the card data: three Fossil cards list `evolves_from = "Mysterious Fossil"`, which is not
-a Pokémon.
-
-Everything else in Base Set works, including the parts that needed new engine machinery:
+All 102 cards. Five systems were built for the awkward ones, and everything after Base Set will
+lean on them, so they are worth knowing before adding cards:
 
 - **All six Pokémon Powers.** `powerOf` / `powerUsable` / `powerActions` / `doPower` in `engine.js`,
   declared per card as a `p:` object in `effects.js` with its reference comment above `EFFECTS`.
@@ -69,6 +64,12 @@ Everything else in Base Set works, including the parts that needed new engine ma
   (Whirlwind). It follows the same deferred-turn-end shape as `pendingPromote`, and the two can be
   outstanding at once **for different players** — the gates in `act()` and `legalActions()` are
   per-player for that reason, and were briefly not, which hung games.
+- **`playsAs: 'pokemon'`** marks a Trainer that is played as a Basic Pokémon. `gen_cards.js` sets it
+  from the one reliable upstream signal — a Trainer carrying an `hp` — which across all 14 sets picks
+  out exactly Clefairy Doll and Mysterious Fossil. **This is why Job 6 can ship Fossil:** Mysterious
+  Fossil needs only its own `effects.js` entry now. Note what the flag deliberately does *not* touch:
+  the opening setup, where these are still Trainer cards that cannot start and do not prevent a
+  mulligan, and `basicsIn()`, so Revive cannot pull one out of the discard.
 
 Beyond Base Set the pattern scales — **182 cards WotC-wide carry a Power**, and Neo adds 10 **Baby**
 Pokémon (their own coin-flip rule) and one **Poké-Body**.
@@ -119,7 +120,7 @@ Five commands. Run the last three before calling anything done.
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
-node tools/powertest.js                  # 68 tests for Powers and the other bespoke cards
+node tools/powertest.js                  # 77 tests for Powers and the other bespoke cards
 node tools/smoke.js shadowless.html      # 46 integration tests against the built file
 ```
 
@@ -208,9 +209,8 @@ hand the player cards they already own.
 
 Trevor's ordering, and he is explicit that it is yours to rearrange and to break into sub-jobs.
 
-- **Job 4** — finish Base Set. In practice: build the Pokémon Power system, then the five
-  oddities, then Clefairy Doll. *Current job.*
-- **Job 4g** — visual pass. Trevor's addition, slotted here deliberately: Job 5 adds four new
+- **Job 4** — finish Base Set. ~~Pokémon Powers, the five oddities, Clefairy Doll.~~ **Done.**
+- **Job 4g** — visual pass. *Current job.* Trevor's addition, slotted here deliberately: Job 5 adds four new
   screens, and setting the visual language *before* they exist is far cheaper than restyling them
   after. By then the battle UI is feature-complete, so there is a whole thing to design against.
   This is also the first job that genuinely benefits from Claude Code over Chat — the build can be
