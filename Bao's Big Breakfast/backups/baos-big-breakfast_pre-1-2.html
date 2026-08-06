@@ -102,47 +102,24 @@ const GROUND_ROW = 13;    // first row of solid counter
 const ROWS = 15;
 
 /* ============================================================================
-   2. LEVELS
-   Each entry is one stage. Reconstructions of Super Mario Bros. world 1 by
-   their recognizable beats rather than by exact tile coordinates; spacing is
-   tuned to the physics above, not measured from the original ROM.
-
-   Fields, all optional unless marked:
-     name      HUD label after "COUNTER"           (required)
-     theme     'counter' | 'cupboard'  — picks tileset, backdrop and music
-     width     level length in tiles                (required)
-     time      starting clock
-     startX / startY   spawn, in tiles. startY defaults to standing on the
-               floor; a negative value drops Bao in from above.
-     ceiling   [x, w] spans of solid counter-underside (rows 0-2)
-     shafts    [x, w] beams of light falling through a hole in that ceiling
-     gaps      [x, w] holes in the floor
-     blocks    [x, y, kind, item?]   kind: brick | q | hard | hidden
-     pipes     [x, heightInTiles, hasSprout]
-     stairs    [x, steps, dir]  dir 1 ascending rightward, -1 descending
-     coins     [x, y] floating honey drops
-     enemies   [x, kind]  kind: yolk | cubie
-     lifts     [x, y, wTiles, mode, a, b, speed]  mode 'h' patrols x between
-               a and b, 'v' patrols y. All six numbers are in tiles.
-     skewerX / endX / endKind   the pole, the goal, and what the goal looks
-               like ('toaster' | 'door')
-
-   Reachability rule, worth keeping if you edit these: row 9 is the LOW shelf —
-   bumpable from the floor and landable on. Row 5 is the HIGH shelf, which a
-   standing jump cannot reach from the floor (that needs ~6 tiles of lift and
-   you have 4.4). So anything on row 5 must sit directly above a row-9 block to
-   be hittable, or be a walk-on canopy entered from a neighbouring shelf.
+   2. LEVEL  —  "Counter 1-1"
+   A reconstruction of Super Mario Bros. 1-1 by its recognizable beats rather
+   than by exact tile coordinates: the lone question block, the five-block row,
+   four pipes of rising height, three pits, the twin pyramids, the eight-step
+   climb to the pole. Spacing is tuned to the physics above, not measured from
+   the original ROM.
    ========================================================================== */
-
-/* ---- COUNTER 1-1 --------------------------------------------------------
-   The lone question block, the five-block row, four pipes of rising height,
-   three pits, the twin pyramids, the eight-step climb to the pole.          */
-const LEVEL_1_1 = {
-  name: '1-1',
-  theme: 'counter',
+const LEVEL = {
   width: 212,
   // [startX, widthInTiles] holes in the counter
   gaps: [[69, 2], [86, 3], [153, 2]],
+  // [x, y, kind, item?]   kind: brick | q | hard | hidden
+  //
+  // Reachability rule, worth keeping if you edit this: row 9 is the LOW shelf —
+  // bumpable from the counter and landable on. Row 5 is the HIGH shelf, which a
+  // standing jump cannot reach from the floor (that needs ~6 tiles of lift and
+  // you have 4.95). So anything on row 5 must sit directly above a row-9 block
+  // to be hittable, or be a walk-on canopy entered from a neighbouring shelf.
   blocks: [
     [16, 9, 'q', 'coin'],
 
@@ -207,129 +184,9 @@ const LEVEL_1_1 = {
     [170, 'yolk'], [171.6, 'yolk'],
   ],
   skewerX: 198,   // the flagpole
-  endX: 203,      // the castle
-  endKind: 'toaster',
+  toasterX: 203,  // the castle
   startX: 3,
 };
-
-/* ---- COUNTER 1-2 --------------------------------------------------------
-   1-2 is the underground level, and the only place under a kitchen counter is
-   the cupboard: Bao drops through a gap in the boards into the dark, and comes
-   out the cupboard door at the far end. The counter overhead is a real solid
-   ceiling (rows 0-2) for most of the level, which is what makes the two shelf
-   heights read as corridors rather than as scenery.
-
-   Two things here that 1-1 does not have:
-     · cracker lifts — one-way moving platforms, the only way across the void
-     · a ceiling low enough to matter — the row-10 tunnel at x=59 can be walked
-       through or run along the top of, whichever you like
-
-   No straw sprouts in the dark on purpose: the one sprig in the level is the
-   straw at x=180, which sits in the light spilling from the open door.        */
-const LEVEL_1_2 = {
-  name: '1-2',
-  theme: 'cupboard',
-  width: 216,
-  time: 400,
-  // Bao falls in through the hole in the counter above
-  startX: 3, startY: -2,
-  // solid underside of the counter, with holes at 2-4 (the way in) and 107-108
-  ceiling: [[0, 2], [5, 102], [109, 70]],
-  shafts: [[2, 3], [107, 2]],
-  gaps: [[52, 3], [96, 2], [113, 2], [126, 22], [166, 3]],
-  blocks: [
-    [10, 9, 'q', 'power'],          // butter early — it is dark down here
-
-    [15, 9, 'brick'], [16, 9, 'q', 'coin'], [17, 9, 'brick'],
-    [25, 9, 'brick'], [26, 9, 'brick'],
-
-    // two sugar cubes to step off, then the long shelf under the counter
-    [33, 9, 'hard'], [34, 9, 'hard'],
-    [36, 5, 'brick'], [37, 5, 'brick'], [38, 5, 'brick'], [39, 5, 'brick'],
-    [40, 5, 'q', 'coin'], [41, 5, 'brick'], [42, 5, 'brick'], [43, 5, 'brick'],
-    [44, 5, 'brick'], [45, 5, 'brick'],
-
-    [48, 9, 'hidden', '1up'],
-
-    // the low tunnel: 2 tiles of headroom, or run across the roof of it
-    [59, 10, 'hard'], [60, 10, 'hard'], [61, 10, 'hard'], [62, 10, 'hard'],
-    [63, 10, 'hard'], [64, 10, 'hard'], [65, 10, 'hard'],
-
-    [69, 9, 'brick'], [70, 9, 'q', 'coin'], [71, 9, 'brick'],
-
-    // the stash the vertical lift exists to reach
-    [80, 5, 'brick'], [81, 5, 'brick'], [82, 5, 'brick'],
-    [83, 5, 'q', 'coin'], [84, 5, 'brick'], [85, 5, 'brick'], [86, 5, 'brick'],
-
-    [89, 9, 'brick'], [90, 9, 'q', 'star'], [91, 9, 'brick'],
-
-    [100, 9, 'brick'], [101, 9, 'brick'], [102, 9, 'q', 'coin'], [103, 9, 'brick'],
-
-    [108, 9, 'hard'], [109, 9, 'hard'],   // lit from the hole overhead
-
-    [118, 9, 'brick'], [119, 9, 'q', 'power'], [120, 9, 'brick'], [121, 9, 'brick'],
-
-    // The strip of shelf still standing halfway across the void. It sits at
-    // counter height, level with both lifts, so the whole crossing is one flat
-    // line — you never jump over the drop, you walk on and walk off.
-    [133, 13, 'hard'], [134, 13, 'hard'], [135, 13, 'hard'],
-    [133, 14, 'hard'], [134, 14, 'hard'], [135, 14, 'hard'],
-
-    [156, 9, 'brick'], [157, 9, 'q', 'coin'], [158, 9, 'brick'],
-
-    [172, 9, 'brick'], [173, 9, 'brick'], [174, 9, 'brick'],
-    [173, 5, 'q', 'coin'],                // bumped from atop the row below
-  ],
-  pipes: [
-    [30, 2, false], [180, 3, true],
-  ],
-  stairs: [
-    [188, 8, 1],
-  ],
-  coins: [
-    [37, 4], [38, 4], [39, 4], [41, 4], [42, 4], [43, 4],   // the long shelf
-    [60, 9], [61, 9], [62, 9], [63, 9], [64, 9],            // the tunnel roof
-    [80, 4], [81, 4], [82, 4], [84, 4], [85, 4], [86, 4],   // the lift stash
-    [94, 7], [95, 7],
-    [106, 7], [107, 7],
-    [161, 7], [162, 7], [163, 7],
-    [178, 7], [179, 7],
-  ],
-  enemies: [
-    [21, 'yolk'], [22.6, 'yolk'],
-    [28, 'yolk'],
-    [46, 'yolk'], [47.6, 'yolk'],
-    [56, 'cubie'],
-    [67, 'yolk'], [68.6, 'yolk'],
-    [88, 'yolk'],
-    [92, 'cubie'],
-    [101, 'yolk'], [102.6, 'yolk'],
-    [110, 'yolk'],
-    [118, 'cubie'],
-    [122, 'yolk'], [123.6, 'yolk'],
-    [152, 'yolk'], [153.6, 'yolk'],
-    [160, 'cubie'],
-    [172, 'yolk'], [173.6, 'yolk'],
-  ],
-  // [x, y, wTiles, mode, a, b, speed]
-  lifts: [
-    [76, 12, 4, 'v', 5, 12, 0.52],      // up to the stash at x=80
-    // Four tiles wide, not three: you arrive at a dead run and a 3-tile
-    // cracker gives you no room to stop. Both run at counter height and each
-    // docks flush at the far end of its travel, so the crossing is a matter of
-    // timing your step, never of clearing a gap. Raising them even a tile
-    // turns every transition into a precision jump over a bottomless drop,
-    // which is not what this game is.
-    [124, 13, 4, 'h', 124, 129, 0.62],  // out over the void...
-    [136, 13, 4, 'h', 136, 144, 0.62],  // ...and back to the floor
-  ],
-  skewerX: 202,
-  endX: 207,
-  endKind: 'door',
-};
-
-const LEVELS = [LEVEL_1_1, LEVEL_1_2];
-let LEVEL = LEVELS[0];
 
 /* ============================================================================
    3. PALETTE
@@ -344,20 +201,6 @@ const PAL = {
   straw: '#5fc46a', strawDark: '#2f8a3c', strawLight: '#9ce8a2',
   ink: '#4a2f1d',
   honey: '#ffc63a', honeyDark: '#d1911a', honeyLight: '#fff0b0',
-};
-
-// The cupboard: same tiles, no daylight on them. Everything is pulled toward a
-// cold brown and desaturated — except the honey, which stays bright so a drop
-// still reads against the dark.
-const PAL_DARK = {
-  board: '#6f4b2a', boardDark: '#4a3018', boardLight: '#8b6237', boardEdge: '#291a0e',
-  waffle: '#9c8760', waffleDark: '#6a5b40', waffleLight: '#bda882',
-  lid: '#a8763a', lidDark: '#6e4a1e', lidLight: '#c99a5e',
-  lidUsed: '#7a5c40', lidUsedDark: '#57402c',
-  sugar: '#c2c4c6', sugarDark: '#85888e', sugarLine: '#a9acb0',
-  straw: '#3f8a4a', strawDark: '#1e5228', strawLight: '#6bb073',
-  ink: '#241608',
-  honey: PAL.honey, honeyDark: PAL.honeyDark, honeyLight: PAL.honeyLight,
 };
 
 /* ============================================================================
@@ -694,28 +537,6 @@ function buildArt() {
     g.fillRect(-3, -1, 1.4, 2); g.fillRect(1.6, -1, 1.4, 2);
     ART.star.push(c);
   }
-  // Lift platforms are crackers. Baked per width so the docking holes stay on
-  // an even grid instead of stretching.
-  ART.lift = {};
-  ART.crackerFor = function (w) {
-    if (ART.lift[w]) return ART.lift[w];
-    const c = newCanvas(w, 8), g = c.getContext('2d');
-    g.fillStyle = '#6b4a24'; g.fillRect(0, 0, w, 8);
-    g.fillStyle = '#d9ab6b'; g.fillRect(1, 1, w - 2, 6);
-    g.fillStyle = '#efc98f'; g.fillRect(1, 1, w - 2, 2);
-    g.fillStyle = '#b8843f';
-    for (let i = 6; i < w - 4; i += 8) { g.fillRect(i, 3, 1, 1); g.fillRect(i + 4, 5, 1, 1); }
-    // scalloped ends
-    g.fillStyle = '#6b4a24';
-    g.fillRect(0, 0, 1, 2); g.fillRect(0, 6, 1, 2);
-    g.fillRect(w - 1, 0, 1, 2); g.fillRect(w - 1, 6, 1, 2);
-    // salt
-    g.fillStyle = '#fff6e2';
-    for (let i = 0; i < w; i += 11) g.fillRect(3 + i, 2, 1, 1);
-    ART.lift[w] = c;
-    return c;
-  };
-
   ART.jam = (function () {
     const c = newCanvas(8, 8), g = c.getContext('2d');
     g.fillStyle = PAL.ink; g.beginPath(); g.arc(4, 4, 4, 0, 7); g.fill();
@@ -731,53 +552,36 @@ function buildArt() {
 const T = {
   EMPTY: 0, BOARD: 1, BOARD_TOP: 2, WAFFLE: 3, LID: 4, LID_USED: 5, HARD: 6,
   PIPE_TL: 7, PIPE_TR: 8, PIPE_L: 9, PIPE_R: 10, HIDDEN: 11, POLE: 12, POLE_TOP: 13,
-  BOARD_UNDER: 14,
 };
 const SOLID = new Set([T.BOARD, T.BOARD_TOP, T.WAFFLE, T.LID, T.LID_USED, T.HARD,
-  T.PIPE_TL, T.PIPE_TR, T.PIPE_L, T.PIPE_R, T.BOARD_UNDER]);
+  T.PIPE_TL, T.PIPE_TR, T.PIPE_L, T.PIPE_R]);
 const BUMPABLE = new Set([T.WAFFLE, T.LID, T.HIDDEN]);
 
-// One atlas per theme, baked once at boot; `TILEART` points at whichever the
-// current level wants. Same drawing code both times — only the palette differs,
-// so the cupboard cannot drift away from the counter by accident.
-const TILESETS = {};
-let TILEART = null;
-
-function buildTileset(P) {
-  const A = {};
+const TILEART = {};
+function buildTiles() {
   function t(fn) { const c = newCanvas(TS, TS); fn(c.getContext('2d')); return c; }
-  const edgeShade = 'rgba(0,0,0,.28)';
 
-  A[T.BOARD_TOP] = t(g => {
-    g.fillStyle = P.board; g.fillRect(0, 0, TS, TS);
-    g.fillStyle = P.boardLight; g.fillRect(0, 0, TS, 3);
-    g.fillStyle = P.boardDark;
+  TILEART[T.BOARD_TOP] = t(g => {
+    g.fillStyle = PAL.board; g.fillRect(0, 0, TS, TS);
+    g.fillStyle = PAL.boardLight; g.fillRect(0, 0, TS, 3);
+    g.fillStyle = PAL.boardDark;
     g.fillRect(2, 6, 9, 1); g.fillRect(6, 10, 8, 1); g.fillRect(0, 13, 5, 1);
-    g.fillStyle = edgeShade; g.fillRect(0, 3, TS, 1);
-    g.fillStyle = P.boardEdge; g.fillRect(0, 15, TS, 1);
+    g.fillStyle = 'rgba(122,74,32,.45)'; g.fillRect(0, 3, TS, 1);
+    g.fillStyle = PAL.boardEdge; g.fillRect(0, 15, TS, 1);
   });
-  A[T.BOARD] = t(g => {
-    g.fillStyle = P.boardDark; g.fillRect(0, 0, TS, TS);
-    g.fillStyle = edgeShade;
+  TILEART[T.BOARD] = t(g => {
+    g.fillStyle = PAL.boardDark; g.fillRect(0, 0, TS, TS);
+    g.fillStyle = 'rgba(122,74,32,.5)';
     g.fillRect(3, 3, 10, 1); g.fillRect(1, 9, 7, 1); g.fillRect(9, 12, 6, 1);
-    g.fillStyle = P.boardEdge; g.fillRect(0, 15, TS, 1);
+    g.fillStyle = PAL.boardEdge; g.fillRect(0, 15, TS, 1);
   });
-  // the underside of the counter: same boards, lit from below instead of above
-  A[T.BOARD_UNDER] = t(g => {
-    g.fillStyle = P.boardDark; g.fillRect(0, 0, TS, TS);
-    g.fillStyle = P.board; g.fillRect(0, 10, TS, 6);
-    g.fillStyle = edgeShade;
-    g.fillRect(2, 2, 9, 1); g.fillRect(6, 6, 8, 1);
-    g.fillStyle = P.boardEdge; g.fillRect(0, 0, TS, 1);
-    g.fillStyle = P.boardLight; g.fillRect(0, 15, TS, 1);
-  });
-  A[T.WAFFLE] = t(g => {
-    g.fillStyle = P.waffleDark; g.fillRect(0, 0, TS, TS);
-    g.fillStyle = P.waffle; g.fillRect(1, 1, 14, 14);
-    g.fillStyle = P.waffleLight; g.fillRect(1, 1, 14, 2); g.fillRect(1, 1, 2, 14);
-    g.fillStyle = P.waffleDark;
+  TILEART[T.WAFFLE] = t(g => {
+    g.fillStyle = PAL.waffleDark; g.fillRect(0, 0, TS, TS);
+    g.fillStyle = PAL.waffle; g.fillRect(1, 1, 14, 14);
+    g.fillStyle = PAL.waffleLight; g.fillRect(1, 1, 14, 2); g.fillRect(1, 1, 2, 14);
+    g.fillStyle = PAL.waffleDark;
     g.fillRect(7, 1, 2, 14); g.fillRect(1, 7, 14, 2);
-    g.fillStyle = 'rgba(60,40,15,.35)'; g.fillRect(4, 4, 2, 2); g.fillRect(10, 4, 2, 2);
+    g.fillStyle = 'rgba(120,80,30,.35)'; g.fillRect(4, 4, 2, 2); g.fillRect(10, 4, 2, 2);
     g.fillRect(4, 10, 2, 2); g.fillRect(10, 10, 2, 2);
   });
   function lidTile(main, dark, light, mark) {
@@ -790,72 +594,66 @@ function buildTileset(P) {
       g.fillStyle = dark; g.fillRect(1, 1, 1, 1); g.fillRect(14, 1, 1, 1);
       g.fillRect(1, 14, 1, 1); g.fillRect(14, 14, 1, 1);
       if (mark) {
-        g.fillStyle = P.ink;
+        g.fillStyle = PAL.ink;
         // a chunky "?"
         g.fillRect(6, 4, 4, 1); g.fillRect(5, 5, 1, 1); g.fillRect(10, 5, 1, 1);
         g.fillRect(10, 6, 1, 2); g.fillRect(8, 8, 2, 1); g.fillRect(7, 9, 2, 1);
         g.fillRect(7, 10, 2, 1); g.fillRect(7, 12, 2, 2);
-        g.fillStyle = P.lidLight;
+        g.fillStyle = '#fff5cf';
         g.fillRect(6, 3, 4, 1);
       }
     });
   }
-  A[T.LID] = lidTile(P.lid, P.lidDark, P.lidLight, true);
-  A[T.LID_USED] = lidTile(P.lidUsed, P.lidUsedDark, P.boardLight, false);
-  A[T.HARD] = t(g => {
-    g.fillStyle = P.sugarDark; g.fillRect(0, 0, TS, TS);
-    g.fillStyle = P.sugar; g.fillRect(1, 1, 14, 14);
-    g.fillStyle = P.sugarLine;
+  TILEART[T.LID] = lidTile(PAL.lid, PAL.lidDark, PAL.lidLight, true);
+  TILEART[T.LID_USED] = lidTile(PAL.lidUsed, PAL.lidUsedDark, '#c9a077', false);
+  TILEART[T.HARD] = t(g => {
+    g.fillStyle = PAL.sugarDark; g.fillRect(0, 0, TS, TS);
+    g.fillStyle = PAL.sugar; g.fillRect(1, 1, 14, 14);
+    g.fillStyle = PAL.sugarLine;
     g.fillRect(2, 12, 12, 2); g.fillRect(12, 2, 2, 12);
-    g.fillStyle = P.sugarLine; g.fillRect(2, 2, 8, 2);
-    g.fillStyle = 'rgba(90,85,75,.4)';
+    g.fillStyle = '#ffffff'; g.fillRect(2, 2, 8, 2);
+    g.fillStyle = 'rgba(180,170,150,.5)';
     for (let i = 0; i < 8; i++) g.fillRect(3 + (i * 5) % 10, 5 + (i * 3) % 8, 1, 1);
   });
-  A[T.HIDDEN] = newCanvas(TS, TS);
+  TILEART[T.HIDDEN] = newCanvas(TS, TS);
 
   function pipeTile(isTop, isLeft) {
     return t(g => {
-      g.fillStyle = P.strawDark; g.fillRect(0, 0, TS, TS);
-      g.fillStyle = P.straw; g.fillRect(isLeft ? 1 : 0, 0, 15, TS);
-      g.fillStyle = P.strawLight;
+      const x0 = isLeft ? 0 : 0;
+      g.fillStyle = PAL.strawDark; g.fillRect(0, 0, TS, TS);
+      g.fillStyle = PAL.straw; g.fillRect(isLeft ? 1 : 0, 0, 15, TS);
+      g.fillStyle = PAL.strawLight;
       g.fillRect(isLeft ? 3 : 9, 0, 3, TS);
-      g.fillStyle = 'rgba(10,40,18,.35)';
+      g.fillStyle = 'rgba(30,90,40,.35)';
       g.fillRect(isLeft ? 12 : 13, 0, 2, TS);
       if (isTop) {
         // the ribbed bendy collar
-        g.fillStyle = P.strawDark; g.fillRect(0, 0, TS, 6);
-        g.fillStyle = P.straw; g.fillRect(isLeft ? 1 : 0, 1, 15, 4);
-        g.fillStyle = P.strawLight; g.fillRect(isLeft ? 2 : 0, 1, 14, 1);
-        g.fillStyle = 'rgba(10,40,18,.4)'; g.fillRect(0, 5, TS, 1);
+        g.fillStyle = PAL.strawDark; g.fillRect(0, 0, TS, 6);
+        g.fillStyle = PAL.straw; g.fillRect(isLeft ? 1 : 0, 1, 15, 4);
+        g.fillStyle = PAL.strawLight; g.fillRect(isLeft ? 2 : 0, 1, 14, 1);
+        g.fillStyle = 'rgba(30,90,40,.4)'; g.fillRect(0, 5, TS, 1);
       }
-      g.fillStyle = P.ink;
+      g.fillStyle = PAL.ink;
       if (isLeft) g.fillRect(0, 0, 1, TS); else g.fillRect(15, 0, 1, TS);
       if (isTop) g.fillRect(0, 0, TS, 1);
     });
   }
-  A[T.PIPE_TL] = pipeTile(true, true);
-  A[T.PIPE_TR] = pipeTile(true, false);
-  A[T.PIPE_L] = pipeTile(false, true);
-  A[T.PIPE_R] = pipeTile(false, false);
+  TILEART[T.PIPE_TL] = pipeTile(true, true);
+  TILEART[T.PIPE_TR] = pipeTile(true, false);
+  TILEART[T.PIPE_L] = pipeTile(false, true);
+  TILEART[T.PIPE_R] = pipeTile(false, false);
 
-  // the skewer is the same bamboo in both themes — it stands in the light
-  A[T.POLE] = t(g => {
+  TILEART[T.POLE] = t(g => {
     g.fillStyle = '#c99b5e'; g.fillRect(7, 0, 3, TS);
     g.fillStyle = '#e8c48f'; g.fillRect(7, 0, 1, TS);
     g.fillStyle = '#8a642f'; g.fillRect(9, 0, 1, TS);
   });
-  A[T.POLE_TOP] = t(g => {
+  TILEART[T.POLE_TOP] = t(g => {
     g.fillStyle = '#c99b5e'; g.fillRect(7, 8, 3, 8);
-    g.fillStyle = '#4a2f1d'; g.beginPath(); g.arc(8, 6, 5, 0, 7); g.fill();
+    g.fillStyle = PAL.ink; g.beginPath(); g.arc(8, 6, 5, 0, 7); g.fill();
     g.fillStyle = '#e0507a'; g.beginPath(); g.arc(8, 6, 4, 0, 7); g.fill();
     g.fillStyle = '#ff9ab5'; g.beginPath(); g.arc(6.5, 4.5, 1.4, 0, 7); g.fill();
   });
-  return A;
-}
-function buildTiles() {
-  TILESETS.counter = buildTileset(PAL);
-  TILESETS.cupboard = buildTileset(PAL_DARK);
-  TILEART = TILESETS.counter;
 }
 
 /* ============================================================================
@@ -886,17 +684,7 @@ function inGap(x) {
   return false;
 }
 
-// Point everything at level `i` and rebuild it. This is the only place the
-// active level, tileset and backdrop are allowed to change together.
-function loadLevel(i) {
-  game.levelIndex = Math.max(0, Math.min(LEVELS.length - 1, i | 0));
-  LEVEL = LEVELS[game.levelIndex];
-  TILEART = TILESETS[LEVEL.theme] || TILESETS.counter;
-  buildLevel();
-}
-
 function buildLevel() {
-  world.w = LEVEL.width;
   world.tiles = new Array(world.w * world.h).fill(T.EMPTY);
   world.meta = {};
 
@@ -904,14 +692,6 @@ function buildLevel() {
     if (inGap(x)) continue;
     setTile(x, GROUND_ROW, T.BOARD_TOP);
     setTile(x, GROUND_ROW + 1, T.BOARD);
-  }
-  // the counter overhead, where the level has one. Rows 0-1 sit behind the HUD
-  // bar, so row 2 is the only one a player ever really looks at.
-  for (const [cx, cw] of (LEVEL.ceiling || [])) {
-    for (let x = cx; x < cx + cw; x++) {
-      setTile(x, 0, T.BOARD); setTile(x, 1, T.BOARD);
-      setTile(x, 2, T.BOARD_UNDER);
-    }
   }
   for (const b of LEVEL.blocks) {
     const [x, y, kind, item] = b;
@@ -950,7 +730,6 @@ function buildLevel() {
   for (const [x, hgt, sprout] of LEVEL.pipes) {
     if (sprout) world.entities.push(makeSprout(x * TS, (GROUND_ROW - hgt) * TS));
   }
-  for (const l of (LEVEL.lifts || [])) world.entities.push(makeLift(l));
 }
 
 /* ============================================================================
@@ -999,20 +778,6 @@ function makeOneUp(px, py) {
 function makeJam(px, py, dir) {
   return baseEnt({ kind: 'jam', x: px, y: py, w: 8, h: 8, vx: TUNE.jamSpeed * dir, vy: 1, life: 200 });
 }
-// Cracker lift. One-way: you land on the top and can jump up through it from
-// below, which is what keeps it from trapping you against the counter above.
-// `prevX/prevY` are what the player's landing test compares against, so they
-// must be stamped before the lift moves, not after.
-function makeLift(spec) {
-  const [tx, ty, tw, mode, a, b, spd] = spec;
-  return baseEnt({
-    kind: 'lift', x: tx * TS, y: ty * TS, w: tw * TS, h: 8,
-    noGravity: true, harmless: true, mode: mode, spd: spd,
-    a: (mode === 'h' ? a : a) * TS, b: (mode === 'h' ? b : b) * TS,
-    vx: mode === 'h' ? spd : 0, vy: mode === 'v' ? -spd : 0,
-    prevX: tx * TS, prevY: ty * TS, dx: 0, dy: 0,
-  });
-}
 function makeBumpBlock(px, py, tile) {
   return baseEnt({ kind: 'bump', x: px, y: py, w: 16, h: 16, noGravity: true, tile: tile, t: 0 });
 }
@@ -1054,10 +819,9 @@ function playerBox() {
   return { w: 12, h: big ? 22 : 13 };
 }
 function resetPlayer(keepPower) {
+  const b = playerBox();
   player.x = LEVEL.startX * TS;
-  // a negative startY drops Bao in from above the level, which is how 1-2
-  // gets you into the cupboard without a scripted pipe animation
-  player.y = (LEVEL.startY !== undefined ? LEVEL.startY : GROUND_ROW - 2) * TS;
+  player.y = (GROUND_ROW - 2) * TS;
   player.vx = 0; player.vy = 0;
   player.facing = 1; player.grounded = false; player.ducking = false;
   player.starT = 0; player.hurtT = 0; player.state = 'play'; player.stateT = 0;
@@ -1072,7 +836,6 @@ const game = {
   scene: 'title',   // title | play | dead | over | clear
   score: 0, honey: 0, lives: TUNE.startLives,
   time: TUNE.startTime, timeSub: 0,
-  levelIndex: 0, finished: false,
   sceneT: 0, paused: false,
   stompChainScore: [100, 200, 400, 500, 800, 1000, 2000, 4000, 5000, 8000],
 };
@@ -1125,8 +888,7 @@ function handleMetaKey(e) {
     case 'Backquote': dev.on = !dev.on; break;
     case 'Enter': case 'NumpadEnter':
       if (game.scene === 'title') startGame();
-      else if (game.scene === 'clear') advance();
-      else if (game.scene === 'over') game.scene = 'title';
+      else if (game.scene === 'over' || game.scene === 'clear') game.scene = 'title';
       break;
   }
   if (!dev.on) return;
@@ -1138,8 +900,6 @@ function handleMetaKey(e) {
     case 'KeyT': game.time = Math.min(999, game.time + 100); break;
     case 'KeyG': dev.slow = !dev.slow; break;
     case 'KeyR': startGame(); break;
-    case 'Digit1': case 'Digit2': case 'Digit3':
-      enterLevel(+e.code.slice(5) - 1, true); break;
     case 'BracketRight': player.x = Math.min((LEVEL.width - 6) * TS, player.x + 16 * TS); break;
     case 'BracketLeft': player.x = Math.max(TS, player.x - 16 * TS); break;
   }
@@ -1199,41 +959,26 @@ const MELODY = [
   [16, 1], [14, 1], [12, 1], [11, 1], [7, 2], [null, 2],
 ];
 const BASSLINE = [0, 0, 4, 4, 5, 5, 7, 7, -1, -1, 4, 4, 5, 5, 7, 7];
-// The cupboard gets its own tune: minor, slower, an octave down, and mostly
-// space. It should feel like the same kitchen with the lights off.
-const MELODY_DARK = [
-  [9, 2], [12, 1], [11, 1], [9, 2], [null, 2],
-  [8, 2], [11, 1], [9, 1], [8, 2], [null, 2],
-  [4, 2], [7, 1], [9, 1], [11, 2], [null, 2],
-  [9, 1], [8, 1], [7, 1], [4, 1], [2, 2], [null, 2],
-];
-// -1 is a rest, same convention as BASSLINE above. A minor, on the offbeat.
-const BASSLINE_DARK = [9, -1, 9, -1, 5, -1, 5, -1, 0, -1, 0, -1, 4, -1, 4, -1];
-const TUNES = {
-  counter:  { melody: MELODY, bass: BASSLINE, ms: 145, lead: 'square', octave: 12, vol: 0.035 },
-  cupboard: { melody: MELODY_DARK, bass: BASSLINE_DARK, ms: 190, lead: 'triangle', octave: 0, vol: 0.045 },
-};
 function noteFreq(semi) { return 261.63 * Math.pow(2, semi / 12); }
 function startMusic() {
   if (!audio.ctx || !audio.music || audio.musicTimer) return;
   audio.musicStep = 0;
-  const tune = TUNES[LEVEL.theme] || TUNES.counter;
-  const beat = tune.ms / 1000;
+  const beat = 0.145;
   audio.musicTimer = setInterval(() => {
     if (!audio.music || !audio.ctx || game.paused) return;
-    const i = audio.musicStep % tune.melody.length;
-    const [n, len] = tune.melody[i];
-    if (n !== null) {
+    const i = audio.musicStep % MELODY.length;
+    const [n, len] = MELODY[i];
+    if (n !== null && audio.sfx !== 'nope') {
       const t0 = audio.ctx.currentTime;
       const o = audio.ctx.createOscillator(), g = audio.ctx.createGain();
-      o.type = tune.lead; o.frequency.value = noteFreq(n + tune.octave);
+      o.type = 'square'; o.frequency.value = noteFreq(n + 12);
       g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(tune.vol, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.035, t0 + 0.01);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + beat * len * 0.9);
       o.connect(g); g.connect(audio.ctx.destination);
       o.start(t0); o.stop(t0 + beat * len);
     }
-    const b = tune.bass[audio.musicStep % tune.bass.length];
+    const b = BASSLINE[audio.musicStep % BASSLINE.length];
     if (b >= 0) {
       const t0 = audio.ctx.currentTime;
       const o = audio.ctx.createOscillator(), g = audio.ctx.createGain();
@@ -1245,7 +990,7 @@ function startMusic() {
       o.start(t0); o.stop(t0 + beat);
     }
     audio.musicStep++;
-  }, tune.ms);
+  }, 145);
 }
 function stopMusic() {
   if (audio.musicTimer) { clearInterval(audio.musicTimer); audio.musicTimer = null; }
@@ -1391,7 +1136,7 @@ function updatePlayer() {
     player.vy = Math.min(TUNE.maxFall, player.vy + TUNE.gravFall);
     moveBox(player, box.w, box.h);
     player.animT += 0.25;
-    if (player.x > LEVEL.endX * TS + 14) levelClear();
+    if (player.x > LEVEL.toasterX * TS + 14) levelClear();
     return;
   }
 
@@ -1451,7 +1196,6 @@ function updatePlayer() {
 
   const before = player.y;
   const col = moveBox(player, box.w, box.h);
-  landOnLifts(box, before + box.h, col);
 
   if (col.down) {
     if (!player.grounded) player.chain = 0;
@@ -1518,36 +1262,23 @@ function loseLife() {
   if (game.lives <= 0) { game.scene = 'over'; game.sceneT = 0; return; }
   restartLevel();
 }
-// Start or restart a stage. `keepPower` is true only when walking forward out
-// of the previous goal — dying always drops Bao back to small, as it should.
-function enterLevel(i, keepPower) {
-  loadLevel(i);
-  resetPlayer(!!keepPower);
+function restartLevel() {
+  buildLevel();
+  resetPlayer(false);
   world.camX = 0;
-  game.time = LEVEL.time || TUNE.startTime;
-  game.timeSub = 0;
-  game.scene = 'play'; game.paused = false;
-  stopMusic(); startMusic();
+  game.time = TUNE.startTime; game.timeSub = 0;
+  game.scene = 'play';
+  startMusic();
 }
-function restartLevel() { enterLevel(game.levelIndex, false); }
-
 function levelClear() {
   game.scene = 'clear'; game.sceneT = 0;
   game.clearBonus = Math.max(0, game.time) * 50;
   game.score += game.clearBonus;
-  game.clearedName = LEVEL.name;
-  game.finished = game.levelIndex >= LEVELS.length - 1;
   sfx('clear');
-}
-// what ENTER does on the clear screen
-function advance() {
-  if (game.finished) { game.scene = 'title'; return; }
-  enterLevel(game.levelIndex + 1, true);
 }
 function startGame() {
   game.score = 0; game.honey = 0; game.lives = TUNE.startLives;
-  game.finished = false;
-  enterLevel(0, false);
+  restartLevel();
 }
 
 /* ============================================================================
@@ -1564,45 +1295,6 @@ function spawnAhead() {
   }
 }
 
-// Lifts move before the player does, every frame, on or off screen. Doing this
-// inside updateEntities would move them *after* him and leave a one-frame gap
-// under his feet on a descending platform.
-function updateLifts() {
-  for (const e of world.entities) {
-    if (e.kind !== 'lift' || e.dead) continue;
-    e.prevX = e.x; e.prevY = e.y;
-    if (e.mode === 'h') {
-      e.x += e.vx;
-      if (e.x <= e.a) { e.x = e.a; e.vx = e.spd; }
-      else if (e.x >= e.b) { e.x = e.b; e.vx = -e.spd; }
-    } else {
-      e.y += e.vy;
-      if (e.y <= e.a) { e.y = e.a; e.vy = e.spd; }
-      else if (e.y >= e.b) { e.y = e.b; e.vy = -e.spd; }
-    }
-    e.dx = e.x - e.prevX; e.dy = e.y - e.prevY;
-  }
-}
-
-// Land the player on any lift he crossed the top of this frame. Called from
-// updatePlayer between the tile solve and the grounded bookkeeping.
-function landOnLifts(box, feetBefore, col) {
-  if (player.vy < 0) return;
-  for (const e of world.entities) {
-    if (e.kind !== 'lift' || e.dead) continue;
-    if (player.x + box.w <= e.x + 1 || player.x >= e.x + e.w - 1) continue;
-    const feet = player.y + box.h;
-    // the +2 / -3 slack is what keeps contact while the lift is descending
-    // faster than he falls; without it `grounded` drops out every other frame
-    if (feetBefore > e.prevY + 2 || feet < e.y - 3) continue;
-    player.y = e.y - box.h;
-    player.vy = 0;
-    player.x += e.dx;
-    if (player.x < 0) player.x = 0;
-    col.down = true;
-  }
-}
-
 function updateEntities() {
   const box = playerBox();
   const pl = { x: player.x, y: player.y, w: box.w, h: box.h };
@@ -1610,9 +1302,8 @@ function updateEntities() {
   for (const e of world.entities) {
     if (e.dead) continue;
 
-    // cull far behind the camera — but not the fixtures, which have to still be
-    // there if the player backtracks or dies and replays the level
-    if (e.x < world.camX - 64 && e.kind !== 'sprout' && e.kind !== 'coin' && e.kind !== 'lift') { e.dead = true; continue; }
+    // cull far behind the camera
+    if (e.x < world.camX - 64 && e.kind !== 'sprout' && e.kind !== 'coin') { e.dead = true; continue; }
     // asleep until on screen
     const onScreen = e.x > world.camX - 32 && e.x < world.camX + VW + 32;
 
@@ -1833,7 +1524,6 @@ function step() {
   if (game.paused) return;
 
   spawnAhead();
-  updateLifts();
   updatePlayer();
   updateEntities();
 
@@ -1864,11 +1554,6 @@ function step() {
    17. RENDER
    ========================================================================== */
 function drawBackground(g) {
-  if (LEVEL.theme === 'cupboard') drawBackgroundCupboard(g);
-  else drawBackgroundCounter(g);
-}
-
-function drawBackgroundCounter(g) {
   const grad = g.createLinearGradient(0, 0, 0, VH);
   grad.addColorStop(0, PAL.sky1);
   grad.addColorStop(0.35, '#ffe9c4');
@@ -1915,132 +1600,6 @@ function drawBackgroundCounter(g) {
     bush(g, base + 165, 0.8);
   }
 }
-/* ---- the cupboard ---------------------------------------------------------
-   Same job as the counter backdrop — sell the scale — but the only way to do
-   it in the dark is silhouette. Three layers: the back panel, then groceries
-   the size of buildings at half parallax, then dust. Everything is rim-lit
-   from the right, because that is where the open door is.                   */
-function drawBackgroundCupboard(g) {
-  const grad = g.createLinearGradient(0, 0, 0, VH);
-  grad.addColorStop(0, '#170e07');
-  grad.addColorStop(0.55, '#2a1a0d');
-  grad.addColorStop(1, '#130c06');
-  g.fillStyle = grad;
-  g.fillRect(0, 0, VW, VH);
-
-  // the back panel of the cupboard, barely visible
-  const pw = 44;
-  const poff = (world.camX * 0.16) % pw;
-  g.fillStyle = 'rgba(0,0,0,.30)';
-  for (let i = -1; i < VW / pw + 2; i++) g.fillRect(Math.round(i * pw - poff), 0, 2, VH);
-  g.fillStyle = 'rgba(255,190,120,.035)';
-  for (let i = -1; i < VW / pw + 2; i++) g.fillRect(Math.round(i * pw - poff) + 2, 0, 1, VH);
-
-  // Below the shelf line, near black. Outdoors a pit reads because you can see
-  // sky through it; down here the backdrop is already dark, so without this a
-  // hole in the floor looks exactly like shadow on the floor.
-  const under = g.createLinearGradient(0, GROUND_ROW * TS - 6, 0, VH);
-  under.addColorStop(0, 'rgba(0,0,0,.25)');
-  under.addColorStop(0.4, 'rgba(0,0,0,.82)');
-  under.addColorStop(1, 'rgba(0,0,0,.95)');
-  g.fillStyle = under;
-  g.fillRect(0, GROUND_ROW * TS - 6, VW, VH - GROUND_ROW * TS + 6);
-
-  // groceries, enormous
-  const sw = 340;
-  const soff = (world.camX * 0.45) % sw;
-  for (let rep = -1; rep < 3; rep++) {
-    const base = rep * sw - soff;
-    tin(g, base + 24, 1.15);
-    sack(g, base + 116, 1.0);
-    tin(g, base + 208, 0.8);
-    bottle(g, base + 268, 1.0);
-  }
-
-  // a faint warm wash from the door end, so the level gets brighter as you go
-  const doorGlow = Math.max(0, Math.min(1, (world.camX - (LEVEL.width - 60) * TS) / (40 * TS)));
-  if (doorGlow > 0) {
-    const gw = g.createLinearGradient(0, 0, VW, 0);
-    gw.addColorStop(0, 'rgba(255,190,110,0)');
-    gw.addColorStop(1, 'rgba(255,190,110,' + (0.20 * doorGlow).toFixed(3) + ')');
-    g.fillStyle = gw; g.fillRect(0, 0, VW, VH);
-  }
-
-  // dust, drifting. Deterministic from the index so it does not shimmer.
-  for (let i = 0; i < 26; i++) {
-    const seed = i * 137.5;
-    const sx = (seed * 7 % 400) - (world.camX * 0.3) % 400;
-    const x = ((sx % 400) + 400) % 400 - 60;
-    const y = (seed % (VH - 20)) + Math.sin((world.frame + i * 40) / 90) * 9;
-    if (x < -4 || x > VW + 4) continue;
-    g.fillStyle = 'rgba(255,224,180,' + (0.05 + (i % 4) * 0.035).toFixed(3) + ')';
-    g.fillRect(Math.round(x), Math.round(y), 1, 1);
-  }
-}
-function tin(g, x, s) {
-  const baseY = GROUND_ROW * TS, h = 150 * s, w = 62 * s;
-  g.fillStyle = '#3a2412';
-  g.fillRect(x, baseY - h, w, h);
-  g.fillStyle = '#4a2f18';                       // label band
-  g.fillRect(x, baseY - h * 0.66, w, h * 0.34);
-  g.fillStyle = '#2c1a0c';                       // rims
-  g.fillRect(x, baseY - h, w, 5 * s);
-  g.fillRect(x, baseY - h + 9 * s, w, 3 * s);
-  g.fillStyle = 'rgba(255,196,120,.16)';         // rim light from the door
-  g.fillRect(x + w - 3, baseY - h, 3, h);
-}
-function sack(g, x, s) {
-  const baseY = GROUND_ROW * TS, h = 176 * s, w = 84 * s;
-  g.fillStyle = '#33210f';
-  g.beginPath();
-  g.moveTo(x, baseY);
-  g.lineTo(x + 5 * s, baseY - h + 18 * s);
-  g.quadraticCurveTo(x + w * 0.5, baseY - h - 8 * s, x + w - 5 * s, baseY - h + 18 * s);
-  g.lineTo(x + w, baseY);
-  g.closePath(); g.fill();
-  g.fillStyle = '#26180a';                       // the folded-over top
-  g.fillRect(x + 4 * s, baseY - h + 14 * s, w - 8 * s, 12 * s);
-  g.fillStyle = 'rgba(255,196,120,.13)';
-  g.fillRect(x + w - 4, baseY - h + 22 * s, 3, h - 22 * s);
-}
-function bottle(g, x, s) {
-  const baseY = GROUND_ROW * TS, h = 196 * s, w = 46 * s;
-  g.fillStyle = '#2b1d0e';
-  g.fillRect(x, baseY - h * 0.72, w, h * 0.72);            // body
-  g.beginPath();                                            // shoulder
-  g.moveTo(x, baseY - h * 0.72);
-  g.quadraticCurveTo(x + w * 0.5, baseY - h * 0.94, x + w * 0.5, baseY - h * 0.94);
-  g.quadraticCurveTo(x + w * 0.5, baseY - h * 0.94, x + w, baseY - h * 0.72);
-  g.closePath(); g.fill();
-  g.fillRect(x + w * 0.36, baseY - h, w * 0.28, h * 0.3);   // neck
-  g.fillStyle = '#3e2a14';
-  g.fillRect(x + w * 0.32, baseY - h, w * 0.36, 9 * s);     // cap
-  g.fillStyle = 'rgba(255,200,130,.18)';
-  g.fillRect(x + w - 3, baseY - h * 0.72, 3, h * 0.72);
-}
-
-// Light falling through a hole in the counter, drawn in world space over the
-// tiles so it lands on them.
-function drawShafts(g) {
-  if (!LEVEL.shafts) return;
-  const floorY = GROUND_ROW * TS;
-  g.save();
-  g.globalCompositeOperation = 'lighter';
-  for (const [tx, tw] of LEVEL.shafts) {
-    const x = tx * TS, w = tw * TS;
-    const gr = g.createLinearGradient(0, 2 * TS, 0, floorY);
-    gr.addColorStop(0, 'rgba(255,214,150,.26)');
-    gr.addColorStop(0.6, 'rgba(255,198,126,.10)');
-    gr.addColorStop(1, 'rgba(255,190,120,0)');
-    g.fillStyle = gr;
-    g.beginPath();
-    g.moveTo(x, 2 * TS); g.lineTo(x + w, 2 * TS);
-    g.lineTo(x + w + 14, floorY); g.lineTo(x - 14, floorY);
-    g.closePath(); g.fill();
-  }
-  g.restore();
-}
-
 function puff(g, x, y, s) {
   g.fillStyle = 'rgba(255,255,255,.86)';
   g.beginPath();
@@ -2090,65 +1649,8 @@ function drawTiles(g) {
   }
 }
 
-function drawEnd(g) {
-  if (LEVEL.endKind === 'door') drawDoor(g);
-  else drawToaster(g);
-}
-
-/* The way out of the cupboard: the door standing open, and the whole kitchen
-   morning on the other side of it. Bao walks into the light rather than into
-   an appliance, which is the same beat as the toaster played the other way. */
-function drawDoor(g) {
-  const x = LEVEL.endX * TS, floorY = GROUND_ROW * TS;
-  const top = 20, h = floorY - top, w = 54;
-
-  // spill: the light reaches back down the level a little way
-  const spill = g.createLinearGradient(x - 90, 0, x + 10, 0);
-  spill.addColorStop(0, 'rgba(255,205,140,0)');
-  spill.addColorStop(1, 'rgba(255,214,158,.42)');
-  g.fillStyle = spill;
-  g.fillRect(x - 90, 0, 100, floorY);
-
-  // the opening
-  const lit = g.createLinearGradient(0, top, 0, floorY);
-  lit.addColorStop(0, '#fff3d6');
-  lit.addColorStop(0.45, '#ffe0aa');
-  lit.addColorStop(1, '#f7c98a');
-  g.fillStyle = lit;
-  g.fillRect(x, top, w, h);
-  // a suggestion of the room beyond, kept vague so it stays bright
-  g.fillStyle = 'rgba(255,255,255,.55)';
-  g.fillRect(x + 6, top + 10, w - 12, 26);
-  g.fillStyle = 'rgba(240,190,130,.35)';
-  g.fillRect(x, floorY - 22, w, 22);
-
-  // the frame Bao steps through
-  g.fillStyle = '#3a2412';
-  g.fillRect(x - 4, top - 6, 4, h + 6);
-  g.fillRect(x - 4, top - 6, w + 12, 6);
-  g.fillStyle = 'rgba(255,220,170,.5)';
-  g.fillRect(x - 5, top - 6, 1, h + 6);
-
-  // the door itself, swung out past the frame, seen from inside
-  const dx = x + w + 4;
-  g.fillStyle = '#5a3a1e';
-  g.beginPath();
-  g.moveTo(dx, top - 6); g.lineTo(dx + 22, top + 4);
-  g.lineTo(dx + 22, floorY - 4); g.lineTo(dx, floorY);
-  g.closePath(); g.fill();
-  g.fillStyle = '#6d4826';                      // panel inset
-  g.beginPath();
-  g.moveTo(dx + 5, top + 6); g.lineTo(dx + 18, top + 13);
-  g.lineTo(dx + 18, floorY - 16); g.lineTo(dx + 5, floorY - 12);
-  g.closePath(); g.fill();
-  g.fillStyle = 'rgba(255,225,175,.55)';        // the lit edge
-  g.fillRect(dx, top - 6, 2, h + 6);
-  g.fillStyle = '#d9b06a';                      // knob
-  g.beginPath(); g.arc(dx + 6, floorY - 62, 3.5, 0, 7); g.fill();
-}
-
 function drawToaster(g) {
-  const x = LEVEL.endX * TS, baseY = GROUND_ROW * TS;
+  const x = LEVEL.toasterX * TS, baseY = GROUND_ROW * TS;
   const w = 68, h = 62;
   const tx = x - 6, ty = baseY - h;
   g.fillStyle = '#4a4a52'; g.fillRect(tx - 2, ty - 2, w + 4, h + 4);
@@ -2210,16 +1712,8 @@ function drawEntity(g, e) {
       g.restore();
       break;
     }
-    case 'coin': case 'pop':
-      // a drop has to still read as a drop with no daylight on it
-      if (LEVEL.theme === 'cupboard') {
-        const gr = g.createRadialGradient(e.x + 6, e.y + 8, 1, e.x + 6, e.y + 8, 13);
-        gr.addColorStop(0, 'rgba(255,214,120,.32)');
-        gr.addColorStop(1, 'rgba(255,200,90,0)');
-        g.fillStyle = gr; g.fillRect(e.x - 8, e.y - 6, 28, 28);
-      }
-      g.drawImage(ART.honey[Math.floor(e.anim) % 4], e.x, e.y);
-      break;
+    case 'coin': g.drawImage(ART.honey[Math.floor(e.anim) % 4], e.x, e.y); break;
+    case 'pop': g.drawImage(ART.honey[Math.floor(e.anim) % 4], e.x, e.y); break;
     case 'butter': g.drawImage(ART.butter, e.x - 1, e.y - 1); break;
     case 'jar': g.drawImage(ART.jar, e.x - 1, e.y - 1); break;
     case 'oneup': {
@@ -2229,13 +1723,6 @@ function drawEntity(g, e) {
       break;
     }
     case 'starItem': g.drawImage(ART.star[Math.floor(e.anim) % 4], e.x - 1, e.y - 1); break;
-    case 'lift': {
-      const x = Math.round(e.x), y = Math.round(e.y);
-      g.fillStyle = 'rgba(0,0,0,.28)';
-      g.fillRect(x + 2, y + 8, e.w - 4, 2);       // a little weight under it
-      g.drawImage(ART.crackerFor(e.w), x, y);
-      break;
-    }
     case 'jam': g.drawImage(ART.jam, e.x, e.y); break;
     case 'crumb': {
       g.save(); g.translate(e.x + 3, e.y + 3); g.rotate(e.anim);
@@ -2295,7 +1782,7 @@ function drawHUD(g2) {
   const items = [
     ['BAO', String(game.score).padStart(6, '0'), pad],
     ['', 'x' + String(game.honey).padStart(2, '0'), 210],
-    ['COUNTER', LEVEL.name, 400],
+    ['COUNTER', '1-1', 400],
     ['TIME', String(Math.max(0, game.time)).padStart(3, '0'), 610],
   ];
   g2.fillStyle = 'rgba(30,18,26,.35)';
@@ -2344,14 +1831,13 @@ function render() {
 
   ctx.translate(-Math.round(world.camX), 0);
 
-  const behindEnd = player.state === 'walk';
-  if (!behindEnd) drawEnd(ctx);
+  const behindToaster = player.state === 'walk';
+  if (!behindToaster) drawToaster(ctx);
   drawTiles(ctx);
-  if (LEVEL.theme === 'cupboard') drawShafts(ctx);
 
   for (const e of world.entities) drawEntity(ctx, e);
   if (game.scene === 'play' || game.scene === 'clear') drawPlayer(ctx);
-  if (behindEnd) drawEnd(ctx);
+  if (behindToaster) drawToaster(ctx);
 
   for (const p of world.particles) {
     ctx.globalAlpha = Math.max(0, 1 - p.t / p.life);
@@ -2408,11 +1894,9 @@ function render() {
     ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
     centerText(ctx, [
       ['TOASTY!', 66, '#e0784f'],
-      ['counter ' + (game.clearedName || '1-1') + ' cleared', 30, '#8a5a3c'],
+      ['counter 1-1 cleared', 30, '#8a5a3c'],
       ['score ' + game.score + '   (time bonus ' + (game.clearBonus || 0) + ')', 24, '#6b3a22'],
-      game.finished
-        ? ['breakfast is served  ·  press ENTER', 22, '#8a5a3c']
-        : ['press ENTER for counter ' + LEVELS[game.levelIndex + 1].name, 22, '#8a5a3c'],
+      ['press ENTER', 22, '#8a5a3c'],
     ], 230);
   }
   if (game.paused && game.scene === 'play') {
@@ -2452,12 +1936,11 @@ function drawDevPanel(g2) {
     'state  ' + player.state + '  power ' + ['small', 'big', 'jam'][player.power] +
       (player.grounded ? '  grounded' : '  air') + (player.ducking ? '  duck' : ''),
     'timers coyote ' + player.coyote + '  buffer ' + player.buffer + '  star ' + player.starT + '  hurt ' + player.hurtT,
-    'level  counter ' + LEVEL.name + '  (' + LEVEL.theme + ')  width ' + LEVEL.width,
     'world  cam ' + world.camX.toFixed(1) + '  ents ' + world.entities.length + '  parts ' + world.particles.length,
     'perf   ' + dev.fps.toFixed(0) + ' fps  frame ' + world.frame,
     'flags  ' + (dev.invincible ? 'INVINCIBLE ' : '') + (dev.slow ? 'SLOWMO ' : '') + (dev.hitboxes ? 'HITBOX' : ''),
     'keys   I invincible · O power · H hitboxes · G slowmo',
-    '       L +life · T +time · R restart · [ ] warp · 1-2 level',
+    '       L +life · T +time · R restart · [ ] warp',
   ];
   if (artWarnings.length) lines.push('ART!   ' + artWarnings.length + ' malformed sprite rows');
   g2.save();
@@ -2508,17 +1991,12 @@ function frame(now) {
    ========================================================================== */
 buildArt();
 buildTiles();
-loadLevel(0);
+buildLevel();
 resetPlayer(false);
 if (artWarnings.length) console.warn('Sprite row length problems:', artWarnings);
 requestAnimationFrame(frame);
 
-// exposed for poking at from the console — the headless harness drives the
-// game entirely through this
+// exposed for poking at from the console
 window.BAO = { world: world, player: player, game: game, TUNE: TUNE, dev: dev,
-  step: step, buildLevel: buildLevel, artWarnings: artWarnings,
-  levels: LEVELS, loadLevel: loadLevel, enterLevel: enterLevel,
-  startGame: startGame, keys: keys, pressed: pressed,
-  T: T, SOLID: SOLID, isSolid: isSolid, getTile: getTile,
-  level: function () { return LEVEL; } };
+  step: step, buildLevel: buildLevel, artWarnings: artWarnings };
 </script>
