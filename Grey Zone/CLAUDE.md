@@ -72,19 +72,28 @@ Its mast is tall enough that it's spotted the moment it enters coverage — it c
 
 All in `grey_zone.html`, one script block, roughly in this order:
 
+The source was reflowed on 2026-08-05 — it was written hand-minified in Chat artifact style, which
+made targeted edits fragile. Formatting only; behavior is unchanged and was verified. Every
+`/* ---------- name ---------- */` banner is a section marker, so grep for those rather than
+trusting these line numbers after any edit.
+
 | Region | Contents |
 |-|-|
-| `CONFIG` (~68) | Every tunable. `C`, `D` (drone), `EN` (enemy) aliases below it |
-| terrain (~119) | `genTerrain`, `surfaceY`, `crater`, `flattenAround` — 240-sample heightfield |
-| woods (~133) | `genTrees`, `countConceal`, `recomputeConceal` — one wood guaranteed on the enemy |
-| fog (~162) | `addCircle`, `computeFog`, `vis` |
-| `fresh()` (~174) | Match setup and full state reset |
-| drone (~188) | `toggleDrone`, `nudgeAlt`; the flight/battery/detection update lives in `step` |
-| firing (~199) | `fire`, `blast`, `playerShellImpact`, `enemyShellImpact`, `enemyFire` |
-| `step()` (~244) | Fixed 1/120 timestep, 4x substepped ballistics |
-| drawing (~325) | Painter's order is set in `frame()`; trees deliberately draw *behind* terrain |
-| `hud()` (~479) | Threat bar, gun telemetry, drone panel, toasts, end card |
-| input (~592) | `A/D` elev, `W/S` charge, `SPACE` fire, `E` drone, arrows fly it, `R` resets |
+| `CONFIG` (68) | Every tunable. `C`, `D` (drone), `EN` (enemy) aliases below it |
+| terrain (128) | `genTerrain`, `surfaceY`, `crater`, `flattenAround` — 240-sample heightfield |
+| woods (177) | `genTrees`, `countConceal`, `recomputeConceal` — one wood guaranteed on the enemy |
+| fog (226) | `addCircle`, `computeFog`, `vis` |
+| `fresh()` (249) | Match setup and full state reset |
+| drone (279) | `toggleDrone`, `nudgeAlt`; the flight/battery/detection update lives in `step` |
+| firing (305) | `fire`, `blast`, `playerShellImpact`, `enemyShellImpact`, `enemyFire` |
+| `step()` (399) | Fixed 1/120 timestep, 4x substepped ballistics |
+| drawing (541) | Painter's order is set in `frame()`; trees deliberately draw *behind* terrain |
+| `hud()` (929) | Threat bar, gun telemetry, drone panel, toasts, end card |
+| input (1197) | `A/D` elev, `W/S` charge, `SPACE` fire, `E` drone, arrows fly it, `R` resets |
+
+The game is driveable from the console for testing — `step(C.DT)` advances one tick, `fresh()`
+resets, and every draw function can be called standalone. Running a few thousand ticks headless
+is a much better check than a screenshot.
 
 `R` for a new engagement is real but undocumented in the hint bar.
 
@@ -151,6 +160,13 @@ Found by reading, not by playtesting — verify by feel before acting:
   deliberate simplification; it does break symmetry, which matters given the PvP goal.
 - **`state.detect` never decays**, so detection banks across sorties: recall, recharge, relaunch,
   resume where you left off. Undecided whether that's mercy or a leak.
+- **Concealment is weaker than it looks, and the EW station is what actually enforces the loop.**
+  Measured: under fully intact canopy the detection rate is 0.044/sec, so a drone loitering
+  directly over the enemy at 200m acquires in ~23s — inside a single 31s battery. You can skip
+  the shell-the-treeline step entirely. What stops you is that the EW station spawns 180-340 from
+  the enemy with a 330 field, so the low-altitude hover that makes canopy irrelevant is usually
+  the exact spot that kills drones. The concealment mechanic is being carried by the jammer.
+  Worth deciding whether that's an elegant interlock or an accident to be fixed at the source.
 
 ## Direction
 
