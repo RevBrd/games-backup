@@ -25,7 +25,10 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 button,input,select{font-family:inherit;font-size:inherit;color:inherit}
-.wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;height:100vh}
+/* 324px, down from 380. The card faces are natively 240x330, so the old rail was
+   upscaling them ~1.5x and softening a scan that is already soft. Narrowing is
+   not a concession here, it is the sharper option — see .cardface. */
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 324px;height:100vh}
 /* The mat takes the flexible space; hand and bars are fixed. A tall Active with
    three attacks then scrolls the mat instead of pushing the hand off screen. */
 .boardcol{display:flex;flex-direction:column;min-width:0;min-height:0;padding:8px 12px 12px;gap:7px}
@@ -96,10 +99,16 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    empty cloth between them and the cards — which reads as sprawl rather than as
    a mat. Bounded, the leftover green becomes margin, which reads as intended. */
 .mat{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:start;
-  width:100%;max-width:1120px;margin:0 auto}
+  width:100%;max-width:1160px;margin:0 auto}
 /* Centred, so the two Active Pokemon meet across the centre line instead of
    both hugging the left edge. That facing-off is the picture the board is for. */
 .playarea{display:flex;flex-direction:column;gap:6px;min-width:0;align-items:center}
+.activezone,.benchzone{display:flex;flex-direction:column;min-width:0}
+/* Both halves render Active-then-bench so the wide layout can put them in a row
+   and have the two Actives align. Stacked, the opponent's order flips so their
+   Active still ends up nearest the centre line. */
+.side.foe .activezone{order:2}
+.side.foe .benchzone{order:1}
 /* Zone captions are silk-screened onto the mat: low contrast, wide tracking. */
 .zonelabel{font-size:8px;letter-spacing:.22em;color:var(--matink);margin-bottom:3px}
 .activezone .activerow{display:flex}
@@ -128,8 +137,8 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
   box-shadow:inset 0 0 0 2px #262E36;
 }
 .cardback.sm{width:32px;height:44px}
-.cardback.pz{width:27px;height:37px}
-.cardback.pz .cb-mark{width:8px;height:8px;border-width:1px;box-shadow:inset 0 0 0 1px #262E36}
+.cardback.pz{width:34px;height:47px}
+.cardback.pz .cb-mark{width:10px;height:10px;border-width:1px;box-shadow:inset 0 0 0 1px #262E36}
 .cardback.taken{background:transparent;border:0;box-shadow:inset 0 0 0 1px var(--matline)}
 .cardback.taken .cb-mark{display:none}
 /* Prizes are the clock on the game — six cards is the entire win condition — so
@@ -141,7 +150,10 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 }
 .zone.prizes .zonelabel{margin:0 0 5px;align-self:stretch;text-align:center;
   border-bottom:1px solid var(--matline);padding-bottom:4px}
-.prizegrid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+/* Three across rather than two: the prizes got bigger, and laying them wide
+   spends that on width — which the mat has — instead of height, which it does
+   not. Six prizes become two rows instead of three. */
+.prizegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 .zone.prizes .zone-cap{margin-top:6px}
 .zone.prizes.hot{box-shadow:inset 0 0 0 1px #6A5326;background:rgba(226,168,75,.07)}
 .zone.prizes.hot .zonelabel{color:#A0864F;border-bottom-color:#6A5326}
@@ -397,7 +409,11 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 
 /* The real printed face, shown only where the card is the SUBJECT rather than
    a token in play — the preview rail, and later the dex and pack opening. */
-.cardface{width:100%;display:block;border-radius:5px;margin-bottom:10px;
+/* Capped at the scan's native 240px and centred, so it renders 1:1 and stays
+   crisp instead of being stretched to whatever the rail happens to be. The
+   attack text is unreadable at this size, which is fine — that is precisely
+   what the rendered data sheet underneath is for. */
+.cardface{width:100%;max-width:240px;display:block;margin:0 auto 10px;border-radius:5px;
   box-shadow:0 2px 4px rgba(0,0,0,.5), 0 14px 30px -14px #000}
 .cardface.miss{display:none}
 /* With the printed face above it, the rendered card below stops being a picture
@@ -534,3 +550,33 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .orderrow .ss{color:var(--dim);font-size:10.5px;min-width:100px;text-align:right}
 .btn.tiny{padding:1px 7px;font-size:11px;line-height:1.3}
 .searchrow.on{background:#3A2F1C;border-color:var(--amber)}
+
+
+/* ===================== WIDE LAYOUT — must stay last =====================
+   Stand the bench beside the Active instead of under it. That is the good
+   trade on a screen: the mat has width going spare and no height at all, and
+   this takes roughly 75px per side out of the stack.
+
+   It needs about 1080px of mat, so below the breakpoint the bench goes back
+   under the Active rather than overflowing sideways — which no amount of
+   vertical auto-fitting could rescue.
+
+   THIS BLOCK MUST BE THE LAST THING IN THE FILE. It overrides widths set in
+   the CARD SYSTEM section at equal specificity, so moving it earlier silently
+   loses to those rules and the two Actives stop lining up. */
+@media (min-width:1560px){
+  .playarea{flex-direction:row;align-items:stretch;gap:16px;justify-content:center}
+  /* Both halves lay out Active-then-bench here, and the two Actives are the
+     same width, so each pair centres identically and they line up across the
+     centre line. */
+  .side.foe .activezone,.side.foe .benchzone{order:0}
+  .slot.pcard.act,.side.mine .slot.pcard.act{width:360px}
+  .slot.empty.act,.side.mine .slot.empty.act{width:360px}
+  /* The Active anchors on the centre line while the bench sits out at the far
+     edge of the row — low on your half, high on theirs. That offset does the
+     same job the size difference does: saying which one is fighting. */
+  .side.mine .activezone{justify-content:flex-start}
+  .side.mine .benchzone{justify-content:flex-end}
+  .side.foe .activezone{justify-content:flex-end}
+  .side.foe .benchzone{justify-content:flex-start}
+}

@@ -170,7 +170,9 @@ guessed wrong. Add an entry whenever you make a judgement call; an unlogged one 
 ## Working on it
 
 **The board fits itself to the window — never hand-tune it to a resolution.** `fitBoard()` measures
-the mat against the height it actually got and scales the whole column with `zoom` until it fits.
+the mat against the height it actually got and scales the whole column with `zoom`, **both ways**:
+down to 0.6x when the mat would scroll, and up to 1.3x when there is room going spare, so a large
+window gets bigger cards rather than a band of empty desk.
 This exists because targeting a number is provably wrong: a "1920x1080 laptop" is not a 1920x1080
 page. Browser chrome and the taskbar take 150–200px, and Windows display scaling at 125–150% can
 leave the page as little as **1280x600 CSS pixels**. The first sizing pass targeted 1366x768 and
@@ -183,6 +185,16 @@ dead mat above the opponent while clipping your own bench. Worse, the overflow t
 a flex item and never reaches the table's `scrollHeight`, so `fitBoard()` cannot see it and silently
 does nothing. Sides take their natural height and `.table` centres the pair; that keeps the content
 against the centre line **and** keeps overflow measurable. This cost a round trip to find.
+
+**Anything that measures a size must pick one coordinate space.** `getBoundingClientRect()` reports
+*post*-zoom screen pixels; `offsetWidth` / `clientWidth` / `scrollHeight` report *pre*-zoom layout
+pixels. Because `fitBoard()` zooms the board column, mixing the two silently mis-measures whenever a
+scale is applied — it put the fanned hand off the right edge on exactly the viewports that needed
+scaling, and nowhere else, which is why it survived the first sweep.
+
+**Above 1560px the bench stands beside the Active instead of under it** (the last block in
+`style.css`). That block **must stay last in the file** — it overrides widths set in the CARD SYSTEM
+section at equal specificity, so moving it earlier silently loses and the two Actives stop lining up.
 
 **Play it.** Open `shadowless.html`. The right-hand rail has four tabs: CARD (preview), LOG, DEV,
 CARDS (implementation coverage + live deck validation). **LOG is the working default and clicking a

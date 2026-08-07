@@ -418,9 +418,11 @@ function render() {
 // is still larger than 1:1 on an unscaled screen.
 function fitBoard() {
   const col = UI.boardEl, table = UI.tableEl;
-  if (!col || !table || !col.style || typeof table.getBoundingClientRect !== 'function') return;
+  if (!col || !table || !col.style || typeof col.clientHeight !== 'number') return;
   col.style.zoom = '';
   UI.fitZoom = 1;
+
+  // --- too tall: shrink until the mat stops scrolling ---
   // Each pass changes the CSS-pixel space the next one measures in, so this
   // converges rather than solving in one shot. Four passes is plenty.
   for (let i = 0; i < 4; i++) {
@@ -436,6 +438,37 @@ function fitBoard() {
     UI.fitZoom = z;
     col.style.zoom = z.toFixed(3);
   }
+  if (UI.fitZoom < 0.999) return;
+
+  // --- room to spare: grow, rather than leaving a band of empty desk ---
+  // Standing the bench beside the Active freed a lot of height, and on a large
+  // window that turned into 230px of nothing between the mat and the hand. The
+  // useful thing to do with spare room is bigger cards, not a bigger gap.
+  // Stepped and re-measured rather than solved, because the binding constraint
+  // moves: sometimes it is the mat starting to scroll, sometimes the action bar
+  // reaching the bottom of the window, sometimes the mat running out of width.
+  let z = 1;
+  for (let i = 0; i < 12; i++) {
+    const next = Math.round((z + 0.05) * 100) / 100;
+    if (next > 1.3) break;
+    col.style.zoom = String(next);
+    if (boardFitsAt()) z = next;
+    else break;
+  }
+  col.style.zoom = z > 1.001 ? String(z) : '';
+  UI.fitZoom = z;
+}
+
+// Measured with whatever zoom is currently applied.
+function boardFitsAt() {
+  const col = UI.boardEl, table = UI.tableEl, bar = UI.barEl;
+  if (table.scrollHeight - table.clientHeight > 1) return false;
+  if (col.scrollWidth - col.clientWidth > 1) return false;
+  if (bar && typeof bar.getBoundingClientRect === 'function') {
+    const vh = (typeof innerHeight === 'number') ? innerHeight : 0;
+    if (vh && bar.getBoundingClientRect().bottom > vh - 6) return false;
+  }
+  return true;
 }
 
 // The hand must never wrap — a second row costs ~70px of mat, and on a laptop
@@ -447,13 +480,18 @@ function layoutHand() {
   // harness's DOM stub has no querySelector, and there is no reason to search
   // the tree for something we just built.
   const hand = UI.handEl;
-  if (!hand || typeof hand.getBoundingClientRect !== 'function' || !hand.style) return;
+  if (!hand || !hand.style) return;
   const cards = hand.children;
   const n = cards.length;
   if (n < 2) return;
-  const w = cards[0].getBoundingClientRect().width || 150;
+  // offsetWidth, NOT getBoundingClientRect: fitBoard() may have zoomed the whole
+  // column, and getBoundingClientRect reports post-zoom screen pixels while
+  // clientWidth reports pre-zoom layout pixels. Mixing the two under-counts the
+  // card width and overflows the hand off the right edge. Both of these are
+  // layout pixels, so they are comparable.
+  const w = cards[0].offsetWidth;
   const avail = hand.clientWidth || 0;
-  if (!avail) return;
+  if (!w || !avail) return;
   // Floor, never round: the error is multiplied by (n-1) gaps, so rounding up
   // pushes the last card past the edge on a big hand. Floor only ever tightens.
   const step = Math.max(22, Math.min(w + 7, (avail - w) / (n - 1)));
@@ -473,7 +511,8 @@ function renderBoardColumn() {
   UI.boardEl = col; UI.tableEl = table;
   col.appendChild(table);
   col.appendChild(renderHand());
-  col.appendChild(renderActionBar());
+  UI.barEl = renderActionBar();
+  col.appendChild(UI.barEl);
   return col;
 }
 
@@ -585,8 +624,11 @@ function renderSide(pi, isFoe) {
   else actRow.appendChild(el('div', 'slot empty act', 'EMPTY'));
   actWrap.appendChild(actRow);
 
-  if (isFoe) { play.appendChild(benchWrap); play.appendChild(actWrap); }
-  else { play.appendChild(actWrap); play.appendChild(benchWrap); }
+  // Always Active then bench, both halves — CSS `order` flips the opponent back
+  // when the two are stacked. Doing it here instead would stop the wide layout
+  // from putting them in a row with the Actives aligned.
+  play.appendChild(actWrap);
+  play.appendChild(benchWrap);
   mat.appendChild(play);
 
   const rails = el('div', 'railzones');
