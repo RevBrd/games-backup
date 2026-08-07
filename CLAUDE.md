@@ -28,6 +28,7 @@ starting or resuming work. This file is the catalog and the cross-game housekeep
 | [Grey Zone](Grey%20Zone/) | A modern artillery duel where seeing is the whole game — you're a dug-in gun that can't move, hunting another one you can't see, through per-column fog you have to buy with a recon drone and shell out of the treeline | Playable and winnable, but not yet a contest. Fog, concealment and drone optics are the finished part. **The enemy is an explicit placeholder that fires on a timer and doesn't know you exist** — the real muzzle-flash counterbattery was built once and pulled for being too lethal to playtest, and rebuilding it (with a dev mode) is the next job. Immobility is the thesis, not a gap; long-term target is player/CPU symmetry. Read its `CLAUDE.md` |
 | [GemTD](GemTD/) | A faithful-ish remake of Gem Tower Defense, the lost flash classic — maze the path with blocks, keep one of every five as a gem, and combine gems into 13 advanced towers | Mechanically complete and playable endlessly. Reconstructed from two stats workbooks that live in the folder, so **read its `CLAUDE.md` for source precedence before changing any number** — and note the 40/40 recipe bijection that any recipe edit breaks silently. Air waves every 4th level are the difficulty and are meant to be. Wants a background pass, score persistence, and difficulty modes |
 | [Afterglow](Afterglow/) | Missile Command at dusk over a city that is going dark — your interceptor blooms and then *lingers*, and the lingering cloud doesn't kill, it takes a missile's guidance away and lets physics finish it | About half built. Engine, city, damage, build phase, two weapons and three threats are done. **Loss tinted by beauty is the whole point** — no repair, no victory, no people, ever; the rejected repair mechanic and the no-people rule are both registered in its `CLAUDE.md`, read it first. Thermite, the intended visual signature, exists as a dev-gated visual prototype only; weapons, threats and the light-pollution system are planned |
+| [Oblique](Oblique/) | A Civil War battle where you are the general standing on the field, and every order has to be carried to the regiment by hand — distance is latency. Under it, a line of battle that bends, stretches, tears open and closes up | **A kernel, not a game.** Three jobs went into the line mechanic alone and it works; enemy, volleys, morale, ammunition, the courier and the general himself are all unbuilt, and nearly everything visible is placeholder — read the register in its `CLAUDE.md` before "fixing" the palette or the scale. Sibling to the unported **Volley**, which it may eventually combine with |
 
 Other games exist from earlier Claude Chat sessions and are not yet migrated into this folder.
 Add a row when one lands, and give it a `CLAUDE.md` of its own.
@@ -54,11 +55,16 @@ If known, please credit the Claude model that assisted in its creation within th
   for once a game outgrows one file, and not before. Note that ES modules do **not** load from
   `file://`, so the builder concatenates rather than emitting `<script src>` tags.
 
+## Possible new convention
+
+- **Event logs.** For games that have specific, readable events in which log review of Trevor's playtest runs would be genuinely helpful. Not every game will need one; that is your judgement call to make. 
+- **Edit this section** if you implement, along with a brief note about its usefulness, advice for other instances' decision-making around it, and opinion on it becoming a regular convention.
+
 ## Git
 
 **One repository holds the whole collection, and it lives at `Projects/Games/`.** Every game is an
 ordinary subfolder of it. There is no remote — history is local to this machine, so nothing is
-recoverable from a server if it's lost here.
+recoverable from a server if it's lost here. A backup system is planned for the future.
 
 **A game folder should not contain its own `.git`.**
 
