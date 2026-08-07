@@ -4,8 +4,8 @@
     {
       "name": "afterglow",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["tools/serve.js", "8123"],
-      "port": 8123
+      "runtimeArgs": ["tools/serve.js", "8137"],
+      "port": 8137
     }
   ]
 }

@@ -56,7 +56,16 @@ hit things, you put a cloud where a thing is going to be and let physics finish 
 `applyLinger` is keyed by (enemy type × weapon type) on purpose — new threats and
 weapons slot into that table. Use it rather than adding special cases at call sites.
 
-**Never** make Linger kill on contact. That collapses the game back into Missile Command.
+**Linger does not kill on contact.** Break that generally and the game collapses back
+into Missile Command — the whole point is that your weapon takes guidance away rather
+than destroying things.
+
+**One deliberate, bounded exception: the Hypersonic.** Every threat is meant to interact
+with Linger in its own distinct way, and "destroyed outright by it" was the one corner of
+that space nothing occupied. A hypersonic can't survive contact with a cloud at its speed;
+it can also still be killed by a direct blast, but it moves far faster than an interceptor
+so the player needs the help. This is a designed exception with a stated reason, **not a
+loosening of the rule** — do not extend it to a second threat without one just as good.
 
 ## Frozen / do-not-touch
 
@@ -90,8 +99,9 @@ the offscreen jets delivering them can no longer get close — those jets are im
 never drawn.
 
 **Threats.** MIRV (splits partway down; a direct blast before the split kills the whole
-thing, but Linger makes it split *early*). Hypersonic (very fast; counter unsolved,
-possibly brittle enough that Linger alone breaks it). Glide Bomb (enters high with
+thing, but Linger makes it split *early* — the first threat where reaching for your main
+tool is the wrong move). Hypersonic (very fast, and the one threat Linger destroys
+outright — see the exception noted above). Glide Bomb (enters high with
 horizontal momentum, arcs down under gravity, huge damage, tanky, **immune to Linger** —
 countered by its slow speed, or by SAM; the most tentative of the set).
 
@@ -113,7 +123,10 @@ should become the player's own without the game ever saying so.
 Dev-gated and **purely decorative**: no damage, no ignition, cannot be shot, no wave
 spawns it. Built to answer "does it look right" before any mechanics depend on it.
 
-All tunables live in the `TH` block, which is the only place to touch. Notes:
+All tunables live in the `TH` block, which is the only place to touch. A curtain takes
+**~17–34s to reach the rooftops and ~36s to fully burn out** — it is released from very
+high up and is meant to be sat with, the way footage shot from underneath one plays. That
+slowness is the point, not a stall. Notes:
 - Trails are drawn as **beads, not lines** — the beading is what reads as a burning
   fragment shedding sparks rather than a tracer round.
 - Rendering is **additive** (`globalCompositeOperation = 'lighter'`). Overlapping motes
@@ -123,9 +136,8 @@ All tunables live in the `TH` block, which is the only place to touch. Notes:
   `fillStyle` is set ~144×/frame instead of ~15,000×. Heads are one pre-rendered sprite
   each. This is what keeps it at 60fps; a naive rewrite drops it to ~26.
 - Falls **behind** the foreground skyline, so it descends into the city.
-
-Still short of the reference: trails are too parallel and too orderly, and the fan
-should be wider at the top. Density, beading and colour are close.
+- Trail length is measured in **time**, not distance. Change `fallV` and you must scale
+  `trailSecs` and `trailStep` by the same factor or the streaks collapse into stubs.
 
 ## Dev
 
@@ -143,13 +155,17 @@ thermite system driven through full bursts. The canvas stub **rejects NaN/Infini
 every numeric argument and on any rgba string**, so a broken motion model fails loudly
 instead of rendering an invisible blank. Draw-call ceilings guard the frame budget.
 
-For visual work, serve it rather than opening `file://` — the in-app preview pane treats
-file URLs as non-reloading static snapshots and will silently stack multiple game loops
-in one document if you re-navigate:
+For visual work, serve it rather than opening `file://`:
 
 ```bash
 node tools/serve.js
 ```
+
+**The in-app preview pane only advances frames while the pane is actually on screen.**
+A hidden pane doesn't composite, so `requestAnimationFrame` never fires and the game
+looks frozen — `dev-stats` stays at `—`, the canvas never changes, and a screenshot
+fails with "not compositing frames". That is not a bug in the game and no amount of
+reloading fixes it. Display the pane, or test in a real browser window.
 
 ## Credits
 

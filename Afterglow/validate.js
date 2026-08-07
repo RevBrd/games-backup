@@ -200,30 +200,57 @@ check('dev panel toggles with backtick', () => {
   assert(getEl('dev').style.display === 'block', 'dev panel did not open');
 });
 
+// Read the live mote count straight out of the dev readout. Inferring "has it
+// drained" from total draw calls does not work: the count is near zero for a
+// moment after release (trail buffers still empty) and the rest of the scene's
+// draw cost drifts upward as the city burns.
+function thermiteCount(){
+  const mm = /\bth (\d+)/.exec(getEl('dev-stats').textContent);
+  return mm ? Number(mm[1]) : -1;
+}
+
 let peakFrameDraws = 0;
-check('T releases a thermite burst', () => {
-  resetDraws();
-  step(1);
-  const before = snapshotDraws().total;
-  fireWindow('keydown', { key: 'T' });
-  resetDraws();
-  step(1);
-  const after = snapshotDraws().total;
-  assert(after > before + 100, `expected a large draw spike after release, got ${after} vs baseline ${before}`);
-  assert(!numberViolation, numberViolation);
-  return `${after} draw calls on the release frame`;
+check('dev readout exposes the mote count', () => {
+  step(2);
+  assert(thermiteCount() === 0, `expected "th 0" in the dev readout, got "${getEl('dev-stats').textContent}"`);
 });
 
-check('thermite motion stays finite through a full fall', () => {
-  // The curtain falls slowly by design; give it well past the longest mote life.
-  for (let i = 0; i < 1200; i++){
+check('T releases a thermite burst', () => {
+  fireWindow('keydown', { key: 'T' });
+  step(2);
+  const n = thermiteCount();
+  assert(n > 100, `expected a full curtain of motes, got ${n}`);
+  assert(!numberViolation, numberViolation);
+  return `${n} motes airborne`;
+});
+
+// Step frames until every mote is gone, tracking the worst per-frame draw cost.
+// Self-tuning on purpose: fall speed and mote lifetime are meant to be retuned
+// freely, and a hardcoded drain window turns into a false failure the moment
+// either changes.
+function runUntilDrained(capSeconds){
+  const capFrames = Math.round(capSeconds * 60);
+  let frames = 0, peakMotes = 0;
+  while (frames < capFrames){
     resetDraws();
     step(1);
+    frames++;
     peakFrameDraws = Math.max(peakFrameDraws, snapshotDraws().total);
+    const n = thermiteCount();
+    peakMotes = Math.max(peakMotes, n);
     if (numberViolation) break;
+    if (n === 0) return { drained: true, frames, peakMotes };
   }
+  return { drained: false, frames, peakMotes, left: thermiteCount() };
+}
+
+check('thermite motion stays finite through a full fall', () => {
+  const r = runUntilDrained(150);
   assert(!numberViolation, numberViolation);
-  return `peak ${peakFrameDraws} draw calls/frame`;
+  assert(r.drained, `${r.left} motes still airborne after ${(r.frames/60).toFixed(0)}s`);
+  // The curtain is meant to hang for a long time — that is the design, not a stall.
+  assert(r.frames > 60*8, `whole curtain gone in ${(r.frames/60).toFixed(1)}s — far too fast to sit with`);
+  return `fully drained in ${(r.frames/60).toFixed(1)}s, peak ${peakFrameDraws} draws/frame`;
 });
 
 check('draw cost per frame stays affordable', () => {
@@ -233,26 +260,12 @@ check('draw cost per frame stays affordable', () => {
   assert(peakFrameDraws > 2000, `peak ${peakFrameDraws} suggests the curtain never actually rendered`);
 });
 
-check('thermite drains completely (no leaked motes)', () => {
-  fireWindow('keydown', { key: '`' });   // reopen dev readout path
-  step(600);
-  resetDraws();
-  step(1);
-  const idle = snapshotDraws().total;
-  assert(idle < 2000, `still drawing ${idle} calls/frame long after the burst — motes are leaking`);
-  return `idle baseline ${idle} draw calls/frame`;
-});
-
 check('repeated bursts do not accumulate', () => {
-  fireWindow('keydown', { key: '`' });
   for (let i = 0; i < 6; i++){ fireWindow('keydown', { key: 'T' }); step(40); }
-  step(1500);
-  resetDraws();
-  step(1);
-  const idle = snapshotDraws().total;
+  const r = runUntilDrained(260);
   assert(!numberViolation, numberViolation);
-  assert(idle < 2000, `${idle} draw calls/frame after six bursts drained — leak`);
-  return `six bursts drained to ${idle}`;
+  assert(r.drained, `${r.left} motes still airborne long after six bursts — leak`);
+  return `peaked at ${r.peakMotes} motes, drained in ${(r.frames/60).toFixed(1)}s`;
 });
 
 check('no orphaned wavebreak code', () => {

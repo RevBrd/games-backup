@@ -359,31 +359,36 @@ const DRONE_DIVE_G     = 28;     // it's already descending; just a little extra
 // ================================================================
 const TH = {
   // --- the burst ---
-  count:       300,       // motes per release
+  count:       210,       // motes per release
   clusters:    5,         // sub-clumps across the band — an even spread reads fake
   clumpJitter: 0.17,      // how far a mote strays from its clump centre (fraction of span)
   spanCells:   5.5,       // districts wide the curtain falls across
   burstY:      [40, 78],  // altitude band the release happens in
-  fanOut:      [8, 34],   // outward px/s at the edges of the burst
-  burstKick:   [-14, 18], // initial vertical scatter px/s
+  fanOut:      [6, 26],   // outward px/s at the edges of the burst
+  burstKick:   [-6, 8],   // initial vertical scatter px/s
   // --- the fall ---
-  fallV:       [34, 62],  // terminal fall speed px/s. SLOW is the entire point
+  // ~17-34s from release to rooftops. It is meant to be released from very high
+  // up and to be sat with: you watch it come, knowing what arrives with it.
+  // If you change fallV, scale trailSecs and trailStep by the SAME factor or the
+  // streaks collapse into stubs — trail length is measured in time, not distance.
+  fallV:       [14, 25],  // terminal fall speed px/s. SLOW is the entire point
   heavyChance: 0.09,      // fraction that are big bright fragments
   heavyMult:   [1.35, 1.8], // ...and how much faster those fall
   drag:        0.9,       // how fast vy eases toward terminal
-  lateralDrag: 0.55,      // how fast the outward fan bleeds off
-  driftAmp:    [3, 15],   // lateral waver amplitude px
-  driftHz:     [0.10, 0.38],
-  life:        [9, 17],   // seconds before a mote burns out in the air
+  lateralDrag: 0.40,      // how fast the outward fan bleeds off (lower = wider fan up top)
+  driftAmp:    [4, 22],   // lateral waver amplitude px
+  driftHz:     [0.04, 0.15],  // scaled with fallV — too high and a slow mote just vibrates
+  life:        [24, 48],  // seconds before a mote burns out in the air (some never land)
   // --- the look ---
-  trailSecs:   2.6,       // how far back the LONGEST trails reach
-  trailStep:   0.06,      // seconds between trail beads (bigger = fewer, more separated beads)
+  trailSecs:   6.5,       // how far back the LONGEST trails reach
+  trailStep:   0.15,      // seconds between trail beads (bigger = fewer, more separated beads)
   trailMix:    [1.0, 0.66, 0.44],  // three trail-length classes, mixed evenly. Uniform = fake
   headR:       [0.9, 1.7],
   haloMult:    4.6,       // soft bloom radius as a multiple of head radius
   headGain:    1.15,      // overall head brightness. Overlap sums toward white — that IS the bloom
-  flickerHz:   [8, 26],
-  sparkChance: 0.05,      // per mote per frame: sheds a glinting fleck
+  flickerHz:   [8, 26],   // glint rate — independent of fall speed, leave fast
+  sparkChance: 0.02,      // per mote per frame: sheds a glinting fleck
+  sparkG:      10,        // gravity on a shed fleck
   sparkCap:    520
 };
 const TH_TRAIL_N = Math.ceil(TH.trailSecs / TH.trailStep);
@@ -824,14 +829,14 @@ function updateThermite(dt){
       m.n++;
     }
     if (thFlecks.length < TH.sparkCap && Math.random() < TH.sparkChance){
-      thFlecks.push({ x:m.x, y:m.y, vx:m.vx*0.4 + rand(-14,14), vy:m.vy*rand(0.5,0.95),
-                      life:rand(0.35,1.1), max:1.1, ti:m.ti });
+      thFlecks.push({ x:m.x, y:m.y, vx:m.vx*0.4 + rand(-7,7), vy:m.vy*rand(0.5,0.95),
+                      life:rand(0.5,1.6), max:1.6, ti:m.ti });
     }
     // PROTOTYPE: burns out on contact with the ground. No damage, no ignition — yet.
     if (m.age >= m.life || m.y >= GROUND_Y - 2) m.dead = true;
   }
   thermite = thermite.filter(m=>!m.dead);
-  for (const f of thFlecks){ f.life -= dt; f.vy += 26*dt; f.x += f.vx*dt; f.y += f.vy*dt; }
+  for (const f of thFlecks){ f.life -= dt; f.vy += TH.sparkG*dt; f.x += f.vx*dt; f.y += f.vy*dt; }
   thFlecks = thFlecks.filter(f=> f.life>0 && f.y < GROUND_Y);
 }
 // Everything here draws additively: overlapping motes sum toward white, so the
