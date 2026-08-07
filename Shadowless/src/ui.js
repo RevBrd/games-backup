@@ -46,6 +46,9 @@ const UI = {
   view: null,           // frozen board snapshot while a flip is being presented
   pres: null,           // {queue, banner}
   devTab: 'log',
+  fitZoom: 1,           // set by fitBoard(); 1 means the mat fitted unscaled
+  boardEl: null, tableEl: null, handEl: null,
+  railEl: null, railBody: null, peekEl: null,
   myDeck: 'Brushfire',
   foeDeck: 'Overgrowth',
   cfgDraft: { prizeCount: 6, firstPlayerMayAttack: true, noEvolveFirstTurn: true },
@@ -348,10 +351,36 @@ function fullCard(card) {
   return d;
 }
 
+// Clicking a card notes it as the inspected one but deliberately does NOT
+// switch the rail to the CARD tab. It used to, and it meant every card you
+// picked up threw the log away — which is the panel you actually want up while
+// a turn is running. Hovering is how you look at a card now; the CARD tab holds
+// whatever you last clicked, for when you want it to stay put.
 function inspectCard(id) {
   UI.inspect = id;
-  if (UI.devTab !== 'card') UI.lastTab = UI.devTab;
-  UI.devTab = 'card';
+}
+
+// Peek: swap the rail's body for a card while the pointer is over it, and put
+// the old body back on the way out. Deliberately a targeted DOM swap rather
+// than a render() — the whole board is rebuilt on every render, and doing that
+// on mouseenter would be visible.
+function railPeek(cardId) {
+  const rail = UI.railEl, body = UI.railBody;
+  if (!rail || !body || typeof rail.replaceChild !== 'function') return;
+  if (UI.peekEl) { rail.replaceChild(body, UI.peekEl); UI.peekEl = null; }
+  if (!cardId) return;
+  const c = CARD_DB[cardId];
+  if (!c) return;
+  const box = el('div', 'prevbox peek');
+  box.appendChild(fullCard(c));
+  rail.replaceChild(box, body);
+  UI.peekEl = box;
+}
+
+function peekOn(node, cardId) {
+  node.onmouseenter = () => railPeek(cardId);
+  node.onmouseleave = () => railPeek(null);
+  return node;
 }
 
 // ------------------------------------------------------------- rendering ---
@@ -371,8 +400,42 @@ function render() {
   if (S().phase === 'setup') root.appendChild(renderSetup());
   if (S().phase === 'over') root.appendChild(renderOver());
 
+  fitBoard();
   layoutHand();
   maybeRunAI();
+}
+
+// Fit the board to whatever height it actually got, rather than to a height we
+// guessed. A "1920x1080 laptop" is not a 1920x1080 page: browser chrome and the
+// taskbar take 150-200px, and Windows display scaling at 125% or 150% can leave
+// the page as little as 1280x600 CSS pixels. Hand-tuning to any one of those
+// numbers is how the first attempt went wrong.
+//
+// So when the mat is squeezed, scale the whole column down until it isn't.
+// `zoom` rather than transform:scale because zoom reflows — the mat really does
+// get smaller instead of being drawn smaller over the same footprint. And it
+// costs nothing perceptually on a scaled display: at 150% OS scaling, a 0.8 zoom
+// is still larger than 1:1 on an unscaled screen.
+function fitBoard() {
+  const col = UI.boardEl, table = UI.tableEl;
+  if (!col || !table || !col.style || typeof table.getBoundingClientRect !== 'function') return;
+  col.style.zoom = '';
+  UI.fitZoom = 1;
+  // Each pass changes the CSS-pixel space the next one measures in, so this
+  // converges rather than solving in one shot. Four passes is plenty.
+  for (let i = 0; i < 4; i++) {
+    const over = table.scrollHeight - table.clientHeight;
+    if (over <= 1) break;
+    const h = col.clientHeight;
+    if (!h) break;
+    // +4px of cushion: solving for an exact fit leaves a few pixels of overflow
+    // once rounding lands, and a mat that scrolls by 4px is still a mat that
+    // scrolls.
+    const z = Math.max(0.6, UI.fitZoom * (h / (h + over + 4)));
+    if (Math.abs(z - UI.fitZoom) < 0.002) break;
+    UI.fitZoom = z;
+    col.style.zoom = z.toFixed(3);
+  }
 }
 
 // The hand must never wrap — a second row costs ~70px of mat, and on a laptop
@@ -407,6 +470,7 @@ function renderBoardColumn() {
   table.appendChild(renderSide(1, true));
   table.appendChild(renderCentreLine());
   table.appendChild(renderSide(0, false));
+  UI.boardEl = col; UI.tableEl = table;
   col.appendChild(table);
   col.appendChild(renderHand());
   col.appendChild(renderActionBar());
@@ -653,7 +717,7 @@ function renderSlot(slot, pi, where, idx) {
   }
 
   d.onclick = slotOnClick(slot, pi, where, idx, can, c);
-  return d;
+  return peekOn(d, c.id);
 }
 
 // Shared by the Active card and the bench tiles — a benched Pokemon is just as
@@ -743,7 +807,7 @@ function renderBenchTile(slot, pi, idx) {
   if (st.children.length) d.appendChild(st);
 
   d.onclick = slotOnClick(slot, pi, 'bench', idx, can, c);
-  return d;
+  return peekOn(d, c.id);
 }
 
 function renderHand() {
@@ -773,7 +837,7 @@ function renderHand() {
       }
       render();
     };
-    row.appendChild(card);
+    row.appendChild(peekOn(card, c.id));
   });
   if (!me().hand.length) row.appendChild(el('div', 'empty', 'hand empty'));
   UI.handEl = row;
@@ -1361,10 +1425,13 @@ function renderRail() {
     tabs.appendChild(b);
   });
   rail.appendChild(tabs);
-  if (UI.devTab === 'card') rail.appendChild(renderPreview());
-  if (UI.devTab === 'log') rail.appendChild(renderLog());
-  if (UI.devTab === 'dev') rail.appendChild(renderDev());
-  if (UI.devTab === 'cards') rail.appendChild(renderCoverage());
+  const body = UI.devTab === 'card' ? renderPreview()
+    : UI.devTab === 'dev' ? renderDev()
+    : UI.devTab === 'cards' ? renderCoverage()
+    : renderLog();
+  // Held so railPeek() can swap it out and back without a full render.
+  UI.railEl = rail; UI.railBody = body; UI.peekEl = null;
+  rail.appendChild(body);
   return rail;
 }
 
@@ -1478,6 +1545,24 @@ function renderDev() {
   g2.appendChild(fpRow);
   box.appendChild(g2);
 
+  // What the page actually got, which is never what the screen says. Display
+  // scaling and browser chrome between them can turn a "1920x1080 laptop" into
+  // a 1280x600 page, and guessing at that number instead of reading it is how
+  // the first sizing pass got the board wrong.
+  const gvp = el('div', 'grp');
+  gvp.appendChild(el('div', 'grphead', 'Viewport'));
+  const vp = el('div', 'dump');
+  const dpr = (typeof devicePixelRatio === 'number') ? devicePixelRatio : 1;
+  const cw = (typeof innerWidth === 'number') ? innerWidth : 0;
+  const ch = (typeof innerHeight === 'number') ? innerHeight : 0;
+  vp.textContent =
+    `page        ${cw} x ${ch} CSS px\n` +
+    `device      ${Math.round(cw * dpr)} x ${Math.round(ch * dpr)} device px\n` +
+    `scaling     ${dpr}x  (OS display scale + browser zoom)\n` +
+    `mat fit     ${UI.fitZoom < 0.999 ? UI.fitZoom.toFixed(3) + 'x — board scaled down to fit' : '1.000x — fits unscaled'}`;
+  gvp.appendChild(vp);
+  box.appendChild(gvp);
+
   const g3 = el('div', 'grp');
   g3.appendChild(el('div', 'grphead', 'State'));
   const s = UI.E.state;
@@ -1556,3 +1641,11 @@ function maybeRunAI() {
 }
 
 window.addEventListener('DOMContentLoaded', () => { UI.screen = 'decks'; render(); });
+
+// The mat is fitted to the window, so it has to be refitted when the window
+// changes. Debounced — a drag-resize fires this continuously.
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (!presenting()) render(); }, 120);
+});

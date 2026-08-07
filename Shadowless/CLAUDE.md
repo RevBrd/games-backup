@@ -169,8 +169,19 @@ guessed wrong. Add an entry whenever you make a judgement call; an unlogged one 
 
 ## Working on it
 
+**The board fits itself to the window — never hand-tune it to a resolution.** `fitBoard()` measures
+the mat against the height it actually got and scales the whole column with `zoom` until it fits.
+This exists because targeting a number is provably wrong: a "1920x1080 laptop" is not a 1920x1080
+page. Browser chrome and the taskbar take 150–200px, and Windows display scaling at 125–150% can
+leave the page as little as **1280x600 CSS pixels**. The first sizing pass targeted 1366x768 and
+missed for exactly that reason. **The DEV tab prints the real numbers** — page size, device pixels,
+scaling factor and the applied fit — so read that rather than guessing again.
+
 **Play it.** Open `shadowless.html`. The right-hand rail has four tabs: CARD (preview), LOG, DEV,
-CARDS (implementation coverage + live deck validation). Deck select exposes prize count, AI tier and
+CARDS (implementation coverage + live deck validation). **LOG is the working default and clicking a
+card no longer takes it away** — hovering any card peeks its real printed face into the rail and
+leaving puts the log straight back. That peek is a targeted DOM swap, not a `render()`, because the
+whole board is rebuilt on every render and doing that on `mouseenter` is visible. Deck select exposes prize count, AI tier and
 a **seed** — every match is reproducible, and the game-over screen offers "Replay this seed". Use it
 when chasing a bug. **Mirror matches are allowed**: both sides may take the same deck, including
 Sandbox, and still shuffle independently.

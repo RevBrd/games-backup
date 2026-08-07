@@ -21,6 +21,14 @@ function mkEl(tag) {
       contains(c) { return this._s.has(c); },
     },
     appendChild(c) { this.children.push(c); return c; },
+    // The rail swaps its body node in and out for the hover peek, so the stub
+    // needs this for that path to be exercised rather than skipped.
+    replaceChild(fresh, old) {
+      const i = this.children.indexOf(old);
+      if (i < 0) throw new Error('replaceChild: node is not a child');
+      this.children[i] = fresh;
+      return old;
+    },
     addEventListener() {},
     set textContent(v) { this._text = String(v); },
     get textContent() { return this._text; },
@@ -44,7 +52,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, fullCard, inspectCard};')
+  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, fullCard, inspectCard, railPeek};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect } = ctx;
@@ -491,7 +499,9 @@ T('card faces render for every card in play, all three kinds', () => {
   return kinds.size === 3;
 });
 
-T('clicking a card opens the preview panel on the card tab', () => {
+// Clicking used to jump the rail to the CARD tab, which threw the log away
+// every time you picked up a card. It must not any more.
+T('clicking a card notes it without stealing the rail from the log', () => {
   UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth'; UI.seedDraft = '73'; UI.flipDelay = 0;
   startMatch(); UI.E.setupAuto(0);
   UI.devTab = 'log';
@@ -500,7 +510,22 @@ T('clicking a card opens the preview panel on the card tab', () => {
   ctx.inspectCard(id);
   render();
   UI.flipDelay = 2000;
-  return UI.devTab === 'card' && UI.inspect === id;
+  return UI.devTab === 'log' && UI.inspect === id;
+});
+
+T('hovering a card peeks it into the rail and leaving puts the log back', () => {
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth'; UI.seedDraft = '73'; UI.flipDelay = 0;
+  startMatch(); UI.E.setupAuto(0);
+  UI.devTab = 'log';
+  render();
+  const logBody = UI.railBody;
+  ctx.railPeek('base1-4');
+  const peeked = UI.peekEl !== null && UI.railEl.children.indexOf(UI.peekEl) >= 0
+              && UI.railEl.children.indexOf(logBody) < 0;
+  ctx.railPeek(null);
+  const restored = UI.peekEl === null && UI.railEl.children.indexOf(logBody) >= 0;
+  UI.flipDelay = 2000;
+  return peeked && restored;
 });
 
 T('preview panel handles having nothing selected', () => {
