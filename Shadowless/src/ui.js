@@ -400,9 +400,27 @@ function render() {
   if (S().phase === 'setup') root.appendChild(renderSetup());
   if (S().phase === 'over') root.appendChild(renderOver());
 
-  fitBoard();
+  chooseLayout();
   layoutHand();
   maybeRunAI();
+}
+
+// Wide layout or stacked? Decided by MEASURING, never by a media query.
+// A media query tests CSS pixels, and CSS pixels are not what you see: with
+// Windows display scaling at 125%, a 1920-wide screen is a 1536-wide page, so
+// a `min-width:1560px` rule silently never fires on the machine it was written
+// for. Worse, fitBoard() may scale the column, which changes how much CSS width
+// the content has — so the honest test is to lay it out and look.
+function chooseLayout() {
+  const col = UI.boardEl;
+  if (!col || !col.classList) { fitBoard(); return; }
+  col.classList.add('wide');
+  fitBoard();
+  if (typeof col.scrollWidth === 'number' && col.scrollWidth - col.clientWidth > 1) {
+    col.classList.remove('wide');
+    fitBoard();
+  }
+  UI.wideLayout = col.classList.contains('wide');
 }
 
 // Fit the board to whatever height it actually got, rather than to a height we
@@ -490,8 +508,11 @@ function layoutHand() {
   // card width and overflows the hand off the right edge. Both of these are
   // layout pixels, so they are comparable.
   const w = cards[0].offsetWidth;
-  const avail = hand.clientWidth || 0;
-  if (!w || !avail) return;
+  // 2px of slack: fitBoard applies fractional zoom, and the browser's rounding
+  // of a scaled layout can report a pixel or two of overflow even when every
+  // card demonstrably fits. That spurious pixel raises a scrollbar.
+  const avail = (hand.clientWidth || 0) - 2;
+  if (!w || avail <= 0) return;
   // Floor, never round: the error is multiplied by (n-1) gaps, so rounding up
   // pushes the last card past the edge on a big hand. Floor only ever tightens.
   const step = Math.max(22, Math.min(w + 7, (avail - w) / (n - 1)));
@@ -604,7 +625,6 @@ function renderSide(pi, isFoe) {
   side.appendChild(head);
 
   const mat = el('div', 'mat');
-  mat.appendChild(prizeZone(p, !isFoe));
 
   const play = el('div', 'playarea');
   const benchWrap = el('div', 'benchzone');
@@ -624,11 +644,18 @@ function renderSide(pi, isFoe) {
   else actRow.appendChild(el('div', 'slot empty act', 'EMPTY'));
   actWrap.appendChild(actRow);
 
-  // Always Active then bench, both halves — CSS `order` flips the opponent back
+  // Always Active then field, both halves — CSS `order` flips the opponent back
   // when the two are stacked. Doing it here instead would stop the wide layout
   // from putting them in a row with the Actives aligned.
+  //
+  // Prizes ride above the bench inside the field rather than sitting in a column
+  // of their own. That column was the widest empty thing on the mat, and losing
+  // it pulls both sides in by its whole width.
   play.appendChild(actWrap);
-  play.appendChild(benchWrap);
+  const field = el('div', 'fieldzone');
+  field.appendChild(prizeZone(p, !isFoe));
+  field.appendChild(benchWrap);
+  play.appendChild(field);
   mat.appendChild(play);
 
   const rails = el('div', 'railzones');

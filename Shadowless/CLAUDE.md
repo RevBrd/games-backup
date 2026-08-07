@@ -192,9 +192,16 @@ pixels. Because `fitBoard()` zooms the board column, mixing the two silently mis
 scale is applied — it put the fanned hand off the right edge on exactly the viewports that needed
 scaling, and nowhere else, which is why it survived the first sweep.
 
-**Above 1560px the bench stands beside the Active instead of under it** (the last block in
-`style.css`). That block **must stay last in the file** — it overrides widths set in the CARD SYSTEM
-section at equal specificity, so moving it earlier silently loses and the two Actives stop lining up.
+**When there is room, the field (prizes + bench) stands beside the Active instead of under it** —
+the `.boardcol.wide` block, which **must stay last in `style.css`**: it overrides widths set in the
+CARD SYSTEM section at equal specificity, so moving it earlier silently loses and the two Actives
+stop lining up.
+
+**That layout choice is made by measuring, in `chooseLayout()` — never by a media query.** This was
+a `@media (min-width:1560px)` rule once and it silently never fired on the machine it was written
+for: a media query tests CSS pixels, and with Windows display scaling at 125% a 1920-wide screen is
+a 1536-wide page. `fitBoard()` also scales the column, which changes the available CSS width again.
+The only honest test is to apply the layout and measure whether it overflowed.
 
 **Play it.** Open `shadowless.html`. The right-hand rail has four tabs: CARD (preview), LOG, DEV,
 CARDS (implementation coverage + live deck validation). **LOG is the working default and clicking a

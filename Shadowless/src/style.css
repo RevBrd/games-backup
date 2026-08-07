@@ -94,21 +94,29 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 }
 .centreline::before{left:5%} .centreline::after{right:5%}
 
-/* Capped and centred. Un-capped, the prizes end up hard against one edge of a
-   1900px window and the deck against the other, with a quarter of the screen of
-   empty cloth between them and the cards — which reads as sprawl rather than as
-   a mat. Bounded, the leftover green becomes margin, which reads as intended. */
-.mat{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:start;
-  width:100%;max-width:1160px;margin:0 auto}
+/* The mat is exactly as wide as its contents and centred, so the leftover green
+   is margin by construction. It used to stretch to a cap, which meant the prizes
+   sat hard against one edge of a 1900px window and the deck against the other
+   with a quarter of the screen of empty cloth between them — sprawl rather than
+   a mat. Bringing the sides in is most of the "feel" fix. */
+.mat{display:flex;gap:14px;align-items:flex-start;justify-content:center;
+  width:max-content;max-width:100%;margin:0 auto}
 /* Centred, so the two Active Pokemon meet across the centre line instead of
    both hugging the left edge. That facing-off is the picture the board is for. */
 .playarea{display:flex;flex-direction:column;gap:6px;min-width:0;align-items:center}
-.activezone,.benchzone{display:flex;flex-direction:column;min-width:0}
-/* Both halves render Active-then-bench so the wide layout can put them in a row
+.activezone,.benchzone,.fieldzone{display:flex;flex-direction:column;min-width:0}
+.fieldzone{gap:6px}
+/* Both halves render Active-then-field so the wide layout can put them in a row
    and have the two Actives align. Stacked, the opponent's order flips so their
    Active still ends up nearest the centre line. */
 .side.foe .activezone{order:2}
-.side.foe .benchzone{order:1}
+.side.foe .fieldzone{order:1}
+/* Prizes always sit on the side of the field FURTHEST from the centre line, so
+   the two benches flank the two Actives and the mirror holds. */
+.side.foe .fieldzone .zone.prizes{order:1}
+.side.foe .fieldzone .benchzone{order:2}
+.side.mine .fieldzone .benchzone{order:1}
+.side.mine .fieldzone .zone.prizes{order:2}
 /* Zone captions are silk-screened onto the mat: low contrast, wide tracking. */
 .zonelabel{font-size:8px;letter-spacing:.22em;color:var(--matink);margin-bottom:3px}
 .activezone .activerow{display:flex}
@@ -145,16 +153,17 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    they get their own printed panel with a rule under its heading, not a loose
    grid sitting next to the deck. */
 .zone.prizes{
-  padding:5px 8px 6px;border-radius:4px;gap:0;
+  padding:4px 8px 5px;border-radius:4px;gap:0;
+  flex-direction:row;align-items:center;
   background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px var(--matline);
 }
-.zone.prizes .zonelabel{margin:0 0 5px;align-self:stretch;text-align:center;
-  border-bottom:1px solid var(--matline);padding-bottom:4px}
-/* Three across rather than two: the prizes got bigger, and laying them wide
-   spends that on width — which the mat has — instead of height, which it does
-   not. Six prizes become two rows instead of three. */
-.prizegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
-.zone.prizes .zone-cap{margin-top:6px}
+.zone.prizes .zonelabel{margin:0 9px 0 0;padding-right:9px;align-self:stretch;
+  display:flex;align-items:center;border-right:1px solid var(--matline)}
+/* One long row, riding above the bench. Six prizes are the entire win condition
+   and they read better as a countable strip than as a block. */
+.prizegrid{display:flex;gap:5px}
+.zone.prizes .zone-cap{margin:0 0 0 9px;padding-left:9px;align-self:stretch;
+  align-items:center;border-left:1px solid var(--matline)}
 .zone.prizes.hot{box-shadow:inset 0 0 0 1px #6A5326;background:rgba(226,168,75,.07)}
 .zone.prizes.hot .zonelabel{color:#A0864F;border-bottom-color:#6A5326}
 
@@ -221,6 +230,10 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
      rather than as padding inside the mat. It also stops the action bar sitting
      flush against the bottom edge of the window. */
   flex:0 0 auto;margin-top:auto;
+  /* clip, not hidden: horizontal overflow from sub-pixel rounding under a
+     fractional zoom must not raise a scrollbar, but the hover-lift still has to
+     be able to rise out of the panel. overflow:hidden would clip that too. */
+  overflow-x:clip;overflow-y:visible;
   border:1px solid var(--line);border-radius:5px;
   background:linear-gradient(180deg,#1B2229 0%,#171D23 100%);
   padding:6px 10px 8px;
@@ -416,11 +429,16 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .cardface{width:100%;max-width:240px;display:block;margin:0 auto 10px;border-radius:5px;
   box-shadow:0 2px 4px rgba(0,0,0,.5), 0 14px 30px -14px #000}
 .cardface.miss{display:none}
-/* With the printed face above it, the rendered card below stops being a picture
-   of the card and becomes its data sheet: the attack text the scan is too small
-   to read, set large enough to actually read. */
-.pcard.has-face .sigil.lg{display:none}
-.pcard.has-face .pc-eyebrow{margin-top:2px}
+/* When the real face is there, it IS the panel. The rendered card underneath was
+   restating a name, HP, type and attack text that the scan already shows
+   perfectly legibly at native size — so everything but the printing credits goes
+   away, and you get the card by itself. Cards from an unfetched set never gain
+   `.has-face`, so they still render the full face and lose nothing. */
+.pcard.has-face{background:transparent;border:0;box-shadow:none;padding:0}
+.pcard.has-face > *{display:none}
+.pcard.has-face > .cardface{display:block}
+.pcard.has-face > .pc-credit{display:flex;border-top:0;margin-top:0;padding-top:0;
+  color:var(--dim);justify-content:center;gap:14px}
 
 /* ---- cards in hand ---- */
 .hand .pcard{width:150px;cursor:pointer}
@@ -435,11 +453,11 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 
 /* ---- the Active Pokemon ---- */
 .slot.pcard{cursor:pointer}
-/* Wider than it needs to be for its own sake — a wide Active is a SHORT Active,
-   because the attack text stops wrapping to three lines. The mat has width going
-   spare and no height to give, so this is the good trade. */
-.slot.pcard.act{width:340px}
-.side.mine .slot.pcard.act{width:400px}
+/* Wide enough that attack text does not wrap to three lines, and no wider. It
+   was 400 for a while, which bought height back but left the card looking
+   stretched next to everything else on the mat. */
+.slot.pcard.act{width:300px}
+.side.mine .slot.pcard.act{width:334px}
 .slot.pcard.targetable{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber)}
 .slot.pcard.inspected{border-color:#5C6660}
 .slot .slotmeta{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--ink2)}
@@ -453,8 +471,8 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .slot.empty{background:transparent;border:0;box-shadow:inset 0 0 0 1px var(--matline);
   border-radius:3px;display:flex;align-items:center;justify-content:center;
   color:var(--matink);font-size:9px;letter-spacing:.16em}
-.slot.empty.act{width:340px;min-height:96px}
-.side.mine .slot.empty.act{width:400px}
+.slot.empty.act{width:300px;min-height:96px}
+.side.mine .slot.empty.act{width:334px}
 
 /* ---- benched Pokemon: the same information, a third of the area ---- */
 /* Bench tiles are deliberately NOT small copies of the Active card. They carry
@@ -553,30 +571,29 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 
 
 /* ===================== WIDE LAYOUT — must stay last =====================
-   Stand the bench beside the Active instead of under it. That is the good
-   trade on a screen: the mat has width going spare and no height at all, and
-   this takes roughly 75px per side out of the stack.
+   Stand the field (prizes + bench) beside the Active instead of under it. That
+   is the good trade on a screen: the mat has width going spare and no height at
+   all, and this takes roughly 75px per side out of the stack.
 
-   It needs about 1080px of mat, so below the breakpoint the bench goes back
-   under the Active rather than overflowing sideways — which no amount of
-   vertical auto-fitting could rescue.
+   Applied by chooseLayout() measuring whether it actually fits — NOT by a media
+   query. A media query tests CSS pixels, which are not what the user sees: with
+   display scaling at 125% a 1920-wide screen is a 1536-wide page, so a
+   `min-width:1560px` rule never fires on the machine it was written for. That
+   is exactly how this silently reverted to stacked once already.
 
    THIS BLOCK MUST BE THE LAST THING IN THE FILE. It overrides widths set in
    the CARD SYSTEM section at equal specificity, so moving it earlier silently
    loses to those rules and the two Actives stop lining up. */
-@media (min-width:1560px){
-  .playarea{flex-direction:row;align-items:stretch;gap:16px;justify-content:center}
-  /* Both halves lay out Active-then-bench here, and the two Actives are the
-     same width, so each pair centres identically and they line up across the
-     centre line. */
-  .side.foe .activezone,.side.foe .benchzone{order:0}
-  .slot.pcard.act,.side.mine .slot.pcard.act{width:360px}
-  .slot.empty.act,.side.mine .slot.empty.act{width:360px}
-  /* The Active anchors on the centre line while the bench sits out at the far
-     edge of the row — low on your half, high on theirs. That offset does the
-     same job the size difference does: saying which one is fighting. */
-  .side.mine .activezone{justify-content:flex-start}
-  .side.mine .benchzone{justify-content:flex-end}
-  .side.foe .activezone{justify-content:flex-end}
-  .side.foe .benchzone{justify-content:flex-start}
-}
+.boardcol.wide .playarea{flex-direction:row;align-items:stretch;gap:16px;justify-content:center}
+/* Both halves lay out Active-then-field here, and the two Actives are the same
+   width, so each pair centres identically and they line up across the centre
+   line. */
+.boardcol.wide .side.foe .activezone,.boardcol.wide .side.foe .fieldzone{order:0}
+.boardcol.wide .slot.pcard.act,.boardcol.wide .side.mine .slot.pcard.act{width:318px}
+.boardcol.wide .slot.empty.act,.boardcol.wide .side.mine .slot.empty.act{width:318px}
+/* The Active anchors on the centre line while the field sits out at the far
+   edge of the row. */
+.boardcol.wide .side.mine .activezone{justify-content:flex-start}
+.boardcol.wide .side.mine .fieldzone{justify-content:flex-end}
+.boardcol.wide .side.foe .activezone{justify-content:flex-end}
+.boardcol.wide .side.foe .fieldzone{justify-content:flex-start}
