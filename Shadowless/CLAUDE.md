@@ -177,6 +177,13 @@ leave the page as little as **1280x600 CSS pixels**. The first sizing pass targe
 missed for exactly that reason. **The DEV tab prints the real numbers** — page size, device pixels,
 scaling factor and the applied fit — so read that rather than guessing again.
 
+**Never give the two mat halves `flex:1 1 0`.** It looks right and it is wrong twice. Your half is
+much taller than the opponent's — it carries the attack buttons — so equal halves leave a band of
+dead mat above the opponent while clipping your own bench. Worse, the overflow then happens *inside*
+a flex item and never reaches the table's `scrollHeight`, so `fitBoard()` cannot see it and silently
+does nothing. Sides take their natural height and `.table` centres the pair; that keeps the content
+against the centre line **and** keeps overflow measurable. This cost a round trip to find.
+
 **Play it.** Open `shadowless.html`. The right-hand rail has four tabs: CARD (preview), LOG, DEV,
 CARDS (implementation coverage + live deck validation). **LOG is the working default and clicking a
 card no longer takes it away** — hovering any card peeks its real printed face into the rail and
