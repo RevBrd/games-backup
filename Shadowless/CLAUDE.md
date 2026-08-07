@@ -98,9 +98,15 @@ data/
   fullpool.json        completion manifest: id/name/kind for all 1,251 cards
   wotc_*.csv           superseded by raw/. Kept as an independent cross-check
   core_*.csv           superseded by raw/. Trainers here stopped at Fossil
+assets/
+  cards/<set>/*.png    the real printed card faces. GITIGNORED and DERIVED —
+                       `node tools/fetch_art.js base1` rebuilds them from the
+                       URLs already in data/raw/. Base Set is fetched (14.8 MB)
 tools/
   build.js             src/ -> shadowless.html
   gen_cards.js         data/ -> src/cards.js
+  fetch_art.js         downloads card faces into assets/. Skips what it already
+                       has, so it resumes cleanly and re-running is cheap
   selftest.js          engine + AI statistical regression (drives src/ directly)
   powertest.js         behavioural tests for Powers and the oddity cards
   smoke.js             46-test integration suite against the BUILT artifact, incl. UI
@@ -118,6 +124,7 @@ Five commands. Run the last three before calling anything done.
 
 ```bash
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
+node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/powertest.js                  # 77 tests for Powers and the other bespoke cards
@@ -210,12 +217,25 @@ hand the player cards they already own.
 Trevor's ordering, and he is explicit that it is yours to rearrange and to break into sub-jobs.
 
 - **Job 4** — finish Base Set. ~~Pokémon Powers, the five oddities, Clefairy Doll.~~ **Done.**
-- **Job 4g** — visual pass. *Current job.* Trevor's addition, slotted here deliberately: Job 5 adds four new
+- **Job 4g** — visual pass. *Current job, in progress.* **The mat is built** (6 Aug 2026): the two
+  halves now share one printed playmat instead of sitting in separate panels, benched Pokemon are
+  compact tiles rather than copies of the Active card, the hand fans instead of wrapping, and both
+  Actives are held nose-to-nose against the centre line at any window size. The binding constraint
+  is a **laptop screen** — Trevor's call, 6 Aug — and it was doing real damage: at 1366x768 the old
+  board needed **1098px of height and had 768**, so you could not see both sides at once. It now
+  fits exactly, and `.table` is the flexible element so a tall Active scrolls the mat rather than
+  pushing the hand off screen. Still to do: the deck-select and setup screens, audio-free feedback
+  for attacks/KOs, and a collection-screen mockup to prove the language carries into Job 5. Trevor's addition, slotted here deliberately: Job 5 adds four new
   screens, and setting the visual language *before* they exist is far cheaper than restyling them
   after. By then the battle UI is feature-complete, so there is a whole thing to design against.
   This is also the first job that genuinely benefits from Claude Code over Chat — the build can be
   rendered, screenshotted and iterated against for real.
-  **On card art:** the `images` URLs in `data/raw/` are *complete card faces* — border, name, HP,
+  **On card art — settled and built.** Base Set is fetched and the split works: the mat and hand
+  keep the rendered face, and the preview rail shows the **real printed card** with the rendered
+  face beneath it as a data sheet. The sigil is dropped when a real face loads (`.has-face`), since
+  it only ever stood in for art we didn't have — but only on success, so an unfetched set falls back
+  to exactly the old panel. The original reasoning:
+  the `images` URLs in `data/raw/` are *complete card faces* — border, name, HP,
   attacks, the lot — not illustration crops. There is no crop available anywhere, so they cannot
   fill the sigil's frame; using them means showing the whole printed card. That makes them a poor
   instrument (nothing to overlay damage onto, attack text illegible at 240px) and a lovely object.

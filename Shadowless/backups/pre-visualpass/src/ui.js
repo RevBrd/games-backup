@@ -219,19 +219,9 @@ function typeTag(t) {
   return s;
 }
 
-// The colour a card is filed under: its own type for a Pokemon, the type it
-// provides for an Energy, one purple for every Trainer. Painted onto the left
-// edge, which is the only strip that survives being overlapped in a fanned hand.
-function cardAccent(card) {
-  if (card.kind === 'pokemon') return ENERGY_INK[card.type] || ENERGY_INK.C;
-  if (card.kind === 'energy') return ENERGY_INK[(card.provides || 'C')[0]] || ENERGY_INK.C;
-  return '#6F4C86';
-}
-
 // Compact face: hand, setup, search lists.
 function miniCard(card) {
   const d = el('div', 'pcard mini k-' + card.kind);
-  d.style.borderLeftColor = cardAccent(card);
   const head = el('div', 'pc-head');
   head.appendChild(el('div', 'pc-name', card.name));
   if (card.kind === 'pokemon') head.appendChild(el('div', 'pc-hp', card.hp + ' HP'));
@@ -262,33 +252,9 @@ function miniCard(card) {
   return d;
 }
 
-// The real printed face, from assets/cards/<set>/<number>.png. These are the
-// whole 1999 card — border, name box, the lot — so they belong only where the
-// card is the SUBJECT rather than a token in play. If the set has not been
-// fetched the image simply hides itself and the rendered face carries on alone.
-function cardFaceImage(card, host) {
-  const m = /^([a-z0-9]+)-(.+)$/.exec(card.id || '');
-  if (!m) return null;
-  const img = el('img', 'cardface');
-  img.src = `assets/cards/${m[1]}/${m[2]}.png`;
-  img.alt = card.name;
-  img.loading = 'lazy';
-  // The sigil is a stand-in for art we don't have. When the real face loads it
-  // is no longer standing in for anything, so it goes — but only on success, so
-  // an unfetched set falls back to exactly the old panel.
-  img.onerror = () => {
-    img.classList.add('miss');
-    if (host && host.classList) host.classList.remove('has-face');
-  };
-  return img;
-}
-
 // Full face: the preview panel.
 function fullCard(card) {
-  const d = el('div', 'pcard full has-face k-' + card.kind);
-  d.style.borderLeftColor = cardAccent(card);
-  const face = cardFaceImage(card, d);
-  if (face) d.appendChild(face); else d.classList.remove('has-face');
+  const d = el('div', 'pcard full k-' + card.kind);
   const eyebrow = el('div', 'pc-eyebrow');
   eyebrow.appendChild(el('span', null,
     card.kind === 'pokemon' ? card.stage.toUpperCase()
@@ -311,9 +277,7 @@ function fullCard(card) {
 
     if (card.power) {
       const pw = el('div', 'pc-power');
-      // `kind` is what gen_cards.js writes ("Pokémon Power"). Reading `.type`
-      // here printed "undefined: Energy Burn" on all six Power cards.
-      pw.appendChild(el('div', 'pc-powname', card.power.kind + ': ' + card.power.name));
+      pw.appendChild(el('div', 'pc-powname', card.power.type + ': ' + card.power.name));
       pw.appendChild(el('div', 'pc-text', card.power.text));
       d.appendChild(pw);
     }
@@ -361,7 +325,6 @@ function render() {
   if (UI.screen === 'decks') { root.appendChild(renderDeckSelect()); return; }
   if (!UI.E) { root.appendChild(el('div', 'empty', 'No game loaded.')); return; }
 
-  UI.handEl = null;
   const wrap = el('div', 'wrap');
   wrap.appendChild(renderBoardColumn());
   wrap.appendChild(renderRail());
@@ -371,43 +334,15 @@ function render() {
   if (S().phase === 'setup') root.appendChild(renderSetup());
   if (S().phase === 'over') root.appendChild(renderOver());
 
-  layoutHand();
   maybeRunAI();
 }
 
-// The hand must never wrap — a second row costs ~70px of mat, and on a laptop
-// the mat has none to give. So the cards fan instead: they overlap only as far
-// as they have to, which for a normal 5-7 card hand is not at all. Measured
-// after layout rather than assumed, so it holds at any window width.
-function layoutHand() {
-  // renderHand() stashes the node rather than us querying for it: the headless
-  // harness's DOM stub has no querySelector, and there is no reason to search
-  // the tree for something we just built.
-  const hand = UI.handEl;
-  if (!hand || typeof hand.getBoundingClientRect !== 'function' || !hand.style) return;
-  const cards = hand.children;
-  const n = cards.length;
-  if (n < 2) return;
-  const w = cards[0].getBoundingClientRect().width || 150;
-  const avail = hand.clientWidth || 0;
-  if (!avail) return;
-  // Floor, never round: the error is multiplied by (n-1) gaps, so rounding up
-  // pushes the last card past the edge on a big hand. Floor only ever tightens.
-  const step = Math.max(22, Math.min(w + 7, (avail - w) / (n - 1)));
-  hand.style.setProperty('--fan', Math.floor(step - w) + 'px');
-}
-
-// The two halves share one mat rather than sitting in separate panels — that is
-// most of what makes the board read as a board. The centre line is printed on
-// it, and doubles as where the game shouts at you.
 function renderBoardColumn() {
   const col = el('div', 'boardcol');
   col.appendChild(renderStatusBar());
-  const table = el('div', 'table');
-  table.appendChild(renderSide(1, true));
-  table.appendChild(renderCentreLine());
-  table.appendChild(renderSide(0, false));
-  col.appendChild(table);
+  col.appendChild(renderSide(1, true));
+  col.appendChild(renderMidline());
+  col.appendChild(renderSide(0, false));
   col.appendChild(renderHand());
   col.appendChild(renderActionBar());
   return col;
@@ -427,8 +362,8 @@ function renderStatusBar() {
   return bar;
 }
 
-function renderCentreLine() {
-  const m = el('div', 'centreline');
+function renderMidline() {
+  const m = el('div', 'midline');
   if (UI.fxActive('ko0') || UI.fxActive('ko1')) {
     m.appendChild(el('div', 'kobanner', 'KNOCKED OUT'));
   } else if (UI.targeting) {
@@ -467,7 +402,6 @@ function stackZone(label, n, cls) {
 
 function prizeZone(p, mine) {
   const z = el('div', 'zone prizes');
-  z.appendChild(el('div', 'zonelabel', 'PRIZES'));
   const grid = el('div', 'prizegrid');
   const total = UI.E.cfg.prizeCount;
   for (let i = 0; i < total; i++) {
@@ -492,8 +426,7 @@ function renderSide(pi, isFoe) {
   const side = el('div', 'side' + (isFoe ? ' foe' : ' mine'));
 
   const head = el('div', 'sidehead');
-  head.appendChild(el('div', 'sidename', isFoe ? 'OPPONENT' : 'YOU'));
-  head.appendChild(el('div', 'sidedeck', isFoe ? UI.foeDeck : UI.myDeck));
+  head.appendChild(el('div', 'sidename', (isFoe ? 'OPPONENT' : 'YOU') + ' — ' + (isFoe ? UI.foeDeck : UI.myDeck)));
   const hand = el('div', 'handcount');
   hand.appendChild(el('b', null, String(p.hand.length)));
   hand.appendChild(el('span', null, 'in hand'));
@@ -509,7 +442,7 @@ function renderSide(pi, isFoe) {
   benchWrap.appendChild(bl);
   const benchRow = el('div', 'bench');
   for (let i = 0; i < UI.E.cfg.benchMax; i++) {
-    if (p.bench[i]) benchRow.appendChild(renderBenchTile(p.bench[i], pi, i));
+    if (p.bench[i]) benchRow.appendChild(renderSlot(p.bench[i], pi, 'bench', i));
     else benchRow.appendChild(el('div', 'slot empty benchslot', ''));
   }
   benchWrap.appendChild(benchRow);
@@ -518,7 +451,7 @@ function renderSide(pi, isFoe) {
   actWrap.appendChild(el('div', 'zonelabel', 'ACTIVE'));
   const actRow = el('div', 'activerow');
   if (p.active) actRow.appendChild(renderSlot(p.active, pi, 'active', -1));
-  else actRow.appendChild(el('div', 'slot empty act', 'EMPTY'));
+  else actRow.appendChild(el('div', 'slot empty', 'no active pokemon'));
   actWrap.appendChild(actRow);
 
   if (isFoe) { play.appendChild(benchWrap); play.appendChild(actWrap); }
@@ -620,11 +553,35 @@ function renderSlot(slot, pi, where, idx) {
   const fill = el('i'); fill.style.width = Math.min(100, (slot.dmg / c.hp) * 100) + '%';
   bar.appendChild(fill); info.appendChild(bar);
 
-  const en = energyPips(slot, 'full');
-  en.appendChild(el('span', 'retreatnote', 'retreat ' + c.retreat));
+  const en = el('div', 'energyrow');
+  slot.energy.forEach(e => {
+    const p = el('i', 'pip ink');
+    // asEnergy is set on the card instance by Buzzap, which turns an Electrode
+    // into an Energy card; the card definition still says Pokemon.
+    const prov = e.asEnergy || CARD_DB[e.id].provides;
+    p.style.background = ENERGY_INK[(prov || 'C')[0]] || ENERGY_INK.C;
+    p.title = CARD_DB[e.id].name + (e.asEnergy ? ` (Buzzap: ${e.asEnergy})` : '');
+    en.appendChild(p);
+  });
+  if (!slot.energy.length) en.appendChild(el('span', 'none', 'no energy'));
+  const need = el('span', 'retreatnote', 'retreat ' + c.retreat);
+  en.appendChild(need);
   info.appendChild(en);
 
-  const st = statusBadges(slot, false);
+  const st = el('div', 'statuses');
+  const badge = (txt, cls) => st.appendChild(el('span', 'badge ' + cls, txt));
+  if (slot.status.asleep) badge('ASLEEP', 'slp');
+  if (slot.status.paralyzed) badge('PARALYZED', 'par');
+  if (slot.status.confused) badge('CONFUSED', 'cnf');
+  if (slot.status.poisoned) badge('POISONED', 'psn');
+  slot.effects.forEach(e => {
+    if (e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS') badge('SHIELDED', 'shd');
+    if (e.kind === 'PREVENT_UP_TO') badge('HARDENED', 'shd');
+    if (e.kind === 'DAMAGE_REDUCTION') badge('-' + e.amount, 'shd');
+    if (e.kind === 'DAMAGE_BONUS') badge('+' + e.amount, 'bns');
+    if (e.kind === 'DESTINY_BOND') badge('DESTINY BOND', 'bond');
+    if (e.kind === 'ATTACK_FLIP') badge('DAZED', 'cnf');
+  });
   if (st.children.length) info.appendChild(st);
   body.appendChild(info);
   d.appendChild(body);
@@ -652,14 +609,7 @@ function renderSlot(slot, pi, where, idx) {
     d.appendChild(atks);
   }
 
-  d.onclick = slotOnClick(slot, pi, where, idx, can, c);
-  return d;
-}
-
-// Shared by the Active card and the bench tiles — a benched Pokemon is just as
-// clickable a target as the Active one, so the two must not drift apart.
-function slotOnClick(slot, pi, where, idx, can, c) {
-  return () => {
+  d.onclick = (ev) => {
     if (can && UI.powerMode) {
       const pm = UI.powerMode;
       if (pm.kind === 'BUZZAP') { pm.to = slot.uid; render(); return; }
@@ -674,75 +624,6 @@ function slotOnClick(slot, pi, where, idx, can, c) {
     if (can) return resolveTarget(slot, pi, where, idx);
     inspectCard(c.id); render();
   };
-}
-
-function statusBadges(slot, terse) {
-  const st = el('div', 'statuses');
-  const badge = (long, short, cls) => st.appendChild(el('span', 'badge ' + cls, terse ? short : long));
-  if (slot.status.asleep) badge('ASLEEP', 'SLP', 'slp');
-  if (slot.status.paralyzed) badge('PARALYZED', 'PAR', 'par');
-  if (slot.status.confused) badge('CONFUSED', 'CNF', 'cnf');
-  if (slot.status.poisoned) badge('POISONED', 'PSN', 'psn');
-  slot.effects.forEach(e => {
-    if (e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS') badge('SHIELDED', 'SHLD', 'shd');
-    if (e.kind === 'PREVENT_UP_TO') badge('HARDENED', 'HARD', 'shd');
-    if (e.kind === 'DAMAGE_REDUCTION') badge('-' + e.amount, '-' + e.amount, 'shd');
-    if (e.kind === 'DAMAGE_BONUS') badge('+' + e.amount, '+' + e.amount, 'bns');
-    if (e.kind === 'DESTINY_BOND') badge('DESTINY BOND', 'BOND', 'bond');
-    if (e.kind === 'ATTACK_FLIP') badge('DAZED', 'DAZE', 'cnf');
-  });
-  return st;
-}
-
-function energyPips(slot, cls) {
-  const en = el('div', 'energyrow');
-  slot.energy.forEach(e => {
-    const p = el('i', 'pip ink');
-    // asEnergy is set on the card instance by Buzzap, which turns an Electrode
-    // into an Energy card; the card definition still says Pokemon.
-    const prov = e.asEnergy || CARD_DB[e.id].provides;
-    p.style.background = ENERGY_INK[(prov || 'C')[0]] || ENERGY_INK.C;
-    p.title = CARD_DB[e.id].name + (e.asEnergy ? ` (Buzzap: ${e.asEnergy})` : '');
-    en.appendChild(p);
-  });
-  if (!slot.energy.length) en.appendChild(el('span', 'none', cls === 'terse' ? '—' : 'no energy'));
-  return en;
-}
-
-// A bench tile is NOT a small copy of the Active card. It carries only what you
-// steer by from across the table — who it is, how hurt, how charged, what's
-// wrong with it — and the size gap is what makes the Active read as the one
-// that is actually fighting.
-function renderBenchTile(slot, pi, idx) {
-  const c = topCard(CARD_DB, slot);
-  const d = el('div', 'benchcard');
-  d.style.borderLeftColor = ENERGY_INK[c.type] || ENERGY_INK.C;
-  const can = slotTargetable(slot, pi, 'bench', idx);
-  if (can) d.classList.add('targetable');
-  if (UI.inspect === c.id) d.classList.add('inspected');
-  if (UI.fxActive('hit' + slot.uid)) d.classList.add('fx-hit');
-  d.title = `${c.name} — ${c.stage}, ${Math.max(0, c.hp - slot.dmg)}/${c.hp} HP, retreat ${c.retreat}`;
-
-  d.appendChild(el('div', 'bn', c.name));
-
-  const hp = el('div', 'bhp');
-  const left = el('b', null, String(Math.max(0, c.hp - slot.dmg)));
-  if (slot.dmg > 0) left.classList.add('hurt');
-  hp.appendChild(left);
-  hp.appendChild(el('span', null, '/' + c.hp));
-  if (slot.stack.length > 1) hp.appendChild(el('span', 'bstack', '×' + slot.stack.length));
-  d.appendChild(hp);
-
-  const bar = el('div', 'dmgbar');
-  const fill = el('i'); fill.style.width = Math.min(100, (slot.dmg / c.hp) * 100) + '%';
-  bar.appendChild(fill); d.appendChild(bar);
-
-  d.appendChild(energyPips(slot, 'terse'));
-
-  const st = statusBadges(slot, true);
-  if (st.children.length) d.appendChild(st);
-
-  d.onclick = slotOnClick(slot, pi, 'bench', idx, can, c);
   return d;
 }
 
@@ -776,7 +657,6 @@ function renderHand() {
     row.appendChild(card);
   });
   if (!me().hand.length) row.appendChild(el('div', 'empty', 'hand empty'));
-  UI.handEl = row;
   h.appendChild(row);
   return h;
 }

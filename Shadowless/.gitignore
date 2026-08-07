@@ -1,0 +1,4 @@
+# Real printed card faces, downloaded from the URLs already in data/raw/*.json.
+# Derived assets, not source — ~15 MB per set, and `node tools/fetch_art.js base1`
+# rebuilds them from scratch. See CLAUDE.md, Job 4g.
+assets/cards/
