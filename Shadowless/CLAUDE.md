@@ -261,7 +261,19 @@ hand the player cards they already own.
 Trevor's ordering, and he is explicit that it is yours to rearrange and to break into sub-jobs.
 
 - **Job 4** — finish Base Set. ~~Pokémon Powers, the five oddities, Clefairy Doll.~~ **Done.**
-- **Job 4g** — visual pass. *Current job, in progress.* **The mat is built** (6 Aug 2026): the two
+- **Job 4g** — visual pass. **Done**, bar the coin-flip animation noted below.
+  The deck-select screen is now the title screen — it says the game's name, explains what the name
+  means, and gives each theme deck the face of its own heaviest card (`deckHero()`), which is the
+  first real use of the fetched scans outside the preview rail. Every overlay (setup, pickers,
+  game-over) is mat cloth now rather than the old blue-grey panel. That screen sizes itself with
+  `clamp(..vh..)` rather than the board's JS fitter — it is static, so CSS is enough.
+  **Deliberately not built:** a collection/dex mockup. It was on the plan to prove the visual
+  language carries into Job 5, but the language is settled and mocking up screens that don't exist
+  yet would be thrown away. Build it for real in Job 5.
+  **Still open:** a coin-flip animation. It lives in the action bar and is honest but plain; the
+  mat's centre line is the natural home for something more theatrical. Deliberately *not* put in the
+  on-mat ticker's space — a flip is rare, so it would leave that gap empty most of the time.
+- **Job 4g (history)** — visual pass, as originally scoped. **The mat is built** (6 Aug 2026): the two
   halves now share one printed playmat instead of sitting in separate panels, benched Pokemon are
   compact tiles rather than copies of the Active card, the hand fans instead of wrapping, and both
   Actives are held nose-to-nose against the centre line at any window size. The binding constraint

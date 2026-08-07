@@ -1201,11 +1201,36 @@ function deckSummary(name) {
   return { k, types, basics, stage2 };
 }
 
+// The deck a deck is "about" — its heaviest evolution, tie-broken on HP. Used to
+// give each theme deck a face on the select screen, since we have the real
+// printed cards sitting right there. Sandbox has no fixed list, so it gets a
+// card back instead, which is honest: you don't know what you're getting.
+function deckHero(name) {
+  const d = DECKS[name];
+  if (!d) return null;
+  const rank = { 'Basic': 0, 'Stage 1': 1, 'Stage 2': 2 };
+  let best = null, bestScore = -1;
+  for (const [, id] of d.list) {
+    const c = CARD_DB[id];
+    if (!c || c.kind !== 'pokemon') continue;
+    const score = (rank[c.stage] || 0) * 1000 + (c.hp || 0);
+    if (score > bestScore) { bestScore = score; best = id; }
+  }
+  return best;
+}
+
 function renderDeckSelect() {
   const ov = el('div', 'deckscreen');
-  const box = el('div', 'sheet wide');
-  box.appendChild(el('h2', null, 'Choose decks'));
-  box.appendChild(el('p', 'dimtxt', 'Four Base Set theme decks. Pick one for yourself and one for the opponent, then set up your opening board.'));
+  const box = el('div', 'deckbox');
+
+  // The game has never said its own name anywhere. It does now, and the note
+  // says what the name means — it is a print-run term, not a mood.
+  const title = el('div', 'titleblock');
+  title.appendChild(el('h1', 'gametitle', 'SHADOWLESS'));
+  title.appendChild(el('div', 'gamesub', 'The Wizards of the Coast era, played to the letter of the original rules.'));
+  title.appendChild(el('div', 'gamenote',
+    `Named for the early Base Set sheets, printed before the drop shadow. ${Object.keys(CARD_DB).length} cards implemented.`));
+  box.appendChild(title);
 
   const mkGrid = (key, heading) => {
     const sec = el('div', 'deckgrp');
@@ -1215,6 +1240,16 @@ function renderDeckSelect() {
       const s = deckSummary(n);
       const isSandbox = n === SANDBOX;
       const c = el('div', 'deckcard' + (UI[key] === n ? ' on' : ''));
+
+      const art = el('div', 'dart');
+      const hero = isSandbox ? null : deckHero(n);
+      if (hero) {
+        const img = cardFaceImage(CARD_DB[hero], null);
+        if (img) art.appendChild(img);
+      }
+      if (!hero) { const b = cardBack('deckback'); art.appendChild(b); }
+      c.appendChild(art);
+
       c.appendChild(el('div', 'dname', n));
       const pips = el('div', 'dtypes');
       Object.keys(s.types).sort((a, b) => s.types[b] - s.types[a]).forEach(t => {
@@ -1222,9 +1257,9 @@ function renderDeckSelect() {
         pips.appendChild(p);
       });
       c.appendChild(pips);
-      c.appendChild(el('div', 'dstat', `${s.k.pokemon} Pokemon · ${s.k.trainer} Trainer · ${s.k.energy} Energy`));
+      c.appendChild(el('div', 'dstat', `${s.k.pokemon} / ${s.k.trainer} / ${s.k.energy}`));
       c.appendChild(el('div', 'dstat dim', isSandbox
-        ? 'randomly generated from every implemented card'
+        ? 'every implemented card'
         : `${s.basics} Basics${s.stage2 ? ` · ${s.stage2} Stage 2` : ''}`));
       c.onclick = () => { UI[key] = n; render(); };
       grid.appendChild(c);
@@ -1236,32 +1271,36 @@ function renderDeckSelect() {
   box.appendChild(mkGrid('myDeck', 'YOUR DECK'));
   box.appendChild(mkGrid('foeDeck', 'OPPONENT'));
 
-  const diff = el('div', 'row');
-  diff.appendChild(el('label', null, 'opponent'));
+  const opts = el('div', 'deckopts');
+  const field = (lbl, node) => {
+    const f = el('div', 'dfield');
+    f.appendChild(el('label', null, lbl));
+    f.appendChild(node);
+    return f;
+  };
+
   const dsel = el('select');
   [['Expert', 'expert'], ['Novice', 'novice'], ['Damage-only bot', 'greedy'], ['Random', 'random']]
     .forEach(([t, v]) => { const o = el('option', null, t); o.value = v; if (UI.aiMode === v) o.selected = true; dsel.appendChild(o); });
   dsel.onchange = () => { UI.aiMode = dsel.value; };
-  diff.appendChild(dsel);
-  box.appendChild(diff);
+  opts.appendChild(field('opponent plays', dsel));
 
-  const opts = el('div', 'row');
-  opts.appendChild(el('label', null, 'prizes'));
   const ps = el('select');
   [6, 4, 3, 2, 1].forEach(n => { const o = el('option', null, String(n)); o.value = n; if (UI.cfgDraft.prizeCount === n) o.selected = true; ps.appendChild(o); });
   ps.onchange = () => { UI.cfgDraft.prizeCount = parseInt(ps.value, 10); };
-  opts.appendChild(ps);
-  opts.appendChild(el('label', null, 'seed'));
+  opts.appendChild(field('prizes', ps));
+
   const si = el('input'); si.type = 'text'; si.placeholder = 'random'; si.value = UI.seedDraft;
   si.oninput = () => { UI.seedDraft = si.value.trim(); };
-  opts.appendChild(si);
+  opts.appendChild(field('seed', si));
   box.appendChild(opts);
 
-  const bar = el('div', 'actionbar');
-  const go = el('button', 'btn end', `Play ${UI.myDeck} vs ${UI.foeDeck}`);
+  const bar = el('div', 'deckgo');
+  const go = el('button', 'btn end big', `Play ${UI.myDeck} vs ${UI.foeDeck}`);
   go.onclick = () => startMatch();
   bar.appendChild(go);
   box.appendChild(bar);
+
   ov.appendChild(box);
   return ov;
 }

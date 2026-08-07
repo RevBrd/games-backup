@@ -357,23 +357,71 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .verr{color:var(--red);font-size:10.5px;padding-left:14px}
 .vwarn{color:var(--amber);font-size:10.5px;padding-left:14px}
 
-/* ---- deck select ---- */
-.deckscreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.sheet.wide{max-width:900px}
-.deckgrp{margin-bottom:14px}
-.deckgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
-.deckcard{background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:10px 11px;cursor:pointer}
-.deckcard:hover{border-color:#55636F}
-.deckcard.on{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset;background:#2C3742}
-.dname{font-weight:700;font-size:14px;letter-spacing:.02em}
-.dtypes{display:flex;gap:3px;margin:6px 0}
-.dstat{font-size:10.5px;color:var(--dim)}
-.dstat.dim{color:#5A646E}
+/* ---- deck select: the title screen ---- */
+/* Same cloth as the mat, because this is the same table — you are sitting down
+   at it rather than arriving at a menu. */
+.deckscreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:clamp(8px,2vh,22px) 20px;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.012) 0 1px,transparent 1px 3px),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.05) 0 1px,transparent 1px 3px),
+    radial-gradient(120% 90% at 50% 0%,var(--mat) 0%,var(--mat2) 55%,#121917 100%);
+}
+.deckbox{width:100%;max-width:1000px;display:flex;flex-direction:column;gap:clamp(7px,1.7vh,14px)}
+
+.titleblock{text-align:center;padding-bottom:clamp(5px,1.4vh,11px);border-bottom:1px solid var(--matline)}
+/* Everything on this screen is sized against the viewport, so the title screen
+   fits without scrolling on a short page instead of needing its own fitter. */
+.gametitle{
+  margin:0;font-family:var(--serif);font-weight:600;
+  font-size:clamp(28px,5.2vh,46px);line-height:1;letter-spacing:.28em;text-indent:.28em;
+  color:var(--stock);
+  /* the faintest drop shadow, on the one word that is named for not having one */
+  text-shadow:0 2px 0 rgba(0,0,0,.45), 0 14px 34px rgba(0,0,0,.55);
+}
+.gamesub{margin-top:9px;font-size:11.5px;letter-spacing:.05em;color:#93A39C}
+.gamenote{margin-top:3px;font-size:10px;color:var(--matink)}
+
+.deckgrp{display:flex;flex-direction:column;gap:6px}
+.grphead{font-size:9px;letter-spacing:.22em;color:var(--matink);margin:0}
+.deckgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+/* Each theme deck wears the face of its own heaviest card. We have the real
+   printed scans; a deck of Charizard should look like one. */
+.deckcard{
+  background:rgba(0,0,0,.20);border:1px solid var(--matline);border-radius:4px;
+  padding:clamp(6px,1.2vh,10px) 9px;cursor:pointer;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  transition:border-color .12s ease, transform .12s ease;
+}
+.deckcard:hover{border-color:#6E837B;transform:translateY(-2px)}
+.deckcard.on{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset;background:rgba(226,168,75,.07)}
+.dart{width:100%;display:flex;justify-content:center;margin-bottom:2px}
+.dart .cardface{width:auto;max-width:none;height:clamp(64px,12vh,124px);margin:0;border-radius:3px;
+  box-shadow:0 2px 4px rgba(0,0,0,.5), 0 10px 20px -10px #000}
+.dart .cardback.deckback{height:clamp(64px,12vh,124px);width:auto;aspect-ratio:240/330}
+.dname{font-family:var(--serif);font-weight:600;font-size:15px;letter-spacing:.01em;color:var(--stock)}
+.dtypes{display:flex;gap:3px;justify-content:center}
+.dstat{font-size:10px;color:#8A9A93}
+.dstat.dim{color:var(--matink);font-size:9.5px}
+
+.deckopts{display:flex;gap:16px;align-items:flex-end;justify-content:center;
+  padding-top:10px;border-top:1px solid var(--matline)}
+.dfield{display:flex;flex-direction:column;gap:3px}
+.dfield label{font-size:9px;letter-spacing:.16em;color:var(--matink)}
+.dfield select,.dfield input{background:rgba(0,0,0,.3);border:1px solid var(--matline);
+  border-radius:2px;padding:4px 7px;min-width:120px}
+.deckgo{display:flex;justify-content:center}
+.btn.big{padding:9px 26px;font-size:13px;letter-spacing:.06em}
 
 /* ---- Computer Search picker ---- */
-.searchlist{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:3px;margin-bottom:12px}
-.searchrow{display:flex;align-items:center;gap:10px;padding:5px 9px;cursor:pointer;border-bottom:1px solid #202832}
-.searchrow:hover{background:#2C3742}
+/* These live inside .sheet, which is mat cloth now, so they take the mat's
+   greens rather than the old blue-grey panel colours. */
+.searchlist{max-height:46vh;overflow:auto;border:1px solid var(--matline);border-radius:3px;
+  margin-bottom:12px;background:rgba(0,0,0,.18)}
+.searchrow{display:flex;align-items:center;gap:10px;padding:5px 9px;cursor:pointer;
+  border-bottom:1px solid rgba(0,0,0,.25)}
+.searchrow:hover{background:rgba(255,255,255,.05)}
 .searchrow.k-pokemon{border-left:2px solid #6FAE5A}
 .searchrow.k-trainer{border-left:2px solid #9269A8}
 .searchrow.k-energy{border-left:2px solid #4E9BC4}
@@ -382,12 +430,29 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .searchrow .ss{color:var(--dim);font-size:10.5px;min-width:110px;text-align:right}
 
 /* ---- overlays ---- */
-.overlay{position:fixed;inset:0;background:rgba(10,13,17,.82);display:flex;align-items:center;justify-content:center;padding:24px;z-index:20}
-.sheet{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:20px 22px;max-width:820px;width:100%;max-height:88vh;overflow:auto}
-.sheet h2{margin:0 0 6px;font-size:16px;letter-spacing:.04em}
-.sheet p{margin:0 0 12px}
-.setupcur{border:1px solid var(--line);border-radius:3px;padding:8px 10px;margin-bottom:12px;background:var(--panel2)}
-.setupcur .lbl{font-size:11px;color:var(--dim)}
+.overlay{position:fixed;inset:0;background:rgba(8,11,10,.84);display:flex;align-items:center;justify-content:center;padding:24px;z-index:20}
+/* Sheets are the same cloth as the mat, so setup and the game-over card feel
+   like part of the table rather than dialogs laid over it. */
+.sheet{
+  background:linear-gradient(180deg,var(--mat) 0%,var(--mat2) 100%);
+  border:1px solid var(--matedge);border-radius:6px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03), 0 24px 60px -20px #000;
+  padding:20px 22px;max-width:820px;width:100%;max-height:88vh;overflow:auto;
+}
+.sheet h2{margin:0 0 6px;font-family:var(--serif);font-weight:600;font-size:22px;
+  letter-spacing:.06em;color:var(--stock)}
+.sheet p{margin:0 0 12px;color:#93A39C;font-size:11.5px}
+.sheet .dimtxt{color:var(--matink)}
+.sheet .grphead,.sheet .row label{color:var(--matink)}
+.sheet select,.sheet input[type=text]{background:rgba(0,0,0,.3);border-color:var(--matline)}
+.sheet .btn{background:rgba(0,0,0,.28);border-color:var(--matline);color:#B7C6BE}
+.sheet .btn:hover{border-color:var(--amber);color:var(--txt)}
+.sheet .btn.end{background:#3A2F1C;border-color:#6A5326;color:var(--amber)}
+.sheet .btn.ghost{background:transparent;color:var(--matink)}
+.sheet .searchrow .ss,.sheet .orderrow .ss{color:var(--matink)}
+.setupcur{border:1px solid var(--matline);border-radius:3px;padding:8px 10px;margin-bottom:12px;
+  background:rgba(0,0,0,.2)}
+.setupcur .lbl{font-size:11px;color:#8A9A93}
 /* Inside a sheet the hand is a plain wrapping row again — there is room, and
    nothing is competing for it. */
 .sheet .hand{margin-bottom:14px;flex-wrap:wrap;gap:8px;padding-top:0}
@@ -582,8 +647,9 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 /* search list rows keep the card family */
 .searchrow .sn{font-family:var(--serif);font-weight:600;font-size:12.5px}
 
-/* deck-select cards stay dark - they are not game cards */
-.deckcard .dname{font-family:var(--serif);font-size:16px}
+/* The deck-select hero art must not inherit the preview panel's native-size cap
+   — there it is the subject at 1:1, here it is a thumbnail sized by height. */
+.deckcard .pcard{background:transparent;border:0;box-shadow:none;padding:0}
 
 
 /* ---- motion ---- */
@@ -609,8 +675,9 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 
 
 /* ---- generic picker ---- */
-.orderlist{border:1px solid var(--line);border-radius:3px;margin-bottom:12px;max-height:46vh;overflow:auto}
-.orderrow{display:flex;align-items:center;gap:9px;padding:6px 9px;border-bottom:1px solid #202832}
+.orderlist{border:1px solid var(--matline);border-radius:3px;margin-bottom:12px;max-height:46vh;
+  overflow:auto;background:rgba(0,0,0,.18)}
+.orderrow{display:flex;align-items:center;gap:9px;padding:6px 9px;border-bottom:1px solid rgba(0,0,0,.25)}
 .orderrow.k-pokemon{border-left:2px solid #6FAE5A}
 .orderrow.k-trainer{border-left:2px solid #9269A8}
 .orderrow.k-energy{border-left:2px solid #4E9BC4}
@@ -5877,11 +5944,36 @@ function deckSummary(name) {
   return { k, types, basics, stage2 };
 }
 
+// The deck a deck is "about" — its heaviest evolution, tie-broken on HP. Used to
+// give each theme deck a face on the select screen, since we have the real
+// printed cards sitting right there. Sandbox has no fixed list, so it gets a
+// card back instead, which is honest: you don't know what you're getting.
+function deckHero(name) {
+  const d = DECKS[name];
+  if (!d) return null;
+  const rank = { 'Basic': 0, 'Stage 1': 1, 'Stage 2': 2 };
+  let best = null, bestScore = -1;
+  for (const [, id] of d.list) {
+    const c = CARD_DB[id];
+    if (!c || c.kind !== 'pokemon') continue;
+    const score = (rank[c.stage] || 0) * 1000 + (c.hp || 0);
+    if (score > bestScore) { bestScore = score; best = id; }
+  }
+  return best;
+}
+
 function renderDeckSelect() {
   const ov = el('div', 'deckscreen');
-  const box = el('div', 'sheet wide');
-  box.appendChild(el('h2', null, 'Choose decks'));
-  box.appendChild(el('p', 'dimtxt', 'Four Base Set theme decks. Pick one for yourself and one for the opponent, then set up your opening board.'));
+  const box = el('div', 'deckbox');
+
+  // The game has never said its own name anywhere. It does now, and the note
+  // says what the name means — it is a print-run term, not a mood.
+  const title = el('div', 'titleblock');
+  title.appendChild(el('h1', 'gametitle', 'SHADOWLESS'));
+  title.appendChild(el('div', 'gamesub', 'The Wizards of the Coast era, played to the letter of the original rules.'));
+  title.appendChild(el('div', 'gamenote',
+    `Named for the early Base Set sheets, printed before the drop shadow. ${Object.keys(CARD_DB).length} cards implemented.`));
+  box.appendChild(title);
 
   const mkGrid = (key, heading) => {
     const sec = el('div', 'deckgrp');
@@ -5891,6 +5983,16 @@ function renderDeckSelect() {
       const s = deckSummary(n);
       const isSandbox = n === SANDBOX;
       const c = el('div', 'deckcard' + (UI[key] === n ? ' on' : ''));
+
+      const art = el('div', 'dart');
+      const hero = isSandbox ? null : deckHero(n);
+      if (hero) {
+        const img = cardFaceImage(CARD_DB[hero], null);
+        if (img) art.appendChild(img);
+      }
+      if (!hero) { const b = cardBack('deckback'); art.appendChild(b); }
+      c.appendChild(art);
+
       c.appendChild(el('div', 'dname', n));
       const pips = el('div', 'dtypes');
       Object.keys(s.types).sort((a, b) => s.types[b] - s.types[a]).forEach(t => {
@@ -5898,9 +6000,9 @@ function renderDeckSelect() {
         pips.appendChild(p);
       });
       c.appendChild(pips);
-      c.appendChild(el('div', 'dstat', `${s.k.pokemon} Pokemon · ${s.k.trainer} Trainer · ${s.k.energy} Energy`));
+      c.appendChild(el('div', 'dstat', `${s.k.pokemon} / ${s.k.trainer} / ${s.k.energy}`));
       c.appendChild(el('div', 'dstat dim', isSandbox
-        ? 'randomly generated from every implemented card'
+        ? 'every implemented card'
         : `${s.basics} Basics${s.stage2 ? ` · ${s.stage2} Stage 2` : ''}`));
       c.onclick = () => { UI[key] = n; render(); };
       grid.appendChild(c);
@@ -5912,32 +6014,36 @@ function renderDeckSelect() {
   box.appendChild(mkGrid('myDeck', 'YOUR DECK'));
   box.appendChild(mkGrid('foeDeck', 'OPPONENT'));
 
-  const diff = el('div', 'row');
-  diff.appendChild(el('label', null, 'opponent'));
+  const opts = el('div', 'deckopts');
+  const field = (lbl, node) => {
+    const f = el('div', 'dfield');
+    f.appendChild(el('label', null, lbl));
+    f.appendChild(node);
+    return f;
+  };
+
   const dsel = el('select');
   [['Expert', 'expert'], ['Novice', 'novice'], ['Damage-only bot', 'greedy'], ['Random', 'random']]
     .forEach(([t, v]) => { const o = el('option', null, t); o.value = v; if (UI.aiMode === v) o.selected = true; dsel.appendChild(o); });
   dsel.onchange = () => { UI.aiMode = dsel.value; };
-  diff.appendChild(dsel);
-  box.appendChild(diff);
+  opts.appendChild(field('opponent plays', dsel));
 
-  const opts = el('div', 'row');
-  opts.appendChild(el('label', null, 'prizes'));
   const ps = el('select');
   [6, 4, 3, 2, 1].forEach(n => { const o = el('option', null, String(n)); o.value = n; if (UI.cfgDraft.prizeCount === n) o.selected = true; ps.appendChild(o); });
   ps.onchange = () => { UI.cfgDraft.prizeCount = parseInt(ps.value, 10); };
-  opts.appendChild(ps);
-  opts.appendChild(el('label', null, 'seed'));
+  opts.appendChild(field('prizes', ps));
+
   const si = el('input'); si.type = 'text'; si.placeholder = 'random'; si.value = UI.seedDraft;
   si.oninput = () => { UI.seedDraft = si.value.trim(); };
-  opts.appendChild(si);
+  opts.appendChild(field('seed', si));
   box.appendChild(opts);
 
-  const bar = el('div', 'actionbar');
-  const go = el('button', 'btn end', `Play ${UI.myDeck} vs ${UI.foeDeck}`);
+  const bar = el('div', 'deckgo');
+  const go = el('button', 'btn end big', `Play ${UI.myDeck} vs ${UI.foeDeck}`);
   go.onclick = () => startMatch();
   bar.appendChild(go);
   box.appendChild(bar);
+
   ov.appendChild(box);
   return ov;
 }
