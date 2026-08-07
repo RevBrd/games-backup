@@ -28,10 +28,14 @@ function loadKernel() {
   const exports = `
     return {
       CFG, skipMin, solveChain, measureStrain, makeLine, lineFromRegts, makeRegiment,
-      straightJoints, resetField, detach, trimEmptyFlanks, closeUp, tryMerge, tryFillGap,
-      occupied, gaps, spansOf, slotDepth, stretchRatio, slotQuad, dragStake, atSpanLimit,
+      straightJoints, resetField, detach, trimEmptyFlanks, closeUp, closeUpPlan,
+      tryMerge, tryFillGap, occupied, gaps, spansOf, slotDepth, stretchRatio, slotQuad,
+      dragStake, commitSpans, atSpanLimit, slotCentre, lineCentre, nearestGapTo,
       hitRegiment, hitStake, lineOfReg, slotIndex, rollDesignation, ordinal, dist, norm,
-      march, selection,
+      march, marchGeneral, tickOrders, dispatch, cancelOrders, resetGeneral, general,
+      selection,
+      get orders(){ return orders; },
+      get instantOrders(){ return instantOrders; }, setInstant(v){ instantOrders = v; },
       get lines(){ return lines; }, setLines(v){ lines = v; },
       setField(w,h){ W = w; H = h; }
     };`;
@@ -148,14 +152,33 @@ t("strain appears when the line is asked for the impossible", () => {
 /* ---------- drawing out and closing up ---------- */
 t("dragStake clamps span to MIN_SPAN..MAX_SPAN", () => {
   const L = freshField();
-  L.target = K.dragStake(L, 6, { x: L.joints[6].x + 4000, y: L.joints[6].y });
-  for (const s of K.spansOf(L)) {
+  let r = K.dragStake(L, 6, { x: L.joints[6].x + 4000, y: L.joints[6].y });
+  for (const s of r.spans) {
     ok(s <= CFG.MAX_SPAN + 0.01 && s >= CFG.MIN_SPAN - 0.01, "span out of range: " + s);
   }
-  ok(K.atSpanLimit(L.slots[5].span), "a stake dragged to infinity should sit at its limit");
+  ok(K.atSpanLimit(r.spans[5]), "a stake dragged to infinity should sit at its limit");
 
-  L.target = K.dragStake(L, 6, { x: L.joints[5].x + 1, y: L.joints[5].y });
-  ok(K.atSpanLimit(L.slots[5].span), "a stake dragged onto its pivot should sit at its limit");
+  r = K.dragStake(L, 6, { x: L.joints[5].x + 1, y: L.joints[5].y });
+  ok(K.atSpanLimit(r.spans[5]), "a stake dragged onto its pivot should sit at its limit");
+});
+
+t("dragStake mutates nothing — a span is an order, not a fact", () => {
+  const L = freshField();
+  const before = K.spansOf(L);
+  const beforeJoints = L.joints.map(p => ({ x: p.x, y: p.y }));
+  K.dragStake(L, 6, { x: L.joints[6].x + 4000, y: L.joints[6].y });
+  const after = K.spansOf(L);
+  for (let i = 0; i < before.length; i++) eq(after[i], before[i], "span " + i + " changed");
+  for (let i = 0; i < L.joints.length; i++) {
+    near(K.dist(L.joints[i], beforeJoints[i]), 0, 1e-9, "joint " + i + " moved");
+  }
+});
+
+t("commitSpans is what actually writes a frontage", () => {
+  const L = freshField();
+  const r = K.dragStake(L, 6, { x: L.joints[6].x + 4000, y: L.joints[6].y });
+  K.commitSpans(L, r.spans);
+  ok(K.atSpanLimit(L.slots[5].span), "span was not committed");
 });
 
 t("depth follows frontage inversely", () => {
@@ -241,12 +264,131 @@ t("a line marches onto its ordered position", () => {
 
 t("marching never tears the line apart", () => {
   const L = freshField();
-  L.target = K.dragStake(L, 0, { x: L.joints[0].x - 60, y: L.joints[0].y - 240 });
+  const r = K.dragStake(L, 0, { x: L.joints[0].x - 60, y: L.joints[0].y - 240 });
+  K.commitSpans(L, r.spans);
+  L.target = r.joints;
   for (let i = 0; i < 900; i++) K.march(1 / 60);
   const spans = K.spansOf(L);
   for (let i = 0; i < L.joints.length - 1; i++) {
     near(K.dist(L.joints[i], L.joints[i + 1]), spans[i], 2.0, "segment " + i + " after marching");
   }
+});
+
+/* ---------- the courier ---------- */
+function standAt(x, y) { K.general.x = K.general.tx = x; K.general.y = K.general.ty = y; }
+
+t("an order changes nothing until the courier arrives", () => {
+  const L = freshField();
+  standAt(80, 740);
+  const before = L.target.map(p => ({ x: p.x, y: p.y }));
+  const shape = L.joints.map(p => ({ x: p.x, y: p.y - 150 }));
+  let applied = false;
+
+  const o = K.dispatch(L, K.slotCentre(L, 0), { kind: "move", shape },
+                       () => { applied = true; L.target = shape; });
+  ok(o.dur > 1, "a courier should take real time; got " + o.dur.toFixed(2) + "s");
+
+  K.tickOrders(o.dur * 0.5);
+  ok(!applied, "the order was obeyed before it arrived");
+  ok(L.pending, "pending should be visible while the rider is out");
+  for (let i = 0; i < L.target.length; i++) {
+    near(K.dist(L.target[i], before[i]), 0, 1e-9, "target joint " + i + " moved early");
+  }
+
+  K.tickOrders(o.dur * 0.6);
+  ok(applied, "the order never arrived");
+  ok(!L.pending, "pending should clear on arrival");
+  eq(K.orders.length, 0, "the rider should be gone");
+});
+
+t("distance is latency", () => {
+  const L = freshField();
+  const c = K.slotCentre(L, 0);
+  standAt(c.x, c.y + 40);
+  const close = K.dispatch(L, c, { kind: "move", shape: L.joints }, () => {});
+  K.cancelOrders(L);
+  standAt(c.x - 900, c.y + 40);
+  const far = K.dispatch(L, c, { kind: "move", shape: L.joints }, () => {});
+  K.cancelOrders(L);
+  ok(far.dur > close.dur * 3,
+     "a far order should cost far more: " + close.dur.toFixed(2) + "s vs " + far.dur.toFixed(2) + "s");
+});
+
+t("a new order supersedes the one still in flight", () => {
+  const L = freshField();
+  standAt(80, 740);
+  let first = 0, second = 0;
+  K.dispatch(L, K.slotCentre(L, 0), { kind: "move", shape: L.joints }, () => { first++; });
+  K.dispatch(L, K.slotCentre(L, 0), { kind: "move", shape: L.joints }, () => { second++; });
+  eq(K.orders.length, 1, "riders in flight");
+  K.tickOrders(99);
+  eq(first, 0, "the superseded order should never be obeyed");
+  eq(second, 1, "the new order should be obeyed");
+});
+
+t("an order to a body that no longer exists is dropped", () => {
+  const L = freshField();
+  const loose = K.detach(L, [2])[0];
+  standAt(80, 740);
+  let applied = false;
+  K.dispatch(loose, K.slotCentre(loose, 0), { kind: "move", shape: loose.joints },
+             () => { applied = true; });
+  K.setLines(K.lines.filter(x => x !== loose));      // destroyed while the rider is out
+  K.tickOrders(99);
+  ok(!applied, "delivered an order to a body that is gone");
+  eq(K.orders.length, 0, "the stale rider was not cleaned up");
+});
+
+t("instant orders (dev) deliver on the spot", () => {
+  const L = freshField();
+  standAt(80, 740);
+  let applied = false;
+  K.setInstant(true);
+  K.dispatch(L, K.slotCentre(L, 0), { kind: "move", shape: L.joints }, () => { applied = true; });
+  K.setInstant(false);
+  ok(applied, "instant order did not apply");
+  eq(K.orders.length, 0, "instant order should not queue a rider");
+  ok(!L.pending, "instant order should leave nothing pending");
+});
+
+t("a body ordered into a gap merges on arrival, not on delivery", () => {
+  const L = freshField();
+  const home = [K.slotCentre(L, 2)];   // remembered before anything moves
+  const j2 = { x: L.joints[2].x, y: L.joints[2].y };
+  const j3 = { x: L.joints[3].x, y: L.joints[3].y };
+  const loose = K.detach(L, [2])[0];
+
+  for (const p of loose.joints) { p.x -= 320; p.y -= 320; }   // send it well away
+  loose.target = loose.joints.map(p => ({ x: p.x, y: p.y }));
+  ok(home.length === 1);
+
+  standAt(loose.joints[0].x, loose.joints[0].y - 30);
+  const shape = [j2, j3];
+  K.dispatch(loose, K.slotCentre(loose, 0), { kind: "move", shape },
+             () => { loose.target = shape; });
+  K.tickOrders(99);
+  eq(K.lines.length, 2, "it must not teleport into the gap when the order lands");
+
+  for (let i = 0; i < 4000 && K.lines.length > 1; i++) K.march(1 / 60);
+  eq(K.lines.length, 1, "it never merged after walking there");
+  eq(K.gaps(K.lines[0]), 0, "the gap should be filled");
+  eq(totalRegiments(), 6, "regiments conserved");
+});
+
+t("a stationary body does not merge with its neighbour unprompted", () => {
+  const L = freshField();
+  K.detach(L, [2]);                     // the loose body sits exactly in the gap
+  for (let i = 0; i < 600; i++) K.march(1 / 60);
+  eq(K.lines.length, 2, "bodies merged without ever being ordered to");
+  eq(K.gaps(L), 1, "the gap should still be open");
+});
+
+t("the general rides to where he is sent", () => {
+  freshField();
+  standAt(400, 600);
+  K.general.tx = 700; K.general.ty = 300;
+  for (let i = 0; i < 2000; i++) K.marchGeneral(1 / 60);
+  near(K.dist(K.general, { x: 700, y: 300 }), 0, 0.6, "the general failed to arrive");
 });
 
 /* ---------- report ---------- */

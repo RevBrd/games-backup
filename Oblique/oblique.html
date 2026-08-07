@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>OBLIQUE — line kernel III</title>
+<title>OBLIQUE — the courier</title>
 <style>
   :root{
     --ground:#16242a;
@@ -36,6 +36,12 @@
   #legend{left:16px;bottom:16px;max-width:286px}
   #legend b{color:var(--bone);font-weight:600;letter-spacing:.1em}
   #legend .k{color:var(--blue-lt)}
+  #legend .o{color:var(--brass)}
+  #legend .s{color:#8fb9a2}
+  /* deliberately off-palette, so it can never be mistaken for the map */
+  #dev{right:16px;bottom:16px;min-width:230px;display:none;
+       color:#b9a6d8;border-color:#4a3f63;background:rgba(18,14,28,.9)}
+  #dev b{color:#dcccf5;font-weight:600;letter-spacing:.08em}
   #readout{right:16px;top:16px;min-width:186px;text-align:right}
   #readout .v{color:var(--bone)}
   #readout .warn{color:var(--rust)}
@@ -49,19 +55,26 @@
 <body>
 <div id="wrap">
   <canvas id="cv"></canvas>
-  <div id="title"><h1>Oblique</h1><p>Line kernel III &mdash; frontage, gaps, closing up</p></div>
+  <div id="title"><h1>Oblique</h1><p>Job 4 &mdash; every order goes by hand</p></div>
   <div class="plate" id="readout"></div>
+  <div class="plate" id="dev"></div>
   <div class="plate" id="legend">
     <b>ORDERS</b><br>
     <span class="k">drag</span> a regiment &mdash; line conforms<br>
     <span class="k">click</span> select &middot; <span class="k">shift+click</span> add<br>
     <span class="k">alt+drag</span> take out of line (leaves a gap)<br>
-    <span class="k">click a stake</span> anchor / release that joint<br>
     <span class="k">drag a stake</span> draw out or close up a regiment<br>
     <span class="k">C</span> close up &mdash; contract onto the gaps<br>
     drag a loose body onto a flank or gap to fill it<br>
     <span class="k">[ ]</span> thin / restore selected (preview)<br>
-    <span class="k">G</span> ghost always &middot; <span class="k">R</span> reset field
+    <br>
+    <b>FREE &mdash; NO RIDER NEEDED</b><br>
+    <span class="k">click a stake</span> anchor / release that joint<br>
+    <span class="k">drag the standard</span> move yourself<br>
+    <span class="k">G</span> ghost always &middot; <span class="k">R</span> reset field<br>
+    <br>
+    <span class="o">brass</span> = written, still in a rider's pocket<br>
+    <span class="s">green</span> = received, the regiment is walking
   </div>
 </div>
 <script>
@@ -93,8 +106,16 @@ const CFG = {
   MARCH     : 30,
   SLATS     : 14,
   MERGE_R   : 40,
-  STRAIN_T  : 3.0
+  STRAIN_T  : 3.0,
+  GEN_R     : 15     // grab radius on the general's marker
 };
+/* The whole sim runs about 35x real time, so absolute speeds mean nothing and
+   RATIOS are the only defensible way to tune this. A courier rides; the men
+   walk. Against infantry at the pace of a line of battle that is roughly 4.5x,
+   and the general repositioning himself is deliberate rather than a gallop.
+   Tune the multipliers, not the products. */
+CFG.COURIER = CFG.MARCH * 4.5;   // px/s: a rider carrying an order
+CFG.GENERAL = CFG.MARCH * 2.5;   // px/s: the general moving himself
 CFG.SLOT_LEN = CFG.REG_LEN + CFG.DRESS;
 /* A regiment can be drawn out to cover more frontage, or closed up to cover
    less. The manpower does not change, so the depth changes inversely: a
@@ -172,7 +193,9 @@ function makeLine(slots, joints){
     joints: cloneAll(joints),
     target: cloneAll(joints),
     anchors: new Set(),
-    strain: new Array(joints.length).fill(0)
+    strain: new Array(joints.length).fill(0),
+    pending: null,      // an order written but not yet delivered
+    walking: false      // true while marching, so a merge fires once on arrival
   };
 }
 function lineFromRegts(regts, joints){
@@ -207,6 +230,7 @@ function resetField(){
   for(let i=0;i<n;i++) regts.push(makeRegiment());
   lines.push(lineFromRegts(regts, straightJoints(W*0.5, H*0.56, n, 0)));
   selection.clear();
+  resetGeneral();
 }
 
 /* ---------------- the solver (unchanged from job 1) ---------------- */
@@ -293,7 +317,9 @@ function measureStrain(L, pts){
 /* ---------------- slot geometry ---------------- */
 /* A slot's brick is REG_LEN centred inside SLOT_LEN, so a dressing
    interval of DRESS/2 sits at each end. */
-function slotQuad(L, i, pts){
+/* `spans` overrides the line's own frontages, so a pending order can be drawn
+   at the frontage it would produce rather than the one currently in force. */
+function slotQuad(L, i, pts, spans){
   const a=pts[i], b=pts[i+1];
   let dx=b.x-a.x, dy=b.y-a.y; const d=Math.hypot(dx,dy)||1;
   dx/=d; dy/=d;
@@ -301,11 +327,35 @@ function slotQuad(L, i, pts){
   const inset=CFG.DRESS/2;
   const f=V(a.x+dx*inset, a.y+dy*inset);     // front-left corner
   const g=V(a.x+dx*(d-inset), a.y+dy*(d-inset));
-  const depth=slotDepth(L.slots[i] ? L.slots[i].span : CFG.SLOT_LEN);
+  const depth=slotDepth(spans ? spans[i]
+                             : (L.slots[i] ? L.slots[i].span : CFG.SLOT_LEN));
   const bx=-nx*depth, by=-ny*depth;
   return { a:f, b:g, dx,dy,nx,ny, len:d-inset*2, depth,
            c1:clone(f), c2:clone(g),
            c3:V(g.x+bx,g.y+by), c4:V(f.x+bx,f.y+by) };
+}
+
+/* Where a courier is addressed to, and where a gap is. */
+function slotCentre(L,i){
+  const a=L.joints[i], b=L.joints[i+1];
+  return V((a.x+b.x)/2, (a.y+b.y)/2);
+}
+function lineCentre(L){
+  let x=0,y=0;
+  for(const p of L.joints){ x+=p.x; y+=p.y; }
+  return V(x/L.joints.length, y/L.joints.length);
+}
+function nearestGapTo(c, exclude){
+  let best=null, bestD=CFG.MERGE_R;
+  for(const B of lines){
+    if(B===exclude) continue;
+    for(let i=0;i<B.slots.length;i++){
+      if(B.slots[i].reg) continue;
+      const d=dist(c, slotCentre(B,i));
+      if(d<bestD){ bestD=d; best={line:B, i}; }
+    }
+  }
+  return best;
 }
 
 function pointInQuad(p,q){
@@ -352,10 +402,14 @@ function slotIndex(L,id){ return L.slots.findIndex(s=>s.reg&&s.reg.id===id); }
    otherwise whichever neighbour the pointer is pulling away from. The slot on
    the other side keeps its frontage and is simply towed along, which is what
    makes "pin one end, pull the other" behave the way it reads. */
+/* Pure: returns {joints, spans} and mutates nothing. The spans are an ORDER,
+   not a fact — they are only written into the slots when a courier delivers
+   them (commitSpans), so a drawn-out regiment is drawn out when it is told,
+   not when the player lets go of the mouse. */
 function dragStake(L, j, want){
   const clampSpan=v=>Math.max(CFG.MIN_SPAN, Math.min(CFG.MAX_SPAN, v));
   const hasLeft = j>0, hasRight = j<L.slots.length;
-  if(!hasLeft && !hasRight) return cloneAll(L.joints);
+  if(!hasLeft && !hasRight) return { joints:cloneAll(L.joints), spans:spansOf(L) };
 
   let pivot;
   if(hasLeft && L.anchors.has(j-1))       pivot=j-1;
@@ -380,8 +434,10 @@ function dragStake(L, j, want){
   anchors.add(pivot);                        // the pivot holds while we pull
   solveChain(out, rest, new Map([[j,p]]), anchors, spans);
 
-  for(let i=0;i<L.slots.length;i++) L.slots[i].span=spans[i];
-  return out;
+  return { joints:out, spans };
+}
+function commitSpans(L, spans){
+  for(let i=0;i<L.slots.length && i<spans.length;i++) L.slots[i].span=spans[i];
 }
 
 function atSpanLimit(span){
@@ -440,10 +496,13 @@ function trimEmptyFlanks(L){
    Contract the line onto its gaps. The line keeps its curve and keeps
    its anchored joint fixed; it simply becomes shorter. Ceding frontage
    is the price of a solid line. */
-function closeUp(L){
-  if(!gaps(L)) return false;
+/* Split into a dry run and an apply, so the order can be previewed while the
+   courier is still riding. The plan is recomputed on arrival — the preview is
+   advisory, and the line may have shifted in the meantime. */
+function closeUpPlan(L){
+  if(!gaps(L)) return null;
   const kept=L.slots.filter(s=>s.reg);
-  if(!kept.length) return false;
+  if(!kept.length) return null;
 
   /* Where the shortened line will end up: resample the curve the player has
      already shaped, so a bent line closes into a shorter bend rather than
@@ -472,11 +531,16 @@ function closeUp(L){
   while(here.length > dest.length) here.splice(here.length-2, 1);
   while(here.length < dest.length) here.push(clone(here[here.length-1] || dest[0]));
 
-  L.slots = kept.map(s=>({reg:s.reg, span:s.span}));
-  L.joints = here;
-  L.target = dest;
-  L.strain = new Array(dest.length).fill(0);
-  L.anchors = anchor===undefined ? new Set() : new Set([0]);
+  return { kept, dest, here, anchor };
+}
+function closeUp(L){
+  const plan=closeUpPlan(L);
+  if(!plan) return false;
+  L.slots  = plan.kept.map(s=>({reg:s.reg, span:s.span}));
+  L.joints = plan.here;
+  L.target = plan.dest;
+  L.strain = new Array(plan.dest.length).fill(0);
+  L.anchors = plan.anchor===undefined ? new Set() : new Set([0]);
   return true;
 }
 function arcLen(path){ let s=0; for(let i=0;i<path.length-1;i++) s+=dist(path[i],path[i+1]); return s; }
@@ -558,11 +622,84 @@ function tryMerge(A){
   return null;
 }
 
+/* ---------------- the general and his couriers ----------------
+   You have no radio. Every order is written where you stand and carried to the
+   regiment by a rider, and NOTHING happens to the troops until he gets there.
+
+   The whole system is a delay in front of the assignment to L.target. A line
+   therefore has up to three states visible at once, and telling them apart is
+   most of the game's legibility:
+
+     L.pending   what you have ordered      — nobody has heard it yet
+     L.target    what the regiment knows    — it is walking there now
+     L.joints    where the men are standing
+
+   Anchors and selection are deliberately NOT orders. They change your map, not
+   your troops: an anchor is you deciding where the line ought to pin, and it
+   only takes effect through the next order you actually send. Making them cost
+   a rider would tax planning, which is the one thing a general can do freely. */
+
+const general = { x:0, y:0, tx:0, ty:0 };
+let orders=[], nextOrderId=1;
+let instantOrders=false;          // dev only
+
+function resetGeneral(){
+  general.x=general.tx=W*0.5;
+  general.y=general.ty=H*0.88;
+  orders=[];
+}
+
+/* The courier leaves from wherever the general was standing when the order was
+   written, and rides to a FIXED point — where the addressee was at that moment.
+   He does not chase a marching regiment. That keeps a delivery time predictable
+   the instant you let go of the mouse, which matters more for reading the game
+   than the small realism it costs. */
+function dispatch(L, to, pending, apply){
+  orders = orders.filter(o => o.line !== L);     // a new order supersedes the old
+  L.pending = pending;
+  const from = V(general.x, general.y);
+  const o = { id:nextOrderId++, line:L, from, to:clone(to),
+              t:0, dur:Math.max(0.08, dist(from,to)/CFG.COURIER), apply };
+  if(instantOrders){ deliver(o); return o; }
+  orders.push(o);
+  return o;
+}
+function deliver(o){
+  o.line.pending=null;
+  if(lines.includes(o.line)) o.apply();
+}
+function cancelOrders(L){
+  orders = orders.filter(o=>o.line!==L);
+  if(L) L.pending=null;
+}
+function tickOrders(dt){
+  if(!orders.length) return;
+  const arrived=[];
+  orders = orders.filter(o=>{
+    if(!lines.includes(o.line)){ o.line.pending=null; return false; }  // addressee is gone
+    o.t += dt;
+    if(o.t >= o.dur){ arrived.push(o); return false; }
+    return true;
+  });
+  for(const o of arrived) deliver(o);
+}
+function marchGeneral(dt){
+  const dx=general.tx-general.x, dy=general.ty-general.y;
+  const d=Math.hypot(dx,dy);
+  if(d<0.5){ general.x=general.tx; general.y=general.ty; return; }
+  const step=Math.min(d, CFG.GENERAL*dt);
+  general.x+=dx/d*step; general.y+=dy/d*step;
+}
+
 /* ---------------- march ----------------
    Lines walk from where they physically stand (joints) toward where they have
-   been ordered to be (target). When couriers arrive, the delay goes in front
-   of the assignment to target — the walking itself does not change. */
+   been ordered to be (target).
+
+   A loose body merges when it ARRIVES, not when the order is given. Ordering a
+   regiment into a gap does not put it in the gap; it makes it walk there, and
+   the line is short until it gets there. */
 function march(dt){
+  const arrivedLoose=[];
   for(const L of lines){
     let moved=false;
     for(let i=0;i<L.joints.length;i++){
@@ -586,8 +723,14 @@ function march(dt){
         }
       }
       L.strain=measureStrain(L, L.joints);
+      L.walking=true;
+    } else if(L.walking){
+      L.walking=false;             // this is the frame it halted
+      arrivedLoose.push(L);
     }
   }
+  // done after the walk, because a merge rewrites `lines`
+  for(const L of arrivedLoose){ if(lines.includes(L) && occupied(L)) tryMerge(L); }
 }
 
 /* ---------------- interaction state ---------------- */
@@ -617,13 +760,19 @@ window.addEventListener("resize", resize);
 /* ---------------- input ---------------- */
 function mouse(ev){ const r=cv.getBoundingClientRect(); return V(ev.clientX-r.left, ev.clientY-r.top); }
 
+/* Every drag below writes to L.pending — an intention. Nothing reaches
+   L.target, L.slots or the roster of lines until a courier arrives. */
+let generalDrag=false, dev=false;
+
 cv.addEventListener("pointerdown", ev=>{
   cv.setPointerCapture(ev.pointerId);
   const p=mouse(ev);
 
+  if(dist(p, general) < CFG.GEN_R){ generalDrag=true; return; }
+
   const st=hitStake(p);
   if(st){
-    // click toggles the anchor, drag reshapes the line; decided on release
+    // click toggles the anchor, drag draws the regiment out; decided on release
     stakeAction={ line:st.line, j:st.j, start:p, moved:false };
     return;
   }
@@ -638,70 +787,96 @@ cv.addEventListener("pointerdown", ev=>{
   }
   if(!selection.has(hit.reg.id)){ selection.clear(); selection.add(hit.reg.id); }
 
-  let L=hit.line;
-  let ids=[...selection].filter(id=>lineOfReg(id)===L);
-
-  if(ev.altKey){
-    const idxs=ids.map(id=>slotIndex(L,id)).filter(i=>i>=0);
-    const made=detach(L, idxs);
-    if(!made.length) return;
-    L=made[made.length-1];
-    ids=L.slots.filter(s=>s.reg).map(s=>s.reg.id);
-    selection.clear(); for(const id of ids) selection.add(id);
-  }
-
-  drag={ line:L, ids, start:p, rest:cloneAll(L.joints) };
+  const L=hit.line;
+  const ids=[...selection].filter(id=>lineOfReg(id)===L);
+  /* alt is an INTENT to take out of line. The men do not move yet, so the
+     detach itself is deferred to the courier along with everything else. */
+  drag={ line:L, ids, grabbed:hit.i, start:p, rest:cloneAll(L.joints),
+         detach:!!ev.altKey, moved:false };
 });
 
 cv.addEventListener("pointermove", ev=>{
   const p=mouse(ev);
 
+  if(generalDrag){ general.tx=p.x; general.ty=p.y; return; }
+
   if(stakeAction){
     if(!stakeAction.moved && dist(p, stakeAction.start) < 4) return;
     stakeAction.moved=true;
     const L=stakeAction.line;
-    L.target = dragStake(L, stakeAction.j, p);
-    L.strain = measureStrain(L, L.target);
+    const r=dragStake(L, stakeAction.j, p);
+    L.pending={ kind:"stake", shape:r.joints, spans:r.spans };
     return;
   }
 
   if(!drag){ hoverGap=null; return; }
-  const delta=V(p.x-drag.start.x, p.y-drag.start.y);
   const L=drag.line;
-  const pts=cloneAll(drag.rest);
-  solveChain(pts, drag.rest, drivenFor(L, drag.ids, delta, drag.rest), L.anchors);
-  L.target=pts;
-  L.strain=measureStrain(L, pts);
+  const delta=V(p.x-drag.start.x, p.y-drag.start.y);
+  if(!drag.moved && Math.hypot(delta.x,delta.y)<3) return;
+  drag.moved=true;
 
-  // preview which gap a single loose regiment would drop into
-  hoverGap=null;
-  if(L.slots.length===1 && L.slots[0].reg){
-    const c=V((pts[0].x+pts[1].x)/2, (pts[0].y+pts[1].y)/2);
-    let bd=CFG.MERGE_R;
-    for(const B of lines){
-      if(B===L) continue;
-      for(let i=0;i<B.slots.length;i++){
-        if(B.slots[i].reg) continue;
-        const gc=V((B.joints[i].x+B.joints[i+1].x)/2, (B.joints[i].y+B.joints[i+1].y)/2);
-        const d=dist(c,gc);
-        if(d<bd){ bd=d; hoverGap={line:B,i}; }
-      }
-    }
+  if(drag.detach){
+    const idxs=drag.ids.map(id=>slotIndex(L,id)).filter(i=>i>=0).sort((a,b)=>a-b);
+    L.pending={ kind:"detach", idxs, delta:clone(delta) };
+    hoverGap = idxs.length===1
+      ? nearestGapTo(V(slotCentre(L,idxs[0]).x+delta.x, slotCentre(L,idxs[0]).y+delta.y), L)
+      : null;
+    return;
   }
+
+  /* spansOf(L) matters: without it the solver re-solves at nominal frontage and
+     silently squashes any regiment that has been drawn out. */
+  const pts=cloneAll(drag.rest);
+  solveChain(pts, drag.rest, drivenFor(L, drag.ids, delta, drag.rest), L.anchors, spansOf(L));
+  L.pending={ kind:"move", shape:pts };
+
+  hoverGap = (L.slots.length===1 && L.slots[0].reg)
+    ? nearestGapTo(V((pts[0].x+pts[1].x)/2, (pts[0].y+pts[1].y)/2), L)
+    : null;
 });
 
 cv.addEventListener("pointerup", ()=>{
+  if(generalDrag){ generalDrag=false; return; }
+
   if(stakeAction){
+    const {line:L, j}=stakeAction;
     if(!stakeAction.moved){
-      const {line:L, j}=stakeAction;
+      // free: an anchor is a note on your map, not an order to anybody
       if(L.anchors.has(j)) L.anchors.delete(j); else L.anchors.add(j);
+    } else if(L.pending && L.pending.kind==="stake"){
+      const {shape, spans}=L.pending;
+      dispatch(L, L.joints[j], L.pending, ()=>{
+        commitSpans(L, spans);
+        L.target=shape;
+        L.strain=measureStrain(L, shape);
+      });
     }
     stakeAction=null;
     return;
   }
+
   if(drag){
     const L=drag.line;
-    if(lines.includes(L) && occupied(L)) tryMerge(L);
+    if(!drag.moved || !L.pending){ L.pending=null; drag=null; hoverGap=null; return; }
+
+    if(L.pending.kind==="detach"){
+      const {idxs, delta}=L.pending;
+      dispatch(L, slotCentre(L, idxs[0]), L.pending, ()=>{
+        const made=detach(L, idxs);
+        if(!made.length) return;
+        selection.clear();
+        for(const M of made){
+          M.target=M.joints.map(q=>V(q.x+delta.x, q.y+delta.y));
+          for(const s of M.slots) if(s.reg) selection.add(s.reg.id);
+        }
+      });
+    } else {
+      const shape=L.pending.shape;
+      dispatch(L, slotCentre(L, drag.grabbed), L.pending, ()=>{
+        L.target=shape;
+        L.strain=measureStrain(L, shape);
+      });
+    }
     drag=null; hoverGap=null;
   }
 });
@@ -710,11 +885,20 @@ window.addEventListener("keydown", ev=>{
   const k=ev.key.toLowerCase();
   if(k==="g") ghostAlways=!ghostAlways;
   if(k==="r") resetField();
+  if(k==="`"||ev.key==="`"){ dev=!dev; return; }
+  if(dev && k==="i") instantOrders=!instantOrders;
+
   if(k==="c"){
     const touched=new Set();
     for(const id of selection){ const L=lineOfReg(id); if(L) touched.add(L); }
     if(!touched.size) for(const L of lines) touched.add(L);
-    for(const L of touched) closeUp(L);
+    for(const L of touched){
+      const plan=closeUpPlan(L);
+      if(!plan) continue;
+      dispatch(L, lineCentre(L),
+        {kind:"close", shape:plan.dest, spans:plan.kept.map(s=>s.span)},
+        ()=>{ closeUp(L); });
+    }
   }
   if(k==="["||k==="]"){
     const d = k==="[" ? -0.1 : 0.1;
@@ -858,6 +1042,92 @@ function drawGap(q, opts){
   }
 }
 
+function outline(q){
+  ctx.beginPath();
+  ctx.moveTo(q.c1.x,q.c1.y); ctx.lineTo(q.c2.x,q.c2.y);
+  ctx.lineTo(q.c3.x,q.c3.y); ctx.lineTo(q.c4.x,q.c4.y);
+  ctx.closePath();
+}
+
+/* An order nobody has heard yet, in brass. The green ghost means the regiment
+   knows and is walking; brass means it is still in a rider's pocket. */
+function drawPending(L){
+  const P=L.pending;
+  if(!P) return;
+  ctx.save();
+  ctx.setLineDash([4,4]); ctx.lineWidth=1.2;
+
+  if(P.kind==="detach"){
+    ctx.strokeStyle="rgba(195,145,64,.85)";
+    for(const i of P.idxs){
+      if(!L.slots[i]) continue;
+      ctx.save(); ctx.translate(P.delta.x, P.delta.y);
+      outline(slotQuad(L,i,L.joints)); ctx.stroke();
+      ctx.restore();
+    }
+    ctx.strokeStyle="rgba(195,145,64,.28)";   // the holes it would leave
+    for(const i of P.idxs){
+      if(!L.slots[i]) continue;
+      outline(slotQuad(L,i,L.joints)); ctx.stroke();
+      const c=slotCentre(L,i);
+      ctx.beginPath(); ctx.moveTo(c.x,c.y);
+      ctx.lineTo(c.x+P.delta.x, c.y+P.delta.y); ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+
+  const pts=P.shape, spans=P.spans||null;
+  const n=spans ? Math.min(spans.length, pts.length-1) : pts.length-1;
+  ctx.strokeStyle="rgba(195,145,64,.85)";
+  for(let i=0;i<n;i++){
+    if(!spans && L.slots[i] && !L.slots[i].reg) continue;   // gaps stay gaps
+    outline(slotQuad(L,i,pts,spans)); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.strokeStyle="rgba(195,145,64,.4)"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCouriers(){
+  for(const o of orders){
+    const f=Math.min(1, o.t/o.dur);
+    const x=o.from.x+(o.to.x-o.from.x)*f, y=o.from.y+(o.to.y-o.from.y)*f;
+    ctx.save();
+    ctx.setLineDash([2,6]);
+    ctx.strokeStyle="rgba(195,145,64,.26)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(o.from.x,o.from.y); ctx.lineTo(o.to.x,o.to.y); ctx.stroke();
+    ctx.setLineDash([]);
+    // a halo that tightens as he closes on the regiment
+    ctx.strokeStyle="rgba(224,181,102,.30)";
+    ctx.beginPath(); ctx.arc(x,y, 3.4+7*(1-f), 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,y,3.4,0,Math.PI*2);
+    ctx.fillStyle="#e0b566"; ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawGeneral(){
+  ctx.save();
+  if(Math.hypot(general.tx-general.x, general.ty-general.y) > 1){
+    ctx.setLineDash([3,5]); ctx.strokeStyle="rgba(195,145,64,.34)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(general.x,general.y);
+    ctx.lineTo(general.tx,general.ty); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.translate(general.x, general.y);
+  ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2);
+  ctx.fillStyle="rgba(195,145,64,.20)"; ctx.fill();
+  ctx.strokeStyle="#c39140"; ctx.lineWidth=1.7; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-7); ctx.lineTo(0,-20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-20); ctx.lineTo(12,-17); ctx.lineTo(0,-14);
+  ctx.closePath(); ctx.fillStyle="#c39140"; ctx.fill();
+  ctx.restore();
+}
+
 function drawGhost(L){
   const pts=L.target;
   ctx.save();
@@ -936,7 +1206,8 @@ function draw(){
   for(const L of lines){
     const loose = occupied(L)<2 && lines.length>1;
     const moving = L.joints.some((p,i)=>dist(p,L.target[i])>1.5);
-    if((drag&&drag.line===L) || ghostAlways || moving) drawGhost(L);
+    if(ghostAlways || moving) drawGhost(L);
+    if(L.pending) drawPending(L);
 
     for(let i=0;i<L.slots.length;i++){
       const q=slotQuad(L,i,L.joints);
@@ -954,6 +1225,8 @@ function draw(){
     drawStrain(L);
     drawStakes(L);
   }
+  drawCouriers();
+  drawGeneral();
   updateReadout();
 }
 
@@ -977,6 +1250,8 @@ function updateReadout(){
   }
   const regts=lines.reduce((s,L)=>s+occupied(L),0);
   const anchors=lines.reduce((s,L)=>s+L.anchors.size,0);
+  let wait=0;
+  for(const o of orders) wait=Math.max(wait, o.dur-o.t);
   el.innerHTML=
     `BODIES <span class="v">${lines.length}</span><br>`+
     `REGIMENTS <span class="v">${regts}</span><br>`+
@@ -985,17 +1260,41 @@ function updateReadout(){
     `ANCHORS <span class="v">${anchors}</span><br>`+
     `MAX BEND <span class="v">${(bend*180/Math.PI).toFixed(0)}&deg;</span><br>`+
     `FRONTAGE <span class="v">${(tightest*100).toFixed(0)}&ndash;${(widest*100).toFixed(0)}%</span><br>`+
-    `STRAIN <span class="${worst>CFG.STRAIN_T?'warn':'v'}">${worst.toFixed(1)}</span>`;
+    `STRAIN <span class="${worst>CFG.STRAIN_T?'warn':'v'}">${worst.toFixed(1)}</span><br>`+
+    `COURIERS <span class="${orders.length?'warn':'v'}">${orders.length}</span><br>`+
+    `NEXT <span class="v">${wait>0?wait.toFixed(1)+'s':'&mdash;'}</span>`;
+
+  const d=document.getElementById("dev");
+  d.style.display = dev ? "block" : "none";
+  if(!dev) return;
+  const rows=orders.map(o=>
+    `&nbsp;&nbsp;#${o.id} ${o.line.pending?o.line.pending.kind:'?'} `+
+    `${(o.dur-o.t).toFixed(1)}s / ${o.dur.toFixed(1)}s`).join("<br>") || "&nbsp;&nbsp;none";
+  d.innerHTML=
+    `<b>DEV</b><br>`+
+    `instant orders <b>${instantOrders?"ON":"off"}</b> &nbsp;(I)<br>`+
+    `general ${general.x.toFixed(0)},${general.y.toFixed(0)}`+
+    (Math.hypot(general.tx-general.x,general.ty-general.y)>1?" &rarr; riding":"")+"<br>"+
+    `courier ${CFG.COURIER}px/s &middot; march ${CFG.MARCH}px/s<br>`+
+    `orders in flight:<br>${rows}`;
 }
 
 let last=performance.now();
 function frame(now){
   const dt=Math.min(0.05,(now-last)/1000); last=now;
-  march(dt); draw();
+  marchGeneral(dt); tickOrders(dt); march(dt); draw();
   requestAnimationFrame(frame);
 }
 
 resize(); resetField(); requestAnimationFrame(frame);
+
+/* A deliberate test seam for tools/smoke.js, which drives the real pointer and
+   key handlers against a stubbed DOM. Read-only, and inert in normal play. */
+window.__oblique = {
+  CFG, general,
+  get lines(){ return lines; },
+  get orders(){ return orders; }
+};
 </script>
 </body>
 </html>
