@@ -95,6 +95,43 @@ The game is driveable from the console for testing — `step(C.DT)` advances one
 resets, and every draw function can be called standalone. Running a few thousand ticks headless
 is a much better check than a screenshot.
 
+**The in-app preview pane only advances frames while it is actually on screen.** A hidden pane
+doesn't composite, so `requestAnimationFrame` never fires, `matchTime` stays at 0 and a screenshot
+fails with "not compositing frames". Drive `step()` by hand instead, or use a real browser window.
+
+## Dev mode and the engagement log
+
+Both landed 2026-08-05, together, because the counterbattery mechanic was torn out last time for
+being untunable without them.
+
+**Backtick** opens a dev panel showing everything the fiction hides: the enemy's true position and
+HP, its ranging progress, scatter and seconds to next shot, live detection rate and concealment,
+drone fidelity and battery, EW state. It is drawn deliberately off-palette in lilac so it can
+never be mistaken for the HUD. With the panel open: `I` invulnerable, `V` reveal (fog off, enemy
+drawn), `P` pause. Those three are inert while the panel is closed, so a stray press costs nothing.
+
+**`L` saves an engagement log** — always, dev mode or not. It downloads `greyzone-log.txt`, one
+short line per event, a whole match in about 2KB. Trevor's idea, and it paid for itself on the
+first run by exposing the ballistic bias below, which no amount of playing could have isolated.
+
+```
+     t  event     detail
+  22.0  EN_FIRE    aim=90 want=-463 scatter=831 prog=0.09 CLAMPED
+  25.7  EN_IMPACT  x=-1 miss=-231 dmg=0.0 myHP=100 seen=0
+  27.7  IMPACT     x=4076 miss=0 d=6 dmg=54.4 enHP=34 obs=0 felled=4
+  36.6  DETECT     25% rate=0.036 alt=700 conceal=0.05
+```
+
+The header line carries the match parameters — range, enemy and EW positions, wind, cover. If
+invuln or reveal were used it says so, so a log can't quietly misrepresent a run. `EN_FIRE` records
+both `want` (the AI's intended aimpoint) and `aim` (after clamping), which is what makes the two
+gunnery defects visible. Detection is logged at quarter milestones only; a per-tick trace would
+drown everything else.
+
+**Ask Trevor for a log before touching the enemy AI.** Reading one is worth more than a
+description, because the failure mode of AI work is behaviour that feels plausible and is
+incoherent.
+
 `R` for a new engagement is real but undocumented in the hint bar.
 
 ## Design history
@@ -145,17 +182,40 @@ Unbuilt: audio, persistence, progression, any menu or difficulty selection, enem
 any weapon other than the standard shell, mobile-native drone controls (flying is arrow-keys or
 click-to-send; the on-screen bar only does altitude).
 
-### Numbers that look wrong
+Small and real, noticed while reflowing: `drawEmplacement` calls `rand()` for its eight sandbag
+speckles every frame, so they shimmer instead of sitting still. One-line fix whenever someone is
+next in that function.
 
-Found by reading, not by playtesting — verify by feel before acting:
+### Confirmed defects in the enemy's gunnery
 
+Measured, not inferred. Both are real and both are fixed by the belief-based rebuild rather than
+by patching — an enemy that observes its own fall of shot corrects these automatically, which is
+the strongest argument for doing the rebuild rather than tuning what's here.
+
+- **The enemy has a fixed ballistic bias it can never correct.** `enemyFire()` solves the
+  flat-ground range equation, which yields the distance at which the shell returns to *its own
+  muzzle height* — not the distance to the ground under the target. Whenever the player's ground
+  sits lower than the enemy's muzzle the shell sails past; higher, it falls short. Measured over
+  five shells with craters reset between each: **-15m every shot on levelled terrain, -42m every
+  shot on a real map, identical to the metre.** A full match logged a consistent **-110m**. Scatter
+  is applied to the *aimpoint*, so "DIALED IN" fires a tight distribution centred ~110m off and
+  the enemy cannot hit you except by scatter luck in the favourable direction. In one 240-second
+  logged match it landed nine dialed-in shells for 21 total damage.
 - **`enemyFire()` clamps its aimpoint to a minimum of x=90 while scattering ±900 around your
-  x=230.** Early in a match roughly half of all incoming is clipped onto that one spot, 140m short
-  of you and harmlessly outside `SPLASH:90`. It reads as a stack of shells hitting the same patch
-  of dirt.
-- **The race isn't a race.** First shell lands at t≈22s, cadence ≈22s, fully dialed at t≈86s.
-  Once dialed, expected damage is ~13 per shell against 100 HP, putting death somewhere near the
-  four-minute mark — and the drone-and-treeline loop resolves well inside that.
+  x=230.** Early in a match roughly half of all incoming is clipped onto that one spot. Confirmed
+  in play — it reads as a stack of shells hitting the same patch of dirt behind you. The log marks
+  these `CLAMPED`.
+
+Together these are why the game isn't a contest, and the four-minute death estimate above is
+optimistic — on an unfavourable map the current enemy essentially cannot kill you at all.
+
+### Other numbers worth a look
+
+- **Your own crater moves the target before the damage is measured.** `playerShellImpact` calls
+  `blast()` first, which lowers the ground under the enemy, and only then measures `d` against
+  `surfaceY(enemyX)+18`. A dead-centre shell therefore does ~54 rather than the 58 `MAX_DMG`
+  implies, and the two-shot kill window is roughly ±10m. Decide whether to sample the reference
+  elevation before the blast or leave it as incidental realism.
 - **Enemy shells ignore wind.** `step()` applies `wind` to the player's shell only. May be a
   deliberate simplification; it does break symmetry, which matters given the PvP goal.
 - **`state.detect` never decays**, so detection banks across sorties: recall, recharge, relaunch,
@@ -191,7 +251,8 @@ background. Different war, different register, different scale. Do not let them 
 ## Credits
 
 - **Opus 4.8** — original concept, title, and the entire build across three jobs.
-- **Opus 5** — this file (2026-08-05).
+- **Trevor** — direction throughout, and the engagement log was his idea.
+- **Opus 5** — this file, the source reflow, dev mode and the log (2026-08-05).
 
 Per collection convention, the creating instance picks the title, and this one is Opus 4.8's:
 "grey zone" is what No Man's Land is called now.

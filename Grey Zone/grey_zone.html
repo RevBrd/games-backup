@@ -54,7 +54,7 @@
     <span class="lbl" id="droneStat">drone ready</span>
     <button data-act="reset">New Engagement</button>
   </div>
-  <div id="hint">GUN: A/D elev · W/S charge · SPACE fire &nbsp;|&nbsp; DRONE: E launch · ← → fly · ↑ ↓ altitude · click field to send it &nbsp;|&nbsp; the enemy is ranging in on you — find &amp; kill it before it dials you in</div>
+  <div id="hint">GUN: A/D elev · W/S charge · SPACE fire &nbsp;|&nbsp; DRONE: E launch · ← → fly · ↑ ↓ altitude · click field to send it &nbsp;|&nbsp; R new engagement · L save log &nbsp;|&nbsp; the enemy is ranging in on you — find &amp; kill it before it dials you in</div>
 </div>
 <script>
 /* ============================================================
@@ -249,7 +249,7 @@ function vis(x){                      // live sensor strength 0..1 at world x
 /* ---------- state ---------- */
 let state, wind, shot = null, incoming = [], effects = [], scorch = [], marks = [], shake = 0, ew = null,
     drone = null, droneCharge = D.BATTERY, droneLockout = 0, toast = null, idBanner = 0, lowBatt = false,
-    matchTime = 0;
+    matchTime = 0, LOG = [], detMark = 0;
 
 function fresh(){
   enemyX = rand(C.WORLD_W * C.SECTOR_MIN, C.WORLD_W * C.SECTOR_MAX);
@@ -273,12 +273,48 @@ function fresh(){
   toast = null; idBanner = 0; lowBatt = false; matchTime = 0;
   explored = new Uint8Array(N);
   liveStr = new Float32Array(N);
+  LOG = [];
+  detMark = 0;
   updateUI();
+}
+
+/* ---------- dev mode & event log ---------- */
+/* Backtick opens the panel. The log records unconditionally, so an ordinary
+   playtest can be handed back as a file afterwards — L saves it. Keep entries
+   one short line each; the whole point is that a full match stays readable. */
+const dev = { on: false, invuln: false, reveal: false, paused: false };
+
+function logEvent(tag, detail){
+  LOG.push(matchTime.toFixed(1).padStart(6) + '  ' + tag.padEnd(11) + (detail || ''));
+  if(LOG.length > 4000) LOG.shift();
+}
+
+function logText(){
+  return [
+    'GREY ZONE — engagement log',
+    `range=${Math.round(enemyX - C.PLAYER_X)} enemyX=${Math.round(enemyX)} ` +
+    `ewX=${Math.round(ew.x)} ewOffset=${Math.round(ew.x - enemyX)} ` +
+    `wind=${wind.toFixed(0)} woods=${woods.length} coverTrees=${initialConceal} ` +
+    `coverLeft=${countConceal()}`,
+    dev.invuln || dev.reveal ? `DEV: invuln=${dev.invuln} reveal=${dev.reveal}` : '',
+    '     t  event     detail',
+    ...LOG,
+  ].filter(Boolean).join('\n') + '\n';
+}
+
+function saveLog(){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([logText()], { type: 'text/plain' }));
+  a.download = 'greyzone-log.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  setToast('LOG SAVED — ' + LOG.length + ' EVENTS');
 }
 
 /* ---------- drone ---------- */
 function toggleDrone(){
   if(drone){
+    logEvent('DRONE_IN', `x=${Math.round(drone.x)} bat=${drone.battery.toFixed(1)} det=${state.detect.toFixed(2)}`);
     droneCharge = drone.battery;
     drone = null;
     lowBatt = false;
@@ -293,6 +329,7 @@ function toggleDrone(){
   }
   drone = { x: C.PLAYER_X + 140, alt: D.ALT_START, vx: 0, battery: droneCharge, targetX: null };
   setToast('RECON DRONE AIRBORNE');
+  logEvent('DRONE_UP', `bat=${droneCharge.toFixed(1)} det=${state.detect.toFixed(2)}`);
   updateUI();
 }
 
@@ -315,6 +352,7 @@ function fire(){
   };
   state.rounds++;
   state.reload = C.RELOAD;
+  logEvent('FIRE', `#${state.rounds} elev=${state.elev.toFixed(1)} chg=${state.pwr.toFixed(1)}`);
 }
 
 function gridLabel(x){
@@ -342,16 +380,20 @@ function blast(x, big){
 }
 
 function playerShellImpact(x, y){
+  const concealBefore = countConceal();
   blast(x);
   if(ew && ew.alive && Math.abs(x - ew.x) < C.EW.DMG_R){
     ew.hp = Math.max(0, ew.hp - C.MAX_DMG * (1 - Math.abs(x - ew.x) / C.EW.DMG_R));
+    logEvent('EW_HIT', `hp=${ew.hp.toFixed(0)}/${C.EW.HP}`);
     if(ew.hp <= 0){
       ew.alive = false;
       blast(ew.x, true);
       setToast('EW STATION DESTROYED — SPECTRUM CLEAR');
+      logEvent('EW_KILL', 'spectrum clear');
     }
   }
   const d = Math.hypot(x - enemyX, y - (surfaceY(enemyX) + 18));
+  const hpBefore = state.enemyHP;
   if(d < C.SPLASH){
     state.enemyHP = Math.max(0, state.enemyHP - C.MAX_DMG * (1 - d / C.SPLASH));
     if(state.enemyHP <= 0 && !state.over){
@@ -361,6 +403,10 @@ function playerShellImpact(x, y){
     }
   }
   const observed = liveStr[Math.round(idxAt(x))] > 0.12;
+  logEvent('IMPACT', `x=${Math.round(x)} miss=${Math.round(x - enemyX)} d=${Math.round(d)} ` +
+    `dmg=${(hpBefore - state.enemyHP).toFixed(1)} enHP=${Math.round(state.enemyHP)} ` +
+    `obs=${observed ? 1 : 0} felled=${concealBefore - countConceal()}`);
+  if(state.over && state.win) logEvent('END', `WIN rounds=${state.rounds}`);
   if(observed){
     marks.push({
       x, y: surfaceY(x), grid: gridLabel(x),
@@ -373,7 +419,8 @@ function playerShellImpact(x, y){
 function enemyShellImpact(x, y){
   blast(x);
   const d = Math.abs(x - C.PLAYER_X);
-  if(d < C.SPLASH && !state.over){
+  const hpBefore = state.playerHP;
+  if(d < C.SPLASH && !state.over && !dev.invuln){
     state.playerHP = Math.max(0, state.playerHP - EN.MAX_DMG * (1 - d / C.SPLASH));
     if(state.playerHP <= 0){
       state.over = true;
@@ -381,18 +428,25 @@ function enemyShellImpact(x, y){
       blast(C.PLAYER_X, true);
     }
   }
+  logEvent('EN_IMPACT', `x=${Math.round(x)} miss=${Math.round(x - C.PLAYER_X)} ` +
+    `dmg=${(hpBefore - state.playerHP).toFixed(1)} myHP=${Math.round(state.playerHP)} ` +
+    `seen=${vis(x) > 0.12 ? 1 : 0}`);
+  if(state.over && !state.win) logEvent('END', `LOSS rounds=${state.rounds}`);
 }
 
 function enemyFire(){
   const prog = clamp((matchTime - EN.ACQUIRE_DELAY) / EN.RANGE_IN_TIME, 0, 1);
   const scatter = lerp(EN.SCATTER_MAX, EN.SCATTER_MIN, prog);
-  const tx = clamp(C.PLAYER_X + (Math.random() * 2 - 1) * scatter, 90, enemyX - 60);
+  const raw = C.PLAYER_X + (Math.random() * 2 - 1) * scatter;
+  const tx = clamp(raw, 90, enemyX - 60);
   const R = Math.abs(enemyX - tx), th = EN.ARC * Math.PI / 180;
   const v = Math.sqrt(Math.max(1, R * C.GRAVITY / Math.sin(2 * th)));
   incoming.push({
     x: enemyX, y: surfaceY(enemyX) + 26,
     vx: -Math.cos(th) * v, vy: Math.sin(th) * v, trail: [],
   });
+  logEvent('EN_FIRE', `aim=${Math.round(tx)} want=${Math.round(raw)} ` +
+    `scatter=${Math.round(scatter)} prog=${prog.toFixed(2)}` + (raw !== tx ? ' CLAMPED' : ''));
 }
 
 /* ---------- update ---------- */
@@ -450,6 +504,7 @@ function step(dt){
   if(drone){
     drone.battery -= dt;
     if(drone.battery <= 0){
+      logEvent('DRONE_DOWN', `flat x=${Math.round(drone.x)} det=${state.detect.toFixed(2)}`);
       droneCharge = 0;
       droneLockout = D.DEATH_LOCKOUT;
       drone = null;
@@ -480,9 +535,12 @@ function step(dt){
       if(ew && ew.alive && !ew.seen && vis(ew.x) > 0.15){
         ew.seen = true;
         setToast('EW STATION DETECTED — JAMMING FIELD MAPPED');
+        logEvent('EW_SEEN', `x=${Math.round(ew.x)}`);
       }
       // jamming field destroys drones inside it — but only below its ceiling
       if(ew && ew.alive && Math.abs(drone.x - ew.x) < C.EW.FIELD && drone.alt < C.EW.CEIL){
+        logEvent('DRONE_DOWN', `jammed x=${Math.round(drone.x)} alt=${Math.round(drone.alt)} ` +
+          `det=${state.detect.toFixed(2)}`);
         droneCharge = 0;
         droneLockout = D.DEATH_LOCKOUT;
         drone = null;
@@ -506,10 +564,18 @@ function step(dt){
       }
       state.detRate = rate;
       if(rate > 0) state.detect = Math.min(1, state.detect + rate * dt);
+      // quarter-milestones only — a per-tick detect trace would drown the log
+      if(state.detect >= detMark + 0.25 && state.detect < 1){
+        detMark = Math.floor(state.detect * 4) / 4;
+        logEvent('DETECT', `${Math.round(detMark * 100)}% rate=${rate.toFixed(3)} ` +
+          `alt=${Math.round(drone.alt)} conceal=${concealment.toFixed(2)}`);
+      }
       if(state.detect >= 1){
         state.enemyKnown = true;
         idBanner = 2.6;
         setToast('TARGET ACQUIRED — CORRECTION ONLINE');
+        logEvent('ACQUIRE', `alt=${Math.round(drone.alt)} conceal=${concealment.toFixed(2)} ` +
+          `rounds=${state.rounds}`);
       }
     }
   } else {
@@ -819,6 +885,7 @@ function drawEffects(){
 }
 
 function drawFog(){
+  if(dev.reveal) return;
   const wpx = cssW / (N - 1) + 1;
   for(let i = 0; i < N; i++){
     const base = explored[i] ? C.FOG_DIM : C.FOG_DARK, a = base * (1 - liveStr[i]);
@@ -1142,8 +1209,46 @@ function hud(){
     ctx.fillStyle = 'rgba(170,178,166,0.9)';
     ctx.font = '12px JetBrains Mono, monospace';
     ctx.fillText(`${state.rounds} rounds expended · ${matchTime.toFixed(0)}s · New Engagement to reset`, cssW / 2, cssH / 2 + 22);
+    ctx.fillStyle = 'rgba(120,128,118,0.7)';
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillText('L saves an engagement log', cssW / 2, cssH / 2 + 44);
   }
+  if(dev.on) devPanel();
   ctx.restore();
+}
+
+/* Deliberately non-diegetic: this panel shows what the fiction is hiding, so it
+   must never be mistaken for the HUD. Plain box, off-palette lilac, no brackets. */
+function devPanel(){
+  const bx = 14 + 18, by = 14 + 30, w = 268, lh = 13;
+  const prog = clamp((matchTime - EN.ACQUIRE_DELAY) / EN.RANGE_IN_TIME, 0, 1);
+  const next = matchTime < EN.ACQUIRE_DELAY
+    ? EN.ACQUIRE_DELAY - matchTime + Math.max(0, state.enemyTimer - (EN.ACQUIRE_DELAY - matchTime))
+    : Math.max(0, state.enemyTimer);
+  const fid = drone ? Math.round(clamp(Math.pow(D.REF_ALT / drone.alt, D.FALLOFF), 0, 1) * 100) : 0;
+  const lines = [
+    ['DEV', '` panel  I invuln  V reveal  P pause  L log'],
+    ['ENEMY', `x=${Math.round(enemyX)} range=${Math.round(enemyX - C.PLAYER_X)} hp=${Math.round(state.enemyHP)}`],
+    ['RANGING', `prog=${prog.toFixed(2)} scatter=${Math.round(lerp(EN.SCATTER_MAX, EN.SCATTER_MIN, prog))} next=${next.toFixed(1)}s`],
+    ['DETECT', `${state.detect.toFixed(2)} rate=${state.detRate.toFixed(3)} conceal=${concealment.toFixed(2)}`],
+    ['DRONE', drone ? `alt=${Math.round(drone.alt)} fid=${fid}% bat=${drone.battery.toFixed(1)}`
+                    : (droneLockout > 0 ? `lost ${droneLockout.toFixed(1)}s` : `charging ${droneCharge.toFixed(1)}`)],
+    ['EW', ew.alive ? `x=${Math.round(ew.x)} hp=${Math.round(ew.hp)} seen=${ew.seen ? 1 : 0}` : 'destroyed'],
+    ['LOG', `${LOG.length} events` + (dev.invuln ? '  ·  INVULN' : '') + (dev.paused ? '  ·  PAUSED' : '')],
+  ];
+  ctx.fillStyle = 'rgba(12,10,16,0.82)';
+  ctx.fillRect(bx - 8, by - 12, w, lines.length * lh + 16);
+  ctx.strokeStyle = 'rgba(170,140,200,0.45)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bx - 8, by - 12, w, lines.length * lh + 16);
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'left';
+  lines.forEach((r, i) => {
+    ctx.fillStyle = 'rgba(180,150,210,0.75)';
+    ctx.fillText(r[0], bx, by + i * lh);
+    ctx.fillStyle = 'rgba(224,220,232,0.9)';
+    ctx.fillText(r[1], bx + 58, by + i * lh);
+  });
 }
 
 /* ---------- loop ---------- */
@@ -1153,6 +1258,7 @@ function frame(now){
   let dt = (now - last) / 1000;
   last = now;
   if(dt > 0.1) dt = 0.1;
+  if(dev.paused) dt = 0;
   acc += dt;
   while(acc >= C.DT){ step(C.DT); acc -= C.DT; }
 
@@ -1163,7 +1269,7 @@ function frame(now){
   drawTrees();
   drawTerrain();
   drawEmplacement(C.PLAYER_X, true);
-  if(state.enemyKnown) drawEmplacement(enemyX, false);
+  if(state.enemyKnown || dev.reveal) drawEmplacement(enemyX, false);
   if(shot) drawShell(shot, false);
   for(const sh of incoming) drawShell(sh, true);
   drawEffects();
@@ -1221,7 +1327,19 @@ addEventListener('keydown', e => {
   else if(k === ' ') fire();
   else if(k === 'e') toggleDrone();
   else if(k === 'r') fresh();
+  else if(k === 'l') saveLog();
+  else if(k === '`') dev.on = !dev.on;
+  // dev toggles are inert unless the panel is open, so a stray press costs nothing
+  else if(dev.on && k === 'i') devToggle('invuln');
+  else if(dev.on && k === 'v') devToggle('reveal');
+  else if(dev.on && k === 'p') devToggle('paused');
 });
+
+function devToggle(flag){
+  dev[flag] = !dev[flag];
+  setToast('DEV: ' + flag.toUpperCase() + ' ' + (dev[flag] ? 'ON' : 'OFF'));
+  logEvent('DEV', `${flag}=${dev[flag] ? 'on' : 'off'}`);
+}
 
 addEventListener('keyup', e => {
   const k = e.key.toLowerCase();
