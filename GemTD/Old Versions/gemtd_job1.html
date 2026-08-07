@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GEM TD — Job 1: Engine Spine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --obsidian: #0b0d12;
+    --graphite: #161922;
+    --graphite-lo: #11131a;
+    --quartz: #3a3f4d;
+    --quartz-hi: #565d70;
+    --quartz-lo: #272b36;
+    --sapphire: #2f6dff;
+    --sapphire-hi: #7fb0ff;
+    --garnet: #c23a52;
+    --gold: #d4af6a;
+    --bone: #e8e4d8;
+    --bone-dim: #9a978d;
+    --ok: #6ad29b;
+    --bad: #e0566b;
+    --line: #20242f;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background:
+      radial-gradient(1200px 800px at 30% -10%, #161a24 0%, var(--obsidian) 60%);
+    color: var(--bone);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+  #wrap {
+    display: flex; gap: 18px; align-items: flex-start;
+    justify-content: center; padding: 22px;
+    min-height: 100%;
+  }
+  #stage { position: relative; }
+  /* top bar */
+  #hud {
+    display: flex; gap: 26px; align-items: baseline;
+    padding: 0 4px 10px; flex-wrap: wrap;
+  }
+  .stat { display: flex; flex-direction: column; line-height: 1.1; }
+  .stat .k {
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: .18em;
+    color: var(--bone-dim); text-transform: uppercase;
+  }
+  .stat .v { font-size: 19px; font-weight: 700; }
+  .stat .v.gold { color: var(--gold); }
+  .stat .v.lives { color: var(--garnet); }
+  .stat .v.sap { color: var(--sapphire-hi); }
+  canvas {
+    display: block; border: 1px solid var(--line);
+    background: #0c0e14;
+    box-shadow: 0 0 0 1px #000, 0 24px 60px -30px #000 inset;
+    cursor: crosshair;
+  }
+  /* side panel */
+  #panel {
+    width: 290px; display: flex; flex-direction: column; gap: 12px;
+    padding-top: 34px;
+  }
+  .card {
+    background: linear-gradient(180deg, var(--graphite), var(--graphite-lo));
+    border: 1px solid var(--line); border-radius: 4px; padding: 14px;
+  }
+  .card h2 {
+    font-family: 'Cinzel', serif; margin: 0 0 8px; font-size: 13px;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--bone);
+    font-weight: 600;
+  }
+  .prompt { font-size: 12.5px; color: var(--bone-dim); line-height: 1.5; min-height: 34px; }
+  .prompt b { color: var(--bone); font-weight: 500; }
+  button {
+    width: 100%; font-family: 'Cinzel', serif; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; font-size: 12.5px;
+    color: var(--bone); background: linear-gradient(180deg, #232838, #161a26);
+    border: 1px solid #313748; border-radius: 4px; padding: 11px;
+    cursor: pointer; transition: .12s; margin-top: 8px;
+  }
+  button:hover:not(:disabled) { border-color: var(--sapphire); color: #fff; }
+  button.primary { background: linear-gradient(180deg, #2a59c8, #1c3c8a); border-color: #3a6fe0; }
+  button.primary:hover:not(:disabled) { background: linear-gradient(180deg, #3568df, #244aa8); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  /* specimen label */
+  .spec { font-size: 12.5px; line-height: 1.7; }
+  .spec .name { font-family: 'Cinzel', serif; font-size: 15px; color: var(--sapphire-hi); margin-bottom: 6px; }
+  .spec .row { display: flex; justify-content: space-between; }
+  .spec .row .lbl { color: var(--bone-dim); }
+  .spec .row .num { color: var(--bone); }
+  .spec .row .num.range { color: var(--sapphire); }
+  .spec .note { color: var(--bone-dim); margin-top: 8px; font-style: italic; }
+  .spec .empty { color: var(--bone-dim); font-style: italic; }
+  .legend { font-size: 11px; color: var(--bone-dim); line-height: 1.6; }
+  .legend kbd {
+    font-family: 'JetBrains Mono'; background: #20242f; border: 1px solid #313748;
+    border-radius: 3px; padding: 0 5px; color: var(--bone);
+  }
+  .tag {
+    display: inline-block; font-size: 10px; letter-spacing: .12em;
+    color: var(--gold); border: 1px solid #4a3f25; border-radius: 3px;
+    padding: 1px 6px; margin-bottom: 8px; text-transform: uppercase;
+  }
+  #banner {
+    position: absolute; inset: 0; display: none; place-items: center;
+    background: rgba(7,9,14,.82); z-index: 5; text-align: center;
+  }
+  #banner .big { font-family: 'Cinzel', serif; font-size: 34px; letter-spacing: .08em; }
+  #banner .sub { color: var(--bone-dim); margin-top: 8px; font-size: 13px; }
+  #banner.win .big { color: var(--gold); }
+  #banner.lose .big { color: var(--garnet); }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <div id="hud">
+      <div class="stat"><span class="k">Level</span><span class="v" id="hLevel">1</span></div>
+      <div class="stat"><span class="k">Lives</span><span class="v lives" id="hLives">9</span></div>
+      <div class="stat"><span class="k">Gold</span><span class="v gold" id="hGold">40</span></div>
+      <div class="stat"><span class="k">Score</span><span class="v" id="hScore">0</span></div>
+      <div class="stat"><span class="k">Phase</span><span class="v sap" id="hPhase">Build</span></div>
+    </div>
+    <div style="position:relative">
+      <canvas id="cv" width="600" height="600"></canvas>
+      <div id="banner"><div><div class="big" id="bBig"></div><div class="sub" id="bSub"></div></div></div>
+    </div>
+  </div>
+
+  <div id="panel">
+    <div class="card">
+      <span class="tag">Job 1 · Engine Spine</span>
+      <h2 id="cTitle">Build Phase</h2>
+      <div class="prompt" id="cPrompt"></div>
+      <button id="bStart" class="primary" disabled>Start Wave</button>
+      <button id="bChances" disabled title="Coming in Job 3">Upgrade Chances</button>
+      <button id="bReset">Reset Game</button>
+    </div>
+
+    <div class="card">
+      <h2>Specimen</h2>
+      <div class="spec" id="spec"><div class="empty">Hover a gem to inspect it.</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="legend">
+        <kbd>L-click</kbd> place / pick / delete<br/>
+        <kbd>R-click</kbd> undo a placed block<br/>
+        <kbd>D</kbd> debug x-ray overlay<br/>
+        <kbd>Space</kbd> start wave<br/><br/>
+        Place <b style="color:var(--bone)">5</b> blocks, keep <b style="color:var(--bone)">1</b> as a gem,
+        the other 4 become deletable walls. You can't fully seal the path to the goal.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   GEM TD — JOB 1: ENGINE SPINE
+   Labeled "drawers": CONFIG · STATE · GRID · PATHFINDING · ENEMIES · TOWERS ·
+   BUILD · WAVES · RENDER · INPUT · UI · LOOP
+   Verified core (pathfinding + seal-prevention) ported from standalone test.
+============================================================================ */
+
+/* ---------------------------------- CONFIG -------------------------------- */
+const N = 40;                 // 40x40 cell grid (matches original)
+const CELL = 15;              // px per cell -> 600x600 board
+const SQRT2 = Math.SQRT2;
+const idx = (x, y) => y * N + x;
+const inB = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
+const cx2px = (cx) => (cx + 0.5) * CELL;
+const cy2px = (cy) => (cy + 0.5) * CELL;
+
+const SPAWN = { x: 0, y: 5 };
+const CPS = [                 // ordered checkpoints 1..6 (6 = goal)
+  { x: 6,  y: 5  },
+  { x: 5,  y: 22 },
+  { x: 31, y: 21 },
+  { x: 31, y: 5  },
+  { x: 18, y: 5  },
+  { x: 18, y: 34 },
+];
+const ROUTE = [SPAWN, ...CPS]; // for validation: each consecutive pair must connect
+
+const NB = [
+  [1,0,1],[-1,0,1],[0,1,1],[0,-1,1],
+  [1,1,SQRT2],[1,-1,SQRT2],[-1,1,SQRT2],[-1,-1,SQRT2],
+]; // 8-dir, corner-cutting allowed -> single-cell gaps are passable
+
+// --- balance PLACEHOLDERS (flagged; real values come in later Jobs) ---
+const BAL = {
+  startGold: 40, startLives: 9, maxLevel: 41,
+  killBounty: 2, roundBonus: (lvl) => 8 + lvl * 2,
+  enemyHP:   (lvl) => Math.round(18 * Math.pow(1.15, lvl - 1)),
+  enemySpd:  (lvl) => 42 * Math.pow(1.02, lvl - 1),   // px/sec
+  enemyCount:(lvl) => 8 + lvl,
+  spawnGap: 0.55,                                     // sec between spawns
+};
+// Chipped Sapphire (the single Job-1 gem) — mirrors the screenshot
+const SAPPHIRE = {
+  name: 'Chipped Sapphire', dmgMin: 5, dmgMax: 8,
+  cooldown: 800, range: 4.5, color: '#2f6dff',
+  slowFactor: 0.6, slowDur: 900,
+};
+
+/* ---------------------------------- STATE --------------------------------- */
+let G;
+function freshGame() {
+  return {
+    phase: 'build',          // build | combat | gameover | win
+    level: 1, lives: BAL.startLives, gold: BAL.startGold, score: 0,
+    blocked: new Uint8Array(N * N),  // occupancy: gem or wall
+    walls: [],               // {x,y} top-left of 2x2
+    gems: [],                // {x,y,cx,cy,...stats, kills, lastShot}
+    fields: null,            // 6 distance fields (one per checkpoint)
+    // build sub-state
+    candidates: [],          // {x,y} placed this phase (max 5)
+    chosen: false,           // has a gem been kept this phase?
+    // combat
+    enemies: [], projectiles: [], particles: [],
+    spawnQueue: 0, spawnTimer: 0,
+    hover: { cx: -1, cy: -1, gem: null },
+    debug: false,
+  };
+}
+
+/* ----------------------------------- GRID --------------------------------- */
+function fits2x2(x, y, grid) {
+  if (!inB(x, y) || !inB(x + 1, y + 1)) return false;
+  for (let dx = 0; dx < 2; dx++) for (let dy = 0; dy < 2; dy++) {
+    const cxp = x + dx, cyp = y + dy;
+    if (grid[idx(cxp, cyp)]) return false;
+    // keep checkpoints & spawn cell walkable
+    if (cxp === SPAWN.x && cyp === SPAWN.y) return false;
+    for (const cp of CPS) if (cp.x === cxp && cp.y === cyp) return false;
+  }
+  return true;
+}
+function set2x2(grid, x, y, v) {
+  for (let dx = 0; dx < 2; dx++) for (let dy = 0; dy < 2; dy++) grid[idx(x + dx, y + dy)] = v;
+}
+
+/* ------------------------------- PATHFINDING ------------------------------ */
+// Dijkstra distance field FROM src over free cells (corner-cutting allowed).
+function computeField(grid, src) {
+  const dist = new Float64Array(N * N).fill(Infinity);
+  dist[idx(src.x, src.y)] = 0;
+  const pq = [[0, src.x, src.y]];
+  while (pq.length) {
+    let mi = 0;
+    for (let i = 1; i < pq.length; i++) if (pq[i][0] < pq[mi][0]) mi = i;
+    const [d, x, y] = pq.splice(mi, 1)[0];
+    if (d > dist[idx(x, y)]) continue;
+    for (const [dx, dy, c] of NB) {
+      const nx = x + dx, ny = y + dy;
+      if (!inB(nx, ny) || grid[idx(nx, ny)]) continue;
+      const nd = d + c;
+      if (nd < dist[idx(nx, ny)]) { dist[idx(nx, ny)] = nd; pq.push([nd, nx, ny]); }
+    }
+  }
+  return dist;
+}
+function recomputeFields() { G.fields = CPS.map(cp => computeField(G.blocked, cp)); }
+
+// Would placing/keeping this grid keep every ordered segment connected?
+function routeOpen(grid) {
+  for (let i = 0; i < ROUTE.length - 1; i++) {
+    const f = computeField(grid, ROUTE[i + 1]);
+    if (!isFinite(f[idx(ROUTE[i].x, ROUTE[i].y)])) return false;
+  }
+  return true;
+}
+function placementLegal(x, y) {
+  if (!fits2x2(x, y, G.blocked)) return false;
+  const test = Uint8Array.from(G.blocked);
+  set2x2(test, x, y, 1);
+  return routeOpen(test);
+}
+// Gradient-descent path (cell list) from a cell toward checkpoint i.
+function gradientPath(field, fromCx, fromCy, target) {
+  if (!isFinite(field[idx(fromCx, fromCy)])) return null;
+  const path = []; let cxp = fromCx, cyp = fromCy, guard = 0;
+  while (!(cxp === target.x && cyp === target.y) && guard++ < 4000) {
+    let best = null, bd = field[idx(cxp, cyp)];
+    for (const [dx, dy] of NB) {
+      const nx = cxp + dx, ny = cyp + dy;
+      if (!inB(nx, ny) || G.blocked[idx(nx, ny)]) continue;
+      if (field[idx(nx, ny)] < bd - 1e-9) { bd = field[idx(nx, ny)]; best = [nx, ny]; }
+    }
+    if (!best) break;
+    cxp = best[0]; cyp = best[1]; path.push({ x: cxp, y: cyp });
+  }
+  return (cxp === target.x && cyp === target.y) ? path : null;
+}
+
+/* --------------------------------- ENEMIES -------------------------------- */
+function spawnEnemy() {
+  const hp = BAL.enemyHP(G.level);
+  const e = {
+    x: cx2px(SPAWN.x), y: cy2px(SPAWN.y),
+    hp, maxHp: hp, baseSpd: BAL.enemySpd(G.level),
+    target: 0,                  // index into CPS the enemy must reach next
+    path: null, wp: 0,
+    slowUntil: 0,
+  };
+  retargetPath(e);
+  G.enemies.push(e);
+}
+function retargetPath(e) {
+  const field = G.fields[e.target];
+  const ccx = Math.floor(e.x / CELL), ccy = Math.floor(e.y / CELL);
+  const cells = gradientPath(field, ccx, ccy, CPS[e.target]);
+  e.path = cells ? cells.map(c => ({ x: cx2px(c.x), y: cy2px(c.y) })) : null;
+  e.wp = 0;
+}
+function updateEnemies(dt, now) {
+  for (const e of G.enemies) {
+    // 1) arrival check first — advance target / leak before moving
+    const cpx = cx2px(CPS[e.target].x), cpy = cy2px(CPS[e.target].y);
+    if (Math.hypot(cpx - e.x, cpy - e.y) < CELL * 0.7) {
+      if (e.target === CPS.length - 1) { leak(e); continue; } // reached goal
+      e.target++; retargetPath(e);
+    }
+    // 2) move along path
+    const spd = e.baseSpd * (now < e.slowUntil ? SAPPHIRE.slowFactor : 1);
+    if (!e.path || e.wp >= e.path.length) retargetPath(e);
+    if (!e.path || e.wp >= e.path.length) continue; // at target or no route; wait
+    const wp = e.path[e.wp];
+    let dx = wp.x - e.x, dy = wp.y - e.y, d = Math.hypot(dx, dy);
+    const step = spd * dt;
+    if (d <= step) { e.x = wp.x; e.y = wp.y; e.wp++; }
+    else { e.x += dx / d * step; e.y += dy / d * step; }
+  }
+  G.enemies = G.enemies.filter(e => !e.dead && !e.leaked);
+}
+function leak(e) {
+  e.leaked = true; G.lives--;
+  if (G.lives <= 0) endGame(false);
+}
+function killEnemy(e, gem) {
+  e.dead = true; G.gold += BAL.killBounty; G.score += 10;
+  if (gem) gem.kills++;
+  for (let i = 0; i < 7; i++)
+    G.particles.push({ x: e.x, y: e.y, vx: (Math.random()-.5)*90, vy: (Math.random()-.5)*90, life: .5, col: '#c23a52' });
+}
+
+/* --------------------------------- TOWERS --------------------------------- */
+function updateGems(now) {
+  for (const g of G.gems) {
+    if (now - g.lastShot < g.cooldown) continue;
+    let best = null, bestD = Infinity;
+    for (const e of G.enemies) {
+      const d = Math.hypot(e.x - g.px, e.y - g.py);
+      if (d <= g.range * CELL && d < bestD) { bestD = d; best = e; }
+    }
+    if (best) {
+      g.lastShot = now;
+      const dmg = g.dmgMin + Math.random() * (g.dmgMax - g.dmgMin);
+      G.projectiles.push({ x: g.px, y: g.py, target: best, dmg, gem: g });
+    }
+  }
+}
+function updateProjectiles(dt, now) {
+  const PSPD = 520;
+  for (const p of G.projectiles) {
+    const e = p.target;
+    if (!e || e.dead || e.leaked) { p.spent = true; continue; }
+    let dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy);
+    const step = PSPD * dt;
+    if (d <= step) {
+      e.hp -= p.dmg; e.slowUntil = now + SAPPHIRE.slowDur; p.spent = true;
+      if (e.hp <= 0) killEnemy(e, p.gem);
+    } else { p.x += dx / d * step; p.y += dy / d * step; }
+  }
+  G.projectiles = G.projectiles.filter(p => !p.spent);
+}
+function updateParticles(dt) {
+  for (const pt of G.particles) { pt.x += pt.vx*dt; pt.y += pt.vy*dt; pt.life -= dt; }
+  G.particles = G.particles.filter(p => p.life > 0);
+}
+
+/* ---------------------------------- BUILD --------------------------------- */
+function tryPlaceCandidate(cxp, cyp) {
+  if (G.candidates.length >= 5 || G.chosen) return;
+  if (!placementLegal(cxp, cyp)) { flashPrompt("That placement would seal the path — try elsewhere."); return; }
+  set2x2(G.blocked, cxp, cyp, 1);
+  G.candidates.push({ x: cxp, y: cyp });
+  recomputeFields();
+  refreshBuildUI();
+}
+function undoCandidate(cxp, cyp) {
+  if (G.chosen) return;
+  for (let i = 0; i < G.candidates.length; i++) {
+    const c = G.candidates[i];
+    if (cxp >= c.x && cxp < c.x + 2 && cyp >= c.y && cyp < c.y + 2) {
+      set2x2(G.blocked, c.x, c.y, 0);
+      G.candidates.splice(i, 1);
+      recomputeFields(); refreshBuildUI(); return;
+    }
+  }
+}
+function chooseGem(cxp, cyp) {
+  if (G.candidates.length < 5 || G.chosen) return;
+  let pick = -1;
+  for (let i = 0; i < G.candidates.length; i++) {
+    const c = G.candidates[i];
+    if (cxp >= c.x && cxp < c.x + 2 && cyp >= c.y && cyp < c.y + 2) { pick = i; break; }
+  }
+  if (pick < 0) return;
+  const c = G.candidates[pick];
+  G.gems.push(makeGem(c.x, c.y));
+  for (let i = 0; i < G.candidates.length; i++) if (i !== pick) G.walls.push(G.candidates[i]);
+  G.candidates = []; G.chosen = true;
+  recomputeFields(); refreshBuildUI();
+}
+function makeGem(x, y) {
+  return {
+    x, y, px: (x + 1) * CELL, py: (y + 1) * CELL,
+    name: SAPPHIRE.name, dmgMin: SAPPHIRE.dmgMin, dmgMax: SAPPHIRE.dmgMax,
+    cooldown: SAPPHIRE.cooldown, range: SAPPHIRE.range, kills: 0, lastShot: 0,
+  };
+}
+function deleteWall(cxp, cyp) {
+  if (!G.chosen) return; // deletion only after a gem is kept this phase
+  for (let i = 0; i < G.walls.length; i++) {
+    const w = G.walls[i];
+    if (cxp >= w.x && cxp < w.x + 2 && cyp >= w.y && cyp < w.y + 2) {
+      set2x2(G.blocked, w.x, w.y, 0);
+      G.walls.splice(i, 1);
+      recomputeFields(); refreshBuildUI(); return;
+    }
+  }
+}
+
+/* ---------------------------------- WAVES --------------------------------- */
+function startWave() {
+  if (G.phase !== 'build' || !G.chosen) return;
+  recomputeFields();
+  G.phase = 'combat';
+  G.spawnQueue = BAL.enemyCount(G.level);
+  G.spawnTimer = 0;
+  refreshBuildUI();
+}
+function endWave() {
+  G.gold += BAL.roundBonus(G.level);
+  G.score += 50;
+  if (G.level >= BAL.maxLevel) { endGame(true); return; }
+  G.level++;
+  G.phase = 'build';
+  G.chosen = false; G.candidates = [];
+  refreshBuildUI();
+}
+function updateSpawning(dt) {
+  if (G.spawnQueue > 0) {
+    G.spawnTimer -= dt;
+    if (G.spawnTimer <= 0) { spawnEnemy(); G.spawnQueue--; G.spawnTimer = BAL.spawnGap; }
+  } else if (G.enemies.length === 0 && G.phase === 'combat') {
+    endWave();
+  }
+}
+function endGame(won) {
+  G.phase = won ? 'win' : 'gameover';
+  const b = document.getElementById('banner');
+  b.className = won ? 'win' : 'lose'; b.style.display = 'grid';
+  document.getElementById('bBig').textContent = won ? 'CLEARED' : 'CASTLE LOST';
+  document.getElementById('bSub').textContent = won
+    ? `All ${BAL.maxLevel} levels survived · Score ${G.score}`
+    : `Fell on level ${G.level} · Score ${G.score}`;
+}
+
+/* ---------------------------------- RENDER -------------------------------- */
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+function draw() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  drawFloor();                 // visible arena surface + faint grid (always on)
+  if (G.debug) drawGrid();     // brighter grid overlay in debug
+
+  // walls
+  for (const w of G.walls) drawBlock(w.x, w.y, false);
+  // candidate previews (this build phase)
+  for (const c of G.candidates) drawCandidate(c.x, c.y);
+
+  // checkpoints
+  for (let i = 0; i < CPS.length; i++) drawCheckpoint(CPS[i], i + 1);
+  drawSpawn();
+
+  // gems
+  for (const g of G.gems) drawGem(g);
+
+  // hover footprint during placing
+  if (G.phase === 'build' && !G.chosen && G.candidates.length < 5 &&
+      G.hover.cx >= 0) drawHoverFootprint();
+
+  // range ring on hovered gem
+  if (G.hover.gem) {
+    const g = G.hover.gem;
+    ctx.beginPath(); ctx.arc(g.px, g.py, g.range * CELL, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(127,176,255,.35)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // enemies
+  for (const e of G.enemies) drawEnemy(e);
+  // projectiles
+  for (const p of G.projectiles) {
+    ctx.beginPath(); ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2);
+    ctx.fillStyle = '#bcd6ff'; ctx.shadowColor = '#7fb0ff'; ctx.shadowBlur = 8;
+    ctx.fill(); ctx.shadowBlur = 0;
+  }
+  // particles
+  for (const pt of G.particles) {
+    ctx.globalAlpha = Math.max(0, pt.life * 2);
+    ctx.fillStyle = pt.col; ctx.fillRect(pt.x - 1.5, pt.y - 1.5, 3, 3);
+    ctx.globalAlpha = 1;
+  }
+
+  if (G.debug) drawDebugPaths();
+}
+function drawFloor() {
+  // arena surface — a dark jeweler's-velvet slate, clearly lighter than the page
+  const g = ctx.createLinearGradient(0, 0, 0, cv.height);
+  g.addColorStop(0, '#202736'); g.addColorStop(1, '#141925');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+  // faint minor grid + slightly stronger 2-cell lines (placement is 2x2)
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(140,158,190,.06)'; ctx.beginPath();
+  for (let i = 0; i <= N; i++) {
+    ctx.moveTo(i*CELL+.5, 0); ctx.lineTo(i*CELL+.5, N*CELL);
+    ctx.moveTo(0, i*CELL+.5); ctx.lineTo(N*CELL, i*CELL+.5);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(140,158,190,.11)'; ctx.beginPath();
+  for (let i = 0; i <= N; i += 2) {
+    ctx.moveTo(i*CELL+.5, 0); ctx.lineTo(i*CELL+.5, N*CELL);
+    ctx.moveTo(0, i*CELL+.5); ctx.lineTo(N*CELL, i*CELL+.5);
+  }
+  ctx.stroke();
+  // inner border glow
+  ctx.strokeStyle = 'rgba(127,176,255,.18)'; ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, cv.width-2, cv.height-2);
+}
+function drawGrid() {
+  ctx.strokeStyle = 'rgba(80,90,110,.16)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= N; i++) {
+    ctx.beginPath(); ctx.moveTo(i*CELL, 0); ctx.lineTo(i*CELL, N*CELL); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i*CELL); ctx.lineTo(N*CELL, i*CELL); ctx.stroke();
+  }
+}
+function drawBlock(x, y, isCand) {
+  const px = x*CELL, py = y*CELL, s = 2*CELL;
+  ctx.fillStyle = '#565d70'; ctx.fillRect(px, py, s, s);
+  // facet highlight TL, shadow BR
+  ctx.fillStyle = 'rgba(124,134,158,.95)'; ctx.fillRect(px, py, s, 3); ctx.fillRect(px, py, 3, s);
+  ctx.fillStyle = 'rgba(26,29,40,.95)'; ctx.fillRect(px, py+s-3, s, 3); ctx.fillRect(px+s-3, py, 3, s);
+  ctx.strokeStyle = '#161922'; ctx.lineWidth = 1; ctx.strokeRect(px+.5, py+.5, s-1, s-1);
+}
+function drawCandidate(x, y) {
+  const px = x*CELL, py = y*CELL, s = 2*CELL;
+  const pulse = 0.5 + 0.5 * Math.sin(performance.now()/250);
+  ctx.fillStyle = `rgba(47,109,255,${0.18 + pulse*0.14})`; ctx.fillRect(px, py, s, s);
+  ctx.strokeStyle = `rgba(127,176,255,${0.6 + pulse*0.4})`; ctx.lineWidth = 1.5;
+  ctx.strokeRect(px+1, py+1, s-2, s-2);
+  ctx.fillStyle = '#cfe0ff'; ctx.font = "600 13px 'Cinzel', serif";
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('?', px + s/2, py + s/2);
+}
+function drawGem(g) {
+  const px = g.px, py = g.py, r = CELL * 0.92;
+  ctx.save(); ctx.translate(px, py);
+  ctx.shadowColor = '#2f6dff'; ctx.shadowBlur = 14;
+  // faceted octagon
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const a = Math.PI/8 + i * Math.PI/4;
+    const rad = (i % 2 === 0) ? r : r*0.72;
+    const X = Math.cos(a)*rad, Y = Math.sin(a)*rad;
+    i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+  }
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(-r, -r, r, r);
+  grad.addColorStop(0, '#7fb0ff'); grad.addColorStop(.5, '#2f6dff'); grad.addColorStop(1, '#163a8f');
+  ctx.fillStyle = grad; ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#cfe0ff'; ctx.lineWidth = 1; ctx.stroke();
+  // inner facet lines
+  ctx.strokeStyle = 'rgba(207,224,255,.5)'; ctx.beginPath();
+  ctx.moveTo(0,-r*0.7); ctx.lineTo(0,r*0.7); ctx.moveTo(-r*0.7,0); ctx.lineTo(r*0.7,0); ctx.stroke();
+  ctx.restore();
+}
+function drawCheckpoint(cp, num) {
+  const px = cx2px(cp.x), py = cy2px(cp.y);
+  ctx.beginPath(); ctx.arc(px, py, CELL*0.85, 0, Math.PI*2);
+  ctx.strokeStyle = num === 6 ? '#ffd27a' : 'rgba(212,175,106,.85)';
+  ctx.lineWidth = num === 6 ? 2.2 : 1.4; ctx.stroke();
+  ctx.fillStyle = num === 6 ? '#ffd27a' : '#d4af6a';
+  ctx.font = "700 12px 'Cinzel', serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(num, px, py);
+}
+function drawSpawn() {
+  const px = cx2px(SPAWN.x), py = cy2px(SPAWN.y);
+  ctx.fillStyle = 'rgba(106,210,155,.8)';
+  ctx.beginPath(); ctx.arc(px, py, CELL*0.5, 0, Math.PI*2); ctx.fill();
+}
+function drawEnemy(e) {
+  ctx.beginPath(); ctx.arc(e.x, e.y, CELL*0.42, 0, Math.PI*2);
+  ctx.fillStyle = '#c23a52'; ctx.fill();
+  ctx.strokeStyle = '#5a1622'; ctx.lineWidth = 1.2; ctx.stroke();
+  // hp bar
+  const w = CELL*1.1, h = 3, frac = Math.max(0, e.hp / e.maxHp);
+  ctx.fillStyle = '#000'; ctx.fillRect(e.x - w/2, e.y - CELL*0.9, w, h);
+  ctx.fillStyle = frac > .5 ? '#6ad29b' : frac > .25 ? '#d4af6a' : '#e0566b';
+  ctx.fillRect(e.x - w/2, e.y - CELL*0.9, w*frac, h);
+}
+function drawHoverFootprint() {
+  const { cx, cy } = G.hover;
+  const legal = placementLegalCached(cx, cy);
+  const px = cx*CELL, py = cy*CELL, s = 2*CELL;
+  ctx.fillStyle = legal ? 'rgba(106,210,155,.22)' : 'rgba(224,86,107,.22)';
+  ctx.fillRect(px, py, s, s);
+  ctx.strokeStyle = legal ? '#6ad29b' : '#e0566b'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(px+1, py+1, s-2, s-2);
+}
+function drawDebugPaths() {
+  ctx.strokeStyle = 'rgba(127,176,255,.5)'; ctx.lineWidth = 1;
+  for (const e of G.enemies) {
+    if (!e.path) continue;
+    ctx.beginPath(); ctx.moveTo(e.x, e.y);
+    for (let i = e.wp; i < e.path.length; i++) ctx.lineTo(e.path[i].x, e.path[i].y);
+    ctx.stroke();
+  }
+  // coord readout
+  if (G.hover.cx >= 0) {
+    ctx.fillStyle = '#7fb0ff'; ctx.font = "11px 'JetBrains Mono'";
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(`cell ${G.hover.cx},${G.hover.cy}`, 6, 6);
+    ctx.fillText(`enemies ${G.enemies.length}`, 6, 20);
+  }
+}
+// lightweight hover legality cache (avoid full routeOpen every frame)
+let _hoverCache = { cx: -2, cy: -2, val: false };
+function placementLegalCached(cx, cy) {
+  if (_hoverCache.cx === cx && _hoverCache.cy === cy) return _hoverCache.val;
+  _hoverCache = { cx, cy, val: placementLegal(cx, cy) };
+  return _hoverCache.val;
+}
+
+/* ----------------------------------- INPUT -------------------------------- */
+function evtCell(ev) {
+  const r = cv.getBoundingClientRect();
+  return {
+    cx: Math.floor((ev.clientX - r.left) / CELL),
+    cy: Math.floor((ev.clientY - r.top) / CELL),
+  };
+}
+cv.addEventListener('mousemove', (ev) => {
+  const { cx, cy } = evtCell(ev);
+  G.hover.cx = cx; G.hover.cy = cy; G.hover.gem = null;
+  for (const g of G.gems) if (cx >= g.x && cx < g.x+2 && cy >= g.y && cy < g.y+2) G.hover.gem = g;
+  updateSpec();
+});
+cv.addEventListener('mouseleave', () => { G.hover.cx = -1; G.hover.gem = null; updateSpec(); });
+cv.addEventListener('contextmenu', (ev) => {
+  ev.preventDefault();
+  if (G.phase !== 'build') return;
+  const { cx, cy } = evtCell(ev);
+  undoCandidate(cx, cy);
+});
+cv.addEventListener('mousedown', (ev) => {
+  if (ev.button !== 0 || G.phase !== 'build') return;
+  const { cx, cy } = evtCell(ev);
+  if (!G.chosen && G.candidates.length < 5) tryPlaceCandidate(cx, cy);
+  else if (!G.chosen && G.candidates.length === 5) chooseGem(cx, cy);
+  else if (G.chosen) deleteWall(cx, cy);
+});
+window.addEventListener('keydown', (ev) => {
+  if (ev.code === 'KeyD') { G.debug = !G.debug; }
+  if (ev.code === 'Space') { ev.preventDefault(); startWave(); }
+});
+
+/* ------------------------------------- UI --------------------------------- */
+let _flash = '', _flashUntil = 0;
+function flashPrompt(msg) { _flash = msg; _flashUntil = performance.now() + 2200; }
+function refreshBuildUI() {
+  document.getElementById('hLevel').textContent = G.level;
+  document.getElementById('hLives').textContent = G.lives;
+  document.getElementById('hGold').textContent = G.gold;
+  document.getElementById('hScore').textContent = G.score;
+  document.getElementById('hPhase').textContent =
+    G.phase === 'build' ? 'Build' : G.phase === 'combat' ? 'Combat' : G.phase;
+  const start = document.getElementById('bStart');
+  start.disabled = !(G.phase === 'build' && G.chosen);
+  const title = document.getElementById('cTitle'), prompt = document.getElementById('cPrompt');
+  if (G.phase === 'combat') {
+    title.textContent = 'Combat'; prompt.innerHTML = `Wave <b>${G.level}</b> incoming — gems fire automatically.`;
+  } else if (G.phase === 'build') {
+    title.textContent = 'Build Phase';
+    if (!G.chosen && G.candidates.length < 5)
+      prompt.innerHTML = `Place <b>${5 - G.candidates.length}</b> more block(s). Right-click to undo.`;
+    else if (!G.chosen)
+      prompt.innerHTML = `Pick <b>1</b> of the 5 to keep as a gem — the rest become walls.`;
+    else
+      prompt.innerHTML = `Gem kept. Delete walls to reshape, then <b>Start Wave</b>.`;
+  }
+}
+function updateSpec() {
+  const el = document.getElementById('spec');
+  const g = G.hover.gem;
+  if (!g) { el.innerHTML = '<div class="empty">Hover a gem to inspect it.</div>'; return; }
+  el.innerHTML = `
+    <div class="name">${g.name}</div>
+    <div class="row"><span class="lbl">Damage</span><span class="num">${g.dmgMin.toFixed(1)} – ${g.dmgMax.toFixed(1)}</span></div>
+    <div class="row"><span class="lbl">Cooldown</span><span class="num">${g.cooldown} ms</span></div>
+    <div class="row"><span class="lbl">Range</span><span class="num range">${(g.range*CELL).toFixed(0)}</span></div>
+    <div class="row"><span class="lbl">Kills</span><span class="num">${g.kills}</span></div>
+    <div class="note">Attacks slow the target's movement speed.</div>`;
+}
+document.getElementById('bStart').addEventListener('click', startWave);
+document.getElementById('bReset').addEventListener('click', () => { G = freshGame(); init(); });
+
+/* ------------------------------------ LOOP -------------------------------- */
+let last = 0;
+function frame(t) {
+  const now = t; const dt = Math.min(0.05, (t - last) / 1000); last = t;
+  if (G.phase === 'combat') {
+    updateSpawning(dt);
+    updateGems(now);
+    updateProjectiles(dt, now);
+    updateEnemies(dt, now);
+  }
+  updateParticles(dt);
+  // live HUD during combat
+  if (G.phase === 'combat') {
+    document.getElementById('hLives').textContent = G.lives;
+    document.getElementById('hGold').textContent = G.gold;
+    document.getElementById('hScore').textContent = G.score;
+  }
+  // flash messaging
+  if (performance.now() < _flashUntil && G.phase === 'build') {
+    document.getElementById('cPrompt').innerHTML = `<span style="color:var(--bad)">${_flash}</span>`;
+  }
+  draw();
+  requestAnimationFrame(frame);
+}
+
+/* ------------------------------------ INIT -------------------------------- */
+function init() {
+  recomputeFields();
+  refreshBuildUI(); updateSpec();
+  const b = document.getElementById('banner'); b.style.display = 'none';
+}
+G = freshGame();
+init();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

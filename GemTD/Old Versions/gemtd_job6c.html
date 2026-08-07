@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GEM TD — Job 5a: Armor <title>GEM TD — Job 4b: Special Gem Effects</title> Weakness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --obsidian:#0b0d12; --graphite:#161922; --graphite-lo:#11131a;
+    --bone:#e8e4d8; --bone-dim:#9a978d; --gold:#d4af6a; --garnet:#c23a52;
+    --ok:#6ad29b; --bad:#e0566b; --line:#20242f; --sapphire-hi:#7fb0ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%;
+    background: radial-gradient(1200px 800px at 30% -10%, #161a24 0%, var(--obsidian) 60%);
+    color: var(--bone); font-family:'JetBrains Mono', ui-monospace, monospace;
+    -webkit-font-smoothing: antialiased; }
+  #wrap { display:flex; gap:18px; align-items:flex-start; justify-content:center; padding:22px; min-height:100%; }
+  #hud { display:flex; gap:24px; align-items:baseline; padding:0 4px 10px; flex-wrap:wrap; }
+  .stat { display:flex; flex-direction:column; line-height:1.1; }
+  .stat .k { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.18em; color:var(--bone-dim); text-transform:uppercase; }
+  .stat .v { font-size:19px; font-weight:700; }
+  .stat .v.gold { color:var(--gold); } .stat .v.lives { color:var(--garnet); } .stat .v.sap { color:var(--sapphire-hi); }
+  canvas { display:block; border:1px solid var(--line); background:#141925;
+    box-shadow:0 0 0 1px #000, 0 24px 60px -30px #000; cursor:crosshair; }
+  #panel { width:300px; display:flex; flex-direction:column; gap:12px; padding-top:34px; }
+  .card { background:linear-gradient(180deg, var(--graphite), var(--graphite-lo));
+    border:1px solid var(--line); border-radius:4px; padding:14px; }
+  .card h2 { font-family:'Cinzel',serif; margin:0 0 8px; font-size:13px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--bone); font-weight:600; }
+  .prompt { font-size:12.5px; color:var(--bone-dim); line-height:1.5; min-height:34px; }
+  .prompt b { color:var(--bone); font-weight:500; }
+  button { width:100%; font-family:'Cinzel',serif; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; font-size:12.5px; color:var(--bone);
+    background:linear-gradient(180deg,#232838,#161a26); border:1px solid #313748;
+    border-radius:4px; padding:11px; cursor:pointer; transition:.12s; margin-top:8px; }
+  button:hover:not(:disabled){ border-color:#2f6dff; color:#fff; }
+  button.primary{ background:linear-gradient(180deg,#2a59c8,#1c3c8a); border-color:#3a6fe0; }
+  button.primary:hover:not(:disabled){ background:linear-gradient(180deg,#3568df,#244aa8); }
+  button:disabled{ opacity:.4; cursor:not-allowed; }
+  .spec{ font-size:12.5px; line-height:1.7; min-height:150px; }
+  .spec .name{ font-family:'Cinzel',serif; font-size:15px; margin-bottom:2px; }
+  .spec .q{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--bone-dim); margin-bottom:8px; }
+  .spec .row{ display:flex; justify-content:space-between; }
+  .spec .row .lbl{ color:var(--bone-dim); } .spec .row .num{ color:var(--bone); }
+  .spec .note{ color:var(--bone-dim); margin-top:8px; font-style:italic; }
+  .spec .empty{ color:var(--bone-dim); font-style:italic; }
+  .legend{ font-size:11px; color:var(--bone-dim); line-height:1.6; }
+  .legend kbd{ background:#20242f; border:1px solid #313748; border-radius:3px; padding:0 5px; color:var(--bone); }
+  .tag{ display:inline-block; font-size:10px; letter-spacing:.12em; color:var(--gold);
+    border:1px solid #4a3f25; border-radius:3px; padding:1px 6px; margin-bottom:8px; text-transform:uppercase; }
+  #banner{ position:absolute; inset:0; display:none; place-items:center; background:rgba(7,9,14,.82); z-index:5; text-align:center; }
+  #banner .big{ font-family:'Cinzel',serif; font-size:34px; letter-spacing:.08em; }
+  #banner .sub{ color:var(--bone-dim); margin-top:8px; font-size:13px; }
+  #banner.win .big{ color:var(--gold);} #banner.lose .big{ color:var(--garnet);}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <div id="hud">
+      <div class="stat"><span class="k">Level</span><span class="v" id="hLevel">1</span></div>
+      <div class="stat"><span class="k">Lives</span><span class="v lives" id="hLives">9</span></div>
+      <div class="stat"><span class="k">Gold</span><span class="v gold" id="hGold">10</span></div>
+      <div class="stat"><span class="k">Score</span><span class="v" id="hScore">0</span></div>
+      <div class="stat"><span class="k">Phase</span><span class="v sap" id="hPhase">Build</span></div>
+    </div>
+    <div style="position:relative">
+      <canvas id="cv" width="600" height="600"></canvas>
+      <div id="banner"><div><div class="big" id="bBig"></div><div class="sub" id="bSub"></div></div></div>
+    </div>
+  </div>
+  <div id="panel">
+    <div class="card">
+      <span class="tag">Job 6c · Build Flow</span>
+      <h2 id="cTitle">Build Phase</h2>
+      <div class="prompt" id="cPrompt"></div>
+      <div id="waveInfo" style="font-size:12px;line-height:1.5;margin:2px 0 6px;color:var(--bone-dim)"></div>
+      <button id="bPlace">Place Gem</button>
+      <button id="bRepick" disabled>Repick — reroll · 25g</button>
+      <button id="bRepickReplace" disabled>Repick — replace · 25g</button>
+      <button id="bChances">Upgrade Chances</button>
+      <div id="oddsLine" style="font-size:11px;color:var(--bone-dim);line-height:1.5;margin-top:8px;"></div>
+      <button id="bReset">Reset Game</button>
+    </div>
+    <div class="card">
+      <h2>Specimen</h2>
+      <div class="spec" id="spec"><div class="empty">Hover a gem or a build candidate to inspect it.</div></div>
+      <div id="actions"></div>
+    </div>
+    <div class="card">
+      <h2>Economy</h2>
+      <div class="econ" id="econLine" style="font-size:12px;color:var(--bone-dim);line-height:1.6;margin-bottom:4px;"></div>
+      <button id="bBuy1">Buy 1 Life · 50g</button>
+      <button id="bBuy5">Buy 5 Lives · 250g</button>
+    </div>
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="legend">
+        <kbd>L-click</kbd> place block / open options<br/>
+        <kbd>R-click</kbd> undo a placed block<br/>
+        <kbd>D</kbd> debug x-ray<br/>
+        <kbd>1</kbd>–<kbd>6</kbd> (debug) set hovered gem quality<br/><br/>
+        Place <b style="color:var(--bone)">5</b> blocks, then click one for <b style="color:var(--bone)">Keep</b> / <b style="color:var(--bone)">Combine</b> — that starts the wave. The other 4 become deletable rocks.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   GEM TD — JOB 2: GEM ROSTER & COMBAT BEHAVIORS
+   Engine (CONFIG/GRID/PATHFINDING/ENEMIES movement/BUILD/WAVES) ported verbatim
+   from the verified Job 1 spine. New: GEM_TYPES data, 8 distinct behaviors,
+   enemy status-effect system (stacking cold + poison), Opal buff auras.
+============================================================================ */
+
+/* ---------------------------------- CONFIG -------------------------------- */
+const N = 40, CELL = 15, SQRT2 = Math.SQRT2;
+const idx = (x,y)=>y*N+x;
+const inB = (x,y)=>x>=0&&y>=0&&x<N&&y<N;
+const cx2px = c=>(c+0.5)*CELL, cy2px = c=>(c+0.5)*CELL;
+const RANGE_SCALE = 1.0;   // sheet ranges are original-game px; PLACEHOLDER scale, tune by feel
+
+const SPAWN = { x:0, y:5 };
+const CPS = [ {x:6,y:5},{x:5,y:22},{x:31,y:21},{x:31,y:5},{x:18,y:5},{x:18,y:34} ];
+const ENDPOINT = { x:39, y:34 };          // the REAL goal: right-edge exit past CP6
+const TARGETS = [ ...CPS, ENDPOINT ];      // enemies hit CP1..CP6 in order, then leak at ENDPOINT
+const ROUTE = [SPAWN, ...TARGETS];
+const NB = [ [1,0,1],[-1,0,1],[0,1,1],[0,-1,1] ];   // orthogonal only — no diagonal moves / corner-cutting
+
+const BAL = {
+  startGold:10, startLives:9, maxLevel:41,
+  bounty:(l)=>1+Math.floor(l/4),   // kill reward == leak cost; +1 at every air level (every 4th wave)
+  roundBonus:(l)=>9+2*(l-1),       // wave-clear bonus: 9/11/13/15... (borrowed system, expect tuning)
+  buyLifeCost:50, buy5Cost:250, livesCap:50,
+  enemyHP:(l)=>Math.round(18*Math.pow(1.15,l-1)),
+  enemySpd:(l)=>42*Math.pow(1.02,l-1),
+  enemyCount:(l)=>10, spawnGap:1.0,
+  coldDur:5000,            // PLACEHOLDER cold-slow duration (per your note)
+};
+const SPEED_SCALE = 42;       // PLACEHOLDER: maps sheet speed -> px/sec (tune by feel)
+const WEAKNESS_MULT = 1.5;    // (superseded by DMG_MULT matrix below; kept for reference)
+// Damage-type (row) x enemy-weakness (column) multipliers. Opal & Aquamarine share one element ('opalaqua').
+const DMG_MULT = {
+  amethyst: { amethyst:1.75, emerald:0.8, topaz:0.8, opalaqua:0.8, sapphire:0.8,  ruby:0.8, diamond:0.8 },
+  emerald:  { amethyst:1.50, emerald:1.70,topaz:0.7, opalaqua:0.7, sapphire:0.7,  ruby:0.7, diamond:0.7 },
+  topaz:    { amethyst:1.20, emerald:0.7, topaz:1.60,opalaqua:1.0, sapphire:1.0,  ruby:0.5, diamond:0.6 },
+  opalaqua: { amethyst:1.00, emerald:0.7, topaz:1.0, opalaqua:1.90,sapphire:0.4,  ruby:1.0, diamond:0.8 },
+  sapphire: { amethyst:1.00, emerald:1.0, topaz:1.0, opalaqua:1.0, sapphire:1.75, ruby:1.0, diamond:1.0 },
+  ruby:     { amethyst:0.80, emerald:0.5, topaz:1.0, opalaqua:0.8, sapphire:1.0,  ruby:1.80,diamond:1.0 },
+  diamond:  { amethyst:0.20, emerald:0.6, topaz:1.0, opalaqua:1.0, sapphire:0.75, ruby:1.20,diamond:1.60 },
+};
+function dmgBucket(t){ return (t==='opal'||t==='aquamarine')?'opalaqua':t; }
+function dmgMultiplier(dmgType, weakType){
+  const row=DMG_MULT[dmgBucket(dmgType)]; if(!row) return 1;
+  const m=row[dmgBucket(weakType)]; return m==null?1:m;
+}
+const ARMOR_DEBUFF_DUR = 2000;
+// Enemy stats, waves 1-43 (Extreme/Survival), transcribed from the sheet: [hp, spd, armor, minSpd].
+// type is air iff level%4===0 (verified). Past 43 we extrapolate for Survival.
+const WAVE_TABLE=[
+[10,0.75,16,0],[30,0.75,16,0],[55,0.75,16,0],[70,0.65,16,0],[90,0.78,16,0],[120,0.78,16,0],
+[178,0.81,16,0],[240,0.65,16,0],[300,0.81,16,0],[470,0.81,17,0],[650,0.81,17,0],[550,0.71,17,0],
+[800,0.83,17,0],[925,0.83,17,0],[1350,0.83,17,0],[850,0.71,17,0],[1650,0.92,17,0],[2000,0.92,17,0.31],
+[2500,0.99,17,0.34],[1150,0.79,17,0.28],[3250,1.14,18,0.4],[4100,1.19,18,0.45],[5000,1.25,18,0.51],[2850,0.79,18,0.4],
+[6250,1.23,18,0.57],[7750,1.25,18,0.62],[9500,1.26,18,0.68],[5000,0.78,18,0.42],[10500,1.27,18,0.79],[13000,1.29,19,0.85],
+[16000,1.3,19,0.88],[7500,0.91,18,0.45],[19500,1.32,19,0.91],[23500,1.33,19,0.93],[28000,1.34,19,0.96],[10000,0.99,18,0.57],
+[32000,1.36,19,0.99],[38000,1.37,19,1.02],[45000,1.39,19,1.05],[13500,1.08,18,0.71],[49500,1.56,19,1.1],[54000,1.56,19,1.1],
+[58500,1.56,19,1.1]
+];
+function waveStats(level){
+  let hp,spd,armor,minSpd;
+  if(level<=43){ const t=WAVE_TABLE[level-1]; hp=t[0]; spd=t[1]; armor=t[2]; minSpd=t[3]; }
+  else { const air=level%4===0;            // Survival extrapolation — approximate, expect tuning
+    hp=Math.round((air?13500:58500)*Math.pow(1.085, level-(air?40:43)));
+    spd=air?1.20:1.56; armor=air?18:19; minSpd=1.10; }
+  return { hp, spd:spd*SPEED_SCALE, armor, minSpd:minSpd*SPEED_SCALE, isAir:level%4===0 };
+}
+function rollWaveWeakness(level){
+  if(level>=41 || level%4===0) return 'amethyst';   // 40+ and all air waves: amethyst (balance rule)
+  return TYPE_KEYS[Math.floor(Math.random()*TYPE_KEYS.length)]; // ground waves pre-41: random
+}
+
+const QNAMES = ['Chipped','Flawed','Normal','Flawless','Perfect','Great'];
+const QCOLOR = ['#9aa3b5','#9fd0ff','#cfe0ff','#9b87ff','#ffd27a','#ff7ad4'];
+
+/* Upgrade Chances ladder (Page 2). Each entry = quality weights over
+   [Chipped,Flawed,Normal,Flawless,Perfect]; Great (idx5) is combine-only.
+   cost = gold to advance TO that level from the previous one. */
+const UPGRADE_LADDER = [
+  { w:[100,0,0,0,0],  cost:0   },  // L0 Starting
+  { w:[70,30,0,0,0],  cost:20  },  // L1
+  { w:[60,30,10,0,0], cost:50  },  // L2
+  { w:[50,30,20,0,0], cost:80  },  // L3
+  { w:[40,30,20,10,0],cost:110 },  // L4
+  { w:[30,30,30,10,0],cost:140 },  // L5
+  { w:[20,30,30,20,0],cost:170 },  // L6
+  { w:[10,30,30,30,0],cost:200 },  // L7
+  { w:[0,30,30,30,10],cost:230 },  // L8 (Chipped drops out, Perfect enters)
+];
+const REPICK_STEP = 25;            // Repick cost climbs +25 each use, persists all game
+
+/* All numbers transcribed from the stats sheet (Page 1).
+   dmg:[min,max], rng (px), cd (ms). Special fields per behavior. */
+const GEM_TYPES = {
+  amethyst:  { name:'Amethyst', color:'#9b5de5', weight:20, behavior:'single', air:true,
+    note:'High single-target damage. Targets air (active in Job 5).',
+    q:[ {dmg:[9,13],rng:143,cd:800},{dmg:[18,25],rng:161,cd:1000},{dmg:[30,40],rng:179,cd:1000},
+        {dmg:[60,75],rng:186,cd:1000},{dmg:[140,150],rng:215,cd:1000},{dmg:[350,400],rng:235,cd:1000} ] },
+  aquamarine:{ name:'Aquamarine', color:'#3fd0c9', weight:10, behavior:'single',
+    note:'Fast single-target fire.',
+    q:[ {dmg:[6,8],rng:50,cd:500},{dmg:[12,15],rng:52,cd:500},{dmg:[24,30],rng:54,cd:500},
+        {dmg:[48,55],rng:57,cd:500},{dmg:[100,120],rng:79,cd:500},{dmg:[280,280],rng:85,cd:500} ] },
+  diamond:   { name:'Diamond', color:'#dfe9ff', weight:20, behavior:'crit',
+    note:'Chance to deal multiplied damage.',
+    q:[ {dmg:[8,12],rng:72,cd:1000,critC:.25,critM:2},{dmg:[16,18],rng:79,cd:1000,critC:.25,critM:2},
+        {dmg:[30,37],rng:86,cd:1000,critC:.25,critM:2},{dmg:[58,65],rng:93,cd:1000,critC:.25,critM:2},
+        {dmg:[140,150],rng:107,cd:1000,critC:.25,critM:2},{dmg:[300,350],rng:121,cd:1000,critC:.25,critM:5} ] },
+  emerald:   { name:'Emerald', color:'#33c46b', weight:10, behavior:'poison',
+    note:'Poison damage over time; also slows (stacks with cold).',
+    q:[ {dmg:[9,13],rng:79,cd:1000,pDps:2,pDur:3000,slow:.15},{dmg:[10,14],rng:79,cd:1000,pDps:3,pDur:4000,slow:.15},
+        {dmg:[15,25],rng:86,cd:1000,pDps:5,pDur:5000,slow:.15},{dmg:[30,38],rng:100,cd:1000,pDps:8,pDur:6000,slow:.15},
+        {dmg:[80,90],rng:128,cd:1000,pDps:16,pDur:8000,slow:.15},{dmg:[250,250],rng:128,cd:1000,pDps:50,pDur:30000,slow:.15} ] },
+  opal:      { name:'Opal', color:'#ead9a6', weight:10, behavior:'buff',
+    note:'Speeds the fire rate of nearby gems.',
+    q:[ {dmg:[4,5],rng:86,cd:800,cdRed:.10},{dmg:[10,10],rng:100,cd:1000,cdRed:.15},{dmg:[20,20],rng:114,cd:1000,cdRed:.20},
+        {dmg:[40,40],rng:128,cd:1000,cdRed:.25},{dmg:[85,85],rng:143,cd:1000,cdRed:.35},{dmg:[180,180],rng:214,cd:1000,cdRed:.50} ] },
+  ruby:      { name:'Ruby', color:'#e23b5a', weight:10, behavior:'splash',
+    note:'Splash damage in an area.',
+    q:[ {dmg:[8,9],rng:114,cd:1000,splash:25},{dmg:[13,16],rng:114,cd:1000,splash:25},{dmg:[20,25],rng:114,cd:1000,splash:30},
+        {dmg:[38,44],rng:114,cd:1000,splash:30},{dmg:[80,104],rng:128,cd:1000,splash:30},
+        {dmg:[140,140],rng:128,cd:500,multi:3} ] },   // Great: no splash, hits 3
+  sapphire:  { name:'Sapphire', color:'#2f6dff', weight:10, behavior:'slow',
+    note:'Slows the target (cold).',
+    q:[ {dmg:[5,8],rng:72,cd:800,slow:.15},{dmg:[10,13],rng:107,cd:1000,slow:.20},{dmg:[16,21],rng:114,cd:1000,slow:.25},
+        {dmg:[30,40],rng:121,cd:1000,slow:.30},{dmg:[60,75],rng:200,cd:1000,slow:.40},{dmg:[200,200],rng:286,cd:1000,slow:.50} ] },
+  topaz:     { name:'Topaz', color:'#f0b429', weight:10, behavior:'multi',
+    note:'Strikes several targets at once.',
+    q:[ {dmg:[4,4],rng:72,cd:800,multi:3},{dmg:[8,8],rng:72,cd:1000,multi:3},{dmg:[14,14],rng:72,cd:1000,multi:4},
+        {dmg:[25,25],rng:72,cd:1000,multi:4},{dmg:[75,75],rng:86,cd:1000,multi:5},{dmg:[250,250],rng:100,cd:1000,multi:7} ] },
+};
+const TYPE_KEYS = Object.keys(GEM_TYPES);
+function rollForcedOpener(){          // hard-mode turn-1 guarantee: one full Silver or Malachite recipe among the 5 blocks
+  const pick = Math.random()<0.5 ? ['sapphire','diamond','topaz'] : ['emerald','opal','aquamarine'];
+  const five = [...pick, rollType(), rollType()];
+  for(let i=five.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [five[i],five[j]]=[five[j],five[i]]; }
+  return five;
+}
+function rollType() {
+  let tot = 0; for (const k of TYPE_KEYS) tot += GEM_TYPES[k].weight;
+  let r = Math.random()*tot;
+  for (const k of TYPE_KEYS) { r -= GEM_TYPES[k].weight; if (r <= 0) return k; }
+  return TYPE_KEYS[0];
+}
+function rollQuality() {
+  const w = UPGRADE_LADDER[G.upgradeLevel].w;
+  let tot = 0; for (const x of w) tot += x;
+  let r = Math.random()*tot;
+  for (let i=0;i<w.length;i++){ r -= w[i]; if (r <= 0) return i; }
+  return 0;
+}
+
+/* ----- SPECIAL GEMS (advanced towers) — Job 4a subset (existing behaviors) -----
+   Recipes use [type, qualityIndex] where quality .N (1-based) -> index N-1.
+   Novel effects (Flame Strike, Frost Nova, stun, gold-gen, damage-buff aura,
+   DoT auras, armor debuff) are deferred to Job 4b / Job 5; their fields are
+   omitted here so these gems run purely on already-built behaviors.
+   slow factors marked PH are placeholders (sheet gave "Cold/slow" with no %). */
+const SPECIALS = {
+  silver:      { color:'#cfd6e6', baseType:'sapphire', tiers:[
+    { name:'Silver',         recipe:[['sapphire',0],['diamond',0],['topaz',0]], dmg:[19,21], rng:79,  cd:1000, splash:36, slow:0.30, slowDur:5000 },
+    { name:'Sterling Silver',upgradeCost:25,  dmg:[39,40],  rng:93,  cd:1000, splash:36, slow:0.30, slowDur:5000 },
+    { name:'Silver Knight',  upgradeCost:300, dmg:[150,150],rng:107, cd:1000, splash:36, slow:0.30, slowDur:5000 },
+  ]},
+  bloodstone:  { color:'#b01030', baseType:'ruby', tiers:[
+    { name:'Blood Stone',         recipe:[['ruby',4],['aquamarine',3],['amethyst',2]], dmg:[68,68], rng:100, cd:500, splash:57 },
+    { name:'Ancient Blood Stone', upgradeCost:250, dmg:[160,240], rng:100, cd:800, critC:0.15, critM:3, haz:{type:'flame',dps:500,dur:5000}, hazChance:0.10 },
+  ]},
+  yellowsapphire:{ color:'#e8c84a', baseType:'sapphire', tiers:[
+    { name:'Yellow Sapphire',     recipe:[['sapphire',4],['ruby',3],['topaz',3]], dmg:[99,100], rng:114, cd:1000, splash:57, slow:0.30, slowDur:5000 },
+    { name:'Star Yellow Sapphire',upgradeCost:210, dmg:[189,189], rng:122, cd:800, splash:57, slow:0.30, slowDur:5000, dmgBuffAura:0.05, buffRange:171 },
+  ]},
+  jade:        { color:'#3fae7a', baseType:'aquamarine', tiers:[
+    { name:'Jade',            recipe:[['emerald',2],['opal',2],['sapphire',1]], dmg:[30,35], rng:114, cd:500, pDps:5,  pDur:2000, slow:0.50 },
+    { name:'Asian Jade',      upgradeCost:45,  dmg:[50,50], rng:114, cd:500, pDps:10, pDur:3000, slow:0.50 },
+    { name:'Lucky Asian Jade',upgradeCost:250, dmg:[55,55], rng:121, cd:350, pDps:10, pDur:4000, slow:0.50, critC:0.05, critM:4, stunChance:0.01, stunDur:2000, goldChance:0.01 },
+  ]},
+  malachite:   { color:'#1f8f5a', baseType:'emerald', tiers:[
+    { name:'Malachite',        recipe:[['emerald',0],['opal',0],['aquamarine',0]], dmg:[6,6],  rng:107, cd:500, multi:3 },
+    { name:'Vivid Malachite',  upgradeCost:25,  dmg:[11,11], rng:114, cd:500, multi:4 },
+    { name:'Mighty Malachite', upgradeCost:280, dmg:[45,45], rng:114, cd:550, multi:'all' },
+  ]},
+  pinkdiamond: { color:'#f48fb1', baseType:'diamond', ground:true, tiers:[
+    { name:'Pink Diamond',       recipe:[['diamond',4],['diamond',2],['topaz',2]], dmg:[150,175], rng:114, cd:750, critC:0.10, critM:5 },
+    { name:'Great Pink Diamond', upgradeCost:175, dmg:[175,225], rng:121, cd:650, critC:0.10, critM:8 },
+  ]},
+  gold:        { color:'#e8c054', baseType:'amethyst', tiers:[
+    { name:'Gold',         recipe:[['amethyst',4],['amethyst',3],['diamond',1]], dmg:[160,190], rng:114, cd:1000, critC:0.25, critM:2, armorDebuff:5 },
+    { name:'Egyptian Gold',upgradeCost:210, dmg:[160,200], rng:114, cd:750, critC:0.30, critM:2, armorDebuff:8 },
+  ]},
+  darkemerald: { color:'#1f7a4a', baseType:'emerald', tiers:[
+    { name:'Dark Emerald',     recipe:[['emerald',4],['sapphire',3],['topaz',1]], dmg:[90,150], rng:79,  cd:800, stunChance:0.125, stunDur:1500 },
+    { name:'Enchanted Emerald',upgradeCost:250, dmg:[100,200], rng:100, cd:700, critC:0.15, critM:4, stunChance:0.15, stunDur:2000 },
+  ]},
+  tourmaline:  { color:'#3bb3a0', baseType:'opal', tiers:[
+    { name:'Tourmaline',         recipe:[['aquamarine',4],['opal',3],['emerald',1],['aquamarine',1]], dmg:[10,400], rng:121, cd:750, armorDebuff:4, haz:{type:'frost',dps:200,dur:3000,slow:0.5}, hazChance:0.10 },
+    { name:'Paraiba Tourmaline', upgradeCost:350, dmg:[30,420], rng:125, cd:750, armorDebuff:6, haz:{type:'frost',dps:250,dur:3000,slow:0.5}, hazChance:0.10 },
+  ]},
+  blackopal:   { color:'#3a4a6a', baseType:'opal', tiers:[
+    { name:'Black Opal',        recipe:[['opal',4],['diamond',3],['aquamarine',2]], dmg:[24,25], rng:114, cd:1000, dmgBuffAura:0.30, buffRange:143 },
+    { name:'Mystic Black Opal', upgradeCost:250, dmg:[70,70], rng:143, cd:1000, dmgBuffAura:0.40, buffRange:171 },
+  ]},
+  starruby:    { color:'#e0203a', baseType:'ruby', tiers:[
+    { name:'Star Ruby',  recipe:[['ruby',1],['ruby',0],['amethyst',0]], dotAura:true, dotDps:44,  rng:39 },
+    { name:'Blood Star', upgradeCost:30,  dotAura:true, dotDps:52,  rng:72 },
+    { name:'Fire Star',  upgradeCost:290, dotAura:true, dotDps:156, rng:86 },
+  ]},
+  uranium:     { color:'#7fe04a', baseType:'topaz', tiers:[
+    { name:'Uranium 235', recipe:[['topaz',4],['sapphire',2],['opal',1]], dotAura:true, dotDps:188, rng:64, slow:0.50 },
+    { name:'Uranium 238', upgradeCost:190, dotAura:true, dotDps:256, rng:86, slow:0.50 },
+  ]},
+  redcrystal:  { color:'#ff7ad4', baseType:'amethyst', air:true, tiers:[
+    { name:'Red Crystal',        recipe:[['emerald',3],['ruby',2],['amethyst',1]], dmg:[50,75],  rng:186, cd:800, armorAura:4, auraRange:186 },
+    { name:'Red Crystal Facet',  upgradeCost:75,  dmg:[75,100], rng:200, cd:800, armorAura:5, auraRange:200 },
+    { name:'Rose Quartz Crystal',upgradeCost:100, dmg:[100,125],rng:214, cd:800, armorAura:6, auraRange:214 },
+  ]},
+};
+// pool: array of {type, quality}. recipe: array of [type, qIdx].
+function recipeSatisfied(pool, recipe){
+  const need={}; for(const [t,q] of recipe){ const k=t+'.'+q; need[k]=(need[k]||0)+1; }
+  const have={}; for(const g of pool){ const k=g.type+'.'+g.quality; have[k]=(have[k]||0)+1; }
+  for(const k in need) if((have[k]||0)<need[k]) return false; return true;
+}
+// pick concrete component instances from pool, preferring `must` for one slot
+function assembleComponents(recipe, pool, must){
+  const rem=pool.slice(), chosen=[];
+  for(const [t,q] of recipe){
+    let idx=-1;
+    if(must && rem.indexOf(must)>=0 && must.type===t && must.quality===q) idx=rem.indexOf(must);
+    else idx=rem.findIndex(g=>g.type===t&&g.quality===q);
+    if(idx<0) return null;
+    chosen.push(rem[idx]); rem.splice(idx,1);
+  }
+  return chosen;
+}
+// first special whose tier-0 recipe includes `clicked` and is fully present in pool
+function findRecipeFor(clicked, pool){
+  for(const key in SPECIALS){
+    const recipe=SPECIALS[key].tiers[0].recipe;
+    const ck=clicked.type+'.'+clicked.quality;
+    if(!recipe.some(([t,q])=>t+'.'+q===ck)) continue;
+    const comps=assembleComponents(recipe, pool, clicked);
+    if(comps) return { key, name:SPECIALS[key].tiers[0].name, components:comps };
+  }
+  return null;
+}
+
+/* ---------------------------------- STATE --------------------------------- */
+let G;
+function freshGame() {
+  return {
+    phase:'build', level:1, lives:BAL.startLives, gold:BAL.startGold, score:0,
+    upgradeLevel:0, repickCost:REPICK_STEP, waveWeakness:'topaz', forcedTypes:rollForcedOpener(),
+    blocked:new Uint8Array(N*N), walls:[], gems:[], fields:null,
+    candidates:[], chosen:false, placing:false,
+    enemies:[], projectiles:[], particles:[], hazards:[],
+    spawnQueue:0, spawnTimer:0,
+    hover:{ cx:-1, cy:-1, gem:null, cand:null }, sel:null, debug:false,
+  };
+}
+
+/* ----------------------------------- GRID --------------------------------- */
+function fits2x2(x,y,grid){
+  if(!inB(x,y)||!inB(x+1,y+1)) return false;
+  for(let dx=0;dx<2;dx++)for(let dy=0;dy<2;dy++){
+    const cxp=x+dx,cyp=y+dy;
+    if(grid[idx(cxp,cyp)]) return false;
+    if(cxp===SPAWN.x&&cyp===SPAWN.y) return false;
+    if(cxp===ENDPOINT.x&&cyp===ENDPOINT.y) return false;
+    for(const cp of CPS) if(cp.x===cxp&&cp.y===cyp) return false;
+  } return true;
+}
+function set2x2(grid,x,y,v){ for(let dx=0;dx<2;dx++)for(let dy=0;dy<2;dy++) grid[idx(x+dx,y+dy)]=v; }
+
+/* ------------------------------- PATHFINDING ------------------------------ */
+function computeField(grid,src){
+  const dist=new Float64Array(N*N).fill(Infinity); dist[idx(src.x,src.y)]=0;
+  const pq=[[0,src.x,src.y]];
+  while(pq.length){
+    let mi=0; for(let i=1;i<pq.length;i++) if(pq[i][0]<pq[mi][0]) mi=i;
+    const [d,x,y]=pq.splice(mi,1)[0];
+    if(d>dist[idx(x,y)]) continue;
+    for(const [dx,dy,c] of NB){
+      const nx=x+dx,ny=y+dy;
+      if(!inB(nx,ny)||grid[idx(nx,ny)]) continue;
+      const nd=d+c;
+      if(nd<dist[idx(nx,ny)]){ dist[idx(nx,ny)]=nd; pq.push([nd,nx,ny]); }
+    }
+  } return dist;
+}
+function recomputeFields(){ G.fields = TARGETS.map(t=>computeField(G.blocked,t)); }
+function routeOpen(grid){
+  for(let i=0;i<ROUTE.length-1;i++){
+    const f=computeField(grid,ROUTE[i+1]);
+    if(!isFinite(f[idx(ROUTE[i].x,ROUTE[i].y)])) return false;
+  } return true;
+}
+function placementLegal(x,y){
+  if(!fits2x2(x,y,G.blocked)) return false;
+  const t=Uint8Array.from(G.blocked); set2x2(t,x,y,1); return routeOpen(t);
+}
+function gradientPath(field,fx,fy,target){
+  if(!isFinite(field[idx(fx,fy)])) return null;
+  const path=[]; let cxp=fx,cyp=fy,guard=0;
+  while(!(cxp===target.x&&cyp===target.y)&&guard++<4000){
+    let best=null,bd=field[idx(cxp,cyp)];
+    for(const [dx,dy] of NB){
+      const nx=cxp+dx,ny=cyp+dy;
+      if(!inB(nx,ny)||G.blocked[idx(nx,ny)]) continue;
+      if(field[idx(nx,ny)]<bd-1e-9){ bd=field[idx(nx,ny)]; best=[nx,ny]; }
+    }
+    if(!best) break; cxp=best[0]; cyp=best[1]; path.push({x:cxp,y:cyp});
+  }
+  return (cxp===target.x&&cyp===target.y)?path:null;
+}
+
+/* --------------------------------- ENEMIES -------------------------------- */
+function spawnEnemy(){
+  const st=waveStats(G.level);
+  const e={ x:cx2px(SPAWN.x), y:cy2px(SPAWN.y), hp:st.hp, maxHp:st.hp, baseSpd:st.spd,
+    armor:st.armor, minSpd:st.minSpd, isAir:st.isAir, weakness:G.waveWeakness,
+    armorDebuff:0, armorDebuffUntil:0, stunUntil:0,
+    auraArmorDebuff:0, target:0, path:null, wp:0, cold:null, poison:null };
+  if(!e.isAir) retargetPath(e); G.enemies.push(e);
+}
+function retargetPath(e){
+  const f=G.fields[e.target];
+  const cc=Math.floor(e.x/CELL), cr=Math.floor(e.y/CELL);
+  const cells=gradientPath(f,cc,cr,TARGETS[e.target]);
+  e.path=cells?cells.map(c=>({x:cx2px(c.x),y:cy2px(c.y)})):null; e.wp=0;
+}
+function effSpeed(e,now){
+  if(e.stunUntil && now<e.stunUntil) return 0;
+  let m=1;
+  if(e.cold && now<e.cold.until) m*=(1-e.cold.f);
+  if(e.poison && now<e.poison.until) m*=(1-e.poison.slow);
+  let spd=e.baseSpd*m;
+  if(e.minSpd) spd=Math.max(spd, e.minSpd);   // can't be slowed below the wave's floor (lvls 18+)
+  return spd;
+}
+function updateEnemies(dt,now){
+  for(const e of G.enemies){
+    if(e.armorDebuff && now>=e.armorDebuffUntil) e.armorDebuff=0;
+    // poison DoT
+    if(e.poison && now<e.poison.until){
+      while(now>=e.poison.nextTick){
+        e.hp-=e.poison.dps; e.poison.nextTick+=1000;
+        if(e.hp<=0){ killEnemy(e,e.poison.gem); break; }
+      }
+    }
+    if(e.dead) continue;
+    // air enemies have armor stripped by Red Crystal auras in range
+    if(e.isAir){
+      e.auraArmorDebuff=0;
+      for(const g of G.gems){ if(g.isSpecial && SPECIALS[g.special].air && g.s.armorAura){
+        if(Math.hypot(g.px-e.x,g.py-e.y)<=g.s.auraRange*RANGE_SCALE) e.auraArmorDebuff=Math.max(e.auraArmorDebuff,g.s.armorAura); } }
+    }
+    const spd=effSpeed(e,now);
+    if(e.isAir){
+      // flyers ignore the maze: straight line through the checkpoint order
+      const tx=cx2px(TARGETS[e.target].x), ty=cy2px(TARGETS[e.target].y);
+      let dx=tx-e.x,dy=ty-e.y,d=Math.hypot(dx,dy); const step=spd*dt;
+      if(d<=Math.max(step,CELL*0.7)){ if(e.target===TARGETS.length-1){ leak(e); continue; } e.target++; }
+      else { e.x+=dx/d*step; e.y+=dy/d*step; }
+      continue;
+    }
+    // ground: arrival then maze pathing
+    const cpx=cx2px(TARGETS[e.target].x), cpy=cy2px(TARGETS[e.target].y);
+    if(Math.hypot(cpx-e.x,cpy-e.y)<CELL*0.7){
+      if(e.target===TARGETS.length-1){ leak(e); continue; }
+      e.target++; retargetPath(e);
+    }
+    if(!e.path||e.wp>=e.path.length) retargetPath(e);
+    if(!e.path||e.wp>=e.path.length) continue;
+    const wp=e.path[e.wp]; let dx=wp.x-e.x,dy=wp.y-e.y,d=Math.hypot(dx,dy); const step=spd*dt;
+    if(d<=step){ e.x=wp.x; e.y=wp.y; e.wp++; } else { e.x+=dx/d*step; e.y+=dy/d*step; }
+  }
+  G.enemies=G.enemies.filter(e=>!e.dead&&!e.leaked);
+}
+function leak(e){ e.leaked=true; G.lives-=BAL.bounty(G.level); if(G.lives<=0){ G.lives=0; endGame(false); } }
+function killEnemy(e,gem){
+  if(e.dead) return;
+  e.dead=true; G.gold+=BAL.bounty(G.level); G.score+=10; if(gem) gem.kills++;
+  for(let i=0;i<7;i++) G.particles.push({x:e.x,y:e.y,vx:(Math.random()-.5)*90,vy:(Math.random()-.5)*90,life:.5,col:'#c23a52'});
+}
+
+/* --------------------------------- TOWERS --------------------------------- */
+function effCooldown(g){ return g.cd * (g.cdMult||1); }
+function recomputeBuffs(){
+  for(const g of G.gems){
+    let cdMult=1, dmgBuff=1;
+    for(const o of G.gems){
+      if(o===g) continue;
+      const dist=Math.hypot(o.px-g.px,o.py-g.py);
+      if(o.type==='opal' && dist<=o.s.rng*RANGE_SCALE) cdMult*=(1-o.s.cdRed);            // Opal: fire-rate aura
+      if(o.s.dmgBuffAura && dist<=(o.s.buffRange||o.s.rng)*RANGE_SCALE) dmgBuff*=(1+o.s.dmgBuffAura); // Black Opal / Star YS: damage aura
+    }
+    g.cdMult=cdMult; g.dmgBuff=dmgBuff;
+  }
+}
+function gemHitsAir(g){
+  if(g.isSpecial) return !SPECIALS[g.special].ground;   // ground-only specials (Pink Diamond) can't hit air
+  return g.type!=='diamond';                            // base Diamond is ground-only
+}
+function gemHitsGround(g){
+  if(g.isSpecial) return !SPECIALS[g.special].air;       // air-only specials (Red Crystal) can't hit ground
+  return g.type!=='amethyst';                            // base Amethyst is air-only
+}
+function enemiesInRange(g){
+  const out=[]; const R=g.s.rng*RANGE_SCALE;
+  for(const e of G.enemies){
+    if(e.isAir && !gemHitsAir(g)) continue;
+    if(!e.isAir && !gemHitsGround(g)) continue;
+    const d=Math.hypot(e.x-g.px,e.y-g.py); if(d<=R) out.push([d,e]);
+  }
+  return out.sort((a,b)=>a[0]-b[0]);
+}
+function rollDmg(s){ return s.dmg[0]+Math.random()*(s.dmg[1]-s.dmg[0]); }
+function promoLevel(g){ return Math.floor((g.kills||0)/10); }   // +1 promotion per 10 kills
+function promoMult(g){ return 1 + 0.10*promoLevel(g); }          // +10% of BASE damage per level, non-compounding
+function updateGems(now){
+  for(const g of G.gems){
+    if(g.s.dotAura){                          // DoT aura: 10 ticks/sec, 10% of DPS each, all in range, no projectile
+      if(now-g.lastShot < 100) continue;
+      g.lastShot=now;
+      const tick=g.s.dotDps*0.1*(g.dmgBuff||1)*promoMult(g);
+      for(const [d,e] of enemiesInRange(g)){ damageEnemy(e,tick,g); if(g.s.slow) e.cold={f:g.s.slow,until:now+250}; }
+      continue;
+    }
+    if(now-g.lastShot < effCooldown(g)) continue;
+    const inR=enemiesInRange(g); if(!inR.length) continue;
+    g.lastShot=now;
+    const s=g.s;
+    const n = s.multi ? (s.multi==='all'?inR.length:s.multi) : 1;
+    const targets = inR.slice(0,n).map(t=>t[1]);
+    for(const e of targets){
+      let dmg=rollDmg(s)*(g.dmgBuff||1)*promoMult(g);
+      if(s.critC && Math.random()<s.critC) dmg*=s.critM;
+      G.projectiles.push(mkProj(g,e,dmg));
+    }
+  }
+}
+function mkProj(g,target,dmg){ return { x:g.px, y:g.py, target, dmg, gem:g, s:g.s, col:g.color }; }
+function updateProjectiles(dt,now){
+  const PSPD=540;
+  for(const p of G.projectiles){
+    const e=p.target;
+    if(!e||e.dead||e.leaked){ p.spent=true; continue; }
+    let dx=e.x-p.x,dy=e.y-p.y,d=Math.hypot(dx,dy); const step=PSPD*dt;
+    if(d<=step){ p.spent=true; applyHit(p,e,now); }
+    else { p.x+=dx/d*step; p.y+=dy/d*step; }
+  }
+  G.projectiles=G.projectiles.filter(p=>!p.spent);
+}
+function damageEnemy(e,dmg,gem){
+  if(e.dead||e.leaked) return;
+  const dtype = gem ? (gem.type||gem.baseType) : null;
+  const wmult = dtype ? dmgMultiplier(dtype, e.weakness) : 1;
+  const eff = Math.max(0, e.armor - (e.armorDebuff||0) - (e.auraArmorDebuff||0));
+  e.hp -= dmg * wmult / (1 + 0.06*eff);
+  if(e.hp<=0) killEnemy(e,gem);
+}
+function applyEffects(e,s,now,gem){
+  if(e.dead||e.leaked) return;
+  if(s.pDps){ e.poison={ dps:s.pDps, until:now+s.pDur, slow:s.slow||0, nextTick:now+1000, gem }; }
+  else if(s.slow){ e.cold={ f:s.slow, until:now+(s.slowDur||BAL.coldDur) }; }
+  if(s.stunChance && Math.random()<s.stunChance){ e.stunUntil=now+s.stunDur; }
+  if(s.goldChance && Math.random()<s.goldChance){ G.gold+=Math.floor(G.level/2); }
+  if(s.haz && Math.random()<s.hazChance){ spawnHazard(e.x,e.y,s.haz,now); }
+  if(s.armorDebuff){ e.armorDebuff=Math.max(e.armorDebuff||0, s.armorDebuff); e.armorDebuffUntil=now+ARMOR_DEBUFF_DUR; }
+}
+function spawnHazard(x,y,haz,now){
+  G.hazards.push({ x,y, r:35*RANGE_SCALE, dps:haz.dps, slow:haz.slow||0, type:haz.type, until:now+haz.dur });
+}
+function updateHazards(dt,now){
+  for(const h of G.hazards){
+    if(now>=h.until){ h.dead=true; continue; }
+    for(const e of G.enemies){ if(e.dead||e.leaked) continue;
+      if(Math.hypot(e.x-h.x,e.y-h.y)<=h.r){ damageEnemy(e,h.dps*dt,null); if(h.slow) e.cold={f:h.slow,until:now+250}; } }
+  }
+  G.hazards=G.hazards.filter(h=>!h.dead);
+}
+function applyHit(p,e,now){
+  const s=p.s;
+  if(s.splash){
+    const R=s.splash*RANGE_SCALE;
+    for(const o of G.enemies){
+      if(o.dead||o.leaked) continue;
+      if(Math.hypot(o.x-e.x,o.y-e.y)<=R){ damageEnemy(o,p.dmg,p.gem); applyEffects(o,s,now,p.gem); }
+    }
+  } else { damageEnemy(e,p.dmg,p.gem); applyEffects(e,s,now,p.gem); }
+}
+function updateParticles(dt){ for(const pt of G.particles){ pt.x+=pt.vx*dt; pt.y+=pt.vy*dt; pt.life-=dt; } G.particles=G.particles.filter(p=>p.life>0); }
+
+/* ---------------------------------- BUILD --------------------------------- */
+function tryPlaceCandidate(cxp,cyp){
+  if(G.candidates.length>=5||G.chosen) return;
+  if(!placementLegal(cxp,cyp)){ flashPrompt("That placement would seal the path — try elsewhere."); return; }
+  set2x2(G.blocked,cxp,cyp,1);
+  const type=(G.level===1 && G.forcedTypes && G.forcedTypes.length)?G.forcedTypes.shift():rollType();
+  G.candidates.push({ x:cxp, y:cyp, type, quality:rollQuality() });
+  G.sel=null; recomputeFields(); refreshBuildUI();
+}
+function undoCandidate(cxp,cyp){
+  if(G.chosen) return;
+  for(let i=0;i<G.candidates.length;i++){ const c=G.candidates[i];
+    if(cxp>=c.x&&cxp<c.x+2&&cyp>=c.y&&cyp<c.y+2){ set2x2(G.blocked,c.x,c.y,0); if(G.level===1&&G.forcedTypes) G.forcedTypes.unshift(c.type); G.candidates.splice(i,1); G.sel=null; recomputeFields(); refreshBuildUI(); return; } }
+}
+function candGroup(i){ const c=G.candidates[i]; return G.candidates.filter(o=>o.type===c.type&&o.quality===c.quality); }
+function finishSelect(){ G.candidates=[]; G.chosen=true; G.sel=null; recomputeBuffs(); startWave(); }
+function keepCandidate(i){
+  const c=G.candidates[i];
+  G.gems.push(makeGem(c.x,c.y,c.type,c.quality));
+  for(let j=0;j<G.candidates.length;j++) if(j!==i) G.walls.push(G.candidates[j]);
+  finishSelect();
+}
+function combineCandidate(i){
+  const c=G.candidates[i]; const grp=candGroup(i);
+  const q=Math.min(5, c.quality + (grp.length>=4?2:1)); // pair -> +1, full set of four -> +2; Perfect+1 = Great
+  G.gems.push(makeGem(c.x,c.y,c.type,q));
+  for(let j=0;j<G.candidates.length;j++) if(j!==i) G.walls.push(G.candidates[j]);
+  finishSelect();
+}
+function makeGem(x,y,type,quality){
+  const T=GEM_TYPES[type], s=T.q[quality];
+  return { x,y, px:(x+1)*CELL, py:(y+1)*CELL, type, name:T.name, color:T.color,
+    behavior:T.behavior, quality, s, cd:s.cd, lastShot:0, kills:0, cdMult:1,
+    placedLevel:G.level, downgraded:false };
+}
+function setGemQuality(g,quality){ g.quality=quality; g.s=GEM_TYPES[g.type].q[quality]; g.cd=g.s.cd; recomputeBuffs(); }
+function gemEligibleDowngrade(g){ return !g.isSpecial && g.placedLevel===G.level && !g.downgraded && g.quality>0; }
+function makeSpecial(x,y,key,tier){
+  const sp=SPECIALS[key], t=sp.tiers[tier];
+  return { x,y, px:(x+1)*CELL, py:(y+1)*CELL, isSpecial:true, special:key, tier,
+    name:t.name, color:sp.color, baseType:sp.baseType, s:t, cd:t.cd||1000,
+    lastShot:0, kills:0, cdMult:1, dmgBuff:1 };
+}
+function combineSpecialCandidate(i){
+  const c=G.candidates[i]; const found=findRecipeFor(c, G.candidates); if(!found) return;
+  G.gems.push(makeSpecial(c.x,c.y,found.key,0));
+  for(let j=0;j<G.candidates.length;j++) if(j!==i) G.walls.push(G.candidates[j]);
+  finishSelect();                       // clears candidates, auto-starts the wave
+}
+function combineSpecialMaze(clicked){
+  const found=findRecipeFor(clicked, G.gems); if(!found) return;
+  const special=makeSpecial(clicked.x,clicked.y,found.key,0);
+  for(const comp of found.components){
+    if(comp===clicked) continue;
+    const gi=G.gems.indexOf(comp); if(gi>=0) G.gems.splice(gi,1);
+    G.walls.push({x:comp.x,y:comp.y});  // consumed components revert to deletable rocks
+  }
+  const ci=G.gems.indexOf(clicked); if(ci>=0) G.gems.splice(ci,1);
+  special.kills = found.components.reduce((a,c)=>a+(c.kills||0),0); // carry kills over (design call)
+  G.gems.push(special); G.sel=null; recomputeBuffs(); updatePanel(); // occupancy unchanged -> no field recompute
+}
+function upgradeSpecial(g){
+  const sp=SPECIALS[g.special], next=sp.tiers[g.tier+1];
+  if(!next || G.gold<next.upgradeCost) return;
+  G.gold-=next.upgradeCost; g.tier++; g.s=next; g.name=next.name; g.cd=next.cd||1000;
+  recomputeBuffs(); updatePanel(); updateEcon();
+}
+function downgradeGem(g){
+  if(!gemEligibleDowngrade(g)) return;
+  g.downgraded=true; setGemQuality(g,g.quality-1); updatePanel();
+}
+function deleteRock(w){
+  if(G.phase!=='build') return;
+  const i=G.walls.indexOf(w); if(i<0) return;
+  set2x2(G.blocked,w.x,w.y,0); G.walls.splice(i,1); G.sel=null; recomputeFields(); updatePanel();
+}
+function doAction(act){
+  if(!G.sel) return;
+  if(G.sel.kind==='cand'){
+    if(act==='keep') keepCandidate(G.sel.i);
+    else if(act==='combine') combineCandidate(G.sel.i);
+    else if(act==='special') combineSpecialCandidate(G.sel.i);
+  } else if(G.sel.kind==='gem'){
+    if(act==='downgrade') downgradeGem(G.sel.ref);
+    else if(act==='special') combineSpecialMaze(G.sel.ref);
+    else if(act==='upgrade') upgradeSpecial(G.sel.ref);
+  } else if(G.sel.kind==='rock'){
+    if(act==='delete') deleteRock(G.sel.ref);
+  }
+}
+
+/* ---------------------------------- WAVES --------------------------------- */
+function startWave(){
+  if(G.phase!=='build'||!G.chosen) return;
+  recomputeFields(); recomputeBuffs();
+  G.phase='combat'; G.spawnQueue=BAL.enemyCount(G.level); G.spawnTimer=0; refreshBuildUI();
+}
+function endWave(){
+  G.gold+=BAL.roundBonus(G.level); G.score+=50;
+  if(G.level>=BAL.maxLevel){ endGame(true); return; }
+  G.level++; G.waveWeakness=rollWaveWeakness(G.level); G.phase='build'; G.chosen=false; G.candidates=[]; G.placing=false; refreshBuildUI();
+}
+function updateSpawning(dt){
+  if(G.spawnQueue>0){ G.spawnTimer-=dt; if(G.spawnTimer<=0){ spawnEnemy(); G.spawnQueue--; G.spawnTimer=BAL.spawnGap; } }
+  else if(G.enemies.length===0 && G.phase==='combat'){ endWave(); }
+}
+function endGame(won){
+  G.phase=won?'win':'gameover';
+  const b=document.getElementById('banner'); b.className=won?'win':'lose'; b.style.display='grid';
+  document.getElementById('bBig').textContent=won?'CLEARED':'CASTLE LOST';
+  document.getElementById('bSub').textContent=won?`All ${BAL.maxLevel} levels survived · Score ${G.score}`:`Fell on level ${G.level} · Score ${G.score}`;
+}
+/* lives can be bought at any time. cap 50 accumulated; buy-5 disables at 46+ to avoid wasted gold. */
+function buyLife(n){
+  if(G.phase==='gameover'||G.phase==='win') return;
+  const cost = n===5 ? BAL.buy5Cost : BAL.buyLifeCost;
+  if(n===5 && G.lives>45) return;
+  if(n===1 && G.lives>=BAL.livesCap) return;
+  if(G.gold<cost) return;
+  G.gold-=cost; G.lives=Math.min(BAL.livesCap, G.lives+n);
+  refreshBuildUI(); updateEcon();
+}
+/* Upgrade Chances: buy the next ladder level; improves quality odds for FUTURE candidates. */
+function buyUpgradeChance(){
+  if(G.upgradeLevel>=UPGRADE_LADDER.length-1) return;
+  const cost=UPGRADE_LADDER[G.upgradeLevel+1].cost;
+  if(G.gold<cost) return;
+  G.gold-=cost; G.upgradeLevel++; refreshBuildUI(); updateEcon();
+}
+/* Repick: re-roll all 5 candidates (cost climbs +25 each use, never resets). Only pre-keep. */
+function startPlacing(){ if(!(G.phase==='build'&&!G.placing&&!G.chosen)) return; G.placing=true; G.sel=null; refreshBuildUI(); updatePanel(); }
+function repickReplace(){     // pay a repick to discard the lot and re-place 5 freshly-rolled blocks
+  if(!(G.phase==='build'&&G.placing&&!G.chosen&&G.candidates.length===5&&G.gold>=G.repickCost)) return;
+  G.gold-=G.repickCost; G.repickCost+=REPICK_STEP;
+  for(const c of G.candidates) set2x2(G.blocked,c.x,c.y,0);
+  G.candidates=[]; G.sel=null; recomputeFields(); refreshBuildUI(); updateEcon(); updatePanel();
+}
+function repick(){
+  if(G.chosen || G.candidates.length<5 || G.gold<G.repickCost) return;
+  G.gold-=G.repickCost; G.repickCost+=REPICK_STEP;
+  for(const c of G.candidates){ c.type=rollType(); c.quality=rollQuality(); }
+  G.sel=null; refreshBuildUI(); updateEcon(); updatePanel();
+}
+
+/* ---------------------------------- RENDER -------------------------------- */
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  drawFloor(); if(G.debug) drawGrid();
+  for(const w of G.walls) drawBlock(w.x,w.y);
+  for(const c of G.candidates) drawGemShape((c.x+1)*CELL,(c.y+1)*CELL,GEM_TYPES[c.type].color,true);
+  for(let i=0;i<CPS.length;i++) drawCheckpoint(CPS[i],i+1);
+  drawGoal(); drawSpawn();
+  for(const g of G.gems) drawGemShape(g.px,g.py,g.color,false,g.isSpecial);
+  if(G.phase==='build'&&!G.chosen&&G.candidates.length<5&&G.hover.cx>=0) drawHoverFootprint();
+  const focus = (G.sel&&G.sel.kind==='gem') ? G.sel.ref : G.hover.gem;
+  if(focus){ ctx.beginPath(); ctx.arc(focus.px,focus.py,focus.s.rng*RANGE_SCALE,0,Math.PI*2);
+    ctx.strokeStyle='rgba(127,176,255,.35)'; ctx.lineWidth=1; ctx.stroke();
+    if(focus.type==='opal'){ ctx.strokeStyle='rgba(234,217,166,.25)'; ctx.stroke(); } }
+  // selection outline
+  if(G.sel){
+    let cell=null;
+    if(G.sel.kind==='cand'&&G.candidates[G.sel.i]) cell=G.candidates[G.sel.i];
+    else if(G.sel.kind==='gem') cell=G.sel.ref;
+    else if(G.sel.kind==='rock') cell=G.sel.ref;
+    if(cell){ const pulse=0.5+0.5*Math.sin(performance.now()/200);
+      ctx.strokeStyle=`rgba(255,255,255,${0.55+pulse*0.35})`; ctx.lineWidth=2;
+      ctx.strokeRect(cell.x*CELL-1,cell.y*CELL-1,2*CELL+2,2*CELL+2); }
+  }
+  for(const e of G.enemies) drawEnemy(e);
+  for(const p of G.projectiles){ ctx.beginPath(); ctx.arc(p.x,p.y,2.6,0,Math.PI*2);
+    ctx.fillStyle=p.col; ctx.shadowColor=p.col; ctx.shadowBlur=8; ctx.fill(); ctx.shadowBlur=0; }
+  for(const h of G.hazards){ const pulse=0.6+0.4*Math.sin(performance.now()/120);
+    ctx.beginPath(); ctx.arc(h.x,h.y,h.r,0,Math.PI*2);
+    ctx.fillStyle = h.type==='flame'?`rgba(255,120,40,${0.16*pulse})`:`rgba(120,200,255,${0.16*pulse})`; ctx.fill();
+    ctx.strokeStyle = h.type==='flame'?'rgba(255,150,60,.65)':'rgba(150,210,255,.65)'; ctx.lineWidth=1.5; ctx.stroke(); }
+  for(const pt of G.particles){ ctx.globalAlpha=Math.max(0,pt.life*2); ctx.fillStyle=pt.col; ctx.fillRect(pt.x-1.5,pt.y-1.5,3,3); ctx.globalAlpha=1; }
+  if(G.debug) drawDebugPaths();
+}
+function drawFloor(){
+  const g=ctx.createLinearGradient(0,0,0,cv.height); g.addColorStop(0,'#202736'); g.addColorStop(1,'#141925');
+  ctx.fillStyle=g; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.lineWidth=1; ctx.strokeStyle='rgba(140,158,190,.06)'; ctx.beginPath();
+  for(let i=0;i<=N;i++){ ctx.moveTo(i*CELL+.5,0); ctx.lineTo(i*CELL+.5,N*CELL); ctx.moveTo(0,i*CELL+.5); ctx.lineTo(N*CELL,i*CELL+.5); } ctx.stroke();
+  ctx.strokeStyle='rgba(140,158,190,.11)'; ctx.beginPath();
+  for(let i=0;i<=N;i+=2){ ctx.moveTo(i*CELL+.5,0); ctx.lineTo(i*CELL+.5,N*CELL); ctx.moveTo(0,i*CELL+.5); ctx.lineTo(N*CELL,i*CELL+.5); } ctx.stroke();
+  ctx.strokeStyle='rgba(127,176,255,.18)'; ctx.lineWidth=2; ctx.strokeRect(1,1,cv.width-2,cv.height-2);
+}
+function drawGrid(){ ctx.strokeStyle='rgba(120,135,160,.16)'; ctx.lineWidth=1;
+  for(let i=0;i<=N;i++){ ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,N*CELL); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(N*CELL,i*CELL); ctx.stroke(); } }
+function drawBlock(x,y){
+  const px=x*CELL,py=y*CELL,s=2*CELL;
+  ctx.fillStyle='#565d70'; ctx.fillRect(px,py,s,s);
+  ctx.fillStyle='rgba(124,134,158,.95)'; ctx.fillRect(px,py,s,3); ctx.fillRect(px,py,3,s);
+  ctx.fillStyle='rgba(26,29,40,.95)'; ctx.fillRect(px,py+s-3,s,3); ctx.fillRect(px+s-3,py,3,s);
+  ctx.strokeStyle='#161922'; ctx.lineWidth=1; ctx.strokeRect(px+.5,py+.5,s-1,s-1);
+}
+function shade(hex,f){ const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=Math.round(r*f); g=Math.round(g*f); b=Math.round(b*f); return `rgb(${Math.min(r,255)},${Math.min(g,255)},${Math.min(b,255)})`; }
+function drawGemShape(px,py,color,isCand,isSpecial){
+  const r=CELL*(isSpecial?1.0:0.92);
+  ctx.save(); ctx.translate(px,py);
+  ctx.shadowColor=color; ctx.shadowBlur=isCand?8:(isSpecial?22:14);
+  ctx.beginPath();
+  for(let i=0;i<8;i++){ const a=Math.PI/8+i*Math.PI/4; const rad=(i%2===0)?r:r*0.72; const X=Math.cos(a)*rad,Y=Math.sin(a)*rad; i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
+  ctx.closePath();
+  const grad=ctx.createLinearGradient(-r,-r,r,r);
+  grad.addColorStop(0,shade(color,1.5)); grad.addColorStop(.5,color); grad.addColorStop(1,shade(color,0.45));
+  ctx.fillStyle=grad; ctx.globalAlpha=isCand?0.55:1; ctx.fill(); ctx.shadowBlur=0; ctx.globalAlpha=1;
+  ctx.strokeStyle=shade(color,1.7); ctx.lineWidth=1; ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(0,-r*0.7); ctx.lineTo(0,r*0.7); ctx.moveTo(-r*0.7,0); ctx.lineTo(r*0.7,0); ctx.stroke();
+  if(isSpecial){ // gold facet ring marking an advanced tower
+    ctx.strokeStyle='#ffd27a'; ctx.lineWidth=1.4; ctx.beginPath();
+    for(let i=0;i<8;i++){ const a=i*Math.PI/4; const X=Math.cos(a)*r*1.18,Y=Math.sin(a)*r*1.18; i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
+    ctx.closePath(); ctx.stroke();
+  }
+  if(isCand){ ctx.fillStyle='#fff'; ctx.font="700 11px 'Cinzel',serif"; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('?',0,0); }
+  ctx.restore();
+}
+function drawCheckpoint(cp,num){
+  const px=cx2px(cp.x),py=cy2px(cp.y);
+  ctx.beginPath(); ctx.arc(px,py,CELL*0.85,0,Math.PI*2);
+  ctx.strokeStyle='rgba(212,175,106,.85)'; ctx.lineWidth=1.4; ctx.stroke();
+  ctx.fillStyle='#d4af6a'; ctx.font="700 12px 'Cinzel',serif"; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(num,px,py);
+}
+function drawGoal(){
+  const px=cx2px(ENDPOINT.x),py=cy2px(ENDPOINT.y);
+  // pulsing castle/goal marker at the right-edge exit
+  const pulse=0.5+0.5*Math.sin(performance.now()/400);
+  ctx.beginPath(); ctx.arc(px,py,CELL*0.95,0,Math.PI*2);
+  ctx.strokeStyle=`rgba(255,210,122,${0.6+pulse*0.4})`; ctx.lineWidth=2.4; ctx.stroke();
+  ctx.fillStyle='#ffd27a'; ctx.font="700 11px 'Cinzel',serif"; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('◆',px,py);
+}
+function drawSpawn(){ const px=cx2px(SPAWN.x),py=cy2px(SPAWN.y); ctx.fillStyle='rgba(106,210,155,.8)'; ctx.beginPath(); ctx.arc(px,py,CELL*0.5,0,Math.PI*2); ctx.fill(); }
+function drawEnemy(e){
+  if(e.isAir){
+    ctx.save(); ctx.translate(e.x,e.y);
+    ctx.fillStyle='#b07bff'; ctx.strokeStyle='#5a2a8a'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(0,-CELL*0.30); ctx.lineTo(CELL*0.5,CELL*0.18); ctx.lineTo(0,CELL*0.02); ctx.lineTo(-CELL*0.5,CELL*0.18);
+    ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+  } else {
+    ctx.beginPath(); ctx.arc(e.x,e.y,CELL*0.42,0,Math.PI*2); ctx.fillStyle='#c23a52'; ctx.fill();
+    ctx.strokeStyle='#5a1622'; ctx.lineWidth=1.2; ctx.stroke();
+  }
+  const now=performance.now();
+  if(e.cold&&now<e.cold.until){ ctx.strokeStyle='#7fd0ff'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.arc(e.x,e.y,CELL*0.5,0,Math.PI*2); ctx.stroke(); }
+  if(e.poison&&now<e.poison.until){ ctx.fillStyle='rgba(51,196,107,.8)'; ctx.beginPath(); ctx.arc(e.x+CELL*0.32,e.y-CELL*0.32,2,0,Math.PI*2); ctx.fill(); }
+  const w=CELL*1.1,h=3,frac=Math.max(0,e.hp/e.maxHp);
+  ctx.fillStyle='#000'; ctx.fillRect(e.x-w/2,e.y-CELL*0.9,w,h);
+  ctx.fillStyle=frac>.5?'#6ad29b':frac>.25?'#d4af6a':'#e0566b'; ctx.fillRect(e.x-w/2,e.y-CELL*0.9,w*frac,h);
+}
+function drawHoverFootprint(){
+  const {cx,cy}=G.hover; const legal=placementLegalCached(cx,cy);
+  const px=cx*CELL,py=cy*CELL,s=2*CELL;
+  ctx.fillStyle=legal?'rgba(106,210,155,.22)':'rgba(224,86,107,.22)'; ctx.fillRect(px,py,s,s);
+  ctx.strokeStyle=legal?'#6ad29b':'#e0566b'; ctx.lineWidth=1.5; ctx.strokeRect(px+1,py+1,s-2,s-2);
+}
+function drawDebugPaths(){
+  ctx.strokeStyle='rgba(127,176,255,.5)'; ctx.lineWidth=1;
+  for(const e of G.enemies){ if(!e.path) continue; ctx.beginPath(); ctx.moveTo(e.x,e.y); for(let i=e.wp;i<e.path.length;i++) ctx.lineTo(e.path[i].x,e.path[i].y); ctx.stroke(); }
+  if(G.hover.cx>=0){ ctx.fillStyle='#7fb0ff'; ctx.font="11px 'JetBrains Mono'"; ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText(`cell ${G.hover.cx},${G.hover.cy}`,6,6); ctx.fillText(`enemies ${G.enemies.length}`,6,20); }
+}
+let _hc={cx:-2,cy:-2,val:false};
+function placementLegalCached(cx,cy){ if(_hc.cx===cx&&_hc.cy===cy) return _hc.val; _hc={cx,cy,val:placementLegal(cx,cy)}; return _hc.val; }
+
+/* ----------------------------------- INPUT -------------------------------- */
+function evtCell(ev){ const r=cv.getBoundingClientRect(); return { cx:Math.floor((ev.clientX-r.left)/CELL), cy:Math.floor((ev.clientY-r.top)/CELL) }; }
+function gemAt(cx,cy){ for(const g of G.gems) if(cx>=g.x&&cx<g.x+2&&cy>=g.y&&cy<g.y+2) return g; return null; }
+function candIdxAt(cx,cy){ for(let i=0;i<G.candidates.length;i++){ const c=G.candidates[i]; if(cx>=c.x&&cx<c.x+2&&cy>=c.y&&cy<c.y+2) return i; } return -1; }
+function rockAt(cx,cy){ for(const w of G.walls) if(cx>=w.x&&cx<w.x+2&&cy>=w.y&&cy<w.y+2) return w; return null; }
+cv.addEventListener('mousemove',(ev)=>{
+  const {cx,cy}=evtCell(ev); G.hover.cx=cx; G.hover.cy=cy;
+  G.hover.gem=gemAt(cx,cy); const ci=candIdxAt(cx,cy); G.hover.cand=ci>=0?G.candidates[ci]:null;
+  updatePanel();
+});
+cv.addEventListener('mouseleave',()=>{ G.hover.cx=-1; G.hover.gem=null; G.hover.cand=null; updatePanel(); });
+cv.addEventListener('contextmenu',(ev)=>{ ev.preventDefault(); if(G.phase!=='build'||!G.placing||G.chosen) return; const {cx,cy}=evtCell(ev); undoCandidate(cx,cy); });
+cv.addEventListener('mousedown',(ev)=>{
+  if(ev.button!==0) return; const {cx,cy}=evtCell(ev);
+  // placing the 5 candidates
+  if(G.phase==='build' && G.placing && !G.chosen && G.candidates.length<5){ tryPlaceCandidate(cx,cy); return; }
+  // otherwise clicking selects an entity to reveal its action menu
+  const ci=candIdxAt(cx,cy);
+  if(G.phase==='build' && G.placing && !G.chosen && G.candidates.length===5 && ci>=0){ G.sel={kind:'cand', i:ci}; updatePanel(); return; }
+  const g=gemAt(cx,cy); if(g){ G.sel={kind:'gem', ref:g}; updatePanel(); return; }
+  const w=rockAt(cx,cy); if(w){ G.sel={kind:'rock', ref:w}; updatePanel(); return; }
+  G.sel=null; updatePanel();
+});
+window.addEventListener('keydown',(ev)=>{
+  if(ev.code==='KeyD'){ G.debug=!G.debug; }
+  if(G.debug && G.hover.gem){ const m={Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5}; if(ev.code in m){ setGemQuality(G.hover.gem,m[ev.code]); updatePanel(); } }
+});
+
+/* ------------------------------------- UI --------------------------------- */
+let _flash='',_flashUntil=0;
+function flashPrompt(m){ _flash=m; _flashUntil=performance.now()+2200; }
+function weaknessLabel(){ const c=GEM_TYPES[G.waveWeakness]; const air=G.level%4===0;
+  return `Wave ${G.level} · weak to <b style="color:${c.color}">${c.name}</b>${air?' · <span style="color:#7fb0ff">&#10022; Air</span>':''}`; }
+function refreshBuildUI(){
+  const wi=document.getElementById('waveInfo'); if(wi) wi.innerHTML=weaknessLabel();
+  hLevel.textContent=G.level; hLives.textContent=G.lives; hGold.textContent=G.gold; hScore.textContent=G.score;
+  hPhase.textContent=G.phase==='build'?'Build':G.phase==='combat'?'Combat':G.phase;
+  if(G.phase==='combat'){ cTitle.textContent='Combat'; cPrompt.innerHTML=`Wave <b>${G.level}</b> — gems fire automatically. Click a gem to inspect or downgrade.`; }
+  else if(G.phase==='build'){ cTitle.textContent='Build Phase';
+    if(!G.placing&&!G.chosen) cPrompt.innerHTML=`Free build — delete rocks, combine or upgrade gems, then press <b>Place Gem</b>.`;
+    else if(!G.chosen&&G.candidates.length<5) cPrompt.innerHTML=`Place <b>${5-G.candidates.length}</b> more block(s). Right-click to undo.`;
+    else if(!G.chosen) cPrompt.innerHTML=`Click a candidate for options. <b>Keep</b> or <b>Combine</b> starts the wave.`;
+  }
+  updatePanel();
+}
+function promoHTML(kills){
+  if(kills==null) return '';
+  const lvl=Math.floor(kills/10), toNext=10-(kills%10);
+  return `<div class="row"><span class="lbl">Promotion</span><span class="num">Lv ${lvl}${lvl?` · +${lvl*10}% dmg`:''}</span></div>`+
+         `<div class="row"><span class="lbl">Next promo</span><span class="num">${toNext} kill${toNext>1?'s':''}</span></div>`;
+}
+function specHTML(type,quality,kills){
+  const T=GEM_TYPES[type], s=T.q[quality];
+  let special='';
+  if(T.behavior==='crit') special=`<div class="row"><span class="lbl">Crit</span><span class="num">${Math.round(s.critC*100)}% · ×${s.critM}</span></div>`;
+  if(T.behavior==='slow') special=`<div class="row"><span class="lbl">Slow (cold)</span><span class="num">${Math.round(s.slow*100)}%</span></div>`;
+  if(T.behavior==='poison') special=`<div class="row"><span class="lbl">Poison</span><span class="num">${s.pDps}/s · ${s.pDur/1000}s</span></div><div class="row"><span class="lbl">Slow</span><span class="num">${Math.round(s.slow*100)}%</span></div>`;
+  if(T.behavior==='splash') special= s.multi?`<div class="row"><span class="lbl">Targets</span><span class="num">${s.multi}</span></div>`:`<div class="row"><span class="lbl">Splash</span><span class="num">${s.splash}px</span></div>`;
+  if(T.behavior==='multi') special=`<div class="row"><span class="lbl">Targets</span><span class="num">${s.multi}</span></div>`;
+  if(T.behavior==='buff') special=`<div class="row"><span class="lbl">Fire-rate aura</span><span class="num">−${Math.round(s.cdRed*100)}%</span></div>`;
+  const killsRow = kills!=null?`<div class="row"><span class="lbl">Kills</span><span class="num" id="liveKills">${kills}</span></div>`:'';
+  return `<div class="name" style="color:${T.color}">${T.name}</div>
+    <div class="q" style="color:${QCOLOR[quality]}">${QNAMES[quality]}</div>
+    <div class="row"><span class="lbl">Damage</span><span class="num">${s.dmg[0]} – ${s.dmg[1]}</span></div>
+    <div class="row"><span class="lbl">Range</span><span class="num">${Math.round(s.rng*RANGE_SCALE)}</span></div>
+    <div class="row"><span class="lbl">Cooldown</span><span class="num">${s.cd} ms</span></div>
+    ${special}${killsRow}${promoHTML(kills)}
+    <div class="note">${T.note}</div>`;
+}
+function specialStatHTML(g){
+  const sp=SPECIALS[g.special], s=g.s, next=sp.tiers[g.tier+1];
+  const fx=[];
+  if(s.dotAura) fx.push(`Aura DoT ${s.dotDps}/s, all in range`);
+  if(s.splash) fx.push(`Splash ${s.splash}px`);
+  if(s.slow && !s.pDps && !s.dotAura) fx.push(`Cold slow ${Math.round(s.slow*100)}%`);
+  if(s.slow && s.dotAura) fx.push(`Slows ${Math.round(s.slow*100)}% in range`);
+  if(s.pDps) fx.push(`Poison ${s.pDps}/s · slow ${Math.round((s.slow||0)*100)}%`);
+  if(s.critC) fx.push(`Crit ${Math.round(s.critC*100)}% ×${s.critM}`);
+  if(s.multi) fx.push(`Hits ${s.multi==='all'?'all in range':s.multi}`);
+  if(s.stunChance) fx.push(`Stun ${Math.round(s.stunChance*100)}% · ${s.stunDur/1000}s`);
+  if(s.dmgBuffAura) fx.push(`+${Math.round(s.dmgBuffAura*100)}% dmg to nearby gems`);
+  if(s.haz) fx.push(`${s.haz.type==='flame'?'Flame Strike':'Frost Nova'} ${Math.round(s.hazChance*100)}%`);
+  if(s.goldChance) fx.push(`${Math.round(s.goldChance*100)}% bonus gold on hit`);
+  const dmgRow = s.dmg?`<div class="row"><span class="lbl">Damage</span><span class="num">${s.dmg[0]} – ${s.dmg[1]}</span></div>`:'';
+  const cdRow  = s.cd?`<div class="row"><span class="lbl">Cooldown</span><span class="num">${s.cd} ms</span></div>`:'';
+  return `<div class="name" style="color:${g.color}">${g.name}</div>
+    <div class="q" style="color:var(--gold)">Special · Tier ${g.tier+1}</div>
+    ${dmgRow}
+    <div class="row"><span class="lbl">Range</span><span class="num">${Math.round(s.rng*RANGE_SCALE)}</span></div>
+    ${cdRow}
+    ${fx.map(f=>`<div class="row"><span class="lbl">Effect</span><span class="num">${f}</span></div>`).join('')}
+    <div class="row"><span class="lbl">Kills</span><span class="num" id="liveKills">${g.kills}</span></div>
+    ${promoHTML(g.kills)}
+    ${next?`<div class="note">Upgrade to ${next.name}: ${next.upgradeCost}g</div>`:`<div class="note">Max tier.</div>`}`;
+}
+function updatePanel(){
+  const spec=document.getElementById('spec'), actions=document.getElementById('actions');
+  let html='', acts='';
+  const sel=G.sel;
+  if(sel && sel.kind==='cand'){
+    const c=G.candidates[sel.i];
+    if(!c){ G.sel=null; }
+    else {
+      html=specHTML(c.type,c.quality,null);
+      acts=`<button data-act="keep">Keep</button>`;
+      const grp=candGroup(sel.i).length;
+      if(grp>=2){ const rq=Math.min(5,c.quality+(grp>=4?2:1)); acts+=`<button data-act="combine">Combine ×${grp} → ${QNAMES[rq]}</button>`; }
+      const rec=findRecipeFor(c, G.candidates);
+      if(rec) acts+=`<button data-act="special" style="border-color:#4a3f25;color:var(--gold)">Combine Special → ${rec.name}</button>`;
+    }
+  }
+  else if(sel && sel.kind==='gem'){
+    const g=sel.ref;
+    if(g.isSpecial){
+      html=specialStatHTML(g);
+      const next=SPECIALS[g.special].tiers[g.tier+1];
+      if(next) acts=`<button data-act="upgrade">Upgrade → ${next.name} · ${next.upgradeCost}g</button>`;
+    } else {
+      html=specHTML(g.type,g.quality,g.kills);
+      if(gemEligibleDowngrade(g)) acts+=`<button data-act="downgrade">Downgrade → ${QNAMES[g.quality-1]}</button>`;
+      const rec=findRecipeFor(g, G.gems);
+      if(rec) acts+=`<button data-act="special" style="border-color:#4a3f25;color:var(--gold)">Combine Special → ${rec.name}</button>`;
+    }
+  }
+  else if(sel && sel.kind==='rock'){
+    html=`<div class="name" style="color:#9aa3b5">Rock</div><div class="q">Wall segment</div><div class="note">A solid 2×2 block — only good for lengthening the maze.</div>`;
+    acts = G.phase==='build' ? `<button data-act="delete">Delete</button>` : `<div class="note">Deletable only during the build phase.</div>`;
+  }
+  else if(G.hover.gem){ const g=G.hover.gem; html=g.isSpecial?specialStatHTML(g):specHTML(g.type,g.quality,g.kills); }
+  else if(G.hover.cand){ html=specHTML(G.hover.cand.type,G.hover.cand.quality,null); }
+  else html='<div class="empty">Hover to inspect · click for actions.</div>';
+  spec.innerHTML=html; actions.innerHTML=acts;
+}
+function updateEcon(){
+  const v=BAL.bounty(G.level);
+  econLine.innerHTML=`+${v} gold / kill · −${v} lives / leak<br/>Lives cap ${BAL.livesCap}`;
+  const over = G.phase==='gameover'||G.phase==='win';
+  bBuy1.disabled = over || G.gold<BAL.buyLifeCost || G.lives>=BAL.livesCap;
+  bBuy5.disabled = over || G.gold<BAL.buy5Cost || G.lives>45;
+  refreshUpgradeUI();
+}
+const hLevel=document.getElementById('hLevel'),hLives=document.getElementById('hLives'),hGold=document.getElementById('hGold'),
+  hScore=document.getElementById('hScore'),hPhase=document.getElementById('hPhase'),
+  cTitle=document.getElementById('cTitle'),cPrompt=document.getElementById('cPrompt'),
+  econLine=document.getElementById('econLine'),bBuy1=document.getElementById('bBuy1'),bBuy5=document.getElementById('bBuy5'),
+  bRepick=document.getElementById('bRepick'),bChances=document.getElementById('bChances'),oddsLine=document.getElementById('oddsLine'),
+  bPlace=document.getElementById('bPlace'),bRepickReplace=document.getElementById('bRepickReplace');
+function refreshUpgradeUI(){
+  // Repick: only meaningful pre-keep with 5 candidates down
+  const neutral = G.phase==='build' && !G.placing && !G.chosen;
+  const placing5 = G.phase==='build' && G.placing && !G.chosen && G.candidates.length===5;
+  bPlace.style.display = neutral?'':'none';
+  bRepick.style.display = placing5?'':'none';
+  bRepickReplace.style.display = placing5?'':'none';
+  bRepick.textContent=`Repick — reroll · ${G.repickCost}g`;
+  bRepickReplace.textContent=`Repick — replace · ${G.repickCost}g`;
+  const canRepick = placing5 && G.gold>=G.repickCost;
+  bRepick.disabled=!canRepick; bRepickReplace.disabled=!canRepick;
+  // Upgrade Chances: buy next ladder level
+  const maxed=G.upgradeLevel>=UPGRADE_LADDER.length-1;
+  const next=maxed?null:UPGRADE_LADDER[G.upgradeLevel+1];
+  bChances.textContent=maxed?`Upgrade Chances · MAX`:`Upgrade Chances · ${next.cost}g`;
+  bChances.disabled=maxed||G.gold<next.cost;
+  const w=UPGRADE_LADDER[G.upgradeLevel].w;
+  const parts=[]; for(let i=0;i<5;i++) if(w[i]>0) parts.push(`<span style="color:${QCOLOR[i]}">${QNAMES[i]} ${w[i]}%</span>`);
+  oddsLine.innerHTML=`Tier ${G.upgradeLevel}/8 odds:<br/>${parts.join(' · ')}`;
+}
+bBuy1.addEventListener('click',()=>buyLife(1));
+bBuy5.addEventListener('click',()=>buyLife(5));
+bRepick.addEventListener('click',repick);
+bPlace.addEventListener('click',startPlacing);
+bRepickReplace.addEventListener('click',repickReplace);
+bChances.addEventListener('click',buyUpgradeChance);
+document.getElementById('actions').addEventListener('click',(e)=>{ const a=e.target&&e.target.dataset?e.target.dataset.act:null; if(a) doAction(a); });
+document.getElementById('bReset').addEventListener('click',()=>{ G=freshGame(); init(); });
+
+/* ------------------------------------ LOOP -------------------------------- */
+let last=0;
+function frame(t){
+  const now=t,dt=Math.min(0.05,(t-last)/1000); last=t;
+  if(G.phase==='combat'){ updateSpawning(dt); updateGems(now); updateProjectiles(dt,now); updateHazards(dt,now); updateEnemies(dt,now);
+    hLives.textContent=G.lives; hGold.textContent=G.gold; hScore.textContent=G.score; }
+  updateParticles(dt); updateEcon();
+  if(G.sel&&G.sel.kind==='gem'){ const lk=document.getElementById('liveKills'); if(lk) lk.textContent=G.sel.ref.kills; }
+  if(performance.now()<_flashUntil&&G.phase==='build') cPrompt.innerHTML=`<span style="color:var(--bad)">${_flash}</span>`;
+  draw(); requestAnimationFrame(frame);
+}
+function init(){ G.waveWeakness=rollWaveWeakness(G.level); recomputeFields(); refreshBuildUI(); updatePanel(); updateEcon(); document.getElementById('banner').style.display='none'; }
+G=freshGame(); init(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>

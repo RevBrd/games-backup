@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GEM TD — Job 3b: Gem Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --obsidian:#0b0d12; --graphite:#161922; --graphite-lo:#11131a;
+    --bone:#e8e4d8; --bone-dim:#9a978d; --gold:#d4af6a; --garnet:#c23a52;
+    --ok:#6ad29b; --bad:#e0566b; --line:#20242f; --sapphire-hi:#7fb0ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%;
+    background: radial-gradient(1200px 800px at 30% -10%, #161a24 0%, var(--obsidian) 60%);
+    color: var(--bone); font-family:'JetBrains Mono', ui-monospace, monospace;
+    -webkit-font-smoothing: antialiased; }
+  #wrap { display:flex; gap:18px; align-items:flex-start; justify-content:center; padding:22px; min-height:100%; }
+  #hud { display:flex; gap:24px; align-items:baseline; padding:0 4px 10px; flex-wrap:wrap; }
+  .stat { display:flex; flex-direction:column; line-height:1.1; }
+  .stat .k { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.18em; color:var(--bone-dim); text-transform:uppercase; }
+  .stat .v { font-size:19px; font-weight:700; }
+  .stat .v.gold { color:var(--gold); } .stat .v.lives { color:var(--garnet); } .stat .v.sap { color:var(--sapphire-hi); }
+  canvas { display:block; border:1px solid var(--line); background:#141925;
+    box-shadow:0 0 0 1px #000, 0 24px 60px -30px #000; cursor:crosshair; }
+  #panel { width:300px; display:flex; flex-direction:column; gap:12px; padding-top:34px; }
+  .card { background:linear-gradient(180deg, var(--graphite), var(--graphite-lo));
+    border:1px solid var(--line); border-radius:4px; padding:14px; }
+  .card h2 { font-family:'Cinzel',serif; margin:0 0 8px; font-size:13px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--bone); font-weight:600; }
+  .prompt { font-size:12.5px; color:var(--bone-dim); line-height:1.5; min-height:34px; }
+  .prompt b { color:var(--bone); font-weight:500; }
+  button { width:100%; font-family:'Cinzel',serif; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; font-size:12.5px; color:var(--bone);
+    background:linear-gradient(180deg,#232838,#161a26); border:1px solid #313748;
+    border-radius:4px; padding:11px; cursor:pointer; transition:.12s; margin-top:8px; }
+  button:hover:not(:disabled){ border-color:#2f6dff; color:#fff; }
+  button.primary{ background:linear-gradient(180deg,#2a59c8,#1c3c8a); border-color:#3a6fe0; }
+  button.primary:hover:not(:disabled){ background:linear-gradient(180deg,#3568df,#244aa8); }
+  button:disabled{ opacity:.4; cursor:not-allowed; }
+  .spec{ font-size:12.5px; line-height:1.7; min-height:150px; }
+  .spec .name{ font-family:'Cinzel',serif; font-size:15px; margin-bottom:2px; }
+  .spec .q{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--bone-dim); margin-bottom:8px; }
+  .spec .row{ display:flex; justify-content:space-between; }
+  .spec .row .lbl{ color:var(--bone-dim); } .spec .row .num{ color:var(--bone); }
+  .spec .note{ color:var(--bone-dim); margin-top:8px; font-style:italic; }
+  .spec .empty{ color:var(--bone-dim); font-style:italic; }
+  .legend{ font-size:11px; color:var(--bone-dim); line-height:1.6; }
+  .legend kbd{ background:#20242f; border:1px solid #313748; border-radius:3px; padding:0 5px; color:var(--bone); }
+  .tag{ display:inline-block; font-size:10px; letter-spacing:.12em; color:var(--gold);
+    border:1px solid #4a3f25; border-radius:3px; padding:1px 6px; margin-bottom:8px; text-transform:uppercase; }
+  #banner{ position:absolute; inset:0; display:none; place-items:center; background:rgba(7,9,14,.82); z-index:5; text-align:center; }
+  #banner .big{ font-family:'Cinzel',serif; font-size:34px; letter-spacing:.08em; }
+  #banner .sub{ color:var(--bone-dim); margin-top:8px; font-size:13px; }
+  #banner.win .big{ color:var(--gold);} #banner.lose .big{ color:var(--garnet);}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <div id="hud">
+      <div class="stat"><span class="k">Level</span><span class="v" id="hLevel">1</span></div>
+      <div class="stat"><span class="k">Lives</span><span class="v lives" id="hLives">9</span></div>
+      <div class="stat"><span class="k">Gold</span><span class="v gold" id="hGold">10</span></div>
+      <div class="stat"><span class="k">Score</span><span class="v" id="hScore">0</span></div>
+      <div class="stat"><span class="k">Phase</span><span class="v sap" id="hPhase">Build</span></div>
+    </div>
+    <div style="position:relative">
+      <canvas id="cv" width="600" height="600"></canvas>
+      <div id="banner"><div><div class="big" id="bBig"></div><div class="sub" id="bSub"></div></div></div>
+    </div>
+  </div>
+  <div id="panel">
+    <div class="card">
+      <span class="tag">Job 3b · Gem Management</span>
+      <h2 id="cTitle">Build Phase</h2>
+      <div class="prompt" id="cPrompt"></div>
+      <button id="bRepick" disabled>Repick · 25g</button>
+      <button id="bChances">Upgrade Chances</button>
+      <div id="oddsLine" style="font-size:11px;color:var(--bone-dim);line-height:1.5;margin-top:8px;"></div>
+      <button id="bReset">Reset Game</button>
+    </div>
+    <div class="card">
+      <h2>Specimen</h2>
+      <div class="spec" id="spec"><div class="empty">Hover a gem or a build candidate to inspect it.</div></div>
+      <div id="actions"></div>
+    </div>
+    <div class="card">
+      <h2>Economy</h2>
+      <div class="econ" id="econLine" style="font-size:12px;color:var(--bone-dim);line-height:1.6;margin-bottom:4px;"></div>
+      <button id="bBuy1">Buy 1 Life · 50g</button>
+      <button id="bBuy5">Buy 5 Lives · 250g</button>
+    </div>
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="legend">
+        <kbd>L-click</kbd> place block / open options<br/>
+        <kbd>R-click</kbd> undo a placed block<br/>
+        <kbd>D</kbd> debug x-ray<br/>
+        <kbd>1</kbd>–<kbd>6</kbd> (debug) set hovered gem quality<br/><br/>
+        Place <b style="color:var(--bone)">5</b> blocks, then click one for <b style="color:var(--bone)">Keep</b> / <b style="color:var(--bone)">Combine</b> — that starts the wave. The other 4 become deletable rocks.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   GEM TD — JOB 2: GEM ROSTER & COMBAT BEHAVIORS
+   Engine (CONFIG/GRID/PATHFINDING/ENEMIES movement/BUILD/WAVES) ported verbatim
+   from the verified Job 1 spine. New: GEM_TYPES data, 8 distinct behaviors,
+   enemy status-effect system (stacking cold + poison), Opal buff auras.
+============================================================================ */
+
+/* ---------------------------------- CONFIG -------------------------------- */
+const N = 40, CELL = 15, SQRT2 = Math.SQRT2;
+const idx = (x,y)=>y*N+x;
+const inB = (x,y)=>x>=0&&y>=0&&x<N&&y<N;
+const cx2px = c=>(c+0.5)*CELL, cy2px = c=>(c+0.5)*CELL;
+const RANGE_SCALE = 1.0;   // sheet ranges are original-game px; PLACEHOLDER scale, tune by feel
+
+const SPAWN = { x:0, y:5 };
+const CPS = [ {x:6,y:5},{x:5,y:22},{x:31,y:21},{x:31,y:5},{x:18,y:5},{x:18,y:34} ];
+const ENDPOINT = { x:39, y:34 };          // the REAL goal: right-edge exit past CP6
+const TARGETS = [ ...CPS, ENDPOINT ];      // enemies hit CP1..CP6 in order, then leak at ENDPOINT
+const ROUTE = [SPAWN, ...TARGETS];
+const NB = [ [1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,SQRT2],[1,-1,SQRT2],[-1,1,SQRT2],[-1,-1,SQRT2] ];
+
+const BAL = {
+  startGold:10, startLives:9, maxLevel:41,
+  bounty:(l)=>1+Math.floor(l/4),   // kill reward == leak cost; +1 at every air level (every 4th wave)
+  roundBonus:(l)=>9+2*(l-1),       // wave-clear bonus: 9/11/13/15... (borrowed system, expect tuning)
+  buyLifeCost:50, buy5Cost:250, livesCap:50,
+  enemyHP:(l)=>Math.round(18*Math.pow(1.15,l-1)),
+  enemySpd:(l)=>42*Math.pow(1.02,l-1),
+  enemyCount:(l)=>8+l, spawnGap:0.55,
+  coldDur:5000,            // PLACEHOLDER cold-slow duration (per your note)
+};
+
+const QNAMES = ['Chipped','Flawed','Normal','Flawless','Perfect','Great'];
+const QCOLOR = ['#9aa3b5','#9fd0ff','#cfe0ff','#9b87ff','#ffd27a','#ff7ad4'];
+
+/* Upgrade Chances ladder (Page 2). Each entry = quality weights over
+   [Chipped,Flawed,Normal,Flawless,Perfect]; Great (idx5) is combine-only.
+   cost = gold to advance TO that level from the previous one. */
+const UPGRADE_LADDER = [
+  { w:[100,0,0,0,0],  cost:0   },  // L0 Starting
+  { w:[70,30,0,0,0],  cost:20  },  // L1
+  { w:[60,30,10,0,0], cost:50  },  // L2
+  { w:[50,30,20,0,0], cost:80  },  // L3
+  { w:[40,30,20,10,0],cost:110 },  // L4
+  { w:[30,30,30,10,0],cost:140 },  // L5
+  { w:[20,30,30,20,0],cost:170 },  // L6
+  { w:[10,30,30,30,0],cost:200 },  // L7
+  { w:[0,30,30,30,10],cost:230 },  // L8 (Chipped drops out, Perfect enters)
+];
+const REPICK_STEP = 25;            // Repick cost climbs +25 each use, persists all game
+
+/* All numbers transcribed from the stats sheet (Page 1).
+   dmg:[min,max], rng (px), cd (ms). Special fields per behavior. */
+const GEM_TYPES = {
+  amethyst:  { name:'Amethyst', color:'#9b5de5', weight:20, behavior:'single', air:true,
+    note:'High single-target damage. Targets air (active in Job 5).',
+    q:[ {dmg:[9,13],rng:143,cd:800},{dmg:[18,25],rng:161,cd:1000},{dmg:[30,40],rng:179,cd:1000},
+        {dmg:[60,75],rng:186,cd:1000},{dmg:[140,150],rng:215,cd:1000},{dmg:[350,400],rng:235,cd:1000} ] },
+  aquamarine:{ name:'Aquamarine', color:'#3fd0c9', weight:10, behavior:'single',
+    note:'Fast single-target fire.',
+    q:[ {dmg:[6,8],rng:50,cd:500},{dmg:[12,15],rng:52,cd:500},{dmg:[24,30],rng:54,cd:500},
+        {dmg:[48,55],rng:57,cd:500},{dmg:[100,120],rng:79,cd:500},{dmg:[280,280],rng:85,cd:500} ] },
+  diamond:   { name:'Diamond', color:'#dfe9ff', weight:20, behavior:'crit',
+    note:'Chance to deal multiplied damage.',
+    q:[ {dmg:[8,12],rng:72,cd:1000,critC:.25,critM:2},{dmg:[16,18],rng:79,cd:1000,critC:.25,critM:2},
+        {dmg:[30,37],rng:86,cd:1000,critC:.25,critM:2},{dmg:[58,65],rng:93,cd:1000,critC:.25,critM:2},
+        {dmg:[140,150],rng:107,cd:1000,critC:.25,critM:2},{dmg:[300,350],rng:121,cd:1000,critC:.25,critM:5} ] },
+  emerald:   { name:'Emerald', color:'#33c46b', weight:10, behavior:'poison',
+    note:'Poison damage over time; also slows (stacks with cold).',
+    q:[ {dmg:[9,13],rng:79,cd:1000,pDps:2,pDur:3000,slow:.15},{dmg:[10,14],rng:79,cd:1000,pDps:3,pDur:4000,slow:.15},
+        {dmg:[15,25],rng:86,cd:1000,pDps:5,pDur:5000,slow:.15},{dmg:[30,38],rng:100,cd:1000,pDps:8,pDur:6000,slow:.15},
+        {dmg:[80,90],rng:128,cd:1000,pDps:16,pDur:8000,slow:.15},{dmg:[250,250],rng:128,cd:1000,pDps:50,pDur:30000,slow:.15} ] },
+  opal:      { name:'Opal', color:'#ead9a6', weight:10, behavior:'buff',
+    note:'Speeds the fire rate of nearby gems.',
+    q:[ {dmg:[4,5],rng:86,cd:800,cdRed:.10},{dmg:[10,10],rng:100,cd:1000,cdRed:.15},{dmg:[20,20],rng:114,cd:1000,cdRed:.20},
+        {dmg:[40,40],rng:128,cd:1000,cdRed:.25},{dmg:[85,85],rng:143,cd:1000,cdRed:.35},{dmg:[180,180],rng:214,cd:1000,cdRed:.50} ] },
+  ruby:      { name:'Ruby', color:'#e23b5a', weight:10, behavior:'splash',
+    note:'Splash damage in an area.',
+    q:[ {dmg:[8,9],rng:114,cd:1000,splash:25},{dmg:[13,16],rng:114,cd:1000,splash:25},{dmg:[20,25],rng:114,cd:1000,splash:30},
+        {dmg:[38,44],rng:114,cd:1000,splash:30},{dmg:[80,104],rng:128,cd:1000,splash:30},
+        {dmg:[140,140],rng:128,cd:500,multi:3} ] },   // Great: no splash, hits 3
+  sapphire:  { name:'Sapphire', color:'#2f6dff', weight:10, behavior:'slow',
+    note:'Slows the target (cold).',
+    q:[ {dmg:[5,8],rng:72,cd:800,slow:.15},{dmg:[10,13],rng:107,cd:1000,slow:.20},{dmg:[16,21],rng:114,cd:1000,slow:.25},
+        {dmg:[30,40],rng:121,cd:1000,slow:.30},{dmg:[60,75],rng:200,cd:1000,slow:.40},{dmg:[200,200],rng:286,cd:1000,slow:.50} ] },
+  topaz:     { name:'Topaz', color:'#f0b429', weight:10, behavior:'multi',
+    note:'Strikes several targets at once.',
+    q:[ {dmg:[4,4],rng:72,cd:800,multi:3},{dmg:[8,8],rng:72,cd:1000,multi:3},{dmg:[14,14],rng:72,cd:1000,multi:4},
+        {dmg:[25,25],rng:72,cd:1000,multi:4},{dmg:[75,75],rng:86,cd:1000,multi:5},{dmg:[250,250],rng:100,cd:1000,multi:7} ] },
+};
+const TYPE_KEYS = Object.keys(GEM_TYPES);
+function rollType() {
+  let tot = 0; for (const k of TYPE_KEYS) tot += GEM_TYPES[k].weight;
+  let r = Math.random()*tot;
+  for (const k of TYPE_KEYS) { r -= GEM_TYPES[k].weight; if (r <= 0) return k; }
+  return TYPE_KEYS[0];
+}
+function rollQuality() {
+  const w = UPGRADE_LADDER[G.upgradeLevel].w;
+  let tot = 0; for (const x of w) tot += x;
+  let r = Math.random()*tot;
+  for (let i=0;i<w.length;i++){ r -= w[i]; if (r <= 0) return i; }
+  return 0;
+}
+
+/* ---------------------------------- STATE --------------------------------- */
+let G;
+function freshGame() {
+  return {
+    phase:'build', level:1, lives:BAL.startLives, gold:BAL.startGold, score:0,
+    upgradeLevel:0, repickCost:REPICK_STEP,
+    blocked:new Uint8Array(N*N), walls:[], gems:[], fields:null,
+    candidates:[], chosen:false,
+    enemies:[], projectiles:[], particles:[],
+    spawnQueue:0, spawnTimer:0,
+    hover:{ cx:-1, cy:-1, gem:null, cand:null }, sel:null, debug:false,
+  };
+}
+
+/* ----------------------------------- GRID --------------------------------- */
+function fits2x2(x,y,grid){
+  if(!inB(x,y)||!inB(x+1,y+1)) return false;
+  for(let dx=0;dx<2;dx++)for(let dy=0;dy<2;dy++){
+    const cxp=x+dx,cyp=y+dy;
+    if(grid[idx(cxp,cyp)]) return false;
+    if(cxp===SPAWN.x&&cyp===SPAWN.y) return false;
+    if(cxp===ENDPOINT.x&&cyp===ENDPOINT.y) return false;
+    for(const cp of CPS) if(cp.x===cxp&&cp.y===cyp) return false;
+  } return true;
+}
+function set2x2(grid,x,y,v){ for(let dx=0;dx<2;dx++)for(let dy=0;dy<2;dy++) grid[idx(x+dx,y+dy)]=v; }
+
+/* ------------------------------- PATHFINDING ------------------------------ */
+function computeField(grid,src){
+  const dist=new Float64Array(N*N).fill(Infinity); dist[idx(src.x,src.y)]=0;
+  const pq=[[0,src.x,src.y]];
+  while(pq.length){
+    let mi=0; for(let i=1;i<pq.length;i++) if(pq[i][0]<pq[mi][0]) mi=i;
+    const [d,x,y]=pq.splice(mi,1)[0];
+    if(d>dist[idx(x,y)]) continue;
+    for(const [dx,dy,c] of NB){
+      const nx=x+dx,ny=y+dy;
+      if(!inB(nx,ny)||grid[idx(nx,ny)]) continue;
+      const nd=d+c;
+      if(nd<dist[idx(nx,ny)]){ dist[idx(nx,ny)]=nd; pq.push([nd,nx,ny]); }
+    }
+  } return dist;
+}
+function recomputeFields(){ G.fields = TARGETS.map(t=>computeField(G.blocked,t)); }
+function routeOpen(grid){
+  for(let i=0;i<ROUTE.length-1;i++){
+    const f=computeField(grid,ROUTE[i+1]);
+    if(!isFinite(f[idx(ROUTE[i].x,ROUTE[i].y)])) return false;
+  } return true;
+}
+function placementLegal(x,y){
+  if(!fits2x2(x,y,G.blocked)) return false;
+  const t=Uint8Array.from(G.blocked); set2x2(t,x,y,1); return routeOpen(t);
+}
+function gradientPath(field,fx,fy,target){
+  if(!isFinite(field[idx(fx,fy)])) return null;
+  const path=[]; let cxp=fx,cyp=fy,guard=0;
+  while(!(cxp===target.x&&cyp===target.y)&&guard++<4000){
+    let best=null,bd=field[idx(cxp,cyp)];
+    for(const [dx,dy] of NB){
+      const nx=cxp+dx,ny=cyp+dy;
+      if(!inB(nx,ny)||G.blocked[idx(nx,ny)]) continue;
+      if(field[idx(nx,ny)]<bd-1e-9){ bd=field[idx(nx,ny)]; best=[nx,ny]; }
+    }
+    if(!best) break; cxp=best[0]; cyp=best[1]; path.push({x:cxp,y:cyp});
+  }
+  return (cxp===target.x&&cyp===target.y)?path:null;
+}
+
+/* --------------------------------- ENEMIES -------------------------------- */
+function spawnEnemy(){
+  const hp=BAL.enemyHP(G.level);
+  const e={ x:cx2px(SPAWN.x), y:cy2px(SPAWN.y), hp, maxHp:hp, baseSpd:BAL.enemySpd(G.level),
+    target:0, path:null, wp:0, cold:null, poison:null };
+  retargetPath(e); G.enemies.push(e);
+}
+function retargetPath(e){
+  const f=G.fields[e.target];
+  const cc=Math.floor(e.x/CELL), cr=Math.floor(e.y/CELL);
+  const cells=gradientPath(f,cc,cr,TARGETS[e.target]);
+  e.path=cells?cells.map(c=>({x:cx2px(c.x),y:cy2px(c.y)})):null; e.wp=0;
+}
+function effSpeed(e,now){
+  let m=1;
+  if(e.cold && now<e.cold.until) m*=(1-e.cold.f);
+  if(e.poison && now<e.poison.until) m*=(1-e.poison.slow);
+  return e.baseSpd*m;
+}
+function updateEnemies(dt,now){
+  for(const e of G.enemies){
+    // poison DoT
+    if(e.poison && now<e.poison.until){
+      while(now>=e.poison.nextTick){
+        e.hp-=e.poison.dps; e.poison.nextTick+=1000;
+        if(e.hp<=0){ killEnemy(e,e.poison.gem); break; }
+      }
+    }
+    if(e.dead) continue;
+    // arrival first
+    const cpx=cx2px(TARGETS[e.target].x), cpy=cy2px(TARGETS[e.target].y);
+    if(Math.hypot(cpx-e.x,cpy-e.y)<CELL*0.7){
+      if(e.target===TARGETS.length-1){ leak(e); continue; }
+      e.target++; retargetPath(e);
+    }
+    const spd=effSpeed(e,now);
+    if(!e.path||e.wp>=e.path.length) retargetPath(e);
+    if(!e.path||e.wp>=e.path.length) continue;
+    const wp=e.path[e.wp]; let dx=wp.x-e.x,dy=wp.y-e.y,d=Math.hypot(dx,dy); const step=spd*dt;
+    if(d<=step){ e.x=wp.x; e.y=wp.y; e.wp++; } else { e.x+=dx/d*step; e.y+=dy/d*step; }
+  }
+  G.enemies=G.enemies.filter(e=>!e.dead&&!e.leaked);
+}
+function leak(e){ e.leaked=true; G.lives-=BAL.bounty(G.level); if(G.lives<=0){ G.lives=0; endGame(false); } }
+function killEnemy(e,gem){
+  if(e.dead) return;
+  e.dead=true; G.gold+=BAL.bounty(G.level); G.score+=10; if(gem) gem.kills++;
+  for(let i=0;i<7;i++) G.particles.push({x:e.x,y:e.y,vx:(Math.random()-.5)*90,vy:(Math.random()-.5)*90,life:.5,col:'#c23a52'});
+}
+
+/* --------------------------------- TOWERS --------------------------------- */
+function effCooldown(g){ return g.cd * (g.cdMult||1); }
+function recomputeBuffs(){
+  for(const g of G.gems){
+    let mult=1;
+    for(const o of G.gems){
+      if(o===g || o.type!=='opal') continue;
+      if(Math.hypot(o.px-g.px,o.py-g.py) <= o.s.rng*RANGE_SCALE) mult *= (1 - o.s.cdRed);
+    }
+    g.cdMult=mult;
+  }
+}
+function enemiesInRange(g){
+  const out=[]; const R=g.s.rng*RANGE_SCALE;
+  for(const e of G.enemies){ const d=Math.hypot(e.x-g.px,e.y-g.py); if(d<=R) out.push([d,e]); }
+  return out.sort((a,b)=>a[0]-b[0]);
+}
+function rollDmg(s){ return s.dmg[0]+Math.random()*(s.dmg[1]-s.dmg[0]); }
+function updateGems(now){
+  for(const g of G.gems){
+    if(now-g.lastShot < effCooldown(g)) continue;
+    const inR=enemiesInRange(g); if(!inR.length) continue;
+    g.lastShot=now;
+    const b=g.behavior, s=g.s;
+    if(b==='multi' || (b==='splash' && s.multi)){
+      const targets=inR.slice(0,s.multi||3).map(t=>t[1]);
+      for(const e of targets) G.projectiles.push(mkProj(g,e,rollDmg(s)));
+    } else {
+      const e=inR[0][1]; let dmg=rollDmg(s);
+      if(b==='crit' && Math.random()<s.critC){ dmg*=s.critM; }
+      G.projectiles.push(mkProj(g,e,dmg));
+    }
+  }
+}
+function mkProj(g,target,dmg){ return { x:g.px, y:g.py, target, dmg, gem:g, behavior:g.behavior, s:g.s, col:g.color }; }
+function updateProjectiles(dt,now){
+  const PSPD=540;
+  for(const p of G.projectiles){
+    const e=p.target;
+    if(!e||e.dead||e.leaked){ p.spent=true; continue; }
+    let dx=e.x-p.x,dy=e.y-p.y,d=Math.hypot(dx,dy); const step=PSPD*dt;
+    if(d<=step){ p.spent=true; applyHit(p,e,now); }
+    else { p.x+=dx/d*step; p.y+=dy/d*step; }
+  }
+  G.projectiles=G.projectiles.filter(p=>!p.spent);
+}
+function applyHit(p,e,now){
+  const s=p.s, b=p.behavior;
+  // splash: damage all enemies near impact
+  if(b==='splash' && s.splash){
+    const R=s.splash*RANGE_SCALE;
+    for(const o of G.enemies){
+      if(o.dead||o.leaked) continue;
+      if(Math.hypot(o.x-e.x,o.y-e.y)<=R){ o.hp-=p.dmg; if(o.hp<=0) killEnemy(o,p.gem); }
+    }
+    return;
+  }
+  // direct damage
+  e.hp-=p.dmg;
+  if(b==='slow'){ e.cold={ f:s.slow, until:now+BAL.coldDur }; }
+  if(b==='poison'){ e.poison={ dps:s.pDps, until:now+s.pDur, slow:s.slow, nextTick:now+1000, gem:p.gem }; }
+  if(e.hp<=0) killEnemy(e,p.gem);
+}
+function updateParticles(dt){ for(const pt of G.particles){ pt.x+=pt.vx*dt; pt.y+=pt.vy*dt; pt.life-=dt; } G.particles=G.particles.filter(p=>p.life>0); }
+
+/* ---------------------------------- BUILD --------------------------------- */
+function tryPlaceCandidate(cxp,cyp){
+  if(G.candidates.length>=5||G.chosen) return;
+  if(!placementLegal(cxp,cyp)){ flashPrompt("That placement would seal the path — try elsewhere."); return; }
+  set2x2(G.blocked,cxp,cyp,1);
+  G.candidates.push({ x:cxp, y:cyp, type:rollType(), quality:rollQuality() });
+  G.sel=null; recomputeFields(); refreshBuildUI();
+}
+function undoCandidate(cxp,cyp){
+  if(G.chosen) return;
+  for(let i=0;i<G.candidates.length;i++){ const c=G.candidates[i];
+    if(cxp>=c.x&&cxp<c.x+2&&cyp>=c.y&&cyp<c.y+2){ set2x2(G.blocked,c.x,c.y,0); G.candidates.splice(i,1); G.sel=null; recomputeFields(); refreshBuildUI(); return; } }
+}
+function candGroup(i){ const c=G.candidates[i]; return G.candidates.filter(o=>o.type===c.type&&o.quality===c.quality); }
+function finishSelect(){ G.candidates=[]; G.chosen=true; G.sel=null; recomputeBuffs(); startWave(); }
+function keepCandidate(i){
+  const c=G.candidates[i];
+  G.gems.push(makeGem(c.x,c.y,c.type,c.quality));
+  for(let j=0;j<G.candidates.length;j++) if(j!==i) G.walls.push(G.candidates[j]);
+  finishSelect();
+}
+function combineCandidate(i){
+  const c=G.candidates[i]; const grp=candGroup(i);
+  const q=Math.min(5, c.quality + (grp.length>=4?2:1)); // pair -> +1, full set of four -> +2; Perfect+1 = Great
+  G.gems.push(makeGem(c.x,c.y,c.type,q));
+  for(let j=0;j<G.candidates.length;j++) if(j!==i) G.walls.push(G.candidates[j]);
+  finishSelect();
+}
+function makeGem(x,y,type,quality){
+  const T=GEM_TYPES[type], s=T.q[quality];
+  return { x,y, px:(x+1)*CELL, py:(y+1)*CELL, type, name:T.name, color:T.color,
+    behavior:T.behavior, quality, s, cd:s.cd, lastShot:0, kills:0, cdMult:1,
+    placedLevel:G.level, downgraded:false };
+}
+function setGemQuality(g,quality){ g.quality=quality; g.s=GEM_TYPES[g.type].q[quality]; g.cd=g.s.cd; recomputeBuffs(); }
+function gemEligibleDowngrade(g){ return g.placedLevel===G.level && !g.downgraded && g.quality>0; }
+function downgradeGem(g){
+  if(!gemEligibleDowngrade(g)) return;
+  g.downgraded=true; setGemQuality(g,g.quality-1); updatePanel();
+}
+function deleteRock(w){
+  if(G.phase!=='build') return;
+  const i=G.walls.indexOf(w); if(i<0) return;
+  set2x2(G.blocked,w.x,w.y,0); G.walls.splice(i,1); G.sel=null; recomputeFields(); updatePanel();
+}
+function doAction(act){
+  if(!G.sel) return;
+  if(G.sel.kind==='cand'){ if(act==='keep') keepCandidate(G.sel.i); else if(act==='combine') combineCandidate(G.sel.i); }
+  else if(G.sel.kind==='gem'){ if(act==='downgrade') downgradeGem(G.sel.ref); }
+  else if(G.sel.kind==='rock'){ if(act==='delete') deleteRock(G.sel.ref); }
+}
+
+/* ---------------------------------- WAVES --------------------------------- */
+function startWave(){
+  if(G.phase!=='build'||!G.chosen) return;
+  recomputeFields(); recomputeBuffs();
+  G.phase='combat'; G.spawnQueue=BAL.enemyCount(G.level); G.spawnTimer=0; refreshBuildUI();
+}
+function endWave(){
+  G.gold+=BAL.roundBonus(G.level); G.score+=50;
+  if(G.level>=BAL.maxLevel){ endGame(true); return; }
+  G.level++; G.phase='build'; G.chosen=false; G.candidates=[]; refreshBuildUI();
+}
+function updateSpawning(dt){
+  if(G.spawnQueue>0){ G.spawnTimer-=dt; if(G.spawnTimer<=0){ spawnEnemy(); G.spawnQueue--; G.spawnTimer=BAL.spawnGap; } }
+  else if(G.enemies.length===0 && G.phase==='combat'){ endWave(); }
+}
+function endGame(won){
+  G.phase=won?'win':'gameover';
+  const b=document.getElementById('banner'); b.className=won?'win':'lose'; b.style.display='grid';
+  document.getElementById('bBig').textContent=won?'CLEARED':'CASTLE LOST';
+  document.getElementById('bSub').textContent=won?`All ${BAL.maxLevel} levels survived · Score ${G.score}`:`Fell on level ${G.level} · Score ${G.score}`;
+}
+/* lives can be bought at any time. cap 50 accumulated; buy-5 disables at 46+ to avoid wasted gold. */
+function buyLife(n){
+  if(G.phase==='gameover'||G.phase==='win') return;
+  const cost = n===5 ? BAL.buy5Cost : BAL.buyLifeCost;
+  if(n===5 && G.lives>45) return;
+  if(n===1 && G.lives>=BAL.livesCap) return;
+  if(G.gold<cost) return;
+  G.gold-=cost; G.lives=Math.min(BAL.livesCap, G.lives+n);
+  refreshBuildUI(); updateEcon();
+}
+/* Upgrade Chances: buy the next ladder level; improves quality odds for FUTURE candidates. */
+function buyUpgradeChance(){
+  if(G.upgradeLevel>=UPGRADE_LADDER.length-1) return;
+  const cost=UPGRADE_LADDER[G.upgradeLevel+1].cost;
+  if(G.gold<cost) return;
+  G.gold-=cost; G.upgradeLevel++; refreshBuildUI(); updateEcon();
+}
+/* Repick: re-roll all 5 candidates (cost climbs +25 each use, never resets). Only pre-keep. */
+function repick(){
+  if(G.chosen || G.candidates.length<5 || G.gold<G.repickCost) return;
+  G.gold-=G.repickCost; G.repickCost+=REPICK_STEP;
+  for(const c of G.candidates){ c.type=rollType(); c.quality=rollQuality(); }
+  G.sel=null; refreshBuildUI(); updateEcon(); updatePanel();
+}
+
+/* ---------------------------------- RENDER -------------------------------- */
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  drawFloor(); if(G.debug) drawGrid();
+  for(const w of G.walls) drawBlock(w.x,w.y);
+  for(const c of G.candidates) drawGemShape((c.x+1)*CELL,(c.y+1)*CELL,GEM_TYPES[c.type].color,true);
+  for(let i=0;i<CPS.length;i++) drawCheckpoint(CPS[i],i+1);
+  drawGoal(); drawSpawn();
+  for(const g of G.gems) drawGemShape(g.px,g.py,g.color,false);
+  if(G.phase==='build'&&!G.chosen&&G.candidates.length<5&&G.hover.cx>=0) drawHoverFootprint();
+  const focus = (G.sel&&G.sel.kind==='gem') ? G.sel.ref : G.hover.gem;
+  if(focus){ ctx.beginPath(); ctx.arc(focus.px,focus.py,focus.s.rng*RANGE_SCALE,0,Math.PI*2);
+    ctx.strokeStyle='rgba(127,176,255,.35)'; ctx.lineWidth=1; ctx.stroke();
+    if(focus.type==='opal'){ ctx.strokeStyle='rgba(234,217,166,.25)'; ctx.stroke(); } }
+  // selection outline
+  if(G.sel){
+    let cell=null;
+    if(G.sel.kind==='cand'&&G.candidates[G.sel.i]) cell=G.candidates[G.sel.i];
+    else if(G.sel.kind==='gem') cell=G.sel.ref;
+    else if(G.sel.kind==='rock') cell=G.sel.ref;
+    if(cell){ const pulse=0.5+0.5*Math.sin(performance.now()/200);
+      ctx.strokeStyle=`rgba(255,255,255,${0.55+pulse*0.35})`; ctx.lineWidth=2;
+      ctx.strokeRect(cell.x*CELL-1,cell.y*CELL-1,2*CELL+2,2*CELL+2); }
+  }
+  for(const e of G.enemies) drawEnemy(e);
+  for(const p of G.projectiles){ ctx.beginPath(); ctx.arc(p.x,p.y,2.6,0,Math.PI*2);
+    ctx.fillStyle=p.col; ctx.shadowColor=p.col; ctx.shadowBlur=8; ctx.fill(); ctx.shadowBlur=0; }
+  for(const pt of G.particles){ ctx.globalAlpha=Math.max(0,pt.life*2); ctx.fillStyle=pt.col; ctx.fillRect(pt.x-1.5,pt.y-1.5,3,3); ctx.globalAlpha=1; }
+  if(G.debug) drawDebugPaths();
+}
+function drawFloor(){
+  const g=ctx.createLinearGradient(0,0,0,cv.height); g.addColorStop(0,'#202736'); g.addColorStop(1,'#141925');
+  ctx.fillStyle=g; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.lineWidth=1; ctx.strokeStyle='rgba(140,158,190,.06)'; ctx.beginPath();
+  for(let i=0;i<=N;i++){ ctx.moveTo(i*CELL+.5,0); ctx.lineTo(i*CELL+.5,N*CELL); ctx.moveTo(0,i*CELL+.5); ctx.lineTo(N*CELL,i*CELL+.5); } ctx.stroke();
+  ctx.strokeStyle='rgba(140,158,190,.11)'; ctx.beginPath();
+  for(let i=0;i<=N;i+=2){ ctx.moveTo(i*CELL+.5,0); ctx.lineTo(i*CELL+.5,N*CELL); ctx.moveTo(0,i*CELL+.5); ctx.lineTo(N*CELL,i*CELL+.5); } ctx.stroke();
+  ctx.strokeStyle='rgba(127,176,255,.18)'; ctx.lineWidth=2; ctx.strokeRect(1,1,cv.width-2,cv.height-2);
+}
+function drawGrid(){ ctx.strokeStyle='rgba(120,135,160,.16)'; ctx.lineWidth=1;
+  for(let i=0;i<=N;i++){ ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,N*CELL); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(N*CELL,i*CELL); ctx.stroke(); } }
+function drawBlock(x,y){
+  const px=x*CELL,py=y*CELL,s=2*CELL;
+  ctx.fillStyle='#565d70'; ctx.fillRect(px,py,s,s);
+  ctx.fillStyle='rgba(124,134,158,.95)'; ctx.fillRect(px,py,s,3); ctx.fillRect(px,py,3,s);
+  ctx.fillStyle='rgba(26,29,40,.95)'; ctx.fillRect(px,py+s-3,s,3); ctx.fillRect(px+s-3,py,3,s);
+  ctx.strokeStyle='#161922'; ctx.lineWidth=1; ctx.strokeRect(px+.5,py+.5,s-1,s-1);
+}
+function shade(hex,f){ const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=Math.round(r*f); g=Math.round(g*f); b=Math.round(b*f); return `rgb(${Math.min(r,255)},${Math.min(g,255)},${Math.min(b,255)})`; }
+function drawGemShape(px,py,color,isCand){
+  const r=CELL*0.92;
+  ctx.save(); ctx.translate(px,py);
+  ctx.shadowColor=color; ctx.shadowBlur=isCand?8:14;
+  ctx.beginPath();
+  for(let i=0;i<8;i++){ const a=Math.PI/8+i*Math.PI/4; const rad=(i%2===0)?r:r*0.72; const X=Math.cos(a)*rad,Y=Math.sin(a)*rad; i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
+  ctx.closePath();
+  const grad=ctx.createLinearGradient(-r,-r,r,r);
+  grad.addColorStop(0,shade(color,1.5)); grad.addColorStop(.5,color); grad.addColorStop(1,shade(color,0.45));
+  ctx.fillStyle=grad; ctx.globalAlpha=isCand?0.55:1; ctx.fill(); ctx.shadowBlur=0; ctx.globalAlpha=1;
+  ctx.strokeStyle=shade(color,1.7); ctx.lineWidth=1; ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(0,-r*0.7); ctx.lineTo(0,r*0.7); ctx.moveTo(-r*0.7,0); ctx.lineTo(r*0.7,0); ctx.stroke();
+  if(isCand){ ctx.fillStyle='#fff'; ctx.font="700 11px 'Cinzel',serif"; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('?',0,0); }
+  ctx.restore();
+}
+function drawCheckpoint(cp,num){
+  const px=cx2px(cp.x),py=cy2px(cp.y);
+  ctx.beginPath(); ctx.arc(px,py,CELL*0.85,0,Math.PI*2);
+  ctx.strokeStyle='rgba(212,175,106,.85)'; ctx.lineWidth=1.4; ctx.stroke();
+  ctx.fillStyle='#d4af6a'; ctx.font="700 12px 'Cinzel',serif"; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(num,px,py);
+}
+function drawGoal(){
+  const px=cx2px(ENDPOINT.x),py=cy2px(ENDPOINT.y);
+  // pulsing castle/goal marker at the right-edge exit
+  const pulse=0.5+0.5*Math.sin(performance.now()/400);
+  ctx.beginPath(); ctx.arc(px,py,CELL*0.95,0,Math.PI*2);
+  ctx.strokeStyle=`rgba(255,210,122,${0.6+pulse*0.4})`; ctx.lineWidth=2.4; ctx.stroke();
+  ctx.fillStyle='#ffd27a'; ctx.font="700 11px 'Cinzel',serif"; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('◆',px,py);
+}
+function drawSpawn(){ const px=cx2px(SPAWN.x),py=cy2px(SPAWN.y); ctx.fillStyle='rgba(106,210,155,.8)'; ctx.beginPath(); ctx.arc(px,py,CELL*0.5,0,Math.PI*2); ctx.fill(); }
+function drawEnemy(e){
+  ctx.beginPath(); ctx.arc(e.x,e.y,CELL*0.42,0,Math.PI*2); ctx.fillStyle='#c23a52'; ctx.fill();
+  ctx.strokeStyle='#5a1622'; ctx.lineWidth=1.2; ctx.stroke();
+  const now=performance.now();
+  if(e.cold&&now<e.cold.until){ ctx.strokeStyle='#7fd0ff'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.arc(e.x,e.y,CELL*0.5,0,Math.PI*2); ctx.stroke(); }
+  if(e.poison&&now<e.poison.until){ ctx.fillStyle='rgba(51,196,107,.8)'; ctx.beginPath(); ctx.arc(e.x+CELL*0.32,e.y-CELL*0.32,2,0,Math.PI*2); ctx.fill(); }
+  const w=CELL*1.1,h=3,frac=Math.max(0,e.hp/e.maxHp);
+  ctx.fillStyle='#000'; ctx.fillRect(e.x-w/2,e.y-CELL*0.9,w,h);
+  ctx.fillStyle=frac>.5?'#6ad29b':frac>.25?'#d4af6a':'#e0566b'; ctx.fillRect(e.x-w/2,e.y-CELL*0.9,w*frac,h);
+}
+function drawHoverFootprint(){
+  const {cx,cy}=G.hover; const legal=placementLegalCached(cx,cy);
+  const px=cx*CELL,py=cy*CELL,s=2*CELL;
+  ctx.fillStyle=legal?'rgba(106,210,155,.22)':'rgba(224,86,107,.22)'; ctx.fillRect(px,py,s,s);
+  ctx.strokeStyle=legal?'#6ad29b':'#e0566b'; ctx.lineWidth=1.5; ctx.strokeRect(px+1,py+1,s-2,s-2);
+}
+function drawDebugPaths(){
+  ctx.strokeStyle='rgba(127,176,255,.5)'; ctx.lineWidth=1;
+  for(const e of G.enemies){ if(!e.path) continue; ctx.beginPath(); ctx.moveTo(e.x,e.y); for(let i=e.wp;i<e.path.length;i++) ctx.lineTo(e.path[i].x,e.path[i].y); ctx.stroke(); }
+  if(G.hover.cx>=0){ ctx.fillStyle='#7fb0ff'; ctx.font="11px 'JetBrains Mono'"; ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText(`cell ${G.hover.cx},${G.hover.cy}`,6,6); ctx.fillText(`enemies ${G.enemies.length}`,6,20); }
+}
+let _hc={cx:-2,cy:-2,val:false};
+function placementLegalCached(cx,cy){ if(_hc.cx===cx&&_hc.cy===cy) return _hc.val; _hc={cx,cy,val:placementLegal(cx,cy)}; return _hc.val; }
+
+/* ----------------------------------- INPUT -------------------------------- */
+function evtCell(ev){ const r=cv.getBoundingClientRect(); return { cx:Math.floor((ev.clientX-r.left)/CELL), cy:Math.floor((ev.clientY-r.top)/CELL) }; }
+function gemAt(cx,cy){ for(const g of G.gems) if(cx>=g.x&&cx<g.x+2&&cy>=g.y&&cy<g.y+2) return g; return null; }
+function candIdxAt(cx,cy){ for(let i=0;i<G.candidates.length;i++){ const c=G.candidates[i]; if(cx>=c.x&&cx<c.x+2&&cy>=c.y&&cy<c.y+2) return i; } return -1; }
+function rockAt(cx,cy){ for(const w of G.walls) if(cx>=w.x&&cx<w.x+2&&cy>=w.y&&cy<w.y+2) return w; return null; }
+cv.addEventListener('mousemove',(ev)=>{
+  const {cx,cy}=evtCell(ev); G.hover.cx=cx; G.hover.cy=cy;
+  G.hover.gem=gemAt(cx,cy); const ci=candIdxAt(cx,cy); G.hover.cand=ci>=0?G.candidates[ci]:null;
+  updatePanel();
+});
+cv.addEventListener('mouseleave',()=>{ G.hover.cx=-1; G.hover.gem=null; G.hover.cand=null; updatePanel(); });
+cv.addEventListener('contextmenu',(ev)=>{ ev.preventDefault(); if(G.phase!=='build'||G.chosen) return; const {cx,cy}=evtCell(ev); undoCandidate(cx,cy); });
+cv.addEventListener('mousedown',(ev)=>{
+  if(ev.button!==0) return; const {cx,cy}=evtCell(ev);
+  // placing the 5 candidates
+  if(G.phase==='build' && !G.chosen && G.candidates.length<5){ tryPlaceCandidate(cx,cy); return; }
+  // otherwise clicking selects an entity to reveal its action menu
+  const ci=candIdxAt(cx,cy);
+  if(G.phase==='build' && !G.chosen && G.candidates.length===5 && ci>=0){ G.sel={kind:'cand', i:ci}; updatePanel(); return; }
+  const g=gemAt(cx,cy); if(g){ G.sel={kind:'gem', ref:g}; updatePanel(); return; }
+  const w=rockAt(cx,cy); if(w){ G.sel={kind:'rock', ref:w}; updatePanel(); return; }
+  G.sel=null; updatePanel();
+});
+window.addEventListener('keydown',(ev)=>{
+  if(ev.code==='KeyD'){ G.debug=!G.debug; }
+  if(G.debug && G.hover.gem){ const m={Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5}; if(ev.code in m){ setGemQuality(G.hover.gem,m[ev.code]); updatePanel(); } }
+});
+
+/* ------------------------------------- UI --------------------------------- */
+let _flash='',_flashUntil=0;
+function flashPrompt(m){ _flash=m; _flashUntil=performance.now()+2200; }
+function refreshBuildUI(){
+  hLevel.textContent=G.level; hLives.textContent=G.lives; hGold.textContent=G.gold; hScore.textContent=G.score;
+  hPhase.textContent=G.phase==='build'?'Build':G.phase==='combat'?'Combat':G.phase;
+  if(G.phase==='combat'){ cTitle.textContent='Combat'; cPrompt.innerHTML=`Wave <b>${G.level}</b> — gems fire automatically. Click a gem to inspect or downgrade.`; }
+  else if(G.phase==='build'){ cTitle.textContent='Build Phase';
+    if(!G.chosen&&G.candidates.length<5) cPrompt.innerHTML=`Place <b>${5-G.candidates.length}</b> more block(s). Right-click to undo.`;
+    else if(!G.chosen) cPrompt.innerHTML=`Click a candidate for options. <b>Keep</b> or <b>Combine</b> starts the wave.`;
+  }
+  updatePanel();
+}
+function specHTML(type,quality,kills){
+  const T=GEM_TYPES[type], s=T.q[quality];
+  let special='';
+  if(T.behavior==='crit') special=`<div class="row"><span class="lbl">Crit</span><span class="num">${Math.round(s.critC*100)}% · ×${s.critM}</span></div>`;
+  if(T.behavior==='slow') special=`<div class="row"><span class="lbl">Slow (cold)</span><span class="num">${Math.round(s.slow*100)}%</span></div>`;
+  if(T.behavior==='poison') special=`<div class="row"><span class="lbl">Poison</span><span class="num">${s.pDps}/s · ${s.pDur/1000}s</span></div><div class="row"><span class="lbl">Slow</span><span class="num">${Math.round(s.slow*100)}%</span></div>`;
+  if(T.behavior==='splash') special= s.multi?`<div class="row"><span class="lbl">Targets</span><span class="num">${s.multi}</span></div>`:`<div class="row"><span class="lbl">Splash</span><span class="num">${s.splash}px</span></div>`;
+  if(T.behavior==='multi') special=`<div class="row"><span class="lbl">Targets</span><span class="num">${s.multi}</span></div>`;
+  if(T.behavior==='buff') special=`<div class="row"><span class="lbl">Fire-rate aura</span><span class="num">−${Math.round(s.cdRed*100)}%</span></div>`;
+  const killsRow = kills!=null?`<div class="row"><span class="lbl">Kills</span><span class="num" id="liveKills">${kills}</span></div>`:'';
+  return `<div class="name" style="color:${T.color}">${T.name}</div>
+    <div class="q" style="color:${QCOLOR[quality]}">${QNAMES[quality]}</div>
+    <div class="row"><span class="lbl">Damage</span><span class="num">${s.dmg[0]} – ${s.dmg[1]}</span></div>
+    <div class="row"><span class="lbl">Range</span><span class="num">${Math.round(s.rng*RANGE_SCALE)}</span></div>
+    <div class="row"><span class="lbl">Cooldown</span><span class="num">${s.cd} ms</span></div>
+    ${special}${killsRow}
+    <div class="note">${T.note}</div>`;
+}
+function updatePanel(){
+  const spec=document.getElementById('spec'), actions=document.getElementById('actions');
+  let html='', acts='';
+  const sel=G.sel;
+  if(sel && sel.kind==='cand'){
+    const c=G.candidates[sel.i];
+    if(!c){ G.sel=null; }
+    else {
+      html=specHTML(c.type,c.quality,null);
+      acts=`<button data-act="keep">Keep</button>`;
+      const grp=candGroup(sel.i).length;
+      if(grp>=2){ const rq=Math.min(5,c.quality+(grp>=4?2:1)); acts+=`<button data-act="combine">Combine ×${grp} → ${QNAMES[rq]}</button>`; }
+      // "Combine Special" hook lands in Job 4 (needs advanced-tower recipes)
+    }
+  }
+  else if(sel && sel.kind==='gem'){
+    const g=sel.ref; html=specHTML(g.type,g.quality,g.kills);
+    if(gemEligibleDowngrade(g)) acts=`<button data-act="downgrade">Downgrade → ${QNAMES[g.quality-1]}</button>`;
+  }
+  else if(sel && sel.kind==='rock'){
+    html=`<div class="name" style="color:#9aa3b5">Rock</div><div class="q">Wall segment</div><div class="note">A solid 2×2 block — only good for lengthening the maze.</div>`;
+    acts = G.phase==='build' ? `<button data-act="delete">Delete</button>` : `<div class="note">Deletable only during the build phase.</div>`;
+  }
+  else if(G.hover.gem){ html=specHTML(G.hover.gem.type,G.hover.gem.quality,G.hover.gem.kills); }
+  else if(G.hover.cand){ html=specHTML(G.hover.cand.type,G.hover.cand.quality,null); }
+  else html='<div class="empty">Hover to inspect · click for actions.</div>';
+  spec.innerHTML=html; actions.innerHTML=acts;
+}
+function updateEcon(){
+  const v=BAL.bounty(G.level);
+  econLine.innerHTML=`+${v} gold / kill · −${v} lives / leak<br/>Lives cap ${BAL.livesCap}`;
+  const over = G.phase==='gameover'||G.phase==='win';
+  bBuy1.disabled = over || G.gold<BAL.buyLifeCost || G.lives>=BAL.livesCap;
+  bBuy5.disabled = over || G.gold<BAL.buy5Cost || G.lives>45;
+  refreshUpgradeUI();
+}
+const hLevel=document.getElementById('hLevel'),hLives=document.getElementById('hLives'),hGold=document.getElementById('hGold'),
+  hScore=document.getElementById('hScore'),hPhase=document.getElementById('hPhase'),
+  cTitle=document.getElementById('cTitle'),cPrompt=document.getElementById('cPrompt'),
+  econLine=document.getElementById('econLine'),bBuy1=document.getElementById('bBuy1'),bBuy5=document.getElementById('bBuy5'),
+  bRepick=document.getElementById('bRepick'),bChances=document.getElementById('bChances'),oddsLine=document.getElementById('oddsLine');
+function refreshUpgradeUI(){
+  // Repick: only meaningful pre-keep with 5 candidates down
+  bRepick.textContent=`Repick · ${G.repickCost}g`;
+  bRepick.disabled=!(G.phase==='build'&&!G.chosen&&G.candidates.length===5&&G.gold>=G.repickCost);
+  // Upgrade Chances: buy next ladder level
+  const maxed=G.upgradeLevel>=UPGRADE_LADDER.length-1;
+  const next=maxed?null:UPGRADE_LADDER[G.upgradeLevel+1];
+  bChances.textContent=maxed?`Upgrade Chances · MAX`:`Upgrade Chances · ${next.cost}g`;
+  bChances.disabled=maxed||G.gold<next.cost;
+  const w=UPGRADE_LADDER[G.upgradeLevel].w;
+  const parts=[]; for(let i=0;i<5;i++) if(w[i]>0) parts.push(`<span style="color:${QCOLOR[i]}">${QNAMES[i]} ${w[i]}%</span>`);
+  oddsLine.innerHTML=`Tier ${G.upgradeLevel}/8 odds:<br/>${parts.join(' · ')}`;
+}
+bBuy1.addEventListener('click',()=>buyLife(1));
+bBuy5.addEventListener('click',()=>buyLife(5));
+bRepick.addEventListener('click',repick);
+bChances.addEventListener('click',buyUpgradeChance);
+document.getElementById('actions').addEventListener('click',(e)=>{ const a=e.target&&e.target.dataset?e.target.dataset.act:null; if(a) doAction(a); });
+document.getElementById('bReset').addEventListener('click',()=>{ G=freshGame(); init(); });
+
+/* ------------------------------------ LOOP -------------------------------- */
+let last=0;
+function frame(t){
+  const now=t,dt=Math.min(0.05,(t-last)/1000); last=t;
+  if(G.phase==='combat'){ updateSpawning(dt); updateGems(now); updateProjectiles(dt,now); updateEnemies(dt,now);
+    hLives.textContent=G.lives; hGold.textContent=G.gold; hScore.textContent=G.score; }
+  updateParticles(dt); updateEcon();
+  if(G.sel&&G.sel.kind==='gem'){ const lk=document.getElementById('liveKills'); if(lk) lk.textContent=G.sel.ref.kills; }
+  if(performance.now()<_flashUntil&&G.phase==='build') cPrompt.innerHTML=`<span style="color:var(--bad)">${_flash}</span>`;
+  draw(); requestAnimationFrame(frame);
+}
+function init(){ recomputeFields(); refreshBuildUI(); updatePanel(); updateEcon(); document.getElementById('banner').style.display='none'; }
+G=freshGame(); init(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
