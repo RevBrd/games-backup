@@ -186,6 +186,13 @@ a flex item and never reaches the table's `scrollHeight`, so `fitBoard()` cannot
 does nothing. Sides take their natural height and `.table` centres the pair; that keeps the content
 against the centre line **and** keeps overflow measurable. This cost a round trip to find.
 
+**The Active card's height is fixed, and the numbers in `style.css` are MEASURED, not chosen.**
+`min-height` 249px yours / 149px theirs — the tallest of all 69 implemented Pokémon rendered into
+each slot at 318px wide, poisoned and confused so the status row is populated (Clefairy and Chansey
+win). Re-derive by rendering the pool if the card face or fonts change. The status row is always
+appended even when empty for the same reason: poisoning something used to grow the card by a line
+and shift the whole board.
+
 **Anything that measures a size must pick one coordinate space.** `getBoundingClientRect()` reports
 *post*-zoom screen pixels; `offsetWidth` / `clientWidth` / `scrollHeight` report *pre*-zoom layout
 pixels. Because `fitBoard()` zooms the board column, mixing the two silently mis-measures whenever a

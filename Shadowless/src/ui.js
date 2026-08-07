@@ -551,6 +551,20 @@ function renderStatusBar() {
   return bar;
 }
 
+// The last handful of log entries, printed on the mat. Oldest at the top so it
+// reads downward like a ticker — the opposite of the rail, which is newest-first
+// because you scroll back through it.
+function renderMatLog() {
+  const box = el('div', 'matlog');
+  const entries = S().log.slice(-5);
+  entries.forEach(e => {
+    const d = el('div', 'mlline k-' + e.kind);
+    d.appendChild(el('span', 'lx', e.text));
+    box.appendChild(d);
+  });
+  return box;
+}
+
 function renderCentreLine() {
   const m = el('div', 'centreline');
   if (UI.fxActive('ko0') || UI.fxActive('ko1')) {
@@ -653,6 +667,11 @@ function renderSide(pi, isFoe) {
   // it pulls both sides in by its whole width.
   play.appendChild(actWrap);
   const field = el('div', 'fieldzone');
+  // Your Active is taller than your field, which leaves a gap beside it in the
+  // wide layout. Rather than pad it, put the last few log lines on the mat —
+  // so the game narrates itself without you having to keep the rail on LOG.
+  // Hidden when stacked, where there is no gap to fill.
+  if (!isFoe) field.appendChild(renderMatLog());
   field.appendChild(prizeZone(p, !isFoe));
   field.appendChild(benchWrap);
   play.appendChild(field);
@@ -757,10 +776,28 @@ function renderSlot(slot, pi, where, idx) {
   en.appendChild(el('span', 'retreatnote', 'retreat ' + c.retreat));
   info.appendChild(en);
 
-  const st = statusBadges(slot, false);
-  if (st.children.length) info.appendChild(st);
+  // Always appended, even empty. The status row is what made the Active card
+  // change height mid-turn — poisoning something grew it by a line. Reserving
+  // the row costs 13px of stock and keeps the board still.
+  info.appendChild(statusBadges(slot, false));
   body.appendChild(info);
   d.appendChild(body);
+
+  // The opponent's Active lists what it can hit you with — cost, name, damage,
+  // and nothing else. The text is deliberately absent: it would double the card's
+  // height for something you can read in the rail by hovering. Knowing the
+  // numbers is the part you steer by.
+  if (pi === 1 && where === 'active' && (c.attacks || []).length) {
+    const atks = el('div', 'attacks foeatks');
+    c.attacks.forEach(a => {
+      const l = el('div', 'pc-atkline');
+      l.appendChild(costRow(a.cost));
+      l.appendChild(el('span', 'pc-atkname', a.name));
+      l.appendChild(el('span', 'pc-atkdmg', a.dmg || '—'));
+      atks.appendChild(l);
+    });
+    d.appendChild(atks);
+  }
 
   if (pi === 0 && where === 'active' && !presenting() && S().phase === 'main' && S().active === 0 && S().pendingPromote === null) {
     const atks = el('div', 'attacks');

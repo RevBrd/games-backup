@@ -174,6 +174,22 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .zone.prizes.hot{box-shadow:inset 0 0 0 1px #6A5326;background:rgba(226,168,75,.07)}
 .zone.prizes.hot .zonelabel{color:#A0864F;border-bottom-color:#6A5326}
 
+/* Printed onto the mat rather than panelled: it is a whisper of what just
+   happened, not a second log. The rail is still the place you read properly. */
+.matlog{
+  display:none;flex-direction:column;justify-content:flex-end;gap:1px;
+  flex:1 1 auto;min-height:0;overflow:hidden;
+  padding:0 2px 6px;font-size:9.5px;line-height:1.35;color:#5E6E68;
+}
+.mlline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mlline.k-turn{color:#8A7742;letter-spacing:.05em}
+.mlline.k-attack{color:#9FB0A8;font-weight:700}
+.mlline.k-dmg{color:#A5705F}
+.mlline.k-ko{color:#B4574C;font-weight:700}
+.mlline.k-prize{color:#A0864F}
+.mlline.k-flip{color:#7C8C84}
+.mlline.k-win{color:#6FAE5A;font-weight:700}
+
 .midline{min-height:0}
 .prompt{color:var(--amber);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
 .kobanner{color:var(--red);font-size:10.5px;letter-spacing:.24em;font-weight:700;
@@ -204,6 +220,9 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .pips{display:inline-flex;gap:2px;align-items:center}
 .free{font-size:10px;color:var(--dim)}
 .statuses{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px}
+/* One reserved badge row on the Active, so gaining or losing a condition does
+   not resize the card. Rare multi-badge cases still wrap and grow. */
+.slot.act .statuses{min-height:13px;margin-top:4px}
 .badge{font-size:8.5px;letter-spacing:.08em;padding:1px 4px;border-radius:2px;border:1px solid}
 .badge.slp{color:#8FA3C4;border-color:#3F4C63}
 .badge.par{color:#D9BB47;border-color:#5A4E23}
@@ -247,7 +266,10 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 }
 .panelhead{display:flex;justify-content:space-between;align-items:baseline;
   font-size:9.5px;letter-spacing:.16em;color:var(--dim);margin-bottom:5px}
-.hand{display:flex;align-items:flex-start;padding-top:6px}
+/* stretch, not flex-start: every card in hand is the same height, set by the
+   tallest. A ragged row of cards is not what a hand of cards looks like, and the
+   short ones carrying some empty stock is the right kind of wrong. */
+.hand{display:flex;align-items:stretch;padding-top:6px}
 /* position:relative is load-bearing, not decoration — later siblings paint over
    earlier ones, so without it the z-index below is inert and a lifted card
    still sits under its right-hand neighbour. */
@@ -413,7 +435,11 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .pc-typerow{margin:2px 0 8px}
 
 .pc-atkline{display:flex;align-items:center;gap:7px;margin-top:4px}
-.pc-atkname{flex:1;font-family:var(--serif);font-size:12px;font-weight:600}
+/* overflow-wrap:anywhere because a long single word cannot wrap and will simply
+   run out of the card — "Flamethrower" was being cut mid-word on a 150px hand
+   card. min-width:0 lets the name actually shrink inside the flex row. */
+.pc-atkname{flex:1;min-width:0;overflow-wrap:anywhere;
+  font-family:var(--serif);font-size:12px;font-weight:600}
 .pc-atkdmg{font-weight:700;font-size:12px}
 .pc-text{font-size:9.5px;color:var(--ink2);line-height:1.35;margin-top:2px}
 .pc-text.body{margin-top:8px;font-size:11px}
@@ -462,9 +488,19 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .slot.pcard{cursor:pointer}
 /* Wide enough that attack text does not wrap to three lines, and no wider. It
    was 400 for a while, which bought height back but left the card looking
-   stretched next to everything else on the mat. */
-.slot.pcard.act{width:300px}
-.side.mine .slot.pcard.act{width:334px}
+   stretched next to everything else on the mat.
+   One width in both layouts, so the fixed heights below hold in both. */
+.slot.pcard.act{width:318px}
+/* Fixed heights, so the board stops resizing itself every time the Active
+   changes. Both numbers are MEASURED, not chosen: the tallest of all 69
+   implemented Pokemon rendered into each slot at this width (Clefairy for
+   yours, Metronome's text being long; Chansey for theirs). Re-derive by
+   rendering the pool if the card face or fonts change.
+   The cost is small because it is not an outlier: two-thirds of Pokemon carry
+   two attacks and already sit at or near 239, so only the 24 single-attack
+   cards gain any empty stock at the bottom. */
+.side.mine .slot.pcard.act{min-height:249px}
+.side.foe .slot.pcard.act{min-height:149px}
 .slot.pcard.targetable{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber)}
 .slot.pcard.inspected{border-color:#5C6660}
 .slot .slotmeta{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--ink2)}
@@ -478,8 +514,9 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .slot.empty{background:transparent;border:0;box-shadow:inset 0 0 0 1px var(--matline);
   border-radius:3px;display:flex;align-items:center;justify-content:center;
   color:var(--matink);font-size:9px;letter-spacing:.16em}
-.slot.empty.act{width:300px;min-height:96px}
-.side.mine .slot.empty.act{width:334px}
+.slot.empty.act{width:318px;min-height:96px}
+.side.mine .slot.empty.act{min-height:249px}
+.side.foe .slot.empty.act{min-height:149px}
 
 /* ---- benched Pokemon: the same information, a third of the area ---- */
 /* Bench tiles are deliberately NOT small copies of the Active card. They carry
@@ -528,6 +565,13 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .slot .atk.off{opacity:.5;cursor:default}
 .slot .atk.off:hover{border-color:var(--hair);background:#EDF0EC}
 .slot .atk .pc-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* The opponent's attack list: numbers only, no text, and no button affordance
+   because you cannot press them. */
+.slot .attacks.foeatks{margin-top:6px;border-top:1px solid var(--hair);padding-top:5px;gap:2px}
+.slot .attacks.foeatks .pc-atkline{margin-top:0;padding:1px 0}
+.slot .attacks.foeatks .pc-atkname{font-size:11.5px}
+.slot .attacks.foeatks .pc-atkdmg{font-size:11.5px;color:#8A3A2E}
 .atkwhy{font-size:9px;color:#A33C30;margin-top:2px}
 
 /* preview rail */
@@ -596,10 +640,11 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    width, so each pair centres identically and they line up across the centre
    line. */
 .boardcol.wide .side.foe .activezone,.boardcol.wide .side.foe .fieldzone{order:0}
-.boardcol.wide .slot.pcard.act,.boardcol.wide .side.mine .slot.pcard.act{width:318px}
-.boardcol.wide .slot.empty.act,.boardcol.wide .side.mine .slot.empty.act{width:318px}
+/* The Active is one width in both layouts now, so nothing to override here. */
 /* The Active anchors on the centre line while the field sits out at the far
    edge of the row. */
+/* The on-mat ticker only exists where there is a gap to put it in. */
+.boardcol.wide .side.mine .matlog{display:flex}
 .boardcol.wide .side.mine .activezone{justify-content:flex-start}
 .boardcol.wide .side.mine .fieldzone{justify-content:flex-end}
 .boardcol.wide .side.foe .activezone{justify-content:flex-end}
@@ -5182,6 +5227,20 @@ function renderStatusBar() {
   return bar;
 }
 
+// The last handful of log entries, printed on the mat. Oldest at the top so it
+// reads downward like a ticker — the opposite of the rail, which is newest-first
+// because you scroll back through it.
+function renderMatLog() {
+  const box = el('div', 'matlog');
+  const entries = S().log.slice(-5);
+  entries.forEach(e => {
+    const d = el('div', 'mlline k-' + e.kind);
+    d.appendChild(el('span', 'lx', e.text));
+    box.appendChild(d);
+  });
+  return box;
+}
+
 function renderCentreLine() {
   const m = el('div', 'centreline');
   if (UI.fxActive('ko0') || UI.fxActive('ko1')) {
@@ -5284,6 +5343,11 @@ function renderSide(pi, isFoe) {
   // it pulls both sides in by its whole width.
   play.appendChild(actWrap);
   const field = el('div', 'fieldzone');
+  // Your Active is taller than your field, which leaves a gap beside it in the
+  // wide layout. Rather than pad it, put the last few log lines on the mat —
+  // so the game narrates itself without you having to keep the rail on LOG.
+  // Hidden when stacked, where there is no gap to fill.
+  if (!isFoe) field.appendChild(renderMatLog());
   field.appendChild(prizeZone(p, !isFoe));
   field.appendChild(benchWrap);
   play.appendChild(field);
@@ -5388,10 +5452,28 @@ function renderSlot(slot, pi, where, idx) {
   en.appendChild(el('span', 'retreatnote', 'retreat ' + c.retreat));
   info.appendChild(en);
 
-  const st = statusBadges(slot, false);
-  if (st.children.length) info.appendChild(st);
+  // Always appended, even empty. The status row is what made the Active card
+  // change height mid-turn — poisoning something grew it by a line. Reserving
+  // the row costs 13px of stock and keeps the board still.
+  info.appendChild(statusBadges(slot, false));
   body.appendChild(info);
   d.appendChild(body);
+
+  // The opponent's Active lists what it can hit you with — cost, name, damage,
+  // and nothing else. The text is deliberately absent: it would double the card's
+  // height for something you can read in the rail by hovering. Knowing the
+  // numbers is the part you steer by.
+  if (pi === 1 && where === 'active' && (c.attacks || []).length) {
+    const atks = el('div', 'attacks foeatks');
+    c.attacks.forEach(a => {
+      const l = el('div', 'pc-atkline');
+      l.appendChild(costRow(a.cost));
+      l.appendChild(el('span', 'pc-atkname', a.name));
+      l.appendChild(el('span', 'pc-atkdmg', a.dmg || '—'));
+      atks.appendChild(l);
+    });
+    d.appendChild(atks);
+  }
 
   if (pi === 0 && where === 'active' && !presenting() && S().phase === 'main' && S().active === 0 && S().pendingPromote === null) {
     const atks = el('div', 'attacks');
