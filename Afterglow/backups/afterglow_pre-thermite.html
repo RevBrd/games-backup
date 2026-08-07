@@ -216,11 +216,7 @@
         <button data-act="t2">Tier 2</button>
         <button data-act="t3">Tier 3</button>
       </div>
-      <div class="row">
-        <button data-act="therm">Thermite</button>
-        <button data-act="thermclr">Clear Th.</button>
-      </div>
-      <div class="hint">` toggle · Esc pause · N skip · I invuln · 0-3 tiers · F freeze · T thermite</div>
+      <div class="hint">` toggle · Esc pause · N skip · I invuln · 0-3 tiers · F freeze</div>
     </div>
   </div>
 </div>
@@ -345,108 +341,6 @@ const DRONE_DIVE_DEATH_T = 1.25; // killed mid-dive — already fast and nose-do
 const DRONE_DEATH_FIRE = 0.5;    // delay before smoke/fire appears (both profiles)
 const DRONE_DEATH_G    = 35;     // gravity on a coasting wreck (gentle — it hangs in the air)
 const DRONE_DIVE_G     = 28;     // it's already descending; just a little extra pull
-
-// ================================================================
-// THERMITE — VISUAL PROTOTYPE (Job 6a). Dev-gated, NO gameplay effect yet:
-// it does not damage the city, cannot be shot, and no wave ever spawns it.
-// This pass exists only to answer "does it look right", because the look is
-// the intended visual signature of the whole game and everything downstream
-// depends on it landing. Reference: an incendiary airburst — white-hot heads,
-// long beaded trails, heavy bloom where the curtain is dense, and a fall slow
-// enough to be beautiful before it is a problem.
-// Release with T (dev panel open) or the THERMITE button.
-// ALL VALUES TUNABLE. This block is the only place you need to touch.
-// ================================================================
-const TH = {
-  // --- the burst ---
-  count:       300,       // motes per release
-  clusters:    5,         // sub-clumps across the band — an even spread reads fake
-  clumpJitter: 0.17,      // how far a mote strays from its clump centre (fraction of span)
-  spanCells:   5.5,       // districts wide the curtain falls across
-  burstY:      [40, 78],  // altitude band the release happens in
-  fanOut:      [8, 34],   // outward px/s at the edges of the burst
-  burstKick:   [-14, 18], // initial vertical scatter px/s
-  // --- the fall ---
-  fallV:       [34, 62],  // terminal fall speed px/s. SLOW is the entire point
-  heavyChance: 0.09,      // fraction that are big bright fragments
-  heavyMult:   [1.35, 1.8], // ...and how much faster those fall
-  drag:        0.9,       // how fast vy eases toward terminal
-  lateralDrag: 0.55,      // how fast the outward fan bleeds off
-  driftAmp:    [3, 15],   // lateral waver amplitude px
-  driftHz:     [0.10, 0.38],
-  life:        [9, 17],   // seconds before a mote burns out in the air
-  // --- the look ---
-  trailSecs:   2.6,       // how far back the LONGEST trails reach
-  trailStep:   0.06,      // seconds between trail beads (bigger = fewer, more separated beads)
-  trailMix:    [1.0, 0.66, 0.44],  // three trail-length classes, mixed evenly. Uniform = fake
-  headR:       [0.9, 1.7],
-  haloMult:    4.6,       // soft bloom radius as a multiple of head radius
-  headGain:    1.15,      // overall head brightness. Overlap sums toward white — that IS the bloom
-  flickerHz:   [8, 26],
-  sparkChance: 0.05,      // per mote per frame: sheds a glinting fleck
-  sparkCap:    520
-};
-const TH_TRAIL_N = Math.ceil(TH.trailSecs / TH.trailStep);
-// temperature ramp: 0 = amber, 1 = white hot. Pre-baked so the draw loop only
-// ever indexes an array — assigning the same string identity keeps the canvas
-// colour-parse cache warm, which is what makes ~8k beads/frame affordable.
-const TH_TEMPS = 6, TH_ALPHAS = 24;
-const TH_PAL = (function(){
-  const pal = [];
-  for (let t=0;t<TH_TEMPS;t++){
-    const k = t/(TH_TEMPS-1);
-    const g = Math.round(158 + (250-158)*k), b = Math.round(72 + (238-72)*k);
-    const row = [];
-    for (let a=0;a<TH_ALPHAS;a++) row.push('rgba(255,'+g+','+b+','+((a+1)/TH_ALPHAS).toFixed(3)+')');
-    pal.push(row);
-  }
-  return pal;
-})();
-function thTi(temp){ return clamp((temp*(TH_TEMPS-1))|0, 0, TH_TEMPS-1); }
-function thA(a){ return clamp(((a*TH_ALPHAS)|0), 0, TH_ALPHAS-1); }
-// Per-trail-index alpha bucket and bead size, baked once for every combination of
-// (trail-length class x heavy). A mote just stores the offset of its own row, so the
-// inner draw loop is two typed-array reads and no maths. Baking these is what lets
-// the draw loop bucket every bead by colour and set fillStyle ~144 times a frame
-// instead of ~15,000 — that difference is the whole frame budget.
-// -1 means "too faint to bother drawing".
-const TH_CLASSES = TH.trailMix.length * 2;
-const TH_BEAD_A = new Int16Array(TH_CLASSES*TH_TRAIL_N);
-const TH_BEAD_S = new Float32Array(TH_CLASSES*TH_TRAIL_N);
-for (let L=0;L<TH.trailMix.length;L++) for (let h=0;h<2;h++){
-  const row = (L*2+h)*TH_TRAIL_N;
-  for (let k=0;k<TH_TRAIL_N;k++){
-    const f = clamp(1 - (k/TH_TRAIL_N)/TH.trailMix[L], 0, 1);
-    const a = Math.pow(f,1.5)*0.62*(h?1.55:1);   // ^1.5 not ^2: keeps the streak alive further back
-    TH_BEAD_A[row+k] = a < 0.03 ? -1 : clamp((a*TH_ALPHAS)|0, 0, TH_ALPHAS-1);
-    TH_BEAD_S[row+k] = 0.75 + f*(h?2.1:1.25);
-  }
-}
-const TH_BUCKETS = [], TH_BUCKET_S = new Float32Array(TH_TEMPS*TH_ALPHAS);
-for (let i=0;i<TH_TEMPS*TH_ALPHAS;i++) TH_BUCKETS.push([]);
-// One pre-rendered glow sprite per temperature. A scaled drawImage is far cheaper
-// than three beginPath/arc/fill passes and gives a softer falloff than any of them.
-const TH_SPRITE = (function(){
-  const out = [];
-  for (let t=0;t<TH_TEMPS;t++){
-    const S = 64, cv = document.createElement('canvas');
-    cv.width = S; cv.height = S;
-    const g = cv.getContext('2d');
-    const k = t/(TH_TEMPS-1);
-    const gg = Math.round(158 + (250-158)*k), bb = Math.round(72 + (238-72)*k);
-    const rad = g.createRadialGradient(S/2,S/2,0, S/2,S/2,S/2);
-    rad.addColorStop(0,    'rgba(255,254,250,1)');
-    rad.addColorStop(0.07, 'rgba(255,253,246,0.98)');
-    rad.addColorStop(0.15, 'rgba(255,'+Math.min(255,gg+52)+','+Math.min(255,bb+58)+',0.72)');
-    rad.addColorStop(0.34, 'rgba(255,'+gg+','+bb+',0.30)');
-    rad.addColorStop(0.64, 'rgba(255,'+gg+','+bb+',0.09)');
-    rad.addColorStop(1,    'rgba(255,'+gg+','+bb+',0)');
-    g.fillStyle = rad; g.fillRect(0,0,S,S);
-    out.push(cv);
-  }
-  return out;
-})();
-
 const UPG_KEYS = ['magSize','reloadTime','blastRadius'];
 const MAX_UPG_LEVEL = 4;
 function upgradeCost(type, key, curLevel){
@@ -470,7 +364,7 @@ let loiterQueue = 0, loiterTimer = 0;
 let bomberQueue = 0, bomberTimer = 0;
 let selectedWeapon = 'standard';
 let weaponHint = '', weaponHintT = 0;
-let settleTimer = 0;
+let breakTimer = 0, waveBonus = 0, settleTimer = 0;
 let shake = 0;
 let damagePoints = 0;
 let gameTime = 0;
@@ -478,8 +372,6 @@ let cityBlackout = false;   // true once the grid itself fails (<90% integrity)
 let lastLeakTime = -100;   // gameTime of the most recent city impact (for the ruminate-on-damage settle)
 // distant-war ambience: tracers arcing up from behind the skyline; rate set per-wave by damage
 let ambient = [], ambientAcc = 0, ambientLevel = 0;
-// thermite prototype (see TH block above) — purely decorative for now
-let thermite = [], thFlecks = [], thFlash = 0, thFlashX = 0, thFlashY = 0;
 let fps = 60;
 
 const overlay = document.getElementById('overlay');
@@ -768,130 +660,6 @@ function spawnTracerBurst(){
     ambient.push({ x:ox+rand(-4,4), y:oy, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,
                    life:rand(0.9, 1.6), max:1.6 });
   }
-}
-
-// ---------- thermite (visual prototype — see the TH block up top) ----------
-// One airburst: a band of burning motes that fan out slightly, then settle into
-// a slow parallel fall. Each carries a ring buffer of past positions so its trail
-// can be drawn as a chain of beads rather than a smooth line — the beading is
-// what reads as "burning fragment shedding sparks" instead of "tracer round".
-function releaseThermite(cx){
-  cx = clamp(cx, 70, W-70);
-  const span = TH.spanCells * CELL_W;
-  const by = rand(TH.burstY[0], TH.burstY[1]);
-  thFlash = 1; thFlashX = cx; thFlashY = by;
-  // sub-clump centres across the band — an even spread reads as a sprinkler, not a burst
-  const clump = [];
-  for (let c=0;c<TH.clusters;c++) clump.push(rand(-0.44, 0.44) * (0.55 + 0.45*Math.random()));
-  for (let i=0;i<TH.count;i++){
-    const u = clamp(clump[(Math.random()*TH.clusters)|0]
-                    + (Math.random()+Math.random()-1)*TH.clumpJitter, -0.5, 0.5);
-    const edge = clamp(Math.abs(u)*2, 0, 1);
-    const heavy = Math.random() < TH.heavyChance;
-    let vT = rand(TH.fallV[0], TH.fallV[1]);
-    if (heavy) vT *= rand(TH.heavyMult[0], TH.heavyMult[1]);
-    // warmer overall than the heads suggest: the trailing ends are where the amber lives
-    const temp = heavy ? rand(0.72,1) : rand(0.04,0.86);
-    const L = (Math.random()*TH.trailMix.length)|0;
-    thermite.push({
-      x: cx + u*span, y: by + rand(-16,16),
-      vx: (u<0?-1:1) * rand(TH.fanOut[0], TH.fanOut[1]) * edge,
-      vy: rand(TH.burstKick[0], TH.burstKick[1]),
-      vT, heavy, ti: thTi(temp), cls: (L*2 + (heavy?1:0))*TH_TRAIL_N,
-      r: rand(TH.headR[0], TH.headR[1]) * (heavy ? 2.1 : 1),
-      amp: rand(TH.driftAmp[0], TH.driftAmp[1]), hz: rand(TH.driftHz[0], TH.driftHz[1]),
-      ph: rand(0,6.28), fhz: rand(TH.flickerHz[0], TH.flickerHz[1]), fph: rand(0,6.28),
-      life: rand(TH.life[0], TH.life[1]) * (heavy ? 1.25 : 1),
-      age: 0, tAcc: 0, n: 0, trail: new Float32Array(TH_TRAIL_N*2), dead: false
-    });
-  }
-}
-function updateThermite(dt){
-  if (thFlash > 0){ thFlash -= dt*2.6; if (thFlash < 0) thFlash = 0; }
-  if (!thermite.length && !thFlecks.length) return;
-  for (const m of thermite){
-    m.age += dt;
-    m.vy += (m.vT - m.vy) * clamp(TH.drag*dt, 0, 1);
-    m.vx *= (1 - TH.lateralDrag*dt);
-    const waver = Math.sin(m.age*m.hz*6.283 + m.ph) * m.amp * m.hz * 2;
-    m.x += (m.vx + waver) * dt;
-    m.y += m.vy * dt;
-    m.tAcc -= dt;
-    if (m.tAcc <= 0){
-      m.tAcc = TH.trailStep;
-      const i = (m.n % TH_TRAIL_N)*2;
-      m.trail[i] = m.x; m.trail[i+1] = m.y;
-      m.n++;
-    }
-    if (thFlecks.length < TH.sparkCap && Math.random() < TH.sparkChance){
-      thFlecks.push({ x:m.x, y:m.y, vx:m.vx*0.4 + rand(-14,14), vy:m.vy*rand(0.5,0.95),
-                      life:rand(0.35,1.1), max:1.1, ti:m.ti });
-    }
-    // PROTOTYPE: burns out on contact with the ground. No damage, no ignition — yet.
-    if (m.age >= m.life || m.y >= GROUND_Y - 2) m.dead = true;
-  }
-  thermite = thermite.filter(m=>!m.dead);
-  for (const f of thFlecks){ f.life -= dt; f.vy += 26*dt; f.x += f.vx*dt; f.y += f.vy*dt; }
-  thFlecks = thFlecks.filter(f=> f.life>0 && f.y < GROUND_Y);
-}
-// Everything here draws additively: overlapping motes sum toward white, so the
-// dense middle of a curtain blooms on its own. That bloom IS the effect — do not
-// swap this for source-over and try to fake it with shadowBlur.
-function drawThermite(){
-  if (!thermite.length && !thFlecks.length && thFlash <= 0) return;
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-
-  if (thFlash > 0){                       // the release itself
-    const a = thFlash*thFlash, rr = 150*(1.4 - thFlash*0.4);
-    const g = ctx.createRadialGradient(thFlashX,thFlashY,0, thFlashX,thFlashY, rr);
-    g.addColorStop(0,'rgba(255,248,232,'+(0.55*a)+')');
-    g.addColorStop(0.5,'rgba(255,190,120,'+(0.22*a)+')');
-    g.addColorStop(1,'rgba(255,140,70,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(thFlashX,thFlashY,rr,0,7); ctx.fill();
-  }
-
-  // --- beaded trails, bucketed by colour so fillStyle is set ~144x, not ~16000x ---
-  for (let i=0;i<TH_BUCKETS.length;i++) TH_BUCKETS[i].length = 0;
-  // Dense curtain: thin the beads and fatten what's left, so overlapping releases
-  // lose trail resolution rather than framerate. One design-intent burst (~190)
-  // never trips this; two or three stacked releases degrade gracefully.
-  const lod  = thermite.length > 680 ? 3 : (thermite.length > 400 ? 2 : 1);
-  const lodS = lod > 2 ? 1.7 : (lod > 1 ? 1.35 : 1);
-  for (const m of thermite){
-    const have = Math.min(m.n, TH_TRAIL_N), base = m.cls, row = m.ti*TH_ALPHAS;
-    for (let k=0;k<have;k+=lod){
-      const ai = TH_BEAD_A[base+k];
-      if (ai < 0) continue;
-      const key = row + ai, idx = ((m.n-1-k) % TH_TRAIL_N + TH_TRAIL_N) % TH_TRAIL_N;
-      TH_BUCKETS[key].push(m.trail[idx*2], m.trail[idx*2+1]);
-      TH_BUCKET_S[key] = TH_BEAD_S[base+k]*lodS;
-    }
-  }
-  for (let t=0;t<TH_TEMPS;t++){
-    const pal = TH_PAL[t];
-    for (let a=0;a<TH_ALPHAS;a++){
-      const key = t*TH_ALPHAS + a, arr = TH_BUCKETS[key];
-      if (!arr.length) continue;
-      ctx.fillStyle = pal[a];
-      const s = TH_BUCKET_S[key], h = s*0.5;
-      for (let i=0;i<arr.length;i+=2) ctx.fillRect(arr[i]-h, arr[i+1]-h, s, s);
-    }
-  }
-
-  for (const f of thFlecks){              // shed glints
-    ctx.fillStyle = TH_PAL[f.ti][thA(clamp(f.life/f.max,0,1)*0.7)];
-    ctx.fillRect(f.x-0.6, f.y-0.6, 1.2, 1.2);
-  }
-
-  for (const m of thermite){              // heads — one scaled sprite each
-    const fade = clamp((m.life-m.age)/1.6, 0, 1);
-    ctx.globalAlpha = clamp(fade * (0.72 + 0.28*Math.sin(m.age*m.fhz + m.fph)) * TH.headGain, 0, 1);
-    const d = m.r*TH.haloMult*2;
-    ctx.drawImage(TH_SPRITE[m.ti], m.x-d*0.5, m.y-d*0.5, d, d);
-  }
-  ctx.globalAlpha = 1;
-  ctx.restore();
 }
 
 // Deflection response to the lingering cloud. Keyed on missile type so future
@@ -1227,8 +995,6 @@ function update(dt){
   for (const a of ambient){ a.x += a.vx*dt; a.y += a.vy*dt; a.vy += 120*dt; a.life -= dt; }
   ambient = ambient.filter(a=> a.life>0 && a.y > -40);
 
-  updateThermite(dt);
-
   for (const p of particles){ p.life-=dt; if(p.g) p.vy+=p.g*dt; p.x+=p.vx*dt; p.y+=p.vy*dt;
     if(p.g && p.y > GROUND_Y){ p.y=GROUND_Y; p.life=0; } }
   for (const s of smoke){
@@ -1274,6 +1040,8 @@ function update(dt){
     buildTimer -= dt;
     if (buildTimer<=0){ startWave(wave+1); }
     else { updateBuildTimerUI(); }
+  } else if (state === 'wavebreak'){
+    breakTimer -= dt; if (breakTimer<=0) startWave(wave+1);
   }
 }
 
@@ -1417,12 +1185,18 @@ function gameoverHTML(){
     '<div class="summary">Final Score <span>'+score+'</span><br>Held to Wave <span>'+wave+'</span></div>'+
     '<div class="cta">Click to try again</div>';
 }
+function waveBreakHTML(d){
+  return '<h1 style="font-size:34px;letter-spacing:10px;">WAVE '+wave+' HELD</h1><div class="rule"></div>'+
+    '<div class="summary">Integrity <span>'+integrityPct(damagePoints)+'%</span><br>'+
+    'Hold bonus <span>+'+d.holdBonus+'</span> &nbsp; Reserve <span>+'+d.ammoBonus+'</span></div>'+
+    '<div class="cta">Next wave incoming…</div>';
+}
 function showScreen(el, html){ if(html!=null) el.innerHTML = html; el.classList.remove('hidden'); }
 function hideAllScreens(){ overlay.classList.add('hidden'); pauseScr.classList.add('hidden'); buildScr.classList.add('hidden'); }
 
 // ---------- pause ----------
 function togglePause(){
-  if (state==='playing' || state==='settle' || state==='build'){ pausePrev=state; state='paused'; showScreen(pauseScr, null); }
+  if (state==='playing' || state==='wavebreak' || state==='settle' || state==='build'){ pausePrev=state; state='paused'; showScreen(pauseScr, null); }
   else if (state==='paused'){ resumeGame(); }
 }
 function resumeGame(){ state=pausePrev; pauseScr.classList.add('hidden'); }
@@ -1439,6 +1213,7 @@ function toLogical(evt){
 canvas.addEventListener('pointerdown', e=>{ if (state==='playing'){ const p=toLogical(e); fireAt(p.x,p.y); } });
 overlay.addEventListener('pointerdown', ()=>{
   if (state==='menu' || state==='gameover'){ hideAllScreens(); resetGame(); }
+  else if (state==='wavebreak'){ hideAllScreens(); breakTimer=0; }
 });
 pauseBtn.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); togglePause(); });
 document.getElementById('btn-resume').addEventListener('pointerdown', e=>{ e.stopPropagation(); resumeGame(); });
@@ -1459,7 +1234,6 @@ window.addEventListener('keydown', (e)=>{
   else if (k==='2') devSetTiers(2);
   else if (k==='3') devSetTiers(3);
   else if (k==='f' || k==='F') devFreeze = !devFreeze;
-  else if (k==='t' || k==='T') releaseThermite(rand(W*0.22, W*0.78));
 });
 
 // ---------- dev actions ----------
@@ -1478,8 +1252,6 @@ devPanel.addEventListener('pointerdown', (e)=>{
   if(a==='skip') devSkip(); else if(a==='dmg') devAddDamage(); else if(a==='invuln') devToggleInvuln();
   else if(a==='salv'){ salvage+=50; syncHud(); if(state==='build') renderBuildPanel(); }
   else if(a==='freeze') devFreeze=!devFreeze;
-  else if(a==='therm') releaseThermite(rand(W*0.22, W*0.78));
-  else if(a==='thermclr'){ thermite=[]; thFlecks=[]; thFlash=0; }
   else if(a==='t0') devSetTiers(0); else if(a==='t1') devSetTiers(1);
   else if(a==='t2') devSetTiers(2); else if(a==='t3') devSetTiers(3);
 });
@@ -1503,7 +1275,6 @@ function render(){
   drawImpacts();   // ground-impact bloom also sits behind the front buildings
   drawSmoke(true);     // impact puff — behind the skyline
   drawParticles(true); // impact sparks — behind the skyline
-  drawThermite();      // falls BEHIND the foreground skyline, so it descends into the city
   drawCity();
   drawSmoke(false);
 
@@ -1960,7 +1731,7 @@ function frame(now){
   update(dt); render();
   if (devOn){
     devStats.textContent = 'wave '+wave+'  int '+integrityPct(damagePoints)+'%  salv '+salvage+'  bat '+batteries.length+'  fps '+Math.round(fps)+
-      '  sm '+smoke.length+'  pt '+particles.length+'  en '+enemies.length+'  th '+thermite.length;
+      '  sm '+smoke.length+'  pt '+particles.length+'  en '+enemies.length;
   }
   requestAnimationFrame(frame);
 }
