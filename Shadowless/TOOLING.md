@@ -13,8 +13,12 @@ node tools/gen_cards.js                  # data/raw/ -> src/cards.js
 node tools/build.js                      # src/  -> shadowless.html
 node tools/selftest.js                   # rules + AI regression
 node tools/powertest.js                  # Powers and the bespoke cards
-node tools/smoke.js shadowless.html      # 46 integration tests against the built file
+node tools/smoke.js shadowless.html      # 48 integration tests against the built file
 ```
+
+A sixth, `tools/shot.js`, screenshots the built game at an exact viewport using the locally
+installed Chrome. It is a looking-at-it tool rather than a build step, so it is documented where it
+gets used: **[LAYOUT.md](LAYOUT.md)**.
 
 Both generators accept `--check`: regenerate to memory, diff against what's committed, exit non-zero
 if they differ. Cheap to run and the fastest way to catch someone having hand-edited a generated file.
@@ -51,8 +55,9 @@ Field mapping worth knowing:
   `effects.js` says what it does.
 
 Upstream also carries `flavorText`, `nationalPokedexNumbers` and card `images` URLs that the
-generator currently discards. The first two are wanted by Job 5's dex; the images are a live
-question for the visual pass.
+generator currently discards. The first two are wanted by Job 5's dex. The images are settled and
+already in use — `tools/fetch_art.js` reads those URLs, and where the scans do and do not appear is
+a standing design decision in `CLAUDE.md`.
 
 ## data/decks.json is source, not output
 
