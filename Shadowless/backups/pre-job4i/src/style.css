@@ -48,13 +48,6 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
      scroll, and then get scaled by fitBoard) but it does not grow to swallow
      spare room. Spare room is worth more to the hand — see .handpanel. */
   flex:0 1 auto;min-height:0;overflow:auto;
-  /* The cloth is exactly as wide as the widest half and centred, so the desk
-     shows either side of it. It used to stretch to the whole board column,
-     which on a 1900px window printed a metre of empty mat around a board that
-     was 800px of content — the same "sprawl rather than a mat" that `.mat` was
-     already narrowed to fix, one level further out. Do not give this a width:
-     max-content is what keeps it honest as the content changes. */
-  width:max-content;max-width:100%;align-self:center;
   /* `safe` so that if the content ever does exceed the mat it overflows
      downward and stays scrollable, instead of centring and putting the top
      out of reach. */
@@ -66,14 +59,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
     repeating-linear-gradient(0deg,rgba(0,0,0,.05) 0 1px,transparent 1px 3px),
     linear-gradient(180deg,var(--mat2) 0%,var(--mat) 50%,var(--mat2) 100%);
   border:1px solid var(--matedge);
-  /* The inner rim is what gives the mat an EDGE. Without it the cloth's bottom
-     stop (--mat2) and the desk (--bg) are four points apart and the mat simply
-     dissolves into the table — which reads as the board trailing off into empty
-     space rather than as an object lying on a desk. It cost a session an hour
-     of hunting a "dead band" that was only ever this fade. The dark border
-     outside plus a light rim inside is the same two-line trick a real printed
-     mat gets from its bound edge. */
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.07), inset 0 18px 40px -30px #000;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03), inset 0 18px 40px -30px #000;
 }
 /* Your half of the mat is lit a shade warmer than the far side. It is a small
    difference and it is the whole reason you never have to ask which row is
@@ -262,7 +248,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
      column, so leftover height falls as desk between the mat and your hand
      rather than as padding inside the mat. It also stops the action bar sitting
      flush against the bottom edge of the window. */
-  flex:0 0 auto;margin-top:auto;align-self:center;
+  flex:0 0 auto;margin-top:auto;
   /* clip, not hidden: horizontal overflow from sub-pixel rounding under a
      fractional zoom must not raise a scrollbar, but the hover-lift still has to
      be able to rise out of the panel. overflow:hidden would clip that too. */
@@ -275,11 +261,8 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
   font-size:9.5px;letter-spacing:.16em;color:var(--dim);margin-bottom:5px}
 /* stretch, not flex-start: every card in hand is the same height, set by the
    tallest. A ragged row of cards is not what a hand of cards looks like, and the
-   short ones carrying some empty stock is the right kind of wrong.
-   Centred, because a hand is held in front of you. Left-aligned, a small hand
-   sat against one edge of a very wide panel with a metre of empty desk beside
-   it, which read as a bug rather than as a hand. */
-.hand{display:flex;align-items:stretch;justify-content:center;padding-top:6px}
+   short ones carrying some empty stock is the right kind of wrong. */
+.hand{display:flex;align-items:stretch;padding-top:6px}
 /* position:relative is load-bearing, not decoration — later siblings paint over
    earlier ones, so without it the z-index below is inert and a lifted card
    still sits under its right-hand neighbour. */
@@ -549,14 +532,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
   color:var(--dim);justify-content:center;gap:14px}
 
 /* ---- cards in hand ---- */
-/* 116px, down from 150. The hand face carries no attack names and no rules
-   text, so the width those needed is width the fan can spend on fitting more
-   cards on screen: at 1366px this is 8 cards before any overlap at all, where
-   150px managed 6. See handCard() for why the words went.
-   The overlay sheets still use miniCard, which keeps its own natural width —
-   there is room in a dialog and nothing competing for it. */
 .hand .pcard{width:150px;cursor:pointer}
-.hand .handcard{width:116px}
 .hand .pcard:hover{border-color:var(--amber)}
 .hand .pcard.sel{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber), 0 10px 18px -8px rgba(0,0,0,.8)}
 .hand .pcard.dead{opacity:.45;cursor:default}
@@ -565,40 +541,6 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 /* A left edge in the type colour survives the overlap, so a fanned hand is
    still readable as "two Fire, a Grass, two Trainers" at a glance. */
 .pcard.k-pokemon,.pcard.k-energy,.pcard.k-trainer{border-left-width:3px}
-
-/* ---- the hand face ---- */
-/* Four things and no more: name, kind, art, and what each attack costs against
-   what it does. Everything is stacked in a single column and ordered by how
-   much of it survives being overlapped by the next card — name first, because
-   the first six characters of a name are usually the whole answer. */
-.handcard{display:flex;flex-direction:column;padding:6px 7px 7px;gap:0}
-/* Two lines, reserved whether or not they are used, so a hand of long and short
-   names still has its type tags on one line and its costs on another. Wrapping
-   is by word: an unbreakable name is allowed to be clipped at the card edge
-   rather than broken into syllables, which is what the old face did. */
-.hc-name{
-  font-family:var(--serif);font-size:11.5px;font-weight:600;line-height:1.15;
-  height:2.3em;overflow:hidden;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-}
-.hc-tags{display:flex;align-items:center;gap:4px;margin-top:3px;min-height:13px}
-.hc-tags .typetag{font-size:8px;letter-spacing:.06em;padding:1px 4px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.hc-hp{margin-left:auto;font-size:9px;color:var(--ink2);white-space:nowrap}
-/* The sigil is a 100x100 viewBox and keeps its aspect, so a wide box shows it
-   square and centred with stock either side — an art window rather than a
-   stretched emblem. */
-/* flex:1 so the art takes ALL the spare stock rather than leaving it in a lump
-   at the bottom. Every card in the hand is stretched to the tallest, so a
-   Trainer beside a two-attack Pokemon has ~40px going spare — as a gap that
-   reads as an unfinished card, as a taller art window it reads as a card with
-   a bigger picture on it, which is what a Trainer actually has. */
-.sigil.hc-art{width:100%;flex:1 1 auto;min-height:46px;margin:5px 0 0}
-.hc-atks{padding-top:5px;display:flex;flex-direction:column;gap:2px}
-.hc-atk{display:flex;align-items:center;gap:6px;
-  border-top:1px solid var(--hair);padding-top:3px}
-.hc-atk .pips{flex:0 0 auto}
-.hc-dmg{margin-left:auto;font-weight:700;font-size:11.5px}
 
 /* ---- the Active Pokemon ---- */
 .slot.pcard{cursor:pointer}

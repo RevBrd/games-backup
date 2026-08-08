@@ -52,10 +52,10 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, fullCard, inspectCard, railPeek};')
+  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
-const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect } = ctx;
+const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME } = ctx;
 
 console.log('\n=== BUILT ARTIFACT SMOKE ===');
 
@@ -497,6 +497,41 @@ T('card faces render for every card in play, all three kinds', () => {
   }
   UI.flipDelay = 2000;
   return kinds.size === 3;
+});
+
+// The hand face is deliberately not miniCard. It must render for all three
+// kinds, and it must NOT carry attack names or rules text — those are what
+// broke mid-word inside a 116px card and sent us here in the first place.
+T('the hand face renders every card and carries no attack names or rules text', () => {
+  // The stub's textContent is per-node, not a subtree walk like the real DOM's,
+  // so gather the tree by hand rather than reading the root and seeing nothing.
+  const deepText = (n) => (n._text || '') + (n.children || []).map(deepText).join(' ');
+  const kinds = new Set();
+  let leaked = null;
+  for (const id in CARD_DB) {
+    const c = CARD_DB[id];
+    kinds.add(c.kind);
+    const node = ctx.handCard(c);
+    const text = deepText(node);
+    // Mewtwo's attack is called Psychic and so is its type, which the face DOES
+    // print as its type tag. Attack names that are also type names cannot be
+    // told apart by string search, so they sit this one out.
+    const typeNames = new Set(Object.keys(ENERGY_NAME).map(k => ENERGY_NAME[k]));
+    for (const a of (c.attacks || [])) {
+      // A very short attack name could collide with a damage figure, so only
+      // names long enough to be unambiguous are checked.
+      if (a.name && a.name.length > 3 && !typeNames.has(a.name) && text.includes(a.name)) {
+        leaked = c.name + ' / ' + a.name;
+      }
+      if (a.text && a.text.length > 12 && text.includes(a.text.slice(0, 12))) leaked = c.name + ' / rules text';
+    }
+    if (c.kind === 'trainer' && c.text && c.text.length > 12 && text.includes(c.text.slice(0, 12))) {
+      leaked = c.name + ' / Trainer text';
+    }
+    if (!text.includes(c.name)) leaked = c.name + ' / name missing';
+  }
+  if (leaked) console.log('      leaked: ' + leaked);
+  return kinds.size === 3 && !leaked;
 });
 
 // Clicking used to jump the rail to the CARD tab, which threw the log away

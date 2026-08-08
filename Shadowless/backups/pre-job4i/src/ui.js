@@ -265,53 +265,6 @@ function miniCard(card) {
   return d;
 }
 
-// The hand face. Deliberately NOT miniCard: a card in hand is a thing you are
-// deciding whether to play, and what you decide on is name, kind, and what the
-// attacks cost against what they do. Attack NAMES and rules text were the whole
-// of the problem — "Poisonpowder" cannot wrap inside a 95px column, so it broke
-// mid-word into three lines, and a clamped Trainer paragraph got cut off mid-
-// sentence anyway, which is worse than not showing it. The rail shows the real
-// printed card on hover; that is where the words live now.
-//
-// Dropping the words also buys the width back, which is the other half of the
-// job: a narrower card is a hand that fits more cards before it has to overlap.
-function handCard(card) {
-  const d = el('div', 'pcard handcard k-' + card.kind);
-  d.style.borderLeftColor = cardAccent(card);
-  d.appendChild(el('div', 'hc-name', card.name));
-
-  const tags = el('div', 'hc-tags');
-  if (card.kind === 'pokemon') {
-    tags.appendChild(typeTag(card.type));
-    tags.appendChild(el('span', 'hc-hp', card.hp + ' HP'));
-  } else if (card.kind === 'energy') {
-    // Double Colorless provides 'CC'; the tag takes the type, the count rides
-    // beside it rather than colouring a second pip that means the same thing.
-    tags.appendChild(typeTag((card.provides || 'C')[0]));
-    if ((card.provides || '').length > 1) tags.appendChild(el('span', 'hc-hp', '×' + card.provides.length));
-  } else {
-    tags.appendChild(el('span', 'typetag trainer', card.sub));
-  }
-  d.appendChild(tags);
-
-  d.appendChild(sigilBox(card, 'hc-art'));
-
-  // Cost on the left, damage on the right, nothing in between. Attacks with no
-  // damage number still get their row — the cost is the information there, and
-  // an absent row would make a two-attack Pokemon look like a one-attack one.
-  if (card.kind === 'pokemon' && (card.attacks || []).length) {
-    const atks = el('div', 'hc-atks');
-    card.attacks.forEach(a => {
-      const r = el('div', 'hc-atk');
-      r.appendChild(costRow(a.cost));
-      r.appendChild(el('span', 'hc-dmg', a.dmg || '·'));
-      atks.appendChild(r);
-    });
-    d.appendChild(atks);
-  }
-  return d;
-}
-
 // The real printed face, from assets/cards/<set>/<number>.png. These are the
 // whole 1999 card — border, name box, the lot — so they belong only where the
 // card is the SUBJECT rather than a token in play. If the set has not been
@@ -437,7 +390,7 @@ function render() {
   if (UI.screen === 'decks') { root.appendChild(renderDeckSelect()); return; }
   if (!UI.E) { root.appendChild(el('div', 'empty', 'No game loaded.')); return; }
 
-  UI.handEl = null; UI.handPanelEl = null; UI.vpDumpEl = null;
+  UI.handEl = null;
   const wrap = el('div', 'wrap');
   wrap.appendChild(renderBoardColumn());
   wrap.appendChild(renderRail());
@@ -449,7 +402,6 @@ function render() {
 
   chooseLayout();
   layoutHand();
-  writeViewportDump();      // only meaningful once the fitter has settled
   maybeRunAI();
 }
 
@@ -549,22 +501,6 @@ function layoutHand() {
   if (!hand || !hand.style) return;
   const cards = hand.children;
   const n = cards.length;
-
-  // The hand panel is the near edge of the same table, so it starts at the
-  // mat's width rather than at the board column's. Spanning the whole column
-  // left a bordered box two thirds empty sitting under a mat that had just
-  // been narrowed to its contents — the panel read as a container, not as a
-  // hand. It still grows past the mat when the hand genuinely needs the room,
-  // up to the full column, so a big hand is never squeezed for symmetry.
-  const panel = UI.handPanelEl, table = UI.tableEl, col = UI.boardEl;
-  if (panel && panel.style && table && col && typeof table.offsetWidth === 'number') {
-    const cw = n ? (cards[0].offsetWidth || 0) : 0;
-    const natural = n ? cw * n + 7 * (n - 1) + 22 : 0;   // 22 = the panel's own padding
-    const roomy = Math.max(0, (col.clientWidth || 0) - 24);
-    const want = Math.max(table.offsetWidth || 0, Math.min(roomy, natural));
-    if (want > 0) panel.style.width = want + 'px';
-  }
-
   if (n < 2) return;
   // offsetWidth, NOT getBoundingClientRect: fitBoard() may have zoomed the whole
   // column, and getBoundingClientRect reports post-zoom screen pixels while
@@ -579,14 +515,7 @@ function layoutHand() {
   if (!w || avail <= 0) return;
   // Floor, never round: the error is multiplied by (n-1) gaps, so rounding up
   // pushes the last card past the edge on a big hand. Floor only ever tightens.
-  //
-  // The 34px lower bound is what a card must still show of itself when the fan
-  // is at its tightest: the type-coloured left edge, the first characters of
-  // the name, and the left of its sigil. It was 22, which was tuned against a
-  // 150px card carrying attack names it could not fit anyway. It only binds
-  // past ~28 cards at 1366px, and overflowing is the correct failure there —
-  // the alternative is a row of 22px slivers that says nothing.
-  const step = Math.max(34, Math.min(w + 7, (avail - w) / (n - 1)));
+  const step = Math.max(22, Math.min(w + 7, (avail - w) / (n - 1)));
   hand.style.setProperty('--fan', Math.floor(step - w) + 'px');
 }
 
@@ -999,7 +928,7 @@ function renderHand() {
   me().hand.forEach((inst, i) => {
     const c = CARD_DB[inst.id];
     const acts = legal.filter(a => a.hand === i);
-    const card = handCard(c);
+    const card = miniCard(c);
     if (UI.sel && UI.sel.idx === i) card.classList.add('sel');
     if (!acts.length) card.classList.add('dead');
     if (UI.inspect === c.id) card.classList.add('inspected');
@@ -1017,7 +946,7 @@ function renderHand() {
     row.appendChild(peekOn(card, c.id));
   });
   if (!me().hand.length) row.appendChild(el('div', 'empty', 'hand empty'));
-  UI.handEl = row; UI.handPanelEl = h;
+  UI.handEl = row;
   h.appendChild(row);
   return h;
 }
@@ -1768,12 +1697,14 @@ function renderDev() {
   const gvp = el('div', 'grp');
   gvp.appendChild(el('div', 'grphead', 'Viewport'));
   const vp = el('div', 'dump');
-  // Held, not filled: renderDev() runs while the rail is still being BUILT, so
-  // the board column it wants to measure is not in the document yet and every
-  // size reads 0. render() calls writeViewportDump() again once the layout has
-  // settled, which is the only moment these numbers mean anything.
-  UI.vpDumpEl = vp;
-  writeViewportDump();
+  const dpr = (typeof devicePixelRatio === 'number') ? devicePixelRatio : 1;
+  const cw = (typeof innerWidth === 'number') ? innerWidth : 0;
+  const ch = (typeof innerHeight === 'number') ? innerHeight : 0;
+  vp.textContent =
+    `page        ${cw} x ${ch} CSS px\n` +
+    `device      ${Math.round(cw * dpr)} x ${Math.round(ch * dpr)} device px\n` +
+    `scaling     ${dpr}x  (OS display scale + browser zoom)\n` +
+    `mat fit     ${UI.fitZoom < 0.999 ? UI.fitZoom.toFixed(3) + 'x — board scaled down to fit' : '1.000x — fits unscaled'}`;
   gvp.appendChild(vp);
   box.appendChild(gvp);
 
@@ -1789,44 +1720,6 @@ function renderDev() {
   g3.appendChild(pre);
   box.appendChild(g3);
   return box;
-}
-
-// What the page actually got, which is never what the screen says: display
-// scaling and browser chrome between them can turn a "1920x1080 laptop" into a
-// 1280x600 page, and guessing at that number instead of reading it is how the
-// first sizing pass got the board wrong.
-//
-// Everything below the rule is what the FITTER then did with it. Every layout
-// question asked of this board has come down to "what did the mat actually
-// get", and hand-instrumenting that each time is how a session loses an hour.
-function writeViewportDump() {
-  const vp = UI.vpDumpEl;
-  if (!vp) return;
-  const num = (x) => (typeof x === 'number' ? Math.round(x) : 0);
-  const dpr = (typeof devicePixelRatio === 'number') ? devicePixelRatio : 1;
-  const cw = (typeof innerWidth === 'number') ? innerWidth : 0;
-  const ch = (typeof innerHeight === 'number') ? innerHeight : 0;
-  const col = UI.boardEl, table = UI.tableEl, panel = UI.handPanelEl;
-
-  // The desk showing between the mat and the hand. It is a real measurement of
-  // the gap, not of overflow: the gap is made by the hand panel's margin-top:
-  // auto, so it lives INSIDE scrollHeight and subtracting heights cannot see it.
-  const gap = (table && panel && typeof panel.offsetTop === 'number')
-    ? num(panel.offsetTop) - (num(table.offsetTop) + num(table.offsetHeight)) : 0;
-
-  vp.textContent =
-    `page        ${cw} x ${ch} CSS px\n` +
-    `device      ${Math.round(cw * dpr)} x ${Math.round(ch * dpr)} device px\n` +
-    `scaling     ${dpr}x  (OS display scale + browser zoom)\n` +
-    `----------------------------------------\n` +
-    `mat fit     ${UI.fitZoom < 0.999 ? UI.fitZoom.toFixed(3) + 'x — scaled DOWN to fit'
-      : UI.fitZoom > 1.001 ? UI.fitZoom.toFixed(3) + 'x — grown into spare room'
-      : '1.000x — fits unscaled'}\n` +
-    `layout      ${UI.wideLayout ? 'wide — field beside the Active' : 'stacked — field under the Active'}\n` +
-    `board col   ${num(col && col.clientWidth)} x ${num(col && col.clientHeight)} layout px\n` +
-    `mat cloth   ${num(table && table.offsetWidth)} wide · wants ${num(table && table.scrollHeight)} tall, got ${num(table && table.clientHeight)}\n` +
-    `hand panel  ${num(panel && panel.offsetWidth)} wide\n` +
-    `spare desk  ${gap > 1 ? gap + ' px between the mat and your hand' : 'none'}`;
 }
 
 function playerDump(p) {
