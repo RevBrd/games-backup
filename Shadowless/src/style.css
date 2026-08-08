@@ -44,10 +44,16 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 
 /* ---- the table: one mat, two halves, mirrored across a centre line ---- */
 .table{
-  /* The mat takes the height it needs and no more; it may shrink (and then
-     scroll, and then get scaled by fitBoard) but it does not grow to swallow
-     spare room. Spare room is worth more to the hand — see .handpanel. */
-  flex:0 1 auto;min-height:0;overflow:auto;
+  /* The mat takes the leftover height. It used to be `flex:0 1 auto`, on the
+     reasoning that spare room was worth more to the hand — but the hand is
+     `flex:0 0 auto` and never took any of it. What actually happened was that
+     the hand's `margin-top:auto` swallowed the lot and paid it out as a band of
+     bare desk, ~90px of it at 1366x768.
+     Growing the cloth instead is free: `justify-content:safe center` already
+     centres the two halves inside it, so the extra reads as a larger mat rather
+     than as a hole. It also removes the last auto margin from this column, which
+     matters more than it looks — see the geometry warning in LAYOUT.md. */
+  flex:1 1 auto;min-height:0;overflow:auto;
   /* The cloth is exactly as wide as the widest half and centred, so the desk
      shows either side of it. It used to stretch to the whole board column,
      which on a 1900px window printed a metre of empty mat around a board that
@@ -183,8 +189,14 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 
 /* Printed onto the mat rather than panelled: it is a whisper of what just
    happened, not a second log. The rail is still the place you read properly. */
+/* Top-aligned, so the ticker starts level with the top of the Active card
+   opposite it rather than hanging off the bottom of its box. It was bottom-
+   aligned, which anchored it to the BENCH label below and left the gap at the
+   top of the field column — the most conspicuous empty space on the mat.
+   It still takes the flexible slot, so what slack the column has ends up under
+   the printed text where the eye reads it as margin rather than as a hole. */
 .matlog{
-  display:none;flex-direction:column;justify-content:flex-end;gap:1px;
+  display:none;flex-direction:column;justify-content:flex-start;gap:1px;
   flex:1 1 auto;min-height:0;overflow:hidden;
   padding:0 2px 6px;font-size:9.5px;line-height:1.35;color:#5E6E68;
 }
@@ -258,11 +270,13 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    many cards you hold. Overlap tightens as the hand grows; hovering lifts a
    card clear of its neighbours. */
 .handpanel{
-  /* margin-top:auto pins the hand and the action bar to the bottom of the
-     column, so leftover height falls as desk between the mat and your hand
-     rather than as padding inside the mat. It also stops the action bar sitting
-     flush against the bottom edge of the window. */
-  flex:0 0 auto;margin-top:auto;align-self:center;
+  /* NO margin-top:auto. It used to pin the hand to the bottom of the column,
+     which sounds right and produced a band of bare desk above it — and worse,
+     an auto margin inside a `zoom`ed flex column is not reflected in
+     getBoundingClientRect() or offsetTop, so the gap was invisible to every
+     measurement the fitter and the DEV readout could take. The mat takes the
+     leftover now; this stays exactly as tall as the cards in it. */
+  flex:0 0 auto;align-self:center;
   /* clip, not hidden: horizontal overflow from sub-pixel rounding under a
      fractional zoom must not raise a scrollbar, but the hover-lift still has to
      be able to rise out of the panel. overflow:hidden would clip that too. */
@@ -556,7 +570,17 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    The overlay sheets still use miniCard, which keeps its own natural width —
    there is room in a dialog and nothing competing for it. */
 .hand .pcard{width:150px;cursor:pointer}
-.hand .handcard{width:116px}
+/* 98px. Everything on this face is scaled with the width rather than only the
+   box being narrowed — type, name, damage and the cost pips all step down
+   together — so it reads as the same card printed smaller instead of the same
+   text crammed into less room.
+   Two things fight this number and both are working as intended. The fitter
+   partly undoes it: a shorter hand frees height, which lets fitBoard grow the
+   whole column, so the card on screen shrinks by less than the figure here.
+   And the aspect changed on the way — these were nearly 2:1 tall because the
+   sigil was taking its own intrinsic height; at 98x~140 they are close to the
+   3:4 of a real card, which is what they are drawings of. */
+.hand .handcard{width:98px}
 .hand .pcard:hover{border-color:var(--amber)}
 .hand .pcard.sel{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber), 0 10px 18px -8px rgba(0,0,0,.8)}
 .hand .pcard.dead{opacity:.45;cursor:default}
@@ -571,20 +595,23 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    what it does. Everything is stacked in a single column and ordered by how
    much of it survives being overlapped by the next card — name first, because
    the first six characters of a name are usually the whole answer. */
-.handcard{display:flex;flex-direction:column;padding:6px 7px 7px;gap:0}
+.handcard{display:flex;flex-direction:column;padding:5px 6px 6px;gap:0}
 /* Two lines, reserved whether or not they are used, so a hand of long and short
    names still has its type tags on one line and its costs on another. Wrapping
    is by word: an unbreakable name is allowed to be clipped at the card edge
    rather than broken into syllables, which is what the old face did. */
 .hc-name{
-  font-family:var(--serif);font-size:11.5px;font-weight:600;line-height:1.15;
+  font-family:var(--serif);font-size:10.5px;font-weight:600;line-height:1.15;
   height:2.3em;overflow:hidden;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
 }
-.hc-tags{display:flex;align-items:center;gap:4px;margin-top:3px;min-height:13px}
-.hc-tags .typetag{font-size:8px;letter-spacing:.06em;padding:1px 4px;
+.hc-tags{display:flex;align-items:center;gap:3px;margin-top:3px;min-height:12px}
+.hc-tags .typetag{font-size:7.5px;letter-spacing:.04em;padding:1px 3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.hc-hp{margin-left:auto;font-size:9px;color:var(--ink2);white-space:nowrap}
+.hc-hp{margin-left:auto;font-size:8.5px;color:var(--ink2);white-space:nowrap}
+/* The cost pips step down with everything else. Scoped, because .pip.ink is
+   shared with the Active card and the preview panel, which did not shrink. */
+.handcard .pip.ink{width:8px;height:8px}
 /* The sigil is a 100x100 viewBox and keeps its aspect, so a wide box shows it
    square and centred with stock either side — an art window rather than a
    stretched emblem. */
@@ -593,12 +620,18 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    Trainer beside a two-attack Pokemon has ~40px going spare — as a gap that
    reads as an unfinished card, as a taller art window it reads as a card with
    a bigger picture on it, which is what a Trainer actually has. */
-.sigil.hc-art{width:100%;flex:1 1 auto;min-height:46px;margin:5px 0 0}
-.hc-atks{padding-top:5px;display:flex;flex-direction:column;gap:2px}
-.hc-atk{display:flex;align-items:center;gap:6px;
+/* flex-basis 0, NOT auto. The sigil's SVG is a square viewBox with no intrinsic
+   height, so at `width:100%` an auto basis resolves to the card's own width —
+   the art silently sets the row height instead of consuming what is left of it,
+   and every card in the hand inflates to fit a ~90px emblem. With a basis of 0
+   the row is sized by the text, min-height guarantees the art a floor, and the
+   grow factor hands it whatever the tallest card left over. */
+.sigil.hc-art{width:100%;flex:1 1 0;min-height:38px;margin:4px 0 0}
+.hc-atks{padding-top:4px;display:flex;flex-direction:column;gap:2px}
+.hc-atk{display:flex;align-items:center;gap:5px;
   border-top:1px solid var(--hair);padding-top:3px}
 .hc-atk .pips{flex:0 0 auto}
-.hc-dmg{margin-left:auto;font-weight:700;font-size:11.5px}
+.hc-dmg{margin-left:auto;font-weight:700;font-size:10.5px}
 
 /* ---- the Active Pokemon ---- */
 .slot.pcard{cursor:pointer}
@@ -638,12 +671,44 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 /* Bench tiles are deliberately NOT small copies of the Active card. They carry
    only what you steer by from across the table — who, how hurt, how charged —
    and the size gap is what makes the Active read as the one that is fighting. */
+/* 84px tall, and the number is a BUDGET, not a preference. The opponent's field
+   column is only as tall as their Active (149px) and already spends 56 on
+   prizes, so 84 is very nearly all the room that side has — which is the number
+   that matters, because the two benches must be the same height or the mirror
+   the whole mat is built on stops reading. Your side has more slack than this;
+   it stays in the ticker above rather than making your bench taller than theirs.
+   Fixed, not stretched, for the same reason the Active is fixed: a benched
+   Pokemon getting Poisoned should not resize the board. */
 .bench .benchcard{
-  width:106px;padding:5px 6px;border-radius:3px;cursor:pointer;
+  width:106px;min-height:84px;padding:5px 6px;border-radius:3px;cursor:pointer;
+  display:flex;flex-direction:column;
   background:var(--stock2);color:var(--ink);border:1px solid var(--hair);
   border-left-width:3px;
   box-shadow:0 1px 0 rgba(0,0,0,.4), 0 4px 9px -6px rgba(0,0,0,.7);
 }
+/* The emblem takes whatever the fixed height leaves over, so a tile carrying
+   two status badges shrinks its art instead of growing the row. Every other
+   face in the game carries a sigil; without one the bench read as a list of
+   names rather than as cards on a mat. */
+/* Square and centred, not a full-width band. The sigil's viewBox is square and
+   it keeps its aspect, so a 94x29 band renders a 29px emblem adrift in a field
+   of pale stock — it reads as a smudge rather than as art. Sized off the height
+   the tile has left, it comes out around 30px: a stamp on the card, which is
+   the most a bench tile can carry without becoming a small copy of the Active. */
+/* A CROPPED band, not a shrunken emblem. The tile can spare about 30px of
+   height and has 94px of width, and the sigil's viewBox is square — so letting
+   it keep its aspect gives a 30px emblem adrift in pale stock, which reads as a
+   smudge. Instead the emblem is drawn at the tile's full width and the box
+   clips it to the height available, centred: you get the core of the mark at a
+   size you can actually see, in a window shaped like an illustration window.
+   Every other face in the game carries a sigil; without one the bench read as a
+   list of names rather than as cards on a mat. */
+.bench .benchcard .sigil.bcart{
+  flex:1 1 0;min-height:12px;width:100%;margin:3px 0 2px;
+  display:flex;align-items:center;overflow:hidden;
+  border:0;background:transparent;
+}
+.bench .benchcard .sigil.bcart svg{flex:0 0 auto;width:100%;height:auto}
 .bench .benchcard .bn{font-family:var(--serif);font-size:11px;font-weight:600;line-height:1.15;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bench .benchcard .bhp{display:flex;align-items:baseline;gap:1px;
@@ -660,7 +725,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .bench .benchcard.inspected{border-color:#5C6660}
 /* Empty bench places stay visible so the row keeps its shape and you can always
    see how much room is left. */
-.slot.empty.benchslot{width:106px;min-height:58px;padding:0;
+.slot.empty.benchslot{width:106px;min-height:84px;padding:0;
   background:transparent;border:0;box-shadow:inset 0 0 0 1px var(--matline);
   border-radius:3px;font-size:0}
 

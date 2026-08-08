@@ -974,6 +974,12 @@ function renderBenchTile(slot, pi, idx) {
   if (slot.stack.length > 1) hp.appendChild(el('span', 'bstack', '×' + slot.stack.length));
   d.appendChild(hp);
 
+  // The emblem, sized by the room the fixed tile height leaves. It is the only
+  // thing added when the bench grew: the tile still carries no attacks and no
+  // text, so it is not a small copy of the Active card — the size gap is what
+  // makes the Active read as the one that is actually fighting.
+  d.appendChild(sigilBox(c, 'bcart'));
+
   const bar = el('div', 'dmgbar');
   const fill = el('i'); fill.style.width = Math.min(100, (slot.dmg / c.hp) * 100) + '%';
   bar.appendChild(fill); d.appendChild(bar);
@@ -1808,11 +1814,15 @@ function writeViewportDump() {
   const ch = (typeof innerHeight === 'number') ? innerHeight : 0;
   const col = UI.boardEl, table = UI.tableEl, panel = UI.handPanelEl;
 
-  // The desk showing between the mat and the hand. It is a real measurement of
-  // the gap, not of overflow: the gap is made by the hand panel's margin-top:
-  // auto, so it lives INSIDE scrollHeight and subtracting heights cannot see it.
-  const gap = (table && panel && typeof panel.offsetTop === 'number')
-    ? num(panel.offsetTop) - (num(table.offsetTop) + num(table.offsetHeight)) : 0;
+  // How much cloth the mat has beyond what its contents need. This used to
+  // report the desk showing between the mat and the hand, computed from the
+  // hand panel's offsetTop — and it read 7px while ninety were plainly on
+  // screen, because an auto margin inside a `zoom`ed flex column shows up in
+  // NEITHER offsetTop nor getBoundingClientRect(). There is no auto margin in
+  // this column any more, so there is nothing to measure: spare height goes to
+  // the mat, and this says how much of it did.
+  const spare = (table && typeof table.clientHeight === 'number')
+    ? num(table.clientHeight) - num(table.scrollHeight) : 0;
 
   vp.textContent =
     `page        ${cw} x ${ch} CSS px\n` +
@@ -1826,7 +1836,7 @@ function writeViewportDump() {
     `board col   ${num(col && col.clientWidth)} x ${num(col && col.clientHeight)} layout px\n` +
     `mat cloth   ${num(table && table.offsetWidth)} wide · wants ${num(table && table.scrollHeight)} tall, got ${num(table && table.clientHeight)}\n` +
     `hand panel  ${num(panel && panel.offsetWidth)} wide\n` +
-    `spare desk  ${gap > 1 ? gap + ' px between the mat and your hand' : 'none'}`;
+    `spare cloth ${spare > 1 ? spare + ' px of mat beyond its contents' : 'none — the mat is exactly full'}`;
 }
 
 function playerDump(p) {

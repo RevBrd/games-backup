@@ -116,6 +116,26 @@ pixels. Because `fitBoard()` zooms the board column, mixing the two silently mis
 scale is applied — it put the fanned hand off the right edge on exactly the viewports that needed
 scaling, and nowhere else, which is why it survived the first sweep.
 
+**No `auto` margins anywhere in `.boardcol`.** This one is nastier than the coordinate-space trap,
+because it makes the DOM *lie to you*. An auto margin resolved inside a `zoom`ed flex column shows
+up in **neither** `offsetTop` **nor** `getBoundingClientRect()`: the hand panel sat 90px lower than
+both APIs reported, they agreed with each other and with the arithmetic, and all three were wrong.
+Two rounds of instrumentation were spent trusting them. What settled it was painting the three
+column children solid red/green/blue and looking — when the geometry API is the thing under
+suspicion, colour in the boxes:
+
+```bash
+node tools/shot.js out.png --size 1366x768 --board --turns 6 \
+  --js "UI.handPanelEl.style.background='#f00'; UI.tableEl.style.background='#00f'; UI.barEl.style.background='#0f0'"
+```
+
+The fix was to stop needing the measurement: `.table` is `flex:1 1 auto` and takes the leftover
+height, and `.handpanel` has no auto margin. Spare room becomes **mat** — the cloth grows and
+`justify-content:safe center` keeps the two halves centred in it — instead of becoming a band of
+bare desk that nothing could see. Note that `fitBoard()`'s `boardFitsAt()` still reads
+`bar.getBoundingClientRect().bottom`; that is safe only because there is no longer an auto margin
+above it. Put one back and the fitter goes blind again.
+
 **The cloth is as wide as its contents, at two levels.** `.mat` is `width:max-content` so the
 leftover green is margin by construction, and `.table` is too, so the *cloth itself* stops where the
 board stops and the desk shows either side. Before that second one, a 1900px window printed a metre
@@ -135,8 +155,17 @@ was cut off mid-sentence anyway — which is worse than not showing it. Hovering
 printed card into the rail; that is where the words live. The overlay sheets (setup, pickers) still
 use `miniCard`, because there is room in a dialog and nothing competing for it.
 
-Dropping the words bought the width back, which was the other half of the job: **116px instead of
-150px is 8 cards at 1366px before any overlap at all, where the old face managed 6.**
+Dropping the words bought the width back, which was the other half of the job: **98px instead of
+150px is 11 cards with no overlap at all on a 1915px window, where the old face managed 6 at
+1366px.**
+
+**A sigil in a flex column needs `flex-basis: 0`, never `auto`.** The emblem is a square `viewBox`
+with no intrinsic size, so at `width:100%` an `auto` basis resolves to the element's own width — the
+art silently *sets* the row height instead of consuming what is left of it, and because the hand
+stretches every card to the tallest, one ballooned emblem inflates all of them. That is most of why
+the first hand face came out too big. With a basis of 0 the row is sized by the text, `min-height`
+gives the art a floor, and the grow factor hands it the leftover. `.hc-art` and `.bcart` both do
+this; so should anything else that fills space with a sigil.
 
 **The fan's 34px floor is a legibility floor**, not an arbitrary minimum: it is what a card must
 still show of itself when the fan is at its tightest — the type-coloured left edge, the first
@@ -154,6 +183,28 @@ the content, which shrinks the panel, which changes the fan.
 
 `layoutHand()` uses `offsetWidth`, **not** `getBoundingClientRect()`, for the reason in the
 coordinate-space rule above.
+
+## The bench
+
+**Bench tile height is a budget set by the OPPONENT's side, not by yours.** Both benches must be the
+same height or the mirror the whole mat is built on stops reading — and the opponent's field column
+is only as tall as their Active (149px), of which prizes already take 56. That leaves 84px, which is
+what both tiles get. Your side has more slack than that; it stays in the ticker above rather than
+making your bench taller than theirs.
+
+Fixed, not stretched, for the same reason the Active is fixed: a benched Pokémon getting Poisoned
+must not resize the board. The sigil absorbs the difference instead.
+
+**The bench sigil is cropped, not shrunk.** 84px of tile leaves about 30px for art against 94px of
+width, and the emblem keeps its square aspect — so letting it fit gives a 30px mark adrift in pale
+stock, which reads as a smudge. It is drawn at the tile's full width and the box clips it to the
+height available, centred, giving an illustration window rather than a speck. A bench tile still
+carries no attacks and no text: the size gap against the Active is what makes the Active read as the
+one that is actually fighting.
+
+**The on-mat ticker is top-aligned** so it starts level with the top of the Active card opposite it.
+It was bottom-aligned, which anchored it to the BENCH label below and put the column's slack at the
+top — the most conspicuous empty space on the mat.
 
 ## The title screen is not fitted
 
