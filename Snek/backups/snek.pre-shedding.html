@@ -134,7 +134,7 @@
     </div>
 
     <div class="foot">
-      <span>arrows / wasd &nbsp;·&nbsp; space sheds &nbsp;·&nbsp; P pauses</span>
+      <span>arrows / wasd &nbsp;·&nbsp; swipe on phone &nbsp;·&nbsp; P pauses</span>
       <span>` for numbers</span>
     </div>
   </div>
@@ -190,16 +190,6 @@ const T = {
   TONGUE_EVERY: 1500,
   TONGUE_MS:    190,
   ALARM_LOOK:   2,       // cells ahead checked for "about to die" face
-
-  // ---- SHEDDING (prototype — every one of these is live-tunable from the
-  //      dev panel, and none of them is a considered value yet) ----
-  SHED_ON:      true,    // the mechanic itself, so it can be A/B'd against nothing
-  SHED_DROP:    3,       // segments dropped per shed
-  SHED_MIN_LEN: 5,       // refuse if it would leave the snake shorter than this
-  SHED_LEAVES:  'skin',  // 'none' | 'skin' (fades, harmless) | 'wall' (permanent, lethal)
-  SHED_COOL_MS: 0,       // 0 = free. length is already a cost; this may be double-charging
-  SKIN_FADE_MS: 1400,    // how long a shed skin lingers before it's gone
-  WALL_MS:      0,       // 0 = walls never expire
 };
 
 /* ============================================================
@@ -218,12 +208,6 @@ const VOICE = {
     "in fairness, you were going pretty fast.",
     "snek is fine. snek is having a lovely time.",
   ],
-  // only reachable while shed remains are set to 'wall'
-  wallDeaths: [
-    "you walked into an old bit of yourself.",
-    "that was your skin. you left it there.",
-    "the shedding was supposed to help.",
-  ],
   early:   "that was four seconds.",
   good:    "okay. that one was actually good.",
   tie:     "exactly your best. weirdly precise.",
@@ -237,7 +221,6 @@ const COL = {
   rule:   "#a9c2dd",
   margin: "#d9736f",
   ink:    "#2f3d8c",
-  inkSoft:"#8290bd",
   inkPale:"#ccd6f0",
   red:    "#c33c34",
   redPale:"#f0bdb6",
@@ -356,8 +339,6 @@ const BEST_KEY = 'snek.best.v1';
    STATE
    ============================================================ */
 let snake, dir, nextDir, food, score, best, lumps;
-let sheds = [];            // {cells, mode, bornAt} — what shedding leaves behind
-let lastShedAt = -1e9, shedRefusedAt = -1e9;
 let alive=false, started=false, paused=false;
 // ms between steps at a given score, and the cells/sec that implies
 const stepMsFor = s => Math.max(T.STEP_MS_MIN, T.STEP_MS * Math.pow(T.STEP_RAMP, s));
@@ -386,57 +367,16 @@ function reset(){
   dir = {x:1,y:0}; nextDir = {x:1,y:0};
   score = 0; speed = speedFor(0); lumps = []; ticks = 0;
   chompAt = -1e9; deadAt = -1e9;
-  sheds = []; lastShedAt = -1e9; shedRefusedAt = -1e9;
   eyes[0] = makeEye(0); eyes[1] = makeEye(1);
   placeFood();
   scoreEl.textContent = '0';
 }
 
-// live shed walls, as a flat cell list — lethal, and food won't spawn on them
-function wallCells(){
-  const out = [];
-  for (const s of sheds) if (s.mode === 'wall') out.push(...s.cells);
-  return out;
-}
-const isWall = (x,y) => sheds.some(s => s.mode === 'wall' && s.cells.some(c=>c.x===x && c.y===y));
-
 function placeFood(){
   const free = [];
   for (let y=0;y<C;y++) for (let x=0;x<C;x++)
-    if (!snake.some(s=>s.x===x&&s.y===y) && !isWall(x,y)) free.push({x,y});
+    if (!snake.some(s=>s.x===x&&s.y===y)) free.push({x,y});
   food = free.length ? pick(free) : null;   // null == board full == you win, somehow
-}
-
-// Drop the last N segments. Length is the price; whether there's a second price
-// (a cooldown) and whether the drop leaves anything behind are the open questions
-// this whole rig exists to answer.
-function shed(){
-  if (!T.SHED_ON || !alive || paused) return false;
-  const now = performance.now();
-  if (T.SHED_COOL_MS > 0 && now - lastShedAt < T.SHED_COOL_MS){ shedRefusedAt = now; return false; }
-  if (snake.length - T.SHED_DROP < T.SHED_MIN_LEN){ shedRefusedAt = now; return false; }
-
-  const dropped = snake.splice(snake.length - T.SHED_DROP, T.SHED_DROP);
-  lastShedAt = now;
-
-  if (T.SHED_LEAVES !== 'none'){
-    sheds.push({ cells: dropped, mode: T.SHED_LEAVES, bornAt: now });
-  }
-  // lumps riding in the discarded length go with it
-  lumps = lumps.filter(L => L.t < snake.length);
-
-  // the whole animal lurches
-  eyes.forEach((e,i)=>{ e.vy -= 210 * (0.8 + i*0.4); e.vx += (i?1:-1) * 120; });
-  sheet.classList.add('jolt');
-  setTimeout(()=>sheet.classList.remove('jolt'), 110);
-  return true;
-}
-
-function expireSheds(now){
-  sheds = sheds.filter(s =>
-    s.mode === 'wall'
-      ? (T.WALL_MS === 0 || now - s.bornAt < T.WALL_MS)
-      : now - s.bornAt < T.SKIN_FADE_MS);
 }
 
 function showOverlay(t,b,p){
@@ -469,15 +409,14 @@ function togglePause(){
   }
 }
 
-function gameOver(cause){
+function gameOver(){
   alive = false;
   deadAt = performance.now();
   const wasBest = score > best;
   if (wasBest){ best = score; bestEl.textContent = best; saveBest(best); }
 
   let line = pick(VOICE.deaths);
-  if (cause === 'wall') line = pick(VOICE.wallDeaths);
-  else if (performance.now() - runStart < 5000 && score === 0) line = VOICE.early;
+  if (performance.now() - runStart < 5000 && score === 0) line = VOICE.early;
   else if (wasBest && score >= 5) line = VOICE.good;
   else if (score === best && score > 0) line = VOICE.tie;
 
@@ -512,8 +451,7 @@ function step(){
   const growing = food && head.x===food.x && head.y===food.y;
   const hit = snake.some((s,i)=>
     s.x===head.x && s.y===head.y && !(i===snake.length-1 && !growing));
-  if (hit) return gameOver('self');
-  if (isWall(head.x, head.y)) return gameOver('wall');
+  if (hit) return gameOver();
 
   snake.unshift(head);
   for (const L of lumps) L.t += 1;
@@ -538,58 +476,6 @@ function dangerAhead(){
     if (snake.some((s,i)=> s.x===x && s.y===y && i < snake.length-n)) return true;
   }
   return false;
-}
-
-/* ============================================================
-   TRAP TRAINER  —  dev only
-   ------------------------------------------------------------
-   Feel can't be A/B'd across two runs that trapped you differently. These are
-   fixed, hand-verified positions: identical board, identical heading, every
-   time. Arm one, flip a single knob, arm it again. That's the whole point of
-   the rig — without it you're collecting anecdotes, not comparing anything.
-
-   Both are laid out so the cells that shedding frees are the LAST ones in the
-   array, because shedding takes from the tail. Verified by validate.js, which
-   re-derives the geometry rather than trusting these comments.
-   ============================================================ */
-const TRAPS = [
-  {
-    name: 'cap',
-    note: 'sealed in. one tick. shedding frees the cell above the head.',
-    dir:  {x:1, y:0},
-    cells: [[13,10],[12,10],[11,10],[10,10],[9,10],[9,11],[10,11],[11,11],[12,11],
-            [13,11],[14,11],[14,10],[14,9],[14,8],[14,7],[13,7],[13,8],[13,9]]
-  },
-  {
-    name: 'corridor',
-    note: 'three cells of runway into a dead end. shedding opens the ceiling.',
-    dir:  {x:1, y:0},
-    cells: [[10,10],[9,10],[8,10],[8,11],[9,11],[10,11],[11,11],[12,11],[13,11],
-            [14,11],[14,10],[14,9],[14,8],[13,8],[12,8],[11,8],[10,8],[9,8],
-            [9,9],[10,9],[11,9],[12,9],[13,9]]
-  },
-];
-let trapIdx = 0;
-
-function armTrap(i){
-  const t = TRAPS[((i % TRAPS.length) + TRAPS.length) % TRAPS.length];
-  trapIdx = TRAPS.indexOf(t);
-  if (!started){ started = true; }
-  alive = true;
-  snake = t.cells.map(c => ({x:c[0], y:c[1]}));
-  dir = {x:t.dir.x, y:t.dir.y}; nextDir = {x:t.dir.x, y:t.dir.y};
-  lumps = []; sheds = []; lastShedAt = -1e9; shedRefusedAt = -1e9;
-  ticks = 0; chompAt = -1e9;
-  score = Math.max(0, snake.length - T.START_LEN);   // so the speed matches the length
-  speed = speedFor(score);
-  scoreEl.textContent = score;
-  food = null; placeFood();
-  // arm it PAUSED so the board can be read before the clock starts
-  paused = true;
-  showOverlay('trap: ' + t.name, t.note, 'P to release &nbsp;·&nbsp; space to shed');
-  cancelAnimationFrame(rafId);
-  draw();
-  return t;
 }
 
 /* ============================================================
@@ -678,11 +564,11 @@ function segWidth(i){
   return w + Math.min(bulge, T.LUMP_MAX);
 }
 
-// split a cell list into runs that don't jump across a wrap seam
-function cellRuns(cells, widthFn){
+// split the body into runs that don't jump across a wrap seam
+function bodyRuns(){
   const runs=[]; let cur=[];
-  for (let i=0;i<cells.length;i++){
-    const p = {x:cellX(cells[i].x), y:cellY(cells[i].y), w:widthFn(i)};
+  for (let i=0;i<snake.length;i++){
+    const p = {x:cellX(snake[i].x), y:cellY(snake[i].y), w:segWidth(i)};
     if (cur.length){
       const q = cur[cur.length-1];
       if (Math.abs(p.x-q.x) > S*1.5 || Math.abs(p.y-q.y) > S*1.5){ runs.push(cur); cur=[]; }
@@ -690,11 +576,6 @@ function cellRuns(cells, widthFn){
     cur.push(p);
   }
   if (cur.length) runs.push(cur);
-  return runs;
-}
-
-function bodyRuns(){
-  const runs = cellRuns(snake, segWidth);
   // a blunt cylinder has nowhere to put a face, so give the head a snout
   const first = runs[0];
   first.unshift({
@@ -759,48 +640,6 @@ function outlineRun(run, wob, seed){
   const tailCap = circlePts(pts[n-1].x, pts[n-1].y, pts[n-1].w/2, 9, aT,          aT - Math.PI);
   const headCap = circlePts(pts[0].x,   pts[0].y,   pts[0].w/2,   9, aH - Math.PI, aH - 2*Math.PI);
   return L.concat(tailCap, R.slice().reverse(), headCap);
-}
-
-// A shed skin is a drawing you've abandoned: same outline, no colouring-in.
-// Walls get hatched so they read as solid; skins just fade off the page.
-// Both are STILL — they don't move, so they don't boil.
-function drawSheds(now){
-  for (const sd of sheds){
-    const isWallShed = sd.mode === 'wall';
-    const age = now - sd.bornAt;
-    const life = isWallShed
-      ? (T.WALL_MS === 0 ? 1 : 1 - age/T.WALL_MS)
-      : 1 - age/T.SKIN_FADE_MS;
-    if (life <= 0) continue;
-
-    const n = sd.cells.length;
-    const runs = cellRuns(sd.cells, i => {
-      const endness = Math.min(i, n-1-i);
-      return T.BODY_W * (0.55 + 0.45*Math.min(1, endness/1.5));
-    });
-
-    for (const run of runs){
-      const poly = outlineRun(run, T.WOBBLE, 6161);
-      if (isWallShed){
-        // filled in with the side of a pencil: it's solid, it's in your way
-        ctx.globalAlpha = 0.9*life;
-        ctx.fillStyle = "#d6d3c6";
-        tracePath(ctx, poly, true); ctx.fill();
-        ctx.globalAlpha = 0.85*life;
-        penStroke(ctx, poly, {color:"#6f6d64", width:1.8, close:true,
-                              seed:6161, phase:STILL, passes:1});
-      } else {
-        // dashed, because that's how you draw a thing that isn't there any more
-        ctx.save();
-        ctx.setLineDash([5, 4]);
-        ctx.globalAlpha = 0.75*life;
-        penStroke(ctx, poly, {color:COL.inkSoft, width:1.6, close:true,
-                              seed:6161, phase:STILL, passes:1});
-        ctx.restore();
-      }
-      ctx.globalAlpha = 1;
-    }
-  }
 }
 
 function drawSnake(){
@@ -905,7 +744,6 @@ function draw(){
   drawPaper();
   drawBorder();
   drawTallies();
-  drawSheds(performance.now());
   drawApple();
   drawSnake();
   if (!started) drawAnnotations();          // labels only before the first run
@@ -942,7 +780,6 @@ function loop(now){
   fps = fps*0.9 + (1/Math.max(dt,1e-4))*0.1;
   boil = Math.floor(now / T.BOIL_MS) % 3;
 
-  expireSheds(now);
   if (alive && !paused){
     acc += dt;
     const interval = 1/speed;
@@ -958,7 +795,6 @@ function loop(now){
 function idle(now){
   const dt = Math.min(0.05, (now-last)/1000); last = now;
   boil = Math.floor(now / T.BOIL_MS) % 3;
-  expireSheds(now);
   updateEyes(dt);
   draw();
   rafId = requestAnimationFrame(idle);
@@ -968,30 +804,8 @@ function idle(now){
    DEV READOUT  —  ` toggles
    ============================================================ */
 let devOn = false;
-
-// live knobs — cycling one of these mid-run is the whole A/B mechanism
-const KNOBS = [
-  { key:'1', name:'SHED_ON',      vals:[true,false] },
-  { key:'2', name:'SHED_LEAVES',  vals:['none','skin','wall'] },
-  { key:'3', name:'SHED_DROP',    vals:[2,3,4,5,8] },
-  { key:'4', name:'SHED_COOL_MS', vals:[0,500,1500,3000] },
-  { key:'5', name:'SHED_MIN_LEN', vals:[4,5,7,10] },
-];
-function cycleKnob(k, back){
-  const kn = KNOBS.find(x=>x.key===k);
-  if (!kn) return false;
-  const i = kn.vals.indexOf(T[kn.name]);
-  const n = kn.vals.length;
-  T[kn.name] = kn.vals[((i + (back?-1:1)) % n + n) % n];
-  return true;
-}
-
 function drawDev(){
   const h = snake[0];
-  const now = performance.now();
-  const cool = T.SHED_COOL_MS > 0 ? Math.max(0, T.SHED_COOL_MS - (now - lastShedAt)) : 0;
-  const canShed = T.SHED_ON && alive && !paused && cool === 0 &&
-                  snake.length - T.SHED_DROP >= T.SHED_MIN_LEN;
   devEl.textContent =
 `SNEK dev
 fps      ${fps.toFixed(0)}
@@ -1005,18 +819,7 @@ lumps    ${lumps.map(l=>l.t.toFixed(0)).join(',') || '—'}
 eyeL     ${eyes[0].ox.toFixed(1)},${eyes[0].oy.toFixed(1)}
 eyeR     ${eyes[1].ox.toFixed(1)},${eyes[1].oy.toFixed(1)}
 boil     ${boil}
-danger   ${alive && dangerAhead() ? 'YES' : 'no'}
-──── shedding ────────────────
-[space]  ${canShed ? 'READY' : (T.SHED_ON ? (cool>0 ? 'cooling '+cool.toFixed(0)+'ms' : 'too short') : 'OFF')}
-1 on     ${T.SHED_ON}
-2 leaves ${T.SHED_LEAVES}
-3 drop   ${T.SHED_DROP}
-4 cool   ${T.SHED_COOL_MS}ms
-5 minlen ${T.SHED_MIN_LEN}
-sheds    ${sheds.length} (${sheds.filter(s=>s.mode==='wall').length} wall)
-refused  ${now - shedRefusedAt < 600 ? 'JUST NOW' : '—'}
-──── traps (t / shift+t) ─────
-armed    ${TRAPS[trapIdx].name}`;
+danger   ${alive && dangerAhead() ? 'YES' : 'no'}`;
 }
 
 /* ============================================================
@@ -1040,22 +843,6 @@ window.addEventListener('keydown', e=>{
 
   // dev readout, available in every state
   if (e.key === '`'){ devOn = !devOn; devEl.classList.toggle('hidden', !devOn); return; }
-
-  // dev-only controls, gated behind the panel so a normal player can't fall
-  // into them. they work while paused on purpose — reconfigure between attempts.
-  if (devOn){
-    if (cycleKnob(e.key, e.shiftKey)){ e.preventDefault(); draw(); return; }
-    if (e.key === 't' || e.key === 'T'){
-      e.preventDefault();
-      armTrap(e.shiftKey ? trapIdx - 1 : (started ? trapIdx + 1 : trapIdx));
-      return;
-    }
-  }
-
-  // shedding: the mechanic under test
-  if (alive && !paused && (e.key === ' ' || e.key === 'Spacebar')){
-    e.preventDefault(); shed(); return;
-  }
 
   if (!alive){
     // the note says "press anything", so anything has to work. this check comes
@@ -1105,8 +892,6 @@ window.SNEK = {
   get state(){ return {snake, dir, food, score, best, alive, started, paused, speed, lumps, ticks, eyes}; },
   step, start, reset, turn, togglePause, draw, updateEyes,
   segWidth, speedFor, stepMsFor, wobblePts, STILL,
-  shed, armTrap, cycleKnob, isWall, expireSheds, TRAPS, KNOBS,
-  get sheds(){ return sheds; },
   get boil(){ return boil; },
   setFood: (x,y)=>{ food = {x,y}; },
   setDir:  (x,y)=>{ nextDir = {x,y}; },

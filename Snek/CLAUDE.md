@@ -74,8 +74,9 @@ input tests covering all of this.
 ## Files
 
 - `snek.html` — the whole game, self-contained, runs by double-clicking.
-- `validate.js` — headless Node harness, 57 checks. Run before delivering:
+- `validate.js` — headless Node harness, 90 checks. Run before delivering:
   `& "C:\Program Files\nodejs\node.exe" validate.js` (node is installed but **not on PATH**).
+- `backups/` — pre-job safety copies, per the collection convention.
 - `snake.html` — the untouched original from a Claude Chat session, kept as a reference for what
   the mechanics were before the reskin. Nothing loads it. Safe to delete once nobody cares.
 
@@ -123,26 +124,77 @@ meant to be readable at a glance. Chaikin smoothing is *not* what was eating it 
 survives); it was simply too small. `LUMP_MAX` caps the total so a back-to-back run of apples
 doesn't sum into one uniformly fat tube.
 
+## Shedding — prototype, not a decision
+
+**Space drops the last `SHED_DROP` segments.** Live in the base game so it gets played naturally,
+but every number is provisional and the whole mechanic can be switched off with `SHED_ON` for an
+A/B against no shedding at all. Nothing here is tuned yet.
+
+Three modes for what a shed leaves behind, and this is the live question:
+
+- `none` — vanishes.
+- `skin` — a **dashed** outline that fades over `SKIN_FADE_MS`. Harmless. Dashed because that's
+  the drawing convention for a thing that isn't there any more, and it reads instantly as distinct
+  from the body without needing a colour change.
+- `wall` — solid pencil-grey fill, **permanent and lethal**, and food won't spawn on it.
+
+### The rig
+
+Feel can't be A/B'd across two runs that trapped you differently — you'd be comparing one bad
+situation against a differently-bad one. So there's a trap trainer.
+
+`T` arms a fixed, hand-verified position: identical board, identical heading, every time. It arms
+**paused**, so the board can be read before the clock starts. `shift+T` steps back. Two traps:
+
+- **cap** — sealed in on all sides, one tick to live. Shedding frees the cell directly above.
+- **corridor** — three cells of runway into a dead end, with the ceiling above the corridor made
+  of the last segments. Shedding opens a three-cell escape window.
+
+Both are laid out so the cells shedding frees are the **last** entries in the array, because
+shedding takes from the tail. `validate.js` re-derives that geometry rather than trusting the
+comments — it checks connectivity, uniqueness, that the head really is sealed, and that a freed
+cell is actually reachable. It also runs the trap end to end both ways: do nothing and die, shed
+and live.
+
+With the dev panel open, `1`–`5` cycle `SHED_ON`, `SHED_LEAVES`, `SHED_DROP`, `SHED_COOL_MS` and
+`SHED_MIN_LEN` live, mid-run, and they work while paused so you can reconfigure between attempts.
+`shift` cycles backwards. **Flip one knob, re-arm the same trap.** That's the whole method; without
+it you're collecting anecdotes.
+
+### Hypotheses on record, so they can be wrong
+
+1. **Persistent walls will feel bad.** Snake's tension is that the board fills with *you* —
+   legible, and your own fault. Debris fills it with something you can't reason about as your
+   body, and it compounds: shed to escape, the debris worsens the board, shed again. That's a doom
+   loop, and the standing principle is that penalties constrain the fun loop rather than remove
+   it. Prediction: fading skins win.
+2. **A cooldown is double-charging.** Length is already the price, and it self-balances — shedding
+   while short hurts proportionally more. Prediction: free is correct, and a cooldown only earns
+   its place if shedding turns out to be spammable.
+
 ## Dev controls
 
 `` ` `` toggles a live readout — fps, state, tick, speed, length, head cell, food cell, lump
-positions, both pupil offsets, boil phase, and whether the alarm check is firing. `P` pauses.
+positions, both pupil offsets, boil phase, whether the alarm check is firing, and the full
+shedding block (ready/cooling/too-short, every knob, live shed count, and the armed trap).
+`P` pauses. `Space` sheds. Dev keys `1`–`5` and `T` only respond while the panel is open, so a
+normal player can't fall into them.
 
 ## Not built yet
 
 Deliberately. Pass 1 answered one question: *does the doodle hold up in motion?* Candidates,
 roughly in the order they'd be worth trying:
 
-Agreed order:
+Shedding is built and in prototype — see its section above. It is **not** settled, and the two
+open questions (what a shed leaves behind, and whether it needs a cooldown) are what the trap
+trainer exists to answer. Don't promote the current defaults to "decided" without playtest
+evidence.
 
-1. **Shedding.** Drop 3 segments to escape a box you drew yourself into, at the cost of the length
-   you spent earning them. Constrains the fun loop instead of removing it, and a snake shedding is
-   thematically free. First because it's the only one that changes how the game is *played*, so
-   it's the one most likely to need tuning rounds. Open: do shed segments stay on the paper as an
-   obstacle, and is it free or on a cooldown.
-2. **A food that runs away.** A bug that skitters a cell every few ticks, worth more than an apple.
-   Adds a chase without adding a system. Purely additive, so it slots in after shedding settles.
-3. **The tongue grab + sound**, together, as one feel pass. The tongue lashes out and drags the
+Remaining, in order:
+
+1. **A food that runs away.** A bug that skitters a cell every few ticks, worth more than an apple.
+   Adds a chase without adding a system. Purely additive, so it slots in once shedding settles.
+2. **The tongue grab + sound**, together, as one feel pass. The tongue lashes out and drags the
    apple in over ~150ms; pen-scratch audio for movement.
 
    **The grab has to be retroactive.** The apple is consumed the instant the head enters its cell,
