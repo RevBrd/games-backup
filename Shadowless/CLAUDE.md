@@ -33,6 +33,7 @@ of them unless you are working on that thing** — that is the point of the spli
 | [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap — and `tools/shot.js`, which screenshots the built game at any exact viewport |
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source. Buzzap, Mirror Move, Metronome, Clefairy Doll are settled there |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering why a Python script in `tools/chat-era/` won't run. Field mappings, the Energy `provides` quirks, how the Node tools were verified against what they replaced |
+| [PACKS.md](PACKS.md) | Planning or building Job 5's booster packs. Real WotC pack composition and rarity tiers, verified against `data/raw/`, plus open questions on Shiny/Shadowless as pull mechanics — nothing there is decided yet |
 
 ## Status
 
