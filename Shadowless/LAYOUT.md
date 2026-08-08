@@ -206,6 +206,37 @@ one that is actually fighting.
 It was bottom-aligned, which anchored it to the BENCH label below and put the column's slack at the
 top — the most conspicuous empty space on the mat.
 
+## The coin toss
+
+**It lands on the centre line, and that is the design decision** — the animation is the easy part.
+Roughly half of all flips are the **opponent's**: Poison Sting, Confuse Ray, their Whirlwind. So
+anything anchored to your hand, your half, or the space beside your discard pile would be claiming
+their coin was tossed on your side of the table. The centre line is between the two players, it is
+already where the board shouts at you, and it is the one spot that is there whatever the hand is
+doing. It is also, for once, a case where an empty gap is not a risk: the toss is absolutely
+positioned out of a **zero-height** strip, so it overhangs both halves without reflowing either and
+costs nothing when no flip is happening.
+
+That no-reflow property is load-bearing rather than tidy. The board behind it is frozen on a
+pre-action snapshot for the duration, and a coin that resized the mat would move the very cards you
+are waiting on.
+
+**The result is announced in exactly one place.** It used to be in the action bar; the bar now says
+only *why* the game has stopped. Having it in both made the mat's version read as decoration rather
+than as the event, which is the whole thing the toss was moved to fix.
+
+Two smaller notes. The faces are **drawn, not lettered** — an H and a T are unambiguous and say
+nothing, and the point of putting the toss on the mat is that it should look like an object; obverse
+is struck in the board's amber, reverse in its steel, both with a milled rim so the edge reads as
+metal while it tumbles. And the tumbling coin carries a **static 62° tilt underneath its animation**,
+which is the reduced-motion fallback: with the animation suppressed a flat coin would sit showing
+its obverse for the whole toss, which looks like a result that then changes its mind. Edge-on
+commits to nothing. The landed *face* survives reduced motion, because that is information.
+
+**`UI.flipDelay < 250` skips presentation entirely** (`dispatch()`), which is what the DEV tab's
+"coin pause: off" setting does. Worth knowing before you try to screenshot a fast flip and find
+there is nothing to screenshot.
+
 ## The title screen is not fitted
 
 `.deckscreen` sizes itself with `clamp(..vh..)` rather than the board's JS fitter. It is static —

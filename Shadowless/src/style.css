@@ -322,21 +322,45 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .btn.etype{border-width:2px;padding:.3em .7em}
 .btn.off{opacity:.4;pointer-events:none}
 
-/* ---- coin flip presentation ---- */
-.coinbox{display:flex;align-items:center;gap:12px;padding:2px}
-.coinface{
-  width:30px;height:30px;border-radius:50%;flex:0 0 auto;
-  display:flex;align-items:center;justify-content:center;
-  border:2px solid var(--line);background:#232C36;color:var(--dim);
-  font-weight:700;font-size:13px;letter-spacing:.02em;
+/* ---- the coin toss, on the centre line ---- */
+/* Hung off a zero-height strip so it overhangs both halves of the mat without
+   reflowing either. The board behind it is frozen for the duration, so covering
+   a little of each side is free — and a coin that resized the mat would move
+   the very cards you are waiting on. */
+.cointoss{
+  position:absolute;left:0;right:0;top:50%;height:0;z-index:6;
+  display:flex;align-items:center;justify-content:center;pointer-events:none;
 }
-.coinbox.landed .coinface{border-color:var(--amber);color:var(--amber);background:#3A2F1C}
-.coinbox.tails .coinface{border-color:#7C8894;color:#9AA5B0;background:#242C35}
-.coinmsg{display:flex;flex-direction:column;gap:1px}
-.coinbig{font-weight:700;letter-spacing:.06em;color:var(--txt)}
-.coinbox.landed .coinbig{color:var(--amber)}
-.coinbox.tails .coinbig{color:#9AA5B0}
-.coinwhy{font-size:10px;color:var(--dim)}
+.centreline.tossing::before,.centreline.tossing::after{opacity:.25}
+/* perspective lives on the capsule, not on the coin: the coin is the thing
+   being rotated, so it cannot also be the thing establishing the frustum. */
+.coincap{
+  display:flex;align-items:center;gap:14px;padding:9px 20px 9px 12px;
+  border-radius:999px;border:1px solid var(--matline);
+  background:linear-gradient(180deg,rgba(9,13,12,.95),rgba(5,8,7,.95));
+  box-shadow:0 14px 34px -12px #000, inset 0 0 0 1px rgba(255,255,255,.04);
+  perspective:460px;
+}
+.coincap.landed{animation:coinland .42s cubic-bezier(.2,1.5,.4,1)}
+@keyframes coinland{0%{transform:scale(.82)}100%{transform:scale(1)}}
+.coin{width:56px;height:56px;position:relative;transform-style:preserve-3d;flex:0 0 auto}
+.coinside{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden}
+.coinside svg{display:block;width:100%;height:100%}
+.coinside.reverse{transform:rotateX(180deg)}
+/* The static tilt is the reduced-motion fallback, and it is chosen rather than
+   left at 0: with the animation suppressed a flat coin would sit showing its
+   obverse through the whole toss, which looks like a result that then changes
+   its mind. Edge-on at 62 degrees reads as "in the air" and commits to nothing. */
+.coincap.flipping .coin{transform:rotateX(62deg);animation:cointumble .5s linear infinite}
+@keyframes cointumble{from{transform:rotateX(0)}to{transform:rotateX(360deg)}}
+.coincap.landed.heads .coin{transform:rotateX(0)}
+.coincap.landed.tails .coin{transform:rotateX(180deg)}
+
+.cointext{display:flex;flex-direction:column;gap:2px;min-width:104px}
+.coinresult{font-size:15px;font-weight:700;letter-spacing:.22em;color:var(--matink)}
+.coincap.landed.heads .coinresult{color:var(--amber)}
+.coincap.landed.tails .coinresult{color:#9AA5B0}
+.coinreason{font-size:9.5px;letter-spacing:.06em;color:#5E6E68}
 
 /* ---- rail ---- */
 .rail{border-left:1px solid var(--line);background:#0F1419;display:flex;flex-direction:column;min-height:0}
@@ -787,6 +811,9 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 
 @media (prefers-reduced-motion:reduce){
   .slot.fx-hit,.benchcard.fx-hit,.cardback.fx-prize,.kobanner{animation:none!important}
+  /* The coin keeps its landed FACE — that is information, not decoration. Only
+     the tumble and the settle go. */
+  .coin,.coincap{animation:none!important}
 }
 
 

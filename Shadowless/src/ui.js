@@ -636,8 +636,82 @@ function renderMatLog() {
   return box;
 }
 
+// The two coin faces, drawn rather than lettered. An H and a T are unambiguous
+// and say nothing; the point of putting the toss on the mat is that a flip is
+// the one moment the whole game stops and waits, so it should look like an
+// object. Obverse is struck in the board's amber, reverse in its steel, and
+// both carry a milled rim so the edge reads as metal when it tumbles.
+function coinFaceSVG(kind) {
+  const heads = kind === 'heads';
+  const col = heads ? '#E2A84B' : '#9AA5B0';
+  const field = heads ? '#3A2F1C' : '#242C35';
+  const p = [];
+  p.push(`<circle cx="50" cy="50" r="47" fill="${field}" stroke="${col}" stroke-width="2.5"/>`);
+  // milled rim
+  for (let i = 0; i < 36; i++) {
+    const a = (i * 10) * Math.PI / 180;
+    p.push(`<line x1="${(50 + 43 * Math.cos(a)).toFixed(1)}" y1="${(50 + 43 * Math.sin(a)).toFixed(1)}" x2="${(50 + 47 * Math.cos(a)).toFixed(1)}" y2="${(50 + 47 * Math.sin(a)).toFixed(1)}" stroke="${col}" stroke-width="1.4" opacity="0.55"/>`);
+  }
+  if (heads) {
+    // a struck hexagon with rays — the same geometric family as the sigils
+    const pts = [];
+    for (let i = 0; i < 6; i++) {
+      const a = (i * 60 - 90) * Math.PI / 180;
+      pts.push((50 + 20 * Math.cos(a)).toFixed(1) + ',' + (50 + 20 * Math.sin(a)).toFixed(1));
+    }
+    p.push(`<circle cx="50" cy="50" r="33" fill="none" stroke="${col}" stroke-width="1" opacity="0.45"/>`);
+    p.push(`<polygon points="${pts.join(' ')}" fill="${col}"/>`);
+    for (let i = 0; i < 6; i++) {
+      const a = (i * 60 - 60) * Math.PI / 180;
+      p.push(`<line x1="${(50 + 25 * Math.cos(a)).toFixed(1)}" y1="${(50 + 25 * Math.sin(a)).toFixed(1)}" x2="${(50 + 32 * Math.cos(a)).toFixed(1)}" y2="${(50 + 32 * Math.sin(a)).toFixed(1)}" stroke="${col}" stroke-width="2" opacity="0.8"/>`);
+    }
+  } else {
+    p.push(`<circle cx="50" cy="50" r="31" fill="none" stroke="${col}" stroke-width="2.4"/>`);
+    p.push(`<circle cx="50" cy="50" r="18" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.7"/>`);
+    p.push(`<circle cx="50" cy="50" r="5.5" fill="${col}"/>`);
+  }
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${p.join('')}</svg>`;
+}
+
+// The toss happens ON THE CENTRE LINE, and that placement is the whole design
+// decision. Half of all flips are the opponent's — Poison Sting, Confuse Ray,
+// their Whirlwind — so anything anchored to your hand or your half would be
+// claiming their coin was tossed on your side of the table. The centre line is
+// between the two players, it is already where the board shouts at you, and it
+// is the one spot that is there whatever the hand is doing.
+//
+// It is absolutely positioned out of a zero-height line so it overhangs both
+// halves without reflowing either. That matters: the board is frozen behind it
+// anyway, and a coin that resized the mat would move the very cards you are
+// waiting on.
+function renderCoinToss(b) {
+  const landed = b.phase === 'landed';
+  const side = b.result === 'HEADS' ? 'heads' : 'tails';
+  const box = el('div', 'cointoss');
+  const cap = el('div', 'coincap ' + (landed ? 'landed ' + side : 'flipping'));
+
+  const coin = el('div', 'coin');
+  const o = el('div', 'coinside obverse'); o.innerHTML = coinFaceSVG('heads');
+  const r = el('div', 'coinside reverse'); r.innerHTML = coinFaceSVG('tails');
+  coin.appendChild(o); coin.appendChild(r);
+  cap.appendChild(coin);
+
+  const txt = el('div', 'cointext');
+  txt.appendChild(el('div', 'coinresult', landed ? b.result : 'IN THE AIR'));
+  txt.appendChild(el('div', 'coinreason', b.reason || (landed ? '' : 'flipping')));
+  cap.appendChild(txt);
+
+  box.appendChild(cap);
+  return box;
+}
+
 function renderCentreLine() {
   const m = el('div', 'centreline');
+  // The toss outranks both of the others: it is the only one of the three that
+  // the game is actually WAITING on, and a Knock Out that happened in the same
+  // action still gets its banner once the coin has landed and play resumes.
+  const b = UI.pres && UI.pres.banner;
+  if (b) { m.classList.add('tossing'); m.appendChild(renderCoinToss(b)); return m; }
   if (UI.fxActive('ko0') || UI.fxActive('ko1')) {
     m.appendChild(el('div', 'kobanner', 'KNOCKED OUT'));
   } else if (UI.targeting) {
@@ -1033,15 +1107,12 @@ function renderActionBar() {
   const s = S();
 
   if (presenting()) {
+    // The coin itself is on the centre line now. The bar only says why the game
+    // has stopped, quietly — announcing the result in two places at once made
+    // the mat's version feel like a decoration rather than the event.
     const b = UI.pres.banner;
-    const landed = b && b.phase === 'landed';
-    const coin = el('div', 'coinbox' + (landed ? ' landed ' + b.result.toLowerCase() : ''));
-    coin.appendChild(el('div', 'coinface', landed ? (b.result === 'HEADS' ? 'H' : 'T') : '?'));
-    const txt = el('div', 'coinmsg');
-    txt.appendChild(el('div', 'coinbig', landed ? b.result : 'Flipping coin…'));
-    if (b && b.reason) txt.appendChild(el('div', 'coinwhy', b.reason));
-    coin.appendChild(txt);
-    bar.appendChild(coin);
+    bar.appendChild(el('div', 'barmsg dimtxt',
+      b && b.reason ? 'Coin flip — ' + b.reason : 'Coin flip'));
     return bar;
   }
 

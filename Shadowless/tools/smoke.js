@@ -230,6 +230,44 @@ T('draining the clock lands the coin and releases the board', () => {
   return UI.view === null;
 });
 
+// The toss lives on the centre line because half of all flips are the
+// opponent's, so it cannot be anchored to either player's half. Guarding the
+// placement AND the fact that the result is announced in exactly one place —
+// having it in both made the mat's version read as decoration.
+T('the toss renders on the centre line and the bar does not announce the result', () => {
+  const find = (n, cls) => {
+    if (n.className && String(n.className).split(' ').indexOf(cls) >= 0) return n;
+    for (const c of (n.children || [])) { const r = find(c, cls); if (r) return r; }
+    return null;
+  };
+  const deep = (n) => (n._text || '') + (n.children || []).map(deep).join(' ');
+
+  riggedFlipBoard(2000);
+  dispatch(0, { t: 'attack', idx: 0 });
+  const line = find(appEl, 'centreline');
+  if (!line) throw new Error('no centre line rendered');
+  if (!find(line, 'cointoss')) throw new Error('the toss is not on the centre line');
+  if (/HEADS|TAILS/.test(deep(find(appEl, 'actionbar')))) {
+    throw new Error('the action bar announced the result while the coin was still in the air');
+  }
+
+  // Drain one tick at a time until the coin actually lands. NOT drain(1): the
+  // damage-flash timer from diffForFx() is queued ahead of the flip timer, so a
+  // single tick fires the wrong one and the banner is still 'flipping'.
+  let guard = 0;
+  while (UI.pres && UI.pres.banner && UI.pres.banner.phase !== 'landed' && guard++ < 20) drain(1);
+  if (!UI.pres || !UI.pres.banner || UI.pres.banner.phase !== 'landed') {
+    throw new Error('the coin never reached its landed phase');
+  }
+  const landed = find(find(appEl, 'centreline'), 'coincap');
+  if (!landed) throw new Error('no coin after landing');
+  const cls = String(landed.className);
+  const onMat = /HEADS|TAILS/.test(deep(find(appEl, 'centreline')));
+  const inBar = /HEADS|TAILS/.test(deep(find(appEl, 'actionbar')));
+  drain(200); UI.flipDelay = 2000;
+  return cls.indexOf('landed') >= 0 && onMat && !inBar;
+});
+
 T('setting the coin pause to zero skips presentation entirely', () => {
   riggedFlipBoard(0);
   dispatch(0, { t: 'attack', idx: 0 });

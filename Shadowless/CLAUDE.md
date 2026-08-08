@@ -195,9 +195,12 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
   far cheaper than restyling them after.
   **Deliberately not built:** a collection/dex mockup — the language is settled and mocking up
   screens that don't exist yet would be thrown away. Build it for real in Job 5.
-  **Still open:** a coin-flip animation. It lives in the action bar and is honest but plain; the
-  mat's centre line is the natural home for something more theatrical. Deliberately *not* in the
-  on-mat ticker's space — a flip is rare, so that gap would sit empty most of the time.
+  The coin toss is built and **Job 4g is closed** (8 Aug 2026). It lands on the mat's centre line,
+  and that placement is the design decision rather than the animation: roughly half of all flips are
+  the *opponent's*, so anything anchored to your hand or your half would be claiming their coin was
+  tossed on your side of the table. See [LAYOUT.md](LAYOUT.md).
+  **The design is locked for now** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
+  bench tiles without asking.
 - **Job 5** — collection, packs, deck building, persistence.
 - **Job 6** — Jungle and Fossil. `node tools/gen_cards.js --sets base1,base2,base3`.
 - **Job 7** — progression, named opponents.

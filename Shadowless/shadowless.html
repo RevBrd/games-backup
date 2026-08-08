@@ -329,21 +329,45 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .btn.etype{border-width:2px;padding:.3em .7em}
 .btn.off{opacity:.4;pointer-events:none}
 
-/* ---- coin flip presentation ---- */
-.coinbox{display:flex;align-items:center;gap:12px;padding:2px}
-.coinface{
-  width:30px;height:30px;border-radius:50%;flex:0 0 auto;
-  display:flex;align-items:center;justify-content:center;
-  border:2px solid var(--line);background:#232C36;color:var(--dim);
-  font-weight:700;font-size:13px;letter-spacing:.02em;
+/* ---- the coin toss, on the centre line ---- */
+/* Hung off a zero-height strip so it overhangs both halves of the mat without
+   reflowing either. The board behind it is frozen for the duration, so covering
+   a little of each side is free — and a coin that resized the mat would move
+   the very cards you are waiting on. */
+.cointoss{
+  position:absolute;left:0;right:0;top:50%;height:0;z-index:6;
+  display:flex;align-items:center;justify-content:center;pointer-events:none;
 }
-.coinbox.landed .coinface{border-color:var(--amber);color:var(--amber);background:#3A2F1C}
-.coinbox.tails .coinface{border-color:#7C8894;color:#9AA5B0;background:#242C35}
-.coinmsg{display:flex;flex-direction:column;gap:1px}
-.coinbig{font-weight:700;letter-spacing:.06em;color:var(--txt)}
-.coinbox.landed .coinbig{color:var(--amber)}
-.coinbox.tails .coinbig{color:#9AA5B0}
-.coinwhy{font-size:10px;color:var(--dim)}
+.centreline.tossing::before,.centreline.tossing::after{opacity:.25}
+/* perspective lives on the capsule, not on the coin: the coin is the thing
+   being rotated, so it cannot also be the thing establishing the frustum. */
+.coincap{
+  display:flex;align-items:center;gap:14px;padding:9px 20px 9px 12px;
+  border-radius:999px;border:1px solid var(--matline);
+  background:linear-gradient(180deg,rgba(9,13,12,.95),rgba(5,8,7,.95));
+  box-shadow:0 14px 34px -12px #000, inset 0 0 0 1px rgba(255,255,255,.04);
+  perspective:460px;
+}
+.coincap.landed{animation:coinland .42s cubic-bezier(.2,1.5,.4,1)}
+@keyframes coinland{0%{transform:scale(.82)}100%{transform:scale(1)}}
+.coin{width:56px;height:56px;position:relative;transform-style:preserve-3d;flex:0 0 auto}
+.coinside{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden}
+.coinside svg{display:block;width:100%;height:100%}
+.coinside.reverse{transform:rotateX(180deg)}
+/* The static tilt is the reduced-motion fallback, and it is chosen rather than
+   left at 0: with the animation suppressed a flat coin would sit showing its
+   obverse through the whole toss, which looks like a result that then changes
+   its mind. Edge-on at 62 degrees reads as "in the air" and commits to nothing. */
+.coincap.flipping .coin{transform:rotateX(62deg);animation:cointumble .5s linear infinite}
+@keyframes cointumble{from{transform:rotateX(0)}to{transform:rotateX(360deg)}}
+.coincap.landed.heads .coin{transform:rotateX(0)}
+.coincap.landed.tails .coin{transform:rotateX(180deg)}
+
+.cointext{display:flex;flex-direction:column;gap:2px;min-width:104px}
+.coinresult{font-size:15px;font-weight:700;letter-spacing:.22em;color:var(--matink)}
+.coincap.landed.heads .coinresult{color:var(--amber)}
+.coincap.landed.tails .coinresult{color:#9AA5B0}
+.coinreason{font-size:9.5px;letter-spacing:.06em;color:#5E6E68}
 
 /* ---- rail ---- */
 .rail{border-left:1px solid var(--line);background:#0F1419;display:flex;flex-direction:column;min-height:0}
@@ -794,6 +818,9 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 
 @media (prefers-reduced-motion:reduce){
   .slot.fx-hit,.benchcard.fx-hit,.cardback.fx-prize,.kobanner{animation:none!important}
+  /* The coin keeps its landed FACE — that is information, not decoration. Only
+     the tumble and the settle go. */
+  .coin,.coincap{animation:none!important}
 }
 
 
@@ -5502,8 +5529,82 @@ function renderMatLog() {
   return box;
 }
 
+// The two coin faces, drawn rather than lettered. An H and a T are unambiguous
+// and say nothing; the point of putting the toss on the mat is that a flip is
+// the one moment the whole game stops and waits, so it should look like an
+// object. Obverse is struck in the board's amber, reverse in its steel, and
+// both carry a milled rim so the edge reads as metal when it tumbles.
+function coinFaceSVG(kind) {
+  const heads = kind === 'heads';
+  const col = heads ? '#E2A84B' : '#9AA5B0';
+  const field = heads ? '#3A2F1C' : '#242C35';
+  const p = [];
+  p.push(`<circle cx="50" cy="50" r="47" fill="${field}" stroke="${col}" stroke-width="2.5"/>`);
+  // milled rim
+  for (let i = 0; i < 36; i++) {
+    const a = (i * 10) * Math.PI / 180;
+    p.push(`<line x1="${(50 + 43 * Math.cos(a)).toFixed(1)}" y1="${(50 + 43 * Math.sin(a)).toFixed(1)}" x2="${(50 + 47 * Math.cos(a)).toFixed(1)}" y2="${(50 + 47 * Math.sin(a)).toFixed(1)}" stroke="${col}" stroke-width="1.4" opacity="0.55"/>`);
+  }
+  if (heads) {
+    // a struck hexagon with rays — the same geometric family as the sigils
+    const pts = [];
+    for (let i = 0; i < 6; i++) {
+      const a = (i * 60 - 90) * Math.PI / 180;
+      pts.push((50 + 20 * Math.cos(a)).toFixed(1) + ',' + (50 + 20 * Math.sin(a)).toFixed(1));
+    }
+    p.push(`<circle cx="50" cy="50" r="33" fill="none" stroke="${col}" stroke-width="1" opacity="0.45"/>`);
+    p.push(`<polygon points="${pts.join(' ')}" fill="${col}"/>`);
+    for (let i = 0; i < 6; i++) {
+      const a = (i * 60 - 60) * Math.PI / 180;
+      p.push(`<line x1="${(50 + 25 * Math.cos(a)).toFixed(1)}" y1="${(50 + 25 * Math.sin(a)).toFixed(1)}" x2="${(50 + 32 * Math.cos(a)).toFixed(1)}" y2="${(50 + 32 * Math.sin(a)).toFixed(1)}" stroke="${col}" stroke-width="2" opacity="0.8"/>`);
+    }
+  } else {
+    p.push(`<circle cx="50" cy="50" r="31" fill="none" stroke="${col}" stroke-width="2.4"/>`);
+    p.push(`<circle cx="50" cy="50" r="18" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.7"/>`);
+    p.push(`<circle cx="50" cy="50" r="5.5" fill="${col}"/>`);
+  }
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${p.join('')}</svg>`;
+}
+
+// The toss happens ON THE CENTRE LINE, and that placement is the whole design
+// decision. Half of all flips are the opponent's — Poison Sting, Confuse Ray,
+// their Whirlwind — so anything anchored to your hand or your half would be
+// claiming their coin was tossed on your side of the table. The centre line is
+// between the two players, it is already where the board shouts at you, and it
+// is the one spot that is there whatever the hand is doing.
+//
+// It is absolutely positioned out of a zero-height line so it overhangs both
+// halves without reflowing either. That matters: the board is frozen behind it
+// anyway, and a coin that resized the mat would move the very cards you are
+// waiting on.
+function renderCoinToss(b) {
+  const landed = b.phase === 'landed';
+  const side = b.result === 'HEADS' ? 'heads' : 'tails';
+  const box = el('div', 'cointoss');
+  const cap = el('div', 'coincap ' + (landed ? 'landed ' + side : 'flipping'));
+
+  const coin = el('div', 'coin');
+  const o = el('div', 'coinside obverse'); o.innerHTML = coinFaceSVG('heads');
+  const r = el('div', 'coinside reverse'); r.innerHTML = coinFaceSVG('tails');
+  coin.appendChild(o); coin.appendChild(r);
+  cap.appendChild(coin);
+
+  const txt = el('div', 'cointext');
+  txt.appendChild(el('div', 'coinresult', landed ? b.result : 'IN THE AIR'));
+  txt.appendChild(el('div', 'coinreason', b.reason || (landed ? '' : 'flipping')));
+  cap.appendChild(txt);
+
+  box.appendChild(cap);
+  return box;
+}
+
 function renderCentreLine() {
   const m = el('div', 'centreline');
+  // The toss outranks both of the others: it is the only one of the three that
+  // the game is actually WAITING on, and a Knock Out that happened in the same
+  // action still gets its banner once the coin has landed and play resumes.
+  const b = UI.pres && UI.pres.banner;
+  if (b) { m.classList.add('tossing'); m.appendChild(renderCoinToss(b)); return m; }
   if (UI.fxActive('ko0') || UI.fxActive('ko1')) {
     m.appendChild(el('div', 'kobanner', 'KNOCKED OUT'));
   } else if (UI.targeting) {
@@ -5899,15 +6000,12 @@ function renderActionBar() {
   const s = S();
 
   if (presenting()) {
+    // The coin itself is on the centre line now. The bar only says why the game
+    // has stopped, quietly — announcing the result in two places at once made
+    // the mat's version feel like a decoration rather than the event.
     const b = UI.pres.banner;
-    const landed = b && b.phase === 'landed';
-    const coin = el('div', 'coinbox' + (landed ? ' landed ' + b.result.toLowerCase() : ''));
-    coin.appendChild(el('div', 'coinface', landed ? (b.result === 'HEADS' ? 'H' : 'T') : '?'));
-    const txt = el('div', 'coinmsg');
-    txt.appendChild(el('div', 'coinbig', landed ? b.result : 'Flipping coin…'));
-    if (b && b.reason) txt.appendChild(el('div', 'coinwhy', b.reason));
-    coin.appendChild(txt);
-    bar.appendChild(coin);
+    bar.appendChild(el('div', 'barmsg dimtxt',
+      b && b.reason ? 'Coin flip — ' + b.reason : 'Coin flip'));
     return bar;
   }
 
