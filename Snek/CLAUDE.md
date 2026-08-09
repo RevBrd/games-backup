@@ -48,8 +48,24 @@ run on real time, not on game ticks, so they keep sloshing between moves and kee
 death. They are the only thing on the page that isn't hand-drawn: white plastic stuck onto a pen
 sketch. That contrast is the gag, so don't "draw" them.
 
-Dead snek's pupils settle at the bottom and stay there. That reads as a blank stare and it costs
-nothing, because it's just the physics being left alone.
+**The pull comes from the apple, not from below.** While there's an apple on the board the constant
+force points at it, so the pupils lean toward it and swing across when it moves — which lands right
+on the eat beat. Every other part of the simulation is untouched: still sloshing, still flung on
+turns, still bouncing off the socket rim. Only the direction of "down" changed.
+
+Two details that are easy to get wrong:
+
+- **Take the short way round.** The board wraps, so an apple two cells behind must not read as an
+  apple nineteen cells ahead. Wrap the delta into ±half the board before normalising.
+- **Aim from each socket, not from the head.** Costs nothing and makes the eyes converge slightly
+  when the apple is close. Free cross-eyed look.
+
+`EYE_LOOK` blends between the two: 1 is full tracking, 0 is plain gravity.
+
+This does bend the conceit — real googly eyes fall down, they don't track. What keeps it honest is
+that **death reverts to true gravity.** Dead snek's pupils drop to the bottom and stay there, so
+the blank stare survives and the physics gets the last word. If tracking ever starts reading as
+"drawn eyes that follow you", pull `EYE_LOOK` back to ~0.5 rather than removing it.
 
 ## Face
 
@@ -74,7 +90,7 @@ input tests covering all of this.
 ## Files
 
 - `snek.html` — the whole game, self-contained, runs by double-clicking.
-- `validate.js` — headless Node harness, 108 checks. Run before delivering:
+- `validate.js` — headless Node harness, 125 checks. Run before delivering:
   `& "C:\Program Files\nodejs\node.exe" validate.js` (node is installed but **not on PATH**).
 - `backups/` — pre-job safety copies, per the collection convention.
 - `snake.html` — the untouched original from a Claude Chat session, kept as a reference for what
@@ -112,11 +128,28 @@ was never a step in the code. Don't go back to a linear gain.
 `STEP_MS` (200) is the gap at score 0, `STEP_MS_MIN` (71) is the floor, hit around score 27. Those
 three numbers preserve the original pace at both ends; only the shape between them changed.
 
-## Belly lumps
+## Belly lumps and deferred growth
 
-Every apple eaten pushes a lump that travels tailward one segment per tick and is dropped when it
-passes the tail. Purely cosmetic, but it doubles as a live readout of your last few meals, and
-it's the thing that makes the snake feel like an animal rather than a queue.
+Every apple eaten pushes a lump that travels tailward `DIGEST_RATE` segments per tick. **The lump
+reaching the tail is what makes the snake longer** — the apple visibly arriving is what holds the
+tail still for one tick. Lumps are not decoration; they are the growth, in transit.
+
+- **Score is immediate, length is deferred.** The tally goes up on the bite, because feedback has
+  to. Only the body waits. Deferring the score too would also mean shedding could cost you points,
+  which is a much bigger change than it looks.
+- **The lag is one body-length of ticks**, so it grows as you do: snappy early, a long pipeline
+  late. That's thematically right (longer gut, longer digestion) and it self-balances.
+- Eating several apples quickly produces a delayed *run* of growth rather than a step. Watch this
+  in playtest — it's a real change to how risk reads, not only a visual.
+- `DEFER_GROWTH: false` restores instant growth for the A/B. Keep that working.
+
+**Shedding's cost is positional, and this was discovered by testing, not designed.** A shed only
+discards lumps that have already travelled into the stretch being dropped — an apple swallowed a
+moment ago sits up at the head and survives. So shedding right after eating is nearly free, and
+shedding late in the pipeline throws away several meals. Emergent and arguably richer than a flat
+cost, but it is *less legible* than "shedding wastes your food", so don't describe it that way in
+player-facing copy until it's been felt. If it plays as arbitrary, the fix is to discard a
+proportion of all in-flight lumps rather than only the ones in the dropped range.
 
 `LUMP_SIZE` is 13px on a 12.5px body — the bulge is wider than a 24px cell on purpose. It was 8px
 and playtested as "seeable if you know to look for it," which is not enough for something that's
@@ -203,9 +236,9 @@ comments — it checks connectivity, uniqueness, that the head really is sealed,
 cell is actually reachable. It also runs the trap end to end both ways: do nothing and die, shed
 and live.
 
-With the dev panel open, `1`–`8` cycle `SHED_ON`, `SHED_LEAVES`, `SHED_MODE`, `SHED_PCT`,
-`SHED_DROP`, `SHED_COOL_MS`, `SHED_MIN_LEN` and `WALL_GRACE` live, mid-run, and they work while
-paused so you can reconfigure between attempts. `shift` cycles backwards. **Flip one knob, re-arm
+With the dev panel open, `1`–`0` cycle `SHED_ON`, `SHED_LEAVES`, `SHED_MODE`, `SHED_PCT`,
+`SHED_DROP`, `SHED_COOL_MS`, `SHED_MIN_LEN`, `WALL_GRACE`, `DEFER_GROWTH` and `EYE_LOOK` live,
+mid-run, and they work while paused so you can reconfigure between attempts. `shift` cycles backwards. **Flip one knob, re-arm
 the same trap.** That's the whole method; without it you're collecting anecdotes.
 
 **The rig has a known blind spot:** the end-to-end trap tests originally only ran in `skin` mode,
@@ -240,8 +273,12 @@ resolve. Unbuilt: mode selection, per-mode best scores, and whatever the modes e
 `` ` `` toggles a live readout — fps, state, tick, speed, length, head cell, food cell, lump
 positions, both pupil offsets, boil phase, whether the alarm check is firing, and the full
 shedding block (ready/cooling/too-short, every knob, live shed count, and the armed trap).
-`P` pauses. `Space` sheds. Dev keys `1`–`5` and `T` only respond while the panel is open, so a
+`P` pauses. `Space` sheds. Dev keys `1`–`0` and `T` only respond while the panel is open, so a
 normal player can't fall into them.
+
+The readout also carries **`lag`** — `score − (length − START_LEN)`, i.e. how many apples are
+still travelling down the body. Under deferred growth that number is the pipeline depth, and it's
+the fastest way to see whether digestion is behaving.
 
 ## Not built yet
 
@@ -251,24 +288,14 @@ roughly in the order they'd be worth trying:
 Shedding is built and playtested — see its section above. What's left there is **mode selection**,
 not tuning.
 
+Deferred growth is built — see *Belly lumps and deferred growth*. It wants playtesting, not
+building.
+
 Remaining, in order:
 
-1. **Deferred growth.** Trevor's idea, and it should come next because it solves a live problem.
-   Today eating grows you instantly. Instead: the lump travels down the body as it already does,
-   and the snake grows by one **when the lump reaches the tail** — the apple visibly arriving is
-   what pauses the tail for a tick. Cartoon-logical, and the lump stops being decorative.
-
-   The reason it's next: **it gives shedding a real cost.** Shedding already discards lumps riding
-   in the dropped length, so under deferred growth you throw away apples you've eaten but not yet
-   digested. That is a legible, thematic, non-arbitrary price — exactly what the cooldown is
-   currently faking. Keep the *score* increment on the bite (feedback has to be immediate); defer
-   only the length.
-
-   Watch for: length lags score by roughly one body-length of ticks, so eating several apples fast
-   produces a delayed run of growth. That's the charm, but it's a real change to how risk reads.
-2. **A food that runs away.** A bug that skitters a cell every few ticks, worth more than an apple.
+1. **A food that runs away.** A bug that skitters a cell every few ticks, worth more than an apple.
    Adds a chase without adding a system.
-3. **The tongue grab + sound**, together, as one feel pass. The tongue lashes out and drags the
+2. **The tongue grab + sound**, together, as one feel pass. The tongue lashes out and drags the
    apple in over ~150ms; pen-scratch audio for movement.
 
    **The grab has to be retroactive.** The apple is consumed the instant the head enters its cell,

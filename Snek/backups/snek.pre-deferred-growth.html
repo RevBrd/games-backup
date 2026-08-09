@@ -173,12 +173,6 @@ const T = {
   LUMP_SPREAD:  1.05,    // how many segments a lump smears across
   LUMP_MAX:     15,      // total bulge cap, so back-to-back apples don't balloon
 
-  // Growth is DEFERRED: eating scores immediately, but the snake only gets
-  // longer when the lump finishes travelling down the body and reaches the
-  // tail. The apple visibly arriving is what holds the tail still for a tick.
-  DEFER_GROWTH: true,    // false restores instant growth, for the A/B
-  DIGEST_RATE:  1,       // segments a lump travels per tick
-
   BOIL_MS:      110,     // hand-drawn line re-jitters this often (3-phase boil)
   WOBBLE:       1.35,    // px of wobble in the pen outline
   FILL_SLOP:    2.3,     // how far the colouring-in misses the outline by
@@ -187,7 +181,6 @@ const T = {
   EYE_R:        6.6,     // googly eye socket radius
   PUPIL_R:      3.0,
   EYE_GRAV:     900,     // px/s^2 — googly eyes are gravity toys
-  EYE_LOOK:     1.0,     // 0 = pull is straight down, 1 = pull comes from the apple
   EYE_DAMP:     0.90,
   EYE_BOUNCE:   0.42,
   EYE_FLING:    150,     // impulse when the head turns
@@ -373,7 +366,6 @@ const BEST_KEY = 'snek.best.v1';
    STATE
    ============================================================ */
 let snake, dir, nextDir, food, score, best, lumps;
-let pendingGrowth = 0;     // apples that have arrived at the tail but not yet lengthened it
 let sheds = [];            // {cells, mode, bornAt} — what shedding leaves behind
 let lastShedAt = -1e9, shedRefusedAt = -1e9;
 let alive=false, started=false, paused=false;
@@ -402,7 +394,7 @@ function reset(){
   snake = [];
   for (let i=0;i<T.START_LEN;i++) snake.push({x:mid-i, y:mid});
   dir = {x:1,y:0}; nextDir = {x:1,y:0};
-  score = 0; speed = speedFor(0); lumps = []; ticks = 0; pendingGrowth = 0;
+  score = 0; speed = speedFor(0); lumps = []; ticks = 0;
   chompAt = -1e9; deadAt = -1e9;
   sheds = []; lastShedAt = -1e9; shedRefusedAt = -1e9;
   eyes[0] = makeEye(0); eyes[1] = makeEye(1);
@@ -539,41 +531,27 @@ function step(){
 
   const head = { x:(snake[0].x + dir.x + C) % C, y:(snake[0].y + dir.y + C) % C };
 
+  // the tail tip vacates this tick, so following it is legal
+  const tail = snake[snake.length-1];
   const growing = food && head.x===food.x && head.y===food.y;
-
-  // Following your own tail is legal exactly when the tail vacates — so work out
-  // whether it does BEFORE the collision test. Under deferred growth eating no
-  // longer holds the tail still, so this can't key off `growing` any more.
-  const willArrive = T.DEFER_GROWTH
-    ? lumps.filter(L => L.t + T.DIGEST_RATE >= snake.length).length
-    : (growing ? 1 : 0);
-  const tailStays = (pendingGrowth + willArrive) > 0;
-
   const hit = snake.some((s,i)=>
-    s.x===head.x && s.y===head.y && !(i===snake.length-1 && !tailStays));
+    s.x===head.x && s.y===head.y && !(i===snake.length-1 && !growing));
   if (hit) return gameOver('self');
   if (isWall(head.x, head.y)) return gameOver('wall');
 
   snake.unshift(head);
-  for (const L of lumps) L.t += T.DIGEST_RATE;
-
-  // A lump reaching the tail IS the growth. Under instant growth the lumps are
-  // decoration and just fall off the end.
-  const arrived = lumps.filter(L => L.t >= snake.length - 1).length;
-  lumps = lumps.filter(L => L.t < snake.length - 1);
-  if (T.DEFER_GROWTH) pendingGrowth += arrived;
+  for (const L of lumps) L.t += 1;
+  while (lumps.length && lumps[0].t > snake.length) lumps.shift();
 
   if (growing){
-    score++; scoreEl.textContent = score;          // score is immediate; feedback has to be
+    score++; scoreEl.textContent = score;
     speed = speedFor(score);
     lumps.push({t:0});
     chompAt = performance.now();
     placeFood();
-    if (!T.DEFER_GROWTH) pendingGrowth++;
+  } else {
+    snake.pop();
   }
-
-  // the tail holds still for one tick per apple that has finished arriving
-  if (pendingGrowth > 0) pendingGrowth--; else snake.pop();
 
   hardenWalls();
 }
@@ -640,7 +618,7 @@ function armTrap(i){
   snake = t.cells.map(c => ({x:c[0], y:c[1]}));
   dir = {x:t.dir.x, y:t.dir.y}; nextDir = {x:t.dir.x, y:t.dir.y};
   lumps = []; sheds = []; lastShedAt = -1e9; shedRefusedAt = -1e9;
-  ticks = 0; chompAt = -1e9; pendingGrowth = 0;
+  ticks = 0; chompAt = -1e9;
   score = Math.max(0, snake.length - T.START_LEN);   // so the speed matches the length
   speed = speedFor(score);
   scoreEl.textContent = score;
@@ -900,8 +878,9 @@ function drawFace(){
   // that is what happens when you glue plastic eyes to a drawing.
   const eyeR = T.EYE_R * (alarmed ? 1.18 : 1);
   for (let i=0;i<2;i++){
-    const a = eyeAnchor(i);                  // same anchor the pupil physics uses
-    const ex = a.x, ey = a.y;
+    const s = i? 1 : -1;
+    const ex = hx - fx*1.5 + px*s*5.9;
+    const ey = hy - fy*1.5 + py*s*5.9;
     const e = eyes[i];
 
     // white plastic dome — the one thing on this page that isn't hand-drawn
@@ -984,49 +963,10 @@ function draw(){
 /* ============================================================
    EYE PHYSICS  —  runs on real time, not on ticks
    ============================================================ */
-// where eye i's socket sits, in canvas pixels
-function eyeAnchor(i){
-  const h = snake[0];
-  const s = i ? 1 : -1;
-  return {
-    x: cellX(h.x) - dir.x*1.5 + (-dir.y)*s*5.9,
-    y: cellY(h.y) - dir.y*1.5 + ( dir.x)*s*5.9
-  };
-}
-
-// Which way is "down" for a googly eye. Normally: down. While there's an apple
-// on the board, the pull comes from the apple instead, so the pupils lean at it
-// and swing across when it moves. All the physics is unchanged — only the
-// direction of the constant force. On death it reverts to real gravity, so the
-// pupils drop and the blank stare survives.
-function eyePull(i){
-  if (!alive || !food) return {x:0, y:1};
-  // shortest way round: the board wraps, so an apple one cell behind you must
-  // not read as an apple twenty cells ahead
-  let dx = food.x - snake[0].x, dy = food.y - snake[0].y;
-  if (dx >  C/2) dx -= C; else if (dx < -C/2) dx += C;
-  if (dy >  C/2) dy -= C; else if (dy < -C/2) dy += C;
-
-  const a = eyeAnchor(i);                    // per-eye, so they converge up close
-  let gx = (cellX(snake[0].x) + dx*S) - a.x;
-  let gy = (cellY(snake[0].y) + dy*S) - a.y;
-  const m = Math.hypot(gx, gy) || 1;
-  gx /= m; gy /= m;
-
-  // blend back toward real gravity; EYE_LOOK 0 is pure googly, 1 is pure tracking
-  gx *= T.EYE_LOOK;
-  gy  = gy*T.EYE_LOOK + (1 - T.EYE_LOOK);
-  const n = Math.hypot(gx, gy) || 1;
-  return {x: gx/n, y: gy/n};
-}
-
 function updateEyes(dt){
   const lim = T.EYE_R - T.PUPIL_R;
-  for (let i=0;i<eyes.length;i++){
-    const e = eyes[i];
-    const g = eyePull(i);
-    e.vx += g.x * T.EYE_GRAV * dt;
-    e.vy += g.y * T.EYE_GRAV * dt;
+  for (const e of eyes){
+    e.vy += T.EYE_GRAV * dt;
     e.ox += e.vx * dt; e.oy += e.vy * dt;
     const d = Math.hypot(e.ox, e.oy);
     if (d > lim){
@@ -1087,8 +1027,6 @@ const KNOBS = [
   { key:'6', name:'SHED_COOL_MS', vals:[0,750,1500,3000] },
   { key:'7', name:'SHED_MIN_LEN', vals:[4,5,7,10] },
   { key:'8', name:'WALL_GRACE',   vals:[4,8,10,16,24] },
-  { key:'9', name:'DEFER_GROWTH', vals:[true,false] },
-  { key:'0', name:'EYE_LOOK',     vals:[1, 0.6, 0.3, 0] },
 ];
 function cycleKnob(k, back){
   const kn = KNOBS.find(x=>x.key===k);
@@ -1110,11 +1048,10 @@ fps      ${fps.toFixed(0)}
 state    ${alive ? (paused?'PAUSED':'ALIVE') : (started?'DEAD':'IDLE')}
 tick     ${ticks}
 speed    ${speed.toFixed(2)} c/s   (int ${(1000/speed).toFixed(0)}ms)
-len      ${snake.length}   score ${score}   lag ${score - (snake.length - T.START_LEN)}
+len      ${snake.length}   score ${score}
 head     ${h.x},${h.y}  dir ${dir.x},${dir.y}
 food     ${food ? food.x+','+food.y : '—'}
 lumps    ${lumps.map(l=>l.t.toFixed(0)).join(',') || '—'}
-digest   ${T.DEFER_GROWTH ? 'deferred' : 'instant'}  pending ${pendingGrowth}
 eyeL     ${eyes[0].ox.toFixed(1)},${eyes[0].oy.toFixed(1)}
 eyeR     ${eyes[1].ox.toFixed(1)},${eyes[1].oy.toFixed(1)}
 boil     ${boil}
@@ -1130,8 +1067,6 @@ danger   ${alive && dangerAhead() ? 'YES' : 'no'}
 6 cool   ${T.SHED_COOL_MS}ms
 7 minlen ${T.SHED_MIN_LEN}
 8 grace  ${T.WALL_GRACE} ticks
-9 defer  ${T.DEFER_GROWTH}
-0 look   ${T.EYE_LOOK}
 sheds    ${sheds.length}  hard ${sheds.filter(s=>s.hard).length}  soft ${sheds.filter(s=>s.mode==='wall'&&!s.hard).length}
 refused  ${now - shedRefusedAt < 600 ? 'JUST NOW' : '—'}
 ──── traps (t / shift+t) ─────
@@ -1225,9 +1160,8 @@ window.SNEK = {
   step, start, reset, turn, togglePause, draw, updateEyes,
   segWidth, speedFor, stepMsFor, wobblePts, STILL,
   shed, armTrap, cycleKnob, isWall, isWallish, expireSheds, shedCount, shedReady,
-  hardenWalls, TRAPS, KNOBS, eyePull, eyeAnchor,
+  hardenWalls, TRAPS, KNOBS,
   get sheds(){ return sheds; },
-  get pendingGrowth(){ return pendingGrowth; },
   get boil(){ return boil; },
   setFood: (x,y)=>{ food = {x,y}; },
   setDir:  (x,y)=>{ nextDir = {x,y}; },

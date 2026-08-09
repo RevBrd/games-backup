@@ -134,44 +134,6 @@ try { frame(16); ok('idle frame renders', drawCalls.stroke > 0 && drawCalls.fill
        'stroke='+drawCalls.stroke+' fill='+drawCalls.fill); }
 catch(e){ ok('idle frame renders', false, e.message); }
 
-/* ---------- shared driver ----------
- * Growth is deferred, so "eat N apples" no longer means "be N longer" until the
- * lumps have travelled the length of the body. And a snake grown along one row
- * wraps into itself the moment it is longer than the board is wide. This drives
- * a serpentine and waits out the digestion pipeline.
- */
-function makeDriver(){
-  let run = 0, right = true;
-  const advance = (eat) => {
-    if (run >= 10){                       // drop two rows and reverse
-      run = 0;
-      S.setDir(0,1); S.step();
-      S.setDir(0,1); S.step();
-      right = !right;
-      S.setDir(right?1:-1, 0);
-    }
-    run++;
-    const h = S.state.snake[0], N = S.T.CELLS;
-    // wrap it — an unwrapped target silently misses at the board edge, which
-    // shows up later as "I asked for 14 apples and got 13"
-    if (eat) S.setFood((h.x + S.state.dir.x + N) % N, (h.y + S.state.dir.y + N) % N);
-    else S.setFood(-5,-5);
-    S.step();
-  };
-  return advance;
-}
-// eat n apples, then run on until every lump has become length
-function feed(n, digest){
-  S.reset(); S.start(); S.setFood(-5,-5);
-  const go = makeDriver();
-  for (let i=0;i<n && S.isAlive();i++) go(true);
-  if (digest !== false){
-    for (let i=0;i<400 && S.isAlive() &&
-         (S.state.lumps.length || S.pendingGrowth); i++) go(false);
-  }
-  return S.state.snake.length;
-}
-
 /* ---------- 3. logic ---------- */
 section('rules');
 S.reset();
@@ -191,8 +153,7 @@ S.setFood(st.snake[0].x + st.dir.x, st.snake[0].y + st.dir.y);
 S.step();
 st = S.state;
 ok('eating scores', st.score === 1, 'score='+st.score);
-ok('eating does NOT grow you on the bite (growth is deferred)',
-   st.snake.length === before, 'len='+st.snake.length);
+ok('eating grows the snake by 1', st.snake.length === before + 1, 'len='+st.snake.length);
 ok('eating records a belly lump', st.lumps.length === 1);
 ok('eating relocates the food', !(st.food.x === st.snake[0].x && st.food.y === st.snake[0].y));
 ok('speed rises with score', st.speed > 1000/S.T.STEP_MS, 'speed='+st.speed.toFixed(2));
@@ -228,50 +189,13 @@ ok('speed rises with score', st.speed > 1000/S.T.STEP_MS, 'speed='+st.speed.toFi
      widest.toFixed(1)+'px');
 }
 
-// --- deferred growth: the lump travelling to the tail IS the growth
-section('deferred growth');
-{
-  S.T.DEFER_GROWTH = true;
-  const start = feed(1, false);                     // one apple, digestion not yet run
-  ok('score is credited on the bite', S.state.score === 1, 'score='+S.state.score);
-  ok('length has not moved yet', S.state.snake.length === start, 'len='+S.state.snake.length);
-  ok('a lump is in flight', S.state.lumps.length === 1);
-
-  const lumpT0 = S.state.lumps[0].t;
-  S.setFood(-5,-5); S.step(); S.step();
-  ok('the lump migrates tailward', S.state.lumps[0].t === lumpT0 + 2*S.T.DIGEST_RATE,
-     't='+S.state.lumps[0].t);
-
-  let grewOn = -1;
-  const preLen = S.state.snake.length;
-  for (let i=0;i<80 && S.isAlive(); i++){
-    S.step();
-    if (S.state.snake.length > preLen){ grewOn = i; break; }
-  }
-  ok('the snake grows when the lump reaches the tail', grewOn >= 0, 'after '+grewOn+' ticks');
-  ok('the lump is consumed by arriving', S.state.lumps.length === 0);
-  ok('it grew by exactly one', S.state.snake.length === preLen + 1, 'len='+S.state.snake.length);
-
-  // the books must balance once the pipeline drains
-  const finalLen = feed(9);
-  ok('9 apples eventually means 9 segments',
-     finalLen === S.T.START_LEN + 9 && S.state.score === 9,
-     `len=${finalLen} score=${S.state.score}`);
-  ok('nothing is left pending', S.state.lumps.length === 0 && S.pendingGrowth === 0);
-
-  // instant growth stays available for the A/B
-  S.T.DEFER_GROWTH = false;
-  S.reset(); S.start();
-  const b = S.state.snake.length;
-  S.setFood(S.state.snake[0].x + S.state.dir.x, S.state.snake[0].y + S.state.dir.y);
-  S.step();
-  ok('DEFER_GROWTH false restores instant growth', S.state.snake.length === b + 1,
-     'len='+S.state.snake.length);
-  S.T.DEFER_GROWTH = true;
-}
-
-section('rules (cont)');
-S.reset(); S.start();
+// --- lumps travel tailward and eventually pass out of the body
+const lumpT0 = S.state.lumps[0].t;
+S.setFood(-5,-5);                                   // park the food off-board
+S.step(); S.step();
+ok('lump migrates toward the tail', S.state.lumps[0].t === lumpT0 + 2, 't='+S.state.lumps[0].t);
+for (let i=0;i<40 && S.isAlive();i++) S.step();
+ok('lump is digested eventually', S.state.lumps.length === 0);
 
 // --- movement + wrap
 S.reset(); S.start(); S.setFood(-5,-5);
@@ -391,61 +315,6 @@ section('googly eyes');
   ok('pupils use the whole socket', maxOff > lim*0.6, 'max='+maxOff.toFixed(2));
 }
 
-// --- the pull comes from the apple, the short way round a wrapping board
-section('eye tracking');
-{
-  S.T.EYE_LOOK = 1;
-  S.reset(); S.start();
-  const h = S.state.snake[0];
-
-  S.setFood(h.x, (h.y + 5) % S.T.CELLS);            // straight below
-  let g = S.eyePull(0);
-  ok('an apple below pulls the pupils down', g.y > 0.8, `(${g.x.toFixed(2)},${g.y.toFixed(2)})`);
-
-  S.setFood(h.x, (h.y - 5 + S.T.CELLS) % S.T.CELLS); // straight above
-  g = S.eyePull(0);
-  ok('an apple above pulls them up', g.y < -0.8, `(${g.x.toFixed(2)},${g.y.toFixed(2)})`);
-
-  // the seam: an apple 2 cells to the LEFT across the wrap must not read as right
-  S.reset(); S.start();
-  const h2 = S.state.snake[0];
-  S.setFood((h2.x - 2 + S.T.CELLS) % S.T.CELLS, h2.y);
-  g = S.eyePull(0);
-  ok('tracking takes the short way round the wrap', g.x < -0.5,
-     `gx=${g.x.toFixed(2)} head=${h2.x} food=${S.state.food.x}`);
-
-  // each eye aims from its own socket, so they converge on a near apple
-  S.reset(); S.start();
-  const h3 = S.state.snake[0];
-  S.setFood((h3.x + S.state.dir.x*2 + S.T.CELLS) % S.T.CELLS, h3.y);
-  const g0 = S.eyePull(0), g1 = S.eyePull(1);
-  ok('the two eyes converge rather than staying parallel',
-     Math.abs(g0.y - g1.y) > 0.05, `${g0.y.toFixed(2)} vs ${g1.y.toFixed(2)}`);
-
-  // EYE_LOOK 0 must give back plain gravity
-  S.T.EYE_LOOK = 0;
-  S.setFood(h3.x, (h3.y - 6 + S.T.CELLS) % S.T.CELLS);
-  g = S.eyePull(0);
-  ok('EYE_LOOK 0 restores straight-down gravity', g.y > 0.99, `(${g.x.toFixed(2)},${g.y.toFixed(2)})`);
-  S.T.EYE_LOOK = 1;
-
-  // pupils must still be caged no matter which way the pull points
-  S.reset(); S.start();
-  const lim = S.T.EYE_R - S.T.PUPIL_R;
-  let escaped = 0;
-  const dirs = [[1,0],[0,1],[-1,0],[0,-1]];
-  for (let i=0;i<300;i++){
-    S.setFood(i % S.T.CELLS, (i*7) % S.T.CELLS);     // apple jumping all over
-    S.setDir(dirs[i%4][0], dirs[i%4][1]);
-    if (S.isAlive()) S.step(); else { S.reset(); S.start(); }
-    S.updateEyes(1/60);
-    for (const e of S.state.eyes){
-      if (Math.hypot(e.ox, e.oy) > lim + 1e-6 || !Number.isFinite(e.ox)) escaped++;
-    }
-  }
-  ok('tracking pupils still never escape the socket', escaped === 0, escaped+' escapes');
-}
-
 // --- a dead snake's eyes settle at the bottom, like real googly eyes
 {
   S.reset(); S.start(); S.setDir(-1,0); S.step();
@@ -463,10 +332,9 @@ section('shedding');
   const cfg = (o) => Object.assign(S.T, o);
   const key = c => c.x + ',' + c.y;
 
-  // pinned to 'fixed' on purpose: this block is about SHED_DROP specifically
-  cfg({SHED_ON:true, SHED_MODE:'fixed', SHED_DROP:3, SHED_MIN_LEN:5,
-       SHED_LEAVES:'none', SHED_COOL_MS:0});
-  feed(10);   // eat AND digest — deferred growth means eating alone isn't length
+  cfg({SHED_ON:true, SHED_DROP:3, SHED_MIN_LEN:5, SHED_LEAVES:'none', SHED_COOL_MS:0});
+  S.reset(); S.start(); S.setFood(-5,-5);
+  for (let i=0;i<8;i++){ const h=S.state.snake[0]; S.setFood(h.x+S.state.dir.x,h.y+S.state.dir.y); S.step(); S.setFood(-5,-5); }
 
   const before = S.state.snake.length;
   const droppedCells = S.state.snake.slice(-3).map(key);
@@ -486,7 +354,8 @@ section('shedding');
 
   // cooldown
   cfg({SHED_COOL_MS: 5000});
-  feed(12);
+  S.reset(); S.start(); S.setFood(-5,-5);
+  for (let i=0;i<10;i++){ const h=S.state.snake[0]; S.setFood(h.x+S.state.dir.x,h.y+S.state.dir.y); S.step(); S.setFood(-5,-5); }
   ok('first shed on a cooldown succeeds', S.shed() === true);
   ok('second shed inside the cooldown is refused', S.shed() === false);
   clock += 6000;
@@ -495,7 +364,8 @@ section('shedding');
 
   // skins: harmless, and they expire
   cfg({SHED_LEAVES:'skin'});
-  feed(12);
+  S.reset(); S.start(); S.setFood(-5,-5);
+  for (let i=0;i<10;i++){ const h=S.state.snake[0]; S.setFood(h.x+S.state.dir.x,h.y+S.state.dir.y); S.step(); S.setFood(-5,-5); }
   S.shed();
   ok('a skin is recorded', S.sheds.length === 1 && S.sheds[0].mode === 'skin');
   const skinCell = S.sheds[0].cells[0];
@@ -505,7 +375,8 @@ section('shedding');
 
   // walls: lethal, permanent, and food avoids them
   cfg({SHED_LEAVES:'wall'});
-  feed(12);
+  S.reset(); S.start(); S.setFood(-5,-5);
+  for (let i=0;i<10;i++){ const h=S.state.snake[0]; S.setFood(h.x+S.state.dir.x,h.y+S.state.dir.y); S.step(); S.setFood(-5,-5); }
   S.shed();
   ok('a wall is recorded', S.sheds.length === 1 && S.sheds[0].mode === 'wall');
   const wsh = S.sheds[0];
@@ -525,32 +396,10 @@ section('shedding');
   ok('food never spawns on a wall', onWall === 0, onWall+' collisions');
   cfg({SHED_LEAVES:'skin', SHED_ON:true, SHED_DROP:3, SHED_MIN_LEN:5, SHED_COOL_MS:0});
 
-  // Deferred growth is what finally gives shedding a real price: apples you've
-  // eaten but not digested go out with the tail.
-  cfg({SHED_LEAVES:'none', SHED_MODE:'fixed', SHED_DROP:4, SHED_MIN_LEN:5, SHED_COOL_MS:0});
-  S.T.DEFER_GROWTH = true;
-  feed(14);
-  const go = makeDriver();
-  for (let i=0;i<3;i++) go(true);
-  ok('apples are in flight before the shed', S.state.lumps.length === 3,
-     'lumps='+S.state.lumps.length);
-
-  // NOTE: shedding only discards apples that have already travelled into the
-  // stretch being dropped. A just-swallowed apple sits at the head and is safe,
-  // so the cost of a shed depends on where your food is in the pipeline.
-  for (let i=0;i<80 && S.isAlive() && S.state.lumps.length &&
-       S.state.lumps[0].t < S.state.snake.length - S.T.SHED_DROP; i++) go(false);
-
-  const lumpsBefore = S.state.lumps.length, scoreBefore = S.state.score;
-  S.shed();
-  ok('shedding discards apples riding in the dropped length',
-     S.state.lumps.length < lumpsBefore, `${lumpsBefore} -> ${S.state.lumps.length}`);
-  ok('shedding never touches the score', S.state.score === scoreBefore,
-     `${scoreBefore} -> ${S.state.score}`);
-
   // the mechanic can be switched off wholesale for an A/B against nothing
   cfg({SHED_ON:false});
-  feed(10);   // eat AND digest — deferred growth means eating alone isn't length
+  S.reset(); S.start(); S.setFood(-5,-5);
+  for (let i=0;i<8;i++){ const h=S.state.snake[0]; S.setFood(h.x+S.state.dir.x,h.y+S.state.dir.y); S.step(); S.setFood(-5,-5); }
   const lenOff = S.state.snake.length;
   ok('SHED_ON false disables shedding entirely',
      S.shed() === false && S.state.snake.length === lenOff);
