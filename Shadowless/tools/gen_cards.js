@@ -59,6 +59,14 @@ function pokemonEntry(c) {
     })),
     // Data only: this says a Power EXISTS. effects.js says what it does.
     power: power ? { kind: power.type, name: power.name, text: power.text } : null,
+    // Dex fields. The engine never reads these — they exist for Job 5's dex,
+    // which groups cards by species rather than by printing. Upstream gives
+    // nationalPokedexNumbers as an array, but it is exactly one entry on all
+    // 1,020 Pokemon across all 14 sets, so it is flattened to a number here.
+    // 191 of those cards carry no flavorText (mostly Neo holos) — the dex has
+    // to tolerate an empty string rather than assume every species has one.
+    dex: (c.nationalPokedexNumbers || [])[0] || 0,
+    flavor: c.flavorText || '',
   };
 }
 

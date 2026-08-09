@@ -12,29 +12,43 @@ rarity fields are actually populated from `data/raw/`.
 Verified against `data/raw/*.json` (the `pokemon-tcg-data` corpus) and corroborated by web search
 7 Aug 2026 — sources at the bottom.
 
-### Pack composition changed once, partway through the era
+### Pack composition, and the "unnumbered Energy" story that turned out not to exist
 
-**Base Set, Jungle, Fossil** (the "unnumbered energy" era) — 11 cards per pack:
+**Corrected 9 Aug 2026**, at the start of Job 5, by re-querying every set in `data/raw/` rather
+than reasoning from Base Set alone. The earlier version of this section described an "unnumbered
+Energy era" that gave way to numbered Energy partway through, and asked which set the cutover
+landed on. **There is no cutover, because there was never an unnumbered pool.** Leaving the
+original wording here would have sent Job 5 hunting for a boundary that doesn't exist.
+
+Eleven cards per pack across the whole era, and the commonly-reported slotting is:
 
 - 1 Rare (roughly 1-in-3 chance of being the holo printing instead of non-holo)
 - 3 Uncommon
-- 5 Common
-- 2 Energy — **unnumbered**, drawn from a small pool outside the set's card count entirely
+- 7 Common-tier
 
-This is why `base1.json` shows 102 numbered cards (16 Rare Holo / 16 Rare / 32 Uncommon /
-32 Common) **plus 6 "(none)"-rarity Energy cards** that aren't part of the 102. Jungle and Fossil
-are cleaner — 16/16/16/16 and 15/15/16/16 — because both are exactly half and roughly-half Base's
-size with proportionally identical slotting, and neither reprinted Energy into their own numbered
-list (the corpus still shows Team Rocket, Gym Heroes/Challenge, and Neo Genesis carrying their own
-6-card unnumbered Energy pools too — the "(none)" rarity persists further into the era than a clean
-Base/Jungle/Fossil-only cutoff would suggest; the pack-composition question below needs a real
-per-set check before Job 5 locks anything in).
+What the corpus actually says about Energy, per set:
 
-**From some point in the Team Rocket/Neo stretch onward** — Energy became **numbered Common cards
-within the set itself** rather than a separate unnumbered pool. Neo Genesis packs are reported as
-7 Common / 3 Uncommon / 1 Rare = 11, no dedicated Energy slot, because Energy is already sitting
-inside that Common count. Exactly where the cutover happens is not yet nailed down — see Open
-Question 1.
+| Sets | Basic Energy in the set | Numbering |
+|---|---|---|
+| `base1` `base4` `gym1` `gym2` `neo1` | 6 cards, **blank `rarity` string** | Numbered at the **end of the set's own range** — Base's are #97–102 of 102 |
+| `base2` `base3` `base5` `base6` `basep` `neo2` `neo3` `neo4` | **none at all** | n/a |
+| `si1` | n/a — all 18 cards carry a blank rarity | Southern Islands has no rarity concept; it was a fixed boxed set |
+
+So the six Base Set Energies **are** part of the 102, not a pool outside it — the corpus simply
+leaves `rarity` empty on basic Energy, in exactly the five sets that reprinted it, and every one of
+those numbers them inside its own range. Double Colorless Energy is the counter-example that proves
+the point: it is #96, Uncommon, and sits in the numbered list like anything else. Base Set's real
+breakdown is 16 Rare Holo / 16 Rare / 32 Uncommon / 32 Common / 6 blank-rarity Energy = 102.
+
+**This vindicates Part 2's design rather than undermining it.** The decision below — Energy is a
+numbered Common-tier card from the start, in every set — was made to sidestep a messy historical
+cutover. It turns out to be the *faithful* option, not a shortcut around one.
+
+**One genuine Job 6 problem falls out of the table above: Jungle and Fossil contain no basic Energy
+whatsoever.** The "≥2 Energy floor" in Part 2 cannot be satisfied from a Jungle or Fossil pack's own
+pool, because there is nothing to draw. Either the floor draws basic Energy from Base's pool (which
+is what really happened — players used the Energy they already had), or those two sets get no floor.
+Not urgent, but it must be settled before Job 6 and it is not settled here.
 
 ### Rarity tiers, as implemented
 
@@ -69,6 +83,30 @@ This matters for Job 5 because **it means there is no real precedent to copy.** 
 as something a pack *pulls* would be an invented mechanic wearing a real term, not a
 recreation — see Part 2.
 
+### Every scan we own is already 1st Edition Shadowless
+
+**Found 9 Aug 2026** by pulling the hires image for `base1-4` and reading it. The `base1` card faces
+in `data/raw/` — the ones `tools/fetch_art.js` downloads into `assets/cards/base1/` — are scans of
+the **1st Edition print run**. The `EDITION 1` stamp sits below the artwork on every card, and the
+art frame carries no drop shadow, because 1st Edition Base *is* Shadowless by definition.
+
+Two of Part 2's five axes therefore have nothing to distinguish them from the default, on the scans:
+a 1st Edition pack would render identically to every other pack, and Shadowless is already true of
+all 102 cards. There is no second image per card in the corpus, so no Unlimited scan to fall back on.
+
+The resolution, agreed with Trevor 9 Aug, is to split the axes by what they can physically express:
+
+- **Additive cosmetics** — Shiny, Reverse Holo, Misprint. These are laid *on top*, so they work on
+  our rendered card face **and** over a scan: a sheen with `mix-blend-mode`, a glitch filter. No
+  bitmap surgery required, and they can appear anywhere a card appears.
+- **Print-run cosmetics** — 1st Edition and Shadowless. A stamp that is already present and a shadow
+  that is already absent. These can only ever be expressed on **our own render**, never on a scan.
+
+The consequence worth carrying forward: **the pack reveal cannot be the scan alone.** It is the one
+moment a variant matters most, and a bare scan is variant-blind — a 1-in-2200 Shadowless would pull
+silently. The reveal uses the `fullCard()` shape (real scan *plus* our marked render underneath),
+which already exists as the hover panel. See Part 2's rendering notes.
+
 **One more wrinkle, caught 8 Aug via Trevor's own collection:** the shadow/shadowless frame change
 is a **Base Set-only event.** Base is the one set whose art frame changed mid-print-run; every set
 after it (Jungle onward) launched with the shadow already standard and it never changed again. 1st
@@ -91,20 +129,24 @@ opening indefinitely, not just early on.
 
 ### Pack composition — Energy folded into a floored Common bucket
 
-Energy gets numbered from the start in every set (no more "(none)"-rarity unnumbered pool), and
-lives inside a single 7-slot Common-tier bucket rather than a separate Energy slot. Pack shape is
-constant across the whole game: **1 Rare + 3 Uncommon + 7 Common-tier = 11 cards.**
+Energy is treated as a Common-tier card and lives inside a single 7-slot Common-tier bucket rather
+than a separate Energy slot. Pack shape is constant across the whole game: **1 Rare + 3 Uncommon +
+7 Common-tier = 11 cards.**
 
 - **Base, Jungle, Fossil:** floor of ≥2 of those 7 Common-tier slots must be Energy. Early game, the
   player is starved for Energy building first decks — this reproduces that pressure deliberately.
 - **Team Rocket onward:** no floor. Energy just competes at its natural (small) share of the Common
   pool, so it becomes scarce exactly when a stocked player stops needing it.
 
-This sidesteps the real-world cutover question entirely — a look back at the corpus shows
-unnumbered Energy sitting in *every* set through Neo Genesis, which is almost certainly the
-`pokemon-tcg-data` API repeating a basic-Energy convenience list per set for deckbuilding, not
-evidence of a real per-set print change. There was no clean historical cutover to find, so
-designing our own at the Team Rocket boundary is the right move rather than a shortcut around one.
+This holds up under the corrected Part 1, but for a different reason than originally written. The
+earlier text justified it as sidestepping a messy real-world cutover; there was no cutover, and
+basic Energy is a normal numbered card in each of the five sets that printed it. So this isn't a
+sidestep at all — it's what the sets actually did, minus the blank `rarity` string that the corpus
+happens to leave on Energy.
+
+**The floor is the part that needs work, not the bucket.** Jungle and Fossil print no basic Energy,
+so their floor has nothing to draw from — see the note at the end of Part 1. The bucket itself is
+fine everywhere.
 
 ### Rare slot — flat 2:1 ratio, not per-set fidelity
 
@@ -145,6 +187,31 @@ card-detail view. Cheap fix for the naming collision noted below, agreed 8 Aug.)
    a rare, **whole-pack** roll — when it hits, every card in that pack renders as a 1st Edition
    version of what it would've gotten anyway. A single flashy moment, distinct in kind from the
    long-tail per-card chases above, not a rung on the same ladder.
+
+### Where the markings actually get drawn
+
+Trevor, 9 Aug 2026. **The scans stay pristine.** A real card face is a general display of the real
+card and carries no variant marking; everything cosmetic is drawn on **our own rendered card face**,
+the one with the sigil. That render doubles as a detail view — most board positions can't show full
+attack stats, so hovering any card gives you the complete printing plus whatever variants it carries.
+
+That view already exists: `fullCard()` in `src/ui.js` stacks the scan on top of our full rendered
+stat block. What Job 5 adds is the markings on the lower half, and the same markings on the smaller
+in-play renders (`miniCard`, `handCard`, `renderSlot`) so a Shiny reads as Shiny on the board rather
+than only on hover.
+
+- **1st Edition** — our own stamp glyph, echoing where the real one sits. Deliberately legible at
+  dex-thumbnail size too: it's a whole-pack roll, so you'll want to spot it across a grid.
+- **Shiny** — Trevor's read is a fancy border treatment rather than a recolour of the art.
+- **Shadowless** — **not settled.** Our render has no art frame to un-shadow, and the nearest
+  analogue is the sigil box. Adding a hard offset shadow to every sigil box, so that one card in two
+  hundred can lack it, would change the default look of the whole game to serve a variant almost
+  nobody sees — and Trevor's note is that the current cards have a balance worth protecting.
+  *Proposed, not agreed:* confine it. The board keeps exactly the look it has now, and the shadowed
+  art window exists only where a card is shown **as a collectible** — dex, pack reveal, detail panel.
+  That puts the entire visual change inside screens Job 5 builds from scratch, touches nothing the
+  8 Aug design lock covers, and is honest to the original, which was itself only ever visible when
+  you were looking at a card rather than playing it.
 
 Placeholder odds for all of these, plus Promo/SI intrusion (below), are in one table:
 
@@ -252,16 +319,11 @@ pack." Two refinements on top of the original ask:
 
 ## Credits
 
-- **Sonnet 5** (Claude Code, 7 Aug 2026) — this document, researched and written during a parallel
-  Job 4g session at Trevor's request.
-- **Sonnet 5** (Claude Code, 8 Aug 2026) — Part 2's working plan, refined with Trevor over the
-  energy floor, the flat holo ratio, and the rarity axes.
-- **Sonnet 5** (Claude Code, 8 Aug 2026, same day) — corrected the 1st-Edition/Shadowless
-  relationship after Trevor's own collection contradicted the original nesting, added Reverse Holo
-  and the RS naming convention, and floated Miscut as a new idea.
-- **Sonnet 5** (Claude Code, 8 Aug 2026, same day) — placeholder rarity table with expected-packs
-  math, adopted Misprint and its digital-glitch visual direction, settled opponent cosmetics and
-  the alt-art-tier question with Trevor.
-- **Sonnet 5** (Claude Code, 8 Aug 2026, same day) — v3 table, reworked backward from Trevor's
-  wins-needed pacing schedule instead of forward from packs opened; resolved the Shadowless
-  "50% better odds" ambiguity and the Misprint/Shadowless gap as a byproduct.
+- **Sonnet 5** (Claude Code, 7-9 Aug 2026) — this document, researched, refined and written during a parallel
+  Job 4g session at Trevor's request, as well as collaborative decision-making with Trevor. This instance kept a turn log, which can be found at \Turn Logs\Packs Turn Log.txt
+- **Opus 5** (Claude Code, 9 Aug 2026) — Job 5 opening pass over Part 1. Re-queried all 14 sets and
+  found there was never an unnumbered Energy pool or a cutover to hunt for; found that every `base1`
+  scan is 1st Edition Shadowless, which forced the additive/print-run split and the rule that a pack
+  reveal can't be the scan alone; caught that Jungle and Fossil print no Energy for the ≥2 floor to
+  draw on. Part 2's rendering section is Trevor's direction from the same day.
+
