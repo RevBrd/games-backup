@@ -69,6 +69,15 @@ This matters for Job 5 because **it means there is no real precedent to copy.** 
 as something a pack *pulls* would be an invented mechanic wearing a real term, not a
 recreation — see Part 2.
 
+**One more wrinkle, caught 8 Aug via Trevor's own collection:** the shadow/shadowless frame change
+is a **Base Set-only event.** Base is the one set whose art frame changed mid-print-run; every set
+after it (Jungle onward) launched with the shadow already standard and it never changed again. 1st
+Edition stamps, though, exist across most of the era's sets, not just Base — Jungle, Fossil, Team
+Rocket, both Gym sets, and Neo all had their own 1st Edition print runs, and every one of those
+already had the shadow, because the frame never reverted. So "1st Edition implies Shadowless" is
+true only for Base Set specifically; project-wide, across all 14 sets, the two are independent
+facts about a print run, not nested. That reshapes how Job 5 should model them — see Part 2.
+
 ## Part 2: what Shadowless (the game) does with this
 
 Discussed with Trevor 8 Aug 2026. The shape below is agreed; the specific percentages in it are
@@ -104,31 +113,62 @@ pick the specific card from within that tier's pool. Deliberately not reading ea
 pool ratio (which drifts 45–55% and isn't worth chasing) — 33% is simple, tunable in one place, and
 matches the commonly-remembered "1 in 3" folklore rate closely enough to feel right.
 
-### The four rarity axes, and how they stack
+### The rarity axes, and how they stack
 
-Everything below is independent of the others (one exception noted) — a single pulled card can
-combine any number of them. **Convergence is a feature, not something to guard against**: a Common
-basic Energy that happens to roll both Shiny and Shadowless should be able to happen, and should be
-funny when it does.
+Every axis below is fully independent of the others — a single pulled card can combine any number
+of them. **Convergence is a feature, not something to guard against**: a Common basic Energy that
+happens to roll Shiny, Shadowless, *and* land in a First Edition pack should be able to happen, and
+should be funny when it does. (Naming convention: **"RS" for Rare Shining** in code, comments, and
+UI chrome from here on — spelled out only where a specific card is being named, e.g. a dex entry or
+card-detail view. Cheap fix for the naming collision noted below, agreed 8 Aug.)
 
-1. **Printed rarity + Rare Shining** — not a roll. Rare Shining is a real WotC rarity (10 cards,
-   Neo Revelation/Destiny only); pulling one of those 10 specific cards *is* pulling a Shining, same
-   as pulling any other Rare. No RNG layer needed on top of the existing rarity table.
+1. **Printed rarity + Rare Shining (RS)** — not a roll. RS is a real WotC rarity (10 cards, Neo
+   Revelation/Destiny only); pulling one of those 10 specific cards *is* pulling an RS, same as
+   pulling any other Rare. No RNG layer needed on top of the existing rarity table. At only 10 cards
+   across the whole pool, RS stays rare enough on its own that it won't get lost under the
+   more-common invented "Shiny" layer below.
 2. **Shiny (invented)** — an independent low-odds cosmetic roll on **any** pulled card, any tier,
-   unrelated to real Rare Shining. A Common can be Shiny. This is the layer the original game
-   lacked entirely, and the one Trevor most wants as a forever-chase. Naming risk: "Shiny" (this
-   layer) and "Shining" (the real rarity) are one letter apart, and a card can be both at once — see
-   Open Question 1 below for whether that's a pun worth keeping or a collision worth avoiding.
-3. **Shadowless (invented, ultra-rare)** — independent per-card roll, candidate odds **~1/4096**
-   (Trevor's own "mainline shiny-hunting" reference number), cosmetic frame/marking rather than a
-   gameplay difference. Can land on any card of any tier, same as Shiny.
-4. **1st Edition (nested under Shadowless, not independent)** — real history revises the original
-   pack-level-swap idea here: 1st Edition Base cards *are* Shadowless cards with an extra stamp, not
-   a separate print run — Unlimited is the one that's actually different (it added the drop shadow).
-   So rather than an independent per-pack swap, 1st Edition is modeled as **a further roll available
-   only on a card that already rolled Shadowless** — one coherent ladder, Unlimited → Shadowless →
-   Shadowless+1st, instead of two systems that can tag the same card two different ways. See Open
-   Question 2 — this is a real design fork, not a settled point.
+   unrelated to RS. A Common can be Shiny. This is the layer the original game lacked entirely, and
+   the one Trevor most wants as a forever-chase. Placeholder odds: somewhere around **1/128** —
+   rare enough to feel earned, common enough that a long session sees a few. Tunable.
+3. **Reverse Holo (invented, borrows a later-era term)** — real reverse holo didn't exist until the
+   e-Card era (Expedition, 2002), which is *after* this project's 14-set corpus ends at Neo Destiny.
+   Same honesty flag as Shadowless below: this is vocabulary borrowed from later WotC history, not a
+   recreation of anything that existed in these specific sets. Restricted to **Common/Uncommon pulls
+   only** — Rares already have their own holo/non-holo axis (see below), and a holographic Common is
+   a distinct, better feeling than overlapping with a system that already exists. Placeholder odds
+   **1/20–1/50**.
+4. **Shadowless (invented, ultra-rare)** — independent per-card roll, candidate odds **~1/4096**
+   (Trevor's own mainline-shiny-hunting reference number), cosmetic frame/marking rather than a
+   gameplay difference. Can land on any card of any tier.
+5. **1st Edition (invented, independent of Shadowless)** — corrected 8 Aug from an earlier version
+   of this doc that nested it under Shadowless. That nesting only holds for Base Set specifically
+   (see Part 1's note on the Base-only frame change); across the full 14-set pool the two are
+   independent facts, so the game should treat them that way too. Back to Trevor's original
+   pitch: a rare (~2% placeholder) chance the **entire pack** gets swapped to a 1st Edition version
+   of what it would've gotten anyway — a single flashy whole-pack moment, distinct in kind from the
+   long-tail per-card chases above, not a rung on the same ladder.
+
+### Ideas raised, not yet adopted
+
+- **A curated escalating alt-art tier** (Trevor's read on TCG Pocket's approach: pick specific
+  cards, give them an extra "special-er" rarer version). Genuinely interesting, but it doesn't
+  compose the way the five axes above do — those are each "one flag, apply the roll to any card,
+  done"; this needs someone to actually choose and tag specific cards, which is real per-card
+  design labor, not a system. Recommend shelving for a later job rather than folding into Job 5's
+  first pass.
+- **"Miscut" / misprint tier** — an idea worth floating in return: genuine WotC-era misprints
+  (off-center cuts, wrong-color energy symbols) are real, famous collector chase items from exactly
+  this era. Unlike Shadowless-as-roll or Reverse Holo, this one's actually *true to the era's real
+  oddities*, just gamifying what was originally a factory accident, and it's cheap — a CSS
+  transform/skew on the existing scan, no new art needed. Would sit near Shadowless rarity or
+  rarer. Not decided either way.
+- **Opponent cards getting the same treatment.** Trevor wants Shiny/Shadowless/etc. rolled for
+  opponent cards too, not just the player's pulls. Leaning toward the lightweight version: roll it
+  live at play time, purely cosmetic, no persistence — the AI doesn't need its own collection for
+  this, it just runs the same render function on both sides of the board. A deeper version (Job-7
+  named opponents with their own persistent pulled collections) is a much bigger scope decision —
+  flagging the fork rather than assuming which one was meant.
 
 ### Promo / Southern Islands intrusion
 
@@ -145,26 +185,23 @@ pack." Two refinements on top of the original ask:
 
 ### Open questions — genuinely unresolved, want Trevor's read on each
 
-1. **Shiny vs. Shining naming.** Keep both called some form of "shiny" and lean into the pun (a
-   Shining Pokémon that's also Shiny), or give the invented cosmetic layer its own name (Radiant,
-   Prism, Foil — something distinct) so UI copy never has to explain the difference between two
-   things called almost the same thing.
-2. **1st Edition: nested-under-Shadowless vs. a pack-wide jackpot event.** The nested version above
-   is the historically coherent one. Trevor's original pitch — a rare (~2%) chance the *entire pack*
-   gets swapped to a 1st Edition version of what it would've been anyway — is a different kind of
-   fun: a single flashy whole-pack moment rather than a per-card long-tail chase. Worth asking
-   whether one replaces the other, or whether the jackpot event survives as a separate, rarer thing
-   layered on top of (not instead of) the nested roll.
-3. **Southern Islands' fixed distribution vs. our intrusion model.** SI was a real boxed set with
+1. **Southern Islands' fixed distribution vs. our intrusion model.** SI was a real boxed set with
    its own guaranteed contents, not a randomized pack — folding 18 fixed-distribution cards into a
    probabilistic intrusion chance is itself an invented mechanic wearing a real set's name. Worth
    flagging explicitly rather than let it ride on the promo-intrusion idea by association.
-4. **Progression-gating specifics.** What "eligible intrusion pool" and "which packs even exist yet"
+2. **Progression-gating specifics.** What "eligible intrusion pool" and "which packs even exist yet"
    actually mean depends on Job 7's opponent/unlock schedule, which is still unbuilt. This doc can't
    fully resolve it in isolation — revisit once Job 7 has real shape.
-5. **Every percentage above is a placeholder.** 2:1 holo ratio, ≥2 Energy floor, ~1/4096 Shadowless,
-   1–2% promo intrusion, whatever the 1st-Edition-nested rate ends up being — none of these are
-   tuned, they're starting points to build against and feel out once packs actually run.
+3. **Miscut tier — adopt it or not?** Floated 8 Aug as a creative addition, grounded in real
+   collector lore, cheap to render. Not yet a decision either way.
+4. **Opponent-cosmetic depth.** Live per-play cosmetic roll (recommended, cheap) vs. persistent
+   opponent collections tied to Job 7 progression (much bigger scope). Leaning toward the former
+   unless Trevor wants the latter.
+5. **Curated alt-art tier — timing, if ever.** Shelved above as not composing cleanly with the rest;
+   worth a firm yes/no/later at some point so it doesn't linger as a vague someday-idea.
+6. **Every percentage above is a placeholder.** 2:1 holo ratio, ≥2 Energy floor, ~1/128 Shiny,
+   1/20–1/50 Reverse Holo, ~1/4096 Shadowless, ~2% First Edition — none of these are tuned, they're
+   starting points to build against and feel out once packs actually run.
 
 ## Sources
 
@@ -180,4 +217,7 @@ pack." Two refinements on top of the original ask:
 - **Sonnet 5** (Claude Code, 7 Aug 2026) — this document, researched and written during a parallel
   Job 4g session at Trevor's request.
 - **Sonnet 5** (Claude Code, 8 Aug 2026) — Part 2's working plan, refined with Trevor over the
-  energy floor, the flat holo ratio, the four rarity axes, and the Shadowless/1st-Edition split.
+  energy floor, the flat holo ratio, and the rarity axes.
+- **Sonnet 5** (Claude Code, 8 Aug 2026, same day) — corrected the 1st-Edition/Shadowless
+  relationship after Trevor's own collection contradicted the original nesting, added Reverse Holo
+  and the RS naming convention, and floated Miscut as a new idea.
