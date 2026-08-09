@@ -127,53 +127,93 @@ card-detail view. Cheap fix for the naming collision noted below, agreed 8 Aug.)
    pulling any other Rare. No RNG layer needed on top of the existing rarity table. At only 10 cards
    across the whole pool, RS stays rare enough on its own that it won't get lost under the
    more-common invented "Shiny" layer below.
-2. **Shiny (invented)** — an independent low-odds cosmetic roll on **any** pulled card, any tier,
-   unrelated to RS. A Common can be Shiny. This is the layer the original game lacked entirely, and
-   the one Trevor most wants as a forever-chase. Placeholder odds: somewhere around **1/128** —
-   rare enough to feel earned, common enough that a long session sees a few. Tunable.
+2. **Shiny (invented)** — an independent low-odds cosmetic roll, per card, on **any** pulled card
+   in any of the 11 slots, unrelated to RS. A Common can be Shiny. This is the layer the original
+   game lacked entirely, and the one Trevor most wants as a forever-chase.
 3. **Reverse Holo (invented, borrows a later-era term)** — real reverse holo didn't exist until the
    e-Card era (Expedition, 2002), which is *after* this project's 14-set corpus ends at Neo Destiny.
    Same honesty flag as Shadowless below: this is vocabulary borrowed from later WotC history, not a
-   recreation of anything that existed in these specific sets. Restricted to **Common/Uncommon pulls
-   only** — Rares already have their own holo/non-holo axis (see below), and a holographic Common is
-   a distinct, better feeling than overlapping with a system that already exists. Placeholder odds
-   **1/20–1/50**.
-4. **Shadowless (invented, ultra-rare)** — independent per-card roll, candidate odds **~1/4096**
-   (Trevor's own mainline-shiny-hunting reference number), cosmetic frame/marking rather than a
-   gameplay difference. Can land on any card of any tier.
+   recreation of anything that existed in these specific sets. Rolled per card, but only on the
+   **7 Common/Uncommon slots** — Rares already have their own holo/non-holo axis, and a holographic
+   Common is a distinct, better feeling than overlapping with a system that already exists.
+4. **Shadowless (invented, ultra-rare)** — independent per-card roll across all 11 slots, cosmetic
+   frame/marking rather than a gameplay difference. Can land on any card of any tier.
 5. **1st Edition (invented, independent of Shadowless)** — corrected 8 Aug from an earlier version
    of this doc that nested it under Shadowless. That nesting only holds for Base Set specifically
    (see Part 1's note on the Base-only frame change); across the full 14-set pool the two are
-   independent facts, so the game should treat them that way too. Back to Trevor's original
-   pitch: a rare (~2% placeholder) chance the **entire pack** gets swapped to a 1st Edition version
-   of what it would've gotten anyway — a single flashy whole-pack moment, distinct in kind from the
+   independent facts, so the game should treat them that way too. Back to Trevor's original pitch:
+   a rare, **whole-pack** roll — when it hits, every card in that pack renders as a 1st Edition
+   version of what it would've gotten anyway. A single flashy moment, distinct in kind from the
    long-tail per-card chases above, not a rung on the same ladder.
+
+Placeholder odds for all of these, plus Promo/SI intrusion (below), are in one table:
+
+### Placeholder rarity table (v2, 8 Aug 2026)
+
+| Axis | Rolls against | Odds | ~Packs to expect one* |
+|---|---|---|---|
+| 1st Edition | whole pack | 1/25 (4%) | ~25 |
+| Reverse Holo | each of 7 Common/Uncommon slots | 1/50 (2%) | ~7 |
+| Promo/SI intrusion | whole pack, replaces 1 Common | 1/100 (1%) | ~100 |
+| Shiny | each of 11 slots | 1/500 | ~46 |
+| Shadowless | each of 11 slots | 1/4096 | ~372 |
+| Misprint | each of 11 slots | 1/15000 | ~1364 |
+
+*Illustrative only — Job 5's actual packs-per-win economy doesn't exist yet, so "packs to expect
+one" is a relative-spacing tool, not a promise about real playtime. At a rough 2,000-packs-opened
+benchmark (~22,000 cards, picked purely to make the ratios concrete) these come out to roughly:
+1st Ed ~80 times, Reverse Holo ~280, Promo ~20, Shiny ~44, Shadowless ~5, Misprint ~1–2 — which
+matches Trevor's stated intent ("a handful, maybe one, over a very long file" for Misprint against
+"several, still an event" for Shadowless) closely enough that these are good starting numbers, not
+just plausible-sounding ones.
+
+**Two things still open on this table:**
+
+- **"50% better odds" on Shadowless is ambiguous.** Could mean the probability increases 50%
+  (1/4096 → ~1/2731) or reads as colloquial "twice as likely" (1/2048). These land meaningfully
+  differently (~248 vs. ~186 packs to expect one). Leaning toward the more generous reading since
+  Shadowless is the headline forever-chase, but this is Trevor's call.
+- **Misprint is only ~3.7x rarer than Shadowless** (1364 vs. 372 packs) — a smaller jump than the
+  one between Shiny and Shadowless (8.2x). If Misprint should feel meaningfully more mythical rather
+  than just further along the same curve, something like 1/25000–1/30000 would widen that gap.
+  1/15000 is still defensible as-is; flagging the option rather than insisting on it.
 
 ### Ideas raised, not yet adopted
 
 - **A curated escalating alt-art tier** (Trevor's read on TCG Pocket's approach: pick specific
   cards, give them an extra "special-er" rarer version). Genuinely interesting, but it doesn't
-  compose the way the five axes above do — those are each "one flag, apply the roll to any card,
+  compose the way the axes above do — those are each "one flag, apply the roll to any card,
   done"; this needs someone to actually choose and tag specific cards, which is real per-card
-  design labor, not a system. Recommend shelving for a later job rather than folding into Job 5's
-  first pass.
-- **"Miscut" / misprint tier** — an idea worth floating in return: genuine WotC-era misprints
-  (off-center cuts, wrong-color energy symbols) are real, famous collector chase items from exactly
-  this era. Unlike Shadowless-as-roll or Reverse Holo, this one's actually *true to the era's real
-  oddities*, just gamifying what was originally a factory accident, and it's cheap — a CSS
-  transform/skew on the existing scan, no new art needed. Would sit near Shadowless rarity or
-  rarer. Not decided either way.
+  design labor, not a system. Both agreed 8 Aug: shelve for a later job rather than fold into
+  Job 5's first pass — it's a genuinely different shape and risks becoming bloat next to systems
+  that are already committed.
 - **Opponent cards getting the same treatment.** Trevor wants Shiny/Shadowless/etc. rolled for
-  opponent cards too, not just the player's pulls. Leaning toward the lightweight version: roll it
-  live at play time, purely cosmetic, no persistence — the AI doesn't need its own collection for
-  this, it just runs the same render function on both sides of the board. A deeper version (Job-7
-  named opponents with their own persistent pulled collections) is a much bigger scope decision —
-  flagging the fork rather than assuming which one was meant.
+  opponent cards too, not just the player's pulls. **Agreed 8 Aug: start with the lightweight
+  version** — roll it live at play time, purely cosmetic, no persistence, same render function on
+  both sides of the board. A deeper version (Job-7 named opponents with their own persistent pulled
+  collections) stays possible later, but only after the lightweight version is proven out.
+
+### Misprint — adopted, visual direction still open
+
+Adopted 8 Aug as the rarest tier (see table above). Two visual directions on the table, not
+mutually exclusive:
+
+- **Period-accurate:** a skewed border/crop, echoing genuine WotC-era off-center miscuts — a real,
+  famous collector chase item from exactly this era, just gamifying what was originally a factory
+  accident.
+- **Trevor's addition, and the stronger pitch:** render it as a **digital-error joke** instead —
+  text overflowing the textbox, artwork at the wrong aspect ratio, a wrong-color energy symbol.
+  Funnier, cheaper (still just CSS), and fits this collection's sense of humor better than a
+  straight period recreation would.
+
+Given how rarely a save will ever see one, worth having **2–3 distinct glitch flavors it can
+randomly pick between** rather than one fixed treatment — a Misprint sighting should feel like a
+fresh joke each time, not "oh, the misprint effect again."
 
 ### Promo / Southern Islands intrusion
 
-A small chance (candidate 1–2%) that a Common slot in an otherwise-normal pack gets replaced by a
-promo or Southern Islands card instead — "every once in a while a promo Mewtwo jumps into your
+A small chance (see table above — 1%) that a Common slot in an otherwise-normal pack gets replaced
+by a promo or Southern Islands card instead — "every once in a while a promo Mewtwo jumps into your
 pack." Two refinements on top of the original ask:
 
 - **Replace a Common slot, not the Rare.** Keeps the Rare slot as the pack's emotional center;
@@ -192,16 +232,19 @@ pack." Two refinements on top of the original ask:
 2. **Progression-gating specifics.** What "eligible intrusion pool" and "which packs even exist yet"
    actually mean depends on Job 7's opponent/unlock schedule, which is still unbuilt. This doc can't
    fully resolve it in isolation — revisit once Job 7 has real shape.
-3. **Miscut tier — adopt it or not?** Floated 8 Aug as a creative addition, grounded in real
-   collector lore, cheap to render. Not yet a decision either way.
-4. **Opponent-cosmetic depth.** Live per-play cosmetic roll (recommended, cheap) vs. persistent
-   opponent collections tied to Job 7 progression (much bigger scope). Leaning toward the former
-   unless Trevor wants the latter.
-5. **Curated alt-art tier — timing, if ever.** Shelved above as not composing cleanly with the rest;
+3. **Misprint's visual direction.** Period-accurate skewed crop, digital-glitch joke, or (leaning
+   this way) a rotating pool of several glitch flavors — see the Misprint section above.
+4. **"50% better odds" on Shadowless** — needs Trevor to say whether that means the probability
+   itself increases 50% (→ ~1/2731) or reads as "twice as likely" (→ ~1/2048). See the placeholder
+   table above for what each implies in practice.
+5. **Whether to widen the Misprint/Shadowless gap.** 1/15000 is only ~3.7x rarer than Shadowless in
+   expected-packs terms — smaller than the Shiny→Shadowless jump. 1/15000 stands unless Trevor wants
+   Misprint to feel more distinctly mythical, in which case 1/25000–1/30000 is the suggested range.
+6. **Curated alt-art tier — timing, if ever.** Shelved as not composing cleanly with the rest;
    worth a firm yes/no/later at some point so it doesn't linger as a vague someday-idea.
-6. **Every percentage above is a placeholder.** 2:1 holo ratio, ≥2 Energy floor, ~1/128 Shiny,
-   1/20–1/50 Reverse Holo, ~1/4096 Shadowless, ~2% First Edition — none of these are tuned, they're
-   starting points to build against and feel out once packs actually run.
+7. **Every number in the placeholder table is exactly that — a placeholder.** All of it (including
+   the 2:1 holo ratio and ≥2 Energy floor from earlier sections) is a starting point to build
+   against and feel out once packs actually run, not a tuned value.
 
 ## Sources
 
@@ -221,3 +264,6 @@ pack." Two refinements on top of the original ask:
 - **Sonnet 5** (Claude Code, 8 Aug 2026, same day) — corrected the 1st-Edition/Shadowless
   relationship after Trevor's own collection contradicted the original nesting, added Reverse Holo
   and the RS naming convention, and floated Miscut as a new idea.
+- **Sonnet 5** (Claude Code, 8 Aug 2026, same day) — placeholder rarity table with expected-packs
+  math, adopted Misprint and its digital-glitch visual direction, settled opponent cosmetics and
+  the alt-art-tier question with Trevor.
