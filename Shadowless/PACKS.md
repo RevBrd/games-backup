@@ -148,35 +148,35 @@ card-detail view. Cheap fix for the naming collision noted below, agreed 8 Aug.)
 
 Placeholder odds for all of these, plus Promo/SI intrusion (below), are in one table:
 
-### Placeholder rarity table (v2, 8 Aug 2026)
+### Placeholder rarity table (v3, 8 Aug 2026 — pacing-first)
 
-| Axis | Rolls against | Odds | ~Packs to expect one* |
-|---|---|---|---|
-| 1st Edition | whole pack | 1/25 (4%) | ~25 |
-| Reverse Holo | each of 7 Common/Uncommon slots | 1/50 (2%) | ~7 |
-| Promo/SI intrusion | whole pack, replaces 1 Common | 1/100 (1%) | ~100 |
-| Shiny | each of 11 slots | 1/500 | ~46 |
-| Shadowless | each of 11 slots | 1/4096 | ~372 |
-| Misprint | each of 11 slots | 1/15000 | ~1364 |
+v2 was worked out forward from packs-opened; this pass (same day) was worked out **backward from
+wins needed**, using a working assumption of **2 packs earned per win**, then rounded to whichever
+per-card odds make the pack/win math land exactly. That assumption is a calibration yardstick, not
+a locked economy decision — if Job 5's real reward rate differs, only the "wins to expect one"
+column moves, not the per-card odds themselves. 1st Edition and Promo/SI are left at their v1
+values; both were already judged fine and weren't part of this pass.
 
-*Illustrative only — Job 5's actual packs-per-win economy doesn't exist yet, so "packs to expect
-one" is a relative-spacing tool, not a promise about real playtime. At a rough 2,000-packs-opened
-benchmark (~22,000 cards, picked purely to make the ratios concrete) these come out to roughly:
-1st Ed ~80 times, Reverse Holo ~280, Promo ~20, Shiny ~44, Shadowless ~5, Misprint ~1–2 — which
-matches Trevor's stated intent ("a handful, maybe one, over a very long file" for Misprint against
-"several, still an event" for Shadowless) closely enough that these are good starting numbers, not
-just plausible-sounding ones.
+| Axis | Rolls against | Odds | Packs to expect one | Wins to expect one (@2 packs/win) |
+|---|---|---|---|---|
+| 1st Edition | whole pack | 1/25 (4%) | ~25 | ~13 |
+| Reverse Holo | each of 10 Common/Uncommon slots | 1/100 | 10 | 5 |
+| Promo/SI intrusion | whole pack, replaces 1 Common | 1/100 (1%) | ~100 | ~50 |
+| Shiny | each of 11 slots | 1/440 | 40 | 20 |
+| Shadowless | each of 11 slots | 1/2200 | 200 | 100 |
+| Misprint | each of 11 slots | 1/11000 | 1000 | 500 |
 
-**Two things still open on this table:**
+Nothing here needs to stay this exact — Trevor's framing is a pacing schedule, not hard numbers.
+Two properties worth preserving if these get retuned later:
 
-- **"50% better odds" on Shadowless is ambiguous.** Could mean the probability increases 50%
-  (1/4096 → ~1/2731) or reads as colloquial "twice as likely" (1/2048). These land meaningfully
-  differently (~248 vs. ~186 packs to expect one). Leaning toward the more generous reading since
-  Shadowless is the headline forever-chase, but this is Trevor's call.
-- **Misprint is only ~3.7x rarer than Shadowless** (1364 vs. 372 packs) — a smaller jump than the
-  one between Shiny and Shadowless (8.2x). If Misprint should feel meaningfully more mythical rather
-  than just further along the same curve, something like 1/25000–1/30000 would widen that gap.
-  1/15000 is still defensible as-is; flagging the option rather than insisting on it.
+- **The win milestones form a clean ~5x ladder** (5 → 20 → 100 → 500, i.e. 4x then 5x then 5x).
+  If a tier ever gets added above Misprint or between two existing tiers, "~5x the wins of the tier
+  below" is now a legible rule to extend from rather than picking a number from scratch.
+- **Shadowless's "50% better odds" ask resolved itself in the process** — 1/2200 is ~1.86x more
+  likely than the old 1/4096, landing almost exactly on "twice as likely," which was the more
+  generous of the two readings flagged in v2. And the Misprint/Shadowless gap widened from ~3.7x to
+  5x (200 packs vs. 1000) in the same pass, addressing the "too close" concern without needing to
+  reach for 1/25000+. Both prior open questions are settled by this table.
 
 ### Ideas raised, not yet adopted
 
@@ -234,17 +234,12 @@ pack." Two refinements on top of the original ask:
    fully resolve it in isolation — revisit once Job 7 has real shape.
 3. **Misprint's visual direction.** Period-accurate skewed crop, digital-glitch joke, or (leaning
    this way) a rotating pool of several glitch flavors — see the Misprint section above.
-4. **"50% better odds" on Shadowless** — needs Trevor to say whether that means the probability
-   itself increases 50% (→ ~1/2731) or reads as "twice as likely" (→ ~1/2048). See the placeholder
-   table above for what each implies in practice.
-5. **Whether to widen the Misprint/Shadowless gap.** 1/15000 is only ~3.7x rarer than Shadowless in
-   expected-packs terms — smaller than the Shiny→Shadowless jump. 1/15000 stands unless Trevor wants
-   Misprint to feel more distinctly mythical, in which case 1/25000–1/30000 is the suggested range.
-6. **Curated alt-art tier — timing, if ever.** Shelved as not composing cleanly with the rest;
+4. **Curated alt-art tier — timing, if ever.** Shelved as not composing cleanly with the rest;
    worth a firm yes/no/later at some point so it doesn't linger as a vague someday-idea.
-7. **Every number in the placeholder table is exactly that — a placeholder.** All of it (including
+5. **Every number in the placeholder table is exactly that — a placeholder.** All of it (including
    the 2:1 holo ratio and ≥2 Energy floor from earlier sections) is a starting point to build
-   against and feel out once packs actually run, not a tuned value.
+   against and feel out once packs actually run, not a tuned value. (Resolved as of the v3 pass:
+   Shadowless's "50% better odds" and the Misprint/Shadowless gap — see the v3 table above.)
 
 ## Sources
 
@@ -267,3 +262,6 @@ pack." Two refinements on top of the original ask:
 - **Sonnet 5** (Claude Code, 8 Aug 2026, same day) — placeholder rarity table with expected-packs
   math, adopted Misprint and its digital-glitch visual direction, settled opponent cosmetics and
   the alt-art-tier question with Trevor.
+- **Sonnet 5** (Claude Code, 8 Aug 2026, same day) — v3 table, reworked backward from Trevor's
+  wins-needed pacing schedule instead of forward from packs opened; resolved the Shadowless
+  "50% better odds" ambiguity and the Misprint/Shadowless gap as a byproduct.
