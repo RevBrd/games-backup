@@ -74,11 +74,11 @@ input tests covering all of this.
 ## Files
 
 - `snek.html` — the whole game, self-contained, runs by double-clicking.
-- `validate.js` — headless Node harness, 90 checks. Run before delivering:
+- `validate.js` — headless Node harness, 108 checks. Run before delivering:
   `& "C:\Program Files\nodejs\node.exe" validate.js` (node is installed but **not on PATH**).
 - `backups/` — pre-job safety copies, per the collection convention.
 - `snake.html` — the untouched original from a Claude Chat session, kept as a reference for what
-  the mechanics were before the reskin. Nothing loads it. Safe to delete once nobody cares.
+  the mechanics were before the reskin. Nothing loads it. Worth preserving.
 
 ## Architecture
 
@@ -124,19 +124,66 @@ meant to be readable at a glance. Chaikin smoothing is *not* what was eating it 
 survives); it was simply too small. `LUMP_MAX` caps the total so a back-to-back run of apples
 doesn't sum into one uniformly fat tube.
 
-## Shedding — prototype, not a decision
+## Shedding
 
-**Space drops the last `SHED_DROP` segments.** Live in the base game so it gets played naturally,
-but every number is provisional and the whole mechanic can be switched off with `SHED_ON` for an
-A/B against no shedding at all. Nothing here is tuned yet.
+**Space drops a slice of the tail.** Playtested once and substantially revised; the remaining
+open question is packaging (see *Modes*, below), not whether the mechanic works.
 
-Three modes for what a shed leaves behind, and this is the live question:
+Three things a shed can leave behind. All three earned their keep in testing and the intent is to
+ship them as **selectable modes**, not to pick a winner:
 
-- `none` — vanishes.
+- `none` — vanishes. The classic game plus an escape hatch.
 - `skin` — a **dashed** outline that fades over `SKIN_FADE_MS`. Harmless. Dashed because that's
-  the drawing convention for a thing that isn't there any more, and it reads instantly as distinct
-  from the body without needing a colour change.
-- `wall` — solid pencil-grey fill, **permanent and lethal**, and food won't spawn on it.
+  the drawing convention for a thing that isn't there any more; it reads as distinct from the body
+  without needing a colour change.
+- `wall` — hardens into solid pencil-grey, **lethal and permanent**, and food won't spawn on it.
+  This is the one with the most in it.
+
+### Walls need a grace period, and it is not optional
+
+A shed drops the cells the snake was just occupying — so in wall mode, the cells shedding frees
+are *exactly* the cells it makes lethal. Net gain zero. Without a grace period **shedding cannot
+save you from anything in wall mode**; it is pure downside.
+
+So a fresh wall is **soft**: passable, drawn dashed. It hardens when either
+
+- the snake has finished passing through it (it entered, and is now clear), or
+- `WALL_GRACE` ticks elapse having never been entered.
+
+It must **never** harden while the snake is still inside it. That would set solid around a body
+mid-transit and kill you for something you could not have seen coming. The in-transit case holds
+the grace open indefinitely.
+
+`WALL_GRACE` counts **ticks, not milliseconds.** Escaping is a spatial problem — you need N cells
+of travel — and a fixed 2000ms would buy 10 cells early and 28 late, silently changing the rule as
+you speed up.
+
+Soft and hard must stay visually distinct (dashed vs filled). A player who can't tell which debris
+is safe isn't being challenged, they're guessing.
+
+### Why the drop is a percentage
+
+`SHED_MODE: 'pct'` drops `SHED_PCT` of current length (min `SHED_MIN_DROP`). Playtest found bigger
+drops strictly better — a small drop opens too narrow a window to actually escape through — and a
+percentage delivers that *and* kills spam in the same move:
+
+- long snake, which is when you get trapped → big drop → a real escape window
+- short snake, which is when you don't need it → negligible drop → won't bail you out
+- chain-shedding pays less every time and asymptotes at `SHED_MIN_LEN` instead of emptying
+
+`'fixed'` is kept as a knob so the comparison stays available.
+
+### Shedding has to cost something, and length alone isn't it
+
+`SHED_COOL_MS` is **1500**. The reasoning that said it was double-charging was wrong, and wrong in
+a specific way worth recording: **speed tracks `score`, never length**, and `shed()` doesn't touch
+score. So shedding costs no points, no speed, and leaves you shorter — and short is *safer* in
+Snake. Length is a score-flavoured cost masquerading as a survival cost.
+
+Playtest confirmed spam was viable, and the sharper version of the problem: if you can shed away
+the whole snake, the end state of spamming is indistinguishable from starting a new game. A cost
+you can pay down to nothing isn't a cost. The cooldown blocks it outright rather than trying to
+out-clever it with incentives.
 
 ### The rig
 
@@ -156,21 +203,37 @@ comments — it checks connectivity, uniqueness, that the head really is sealed,
 cell is actually reachable. It also runs the trap end to end both ways: do nothing and die, shed
 and live.
 
-With the dev panel open, `1`–`5` cycle `SHED_ON`, `SHED_LEAVES`, `SHED_DROP`, `SHED_COOL_MS` and
-`SHED_MIN_LEN` live, mid-run, and they work while paused so you can reconfigure between attempts.
-`shift` cycles backwards. **Flip one knob, re-arm the same trap.** That's the whole method; without
-it you're collecting anecdotes.
+With the dev panel open, `1`–`8` cycle `SHED_ON`, `SHED_LEAVES`, `SHED_MODE`, `SHED_PCT`,
+`SHED_DROP`, `SHED_COOL_MS`, `SHED_MIN_LEN` and `WALL_GRACE` live, mid-run, and they work while
+paused so you can reconfigure between attempts. `shift` cycles backwards. **Flip one knob, re-arm
+the same trap.** That's the whole method; without it you're collecting anecdotes.
 
-### Hypotheses on record, so they can be wrong
+**The rig has a known blind spot:** the end-to-end trap tests originally only ran in `skin` mode,
+which is why the harness passed 90 checks while wall-mode shedding was fundamentally broken. When
+you add a `SHED_LEAVES` value, add an end-to-end trap test for it.
 
-1. **Persistent walls will feel bad.** Snake's tension is that the board fills with *you* —
-   legible, and your own fault. Debris fills it with something you can't reason about as your
-   body, and it compounds: shed to escape, the debris worsens the board, shed again. That's a doom
-   loop, and the standing principle is that penalties constrain the fun loop rather than remove
-   it. Prediction: fading skins win.
-2. **A cooldown is double-charging.** Length is already the price, and it self-balances — shedding
-   while short hurts proportionally more. Prediction: free is correct, and a cooldown only earns
-   its place if shedding turns out to be spammable.
+### The two predictions, and how they died
+
+Both were wrong. Kept because *how* they were wrong is the useful part.
+
+1. **"Persistent walls will feel bad."** The mechanism was right — walls compound, the board
+   degrades, shedding to escape worsens the board, repeat. The verdict was backwards: that
+   compounding is the tension, and it may be the mode's whole identity. The error was misreading
+   the standing principle. "Penalties constrain the fun loop rather than remove it" *endorses*
+   this — you can still move and eat, the board just gets meaner. Escalating pressure is
+   constraint. I filed it as removal.
+2. **"A cooldown is double-charging."** Wrong because the premise was wrong: length is not a
+   price. See the cost section above. The tell was there in the code the whole time — `shed()`
+   never touches `score` — and playtest found the consequence before the reasoning error was
+   spotted.
+
+The pattern in both: a plausible mechanism reasoned correctly, then a confident evaluative leap
+that the rig would have settled in ninety seconds. **Predict the mechanism, test the verdict.**
+
+### Modes — the open question
+
+The three `SHED_LEAVES` values are meant to become selectable game modes rather than a setting to
+resolve. Unbuilt: mode selection, per-mode best scores, and whatever the modes end up called.
 
 ## Dev controls
 
@@ -185,16 +248,27 @@ normal player can't fall into them.
 Deliberately. Pass 1 answered one question: *does the doodle hold up in motion?* Candidates,
 roughly in the order they'd be worth trying:
 
-Shedding is built and in prototype — see its section above. It is **not** settled, and the two
-open questions (what a shed leaves behind, and whether it needs a cooldown) are what the trap
-trainer exists to answer. Don't promote the current defaults to "decided" without playtest
-evidence.
+Shedding is built and playtested — see its section above. What's left there is **mode selection**,
+not tuning.
 
 Remaining, in order:
 
-1. **A food that runs away.** A bug that skitters a cell every few ticks, worth more than an apple.
-   Adds a chase without adding a system. Purely additive, so it slots in once shedding settles.
-2. **The tongue grab + sound**, together, as one feel pass. The tongue lashes out and drags the
+1. **Deferred growth.** Trevor's idea, and it should come next because it solves a live problem.
+   Today eating grows you instantly. Instead: the lump travels down the body as it already does,
+   and the snake grows by one **when the lump reaches the tail** — the apple visibly arriving is
+   what pauses the tail for a tick. Cartoon-logical, and the lump stops being decorative.
+
+   The reason it's next: **it gives shedding a real cost.** Shedding already discards lumps riding
+   in the dropped length, so under deferred growth you throw away apples you've eaten but not yet
+   digested. That is a legible, thematic, non-arbitrary price — exactly what the cooldown is
+   currently faking. Keep the *score* increment on the bite (feedback has to be immediate); defer
+   only the length.
+
+   Watch for: length lags score by roughly one body-length of ticks, so eating several apples fast
+   produces a delayed run of growth. That's the charm, but it's a real change to how risk reads.
+2. **A food that runs away.** A bug that skitters a cell every few ticks, worth more than an apple.
+   Adds a chase without adding a system.
+3. **The tongue grab + sound**, together, as one feel pass. The tongue lashes out and drags the
    apple in over ~150ms; pen-scratch audio for movement.
 
    **The grab has to be retroactive.** The apple is consumed the instant the head enters its cell,

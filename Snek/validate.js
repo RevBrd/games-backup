@@ -379,15 +379,17 @@ section('shedding');
   for (let i=0;i<10;i++){ const h=S.state.snake[0]; S.setFood(h.x+S.state.dir.x,h.y+S.state.dir.y); S.step(); S.setFood(-5,-5); }
   S.shed();
   ok('a wall is recorded', S.sheds.length === 1 && S.sheds[0].mode === 'wall');
-  const wc = S.sheds[0].cells[0];
-  ok('a wall cell is lethal terrain', S.isWall(wc.x, wc.y));
+  const wsh = S.sheds[0];
+  ok('a fresh wall is soft, not yet lethal',
+     !wsh.hard && wsh.cells.every(c => !S.isWall(c.x, c.y)));
+  ok('but it is already reserved against food', S.isWallish(wsh.cells[0].x, wsh.cells[0].y));
   clock += 60000; S.expireSheds(clock);
   ok('walls do not expire when WALL_MS is 0', S.sheds.length === 1);
   let onWall = 0;
   for (let i=0;i<200;i++){
     // placeFood runs inside step(); just check the invariant directly
     const f = S.state.food;
-    if (f && S.isWall(f.x, f.y)) onWall++;
+    if (f && S.isWallish(f.x, f.y)) onWall++;
     S.step();
     if (!S.isAlive()) { S.start(); }
   }
@@ -455,6 +457,7 @@ section('trap trainer');
   }
 
   // end to end: armed trap kills you if you do nothing, survives if you shed
+  S.T.SHED_MODE = 'fixed';
   S.T.SHED_DROP = 3; S.T.SHED_LEAVES = 'skin'; S.T.SHED_MIN_LEN = 5; S.T.SHED_COOL_MS = 0;
 
   S.armTrap(0); S.togglePause();
@@ -466,6 +469,109 @@ section('trap trainer');
   S.setDir(0,-1);                                  // up, into the freed cell
   S.step();
   ok("shedding out of trap 'cap' survives", S.isAlive());
+
+  // THE ONE THE OLD HARNESS MISSED. In wall mode the cells shedding frees are
+  // exactly the cells that become lethal, so without a grace period the escape
+  // is worth nothing. Playtest caught this; the harness had only ever run 'skin'.
+  S.T.SHED_LEAVES = 'wall'; S.T.WALL_GRACE = 10;
+  S.armTrap(0); S.togglePause();
+  ok('shedding works in wall mode too', S.shed() === true);
+  const fresh = S.sheds[S.sheds.length-1];
+  ok('a fresh wall is soft', fresh.hard === false);
+  ok('a soft wall is not lethal terrain',
+     fresh.cells.every(c => !S.isWall(c.x, c.y)));
+  S.setDir(0,-1);
+  S.step();
+  ok('you can shed THROUGH your own fresh wall and live', S.isAlive());
+}
+
+section('wall grace');
+{
+  const cfg = o => Object.assign(S.T, o);
+  cfg({SHED_ON:true, SHED_MODE:'fixed', SHED_DROP:3, SHED_MIN_LEN:5,
+       SHED_LEAVES:'wall', SHED_COOL_MS:0, WALL_GRACE:6});
+  const grow = n => { for (let i=0;i<n;i++){ const h=S.state.snake[0];
+    S.setFood(h.x+S.state.dir.x, h.y+S.state.dir.y); S.step(); S.setFood(-5,-5); } };
+
+  // never entered: hardens on the grace clock
+  S.reset(); S.start(); S.setFood(-5,-5); grow(12);
+  S.shed();
+  const w = S.sheds[S.sheds.length-1];
+  ok('a wall starts soft', !w.hard);
+  for (let i=0;i<5;i++) S.step();
+  ok('it is still soft inside the grace window', !w.hard, 'grace='+w.grace);
+  for (let i=0;i<4;i++) S.step();
+  ok('an unused wall hardens when grace runs out', w.hard === true);
+  ok('a hardened wall IS lethal terrain', w.cells.some(c => S.isWall(c.x,c.y)));
+
+  // hardening must never fire while a body is inside it
+  S.reset(); S.start(); S.setFood(-5,-5); grow(14);
+  S.shed();
+  const w2 = S.sheds[S.sheds.length-1];
+  // U-turn back over the discarded tail
+  S.setDir(0,1);  S.step();
+  S.setDir(-1,0); S.step(); S.step();
+  S.setDir(0,-1); S.step();
+  let hardenedUnderBody = false;
+  for (let i=0;i<24 && S.isAlive();i++){
+    const inside = S.state.snake.some(c => w2.cells.some(k=>k.x===c.x && k.y===c.y));
+    if (inside && w2.hard) hardenedUnderBody = true;
+    S.step();
+  }
+  ok('a wall never hardens with the snake still inside it', !hardenedUnderBody);
+  cfg({WALL_GRACE:10});
+}
+
+section('percentage shedding');
+{
+  const cfg = o => Object.assign(S.T, o);
+  cfg({SHED_ON:true, SHED_MODE:'pct', SHED_PCT:0.25, SHED_MIN_DROP:2,
+       SHED_MIN_LEN:5, SHED_LEAVES:'none', SHED_COOL_MS:0});
+
+  // Grow in a serpentine. Growing along one row looks fine until the snake is
+  // longer than the board is wide, at which point it wraps into its own body and
+  // every assertion after it is measuring a corpse.
+  const growSerp = n => {
+    S.reset(); S.start(); S.setFood(-5,-5);
+    let run = 0, goingRight = true;
+    for (let i=0;i<n && S.isAlive();i++){
+      const h = S.state.snake[0];
+      S.setFood(h.x + S.state.dir.x, h.y + S.state.dir.y);
+      S.step(); S.setFood(-5,-5);
+      if (++run >= 12){
+        run = 0;
+        S.setDir(0,1);  S.step();               // drop a row
+        S.setDir(0,1);  S.step();               // and another, so the lane is clear
+        goingRight = !goingRight;
+        S.setDir(goingRight?1:-1, 0); S.step();
+      }
+    }
+    return S.state.snake.length;
+  };
+
+  const grownTo = growSerp(36);
+  ok('the test snake actually survived being grown', S.isAlive(), 'len='+grownTo);
+  const long = S.state.snake.length;
+  ok('a long snake sheds a big piece', S.shedCount() === Math.round(long*0.25),
+     `len ${long} -> drops ${S.shedCount()}`);
+
+  // chain-shedding must pay less each time — this is what kills spam
+  const drops = [];
+  for (let i=0;i<6 && S.shedReady(clock); i++){ drops.push(S.shedCount()); S.shed(); }
+  ok('chain sheds give diminishing returns',
+     drops.length > 2 && drops[0] > drops[drops.length-1], drops.join(' -> '));
+  ok('chain shedding cannot empty the snake',
+     S.state.snake.length >= S.T.SHED_MIN_LEN, 'len='+S.state.snake.length);
+  ok('a drop is never zero', drops.every(d => d >= S.T.SHED_MIN_DROP), drops.join(','));
+
+  // the cooldown blocks spam outright, which is the belt to that braces
+  cfg({SHED_COOL_MS:1500});
+  growSerp(30);
+  ok('first shed passes', S.shed() === true);
+  ok('an immediate second shed is blocked', S.shed() === false);
+  clock += 1600;
+  ok('shed returns after 1500ms', S.shed() === true);
+  cfg({SHED_LEAVES:'wall'});
 }
 
 /* ---------- 5. input: the ready/dead note must clear on ANY key ---------- */

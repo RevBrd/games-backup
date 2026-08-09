@@ -194,12 +194,22 @@ const T = {
   // ---- SHEDDING (prototype — every one of these is live-tunable from the
   //      dev panel, and none of them is a considered value yet) ----
   SHED_ON:      true,    // the mechanic itself, so it can be A/B'd against nothing
-  SHED_DROP:    3,       // segments dropped per shed
+  // Playtest said bigger drops are better: a small drop opens too narrow a window
+  // to actually escape through. A PERCENTAGE does that and fixes spam in the same
+  // move — it's big when you're long (when you get trapped) and negligible when
+  // you're short (when you don't need it), so chain-shedding pays less each time.
+  SHED_MODE:    'pct',   // 'pct' | 'fixed' — kept switchable so it stays A/B-able
+  SHED_PCT:     0.25,
+  SHED_DROP:    3,       // used only when SHED_MODE is 'fixed'
+  SHED_MIN_DROP:2,       // a shed that drops nothing is worse than no shed
   SHED_MIN_LEN: 5,       // refuse if it would leave the snake shorter than this
-  SHED_LEAVES:  'skin',  // 'none' | 'skin' (fades, harmless) | 'wall' (permanent, lethal)
-  SHED_COOL_MS: 0,       // 0 = free. length is already a cost; this may be double-charging
+  SHED_LEAVES:  'wall',  // 'none' | 'skin' (fades, harmless) | 'wall' (hardens, lethal)
+  SHED_COOL_MS: 1500,    // spam has to be blocked outright — see the shedding notes
   SKIN_FADE_MS: 1400,    // how long a shed skin lingers before it's gone
-  WALL_MS:      0,       // 0 = walls never expire
+  WALL_GRACE:   10,      // TICKS a fresh wall stays passable. ticks, not ms: escaping
+                         // is a spatial problem, and ms would silently buy you more
+                         // cells of grace the faster you got.
+  WALL_MS:      0,       // 0 = hardened walls never expire
 };
 
 /* ============================================================
@@ -392,35 +402,49 @@ function reset(){
   scoreEl.textContent = '0';
 }
 
-// live shed walls, as a flat cell list — lethal, and food won't spawn on them
-function wallCells(){
-  const out = [];
-  for (const s of sheds) if (s.mode === 'wall') out.push(...s.cells);
-  return out;
-}
-const isWall = (x,y) => sheds.some(s => s.mode === 'wall' && s.cells.some(c=>c.x===x && c.y===y));
+const holds = (s, x, y) => s.cells.some(c=>c.x===x && c.y===y);
+
+// Only a HARDENED wall kills. A fresh one is passable — otherwise shedding in
+// wall mode frees exactly the cells it makes lethal, so the net gain is zero and
+// the mechanic cannot save you from anything. Found by playtest, not by me.
+const isWall = (x,y) => sheds.some(s => s.mode === 'wall' && s.hard && holds(s,x,y));
+// food avoids walls that will harden, not just ones that already have
+const isWallish = (x,y) => sheds.some(s => s.mode === 'wall' && holds(s,x,y));
 
 function placeFood(){
   const free = [];
   for (let y=0;y<C;y++) for (let x=0;x<C;x++)
-    if (!snake.some(s=>s.x===x&&s.y===y) && !isWall(x,y)) free.push({x,y});
+    if (!snake.some(s=>s.x===x&&s.y===y) && !isWallish(x,y)) free.push({x,y});
   food = free.length ? pick(free) : null;   // null == board full == you win, somehow
 }
 
-// Drop the last N segments. Length is the price; whether there's a second price
-// (a cooldown) and whether the drop leaves anything behind are the open questions
-// this whole rig exists to answer.
+// how many segments a shed costs right now
+function shedCount(){
+  return T.SHED_MODE === 'pct'
+    ? Math.max(T.SHED_MIN_DROP, Math.round(snake.length * T.SHED_PCT))
+    : T.SHED_DROP;
+}
+
+function shedReady(now){
+  if (!T.SHED_ON || !alive || paused) return false;
+  if (T.SHED_COOL_MS > 0 && now - lastShedAt < T.SHED_COOL_MS) return false;
+  return snake.length - shedCount() >= T.SHED_MIN_LEN;
+}
+
 function shed(){
   if (!T.SHED_ON || !alive || paused) return false;
   const now = performance.now();
-  if (T.SHED_COOL_MS > 0 && now - lastShedAt < T.SHED_COOL_MS){ shedRefusedAt = now; return false; }
-  if (snake.length - T.SHED_DROP < T.SHED_MIN_LEN){ shedRefusedAt = now; return false; }
+  if (!shedReady(now)){ shedRefusedAt = now; return false; }
 
-  const dropped = snake.splice(snake.length - T.SHED_DROP, T.SHED_DROP);
+  const n = shedCount();
+  const dropped = snake.splice(snake.length - n, n);
   lastShedAt = now;
 
   if (T.SHED_LEAVES !== 'none'){
-    sheds.push({ cells: dropped, mode: T.SHED_LEAVES, bornAt: now });
+    sheds.push({
+      cells: dropped, mode: T.SHED_LEAVES, bornAt: now,
+      grace: T.WALL_GRACE, entered: false, hard: false
+    });
   }
   // lumps riding in the discarded length go with it
   lumps = lumps.filter(L => L.t < snake.length);
@@ -527,6 +551,21 @@ function step(){
     placeFood();
   } else {
     snake.pop();
+  }
+
+  hardenWalls();
+}
+
+// A fresh wall is passable and hardens either when the snake has finished
+// passing through it, or when its grace runs out having never been entered.
+// It must NEVER harden while the snake is still inside — that would set solid
+// around a body mid-transit and kill you for something you couldn't have seen.
+function hardenWalls(){
+  for (const s of sheds){
+    if (s.mode !== 'wall' || s.hard) continue;
+    if (snake.some(c => holds(s, c.x, c.y))){ s.entered = true; continue; }  // in transit
+    if (s.entered){ s.hard = true; s.hardAt = performance.now(); continue; } // clear of it
+    if (--s.grace <= 0){ s.hard = true; s.hardAt = performance.now(); }      // never used it
   }
 }
 
@@ -781,7 +820,7 @@ function drawSheds(now){
 
     for (const run of runs){
       const poly = outlineRun(run, T.WOBBLE, 6161);
-      if (isWallShed){
+      if (isWallShed && sd.hard){
         // filled in with the side of a pencil: it's solid, it's in your way
         ctx.globalAlpha = 0.9*life;
         ctx.fillStyle = "#d6d3c6";
@@ -789,6 +828,15 @@ function drawSheds(now){
         ctx.globalAlpha = 0.85*life;
         penStroke(ctx, poly, {color:"#6f6d64", width:1.8, close:true,
                               seed:6161, phase:STILL, passes:1});
+      } else if (isWallShed){
+        // still setting. dashed and hollow means you can still get through it,
+        // and the player has to be able to see that at a glance.
+        ctx.save();
+        ctx.setLineDash([4, 5]);
+        ctx.globalAlpha = 0.7;
+        penStroke(ctx, poly, {color:"#8d8a80", width:1.7, close:true,
+                              seed:6161, phase:STILL, passes:1});
+        ctx.restore();
       } else {
         // dashed, because that's how you draw a thing that isn't there any more
         ctx.save();
@@ -973,9 +1021,12 @@ let devOn = false;
 const KNOBS = [
   { key:'1', name:'SHED_ON',      vals:[true,false] },
   { key:'2', name:'SHED_LEAVES',  vals:['none','skin','wall'] },
-  { key:'3', name:'SHED_DROP',    vals:[2,3,4,5,8] },
-  { key:'4', name:'SHED_COOL_MS', vals:[0,500,1500,3000] },
-  { key:'5', name:'SHED_MIN_LEN', vals:[4,5,7,10] },
+  { key:'3', name:'SHED_MODE',    vals:['pct','fixed'] },
+  { key:'4', name:'SHED_PCT',     vals:[0.15,0.2,0.25,0.33,0.5] },
+  { key:'5', name:'SHED_DROP',    vals:[2,3,4,5,8] },
+  { key:'6', name:'SHED_COOL_MS', vals:[0,750,1500,3000] },
+  { key:'7', name:'SHED_MIN_LEN', vals:[4,5,7,10] },
+  { key:'8', name:'WALL_GRACE',   vals:[4,8,10,16,24] },
 ];
 function cycleKnob(k, back){
   const kn = KNOBS.find(x=>x.key===k);
@@ -990,8 +1041,7 @@ function drawDev(){
   const h = snake[0];
   const now = performance.now();
   const cool = T.SHED_COOL_MS > 0 ? Math.max(0, T.SHED_COOL_MS - (now - lastShedAt)) : 0;
-  const canShed = T.SHED_ON && alive && !paused && cool === 0 &&
-                  snake.length - T.SHED_DROP >= T.SHED_MIN_LEN;
+  const canShed = shedReady(now);
   devEl.textContent =
 `SNEK dev
 fps      ${fps.toFixed(0)}
@@ -1007,13 +1057,17 @@ eyeR     ${eyes[1].ox.toFixed(1)},${eyes[1].oy.toFixed(1)}
 boil     ${boil}
 danger   ${alive && dangerAhead() ? 'YES' : 'no'}
 ──── shedding ────────────────
-[space]  ${canShed ? 'READY' : (T.SHED_ON ? (cool>0 ? 'cooling '+cool.toFixed(0)+'ms' : 'too short') : 'OFF')}
+[space]  ${canShed ? 'READY  (drops '+shedCount()+')'
+           : (T.SHED_ON ? (cool>0 ? 'cooling '+cool.toFixed(0)+'ms' : 'too short') : 'OFF')}
 1 on     ${T.SHED_ON}
 2 leaves ${T.SHED_LEAVES}
-3 drop   ${T.SHED_DROP}
-4 cool   ${T.SHED_COOL_MS}ms
-5 minlen ${T.SHED_MIN_LEN}
-sheds    ${sheds.length} (${sheds.filter(s=>s.mode==='wall').length} wall)
+3 mode   ${T.SHED_MODE}
+4 pct    ${(T.SHED_PCT*100).toFixed(0)}%
+5 drop   ${T.SHED_DROP}${T.SHED_MODE==='pct' ? ' (unused)' : ''}
+6 cool   ${T.SHED_COOL_MS}ms
+7 minlen ${T.SHED_MIN_LEN}
+8 grace  ${T.WALL_GRACE} ticks
+sheds    ${sheds.length}  hard ${sheds.filter(s=>s.hard).length}  soft ${sheds.filter(s=>s.mode==='wall'&&!s.hard).length}
 refused  ${now - shedRefusedAt < 600 ? 'JUST NOW' : '—'}
 ──── traps (t / shift+t) ─────
 armed    ${TRAPS[trapIdx].name}`;
@@ -1105,7 +1159,8 @@ window.SNEK = {
   get state(){ return {snake, dir, food, score, best, alive, started, paused, speed, lumps, ticks, eyes}; },
   step, start, reset, turn, togglePause, draw, updateEyes,
   segWidth, speedFor, stepMsFor, wobblePts, STILL,
-  shed, armTrap, cycleKnob, isWall, expireSheds, TRAPS, KNOBS,
+  shed, armTrap, cycleKnob, isWall, isWallish, expireSheds, shedCount, shedReady,
+  hardenWalls, TRAPS, KNOBS,
   get sheds(){ return sheds; },
   get boil(){ return boil; },
   setFood: (x,y)=>{ food = {x,y}; },
