@@ -72,9 +72,18 @@ lopsided win rates are probably faithful rather than broken. Ask before "fixing"
 `gen_cards.js` fails loudly if `decks.json` references a card outside the generated sets, which is
 what stops a careless `--sets` from silently producing decks full of undefined ids.
 
-## The three test suites
+## The four test suites
 
 They overlap barely at all, and none subsumes the others.
+
+- **`collectiontest.js`** (added Job 5a) drives `src/collection.js`, which is pure data — no DOM, no
+  engine, no `CARD_DB` import. It **stubs `localStorage` rather than skipping persistence**, because
+  "does a save survive a round trip" is the whole point and testing everything except that would be
+  testing the easy half. Its sharper cases are the ones about failure: an unparseable save is
+  preserved under a backup key instead of being overwritten, a full quota reports failure instead of
+  throwing, a missing `localStorage` is distinguishable from an empty one, and a save naming cards
+  from a set this build wasn't generated for still loads. Migration is exercised with a temporarily
+  registered fake step, so the machinery is tested rather than merely present.
 
 - **`selftest.js`** requires the `src/` modules directly — no browser, no DOM stubs, because the
   engine is DOM-free. Validates the decks, checks card coverage against a pinned list of known-missing

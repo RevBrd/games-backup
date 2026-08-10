@@ -14,7 +14,9 @@ const path = require('path');
 
 const HERE = path.join(__dirname, '..');
 const SRC = path.join(HERE, 'src');
-const ORDER = ['cards.js', 'effects.js', 'art.js', 'deckgen.js', 'ai.js', 'engine.js', 'ui.js'];
+// collection.js sits between the engine and the UI: it is pure data with no
+// dependency on either, and the UI is the only thing that reads it.
+const ORDER = ['cards.js', 'effects.js', 'art.js', 'deckgen.js', 'ai.js', 'engine.js', 'collection.js', 'ui.js'];
 const TITLE = 'Shadowless — a WotC-era Pokémon TCG';
 
 const read = n => fs.readFileSync(path.join(SRC, n), 'utf8');
@@ -23,8 +25,35 @@ const read = n => fs.readFileSync(path.join(SRC, n), 'utf8');
 // it directly. Those lines are meaningless in a browser and get stripped on the way in.
 const stripExports = src => src.replace(/^\s*if \(typeof module.*$/gm, '');
 
+// The stripper is line-anchored, so a module whose export list is wrapped over
+// several lines loses only its first line and leaves the orphaned object body
+// behind — which builds happily and then dies as "Unexpected token '}'" some
+// thousands of lines into the generated HTML. Cost a session once.
+//
+// This has to run on the SOURCE, not on the stripped output: stripping removes
+// the `module.exports = {` along with the rest of the line, so by then there is
+// nothing left to recognise. What gives it away is the opening line itself —
+// an unbalanced brace, or no closing semicolon.
+function checkExportLine(name, src) {
+  src.split('\n').forEach((ln, i) => {
+    if (!/^\s*if \(typeof module\b/.test(ln)) return;
+    const opens = (ln.match(/\{/g) || []).length;
+    const closes = (ln.match(/\}/g) || []).length;
+    if (opens === closes && /;\s*$/.test(ln)) return;
+    console.error(`ERROR: ${name}:${i + 1} — the CommonJS export spans more than one line.`);
+    console.error('  tools/build.js strips it with a line-anchored regex, so the rest of');
+    console.error('  the export would be left behind in the bundle. Put it on one line.');
+    console.error(`  ${ln.trim().slice(0, 90)}`);
+    process.exit(1);
+  });
+}
+
 function build() {
-  const js = ORDER.map(f => stripExports(read(f))).join('\n');
+  const js = ORDER.map(f => {
+    const src = read(f);
+    checkExportLine(f, src);
+    return stripExports(src);
+  }).join('\n');
   const css = read('style.css');
   return `<!DOCTYPE html>
 <html lang="en">

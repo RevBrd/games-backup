@@ -33,7 +33,7 @@ of them unless you are working on that thing** — that is the point of the spli
 | [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap — and `tools/shot.js`, which screenshots the built game at any exact viewport |
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source. Buzzap, Mirror Move, Metronome, Clefairy Doll are settled there |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering why a Python script in `tools/chat-era/` won't run. Field mappings, the Energy `provides` quirks, how the Node tools were verified against what they replaced |
-| [PACKS.md](PACKS.md) | Planning or building Job 5's booster packs. Real WotC pack composition and rarity tiers, verified against `data/raw/`, plus open questions on Shiny/Shadowless as pull mechanics — nothing there is decided yet |
+| [PACKS.md](PACKS.md) | Planning or building Job 5's booster packs. Real WotC pack composition and rarity tiers, verified against `data/raw/`, plus open questions on Shiny/Shadowless as pull mechanics — mostly decided but variable |
 
 ## Status
 
@@ -48,7 +48,7 @@ the AI are the finished part**; everything a *collection* game needs is not buil
 | Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen. In play, cards keep a rendered face and a deterministic sigil |
 | Collection / packs / dex | Not started (Job 5) |
 | Deck building | Not started. Four fixed theme decks + a random Sandbox deck for testing |
-| Persistence | **None.** Not one `localStorage` call anywhere. Job 5 builds it from scratch |
+| Persistence | **Job 5a built the spine.** `src/collection.js` — versioned save, migration, validation, export/import, all covered by `tools/collectiontest.js`. Nothing in the UI calls it yet |
 | Progression / named opponents | Not started (Job 7) |
 | Sets beyond Base | Not started, but **no longer data-blocked** — all 14 sets generate cleanly |
 | Audio | None |
@@ -67,6 +67,8 @@ src/  cards.js         CARD_DB + the theme deck lists. GENERATED — see TOOLING
       deckgen.js       builds a legal 60-card deck from a pool (Sandbox; later, opponents)
       ai.js            expected-value scoring over enumerated coin-flip outcomes
       engine.js        the whole ruleset. Pure logic, no DOM
+      collection.js    what the player owns + the save file. Pure data, no DOM,
+                       no engine. Read its header before touching a variant key
       ui.js            everything that touches `document`
       style.css        dark instrument-panel palette, one `:root` block
 data/ raw/*.json       THE card source: the pokemon-tcg-data corpus, 14 sets, 1,251 cards
@@ -82,6 +84,9 @@ tools/ build.js        src/ -> shadowless.html
        selftest.js     engine + AI regression (drives src/ directly)
        powertest.js    behavioural tests for Powers and the oddity cards
        smoke.js        integration suite against the BUILT artifact, incl. UI
+       collectiontest.js  the save file: variant keys, reservation, migration,
+                       corruption handling. Stubs localStorage rather than
+                       skipping persistence
        chat-era/       the original Python tools, superseded. Kept for provenance
 ```
 
@@ -91,7 +96,7 @@ possible without a browser.
 
 ## Tooling
 
-Run the last three before calling anything done.
+Run the last four before calling anything done.
 
 ```bash
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
@@ -99,14 +104,21 @@ node tools/fetch_art.js base1            # real card faces -> assets/ (--hires f
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/powertest.js                  # 77 tests for Powers and the other bespoke cards
-node tools/smoke.js shadowless.html      # 48 integration tests against the built file
+node tools/smoke.js shadowless.html      # 49 integration tests against the built file
+node tools/collectiontest.js             # 84 tests for the save file and variant keys
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 ```
 
-**None of the three suites subsumes the others.** `selftest.js` proves games don't break;
+**None of the four suites subsumes the others.** `selftest.js` proves games don't break;
 `powertest.js` proves the Powers do what the cards *say*, including the cases that must be illegal;
-`smoke.js` drives the built HTML through a stubbed DOM and covers the UI. Both generators take
-`--check`, which exits non-zero if what's committed has drifted from its sources.
+`smoke.js` drives the built HTML through a stubbed DOM and covers the UI; `collectiontest.js`
+proves the save file is trustworthy. Both generators take `--check`, which exits non-zero if what's
+committed has drifted from its sources.
+
+**A module's CommonJS export must be ONE line.** `tools/build.js` strips it with a line-anchored
+regex, so a wrapped export list leaves its own body in the bundle and dies as `Unexpected token '}'`
+thousands of lines into the generated HTML. The builder now refuses to build that, naming the file
+and line — but the convention is why, and the tail of `collection.js` is the ugly worked example.
 
 **`data/decks.json` is source, not output** — the theme decks came from Trevor's spreadsheet, cannot
 be rebuilt, and are his authentic lists. And `tools/chat-era/` cannot run even though Python is
@@ -120,7 +132,7 @@ results.
 - **When the printed card text is ambiguous, follow the Game Boy Color game.** Not the later
   official errata, not a period ruling — the GBC implementation. The reason is practical: it is a
   single consistent arbiter, and it is the version Trevor knows well enough to settle a call in
-  plain English. Ask him; he expects to be asked. Genuine conflicts get handled case by case.
+  plain English. Ask him when unsure, he can be a resource here. Genuine conflicts get handled case by case.
   **Known limit:** the GBC game only contains Base, Jungle and Fossil cards, so it will have nothing
   to say from Team Rocket onward. A fallback will be needed around Job 7, not before.
 - **"As often as you like during your turn" powers are a mode you enter and leave.** Click the
@@ -188,20 +200,12 @@ hand the player cards they already own.
 
 Trevor's ordering, and he is explicit that it is yours to rearrange and to break into sub-jobs.
 
-- **Job 4** — finish Base Set. ~~Pokémon Powers, the five oddities, Clefairy Doll.~~ **Done.**
-- **Job 4g** — visual pass. **Done.** One printed playmat with both Actives nose-to-nose at any
-  window size, a fanning hand, a title screen, every overlay on mat cloth. Slotted before Job 5
-  deliberately: Job 5 adds four new screens, and setting the visual language before they exist is
-  far cheaper than restyling them after.
-  **Deliberately not built:** a collection/dex mockup — the language is settled and mocking up
+
+  **Deliberately not built in earlier Job:** a collection/dex mockup — the language is settled and mocking up
   screens that don't exist yet would be thrown away. Build it for real in Job 5.
-  The coin toss is built and **Job 4g is closed** (8 Aug 2026). It lands on the mat's centre line,
-  and that placement is the design decision rather than the animation: roughly half of all flips are
-  the *opponent's*, so anything anchored to your hand or your half would be claiming their coin was
-  tossed on your side of the table. See [LAYOUT.md](LAYOUT.md).
   **The design is locked for now** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
   bench tiles without asking.
-- **Job 5** — collection, packs, deck building, persistence.
+- **Job 5** — collection mechanics, packs, deck building, persistence.
 - **Job 6** — Jungle and Fossil. `node tools/gen_cards.js --sets base1,base2,base3`.
 - **Job 7** — progression, named opponents.
 - **Job 8+** — remaining sets. No longer blocked.
@@ -226,5 +230,6 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
   `tools/selftest.js`, the Node build port, and this layout.
 - **Opus 5** (Claude Code, 5–6 Aug 2026) — Job 4: Pokémon Powers and the Base Set oddities. Job 4g:
   the mat, the fitter, the title screen, the real card scans.
-- **Opus 5** (Claude Code, 7 Aug 2026) — `tools/shot.js` and the DEV fit readout, the hand face,
+- **Opus 5** (Claude Code, 7-8 Aug 2026) — `tools/shot.js` and the DEV fit readout, the hand face,
   the mat's edge, and this documentation split.
+- **Sonnet 5** (Claude Code, 7-9 Aug 2026) - Packs document, research, rulings discussions.
