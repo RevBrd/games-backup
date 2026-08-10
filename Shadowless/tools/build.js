@@ -14,9 +14,12 @@ const path = require('path');
 
 const HERE = path.join(__dirname, '..');
 const SRC = path.join(HERE, 'src');
-// collection.js sits between the engine and the UI: it is pure data with no
-// dependency on either, and the UI is the only thing that reads it.
-const ORDER = ['cards.js', 'effects.js', 'art.js', 'deckgen.js', 'ai.js', 'engine.js', 'collection.js', 'ui.js'];
+// collection.js and packs.js sit between the engine and the UI: both are pure
+// data with no dependency on either, and the UI is the only thing that reads
+// them. packs.js emits variant FLAG ARRAYS, which collection.js's grant()
+// canonicalises — so the two never need to know about each other, and the
+// order between them does not matter.
+const ORDER = ['cards.js', 'effects.js', 'art.js', 'deckgen.js', 'ai.js', 'engine.js', 'collection.js', 'packs.js', 'ui.js'];
 const TITLE = 'Shadowless — a WotC-era Pokémon TCG';
 
 const read = n => fs.readFileSync(path.join(SRC, n), 'utf8');

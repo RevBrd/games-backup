@@ -176,8 +176,10 @@ card-detail view. Cheap fix for the naming collision noted below, agreed 8 Aug.)
    e-Card era (Expedition, 2002), which is *after* this project's 14-set corpus ends at Neo Destiny.
    Same honesty flag as Shadowless below: this is vocabulary borrowed from later WotC history, not a
    recreation of anything that existed in these specific sets. Rolled per card, but only on the
-   **7 Common/Uncommon slots** — Rares already have their own holo/non-holo axis, and a holographic
+   **10 Common/Uncommon slots** — Rares already have their own holo/non-holo axis, and a holographic
    Common is a distinct, better feeling than overlapping with a system that already exists.
+   (Said "7" until 9 Aug, which was the Common count mistaken for Common-plus-Uncommon. The v3
+   table below always said 10, and 3 + 7 = 10 is right.)
 4. **Shadowless (invented, ultra-rare)** — independent per-card roll across all 11 slots, cosmetic
    frame/marking rather than a gameplay difference. Can land on any card of any tier.
 5. **1st Edition (invented, independent of Shadowless)** — corrected 8 Aug from an earlier version
@@ -232,6 +234,35 @@ values; both were already judged fine and weren't part of this pass.
 | Shiny | each of 11 slots | 1/440 | 40 | 20 |
 | Shadowless | each of 11 slots | 1/2200 | 200 | 100 |
 | Misprint | each of 11 slots | 1/11000 | 1000 | 500 |
+
+### Verified against 200,000 simulated packs (9 Aug 2026, Job 5b)
+
+`src/packs.js` implements the table above and `tools/packtest.js` opens 200,000 packs against it
+with a fixed seed. **Every row lands where it promises** — holo 1-in-3.0, 1st Edition 1-in-25.1,
+Reverse Holo 1-in-9.9, Shiny 1-in-39.3, Shadowless 1-in-200.2, Misprint 1-in-897. The ~5x ladder
+holds at 3.96x / 5.09x / 4.48x between rungs, so it survives as the rule for extending the table.
+
+**The number nobody had computed, and the one Job 5's economy actually turns on:**
+
+| To complete | Median packs | ~Wins at 2 packs/win |
+|---|---|---|
+| Commons + Energy | 27 | 14 |
+| Uncommons | 42 | 21 |
+| Rares (non-holo) | 71 | 36 |
+| **Rare Holos** | **164** | **82** |
+| **All 102** | **157** | **79** |
+
+The whole Base Set collection game is the sixteen Rare Holos. Everything else finishes inside the
+first third of the run — by the time you have your last Uncommon you are barely a quarter of the way
+to the set. Each specific holo arrives at 1/3 x 1/16 per pack, and coupon-collecting sixteen of
+those is the long tail that *is* the game.
+
+Two consequences worth holding onto. **~79 wins to finish one set is a good length**, and it means
+the Job 5 economy does not need a duplicate sink to have a purpose — the chase is long enough on its
+own. And **any future "pity timer" or duplicate-protection idea should aim at the Rare Holo slot
+specifically**, because that is the only slot where the tail is long enough to hurt: the 34-to-390
+pack spread on holos is by far the widest of any tier, so two players can have wildly different
+experiences of the same economy.
 
 Nothing here needs to stay this exact — Trevor's framing is a pacing schedule, not hard numbers.
 Two properties worth preserving if these get retuned later:
@@ -321,6 +352,9 @@ pack." Two refinements on top of the original ask:
 
 - **Sonnet 5** (Claude Code, 7-9 Aug 2026) — this document, researched, refined and written during a parallel
   Job 4g session at Trevor's request, as well as collaborative decision-making with Trevor. This instance kept a turn log, which can be found at \Turn Logs\Packs Turn Log.txt
+- **Opus 5** (Claude Code, 9 Aug 2026) — Job 5b. Built `src/packs.js` and `tools/packtest.js`,
+  verified every row of the v3 table against 200,000 packs, corrected the Reverse Holo slot count
+  from 7 to 10 in the prose, and measured the set-completion pacing the table never implied.
 - **Opus 5** (Claude Code, 9 Aug 2026) — Job 5 opening pass over Part 1. Re-queried all 14 sets and
   found there was never an unnumbered Energy pool or a cutover to hunt for; found that every `base1`
   scan is 1st Edition Shadowless, which forced the additive/print-run split and the rule that a pack

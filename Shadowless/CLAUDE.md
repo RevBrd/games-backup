@@ -69,6 +69,8 @@ src/  cards.js         CARD_DB + the theme deck lists. GENERATED — see TOOLING
       engine.js        the whole ruleset. Pure logic, no DOM
       collection.js    what the player owns + the save file. Pure data, no DOM,
                        no engine. Read its header before touching a variant key
+      packs.js         booster generation. PACK_ODDS is the whole rarity table
+                       in one object — every number in it is a placeholder
       ui.js            everything that touches `document`
       style.css        dark instrument-panel palette, one `:root` block
 data/ raw/*.json       THE card source: the pokemon-tcg-data corpus, 14 sets, 1,251 cards
@@ -87,6 +89,9 @@ tools/ build.js        src/ -> shadowless.html
        collectiontest.js  the save file: variant keys, reservation, migration,
                        corruption handling. Stubs localStorage rather than
                        skipping persistence
+       packtest.js     opens 200,000 packs and checks the odds against the
+                       pacing schedule in PACKS.md. Also prints, without
+                       asserting, how many packs it takes to finish a set
        chat-era/       the original Python tools, superseded. Kept for provenance
 ```
 
@@ -96,7 +101,7 @@ possible without a browser.
 
 ## Tooling
 
-Run the last four before calling anything done.
+Run the last five before calling anything done.
 
 ```bash
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
@@ -106,14 +111,23 @@ node tools/selftest.js                   # rules + AI regression (add a number f
 node tools/powertest.js                  # 77 tests for Powers and the other bespoke cards
 node tools/smoke.js shadowless.html      # 49 integration tests against the built file
 node tools/collectiontest.js             # 84 tests for the save file and variant keys
+node tools/packtest.js                   # 44 tests, 200k packs against the PACKS.md odds
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 ```
 
-**None of the four suites subsumes the others.** `selftest.js` proves games don't break;
+**None of the five suites subsumes the others.** `selftest.js` proves games don't break;
 `powertest.js` proves the Powers do what the cards *say*, including the cases that must be illegal;
 `smoke.js` drives the built HTML through a stubbed DOM and covers the UI; `collectiontest.js`
-proves the save file is trustworthy. Both generators take `--check`, which exits non-zero if what's
-committed has drifted from its sources.
+proves the save file is trustworthy; `packtest.js` proves the pack odds are the odds PACKS.md
+promises. Both generators take `--check`, which exits non-zero if what's committed has drifted from
+its sources.
+
+**`packtest.js` takes a count** — `node tools/packtest.js 20000` for a fast pass while iterating.
+Its seed is fixed, so it is deterministic and cannot flake; the tolerances are sized to catch a
+wrong denominator, not to absorb noise. It also prints an unasserted pacing measurement — **~157
+packs, about 79 wins at 2 packs/win, to complete Base Set, and the 16 Rare Holos are essentially
+the entire cost.** That number is the one Job 5's economy turns on, and nothing in PACKS.md
+computes it.
 
 **A module's CommonJS export must be ONE line.** `tools/build.js` strips it with a line-anchored
 regex, so a wrapped export list leaves its own body in the bundle and dies as `Unexpected token '}'`
