@@ -204,7 +204,16 @@ than only on hover.
 
 - **1st Edition** — our own stamp glyph, echoing where the real one sits. Deliberately legible at
   dex-thumbnail size too: it's a whole-pack roll, so you'll want to spot it across a grid.
-- **Shiny** — Trevor's read is a fancy border treatment rather than a recolour of the art.
+- **Shiny** — **settled 9 Aug: a palette shift, not a sheen.** `hue-rotate(150deg) saturate(1.35)`
+  on the scan, and every line of the Sigil Card's ink turned teal. Trevor picked it out of a
+  comparison strip, where it had been sitting as a Misprint flavour, and it is the better idea on
+  its own merits: a shiny Pokémon in the mainline games *is* a recoloured one, so the treatment
+  means the same thing the word does. It also shifts differently on every card — Charizard goes
+  cyan, Blastoise magenta, Fire Energy green — which reads as an alternate colouring rather than a
+  filter applied on top. Two sheens were tried first and both failed: `color-dodge` blew pale card
+  stock to unreadable white, and `overlay` was legible but landed with wildly different strength
+  depending on how bright a card's art was. Misprint's third flavour became `invert(1)` in the
+  swap, since a palette shift and a hue rotation could no longer coexist.
 - **Shadowless** — **not settled.** Our render has no art frame to un-shadow, and the nearest
   analogue is the sigil box. Adding a hard offset shadow to every sigil box, so that one card in two
   hundred can lack it, would change the default look of the whole game to serve a variant almost
@@ -215,12 +224,18 @@ than only on hover.
   8 Aug design lock covers, and is honest to the original, which was itself only ever visible when
   you were looking at a card rather than playing it.
 
-  **BOTH ARE NOW BUILT (Job 5c), switchable from the DEV tab, and the decision is still open.**
-  `UI.shadowMode = 'shadow'` draws the shadow and Shadowless removes it; `'inverted'` is Trevor's
-  version, where Shadowless is the base state and the rare pull adds a shadow. The confinement above
-  holds in both — the board is identical either way. The honest finding from looking at them: **the
-  difference is subtle at card size.** That is faithful to the real thing, which was also subtle, but
-  it is worth deciding whether a 1-in-200 pull should announce itself more loudly than reality did.
+  **BOTH ARE NOW BUILT (Job 5c), switchable from the DEV tab, and the shadow question is still
+  open.** `UI.shadowMode = 'shadow'` draws the shadow and Shadowless removes it; `'inverted'` is
+  Trevor's version, where Shadowless is the base state and the rare pull adds a shadow. The
+  confinement above holds in both — the board is identical either way.
+
+  **The loudness problem is solved separately, and that was Trevor's idea (9 Aug).** Looking at the
+  A/B, we independently landed on the same objection: the shadow alone is too quiet to carry a
+  1-in-200 pull. So the Sigil Card now prints **"SHADOWLESS" across its art window**, set in the
+  title screen's face — the game's own name as the mark. It deliberately carries no `text-shadow`,
+  where `.gametitle` has one as a joke about the word; the thing the word actually describes should
+  not have one. That makes the watermark the announcement and the shadow the fidelity, so the
+  remaining A/B is a question about faithfulness rather than about legibility.
 
 Placeholder odds for all of these, plus Promo/SI intrusion (below), are in one table:
 

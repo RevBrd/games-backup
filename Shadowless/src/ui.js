@@ -1478,10 +1478,33 @@ function deckHero(name) {
 const ADDITIVE_FX = { sh: 1, rh: 1, mp1: 1, mp2: 1, mp3: 1 };
 const additiveClasses = flags => flags.filter(f => ADDITIVE_FX[f]).map(f => 'v-' + f).join(' ');
 
+// Filter-based treatments, composed into ONE string.
+//
+// This is not a style preference. `filter` is a single CSS property, so two
+// classes that each set it do not stack — the later rule in the stylesheet
+// wins outright and the other treatment silently disappears. That was survivable
+// while Shiny was a sheen and only Misprint used filters. The moment Shiny
+// became a hue rotation, a Shiny Misprint would have lost one of the two at
+// random depending on stylesheet order. Composing here makes them add up.
+//
+// Shiny first, so a Misprint's channel split is applied to the shifted colours
+// rather than the other way round — the split should look like it happened to
+// the card you actually pulled.
+const FX_FILTER = {
+  sh: 'hue-rotate(150deg) saturate(1.35)',
+  mp1: 'drop-shadow(2px 0 0 rgba(255,0,90,.8)) drop-shadow(-2px 0 0 rgba(0,225,255,.8))',
+  mp3: 'invert(1)',
+};
+const FX_ORDER = ['sh', 'mp1', 'mp3'];
+const variantFilter = flags =>
+  FX_ORDER.filter(f => flags.indexOf(f) >= 0).map(f => FX_FILTER[f]).join(' ');
+
 // The real printed card, with additive cosmetics laid over it.
 function pullFace(card, flags) {
   const cls = additiveClasses(flags);
   const host = el('div', 'vfx' + (cls ? ' ' + cls : ''));
+  const fx = variantFilter(flags);
+  if (fx) host.style.filter = fx;
   const img = cardFaceImage(card, null);
   if (!img) { host.appendChild(sigilBox(card, 'lg')); return host; }
   // A set whose art has not been fetched falls back to the sigil rather than a
@@ -1494,26 +1517,38 @@ function pullFace(card, flags) {
   return host;
 }
 
+// The art window inside a rendered card, or null.
+//
+// Hand-rolled loop, not `.filter` and not `querySelector`. A real browser gives
+// an HTMLCollection here, which has no array methods; the smoke DOM stub gives
+// a plain array, which has all of them. `.filter` therefore PASSED every test
+// and threw in Chrome — the detail overlay silently vanished while the pack
+// screen behind it rendered fine. Index with a plain loop and both are happy.
+function sigilOf(node) {
+  for (let i = 0; i < node.children.length; i++) {
+    const c = node.children[i];
+    if (c && (c.className || '').indexOf('sigil') === 0) return c;
+  }
+  return null;
+}
+
 // Our own drawing of the card, carrying everything a scan cannot.
 function sigilCard(card, flags) {
   const d = fullCard(card, { noFace: true });
   d.classList.add('sigilcard', 'sm-' + UI.shadowMode);
-  if (flags.indexOf('sl') >= 0) d.classList.add('is-sl');
+  if (flags.indexOf('sh') >= 0) d.classList.add('is-sh');
+  if (flags.indexOf('sl') >= 0) {
+    d.classList.add('is-sl');
+    // The game's own name across the art window, set the way the title screen
+    // sets it. The shadow difference alone was too quiet to carry a 1-in-200
+    // pull; this is the announcement and the shadow is the fidelity.
+    const art = sigilOf(d);
+    if (art) art.appendChild(el('div', 'slmark', 'SHADOWLESS'));
+  }
   if (flags.indexOf('fe') >= 0) {
     // Into the art window, where the real stamp sits — not floated onto the
     // card body, which is where it landed first and read as a stray badge.
-    //
-    // Hand-rolled loop, not `.filter` and not `querySelector`. A real browser
-    // gives an HTMLCollection here, which has no array methods; the smoke DOM
-    // stub gives a plain array, which has all of them. `.filter` therefore
-    // PASSED every test and threw in Chrome — the detail overlay silently
-    // vanished while the pack screen behind it rendered fine. Index with a
-    // plain loop and both are happy.
-    let art = null;
-    for (let i = 0; i < d.children.length; i++) {
-      const c = d.children[i];
-      if (c && (c.className || '').indexOf('sigil') === 0) { art = c; break; }
-    }
+    const art = sigilOf(d);
     (art || d).appendChild(el('div', 'festamp', '1'));
   }
   const cls = additiveClasses(flags);

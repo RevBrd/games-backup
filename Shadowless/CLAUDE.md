@@ -153,6 +153,14 @@ results.
   power; the board enters that mode and says so; legal sources and targets highlight; click source
   then target as many times as you want; press Done. One pattern serves Damage Swap, Energy Trans
   and Rain Dance. Every individual move gets its own log line.
+- **Decks reserve their cards, and you may never dismantle your last one.** Settled with Trevor
+  9 Aug, for Job 5e. A card in a saved deck is spoken for and cannot be in a second deck — that is
+  what makes owning two Professor Oak an actual constraint, and it is what makes the one Shiny
+  Charizard a real choice. Dismantling a deck returns everything to the pool, **including its
+  Energy**, which is the answer to "do we grant starting Energy": you already have ~25, they are
+  just committed. The last deck may be *edited* freely but not dismantled, because a player with
+  zero decks cannot play and cannot obviously fix it. `available()` in `collection.js` already
+  computes the reservation and stores nothing.
 - **Card art is split by function.** The scans are *complete printed cards*, not illustration crops,
   and no crop exists anywhere — so they appear only where the card is the **subject**: the preview
   rail, the title screen, and later the dex and pack opening. In play, cards keep the rendered face,
@@ -180,18 +188,41 @@ protect — read it before changing anything sized.
 **`state.winner` can legitimately be `0`.** Test it against `null`, never for truthiness. This
 already cost one session an hour of phantom "stalled game" reports.
 
-**`node.children` is an HTMLCollection in a browser and a plain Array in the smoke stub.** So
-`.filter`, `.some`, `.map` on it pass every test and throw in Chrome. This is the one place where
-green suites mean nothing — a UI change that walks children must use an index loop, and must be
-looked at with `tools/shot.js` before it is believed. It has already cost one silently-missing
-overlay.
+**The smoke stub has no layout engine and no real DOM, so a green suite proves nothing visual.**
+`tools/shot.js` is not optional polish on a UI change — it is the only test that exists for a whole
+class of bug. Two have already got through 68 passing tests in one session:
 
-**The Shadowless treatment is an unresolved A/B, switchable from the DEV tab.** `shadow` gives the
-Sigil Card's art window a drop shadow that Shadowless removes; `inverted` makes Shadowless the base
-state — matching our 1st-Edition scans exactly — and the rare pull adds the shadow. Both are built
-because neither can be judged from a description. **The board is untouched in both modes:** the
-shadow exists only where a card is shown as a collectible, which is what keeps the 8 Aug design
-lock intact. Waiting on Trevor.
+- **`node.children` is an HTMLCollection in Chrome and a plain Array in the stub.** `.filter`,
+  `.some` and `.map` on it pass every test and throw in the browser. Walk children with an index
+  loop. This one silently deleted the pull-detail overlay while the screen behind it rendered fine.
+- **`line-height` inherits.** `.vfx` had `line-height:0` — correct for an inline-block wrapping a
+  bare image, catastrophic once the same host also wrapped a card full of text. Every line
+  collapsed, the type chip became a 2px dash, and the card lost 90px of height. Nothing in the stub
+  can see that; `getComputedStyle` through `shot.js` found it in one shot.
+
+When a screenshot looks subtly wrong, **measure it rather than squinting** — inject a snippet that
+writes `offsetHeight`/`getComputedStyle` into the page and screenshot *that*. It turns "something
+looks off" into `lineHeight=0px` immediately.
+
+**How each variant is drawn** (all decided with Trevor 9 Aug, all confined to collectible surfaces —
+**the board is untouched by every one of them**, which is what keeps the 8 Aug design lock intact):
+
+| | On the real scan | On the Sigil Card |
+|---|---|---|
+| Shiny | `hue-rotate(150deg) saturate(1.35)` — a palette shift, which is what "shiny" means in the mainline games. Shifts differently per card, so it reads as an alternate colouring rather than a filter | every line of ink turns teal, via `--ink`/`--ink2`; the sigil drawing takes the same rotation |
+| Reverse Holo | fine diagonal banding, `screen` | — |
+| Misprint | mp1 channel split · mp2 wrong aspect · mp3 inverted | — |
+| 1st Edition | ribbon only | the ① stamp, inside the art window |
+| Shadowless | ribbon only | **"SHADOWLESS" printed across the art window** in the title-screen face, plus the shadow A/B |
+
+**Filter-based treatments are composed in `variantFilter()`, never as CSS classes.** `filter` is a
+single property, so two classes that both set it do not stack — one silently wins. This became
+load-bearing the moment Shiny stopped being a sheen.
+
+**The Shadowless shadow is still an unresolved A/B**, switchable from the DEV tab: `shadow` draws it
+and Shadowless removes it; `inverted` makes Shadowless the base state, matching our 1st-Edition
+scans, with the rare pull adding a shadow. The watermark above is now the loud signal either way,
+so this is a fidelity question rather than a legibility one. Waiting on Trevor.
 
 **Unimplemented cards can never silently do nothing.** The deck validator refuses any deck
 containing a card with no effect script. Preserve that property — it is why the card counts above
