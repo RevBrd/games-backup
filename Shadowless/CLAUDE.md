@@ -37,8 +37,9 @@ of them unless you are working on that thing** — that is the point of the spli
 
 ## Status
 
-Job 4 and Job 4g are complete — the whole of Base Set, and the visual pass. The **rules engine and
-the AI are the finished part**; everything a *collection* game needs is not built yet.
+Jobs 4, 4g and **5 are complete**. The engine and AI were already done; Job 5 built everything a
+*collection* game needs on top of them — you can pick a starter deck, play, win packs, open them,
+browse what you own, and build decks from it, and all of it persists.
 
 | Area | State |
 |---|---|
@@ -47,7 +48,7 @@ the AI are the finished part**; everything a *collection* game needs is not buil
 | Base Set cards | **All 102 implemented.** Base Set is done |
 | Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen. In play, cards keep a rendered face and a deterministic sigil |
 | Collection / packs / dex | **Done (5a–5d).** Starter pick, win 2 packs, open them, browse what you own. Collection browser has CARDS and DEX views, owned/missing filters, per-card counts, variant dots, and export/import |
-| Deck building | **Built (5e-1/2).** Pool grid with kind/type/name filters, deck panel, live legality, save-as-layout vs save-and-build. Variant picking (5e-4) is the remaining piece; Sandbox still ignores ownership on purpose |
+| Deck building | **Done (5e).** Pool grid with kind/type/name filters, deck panel, live legality, save-as-layout vs save-and-build, and variant picking — you choose which physical copy goes in. Sandbox still ignores ownership on purpose |
 | Persistence | **Live.** `src/collection.js` — versioned save, migration, validation. Export downloads a JSON file (with a copy-it-out fallback); import is a paste box on the collection screen |
 | Progression / named opponents | Not started (Job 7) |
 | Sets beyond Base | Not started, but **no longer data-blocked** — all 14 sets generate cleanly |
@@ -109,7 +110,7 @@ node tools/fetch_art.js base1            # real card faces -> assets/ (--hires f
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/powertest.js                  # 77 tests for Powers and the other bespoke cards
-node tools/smoke.js shadowless.html      # 88 integration tests against the built file
+node tools/smoke.js shadowless.html      # 96 integration tests against the built file
 node tools/collectiontest.js             # 105 tests for the save file, decks and variants
 node tools/packtest.js                   # 44 tests, 200k packs against the PACKS.md odds
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
@@ -285,7 +286,16 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
   screens that don't exist yet would be thrown away. Build it for real in Job 5.
   **The design is locked for now** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
   bench tiles without asking.
-- **Job 5** — collection mechanics, packs, deck building, persistence.
+- **Job 5** — collection mechanics, packs, deck building, persistence. **Done, 9 Aug 2026.**
+  5a the save and the variant-combination model · 5b pack generation, verified against 200,000
+  simulated packs · 5c the pack reveal and the variant renderers · 5d the collection and dex
+  browser plus export/import · 5e the deck builder, including choosing which physical copy of a
+  card goes in a deck.
+  **Deliberately not built:** a player-facing auto-build button, and a cap on the number of decks.
+  Both are argued in the standing decisions above; neither is an oversight.
+  **Left open on purpose:** blueprints exist as a mechanism (any `built: false` deck) but have no
+  dedicated screen. A "what am I missing" view over your layouts is the obvious next quality pass
+  and would turn a vague card chase into a specific one.
 - **Job 6** — Jungle and Fossil. `node tools/gen_cards.js --sets base1,base2,base3`.
 - **Job 7** — progression, named opponents.
 - **Job 8+** — remaining sets. No longer blocked.

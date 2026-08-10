@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available};')
+  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -1119,6 +1119,73 @@ T('shortfall says WHY, not just that you are short', () => {
   return /own 0/.test(none) && !/other decks/.test(none)
     && /other decks/.test(held) && /dismantle/.test(held)
     && /other decks/.test(part) && /3 short/.test(part);
+});
+
+// ---- Job 5e-4: choosing which physical copy goes in the deck ------------
+console.log('\n--- variant picking ---');
+
+ctx.UI.save = ctx.newSave({ starter: 'Brushfire', now: 1 });
+ctx.grantDeck(UI.save, DECKS.Brushfire);
+UI.save.decks.push({ id: '1', name: 'Brushfire', built: true, list: DECKS.Brushfire.list.map(e => [e[0], e[1]]) });
+UI.myDeck = 'Brushfire';
+ctx.grant(UI.save, 'base1-58', '', 3);            // 3 plain Pikachu
+ctx.grant(UI.save, 'base1-58', ['sh'], 1);        // 1 Shiny
+ctx.grant(UI.save, 'base1-58', ['fe', 'rh'], 2);  // 2 that are both
+ctx.grant(UI.save, 'base1-31', ['sh'], 1);        // a card whose ONLY copy is Shiny
+ctx.openBuilder(null);
+
+T('a card with one pile adds without asking', () => {
+  // Jynx: the only copy is Shiny. Clicking must give you the Shiny rather
+  // than refusing because the plain pile is empty.
+  ctx.poolClick('base1-31');
+  return !UI.pilePick && ctx.builderQty(UI.builder, 'base1-31', 'sh') === 1
+    && ctx.builderQty(UI.builder, 'base1-31', '') === 0;
+});
+T('a card with several piles asks which one', () => {
+  ctx.poolClick('base1-58');
+  return !!UI.pilePick && UI.pilePick.id === 'base1-58' && ctx.builderTotal(UI.builder) === 1;
+});
+T('the picker renders every available pile, best first', () => {
+  render();
+  const piles = ctx.builderPiles('base1-58');
+  return piles.length === 3 && piles[0].key === 'sh' && piles[0].free === 1
+    && piles[piles.length - 1].key === '' && piles[piles.length - 1].free === 3;
+});
+T('picking a pile adds that exact copy', () => {
+  ctx.builderAdd('base1-58', ['fe', 'rh'], 1);
+  UI.pilePick = null;
+  return ctx.builderQty(UI.builder, 'base1-58', 'fe+rh') === 1
+    && ctx.builderQty(UI.builder, 'base1-58', '') === 0;
+});
+T('piles run down independently as you spend them', () => {
+  ctx.builderAdd('base1-58', ['fe', 'rh'], 1);     // now using both of them
+  const piles = ctx.builderPiles('base1-58');
+  return !piles.some(p => p.key === 'fe+rh')       // that pile is exhausted
+    && piles.some(p => p.key === 'sh' && p.free === 1);
+});
+T('an unowned card still adds, as a plain blueprint entry', () => {
+  const unowned = Object.keys(CARD_DB).find(id => ctx.ownedTotal(UI.save, id) === 0);
+  ctx.poolClick(unowned);
+  return !UI.pilePick && ctx.builderQty(UI.builder, unowned, '') === 1;
+});
+T('a chosen variant survives the save', () => {
+  UI.builder.name = 'Sparkle';
+  ctx.commitBuilder(false);
+  const d = UI.save.decks.find(x => x.name === 'Sparkle');
+  // Compare canonical to canonical. vkey() sorts by the declared variant
+  // order, so ['fe','rh'] is stored as 'rh+fe' — testing against the literal
+  // 'fe+rh' fails even though the code is right. Canonicalising both sides is
+  // the point of having a canonical form at all.
+  const want = ctx.vkey(['fe', 'rh']);
+  const entry = d.list.find(e => e[1] === 'base1-58' && ctx.vkey(e[2]) === want);
+  return !!entry && entry[0] === 2 && want === 'rh+fe';
+});
+T('the pool counts every pile, not just the plain one', () => {
+  // Jynx again: one Shiny and nothing else. A tile reading the plain pile
+  // alone would grey it out and claim you owned none.
+  ctx.openBuilder(null);
+  const piles = ctx.builderPiles('base1-31');
+  return piles.length === 1 && piles[0].key === 'sh' && piles[0].free === 1;
 });
 
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);

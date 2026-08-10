@@ -535,6 +535,7 @@ function render() {
   }
   if (UI.screen === 'builder' && UI.builder) {
     root.appendChild(renderBuilder());
+    if (UI.pilePick) root.appendChild(renderPilePicker());
     return;
   }
   if (UI.screen === 'collection' && UI.save) {
@@ -1948,6 +1949,65 @@ function builderFree(id, k) {
   return available(UI.save, id, key, except) - builderQty(UI.builder, id, key);
 }
 
+// Every pile of this card the player could still add to this deck, best first.
+// A pile is a variant combination — see collection.js. Most cards have exactly
+// one, which is what keeps variant picking invisible until it matters.
+function builderPiles(id) {
+  return pilesOf(UI.save, id)
+    .map(p => ({ key: p.key, label: p.label, score: p.score, free: builderFree(id, p.key) }))
+    .filter(p => p.free > 0);
+}
+
+// What clicking a pool tile does. Three cases, and the middle one is the whole
+// reason this is a function rather than a line:
+//
+//   own none      add plain anyway — that is how a blueprint names a card you
+//                 have not pulled yet
+//   one pile      add it, WHATEVER IT IS. If your only Rattata is Shiny then
+//                 clicking Rattata has to give you the Shiny; refusing because
+//                 the plain pile is empty would be absurd
+//   several       ask, because now it is a real choice
+function poolClick(id) {
+  const piles = builderPiles(id);
+  if (!ownedTotal(UI.save, id)) { builderAdd(id, '', 1); render(); return; }
+  if (!piles.length) return;
+  if (piles.length === 1) { builderAdd(id, piles[0].key, 1); render(); return; }
+  UI.pilePick = { id };
+  render();
+}
+
+// Choosing which physical copy goes in the deck. Shown as card faces rather
+// than as a list, because the entire point is to look at them — this is where
+// a lucky pull stops being a number in a binder and goes on the table.
+function renderPilePicker() {
+  const id = UI.pilePick.id;
+  const card = CARD_DB[id];
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet');
+  box.appendChild(el('h2', null, card.name));
+  box.appendChild(el('p', 'dimtxt', 'You own more than one printing of this. Which goes in the deck?'));
+  const row = el('div', 'pulldetail');
+  builderPiles(id).forEach(p => {
+    const col = el('div', 'dcol');
+    const face = pullFace(card, vflags(p.key));
+    face.style.width = '150px';
+    col.appendChild(face);
+    col.appendChild(el('div', 'lbl', p.label.toUpperCase()));
+    col.appendChild(el('div', 'lbl', p.free + ' available'));
+    col.onclick = () => { builderAdd(id, p.key, 1); UI.pilePick = null; render(); };
+    col.style.cursor = 'pointer';
+    row.appendChild(col);
+  });
+  box.appendChild(row);
+  const bar = el('div', 'actionbar');
+  const cancel = el('button', 'btn ghost', 'Cancel');
+  cancel.onclick = () => { UI.pilePick = null; render(); };
+  bar.appendChild(cancel);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
+}
+
 // Legality from the engine, availability from the save. Kept separate because
 // they answer different questions: "is this a legal deck" and "does this
 // player have it".
@@ -2024,16 +2084,29 @@ function renderBuilder() {
     const card = CARD_DB[id];
     if (!poolMatches(card)) return;
     const owned = ownedTotal(UI.save, id);
-    const free = builderFree(id, '');
+    // Across ALL piles, not just the plain one. Reading only the plain pile
+    // greyed out any card whose only copy happened to be a variant — own one
+    // Rattata and it is Shiny, and the tile claimed you had none.
+    const piles = builderPiles(id);
+    const free = piles.reduce((a, p) => a + p.free, 0);
     const inDeck = b.list.filter(e => e[1] === id).reduce((a, e) => a + e[0], 0);
     const t = el('div', 'colltile' + (owned === 0 ? ' unowned' : (free <= 0 ? ' spent' : '')));
     if (owned > 0) t.appendChild(pullFace(card, vflags(bestVariant(UI.save, id))));
     else t.appendChild(el('div', 'collmiss', card.num));
     if (inDeck) t.appendChild(el('div', 'inuse', String(inDeck)));
-    t.appendChild(el('div', 'collqty', owned ? '×' + Math.max(0, free) : '—'));
+    t.appendChild(el('div', 'collqty', owned ? '×' + free : '—'));
+    // A dot per variant family you could still add, so a tile worth a second
+    // thought looks different from one that is just a card.
+    const fams = {};
+    piles.forEach(p => vflags(p.key).forEach(f => { fams[VARIANT_BY_KEY[f].family] = 1; }));
+    if (Object.keys(fams).length) {
+      const dots = el('div', 'collvars');
+      Object.keys(fams).forEach(f => { const d = el('i', 'collvdot'); d.style.background = VAR_DOT[f]; dots.appendChild(d); });
+      t.appendChild(dots);
+    }
     // Unowned cards can still be added: that is how you plan a deck you cannot
     // afford yet. It just cannot be BUILT, and the shortfall says what to chase.
-    if (free > 0 || owned === 0) t.onclick = () => { builderAdd(id, '', 1); render(); };
+    if (free > 0 || owned === 0) t.onclick = () => poolClick(id);
     grid.appendChild(t);
   });
   main.appendChild(grid);
