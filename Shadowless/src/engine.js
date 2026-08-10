@@ -224,6 +224,31 @@ class Engine {
     return { ok: true };
   }
 
+  // Take a Pokemon back off the board during setup. Legal because setup is
+  // arranging cards face-down before anything is revealed, and the GBC game
+  // lets you rearrange freely until you confirm. Safe to do bluntly: a setup
+  // slot is always a fresh mkSlot holding one Basic, with no energy, no damage
+  // and no evolution stack, so there is no state to strand. Taking the Active
+  // back also empties the bench, because a bench with no Active is not a legal
+  // board and putting the player there would need a rule to dig them out of.
+  setupTakeBack(pi, where, idx) {
+    const p = this.state.players[pi];
+    if (this.state.phase !== 'setup') return this.fail('Not in setup');
+    if (this.state.setupDone[pi]) return this.fail('Setup already confirmed');
+    if (where === 'active') {
+      if (!p.active) return this.fail('No Active to take back');
+      while (p.bench.length) p.hand.push(p.bench.pop().stack[0]);
+      p.hand.push(p.active.stack[0]);
+      p.active = null;
+    } else {
+      const slot = p.bench[idx];
+      if (!slot) return this.fail('No such benched Pokemon');
+      p.bench.splice(idx, 1);
+      p.hand.push(slot.stack[0]);
+    }
+    return { ok: true };
+  }
+
   setupAuto(pi) {
     const p = this.state.players[pi];
     const basics = () => p.hand.map((x, i) => [i, this.db[x.id]])

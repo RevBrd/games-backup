@@ -505,15 +505,70 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .sheet .btn.end{background:#3A2F1C;border-color:#6A5326;color:var(--amber)}
 .sheet .btn.ghost{background:transparent;color:var(--matink)}
 .sheet .searchrow .ss,.sheet .orderrow .ss{color:var(--matink)}
-.setupcur{border:1px solid var(--matline);border-radius:3px;padding:8px 10px;margin-bottom:12px;
-  background:rgba(0,0,0,.2)}
-.setupcur .lbl{font-size:11px;color:#8A9A93}
-/* Inside a sheet the hand is a plain wrapping row again — there is room, and
-   nothing is competing for it. */
-.sheet .hand{margin-bottom:14px;flex-wrap:wrap;gap:8px;padding-top:0}
+/* Inside a sheet the hand is a plain row rather than a fan: layoutHand()
+   measures the real panel and has nothing to measure here, and the hand face
+   is narrow enough that a full opening hand fits without overlapping. It does
+   NOT wrap — a wrapped hand of stretched cards was the old setup screen's
+   worst feature, because `align-items:stretch` made a Fire Energy as tall as a
+   Charmeleon and filled the difference with dead grey. */
+.sheet .hand{gap:6px;padding-top:0;align-items:flex-start;flex-wrap:wrap}
 .sheet .hand .pcard{margin-left:0}
 .sheet .hand .pcard:hover{transform:none}
 .sheet .actionbar{border-top:0;padding-top:0}
+
+/* ---- opening setup: your half of the mat, before there is a mat ---- */
+.setupsheet{max-width:900px}
+.setuphead{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.setuphead h2{margin-bottom:4px}
+.setuphead p{margin-bottom:0;max-width:52ch}
+.setupdecks{display:flex;align-items:center;gap:10px;flex:0 0 auto;padding-top:4px}
+/* `.side.mine` brings the warm gradient with it, so this reads as a strip of
+   your own cloth rather than a second panel inside the dialog. The inner rim
+   is the same trick the mat's edge uses: without it the strip dissolves into
+   the sheet, which is the same colour family. */
+/* width:max-content for the same reason the real cloth has it — the leftover
+   is margin by construction, so the strip stops where the board stops instead
+   of stranding the bench against one edge of an 900px sheet. */
+.setupmat{margin:14px auto;border-radius:4px;gap:10px;width:max-content;max-width:100%;
+  background:linear-gradient(0deg,rgba(226,168,75,.05),rgba(0,0,0,.16) 70%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.045);
+  padding:10px 12px 11px;flex-direction:row;align-items:flex-start}
+.setupmat .activezone{flex:0 0 auto}
+.setupmat .benchzone{min-width:0}
+/* The Active's 249px min-height is MEASURED, and it is measured for the board,
+   where the card carries the attack buttons and must not resize when something
+   gets Poisoned mid-turn. Neither is true in here: there are no attacks on this
+   face and nothing changes while you look at it, so the measurement buys a
+   160px band of empty card stock and nothing else. See LAYOUT.md.
+   Both selectors below have to out-specify `.side.mine .slot.pcard.act`, which
+   this strip matches because it carries `.side.mine` on purpose. */
+.setupmat.side.mine .slot.pcard.act,
+.setupmat.side.mine .slot.empty.act{min-height:0}
+/* An empty shape is printed on the cloth, not drawn as a card — the same as an
+   unfilled bench on the board. Both empties keep their filled counterpart's
+   footprint, so placing a Pokemon never moves the row or resizes the strip. */
+.setupmat .benchcard.empty,.setupmat .slot.empty{background:rgba(0,0,0,.16);
+  border:1px dashed var(--matline);border-radius:3px;box-shadow:none;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:8px;letter-spacing:.16em;color:var(--matink)}
+.setupmat .benchcard.empty{width:106px;min-height:84px;cursor:default}
+.setupmat .slot.empty.act.want{min-height:106px;padding:6px;
+  border-color:#6A5326;color:#A0864F}
+/* A placed Pokemon is a live control here: clicking takes it back. The board's
+   own `.targetable` amber would be wrong — nothing is being targeted — so it
+   gets the softer hover the hand uses. */
+.takeback{cursor:pointer}
+.takeback:hover{border-color:var(--amber);box-shadow:0 0 0 1px rgba(226,168,75,.35) inset}
+.setuphand{margin-bottom:14px}
+.setuphand .zonelabel{display:flex;align-items:baseline;gap:8px}
+.setupcount{letter-spacing:0;font-size:9px;color:#5F6D66}
+/* Only Basics can be placed, so only Basics get the affordance. The rest keep
+   the hand's own dimming rather than being hidden — you want to see that your
+   opening hand is five Energy, because that is the information that makes you
+   press "Change decks". */
+.sheet .hand .pcard.placeable{cursor:pointer}
+.sheet .hand .pcard.placeable:hover{border-color:var(--amber);
+  box-shadow:0 0 0 1px var(--amber) inset}
 
 @media (max-width:1080px){
   .wrap{grid-template-columns:1fr;height:auto}
@@ -3291,6 +3346,31 @@ class Engine {
       if (!p.active) return this.fail('Set your Active first');
       if (p.bench.length >= this.cfg.benchMax) return this.fail('Bench is full');
       p.hand.splice(handIdx, 1); p.bench.push(this.mkSlot(inst));
+    }
+    return { ok: true };
+  }
+
+  // Take a Pokemon back off the board during setup. Legal because setup is
+  // arranging cards face-down before anything is revealed, and the GBC game
+  // lets you rearrange freely until you confirm. Safe to do bluntly: a setup
+  // slot is always a fresh mkSlot holding one Basic, with no energy, no damage
+  // and no evolution stack, so there is no state to strand. Taking the Active
+  // back also empties the bench, because a bench with no Active is not a legal
+  // board and putting the player there would need a rule to dig them out of.
+  setupTakeBack(pi, where, idx) {
+    const p = this.state.players[pi];
+    if (this.state.phase !== 'setup') return this.fail('Not in setup');
+    if (this.state.setupDone[pi]) return this.fail('Setup already confirmed');
+    if (where === 'active') {
+      if (!p.active) return this.fail('No Active to take back');
+      while (p.bench.length) p.hand.push(p.bench.pop().stack[0]);
+      p.hand.push(p.active.stack[0]);
+      p.active = null;
+    } else {
+      const slot = p.bench[idx];
+      if (!slot) return this.fail('No such benched Pokemon');
+      p.bench.splice(idx, 1);
+      p.hand.push(slot.stack[0]);
     }
     return { ok: true };
   }
@@ -8522,35 +8602,106 @@ function togglePick(uid) {
 }
 
 // ------------------------------------------------------------------ setup --
+// Opening setup: your half of the mat, before there is a mat.
+//
+// This was a wrapped grid of miniCards and a two-line text readout saying
+// "Active: — none —". Two things were wrong with it beyond the styling. The
+// cards used miniCard, which prints attack NAMES in a 150px column and breaks
+// them mid-word — "Flamethrower" came out as "Fla/met/hro/wer", which is the
+// exact failure handCard() was built to fix and which LAYOUT.md wrongly said
+// a dialog had room to avoid. And describing the board in words, next to a
+// board, is a worse picture than showing it.
+//
+// So it renders the thing it is about to become: the ACTIVE and BENCH zones
+// from the real mat, in the real slot faces, filled by clicking your real
+// hand face. What you arrange here is literally what you will be looking at
+// ten seconds later, which is the whole argument for it.
 function renderSetup() {
   const ov = el('div', 'overlay');
-  const box = el('div', 'sheet');
-  box.appendChild(el('h2', null, 'Opening setup'));
-  box.appendChild(el('p', 'dimtxt', 'Place one Basic Pokemon as your Active, then up to five more on your Bench. Prizes are dealt once both players are ready.'));
+  const box = el('div', 'sheet setupsheet');
 
-  const banner = el('div', 'row');
+  const head = el('div', 'setuphead');
+  const title = el('div', null);
+  title.appendChild(el('h2', null, 'Opening setup'));
+  title.appendChild(el('p', 'dimtxt', 'Place one Basic Pokemon as your Active, then up to five more on your Bench. Click a placed Pokemon to take it back. Prizes are dealt once both players are ready.'));
+  head.appendChild(title);
+  const banner = el('div', 'setupdecks');
   banner.appendChild(el('span', 'dimtxt small', `${UI.myDeck} vs ${UI.foeDeck}`));
   const back = el('button', 'btn ghost', 'Change decks');
   back.onclick = () => backToDeckSelect();
   banner.appendChild(back);
-  box.appendChild(banner);
+  head.appendChild(banner);
+  box.appendChild(head);
 
   const p = me();
-  const cur = el('div', 'setupcur');
-  cur.appendChild(el('div', 'lbl', 'Active: ' + (p.active ? topCard(CARD_DB, p.active).name : '— none —')));
-  cur.appendChild(el('div', 'lbl', 'Bench: ' + (p.bench.length ? p.bench.map(b => topCard(CARD_DB, b).name).join(', ') : '— empty —')));
-  box.appendChild(cur);
+  const takeBack = (where, idx) => () => { UI.E.setupTakeBack(0, where, idx); render(); };
 
-  const row = el('div', 'hand');
+  // The mat's own idiom: silk-screened zone captions, printed outlines for the
+  // shapes a card has not been put in yet. `.side.mine` carries the warm
+  // gradient, so the strip reads as your half of the cloth rather than as a
+  // second dialog inside the first.
+  const mat = el('div', 'setupmat side mine');
+
+  const az = el('div', 'activezone');
+  az.appendChild(el('div', 'zonelabel', 'ACTIVE'));
+  const arow = el('div', 'activerow');
+  if (p.active) {
+    const s = renderSlot(p.active, 0, 'active', 0);
+    s.classList.add('takeback');
+    s.onclick = takeBack('active', 0);
+    arow.appendChild(s);
+  } else {
+    // `act` so the empty shape takes the Active's real 318px width — otherwise
+    // the whole strip changes width the moment you place something.
+    arow.appendChild(el('div', 'slot empty act want', 'CHOOSE A BASIC'));
+  }
+  az.appendChild(arow);
+  mat.appendChild(az);
+
+  const bz = el('div', 'benchzone');
+  bz.appendChild(el('div', 'zonelabel', 'BENCH'));
+  const brow = el('div', 'bench');
+  for (let i = 0; i < UI.E.cfg.benchMax; i++) {
+    if (p.bench[i]) {
+      // renderBenchTile, not renderSlot — the board's bench is deliberately not
+      // a small copy of the Active, and the size gap between them is what makes
+      // the Active read as the one that is actually fighting. Reproducing that
+      // here is most of why this screen previews the board at all.
+      const s = renderBenchTile(p.bench[i], 0, i);
+      s.classList.add('takeback');
+      s.onclick = takeBack('bench', i);
+      brow.appendChild(s);
+    } else {
+      brow.appendChild(el('div', 'benchcard empty', ''));
+    }
+  }
+  bz.appendChild(brow);
+  mat.appendChild(bz);
+  box.appendChild(mat);
+
+  // The hand, in the hand's own face. Not fanned: layoutHand() measures the
+  // real panel and there is nothing here for it to measure against, and seven
+  // cards at 98px fit a dialog without overlapping anyway.
+  const handzone = el('div', 'setuphand');
+  const cap = el('div', 'zonelabel', 'YOUR HAND');
+  cap.appendChild(el('span', 'setupcount', `${p.hand.length} cards`));
+  handzone.appendChild(cap);
+  const row = el('div', 'hand flat');
   p.hand.forEach((inst, i) => {
     const c = CARD_DB[inst.id];
     const isBasic = c.kind === 'pokemon' && c.stage === 'Basic';
-    const card = miniCard(c);
+    const card = handCard(c);
     if (!isBasic) card.classList.add('dead');
-    if (isBasic) card.onclick = () => { UI.E.setupPlace(0, i, p.active ? 'bench' : 'active'); render(); };
+    else {
+      card.classList.add('placeable');
+      card.onclick = () => { UI.E.setupPlace(0, i, p.active ? 'bench' : 'active'); render(); };
+    }
+    // No peekOn() here: the rail sits behind the overlay's 84% scrim, so a
+    // peek would render into something the player cannot read.
     row.appendChild(card);
   });
-  box.appendChild(row);
+  handzone.appendChild(row);
+  box.appendChild(handzone);
 
   const bar = el('div', 'actionbar');
   const auto = el('button', 'btn ghost', 'Fill automatically');

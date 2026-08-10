@@ -973,5 +973,75 @@ T('no Power can leave one of your own Pokemon Knocked Out', () => {
   return true;
 });
 
+// ---------------------------------------------------------------------------
+// setupTakeBack — added with the rebuilt opening-setup screen, which shows real
+// ACTIVE and BENCH slots and therefore has to let you click one back off.
+// ---------------------------------------------------------------------------
+
+// A fresh game with the opening hand replaced by four known Basics, so the
+// indices below are stable and nothing depends on the shuffle.
+function setupBoard() {
+  const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  E.newGame(DECKS.Brushfire, DECKS.Zap, ['A', 'B']);
+  const p = E.state.players[0];
+  p.active = null; p.bench = [];
+  p.hand = ['base1-46', 'base1-58', 'base1-63', 'base1-68']
+    .map(id => ({ id, uid: E.uid++ }));
+  return E;
+}
+
+T('setup: a benched Pokemon goes back to hand, and the card is the same one', () => {
+  const E = setupBoard();
+  const p = E.state.players[0];
+  E.setupPlace(0, 0, 'active');
+  E.setupPlace(0, 0, 'bench');
+  const uid = p.bench[0].stack[0].uid;
+  eq(p.hand.length, 2, 'hand size after placing two');
+  eq(E.setupTakeBack(0, 'bench', 0).ok, true, 'take back refused');
+  eq(p.bench.length, 0, 'bench did not empty');
+  eq(p.hand.length, 3, 'card did not come back');
+  eq(p.hand[p.hand.length - 1].uid, uid, 'a different physical card came back');
+  return true;
+});
+
+T('setup: taking the Active back also clears the bench', () => {
+  // A bench with no Active is not a legal board, and nothing downstream knows
+  // how to dig the player out of it — so the take-back returns the lot.
+  const E = setupBoard();
+  const p = E.state.players[0];
+  E.setupPlace(0, 0, 'active');
+  E.setupPlace(0, 0, 'bench');
+  E.setupPlace(0, 0, 'bench');
+  eq(p.hand.length, 1, 'hand size after placing three');
+  eq(E.setupTakeBack(0, 'active', 0).ok, true, 'take back refused');
+  eq(p.active, null, 'Active still set');
+  eq(p.bench.length, 0, 'bench survived the Active leaving');
+  eq(p.hand.length, 4, 'not every card came back');
+  return true;
+});
+
+T('setup: take-back is refused once setup is confirmed, and outside setup', () => {
+  const E = setupBoard();
+  E.setupPlace(0, 0, 'active');
+  const p = E.state.players[0];
+  eq(E.setupTakeBack(0, 'bench', 0).ok, false, 'took back an empty bench slot');
+  E.setupConfirm(0);
+  eq(E.setupTakeBack(0, 'active', 0).ok, false, 'took back after confirming');
+  eq(p.active !== null, true, 'Active was removed anyway');
+  return true;
+});
+
+T('setup: a taken-back Pokemon can be placed again and keeps nothing', () => {
+  const E = setupBoard();
+  const p = E.state.players[0];
+  E.setupPlace(0, 0, 'active');
+  E.setupTakeBack(0, 'active', 0);
+  eq(E.setupPlace(0, p.hand.length - 1, 'active').ok, true, 'replace refused');
+  eq(p.active.dmg, 0, 'damage survived the round trip');
+  eq(p.active.energy.length, 0, 'energy survived the round trip');
+  eq(p.active.stack.length, 1, 'stack grew');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

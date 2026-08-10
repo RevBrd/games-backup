@@ -2645,35 +2645,106 @@ function togglePick(uid) {
 }
 
 // ------------------------------------------------------------------ setup --
+// Opening setup: your half of the mat, before there is a mat.
+//
+// This was a wrapped grid of miniCards and a two-line text readout saying
+// "Active: — none —". Two things were wrong with it beyond the styling. The
+// cards used miniCard, which prints attack NAMES in a 150px column and breaks
+// them mid-word — "Flamethrower" came out as "Fla/met/hro/wer", which is the
+// exact failure handCard() was built to fix and which LAYOUT.md wrongly said
+// a dialog had room to avoid. And describing the board in words, next to a
+// board, is a worse picture than showing it.
+//
+// So it renders the thing it is about to become: the ACTIVE and BENCH zones
+// from the real mat, in the real slot faces, filled by clicking your real
+// hand face. What you arrange here is literally what you will be looking at
+// ten seconds later, which is the whole argument for it.
 function renderSetup() {
   const ov = el('div', 'overlay');
-  const box = el('div', 'sheet');
-  box.appendChild(el('h2', null, 'Opening setup'));
-  box.appendChild(el('p', 'dimtxt', 'Place one Basic Pokemon as your Active, then up to five more on your Bench. Prizes are dealt once both players are ready.'));
+  const box = el('div', 'sheet setupsheet');
 
-  const banner = el('div', 'row');
+  const head = el('div', 'setuphead');
+  const title = el('div', null);
+  title.appendChild(el('h2', null, 'Opening setup'));
+  title.appendChild(el('p', 'dimtxt', 'Place one Basic Pokemon as your Active, then up to five more on your Bench. Click a placed Pokemon to take it back. Prizes are dealt once both players are ready.'));
+  head.appendChild(title);
+  const banner = el('div', 'setupdecks');
   banner.appendChild(el('span', 'dimtxt small', `${UI.myDeck} vs ${UI.foeDeck}`));
   const back = el('button', 'btn ghost', 'Change decks');
   back.onclick = () => backToDeckSelect();
   banner.appendChild(back);
-  box.appendChild(banner);
+  head.appendChild(banner);
+  box.appendChild(head);
 
   const p = me();
-  const cur = el('div', 'setupcur');
-  cur.appendChild(el('div', 'lbl', 'Active: ' + (p.active ? topCard(CARD_DB, p.active).name : '— none —')));
-  cur.appendChild(el('div', 'lbl', 'Bench: ' + (p.bench.length ? p.bench.map(b => topCard(CARD_DB, b).name).join(', ') : '— empty —')));
-  box.appendChild(cur);
+  const takeBack = (where, idx) => () => { UI.E.setupTakeBack(0, where, idx); render(); };
 
-  const row = el('div', 'hand');
+  // The mat's own idiom: silk-screened zone captions, printed outlines for the
+  // shapes a card has not been put in yet. `.side.mine` carries the warm
+  // gradient, so the strip reads as your half of the cloth rather than as a
+  // second dialog inside the first.
+  const mat = el('div', 'setupmat side mine');
+
+  const az = el('div', 'activezone');
+  az.appendChild(el('div', 'zonelabel', 'ACTIVE'));
+  const arow = el('div', 'activerow');
+  if (p.active) {
+    const s = renderSlot(p.active, 0, 'active', 0);
+    s.classList.add('takeback');
+    s.onclick = takeBack('active', 0);
+    arow.appendChild(s);
+  } else {
+    // `act` so the empty shape takes the Active's real 318px width — otherwise
+    // the whole strip changes width the moment you place something.
+    arow.appendChild(el('div', 'slot empty act want', 'CHOOSE A BASIC'));
+  }
+  az.appendChild(arow);
+  mat.appendChild(az);
+
+  const bz = el('div', 'benchzone');
+  bz.appendChild(el('div', 'zonelabel', 'BENCH'));
+  const brow = el('div', 'bench');
+  for (let i = 0; i < UI.E.cfg.benchMax; i++) {
+    if (p.bench[i]) {
+      // renderBenchTile, not renderSlot — the board's bench is deliberately not
+      // a small copy of the Active, and the size gap between them is what makes
+      // the Active read as the one that is actually fighting. Reproducing that
+      // here is most of why this screen previews the board at all.
+      const s = renderBenchTile(p.bench[i], 0, i);
+      s.classList.add('takeback');
+      s.onclick = takeBack('bench', i);
+      brow.appendChild(s);
+    } else {
+      brow.appendChild(el('div', 'benchcard empty', ''));
+    }
+  }
+  bz.appendChild(brow);
+  mat.appendChild(bz);
+  box.appendChild(mat);
+
+  // The hand, in the hand's own face. Not fanned: layoutHand() measures the
+  // real panel and there is nothing here for it to measure against, and seven
+  // cards at 98px fit a dialog without overlapping anyway.
+  const handzone = el('div', 'setuphand');
+  const cap = el('div', 'zonelabel', 'YOUR HAND');
+  cap.appendChild(el('span', 'setupcount', `${p.hand.length} cards`));
+  handzone.appendChild(cap);
+  const row = el('div', 'hand flat');
   p.hand.forEach((inst, i) => {
     const c = CARD_DB[inst.id];
     const isBasic = c.kind === 'pokemon' && c.stage === 'Basic';
-    const card = miniCard(c);
+    const card = handCard(c);
     if (!isBasic) card.classList.add('dead');
-    if (isBasic) card.onclick = () => { UI.E.setupPlace(0, i, p.active ? 'bench' : 'active'); render(); };
+    else {
+      card.classList.add('placeable');
+      card.onclick = () => { UI.E.setupPlace(0, i, p.active ? 'bench' : 'active'); render(); };
+    }
+    // No peekOn() here: the rail sits behind the overlay's 84% scrim, so a
+    // peek would render into something the player cannot read.
     row.appendChild(card);
   });
-  box.appendChild(row);
+  handzone.appendChild(row);
+  box.appendChild(handzone);
 
   const bar = el('div', 'actionbar');
   const auto = el('button', 'btn ghost', 'Fill automatically');

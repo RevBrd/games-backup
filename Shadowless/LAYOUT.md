@@ -152,8 +152,16 @@ whether to play, and what you decide on is its name, its kind, and what its atta
 what they do. Attack *names* and rules text were the whole of the problem: "Poisonpowder" cannot
 wrap inside a 95px column, so it broke mid-word into three lines, and a clamped Trainer paragraph
 was cut off mid-sentence anyway — which is worse than not showing it. Hovering peeks the real
-printed card into the rail; that is where the words live. The overlay sheets (setup, pickers) still
-use `miniCard`, because there is room in a dialog and nothing competing for it.
+printed card into the rail; that is where the words live.
+
+**A dialog does not have more room, and this file used to claim it did.** The line here said the
+overlay sheets could keep `miniCard` "because there is room in a dialog and nothing competing for
+it". They cannot: `.sheet .hand .pcard` is the same 150px, so the opening-setup screen printed
+"Flamethrower" as `Fla/met/hro/wer` for as long as that sentence stood. **Opening setup now uses
+`handCard`** like the real hand — see the section below. The Trainer pickers still use `miniCard`,
+deliberately: choosing between two Trainers out of a discard sometimes needs the rules text
+`handCard` drops, so that one is a real trade rather than an oversight. If a picker ever breaks a
+name mid-word, it is the same bug and the same fix.
 
 Dropping the words bought the width back, which was the other half of the job: **98px instead of
 150px is 11 cards with no overlap at all on a 1915px window, where the old face managed 6 at
@@ -236,6 +244,35 @@ commits to nothing. The landed *face* survives reduced motion, because that is i
 **`UI.flipDelay < 250` skips presentation entirely** (`dispatch()`), which is what the DEV tab's
 "coin pause: off" setting does. Worth knowing before you try to screenshot a fast flip and find
 there is nothing to screenshot.
+
+## Opening setup is a preview of the mat, not a dialog about it
+
+`renderSetup()` builds your half of the board — an `ACTIVE` zone and a five-tile `BENCH`, in the
+mat's own silk-screened captions, filled by clicking your real hand face. It replaced a wrapping
+grid of `miniCard`s and a two-line text readout that said `Active: — none —` next to a board.
+
+Three things it reuses on purpose, because reproducing them by hand is how they drift:
+
+- **`renderBenchTile`, not `renderSlot`, for the bench.** The board's bench is deliberately not a
+  small copy of the Active, and that size gap is most of what this screen is previewing.
+- **`.side.mine` on the strip**, which brings the warm gradient with it, so it reads as a piece of
+  your own cloth rather than a second panel inside the sheet. It also brings
+  `.side.mine .slot.pcard.act{min-height:249px}`, which has to be overridden — that number is
+  measured for a card carrying attack buttons on a board that must not resize mid-turn, and neither
+  applies here. **Any override of it needs five classes to win**; `.setupmat .slot.act` silently
+  loses to `.side.mine .slot.pcard.act`.
+- **The empties match their filled footprint exactly** — 106×84 for a bench tile, 318 wide for the
+  Active — so placing a Pokémon never moves the row or resizes the strip.
+
+**The hand here does not fan and does not wrap.** `layoutHand()` measures the real panel and has
+nothing to measure against in a sheet, and seven cards at 98px fit without overlapping anyway.
+`align-items:flex-start` matters more than it looks: the old screen inherited `stretch`, which made
+a Fire Energy as tall as a Charmeleon and filled the difference with dead grey.
+
+**`setupTakeBack()` exists because this screen has slots.** A slot you can click and cannot un-click
+is a trap, so the engine gained a take-back — legal anyway, since setup is arranging cards before
+anything is revealed. Taking the **Active** back returns the whole bench with it: a bench with no
+Active is not a legal board and nothing downstream knows how to dig the player out of it.
 
 ## The title screen is not fitted
 

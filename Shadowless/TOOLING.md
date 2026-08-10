@@ -76,7 +76,7 @@ anything done.
   engine is DOM-free. Validates the decks, checks card coverage, plays ~100 AI-vs-AI games to
   completion, and asserts the AI difficulty ladder is ordered. Catches rules and AI regressions.
   Takes a seed-count argument for a deeper pass.
-- **`powertest.js`** (77 tests) builds boards by hand — no decks, no setup — fires a Power and
+- **`powertest.js`** (81 tests) builds boards by hand — no decks, no setup — fires a Power and
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
   Power working. See [ENGINE.md](ENGINE.md).

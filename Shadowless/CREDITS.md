@@ -42,6 +42,10 @@ below is the worked example, and it is why this file exists at the size it does.
   them. Also two corrections to the pack research — there was never an unnumbered Energy pool to
   find a cutover in, and every scan we own is 1st Edition Shadowless, which forced the split
   between cosmetics that can live on a bitmap and cosmetics that can only live on our own render.
+- **Opus 5** (10 Aug 2026) — rebuilt the opening-setup screen as a preview of your half of the mat,
+  with real ACTIVE and BENCH zones and the hand in the hand's own face; added `setupTakeBack()` and
+  four tests for it. Found and corrected `LAYOUT.md`'s claim that a dialog has room for `miniCard`,
+  which was why setup had been printing "Flamethrower" as `Fla/met/hro/wer`.
 - **Opus 5** (10 Aug 2026) — this documentation pass. Split out `COLLECTION.md`, `HISTORY.md` and
   this file; rewrote `PACKS.md` from a planning document into a reference one; de-duplicated the
   facts that had drifted between files; reconstructed the Chat-era job history from the snapshot

@@ -498,15 +498,70 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .sheet .btn.end{background:#3A2F1C;border-color:#6A5326;color:var(--amber)}
 .sheet .btn.ghost{background:transparent;color:var(--matink)}
 .sheet .searchrow .ss,.sheet .orderrow .ss{color:var(--matink)}
-.setupcur{border:1px solid var(--matline);border-radius:3px;padding:8px 10px;margin-bottom:12px;
-  background:rgba(0,0,0,.2)}
-.setupcur .lbl{font-size:11px;color:#8A9A93}
-/* Inside a sheet the hand is a plain wrapping row again — there is room, and
-   nothing is competing for it. */
-.sheet .hand{margin-bottom:14px;flex-wrap:wrap;gap:8px;padding-top:0}
+/* Inside a sheet the hand is a plain row rather than a fan: layoutHand()
+   measures the real panel and has nothing to measure here, and the hand face
+   is narrow enough that a full opening hand fits without overlapping. It does
+   NOT wrap — a wrapped hand of stretched cards was the old setup screen's
+   worst feature, because `align-items:stretch` made a Fire Energy as tall as a
+   Charmeleon and filled the difference with dead grey. */
+.sheet .hand{gap:6px;padding-top:0;align-items:flex-start;flex-wrap:wrap}
 .sheet .hand .pcard{margin-left:0}
 .sheet .hand .pcard:hover{transform:none}
 .sheet .actionbar{border-top:0;padding-top:0}
+
+/* ---- opening setup: your half of the mat, before there is a mat ---- */
+.setupsheet{max-width:900px}
+.setuphead{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.setuphead h2{margin-bottom:4px}
+.setuphead p{margin-bottom:0;max-width:52ch}
+.setupdecks{display:flex;align-items:center;gap:10px;flex:0 0 auto;padding-top:4px}
+/* `.side.mine` brings the warm gradient with it, so this reads as a strip of
+   your own cloth rather than a second panel inside the dialog. The inner rim
+   is the same trick the mat's edge uses: without it the strip dissolves into
+   the sheet, which is the same colour family. */
+/* width:max-content for the same reason the real cloth has it — the leftover
+   is margin by construction, so the strip stops where the board stops instead
+   of stranding the bench against one edge of an 900px sheet. */
+.setupmat{margin:14px auto;border-radius:4px;gap:10px;width:max-content;max-width:100%;
+  background:linear-gradient(0deg,rgba(226,168,75,.05),rgba(0,0,0,.16) 70%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.045);
+  padding:10px 12px 11px;flex-direction:row;align-items:flex-start}
+.setupmat .activezone{flex:0 0 auto}
+.setupmat .benchzone{min-width:0}
+/* The Active's 249px min-height is MEASURED, and it is measured for the board,
+   where the card carries the attack buttons and must not resize when something
+   gets Poisoned mid-turn. Neither is true in here: there are no attacks on this
+   face and nothing changes while you look at it, so the measurement buys a
+   160px band of empty card stock and nothing else. See LAYOUT.md.
+   Both selectors below have to out-specify `.side.mine .slot.pcard.act`, which
+   this strip matches because it carries `.side.mine` on purpose. */
+.setupmat.side.mine .slot.pcard.act,
+.setupmat.side.mine .slot.empty.act{min-height:0}
+/* An empty shape is printed on the cloth, not drawn as a card — the same as an
+   unfilled bench on the board. Both empties keep their filled counterpart's
+   footprint, so placing a Pokemon never moves the row or resizes the strip. */
+.setupmat .benchcard.empty,.setupmat .slot.empty{background:rgba(0,0,0,.16);
+  border:1px dashed var(--matline);border-radius:3px;box-shadow:none;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:8px;letter-spacing:.16em;color:var(--matink)}
+.setupmat .benchcard.empty{width:106px;min-height:84px;cursor:default}
+.setupmat .slot.empty.act.want{min-height:106px;padding:6px;
+  border-color:#6A5326;color:#A0864F}
+/* A placed Pokemon is a live control here: clicking takes it back. The board's
+   own `.targetable` amber would be wrong — nothing is being targeted — so it
+   gets the softer hover the hand uses. */
+.takeback{cursor:pointer}
+.takeback:hover{border-color:var(--amber);box-shadow:0 0 0 1px rgba(226,168,75,.35) inset}
+.setuphand{margin-bottom:14px}
+.setuphand .zonelabel{display:flex;align-items:baseline;gap:8px}
+.setupcount{letter-spacing:0;font-size:9px;color:#5F6D66}
+/* Only Basics can be placed, so only Basics get the affordance. The rest keep
+   the hand's own dimming rather than being hidden — you want to see that your
+   opening hand is five Energy, because that is the information that makes you
+   press "Change decks". */
+.sheet .hand .pcard.placeable{cursor:pointer}
+.sheet .hand .pcard.placeable:hover{border-color:var(--amber);
+  box-shadow:0 0 0 1px var(--amber) inset}
 
 @media (max-width:1080px){
   .wrap{grid-template-columns:1fr;height:auto}
