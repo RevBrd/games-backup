@@ -153,14 +153,31 @@ results.
   power; the board enters that mode and says so; legal sources and targets highlight; click source
   then target as many times as you want; press Done. One pattern serves Damage Swap, Energy Trans
   and Rain Dance. Every individual move gets its own log line.
-- **Decks reserve their cards, and you may never dismantle your last one.** Settled with Trevor
-  9 Aug, for Job 5e. A card in a saved deck is spoken for and cannot be in a second deck — that is
-  what makes owning two Professor Oak an actual constraint, and it is what makes the one Shiny
-  Charizard a real choice. Dismantling a deck returns everything to the pool, **including its
-  Energy**, which is the answer to "do we grant starting Energy": you already have ~25, they are
-  just committed. The last deck may be *edited* freely but not dismantled, because a player with
-  zero decks cannot play and cannot obviously fix it. `available()` in `collection.js` already
-  computes the reservation and stores nothing.
+- **A deck is BUILT or it is a layout, and only built decks reserve cards.** Settled with Trevor
+  9 Aug; the model is in `collection.js` and tested. A built deck holds its cards and can be
+  played. A layout (`built: false`) holds nothing, cannot be played, and costs nothing to keep —
+  which makes a half-finished *draft* and an unaffordable *blueprint* the same object. This landed
+  by accident: Trevor's answer to "should an illegal draft be saveable" was yes-but-its-cards-stay-
+  available, which is the definition of a non-reserving deck, and it independently reproduces the
+  GBC game's split between decks you have built and layouts you have merely saved.
+  - **Un-building is lossless** — the list survives, so dismantling is reversible. That is what
+    removed the argument for capping the number of decks: the collection caps built decks by
+    itself, and the recovery is one click.
+  - **The last built deck cannot be un-built or deleted.** No longer protection against losing
+    work, just against a confusing state where deck select offers nothing but Sandbox.
+  - **A layout goes stale** when another deck claims a card it wanted, so `deckShortfall()` is
+    recomputed at build time and never cached.
+  - Reservation returns *everything* including Energy, which answers "do we grant starting
+    Energy": you already have ~25, they are simply committed.
+- **Deck legality already exists — `Engine.prototype.validateDeck`, `engine.js:114`.** Exactly 60,
+  four-by-name with basic Energy correctly exempt, at least one Basic, the unimplemented-card
+  refusal, and an evolution-line warning. **Do not write a second one.** `collection.js` adds only
+  the ownership layer on top; the two are deliberately separate because legality is a property of
+  the deck and availability is a property of the save.
+- **No cap on the number of decks, and no player-facing auto-build.** The first because reservation
+  already caps it in a way the player can see and fix. The second because the labour of building is
+  what makes a collection mean anything — `reference/game-design.md` says the work is the setup.
+  `deckgen.js` stays for **opponent** decks in Job 7, and behind the DEV tab for testing.
 - **Card art is split by function.** The scans are *complete printed cards*, not illustration crops,
   and no crop exists anywhere — so they appear only where the card is the **subject**: the preview
   rail, the title screen, and later the dex and pack opening. In play, cards keep the rendered face,
@@ -291,3 +308,9 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 - **Opus 5** (Claude Code, 7-8 Aug 2026) — `tools/shot.js` and the DEV fit readout, the hand face,
   the mat's edge, and this documentation split.
 - **Sonnet 5** (Claude Code, 7-9 Aug 2026) - Packs document, research, rulings discussions.
+- **Opus 5** (Claude Code, 9 Aug 2026) — Job 5. The collection model and save file
+  (`collection.js`), booster generation (`packs.js`), the pack reveal, the variant renderers, the
+  collection and dex browser, export/import, and the two test suites that cover them. Also two
+  corrections to PACKS.md's research — there was never an unnumbered Energy pool to find a cutover
+  in, and every scan we own is 1st Edition Shadowless, which is what forced the split between
+  cosmetics that can live on a bitmap and cosmetics that can only live on our own render.

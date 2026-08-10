@@ -134,6 +134,50 @@ legacy.decks.push({ name: 'legacy', list: [[3, 'base1-61']] });
 eq(C.available(legacy, 'base1-61', ''), 1, 'a [qty, id] entry reserves from the plain pile');
 
 // ===========================================================================
+head('Built decks vs. saved layouts');
+
+// The distinction that fell out of "a draft should not hold cards hostage":
+// a draft and a blueprint are the same object, and it reproduces the GBC
+// split between decks you have BUILT and layouts you have merely SAVED.
+const bd = C.newSave({ now: 1 });
+C.grant(bd, 'base1-61', '', 4);
+bd.decks.push({ id: '1', name: 'Built', list: [[3, 'base1-61']], built: true });
+bd.decks.push({ id: '2', name: 'Draft', list: [[3, 'base1-61']], built: false });
+eq(C.available(bd, 'base1-61', ''), 1, 'only the built deck reserves; the draft holds nothing');
+eq(C.builtDecks(bd).length, 1, 'one deck is built');
+eq(C.findDeck(bd, '2').name, 'Draft', 'decks are found by id');
+eq(C.findDeck(bd, 'nope'), null, 'an unknown id is null, not a throw');
+
+// A layout can go stale: another deck takes what it wanted. That is why
+// availability is recomputed at build time and never cached.
+const short = C.deckShortfall(bd, C.findDeck(bd, '2'), CARD_DB);
+eq(short.length, 1, 'the draft is short, because the built deck took the cards');
+eq(short[0].need, 3, 'and says how many it wanted');
+eq(short[0].have, 1, 'and how many are actually free');
+eq(short[0].name, 'Rattata', 'named for a message the player can act on');
+eq(C.deckShortfall(bd, C.findDeck(bd, '1'), CARD_DB).length, 0, 'a built deck is not short against itself');
+
+eq(C.canUnbuild(bd, '1').ok, false, 'the only built deck cannot be un-built');
+bd.decks.push({ id: '3', name: 'Other', list: [], built: true });
+eq(C.canUnbuild(bd, '1').ok, true, 'with a second built deck it can');
+eq(C.canUnbuild(bd, '2').ok, false, 'a draft was never built, so it cannot be un-built');
+eq(C.canUnbuild(bd, 'nope').ok, false, 'an unknown deck refuses rather than throwing');
+
+// Un-building is LOSSLESS — that is what makes it safe to allow at all.
+const before = JSON.stringify(C.findDeck(bd, '1').list);
+C.findDeck(bd, '1').built = false;
+eq(JSON.stringify(C.findDeck(bd, '1').list), before, 'un-building keeps the list intact');
+eq(C.available(bd, 'base1-61', ''), 4, 'and returns every card to the pool');
+
+eq(C.nextDeckId(bd), '4', 'ids are sequential and predictable');
+
+// A save written before either field existed must gain both, and every deck
+// in it was by definition a real reserving deck.
+const old = C.validate(C.migrate({ v: 1, owned: {}, decks: [{ name: 'Legacy', list: [] }] }));
+eq(old.decks[0].id, '1', 'a deck with no id gets one');
+eq(old.decks[0].built, true, 'and a deck with no `built` flag is built');
+
+// ===========================================================================
 head('The 4-copy rule counts by name, across variants');
 
 const byName = C.copiesByNameIn(CARD_DB, [[3, 'base1-61'], [1, 'base1-61', 'sh']]);

@@ -96,10 +96,11 @@ function resolveDeck(name, seed) {
   return mine || DECKS[name];
 }
 
-// Decks YOU may field: only what you own. The opponent may field anything —
-// their deck is the game's, not yours, so it has never been a collection
-// question. This is the first place ownership actually bites.
-const myDeckNames = () => (UI.save ? UI.save.decks.map(d => d.name) : []).concat([SANDBOX]);
+// Decks YOU may field: only what you own, and only what is BUILT. A draft or a
+// blueprint reserves nothing and is not a deck yet, so it cannot be taken to a
+// match. The opponent may field anything — their deck is the game's, not yours,
+// so it has never been a collection question.
+const myDeckNames = () => (UI.save ? builtDecks(UI.save).map(d => d.name) : []).concat([SANDBOX]);
 
 // ------------------------------------------------------------- the save ----
 function bootSave() {
@@ -143,9 +144,12 @@ function persist() {
 function startNewSave(deckName) {
   UI.save = newSave({ starter: deckName });
   grantDeck(UI.save, DECKS[deckName]);
-  // The starter arrives as a real, editable deck rather than a special case, so
-  // the deck builder will have nothing to learn about it later.
-  UI.save.decks.push({ name: deckName, list: DECKS[deckName].list.map(e => [e[0], e[1]]) });
+  // The starter arrives as a real, editable, BUILT deck rather than a special
+  // case, so the deck builder will have nothing to learn about it later.
+  UI.save.decks.push({
+    id: nextDeckId(UI.save), name: deckName, built: true,
+    list: DECKS[deckName].list.map(e => [e[0], e[1]]),
+  });
   UI.myDeck = deckName;
   persist();
   UI.screen = 'decks';

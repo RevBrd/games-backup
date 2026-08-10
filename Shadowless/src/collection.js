@@ -128,6 +128,16 @@ function ensureShape(s) {
     if (typeof s.stats[k] !== 'number') s.stats[k] = 0;
   });
   if (typeof s.starter !== 'string') s.starter = '';
+  // Decks predate both `id` and `built`. Absent id gets one; absent `built`
+  // means true, because every deck that existed before the flag was a real,
+  // playable, card-reserving deck. Filling only what is ABSENT, as above.
+  let next = 0;
+  for (const d of s.decks) { const n = parseInt(d && d.id, 10); if (n > next) next = n; }
+  for (const d of s.decks) {
+    if (!d || typeof d !== 'object') continue;
+    if (d.id == null) d.id = String(++next);
+    if (d.built == null) d.built = true;
+  }
   return s;
 }
 
@@ -201,18 +211,84 @@ function pilesOf(save, cardId) {
     .sort((a, b) => b.score - a.score);
 }
 
+// ------------------------------------------------------------- decks -------
+// A deck is { id, name, list, built }.
+//
+// BUILT IS THE WHOLE MODEL, and it arrived by accident. Trevor's answer to
+// "should an illegal draft be saveable" was yes, but its cards should stay in
+// the pool for other decks — which is exactly the definition of a deck that
+// does not reserve. That makes a draft and a "blueprint" (a deck you cannot
+// afford yet) the same object, and it independently reproduces the GBC game's
+// split between decks you have BUILT and layouts you have merely SAVED.
+//
+//   built: true   reserves its cards, and can be played
+//   built: false  reserves nothing, cannot be played, costs nothing to keep
+//
+// Two consequences worth knowing. Un-building is LOSSLESS — the list survives,
+// so dismantling is a reversible act rather than a destructive one. And a
+// saved layout can go stale: another deck may claim a card it wanted, so its
+// availability has to be rechecked at build time, never cached.
+const deckIsBuilt = d => d.built !== false;
+const builtDecks = save => save.decks.filter(deckIsBuilt);
+
+// Ids are sequential rather than random so a save diffs cleanly and a test can
+// predict them. Names are display only — they may repeat, and they may be
+// anything the player types.
+function nextDeckId(save) {
+  let max = 0;
+  for (const d of save.decks) { const n = parseInt(d.id, 10); if (n > max) max = n; }
+  return String(max + 1);
+}
+
+const findDeck = (save, id) => save.decks.find(d => String(d.id) === String(id)) || null;
+
+// The last BUILT deck may not be un-built or deleted. With un-building now
+// lossless this is no longer protection against losing work — it is protection
+// against a confusing empty state where deck select offers nothing but
+// Sandbox and it is not obvious why.
+function canUnbuild(save, id) {
+  const d = findDeck(save, id);
+  if (!d) return { ok: false, why: 'no such deck' };
+  if (!deckIsBuilt(d)) return { ok: false, why: 'that deck is not built' };
+  if (builtDecks(save).length <= 1) return { ok: false, why: 'this is your only built deck' };
+  return { ok: true, why: '' };
+}
+
+// What a deck needs that the player cannot currently supply, counting only
+// cards locked up by OTHER built decks. Returns [] when the deck is buildable.
+// Recomputed on demand and never stored — see the note on reservation below.
+function deckShortfall(save, deck, db) {
+  const want = {};
+  for (const entry of deck.list) {
+    const id = entry[1], k = vkey(entry[2]);
+    (want[id] = want[id] || {})[k] = (want[id][k] || 0) + entry[0];
+  }
+  const res = reservedCounts(save, deck.id);
+  const out = [];
+  for (const id in want) {
+    for (const k in want[id]) {
+      const have = ownedOf(save, id, k) - ((res[id] || {})[k] || 0);
+      if (want[id][k] > have) {
+        out.push({ id, vkey: k, need: want[id][k], have: Math.max(0, have),
+          name: (db && db[id] && db[id].name) || id });
+      }
+    }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------- reservation ----
 // DERIVED, never stored. "How many plain Rattata are free" is owned minus the
-// sum across every saved deck, recomputed on demand. Storing it would mean two
+// sum across every BUILT deck, recomputed on demand. Storing it would mean two
 // numbers that can disagree, and they always eventually do.
 //
-// This also means the reserve-or-not design question is not load-bearing: if
-// decks turn out not to reserve, nothing calls available() and no stored field
-// is left behind.
-function reservedCounts(save, exceptDeckName) {
+// `exceptDeck` matches an id or a name, so a deck being edited does not
+// reserve against itself.
+function reservedCounts(save, exceptDeck) {
   const out = {};
   for (const d of save.decks) {
-    if (exceptDeckName !== undefined && d.name === exceptDeckName) continue;
+    if (!deckIsBuilt(d)) continue;              // drafts and blueprints hold nothing
+    if (exceptDeck !== undefined && (String(d.id) === String(exceptDeck) || d.name === exceptDeck)) continue;
     for (const entry of d.list) {
       const [qty, id] = entry;
       const k = vkey(entry[2]);
@@ -223,9 +299,9 @@ function reservedCounts(save, exceptDeckName) {
   return out;
 }
 
-function available(save, cardId, key, exceptDeckName) {
+function available(save, cardId, key, exceptDeck) {
   const k = vkey(key);
-  const res = reservedCounts(save, exceptDeckName);
+  const res = reservedCounts(save, exceptDeck);
   return ownedOf(save, cardId, k) - ((res[cardId] || {})[k] || 0);
 }
 
@@ -379,4 +455,4 @@ function importSave(text) {
 // ONE LINE, deliberately. tools/build.js strips this with a line-anchored
 // regex, so a multi-line export leaves its own body behind in the bundle and
 // breaks the built HTML. The builder now refuses that rather than emitting it.
-if (typeof module !== 'undefined') module.exports = { SAVE_VERSION, SAVE_KEY, SAVE_BACKUP_KEY, PLAIN, VARIANTS, VARIANT_ORDER, VARIANT_BY_KEY, vkey, vflags, isPlain, vscore, vlabel, newSave, ensureShape, grant, grantDeck, ownedOf, ownedTotal, isOwned, bestVariant, pilesOf, packsHeld, packsTotal, addPacks, takePack, reservedCounts, available, copiesByNameIn, collectionStats, MIGRATIONS, migrate, validate, loadSave, writeSave, exportSave, importSave };
+if (typeof module !== 'undefined') module.exports = { SAVE_VERSION, SAVE_KEY, SAVE_BACKUP_KEY, PLAIN, VARIANTS, VARIANT_ORDER, VARIANT_BY_KEY, vkey, vflags, isPlain, vscore, vlabel, newSave, ensureShape, grant, grantDeck, ownedOf, ownedTotal, isOwned, bestVariant, pilesOf, packsHeld, packsTotal, addPacks, takePack, deckIsBuilt, builtDecks, nextDeckId, findDeck, canUnbuild, deckShortfall, reservedCounts, available, copiesByNameIn, collectionStats, MIGRATIONS, migrate, validate, loadSave, writeSave, exportSave, importSave };
