@@ -1084,7 +1084,13 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .packhead{text-align:center}
 .packhead h2{margin:0;font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:.02em;color:var(--stock)}
 .packhead .sub{font-size:10px;letter-spacing:.14em;color:var(--matink);margin-top:3px}
-.packgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%;justify-items:center}
+/* FIVE columns, not six. A pack is ten cards plus the Rare, and six columns
+   wrapped them 6+4 with the short row hanging off the left edge — which read as
+   the grid having run out rather than as a layout. Five splits the ten evenly
+   into two rows of five above the headline Rare. Nothing about card SIZE
+   changes: the cards are sized by height (below) and centred in their columns,
+   so the column count only decides where they sit. */
+.packgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;justify-items:center}
 .pullslot{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
 /* The Rare is the emotional centre, so it gets the whole last row to itself. */
 .pullslot.rare{grid-column:1/-1;margin-top:2px}
