@@ -1,0 +1,3295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Base Set playtest — rules engine (Job 1)</title>
+<style>
+:root{
+  --bg:#171C22; --panel:#1F262E; --panel2:#262F39; --line:#323C48;
+  --txt:#C6D0DA; --dim:#78848F; --amber:#E2A84B; --red:#C8574C; --grn:#6FAE5A;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:var(--mono); font-size:13px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 400px;height:100vh}
+.boardcol{display:flex;flex-direction:column;min-width:0;overflow:auto;padding:14px 16px;gap:12px}
+.empty,.dimtxt{color:var(--dim)}
+.small{font-size:11px}
+
+/* ---- status bar ---- */
+.statusbar{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.turnflag{font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px;color:var(--dim)}
+.turnflag.mine{color:var(--amber)}
+.turnno,.seedno{color:var(--dim);font-size:11px}
+.seedno{margin-left:auto}
+
+/* ---- sides ---- */
+.side{border:1px solid var(--line);border-radius:3px;background:var(--panel);padding:10px}
+.side.mine{border-color:#3B4757}
+.sidehead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sidename{font-size:11px;letter-spacing:.1em;color:var(--dim)}
+.counters{display:flex;gap:10px}
+.ctr{display:flex;gap:4px;align-items:baseline;font-size:11px;color:var(--dim)}
+.ctr b{color:var(--txt);font-size:13px}
+.ctr.hot b{color:var(--amber)}
+.bench{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.activerow{display:flex}
+.midline{min-height:4px;display:flex;justify-content:center}
+.prompt{color:var(--amber);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+
+/* ---- slots ---- */
+.slot{
+  background:var(--panel2);border:1px solid var(--line);border-radius:3px;
+  padding:8px 9px;min-width:172px;max-width:260px;
+}
+.slot.act{min-width:300px;border-color:#45525F}
+.slot.empty{color:var(--dim);display:flex;align-items:center;justify-content:center;min-height:52px;font-size:11px}
+.slot.targetable{border-color:var(--amber);cursor:pointer;box-shadow:0 0 0 1px var(--amber) inset}
+.slot.targetable:hover{background:#2E3946}
+.slottop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.nm{font-weight:700}
+.hp{font-size:11px;color:var(--dim)}
+.hp.hurt{color:var(--amber)}
+.slotmeta{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--dim);margin-top:3px}
+.wr{font-weight:700}
+.dmgbar{height:2px;background:#131820;margin:6px 0;border-radius:2px;overflow:hidden}
+.dmgbar i{display:block;height:100%;background:var(--red)}
+.energyrow{display:flex;gap:3px;align-items:center;min-height:12px}
+.energyrow .none{font-size:10px;color:#5A646E}
+.pip{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.pips{display:inline-flex;gap:2px;align-items:center}
+.free{font-size:10px;color:var(--dim)}
+.statuses{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.badge{font-size:9px;letter-spacing:.08em;padding:1px 4px;border-radius:2px;border:1px solid}
+.badge.slp{color:#8FA3C4;border-color:#3F4C63}
+.badge.par{color:#D9BB47;border-color:#5A4E23}
+.badge.cnf{color:#B78BC9;border-color:#4F3A5A}
+.badge.psn{color:#7FBF6A;border-color:#3A5231}
+.badge.shd{color:#7FC4D6;border-color:#2F4E58}
+.badge.bns{color:var(--amber);border-color:#5C4620}
+
+/* ---- attacks ---- */
+.attacks{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.atk{
+  text-align:left;background:#2C3742;border:1px solid var(--line);border-radius:2px;
+  padding:6px 7px;cursor:pointer;width:100%
+}
+.atk:hover{border-color:var(--amber);background:#33404D}
+.atk.off{opacity:.5;cursor:default}
+.atk.off:hover{border-color:var(--line);background:#2C3742}
+.atkline{display:flex;align-items:center;gap:8px}
+.atkname{font-weight:700;flex:1}
+.atkdmg{color:var(--amber);font-weight:700}
+.atktext{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.35}
+.atkwhy{font-size:10px;color:var(--red);margin-top:3px}
+
+/* ---- hand ---- */
+.handpanel{border:1px solid var(--line);border-radius:3px;background:var(--panel);padding:10px}
+.panelhead{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.1em;color:var(--dim);margin-bottom:8px}
+.hand{display:flex;gap:7px;flex-wrap:wrap}
+.card{
+  background:var(--panel2);border:1px solid var(--line);border-radius:3px;
+  padding:7px 8px;width:150px;cursor:pointer
+}
+.card:hover{border-color:#55636F}
+.card.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
+.card.dead{opacity:.38;cursor:default}
+.card.targetable{border-color:var(--amber);cursor:pointer}
+.card.k-energy{border-left:2px solid #4E9BC4}
+.card.k-trainer{border-left:2px solid #9269A8}
+.card.k-pokemon{border-left:2px solid #6FAE5A}
+.cname{font-weight:700;font-size:12px}
+.csub{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--dim);margin-top:2px}
+.ctext{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.35}
+
+/* ---- action bar ---- */
+.actionbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.barmsg{font-size:11px;color:var(--txt);margin-right:4px}
+.btn{background:#2F3A46;border:1px solid var(--line);border-radius:2px;padding:6px 11px;cursor:pointer}
+.btn:hover{border-color:var(--amber)}
+.btn.end{background:#3A2F1C;border-color:#5C4620;color:var(--amber)}
+.btn.ghost{background:transparent;color:var(--dim)}
+.btn.off{opacity:.4;pointer-events:none}
+
+/* ---- coin flip presentation ---- */
+.coinbox{display:flex;align-items:center;gap:12px;padding:4px 2px}
+.coinface{
+  width:34px;height:34px;border-radius:50%;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--line);background:#232C36;color:var(--dim);
+  font-weight:700;font-size:14px;letter-spacing:.02em;
+}
+.coinbox.landed .coinface{border-color:var(--amber);color:var(--amber);background:#3A2F1C}
+.coinbox.tails .coinface{border-color:#7C8894;color:#9AA5B0;background:#242C35}
+.coinmsg{display:flex;flex-direction:column;gap:1px}
+.coinbig{font-weight:700;letter-spacing:.06em;color:var(--txt)}
+.coinbox.landed .coinbig{color:var(--amber)}
+.coinbox.tails .coinbig{color:#9AA5B0}
+.coinwhy{font-size:10px;color:var(--dim)}
+
+/* ---- rail ---- */
+.rail{border-left:1px solid var(--line);background:#141920;display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tab{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;padding:9px 0;cursor:pointer;color:var(--dim);letter-spacing:.12em;font-size:11px}
+.tab.on{color:var(--amber);border-bottom-color:var(--amber)}
+.logbox{flex:1;overflow:auto;padding:8px 10px;font-size:11.5px}
+.logline{display:flex;gap:8px;padding:1px 0;border-left:2px solid transparent;padding-left:6px}
+.lt{color:#4C5661;min-width:18px;text-align:right}
+.lx{flex:1;word-break:break-word}
+.logline.k-turn{border-left-color:var(--amber);margin-bottom:8px}
+.logline.k-turn .lx{color:var(--amber);letter-spacing:.06em}
+.logline.k-attack .lx{color:#E4E9EE;font-weight:700}
+.logline.k-dmg .lx{color:#E08C7E}
+.logline.k-ko{border-left-color:var(--red)}
+.logline.k-ko .lx{color:var(--red);font-weight:700}
+.logline.k-prize .lx{color:var(--amber)}
+.logline.k-status .lx{color:#C9A9D8}
+.logline.k-eff .lx{color:#7FC4D6}
+.logline.k-flip .lx{color:#8D97A2}
+.logline.k-trainer .lx{color:#A9B6C4}
+.logline.k-err .lx{color:var(--red)}
+.logline.k-win{border-left-color:var(--grn)}
+.logline.k-win .lx{color:var(--grn);font-weight:700}
+.logline.k-sys .lx{color:#5F6A75}
+
+.devbox,.covbox{flex:1;overflow:auto;padding:10px 12px}
+.grp{border:1px solid var(--line);border-radius:3px;padding:9px 10px;margin-bottom:10px;background:var(--panel)}
+.grphead{font-size:11px;letter-spacing:.1em;color:var(--dim);margin-bottom:8px}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.row label{min-width:64px;color:var(--dim);font-size:11px}
+.row.chk label{min-width:0;flex:1}
+.row input[type=text],.row select{flex:1;background:#141920;border:1px solid var(--line);border-radius:2px;padding:4px 6px}
+.row input[type=range]{flex:1}
+.dump{background:#0F141A;border:1px solid var(--line);border-radius:2px;padding:8px;font-size:10.5px;color:#9FAAB6;max-height:340px;overflow:auto;white-space:pre-wrap}
+.covlist{max-height:300px;overflow:auto;margin-bottom:10px}
+.covrow{display:flex;align-items:center;gap:7px;padding:2px 0;font-size:11px}
+.dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.dot.ok{background:var(--grn)} .dot.no{background:var(--red)}
+.cn{flex:1}
+.ci{color:#4C5661;font-size:10px}
+.verr{color:var(--red);font-size:10.5px;padding-left:14px}
+.vwarn{color:var(--amber);font-size:10.5px;padding-left:14px}
+
+/* ---- deck select ---- */
+.deckscreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.sheet.wide{max-width:900px}
+.deckgrp{margin-bottom:14px}
+.deckgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.deckcard{background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:10px 11px;cursor:pointer}
+.deckcard:hover{border-color:#55636F}
+.deckcard.on{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset;background:#2C3742}
+.dname{font-weight:700;font-size:14px;letter-spacing:.02em}
+.dtypes{display:flex;gap:3px;margin:6px 0}
+.dstat{font-size:10.5px;color:var(--dim)}
+.dstat.dim{color:#5A646E}
+
+/* ---- Computer Search picker ---- */
+.searchlist{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:3px;margin-bottom:12px}
+.searchrow{display:flex;align-items:center;gap:10px;padding:5px 9px;cursor:pointer;border-bottom:1px solid #202832}
+.searchrow:hover{background:#2C3742}
+.searchrow.k-pokemon{border-left:2px solid #6FAE5A}
+.searchrow.k-trainer{border-left:2px solid #9269A8}
+.searchrow.k-energy{border-left:2px solid #4E9BC4}
+.searchrow .sn{flex:1;font-weight:700;font-size:12px}
+.searchrow .sq{color:var(--amber);font-size:11px}
+.searchrow .ss{color:var(--dim);font-size:10.5px;min-width:110px;text-align:right}
+
+/* ---- overlays ---- */
+.overlay{position:fixed;inset:0;background:rgba(10,13,17,.82);display:flex;align-items:center;justify-content:center;padding:24px;z-index:20}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:20px 22px;max-width:820px;width:100%;max-height:88vh;overflow:auto}
+.sheet h2{margin:0 0 6px;font-size:16px;letter-spacing:.04em}
+.sheet p{margin:0 0 12px}
+.setupcur{border:1px solid var(--line);border-radius:3px;padding:8px 10px;margin-bottom:12px;background:var(--panel2)}
+.setupcur .lbl{font-size:11px;color:var(--dim)}
+.sheet .hand{margin-bottom:14px}
+.sheet .actionbar{border-top:0;padding-top:0}
+
+@media (max-width:1080px){
+  .wrap{grid-template-columns:1fr;height:auto}
+  .rail{border-left:0;border-top:1px solid var(--line);height:60vh}
+  .slot.act{min-width:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// AUTO-GENERATED from pokemon-tcg-data + P_TCG_Data.xlsx. Do not hand-edit.
+const CARD_DB = {
+  "base1-12": {"id": "base1-12", "name": "Ninetales", "set": "base1", "num": "12", "rarity": "Rare Holo", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Stage 1", "hp": 80, "type": "R", "evolvesFrom": "Vulpix", "wkType": "W", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Lure", "cost": "CC", "dmg": "", "text": "If your opponent has any Benched Pokémon, choose 1 of them and switch it with his or her Active Pokémon."}, {"name": "Fire Blast", "cost": "RRRR", "dmg": "80", "text": "Discard 1 Fire Energy card attached to Ninetales in order to use this attack."}], "power": null},
+  "base1-69": {"id": "base1-69", "name": "Weedle", "set": "base1", "num": "69", "rarity": "Common", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Basic", "hp": 40, "type": "G", "evolvesFrom": "", "wkType": "R", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Poison Sting", "cost": "G", "dmg": "10", "text": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."}], "power": null},
+  "base1-66": {"id": "base1-66", "name": "Tangela", "set": "base1", "num": "66", "rarity": "Common", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Basic", "hp": 50, "type": "G", "evolvesFrom": "", "wkType": "R", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 2, "attacks": [{"name": "Bind", "cost": "GC", "dmg": "20", "text": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."}, {"name": "Poisonpowder", "cost": "GGG", "dmg": "20", "text": "The Defending Pokémon is now Poisoned."}], "power": null},
+  "base1-55": {"id": "base1-55", "name": "Nidoran ♂", "set": "base1", "num": "55", "rarity": "Common", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 40, "type": "G", "evolvesFrom": "", "wkType": "P", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Horn Hazard", "cost": "G", "dmg": "30", "text": "Flip a coin. If tails, this attack does nothing."}], "power": null},
+  "base1-23": {"id": "base1-23", "name": "Arcanine", "set": "base1", "num": "23", "rarity": "Uncommon", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Stage 1", "hp": 100, "type": "R", "evolvesFrom": "Growlithe", "wkType": "W", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 3, "attacks": [{"name": "Flamethrower", "cost": "RRC", "dmg": "50", "text": "Discard 1 Fire Energy card attached to Arcanine in order to use this attack."}, {"name": "Take Down", "cost": "RRCC", "dmg": "80", "text": "Arcanine does 30 damage to itself."}], "power": null},
+  "base1-28": {"id": "base1-28", "name": "Growlithe", "set": "base1", "num": "28", "rarity": "Uncommon", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 60, "type": "R", "evolvesFrom": "", "wkType": "W", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Flare", "cost": "RC", "dmg": "20", "text": ""}], "power": null},
+  "base1-24": {"id": "base1-24", "name": "Charmeleon", "set": "base1", "num": "24", "rarity": "Uncommon", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Stage 1", "hp": 80, "type": "R", "evolvesFrom": "Charmander", "wkType": "W", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Slash", "cost": "CCC", "dmg": "30", "text": ""}, {"name": "Flamethrower", "cost": "RRC", "dmg": "50", "text": "Discard 1 Fire Energy card attached to Charmeleon in order to use this attack."}], "power": null},
+  "base1-68": {"id": "base1-68", "name": "Vulpix", "set": "base1", "num": "68", "rarity": "Common", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 50, "type": "R", "evolvesFrom": "", "wkType": "W", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Confuse Ray", "cost": "RR", "dmg": "10", "text": "Flip a coin. If heads, the Defending Pokémon is now Confused."}], "power": null},
+  "base1-46": {"id": "base1-46", "name": "Charmander", "set": "base1", "num": "46", "rarity": "Common", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Basic", "hp": 50, "type": "R", "evolvesFrom": "", "wkType": "W", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Scratch", "cost": "C", "dmg": "10", "text": ""}, {"name": "Ember", "cost": "RC", "dmg": "30", "text": "Discard 1 Fire Energy card attached to Charmander in order to use this attack."}], "power": null},
+  "base1-75": {"id": "base1-75", "name": "Lass", "set": "base1", "num": "75", "rarity": "Rare", "artist": "Ken Sugimori", "kind": "trainer", "sub": "Trainer", "text": "You and your opponent show each other your hands, then shuffle all the Trainer cards from your hands into your decks."},
+  "base1-84": {"id": "base1-84", "name": "PlusPower", "set": "base1", "num": "84", "rarity": "Uncommon", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Attach PlusPower to your Active Pokémon. At the end of your turn, discard PlusPower. If this Pokémon's attack does damage to the Defending Pokémon (after applying Weakness and Resistance), the attack does 10 more damage to the Defending Pokémon."},
+  "base1-81": {"id": "base1-81", "name": "Energy Retrieval", "set": "base1", "num": "81", "rarity": "Uncommon", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Trade 1 of the other cards in your hand for up to 2 basic Energy cards from your discard pile."},
+  "base1-95": {"id": "base1-95", "name": "Switch", "set": "base1", "num": "95", "rarity": "Common", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Switch 1 of your own Benched Pokémon with your Active Pokémon."},
+  "base1-94": {"id": "base1-94", "name": "Potion", "set": "base1", "num": "94", "rarity": "Common", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Remove up to 2 damage counters from 1 of your Pokémon."},
+  "base1-93": {"id": "base1-93", "name": "Gust of Wind", "set": "base1", "num": "93", "rarity": "Common", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Choose 1 of your opponent's Benched Pokémon and switch it with his or her Active Pokémon."},
+  "base1-92": {"id": "base1-92", "name": "Energy Removal", "set": "base1", "num": "92", "rarity": "Common", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Choose 1 Energy card attached to 1 of your opponent's Pokémon and discard it."},
+  "base1-99": {"id": "base1-99", "name": "Grass Energy", "set": "base1", "num": "99", "rarity": "", "artist": "Keiji Kinebuchi", "kind": "energy", "cls": "Basic", "provides": "G", "text": ""},
+  "base1-98": {"id": "base1-98", "name": "Fire Energy", "set": "base1", "num": "98", "rarity": "", "artist": "Keiji Kinebuchi", "kind": "energy", "cls": "Basic", "provides": "R", "text": ""},
+  "base1-6": {"id": "base1-6", "name": "Gyarados", "set": "base1", "num": "6", "rarity": "Rare Holo", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Stage 1", "hp": 100, "type": "W", "evolvesFrom": "Magikarp", "wkType": "G", "wkVal": "x2", "rsType": "F", "rsVal": "-30", "retreat": 3, "attacks": [{"name": "Dragon Rage", "cost": "WWW", "dmg": "50", "text": ""}, {"name": "Bubblebeam", "cost": "WWWW", "dmg": "40", "text": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."}], "power": null},
+  "base1-35": {"id": "base1-35", "name": "Magikarp", "set": "base1", "num": "35", "rarity": "Uncommon", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Basic", "hp": 30, "type": "W", "evolvesFrom": "", "wkType": "L", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Tackle", "cost": "C", "dmg": "10", "text": ""}, {"name": "Flail", "cost": "W", "dmg": "10×", "text": "Does 10 damage times the number of damage counters on Magikarp."}], "power": null},
+  "base1-64": {"id": "base1-64", "name": "Starmie", "set": "base1", "num": "64", "rarity": "Common", "artist": "Keiji Kinebuchi", "kind": "pokemon", "stage": "Stage 1", "hp": 60, "type": "W", "evolvesFrom": "Staryu", "wkType": "L", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Recover", "cost": "WW", "dmg": "", "text": "Discard 1 Water Energy card attached to Starmie in order to use this attack. Remove all damage counters from Starmie."}, {"name": "Star Freeze", "cost": "WCC", "dmg": "20", "text": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."}], "power": null},
+  "base1-65": {"id": "base1-65", "name": "Staryu", "set": "base1", "num": "65", "rarity": "Common", "artist": "Keiji Kinebuchi", "kind": "pokemon", "stage": "Basic", "hp": 40, "type": "W", "evolvesFrom": "", "wkType": "L", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Slap", "cost": "W", "dmg": "20", "text": ""}], "power": null},
+  "base1-17": {"id": "base1-17", "name": "Beedrill", "set": "base1", "num": "17", "rarity": "Rare", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Stage 2", "hp": 80, "type": "G", "evolvesFrom": "Kakuna", "wkType": "R", "wkVal": "x2", "rsType": "F", "rsVal": "-30", "retreat": 0, "attacks": [{"name": "Twineedle", "cost": "CCC", "dmg": "30×", "text": "Flip 2 coins. This attack does 30 damage times the number of heads."}, {"name": "Poison Sting", "cost": "GGG", "dmg": "40", "text": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."}], "power": null},
+  "base1-33": {"id": "base1-33", "name": "Kakuna", "set": "base1", "num": "33", "rarity": "Uncommon", "artist": "Keiji Kinebuchi", "kind": "pokemon", "stage": "Stage 1", "hp": 80, "type": "G", "evolvesFrom": "Weedle", "wkType": "R", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 2, "attacks": [{"name": "Stiffen", "cost": "CC", "dmg": "", "text": "Flip a coin. If heads, prevent all damage done to Kakuna during your opponent's next turn. (Any other effects of attacks still happen.)"}, {"name": "Poisonpowder", "cost": "GG", "dmg": "20", "text": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."}], "power": null},
+  "base1-30": {"id": "base1-30", "name": "Ivysaur", "set": "base1", "num": "30", "rarity": "Uncommon", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Stage 1", "hp": 60, "type": "G", "evolvesFrom": "Bulbasaur", "wkType": "R", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Vine Whip", "cost": "GCC", "dmg": "30", "text": ""}, {"name": "Poisonpowder", "cost": "GGG", "dmg": "20", "text": "The Defending Pokémon is now Poisoned."}], "power": null},
+  "base1-44": {"id": "base1-44", "name": "Bulbasaur", "set": "base1", "num": "44", "rarity": "Common", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Basic", "hp": 40, "type": "G", "evolvesFrom": "", "wkType": "R", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Leech Seed", "cost": "GG", "dmg": "20", "text": "Unless all damage from this attack is prevented, you may remove 1 damage counter from Bulbasaur."}], "power": null},
+  "base1-91": {"id": "base1-91", "name": "Bill", "set": "base1", "num": "91", "rarity": "Common", "artist": "Ken Sugimori", "kind": "trainer", "sub": "Trainer", "text": "Draw 2 cards."},
+  "base1-90": {"id": "base1-90", "name": "Super Potion", "set": "base1", "num": "90", "rarity": "Uncommon", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Discard 1 Energy card attached to your own Pokémon in order to remove up to 4 damage counters from that Pokémon."},
+  "base1-102": {"id": "base1-102", "name": "Water Energy", "set": "base1", "num": "102", "rarity": "", "artist": "Keiji Kinebuchi", "kind": "energy", "cls": "Basic", "provides": "W", "text": ""},
+  "base1-7": {"id": "base1-7", "name": "Hitmonchan", "set": "base1", "num": "7", "rarity": "Rare Holo", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 70, "type": "F", "evolvesFrom": "", "wkType": "P", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 2, "attacks": [{"name": "Jab", "cost": "F", "dmg": "20", "text": ""}, {"name": "Special Punch", "cost": "FFC", "dmg": "40", "text": ""}], "power": null},
+  "base1-27": {"id": "base1-27", "name": "Farfetch'd", "set": "base1", "num": "27", "rarity": "Uncommon", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 50, "type": "C", "evolvesFrom": "", "wkType": "L", "wkVal": "x2", "rsType": "F", "rsVal": "-30", "retreat": 1, "attacks": [{"name": "Leek Slap", "cost": "C", "dmg": "30", "text": "Flip a coin. If tails, this attack does nothing. Either way, you can't use this attack again as long as Farfetch'd stays in play (even putting Farfetch'd on the Bench won't let you use it again)."}, {"name": "Pot Smash", "cost": "CCC", "dmg": "30", "text": ""}], "power": null},
+  "base1-42": {"id": "base1-42", "name": "Wartortle", "set": "base1", "num": "42", "rarity": "Uncommon", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Stage 1", "hp": 70, "type": "W", "evolvesFrom": "Squirtle", "wkType": "L", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Withdraw", "cost": "WC", "dmg": "", "text": "Flip a coin. If heads, prevent all damage done to Wartortle during your opponent's next turn. (Any other effects of attacks still happen.)"}, {"name": "Bite", "cost": "WCC", "dmg": "40", "text": ""}], "power": null},
+  "base1-63": {"id": "base1-63", "name": "Squirtle", "set": "base1", "num": "63", "rarity": "Common", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Basic", "hp": 40, "type": "W", "evolvesFrom": "", "wkType": "L", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Bubble", "cost": "W", "dmg": "10", "text": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."}, {"name": "Withdraw", "cost": "WC", "dmg": "", "text": "Flip a coin. If heads, prevent all damage done to Squirtle during your opponent's next turn. (Any other effects of attacks still happen.)"}], "power": null},
+  "base1-56": {"id": "base1-56", "name": "Onix", "set": "base1", "num": "56", "rarity": "Common", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 90, "type": "F", "evolvesFrom": "", "wkType": "G", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 3, "attacks": [{"name": "Rock Throw", "cost": "F", "dmg": "10", "text": ""}, {"name": "Harden", "cost": "FF", "dmg": "", "text": "During your opponent's next turn, whenever 30 or less damage is done to Onix (after applying Weakness and Resistance), prevent that damage. (Any other effects of attacks still happen.)"}], "power": null},
+  "base1-62": {"id": "base1-62", "name": "Sandshrew", "set": "base1", "num": "62", "rarity": "Common", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 40, "type": "F", "evolvesFrom": "", "wkType": "G", "wkVal": "x2", "rsType": "L", "rsVal": "-30", "retreat": 1, "attacks": [{"name": "Sand-attack", "cost": "F", "dmg": "10", "text": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."}], "power": null},
+  "base1-34": {"id": "base1-34", "name": "Machoke", "set": "base1", "num": "34", "rarity": "Uncommon", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Stage 1", "hp": 80, "type": "F", "evolvesFrom": "Machop", "wkType": "P", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 3, "attacks": [{"name": "Karate Chop", "cost": "FFC", "dmg": "50-", "text": "Does 50 damage minus 10 damage for each damage counter on Machoke."}, {"name": "Submission", "cost": "FFCC", "dmg": "60", "text": "Machoke does 20 damage to itself."}], "power": null},
+  "base1-52": {"id": "base1-52", "name": "Machop", "set": "base1", "num": "52", "rarity": "Common", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Basic", "hp": 50, "type": "F", "evolvesFrom": "", "wkType": "P", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Low Kick", "cost": "F", "dmg": "20", "text": ""}], "power": null},
+  "base1-79": {"id": "base1-79", "name": "Super Energy Removal", "set": "base1", "num": "79", "rarity": "Rare", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Discard 1 Energy card attached to 1 of your Pokémon in order to choose 1 of your opponent's Pokémon and up to 2 Energy cards attached to it. Discard those Energy cards."},
+  "base1-88": {"id": "base1-88", "name": "Professor Oak", "set": "base1", "num": "88", "rarity": "Uncommon", "artist": "Ken Sugimori", "kind": "trainer", "sub": "Trainer", "text": "Discard your hand, then draw 7 cards."},
+  "base1-97": {"id": "base1-97", "name": "Fighting Energy", "set": "base1", "num": "97", "rarity": "", "artist": "Keiji Kinebuchi", "kind": "energy", "cls": "Basic", "provides": "F", "text": ""},
+  "base1-10": {"id": "base1-10", "name": "Mewtwo", "set": "base1", "num": "10", "rarity": "Rare Holo", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 60, "type": "P", "evolvesFrom": "", "wkType": "P", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 3, "attacks": [{"name": "Psychic", "cost": "PC", "dmg": "10+", "text": "Does 10 damage plus 10 more damage for each Energy card attached to the Defending Pokémon."}, {"name": "Barrier", "cost": "PP", "dmg": "", "text": "Discard 1 Psychic Energy card attached to Mewtwo in order to prevent all effects of attacks, including damage, done to Mewtwo during your opponent's next turn."}], "power": null},
+  "base1-32": {"id": "base1-32", "name": "Kadabra", "set": "base1", "num": "32", "rarity": "Uncommon", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Stage 1", "hp": 60, "type": "P", "evolvesFrom": "Abra", "wkType": "P", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 3, "attacks": [{"name": "Recover", "cost": "PP", "dmg": "", "text": "Discard 1 Psychic Energy card attached to Kadabra in order to use this attack. Remove all damage counters from Kadabra."}, {"name": "Super Psy", "cost": "PPC", "dmg": "50", "text": ""}], "power": null},
+  "base1-31": {"id": "base1-31", "name": "Jynx", "set": "base1", "num": "31", "rarity": "Uncommon", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 70, "type": "P", "evolvesFrom": "", "wkType": "P", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 2, "attacks": [{"name": "Doubleslap", "cost": "P", "dmg": "10×", "text": "Flip 2 coins. This attack does 10 damage times the number of heads."}, {"name": "Meditate", "cost": "PPC", "dmg": "20+", "text": "Does 20 damage plus 10 more damage for each damage counter on the Defending Pokémon."}], "power": null},
+  "base1-29": {"id": "base1-29", "name": "Haunter", "set": "base1", "num": "29", "rarity": "Uncommon", "artist": "Keiji Kinebuchi", "kind": "pokemon", "stage": "Stage 1", "hp": 60, "type": "P", "evolvesFrom": "Gastly", "wkType": "", "wkVal": "", "rsType": "F", "rsVal": "-30", "retreat": 1, "attacks": [{"name": "Hypnosis", "cost": "P", "dmg": "", "text": "The Defending Pokémon is now Asleep."}, {"name": "Dream Eater", "cost": "PP", "dmg": "50", "text": "You can't use this attack unless the Defending Pokémon is Asleep."}], "power": null},
+  "base1-50": {"id": "base1-50", "name": "Gastly", "set": "base1", "num": "50", "rarity": "Common", "artist": "Keiji Kinebuchi", "kind": "pokemon", "stage": "Basic", "hp": 30, "type": "P", "evolvesFrom": "", "wkType": "", "wkVal": "", "rsType": "F", "rsVal": "-30", "retreat": 0, "attacks": [{"name": "Sleeping Gas", "cost": "P", "dmg": "", "text": "Flip a coin. If heads, the Defending Pokémon is now Asleep."}, {"name": "Destiny Bond", "cost": "PC", "dmg": "", "text": "Discard 1 Psychic Energy card attached to Gastly in order to use this attack. If a Pokémon Knocks Out Gastly during your opponent's next turn, Knock Out that Pokémon."}], "power": null},
+  "base1-49": {"id": "base1-49", "name": "Drowzee", "set": "base1", "num": "49", "rarity": "Common", "artist": "Ken Sugimori", "kind": "pokemon", "stage": "Basic", "hp": 50, "type": "P", "evolvesFrom": "", "wkType": "P", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Pound", "cost": "C", "dmg": "10", "text": ""}, {"name": "Confuse Ray", "cost": "PP", "dmg": "10", "text": "Flip a coin. If heads, the Defending Pokémon is now Confused."}], "power": null},
+  "base1-43": {"id": "base1-43", "name": "Abra", "set": "base1", "num": "43", "rarity": "Common", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Basic", "hp": 30, "type": "P", "evolvesFrom": "", "wkType": "P", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 0, "attacks": [{"name": "Psyshock", "cost": "P", "dmg": "10", "text": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."}], "power": null},
+  "base1-58": {"id": "base1-58", "name": "Pikachu", "set": "base1", "num": "58", "rarity": "Common", "artist": "Mitsuhiro Arita", "kind": "pokemon", "stage": "Basic", "hp": 40, "type": "L", "evolvesFrom": "", "wkType": "F", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Gnaw", "cost": "C", "dmg": "10", "text": ""}, {"name": "Thunder Jolt", "cost": "LC", "dmg": "30", "text": "Flip a coin. If tails, Pikachu does 10 damage to itself."}], "power": null},
+  "base1-53": {"id": "base1-53", "name": "Magnemite", "set": "base1", "num": "53", "rarity": "Common", "artist": "Keiji Kinebuchi", "kind": "pokemon", "stage": "Basic", "hp": 40, "type": "L", "evolvesFrom": "", "wkType": "F", "wkVal": "x2", "rsType": "", "rsVal": "", "retreat": 1, "attacks": [{"name": "Thunder Wave", "cost": "L", "dmg": "10", "text": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."}, {"name": "Selfdestruct", "cost": "LC", "dmg": "40", "text": "Does 10 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Magnemite does 40 damage to itself."}], "power": null},
+  "base1-71": {"id": "base1-71", "name": "Computer Search", "set": "base1", "num": "71", "rarity": "Rare", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Discard 2 of the other cards from your hand in order to search your deck for any card and put it into your hand. Shuffle your deck afterward."},
+  "base1-80": {"id": "base1-80", "name": "Defender", "set": "base1", "num": "80", "rarity": "Uncommon", "artist": "Keiji Kinebuchi", "kind": "trainer", "sub": "Trainer", "text": "Attach Defender to 1 of your Pokémon. At the end of your opponent's next turn, discard Defender. Damage done to that Pokémon by attacks is reduced by 20 (after applying Weakness and Resistance)."},
+  "base1-100": {"id": "base1-100", "name": "Lightning Energy", "set": "base1", "num": "100", "rarity": "", "artist": "Keiji Kinebuchi", "kind": "energy", "cls": "Basic", "provides": "L", "text": ""},
+  "base1-101": {"id": "base1-101", "name": "Psychic Energy", "set": "base1", "num": "101", "rarity": "", "artist": "Keiji Kinebuchi", "kind": "energy", "cls": "Basic", "provides": "P", "text": ""},
+};
+
+const DECKS = {
+  "Brushfire": { name: "Brushfire", list: [
+    [1, "base1-12"],  // Ninetales
+    [4, "base1-69"],  // Weedle
+    [2, "base1-66"],  // Tangela
+    [4, "base1-55"],  // Nidoran ♂
+    [1, "base1-23"],  // Arcanine
+    [2, "base1-28"],  // Growlithe
+    [2, "base1-24"],  // Charmeleon
+    [2, "base1-68"],  // Vulpix
+    [4, "base1-46"],  // Charmander
+    [1, "base1-75"],  // Lass
+    [1, "base1-84"],  // PlusPower
+    [2, "base1-81"],  // Energy Retrieval
+    [1, "base1-95"],  // Switch
+    [3, "base1-94"],  // Potion
+    [1, "base1-93"],  // Gust of Wind
+    [1, "base1-92"],  // Energy Removal
+    [10, "base1-99"],  // Grass Energy
+    [18, "base1-98"],  // Fire Energy
+  ]},
+  "Overgrowth": { name: "Overgrowth", list: [
+    [1, "base1-6"],  // Gyarados
+    [2, "base1-35"],  // Magikarp
+    [3, "base1-64"],  // Starmie
+    [4, "base1-65"],  // Staryu
+    [1, "base1-17"],  // Beedrill
+    [2, "base1-33"],  // Kakuna
+    [2, "base1-30"],  // Ivysaur
+    [4, "base1-69"],  // Weedle
+    [4, "base1-44"],  // Bulbasaur
+    [1, "base1-94"],  // Potion
+    [2, "base1-91"],  // Bill
+    [2, "base1-90"],  // Super Potion
+    [2, "base1-95"],  // Switch
+    [2, "base1-93"],  // Gust of Wind
+    [12, "base1-102"],  // Water Energy
+    [16, "base1-99"],  // Grass Energy
+  ]},
+  "Blackout": { name: "Blackout", list: [
+    [1, "base1-7"],  // Hitmonchan
+    [2, "base1-27"],  // Farfetch'd
+    [2, "base1-42"],  // Wartortle
+    [4, "base1-63"],  // Squirtle
+    [3, "base1-65"],  // Staryu
+    [3, "base1-56"],  // Onix
+    [3, "base1-62"],  // Sandshrew
+    [2, "base1-34"],  // Machoke
+    [4, "base1-52"],  // Machop
+    [1, "base1-79"],  // Super Energy Removal
+    [1, "base1-84"],  // PlusPower
+    [1, "base1-88"],  // Professor Oak
+    [1, "base1-93"],  // Gust of Wind
+    [4, "base1-92"],  // Energy Removal
+    [16, "base1-97"],  // Fighting Energy
+    [12, "base1-102"],  // Water Energy
+  ]},
+  "Zap": { name: "Zap", list: [
+    [1, "base1-10"],  // Mewtwo
+    [1, "base1-32"],  // Kadabra
+    [2, "base1-31"],  // Jynx
+    [2, "base1-29"],  // Haunter
+    [3, "base1-50"],  // Gastly
+    [2, "base1-49"],  // Drowzee
+    [3, "base1-43"],  // Abra
+    [4, "base1-58"],  // Pikachu
+    [3, "base1-53"],  // Magnemite
+    [1, "base1-71"],  // Computer Search
+    [1, "base1-80"],  // Defender
+    [1, "base1-90"],  // Super Potion
+    [1, "base1-88"],  // Professor Oak
+    [2, "base1-95"],  // Switch
+    [1, "base1-94"],  // Potion
+    [2, "base1-93"],  // Gust of Wind
+    [2, "base1-91"],  // Bill
+    [12, "base1-100"],  // Lightning Energy
+    [16, "base1-101"],  // Psychic Energy
+  ]},
+};
+
+
+
+// EFFECT SCRIPTS — hand-authored. Each card_id maps to its implemented behaviour.
+// Attacks: `a` is an array parallel to CARD_DB[id].attacks; each entry is a verb list.
+// Trainers/Energy: `t` is a verb list.
+// A card absent from this table, or with a null entry, is NOT IMPLEMENTED and the
+// deck validator will refuse to build a deck containing it.
+//
+// VERB REFERENCE
+//   cost phase (checked for legality, paid on use):
+//     COST_DISCARD_ENERGY {n, t}   discard n Energy providing type t, attached to self
+//     ONCE_WHILE_IN_PLAY           this attack may be used only once per stay in play
+//   damage-shaping (replaces/gates the printed damage):
+//     FLIP_OR_NOTHING              flip; tails => whole attack does nothing
+//     DMG_PER_HEAD {coins, per}    flip N coins; damage = per * heads
+//     DMG_PER_COUNTER_SELF {per}   damage = per * (own damage / 10)
+//     DMG_MINUS_PER_COUNTER_SELF {base, per}
+//                                  damage = base - per * (own damage / 10), floored at 0
+//     DMG_PER_DEF_ENERGY {base, per}   base + per * Energy attached to the defender
+//     DMG_PER_DEF_COUNTER {base, per}  base + per * damage counters on the defender
+//     REQUIRE_DEF_STATUS {s, label}    attack is illegal unless the defender has status s
+//   post-damage:
+//     STATUS {s}                   apply status to defender
+//     STATUS_ON_FLIP {s}           flip; heads => apply status to defender
+//     RECOIL {n}                   self takes n damage (no weakness/resistance)
+//     HEAL_SELF_ALL                remove all damage counters from self
+//     HEAL_SELF_IF_DAMAGED {n}     remove n counters from self unless all damage prevented
+//     PREVENT_ALL_DMG_SELF_ON_FLIP flip; heads => prevent all damage to self during
+//                                  opponent's next turn
+//     HARDEN {threshold}           prevent damage to self of `threshold` or less
+//                                  during opponent's next turn (after W/R)
+//     JAM_DEFENDER {label}         defender must flip to attack next turn or it fails
+//     BARRIER                      prevent ALL effects of attacks (incl. damage) on self
+//                                  during the opponent's next turn
+//     DESTINY_BOND                 if something KOs self during the opponent's next
+//                                  turn, that Pokemon is Knocked Out too
+//     RECOIL_ON_FLIP {n, label}    flip; TAILS => self takes n damage
+//     BENCH_SPLASH {n}             n damage to every Benched Pokemon on BOTH sides,
+//                                  ignoring Weakness/Resistance
+//     SWITCH_DEFENDER_CHOOSE       attacker picks one of defender's benched; swap to active
+//   trainers:
+//     T_DRAW {n} / T_HEAL {n} / T_DISCARD_ENERGY_THEN_HEAL {n} / T_SWITCH_OWN
+//     T_SWITCH_OPPONENT / T_DISCARD_OPP_ENERGY / T_PLUSPOWER / T_LASS
+//     T_ENERGY_RETRIEVAL {n} / T_PROFESSOR_OAK / T_SUPER_ENERGY_REMOVAL
+//     T_DEFENDER / T_COMPUTER_SEARCH
+
+const EFFECTS = {
+
+  // ---- Brushfire ----
+  'base1-12': { a: [                                   // Ninetales
+    [{ v: 'SWITCH_DEFENDER_CHOOSE' }],                 //   Lure
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'R' }],      //   Fire Blast
+  ]},
+  'base1-69': { a: [                                   // Weedle
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],          //   Poison Sting
+  ]},
+  'base1-66': { a: [                                   // Tangela
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Bind
+    [{ v: 'STATUS', s: 'Poisoned' }],                  //   Poisonpowder
+  ]},
+  'base1-55': { a: [                                   // Nidoran M
+    [{ v: 'FLIP_OR_NOTHING' }],                        //   Horn Hazard
+  ]},
+  'base1-23': { a: [                                   // Arcanine
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'R' }],      //   Flamethrower
+    [{ v: 'RECOIL', n: 30 }],                          //   Take Down
+  ]},
+  'base1-28': { a: [ [] ]},                            // Growlithe / Flare
+  'base1-24': { a: [                                   // Charmeleon
+    [],                                                //   Slash
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'R' }],      //   Flamethrower
+  ]},
+  'base1-68': { a: [                                   // Vulpix
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Confuse Ray
+  ]},
+  'base1-46': { a: [                                   // Charmander
+    [],                                                //   Scratch
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'R' }],      //   Ember
+  ]},
+
+  // ---- Overgrowth ----
+  'base1-6': { a: [                                    // Gyarados
+    [],                                                //   Dragon Rage
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Bubblebeam
+  ]},
+  'base1-35': { a: [                                   // Magikarp
+    [],                                                //   Tackle
+    [{ v: 'DMG_PER_COUNTER_SELF', per: 10 }],          //   Flail
+  ]},
+  'base1-64': { a: [                                   // Starmie
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'W' },       //   Recover
+     { v: 'HEAL_SELF_ALL' }],
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Star Freeze
+  ]},
+  'base1-65': { a: [ [] ]},                            // Staryu / Slap
+  'base1-17': { a: [                                   // Beedrill
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 30 }],        //   Twineedle
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],          //   Poison Sting
+  ]},
+  'base1-33': { a: [                                   // Kakuna
+    [{ v: 'PREVENT_ALL_DMG_SELF_ON_FLIP' }],           //   Stiffen
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],          //   Poisonpowder
+  ]},
+  'base1-30': { a: [                                   // Ivysaur
+    [],                                                //   Vine Whip
+    [{ v: 'STATUS', s: 'Poisoned' }],                  //   Poisonpowder
+  ]},
+  'base1-44': { a: [                                   // Bulbasaur
+    [{ v: 'HEAL_SELF_IF_DAMAGED', n: 1 }],             //   Leech Seed
+  ]},
+
+  // ---- Trainers ----
+  'base1-75': { t: [{ v: 'T_LASS' }] },
+  'base1-84': { t: [{ v: 'T_PLUSPOWER' }] },
+  'base1-81': { t: [{ v: 'T_ENERGY_RETRIEVAL', n: 2 }] },
+  'base1-95': { t: [{ v: 'T_SWITCH_OWN' }] },
+  'base1-94': { t: [{ v: 'T_HEAL', n: 2 }] },
+  'base1-93': { t: [{ v: 'T_SWITCH_OPPONENT' }] },
+  'base1-92': { t: [{ v: 'T_DISCARD_OPP_ENERGY' }] },
+  'base1-91': { t: [{ v: 'T_DRAW', n: 2 }] },
+  'base1-90': { t: [{ v: 'T_DISCARD_ENERGY_THEN_HEAL', n: 4 }] },
+
+  // ---- Blackout ----
+  'base1-7': { a: [ [], [] ]},                         // Hitmonchan: Jab / Special Punch
+  'base1-52': { a: [ [] ]},                            // Machop: Low Kick
+  'base1-34': { a: [                                   // Machoke
+    [{ v: 'DMG_MINUS_PER_COUNTER_SELF', base: 50, per: 10 }],  //   Karate Chop
+    [{ v: 'RECOIL', n: 20 }],                                   //   Submission
+  ]},
+  'base1-63': { a: [                                   // Squirtle
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Bubble
+    [{ v: 'PREVENT_ALL_DMG_SELF_ON_FLIP' }],           //   Withdraw
+  ]},
+  'base1-42': { a: [                                   // Wartortle
+    [{ v: 'PREVENT_ALL_DMG_SELF_ON_FLIP' }],           //   Withdraw
+    [],                                                //   Bite
+  ]},
+  'base1-27': { a: [                                   // Farfetch'd
+    [{ v: 'FLIP_OR_NOTHING' }, { v: 'ONCE_WHILE_IN_PLAY' }],   //   Leek Slap
+    [],                                                //   Pot Smash
+  ]},
+  'base1-56': { a: [                                   // Onix
+    [],                                                //   Rock Throw
+    [{ v: 'HARDEN', threshold: 30 }],                  //   Harden
+  ]},
+  'base1-62': { a: [                                   // Sandshrew
+    [{ v: 'JAM_DEFENDER', label: 'Sand-attack' }],     //   Sand-attack
+  ]},
+  'base1-79': { t: [{ v: 'T_SUPER_ENERGY_REMOVAL' }] },
+  'base1-88': { t: [{ v: 'T_PROFESSOR_OAK' }] },
+  'base1-97': { t: [] },                               // Fighting Energy
+
+  // ---- Zap! ----
+  'base1-10': { a: [                                   // Mewtwo
+    [{ v: 'DMG_PER_DEF_ENERGY', base: 10, per: 10 }],  //   Psychic
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'P' },       //   Barrier
+     { v: 'BARRIER' }],
+  ]},
+  'base1-29': { a: [                                   // Haunter
+    [{ v: 'STATUS', s: 'Asleep' }],                    //   Hypnosis
+    [{ v: 'REQUIRE_DEF_STATUS', s: 'asleep', label: 'Asleep' }],  // Dream Eater
+  ]},
+  'base1-50': { a: [                                   // Gastly
+    [{ v: 'STATUS_ON_FLIP', s: 'Asleep' }],            //   Sleeping Gas
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'P' },       //   Destiny Bond
+     { v: 'DESTINY_BOND' }],
+  ]},
+  'base1-31': { a: [                                   // Jynx
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 10 }],        //   Doubleslap
+    [{ v: 'DMG_PER_DEF_COUNTER', base: 20, per: 10 }], //   Meditate
+  ]},
+  'base1-32': { a: [                                   // Kadabra
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'P' },       //   Recover
+     { v: 'HEAL_SELF_ALL' }],
+    [],                                                //   Super Psy
+  ]},
+  'base1-43': { a: [                                   // Abra
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Psyshock
+  ]},
+  'base1-49': { a: [                                   // Drowzee
+    [],                                                //   Pound
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Confuse Ray
+  ]},
+  'base1-53': { a: [                                   // Magnemite
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Thunder Wave
+    [{ v: 'BENCH_SPLASH', n: 10 },                     //   Selfdestruct
+     { v: 'RECOIL', n: 40 }],
+  ]},
+  'base1-58': { a: [                                   // Pikachu
+    [],                                                //   Gnaw
+    [{ v: 'RECOIL_ON_FLIP', n: 10, label: 'avoid recoil?' }],  // Thunder Jolt
+  ]},
+  'base1-71': { t: [{ v: 'T_COMPUTER_SEARCH' }] },
+  'base1-80': { t: [{ v: 'T_DEFENDER' }] },
+  'base1-100': { t: [] },                              // Lightning Energy
+  'base1-101': { t: [] },                              // Psychic Energy
+
+  // ---- Basic Energy (no scripted behaviour needed) ----
+  'base1-99': { t: [] },
+  'base1-98': { t: [] },
+  'base1-102': { t: [] },
+};
+
+
+// ============================================================================
+// AI — expected-value play.
+//
+// The core idea: never judge an attack by its printed damage. Enumerate the
+// coin-flip outcomes into a probability distribution, run each outcome through
+// the ENGINE's own damage calculation, and score the result. That way the bot
+// values Twineedle at its true average, understands that Bubblebeam's paralysis
+// is worth more than 10 extra damage, and refuses to attack into a Barrier.
+//
+// Scoring is in abstract "points". Roughly: 1 point ~= 1 damage. A Knock Out is
+// worth much more than the damage it took, because Prizes are the win condition.
+// ============================================================================
+
+const AI_WEIGHTS = {
+  damage: 1.0,          // per point of expected damage dealt
+  knockout: 55,         // landing a KO (on top of the damage)
+  lastPrize: 240,       // KO that wins the game outright
+  selfDamage: 0.8,      // per point of expected damage to self
+  selfKO: 70,           // killing your own Pokemon
+  benchDamageFoe: 0.7,  // splash onto their bench
+  benchDamageMine: 0.9, // splash onto mine
+  paralyze: 26,         // costs them a turn
+  sleep: 22,            // ~50% they stay down, plus they can't attack
+  confuse: 15,          // ~50% their attack fails and they self-hit
+  poison: 12,           // 10/turn until they switch
+  energyDiscard: 7,     // per Energy burned as an attack cost
+  drag: 14,             // forcing a benched Pokemon into the Active spot
+  shieldSelf: 20,       // Stiffen / Withdraw / Barrier
+  destinyBond: 18,      // arming Destiny Bond when death looks likely
+  attachEnable: 1.0,    // scale on "how much better my attacks get"
+  attachBuild: 3.5,     // progress toward an attack we can't afford yet
+  evolveHP: 0.45,       // per point of max-HP gained
+  evolveBase: 16,       // evolving is good almost always
+  benchFirst: 26,       // first spare Basic on the bench is important
+  benchMore: 7,         // each additional one
+  benchTooMany: 2,
+  retreatBase: -6,      // retreating costs tempo and Energy
+  dangerSwap: 22,       // ...but escaping a lethal threat is worth it
+  drawCard: 5,          // per card drawn
+  healPer10: 3.5,
+  stripEnergy: 11,      // per Energy removed from the opponent
+  threshold: 0.5,       // don't bother with actions scoring below this
+};
+
+// Local copy: ai.js is concatenated BEFORE engine.js in the bundle, so it
+// cannot rely on engine-scope helpers being defined yet.
+function aiParseDamage(d) {
+  if (!d) return 0;
+  const m = String(d).match(/^(\d+)/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+const STATUS_VALUE = { Paralyzed: 'paralyze', Asleep: 'sleep', Confused: 'confuse', Poisoned: 'poison' };
+
+class AI {
+  constructor(engine, opts = {}) {
+    this.E = engine;
+    this.W = Object.assign({}, AI_WEIGHTS, opts.weights || {});
+    this.mode = opts.mode || 'expert';
+  }
+
+  get db() { return this.E.db; }
+  get eff() { return this.E.effects; }
+  top(slot) { return this.db[slot.stack[slot.stack.length - 1].id]; }
+  script(slot, idx) {
+    const c = this.top(slot);
+    const e = this.eff[c.id];
+    return (e && e.a && e.a[idx]) || [];
+  }
+  remainingHP(slot) { return this.top(slot).hp - slot.dmg; }
+
+  // ---------------------------------------------------------------- forecast
+  // Enumerate coin-flip outcomes for an attack into a probability distribution.
+  // Returns raw (pre-Weakness) damage outcomes plus effect probabilities.
+  rawOutcomes(atkSlot, defSlot, idx) {
+    const c = this.top(atkSlot);
+    const atk = (c.attacks || [])[idx];
+    if (!atk) return { outcomes: [], statuses: {}, selfDmg: 0, energyCost: 0, flags: {} };
+    const script = this.script(atkSlot, idx);
+
+    let base = aiParseDamage(atk.dmg);
+    let outcomes = [{ p: 1, dmg: base }];
+    const statuses = {};
+    const flags = {};
+    let selfDmg = 0, energyCost = 0;
+
+    const split = (fn) => {
+      const next = [];
+      for (const o of outcomes) for (const [p2, d2] of fn(o.dmg)) next.push({ p: o.p * p2, dmg: d2 });
+      outcomes = next;
+    };
+
+    for (const v of script) {
+      switch (v.v) {
+        case 'COST_DISCARD_ENERGY': energyCost += v.n; break;
+        case 'FLIP_OR_NOTHING':
+          split(() => [[0.5, 0], [0.5, base]]);
+          flags.halfWhiff = true;
+          break;
+        case 'DMG_PER_HEAD': {
+          const n = v.coins, dist = [];
+          for (let h = 0; h <= n; h++) {
+            let ways = 1;
+            for (let k = 0; k < h; k++) ways = ways * (n - k) / (k + 1);
+            dist.push([ways / Math.pow(2, n), v.per * h]);
+          }
+          split(() => dist);
+          break;
+        }
+        case 'DMG_PER_COUNTER_SELF':
+          split(() => [[1, v.per * Math.floor(atkSlot.dmg / 10)]]); break;
+        case 'DMG_MINUS_PER_COUNTER_SELF':
+          split(() => [[1, Math.max(0, v.base - v.per * Math.floor(atkSlot.dmg / 10))]]); break;
+        case 'DMG_PER_DEF_ENERGY':
+          split(() => [[1, v.base + v.per * (defSlot ? defSlot.energy.length : 0)]]); break;
+        case 'DMG_PER_DEF_COUNTER':
+          split(() => [[1, v.base + v.per * (defSlot ? Math.floor(defSlot.dmg / 10) : 0)]]); break;
+        case 'STATUS': statuses[v.s] = 1; break;
+        case 'STATUS_ON_FLIP': statuses[v.s] = 0.5; break;
+        case 'RECOIL': selfDmg += v.n; break;
+        case 'RECOIL_ON_FLIP': selfDmg += v.n * 0.5; break;
+        case 'BENCH_SPLASH': flags.benchSplash = v.n; break;
+        case 'SWITCH_DEFENDER_CHOOSE': flags.drag = true; break;
+        case 'PREVENT_ALL_DMG_SELF_ON_FLIP': flags.shield = 0.5; break;
+        case 'BARRIER': flags.shield = 1; break;
+        case 'HARDEN': flags.harden = v.threshold; break;
+        case 'DESTINY_BOND': flags.destinyBond = true; break;
+        case 'JAM_DEFENDER': flags.jam = true; break;
+        case 'HEAL_SELF_ALL': flags.healAll = true; break;
+        case 'HEAL_SELF_IF_DAMAGED': flags.heal = v.n; break;
+        case 'ONCE_WHILE_IN_PLAY': flags.oncePerStay = true; break;
+      }
+    }
+    // FLIP_OR_NOTHING suppresses the whole attack, statuses included.
+    if (flags.halfWhiff) for (const k in statuses) statuses[k] *= 0.5;
+    return { outcomes, statuses, selfDmg, energyCost, flags };
+  }
+
+  // Run each raw outcome through the engine's own damage maths.
+  forecast(pi, idx) {
+    const E = this.E;
+    const me = E.state.players[pi], you = E.state.players[1 - pi];
+    const atkSlot = me.active, defSlot = you.active;
+    if (!atkSlot || !defSlot) return null;
+    const raw = this.rawOutcomes(atkSlot, defSlot, idx);
+    const hpLeft = this.remainingHP(defSlot);
+    let expDmg = 0, pLethal = 0;
+    for (const o of raw.outcomes) {
+      const r = E.computeDamage(atkSlot, defSlot, o.dmg);
+      expDmg += o.p * r.dmg;
+      if (r.dmg >= hpLeft) pLethal += o.p;
+    }
+    const blocked = E.effectsBlocked(defSlot);
+    return { expDmg, pLethal, hpLeft, blocked, ...raw };
+  }
+
+  // ------------------------------------------------------------ attack score
+  scoreAttack(pi, idx) {
+    const W = this.W, E = this.E;
+    const f = this.forecast(pi, idx);
+    if (!f) return -Infinity;
+    const me = E.state.players[pi], you = E.state.players[1 - pi];
+    const atkSlot = me.active;
+
+    let s = f.expDmg * W.damage;
+    if (f.pLethal > 0) {
+      s += f.pLethal * (you.prizes.length <= 1 ? W.lastPrize : W.knockout);
+    }
+
+    // status conditions - suppressed entirely if they're behind a Barrier
+    if (!f.blocked) {
+      for (const st in f.statuses) {
+        const key = STATUS_VALUE[st];
+        if (key) s += f.statuses[st] * W[key];
+      }
+      if (f.flags.jam) s += W.confuse;          // same shape as Confusion
+      if (f.flags.drag && you.bench.length) s += W.drag;
+    }
+
+    // self-harm
+    if (f.selfDmg > 0) {
+      s -= f.selfDmg * W.selfDamage;
+      if (atkSlot.dmg + f.selfDmg >= this.top(atkSlot).hp) s -= W.selfKO;
+    }
+    if (f.energyCost > 0) s -= f.energyCost * W.energyDiscard;
+
+    // bench splash cuts both ways
+    if (f.flags.benchSplash) {
+      const n = f.flags.benchSplash;
+      for (const b of you.bench) {
+        s += Math.min(n, this.remainingHP(b)) * W.benchDamageFoe;
+        if (this.remainingHP(b) <= n) s += W.knockout * 0.6;
+      }
+      for (const b of me.bench) {
+        s -= Math.min(n, this.remainingHP(b)) * W.benchDamageMine;
+        if (this.remainingHP(b) <= n) s -= W.selfKO * 0.6;
+      }
+    }
+
+    // defensive plays are worth more the more danger we're in
+    const danger = this.incomingThreat(pi);
+    const frail = danger >= this.remainingHP(atkSlot);
+    if (f.flags.shield) s += f.flags.shield * W.shieldSelf * (frail ? 1.6 : 0.7);
+    if (f.flags.harden) s += W.shieldSelf * (danger <= f.flags.harden ? 1.2 : 0.3);
+    if (f.flags.destinyBond) s += frail ? W.destinyBond * 1.8 : W.destinyBond * 0.3;
+    if (f.flags.healAll) s += Math.min(atkSlot.dmg, this.top(atkSlot).hp) / 10 * W.healPer10;
+    if (f.flags.heal) s += Math.min(f.flags.heal * 10, atkSlot.dmg) / 10 * W.healPer10;
+
+    // don't burn a once-per-stay attack on a whiff-heavy turn for nothing
+    if (f.flags.oncePerStay && f.expDmg <= 0 && !Object.keys(f.statuses).length) s -= 10;
+
+    return s;
+  }
+
+  // Biggest single hit the opponent's Active could land on ours right now.
+  incomingThreat(pi) {
+    const E = this.E;
+    const me = E.state.players[pi], you = E.state.players[1 - pi];
+    if (!you.active || !me.active) return 0;
+    let worst = 0;
+    const c = this.top(you.active);
+    (c.attacks || []).forEach((a, i) => {
+      if (!E.costSatisfied(you.active, a.cost)) return;
+      const raw = this.rawOutcomes(you.active, me.active, i);
+      for (const o of raw.outcomes) {
+        const r = E.computeDamage(you.active, me.active, o.dmg);
+        if (r.dmg > worst) worst = r.dmg;
+      }
+    });
+    return worst;
+  }
+
+  bestAttackScore(pi) {
+    const E = this.E, p = E.state.players[pi];
+    if (!p.active || !E.canAttackAtAll(pi)) return { score: -Infinity, idx: -1 };
+    const c = this.top(p.active);
+    let best = { score: -Infinity, idx: -1 };
+    (c.attacks || []).forEach((a, i) => {
+      if (!E.canUseAttack(pi, i).ok) return;
+      const s = this.scoreAttack(pi, i);
+      if (s > best.score) best = { score: s, idx: i };
+    });
+    return best;
+  }
+
+  // How good is this slot's best attack if we pretend `extra` Energy is on it?
+  // Used to decide where an Energy attachment does the most good.
+  potential(pi, slot, extraEnergyId) {
+    const E = this.E;
+    const c = this.top(slot);
+    const pool = slot.energy.map(e => (this.db[e.id].provides || 'C'));
+    if (extraEnergyId) pool.push(this.db[extraEnergyId].provides || 'C');
+    let best = -Infinity, bestShort = 99;
+    (c.attacks || []).forEach((a, i) => {
+      const need = a.cost.split('').filter(x => x !== 'C');
+      const generic = a.cost.length - need.length;
+      const used = new Array(pool.length).fill(false);
+      let short = 0;
+      for (const t of need) {
+        const k = pool.findIndex((x, j) => !used[j] && x === t);
+        if (k === -1) short++; else used[k] = true;
+      }
+      const spare = pool.filter((x, j) => !used[j]).length;
+      if (spare < generic) short += generic - spare;
+      const isActive = E.state.players[pi].active === slot;
+      let val;
+      if (short === 0) {
+        val = isActive ? this.scoreAttackHypothetical(pi, slot, i) : aiParseDamage(a.dmg);
+      } else {
+        val = -1;
+      }
+      if (short < bestShort) bestShort = short;
+      if (val > best) best = val;
+    });
+    return { best: best === -Infinity ? 0 : best, short: bestShort };
+  }
+
+  // Score an attack as if `slot` were Active (used for bench planning).
+  scoreAttackHypothetical(pi, slot, idx) {
+    const E = this.E, p = E.state.players[pi];
+    if (p.active === slot) {
+      const chk = E.canUseAttack(pi, idx);
+      return chk.ok ? this.scoreAttack(pi, idx) : aiParseDamage(this.top(slot).attacks[idx].dmg);
+    }
+    return aiParseDamage(this.top(slot).attacks[idx].dmg);
+  }
+
+  // ------------------------------------------------------------ action score
+  scoreAction(pi, a) {
+    const E = this.E, W = this.W;
+    const me = E.state.players[pi], you = E.state.players[1 - pi];
+
+    switch (a.t) {
+      case 'attack': return this.scoreAttack(pi, a.idx);
+
+      case 'attachEnergy': {
+        const slot = E.allSlots(pi).find(x => x.uid === a.target);
+        if (!slot) return -Infinity;
+        const inst = me.hand[a.hand];
+        const before = this.potential(pi, slot, null);
+        const after = this.potential(pi, slot, inst.id);
+        let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
+        if (after.short < before.short) s += W.attachBuild * (before.short - after.short) * 2;
+        else if (after.best > before.best) s += W.attachBuild;
+        else s += 0.4;
+        if (slot === me.active) s += 4;                 // the Active uses it soonest
+        else s += 1;
+        return s;
+      }
+
+      case 'evolve': {
+        const slot = E.allSlots(pi).find(x => x.uid === a.target);
+        if (!slot) return -Infinity;
+        const oldC = this.top(slot), newC = this.db[me.hand[a.hand].id];
+        let s = W.evolveBase + Math.max(0, newC.hp - oldC.hp) * W.evolveHP;
+        if (slot === me.active) s += 6;
+        // evolving also wipes Special Conditions
+        const st = slot.status;
+        if (st.asleep || st.paralyzed || st.confused) s += 14;
+        if (st.poisoned) s += 8;
+        return s;
+      }
+
+      case 'playBasic': {
+        const n = me.bench.length;
+        if (n === 0) return W.benchFirst;
+        if (n < 3) return W.benchMore;
+        return W.benchTooMany;
+      }
+
+      case 'retreat': {
+        if (!me.active) return -Infinity;
+        const b = me.bench[a.bench];
+        if (!b) return -Infinity;
+        const cost = this.top(me.active).retreat;
+        const danger = this.incomingThreat(pi);
+        const dying = danger >= this.remainingHP(me.active);
+        const mineNow = this.bestAttackScore(pi).score;
+        const theirs = this.potential(pi, b, null);
+        let s = W.retreatBase - cost * 4;
+        if (dying) s += W.dangerSwap;
+        if (mineNow < 0 || mineNow === -Infinity) s += 10;
+        if (theirs.short === 0) s += 8;
+        // never retreat into something that dies instantly
+        if (danger >= this.remainingHP(b)) s -= 18;
+        return s;
+      }
+
+      case 'promote': {
+        const b = me.bench[a.bench];
+        if (!b) return -Infinity;
+        const pot = this.potential(pi, b, null);
+        return this.remainingHP(b) * 0.35 + (pot.short === 0 ? 25 : 0) + pot.best * 0.2;
+      }
+
+      case 'playTrainer': return this.scoreTrainer(pi, a);
+      case 'pass': return 0;
+      default: return -Infinity;
+    }
+  }
+
+  // ----------------------------------------------------------- trainer score
+  // Also fills in a.opts, so the engine never has to pick targets at random.
+  scoreTrainer(pi, a) {
+    const E = this.E, W = this.W;
+    const me = E.state.players[pi], you = E.state.players[1 - pi];
+    const inst = me.hand[a.hand];
+    const script = (this.eff[inst.id] && this.eff[inst.id].t) || [];
+    let s = 0;
+    a.opts = a.opts || {};
+
+    for (const v of script) {
+      switch (v.v) {
+        case 'T_DRAW': s += v.n * W.drawCard; break;
+
+        case 'T_PROFESSOR_OAK': {
+          // good when the hand is dead, terrible when it's full of gas
+          const keep = me.hand.filter(x => x.uid !== inst.uid).length;
+          s += (7 - keep) * W.drawCard;
+          if (keep >= 6) s -= 30;
+          break;
+        }
+
+        case 'T_HEAL': {
+          const cands = E.allSlots(pi).filter(x => x.dmg > 0);
+          if (!cands.length) return -Infinity;
+          let best = cands[0];
+          for (const c of cands) if (c.dmg > best.dmg) best = c;
+          a.opts.targetUid = best.uid;
+          s += Math.min(v.n * 10, best.dmg) / 10 * W.healPer10;
+          if (best === me.active && this.incomingThreat(pi) >= this.remainingHP(best)) s += 12;
+          break;
+        }
+
+        case 'T_DISCARD_ENERGY_THEN_HEAL': {
+          const cands = E.allSlots(pi).filter(x => x.dmg > 0 && x.energy.length);
+          if (!cands.length) return -Infinity;
+          let best = cands[0];
+          for (const c of cands) if (c.dmg > best.dmg) best = c;
+          a.opts.targetUid = best.uid;
+          s += Math.min(v.n * 10, best.dmg) / 10 * W.healPer10 - W.energyDiscard;
+          break;
+        }
+
+        case 'T_SWITCH_OWN': {
+          if (!me.bench.length || !me.active) return -Infinity;
+          let bestI = -1, bestV = -Infinity;
+          me.bench.forEach((b, i) => {
+            const pot = this.potential(pi, b, null);
+            const v2 = this.remainingHP(b) * 0.3 + (pot.short === 0 ? 20 : 0);
+            if (v2 > bestV) { bestV = v2; bestI = i; }
+          });
+          a.opts.bench = bestI;
+          const danger = this.incomingThreat(pi);
+          s += (danger >= this.remainingHP(me.active)) ? 24 : -4;
+          const st = me.active.status;
+          if (st.asleep || st.paralyzed || st.confused) s += 20;
+          break;
+        }
+
+        case 'T_SWITCH_OPPONENT': {
+          if (!you.bench.length) return -Infinity;
+          // drag up whatever we can kill fastest / whatever is least ready
+          let bestI = 0, bestV = -Infinity;
+          you.bench.forEach((b, i) => {
+            const pot = this.potential(1 - pi, b, null);
+            const v2 = (100 - this.remainingHP(b)) * 0.4 + (pot.short > 0 ? 18 : 0);
+            if (v2 > bestV) { bestV = v2; bestI = i; }
+          });
+          a.opts.bench = bestI;
+          s += W.drag + bestV * 0.3;
+          break;
+        }
+
+        case 'T_DISCARD_OPP_ENERGY': {
+          const cands = E.allSlots(1 - pi).filter(x => x.energy.length);
+          if (!cands.length) return -Infinity;
+          let best = cands[0];
+          for (const c of cands) if (c.energy.length > best.energy.length) best = c;
+          a.opts.targetUid = best.uid; a.opts.energyIdx = 0;
+          s += W.stripEnergy + (best === you.active ? 6 : 0);
+          break;
+        }
+
+        case 'T_SUPER_ENERGY_REMOVAL': {
+          const mine = E.allSlots(pi).filter(x => x.energy.length);
+          const theirs = E.allSlots(1 - pi).filter(x => x.energy.length);
+          if (!mine.length || !theirs.length) return -Infinity;
+          // spend from whoever needs it least; strip from whoever has most
+          let src = mine[0];
+          for (const c of mine) if (c !== me.active && c.energy.length <= src.energy.length) src = c;
+          let tgt = theirs[0];
+          for (const c of theirs) if (c.energy.length > tgt.energy.length) tgt = c;
+          a.opts.selfUid = src.uid; a.opts.targetUid = tgt.uid;
+          s += Math.min(2, tgt.energy.length) * W.stripEnergy - W.energyDiscard;
+          if (src === me.active) s -= 10;
+          break;
+        }
+
+        case 'T_PLUSPOWER': {
+          if (!me.active) return -Infinity;
+          // only worth it if we're actually attacking, and best if it converts a KO
+          const best = this.bestAttackScore(pi);
+          if (best.idx < 0) return -Infinity;
+          const f = this.forecast(pi, best.idx);
+          if (!f || f.expDmg <= 0) return -Infinity;
+          s += 6;
+          if (f.expDmg < f.hpLeft && f.expDmg + 10 >= f.hpLeft) s += 34;   // turns it lethal
+          break;
+        }
+
+        case 'T_DEFENDER': {
+          const danger = this.incomingThreat(pi);
+          if (!me.active) return -Infinity;
+          a.opts.targetUid = me.active.uid;
+          s += danger > 0 ? 8 : -2;
+          if (danger >= this.remainingHP(me.active) && danger - 20 < this.remainingHP(me.active)) s += 26;
+          break;
+        }
+
+        case 'T_ENERGY_RETRIEVAL': {
+          const basics = me.discard.filter(x => { const c = this.db[x.id]; return c.kind === 'energy' && c.cls === 'Basic'; });
+          if (!basics.length || me.hand.length < 2) return -Infinity;
+          const junk = this.worstHandCard(pi, inst.uid);
+          if (junk === null) return -Infinity;
+          a.opts.discardUid = junk;
+          s += Math.min(v.n, basics.length) * 6;
+          break;
+        }
+
+        case 'T_COMPUTER_SEARCH': {
+          const others = me.hand.filter(x => x.uid !== inst.uid);
+          if (others.length < 2 || !me.deck.length) return -Infinity;
+          const junk = this.rankHandJunk(pi, inst.uid).slice(0, 2);
+          if (junk.length < 2) return -Infinity;
+          a.opts.discardUids = junk;
+          const want = this.wantFromDeck(pi);
+          if (want) a.opts.pickUid = want;
+          s += 12;
+          break;
+        }
+
+        case 'T_LASS': {
+          const theirTrainers = you.hand.length;     // hidden in practice; value it flat
+          s += 3;
+          break;
+        }
+      }
+    }
+    return s;
+  }
+
+  // Cards we'd least mind pitching: spare Energy beyond what we can attach,
+  // then evolutions with no pre-evolution in play, then duplicates.
+  rankHandJunk(pi, excludeUid) {
+    const E = this.E, me = E.state.players[pi];
+    const inPlay = new Set(E.allSlots(pi).map(s => this.top(s).name));
+    const scored = me.hand
+      .filter(x => x.uid !== excludeUid)
+      .map(x => {
+        const c = this.db[x.id];
+        let junk = 0;
+        if (c.kind === 'energy') junk = 3;
+        else if (c.kind === 'pokemon' && c.evolvesFrom && !inPlay.has(c.evolvesFrom)) junk = 5;
+        else if (c.kind === 'pokemon' && c.stage === 'Basic') junk = 2;
+        else junk = 1;
+        return { uid: x.uid, junk };
+      })
+      .sort((a, b) => b.junk - a.junk);
+    return scored.map(x => x.uid);
+  }
+  worstHandCard(pi, excludeUid) {
+    const r = this.rankHandJunk(pi, excludeUid);
+    return r.length ? r[0] : null;
+  }
+
+  // What would we most like Computer Search to fetch?
+  wantFromDeck(pi) {
+    const E = this.E, me = E.state.players[pi];
+    const inPlay = E.allSlots(pi).map(s => this.top(s).name);
+    // 1) an evolution for something we already have out
+    for (const inst of me.deck) {
+      const c = this.db[inst.id];
+      if (c.kind === 'pokemon' && c.evolvesFrom && inPlay.includes(c.evolvesFrom)) return inst.uid;
+    }
+    // 2) Energy the Active still needs
+    if (me.active) {
+      const c = this.top(me.active);
+      const need = new Set();
+      (c.attacks || []).forEach(a => a.cost.split('').forEach(t => { if (t !== 'C') need.add(t); }));
+      for (const inst of me.deck) {
+        const e = this.db[inst.id];
+        if (e.kind === 'energy' && need.has(e.provides)) return inst.uid;
+      }
+    }
+    // 3) any Basic Pokemon
+    for (const inst of me.deck) {
+      const c = this.db[inst.id];
+      if (c.kind === 'pokemon' && c.stage === 'Basic') return inst.uid;
+    }
+    return me.deck.length ? me.deck[0].uid : null;
+  }
+
+  // ------------------------------------------------------------------ choose
+  // Sequencing rule that matters more than any weight: attacking ENDS the turn,
+  // so every worthwhile non-attack action must happen first.
+  choose(pi) {
+    const E = this.E, s = E.state;
+    if (s.phase === 'over') return null;
+
+    if (s.pendingPromote !== null) {
+      if (s.pendingPromote !== pi) return null;
+      const acts = E.legalActions(pi).filter(a => a.t === 'promote');
+      if (!acts.length) return null;
+      return this.pickBest(pi, acts, true);
+    }
+    if (s.active !== pi) return null;
+
+    const acts = E.legalActions(pi);
+    if (!acts.length) return null;
+
+    const setup = acts.filter(a => a.t !== 'attack' && a.t !== 'pass');
+    const best = setup.length ? this.pickBest(pi, setup) : null;
+    if (best && best.__score >= this.W.threshold) return best;
+
+    const attacks = acts.filter(a => a.t === 'attack');
+    if (attacks.length) {
+      const bestAtk = this.pickBest(pi, attacks);
+      if (bestAtk && bestAtk.__score > 0) return bestAtk;
+    }
+    return acts.find(a => a.t === 'pass') || null;
+  }
+
+  pickBest(pi, acts, allowNegative = false) {
+    const noisy = this.mode === 'novice';
+    let best = null, bestScore = -Infinity;
+    const scored = [];
+    for (const a of acts) {
+      let sc = this.scoreAction(pi, a);
+      if (noisy && sc > -Infinity) sc += (this.E.rand() - 0.5) * 12;
+      scored.push({ a, sc });
+      if (sc > bestScore) { bestScore = sc; best = a; }
+    }
+    if (!best) return null;
+    if (!allowNegative && bestScore === -Infinity) return null;
+
+    // A novice misses the best line sometimes - but picks another SENSIBLE
+    // move, not a random one. Deliberately fumbling into nonsense made it play
+    // worse than the dumb greedy bot, which is not what "easier" should mean.
+    if (noisy && this.E.rand() < 0.22) {
+      const ok = scored.filter(x => x.sc > 0 && x.a !== best);
+      if (ok.length) {
+        const pickIt = ok[Math.floor(this.E.rand() * ok.length)];
+        this.scoreAction(pi, pickIt.a);      // re-run so opts are populated
+        pickIt.a.__score = pickIt.sc;
+        return pickIt.a;
+      }
+    }
+    best.__score = bestScore;
+    return best;
+  }
+}
+
+
+// ============================================================================
+// RULES ENGINE  —  WOTC-era (Base Set) Pokemon TCG
+// Pure logic. No DOM. Drives both the UI and the headless test harness.
+// ============================================================================
+
+const CONFIG_DEFAULTS = {
+  prizeCount: 6,          // dev-adjustable to shorten games
+  benchMax: 5,
+  handSize: 7,
+  deckSize: 60,
+  maxCopiesByName: 4,     // basic Energy exempt
+  weaknessMultiplier: 2,  // WOTC: x2
+  resistanceFlat: 30,     // WOTC: -30
+  firstPlayerMayAttack: true,   // ASSUMPTION - see notes
+  noEvolveFirstTurn: true,      // ASSUMPTION - see notes
+  trainersPerTurn: Infinity,    // Base Set has no Supporter restriction
+  maxMulligans: 20,
+};
+
+// ---------------------------------------------------------------- RNG -------
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ------------------------------------------------------------- helpers ------
+const cardOf = (db, inst) => db[inst.id];
+const topInst = (slot) => slot.stack[slot.stack.length - 1];
+const topCard = (db, slot) => db[topInst(slot).id];
+
+function parseDamage(d) {
+  if (!d) return 0;
+  const m = String(d).match(/^(\d+)/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function energyProvides(db, inst) {
+  const c = db[inst.id];
+  return c && c.kind === 'energy' ? (c.provides || 'C') : '';
+}
+
+// ============================================================================
+// ENGINE
+// ============================================================================
+class Engine {
+  constructor(db, effects, opts = {}) {
+    this.db = db;
+    this.effects = effects;
+    this.cfg = Object.assign({}, CONFIG_DEFAULTS, opts.cfg || {});
+    this.seed = (opts.seed === undefined) ? (Date.now() & 0x7fffffff) : opts.seed;
+    this.rand = mulberry32(this.seed);
+    this.uid = 1;
+    this.dev = { forceFlip: null };   // null | 'H' | 'T'
+    this.state = null;
+  }
+
+  // ------------------------------------------------------------ logging ----
+  log(text, kind = 'info') {
+    this.state.log.push({ t: this.state.turn, p: this.state.active, text, kind });
+    if (this.state.log.length > 4000) this.state.log.shift();
+  }
+
+  flip(reason = '') {
+    let heads;
+    if (this.dev.forceFlip === 'H') heads = true;
+    else if (this.dev.forceFlip === 'T') heads = false;
+    else heads = this.rand() < 0.5;
+    this.log(`Coin flip${reason ? ' (' + reason + ')' : ''}: ${heads ? 'HEADS' : 'TAILS'}`, 'flip');
+    return heads;
+  }
+
+  shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(this.rand() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ------------------------------------------------------- deck building ---
+  buildDeck(deckDef) {
+    const out = [];
+    for (const [qty, id] of deckDef.list) {
+      for (let i = 0; i < qty; i++) out.push({ uid: this.uid++, id });
+    }
+    return out;
+  }
+
+  validateDeck(deckDef) {
+    const errors = [], warnings = [];
+    const total = deckDef.list.reduce((a, [q]) => a + q, 0);
+    if (total !== this.cfg.deckSize) errors.push(`Deck has ${total} cards, needs ${this.cfg.deckSize}`);
+
+    const byName = {}, names = new Set();
+    let basics = 0, unimplemented = [];
+    for (const [q, id] of deckDef.list) {
+      const c = this.db[id];
+      if (!c) { errors.push(`Unknown card_id ${id}`); continue; }
+      names.add(c.name);
+      const isBasicEnergy = c.kind === 'energy' && c.cls === 'Basic';
+      if (!isBasicEnergy) byName[c.name] = (byName[c.name] || 0) + q;
+      if (c.kind === 'pokemon' && c.stage === 'Basic') basics += q;
+      if (!this.isImplemented(id)) unimplemented.push(`${c.name} (${id})`);
+    }
+    for (const n in byName) {
+      if (byName[n] > this.cfg.maxCopiesByName)
+        errors.push(`${byName[n]}x "${n}" exceeds the ${this.cfg.maxCopiesByName}-copy limit`);
+    }
+    if (basics === 0) errors.push('Deck contains no Basic Pokemon');
+    if (unimplemented.length) errors.push(`Not yet implemented: ${unimplemented.join(', ')}`);
+
+    for (const [q, id] of deckDef.list) {
+      const c = this.db[id];
+      if (c && c.kind === 'pokemon' && c.evolvesFrom && !names.has(c.evolvesFrom))
+        warnings.push(`${c.name} has no ${c.evolvesFrom} in deck`);
+    }
+    return { ok: errors.length === 0, errors, warnings, total, basics };
+  }
+
+  isImplemented(id) {
+    const c = this.db[id];
+    if (!c) return false;
+    const e = this.effects[id];
+    if (!e) return false;
+    if (c.kind === 'pokemon') {
+      if (!e.a || e.a.length !== (c.attacks || []).length) return false;
+      return e.a.every(x => Array.isArray(x));
+    }
+    return Array.isArray(e.t);
+  }
+
+  coverageReport() {
+    const rows = [];
+    for (const id in this.db) rows.push({ id, name: this.db[id].name, kind: this.db[id].kind, done: this.isImplemented(id) });
+    return { rows, done: rows.filter(r => r.done).length, total: rows.length };
+  }
+
+  // ------------------------------------------------------------- setup -----
+  newGame(deckA, deckB, names = ['Player', 'Opponent']) {
+    const mkPlayer = (def, name) => ({
+      name, deckDef: def,
+      deck: this.shuffle(this.buildDeck(def)),
+      hand: [], discard: [], prizes: [],
+      active: null, bench: [],
+      turnsTaken: 0, energyAttached: false, retreated: false, trainersPlayed: 0,
+      mulligans: 0,
+    });
+    this.state = {
+      cfg: this.cfg, turn: 0, active: 0, phase: 'setup',
+      winner: null, winReason: '', log: [],
+      players: [mkPlayer(deckA, names[0]), mkPlayer(deckB, names[1])],
+      pendingPromote: null, promoteQueue: [], pendingEndTurn: false, setupDone: [false, false],
+    };
+    this.log(`New game. Seed ${this.seed}.`, 'sys');
+
+    for (let i = 0; i < 2; i++) this.openingHand(i);
+
+    // who goes first
+    this.state.active = this.flip('who goes first') ? 0 : 1;
+    this.log(`${this.state.players[this.state.active].name} will go first.`, 'sys');
+    return this.state;
+  }
+
+  openingHand(pi) {
+    const p = this.state.players[pi];
+    let tries = 0;
+    while (tries++ < this.cfg.maxMulligans) {
+      p.hand = p.deck.splice(0, this.cfg.handSize);
+      if (p.hand.some(x => { const c = this.db[x.id]; return c.kind === 'pokemon' && c.stage === 'Basic'; })) break;
+      this.log(`${p.name} has no Basic Pokemon - mulligan.`, 'sys');
+      p.deck = this.shuffle(p.deck.concat(p.hand)); p.hand = []; p.mulligans++;
+    }
+    // opponent draws 1 extra per mulligan
+    if (p.mulligans > 0) {
+      const opp = this.state.players[1 - pi];
+      // deferred: opponent's hand may not be dealt yet; record and apply at setup end
+      opp.bonusDraws = (opp.bonusDraws || 0) + p.mulligans;
+    }
+  }
+
+  setupPlace(pi, handIdx, where) {
+    const p = this.state.players[pi];
+    if (this.state.phase !== 'setup') return this.fail('Not in setup');
+    if (this.state.setupDone[pi]) return this.fail('Setup already confirmed');
+    const inst = p.hand[handIdx];
+    if (!inst) return this.fail('No such card');
+    const c = this.db[inst.id];
+    if (!(c.kind === 'pokemon' && c.stage === 'Basic')) return this.fail('Only Basic Pokemon may be placed');
+    if (where === 'active') {
+      if (p.active) return this.fail('Active already set');
+      p.hand.splice(handIdx, 1); p.active = this.mkSlot(inst);
+    } else {
+      if (!p.active) return this.fail('Set your Active first');
+      if (p.bench.length >= this.cfg.benchMax) return this.fail('Bench is full');
+      p.hand.splice(handIdx, 1); p.bench.push(this.mkSlot(inst));
+    }
+    return { ok: true };
+  }
+
+  setupAuto(pi) {
+    const p = this.state.players[pi];
+    const basics = () => p.hand.map((x, i) => [i, this.db[x.id]])
+      .filter(([, c]) => c.kind === 'pokemon' && c.stage === 'Basic');
+    let b = basics();
+    if (!b.length) return this.fail('No Basic to place');
+    b.sort((x, y) => y[1].hp - x[1].hp);
+    this.setupPlace(pi, b[0][0], 'active');
+    while (p.bench.length < this.cfg.benchMax) {
+      b = basics(); if (!b.length) break;
+      this.setupPlace(pi, b[0][0], 'bench');
+    }
+    return this.setupConfirm(pi);
+  }
+
+  setupConfirm(pi) {
+    const p = this.state.players[pi];
+    if (!p.active) return this.fail('You must place an Active Pokemon');
+    this.state.setupDone[pi] = true;
+    if (this.state.setupDone[0] && this.state.setupDone[1]) this.beginPlay();
+    return { ok: true };
+  }
+
+  mkSlot(inst) {
+    return {
+      uid: this.uid++, stack: [inst], dmg: 0, energy: [],
+      status: { asleep: false, paralyzed: false, confused: false, poisoned: false },
+      paralyzedTurn: -1, playedTurn: 0, effects: [], usedAttacks: {}, forcedKO: false,
+    };
+  }
+
+  beginPlay() {
+    for (let i = 0; i < 2; i++) {
+      const p = this.state.players[i];
+      for (let k = 0; k < this.cfg.prizeCount; k++) p.prizes.push(p.deck.shift());
+      if (p.bonusDraws) { for (let k = 0; k < p.bonusDraws; k++) if (p.deck.length) p.hand.push(p.deck.shift()); this.log(`${p.name} draws ${p.bonusDraws} extra (opponent mulligans).`, 'sys'); }
+    }
+    this.state.phase = 'main';
+    this.state.turn = 0;
+    this.startTurn();
+  }
+
+  fail(msg) { if (this.state) this.log('Illegal: ' + msg, 'err'); return { ok: false, error: msg }; }
+
+  // Both Active Pokemon can be Knocked Out at once (Take Down recoil, Poison),
+  // so promotion is a queue, not a single slot. Turn player promotes first.
+  syncPromote() {
+    const s = this.state;
+    s.promoteQueue.sort((a, b) => (a === s.active ? -1 : b === s.active ? 1 : 0));
+    s.pendingPromote = s.promoteQueue.length ? s.promoteQueue[0] : null;
+  }
+  addPromote(i) {
+    const s = this.state;
+    if (!s.promoteQueue.includes(i)) s.promoteQueue.push(i);
+    this.syncPromote();
+  }
+  clearPromote(i) {
+    const s = this.state;
+    s.promoteQueue = s.promoteQueue.filter(x => x !== i);
+    this.syncPromote();
+  }
+
+  // -------------------------------------------------------- turn cycle -----
+  cur() { return this.state.players[this.state.active]; }
+  opp() { return this.state.players[1 - this.state.active]; }
+
+  startTurn() {
+    const s = this.state;
+    s.turn++;
+    const p = this.cur();
+    p.turnsTaken++; p.energyAttached = false; p.retreated = false; p.trainersPlayed = 0;
+
+    // purge lasting effects that expire at the start of this turn
+    this.eachSlot((slot) => {
+      slot.effects = slot.effects.filter(e => {
+        if (e.expireAtStartOfTurn !== undefined && e.expireAtStartOfTurn <= s.turn) {
+          this.log(`${this.nameOf(slot)}: ${e.kind} wears off.`, 'eff'); return false;
+        }
+        return true;
+      });
+    });
+
+    this.log(`--- Turn ${s.turn}: ${p.name} ---`, 'turn');
+
+    if (p.deck.length === 0) {
+      return this.endGame(1 - s.active, `${p.name} could not draw a card`);
+    }
+    p.hand.push(p.deck.shift());
+    this.log(`${p.name} draws a card. (${p.deck.length} left)`);
+    return { ok: true };
+  }
+
+  endTurn() {
+    const s = this.state;
+    if (s.phase === 'over') return { ok: true };
+    const ended = s.active;
+
+    // end-of-turn effect expiry (e.g. PlusPower is discarded)
+    this.eachSlot((slot, pi) => {
+      slot.effects = slot.effects.filter(e => {
+        if (e.expireAtEndOfTurn !== undefined && e.expireAtEndOfTurn <= s.turn) {
+          if (e.card) { s.players[pi].discard.push(e.card); this.log(`${this.db[e.card.id].name} is discarded.`, 'eff'); }
+          else this.log(`${this.nameOf(slot)}: ${e.kind} ends.`, 'eff');
+          return false;
+        }
+        return true;
+      });
+    });
+
+    this.betweenTurns(ended);
+    if (s.phase === 'over') return { ok: true };
+    if (s.pendingPromote !== null) { s.pendingEndTurn = true; return { ok: true }; }
+
+    s.active = 1 - s.active;
+    return this.startTurn();
+  }
+
+  // Between turns: poison damage, then Asleep flips, then Paralysis recovery
+  // for the player whose turn just ended.
+  betweenTurns(endedPlayer) {
+    const s = this.state;
+    for (let i = 0; i < 2; i++) {
+      const a = s.players[i].active;
+      if (a && a.status.poisoned) {
+        a.dmg += 10;
+        this.log(`${this.nameOf(a)} takes 10 from Poison. (${a.dmg} total)`, 'status');
+      }
+    }
+    this.checkKOs();
+    if (s.phase === 'over') return;
+
+    for (let i = 0; i < 2; i++) {
+      const a = s.players[i].active;
+      if (a && a.status.asleep) {
+        if (this.flip(`${this.nameOf(a)} waking`)) { a.status.asleep = false; this.log(`${this.nameOf(a)} woke up.`, 'status'); }
+        else this.log(`${this.nameOf(a)} is still Asleep.`, 'status');
+      }
+    }
+    const ea = s.players[endedPlayer].active;
+    if (ea && ea.status.paralyzed && ea.paralyzedTurn < s.turn) {
+      ea.status.paralyzed = false;
+      this.log(`${this.nameOf(ea)} is no longer Paralyzed.`, 'status');
+    }
+  }
+
+  eachSlot(fn) {
+    for (let i = 0; i < 2; i++) {
+      const p = this.state.players[i];
+      if (p.active) fn(p.active, i);
+      p.bench.forEach(s => fn(s, i));
+    }
+  }
+
+  nameOf(slot) { return topCard(this.db, slot).name; }
+
+  // ------------------------------------------------------------ actions ----
+  legalActions(pi) {
+    const s = this.state;
+    const acts = [];
+    if (s.phase === 'over') return acts;
+    if (s.pendingPromote !== null) {
+      if (s.pendingPromote === pi) {
+        s.players[pi].bench.forEach((b, i) => acts.push({ t: 'promote', bench: i, label: `Promote ${this.nameOf(b)}` }));
+      }
+      return acts;
+    }
+    if (s.phase !== 'main' || s.active !== pi) return acts;
+    const p = s.players[pi];
+
+    p.hand.forEach((inst, i) => {
+      const c = this.db[inst.id];
+      if (c.kind === 'pokemon' && c.stage === 'Basic' && p.bench.length < this.cfg.benchMax)
+        acts.push({ t: 'playBasic', hand: i, label: `Bench ${c.name}` });
+      if (c.kind === 'pokemon' && c.evolvesFrom) {
+        this.allSlots(pi).forEach(sl => {
+          if (this.canEvolve(pi, sl, c)) acts.push({ t: 'evolve', hand: i, target: sl.uid, label: `Evolve into ${c.name}` });
+        });
+      }
+      if (c.kind === 'energy' && !p.energyAttached) {
+        this.allSlots(pi).forEach(sl => acts.push({ t: 'attachEnergy', hand: i, target: sl.uid, label: `Attach ${c.name} to ${this.nameOf(sl)}` }));
+      }
+      if (c.kind === 'trainer' && p.trainersPlayed < this.cfg.trainersPerTurn && this.trainerPlayable(pi, inst))
+        acts.push({ t: 'playTrainer', hand: i, label: `Play ${c.name}` });
+    });
+
+    if (!p.retreated && p.active && p.bench.length && this.canRetreat(p.active))
+      p.bench.forEach((b, i) => acts.push({ t: 'retreat', bench: i, label: `Retreat to ${this.nameOf(b)}` }));
+
+    if (p.active && this.canAttackAtAll(pi)) {
+      const c = topCard(this.db, p.active);
+      (c.attacks || []).forEach((a, i) => {
+        if (this.canUseAttack(pi, i).ok) acts.push({ t: 'attack', idx: i, label: `Attack: ${a.name}` });
+      });
+    }
+    acts.push({ t: 'pass', label: 'End turn' });
+    return acts;
+  }
+
+  allSlots(pi) {
+    const p = this.state.players[pi];
+    return (p.active ? [p.active] : []).concat(p.bench);
+  }
+  findSlot(pi, uid) { return this.allSlots(pi).find(s => s.uid === uid); }
+
+  canEvolve(pi, slot, evoCard) {
+    const s = this.state;
+    if (topCard(this.db, slot).name !== evoCard.evolvesFrom) return false;
+    if (slot.playedTurn >= s.turn) return false;                       // played this turn
+    if (slot.evolvedTurn === s.turn) return false;                     // already evolved this turn
+    if (this.cfg.noEvolveFirstTurn && s.players[pi].turnsTaken <= 1) return false;
+    return true;
+  }
+
+  canRetreat(slot) {
+    if (slot.status.asleep || slot.status.paralyzed) return false;
+    return slot.energy.length >= topCard(this.db, slot).retreat;
+  }
+
+  canAttackAtAll(pi) {
+    const s = this.state, p = s.players[pi];
+    if (!p.active || !this.opp().active) return false;
+    if (p.active.status.asleep || p.active.status.paralyzed) return false;
+    if (!this.cfg.firstPlayerMayAttack && s.turn === 1) return false;
+    return true;
+  }
+
+  // Does the attached Energy satisfy the cost string (e.g. "RRC")?
+  costSatisfied(slot, cost) {
+    const pool = slot.energy.map(e => energyProvides(this.db, e));
+    const need = cost.split('').filter(x => x !== 'C');
+    const generic = cost.length - need.length;
+    const used = new Array(pool.length).fill(false);
+    for (const t of need) {
+      const k = pool.findIndex((p, i) => !used[i] && p === t);
+      if (k === -1) return false;
+      used[k] = true;
+    }
+    return pool.filter((p, i) => !used[i]).length >= generic;
+  }
+
+  canUseAttack(pi, idx) {
+    const p = this.state.players[pi];
+    if (!p.active) return { ok: false, why: 'No Active Pokemon' };
+    const c = topCard(this.db, p.active);
+    const a = (c.attacks || [])[idx];
+    if (!a) return { ok: false, why: 'No such attack' };
+    if (!this.costSatisfied(p.active, a.cost)) return { ok: false, why: 'Not enough Energy' };
+    const script = (this.effects[c.id] && this.effects[c.id].a && this.effects[c.id].a[idx]) || [];
+    if (p.active.usedAttacks && p.active.usedAttacks[idx]
+        && script.some(v => v.v === 'ONCE_WHILE_IN_PLAY'))
+      return { ok: false, why: 'Already used while this Pokemon has been in play' };
+    for (const v of script) {
+      if (v.v === 'COST_DISCARD_ENERGY') {
+        const have = p.active.energy.filter(e => energyProvides(this.db, e) === v.t).length;
+        if (have < v.n) return { ok: false, why: `Needs ${v.n} ${v.t} Energy to discard` };
+      }
+      if (v.v === 'REQUIRE_DEF_STATUS') {
+        const def = this.state.players[1 - pi].active;
+        if (!def || !def.status[v.s]) return { ok: false, why: `Defending Pokemon must be ${v.label || v.s}` };
+      }
+    }
+    return { ok: true };
+  }
+
+  trainerPlayable(pi, inst) {
+    const p = this.state.players[pi], o = this.state.players[1 - pi];
+    const script = (this.effects[inst.id] && this.effects[inst.id].t) || [];
+    for (const v of script) {
+      switch (v.v) {
+        case 'T_DRAW': if (p.deck.length === 0) return false; break;
+        case 'T_SWITCH_OWN': if (!p.active || p.bench.length === 0) return false; break;
+        case 'T_SWITCH_OPPONENT': if (!o.active || o.bench.length === 0) return false; break;
+        case 'T_DISCARD_OPP_ENERGY':
+          if (!this.allSlots(1 - pi).some(s => s.energy.length)) return false; break;
+        case 'T_HEAL': if (!this.allSlots(pi).some(s => s.dmg > 0)) return false; break;
+        case 'T_DISCARD_ENERGY_THEN_HEAL':
+          if (!this.allSlots(pi).some(s => s.dmg > 0 && s.energy.length)) return false; break;
+        case 'T_PLUSPOWER': if (!p.active) return false; break;
+        case 'T_PROFESSOR_OAK': if (p.deck.length === 0) return false; break;
+        case 'T_DEFENDER': if (!this.allSlots(pi).length) return false; break;
+        case 'T_COMPUTER_SEARCH':
+          if (p.deck.length === 0) return false;
+          if (p.hand.length < 3) return false;   // the card itself + 2 to discard
+          break;
+        case 'T_SUPER_ENERGY_REMOVAL':
+          if (!this.allSlots(pi).some(x => x.energy.length)) return false;
+          if (!this.allSlots(1 - pi).some(x => x.energy.length)) return false;
+          break;
+        case 'T_ENERGY_RETRIEVAL':
+          if (!p.discard.some(x => { const c = this.db[x.id]; return c.kind === 'energy' && c.cls === 'Basic'; })) return false;
+          if (p.hand.length < 2) return false; break;
+      }
+    }
+    return true;
+  }
+
+  // ------------------------------------------------------------- dispatch --
+  act(pi, a) {
+    const s = this.state;
+    if (s.phase === 'over') return this.fail('Game is over');
+    if (s.pendingPromote !== null && a.t !== 'promote') return this.fail('Must promote a Pokemon first');
+    if (a.t !== 'promote' && s.active !== pi) return this.fail('Not your turn');
+
+    switch (a.t) {
+      case 'playBasic':    return this.doPlayBasic(pi, a);
+      case 'evolve':       return this.doEvolve(pi, a);
+      case 'attachEnergy': return this.doAttach(pi, a);
+      case 'playTrainer':  return this.doTrainer(pi, a);
+      case 'retreat':      return this.doRetreat(pi, a);
+      case 'attack':       return this.doAttack(pi, a);
+      case 'promote':      return this.doPromote(pi, a);
+      case 'pass':         return this.endTurn();
+      default:             return this.fail('Unknown action ' + a.t);
+    }
+  }
+
+  doPlayBasic(pi, a) {
+    const p = this.state.players[pi];
+    const inst = p.hand[a.hand]; if (!inst) return this.fail('No such card');
+    const c = this.db[inst.id];
+    if (!(c.kind === 'pokemon' && c.stage === 'Basic')) return this.fail('Not a Basic Pokemon');
+    if (p.bench.length >= this.cfg.benchMax) return this.fail('Bench is full');
+    p.hand.splice(a.hand, 1);
+    const sl = this.mkSlot(inst); sl.playedTurn = this.state.turn;
+    p.bench.push(sl);
+    this.log(`${p.name} benches ${c.name}.`);
+    return { ok: true };
+  }
+
+  doEvolve(pi, a) {
+    const p = this.state.players[pi];
+    const inst = p.hand[a.hand]; if (!inst) return this.fail('No such card');
+    const c = this.db[inst.id];
+    const sl = this.findSlot(pi, a.target); if (!sl) return this.fail('No such target');
+    if (!this.canEvolve(pi, sl, c)) return this.fail('Cannot evolve that Pokemon now');
+    p.hand.splice(a.hand, 1);
+    const was = this.nameOf(sl);
+    sl.stack.push(inst);
+    sl.evolvedTurn = this.state.turn;
+    sl.status = { asleep: false, paralyzed: false, confused: false, poisoned: false };
+    this.log(`${was} evolves into ${c.name}. Special Conditions removed.`, 'eff');
+    return { ok: true };
+  }
+
+  doAttach(pi, a) {
+    const p = this.state.players[pi];
+    if (p.energyAttached) return this.fail('Already attached Energy this turn');
+    const inst = p.hand[a.hand]; if (!inst) return this.fail('No such card');
+    const c = this.db[inst.id];
+    if (c.kind !== 'energy') return this.fail('Not an Energy card');
+    const sl = this.findSlot(pi, a.target); if (!sl) return this.fail('No such target');
+    p.hand.splice(a.hand, 1);
+    sl.energy.push(inst); p.energyAttached = true;
+    this.log(`${p.name} attaches ${c.name} to ${this.nameOf(sl)}.`);
+    return { ok: true };
+  }
+
+  doRetreat(pi, a) {
+    const p = this.state.players[pi];
+    if (p.retreated) return this.fail('Already retreated this turn');
+    if (!p.active) return this.fail('No Active Pokemon');
+    if (!this.canRetreat(p.active)) return this.fail('Cannot retreat (status or insufficient Energy)');
+    const b = p.bench[a.bench]; if (!b) return this.fail('No such benched Pokemon');
+    const cost = topCard(this.db, p.active).retreat;
+    let pay = a.pay;
+    if (!pay) pay = this.retreatPayOrder(p.active).slice(0, cost).map(e => e.uid);
+    if (pay.length !== cost) return this.fail(`Must discard exactly ${cost} Energy`);
+    for (const uid of pay) {
+      const k = p.active.energy.findIndex(e => e.uid === uid);
+      if (k === -1) return this.fail('Energy not attached');
+      p.discard.push(p.active.energy.splice(k, 1)[0]);
+    }
+    const old = p.active;
+    old.status = { asleep: false, paralyzed: false, confused: false, poisoned: false };
+    p.active = b; p.bench.splice(a.bench, 1); p.bench.push(old);
+    p.retreated = true;
+    this.log(`${p.name} retreats ${this.nameOf(old)}; ${this.nameOf(b)} is now Active.`);
+    return { ok: true };
+  }
+
+  // When the caller doesn't specify which Energy to discard for retreat, spend
+  // the ones this Pokemon's own attacks don't ask for, so we never eat the last
+  // Fire off a Charmeleon to pay a Colorless cost.
+  retreatPayOrder(slot) {
+    const c = topCard(this.db, slot);
+    const needed = new Set();
+    (c.attacks || []).forEach(a => a.cost.split('').forEach(x => { if (x !== 'C') needed.add(x); }));
+    return slot.energy.slice().sort((x, y) => {
+      const nx = needed.has(energyProvides(this.db, x)) ? 1 : 0;
+      const ny = needed.has(energyProvides(this.db, y)) ? 1 : 0;
+      return nx - ny;
+    });
+  }
+
+  doPromote(pi, a) {
+    const s = this.state;
+    if (s.pendingPromote !== pi) return this.fail('Not waiting on you');
+    const p = s.players[pi];
+    const b = p.bench[a.bench]; if (!b) return this.fail('No such benched Pokemon');
+    p.bench.splice(a.bench, 1); p.active = b;
+    this.log(`${p.name} promotes ${this.nameOf(b)} to Active.`);
+    this.clearPromote(pi);
+    if (s.pendingPromote !== null) return { ok: true };   // another player still owes a promote
+    if (s.pendingEndTurn) {
+      s.pendingEndTurn = false;
+      s.active = 1 - s.active;
+      return this.startTurn();
+    }
+    return { ok: true };
+  }
+
+  // ------------------------------------------------------------- trainers --
+  doTrainer(pi, a) {
+    const p = this.state.players[pi], o = this.state.players[1 - pi];
+    const inst = p.hand[a.hand]; if (!inst) return this.fail('No such card');
+    const c = this.db[inst.id];
+    if (c.kind !== 'trainer') return this.fail('Not a Trainer card');
+    if (p.trainersPlayed >= this.cfg.trainersPerTurn) return this.fail('Trainer limit reached this turn');
+    const script = (this.effects[inst.id] && this.effects[inst.id].t);
+    if (!script) return this.fail(`${c.name} is not implemented`);
+    if (!this.trainerPlayable(pi, inst)) return this.fail(`${c.name} would do nothing`);
+
+    p.hand.splice(a.hand, 1);
+    this.log(`${p.name} plays ${c.name}.`, 'trainer');
+    let toDiscard = true;
+
+    for (const v of script) {
+      switch (v.v) {
+        case 'T_DRAW': {
+          for (let i = 0; i < v.n && p.deck.length; i++) p.hand.push(p.deck.shift());
+          this.log(`${p.name} draws ${v.n}.`); break;
+        }
+        case 'T_SWITCH_OWN': {
+          const bi = (a.opts && a.opts.bench !== undefined) ? a.opts.bench : this.pick(p.bench.length);
+          const b = p.bench[bi]; if (!b) return this.fail('Bad target');
+          const old = p.active;
+          old.status = { asleep: false, paralyzed: false, confused: false, poisoned: false };
+          p.active = b; p.bench.splice(bi, 1); p.bench.push(old);
+          this.log(`${this.nameOf(b)} is now Active.`); break;
+        }
+        case 'T_SWITCH_OPPONENT': {
+          const bi = (a.opts && a.opts.bench !== undefined) ? a.opts.bench : this.pick(o.bench.length);
+          const b = o.bench[bi]; if (!b) return this.fail('Bad target');
+          const old = o.active;
+          old.status = { asleep: false, paralyzed: false, confused: false, poisoned: false };
+          o.active = b; o.bench.splice(bi, 1); o.bench.push(old);
+          this.log(`${o.name}'s ${this.nameOf(b)} is dragged into the Active spot.`); break;
+        }
+        case 'T_DISCARD_OPP_ENERGY': {
+          const slots = this.allSlots(1 - pi).filter(s => s.energy.length);
+          const tgt = (a.opts && a.opts.targetUid) ? slots.find(s => s.uid === a.opts.targetUid) : slots[this.pick(slots.length)];
+          if (!tgt) return this.fail('No Energy to remove');
+          const e = tgt.energy.splice((a.opts && a.opts.energyIdx) || 0, 1)[0];
+          o.discard.push(e);
+          this.log(`${this.db[e.id].name} discarded from ${this.nameOf(tgt)}.`); break;
+        }
+        case 'T_HEAL': {
+          const slots = this.allSlots(pi).filter(s => s.dmg > 0);
+          const tgt = (a.opts && a.opts.targetUid) ? slots.find(s => s.uid === a.opts.targetUid) : slots[this.pick(slots.length)];
+          if (!tgt) return this.fail('Nothing damaged');
+          const heal = Math.min(v.n * 10, tgt.dmg);
+          tgt.dmg -= heal;
+          this.log(`${this.nameOf(tgt)} heals ${heal}. (${tgt.dmg} damage left)`); break;
+        }
+        case 'T_DISCARD_ENERGY_THEN_HEAL': {
+          const slots = this.allSlots(pi).filter(s => s.dmg > 0 && s.energy.length);
+          const tgt = (a.opts && a.opts.targetUid) ? slots.find(s => s.uid === a.opts.targetUid) : slots[this.pick(slots.length)];
+          if (!tgt) return this.fail('No valid target');
+          p.discard.push(tgt.energy.splice(0, 1)[0]);
+          const heal = Math.min(v.n * 10, tgt.dmg);
+          tgt.dmg -= heal;
+          this.log(`${this.nameOf(tgt)} discards Energy and heals ${heal}.`); break;
+        }
+        case 'T_DEFENDER': {
+          const slots = this.allSlots(pi);
+          const tgt = (a.opts && a.opts.targetUid) ? slots.find(x => x.uid === a.opts.targetUid) : (p.active || slots[0]);
+          if (!tgt) return this.fail('No Pokemon to attach to');
+          tgt.effects.push({
+            kind: 'DAMAGE_REDUCTION', amount: 20, label: 'Defender',
+            expireAtEndOfTurn: this.state.turn + 1, card: inst,
+          });
+          this.log(`Defender attached to ${this.nameOf(tgt)} (-20 damage until the end of the opponent's next turn).`, 'eff');
+          toDiscard = false;   // discarded when the effect expires
+          break;
+        }
+        case 'T_COMPUTER_SEARCH': {
+          // Hand indices are unsafe here: this Trainer has already been removed
+          // from hand, shifting every index after it. Always resolve by uid.
+          let uids = (a.opts && a.opts.discardUids) || null;
+          if (!uids) {
+            const pool = p.hand.map(x => x.uid);
+            uids = [];
+            while (uids.length < 2 && pool.length) uids.push(pool.splice(this.pick(pool.length), 1)[0]);
+          }
+          if (uids.length !== 2) return this.fail('Must discard exactly 2 other cards');
+          for (const u of uids) {
+            const k = p.hand.findIndex(x => x.uid === u);
+            if (k === -1) return this.fail('Card to discard is not in hand');
+            p.discard.push(p.hand.splice(k, 1)[0]);
+          }
+          let want = (a.opts && a.opts.pickUid !== undefined)
+            ? p.deck.findIndex(x => x.uid === a.opts.pickUid) : -1;
+          if (want === -1) want = this.pick(p.deck.length);
+          const got = p.deck.splice(want, 1)[0];
+          if (got) { p.hand.push(got); this.log(`Computer Search: found ${this.db[got.id].name}.`); }
+          this.shuffle(p.deck);
+          break;
+        }
+        case 'T_PLUSPOWER': {
+          if (!p.active) return this.fail('No Active Pokemon');
+          p.active.effects.push({
+            kind: 'DAMAGE_BONUS', amount: 10,
+            expireAtEndOfTurn: this.state.turn, card: inst,
+          });
+          this.log(`PlusPower attached to ${this.nameOf(p.active)} (+10 this turn).`, 'eff');
+          toDiscard = false;   // discarded when the effect expires
+          break;
+        }
+        case 'T_PROFESSOR_OAK': {
+          const n = p.hand.length;
+          while (p.hand.length) p.discard.push(p.hand.pop());
+          let drew = 0;
+          for (let i = 0; i < 7 && p.deck.length; i++) { p.hand.push(p.deck.shift()); drew++; }
+          this.log(`${p.name} discards ${n} card(s) and draws ${drew}.`);
+          break;
+        }
+        case 'T_SUPER_ENERGY_REMOVAL': {
+          const mine = this.allSlots(pi).filter(x => x.energy.length);
+          const src = (a.opts && a.opts.selfUid) ? mine.find(x => x.uid === a.opts.selfUid) : mine[this.pick(mine.length)];
+          if (!src) return this.fail('You have no Energy to discard');
+          const theirs = this.allSlots(1 - pi).filter(x => x.energy.length);
+          const tgt = (a.opts && a.opts.targetUid) ? theirs.find(x => x.uid === a.opts.targetUid) : theirs[this.pick(theirs.length)];
+          if (!tgt) return this.fail('Opponent has no Energy to remove');
+          p.discard.push(src.energy.splice(0, 1)[0]);
+          let removed = 0;
+          for (let i = 0; i < 2 && tgt.energy.length; i++) { o.discard.push(tgt.energy.splice(0, 1)[0]); removed++; }
+          this.log(`${this.nameOf(src)} discards 1 Energy; ${removed} Energy discarded from ${this.nameOf(tgt)}.`);
+          break;
+        }
+        case 'T_LASS': {
+          let moved = 0;
+          for (const pl of [p, o]) {
+            const keep = [];
+            for (const x of pl.hand) {
+              if (this.db[x.id].kind === 'trainer') { pl.deck.push(x); moved++; }
+              else keep.push(x);
+            }
+            pl.hand = keep; this.shuffle(pl.deck);
+          }
+          this.log(`Lass: ${moved} Trainer card(s) shuffled back into decks.`); break;
+        }
+        case 'T_PROFESSOR_OAK': if (p.deck.length === 0) return false; break;
+        case 'T_DEFENDER': if (!this.allSlots(pi).length) return false; break;
+        case 'T_COMPUTER_SEARCH':
+          if (p.deck.length === 0) return false;
+          if (p.hand.length < 3) return false;   // the card itself + 2 to discard
+          break;
+        case 'T_SUPER_ENERGY_REMOVAL':
+          if (!this.allSlots(pi).some(x => x.energy.length)) return false;
+          if (!this.allSlots(1 - pi).some(x => x.energy.length)) return false;
+          break;
+        case 'T_ENERGY_RETRIEVAL': {
+          if (p.hand.length < 1) return this.fail('No card to trade');
+          let di;
+          if (a.opts && a.opts.discardUid !== undefined) {
+            di = p.hand.findIndex(x => x.uid === a.opts.discardUid);
+            if (di === -1) return this.fail('Card to discard is not in hand');
+          } else di = this.pick(p.hand.length);
+          p.discard.push(p.hand.splice(di, 1)[0]);
+          let got = 0;
+          for (let i = 0; i < v.n; i++) {
+            const k = p.discard.findIndex(x => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; });
+            if (k === -1) break;
+            p.hand.push(p.discard.splice(k, 1)[0]); got++;
+          }
+          this.log(`Energy Retrieval: recovered ${got} basic Energy.`); break;
+        }
+        default: return this.fail(`Unimplemented verb ${v.v}`);
+      }
+    }
+    p.trainersPlayed++;
+    if (toDiscard) p.discard.push(inst);
+    this.checkKOs();
+    return { ok: true };
+  }
+
+  pick(n) { return n <= 0 ? 0 : Math.floor(this.rand() * n); }
+
+  // --------------------------------------------------------------- combat --
+  doAttack(pi, a) {
+    const s = this.state;
+    const me = s.players[pi], you = s.players[1 - pi];
+    if (!this.canAttackAtAll(pi)) return this.fail('Cannot attack right now');
+    const chk = this.canUseAttack(pi, a.idx);
+    if (!chk.ok) return this.fail(chk.why);
+
+    const atk = me.active, def = you.active;
+    const card = topCard(this.db, atk);
+    const attack = card.attacks[a.idx];
+    const script = (this.effects[card.id] && this.effects[card.id].a && this.effects[card.id].a[a.idx]) || [];
+    this.log(`${card.name} uses ${attack.name}.`, 'attack');
+
+    // Confusion gate
+    if (atk.status.confused) {
+      if (!this.flip('Confusion')) {
+        this.log(`${card.name} is Confused - the attack fails and it hits itself for 30.`, 'status');
+        atk.dmg += 30;
+        return this.finishAttack();
+      }
+    }
+
+    // Sand-attack style interference: the ATTACKER carries the effect, applied by
+    // whoever attacked it last turn.
+    const jam = atk.effects.find(e => e.kind === 'ATTACK_FLIP');
+    if (jam) {
+      if (!this.flip(jam.label || 'attack succeeds?')) {
+        this.log(`${card.name}'s attack does nothing.`, 'eff');
+        if (script.some(v => v.v === 'ONCE_WHILE_IN_PLAY')) atk.usedAttacks[a.idx] = true;
+        return this.finishAttack();
+      }
+    }
+    if (script.some(v => v.v === 'ONCE_WHILE_IN_PLAY')) atk.usedAttacks[a.idx] = true;
+
+    // pay attack costs
+    for (const v of script) {
+      if (v.v === 'COST_DISCARD_ENERGY') {
+        for (let i = 0; i < v.n; i++) {
+          const k = atk.energy.findIndex(e => energyProvides(this.db, e) === v.t);
+          if (k === -1) return this.fail('Cost could not be paid');
+          me.discard.push(atk.energy.splice(k, 1)[0]);
+        }
+        this.log(`${card.name} discards ${v.n} ${v.t} Energy as a cost.`);
+      }
+    }
+
+    // base damage / damage-shaping verbs
+    let base = parseDamage(attack.dmg);
+    let nothing = false;
+    for (const v of script) {
+      if (v.v === 'FLIP_OR_NOTHING') { if (!this.flip('attack succeeds?')) nothing = true; }
+      else if (v.v === 'DMG_PER_HEAD') {
+        let h = 0;
+        for (let i = 0; i < v.coins; i++) if (this.flip(`coin ${i + 1}/${v.coins}`)) h++;
+        base = v.per * h;
+        this.log(`${h} head(s) -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_COUNTER_SELF') {
+        base = v.per * (atk.dmg / 10);
+        this.log(`${Math.floor(atk.dmg / 10)} damage counter(s) -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_DEF_ENERGY') {
+        const n2 = def ? def.energy.length : 0;
+        base = v.base + v.per * n2;
+        this.log(`${v.base} plus ${v.per} per Energy on the defender (${n2}) -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_DEF_COUNTER') {
+        const n2 = def ? Math.floor(def.dmg / 10) : 0;
+        base = v.base + v.per * n2;
+        this.log(`${v.base} plus ${v.per} per damage counter on the defender (${n2}) -> ${base} damage.`);
+      } else if (v.v === 'DMG_MINUS_PER_COUNTER_SELF') {
+        const c2 = Math.floor(atk.dmg / 10);
+        base = Math.max(0, v.base - v.per * c2);
+        this.log(`${v.base} minus ${v.per} per counter (${c2}) -> ${base} damage.`);
+      }
+    }
+
+    if (nothing) { this.log('The attack does nothing.', 'eff'); return this.finishAttack(); }
+
+    const res = this.dealDamage(atk, def, base);
+
+    // post-damage verbs
+    const blocked = this.effectsBlocked(def);
+    for (const v of script) {
+      switch (v.v) {
+        case 'STATUS':
+          if (blocked) this.log(`${this.nameOf(def)} is protected - no ${v.s}.`, 'eff');
+          else this.applyStatus(def, v.s);
+          break;
+        case 'STATUS_ON_FLIP':
+          if (this.flip(`${v.s}?`)) {
+            if (blocked) this.log(`${this.nameOf(def)} is protected - no ${v.s}.`, 'eff');
+            else this.applyStatus(def, v.s);
+          }
+          break;
+        case 'BARRIER':
+          atk.effects.push({ kind: 'PREVENT_ALL_EFFECTS', label: 'Barrier',
+                             expireAtStartOfTurn: s.turn + 2 });
+          this.log(`${card.name} raises a Barrier - all effects of attacks, including damage, are prevented during the opponent's next turn.`, 'eff');
+          break;
+        case 'DESTINY_BOND':
+          atk.effects.push({ kind: 'DESTINY_BOND', label: 'Destiny Bond',
+                             expireAtStartOfTurn: s.turn + 2 });
+          this.log(`${card.name} seals a Destiny Bond - whatever Knocks it out next turn goes down with it.`, 'eff');
+          break;
+        case 'RECOIL_ON_FLIP':
+          if (!this.flip(v.label || 'avoid recoil?')) {
+            atk.dmg += v.n;
+            this.log(`${card.name} does ${v.n} damage to itself. (${atk.dmg} total)`, 'eff');
+          }
+          break;
+        case 'HARDEN':
+          atk.effects.push({ kind: 'PREVENT_UP_TO', threshold: v.threshold,
+                             label: 'Harden', expireAtStartOfTurn: s.turn + 2 });
+          this.log(`${card.name} hardens: ${v.threshold} or less damage will be prevented during the opponent's next turn.`, 'eff');
+          break;
+        case 'JAM_DEFENDER':
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          def.effects.push({ kind: 'ATTACK_FLIP', label: v.label || 'Sand-attack',
+                             expireAtStartOfTurn: s.turn + 2 });
+          this.log(`${this.nameOf(def)} is dazed - it must flip to attack next turn.`, 'eff');
+          break;
+        case 'BENCH_SPLASH': {
+          for (let pi2 = 0; pi2 < 2; pi2++) {
+            for (const b of s.players[pi2].bench) this.dealDamage(atk, b, v.n, { noWR: true });
+          }
+          this.log(`${v.n} damage splashed onto every Benched Pokemon.`, 'eff');
+          break;
+        }
+        case 'RECOIL':
+          atk.dmg += v.n;
+          this.log(`${card.name} does ${v.n} damage to itself. (${atk.dmg} total)`, 'eff'); break;
+        case 'HEAL_SELF_ALL':
+          if (atk.dmg > 0) { this.log(`${card.name} removes all ${atk.dmg} damage from itself.`, 'eff'); atk.dmg = 0; }
+          break;
+        case 'HEAL_SELF_IF_DAMAGED':
+          if (!res.prevented && atk.dmg > 0) {
+            const h = Math.min(v.n * 10, atk.dmg); atk.dmg -= h;
+            this.log(`${card.name} removes ${h} damage from itself.`, 'eff');
+          }
+          break;
+        case 'PREVENT_ALL_DMG_SELF_ON_FLIP':
+          if (this.flip('prevent damage?')) {
+            atk.effects.push({ kind: 'PREVENT_ALL_DAMAGE', expireAtStartOfTurn: s.turn + 2 });
+            this.log(`${card.name} will prevent all damage during the opponent's next turn.`, 'eff');
+          }
+          break;
+        case 'SWITCH_DEFENDER_CHOOSE': {
+          if (you.active && you.bench.length) {
+            const bi = (a.opts && a.opts.bench !== undefined) ? a.opts.bench : this.pick(you.bench.length);
+            const b = you.bench[bi];
+            if (b) {
+              const old = you.active;
+              old.status = { asleep: false, paralyzed: false, confused: false, poisoned: false };
+              you.active = b; you.bench.splice(bi, 1); you.bench.push(old);
+              this.log(`${this.nameOf(b)} is dragged into the Active spot.`, 'eff');
+            }
+          }
+          break;
+        }
+      }
+    }
+    return this.finishAttack();
+  }
+
+  finishAttack() {
+    this.checkKOs();
+    if (this.state.phase === 'over') return { ok: true };
+    return this.endTurn();
+  }
+
+  applyStatus(slot, s) {
+    if (!slot) return;
+    if (s === 'Poisoned') { slot.status.poisoned = true; }
+    else {
+      slot.status.asleep = false; slot.status.paralyzed = false; slot.status.confused = false;
+      if (s === 'Asleep') slot.status.asleep = true;
+      if (s === 'Paralyzed') { slot.status.paralyzed = true; slot.paralyzedTurn = this.state.turn; }
+      if (s === 'Confused') slot.status.confused = true;
+    }
+    this.log(`${this.nameOf(slot)} is now ${s}.`, 'status');
+  }
+
+  // PURE. Returns what `base` damage from atkSlot would do to defSlot, with a
+  // step log, without mutating anything. dealDamage() applies the result, and
+  // the AI uses it to forecast. Single source of truth: the AI can never
+  // predict something the engine wouldn't actually do.
+  computeDamage(atkSlot, defSlot, base, opts = {}) {
+    const steps = [];
+    if (!defSlot) return { dmg: 0, prevented: false, steps };
+    const A = topCard(this.db, atkSlot), D = topCard(this.db, defSlot);
+    let dmg = base;
+    if (dmg > 0 && !opts.noWR) {
+      if (D.wkType && D.wkType === A.type) {
+        dmg *= this.cfg.weaknessMultiplier;
+        steps.push(`Weakness: ${D.name} takes double -> ${dmg}.`);
+      }
+      if (D.rsType && D.rsType === A.type) {
+        dmg -= this.cfg.resistanceFlat;
+        steps.push(`Resistance: -${this.cfg.resistanceFlat} -> ${Math.max(0, dmg)}.`);
+      }
+      if (dmg < 0) dmg = 0;
+    }
+    if (dmg > 0) {
+      for (const e of atkSlot.effects) {
+        if (e.kind === 'DAMAGE_BONUS') { dmg += e.amount; steps.push(`+${e.amount} from ${e.label || 'a bonus'} -> ${dmg}.`); }
+      }
+    }
+    if (dmg > 0) {
+      for (const e of defSlot.effects) {
+        if (e.kind === 'DAMAGE_REDUCTION') {
+          dmg -= e.amount;
+          steps.push(`-${e.amount} from ${e.label || 'a shield'} -> ${Math.max(0, dmg)}.`);
+        }
+      }
+      if (dmg < 0) dmg = 0;
+    }
+    let prevented = false;
+    const absolute = defSlot.effects.find(e => e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS');
+    const threshold = defSlot.effects.find(e => e.kind === 'PREVENT_UP_TO');
+    if (absolute) {
+      if (dmg > 0) { steps.push(`All damage to ${D.name} is prevented.`); prevented = true; }
+      dmg = 0;
+    } else if (threshold && dmg > 0 && dmg <= threshold.threshold) {
+      steps.push(`${D.name} is Hardened: ${dmg} damage (${threshold.threshold} or less) is prevented.`);
+      dmg = 0; prevented = true;
+    }
+    return { dmg, prevented, steps };
+  }
+
+  dealDamage(atkSlot, defSlot, base, opts = {}) {
+    if (!defSlot) return { dealt: 0, prevented: false };
+    const D = topCard(this.db, defSlot);
+    const r = this.computeDamage(atkSlot, defSlot, base, opts);
+    r.steps.forEach(t => this.log(t, t.indexOf('prevented') >= 0 || t.indexOf('Hardened') >= 0 ? 'eff' : 'dmg'));
+    if (r.dmg > 0) {
+      defSlot.dmg += r.dmg;
+      defSlot.lastHitBy = { uid: atkSlot.uid, turn: this.state.turn };
+      this.log(`${D.name} takes ${r.dmg}. (${defSlot.dmg}/${D.hp})`, 'dmg');
+    }
+    return { dealt: r.dmg, prevented: r.prevented };
+  }
+
+  // True when an attack's non-damage effects should be suppressed on this target.
+  effectsBlocked(slot) {
+    return !!slot && slot.effects.some(e => e.kind === 'PREVENT_ALL_EFFECTS');
+  }
+
+  // ---------------------------------------------------------- KO / win -----
+  checkKOs() {
+    const s = this.state;
+    if (s.phase === 'over') return;
+    let any = true;
+    while (any) {
+      any = false;
+      for (let i = 0; i < 2 && !any; i++) {
+        const p = s.players[i], o = s.players[1 - i];
+        const kill = (slot, fromBench, idx) => {
+          const c = topCard(this.db, slot);
+          this.log(`${c.name} is Knocked Out!`, 'ko');
+          // Destiny Bond: whatever Knocked this out is Knocked Out in turn.
+          const bond = slot.effects.find(e => e.kind === 'DESTINY_BOND');
+          if (bond && slot.lastHitBy) {
+            const killer = this.allSlots(1 - i).find(x => x.uid === slot.lastHitBy.uid);
+            if (killer && !killer.forcedKO) {
+              killer.forcedKO = true;
+              this.log(`Destiny Bond: ${this.nameOf(killer)} is dragged down with ${c.name}!`, 'ko');
+            }
+          }
+          slot.stack.forEach(x => p.discard.push(x));
+          slot.energy.forEach(x => p.discard.push(x));
+          slot.effects.forEach(e => { if (e.card) p.discard.push(e.card); });
+          if (fromBench) p.bench.splice(idx, 1); else p.active = null;
+          if (o.prizes.length) {
+            o.hand.push(o.prizes.shift());
+            this.log(`${o.name} takes a Prize. (${o.prizes.length} left)`, 'prize');
+          }
+        };
+        const dead = (sl) => sl.forcedKO || sl.dmg >= topCard(this.db, sl).hp;
+        if (p.active && dead(p.active)) { kill(p.active, false, -1); any = true; }
+        if (!any) for (let k = 0; k < p.bench.length; k++) {
+          if (dead(p.bench[k])) { kill(p.bench[k], true, k); any = true; break; }
+        }
+        if (any) {
+          if (o.prizes.length === 0) return this.endGame(1 - i, `${o.name} took all Prizes`);
+          if (!p.active && p.bench.length === 0) return this.endGame(1 - i, `${p.name} has no Pokemon left`);
+          if (!p.active && p.bench.length > 0) this.addPromote(i);
+        }
+      }
+    }
+  }
+
+  endGame(winner, reason) {
+    this.state.phase = 'over';
+    this.state.winner = winner;
+    this.state.winReason = reason;
+    this.state.pendingPromote = null;
+    this.state.promoteQueue = [];
+    this.log(`GAME OVER - ${this.state.players[winner].name} wins: ${reason}`, 'win');
+    return { ok: true, over: true };
+  }
+
+  // ---------------------------------------------------------------- AI -----
+  // Returns ONE action, or null if this player has nothing to do. The UI steps
+  // through these so the opponent's turn reads at human pace; the harness loops.
+  //
+  // 'expert' / 'novice' delegate to the expected-value AI in ai.js.
+  // 'greedy' and 'random' are kept as rules fuzzers - see the note in choose().
+  aiChoose(pi, mode = 'expert') {
+    if (mode === 'expert' || mode === 'novice') {
+      if (!this._ai || this._ai.mode !== mode) {
+        // ai.js is concatenated before this file in the browser bundle, and
+        // required here under Node. Resolve at call time so both work.
+        const Klass = (typeof AI !== 'undefined') ? AI : require('./ai.js').AI;
+        this._ai = new Klass(this, { mode });
+      }
+      return this._ai.choose(pi);
+    }
+    const s = this.state;
+    if (s.phase === 'over') return null;
+
+    if (s.pendingPromote !== null) {
+      if (s.pendingPromote !== pi) return null;
+      const acts = this.legalActions(pi).filter(a => a.t === 'promote');
+      if (!acts.length) return null;
+      if (mode === 'random') return acts[this.pick(acts.length)];
+      const p = s.players[pi];
+      let best = acts[0], bh = -1;
+      acts.forEach(a => { const h = topCard(this.db, p.bench[a.bench]).hp; if (h > bh) { bh = h; best = a; } });
+      return best;
+    }
+
+    if (s.active !== pi) return null;
+    const acts = this.legalActions(pi);
+    if (!acts.length) return null;
+
+    if (mode === 'random') {
+      const attacks = acts.filter(x => x.t === 'attack');
+      const others = acts.filter(x => x.t !== 'attack' && x.t !== 'pass');
+      if (others.length && this.rand() < 0.72) return others[this.pick(others.length)];
+      if (attacks.length) return attacks[this.pick(attacks.length)];
+      return acts.find(x => x.t === 'pass');
+    }
+
+    const p = s.players[pi];
+    const evolve = acts.find(a => a.t === 'evolve' && p.active && a.target === p.active.uid)
+                || acts.find(a => a.t === 'evolve');
+    const attachActive = acts.find(a => a.t === 'attachEnergy' && p.active && a.target === p.active.uid);
+    const benchIt = acts.find(a => a.t === 'playBasic');
+    const attacks = acts.filter(a => a.t === 'attack');
+
+    if (evolve) return evolve;
+    if (attachActive) return attachActive;
+    if (p.bench.length < 2 && benchIt) return benchIt;
+    if (attacks.length) {
+      let best = attacks[0], bd = -1;
+      for (const a of attacks) {
+        const d = parseDamage(topCard(this.db, p.active).attacks[a.idx].dmg);
+        if (d > bd) { bd = d; best = a; }
+      }
+      return best;
+    }
+    return acts.find(a => a.t === 'pass');
+  }
+
+  aiTurn(pi, mode = 'expert', maxActions = 40) {
+    let n = 0;
+    while (n++ < maxActions) {
+      const s = this.state;
+      if (s.phase === 'over') return;
+      const a = this.aiChoose(pi, mode);
+      if (!a) return;
+      const before = s.turn;
+      this.act(pi, a);
+      if (s.turn !== before || (s.active !== pi && s.pendingPromote === null)) return;
+    }
+    if (this.state.active === pi && this.state.phase !== 'over' && this.state.pendingPromote === null) {
+      this.act(pi, { t: 'pass' });
+    }
+  }
+
+  randomTurn(pi) { return this.aiTurn(pi, 'random'); }
+
+  // A blunt "always builds the Active and swings" player. Not smart - its job is
+  // to drive games to Prize-based endings so the KO / promote / win paths get
+  // exercised, which pure random play almost never does.
+  greedyTurn(pi) { return this.aiTurn(pi, 'greedy'); }
+}
+
+
+// ============================================================================
+// UI LAYER — deliberately instrument-like. Job 1 is about reading the rules
+// engine clearly, not about card art. The log is a first-class panel.
+// ============================================================================
+
+const ENERGY_COLOR = { G: '#6FAE5A', R: '#D4603C', W: '#4E9BC4', L: '#D9BB47', P: '#9269A8', F: '#B07248', C: '#AAB2BB', D: '#5A6672', M: '#8A94A0' };
+const ENERGY_NAME = { G: 'Grass', R: 'Fire', W: 'Water', L: 'Lightning', P: 'Psychic', F: 'Fighting', C: 'Colorless', D: 'Darkness', M: 'Metal' };
+
+// Trainers that need the player to choose something.
+const TRAINER_TARGET = {
+  'base1-95': { scope: 'ownBench',          prompt: 'Choose a Benched Pokemon to bring up' },
+  'base1-93': { scope: 'oppBench',          prompt: "Choose an opposing Benched Pokemon to drag up" },
+  'base1-92': { scope: 'oppEnergy',         prompt: 'Choose an opposing Pokemon to remove Energy from' },
+  'base1-94': { scope: 'ownDamaged',        prompt: 'Choose a damaged Pokemon to heal' },
+  'base1-90': { scope: 'ownDamagedEnergy',  prompt: 'Choose a damaged Pokemon with Energy attached' },
+  'base1-81': { scope: 'handDiscard',       prompt: 'Choose a card from your hand to trade away' },
+  'base1-71': { scope: 'computerSearch',   prompt: 'Discard 2 other cards, then search your deck' },
+  'base1-79': { scope: 'ownEnergy',          prompt: 'Choose one of YOUR Pokemon to discard an Energy from',
+                then: { scope: 'oppEnergy',  prompt: 'Now choose an opposing Pokemon to strip 2 Energy from' } },
+};
+
+const UI = {
+  E: null,
+  sel: null,          // {kind:'hand', idx} | null
+  picker: null,       // Computer Search two-stage chooser
+  targeting: null,    // {scope, prompt, dispatch(payload)}
+  aiMode: 'expert',
+  aiDelay: 1000,
+  aiTimer: null,
+  flipDelay: 2000,      // "Flipping coin..." hold
+  flipHold: 800,        // how long the result sits on screen after landing
+  presTimer: null,
+  view: null,           // frozen board snapshot while a flip is being presented
+  pres: null,           // {queue, banner}
+  devTab: 'log',
+  myDeck: 'Brushfire',
+  foeDeck: 'Overgrowth',
+  cfgDraft: { prizeCount: 6, firstPlayerMayAttack: true, noEvolveFirstTurn: true },
+  seedDraft: '',
+  screen: 'decks',      // 'decks' -> 'setup' -> board
+};
+
+const DECK_NAMES = Object.keys(DECKS);
+const otherDeck = (n) => DECK_NAMES.find(x => x !== n);
+
+// -------------------------------------------------------------- bootstrap --
+function startMatch() {
+  UI.screen = 'setup';
+  newGame();
+}
+
+function backToDeckSelect() {
+  clearTimeout(UI.aiTimer); clearTimeout(UI.presTimer);
+  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null;
+  UI.screen = 'decks';
+  render();
+}
+
+function newGame() {
+  clearTimeout(UI.aiTimer); clearTimeout(UI.presTimer);
+  UI.pres = null; UI.view = null;
+  const seed = UI.seedDraft === '' ? (Math.random() * 2147483647 | 0) : (parseInt(UI.seedDraft, 10) | 0);
+  UI.E = new Engine(CARD_DB, EFFECTS, { seed, cfg: Object.assign({}, UI.cfgDraft) });
+  if (UI.foeDeck === UI.myDeck) UI.foeDeck = otherDeck(UI.myDeck);
+  UI.E.newGame(DECKS[UI.myDeck], DECKS[UI.foeDeck], ['You', 'Opponent']);
+  UI.E.setupAuto(1);                     // opponent sets itself up
+  UI.sel = null; UI.targeting = null; UI.picker = null;
+  render();
+}
+
+// ------------------------------------------------- coin-flip presentation --
+// The engine resolves an action synchronously, so the outcome is already in the
+// state by the time we could announce a flip. Instead of predicting flips, we
+// freeze the board on a pre-action snapshot and replay the log, pausing on each
+// flip. Nothing is predicted; we only re-show what actually happened.
+const presenting = () => UI.pres !== null;
+
+function dispatch(pi, action) {
+  if (presenting()) return;
+  const before = JSON.parse(JSON.stringify(UI.E.state));
+  const mark = UI.E.state.log.length;
+  UI.E.act(pi, action);
+  UI.sel = null; UI.targeting = null;
+  const fresh = UI.E.state.log.slice(mark);
+  if (!fresh.some(e => e.kind === 'flip') || UI.flipDelay < 250) { render(); return; }
+  UI.view = before;
+  UI.pres = { queue: fresh.slice(), banner: null };
+  stepPresentation();
+}
+
+function stepPresentation() {
+  const p = UI.pres;
+  if (!p) return;
+  while (p.queue.length && p.queue[0].kind !== 'flip') UI.view.log.push(p.queue.shift());
+  if (!p.queue.length) { UI.pres = null; UI.view = null; render(); return; }
+
+  const entry = p.queue.shift();
+  const m = entry.text.match(/^Coin flip(?: \((.*?)\))?: (HEADS|TAILS)$/);
+  const reason = (m && m[1]) ? m[1] : '';
+  const result = m ? m[2] : '';
+
+  p.banner = { phase: 'flipping', reason, result: '' };
+  render();
+  UI.presTimer = setTimeout(() => {
+    UI.view.log.push(entry);
+    p.banner = { phase: 'landed', reason, result };
+    render();
+    UI.presTimer = setTimeout(() => { p.banner = null; stepPresentation(); }, UI.flipHold);
+  }, UI.flipDelay);
+}
+
+// ---------------------------------------------------------------- helpers --
+const el = (tag, cls, txt) => { const d = document.createElement(tag); if (cls) d.className = cls; if (txt !== undefined) d.textContent = txt; return d; };
+const S = () => UI.view || UI.E.state;
+const me = () => S().players[0];
+const foe = () => S().players[1];
+
+function myLegal() {
+  if (presenting()) return [];
+  const s = UI.E.state;
+  return (s.phase === 'main' || s.pendingPromote !== null) ? UI.E.legalActions(0) : [];
+}
+
+function costPips(cost) {
+  const w = el('span', 'pips');
+  for (const c of cost) {
+    const p = el('i', 'pip'); p.style.background = ENERGY_COLOR[c] || '#888'; p.title = ENERGY_NAME[c] || c;
+    w.appendChild(p);
+  }
+  if (!cost) w.appendChild(el('span', 'free', 'free'));
+  return w;
+}
+
+// ------------------------------------------------------------- rendering ---
+function render() {
+  const root = document.getElementById('app');
+  root.innerHTML = '';
+  if (UI.screen === 'decks') { root.appendChild(renderDeckSelect()); return; }
+  if (!UI.E) { root.appendChild(el('div', 'empty', 'No game loaded.')); return; }
+
+  const wrap = el('div', 'wrap');
+  wrap.appendChild(renderBoardColumn());
+  wrap.appendChild(renderRail());
+  root.appendChild(wrap);
+
+  if (UI.picker) root.appendChild(renderPicker());
+  if (S().phase === 'setup') root.appendChild(renderSetup());
+  if (S().phase === 'over') root.appendChild(renderOver());
+
+  maybeRunAI();
+}
+
+function renderBoardColumn() {
+  const col = el('div', 'boardcol');
+  col.appendChild(renderStatusBar());
+  col.appendChild(renderSide(1, true));
+  col.appendChild(renderMidline());
+  col.appendChild(renderSide(0, false));
+  col.appendChild(renderHand());
+  col.appendChild(renderActionBar());
+  return col;
+}
+
+function renderStatusBar() {
+  const s = S();
+  const bar = el('div', 'statusbar');
+  const who = s.phase === 'over' ? 'Game over'
+    : s.pendingPromote !== null ? (s.pendingPromote === 0 ? 'Choose a Pokemon to promote' : 'Opponent is promoting')
+    : (s.active === 0 ? 'Your turn' : "Opponent's turn");
+  const t = el('div', 'turnflag' + (s.active === 0 && s.phase === 'main' ? ' mine' : ''), who);
+  bar.appendChild(t);
+  bar.appendChild(el('div', 'turnno', `turn ${s.turn}`));
+  bar.appendChild(el('div', 'seedno', `seed ${UI.E.seed}`));
+  return bar;
+}
+
+function renderMidline() {
+  const m = el('div', 'midline');
+  if (UI.targeting) m.appendChild(el('div', 'prompt', UI.targeting.prompt));
+  return m;
+}
+
+function counters(p, mine) {
+  const c = el('div', 'counters');
+  const add = (label, n, cls) => { const d = el('div', 'ctr ' + (cls || '')); d.appendChild(el('b', null, String(n))); d.appendChild(el('span', null, label)); c.appendChild(d); };
+  add('prizes', p.prizes.length, p.prizes.length <= 2 ? 'hot' : '');
+  add('deck', p.deck.length, p.deck.length <= 5 ? 'hot' : '');
+  add('hand', p.hand.length);
+  add('discard', p.discard.length);
+  return c;
+}
+
+function renderSide(pi, isFoe) {
+  const p = S().players[pi];
+  const side = el('div', 'side' + (isFoe ? ' foe' : ' mine'));
+  const head = el('div', 'sidehead');
+  head.appendChild(el('div', 'sidename', isFoe ? 'OPPONENT — ' + UI.foeDeck : 'YOU — ' + UI.myDeck));
+  head.appendChild(counters(p, !isFoe));
+  side.appendChild(head);
+
+  const benchRow = el('div', 'bench');
+  if (!p.bench.length) benchRow.appendChild(el('div', 'slot empty', 'bench empty'));
+  p.bench.forEach((b, i) => benchRow.appendChild(renderSlot(b, pi, 'bench', i)));
+
+  const actRow = el('div', 'activerow');
+  if (p.active) actRow.appendChild(renderSlot(p.active, pi, 'active', -1));
+  else actRow.appendChild(el('div', 'slot empty', 'no active pokemon'));
+
+  if (isFoe) { side.appendChild(benchRow); side.appendChild(actRow); }
+  else { side.appendChild(actRow); side.appendChild(benchRow); }
+  return side;
+}
+
+function slotTargetable(slot, pi, where, idx) {
+  const t = UI.targeting; if (!t) return false;
+  switch (t.scope) {
+    case 'ownBench': return pi === 0 && where === 'bench';
+    case 'oppBench': return pi === 1 && where === 'bench';
+    case 'oppEnergy': return pi === 1 && slot.energy.length > 0;
+    case 'ownEnergy': return pi === 0 && slot.energy.length > 0;
+    case 'ownDamaged': return pi === 0 && slot.dmg > 0;
+    case 'ownDamagedEnergy': return pi === 0 && slot.dmg > 0 && slot.energy.length > 0;
+    case 'promote': return pi === 0 && where === 'bench';
+    case 'attachTo': case 'evolveOn': return pi === 0 && t.uids.includes(slot.uid);
+    default: return false;
+  }
+}
+
+function renderSlot(slot, pi, where, idx) {
+  const c = topCard(CARD_DB, slot);
+  const d = el('div', 'slot');
+  if (where === 'active') d.classList.add('act');
+  const can = slotTargetable(slot, pi, where, idx);
+  if (can) d.classList.add('targetable');
+
+  const top = el('div', 'slottop');
+  top.appendChild(el('div', 'nm', c.name));
+  const hp = el('div', 'hp');
+  hp.textContent = `${Math.max(0, c.hp - slot.dmg)}/${c.hp}`;
+  if (slot.dmg > 0) hp.classList.add('hurt');
+  top.appendChild(hp);
+  d.appendChild(top);
+
+  const meta = el('div', 'slotmeta');
+  const ty = el('i', 'pip'); ty.style.background = ENERGY_COLOR[c.type]; ty.title = ENERGY_NAME[c.type];
+  meta.appendChild(ty);
+  meta.appendChild(el('span', 'stage', c.stage + (slot.stack.length > 1 ? ` (${slot.stack.length})` : '')));
+  if (c.wkType) { const w = el('span', 'wr'); w.textContent = 'wk'; w.style.color = ENERGY_COLOR[c.wkType]; meta.appendChild(w); }
+  if (c.rsType) { const r = el('span', 'wr'); r.textContent = 'rs'; r.style.color = ENERGY_COLOR[c.rsType]; meta.appendChild(r); }
+  meta.appendChild(el('span', 'rt', 'retreat ' + c.retreat));
+  d.appendChild(meta);
+
+  const bar = el('div', 'dmgbar');
+  const fill = el('i'); fill.style.width = Math.min(100, (slot.dmg / c.hp) * 100) + '%';
+  bar.appendChild(fill); d.appendChild(bar);
+
+  const en = el('div', 'energyrow');
+  slot.energy.forEach(e => {
+    const p = el('i', 'pip'); const t = CARD_DB[e.id].provides;
+    p.style.background = ENERGY_COLOR[t]; p.title = CARD_DB[e.id].name; en.appendChild(p);
+  });
+  if (!slot.energy.length) en.appendChild(el('span', 'none', 'no energy'));
+  d.appendChild(en);
+
+  const st = el('div', 'statuses');
+  const badge = (txt, cls) => { const b = el('span', 'badge ' + cls, txt); st.appendChild(b); };
+  if (slot.status.asleep) badge('ASLEEP', 'slp');
+  if (slot.status.paralyzed) badge('PARALYZED', 'par');
+  if (slot.status.confused) badge('CONFUSED', 'cnf');
+  if (slot.status.poisoned) badge('POISONED', 'psn');
+  slot.effects.forEach(e => {
+    if (e.kind === 'PREVENT_ALL_DAMAGE') badge('SHIELDED', 'shd');
+    if (e.kind === 'DAMAGE_BONUS') badge('+' + e.amount, 'bns');
+  });
+  if (st.children.length) d.appendChild(st);
+
+  // your active: attack buttons
+  if (pi === 0 && where === 'active' && !presenting() && S().phase === 'main' && S().active === 0 && S().pendingPromote === null) {
+    const atks = el('div', 'attacks');
+    (c.attacks || []).forEach((a, i) => {
+      const chk = UI.E.canUseAttack(0, i);
+      const canAtk = chk.ok && UI.E.canAttackAtAll(0);
+      const b = el('button', 'atk' + (canAtk ? '' : ' off'));
+      const l = el('div', 'atkline');
+      l.appendChild(costPips(a.cost));
+      l.appendChild(el('span', 'atkname', a.name));
+      l.appendChild(el('span', 'atkdmg', a.dmg || '—'));
+      b.appendChild(l);
+      if (a.text) b.appendChild(el('div', 'atktext', a.text));
+      if (!canAtk) {
+        const why = !UI.E.canAttackAtAll(0)
+          ? (slot.status.asleep ? 'Asleep — cannot attack' : slot.status.paralyzed ? 'Paralyzed — cannot attack' : 'Cannot attack')
+          : chk.why;
+        b.appendChild(el('div', 'atkwhy', why));
+      } else {
+        b.onclick = () => doAttack(i);
+      }
+      atks.appendChild(b);
+    });
+    d.appendChild(atks);
+  }
+
+  if (can) d.onclick = () => resolveTarget(slot, pi, where, idx);
+  return d;
+}
+
+function renderHand() {
+  const h = el('div', 'handpanel');
+  const head = el('div', 'panelhead');
+  head.appendChild(el('span', null, 'YOUR HAND'));
+  head.appendChild(el('span', 'dimtxt', me().hand.length + ' cards'));
+  h.appendChild(head);
+
+  const row = el('div', 'hand');
+  const legal = myLegal();
+  me().hand.forEach((inst, i) => {
+    const c = CARD_DB[inst.id];
+    const acts = legal.filter(a => a.hand === i);
+    const card = el('div', 'card k-' + c.kind);
+    if (UI.sel && UI.sel.idx === i) card.classList.add('sel');
+    if (!acts.length) card.classList.add('dead');
+    if (UI.targeting && UI.targeting.scope === 'handDiscard') card.classList.add('targetable');
+
+    card.appendChild(el('div', 'cname', c.name));
+    const sub = el('div', 'csub');
+    if (c.kind === 'pokemon') {
+      const p = el('i', 'pip'); p.style.background = ENERGY_COLOR[c.type]; sub.appendChild(p);
+      sub.appendChild(el('span', null, `${c.stage} · ${c.hp} HP`));
+    } else if (c.kind === 'energy') {
+      const p = el('i', 'pip'); p.style.background = ENERGY_COLOR[c.provides]; sub.appendChild(p);
+      sub.appendChild(el('span', null, c.cls + ' Energy'));
+    } else {
+      sub.appendChild(el('span', null, c.sub));
+    }
+    card.appendChild(sub);
+    if (c.kind === 'trainer') card.appendChild(el('div', 'ctext', c.text));
+    if (c.kind === 'pokemon' && c.evolvesFrom) card.appendChild(el('div', 'ctext', '← ' + c.evolvesFrom));
+
+    card.onclick = () => {
+      if (presenting()) return;
+      if (UI.targeting && UI.targeting.scope === 'handDiscard') { UI.targeting.dispatch({ discardUid: me().hand[i].uid }); return; }
+      if (!acts.length) return;
+      UI.sel = (UI.sel && UI.sel.idx === i) ? null : { idx: i };
+      UI.targeting = null;
+      render();
+    };
+    row.appendChild(card);
+  });
+  if (!me().hand.length) row.appendChild(el('div', 'empty', 'hand empty'));
+  h.appendChild(row);
+  return h;
+}
+
+function renderActionBar() {
+  const bar = el('div', 'actionbar');
+  const s = S();
+
+  if (presenting()) {
+    const b = UI.pres.banner;
+    const landed = b && b.phase === 'landed';
+    const coin = el('div', 'coinbox' + (landed ? ' landed ' + b.result.toLowerCase() : ''));
+    coin.appendChild(el('div', 'coinface', landed ? (b.result === 'HEADS' ? 'H' : 'T') : '?'));
+    const txt = el('div', 'coinmsg');
+    txt.appendChild(el('div', 'coinbig', landed ? b.result : 'Flipping coin…'));
+    if (b && b.reason) txt.appendChild(el('div', 'coinwhy', b.reason));
+    coin.appendChild(txt);
+    bar.appendChild(coin);
+    return bar;
+  }
+
+  if (UI.targeting) {
+    const cancel = el('button', 'btn ghost', 'Cancel');
+    cancel.onclick = () => { UI.targeting = null; UI.sel = null; render(); };
+    bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
+    bar.appendChild(cancel);
+    return bar;
+  }
+
+  if (s.pendingPromote === 0) {
+    bar.appendChild(el('div', 'barmsg', 'Your Active Pokemon was Knocked Out. Choose a replacement from your Bench.'));
+    me().bench.forEach((b, i) => {
+      const btn = el('button', 'btn', 'Promote ' + topCard(CARD_DB, b).name);
+      btn.onclick = () => dispatch(0, { t: 'promote', bench: i });
+      bar.appendChild(btn);
+    });
+    return bar;
+  }
+
+  if (s.phase !== 'main' || s.active !== 0) { bar.appendChild(el('div', 'barmsg dimtxt', 'Waiting…')); return bar; }
+
+  if (UI.sel) {
+    const i = UI.sel.idx;
+    const inst = me().hand[i];
+    if (!inst) { UI.sel = null; return bar; }
+    const c = CARD_DB[inst.id];
+    const acts = myLegal().filter(a => a.hand === i);
+    bar.appendChild(el('div', 'barmsg', c.name));
+
+    const bench = acts.find(a => a.t === 'playBasic');
+    if (bench) { const b = el('button', 'btn', 'Put on Bench'); b.onclick = () => dispatch(0, bench); bar.appendChild(b); }
+
+    const evos = acts.filter(a => a.t === 'evolve');
+    if (evos.length) {
+      const b = el('button', 'btn', 'Evolve…');
+      b.onclick = () => {
+        UI.targeting = { scope: 'evolveOn', uids: evos.map(a => a.target), prompt: `Choose the Pokemon to evolve into ${c.name}`,
+          dispatch: (uid) => dispatch(0, evos.find(a => a.target === uid)) };
+        render();
+      };
+      bar.appendChild(b);
+    }
+
+    const atts = acts.filter(a => a.t === 'attachEnergy');
+    if (atts.length) {
+      const b = el('button', 'btn', 'Attach to…');
+      b.onclick = () => {
+        UI.targeting = { scope: 'attachTo', uids: atts.map(a => a.target), prompt: `Choose a Pokemon to attach ${c.name} to`,
+          dispatch: (uid) => dispatch(0, atts.find(a => a.target === uid)) };
+        render();
+      };
+      bar.appendChild(b);
+    }
+
+    const tr = acts.find(a => a.t === 'playTrainer');
+    if (tr) {
+      const need = TRAINER_TARGET[c.id];
+      const b = el('button', 'btn', need ? 'Play…' : 'Play');
+      b.onclick = () => {
+        if (!need) { dispatch(0, tr); return; }
+        if (need.scope === 'computerSearch') {
+          UI.picker = { stage: 'discard', chosen: [], handIdx: i };
+          render(); return;
+        }
+        if (need.then) {
+          UI.targeting = { scope: need.scope, prompt: need.prompt, dispatch: (first) => {
+            UI.targeting = { scope: need.then.scope, prompt: need.then.prompt,
+              dispatch: (second) => dispatch(0, { t: 'playTrainer', hand: i,
+                opts: { selfUid: first.targetUid, targetUid: second.targetUid } }) };
+            render();
+          } };
+          render(); return;
+        }
+        UI.targeting = { scope: need.scope, prompt: need.prompt,
+          dispatch: (opts) => dispatch(0, { t: 'playTrainer', hand: i, opts }) };
+        render();
+      };
+      bar.appendChild(b);
+    }
+
+    const x = el('button', 'btn ghost', 'Deselect');
+    x.onclick = () => { UI.sel = null; render(); };
+    bar.appendChild(x);
+    return bar;
+  }
+
+  const retreats = myLegal().filter(a => a.t === 'retreat');
+  if (retreats.length) {
+    const cost = topCard(CARD_DB, me().active).retreat;
+    const b = el('button', 'btn', `Retreat (discard ${cost} Energy)…`);
+    b.onclick = () => {
+      UI.targeting = { scope: 'ownBench', prompt: 'Choose a Benched Pokemon to bring up',
+        dispatch: (opts) => dispatch(0, { t: 'retreat', bench: opts.bench }) };
+      render();
+    };
+    bar.appendChild(b);
+  } else if (me().active && me().bench.length && !me().retreated) {
+    const c = topCard(CARD_DB, me().active);
+    const why = me().active.status.asleep ? 'Asleep — cannot retreat'
+      : me().active.status.paralyzed ? 'Paralyzed — cannot retreat'
+      : `Needs ${c.retreat} Energy to retreat`;
+    bar.appendChild(el('div', 'barmsg dimtxt', why));
+  }
+
+  const end = el('button', 'btn end', 'End turn');
+  end.onclick = () => dispatch(0, { t: 'pass' });
+  bar.appendChild(end);
+  return bar;
+}
+
+function resolveTarget(slot, pi, where, idx) {
+  const t = UI.targeting; if (!t) return;
+  if (t.scope === 'attachTo' || t.scope === 'evolveOn') return t.dispatch(slot.uid);
+  if (t.scope === 'ownBench' || t.scope === 'oppBench') return t.dispatch({ bench: idx });
+  if (t.scope === 'oppEnergy' || t.scope === 'ownEnergy') return t.dispatch({ targetUid: slot.uid, energyIdx: 0 });
+  return t.dispatch({ targetUid: slot.uid });
+}
+
+function doAttack(i) {
+  const c = topCard(CARD_DB, me().active);
+  const script = (EFFECTS[c.id] && EFFECTS[c.id].a && EFFECTS[c.id].a[i]) || [];
+  const needsBench = script.some(v => v.v === 'SWITCH_DEFENDER_CHOOSE') && foe().bench.length > 0;
+  if (needsBench) {
+    UI.targeting = { scope: 'oppBench', prompt: 'Choose which Benched Pokemon to drag into the Active spot',
+      dispatch: (opts) => dispatch(0, { t: 'attack', idx: i, opts }) };
+    render(); return;
+  }
+  dispatch(0, { t: 'attack', idx: i });
+}
+
+// ------------------------------------------------------- deck select ------
+function deckSummary(name) {
+  const d = DECKS[name];
+  const k = { pokemon: 0, trainer: 0, energy: 0 };
+  const types = {};
+  let basics = 0, stage2 = 0;
+  for (const [q, id] of d.list) {
+    const c = CARD_DB[id];
+    k[c.kind] += q;
+    if (c.kind === 'pokemon') {
+      types[c.type] = (types[c.type] || 0) + q;
+      if (c.stage === 'Basic') basics += q;
+      if (c.stage === 'Stage 2') stage2 += q;
+    }
+  }
+  return { k, types, basics, stage2 };
+}
+
+function renderDeckSelect() {
+  const ov = el('div', 'deckscreen');
+  const box = el('div', 'sheet wide');
+  box.appendChild(el('h2', null, 'Choose decks'));
+  box.appendChild(el('p', 'dimtxt', 'Four Base Set theme decks. Pick one for yourself and one for the opponent, then set up your opening board.'));
+
+  const mkGrid = (key, heading) => {
+    const sec = el('div', 'deckgrp');
+    sec.appendChild(el('div', 'grphead', heading));
+    const grid = el('div', 'deckgrid');
+    DECK_NAMES.forEach(n => {
+      const s = deckSummary(n);
+      const c = el('div', 'deckcard' + (UI[key] === n ? ' on' : ''));
+      c.appendChild(el('div', 'dname', n));
+      const pips = el('div', 'dtypes');
+      Object.keys(s.types).sort((a, b) => s.types[b] - s.types[a]).forEach(t => {
+        const p = el('i', 'pip'); p.style.background = ENERGY_COLOR[t]; p.title = ENERGY_NAME[t];
+        pips.appendChild(p);
+      });
+      c.appendChild(pips);
+      c.appendChild(el('div', 'dstat', `${s.k.pokemon} Pokemon · ${s.k.trainer} Trainer · ${s.k.energy} Energy`));
+      c.appendChild(el('div', 'dstat dim', `${s.basics} Basics${s.stage2 ? ` · ${s.stage2} Stage 2` : ''}`));
+      c.onclick = () => {
+        UI[key] = n;
+        if (UI.foeDeck === UI.myDeck) UI.foeDeck = otherDeck(UI.myDeck);
+        render();
+      };
+      grid.appendChild(c);
+    });
+    sec.appendChild(grid);
+    return sec;
+  };
+
+  box.appendChild(mkGrid('myDeck', 'YOUR DECK'));
+  box.appendChild(mkGrid('foeDeck', 'OPPONENT'));
+
+  const diff = el('div', 'row');
+  diff.appendChild(el('label', null, 'opponent'));
+  const dsel = el('select');
+  [['Expert', 'expert'], ['Novice', 'novice'], ['Damage-only bot', 'greedy'], ['Random', 'random']]
+    .forEach(([t, v]) => { const o = el('option', null, t); o.value = v; if (UI.aiMode === v) o.selected = true; dsel.appendChild(o); });
+  dsel.onchange = () => { UI.aiMode = dsel.value; };
+  diff.appendChild(dsel);
+  box.appendChild(diff);
+
+  const opts = el('div', 'row');
+  opts.appendChild(el('label', null, 'prizes'));
+  const ps = el('select');
+  [6, 4, 3, 2, 1].forEach(n => { const o = el('option', null, String(n)); o.value = n; if (UI.cfgDraft.prizeCount === n) o.selected = true; ps.appendChild(o); });
+  ps.onchange = () => { UI.cfgDraft.prizeCount = parseInt(ps.value, 10); };
+  opts.appendChild(ps);
+  opts.appendChild(el('label', null, 'seed'));
+  const si = el('input'); si.type = 'text'; si.placeholder = 'random'; si.value = UI.seedDraft;
+  si.oninput = () => { UI.seedDraft = si.value.trim(); };
+  opts.appendChild(si);
+  box.appendChild(opts);
+
+  const bar = el('div', 'actionbar');
+  const go = el('button', 'btn end', `Play ${UI.myDeck} vs ${UI.foeDeck}`);
+  go.onclick = () => startMatch();
+  bar.appendChild(go);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
+}
+
+// -------------------------------------------------- Computer Search -------
+function renderPicker() {
+  const p = me();
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet wide');
+  const pk = UI.picker;
+  const selfInst = p.hand[pk.handIdx];
+
+  if (pk.stage === 'discard') {
+    box.appendChild(el('h2', null, 'Computer Search'));
+    box.appendChild(el('p', 'dimtxt', `Discard 2 other cards from your hand. Selected ${pk.chosen.length} of 2.`));
+    const row = el('div', 'hand');
+    p.hand.forEach((inst, i) => {
+      if (selfInst && inst.uid === selfInst.uid) return;      // can't discard itself
+      const c = CARD_DB[inst.id];
+      const card = el('div', 'card k-' + c.kind + (pk.chosen.includes(inst.uid) ? ' sel' : ''));
+      card.appendChild(el('div', 'cname', c.name));
+      card.appendChild(el('div', 'csub', c.kind === 'pokemon' ? `${c.stage} · ${c.hp} HP` : (c.kind === 'energy' ? 'Energy' : 'Trainer')));
+      card.onclick = () => {
+        const k = pk.chosen.indexOf(inst.uid);
+        if (k >= 0) pk.chosen.splice(k, 1);
+        else if (pk.chosen.length < 2) pk.chosen.push(inst.uid);
+        render();
+      };
+      row.appendChild(card);
+    });
+    box.appendChild(row);
+    const bar = el('div', 'actionbar');
+    const next = el('button', 'btn end' + (pk.chosen.length === 2 ? '' : ' off'), 'Search deck');
+    next.onclick = () => { pk.stage = 'search'; render(); };
+    const cancel = el('button', 'btn ghost', 'Cancel');
+    cancel.onclick = () => { UI.picker = null; UI.sel = null; render(); };
+    bar.appendChild(next); bar.appendChild(cancel);
+    box.appendChild(bar);
+    ov.appendChild(box);
+    return ov;
+  }
+
+  // stage: search
+  box.appendChild(el('h2', null, 'Search your deck'));
+  box.appendChild(el('p', 'dimtxt', 'Choose any card to put into your hand. Your deck is shuffled afterward.'));
+  const groups = {};
+  p.deck.forEach(inst => {
+    const c = CARD_DB[inst.id];
+    if (!groups[c.id]) groups[c.id] = { card: c, uids: [] };
+    groups[c.id].uids.push(inst.uid);
+  });
+  const list = el('div', 'searchlist');
+  Object.values(groups)
+    .sort((a, b) => a.card.kind.localeCompare(b.card.kind) || a.card.name.localeCompare(b.card.name))
+    .forEach(g => {
+      const r = el('div', 'searchrow k-' + g.card.kind);
+      r.appendChild(el('span', 'sn', g.card.name));
+      r.appendChild(el('span', 'sq', '×' + g.uids.length));
+      const sub = g.card.kind === 'pokemon' ? `${g.card.stage} · ${g.card.hp} HP`
+        : g.card.kind === 'energy' ? g.card.cls + ' Energy' : 'Trainer';
+      r.appendChild(el('span', 'ss', sub));
+      r.onclick = () => {
+        const opts = { discardUids: pk.chosen.slice(), pickUid: g.uids[0] };
+        const hi = pk.handIdx;
+        UI.picker = null;
+        dispatch(0, { t: 'playTrainer', hand: hi, opts });
+      };
+      list.appendChild(r);
+    });
+  box.appendChild(list);
+  const bar = el('div', 'actionbar');
+  const back = el('button', 'btn ghost', 'Back');
+  back.onclick = () => { pk.stage = 'discard'; render(); };
+  bar.appendChild(back);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
+}
+
+// ------------------------------------------------------------------ setup --
+function renderSetup() {
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet');
+  box.appendChild(el('h2', null, 'Opening setup'));
+  box.appendChild(el('p', 'dimtxt', 'Place one Basic Pokemon as your Active, then up to five more on your Bench. Prizes are dealt once both players are ready.'));
+
+  const banner = el('div', 'row');
+  banner.appendChild(el('span', 'dimtxt small', `${UI.myDeck} vs ${UI.foeDeck}`));
+  const back = el('button', 'btn ghost', 'Change decks');
+  back.onclick = () => backToDeckSelect();
+  banner.appendChild(back);
+  box.appendChild(banner);
+
+  const p = me();
+  const cur = el('div', 'setupcur');
+  cur.appendChild(el('div', 'lbl', 'Active: ' + (p.active ? topCard(CARD_DB, p.active).name : '— none —')));
+  cur.appendChild(el('div', 'lbl', 'Bench: ' + (p.bench.length ? p.bench.map(b => topCard(CARD_DB, b).name).join(', ') : '— empty —')));
+  box.appendChild(cur);
+
+  const row = el('div', 'hand');
+  p.hand.forEach((inst, i) => {
+    const c = CARD_DB[inst.id];
+    const isBasic = c.kind === 'pokemon' && c.stage === 'Basic';
+    const card = el('div', 'card k-' + c.kind + (isBasic ? '' : ' dead'));
+    card.appendChild(el('div', 'cname', c.name));
+    const sub = el('div', 'csub');
+    if (c.kind === 'pokemon') { const q = el('i', 'pip'); q.style.background = ENERGY_COLOR[c.type]; sub.appendChild(q); sub.appendChild(el('span', null, `${c.stage} · ${c.hp} HP`)); }
+    else if (c.kind === 'energy') { const q = el('i', 'pip'); q.style.background = ENERGY_COLOR[c.provides]; sub.appendChild(q); sub.appendChild(el('span', null, 'Energy')); }
+    else sub.appendChild(el('span', null, 'Trainer'));
+    card.appendChild(sub);
+    if (isBasic) card.onclick = () => { UI.E.setupPlace(0, i, p.active ? 'bench' : 'active'); render(); };
+    row.appendChild(card);
+  });
+  box.appendChild(row);
+
+  const bar = el('div', 'actionbar');
+  const auto = el('button', 'btn ghost', 'Fill automatically');
+  auto.onclick = () => { UI.E.setupAuto(0); render(); };
+  const done = el('button', 'btn end', 'Ready');
+  done.onclick = () => { const r = UI.E.setupConfirm(0); if (!r.ok) alert(r.error); render(); };
+  if (!p.active) done.classList.add('off');
+  bar.appendChild(auto); bar.appendChild(done);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
+}
+
+function renderOver() {
+  const s = S();
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet');
+  box.appendChild(el('h2', null, s.winner === 0 ? 'You win' : 'Opponent wins'));
+  box.appendChild(el('p', null, s.winReason));
+  box.appendChild(el('p', 'dimtxt', `Game lasted ${s.turn} turns. Seed ${UI.E.seed}.`));
+  const bar = el('div', 'actionbar');
+  const again = el('button', 'btn end', 'New game');
+  again.onclick = () => { UI.seedDraft = ''; backToDeckSelect(); };
+  const rerun = el('button', 'btn ghost', 'Replay this seed');
+  rerun.onclick = () => { UI.seedDraft = String(UI.E.seed); newGame(); };
+  bar.appendChild(again); bar.appendChild(rerun);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
+}
+
+// ------------------------------------------------------------------- rail --
+function renderRail() {
+  const rail = el('div', 'rail');
+  const tabs = el('div', 'tabs');
+  ['log', 'dev', 'cards'].forEach(t => {
+    const b = el('button', 'tab' + (UI.devTab === t ? ' on' : ''), t.toUpperCase());
+    b.onclick = () => { UI.devTab = t; render(); };
+    tabs.appendChild(b);
+  });
+  rail.appendChild(tabs);
+  if (UI.devTab === 'log') rail.appendChild(renderLog());
+  if (UI.devTab === 'dev') rail.appendChild(renderDev());
+  if (UI.devTab === 'cards') rail.appendChild(renderCoverage());
+  return rail;
+}
+
+function renderLog() {
+  const box = el('div', 'logbox');
+  // Newest first: entries are pushed in at the top and older ones slide down.
+  const entries = S().log.slice(-400).reverse();
+  entries.forEach(e => {
+    const d = el('div', 'logline k-' + e.kind);
+    d.appendChild(el('span', 'lt', String(e.t)));
+    d.appendChild(el('span', 'lx', e.text));
+    box.appendChild(d);
+  });
+  return box;
+}
+
+function renderDev() {
+  const box = el('div', 'devbox');
+
+  const g1 = el('div', 'grp');
+  g1.appendChild(el('div', 'grphead', 'New game'));
+  const seedRow = el('div', 'row');
+  seedRow.appendChild(el('label', null, 'seed'));
+  const si = el('input'); si.type = 'text'; si.placeholder = 'random'; si.value = UI.seedDraft;
+  si.oninput = () => { UI.seedDraft = si.value.trim(); };
+  seedRow.appendChild(si);
+  g1.appendChild(seedRow);
+
+  const przRow = el('div', 'row');
+  przRow.appendChild(el('label', null, 'prizes'));
+  const ps = el('select');
+  [6, 4, 3, 2, 1].forEach(n => { const o = el('option', null, String(n)); o.value = n; if (UI.cfgDraft.prizeCount === n) o.selected = true; ps.appendChild(o); });
+  ps.onchange = () => { UI.cfgDraft.prizeCount = parseInt(ps.value, 10); };
+  przRow.appendChild(ps);
+  g1.appendChild(przRow);
+
+  const mkChk = (label, key) => {
+    const r = el('div', 'row chk');
+    const c = el('input'); c.type = 'checkbox'; c.checked = UI.cfgDraft[key];
+    c.onchange = () => { UI.cfgDraft[key] = c.checked; };
+    r.appendChild(c); r.appendChild(el('label', null, label));
+    return r;
+  };
+  const mkDeckRow = (label, key) => {
+    const r = el('div', 'row');
+    r.appendChild(el('label', null, label));
+    const sel = el('select');
+    DECK_NAMES.forEach(n => { const o = el('option', null, n); o.value = n; if (UI[key] === n) o.selected = true; sel.appendChild(o); });
+    sel.onchange = () => {
+      UI[key] = sel.value;
+      if (UI.foeDeck === UI.myDeck) UI.foeDeck = otherDeck(UI.myDeck);
+      render();
+    };
+    r.appendChild(sel);
+    return r;
+  };
+  g1.appendChild(mkDeckRow('your deck', 'myDeck'));
+  g1.appendChild(mkDeckRow('opponent', 'foeDeck'));
+
+  g1.appendChild(mkChk('first player may attack on turn 1', 'firstPlayerMayAttack'));
+  const go = el('button', 'btn', 'Start new game');
+  go.onclick = () => startMatch();
+  const back2 = el('button', 'btn ghost', 'Deck select');
+  back2.onclick = () => backToDeckSelect();
+  g1.appendChild(back2);
+  g1.appendChild(go);
+  box.appendChild(g1);
+
+  const g2 = el('div', 'grp');
+  g2.appendChild(el('div', 'grphead', 'Live controls'));
+  const coinRow = el('div', 'row');
+  coinRow.appendChild(el('label', null, 'coin'));
+  const cs = el('select');
+  [['auto', ''], ['always heads', 'H'], ['always tails', 'T']].forEach(([t, v]) => {
+    const o = el('option', null, t); o.value = v; if ((UI.E.dev.forceFlip || '') === v) o.selected = true; cs.appendChild(o);
+  });
+  cs.onchange = () => { UI.E.dev.forceFlip = cs.value || null; };
+  coinRow.appendChild(cs); g2.appendChild(coinRow);
+
+  const aiRow = el('div', 'row');
+  aiRow.appendChild(el('label', null, 'opponent'));
+  const as = el('select');
+  [['expert (plays to win)', 'expert'], ['novice (makes mistakes)', 'novice'],
+   ['damage-only bot', 'greedy'], ['random (rules fuzzer)', 'random']].forEach(([t, v]) => {
+    const o = el('option', null, t); o.value = v; if (UI.aiMode === v) o.selected = true; as.appendChild(o);
+  });
+  as.onchange = () => { UI.aiMode = as.value; };
+  aiRow.appendChild(as); g2.appendChild(aiRow);
+
+  const spRow = el('div', 'row');
+  spRow.appendChild(el('label', null, 'pace'));
+  const sp = el('input'); sp.type = 'range'; sp.min = 200; sp.max = 2500; sp.step = 100; sp.value = UI.aiDelay;
+  sp.oninput = () => { UI.aiDelay = parseInt(sp.value, 10); render(); };
+  spRow.appendChild(sp);
+  spRow.appendChild(el('span', 'dimtxt small', (UI.aiDelay / 1000).toFixed(1) + 's'));
+  g2.appendChild(spRow);
+
+  const fpRow = el('div', 'row');
+  fpRow.appendChild(el('label', null, 'coin pause'));
+  const fp = el('input'); fp.type = 'range'; fp.min = 0; fp.max = 4000; fp.step = 250; fp.value = UI.flipDelay;
+  fp.oninput = () => { UI.flipDelay = parseInt(fp.value, 10); render(); };
+  fpRow.appendChild(fp);
+  fpRow.appendChild(el('span', 'dimtxt small', UI.flipDelay < 250 ? 'off' : (UI.flipDelay / 1000).toFixed(2) + 's'));
+  g2.appendChild(fpRow);
+  box.appendChild(g2);
+
+  const g3 = el('div', 'grp');
+  g3.appendChild(el('div', 'grphead', 'State'));
+  const s = UI.E.state;
+  const dump = {
+    turn: s.turn, phase: s.phase, activePlayer: s.active,
+    pendingPromote: s.pendingPromote, promoteQueue: s.promoteQueue,
+    you: playerDump(s.players[0]), opponent: playerDump(s.players[1]),
+  };
+  const pre = el('pre', 'dump', JSON.stringify(dump, null, 1));
+  g3.appendChild(pre);
+  box.appendChild(g3);
+  return box;
+}
+
+function playerDump(p) {
+  const sl = (x) => x ? {
+    name: topCard(CARD_DB, x).name, dmg: x.dmg,
+    energy: x.energy.map(e => CARD_DB[e.id].provides).join(''),
+    status: Object.keys(x.status).filter(k => x.status[k]),
+    effects: x.effects.map(e => e.kind),
+  } : null;
+  return {
+    hand: p.hand.length, deck: p.deck.length, discard: p.discard.length, prizes: p.prizes.length,
+    energyAttachedThisTurn: p.energyAttached, retreatedThisTurn: p.retreated,
+    active: sl(p.active), bench: p.bench.map(sl),
+  };
+}
+
+function renderCoverage() {
+  const box = el('div', 'covbox');
+  const rep = UI.E.coverageReport();
+  const head = el('div', 'grphead', `Implemented ${rep.done} / ${rep.total} cards in play`);
+  box.appendChild(head);
+  box.appendChild(el('div', 'dimtxt small', 'Every card in both decks has a working effect script. Cards without one are rejected by the deck validator, so an unimplemented card can never quietly do nothing.'));
+  const list = el('div', 'covlist');
+  rep.rows.sort((a, b) => (a.done - b.done) || a.name.localeCompare(b.name));
+  rep.rows.forEach(r => {
+    const d = el('div', 'covrow');
+    d.appendChild(el('span', 'dot ' + (r.done ? 'ok' : 'no')));
+    d.appendChild(el('span', 'cn', r.name));
+    d.appendChild(el('span', 'ci', r.id));
+    list.appendChild(d);
+  });
+  box.appendChild(list);
+
+  const v = el('div', 'grp');
+  v.appendChild(el('div', 'grphead', 'Deck validation'));
+  ['Brushfire', 'Overgrowth'].forEach(k => {
+    const res = UI.E.validateDeck(DECKS[k]);
+    const d = el('div', 'covrow');
+    d.appendChild(el('span', 'dot ' + (res.ok ? 'ok' : 'no')));
+    d.appendChild(el('span', 'cn', k));
+    d.appendChild(el('span', 'ci', `${res.total} cards · ${res.basics} basics`));
+    v.appendChild(d);
+    res.errors.forEach(e => v.appendChild(el('div', 'verr', e)));
+    res.warnings.forEach(e => v.appendChild(el('div', 'vwarn', e)));
+  });
+  box.appendChild(v);
+  return box;
+}
+
+// --------------------------------------------------------------- AI driver -
+function maybeRunAI() {
+  clearTimeout(UI.aiTimer);
+  if (presenting()) return;
+  const s = S();
+  if (s.phase !== 'main') return;
+  const needMe = s.pendingPromote === 0;
+  if (needMe) return;
+  const aiTurn = (s.pendingPromote === 1) || (s.pendingPromote === null && s.active === 1);
+  if (!aiTurn) return;
+  UI.aiTimer = setTimeout(() => {
+    const a = UI.E.aiChoose(1, UI.aiMode);
+    if (a) dispatch(1, a); else render();
+  }, Math.max(30, UI.aiDelay));
+}
+
+window.addEventListener('DOMContentLoaded', () => { UI.screen = 'decks'; render(); });
+
+</script>
+</body>
+</html>

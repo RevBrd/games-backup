@@ -1,0 +1,20 @@
+## Turn log for PACKS.md creation
+
+The Sonnet 5 instance involved in creating the PACKS.md file documented its credits per tern. All were the same session across 3 days but credited each pass individually. The credits entry in the main file has been condensed, but directs to the full credits here.'
+
+
+## Credits
+
+- **Sonnet 5** (Claude Code, 7 Aug 2026) — this document, researched and written during a parallel
+  Job 4g session at Trevor's request.
+- **Sonnet 5** (Claude Code, 8 Aug 2026) — Part 2's working plan, refined with Trevor over the
+  energy floor, the flat holo ratio, and the rarity axes.
+- **Sonnet 5** (Claude Code, 9 Aug 2026) — corrected the 1st-Edition/Shadowless
+  relationship after Trevor's own collection contradicted the original nesting, added Reverse Holo
+  and the RS naming convention, and floated Miscut as a new idea.
+- **Sonnet 5** (Claude Code, 9 Aug 2026, same day) — placeholder rarity table with expected-packs
+  math, adopted Misprint and its digital-glitch visual direction, settled opponent cosmetics and
+  the alt-art-tier question with Trevor.
+- **Sonnet 5** (Claude Code, 9 Aug 2026, same day) — v3 table, reworked backward from Trevor's
+  wins-needed pacing schedule instead of forward from packs opened; resolved the Shadowless
+  "50% better odds" ambiguity and the Misprint/Shadowless gap as a byproduct.

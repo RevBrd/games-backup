@@ -2,3 +2,7 @@
 # Derived assets, not source — ~15 MB per set, and `node tools/fetch_art.js base1`
 # rebuilds them from scratch. See CLAUDE.md, Job 4g.
 assets/cards/
+
+# Trevor's own exported collection save. Personal state, not source — the game
+# writes it from the collection screen's Export button. See COLLECTION.md.
+Save File/

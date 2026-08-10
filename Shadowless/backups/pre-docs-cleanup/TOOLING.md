@@ -3,14 +3,22 @@
 Depth behind the Tooling section of `CLAUDE.md`. Read that first; come here when you are about to
 regenerate cards, widen a set, or wonder why a Python script in `tools/chat-era/` won't run.
 
-The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, five test suites, and
+The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, two test suites, and
 a `--check` flag on each generator so drift can't go unnoticed.
 
-The command list is in `CLAUDE.md`. Two things about it that live here:
+## The five commands
 
-`tools/shot.js` screenshots the built game at an exact viewport using the locally installed Chrome.
-It is a looking-at-it tool rather than a build step, so it is documented where it gets used:
-**[LAYOUT.md](LAYOUT.md)**.
+```bash
+node tools/gen_cards.js                  # data/raw/ -> src/cards.js
+node tools/build.js                      # src/  -> shadowless.html
+node tools/selftest.js                   # rules + AI regression
+node tools/powertest.js                  # Powers and the bespoke cards
+node tools/smoke.js shadowless.html      # 48 integration tests against the built file
+```
+
+A sixth, `tools/shot.js`, screenshots the built game at an exact viewport using the locally
+installed Chrome. It is a looking-at-it tool rather than a build step, so it is documented where it
+gets used: **[LAYOUT.md](LAYOUT.md)**.
 
 Both generators accept `--check`: regenerate to memory, diff against what's committed, exit non-zero
 if they differ. Cheap to run and the fastest way to catch someone having hand-edited a generated file.
@@ -46,13 +54,10 @@ Field mapping worth knowing:
   `Pokémon Power` and `Poké-Body`. 6 in Base Set, 182 across the era. That says a Power *exists*;
   `effects.js` says what it does.
 
-- **`dex` and `flavor`** come from upstream's `nationalPokedexNumbers` and `flavorText`, added for
-  Job 5's dex. The Pokédex number is an array upstream and is exactly one entry on every card that
-  has one, so it is flattened to a scalar. 191 cards carry no flavour text at all (mostly Neo
-  holos), so the dex must render without it rather than assume it.
-
-Card `images` URLs are read by `tools/fetch_art.js` rather than by the generator. Where the scans
-do and do not appear is a standing design decision in `CLAUDE.md`.
+Upstream also carries `flavorText`, `nationalPokedexNumbers` and card `images` URLs that the
+generator currently discards. The first two are wanted by Job 5's dex. The images are settled and
+already in use — `tools/fetch_art.js` reads those URLs, and where the scans do and do not appear is
+a standing design decision in `CLAUDE.md`.
 
 ## data/decks.json is source, not output
 
@@ -67,67 +72,37 @@ lopsided win rates are probably faithful rather than broken. Ask before "fixing"
 `gen_cards.js` fails loudly if `decks.json` references a card outside the generated sets, which is
 what stops a careless `--sets` from silently producing decks full of undefined ids.
 
-## The five test suites
+## The four test suites
 
-**None of them subsumes the others**, and they overlap barely at all. Run all five before calling
-anything done.
+They overlap barely at all, and none subsumes the others.
+
+- **`collectiontest.js`** (added Job 5a) drives `src/collection.js`, which is pure data — no DOM, no
+  engine, no `CARD_DB` import. It **stubs `localStorage` rather than skipping persistence**, because
+  "does a save survive a round trip" is the whole point and testing everything except that would be
+  testing the easy half. Its sharper cases are the ones about failure: an unparseable save is
+  preserved under a backup key instead of being overwritten, a full quota reports failure instead of
+  throwing, a missing `localStorage` is distinguishable from an empty one, and a save naming cards
+  from a set this build wasn't generated for still loads. Migration is exercised with a temporarily
+  registered fake step, so the machinery is tested rather than merely present.
 
 - **`selftest.js`** requires the `src/` modules directly — no browser, no DOM stubs, because the
-  engine is DOM-free. Validates the decks, checks card coverage, plays ~100 AI-vs-AI games to
-  completion, and asserts the AI difficulty ladder is ordered. Catches rules and AI regressions.
-  Takes a seed-count argument for a deeper pass.
-- **`powertest.js`** (77 tests) builds boards by hand — no decks, no setup — fires a Power and
-  asserts the exact state change. Half its cases assert that something is **illegal**, which is
-  where these rules actually live. It also covers AI *usage*, which is not the same thing as the
-  Power working. See [ENGINE.md](ENGINE.md).
-- **`smoke.js`** (96 tests) is the original Chat-era harness, driving the **built** HTML through a
+  engine is DOM-free. Validates the decks, checks card coverage against a pinned list of known-missing
+  cards, plays ~100 AI-vs-AI games to completion, and asserts the AI difficulty ladder is ordered.
+  Catches rules and AI regressions. Takes a seed-count argument for a deeper pass.
+- **`powertest.js`** builds boards by hand — no decks, no setup — fires a Power and asserts the
+  exact state change. Half its cases assert that something is **illegal**, which is where these rules
+  actually live: Damage Swap refusing a move that would Knock Out the receiver, a Power switched off
+  by Sleep, Energy Burn not being offered twice. It also covers AI *usage*, which is not the same
+  thing as the Power working: Energy Burn passed every unit test while the AI silently never used it,
+  because `bestAttackScore` returns `{score, idx}` and the first scorer compared the objects.
+- **`smoke.js`** is the original Chat-era harness, now 46 tests, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
-  presentation and freeze, the deck-select flow, the collection screens and the card renderer.
-  Catches build and UI regressions — but it has no layout engine, so a green run proves nothing
-  visual. `tools/shot.js` is the only test for that class of bug.
-- **`collectiontest.js`** (105 tests) drives `src/collection.js`, which is pure data. It **stubs
-  `localStorage` rather than skipping persistence**, because "does a save survive a round trip" is
-  the whole point and testing everything except that would be testing the easy half. Its sharper
-  cases are the failures — see [COLLECTION.md](COLLECTION.md).
-- **`packtest.js`** (44 tests) opens 200,000 packs against a fixed seed and checks every row of the
-  odds table in [PACKS.md](PACKS.md). Deterministic, so it cannot flake; the tolerances are sized to
-  catch a wrong denominator, not to absorb noise. **It takes a count** — `node tools/packtest.js
-  20000` is a fast pass while iterating. It also prints, without asserting, how many packs it takes
-  to finish a set. That number is the one the economy turns on and nothing else computes it.
+  presentation and freeze, the deck-select flow and the card renderer. Catches build and UI
+  regressions.
 
-### What the smoke stub cannot see
-
-A green `smoke.js` run proves nothing visual, and the gap is not theoretical — two bugs got through
-68 passing tests in one session, both found by `tools/shot.js` in a single screenshot each:
-
-- **`node.children` is an HTMLCollection in Chrome and a plain Array in the stub.** `.filter`,
-  `.some` and `.map` on it pass every test and throw in the browser. Walk children with an index
-  loop. This one silently deleted the pull-detail overlay while the screen behind it rendered fine.
-- **`line-height` inherits.** `.vfx` had `line-height:0` — correct for an inline-block wrapping a
-  bare image, catastrophic once the same host also wrapped a card full of text. Every line
-  collapsed, the type chip became a 2px dash, and the card lost 90px of height.
-
-When a screenshot looks subtly wrong, **measure it rather than squinting** — inject a snippet that
-writes `offsetHeight`/`getComputedStyle` into the page and screenshot *that*. It turns "something
-looks off" into `lineHeight=0px` immediately.
-
-### The two things the builder refuses
-
-**A module's CommonJS export must be ONE line.** `build.js` strips it with a line-anchored regex, so
-a wrapped export list leaves its own body in the bundle and dies as `Unexpected token '}'` thousands
-of lines into the generated HTML. The builder now refuses to build that, naming the file and line —
-but the convention is why, and the tail of `collection.js` is the ugly worked example.
-
-**No NUL bytes in any source file.** One shipped, inside a string literal in `ui.js`, from a mangled
-edit. Every suite passed, because a NUL is a valid string character, and the only symptom was `grep`
-declaring the file binary. Editors hide them. The fix is to retype the literal, not to work around it.
-
-### Coverage
-
-The check in `selftest.js` pins `EXPECTED_UNIMPLEMENTED`. **It is empty, because Base Set
-is complete** — every card has an effect script. A card appearing on that list unexpectedly fails
-the run, which is what keeps the card counts in `CLAUDE.md` honest. When Job 6 lands Jungle and
-Fossil, expect it to hold the not-yet-scripted cards until they are done.
+The coverage check in `selftest.js` pins `EXPECTED_UNIMPLEMENTED`, the twelve cards known to be
+missing. A card dropping off that list is progress and it says so; a card appearing on it
+unexpectedly fails the run. Keep it in step with the corresponding section of `CLAUDE.md`.
 
 ## tools/chat-era/ — provenance only
 

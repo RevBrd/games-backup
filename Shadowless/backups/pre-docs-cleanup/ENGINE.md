@@ -71,12 +71,17 @@ The reasoning for both is in `RULINGS.md` under Clefairy Doll.
 any of this.** A green `selftest.js` run says nothing about Powers. Use:
 
 - **`tools/powertest.js`** — builds boards by hand, fires a Power, asserts the exact state change.
-  Half its cases assert that something is **illegal**, which is where these rules actually live:
-  Damage Swap refusing a move that would Knock Out the receiver, a Power switched off by Sleep,
-  Energy Burn not being offered twice.
+  Half its cases assert that something is **illegal**, which is where these rules actually live.
 - **the Sandbox deck**, which draws from everything implemented, for playing against them for real.
 
 `powertest.js` also covers AI *usage*, which is not the same thing as the Power working: Energy Burn
 passed every unit test while the AI silently never used it, because `bestAttackScore` returns
-`{score, idx}` and the first scorer compared the objects. A Power the AI never reaches for is not
-a working Power, and no other suite can see it.
+`{score, idx}` and the first scorer compared the objects.
+
+## Two engine facts that have each cost an hour
+
+**`state.winner` can legitimately be `0`.** Test it against `null`, never for truthiness.
+
+**Unimplemented cards can never silently do nothing.** The deck validator refuses any deck
+containing a card with no effect script. Preserve that property — it is why the card counts in
+`CLAUDE.md` can be trusted.

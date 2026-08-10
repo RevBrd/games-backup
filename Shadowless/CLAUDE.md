@@ -24,20 +24,23 @@ natural alternative and do **not** work from `file://` — see `~/.claude/refere
 
 ## Where the depth lives
 
-This file is the orientation. Four siblings hold the detail, and **you should not need to read any
+This file is the orientation. Seven siblings hold the detail, and **you should not need to read any
 of them unless you are working on that thing** — that is the point of the split.
 
 | File | Read it when |
 |---|---|
-| [ENGINE.md](ENGINE.md) | Adding or changing cards. The five systems built for the awkward ones — Pokémon Powers and Buzzap's `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`. Also: why full games never test any of it |
-| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap — and `tools/shot.js`, which screenshots the built game at any exact viewport |
-| [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source. Buzzap, Mirror Move, Metronome, Clefairy Doll are settled there |
-| [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering why a Python script in `tools/chat-era/` won't run. Field mappings, the Energy `provides` quirks, how the Node tools were verified against what they replaced |
-| [PACKS.md](PACKS.md) | Planning or building Job 5's booster packs. Real WotC pack composition and rarity tiers, verified against `data/raw/`, plus open questions on Shiny/Shadowless as pull mechanics — mostly decided but variable |
+| [ENGINE.md](ENGINE.md) | Adding or changing cards. The five systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`. Also: why full games never test any of it |
+| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap — and `tools/shot.js` |
+| [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
+| [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
+| [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source |
+| [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers |
+| [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
+| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing |
 
 ## Status
 
-Jobs 4, 4g and **5 are complete**. The engine and AI were already done; Job 5 built everything a
+Jobs 1–5 are complete. The engine and AI came out of Claude Chat; Job 5 built everything a
 *collection* game needs on top of them — you can pick a starter deck, play, win packs, open them,
 browse what you own, and build decks from it, and all of it persists.
 
@@ -46,16 +49,16 @@ browse what you own, and build decks from it, and all of it persists.
 | Rules engine | Complete for Base Set, every card |
 | Opponent AI | Four tiers, expected-value based. Beats its own baselines |
 | Base Set cards | **All 102 implemented.** Base Set is done |
-| Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen. In play, cards keep a rendered face and a deterministic sigil |
-| Collection / packs / dex | **Done (5a–5d).** Starter pick, win 2 packs, open them, browse what you own. Collection browser has CARDS and DEX views, owned/missing filters, per-card counts, variant dots, and export/import |
-| Deck building | **Done (5e).** Pool grid with kind/type/name filters, deck panel, live legality, save-as-layout vs save-and-build, and variant picking — you choose which physical copy goes in. Sandbox still ignores ownership on purpose |
-| Persistence | **Live.** `src/collection.js` — versioned save, migration, validation. Export downloads a JSON file (with a copy-it-out fallback); import is a paste box on the collection screen |
+| Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen, dex, pack reveal. In play, cards keep a rendered face and a deterministic sigil |
+| Collection / packs / dex | **Done.** Starter pick, win 2 packs, open them, browse what you own. CARDS and DEX views, owned/missing filters, per-card counts, variant dots, export/import |
+| Deck building | **Done.** Pool grid with filters, live legality, save-as-layout vs save-and-build, and variant picking — you choose which physical copy goes in. Sandbox ignores ownership on purpose |
+| Persistence | **Live.** Versioned save, migration, validation — see [COLLECTION.md](COLLECTION.md) |
 | Progression / named opponents | Not started (Job 7) |
 | Sets beyond Base | Not started, but **no longer data-blocked** — all 14 sets generate cleanly |
 | Audio | None |
 
-Don't trust that table — the three test suites below take about a minute between them and check
-most of it.
+Don't trust that table — the five suites below take about a minute between them and check most of
+it.
 
 ## Layout
 
@@ -71,7 +74,7 @@ src/  cards.js         CARD_DB + the theme deck lists. GENERATED — see TOOLING
       collection.js    what the player owns + the save file. Pure data, no DOM,
                        no engine. Read its header before touching a variant key
       packs.js         booster generation. PACK_ODDS is the whole rarity table
-                       in one object — every number in it is a placeholder
+                       in one object
       ui.js            everything that touches `document`
       style.css        dark instrument-panel palette, one `:root` block
 data/ raw/*.json       THE card source: the pokemon-tcg-data corpus, 14 sets, 1,251 cards
@@ -80,29 +83,20 @@ data/ raw/*.json       THE card source: the pokemon-tcg-data corpus, 14 sets, 1,
       *.csv            superseded by raw/. Kept as an independent cross-check
 assets/cards/<set>/    the real printed card faces. GITIGNORED and DERIVED —
                        `node tools/fetch_art.js base1` rebuilds them. Base Set is fetched
-tools/ build.js        src/ -> shadowless.html
-       gen_cards.js    data/ -> src/cards.js
-       fetch_art.js    downloads card faces into assets/. Resumes cleanly
-       shot.js         screenshots the built game at an exact viewport — see LAYOUT.md
-       selftest.js     engine + AI regression (drives src/ directly)
-       powertest.js    behavioural tests for Powers and the oddity cards
-       smoke.js        integration suite against the BUILT artifact, incl. UI
-       collectiontest.js  the save file: variant keys, reservation, migration,
-                       corruption handling. Stubs localStorage rather than
-                       skipping persistence
-       packtest.js     opens 200,000 packs and checks the odds against the
-                       pacing schedule in PACKS.md. Also prints, without
-                       asserting, how many packs it takes to finish a set
+backups/               pre-job safety copies, including the ten Claude Chat snapshots
+tools/                 two generators, five test suites, a screenshotter and an art
+                       fetcher — all listed below and detailed in TOOLING.md
        chat-era/       the original Python tools, superseded. Kept for provenance
 ```
 
-`src/` modules each end with a `if (typeof module …) module.exports` line so they `require` cleanly
-in Node; the build strips those on the way in. Keep that property — it is what makes the harnesses
-possible without a browser.
+`src/` modules each end with a one-line `if (typeof module …) module.exports` so they `require`
+cleanly in Node; the build strips those on the way in. **Keep that property** — it is what makes
+every test harness possible without a browser.
 
 ## Tooling
 
-Run the last five before calling anything done.
+Run the last five before calling anything done. What each one actually covers, and why none of them
+subsumes the others, is in [TOOLING.md](TOOLING.md).
 
 ```bash
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
@@ -112,78 +106,38 @@ node tools/selftest.js                   # rules + AI regression (add a number f
 node tools/powertest.js                  # 77 tests for Powers and the other bespoke cards
 node tools/smoke.js shadowless.html      # 96 integration tests against the built file
 node tools/collectiontest.js             # 105 tests for the save file, decks and variants
-node tools/packtest.js                   # 44 tests, 200k packs against the PACKS.md odds
+node tools/packtest.js                   # 44 tests, 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 ```
 
-**None of the five suites subsumes the others.** `selftest.js` proves games don't break;
-`powertest.js` proves the Powers do what the cards *say*, including the cases that must be illegal;
-`smoke.js` drives the built HTML through a stubbed DOM and covers the UI; `collectiontest.js`
-proves the save file is trustworthy; `packtest.js` proves the pack odds are the odds PACKS.md
-promises. Both generators take `--check`, which exits non-zero if what's committed has drifted from
-its sources.
-
-**`packtest.js` takes a count** — `node tools/packtest.js 20000` for a fast pass while iterating.
-Its seed is fixed, so it is deterministic and cannot flake; the tolerances are sized to catch a
-wrong denominator, not to absorb noise. It also prints an unasserted pacing measurement — **~157
-packs, about 79 wins at 2 packs/win, to complete Base Set, and the 16 Rare Holos are essentially
-the entire cost.** That number is the one Job 5's economy turns on, and nothing in PACKS.md
-computes it.
-
-**A module's CommonJS export must be ONE line.** `tools/build.js` strips it with a line-anchored
-regex, so a wrapped export list leaves its own body in the bundle and dies as `Unexpected token '}'`
-thousands of lines into the generated HTML. The builder now refuses to build that, naming the file
-and line — but the convention is why, and the tail of `collection.js` is the ugly worked example.
-
-**`data/decks.json` is source, not output** — the theme decks came from Trevor's spreadsheet, cannot
-be rebuilt, and are his authentic lists. And `tools/chat-era/` cannot run even though Python is
-installed; the rest of that story is in [TOOLING.md](TOOLING.md).
+**A module's CommonJS export must be ONE line**, and no source file may contain a NUL byte. The
+builder refuses both, naming the file and line; the reasons each cost a session are in
+[TOOLING.md](TOOLING.md).
 
 ## Standing design decisions
 
-Made with Trevor 4 Aug 2026. Don't re-litigate these; do flag it if one starts producing bad
-results.
+Don't re-litigate these; do flag it if one starts producing bad results. The collection's own
+decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost are in
+[HISTORY.md](HISTORY.md).
 
 - **When the printed card text is ambiguous, follow the Game Boy Color game.** Not the later
   official errata, not a period ruling — the GBC implementation. The reason is practical: it is a
   single consistent arbiter, and it is the version Trevor knows well enough to settle a call in
-  plain English. Ask him when unsure, he can be a resource here. Genuine conflicts get handled case by case.
-  **Known limit:** the GBC game only contains Base, Jungle and Fossil cards, so it will have nothing
-  to say from Team Rocket onward. A fallback will be needed around Job 7, not before.
+  plain English. Ask him when unsure; he expects to be asked and is a resource here.
+  **Known limit:** the GBC game only contains Base, Jungle and Fossil cards, so it has nothing to
+  say from Team Rocket onward. A fallback will be needed around Job 7, not before.
 - **"As often as you like during your turn" powers are a mode you enter and leave.** Click the
   power; the board enters that mode and says so; legal sources and targets highlight; click source
   then target as many times as you want; press Done. One pattern serves Damage Swap, Energy Trans
   and Rain Dance. Every individual move gets its own log line.
-- **A deck is BUILT or it is a layout, and only built decks reserve cards.** Settled with Trevor
-  9 Aug; the model is in `collection.js` and tested. A built deck holds its cards and can be
-  played. A layout (`built: false`) holds nothing, cannot be played, and costs nothing to keep —
-  which makes a half-finished *draft* and an unaffordable *blueprint* the same object. This landed
-  by accident: Trevor's answer to "should an illegal draft be saveable" was yes-but-its-cards-stay-
-  available, which is the definition of a non-reserving deck, and it independently reproduces the
-  GBC game's split between decks you have built and layouts you have merely saved.
-  - **Un-building is lossless** — the list survives, so dismantling is reversible. That is what
-    removed the argument for capping the number of decks: the collection caps built decks by
-    itself, and the recovery is one click.
-  - **The last built deck cannot be un-built or deleted.** No longer protection against losing
-    work, just against a confusing state where deck select offers nothing but Sandbox.
-  - **A layout goes stale** when another deck claims a card it wanted, so `deckShortfall()` is
-    recomputed at build time and never cached.
-  - Reservation returns *everything* including Energy, which answers "do we grant starting
-    Energy": you already have ~25, they are simply committed.
-- **Deck legality already exists — `Engine.prototype.validateDeck`, `engine.js:114`.** Exactly 60,
-  four-by-name with basic Energy correctly exempt, at least one Basic, the unimplemented-card
-  refusal, and an evolution-line warning. **Do not write a second one.** `collection.js` adds only
-  the ownership layer on top; the two are deliberately separate because legality is a property of
-  the deck and availability is a property of the save.
-- **No cap on the number of decks, and no player-facing auto-build.** The first because reservation
-  already caps it in a way the player can see and fix. The second because the labour of building is
-  what makes a collection mean anything — `reference/game-design.md` says the work is the setup.
-  `deckgen.js` stays for **opponent** decks in Job 7, and behind the DEV tab for testing.
 - **Card art is split by function.** The scans are *complete printed cards*, not illustration crops,
   and no crop exists anywhere — so they appear only where the card is the **subject**: the preview
-  rail, the title screen, and later the dex and pack opening. In play, cards keep the rendered face,
-  which is an instrument you can overlay damage onto. ~16 MB per set: fetch per set, gitignore them,
-  keep the fetch script. They are derived assets, not source.
+  rail, the title screen, the dex, the pack reveal. In play, cards keep the rendered face, which is
+  an instrument you can overlay damage onto. They are derived assets, not source: ~16 MB per set,
+  fetched per set and gitignored.
+- **The board's design is locked** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
+  bench tiles without asking. Every variant treatment is confined to collectible surfaces for
+  exactly this reason.
 
 ## Working on it
 
@@ -198,58 +152,15 @@ game-over screen offers "Replay this seed". Use it when chasing a bug. **Mirror 
 allowed**: both sides may take the same deck, including Sandbox, and still shuffle independently.
 
 **The board fits itself to the window — never hand-tune it to a resolution.** A "1920x1080 laptop"
-is not a 1920x1080 page; display scaling can leave it as little as 1280x600 CSS pixels. **The DEV
-tab prints the real numbers**, and `tools/shot.js` shows you any viewport you like. The rules that
-keep it working are in [LAYOUT.md](LAYOUT.md), and several look wrong until you know what they
-protect — read it before changing anything sized.
+is not a 1920x1080 page; display scaling can leave it as little as 1280x600 CSS pixels. The DEV tab
+prints the real numbers, and `tools/shot.js` shows you any viewport you like. The rules that keep it
+working are in [LAYOUT.md](LAYOUT.md), and several look wrong until you know what they protect —
+read it before changing anything sized.
 
-**`state.winner` can legitimately be `0`.** Test it against `null`, never for truthiness. This
-already cost one session an hour of phantom "stalled game" reports.
-
-**`tools/build.js` refuses a NUL byte in any source file.** One shipped, inside a string literal
-in `ui.js`, from a mangled edit — every suite passed, because a NUL is a valid string character,
-and the only symptom was `grep` declaring the file binary. Editors hide them. If the build ever
-reports one, the fix is to retype the literal, not to work around it.
-
-**The smoke stub has no layout engine and no real DOM, so a green suite proves nothing visual.**
-`tools/shot.js` is not optional polish on a UI change — it is the only test that exists for a whole
-class of bug. Two have already got through 68 passing tests in one session:
-
-- **`node.children` is an HTMLCollection in Chrome and a plain Array in the stub.** `.filter`,
-  `.some` and `.map` on it pass every test and throw in the browser. Walk children with an index
-  loop. This one silently deleted the pull-detail overlay while the screen behind it rendered fine.
-- **`line-height` inherits.** `.vfx` had `line-height:0` — correct for an inline-block wrapping a
-  bare image, catastrophic once the same host also wrapped a card full of text. Every line
-  collapsed, the type chip became a 2px dash, and the card lost 90px of height. Nothing in the stub
-  can see that; `getComputedStyle` through `shot.js` found it in one shot.
-
-When a screenshot looks subtly wrong, **measure it rather than squinting** — inject a snippet that
-writes `offsetHeight`/`getComputedStyle` into the page and screenshot *that*. It turns "something
-looks off" into `lineHeight=0px` immediately.
-
-**How each variant is drawn** (all decided with Trevor 9 Aug, all confined to collectible surfaces —
-**the board is untouched by every one of them**, which is what keeps the 8 Aug design lock intact):
-
-| | On the real scan | On the Sigil Card |
-|---|---|---|
-| Shiny | `hue-rotate(150deg) saturate(1.35)` — a palette shift, which is what "shiny" means in the mainline games. Shifts differently per card, so it reads as an alternate colouring rather than a filter | every line of ink turns teal, via `--ink`/`--ink2`; the sigil drawing takes the same rotation |
-| Reverse Holo | fine diagonal banding, `screen` | — |
-| Misprint | mp1 channel split · mp2 wrong aspect · mp3 inverted | — |
-| 1st Edition | ribbon only | the ① stamp, inside the art window |
-| Shadowless | ribbon only | **"SHADOWLESS" printed across the art window** in the title-screen face, plus the shadow A/B |
-
-**Filter-based treatments are composed in `variantFilter()`, never as CSS classes.** `filter` is a
-single property, so two classes that both set it do not stack — one silently wins. This became
-load-bearing the moment Shiny stopped being a sheen.
-
-**Settled 9 Aug: `shadow` is the default** — the art window carries a drop shadow and Shadowless
-removes it, which keeps real-world scarcity pointing the right way. `inverted` stays in the DEV tab
-as a live option rather than being deleted; Trevor's call was "back pocket, not discarded", so do
-not remove it to tidy up. Both are covered by `smoke.js`.
-
-**Unimplemented cards can never silently do nothing.** The deck validator refuses any deck
-containing a card with no effect script. Preserve that property — it is why the card counts above
-can be trusted.
+Two facts that have each cost a session an hour. **`state.winner` can legitimately be `0`** — test
+it against `null`, never for truthiness. And **unimplemented cards can never silently do nothing**:
+the deck validator refuses any deck containing a card with no effect script, which is why the card
+counts above can be trusted. Preserve that property.
 
 **Adding a card** means a `cards.js` entry plus an `effects.js` entry. If the card needs behaviour
 the DSL cannot express, add a verb rather than special-casing it, and document it in the verb
@@ -257,46 +168,39 @@ reference — see [ENGINE.md](ENGINE.md) for the systems that already exist. Tre
 through new card logic in plain English; he has good instincts for how the logic should hang
 together and is not trying to read the code.
 
+**The smoke stub has no layout engine and no real DOM, so a green suite proves nothing visual.**
+`tools/shot.js` is not optional polish on a UI change — it is the only test that exists for a whole
+class of bug, and two of them have already got through 68 passing tests in a single session. What
+they were, and how to measure a screenshot instead of squinting at it, is in
+[TOOLING.md](TOOLING.md).
+
 ## Data
 
 **`data/raw/*.json` is the card source** — the `pokemon-tcg-data` corpus, downloaded 4 Aug 2026,
 14 sets and 1,251 cards. All 189 Trainers carry rules text, none missing. **Nothing in the project
-is data-blocked.** It also carries `flavorText` and `nationalPokedexNumbers` that `CARD_DB`
-discards; Job 5's dex will want both.
+is data-blocked.**
 
-The CSVs are an **independent cross-check, not a second source of truth** — generating Base Set from
-each produced byte-identical output for all 102 cards, which is how the migration was validated, and
-the check is repeatable. Don't add to them, and don't generate from them.
+The CSVs are an **independent cross-check, not a second source of truth**, and the agreement between
+them is what justifies trusting the corpus — see [TOOLING.md](TOOLING.md). Don't add to them, and
+don't generate from them.
 
 Set codes: `base1` Base · `base2` Jungle · `base3` Fossil · `base4` Team Rocket · `base5` Base Set 2
 · `base6` Legendary Collection · `gym1` Gym Heroes · `gym2` Gym Challenge · `neo1`–`neo4` Neo
 Genesis/Discovery/Revelation/Destiny · `basep` promos · `si1` Southern Islands.
 
 **Scope is settled: everything in the data, promos and Southern Islands included.** That makes
-`basep` and `si1` a pack-table and dex question rather than a scope question, and worth thinking
-about early — they are odd shapes for boosters, and `base5`/`base6` are reprint sets that will
-hand the player cards they already own.
+`basep` and `si1` a pack-table and dex question rather than a scope question — they are odd shapes
+for boosters, and `base5`/`base6` are reprint sets that will hand the player cards they already own.
 
 ## Job plan
 
 Trevor's ordering, and he is explicit that it is yours to rearrange and to break into sub-jobs.
 
-
-  **Deliberately not built in earlier Job:** a collection/dex mockup — the language is settled and mocking up
-  screens that don't exist yet would be thrown away. Build it for real in Job 5.
-  **The design is locked for now** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
-  bench tiles without asking.
+- **Jobs 1–4** — the engine, the AI, the art system, the board, the Powers and the Base Set
+  oddities, the mat and the fitter. **Done.** What each one added is in [HISTORY.md](HISTORY.md).
 - **Job 5** — collection mechanics, packs, deck building, persistence. **Done, 9 Aug 2026.**
-  5a the save and the variant-combination model · 5b pack generation, verified against 200,000
-  simulated packs · 5c the pack reveal and the variant renderers · 5d the collection and dex
-  browser plus export/import · 5e the deck builder, including choosing which physical copy of a
-  card goes in a deck.
-  **Deliberately not built:** a player-facing auto-build button, and a cap on the number of decks.
-  Both are argued in the standing decisions above; neither is an oversight.
-  **Left open on purpose:** blueprints exist as a mechanism (any `built: false` deck) but have no
-  dedicated screen. A "what am I missing" view over your layouts is the obvious next quality pass
-  and would turn a vague card chase into a specific one.
-- **Job 6** — Jungle and Fossil. `node tools/gen_cards.js --sets base1,base2,base3`.
+- **Job 6** — Jungle and Fossil. `node tools/gen_cards.js --sets base1,base2,base3`. Settle the
+  Energy floor question in [PACKS.md](PACKS.md) first; those two sets print no basic Energy.
 - **Job 7** — progression, named opponents.
 - **Job 8+** — remaining sets. No longer blocked.
 
@@ -311,21 +215,3 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 3. **`setupConfirm()` is not idempotent.** Calling it twice re-runs `beginPlay()` and deals a second
    set of prizes. Unreachable through the UI — the setup overlay is gone by then — so it is a
    robustness nit rather than a bug, but it will bite anyone driving the engine from a script.
-
-## Credits
-
-- **Opus 5** (Claude Chat) — the whole game through Job 4b: engine, AI, card scripts, art system,
-  UI, the module layout, the Python build pipeline and the 44-test smoke suite.
-- **Opus 5** (Claude Code, 4 Aug 2026) — port into the collection, naming, data audit,
-  `tools/selftest.js`, the Node build port, and this layout.
-- **Opus 5** (Claude Code, 5–6 Aug 2026) — Job 4: Pokémon Powers and the Base Set oddities. Job 4g:
-  the mat, the fitter, the title screen, the real card scans.
-- **Opus 5** (Claude Code, 7-8 Aug 2026) — `tools/shot.js` and the DEV fit readout, the hand face,
-  the mat's edge, and this documentation split.
-- **Sonnet 5** (Claude Code, 7-9 Aug 2026) - Packs document, research, rulings discussions.
-- **Opus 5** (Claude Code, 9 Aug 2026) — Job 5. The collection model and save file
-  (`collection.js`), booster generation (`packs.js`), the pack reveal, the variant renderers, the
-  collection and dex browser, export/import, and the two test suites that cover them. Also two
-  corrections to PACKS.md's research — there was never an unnumbered Energy pool to find a cutover
-  in, and every scan we own is 1st Edition Shadowless, which is what forced the split between
-  cosmetics that can live on a bitmap and cosmetics that can only live on our own render.
