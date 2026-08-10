@@ -527,6 +527,29 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 /* ---- Computer Search picker ---- */
 /* These live inside .sheet, which is mat cloth now, so they take the mat's
    greens rather than the old blue-grey panel colours. */
+/* `.sheet.wide` was set on the picker and defined nowhere, so the widest sheet
+   in the game was the same 820px as the narrowest. The card grid below is what
+   it was for. */
+.sheet.wide{max-width:1040px}
+
+/* The picker grid: real scans, centred, wrapping. Sized so a Base Set face is
+   legible enough to CHOOSE on — the attack names and the Trainer text are the
+   whole point of showing a card here, and both are unreadable below ~130px. */
+.pickgrid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px;
+  max-height:56vh;overflow-y:auto;padding:2px}
+.pickgrid.many .picktile{flex-basis:clamp(102px,9vw,132px)}
+.picktile{flex:0 0 clamp(132px,13vw,168px);cursor:pointer;line-height:1.2;
+  border:1px solid transparent;border-radius:4px;padding:4px}
+.picktile .cardface{width:100%;max-width:none;margin:0;border-radius:3px;
+  box-shadow:0 2px 4px rgba(0,0,0,.5)}
+.picktile .vfx{display:block}
+.pickname{margin-top:4px;text-align:center;font-size:10px;color:#93A39C;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.picktile:hover{border-color:#6E837B}
+.picktile:hover .pickname{color:var(--txt)}
+.picktile.on{border-color:var(--amber);background:rgba(226,168,75,.10)}
+.picktile.on .pickname{color:var(--amber);font-weight:700}
+
 .searchlist{max-height:46vh;overflow:auto;border:1px solid var(--matline);border-radius:3px;
   margin-bottom:12px;background:rgba(0,0,0,.18)}
 .searchrow{display:flex;align-items:center;gap:10px;padding:5px 9px;cursor:pointer;
@@ -8697,13 +8720,34 @@ function renderPicker() {
       });
     box.appendChild(list);
   } else {
-    const row = el('div', 'hand');
+    // The real printed scans, not miniCard.
+    //
+    // A picker is the surface where the card is most completely the SUBJECT —
+    // you are choosing which physical card, not steering a token in play — so
+    // it belongs with the preview rail, the dex and the pack reveal under the
+    // standing decision in CLAUDE.md. It was simply never enumerated there,
+    // because pickers predate the scans.
+    //
+    // It also fixes the thing that made this screen unusable. miniCard prints
+    // attack names in a ~150px column and breaks them mid-word; in here that
+    // meant "Fire Spin" rendered one letter per line, and a Trainer's rules
+    // text was clamped mid-sentence, which is the whole information you would
+    // be choosing on. A scan has none of those problems because it is a
+    // picture of the answer.
+    // Tiles shrink once there are enough of them to need two rows. With a few
+    // cards you are reading them; with a dozen you are scanning for a name, and
+    // a grid that scrolls at the size you read at hides half its own contents.
+    const row = el('div', 'pickgrid' + (pk.items.length > 8 ? ' many' : ''));
     pk.items.forEach(it => {
       const c = CARD_DB[it.id];
-      const card = miniCard(c);
-      if (pk.chosen.includes(it.uid)) card.classList.add('sel');
-      card.onclick = () => togglePick(it.uid);
-      row.appendChild(card);
+      const t = el('div', 'picktile' + (pk.chosen.includes(it.uid) ? ' on' : ''));
+      t.appendChild(pullFace(c, []));
+      // Named underneath as well. An unfetched set falls back to the sigil,
+      // which is deliberately not a portrait of anything — without the name
+      // that fallback would be a row of identical marks.
+      t.appendChild(el('div', 'pickname', c.name));
+      t.onclick = () => togglePick(it.uid);
+      row.appendChild(t);
     });
     if (!pk.items.length) row.appendChild(el('div', 'empty', 'nothing to choose'));
     box.appendChild(row);

@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal};')
+  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -1316,6 +1316,64 @@ T('cancelling an armed retreat leaves the board untouched', () => {
   if (act.energy.length !== 2) throw new Error('energy now ' + act.energy.length);
   if (p.retreated) throw new Error('counted as a retreat');
   return true;
+});
+
+
+// --- the Trainer pickers show the real cards ---------------------------------
+T('a picker renders the printed scans, not miniCard faces', () => {
+  actionBoard();
+  ctx.openPicker({ title: 'Pokemon Trader', prompt: 'Choose one',
+    items: [{ uid: 1, id: 'base1-4' }, { uid: 2, id: 'base1-17' }],
+    min: 1, max: 1, onDone: () => {} });
+  render();
+  // Scoped to the grid, NOT the whole app: the picker is an overlay over a live
+  // board, and the board's own Active card legitimately renders pc-atkname. A
+  // whole-document search here passes or fails on the wrong element.
+  const grid = findByClass(document.getElementById('app'), 'pickgrid');
+  if (!grid) throw new Error('no pick grid');
+  if (!findByClass(grid, 'picktile')) throw new Error('no pick tiles');
+  if (!findByClass(grid, 'cardface')) throw new Error('no scan rendered');
+  // miniCard prints attack NAMES, which is what broke this screen: in a 150px
+  // column "Fire Spin" came out one letter per line.
+  if (findByClass(grid, 'pc-atkname')) throw new Error('still rendering miniCard');
+  return true;
+});
+
+T('a picker names every card under its face', () => {
+  actionBoard();
+  ctx.openPicker({ title: 'Pokemon Trader', prompt: 'Choose one',
+    items: [{ uid: 1, id: 'base1-4' }], min: 1, max: 1, onDone: () => {} });
+  render();
+  // The name has to survive an unfetched set, where the scan falls back to a
+  // sigil that is deliberately not a portrait of anything.
+  return !!findByText(document.getElementById('app'), 'Charizard');
+});
+
+T('a picker shrinks its tiles once there are more than eight', () => {
+  const mk = n => Array.from({ length: n }, (_, i) => ({ uid: i + 1, id: 'base1-4' }));
+  actionBoard();
+  ctx.openPicker({ title: 'x', prompt: 'x', items: mk(6), min: 1, max: 1, onDone: () => {} });
+  render();
+  const few = findByClass(document.getElementById('app'), 'pickgrid');
+  if (String(few.className).indexOf('many') >= 0) throw new Error('six should not be many');
+  ctx.openPicker({ title: 'x', prompt: 'x', items: mk(12), min: 1, max: 1, onDone: () => {} });
+  render();
+  const lots = findByClass(document.getElementById('app'), 'pickgrid');
+  return String(lots.className).indexOf('many') >= 0;
+});
+
+T('picking a card in the grid toggles it', () => {
+  actionBoard();
+  ctx.openPicker({ title: 'x', prompt: 'x',
+    items: [{ uid: 11, id: 'base1-4' }, { uid: 12, id: 'base1-17' }],
+    min: 1, max: 1, onDone: () => {} });
+  render();
+  const tile = findByClass(document.getElementById('app'), 'picktile');
+  tile.onclick();
+  if (UI.picker.chosen.length !== 1) throw new Error('did not select');
+  render();
+  findByClass(document.getElementById('app'), 'picktile').onclick();
+  return UI.picker.chosen.length === 0;
 });
 
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);

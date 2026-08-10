@@ -158,10 +158,27 @@ printed card into the rail; that is where the words live.
 overlay sheets could keep `miniCard` "because there is room in a dialog and nothing competing for
 it". They cannot: `.sheet .hand .pcard` is the same 150px, so the opening-setup screen printed
 "Flamethrower" as `Fla/met/hro/wer` for as long as that sentence stood. **Opening setup now uses
-`handCard`** like the real hand — see the section below. The Trainer pickers still use `miniCard`,
-deliberately: choosing between two Trainers out of a discard sometimes needs the rules text
-`handCard` drops, so that one is a real trade rather than an oversight. If a picker ever breaks a
-name mid-word, it is the same bug and the same fix.
+`handCard`** like the real hand — see the section below.
+
+**The Trainer pickers were worse, and they use the real scans.** I guessed they might legitimately
+keep `miniCard` for its rules text, and one screenshot settled it: in the picker's column
+"Fire Spin" rendered *one letter per line*, "Twineedle" as `Tw/ine/edl/e`, and every Trainer's text
+was clamped mid-sentence — so the information the guess was protecting was the information being
+destroyed. **`miniCard()` now has no callers in the game** — `smoke.js` still renders it, so it is
+not unreachable, just unused. Deliberately left rather than deleted: it is the only compact
+text-carrying face we have, and the next session that wants one should find it rather than rebuild
+it. If nothing has claimed it by the time Job 6 lands, delete it and its test together.
+
+A picker shows `pullFace()`, the printed scan, because a picker is the surface where the card is
+most completely the **subject** — you are choosing which physical card, not steering a token in
+play. That is the standing decision in `CLAUDE.md` about where scans belong; pickers predate the
+scans, which is the only reason they were not on its list. The scan also solves the layout problem
+by not having one: it is a picture of the answer. Tiles shrink past eight items, because with a
+dozen cards you are scanning for a name rather than reading, and a grid that scrolls at reading size
+hides half of itself.
+
+**`.sheet.wide` was set on the picker and defined nowhere**, so the widest sheet in the game was the
+same 820px as the narrowest. It is 1040px now, which is what the card grid needed.
 
 Dropping the words bought the width back, which was the other half of the job: **98px instead of
 150px is 11 cards with no overlap at all on a 1915px window, where the old face managed 6 at

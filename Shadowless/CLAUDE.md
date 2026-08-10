@@ -37,7 +37,7 @@ of them unless you are working on that thing** — that is the point of the spli
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing |
-| [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way |
+| [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
 
 ## Status
 
@@ -105,7 +105,7 @@ node tools/fetch_art.js base1            # real card faces -> assets/ (--hires f
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/powertest.js                  # 81 tests for Powers, the bespoke cards and setup
-node tools/smoke.js shadowless.html      # 104 integration tests against the built file
+node tools/smoke.js shadowless.html      # 108 integration tests against the built file
 node tools/collectiontest.js             # 105 tests for the save file, decks and variants
 node tools/packtest.js                   # 44 tests, 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it

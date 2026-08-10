@@ -2660,13 +2660,34 @@ function renderPicker() {
       });
     box.appendChild(list);
   } else {
-    const row = el('div', 'hand');
+    // The real printed scans, not miniCard.
+    //
+    // A picker is the surface where the card is most completely the SUBJECT —
+    // you are choosing which physical card, not steering a token in play — so
+    // it belongs with the preview rail, the dex and the pack reveal under the
+    // standing decision in CLAUDE.md. It was simply never enumerated there,
+    // because pickers predate the scans.
+    //
+    // It also fixes the thing that made this screen unusable. miniCard prints
+    // attack names in a ~150px column and breaks them mid-word; in here that
+    // meant "Fire Spin" rendered one letter per line, and a Trainer's rules
+    // text was clamped mid-sentence, which is the whole information you would
+    // be choosing on. A scan has none of those problems because it is a
+    // picture of the answer.
+    // Tiles shrink once there are enough of them to need two rows. With a few
+    // cards you are reading them; with a dozen you are scanning for a name, and
+    // a grid that scrolls at the size you read at hides half its own contents.
+    const row = el('div', 'pickgrid' + (pk.items.length > 8 ? ' many' : ''));
     pk.items.forEach(it => {
       const c = CARD_DB[it.id];
-      const card = miniCard(c);
-      if (pk.chosen.includes(it.uid)) card.classList.add('sel');
-      card.onclick = () => togglePick(it.uid);
-      row.appendChild(card);
+      const t = el('div', 'picktile' + (pk.chosen.includes(it.uid) ? ' on' : ''));
+      t.appendChild(pullFace(c, []));
+      // Named underneath as well. An unfetched set falls back to the sigil,
+      // which is deliberately not a portrait of anything — without the name
+      // that fallback would be a row of identical marks.
+      t.appendChild(el('div', 'pickname', c.name));
+      t.onclick = () => togglePick(it.uid);
+      row.appendChild(t);
     });
     if (!pk.items.length) row.appendChild(el('div', 'empty', 'nothing to choose'));
     box.appendChild(row);

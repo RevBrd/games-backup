@@ -520,6 +520,29 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 /* ---- Computer Search picker ---- */
 /* These live inside .sheet, which is mat cloth now, so they take the mat's
    greens rather than the old blue-grey panel colours. */
+/* `.sheet.wide` was set on the picker and defined nowhere, so the widest sheet
+   in the game was the same 820px as the narrowest. The card grid below is what
+   it was for. */
+.sheet.wide{max-width:1040px}
+
+/* The picker grid: real scans, centred, wrapping. Sized so a Base Set face is
+   legible enough to CHOOSE on — the attack names and the Trainer text are the
+   whole point of showing a card here, and both are unreadable below ~130px. */
+.pickgrid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px;
+  max-height:56vh;overflow-y:auto;padding:2px}
+.pickgrid.many .picktile{flex-basis:clamp(102px,9vw,132px)}
+.picktile{flex:0 0 clamp(132px,13vw,168px);cursor:pointer;line-height:1.2;
+  border:1px solid transparent;border-radius:4px;padding:4px}
+.picktile .cardface{width:100%;max-width:none;margin:0;border-radius:3px;
+  box-shadow:0 2px 4px rgba(0,0,0,.5)}
+.picktile .vfx{display:block}
+.pickname{margin-top:4px;text-align:center;font-size:10px;color:#93A39C;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.picktile:hover{border-color:#6E837B}
+.picktile:hover .pickname{color:var(--txt)}
+.picktile.on{border-color:var(--amber);background:rgba(226,168,75,.10)}
+.picktile.on .pickname{color:var(--amber);font-weight:700}
+
 .searchlist{max-height:46vh;overflow:auto;border:1px solid var(--matline);border-radius:3px;
   margin-bottom:12px;background:rgba(0,0,0,.18)}
 .searchrow{display:flex;align-items:center;gap:10px;padding:5px 9px;cursor:pointer;

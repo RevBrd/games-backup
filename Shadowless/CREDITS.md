@@ -58,3 +58,6 @@ below is the worked example, and it is why this file exists at the size it does.
 - **Opus 5** (10 Aug 2026) — the in-battle action UI. Hand clicks run their verb directly instead of
   filling a menu with one item; promote and send-up became bench clicks; retreat moved onto the
   Active card with a confirmation gate that also locks the attacks. Nine smoke tests.
+- **Opus 5** (10 Aug 2026) — the Trainer pickers: the real printed scans instead of `miniCard`,
+  which had been rendering "Fire Spin" one letter per line. Also defined `.sheet.wide`, which was
+  being set on the picker and existed nowhere in the stylesheet.
