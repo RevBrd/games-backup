@@ -165,10 +165,12 @@ prints the real numbers, and `tools/shot.js` shows you any viewport you like. Th
 working are in [LAYOUT.md](LAYOUT.md), and several look wrong until you know what they protect —
 read it before changing anything sized.
 
-Two facts that have each cost a session an hour. **`state.winner` can legitimately be `0`** — test
-it against `null`, never for truthiness. And **unimplemented cards can never silently do nothing**:
+Three facts that have each cost a session an hour. **`state.winner` can legitimately be `0`** — test
+it against `null`, never for truthiness. **Unimplemented cards can never silently do nothing**:
 the deck validator refuses any deck containing a card with no effect script, which is why the card
-counts above can be trusted. Preserve that property.
+counts above can be trusted. Preserve that property. And **a verb `ai.js` cannot score is that same
+failure one level up** — free at runtime, misplayed forever, invisible to every suite. See
+[ENGINE.md](ENGINE.md).
 
 **Adding a card** means a `cards.js` entry plus an `effects.js` entry. If the card needs behaviour
 the DSL cannot express, add a verb rather than special-casing it, and document it in the verb

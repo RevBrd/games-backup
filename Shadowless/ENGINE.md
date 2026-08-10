@@ -80,3 +80,20 @@ any of this.** A green `selftest.js` run says nothing about Powers. Use:
 passed every unit test while the AI silently never used it, because `bestAttackScore` returns
 `{score, idx}` and the first scorer compared the objects. A Power the AI never reaches for is not
 a working Power, and no other suite can see it.
+
+## The silent-failure surface
+
+`ai.js` scores attacks with a `switch` over the verb list, and **a verb it has no case for scores as
+plain base damage**. Nothing throws, no suite goes red, and the card works perfectly for the human —
+the AI just misvalues it forever. That is the same failure the deck validator exists to prevent, one
+level up: an unimplemented *card* can never silently do nothing, but an unscored *verb* currently
+can.
+
+The runtime behaviour is right — throwing mid-game over a scoring gap would be worse than
+misplaying — so the guard belongs in the tooling. The check: walk every verb appearing in
+`effects.js` and assert `ai.js` either scores it or it is on an explicit opt-out list.
+
+**The opt-out list is the point.** Some verbs genuinely need no scoring — pure costs, legality
+gates, and the information Powers, which are no-ops against an opponent that already reads full
+state. Putting a verb on that list is a decision somebody made; leaving one off is an oversight, and
+right now the two are indistinguishable from the outside.

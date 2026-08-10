@@ -4,96 +4,43 @@
 // A card absent from this table, or with a null entry, is NOT IMPLEMENTED and the
 // deck validator will refuse to build a deck containing it.
 //
-// VERB REFERENCE — THIS LIST IS THE CONTRACT. Adding a verb to engine.js without
-// adding it here is how the next card author reinvents it under a second name.
-// It went stale once, during Base Set, and cost the Job 6 planning pass an hour of
-// rediscovery: half the verbs Jungle and Fossil need were already built and
-// undocumented. Every verb the engine implements appears below.
-//
-//   ATTACKS — whole-attack replacements. Intercepted BEFORE the normal pipeline,
-//   so nothing else in the script runs:
-//     METRONOME                    copy a CHOSEN attack of the defender's, re-entering
-//                                  runAttack with self still the attacker. Cannot copy
-//                                  another Metronome. See RULINGS.md
-//     MIRROR_MOVE                  re-apply the defender's `lastAttackResult` flat, past
-//                                  W/R. A recorded event, NOT a recomputation
-//
-//   ATTACKS — cost phase (checked for legality, paid on use; Metronome skips these):
+// VERB REFERENCE
+//   cost phase (checked for legality, paid on use):
 //     COST_DISCARD_ENERGY {n, t}   discard n Energy providing type t, attached to self
-//     COST_DISCARD_ALL_ENERGY      discard every Energy attached to self
 //     ONCE_WHILE_IN_PLAY           this attack may be used only once per stay in play
-//     REQUIRE_DEF_STATUS {s, label}  illegal unless the defender has status s
-//
-//   ATTACKS — damage-shaping. These REPLACE the printed damage and run in script
-//   order, so a later one overwrites an earlier one:
+//   damage-shaping (replaces/gates the printed damage):
 //     FLIP_OR_NOTHING              flip; tails => whole attack does nothing
 //     DMG_PER_HEAD {coins, per}    flip N coins; damage = per * heads
 //     DMG_PER_COUNTER_SELF {per}   damage = per * (own damage / 10)
 //     DMG_MINUS_PER_COUNTER_SELF {base, per}
-//                                  base - per * (own damage / 10), floored at 0
+//                                  damage = base - per * (own damage / 10), floored at 0
 //     DMG_PER_DEF_ENERGY {base, per}   base + per * Energy attached to the defender
 //     DMG_PER_DEF_COUNTER {base, per}  base + per * damage counters on the defender
-//     DMG_PER_SPARE_ENERGY {base, per, t}
-//                                  base + per * (Energy of type t attached to self
-//                                  MINUS what this attack's own cost needs). The
-//                                  Water Gun / Hydro Pump family
-//     DMG_HALF_REMAINING           half the defender's REMAINING HP, rounded up to 10
-//                                  (Super Fang)
-//     FLIP_BONUS_OR_RECOIL {base, bonus, recoil, label}
-//                                  ONE flip governs both: heads => base + bonus,
-//                                  tails => base and self takes `recoil`. Pass
-//                                  recoil: 0 for a plain heads-bonus attack
-//
-//   ATTACKS — post-damage. All of these are skipped on a target whose effects are
-//   blocked (Barrier); the ones acting on SELF are not:
+//     REQUIRE_DEF_STATUS {s, label}    attack is illegal unless the defender has status s
+//   post-damage:
 //     STATUS {s}                   apply status to defender
 //     STATUS_ON_FLIP {s}           flip; heads => apply status to defender
-//     STATUS_COIN_EITHER {heads, tails}
-//                                  heads one condition, tails the other — never nothing
-//     TOXIC {n}                    Poison the defender, and set its between-turns
-//                                  Poison damage to n instead of the usual 10
-//     RECOIL {n}                   self takes n damage (never W/R, never Retaliate)
-//     RECOIL_ON_FLIP {n, label}    flip; TAILS => self takes n damage
+//     RECOIL {n}                   self takes n damage (no weakness/resistance)
 //     HEAL_SELF_ALL                remove all damage counters from self
-//     HEAL_SELF_IF_DAMAGED {n}     remove n counters from self unless ALL damage
-//                                  was prevented
-//     BENCH_SPLASH {n}             n damage to every Benched Pokemon on BOTH sides,
-//                                  ignoring Weakness/Resistance
-//     BENCH_SPLASH_OWN {n}         n damage to your OWN Benched Pokemon only (Earthquake)
-//     DISCARD_DEF_ENERGY           discard 1 Energy card from the defender
-//     ATTACK_LOCK                  disable ONE of the defender's attacks (by index)
-//                                  during the opponent's next turn (Amnesia)
-//     JAM_DEFENDER {label}         defender must flip to attack next turn or it fails
-//     WHIRLWIND                    the DEFENDING player chooses a Benched Pokemon and
-//                                  switches it in. Sets state.pendingSwitch and defers
-//                                  the end of turn — the one decision a player makes
-//                                  during the opponent's turn
-//     SWITCH_DEFENDER_CHOOSE       the ATTACKER picks one of the defender's benched
-//                                  and drags it into the Active spot
-//     BARRIER                      prevent ALL effects of attacks (incl. damage) on
-//                                  self during the opponent's next turn
-//     BARRIER_ON_FLIP {label}      flip; heads => the same (Agility)
-//     PREVENT_ALL_DMG_SELF_ON_FLIP flip; heads => prevent all DAMAGE to self during the
-//                                  opponent's next turn. Other effects still land
+//     HEAL_SELF_IF_DAMAGED {n}     remove n counters from self unless all damage prevented
+//     PREVENT_ALL_DMG_SELF_ON_FLIP flip; heads => prevent all damage to self during
+//                                  opponent's next turn
 //     HARDEN {threshold}           prevent damage to self of `threshold` or less
-//                                  during the opponent's next turn (after W/R)
+//                                  during opponent's next turn (after W/R)
+//     JAM_DEFENDER {label}         defender must flip to attack next turn or it fails
+//     BARRIER                      prevent ALL effects of attacks (incl. damage) on self
+//                                  during the opponent's next turn
 //     DESTINY_BOND                 if something KOs self during the opponent's next
 //                                  turn, that Pokemon is Knocked Out too
-//     CONVERT_DEF_WEAKNESS         set the defender's Weakness to a chosen type,
-//                                  PERMANENTLY while it stays in play (Conversion 1)
-//     CONVERT_SELF_RESISTANCE      the same for self's Resistance (Conversion 2)
-//
-//   TRAINERS — `t` rather than `a`. Each is one whole card; the legality check and
-//   the effect live in two switches in engine.js and BOTH must gain a case:
-//     T_DRAW {n}                   T_HEAL {n}                T_POKEDEX {n}
-//     T_ENERGY_RETRIEVAL {n}       T_DISCARD_ENERGY_THEN_HEAL {n}
-//     T_SWITCH_OWN                 T_SWITCH_OPPONENT         T_SCOOP_UP
-//     T_DISCARD_OPP_ENERGY         T_SUPER_ENERGY_REMOVAL    T_DEVOLUTION_SPRAY
-//     T_PLUSPOWER                  T_DEFENDER                T_FULL_HEAL
-//     T_LASS                       T_PROFESSOR_OAK           T_IMPOSTOR_OAK
-//     T_MAINTENANCE                T_POKEMON_CENTER          T_REVIVE
-//     T_POKEMON_FLUTE              T_COMPUTER_SEARCH         T_ITEM_FINDER
-//     T_POKEMON_TRADER             T_POKEMON_BREEDER
+//     RECOIL_ON_FLIP {n, label}    flip; TAILS => self takes n damage
+//     BENCH_SPLASH {n}             n damage to every Benched Pokemon on BOTH sides,
+//                                  ignoring Weakness/Resistance
+//     SWITCH_DEFENDER_CHOOSE       attacker picks one of defender's benched; swap to active
+//   trainers:
+//     T_DRAW {n} / T_HEAL {n} / T_DISCARD_ENERGY_THEN_HEAL {n} / T_SWITCH_OWN
+//     T_SWITCH_OPPONENT / T_DISCARD_OPP_ENERGY / T_PLUSPOWER / T_LASS
+//     T_ENERGY_RETRIEVAL {n} / T_PROFESSOR_OAK / T_SUPER_ENERGY_REMOVAL
+//     T_DEFENDER / T_COMPUTER_SEARCH
 //
 // POKEMON POWERS
 //   `p` is a single object, not a verb list — Powers are not attacks and don't
@@ -142,29 +89,6 @@
 //
 //   Interactive Powers enumerate one legal action per (source, target) pair, so
 //   the AI can score them like any other action and the UI can highlight them.
-//
-// LASTING EFFECTS — what the verbs above actually PUSH
-//   Several verbs do their work by appending to `slot.effects`, which is an
-//   ordered modifier chain read by computeDamage() and cleared by expiry. Reach
-//   for an existing kind before inventing a verb; three of these have no verb of
-//   their own yet and are placed only by Trainers.
-//     DAMAGE_BONUS      {amount, label}     added AFTER W/R          (PlusPower)
-//     DAMAGE_REDUCTION  {amount, label}     subtracted AFTER W/R     (Defender)
-//     PREVENT_UP_TO     {threshold, label}  prevent if <= threshold  (Harden)
-//     PREVENT_ALL_DAMAGE                    damage only, effects land
-//     PREVENT_ALL_EFFECTS                   damage AND effects; also switches the
-//                                           slot's own Power off (see powerUsable)
-//     ATTACK_DISABLED   {idx, label}        one attack, by index     (Amnesia)
-//     ATTACK_FLIP       {label}             must flip to attack      (Smokescreen)
-//     DESTINY_BOND
-//   `expireAtStartOfTurn: turn + 2` is the standard "during the opponent's next
-//   turn" duration. An effect carrying a `card` discards that card when it expires.
-//
-// AND THE PART NO SUITE CAN SEE
-//   ai.js scores attacks with a switch over these verb names, and a verb it has no
-//   case for scores as PLAIN BASE DAMAGE — silently, forever. Adding a verb here
-//   means adding it there too, or adding it to that file's explicit opt-out list.
-//   See ENGINE.md, "The silent-failure surface".
 
 const EFFECTS = {
 

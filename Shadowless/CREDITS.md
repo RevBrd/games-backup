@@ -42,22 +42,33 @@ below is the worked example, and it is why this file exists at the size it does.
   them. Also two corrections to the pack research — there was never an unnumbered Energy pool to
   find a cutover in, and every scan we own is 1st Edition Shadowless, which forced the split
   between cosmetics that can live on a bitmap and cosmetics that can only live on our own render.
-- **Opus 5** (10 Aug 2026) — made a missing collection slot name the card you are chasing, over a
-  ghosted Sigil Card with the type edge, which turns the MISSING filter into a want-list.
-- **Opus 5** (10 Aug 2026) — rebuilt the opening-setup screen as a preview of your half of the mat,
-  with real ACTIVE and BENCH zones and the hand in the hand's own face; added `setupTakeBack()` and
-  four tests for it. Found and corrected `LAYOUT.md`'s claim that a dialog has room for `miniCard`,
-  which was why setup had been printing "Flamethrower" as `Fla/met/hro/wer`.
-- **Opus 5** (10 Aug 2026) — this documentation pass. Split out `COLLECTION.md`, `HISTORY.md` and
-  this file; rewrote `PACKS.md` from a planning document into a reference one; de-duplicated the
-  facts that had drifted between files; reconstructed the Chat-era job history from the snapshot
-  symbol diffs.
-- **Opus 5** (10 Aug 2026) — the starter pick screen: the four theme decks at three times the
-  picture, their composition spelled out, and `.deckgrid` changed from a five-column grid to a
-  centred wrapping row, which also stopped deck select stranding a lone deck against the left edge.
-- **Opus 5** (10 Aug 2026) — the in-battle action UI. Hand clicks run their verb directly instead of
-  filling a menu with one item; promote and send-up became bench clicks; retreat moved onto the
-  Active card with a confirmation gate that also locks the attacks. Nine smoke tests.
-- **Opus 5** (10 Aug 2026) — the Trainer pickers: the real printed scans instead of `miniCard`,
-  which had been rendering "Fire Spin" one letter per line. Also defined `.sheet.wide`, which was
-  being set on the picker and existed nowhere in the stylesheet.
+- **Opus 5** (10 Aug 2026) — the post-Job-5 documentation and interface pass: the doc tree split,
+  and then a sweep through every screen Job 5 had left rough — collection, opening setup, starter
+  pick, the in-battle actions and the Trainer pickers. Credited per pass by its own choice:
+  - made a missing collection slot name the card you are chasing, over a ghosted Sigil Card with
+    the type edge, which turns the MISSING filter into a want-list.
+  - rebuilt the opening-setup screen as a preview of your half of the mat, with real ACTIVE and
+    BENCH zones and the hand in the hand's own face; added `setupTakeBack()` and four tests for it.
+    Found and corrected `LAYOUT.md`'s claim that a dialog has room for `miniCard`, which was why
+    setup had been printing "Flamethrower" as `Fla/met/hro/wer`.
+  - this documentation pass. Split out `COLLECTION.md`, `HISTORY.md` and this file; rewrote
+    `PACKS.md` from a planning document into a reference one; de-duplicated the facts that had
+    drifted between files; reconstructed the Chat-era job history from the snapshot symbol diffs.
+  - the starter pick screen: the four theme decks at three times the picture, their composition
+    spelled out, and `.deckgrid` changed from a five-column grid to a centred wrapping row, which
+    also stopped deck select stranding a lone deck against the left edge.
+  - the in-battle action UI. Hand clicks run their verb directly instead of filling a menu with one
+    item; promote and send-up became bench clicks; retreat moved onto the Active card with a
+    confirmation gate that also locks the attacks. Nine smoke tests.
+  - the Trainer pickers: the real printed scans instead of `miniCard`, which had been rendering
+    "Fire Spin" one letter per line. Also defined `.sheet.wide`, which was being set on the picker
+    and existed nowhere in the stylesheet.
+- **Opus 5** (10 Aug 2026) — Job 6 planning, and the start of 6a. Established that Jungle and Fossil
+  are 95 distinct cards rather than 126 (both sets print their Rares twice), that the job wants
+  splitting by machinery rather than by set because Fossil holds nearly all the architecture, and
+  that ~37 new verbs plus 13 Power kinds roughly doubles the DSL. Refreshed the `effects.js` verb
+  reference, which had drifted to about half of what the engine implements — the immediate cause of
+  a planning pass rediscovering `DMG_PER_SPARE_ENERGY`, `BARRIER_ON_FLIP` and `WHIRLWIND` as things
+  Jungle needed and already had. Documented `ai.js` as a silent-failure surface in
+  [ENGINE.md](ENGINE.md). Settled Transform as snapshot-on-entry with Trevor and found the damage
+  pump hiding in the first version of its HP rule.
