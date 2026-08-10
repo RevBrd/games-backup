@@ -433,7 +433,15 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 
 .deckgrp{display:flex;flex-direction:column;gap:6px}
 .grphead{font-size:9px;letter-spacing:.22em;color:var(--matink);margin:0}
-.deckgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+/* A centred wrapping row, NOT a five-column grid. The grid was sized for the
+   deck-select opponent row, which happens to hold exactly five — so the starter
+   screen put four cards in it and left a column of air on the right, and the
+   YOUR DECK row put ONE card in it and left four. Both read as the layout
+   having broken rather than as a short row. A flex row with a fixed card width
+   centres 1, 4, 5 and 9 identically, and the player can build any number of
+   decks, so "any number" is the real requirement. */
+.deckgrid{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+.deckcard{flex:0 0 186px;max-width:186px}
 /* Each theme deck wears the face of its own heaviest card. We have the real
    printed scans; a deck of Charizard should look like one. */
 .deckcard{
@@ -452,6 +460,31 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .dtypes{display:flex;gap:3px;justify-content:center}
 .dstat{font-size:10px;color:#8A9A93}
 .dstat.dim{color:var(--matink);font-size:9.5px}
+
+/* ---- the starter pick ---- */
+/* One row of four on an otherwise empty page, where every other screen in this
+   game grows into spare room rather than leaving a band of it — `fitBoard()`
+   scales the board UP to 1.3x for exactly this reason. The shared ceiling is
+   124px because deck select stacks two card rows plus a stat bar, an options
+   row and a button into the same viewport; this screen has one row and can
+   afford three times the picture. The scans are the best material in the
+   project and this is the first thing anybody sees. */
+.deckscreen.starter .deckbox{max-width:1120px;gap:clamp(10px,2.4vh,22px)}
+.deckscreen.starter .deckgrid{gap:clamp(9px,1.6vw,20px)}
+.deckscreen.starter .deckcard{flex:0 0 clamp(186px,17vw,250px);max-width:250px;
+  padding:clamp(9px,1.8vh,16px) 11px;gap:5px}
+.deckscreen.starter .dart .cardface{height:clamp(96px,30vh,300px)}
+.deckscreen.starter .dname{font-size:clamp(15px,2.2vh,20px)}
+/* Spelled out rather than "22 / 10 / 28". The compact triple is fine on deck
+   select, where you already know what the numbers are; it is the wrong thing to
+   meet a new player with on the one screen whose whole job is choosing between
+   four decks you know nothing about. */
+.deckscreen.starter .dstat{font-size:10.5px}
+.deckscreen.starter .dsplit{display:flex;gap:4px 11px;justify-content:center;flex-wrap:wrap;
+  font-size:10px;color:#8A9A93}
+.deckscreen.starter .dsplititem{white-space:nowrap}
+.deckscreen.starter .dsplit b{color:var(--stock);font-weight:700}
+.deckscreen.starter .dsplitlbl{color:var(--matink)}
 
 .deckopts{display:flex;gap:16px;align-items:flex-end;justify-content:center;
   padding-top:10px;border-top:1px solid var(--matline)}

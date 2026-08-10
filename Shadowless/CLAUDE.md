@@ -37,7 +37,7 @@ of them unless you are working on that thing** — that is the point of the spli
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing |
-| [MAINTENANCE.md](MAINTENANCE.md) | These files have drifted and you are about to reorganise them. How to decide what moves, what gets cut, and what must never be |
+| [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way |
 
 ## Status
 
@@ -136,6 +136,13 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
   rail, the title screen, the dex, the pack reveal. In play, cards keep the rendered face, which is
   an instrument you can overlay damage onto. They are derived assets, not source: ~16 MB per set,
   fetched per set and gitignored.
+- **A set is gated as a whole, and goes live only when every card in it is playable.** Settled with
+  Trevor 10 Aug. No half-open sets, and **no collecting a card you cannot play** — the game's pitch
+  is building decks from what you actually own, and a card that every deck refuses inverts that. It
+  is also a soft version of the thing the deck validator exists to prevent: a Jungle Scyther sitting
+  in your binder rejecting every deck *is* a card silently doing nothing. Edge cases get handled
+  individually rather than by loosening the rule. The practical consequence is that
+  `gen_cards.js --sets` is the *last* step of adding a set, not the first — see the Job plan.
 - **The board's design is locked** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
   bench tiles without asking. Every variant treatment is confined to collectible surfaces for
   exactly this reason.
@@ -200,8 +207,19 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 - **Jobs 1–4** — the engine, the AI, the art system, the board, the Powers and the Base Set
   oddities, the mat and the fitter. **Done.** What each one added is in [HISTORY.md](HISTORY.md).
 - **Job 5** — collection mechanics, packs, deck building, persistence. **Done, 9 Aug 2026.**
-- **Job 6** — Jungle and Fossil. `node tools/gen_cards.js --sets base1,base2,base3`. Settle the
-  Energy floor question in [PACKS.md](PACKS.md) first; those two sets print no basic Energy.
+- **Job 6** — Jungle and Fossil. **Bigger than it looks, and it splits in three.** `effects.js` has
+  102 entries and all 102 are `base1`; Jungle is 64 cards and Fossil 62, so this needs **126 new
+  effect scripts — more than all of Base Set.** Running `gen_cards.js --sets` before they exist just
+  turns `selftest.js` red, which is the guard working.
+  - **6a — the plumbing.** Small, and worth doing on its own. The pack machinery is already
+    multi-set: `openPack(db, setCode, rng)`, `buildPools(db, setCode)`, a per-set `ENERGY_FLOOR`,
+    and per-set pack counts in the save. What pins it to Base Set is one constant (`HOME_SET`,
+    ~9 call sites) and the literal `'Base Set booster'`. 6a adds set names, set identity in the
+    reveal, and settles the Energy floor — Jungle and Fossil print **no basic Energy at all**, so
+    the ≥2 floor has nothing to draw from. See [PACKS.md](PACKS.md).
+  - **6b — Jungle's 64 scripts. 6c — Fossil's 62.** A set goes live in packs only when its last
+    script lands, per the gating rule above. Fossil needs only an `effects.js` entry for Mysterious
+    Fossil rather than new machinery — `playsAs` already covers it, see [ENGINE.md](ENGINE.md).
 - **Job 7** — progression, named opponents.
 - **Job 8+** — remaining sets. No longer blocked.
 

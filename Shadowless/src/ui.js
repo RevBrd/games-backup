@@ -1633,7 +1633,10 @@ function settleResult() {
 
 // ------------------------------------------------------------- the screens -
 function renderNewSave() {
-  const ov = el('div', 'deckscreen');
+  // `.starter` scopes this screen's larger hero cards. Deck select stacks two
+  // card rows, a stat bar, an options row and a button into the same viewport
+  // and cannot afford them; this screen is one row on an otherwise empty page.
+  const ov = el('div', 'deckscreen starter');
   const box = el('div', 'deckbox');
   const title = el('div', 'titleblock');
   title.appendChild(el('h1', 'gametitle', 'SHADOWLESS'));
@@ -1659,7 +1662,25 @@ function renderNewSave() {
       pips.appendChild(p);
     });
     c.appendChild(pips);
-    c.appendChild(el('div', 'dstat', `${s.k.pokemon} / ${s.k.trainer} / ${s.k.energy}`));
+    // Spelled out here, unlike deck select's bare "22 / 10 / 28". This is the
+    // one screen whose entire job is choosing between four decks you know
+    // nothing about, so an unlabelled triple of numbers is the wrong thing to
+    // hand someone — there is nothing on the page telling them what it counts.
+    // No "·" separators between the three: the row wraps at narrow widths, and
+    // a separator that is its own flex item gets stranded at the end of the
+    // first line. The gap carries the separation and cannot be orphaned.
+    const split = el('div', 'dsplit');
+    [[s.k.pokemon, 'Pokémon'], [s.k.trainer, 'Trainer'], [s.k.energy, 'Energy']]
+      .forEach(([v, label]) => {
+        // el() throughout rather than a text node: the smoke stub implements
+        // createElement and appendChild but not createTextNode, so a bare text
+        // node passes in Chrome and throws in the suite.
+        const w = el('span', 'dsplititem');
+        w.appendChild(el('b', null, String(v)));
+        w.appendChild(el('span', 'dsplitlbl', ' ' + label));
+        split.appendChild(w);
+      });
+    c.appendChild(split);
     c.appendChild(el('div', 'dstat dim', `${s.basics} Basics${s.stage2 ? ` · ${s.stage2} Stage 2` : ''}`));
     c.onclick = () => startNewSave(n);
     grid.appendChild(c);

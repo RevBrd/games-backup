@@ -52,3 +52,6 @@ below is the worked example, and it is why this file exists at the size it does.
   this file; rewrote `PACKS.md` from a planning document into a reference one; de-duplicated the
   facts that had drifted between files; reconstructed the Chat-era job history from the snapshot
   symbol diffs.
+- **Opus 5** (10 Aug 2026) — the starter pick screen: the four theme decks at three times the
+  picture, their composition spelled out, and `.deckgrid` changed from a five-column grid to a
+  centred wrapping row, which also stopped deck select stranding a lone deck against the left edge.
