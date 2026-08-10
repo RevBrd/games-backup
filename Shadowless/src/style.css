@@ -265,6 +265,28 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .atktext{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.35}
 .atkwhy{font-size:10px;color:var(--red);margin-top:3px}
 
+/* Retreat sits under the attacks on the Active card. Deliberately NOT an .atk:
+   it is a cost you pay rather than a thing the Pokemon does, and it must not
+   fall into the attacks' visual rhythm — that rhythm is exactly what would make
+   it a misclick. Lower contrast, no fill, a rule above it instead of a border
+   around it. */
+.retreatrow{margin-top:5px;padding:4px 6px 1px;border-top:1px solid var(--line);
+  display:flex;align-items:baseline;gap:8px;cursor:pointer;
+  font-size:10.5px;color:#8A9A93;line-height:1.3}
+.retreatrow .rr-lbl{font-weight:700}
+.retreatrow .rr-cost{margin-left:auto;font-size:9.5px;color:var(--dim)}
+.retreatrow:hover{color:var(--txt)}
+.retreatrow:hover .rr-lbl{color:var(--amber)}
+/* Armed: the gate. It states what it is waiting for and offers the way out, and
+   the attacks above it are disabled for as long as this is showing. */
+.retreatrow.armed{background:rgba(226,168,75,.10);border-top-color:#6A5326;
+  color:var(--amber);border-radius:0 0 2px 2px;padding-bottom:4px}
+.retreatrow.armed .rr-cancel{margin-left:auto;font-size:9.5px;color:var(--matink);
+  text-decoration:underline}
+.retreatrow.armed:hover .rr-cancel{color:var(--txt)}
+.retreatrow.off{cursor:default;color:#5A646E;font-size:9.5px;font-weight:400}
+.retreatrow.off:hover{color:#5A646E}
+
 /* ---- hand ---- */
 /* The hand is a fanned row that never wraps, so its height is fixed however
    many cards you hold. Overlap tightens as the hand grows; hovering lifts a

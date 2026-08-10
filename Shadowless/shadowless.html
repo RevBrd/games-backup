@@ -272,6 +272,28 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .atktext{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.35}
 .atkwhy{font-size:10px;color:var(--red);margin-top:3px}
 
+/* Retreat sits under the attacks on the Active card. Deliberately NOT an .atk:
+   it is a cost you pay rather than a thing the Pokemon does, and it must not
+   fall into the attacks' visual rhythm — that rhythm is exactly what would make
+   it a misclick. Lower contrast, no fill, a rule above it instead of a border
+   around it. */
+.retreatrow{margin-top:5px;padding:4px 6px 1px;border-top:1px solid var(--line);
+  display:flex;align-items:baseline;gap:8px;cursor:pointer;
+  font-size:10.5px;color:#8A9A93;line-height:1.3}
+.retreatrow .rr-lbl{font-weight:700}
+.retreatrow .rr-cost{margin-left:auto;font-size:9.5px;color:var(--dim)}
+.retreatrow:hover{color:var(--txt)}
+.retreatrow:hover .rr-lbl{color:var(--amber)}
+/* Armed: the gate. It states what it is waiting for and offers the way out, and
+   the attacks above it are disabled for as long as this is showing. */
+.retreatrow.armed{background:rgba(226,168,75,.10);border-top-color:#6A5326;
+  color:var(--amber);border-radius:0 0 2px 2px;padding-bottom:4px}
+.retreatrow.armed .rr-cancel{margin-left:auto;font-size:9.5px;color:var(--matink);
+  text-decoration:underline}
+.retreatrow.armed:hover .rr-cancel{color:var(--txt)}
+.retreatrow.off{cursor:default;color:#5A646E;font-size:9.5px;font-weight:400}
+.retreatrow.off:hover{color:#5A646E}
+
 /* ---- hand ---- */
 /* The hand is a fanned row that never wraps, so its height is fixed however
    many cards you hold. Overlap tightens as the hand grows; hovering lifts a
@@ -6086,6 +6108,8 @@ const UI = {
   // Undecided on purpose — this exists so the two can be looked at rather than
   // argued about. See PACKS.md.
   shadowMode: 'shadow',
+  // Retreat is the one confirmation-gated action; this is its armed state.
+  retreatArmed: false,
 };
 
 const PACKS_PER_WIN = 2;      // PACKS.md's yardstick, and now the real rule
@@ -6179,7 +6203,7 @@ function startMatch() {
 
 function backToDeckSelect() {
   clearTimeout(UI.aiTimer); clearTimeout(UI.presTimer);
-  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null;
+  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.retreatArmed = false;
   UI.screen = 'decks';
   render();
 }
@@ -6193,7 +6217,7 @@ function newGame() {
   // seeds differ, so they shuffle and draw independently.
   UI.E.newGame(resolveDeck(UI.myDeck, seed), resolveDeck(UI.foeDeck, seed ^ 0x5f5f), ['You', 'Opponent']);
   UI.E.setupAuto(1);                     // opponent sets itself up
-  UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null;
+  UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.retreatArmed = false;
   UI.awarded = false;                    // this game has not paid out yet
   render();
 }
@@ -6247,7 +6271,7 @@ function dispatch(pi, action) {
   const before = JSON.parse(JSON.stringify(UI.E.state));
   const mark = UI.E.state.log.length;
   UI.E.act(pi, action);
-  UI.sel = null; UI.targeting = null;
+  UI.sel = null; UI.targeting = null; UI.retreatArmed = false;
   diffForFx(before, UI.E.state);
   const fresh = UI.E.state.log.slice(mark);
   if (!fresh.some(e => e.kind === 'flip') || UI.flipDelay < 250) { render(); return; }
@@ -6539,8 +6563,38 @@ function peekOn(node, cardId) {
 }
 
 // ------------------------------------------------------------- rendering ---
+
+// Promote and Whirlwind's send-up are bench clicks, so their targeting has to
+// be armed BEFORE the bench is drawn.
+//
+// It lived in renderActionBar() first, which looks reasonable and is wrong by
+// exactly one step: render() builds the table and then the bar, so the tiles
+// asked slotTargetable() while UI.targeting was still null and drew themselves
+// unhighlighted. The prompt appeared, nothing lit up, and only a second
+// unrelated render would fix it. Same shape as writeViewportDump() having to
+// run after chooseLayout() — see LAYOUT.md.
+function armForcedChoice() {
+  if (!UI.E) return;
+  const s = UI.view || UI.E.state;
+  if (!s || s.winner !== null) return;
+  const promote = s.pendingPromote === 0;
+  const send = s.pendingSwitch === 0;
+  if (!promote && !send) {
+    if (UI.targeting && UI.targeting.forced) UI.targeting = null;
+    return;
+  }
+  if (UI.targeting && UI.targeting.forced) return;      // already armed
+  UI.targeting = {
+    scope: 'promote', forced: true,
+    prompt: promote
+      ? 'Your Active Pokemon was Knocked Out — choose a replacement from your Bench.'
+      : 'Whirlwind! Choose one of your Benched Pokemon to send up.',
+    dispatch: (opts) => dispatch(0, { t: promote ? 'promote' : 'switchIn', bench: opts.bench }),
+  };
+}
 function render() {
   const root = document.getElementById('app');
+  armForcedChoice();
   root.innerHTML = '';
   if (UI.screen === 'newsave') { root.appendChild(renderNewSave()); return; }
   if (UI.screen === 'packs' && UI.pack) {
@@ -7091,14 +7145,71 @@ function renderSlot(slot, pi, where, idx) {
           ? (slot.status.asleep ? 'Asleep — cannot attack' : slot.status.paralyzed ? 'Paralyzed — cannot attack' : 'Cannot attack')
           : chk.why;
         b.appendChild(el('div', 'atkwhy', why));
+      } else if (UI.targeting || UI.powerMode) {
+        // Locked while the board is waiting for a target. Without this, arming
+        // Retreat and then misclicking an attack fires the attack and ends the
+        // turn — the retreat row sits directly under the attacks, so that is a
+        // one-pixel mistake with an unrecoverable outcome.
+        b.classList.add('off');
       } else b.onclick = () => doAttack(i);
       atks.appendChild(b);
     });
     d.appendChild(atks);
+    const rr = retreatRow(slot, c);
+    if (rr) d.appendChild(rr);
   }
 
   d.onclick = slotOnClick(slot, pi, where, idx, can, c);
   return peekOn(d, c.id);
+}
+
+// Retreat, on the Active card under its attacks — where the cost it charges is
+// printed, and where the thing it acts on actually is. It was a button in the
+// action bar, which is the last place in the game that described the Active
+// Pokemon from a distance.
+//
+// It is the ONE action here that is confirmation-gated (Trevor, 10 Aug). Two
+// reasons it earns the extra click where attacking does not: it now sits
+// directly beneath the attacks, so the misclick is a one-pixel mistake; and it
+// spends Energy you chose to attach, which is the only cost in the game you pay
+// without getting an effect for it. Arming also LOCKS the attacks above it, so
+// the armed state cannot be escaped by accidentally attacking.
+function retreatRow(slot, c) {
+  const p = me();
+  if (!p.bench.length) return null;
+  const armed = UI.retreatArmed;
+  const legal = myLegal().some(a => a.t === 'retreat');
+
+  if (!legal) {
+    // Say why, in the place the action would have been, rather than in the bar.
+    const why = p.retreated ? 'Already retreated this turn'
+      : slot.status.asleep ? 'Asleep — cannot retreat'
+      : slot.status.paralyzed ? 'Paralyzed — cannot retreat'
+      : `Needs ${c.retreat} Energy to retreat`;
+    return el('div', 'retreatrow off', why);
+  }
+
+  const row = el('div', 'retreatrow' + (armed ? ' armed' : ''));
+  if (armed) {
+    // Just the label and the way out. The instruction is already on the centre
+    // line and in the bar; a third copy on the card would make the card's
+    // version read as decoration, which is the same mistake the coin toss made
+    // when its result was announced twice. See LAYOUT.md.
+    row.appendChild(el('span', 'rr-lbl', 'Retreating'));
+    const x = el('span', 'rr-cancel', 'Cancel');
+    row.appendChild(x);
+    row.onclick = () => { UI.retreatArmed = false; UI.targeting = null; render(); };
+    return row;
+  }
+  row.appendChild(el('span', 'rr-lbl', 'Retreat'));
+  row.appendChild(el('span', 'rr-cost', c.retreat ? `discard ${c.retreat} Energy` : 'free'));
+  row.onclick = () => {
+    UI.retreatArmed = true;
+    UI.targeting = { scope: 'ownBench', prompt: `Retreating ${c.name} — choose a Benched Pokemon to bring up`,
+      dispatch: (opts) => { UI.retreatArmed = false; dispatch(0, { t: 'retreat', bench: opts.bench }); } };
+    render();
+  };
+  return row;
 }
 
 // Shared by the Active card and the bench tiles — a benched Pokemon is just as
@@ -7218,11 +7329,10 @@ function renderHand() {
       if (presenting()) return;
       if (UI.targeting && UI.targeting.scope === 'handDiscard') { UI.targeting.dispatch({ discardUid: me().hand[i].uid }); return; }
       inspectCard(c.id);
-      if (acts.length) {
-        UI.sel = (UI.sel && UI.sel.idx === i) ? null : { idx: i };
-        UI.targeting = null;
-      }
-      render();
+      // A card with nothing legal about it still gets inspected, and still
+      // reports itself in the bar — "why can't I play this" is information.
+      if (!acts.length) { UI.sel = { idx: i }; render(); return; }
+      clickHandCard(i);
     };
     row.appendChild(peekOn(card, c.id));
   });
@@ -7230,6 +7340,94 @@ function renderHand() {
   UI.handEl = row; UI.handPanelEl = h;
   h.appendChild(row);
   return h;
+}
+
+// Everything a card in hand can legally do, as {label, run} pairs.
+//
+// ONE definition, two consumers, and that is the point. Clicking a hand card
+// runs the verb directly when there is only one; the action bar renders them as
+// buttons when there is more than one, or when something set UI.sel by hand.
+// They used to be the same code written once, inline, in the bar — which is why
+// the bar was the only way to play anything.
+//
+// The finding that drove this: almost every card has exactly ONE verb. Energy
+// can only be attached, a Stage 1 can only evolve, a Trainer can only be
+// played, a Basic can only be benched. So the bar's "menu" was nearly always a
+// menu of one, and the click that chose from it was a click with no choice in
+// it. Genuine multi-verb cards still get the menu, because then it IS a choice.
+function handVerbs(i) {
+  const inst = me().hand[i];
+  if (!inst) return [];
+  const c = CARD_DB[inst.id];
+  const acts = myLegal().filter(a => a.hand === i);
+  const out = [];
+
+  const bench = acts.find(a => a.t === 'playBasic');
+  if (bench) out.push({ label: 'Put on Bench', run: () => dispatch(0, bench) });
+
+  const evos = acts.filter(a => a.t === 'evolve');
+  if (evos.length) out.push({ label: 'Evolve…', run: () => {
+    UI.targeting = { scope: 'evolveOn', uids: evos.map(a => a.target), prompt: `Choose the Pokemon to evolve into ${c.name}`,
+      dispatch: (uid) => dispatch(0, evos.find(a => a.target === uid)) };
+    render();
+  } });
+
+  const atts = acts.filter(a => a.t === 'attachEnergy');
+  if (atts.length) out.push({ label: 'Attach to…', run: () => {
+    UI.targeting = { scope: 'attachTo', uids: atts.map(a => a.target), prompt: `Choose a Pokemon to attach ${c.name} to`,
+      dispatch: (uid) => dispatch(0, atts.find(a => a.target === uid)) };
+    render();
+  } });
+
+  const tr = acts.find(a => a.t === 'playTrainer');
+  if (tr) {
+    const need = TRAINER_FLOW[c.id];
+    const needsChoice = !!need || PICKER_TRAINERS.indexOf(c.id) >= 0;
+    out.push({ label: needsChoice ? 'Play…' : 'Play', run: () => {
+      if (pickerFlow(i, inst, c)) return;
+      if (!need) { dispatch(0, tr); return; }
+      if (need.then) {
+        UI.targeting = { scope: need.scope, prompt: need.prompt, dispatch: (first) => {
+          UI.targeting = { scope: need.then.scope, prompt: need.then.prompt,
+            dispatch: (second) => dispatch(0, { t: 'playTrainer', hand: i,
+              opts: { selfUid: first.targetUid, targetUid: second.targetUid } }) };
+          render();
+        } };
+        render(); return;
+      }
+      if (c.id === 'base1-72') {
+        UI.targeting = { scope: need.scope, prompt: need.prompt, dispatch: (opts) => {
+          const sl = UI.E.allSlots(0).find(x => x.uid === opts.targetUid);
+          if (sl && sl.stack.length > 2) {
+            openPicker({ title: 'Devolution Spray', prompt: 'Choose the card to devolve back to',
+              items: sl.stack.slice(0, sl.stack.length - 1), min: 1, max: 1,
+              onDone: (p) => {
+                const keep = sl.stack.findIndex(x => x.uid === p[0]) + 1;
+                dispatch(0, { t: 'playTrainer', hand: i, opts: { targetUid: opts.targetUid, keep } });
+              } });
+          } else dispatch(0, { t: 'playTrainer', hand: i, opts: { targetUid: opts.targetUid, keep: 1 } });
+        } };
+        render(); return;
+      }
+      UI.targeting = { scope: need.scope, prompt: need.prompt,
+        dispatch: (opts) => dispatch(0, { t: 'playTrainer', hand: i, opts }) };
+      render();
+    } });
+  }
+  return out;
+}
+
+// Clicking a card in hand. One verb runs; several offer themselves in the bar;
+// none selects it anyway, so the bar can say the card's name rather than the
+// click doing nothing at all.
+function clickHandCard(i) {
+  if (UI.targeting || UI.powerMode || presenting()) return;
+  const s = S();
+  if (s.phase !== 'main' || s.active !== 0) return;
+  const vs = handVerbs(i);
+  if (vs.length === 1) { UI.sel = null; vs[0].run(); return; }
+  UI.sel = (UI.sel && UI.sel.idx === i) ? null : { idx: i };
+  render();
 }
 
 function renderActionBar() {
@@ -7288,7 +7486,10 @@ function renderActionBar() {
     return bar;
   }
 
-  if (UI.targeting) {
+  // `forced` targeting falls through to the promote/send-up branch below, which
+  // re-arms it and prints the prompt WITHOUT a Cancel. Cancelling a forced
+  // promote would strand the game with no Active and no way to choose one.
+  if (UI.targeting && !UI.targeting.forced) {
     const cancel = el('button', 'btn ghost', 'Cancel');
     cancel.onclick = () => { UI.targeting = null; UI.sel = null; render(); };
     bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
@@ -7296,23 +7497,16 @@ function renderActionBar() {
     return bar;
   }
 
-  if (s.pendingSwitch === 0) {
-    bar.appendChild(el('div', 'barmsg', 'Whirlwind! Choose one of your Benched Pokemon to send up.'));
-    me().bench.forEach((b, i) => {
-      const btn = el('button', 'btn', 'Send up ' + topCard(CARD_DB, b).name);
-      btn.onclick = () => dispatch(0, { t: 'switchIn', bench: i });
-      bar.appendChild(btn);
-    });
-    return bar;
-  }
-
-  if (s.pendingPromote === 0) {
-    bar.appendChild(el('div', 'barmsg', 'Your Active Pokemon was Knocked Out. Choose a replacement from your Bench.'));
-    me().bench.forEach((b, i) => {
-      const btn = el('button', 'btn', 'Promote ' + topCard(CARD_DB, b).name);
-      btn.onclick = () => dispatch(0, { t: 'promote', bench: i });
-      bar.appendChild(btn);
-    });
+  // Promote and Whirlwind's send-up are BENCH CLICKS, not a row of buttons
+  // naming Pokemon that are already on screen. `slotTargetable` has had a
+  // 'promote' scope the whole time; the bar was printing "Promote Growlithe" as
+  // text while Growlithe sat two inches above it, highlightable.
+  //
+  // Neither is cancellable — the game cannot continue until you choose — so the
+  // targeting is armed here on every render rather than by a click, and the bar
+  // carries the prompt with no Cancel beside it.
+  if (s.pendingSwitch === 0 || s.pendingPromote === 0) {
+    bar.appendChild(el('div', 'barmsg', UI.targeting ? UI.targeting.prompt : ''));
     return bar;
   }
 
@@ -7322,73 +7516,12 @@ function renderActionBar() {
     const i = UI.sel.idx;
     const inst = me().hand[i];
     if (!inst) { UI.sel = null; return bar; }
-    const c = CARD_DB[inst.id];
-    const acts = myLegal().filter(a => a.hand === i);
-    bar.appendChild(el('div', 'barmsg', c.name));
-
-    const bench = acts.find(a => a.t === 'playBasic');
-    if (bench) { const b = el('button', 'btn', 'Put on Bench'); b.onclick = () => dispatch(0, bench); bar.appendChild(b); }
-
-    const evos = acts.filter(a => a.t === 'evolve');
-    if (evos.length) {
-      const b = el('button', 'btn', 'Evolve…');
-      b.onclick = () => {
-        UI.targeting = { scope: 'evolveOn', uids: evos.map(a => a.target), prompt: `Choose the Pokemon to evolve into ${c.name}`,
-          dispatch: (uid) => dispatch(0, evos.find(a => a.target === uid)) };
-        render();
-      };
+    bar.appendChild(el('div', 'barmsg', CARD_DB[inst.id].name));
+    handVerbs(i).forEach(v => {
+      const b = el('button', 'btn', v.label);
+      b.onclick = v.run;
       bar.appendChild(b);
-    }
-
-    const atts = acts.filter(a => a.t === 'attachEnergy');
-    if (atts.length) {
-      const b = el('button', 'btn', 'Attach to…');
-      b.onclick = () => {
-        UI.targeting = { scope: 'attachTo', uids: atts.map(a => a.target), prompt: `Choose a Pokemon to attach ${c.name} to`,
-          dispatch: (uid) => dispatch(0, atts.find(a => a.target === uid)) };
-        render();
-      };
-      bar.appendChild(b);
-    }
-
-    const tr = acts.find(a => a.t === 'playTrainer');
-    if (tr) {
-      const need = TRAINER_FLOW[c.id];
-      const needsChoice = !!need || PICKER_TRAINERS.indexOf(c.id) >= 0;
-      const b = el('button', 'btn', needsChoice ? 'Play…' : 'Play');
-      b.onclick = () => {
-        if (pickerFlow(i, inst, c)) return;
-        if (!need) { dispatch(0, tr); return; }
-        if (need.then) {
-          UI.targeting = { scope: need.scope, prompt: need.prompt, dispatch: (first) => {
-            UI.targeting = { scope: need.then.scope, prompt: need.then.prompt,
-              dispatch: (second) => dispatch(0, { t: 'playTrainer', hand: i,
-                opts: { selfUid: first.targetUid, targetUid: second.targetUid } }) };
-            render();
-          } };
-          render(); return;
-        }
-        if (c.id === 'base1-72') {
-          UI.targeting = { scope: need.scope, prompt: need.prompt, dispatch: (opts) => {
-            const sl = UI.E.allSlots(0).find(x => x.uid === opts.targetUid);
-            if (sl && sl.stack.length > 2) {
-              openPicker({ title: 'Devolution Spray', prompt: 'Choose the card to devolve back to',
-                items: sl.stack.slice(0, sl.stack.length - 1), min: 1, max: 1,
-                onDone: (p) => {
-                  const keep = sl.stack.findIndex(x => x.uid === p[0]) + 1;
-                  dispatch(0, { t: 'playTrainer', hand: i, opts: { targetUid: opts.targetUid, keep } });
-                } });
-            } else dispatch(0, { t: 'playTrainer', hand: i, opts: { targetUid: opts.targetUid, keep: 1 } });
-          } };
-          render(); return;
-        }
-        UI.targeting = { scope: need.scope, prompt: need.prompt,
-          dispatch: (opts) => dispatch(0, { t: 'playTrainer', hand: i, opts }) };
-        render();
-      };
-      bar.appendChild(b);
-    }
-
+    });
     const x = el('button', 'btn ghost', 'Deselect');
     x.onclick = () => { UI.sel = null; render(); };
     bar.appendChild(x);
@@ -7414,23 +7547,8 @@ function renderActionBar() {
     bar.appendChild(b);
   });
 
-  const retreats = myLegal().filter(a => a.t === 'retreat');
-  if (retreats.length) {
-    const cost = topCard(CARD_DB, me().active).retreat;
-    const b = el('button', 'btn', `Retreat (discard ${cost} Energy)…`);
-    b.onclick = () => {
-      UI.targeting = { scope: 'ownBench', prompt: 'Choose a Benched Pokemon to bring up',
-        dispatch: (opts) => dispatch(0, { t: 'retreat', bench: opts.bench }) };
-      render();
-    };
-    bar.appendChild(b);
-  } else if (me().active && me().bench.length && !me().retreated) {
-    const c = topCard(CARD_DB, me().active);
-    const why = me().active.status.asleep ? 'Asleep — cannot retreat'
-      : me().active.status.paralyzed ? 'Paralyzed — cannot retreat'
-      : `Needs ${c.retreat} Energy to retreat`;
-    bar.appendChild(el('div', 'barmsg dimtxt', why));
-  }
+  // Retreat is not here any more — it is a row on the Active card, under the
+  // attacks, next to the retreat cost it charges. See retreatRow().
 
   const end = el('button', 'btn end', 'End turn');
   end.onclick = () => dispatch(0, { t: 'pass' });
@@ -7441,7 +7559,7 @@ function renderActionBar() {
 function resolveTarget(slot, pi, where, idx) {
   const t = UI.targeting; if (!t) return;
   if (t.scope === 'attachTo' || t.scope === 'evolveOn' || t.scope === 'breederTarget') return t.dispatch(slot.uid);
-  if (t.scope === 'ownBench' || t.scope === 'oppBench') return t.dispatch({ bench: idx });
+  if (t.scope === 'ownBench' || t.scope === 'oppBench' || t.scope === 'promote') return t.dispatch({ bench: idx });
   if (t.scope === 'oppEnergy' || t.scope === 'ownEnergy') return t.dispatch({ targetUid: slot.uid, energyIdx: 0 });
   return t.dispatch({ targetUid: slot.uid });
 }

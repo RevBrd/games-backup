@@ -288,6 +288,44 @@ is a trap, so the engine gained a take-back — legal anyway, since setup is arr
 anything is revealed. Taking the **Active** back returns the whole bench with it: a bench with no
 Active is not a legal board and nothing downstream knows how to dig the player out of it.
 
+## Actions live where the thing they act on is
+
+Settled with Trevor 10 Aug. The board used to speak two interaction languages:
+direct manipulation on the mat, *and* a detached row of verb buttons at the bottom that described
+things already visible on screen. The bar is now a **status line plus commitments**, not a menu.
+
+**Almost every card in hand has exactly one verb.** Energy can only be attached, a Stage 1 can only
+evolve, a Trainer can only be played, a Basic can only be benched — so the bar's menu was nearly
+always a menu of one, and choosing from it was a click with no choice in it. `handVerbs(i)` is the
+single definition; `clickHandCard()` runs it when there is one and falls back to the bar's menu when
+there are several, which is the only case where it is a real choice. **`smoke.js` drives the bar by
+setting `UI.sel` directly**, which is why that fallback has to keep working.
+
+**A Basic plays on click, with no confirmation.** Trevor's call, taken knowingly: the risk is a
+misclick benching something, and the deal is that it stays this way unless it actually becomes
+annoying. It is the one action with no target to double as a confirmation.
+
+**Promote and Whirlwind's send-up are bench clicks.** `slotTargetable` had a `'promote'` scope the
+whole time while the bar printed "Promote Growlithe" as text two inches below Growlithe. Both are
+`forced: true` — the game cannot continue until you choose, so there is no Cancel, and the generic
+targeting branch in the bar skips forced targeting so it cannot render one.
+
+**`armForcedChoice()` runs at the top of `render()`, and that placement is the whole point.** It
+lived in `renderActionBar()` first, which is wrong by exactly one step: `render()` builds the table
+and *then* the bar, so the bench tiles asked `slotTargetable()` while `UI.targeting` was still null
+and drew themselves unhighlighted. The prompt appeared and nothing lit up. Same shape as
+`writeViewportDump()` having to run after `chooseLayout()`.
+
+**Retreat is a row on the Active card and is the one confirmation-gated action.** It sits under the
+attacks, beside the retreat cost it charges. Two things earn it the gate where attacking does not:
+it is now a one-pixel misclick away from the attacks, and it spends Energy without giving an effect
+back. Arming it **disables every attack button** for as long as it is armed — without that, arming
+retreat and then misclicking an attack ends your turn.
+
+The armed row says only "Retreating" and "Cancel". The instruction is already on the centre line and
+in the bar, and a third copy would make the card's version read as decoration — the same mistake the
+coin toss made when its result was announced in two places.
+
 ## The title screen is not fitted
 
 `.deckscreen` sizes itself with `clamp(..vh..)` rather than the board's JS fitter. It is static —

@@ -80,7 +80,7 @@ anything done.
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
   Power working. See [ENGINE.md](ENGINE.md).
-- **`smoke.js`** (96 tests) is the original Chat-era harness, driving the **built** HTML through a
+- **`smoke.js`** (104 tests) is the original Chat-era harness, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
   presentation and freeze, the deck-select flow, the collection screens and the card renderer.
   Catches build and UI regressions — but it has no layout engine, so a green run proves nothing

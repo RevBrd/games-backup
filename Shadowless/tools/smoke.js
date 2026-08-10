@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey};')
+  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -1186,6 +1186,136 @@ T('the pool counts every pile, not just the plain one', () => {
   ctx.openBuilder(null);
   const piles = ctx.builderPiles('base1-31');
   return piles.length === 1 && piles[0].key === 'sh' && piles[0].free === 1;
+});
+
+
+// --- the action bar stops being a verb menu ---------------------------------
+// One definition of what a hand card can do, two consumers: the click runs it
+// when there is one verb, the bar offers them when there is more than one.
+function findByClass(node, cls) {
+  if (!node) return null;
+  // el() assigns className as a string; classList only holds later .add()
+  // calls, and the stub keeps the two completely separate. Check both.
+  const c = String(node.className || '');
+  if (c.split(/\s+/).indexOf(cls) >= 0) return node;
+  if (node.classList && node.classList.contains(cls)) return node;
+  const kids = node.children || [];
+  for (let i = 0; i < kids.length; i++) { const r = findByClass(kids[i], cls); if (r) return r; }
+  return null;
+}
+
+function actionBoard() {
+  UI.seedDraft = '4242';
+  startMatch();
+  UI.E.setupAuto(0);
+  const s = UI.E.state;
+  s.active = 0; s.phase = 'main'; s.pendingPromote = null; s.promoteQueue = [];
+  s.pendingSwitch = null;
+  UI.sel = null; UI.targeting = null; UI.retreatArmed = false;
+  return s;
+}
+
+T('an Energy in hand has exactly one verb', () => {
+  const s = actionBoard();
+  s.players[0].hand = [{ uid: 90001, id: 'base1-98' }];
+  const vs = ctx.handVerbs(0);
+  return vs.length === 1 && vs[0].label === 'Attach to\u2026';
+});
+
+T('clicking it goes straight to targeting, with no verb button in between', () => {
+  const s = actionBoard();
+  s.players[0].hand = [{ uid: 90002, id: 'base1-98' }];
+  render();
+  ctx.clickHandCard(0);
+  if (!UI.targeting) throw new Error('no targeting armed');
+  if (UI.targeting.scope !== 'attachTo') throw new Error('wrong scope: ' + UI.targeting.scope);
+  return UI.sel === null;
+});
+
+T('a forced promote arms bench targeting BEFORE the bench is drawn', () => {
+  const s = actionBoard();
+  s.players[0].bench = [UI.E.mkSlot({ uid: 90010, id: 'base1-58' })];
+  s.pendingPromote = 0;
+  render();
+  if (!UI.targeting || UI.targeting.scope !== 'promote') throw new Error('not armed');
+  if (!UI.targeting.forced) throw new Error('not marked forced');
+  if (!findByClass(document.getElementById('app'), 'targetable')) throw new Error('no tile lit');
+  return true;
+});
+
+T('a forced promote offers no Cancel', () => {
+  const s = actionBoard();
+  s.players[0].bench = [UI.E.mkSlot({ uid: 90011, id: 'base1-58' })];
+  s.pendingPromote = 0;
+  render();
+  return !findByText(document.getElementById('app'), 'Cancel');
+});
+
+T('promoting by bench click puts up the one you clicked', () => {
+  // Two on the bench, promote the SECOND, so a test that passes by accident
+  // when index 0 is always chosen cannot survive. Note mkSlot() assigns the
+  // slot's own uid from the engine counter -- the uid on the instance you hand
+  // it is the CARD's, not the slot's -- so identity is checked by object.
+  const s = actionBoard();
+  const first = UI.E.mkSlot({ uid: 90012, id: 'base1-58' });
+  const second = UI.E.mkSlot({ uid: 90013, id: 'base1-63' });
+  s.players[0].active = null;
+  s.players[0].bench = [first, second];
+  s.pendingPromote = 0;
+  render();
+  UI.targeting.dispatch({ bench: 1 });
+  const a = s.players[0].active;
+  if (!a) throw new Error('no active after promote; pendingPromote=' + s.pendingPromote);
+  if (a !== second) throw new Error('promoted the wrong slot');
+  if (s.players[0].bench.indexOf(second) >= 0) throw new Error('still on the bench too');
+  if (s.pendingPromote !== null) throw new Error('pendingPromote still ' + s.pendingPromote);
+  return true;
+});
+
+T('retreat is a row on the Active card, not a button in the bar', () => {
+  actionBoard();
+  render();
+  const app = document.getElementById('app');
+  if (findByText(app, 'Retreat (discard 1 Energy)\u2026')) throw new Error('old bar button present');
+  return !!findByClass(app, 'retreatrow');
+});
+
+T('arming retreat locks the attacks above it', () => {
+  const s = actionBoard();
+  const p = s.players[0];
+  p.active = UI.E.mkSlot({ uid: 90020, id: 'base1-58' });
+  p.active.energy = [{ uid: 90021, id: 'base1-99' }, { uid: 90022, id: 'base1-99' }];
+  p.bench = [UI.E.mkSlot({ uid: 90023, id: 'base1-58' })];
+  p.retreated = false;
+  render();
+  const row = findByClass(document.getElementById('app'), 'retreatrow');
+  if (!row || !row.onclick) throw new Error('retreat row not clickable');
+  row.onclick();
+  if (!UI.retreatArmed) throw new Error('not armed');
+  if (!UI.targeting || UI.targeting.scope !== 'ownBench') throw new Error('bench not targeted');
+  const atk = findByClass(document.getElementById('app'), 'atk');
+  return !atk || !atk.onclick;
+});
+
+T('cancelling an armed retreat leaves the board untouched', () => {
+  const s = actionBoard();
+  const p = s.players[0];
+  const act = UI.E.mkSlot({ uid: 90030, id: 'base1-58' });
+  const benched = UI.E.mkSlot({ uid: 90033, id: 'base1-58' });
+  p.active = act;
+  act.energy = [{ uid: 90031, id: 'base1-99' }, { uid: 90032, id: 'base1-99' }];
+  p.bench = [benched];
+  p.retreated = false;
+  render();
+  findByClass(document.getElementById('app'), 'retreatrow').onclick();
+  render();
+  findByClass(document.getElementById('app'), 'retreatrow').onclick();
+  if (UI.retreatArmed) throw new Error('still armed');
+  if (UI.targeting !== null) throw new Error('targeting still ' + (UI.targeting && UI.targeting.scope));
+  if (s.players[0].active !== act) throw new Error('the Active changed');
+  if (act.energy.length !== 2) throw new Error('energy now ' + act.energy.length);
+  if (p.retreated) throw new Error('counted as a retreat');
+  return true;
 });
 
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
