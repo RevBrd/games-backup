@@ -224,10 +224,11 @@ than only on hover.
   8 Aug design lock covers, and is honest to the original, which was itself only ever visible when
   you were looking at a card rather than playing it.
 
-  **BOTH ARE NOW BUILT (Job 5c), switchable from the DEV tab, and the shadow question is still
-  open.** `UI.shadowMode = 'shadow'` draws the shadow and Shadowless removes it; `'inverted'` is
-  Trevor's version, where Shadowless is the base state and the rare pull adds a shadow. The
-  confinement above holds in both — the board is identical either way.
+  **BOTH ARE BUILT (Job 5c), and `shadow` won (Trevor, 9 Aug).** The art window carries a drop
+  shadow by default and Shadowless removes it, which keeps real-world scarcity pointing the right
+  way. `inverted` — Shadowless as the base state, the rare pull adding a shadow — was explicitly
+  kept as a back-pocket option rather than discarded, and stays switchable in the DEV tab. Don't
+  delete it as dead code; it isn't. The confinement holds either way: the board is identical.
 
   **The loudness problem is solved separately, and that was Trevor's idea (9 Aug).** Looking at the
   A/B, we independently landed on the same objection: the shadow alone is too quiet to carry a

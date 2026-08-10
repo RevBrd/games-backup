@@ -219,10 +219,10 @@ looks off" into `lineHeight=0px` immediately.
 single property, so two classes that both set it do not stack — one silently wins. This became
 load-bearing the moment Shiny stopped being a sheen.
 
-**The Shadowless shadow is still an unresolved A/B**, switchable from the DEV tab: `shadow` draws it
-and Shadowless removes it; `inverted` makes Shadowless the base state, matching our 1st-Edition
-scans, with the rare pull adding a shadow. The watermark above is now the loud signal either way,
-so this is a fidelity question rather than a legibility one. Waiting on Trevor.
+**Settled 9 Aug: `shadow` is the default** — the art window carries a drop shadow and Shadowless
+removes it, which keeps real-world scarcity pointing the right way. `inverted` stays in the DEV tab
+as a live option rather than being deleted; Trevor's call was "back pocket, not discarded", so do
+not remove it to tidy up. Both are covered by `smoke.js`.
 
 **Unimplemented cards can never silently do nothing.** The deck validator refuses any deck
 containing a card with no effect script. Preserve that property — it is why the card counts above
