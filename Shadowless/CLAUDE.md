@@ -24,7 +24,7 @@ natural alternative and do **not** work from `file://` — see `~/.claude/refere
 
 ## Where the depth lives
 
-This file is the orientation. Seven siblings hold the detail, and **you should not need to read any
+This file is the orientation. Nine siblings hold the detail, and **you should not need to read any
 of them unless you are working on that thing** — that is the point of the split.
 
 | File | Read it when |
@@ -37,6 +37,7 @@ of them unless you are working on that thing** — that is the point of the spli
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing |
+| [MAINTENANCE.md](MAINTENANCE.md) | These files have drifted and you are about to reorganise them. How to decide what moves, what gets cut, and what must never be |
 
 ## Status
 
