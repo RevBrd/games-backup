@@ -1148,8 +1148,27 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 /* A card you have never seen is a slot in a binder, not an absence. It keeps
    the shape and the number so the grid still reads as a set you are filling. */
 .collmiss{aspect-ratio:240/330;border-radius:3px;border:1px dashed var(--matline);
-  background:rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;
-  font-size:9px;color:#4C5B55;letter-spacing:.06em}
+  border-left:3px solid var(--matline);
+  background:rgba(0,0,0,.22);position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  gap:2px;padding:6px 5px 7px;text-align:center;
+  /* `.colltile` sets line-height:0 for the scan it usually wraps, and
+     line-height INHERITS. Without this the name collapses to a zero-height
+     line box — the same bug that once cost the pull-detail card 90px. */
+  line-height:1.15}
+/* Absolutely positioned rather than a flex child on purpose: a sigil is a
+   square viewBox with no intrinsic size, so as a flex item it resolves its
+   basis from its own width and SETS the row height instead of consuming what
+   is left. Taking it out of flow sidesteps that entirely. */
+.collmiss .missart{position:absolute;left:14%;right:14%;top:12%;opacity:.14;
+  pointer-events:none}
+.collmiss .missart svg{width:100%;height:auto;display:block}
+.collmiss .missname{position:relative;font-size:8.5px;color:#7C8F87;font-weight:600;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.collmiss .missnum{position:relative;font-size:7.5px;color:#4C5B55;letter-spacing:.1em}
+.colltile:hover .collmiss{border-color:#6E837B;background:rgba(0,0,0,.1)}
+.colltile:hover .collmiss .missart{opacity:.26}
+.colltile:hover .collmiss .missname{color:#B7C6BE}
 .collqty{position:absolute;right:2px;bottom:2px;z-index:2;
   font-size:8.5px;line-height:1.3;font-weight:700;padding:0 4px;border-radius:2px;
   background:rgba(8,11,10,.82);color:var(--stock);border:1px solid rgba(255,255,255,.14)}
@@ -7764,7 +7783,24 @@ function collTile(id, count, best, label) {
     }
     t.onclick = () => { UI.detail = { id, flags: vflags(best) }; render(); };
   } else {
-    t.appendChild(el('div', 'collmiss', label || card.num));
+    // A missing slot used to be the card's number and nothing else, which made
+    // both grids a wall of small grey digits: you could see how much was left
+    // but not what any of it was. The chase was real and completely unspecific,
+    // which COLLECTION.md had already flagged as the obvious quality gap.
+    //
+    // So a slot now names the thing you are missing, over a ghosted Sigil Card.
+    // The sigil is OUR drawing rather than the scan, which is exactly right
+    // here — it says "this is the shape of what goes in this hole" without
+    // handing you the printed face you have not earned. It carries real
+    // information too: petals are the attack count, rings the retreat cost.
+    const m = el('div', 'collmiss');
+    // The type edge every other face in this game carries, so a grid of holes
+    // can still be read for "I am short three Water cards".
+    m.style.borderLeftColor = cardAccent(card);
+    m.appendChild(sigilBox(card, 'missart'));
+    m.appendChild(el('div', 'missname', card.name));
+    m.appendChild(el('div', 'missnum', label || card.num));
+    t.appendChild(m);
     // A card you do not own still opens — you can read what you are chasing.
     t.onclick = () => { UI.detail = { id, flags: [] }; render(); };
   }

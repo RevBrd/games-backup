@@ -229,6 +229,20 @@ That no-reflow property is load-bearing rather than tidy. The board behind it is
 pre-action snapshot for the duration, and a coin that resized the mat would move the very cards you
 are waiting on.
 
+**Proposed and rejected, 10 Aug 2026: moving it into the on-mat ticker zone.** Trevor's report was
+that the centre line gets in the way, and testing had convinced him the attribution worry above was
+overblown — a coin on your side does not actually read as only your coin. Both fair, and the ticker
+looked like the right home because it is already where flip *results* print, which would have put
+the coin and its outcome in one place instead of two.
+
+**It was wrong for a reason neither of us had written down: you read the log underneath the coin
+while it spins.** The centre line puts the toss directly above the ticker, so the text explaining
+what is being flipped for stays legible for the whole animation. Landing the coin *in* the ticker
+would cover the one thing a player is doing during the two seconds the coin is in the air. Trevor
+caught this himself, and it is a better argument than the attribution one — that one is about what a
+position implies, this one is about what it costs you. **Anywhere the coin might move to has to
+clear the ticker.**
+
 **The result is announced in exactly one place.** It used to be in the action bar; the bar now says
 only *why* the game has stopped. Having it in both made the mat's version read as decoration rather
 than as the event, which is the whole thing the toss was moved to fix.

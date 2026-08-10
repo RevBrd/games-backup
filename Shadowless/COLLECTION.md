@@ -112,8 +112,35 @@ keeps real-world scarcity pointing the right way. `inverted` is the losing side 
 stays switchable in the DEV tab as a back-pocket option. Do not delete it as dead code; it isn't.
 Both are covered by `smoke.js`.
 
+## A missing slot names what you are missing
+
+Both grids used to print a card's **number and nothing else** in an empty slot, which meant the
+collection and the dex were walls of small grey digits: you could see how much was left and not what
+any of it was. A missing tile now carries the card's **name**, its number, a **type-coloured left
+edge**, and a ghosted **Sigil Card** behind the text.
+
+The sigil rather than the scan is the point. It is our own drawing, so it says "this is the shape of
+what goes in this hole" without handing over a printed face you have not earned — and it is not
+decoration: petals are the attack count and rings the retreat cost, so the placeholder tells you
+something real about the card. The type edge is what makes a grid of holes scannable for "I am
+short three Water cards".
+
+The view this pays off in is **MISSING**, which is now a want-list rather than a count. On a fresh
+save it opens on the sixteen Rare Holos, which is exactly the chase [PACKS.md](PACKS.md) says the
+game actually is.
+
+Two traps that surface here, both already documented and both live:
+
+- **`.colltile` sets `line-height:0`** for the scan it usually wraps, and line-height inherits. A
+  missing tile has real text in it, so it has to set its own — this is the same bug that once cost
+  the pull-detail card 90px of height. See [LAYOUT.md](LAYOUT.md).
+- **The sigil is positioned absolutely, not as a flex child.** A sigil is a square viewBox with no
+  intrinsic size, so as a flex item it resolves its basis from its own width and *sets* the row
+  height instead of consuming what is left. Taking it out of flow sidesteps the whole problem.
+
 ## Left open on purpose
 
 **Blueprints have no dedicated screen.** The mechanism exists — any `built: false` deck is one — but
-there is no "what am I missing" view over your layouts. That is the obvious next quality pass, and
-it would turn a vague card chase into a specific one.
+there is no "what am I missing" view over your *layouts* specifically. The MISSING filter above
+turned the general chase specific; doing the same per-blueprint ("this deck is four cards away") is
+the remaining half and is still unbuilt.

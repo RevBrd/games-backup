@@ -1807,7 +1807,24 @@ function collTile(id, count, best, label) {
     }
     t.onclick = () => { UI.detail = { id, flags: vflags(best) }; render(); };
   } else {
-    t.appendChild(el('div', 'collmiss', label || card.num));
+    // A missing slot used to be the card's number and nothing else, which made
+    // both grids a wall of small grey digits: you could see how much was left
+    // but not what any of it was. The chase was real and completely unspecific,
+    // which COLLECTION.md had already flagged as the obvious quality gap.
+    //
+    // So a slot now names the thing you are missing, over a ghosted Sigil Card.
+    // The sigil is OUR drawing rather than the scan, which is exactly right
+    // here — it says "this is the shape of what goes in this hole" without
+    // handing you the printed face you have not earned. It carries real
+    // information too: petals are the attack count, rings the retreat cost.
+    const m = el('div', 'collmiss');
+    // The type edge every other face in this game carries, so a grid of holes
+    // can still be read for "I am short three Water cards".
+    m.style.borderLeftColor = cardAccent(card);
+    m.appendChild(sigilBox(card, 'missart'));
+    m.appendChild(el('div', 'missname', card.name));
+    m.appendChild(el('div', 'missnum', label || card.num));
+    t.appendChild(m);
     // A card you do not own still opens — you can read what you are chasing.
     t.onclick = () => { UI.detail = { id, flags: [] }; render(); };
   }
