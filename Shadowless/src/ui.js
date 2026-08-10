@@ -61,6 +61,9 @@ const UI = {
   saveNote: '',         // a one-line problem to show the player, or ''
   pack: null,           // the pack being opened; see openNextPack()
   detail: null,         // {card, flags} — the pull the detail overlay is showing
+  collView: 'cards',    // 'cards' (every printing) | 'dex' (one per species)
+  collFilter: 'all',    // 'all' | 'owned' | 'missing'
+  importing: false, importText: '', importErr: '',
   // The Shadowless A/B, switched from the DEV tab. 'shadow' draws the art
   // window with a drop shadow and Shadowless removes it (correct real-world
   // scarcity). 'inverted' makes Shadowless the base state, matching our
@@ -526,7 +529,17 @@ function render() {
     if (UI.detail) root.appendChild(renderPullDetail());
     return;
   }
-  if (UI.screen === 'decks') { root.appendChild(renderDeckSelect()); return; }
+  if (UI.screen === 'collection' && UI.save) {
+    root.appendChild(renderCollection());
+    if (UI.detail) root.appendChild(renderPullDetail());
+    if (UI.importing) root.appendChild(renderImport());
+    return;
+  }
+  if (UI.screen === 'decks') {
+    root.appendChild(renderDeckSelect());
+    if (UI.importing) root.appendChild(renderImport());
+    return;
+  }
   if (!UI.E) { root.appendChild(el('div', 'empty', 'No game loaded.')); return; }
   settleResult();      // pays out a finished game exactly once
 
@@ -1537,6 +1550,10 @@ function sigilCard(card, flags) {
   const d = fullCard(card, { noFace: true });
   d.classList.add('sigilcard', 'sm-' + UI.shadowMode);
   if (flags.indexOf('sh') >= 0) d.classList.add('is-sh');
+  // Misprint expresses itself as a TYPESETTING failure here, where the scan
+  // gets an image defect. One class per flavour; they are mutually exclusive
+  // by family, so at most one ever applies.
+  ['mp1', 'mp2', 'mp3'].forEach(m => { if (flags.indexOf(m) >= 0) d.classList.add('is-' + m); });
   if (flags.indexOf('sl') >= 0) {
     d.classList.add('is-sl');
     // The game's own name across the art window, set the way the title screen
@@ -1746,6 +1763,189 @@ function renderPullDetail() {
   return ov;
 }
 
+// ---------------------------------------------------- the collection ------
+// Two views over the same save. CARDS is every printing, which is what packs
+// fill and what the deck builder will shop from. DEX is one entry per species,
+// which is the thing the game says you are here to complete — and they are very
+// different numbers: Base Set is 102 cards but only 69 species.
+const COLL_FILTERS = [['all', 'ALL'], ['owned', 'OWNED'], ['missing', 'MISSING']];
+
+// A dot per variant family on a tile, so a binder page shows at a glance where
+// the interesting copies are without opening anything.
+const VAR_DOT = { rh: '#A8D8F0', fe: '#D8C48A', sh: '#F0A8DC', sl: '#9FD3C4', mp: '#E88A7A' };
+
+function collFamilies(save, id) {
+  const fams = {};
+  pilesOf(save, id).forEach(p => vflags(p.key).forEach(f => { fams[VARIANT_BY_KEY[f].family] = 1; }));
+  return Object.keys(fams);
+}
+
+// `label` is what an empty slot shows. It differs by view and the difference
+// matters: in the dex an empty slot is a SPECIES you have never seen, so
+// showing its card number there reads as the wrong number entirely.
+function collTile(id, count, best, label) {
+  const card = CARD_DB[id];
+  const t = el('div', 'colltile');
+  if (count > 0) {
+    t.appendChild(pullFace(card, vflags(best)));
+    const q = el('div', 'collqty' + (count >= 40 ? ' hoard' : ''), '×' + count);
+    t.appendChild(q);
+    const fams = collFamilies(UI.save, id);
+    if (fams.length) {
+      const dots = el('div', 'collvars');
+      fams.forEach(f => { const d = el('i', 'collvdot'); d.style.background = VAR_DOT[f]; dots.appendChild(d); });
+      t.appendChild(dots);
+    }
+    t.onclick = () => { UI.detail = { id, flags: vflags(best) }; render(); };
+  } else {
+    t.appendChild(el('div', 'collmiss', label || card.num));
+    // A card you do not own still opens — you can read what you are chasing.
+    t.onclick = () => { UI.detail = { id, flags: [] }; render(); };
+  }
+  return t;
+}
+
+function renderCollection() {
+  const save = UI.save;
+  const st = collectionStats(save, CARD_DB);
+  const ov = el('div', 'collscreen');
+  const box = el('div', 'collbox');
+
+  const head = el('div', 'collhead');
+  head.appendChild(el('h2', null, UI.collView === 'dex' ? 'Dex' : 'Collection'));
+  const counts = el('div', 'collbar');
+  counts.appendChild(el('span', null, UI.collView === 'dex'
+    ? `${st.species.owned} of ${st.species.total} species`
+    : `${st.cards.owned} of ${st.cards.total} cards`));
+  head.appendChild(counts);
+  box.appendChild(head);
+
+  const bar = el('div', 'collbar');
+  const chip = (label, on, fn) => {
+    const c = el('div', 'collchip' + (on ? ' on' : ''), label);
+    c.onclick = fn;
+    bar.appendChild(c);
+  };
+  chip('CARDS', UI.collView !== 'dex', () => { UI.collView = 'cards'; render(); });
+  chip('DEX', UI.collView === 'dex', () => { UI.collView = 'dex'; render(); });
+  bar.appendChild(el('span', null, ' '));
+  COLL_FILTERS.forEach(([k, label]) => chip(label, UI.collFilter === k, () => { UI.collFilter = k; render(); }));
+  box.appendChild(bar);
+
+  const grid = el('div', 'collgrid');
+  const show = have => UI.collFilter === 'all' || (UI.collFilter === 'owned') === have;
+
+  if (UI.collView === 'dex') {
+    // One row per species, represented by the best card of it that you own —
+    // or the lowest-numbered printing as a placeholder if you own none.
+    const species = {};
+    Object.keys(CARD_DB).forEach(id => {
+      const c = CARD_DB[id];
+      if (!c.dex) return;
+      const s = species[c.dex] || (species[c.dex] = { dex: c.dex, name: c.name, ids: [] });
+      s.ids.push(id);
+    });
+    Object.keys(species).map(Number).sort((a, b) => a - b).forEach(n => {
+      const s = species[n];
+      const ownedIds = s.ids.filter(id => isOwned(save, id));
+      if (!show(ownedIds.length > 0)) return;
+      const pick = ownedIds[0] || s.ids[0];
+      const count = ownedIds.reduce((a, id) => a + ownedTotal(save, id), 0);
+      grid.appendChild(collTile(pick, count, count ? bestVariant(save, pick) : '', '#' + s.dex));
+    });
+  } else {
+    Object.keys(CARD_DB).forEach(id => {
+      const n = ownedTotal(save, id);
+      if (!show(n > 0)) return;
+      grid.appendChild(collTile(id, n, bestVariant(save, id), CARD_DB[id].num));
+    });
+  }
+  box.appendChild(grid);
+
+  const foot = el('div', 'collfoot');
+  const left = el('div', null,
+    `${save.stats.packsOpened} packs opened · ${save.stats.cardsPulled} cards pulled · ${save.stats.wins}W-${save.stats.losses}L`);
+  foot.appendChild(left);
+  const acts = el('div', 'collbar');
+  const exp = el('button', 'btn tiny', 'Export save');
+  exp.onclick = () => downloadSave();
+  acts.appendChild(exp);
+  const imp = el('button', 'btn tiny', 'Import');
+  imp.onclick = () => { UI.importText = ''; UI.importErr = ''; UI.importing = true; render(); };
+  acts.appendChild(imp);
+  const back = el('button', 'btn', 'Back');
+  back.onclick = () => { UI.screen = 'decks'; render(); };
+  acts.appendChild(back);
+  foot.appendChild(acts);
+  box.appendChild(foot);
+
+  ov.appendChild(box);
+  return ov;
+}
+
+// ---------------------------------------------------- export / import -----
+// There is no server. A cleared browser profile is the only thing standing
+// between the player and the entire collection, so this is a real feature
+// rather than a convenience.
+//
+// The DOM plumbing is deliberately thin and guarded, because none of Blob,
+// URL.createObjectURL or <a>.click() exists in the smoke stub. The part worth
+// testing — validate, migrate, adopt — is applyImportedSave(), which is pure.
+function downloadSave() {
+  const text = exportSave(UI.save);
+  try {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'shadowless-collection.json';
+    if (typeof a.click === 'function') a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  } catch (e) {
+    // No Blob support, or a browser that refuses the download: fall back to
+    // showing the text so it can still be copied out by hand. Losing the
+    // ability to back up is not an acceptable failure here.
+    UI.importText = text; UI.importErr = 'Copy this out and keep it somewhere safe.';
+    UI.importing = true; render();
+  }
+}
+
+// Returns an error string, or '' on success. Never throws at the caller.
+function applyImportedSave(text) {
+  let s;
+  try { s = importSave(text); } catch (e) { return String(e && e.message || e); }
+  UI.save = s;
+  persist();
+  afterLoad();
+  UI.pack = null; UI.detail = null; UI.importing = false;
+  return '';
+}
+
+function renderImport() {
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet collsheet');
+  box.appendChild(el('h2', null, 'Import a save'));
+  box.appendChild(el('p', 'dimtxt',
+    'Paste an exported collection. This REPLACES what you have now, so export the current one first if you want to keep it.'));
+  const ta = el('textarea');
+  ta.value = UI.importText || '';
+  ta.oninput = () => { UI.importText = ta.value; };
+  box.appendChild(ta);
+  if (UI.importErr) box.appendChild(el('p', 'verr', UI.importErr));
+  const bar = el('div', 'actionbar');
+  const go = el('button', 'btn end', 'Replace my collection');
+  go.onclick = () => {
+    const err = applyImportedSave(ta.value);
+    if (err) { UI.importErr = err; UI.importText = ta.value; }
+    render();
+  };
+  const cancel = el('button', 'btn ghost', 'Cancel');
+  cancel.onclick = () => { UI.importing = false; UI.importErr = ''; render(); };
+  bar.appendChild(go); bar.appendChild(cancel);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
+}
+
 function renderDeckSelect() {
   const ov = el('div', 'deckscreen');
   const box = el('div', 'deckbox');
@@ -1774,6 +1974,9 @@ function renderDeckSelect() {
     stat(`${st.species.owned}/${st.species.total}`, 'SPECIES');
     stat(UI.save.stats.wins, 'WINS');
     stat(UI.save.stats.packsOpened, 'PACKS OPENED');
+    const browse = el('button', 'btn', 'Collection');
+    browse.onclick = () => { UI.screen = 'collection'; render(); };
+    strip.appendChild(browse);
     const held = packsHeld(UI.save, HOME_SET);
     if (held > 0) {
       const go = el('button', 'btn end', `Open ${held} pack${held === 1 ? '' : 's'}`);

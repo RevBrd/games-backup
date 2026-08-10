@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY};')
+  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -945,6 +945,63 @@ T('an unreadable save is reported rather than silently replaced', () => {
   store[SAVE_KEY] = good;
   bootSave();
   return ok && UI.screen === 'decks';
+});
+
+// ---- Job 5d: the collection browser -------------------------------------
+console.log('\n--- collection browser ---');
+
+T('the collection screen renders in every view and filter', () => {
+  UI.screen = 'collection'; UI.detail = null;
+  for (const v of ['cards', 'dex']) {
+    for (const f of ['all', 'owned', 'missing']) {
+      UI.collView = v; UI.collFilter = f; render();
+    }
+  }
+  UI.collView = 'cards'; UI.collFilter = 'all';
+  return created > 0;
+});
+T('CARDS and DEX count different things', () => {
+  const st = collectionStats(UI.save, CARD_DB);
+  // 102 printings, 69 species. A dex that reported 102 would be lying.
+  return st.cards.total === 102 && st.species.total === 69;
+});
+T('an unowned card still opens, so you can read what you are chasing', () => {
+  const missing = Object.keys(CARD_DB).find(id => ownedTotal(UI.save, id) === 0);
+  if (!missing) return true;                 // collection is complete; nothing to test
+  UI.detail = { id: missing, flags: [] };
+  render();
+  UI.detail = null;
+  return true;
+});
+T('export round-trips through import', () => {
+  const before = collectionStats(UI.save, CARD_DB).cards.owned;
+  const text = ctx.exportSave(UI.save);
+  UI.save = ctx.newSave({ now: 1 });         // wipe, then restore
+  const err = ctx.applyImportedSave(text);
+  return err === '' && collectionStats(UI.save, CARD_DB).cards.owned === before;
+});
+T('a bad import is refused and reported, and changes nothing', () => {
+  const before = collectionStats(UI.save, CARD_DB).cards.owned;
+  const err = ctx.applyImportedSave('{"v":1,"owned":"nope","decks":[]}');
+  return err !== '' && collectionStats(UI.save, CARD_DB).cards.owned === before;
+});
+T('importing repoints the selected deck at one you actually have', () => {
+  // A save whose decks differ from the current selection must not leave the
+  // deck screen pointing at a deck that no longer exists.
+  UI.myDeck = 'Zap';
+  const fresh = ctx.newSave({ starter: 'Blackout', now: 1 });
+  ctx.grantDeck(fresh, DECKS.Blackout);
+  fresh.decks.push({ name: 'Blackout', list: DECKS.Blackout.list.map(e => [e[0], e[1]]) });
+  ctx.applyImportedSave(ctx.exportSave(fresh));
+  return UI.myDeck === 'Blackout' && UI.screen === 'decks';
+});
+T('the import overlay renders over both screens it can be opened from', () => {
+  UI.importing = true; UI.importErr = 'test error'; UI.importText = '{}';
+  UI.screen = 'decks'; render();
+  UI.screen = 'collection'; render();
+  UI.importing = false; UI.importErr = ''; UI.importText = '';
+  UI.screen = 'decks'; render();
+  return created > 0;
 });
 
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);

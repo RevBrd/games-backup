@@ -46,9 +46,9 @@ the AI are the finished part**; everything a *collection* game needs is not buil
 | Opponent AI | Four tiers, expected-value based. Beats its own baselines |
 | Base Set cards | **All 102 implemented.** Base Set is done |
 | Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen. In play, cards keep a rendered face and a deterministic sigil |
-| Collection / packs / dex | **Playable loop.** Pick a starter deck, win, get 2 packs, open them. Ownership, variants, pack odds and the reveal screen are built. The dex browser is 5d and does not exist |
+| Collection / packs / dex | **Done (5a–5d).** Starter pick, win 2 packs, open them, browse what you own. Collection browser has CARDS and DEX views, owned/missing filters, per-card counts, variant dots, and export/import |
 | Deck building | Not started (5e). Your starter is a real editable deck in the save; Sandbox still ignores ownership on purpose |
-| Persistence | **Live.** `src/collection.js` — versioned save, migration, validation, export/import. The game boots off it. Export/import have no UI yet (5d) |
+| Persistence | **Live.** `src/collection.js` — versioned save, migration, validation. Export downloads a JSON file (with a copy-it-out fallback); import is a paste box on the collection screen |
 | Progression / named opponents | Not started (Job 7) |
 | Sets beyond Base | Not started, but **no longer data-blocked** — all 14 sets generate cleanly |
 | Audio | None |
@@ -109,7 +109,7 @@ node tools/fetch_art.js base1            # real card faces -> assets/ (--hires f
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/powertest.js                  # 77 tests for Powers and the other bespoke cards
-node tools/smoke.js shadowless.html      # 68 integration tests against the built file
+node tools/smoke.js shadowless.html      # 75 integration tests against the built file
 node tools/collectiontest.js             # 84 tests for the save file and variant keys
 node tools/packtest.js                   # 44 tests, 200k packs against the PACKS.md odds
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
