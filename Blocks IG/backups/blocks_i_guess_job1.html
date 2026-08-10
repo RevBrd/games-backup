@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>blocks, i guess</title>
+</head>
+<body>
+
+<div id="scrMenu">
+  <h1>blocks, i guess</h1>
+  <p>a game</p>
+  <p><a href="#" id="navPlay">play</a></p>
+  <p><a href="#" id="navOptions">options</a></p>
+  <p><a href="#" id="navLb">leaderboard</a></p>
+  <p><a href="#" id="navCredits">credits</a></p>
+  <p><small>version: probably</small></p>
+</div>
+
+<div id="scrOptions" style="display:none">
+  <h2>options</h2>
+  <p><label><input type="checkbox"> music (there is no music)</label></p>
+  <p>difficulty: <select><option>normal</option></select></p>
+  <p>colors: yes</p>
+  <p><a href="#" class="navBack">back</a></p>
+</div>
+
+<div id="scrLb" style="display:none">
+  <h2>leaderboard (real)</h2>
+  <table border="1" cellpadding="4">
+    <tbody id="lbBody"></tbody>
+  </table>
+  <p><a href="#" class="navBack">back</a></p>
+</div>
+
+<div id="scrCredits" style="display:none">
+  <h2>credits</h2>
+  <p>made by: someone</p>
+  <p>engine: html</p>
+  <p>special thanks: no</p>
+  <p><a href="#" class="navBack">back</a></p>
+</div>
+
+<div id="scrGame" style="display:none">
+  <p>score: yeah &nbsp;&nbsp; next: yes</p>
+  <canvas id="cv" width="360" height="560" style="border:1px solid black"></canvas>
+  <p id="inputMsg">&nbsp;</p>
+</div>
+
+<div id="scrDone" style="display:none">
+  <h2>oh hey, you did it.</h2>
+  <p>good job or whatever</p>
+  <p id="scoreLine">score:</p>
+  <p>initials: <input id="initials" maxlength="3" size="4" value="aaa"> <button id="btnOk">ok</button></p>
+</div>
+
+<script>
+"use strict";
+
+// ---------------------------------------------------------------
+// CONFIG — all tunables live here
+// ---------------------------------------------------------------
+var CONFIG = {
+  W: 360, H: 560,
+  SQ: 11,              // half-extent of one block square (square = 22px)
+  GRAV: 1100,          // px/s^2
+  SPAWN_GAP_MIN: 0.06, // shortest gap between dump events (s)
+  SPAWN_GAP_MAX: 0.55, // longest normal gap (s)
+  SPAWN_GAP_POW: 2.2,  // >1 biases gaps toward the short end
+  LULL_CHANCE: 0.10,   // chance a gap is instead a longer "shaking the bag" lull
+  LULL_MIN: 0.6, LULL_MAX: 1.1,
+  BURST_2: 0.50,       // roll above this -> 2 pieces at once
+  BURST_3: 0.85,       // roll above this -> 3 pieces at once
+  OPENING_DUMP: 5,     // pieces poured in immediately at game start
+  FLING_VY_MIN: 80,    // dumped pieces arrive with downward speed
+  FLING_VY_MAX: 260,
+  SPAWN_VX: 55,        // random horizontal drift on spawn
+  SPAWN_SPIN: 3.5,     // random angular velocity on spawn
+  MAX_PIECES: 110,     // hard safety cap -> forces game end
+  END_Y: 70,           // pile reaching above this line ends the game
+  SUBSTEPS: 2,
+  ITER: 8,             // solver iterations per substep
+  SLOP: 0.5,           // allowed penetration
+  BETA: 0.18,          // positional bias factor
+  FRICTION: 0.45,
+  RESTITUTION: 0.0,
+  LIN_DAMP: 0.999,
+  ANG_DAMP: 0.995,
+  SLEEP_LIN: 10,       // linear speed below which a body counts as still
+  SLEEP_ANG: 0.3,
+  SLEEP_T: 0.55,       // seconds of stillness before sleeping
+  WAKE_PEN: 3.0,       // penetration that wakes a sleeping body
+  WAKE_SPD: 60,        // ...if the intruder is moving at least this fast
+  SETTLED_T: 0.25,     // stillness needed for a body to count toward "pile height"
+  END_PAUSE: 1.0,      // beat between topping out and the card
+  NICE_INTERVAL: 0.5,  // seconds between accidental-line checks
+  NICE_FRAC: 0.93      // row coverage needed to earn a "nice"
+};
+
+var SHAPES = {
+  I: [[-1.5,0],[-0.5,0],[0.5,0],[1.5,0]],
+  O: [[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],
+  T: [[-1,0],[0,0],[1,0],[0,-1]],
+  S: [[-1,0],[0,0],[0,-1],[1,-1]],
+  Z: [[-1,-1],[0,-1],[0,0],[1,0]],
+  J: [[-1,-1],[-1,0],[0,0],[1,0]],
+  L: [[1,-1],[-1,0],[0,0],[1,0]]
+};
+var TYPES = Object.keys(SHAPES);
+var COLORS = { I:'#00bcd4', O:'#fdd835', T:'#9c27b0', S:'#4caf50', Z:'#f44336', J:'#3f51b5', L:'#ff9800' };
+
+var LB_SEED = [
+  { n:'sam', s:412 },
+  { n:'aaa', s:999 },
+  { n:'idk', s:305 },
+  { n:'bob', s:8   },
+  { n:'---', s:640 }
+];
+
+// ---------------------------------------------------------------
+// State
+// ---------------------------------------------------------------
+var S = {
+  screen: 'menu',
+  bodies: [],
+  spawnTimer: 0,
+  over: false,        // pile topped out; spawning stopped
+  endTimer: 0,        // counts up after topping out
+  doneShown: false,
+  score: 0,
+  niceTimer: 0,
+  nicedRows: {},
+  niceShow: 0,        // seconds remaining to display "nice"
+  msgTimer: 0,
+  lb: LB_SEED.map(function(e){ return { n:e.n, s:e.s, you:false }; })
+};
+
+// ---------------------------------------------------------------
+// Physics
+// ---------------------------------------------------------------
+function makePiece(type, x, y) {
+  var cells = SHAPES[type];
+  var cx = 0, cy = 0, i;
+  for (i = 0; i < 4; i++) { cx += cells[i][0]; cy += cells[i][1]; }
+  cx /= 4; cy /= 4;
+  var s = CONFIG.SQ * 2;
+  var offs = [];
+  var rad = 0;
+  for (i = 0; i < 4; i++) {
+    var ox = (cells[i][0] - cx) * s;
+    var oy = (cells[i][1] - cy) * s;
+    offs.push([ox, oy]);
+    var r = Math.sqrt(ox*ox + oy*oy);
+    if (r > rad) rad = r;
+  }
+  rad += CONFIG.SQ * 1.5;
+  var mass = 4;
+  var inertia = 0;
+  for (i = 0; i < 4; i++) {
+    var o = offs[i];
+    inertia += ((s*s + s*s) / 12) + o[0]*o[0] + o[1]*o[1]; // unit mass per square
+  }
+  return {
+    type: type,
+    x: x, y: y,
+    a: Math.random() * Math.PI * 2,
+    vx: (Math.random() - 0.5) * 2 * CONFIG.SPAWN_VX,
+    vy: 0,
+    w: (Math.random() - 0.5) * 2 * CONFIG.SPAWN_SPIN,
+    invM: 1 / mass,
+    invI: 1 / inertia,
+    offs: offs,
+    rad: rad,
+    asleep: false,
+    still: 0
+  };
+}
+
+function spawnPiece(x, y) {
+  var type = TYPES[Math.floor(Math.random() * TYPES.length)];
+  var p = makePiece(type, x, y);
+  p.vy = CONFIG.FLING_VY_MIN + Math.random() * (CONFIG.FLING_VY_MAX - CONFIG.FLING_VY_MIN);
+  S.bodies.push(p);
+}
+
+// dump 1-3 pieces at once, spread across the width, staggered in height
+function spawnBurst() {
+  var roll = Math.random();
+  var count = 1;
+  if (roll > CONFIG.BURST_2) count = 2;
+  if (roll > CONFIG.BURST_3) count = 3;
+  var margin = 45;
+  var usable = CONFIG.W - margin * 2;
+  var base = Math.random();
+  for (var i = 0; i < count; i++) {
+    var frac = (base + i / count + (Math.random() - 0.5) * 0.2) % 1;
+    if (frac < 0) frac += 1;
+    var x = margin + frac * usable;
+    var y = -50 - i * 65 - Math.random() * 40;
+    spawnPiece(x, y);
+  }
+}
+
+function nextGap() {
+  if (Math.random() < CONFIG.LULL_CHANCE) {
+    return CONFIG.LULL_MIN + Math.random() * (CONFIG.LULL_MAX - CONFIG.LULL_MIN);
+  }
+  var r = Math.pow(Math.random(), CONFIG.SPAWN_GAP_POW);
+  return CONFIG.SPAWN_GAP_MIN + r * (CONFIG.SPAWN_GAP_MAX - CONFIG.SPAWN_GAP_MIN);
+}
+
+// world position of square center j of body b
+function sqCenter(b, j) {
+  var c = Math.cos(b.a), s = Math.sin(b.a);
+  var o = b.offs[j];
+  return [ b.x + o[0]*c - o[1]*s, b.y + o[0]*s + o[1]*c ];
+}
+
+// corners of square j of body b, in world space
+function sqCorners(b, j) {
+  var c = Math.cos(b.a), s = Math.sin(b.a);
+  var o = b.offs[j], h = CONFIG.SQ;
+  var out = [];
+  var signs = [[-1,-1],[1,-1],[1,1],[-1,1]];
+  for (var k = 0; k < 4; k++) {
+    var lx = o[0] + signs[k][0]*h, ly = o[1] + signs[k][1]*h;
+    out.push([ b.x + lx*c - ly*s, b.y + lx*s + ly*c ]);
+  }
+  return out;
+}
+
+// Test world point p against square j of body B.
+// Returns {nx, ny, pen} with normal in WORLD space pointing out of B's face
+// (i.e., the direction to push the point's owner), or null.
+function pointVsSquare(px, py, B, j) {
+  var c = Math.cos(B.a), s = Math.sin(B.a);
+  var dx = px - B.x, dy = py - B.y;
+  // rotate into B's frame
+  var lx =  dx*c + dy*s;
+  var ly = -dx*s + dy*c;
+  var o = B.offs[j], h = CONFIG.SQ;
+  var rx = lx - o[0], ry = ly - o[1];
+  if (Math.abs(rx) >= h || Math.abs(ry) >= h) return null;
+  var penX = h - Math.abs(rx);
+  var penY = h - Math.abs(ry);
+  var nlx, nly, pen;
+  if (penX < penY) { nlx = rx >= 0 ? 1 : -1; nly = 0; pen = penX; }
+  else             { nlx = 0; nly = ry >= 0 ? 1 : -1; pen = penY; }
+  return { nx: nlx*c - nly*s, ny: nlx*s + nly*c, pen: pen };
+}
+
+// contact: push body a along +n, push body b along -n. b === null means static world.
+function collectContacts() {
+  var contacts = [];
+  var bs = S.bodies;
+  var n = bs.length;
+  var i, j, k, m;
+  var reach = CONFIG.SQ * 3;
+
+  for (i = 0; i < n; i++) {
+    for (j = i + 1; j < n; j++) {
+      var A = bs[i], B = bs[j];
+      if (A.asleep && B.asleep) continue;
+      var ddx = A.x - B.x, ddy = A.y - B.y;
+      var rr = A.rad + B.rad;
+      if (ddx*ddx + ddy*ddy > rr*rr) continue;
+      // per-square pairs
+      for (k = 0; k < 4; k++) {
+        var ca = sqCenter(A, k);
+        for (m = 0; m < 4; m++) {
+          var cb = sqCenter(B, m);
+          var sx = ca[0]-cb[0], sy = ca[1]-cb[1];
+          if (sx*sx + sy*sy > reach*reach) continue;
+          // corners of A's square k inside B's square m
+          var corA = sqCorners(A, k);
+          var q, hit;
+          for (q = 0; q < 4; q++) {
+            hit = pointVsSquare(corA[q][0], corA[q][1], B, m);
+            if (hit) contacts.push({ a:A, b:B, px:corA[q][0], py:corA[q][1], nx:hit.nx, ny:hit.ny, pen:hit.pen, jn:0, jt:0 });
+          }
+          // corners of B's square m inside A's square k
+          var corB = sqCorners(B, m);
+          for (q = 0; q < 4; q++) {
+            hit = pointVsSquare(corB[q][0], corB[q][1], A, k);
+            if (hit) contacts.push({ a:B, b:A, px:corB[q][0], py:corB[q][1], nx:hit.nx, ny:hit.ny, pen:hit.pen, jn:0, jt:0 });
+          }
+        }
+      }
+    }
+  }
+
+  // boundaries: floor + walls
+  for (i = 0; i < n; i++) {
+    var b = bs[i];
+    if (b.asleep) continue;
+    for (k = 0; k < 4; k++) {
+      var cor = sqCorners(b, k);
+      for (var q2 = 0; q2 < 4; q2++) {
+        var px = cor[q2][0], py = cor[q2][1];
+        if (py > CONFIG.H) contacts.push({ a:b, b:null, px:px, py:CONFIG.H, nx:0, ny:-1, pen:py-CONFIG.H, jn:0, jt:0 });
+        if (px < 0)        contacts.push({ a:b, b:null, px:0,  py:py, nx:1,  ny:0, pen:-px,           jn:0, jt:0 });
+        if (px > CONFIG.W) contacts.push({ a:b, b:null, px:CONFIG.W, py:py, nx:-1, ny:0, pen:px-CONFIG.W, jn:0, jt:0 });
+      }
+    }
+  }
+
+  // wake sleeping bodies hit hard by something fast
+  for (i = 0; i < contacts.length; i++) {
+    var ct = contacts[i];
+    if (!ct.b) continue;
+    if (ct.pen < CONFIG.WAKE_PEN) continue;
+    var awake = null, asleep = null;
+    if (ct.a.asleep && !ct.b.asleep) { asleep = ct.a; awake = ct.b; }
+    else if (ct.b.asleep && !ct.a.asleep) { asleep = ct.b; awake = ct.a; }
+    if (asleep && awake) {
+      var spd = Math.sqrt(awake.vx*awake.vx + awake.vy*awake.vy);
+      if (spd > CONFIG.WAKE_SPD) { asleep.asleep = false; asleep.still = 0; }
+    }
+  }
+
+  return contacts;
+}
+
+function solveContacts(contacts, dt) {
+  var it, i;
+  for (it = 0; it < CONFIG.ITER; it++) {
+    for (i = 0; i < contacts.length; i++) {
+      var c = contacts[i];
+      var a = c.a, b = c.b;
+      var aM = a.asleep ? 0 : a.invM;
+      var aI = a.asleep ? 0 : a.invI;
+      var bM = (b && !b.asleep) ? b.invM : 0;
+      var bI = (b && !b.asleep) ? b.invI : 0;
+      if (aM === 0 && bM === 0) continue;
+
+      var rax = c.px - a.x, ray = c.py - a.y;
+      var rbx = b ? c.px - b.x : 0, rby = b ? c.py - b.y : 0;
+
+      // --- normal impulse ---
+      var vax = a.vx - a.w * ray, vay = a.vy + a.w * rax;
+      var vbx = b ? b.vx - b.w * rby : 0, vby = b ? b.vy + b.w * rbx : 0;
+      var rvx = vax - vbx, rvy = vay - vby;
+      var vn = rvx * c.nx + rvy * c.ny;
+
+      var bias = (CONFIG.BETA / dt) * Math.max(c.pen - CONFIG.SLOP, 0);
+      var raXn = rax * c.ny - ray * c.nx;
+      var rbXn = b ? (rbx * c.ny - rby * c.nx) : 0;
+      var em = aM + bM + raXn*raXn*aI + rbXn*rbXn*bI;
+      if (em <= 0) continue;
+
+      var jN = (-(1 + CONFIG.RESTITUTION) * vn + bias) / em;
+      var acc = Math.max(c.jn + jN, 0);
+      jN = acc - c.jn;
+      c.jn = acc;
+
+      a.vx += jN * c.nx * aM;  a.vy += jN * c.ny * aM;  a.w += raXn * jN * aI;
+      if (b) { b.vx -= jN * c.nx * bM; b.vy -= jN * c.ny * bM; b.w -= rbXn * jN * bI; }
+
+      // --- friction impulse ---
+      var tx = -c.ny, ty = c.nx;
+      vax = a.vx - a.w * ray; vay = a.vy + a.w * rax;
+      vbx = b ? b.vx - b.w * rby : 0; vby = b ? b.vy + b.w * rbx : 0;
+      rvx = vax - vbx; rvy = vay - vby;
+      var vt = rvx * tx + rvy * ty;
+
+      var raXt = rax * ty - ray * tx;
+      var rbXt = b ? (rbx * ty - rby * tx) : 0;
+      var emT = aM + bM + raXt*raXt*aI + rbXt*rbXt*bI;
+      if (emT <= 0) continue;
+
+      var jT = -vt / emT;
+      var maxF = CONFIG.FRICTION * c.jn;
+      var accT = Math.min(Math.max(c.jt + jT, -maxF), maxF);
+      jT = accT - c.jt;
+      c.jt = accT;
+
+      a.vx += jT * tx * aM;  a.vy += jT * ty * aM;  a.w += raXt * jT * aI;
+      if (b) { b.vx -= jT * tx * bM; b.vy -= jT * ty * bM; b.w -= rbXt * jT * bI; }
+    }
+  }
+}
+
+function physicsStep(dt) {
+  var i, b;
+  for (i = 0; i < S.bodies.length; i++) {
+    b = S.bodies[i];
+    if (!b.asleep) b.vy += CONFIG.GRAV * dt;
+  }
+  var contacts = collectContacts();
+  solveContacts(contacts, dt);
+  for (i = 0; i < S.bodies.length; i++) {
+    b = S.bodies[i];
+    if (b.asleep) continue;
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.a += b.w * dt;
+    b.vx *= CONFIG.LIN_DAMP;
+    b.vy *= CONFIG.LIN_DAMP;
+    b.w  *= CONFIG.ANG_DAMP;
+    var spd = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
+    if (spd < CONFIG.SLEEP_LIN && Math.abs(b.w) < CONFIG.SLEEP_ANG) {
+      b.still += dt;
+      if (b.still > CONFIG.SLEEP_T) { b.asleep = true; b.vx = 0; b.vy = 0; b.w = 0; }
+    } else {
+      b.still = 0;
+    }
+    // NaN guard: if physics ever explodes, quietly delete the evidence
+    if (!isFinite(b.x) || !isFinite(b.y) || !isFinite(b.a)) {
+      S.bodies.splice(i, 1); i--;
+    }
+  }
+}
+
+// ---------------------------------------------------------------
+// Game step
+// ---------------------------------------------------------------
+function bodyMinY(b) {
+  var min = Infinity;
+  for (var k = 0; k < 4; k++) {
+    var cor = sqCorners(b, k);
+    for (var q = 0; q < 4; q++) if (cor[q][1] < min) min = cor[q][1];
+  }
+  return min;
+}
+
+function pointInAnyBody(px, py) {
+  for (var i = 0; i < S.bodies.length; i++) {
+    var b = S.bodies[i];
+    var dx = px - b.x, dy = py - b.y;
+    if (dx*dx + dy*dy > b.rad*b.rad) continue;
+    for (var k = 0; k < 4; k++) {
+      if (pointVsSquare(px, py, b, k)) return true;
+    }
+  }
+  return false;
+}
+
+function checkNice() {
+  var size = CONFIG.SQ * 2;
+  var cols = Math.floor(CONFIG.W / size);
+  var need = Math.ceil(cols * CONFIG.NICE_FRAC);
+  for (var y = CONFIG.H - size/2; y > CONFIG.END_Y; y -= size) {
+    var row = Math.round(y);
+    if (S.nicedRows[row]) continue;
+    var count = 0;
+    for (var cI = 0; cI < cols; cI++) {
+      var px = cI * size + size/2;
+      if (pointInAnyBody(px, y)) count++;
+    }
+    if (count >= need) {
+      S.nicedRows[row] = true;
+      S.niceShow = 1.6;
+      return;
+    }
+  }
+}
+
+function checkTopOut() {
+  if (S.bodies.length >= CONFIG.MAX_PIECES) return true;
+  for (var i = 0; i < S.bodies.length; i++) {
+    var b = S.bodies[i];
+    if (b.asleep || b.still > CONFIG.SETTLED_T) {
+      if (bodyMinY(b) < CONFIG.END_Y) return true;
+    }
+  }
+  return false;
+}
+
+function stepSim(dt) {
+  if (dt > 0.05) dt = 0.05;
+
+  if (!S.over) {
+    S.spawnTimer -= dt;
+    if (S.spawnTimer <= 0) {
+      spawnBurst();
+      S.spawnTimer = nextGap();
+    }
+  }
+
+  var sub = dt / CONFIG.SUBSTEPS;
+  for (var s = 0; s < CONFIG.SUBSTEPS; s++) physicsStep(sub);
+
+  S.niceTimer -= dt;
+  if (S.niceTimer <= 0) { checkNice(); S.niceTimer = CONFIG.NICE_INTERVAL; }
+  if (S.niceShow > 0) S.niceShow -= dt;
+  if (S.msgTimer > 0) { S.msgTimer -= dt; if (S.msgTimer <= 0) setMsg('\u00a0'); }
+
+  if (!S.over && checkTopOut()) {
+    S.over = true;
+    S.endTimer = 0;
+  }
+  if (S.over && !S.doneShown) {
+    S.endTimer += dt;
+    if (S.endTimer >= CONFIG.END_PAUSE) {
+      S.doneShown = true;
+      showDone();
+    }
+  }
+}
+
+// ---------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------
+var cv = null, ctx = null;
+
+function render() {
+  if (!ctx) return;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+
+  for (var i = 0; i < S.bodies.length; i++) {
+    var b = S.bodies[i];
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(b.a);
+    ctx.fillStyle = COLORS[b.type];
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    var s = CONFIG.SQ * 2;
+    for (var k = 0; k < 4; k++) {
+      var o = b.offs[k];
+      ctx.fillRect(o[0] - CONFIG.SQ, o[1] - CONFIG.SQ, s, s);
+      ctx.strokeRect(o[0] - CONFIG.SQ + 0.5, o[1] - CONFIG.SQ + 0.5, s - 1, s - 1);
+    }
+    ctx.restore();
+  }
+
+  if (S.niceShow > 0) {
+    ctx.fillStyle = '#000000';
+    ctx.font = '16px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('nice', CONFIG.W / 2, 40);
+  }
+}
+
+// ---------------------------------------------------------------
+// Screens / DOM
+// ---------------------------------------------------------------
+var SCREENS = ['scrMenu', 'scrOptions', 'scrLb', 'scrCredits', 'scrGame', 'scrDone'];
+
+function el(id) { return document.getElementById(id); }
+
+function showScreen(id) {
+  for (var i = 0; i < SCREENS.length; i++) {
+    var e = el(SCREENS[i]);
+    if (e) e.style.display = (SCREENS[i] === id) ? '' : 'none';
+  }
+  S.screen = id;
+}
+
+function setMsg(t) {
+  var m = el('inputMsg');
+  if (m) m.textContent = t;
+}
+
+function startGame() {
+  S.bodies = [];
+  S.spawnTimer = 0.25 + Math.random() * 0.3;
+  S.over = false;
+  S.endTimer = 0;
+  S.doneShown = false;
+  S.nicedRows = {};
+  S.niceShow = 0;
+  S.niceTimer = CONFIG.NICE_INTERVAL;
+  // opening pour: a stream of pieces already falling when the screen appears
+  var margin = 45;
+  for (var i = 0; i < CONFIG.OPENING_DUMP; i++) {
+    var x = margin + Math.random() * (CONFIG.W - margin * 2);
+    var y = -40 - i * 85 - Math.random() * 50;
+    spawnPiece(x, y);
+  }
+  setMsg('\u00a0');
+  showScreen('scrGame');
+}
+
+function showDone() {
+  S.score = 100 + Math.floor(Math.random() * 900);
+  showScreen('scrDone');
+  var line = el('scoreLine');
+  if (line) {
+    line.textContent = 'score:';
+    setTimeout(function () {
+      if (S.screen === 'scrDone') line.textContent = 'score: ' + S.score;
+    }, 700);
+  }
+  var init = el('initials');
+  if (init) init.value = 'aaa';
+}
+
+function renderLb() {
+  var body = el('lbBody');
+  if (!body) return;
+  body.innerHTML = '';
+  for (var i = 0; i < S.lb.length; i++) {
+    var e = S.lb[i];
+    var tr = document.createElement('tr');
+    var td1 = document.createElement('td');
+    var td2 = document.createElement('td');
+    td1.textContent = e.n + (e.you ? ' (you)' : '');
+    td2.textContent = String(e.s);
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    body.appendChild(tr);
+  }
+}
+
+function submitScore() {
+  var init = el('initials');
+  var name = (init && init.value ? init.value : 'aaa').toLowerCase().slice(0, 3);
+  if (!name) name = 'aaa';
+  var idx = Math.floor(Math.random() * (S.lb.length + 1));
+  S.lb.splice(idx, 0, { n: name, s: S.score, you: true });
+  renderLb();
+  showScreen('scrLb');
+}
+
+function wireUp() {
+  cv = el('cv');
+  if (cv && cv.getContext) ctx = cv.getContext('2d');
+
+  function nav(id, target) {
+    var e = el(id);
+    if (e) e.addEventListener('click', function (ev) { ev.preventDefault(); target(); });
+  }
+  nav('navPlay', startGame);
+  nav('navOptions', function () { showScreen('scrOptions'); });
+  nav('navLb', function () { renderLb(); showScreen('scrLb'); });
+  nav('navCredits', function () { showScreen('scrCredits'); });
+
+  var backs = document.getElementsByClassName('navBack');
+  for (var i = 0; i < backs.length; i++) {
+    backs[i].addEventListener('click', function (ev) {
+      ev.preventDefault();
+      showScreen('scrMenu');
+    });
+  }
+
+  var ok = el('btnOk');
+  if (ok) ok.addEventListener('click', submitScore);
+
+  document.addEventListener('keydown', function (ev) {
+    if (S.screen !== 'scrGame') return;
+    if (ev.target && ev.target.tagName === 'INPUT') return;
+    setMsg('that doesn\u2019t do anything');
+    S.msgTimer = 1.5;
+  });
+
+  if (cv) cv.addEventListener('mousedown', function () {
+    if (S.screen !== 'scrGame') return;
+    setMsg('no');
+    S.msgTimer = 1.5;
+  });
+}
+
+// ---------------------------------------------------------------
+// Loop
+// ---------------------------------------------------------------
+var lastT = 0;
+function frame(t) {
+  var dt = (t - lastT) / 1000;
+  lastT = t;
+  if (dt > 0 && dt < 0.25 && (S.screen === 'scrGame' || (S.over && !S.doneShown))) {
+    stepSim(dt);
+  }
+  if (S.screen === 'scrGame') render();
+  requestAnimationFrame(frame);
+}
+
+if (typeof document !== 'undefined' && document.getElementById) {
+  try {
+    wireUp();
+    showScreen('scrMenu');
+    requestAnimationFrame(frame);
+  } catch (e) { /* headless */ }
+}
+
+// test hooks
+if (typeof window !== 'undefined') {
+  window.__blocksTest = {
+    S: S,
+    CONFIG: CONFIG,
+    stepSim: stepSim,
+    spawnPiece: spawnPiece,
+    spawnBurst: spawnBurst,
+    startGame: startGame,
+    checkTopOut: checkTopOut,
+    checkNice: checkNice,
+    makePiece: makePiece,
+    bodyMinY: bodyMinY
+  };
+}
+</script>
+</body>
+</html>
