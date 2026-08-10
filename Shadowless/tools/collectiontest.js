@@ -247,6 +247,14 @@ eq(imp.decks[0].name, 'Mine', 'and the decks');
 check(!!C.importSave(JSON.stringify(live)), 'a bare save imports too, not only a wrapped one');
 throws(() => C.importSave('nope'), 'garbage is refused');
 throws(() => C.importSave('{"save":{"v":1,"owned":{},"decks":"no"}}'), 'a structurally bad import is refused');
+
+// ensureShape() must fill an ABSENT field and refuse a wrong-typed one. Getting
+// this backwards means a corrupt save gets quietly "repaired" into an empty one
+// and validate() never sees it — which is exactly what happened first time.
+const sparse = C.importSave('{"v":1,"owned":{"base1-4":{"":1}},"decks":[]}');
+eq(typeof sparse.packs, 'object', 'a save predating `packs` gains it on load');
+eq(sparse.stats.wins, 0, 'and gains zeroed counters');
+throws(() => C.importSave('{"v":1,"owned":"nope","decks":[]}'), 'a wrong-typed owned map is still refused, not repaired');
 // An export taken before a format change must still restore afterwards.
 C.MIGRATIONS[0] = old => ({ v: 1, created: 0, owned: old.owned || {}, decks: [], starter: '', stats: {} });
 eq(C.importSave('{"v":0,"owned":{"base1-4":{"":2}}}').v, 1, 'an old export is migrated on import');

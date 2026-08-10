@@ -45,6 +45,16 @@ global.document = {
 };
 global.window = { addEventListener: (ev, fn) => { if (ev === 'DOMContentLoaded') domReady = fn; } };
 global.alert = () => {};
+// Job 5: the UI now boots off a save. Without a localStorage stub every run
+// would take the no-persistence path, which is the one branch we least need
+// covered — so the stub is here and the real boot flow gets tested.
+const store = {};
+global.localStorage = {
+  _map: store,
+  getItem: k => (k in store ? store[k] : null),
+  setItem: (k, v) => { store[k] = String(v); },
+  removeItem: k => { delete store[k]; },
+};
 // controllable fake clock: nothing fires until we drain it
 let timers = [], tid = 1;
 global.setTimeout = (fn, ms) => { const id = tid++; timers.push({ id, fn, ms }); return id; };
@@ -52,16 +62,45 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME};')
+  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
-const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME } = ctx;
+const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
+  bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace,
+  addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY } = ctx;
 
 console.log('\n=== BUILT ARTIFACT SMOKE ===');
 
-T('boots into the deck-select screen with no game running', () => {
+// Job 5: a browser with no save boots to the starter pick, not to deck select.
+T('a fresh profile boots into the starter-deck pick', () => {
   domReady();
-  return UI.screen === 'decks' && !UI.E;
+  return UI.screen === 'newsave' && !UI.save && !UI.E;
+});
+T('the starter pick renders all four theme decks without throwing', () => {
+  render();
+  return created > 0 && Object.keys(DECKS).length === 4;
+});
+T('picking a starter grants exactly that deck and lands on deck select', () => {
+  startNewSave('Brushfire');
+  let n = 0;
+  for (const id in UI.save.owned) n += ownedTotal(UI.save, id);
+  return UI.screen === 'decks' && n === 60 && UI.save.starter === 'Brushfire';
+});
+T('the starter is a real editable deck, not a special case', () => {
+  return UI.save.decks.length === 1 && UI.save.decks[0].name === 'Brushfire';
+});
+T('you may field only what you own; the opponent may field anything', () => {
+  const mine = myDeckNames();
+  return mine.length === 2 && mine.indexOf('Brushfire') >= 0 && mine.indexOf('Sandbox') >= 0
+    && mine.indexOf('Zap') < 0;
+});
+T('the save round-trips through storage on its own', () => {
+  const raw = JSON.parse(store[SAVE_KEY]);
+  return raw && raw.starter === 'Brushfire' && Object.keys(raw.owned).length > 0;
+});
+T('deck-select screen renders with the collection strip', () => {
+  render();
+  return created > 0;
 });
 T('deck-select screen renders every deck as a choice', () => {
   render();
@@ -804,6 +843,108 @@ T('every picker Trainer opens a picker rather than throwing', () => {
   }
   UI.flipDelay = 2000;
   return true;
+});
+
+// ---- Job 5: packs, rewards, and the variant renderers -------------------
+console.log('\n--- collection & packs ---');
+
+T('opening a pack you do not have is refused', () => {
+  UI.save.packs = {};
+  return openNextPack() === false && UI.screen !== 'packs';
+});
+T('a pack opens into the reveal screen face-down', () => {
+  addPacks(UI.save, 'base1', 3);
+  if (!openNextPack()) throw new Error('openNextPack refused a pack we hold');
+  return UI.screen === 'packs' && UI.pack.order.length === 11
+    && UI.pack.revealed.every(r => r === false);
+});
+T('the Rare is shown last, so the reveal has somewhere to go', () => {
+  return UI.pack.order[10].slot === 'rare'
+    && UI.pack.order.slice(0, 10).every(c => c.slot !== 'rare');
+});
+T('the cards are granted on open, not on flip', () => {
+  // Closing the tab mid-reveal must not cost you the pack.
+  return UI.pack.order.every(c => ownedTotal(UI.save, c.id) > 0);
+});
+T('opening a pack decrements what you hold and counts the stats', () => {
+  return packsHeld(UI.save, 'base1') === 2 && UI.save.stats.packsOpened === 1
+    && UI.save.stats.cardsPulled === 11;
+});
+T('the pack screen renders face-down, part-revealed and fully revealed', () => {
+  render();
+  UI.pack.revealed[0] = true; render();
+  UI.pack.revealed = UI.pack.revealed.map(() => true); render();
+  return created > 0;
+});
+T('a revealed card opens the detail overlay and closes again', () => {
+  UI.detail = { id: UI.pack.order[10].id, flags: [] };
+  render();
+  UI.detail = null; render();
+  return true;
+});
+T('every variant renders on both faces, in both shadow modes', () => {
+  // The two print-run treatments can only appear on the Sigil Card, so both
+  // renderers get every flag rather than only the ones they can draw.
+  const card = CARD_DB['base1-4'];
+  const combos = [[], ['sh'], ['rh'], ['mp1'], ['mp2'], ['mp3'], ['fe'], ['sl'], ['fe', 'sh'], ['sl', 'mp2', 'rh']];
+  for (const mode of ['shadow', 'inverted']) {
+    UI.shadowMode = mode;
+    for (const f of combos) { if (!pullFace(card, f) || !sigilCard(card, f)) return false; }
+  }
+  UI.shadowMode = 'shadow';
+  return true;
+});
+T('the Sigil Card carries a print run that the scan cannot', () => {
+  const withRun = sigilCard(CARD_DB['base1-4'], ['fe', 'sl']);
+  const host = withRun.classList.contains('sigilcard') ? withRun : withRun.children[0];
+  // The 1st Edition stamp belongs INSIDE the art window, where the real one
+  // sits — floated onto the card body it read as a stray badge.
+  const art = host.children.filter(c => (c.className || '').indexOf('sigil') === 0)[0];
+  return host.classList.contains('is-sl') && !!art
+    && art.children.some(c => c.className === 'festamp');
+});
+
+T('winning pays packs exactly once, however many times the board redraws', () => {
+  UI.pack = null; UI.detail = null; UI.screen = 'decks';
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Zap';
+  startMatch();
+  UI.E.setupAuto(0); UI.E.setupConfirm(0);
+  const before = packsHeld(UI.save, 'base1');
+  const wins = UI.save.stats.wins;
+  // Force a finished game rather than playing one out — this is a test about
+  // the payout, not about the rules.
+  UI.E.state.phase = 'over'; UI.E.state.winner = 0; UI.E.state.winReason = 'test';
+  render(); render(); render();
+  return packsHeld(UI.save, 'base1') === before + 2 && UI.save.stats.wins === wins + 1;
+});
+T('a loss pays nothing and is still recorded', () => {
+  newGame();
+  UI.E.setupAuto(0); UI.E.setupConfirm(0);
+  const before = packsHeld(UI.save, 'base1');
+  const losses = UI.save.stats.losses;
+  // winner can legitimately be 0, so this asserts against the real loss value.
+  UI.E.state.phase = 'over'; UI.E.state.winner = 1; UI.E.state.winReason = 'test';
+  render(); render();
+  return packsHeld(UI.save, 'base1') === before && UI.save.stats.losses === losses + 1;
+});
+T('a reload picks the collection back up where it was left', () => {
+  const cards = collectionStats(UI.save, CARD_DB).cards.owned;
+  const packs = packsHeld(UI.save, 'base1');
+  UI.save = null; UI.E = null;
+  bootSave();
+  return UI.screen === 'decks' && UI.saveStatus === 'ok'
+    && collectionStats(UI.save, CARD_DB).cards.owned === cards
+    && packsHeld(UI.save, 'base1') === packs;
+});
+T('an unreadable save is reported rather than silently replaced', () => {
+  const good = store[SAVE_KEY];
+  store[SAVE_KEY] = '{not json';
+  bootSave();
+  const ok = UI.screen === 'newsave' && UI.saveStatus === 'corrupt' && !!UI.saveNote
+    && store['shadowless.save.corrupt'] === '{not json';
+  store[SAVE_KEY] = good;
+  bootSave();
+  return ok && UI.screen === 'decks';
 });
 
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);

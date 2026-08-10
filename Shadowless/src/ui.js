@@ -53,20 +53,100 @@ const UI = {
   foeDeck: 'Overgrowth',
   cfgDraft: { prizeCount: 6, firstPlayerMayAttack: true, noEvolveFirstTurn: true },
   seedDraft: '',
-  screen: 'decks',      // 'decks' -> 'setup' -> board
+  screen: 'decks',      // 'newsave' -> 'decks' -> 'setup' -> board; 'packs' from either end
+
+  // --- Job 5 ---
+  save: null,
+  saveStatus: '',       // 'ok' | 'empty' | 'nostore' | 'corrupt' — see collection.js
+  saveNote: '',         // a one-line problem to show the player, or ''
+  pack: null,           // the pack being opened; see openNextPack()
+  detail: null,         // {card, flags} — the pull the detail overlay is showing
+  // The Shadowless A/B, switched from the DEV tab. 'shadow' draws the art
+  // window with a drop shadow and Shadowless removes it (correct real-world
+  // scarcity). 'inverted' makes Shadowless the base state, matching our
+  // 1st-Edition scans exactly, and the rare pull adds the shadow instead.
+  // Undecided on purpose — this exists so the two can be looked at rather than
+  // argued about. See PACKS.md.
+  shadowMode: 'shadow',
 };
+
+const PACKS_PER_WIN = 2;      // PACKS.md's yardstick, and now the real rule
+const HOME_SET = 'base1';     // the only set generated today; Job 6 widens this
 
 const SANDBOX = 'Sandbox';
 const DECK_NAMES = Object.keys(DECKS).concat([SANDBOX]);
 
 // The Sandbox deck is generated fresh each game from every implemented card,
 // so newly added cards are immediately playable without waiting for the
-// deckbuilder. Same generator the campaign will use for opponent decks.
+// deckbuilder. It deliberately IGNORES the collection — agreed with Trevor,
+// 9 Aug: it is the only way to test a newly implemented card without grinding
+// for it, so it is a dev affordance rather than a deck you own.
 function resolveDeck(name, seed) {
-  if (name !== SANDBOX) return DECKS[name];
-  const pool = Object.keys(CARD_DB);
-  const d = generateDeck(CARD_DB, pool, mulberry32(seed), { name: SANDBOX });
-  return d || DECKS[Object.keys(DECKS)[0]];
+  if (name === SANDBOX) {
+    const pool = Object.keys(CARD_DB);
+    const d = generateDeck(CARD_DB, pool, mulberry32(seed), { name: SANDBOX });
+    return d || DECKS[Object.keys(DECKS)[0]];
+  }
+  // A deck you built or were given comes from the save; the theme decks remain
+  // as definitions so the OPPONENT can still field any of them.
+  const mine = UI.save && UI.save.decks.find(d => d.name === name);
+  return mine || DECKS[name];
+}
+
+// Decks YOU may field: only what you own. The opponent may field anything —
+// their deck is the game's, not yours, so it has never been a collection
+// question. This is the first place ownership actually bites.
+const myDeckNames = () => (UI.save ? UI.save.decks.map(d => d.name) : []).concat([SANDBOX]);
+
+// ------------------------------------------------------------- the save ----
+function bootSave() {
+  const r = loadSave();
+  UI.saveStatus = r.status;
+  UI.saveNote = '';
+  if (r.status === 'ok') { UI.save = r.save; afterLoad(); return; }
+  if (r.status === 'corrupt') {
+    // Do not offer to start over by default. The old text is preserved under a
+    // backup key and a player who has been collecting for weeks should be told
+    // that, not handed a fresh save that quietly buries it.
+    UI.saveNote = 'A save was found but could not be read. The original is kept in your browser under '
+      + SAVE_BACKUP_KEY + ' — nothing has been overwritten. Import a backup, or start fresh below.';
+  } else if (r.status === 'nostore') {
+    UI.saveNote = 'This browser is not allowing local storage, so nothing will be remembered '
+      + 'after you close the tab. Everything still works — it just will not persist.';
+  }
+  UI.save = null;
+  UI.screen = 'newsave';
+}
+
+// Called after any load or import: keep the selected deck pointing at something
+// that exists, or the deck screen renders a selection you cannot play.
+function afterLoad() {
+  const names = myDeckNames();
+  if (names.indexOf(UI.myDeck) < 0) UI.myDeck = names[0];
+  UI.screen = 'decks';
+}
+
+// Every mutation goes through here, so there is exactly one place that can fail
+// and exactly one place that reports it. A write that silently does nothing is
+// the worst outcome available in a collection game.
+function persist() {
+  if (!UI.save || UI.saveStatus === 'nostore') return;
+  const r = writeSave(UI.save);
+  if (r.ok) { UI.saveStatus = 'ok'; UI.saveNote = ''; return; }
+  UI.saveStatus = 'nostore';
+  UI.saveNote = 'Could not write your save: ' + r.error + '. Progress this session is not being kept.';
+}
+
+function startNewSave(deckName) {
+  UI.save = newSave({ starter: deckName });
+  grantDeck(UI.save, DECKS[deckName]);
+  // The starter arrives as a real, editable deck rather than a special case, so
+  // the deck builder will have nothing to learn about it later.
+  UI.save.decks.push({ name: deckName, list: DECKS[deckName].list.map(e => [e[0], e[1]]) });
+  UI.myDeck = deckName;
+  persist();
+  UI.screen = 'decks';
+  render();
 }
 
 // -------------------------------------------------------------- bootstrap --
@@ -92,6 +172,7 @@ function newGame() {
   UI.E.newGame(resolveDeck(UI.myDeck, seed), resolveDeck(UI.foeDeck, seed ^ 0x5f5f), ['You', 'Opponent']);
   UI.E.setupAuto(1);                     // opponent sets itself up
   UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null;
+  UI.awarded = false;                    // this game has not paid out yet
   render();
 }
 
@@ -334,10 +415,15 @@ function cardFaceImage(card, host) {
 }
 
 // Full face: the preview panel.
-function fullCard(card) {
+//
+// `opts.noFace` renders the Sigil Card ALONE — our own drawing of the card,
+// with no scan above it. That is the only surface that can express a print run
+// (1st Edition, Shadowless), because every scan we have is permanently 1st
+// Edition Shadowless. See PACKS.md Part 1 and sigilCard() below.
+function fullCard(card, opts = {}) {
   const d = el('div', 'pcard full has-face k-' + card.kind);
   d.style.borderLeftColor = cardAccent(card);
-  const face = cardFaceImage(card, d);
+  const face = opts.noFace ? null : cardFaceImage(card, d);
   if (face) d.appendChild(face); else d.classList.remove('has-face');
   const eyebrow = el('div', 'pc-eyebrow');
   eyebrow.appendChild(el('span', null,
@@ -434,8 +520,15 @@ function peekOn(node, cardId) {
 function render() {
   const root = document.getElementById('app');
   root.innerHTML = '';
+  if (UI.screen === 'newsave') { root.appendChild(renderNewSave()); return; }
+  if (UI.screen === 'packs' && UI.pack) {
+    root.appendChild(renderPackScreen());
+    if (UI.detail) root.appendChild(renderPullDetail());
+    return;
+  }
   if (UI.screen === 'decks') { root.appendChild(renderDeckSelect()); return; }
   if (!UI.E) { root.appendChild(el('div', 'empty', 'No game loaded.')); return; }
+  settleResult();      // pays out a finished game exactly once
 
   UI.handEl = null; UI.handPanelEl = null; UI.vpDumpEl = null;
   const wrap = el('div', 'wrap');
@@ -1329,10 +1422,18 @@ function doAttack(i) {
 }
 
 // ------------------------------------------------------- deck select ------
+// A deck by name, wherever it lives: your save first, then the theme decks.
+// Both summary and hero go through this so a deck you BUILT renders on the
+// select screen exactly like a theme deck does.
+function deckByName(name) {
+  const mine = UI.save && UI.save.decks.find(d => d.name === name);
+  return mine || DECKS[name] || null;
+}
+
 function deckSummary(name) {
   const d = name === SANDBOX
     ? generateDeck(CARD_DB, Object.keys(CARD_DB), mulberry32(1), { name: SANDBOX })
-    : DECKS[name];
+    : deckByName(name);
   if (!d) return { k: { pokemon: 0, trainer: 0, energy: 0 }, types: {}, basics: 0, stage2: 0 };
   const k = { pokemon: 0, trainer: 0, energy: 0 };
   const types = {};
@@ -1354,7 +1455,7 @@ function deckSummary(name) {
 // printed cards sitting right there. Sandbox has no fixed list, so it gets a
 // card back instead, which is honest: you don't know what you're getting.
 function deckHero(name) {
-  const d = DECKS[name];
+  const d = deckByName(name);
   if (!d) return null;
   const rank = { 'Basic': 0, 'Stage 1': 1, 'Stage 2': 2 };
   let best = null, bestScore = -1;
@@ -1365,6 +1466,249 @@ function deckHero(name) {
     if (score > bestScore) { bestScore = score; best = id; }
   }
   return best;
+}
+
+// ======================================================================
+// JOB 5 — VARIANTS, PACKS, AND THE COLLECTION ON SCREEN
+// ======================================================================
+
+// Which treatments can be drawn ON TOP of a bitmap. The rest (1st Edition,
+// Shadowless) are a stamp already present and a shadow already absent in every
+// scan we own, so over a scan they are a ribbon and nothing more.
+const ADDITIVE_FX = { sh: 1, rh: 1, mp1: 1, mp2: 1, mp3: 1 };
+const additiveClasses = flags => flags.filter(f => ADDITIVE_FX[f]).map(f => 'v-' + f).join(' ');
+
+// The real printed card, with additive cosmetics laid over it.
+function pullFace(card, flags) {
+  const cls = additiveClasses(flags);
+  const host = el('div', 'vfx' + (cls ? ' ' + cls : ''));
+  const img = cardFaceImage(card, null);
+  if (!img) { host.appendChild(sigilBox(card, 'lg')); return host; }
+  // A set whose art has not been fetched falls back to the sigil rather than a
+  // blank tile — same contract as the preview rail.
+  const fb = sigilBox(card, 'lg');
+  fb.style.display = 'none';
+  img.onerror = () => { img.classList.add('miss'); fb.style.display = ''; };
+  host.appendChild(img);
+  host.appendChild(fb);
+  return host;
+}
+
+// Our own drawing of the card, carrying everything a scan cannot.
+function sigilCard(card, flags) {
+  const d = fullCard(card, { noFace: true });
+  d.classList.add('sigilcard', 'sm-' + UI.shadowMode);
+  if (flags.indexOf('sl') >= 0) d.classList.add('is-sl');
+  if (flags.indexOf('fe') >= 0) {
+    // Into the art window, where the real stamp sits — not floated onto the
+    // card body, which is where it landed first and read as a stray badge.
+    //
+    // Hand-rolled loop, not `.filter` and not `querySelector`. A real browser
+    // gives an HTMLCollection here, which has no array methods; the smoke DOM
+    // stub gives a plain array, which has all of them. `.filter` therefore
+    // PASSED every test and threw in Chrome — the detail overlay silently
+    // vanished while the pack screen behind it rendered fine. Index with a
+    // plain loop and both are happy.
+    let art = null;
+    for (let i = 0; i < d.children.length; i++) {
+      const c = d.children[i];
+      if (c && (c.className || '').indexOf('sigil') === 0) { art = c; break; }
+    }
+    (art || d).appendChild(el('div', 'festamp', '1'));
+  }
+  const cls = additiveClasses(flags);
+  if (!cls) return d;
+  const w = el('div', 'vfx ' + cls);
+  w.appendChild(d);
+  return w;
+}
+
+function vribbon(flags) {
+  const r = el('div', 'vribbon');
+  flags.forEach(f => {
+    const v = VARIANT_BY_KEY[f];
+    if (v) r.appendChild(el('span', 'vchip c-' + v.family, v.label));
+  });
+  return r;
+}
+
+// ------------------------------------------------------------ opening it ---
+// The cards are granted the MOMENT the pack is opened, not as they are flipped.
+// Closing the tab halfway through a reveal must not cost you the pack.
+function openNextPack() {
+  if (!UI.save || !takePack(UI.save, HOME_SET)) return false;
+  const seed = (Math.random() * 2147483647) | 0;
+  const pk = openPack(CARD_DB, HOME_SET, mulberry32(seed));
+  // The Rare comes out of packs.js first; it is shown LAST, because a reveal
+  // that opens on the best card has nowhere to go.
+  const order = pk.cards.slice(1).concat([pk.cards[0]]);
+  UI.pack = {
+    set: pk.set, firstEd: pk.firstEd, seed, order,
+    revealed: order.map(() => false),
+    // Computed BEFORE granting, or every card is already owned by the time we ask.
+    isNew: order.map(c => !isOwned(UI.save, c.id)),
+  };
+  for (const c of order) grant(UI.save, c.id, c.flags);
+  UI.save.stats.packsOpened++;
+  UI.save.stats.cardsPulled += order.length;
+  persist();
+  UI.detail = null;
+  UI.screen = 'packs';
+  return true;
+}
+
+// Recorded once per game, not once per render — renderOver() runs every time
+// the board redraws, and awarding packs from there would pay out forever.
+// Reset by newGame().
+function settleResult() {
+  if (UI.awarded || !UI.save || !UI.E) return;
+  const s = UI.E.state;                       // never S(): a frozen flip view lags
+  if (s.phase !== 'over' || s.winner === null) return;   // winner can be 0
+  UI.awarded = true;
+  if (s.winner === 0) { UI.save.stats.wins++; addPacks(UI.save, HOME_SET, PACKS_PER_WIN); }
+  else UI.save.stats.losses++;
+  persist();
+}
+
+// ------------------------------------------------------------- the screens -
+function renderNewSave() {
+  const ov = el('div', 'deckscreen');
+  const box = el('div', 'deckbox');
+  const title = el('div', 'titleblock');
+  title.appendChild(el('h1', 'gametitle', 'SHADOWLESS'));
+  title.appendChild(el('div', 'gamesub', 'Choose the deck you start with. Everything else, you win.'));
+  title.appendChild(el('div', 'gamenote',
+    'These are the four authentic Wizards-era theme decks. You will own every card in the one you pick — '
+    + 'and nothing else, until you open your first pack.'));
+  box.appendChild(title);
+  if (UI.saveNote) box.appendChild(el('div', 'collwarn', UI.saveNote));
+
+  const grid = el('div', 'deckgrid');
+  Object.keys(DECKS).forEach(n => {
+    const s = deckSummary(n);
+    const c = el('div', 'deckcard');
+    const art = el('div', 'dart');
+    const hero = deckHero(n);
+    if (hero) { const img = cardFaceImage(CARD_DB[hero], null); if (img) art.appendChild(img); }
+    c.appendChild(art);
+    c.appendChild(el('div', 'dname', n));
+    const pips = el('div', 'dtypes');
+    Object.keys(s.types).sort((a, b) => s.types[b] - s.types[a]).forEach(t => {
+      const p = el('i', 'pip'); p.style.background = ENERGY_COLOR[t]; p.title = ENERGY_NAME[t];
+      pips.appendChild(p);
+    });
+    c.appendChild(pips);
+    c.appendChild(el('div', 'dstat', `${s.k.pokemon} / ${s.k.trainer} / ${s.k.energy}`));
+    c.appendChild(el('div', 'dstat dim', `${s.basics} Basics${s.stage2 ? ` · ${s.stage2} Stage 2` : ''}`));
+    c.onclick = () => startNewSave(n);
+    grid.appendChild(c);
+  });
+  box.appendChild(grid);
+  ov.appendChild(box);
+  return ov;
+}
+
+function renderPackScreen() {
+  const p = UI.pack;
+  const ov = el('div', 'packscreen');
+  const box = el('div', 'packbox');
+  const anyRevealed = p.revealed.some(Boolean);
+  const allRevealed = p.revealed.every(Boolean);
+
+  const head = el('div', 'packhead');
+  head.appendChild(el('h2', null, 'Base Set booster'));
+  // The 1st Edition line is held back until something has been flipped, so the
+  // whole-pack roll lands as a discovery rather than as a spoiler in the header.
+  head.appendChild(el('div', 'sub', anyRevealed && p.firstEd
+    ? '— 1ST EDITION PRINT RUN —'
+    : 'eleven cards'));
+  box.appendChild(head);
+
+  const grid = el('div', 'packgrid');
+  p.order.forEach((c, i) => {
+    const card = CARD_DB[c.id];
+    const isRare = c.slot === 'rare';
+    const slot = el('div', 'pullslot' + (isRare ? ' rare' : '') + (p.revealed[i] ? '' : ' hidden'));
+    if (!p.revealed[i]) {
+      const back = el('div', 'packback');
+      back.appendChild(el('i'));
+      slot.appendChild(back);
+      slot.onclick = () => { p.revealed[i] = true; render(); };
+    } else {
+      slot.appendChild(pullFace(card, c.flags));
+      const tag = el('div', 'vribbon');
+      if (p.isNew[i]) tag.appendChild(el('span', 'pullnew', 'NEW'));
+      c.flags.forEach(f => {
+        const v = VARIANT_BY_KEY[f];
+        if (v) tag.appendChild(el('span', 'vchip c-' + v.family, v.label));
+      });
+      slot.appendChild(tag);
+      slot.onclick = () => { UI.detail = { id: c.id, flags: c.flags }; render(); };
+    }
+    grid.appendChild(slot);
+  });
+  box.appendChild(grid);
+
+  if (allRevealed) {
+    const nNew = p.isNew.filter(Boolean).length;
+    const nVar = p.order.filter(c => c.flags.length).length;
+    const sum = el('div', 'packsum');
+    sum.appendChild(el('b', null, String(nNew)));
+    sum.appendChild(el('span', null, nNew === 1 ? ' card you did not have' : ' cards you did not have'));
+    if (nVar) { sum.appendChild(el('span', null, '  ·  ')); sum.appendChild(el('b', null, String(nVar))); sum.appendChild(el('span', null, ' with a variant')); }
+    box.appendChild(sum);
+  }
+
+  const bar = el('div', 'packbar');
+  if (!allRevealed) {
+    const all = el('button', 'btn', 'Reveal all');
+    all.onclick = () => { p.revealed = p.revealed.map(() => true); render(); };
+    bar.appendChild(all);
+  }
+  const left = packsHeld(UI.save, HOME_SET);
+  if (left > 0) {
+    const more = el('button', 'btn end', `Open another (${left})`);
+    more.onclick = () => { openNextPack(); render(); };
+    bar.appendChild(more);
+  }
+  const done = el('button', 'btn ghost', 'Done');
+  done.onclick = () => { UI.pack = null; UI.detail = null; UI.screen = 'decks'; render(); };
+  bar.appendChild(done);
+  box.appendChild(bar);
+
+  ov.appendChild(box);
+  return ov;
+}
+
+// The scan and your copy, side by side. They are different objects and this is
+// the screen that admits it: the scan is what the card looks like, the Sigil
+// Card is what YOUR copy looks like — and only the second can carry a print run.
+function renderPullDetail() {
+  const d = UI.detail;
+  const card = CARD_DB[d.id];
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet');
+  box.appendChild(el('h2', null, card.name));
+  box.appendChild(el('p', 'dimtxt', d.flags.length ? vlabel(vkey(d.flags)) : 'Normal printing'));
+
+  const row = el('div', 'pulldetail');
+  const a = el('div', 'dcol');
+  a.appendChild(el('div', 'lbl', 'THE PRINTED CARD'));
+  a.appendChild(pullFace(card, d.flags));
+  row.appendChild(a);
+  const b = el('div', 'dcol');
+  b.appendChild(el('div', 'lbl', 'YOUR COPY'));
+  b.appendChild(sigilCard(card, d.flags));
+  row.appendChild(b);
+  box.appendChild(row);
+
+  const bar = el('div', 'actionbar');
+  const close = el('button', 'btn ghost', 'Close');
+  close.onclick = () => { UI.detail = null; render(); };
+  bar.appendChild(close);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
 }
 
 function renderDeckSelect() {
@@ -1380,11 +1724,39 @@ function renderDeckSelect() {
     `Named for the early Base Set sheets, printed before the drop shadow. ${Object.keys(CARD_DB).length} cards implemented.`));
   box.appendChild(title);
 
+  // What you own, and what is waiting to be opened. This is the first thing on
+  // the screen after the title because in a collection game it is the score.
+  if (UI.save) {
+    const st = collectionStats(UI.save, CARD_DB);
+    const strip = el('div', 'collstrip');
+    const stat = (n, label) => {
+      const s = el('div', 'collstat');
+      s.appendChild(el('b', null, String(n)));
+      s.appendChild(el('span', null, label));
+      strip.appendChild(s);
+    };
+    stat(`${st.cards.owned}/${st.cards.total}`, 'CARDS');
+    stat(`${st.species.owned}/${st.species.total}`, 'SPECIES');
+    stat(UI.save.stats.wins, 'WINS');
+    stat(UI.save.stats.packsOpened, 'PACKS OPENED');
+    const held = packsHeld(UI.save, HOME_SET);
+    if (held > 0) {
+      const go = el('button', 'btn end', `Open ${held} pack${held === 1 ? '' : 's'}`);
+      go.onclick = () => { if (openNextPack()) render(); };
+      strip.appendChild(go);
+    }
+    box.appendChild(strip);
+    if (UI.saveNote) box.appendChild(el('div', 'collwarn', UI.saveNote));
+  }
+
+  // YOUR side lists only decks you can legally field. The OPPONENT side lists
+  // everything — their deck is the game's, not yours, and never was a
+  // collection question.
   const mkGrid = (key, heading) => {
     const sec = el('div', 'deckgrp');
     sec.appendChild(el('div', 'grphead', heading));
     const grid = el('div', 'deckgrid');
-    DECK_NAMES.forEach(n => {
+    (key === 'myDeck' && UI.save ? myDeckNames() : DECK_NAMES).forEach(n => {
       const s = deckSummary(n);
       const isSandbox = n === SANDBOX;
       const c = el('div', 'deckcard' + (UI[key] === n ? ' on' : ''));
@@ -1697,8 +2069,22 @@ function renderOver() {
   box.appendChild(el('h2', null, s.winner === 0 ? 'You win' : 'Opponent wins'));
   box.appendChild(el('p', null, s.winReason));
   box.appendChild(el('p', 'dimtxt', `Game lasted ${s.turn} turns. Seed ${UI.E.seed}.`));
+
+  // The reward. Straight from the win into the reveal, with no inventory screen
+  // in between — Trevor, 9 Aug: the immediate feedback loop is the point.
+  const held = UI.save ? packsHeld(UI.save, HOME_SET) : 0;
+  if (UI.save && s.winner === 0) {
+    box.appendChild(el('p', null, `You won ${PACKS_PER_WIN} booster packs.`));
+  }
+
   const bar = el('div', 'actionbar');
-  const again = el('button', 'btn end', 'New game');
+  if (held > 0) {
+    const open = el('button', 'btn end', held === PACKS_PER_WIN && s.winner === 0
+      ? `Open ${held} packs` : `Open packs (${held})`);
+    open.onclick = () => { if (openNextPack()) render(); };
+    bar.appendChild(open);
+  }
+  const again = el('button', held > 0 ? 'btn' : 'btn end', 'New game');
   again.onclick = () => { UI.seedDraft = ''; backToDeckSelect(); };
   const rerun = el('button', 'btn ghost', 'Replay this seed');
   rerun.onclick = () => { UI.seedDraft = String(UI.E.seed); newGame(); };
@@ -1754,6 +2140,46 @@ function renderLog() {
 
 function renderDev() {
   const box = el('div', 'devbox');
+
+  // --- collection, first, because it is the thing currently being built ---
+  if (UI.save) {
+    const g0 = el('div', 'grp');
+    g0.appendChild(el('div', 'grphead', 'Collection'));
+
+    const packRow = el('div', 'row');
+    packRow.appendChild(el('label', null, 'packs'));
+    const held = el('span', null, String(packsHeld(UI.save, HOME_SET)));
+    packRow.appendChild(held);
+    const give = el('button', 'btn tiny', '+5');
+    // Grinding out wins to test a 1-in-2200 pull is not a reasonable ask, so
+    // there is a hatch. It writes to the real save deliberately: a fake save
+    // would test a code path nobody ships.
+    give.onclick = () => { addPacks(UI.save, HOME_SET, 5); persist(); render(); };
+    packRow.appendChild(give);
+    const openb = el('button', 'btn tiny', 'open');
+    openb.onclick = () => { if (openNextPack()) render(); };
+    packRow.appendChild(openb);
+    g0.appendChild(packRow);
+
+    // The Shadowless A/B. Two defensible answers and no way to pick from a
+    // description, so both are built and this switches between them. See
+    // PACKS.md — 'shadow' keeps real-world scarcity, 'inverted' makes
+    // Shadowless the base state to match our 1st-Edition scans.
+    const shRow = el('div', 'row');
+    shRow.appendChild(el('label', null, 'shadow'));
+    const sm = el('select');
+    [['add shadow (Shadowless removes)', 'shadow'], ['inverted (Shadowless is base)', 'inverted']]
+      .forEach(([t, v]) => { const o = el('option', null, t); o.value = v; if (UI.shadowMode === v) o.selected = true; sm.appendChild(o); });
+    sm.onchange = () => { UI.shadowMode = sm.value; render(); };
+    shRow.appendChild(sm);
+    g0.appendChild(shRow);
+
+    const stRow = el('div', 'row');
+    stRow.appendChild(el('label', null, 'save'));
+    stRow.appendChild(el('span', null, `${UI.saveStatus} · ${UI.save.stats.wins}W-${UI.save.stats.losses}L · ${UI.save.stats.packsOpened} opened`));
+    g0.appendChild(stRow);
+    box.appendChild(g0);
+  }
 
   const g1 = el('div', 'grp');
   g1.appendChild(el('div', 'grphead', 'New game'));
@@ -1973,7 +2399,7 @@ function maybeRunAI() {
   }, Math.max(30, UI.aiDelay));
 }
 
-window.addEventListener('DOMContentLoaded', () => { UI.screen = 'decks'; render(); });
+window.addEventListener('DOMContentLoaded', () => { bootSave(); render(); });
 
 // The mat is fitted to the window, so it has to be refitted when the window
 // changes. Debounced — a drag-resize fires this continuously.

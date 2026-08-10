@@ -46,9 +46,9 @@ the AI are the finished part**; everything a *collection* game needs is not buil
 | Opponent AI | Four tiers, expected-value based. Beats its own baselines |
 | Base Set cards | **All 102 implemented.** Base Set is done |
 | Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen. In play, cards keep a rendered face and a deterministic sigil |
-| Collection / packs / dex | Not started (Job 5) |
-| Deck building | Not started. Four fixed theme decks + a random Sandbox deck for testing |
-| Persistence | **Job 5a built the spine.** `src/collection.js` — versioned save, migration, validation, export/import, all covered by `tools/collectiontest.js`. Nothing in the UI calls it yet |
+| Collection / packs / dex | **Playable loop.** Pick a starter deck, win, get 2 packs, open them. Ownership, variants, pack odds and the reveal screen are built. The dex browser is 5d and does not exist |
+| Deck building | Not started (5e). Your starter is a real editable deck in the save; Sandbox still ignores ownership on purpose |
+| Persistence | **Live.** `src/collection.js` — versioned save, migration, validation, export/import. The game boots off it. Export/import have no UI yet (5d) |
 | Progression / named opponents | Not started (Job 7) |
 | Sets beyond Base | Not started, but **no longer data-blocked** — all 14 sets generate cleanly |
 | Audio | None |
@@ -109,7 +109,7 @@ node tools/fetch_art.js base1            # real card faces -> assets/ (--hires f
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/powertest.js                  # 77 tests for Powers and the other bespoke cards
-node tools/smoke.js shadowless.html      # 49 integration tests against the built file
+node tools/smoke.js shadowless.html      # 68 integration tests against the built file
 node tools/collectiontest.js             # 84 tests for the save file and variant keys
 node tools/packtest.js                   # 44 tests, 200k packs against the PACKS.md odds
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
@@ -179,6 +179,19 @@ protect — read it before changing anything sized.
 
 **`state.winner` can legitimately be `0`.** Test it against `null`, never for truthiness. This
 already cost one session an hour of phantom "stalled game" reports.
+
+**`node.children` is an HTMLCollection in a browser and a plain Array in the smoke stub.** So
+`.filter`, `.some`, `.map` on it pass every test and throw in Chrome. This is the one place where
+green suites mean nothing — a UI change that walks children must use an index loop, and must be
+looked at with `tools/shot.js` before it is believed. It has already cost one silently-missing
+overlay.
+
+**The Shadowless treatment is an unresolved A/B, switchable from the DEV tab.** `shadow` gives the
+Sigil Card's art window a drop shadow that Shadowless removes; `inverted` makes Shadowless the base
+state — matching our 1st-Edition scans exactly — and the rare pull adds the shadow. Both are built
+because neither can be judged from a description. **The board is untouched in both modes:** the
+shadow exists only where a card is shown as a collectible, which is what keeps the 8 Aug design
+lock intact. Waiting on Trevor.
 
 **Unimplemented cards can never silently do nothing.** The deck validator refuses any deck
 containing a card with no effect script. Preserve that property — it is why the card counts above

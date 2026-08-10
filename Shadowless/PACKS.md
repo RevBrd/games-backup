@@ -215,6 +215,13 @@ than only on hover.
   8 Aug design lock covers, and is honest to the original, which was itself only ever visible when
   you were looking at a card rather than playing it.
 
+  **BOTH ARE NOW BUILT (Job 5c), switchable from the DEV tab, and the decision is still open.**
+  `UI.shadowMode = 'shadow'` draws the shadow and Shadowless removes it; `'inverted'` is Trevor's
+  version, where Shadowless is the base state and the rare pull adds a shadow. The confinement above
+  holds in both — the board is identical either way. The honest finding from looking at them: **the
+  difference is subtle at card size.** That is faithful to the real thing, which was also subtle, but
+  it is worth deciding whether a 1-in-200 pull should announce itself more loudly than reality did.
+
 Placeholder odds for all of these, plus Promo/SI intrusion (below), are in one table:
 
 ### Placeholder rarity table (v3, 8 Aug 2026 — pacing-first)

@@ -99,9 +99,52 @@ function newSave(opts = {}) {
     created: opts.now || Date.now(),
     owned: {},                 // cardId -> { vkey: count }
     decks: [],                 // [{ name, list: [[qty, id, vkey?], ...] }]
+    packs: {},                 // setCode -> unopened packs held
     starter: opts.starter || '',
     stats: { wins: 0, losses: 0, packsOpened: 0, cardsPulled: 0 },
   };
+}
+
+// Fill in fields a save predates. Distinct from migrate() on purpose: migrate
+// handles a FORMAT change and must fail loudly on a version it cannot bridge,
+// whereas this is for additive fields where "absent" and "empty" mean the same
+// thing. Adding an optional field to the save is a change to this function and
+// nothing else — no version bump, no migration step.
+// Fills only fields that are ABSENT. A present-but-wrong-typed field is
+// corruption, not an old format, and repairing it here would hide it from
+// validate() and silently discard whatever the player actually had. That
+// distinction is the whole reason this is a separate function: `decks: "no"`
+// must still be refused, while a save written before `packs` existed must not.
+// (Written the lenient way first, which quietly turned a refused import into
+// an accepted one — caught by collectiontest.)
+function ensureShape(s) {
+  if (s.owned == null) s.owned = {};
+  if (s.decks == null) s.decks = [];
+  if (s.packs == null) s.packs = {};
+  // Counters are bookkeeping rather than collection data, so they are the one
+  // place a wrong type is cheaper to reset than to reject.
+  if (s.stats == null || typeof s.stats !== 'object') s.stats = {};
+  ['wins', 'losses', 'packsOpened', 'cardsPulled'].forEach(k => {
+    if (typeof s.stats[k] !== 'number') s.stats[k] = 0;
+  });
+  if (typeof s.starter !== 'string') s.starter = '';
+  return s;
+}
+
+const packsHeld = (save, set) => (save.packs && save.packs[set]) || 0;
+const packsTotal = save => Object.keys(save.packs || {}).reduce((a, k) => a + save.packs[k], 0);
+
+function addPacks(save, set, n) {
+  if (!save.packs) save.packs = {};
+  save.packs[set] = (save.packs[set] || 0) + n;
+  return save;
+}
+
+function takePack(save, set) {
+  if (packsHeld(save, set) <= 0) return false;
+  save.packs[set]--;
+  if (save.packs[set] <= 0) delete save.packs[set];
+  return true;
 }
 
 function grant(save, cardId, key, n = 1) {
@@ -244,7 +287,7 @@ function migrate(raw) {
     if (++guard > 64) throw new Error('migration did not converge');
   }
   if (s.v > SAVE_VERSION) throw new Error(`save is from a newer version (${s.v} > ${SAVE_VERSION})`);
-  return s;
+  return ensureShape(s);
 }
 
 // Structural check only. Deliberately does NOT verify that every card id exists
@@ -336,4 +379,4 @@ function importSave(text) {
 // ONE LINE, deliberately. tools/build.js strips this with a line-anchored
 // regex, so a multi-line export leaves its own body behind in the bundle and
 // breaks the built HTML. The builder now refuses that rather than emitting it.
-if (typeof module !== 'undefined') module.exports = { SAVE_VERSION, SAVE_KEY, SAVE_BACKUP_KEY, PLAIN, VARIANTS, VARIANT_ORDER, VARIANT_BY_KEY, vkey, vflags, isPlain, vscore, vlabel, newSave, grant, grantDeck, ownedOf, ownedTotal, isOwned, bestVariant, pilesOf, reservedCounts, available, copiesByNameIn, collectionStats, MIGRATIONS, migrate, validate, loadSave, writeSave, exportSave, importSave };
+if (typeof module !== 'undefined') module.exports = { SAVE_VERSION, SAVE_KEY, SAVE_BACKUP_KEY, PLAIN, VARIANTS, VARIANT_ORDER, VARIANT_BY_KEY, vkey, vflags, isPlain, vscore, vlabel, newSave, ensureShape, grant, grantDeck, ownedOf, ownedTotal, isOwned, bestVariant, pilesOf, packsHeld, packsTotal, addPacks, takePack, reservedCounts, available, copiesByNameIn, collectionStats, MIGRATIONS, migrate, validate, loadSave, writeSave, exportSave, importSave };
