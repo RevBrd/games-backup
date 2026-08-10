@@ -267,9 +267,17 @@ function deckShortfall(save, deck, db) {
   const out = [];
   for (const id in want) {
     for (const k in want[id]) {
-      const have = ownedOf(save, id, k) - ((res[id] || {})[k] || 0);
+      const own = ownedOf(save, id, k);
+      const held = (res[id] || {})[k] || 0;      // locked up by other BUILT decks
+      const have = own - held;
       if (want[id][k] > have) {
+        // `own` and `held` are reported separately because "you have none" and
+        // "your other deck is holding them" are completely different problems
+        // with completely different fixes — open packs, or dismantle. A single
+        // "0 free" number cannot tell the player which one they are looking at,
+        // and that is the most confusing state a reservation model can produce.
         out.push({ id, vkey: k, need: want[id][k], have: Math.max(0, have),
+          owned: own, held,
           name: (db && db[id] && db[id].name) || id });
       }
     }

@@ -47,7 +47,7 @@ the AI are the finished part**; everything a *collection* game needs is not buil
 | Base Set cards | **All 102 implemented.** Base Set is done |
 | Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen. In play, cards keep a rendered face and a deterministic sigil |
 | Collection / packs / dex | **Done (5a–5d).** Starter pick, win 2 packs, open them, browse what you own. Collection browser has CARDS and DEX views, owned/missing filters, per-card counts, variant dots, and export/import |
-| Deck building | Not started (5e). Your starter is a real editable deck in the save; Sandbox still ignores ownership on purpose |
+| Deck building | **Built (5e-1/2).** Pool grid with kind/type/name filters, deck panel, live legality, save-as-layout vs save-and-build. Variant picking (5e-4) is the remaining piece; Sandbox still ignores ownership on purpose |
 | Persistence | **Live.** `src/collection.js` — versioned save, migration, validation. Export downloads a JSON file (with a copy-it-out fallback); import is a paste box on the collection screen |
 | Progression / named opponents | Not started (Job 7) |
 | Sets beyond Base | Not started, but **no longer data-blocked** — all 14 sets generate cleanly |
@@ -109,8 +109,8 @@ node tools/fetch_art.js base1            # real card faces -> assets/ (--hires f
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/powertest.js                  # 77 tests for Powers and the other bespoke cards
-node tools/smoke.js shadowless.html      # 75 integration tests against the built file
-node tools/collectiontest.js             # 84 tests for the save file and variant keys
+node tools/smoke.js shadowless.html      # 88 integration tests against the built file
+node tools/collectiontest.js             # 105 tests for the save file, decks and variants
 node tools/packtest.js                   # 44 tests, 200k packs against the PACKS.md odds
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 ```
@@ -204,6 +204,11 @@ protect — read it before changing anything sized.
 
 **`state.winner` can legitimately be `0`.** Test it against `null`, never for truthiness. This
 already cost one session an hour of phantom "stalled game" reports.
+
+**`tools/build.js` refuses a NUL byte in any source file.** One shipped, inside a string literal
+in `ui.js`, from a mangled edit — every suite passed, because a NUL is a valid string character,
+and the only symptom was `grep` declaring the file binary. Editors hide them. If the build ever
+reports one, the fix is to retype the literal, not to work around it.
 
 **The smoke stub has no layout engine and no real DOM, so a green suite proves nothing visual.**
 `tools/shot.js` is not optional polish on a UI change — it is the only test that exists for a whole

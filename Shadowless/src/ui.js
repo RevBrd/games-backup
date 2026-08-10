@@ -533,6 +533,10 @@ function render() {
     if (UI.detail) root.appendChild(renderPullDetail());
     return;
   }
+  if (UI.screen === 'builder' && UI.builder) {
+    root.appendChild(renderBuilder());
+    return;
+  }
   if (UI.screen === 'collection' && UI.save) {
     root.appendChild(renderCollection());
     if (UI.detail) root.appendChild(renderPullDetail());
@@ -1887,6 +1891,269 @@ function renderCollection() {
   return ov;
 }
 
+// ====================================================== 5e: DECK BUILDER ===
+// UI.builder = { deckId|null, name, list: [[qty, id, vkey], ...] }
+//
+// Editing is a WORKING COPY. Nothing touches the save until you press one of
+// the two save buttons, so backing out of a session of fiddling costs nothing
+// and cannot half-apply.
+
+// A throwaway Engine purely to reach validateDeck(). Deck legality already
+// lives there — exactly 60, four-by-name with basic Energy exempt, at least
+// one Basic, the unimplemented refusal, the evolution-line warning — and
+// writing a second copy of those rules is how they drift apart. The
+// constructor only assigns fields, so this is cheap and has no side effects.
+function validator() {
+  if (!UI.valEngine) UI.valEngine = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  return UI.valEngine;
+}
+
+const builderTotal = b => b.list.reduce((a, e) => a + e[0], 0);
+const builderQty = (b, id, k) => {
+  const e = b.list.find(x => x[1] === id && vkey(x[2]) === vkey(k));
+  return e ? e[0] : 0;
+};
+
+function builderAdd(id, k, n) {
+  const b = UI.builder, key = vkey(k);
+  const e = b.list.find(x => x[1] === id && vkey(x[2]) === key);
+  if (e) { e[0] += n; if (e[0] <= 0) b.list.splice(b.list.indexOf(e), 1); }
+  else if (n > 0) b.list.push(key ? [n, id, key] : [n, id]);
+}
+
+function openBuilder(deckId) {
+  const d = deckId != null ? findDeck(UI.save, deckId) : null;
+  UI.builder = {
+    deckId: d ? d.id : null,
+    name: d ? d.name : 'New deck',
+    // Deep copy. Editing the saved arrays in place would mutate the collection
+    // as you clicked, and Cancel would have nothing to restore.
+    list: d ? d.list.map(e => e.slice()) : [],
+  };
+  UI.poolFilter = UI.poolFilter || { kind: 'all', type: 'all', text: '', owned: true };
+  UI.screen = 'builder';
+  render();
+}
+
+// How many of a card the player could still put in THIS deck: what they own,
+// minus what other BUILT decks hold, minus what this draft already uses.
+function builderFree(id, k) {
+  const key = vkey(k);
+  // `undefined` is how available() is told to exclude nothing, which is what
+  // a brand-new deck wants — it is not yet in the save and reserves nothing.
+  // This was briefly a magic sentinel string, which worked only by accident
+  // (no deck id could ever match it) and smuggled a literal NUL byte into the
+  // source and into every built HTML. Use the documented contract instead.
+  const except = UI.builder.deckId == null ? undefined : UI.builder.deckId;
+  return available(UI.save, id, key, except) - builderQty(UI.builder, id, key);
+}
+
+// Legality from the engine, availability from the save. Kept separate because
+// they answer different questions: "is this a legal deck" and "does this
+// player have it".
+function builderStatus() {
+  const b = UI.builder;
+  const deck = { name: b.name, list: b.list };
+  const legal = validator().validateDeck(deck);
+  const shortfall = deckShortfall(UI.save, { id: b.deckId, list: b.list }, CARD_DB);
+  return { legal, shortfall, buildable: legal.ok && shortfall.length === 0 };
+}
+
+// "You have 0 free" is true and useless. Owning none and having them locked in
+// another deck are different problems with different fixes — go open packs, or
+// go dismantle something — and the player cannot tell which from a single
+// number. This says which, and therefore what to do about it.
+function shortfallText(s) {
+  const missing = s.need - s.have;
+  if (s.held > 0 && s.owned >= s.need) {
+    return `${s.name}: all ${s.owned} you own are in your other decks — dismantle one, or drop ${missing} here`;
+  }
+  if (s.held > 0) {
+    return `${s.name}: you own ${s.owned}, but ${s.held} are in other decks — ${missing} short`;
+  }
+  return `${s.name}: you own ${s.owned} and the deck wants ${s.need} — ${missing} short`;
+}
+
+const POOL_KINDS = [['all', 'ALL'], ['pokemon', 'POKÉMON'], ['trainer', 'TRAINER'], ['energy', 'ENERGY']];
+const POOL_TYPES = ['G', 'R', 'W', 'L', 'P', 'F', 'C'];
+
+function poolMatches(card) {
+  const f = UI.poolFilter;
+  if (f.kind !== 'all' && card.kind !== f.kind) return false;
+  if (f.type !== 'all') {
+    const t = card.kind === 'pokemon' ? card.type
+      : card.kind === 'energy' ? (card.provides || '')[0] : '';
+    if (t !== f.type) return false;
+  }
+  if (f.text && card.name.toLowerCase().indexOf(f.text.toLowerCase()) < 0) return false;
+  if (f.owned && !isOwned(UI.save, card.id)) return false;
+  return true;
+}
+
+function renderBuilder() {
+  const b = UI.builder;
+  const status = builderStatus();
+  const ov = el('div', 'buildscreen');
+  const box = el('div', 'buildbox');
+
+  const head = el('div', 'buildhead');
+  head.appendChild(el('h2', null, b.deckId == null ? 'New deck' : 'Editing deck'));
+  const f = UI.poolFilter;
+  const fbar = el('div', 'collbar');
+  const chip = (label, on, fn) => {
+    const c = el('div', 'collchip' + (on ? ' on' : ''), label);
+    c.onclick = fn; fbar.appendChild(c);
+  };
+  POOL_KINDS.forEach(([k, label]) => chip(label, f.kind === k, () => { f.kind = k; render(); }));
+  chip('ANY TYPE', f.type === 'all', () => { f.type = 'all'; render(); });
+  POOL_TYPES.forEach(t => chip(ENERGY_NAME[t] || t, f.type === t, () => { f.type = t; render(); }));
+  chip('OWNED ONLY', f.owned, () => { f.owned = !f.owned; render(); });
+  const search = el('input');
+  search.type = 'text'; search.placeholder = 'search'; search.value = f.text;
+  search.className = 'buildname'; search.style.width = '120px'; search.style.fontSize = '11px';
+  search.oninput = () => { f.text = search.value; render(); };
+  fbar.appendChild(search);
+  head.appendChild(fbar);
+  box.appendChild(head);
+
+  const main = el('div', 'buildmain');
+
+  // ---- the pool ----
+  const grid = el('div', 'collgrid');
+  Object.keys(CARD_DB).forEach(id => {
+    const card = CARD_DB[id];
+    if (!poolMatches(card)) return;
+    const owned = ownedTotal(UI.save, id);
+    const free = builderFree(id, '');
+    const inDeck = b.list.filter(e => e[1] === id).reduce((a, e) => a + e[0], 0);
+    const t = el('div', 'colltile' + (owned === 0 ? ' unowned' : (free <= 0 ? ' spent' : '')));
+    if (owned > 0) t.appendChild(pullFace(card, vflags(bestVariant(UI.save, id))));
+    else t.appendChild(el('div', 'collmiss', card.num));
+    if (inDeck) t.appendChild(el('div', 'inuse', String(inDeck)));
+    t.appendChild(el('div', 'collqty', owned ? '×' + Math.max(0, free) : '—'));
+    // Unowned cards can still be added: that is how you plan a deck you cannot
+    // afford yet. It just cannot be BUILT, and the shortfall says what to chase.
+    if (free > 0 || owned === 0) t.onclick = () => { builderAdd(id, '', 1); render(); };
+    grid.appendChild(t);
+  });
+  main.appendChild(grid);
+
+  // ---- the deck ----
+  const side = el('div', 'buildside');
+  const nameIn = el('input', 'buildname');
+  nameIn.type = 'text'; nameIn.value = b.name;
+  nameIn.oninput = () => { b.name = nameIn.value; };
+  side.appendChild(nameIn);
+
+  const total = builderTotal(b);
+  const cnt = el('div', 'buildcount');
+  const num = el('b', total === 60 ? 'good' : 'bad', String(total));
+  cnt.appendChild(num);
+  cnt.appendChild(el('span', null, 'of 60 cards'));
+  side.appendChild(cnt);
+
+  const list = el('div', 'decklist');
+  const GROUPS = [['pokemon', 'POKÉMON'], ['trainer', 'TRAINER'], ['energy', 'ENERGY']];
+  GROUPS.forEach(([kind, label]) => {
+    const rows = b.list.filter(e => CARD_DB[e[1]] && CARD_DB[e[1]].kind === kind);
+    if (!rows.length) return;
+    const n = rows.reduce((a, e) => a + e[0], 0);
+    list.appendChild(el('div', 'dlgroup', `${label} — ${n}`));
+    rows.sort((x, y) => CARD_DB[x[1]].name.localeCompare(CARD_DB[y[1]].name)).forEach(e => {
+      const card = CARD_DB[e[1]];
+      const r = el('div', 'dlrow');
+      r.appendChild(el('span', 'q', e[0] + '×'));
+      r.appendChild(el('span', 'n', card.name));
+      if (vkey(e[2])) r.appendChild(el('span', 'v', vlabel(vkey(e[2]))));
+      r.appendChild(el('span', 'x', '−'));
+      r.onclick = () => { builderAdd(e[1], e[2], -1); render(); };
+      peekOn(r, e[1]);
+      list.appendChild(r);
+    });
+  });
+  if (!b.list.length) list.appendChild(el('div', 'emptynote', 'Click cards on the left to add them.'));
+  side.appendChild(list);
+
+  // ---- why you can or cannot build it ----
+  const leg = el('div', 'legality');
+  const line = (cls, mark, text) => {
+    const r = el('div', 'legrow ' + cls);
+    r.appendChild(el('i', null, mark));
+    r.appendChild(el('span', null, text));
+    leg.appendChild(r);
+  };
+  status.legal.errors.forEach(e => line('bad', '✕', e));
+  status.shortfall.forEach(s => line('bad', '✕', shortfallText(s)));
+  status.legal.warnings.forEach(w => line('warn', '!', w));
+  if (status.buildable) line('ok', '✓', 'Legal, and you own every card. Ready to build.');
+  side.appendChild(leg);
+
+  // ---- actions ----
+  const acts = el('div', 'buildacts');
+  const build = el('button', 'btn end', 'Save & build');
+  build.className = 'btn end' + (status.buildable ? '' : ' off');
+  build.onclick = () => { if (status.buildable) commitBuilder(true); };
+  acts.appendChild(build);
+  const layout = el('button', 'btn', 'Save as layout');
+  layout.onclick = () => commitBuilder(false);
+  acts.appendChild(layout);
+  if (b.deckId != null) {
+    const del = el('button', 'btn ghost', 'Delete');
+    del.onclick = () => deleteBuilderDeck();
+    acts.appendChild(del);
+  }
+  const cancel = el('button', 'btn ghost', 'Cancel');
+  cancel.onclick = () => { UI.builder = null; UI.screen = 'decks'; render(); };
+  acts.appendChild(cancel);
+  side.appendChild(acts);
+  if (UI.builderNote) side.appendChild(el('div', 'verr', UI.builderNote));
+
+  main.appendChild(side);
+  box.appendChild(main);
+  ov.appendChild(box);
+  return ov;
+}
+
+// Returns an error string or ''. Saving as a layout is always allowed; the
+// only refusal is un-building your last built deck, which would leave deck
+// select with nothing but Sandbox on it.
+function commitBuilder(built) {
+  const b = UI.builder;
+  const name = (b.name || '').trim() || 'Untitled deck';
+  let d = b.deckId != null ? findDeck(UI.save, b.deckId) : null;
+  if (d && deckIsBuilt(d) && !built) {
+    const can = canUnbuild(UI.save, d.id);
+    if (!can.ok) { UI.builderNote = 'Cannot un-build: ' + can.why + '.'; render(); return can.why; }
+  }
+  if (!d) {
+    d = { id: nextDeckId(UI.save), name, built, list: [] };
+    UI.save.decks.push(d);
+  }
+  d.name = name;
+  d.built = built;
+  d.list = b.list.map(e => e.slice());
+  persist();
+  UI.builder = null; UI.builderNote = '';
+  afterLoad();                 // keep the selected deck pointing at something real
+  render();
+  return '';
+}
+
+function deleteBuilderDeck() {
+  const d = findDeck(UI.save, UI.builder.deckId);
+  if (!d) { UI.builder = null; UI.screen = 'decks'; render(); return ''; }
+  if (deckIsBuilt(d)) {
+    const can = canUnbuild(UI.save, d.id);
+    if (!can.ok) { UI.builderNote = 'Cannot delete: ' + can.why + '.'; render(); return can.why; }
+  }
+  UI.save.decks = UI.save.decks.filter(x => x !== d);
+  persist();
+  UI.builder = null; UI.builderNote = '';
+  afterLoad();
+  render();
+  return '';
+}
+
 // ---------------------------------------------------- export / import -----
 // There is no server. A cleared browser profile is the only thing standing
 // between the player and the entire collection, so this is a real feature
@@ -1981,6 +2248,23 @@ function renderDeckSelect() {
     const browse = el('button', 'btn', 'Collection');
     browse.onclick = () => { UI.screen = 'collection'; render(); };
     strip.appendChild(browse);
+    const edit = el('button', 'btn', 'Edit deck');
+    // Edits whatever you currently have selected, which is almost always the
+    // one you want — and is one click rather than a per-tile control that
+    // would compete with selecting the deck in the first place.
+    edit.onclick = () => {
+      const d = builtDecks(UI.save).concat(UI.save.decks).find(x => x.name === UI.myDeck);
+      openBuilder(d ? d.id : null);
+    };
+    strip.appendChild(edit);
+    const nu = el('button', 'btn', 'New deck');
+    nu.onclick = () => openBuilder(null);
+    strip.appendChild(nu);
+    if (UI.save.decks.some(d => !deckIsBuilt(d))) {
+      const lay = el('button', 'btn ghost', `${UI.save.decks.filter(d => !deckIsBuilt(d)).length} layout(s)`);
+      lay.onclick = () => { UI.showLayouts = !UI.showLayouts; render(); };
+      strip.appendChild(lay);
+    }
     const held = packsHeld(UI.save, HOME_SET);
     if (held > 0) {
       const go = el('button', 'btn end', `Open ${held} pack${held === 1 ? '' : 's'}`);
@@ -2031,6 +2315,32 @@ function renderDeckSelect() {
   };
 
   box.appendChild(mkGrid('myDeck', 'YOUR DECK'));
+
+  // Layouts are decks you have written down but not committed cards to — a
+  // half-finished draft and a plan you cannot afford yet are the same thing.
+  // They live behind a toggle rather than in the grid, because they are not
+  // playable and putting them beside decks that are would only invite the
+  // click that does nothing.
+  if (UI.showLayouts) {
+    const sec = el('div', 'deckgrp');
+    sec.appendChild(el('div', 'grphead', 'LAYOUTS — saved, but no cards committed'));
+    const rows = el('div', 'legality');
+    UI.save.decks.filter(d => !deckIsBuilt(d)).forEach(d => {
+      const short = deckShortfall(UI.save, d, CARD_DB);
+      const n = d.list.reduce((a, e) => a + e[0], 0);
+      const r = el('div', 'legrow ' + (short.length ? 'warn' : 'ok'));
+      r.appendChild(el('i', null, short.length ? '!' : '✓'));
+      r.appendChild(el('span', null, `${d.name} — ${n}/60`
+        + (short.length ? `, missing ${short.map(s => `${s.need - s.have}× ${s.name}`).join(', ')}` : ', ready to build')));
+      const b = el('button', 'btn tiny', 'Open');
+      b.onclick = () => openBuilder(d.id);
+      r.appendChild(b);
+      rows.appendChild(r);
+    });
+    sec.appendChild(rows);
+    box.appendChild(sec);
+  }
+
   box.appendChild(mkGrid('foeDeck', 'OPPONENT'));
 
   const opts = el('div', 'deckopts');

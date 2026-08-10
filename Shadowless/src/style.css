@@ -1101,3 +1101,53 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
   font-size:10px;color:var(--matink)}
 .collsheet textarea{width:100%;height:150px;background:rgba(0,0,0,.35);color:var(--txt);
   border:1px solid var(--matline);border-radius:2px;font-family:var(--mono);font-size:10px;padding:6px}
+
+/* ---- 5e: the deck builder ---- */
+/* Two columns: the pool you shop from, and the deck you are assembling. Same
+   height discipline as the collection browser — bounded height, and the two
+   panes scroll independently, or the legality readout walks off the screen
+   exactly when you need to read it. */
+.buildscreen{height:100vh;overflow:hidden;display:flex;flex-direction:column;align-items:center;
+  padding:12px 16px 14px;gap:8px;
+  background:radial-gradient(120% 90% at 50% 0%,var(--mat) 0%,var(--mat2) 55%,#121917 100%)}
+.buildbox{width:100%;max-width:1320px;display:flex;flex-direction:column;gap:8px;flex:1 1 auto;min-height:0}
+.buildmain{display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:12px;flex:1 1 auto;min-height:0}
+.buildside{display:flex;flex-direction:column;gap:7px;min-height:0;
+  border:1px solid var(--matline);border-radius:3px;background:rgba(0,0,0,.24);padding:9px}
+.buildname{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--matline);border-radius:2px;
+  color:var(--stock);font-family:var(--serif);font-size:15px;padding:4px 7px}
+.buildcount{display:flex;justify-content:space-between;align-items:baseline;font-size:10px;color:var(--matink)}
+.buildcount b{font-family:var(--serif);font-size:19px;color:var(--stock);font-weight:600}
+.buildcount b.bad{color:var(--red)}
+.buildcount b.good{color:var(--grn)}
+/* The deck itself, as a list rather than as art. You are counting here, not
+   admiring — the art is two inches to the left in the pool. */
+.decklist{flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:1px}
+.dlgroup{font-size:8.5px;letter-spacing:.16em;color:var(--matink);margin:6px 0 2px;padding-bottom:2px;
+  border-bottom:1px solid var(--matline)}
+.dlrow{display:flex;align-items:center;gap:6px;padding:2px 4px;cursor:pointer;border-radius:2px;font-size:11px}
+.dlrow:hover{background:rgba(226,168,75,.10)}
+.dlrow .q{font-weight:700;color:var(--stock);min-width:18px}
+.dlrow .n{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#B7C6BE}
+.dlrow .v{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+.dlrow .x{color:var(--matink)}
+.dlrow:hover .x{color:var(--red)}
+/* Legality, always visible, never a popup. You should be able to see why a
+   deck is not buildable at the moment you make it unbuildable. */
+.legality{display:flex;flex-direction:column;gap:2px;font-size:10px}
+.legrow{display:flex;gap:6px;align-items:flex-start;color:var(--matink)}
+.legrow.ok{color:#7FA88E}
+.legrow.bad{color:var(--red)}
+.legrow.warn{color:var(--amber)}
+.legrow i{font-style:normal;width:11px;flex:0 0 auto}
+.buildacts{display:flex;gap:6px;flex-wrap:wrap}
+/* A pool tile you already have in the deck says so, and a tile you cannot add
+   says why by going quiet rather than by disappearing — a pool that reshuffles
+   as you click it is impossible to work in. */
+.colltile .inuse{position:absolute;left:2px;bottom:2px;z-index:2;font-size:8.5px;font-weight:700;
+  padding:0 4px;border-radius:2px;background:#3A2F1C;color:var(--amber);border:1px solid #6A5326}
+.colltile.spent{opacity:.34;cursor:default}
+.colltile.spent:hover{outline:none}
+.colltile.unowned{opacity:.5}
+.buildhead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.buildhead h2{margin:0;font-family:var(--serif);font-weight:600;font-size:18px;color:var(--stock)}

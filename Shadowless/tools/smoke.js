@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile};')
+  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -1002,6 +1002,123 @@ T('the import overlay renders over both screens it can be opened from', () => {
   UI.importing = false; UI.importErr = ''; UI.importText = '';
   UI.screen = 'decks'; render();
   return created > 0;
+});
+
+// ---- Job 5e: the deck builder -------------------------------------------
+console.log('\n--- deck builder ---');
+
+// Start from a clean, known save: starter Brushfire plus a generous pile of
+// loose cards, so availability has something to be interesting about.
+ctx.UI.save = ctx.newSave({ starter: 'Brushfire', now: 1 });
+ctx.grantDeck(UI.save, DECKS.Brushfire);
+UI.save.decks.push({ id: '1', name: 'Brushfire', built: true, list: DECKS.Brushfire.list.map(e => [e[0], e[1]]) });
+ctx.grant(UI.save, 'base1-58', '', 2);      // 2 loose Pikachu
+UI.myDeck = 'Brushfire';
+
+T('a new deck opens empty and reserves nothing', () => {
+  ctx.openBuilder(null);
+  return UI.screen === 'builder' && UI.builder.deckId === null && UI.builder.list.length === 0;
+});
+T('the pool offers only what other built decks are not holding', () => {
+  // Brushfire holds all 4 of its Charmander; the 2 loose Pikachu are free.
+  const charm = DECKS.Brushfire.list.find(e => CARD_DB[e[1]].name === 'Charmander');
+  return ctx.builderFree('base1-58', '') === 2 && ctx.builderFree(charm[1], '') === 0;
+});
+T('adding and removing changes the working copy, not the save', () => {
+  ctx.builderAdd('base1-58', '', 2);
+  const savedBefore = JSON.stringify(UI.save.decks);
+  ctx.builderAdd('base1-58', '', -1);
+  return ctx.builderTotal(UI.builder) === 1 && JSON.stringify(UI.save.decks) === savedBefore;
+});
+T('removing the last copy drops the row entirely', () => {
+  ctx.builderAdd('base1-58', '', -1);
+  return UI.builder.list.length === 0;
+});
+T('adding consumes availability as you go', () => {
+  ctx.builderAdd('base1-58', '', 2);
+  return ctx.builderFree('base1-58', '') === 0;
+});
+T('the builder renders in every filter combination', () => {
+  for (const k of ['all', 'pokemon', 'trainer', 'energy']) {
+    UI.poolFilter.kind = k; render();
+  }
+  UI.poolFilter.kind = 'all';
+  UI.poolFilter.type = 'L'; render();
+  UI.poolFilter.type = 'all';
+  UI.poolFilter.text = 'pika'; render();
+  UI.poolFilter.text = '';
+  UI.poolFilter.owned = false; render();
+  UI.poolFilter.owned = true; render();
+  return created > 0;
+});
+T('an incomplete deck is not buildable and says why', () => {
+  const s = ctx.builderStatus();
+  return !s.buildable && s.legal.errors.some(e => /needs 60/.test(e));
+});
+T('a layout saves even though it is illegal, and holds no cards', () => {
+  UI.builder.name = 'Scratch';
+  const freeBefore = ctx.available(UI.save, 'base1-58', '');
+  ctx.commitBuilder(false);
+  const d = UI.save.decks.find(x => x.name === 'Scratch');
+  return !!d && d.built === false
+    && ctx.available(UI.save, 'base1-58', '') === freeBefore
+    && UI.screen === 'decks';
+});
+T('a layout is not offered as a deck you can field', () => {
+  return ctx.myDeckNames().indexOf('Scratch') < 0;
+});
+T('a legal, affordable deck builds and then reserves its cards', () => {
+  ctx.openBuilder(null);
+  UI.builder.name = 'Second';
+  // 60 cards of pure basic Energy: legal size, but no Basic Pokemon, so it
+  // proves the legality gate is real before we make it pass.
+  ctx.grant(UI.save, 'base1-98', '', 60);
+  ctx.builderAdd('base1-98', '', 60);
+  if (ctx.builderStatus().buildable) throw new Error('a deck with no Basic Pokemon should not build');
+  ctx.builderAdd('base1-98', '', -1);
+  ctx.grant(UI.save, 'base1-58', '', 1);
+  ctx.builderAdd('base1-58', '', 1);
+  const s = ctx.builderStatus();
+  if (!s.buildable) throw new Error('should be buildable: ' + JSON.stringify(s.legal.errors) + JSON.stringify(s.shortfall));
+  const before = ctx.available(UI.save, 'base1-98', '');
+  ctx.commitBuilder(true);
+  return ctx.available(UI.save, 'base1-98', '') === before - 59
+    && ctx.myDeckNames().indexOf('Second') >= 0;
+});
+T('editing a built deck does not make it compete with itself', () => {
+  const d = UI.save.decks.find(x => x.name === 'Second');
+  const owned = ctx.ownedTotal(UI.save, 'base1-98');
+  // Excluded from its own reservation, every Energy it holds reads as free
+  // again — otherwise opening a built deck for a small edit would immediately
+  // report the whole thing as unaffordable.
+  const withSelf = ctx.available(UI.save, 'base1-98', '');
+  const withoutSelf = ctx.available(UI.save, 'base1-98', '', d.id);
+  ctx.openBuilder(d.id);
+  // builderFree then subtracts what the draft currently uses, so the two
+  // views agree: free-to-add equals what is left over after this deck's own use.
+  const free = ctx.builderFree('base1-98', '');
+  return withoutSelf === withSelf + 59 && free === withoutSelf - 59 && free >= 0
+    && withoutSelf <= owned;
+});
+T('the last built deck cannot be un-built or deleted', () => {
+  UI.builder = null; UI.screen = 'decks';
+  // Reduce to exactly one built deck.
+  UI.save.decks = UI.save.decks.filter(d => d.name === 'Brushfire');
+  const d = UI.save.decks[0];
+  ctx.openBuilder(d.id);
+  const why = ctx.commitBuilder(false);
+  const stillBuilt = ctx.deckIsBuilt(ctx.findDeck(UI.save, d.id));
+  const why2 = ctx.deleteBuilderDeck();
+  return why !== '' && why2 !== '' && stillBuilt && ctx.findDeck(UI.save, d.id) !== null;
+});
+T('shortfall says WHY, not just that you are short', () => {
+  // The three cases are genuinely different problems with different fixes.
+  const none = ctx.shortfallText({ name: 'Bill', need: 2, have: 0, owned: 0, held: 0 });
+  const held = ctx.shortfallText({ name: 'Bill', need: 2, have: 0, owned: 2, held: 2 });
+  const part = ctx.shortfallText({ name: 'Bill', need: 4, have: 1, owned: 3, held: 2 });
+  return /own 0/.test(none) && !/other decks/.test(none)
+    && /other decks/.test(held) && /dismantle/.test(held)
+    && /other decks/.test(part) && /3 short/.test(part);
 });
 
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
