@@ -85,3 +85,12 @@ below is the worked example, and it is why this file exists at the size it does.
   `powerActive`/`powerUsable` split that lets Toxic Gas suppress everything without suppressing
   itself, Transparency's coin kept out of the pure forecaster, and `STATUS_IMMUNE` separated from
   `blocked` after an early version quietly told the AI that Snorlax could not be dragged.
+- **Sonnet 4.6** (10 Aug 2026) — Job 7 groundwork: researched and built `data/gbc_decks.json`, the
+  GBC opponent deck reference. All 16 decks from the first Game Boy Color game — eight Club Masters,
+  four Grand Masters, and Ronald's four escalating rival decks — sourced from Bulbapedia character
+  and deck pages, verified to exactly 60 cards each, and mapped to our set IDs. Out-of-scope cards
+  (GBC-exclusive boosters, Pokémon Web, the game-completion promo Legendary Birds and Dragonite, Neo
+  Genesis) are documented in a substitution table with reasoning, so the implementer has a clear
+  record of what changed and why. Three decks flagged where source extraction left minor quantity
+  uncertainty. Also read through the full doc tree on arrival and had a good orientation conversation
+  about the project.
