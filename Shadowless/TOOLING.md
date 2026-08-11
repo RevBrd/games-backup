@@ -54,6 +54,38 @@ Field mapping worth knowing:
 Card `images` URLs are read by `tools/fetch_art.js` rather than by the generator. Where the scans
 do and do not appear is a standing design decision in `CLAUDE.md`.
 
+## Adding a set
+
+Written after Job 6c, where generating two sets broke six things that had quietly
+assumed Base Set was the only one. Most of that is now bracketed — `SET_LIVE`, `LIVE_DB`,
+memoised pools, a set-scoped `packsToComplete`, and a `--check` that reads the committed
+`SET_INFO` all generalise to any number of sets. **Three things still need a human.**
+
+1. **A display name in `SET_INFO`** (`tools/gen_cards.js`). All fourteen are already there;
+   the generator refuses to emit a set it cannot name, so this fails loud rather than
+   shipping a pack called `neo3`.
+2. **An `ENERGY_GRANT` entry, or deliberately none.** No entry means the set guarantees no
+   basic Energy, which is correct from Team Rocket on and is the reason the table stops at
+   three. See [PACKS.md](PACKS.md).
+3. **`REMAINING` in `selftest.js`**, while the set is being written. Forgetting it is safe:
+   the live-set assertion fires immediately and names the set, because a set with gaps and
+   no `REMAINING` entry is by definition a live set with a hole in it.
+
+Then the order is fixed, and it is the reverse of what feels natural:
+
+```bash
+node tools/gen_cards.js --sets base1,base2,base3   # 1. generate — the cards exist but are not live
+#    2. write effects.js entries until selftest's per-set count reaches 0
+node tools/fetch_art.js base2                      # 3. BEFORE the set goes live, not after
+#    4. drop the set from REMAINING; it goes live by itself
+```
+
+**Step 3 is the one with no safety net.** Card art is derived and gitignored, the suites
+never touch the filesystem, and `smoke.js` has no layout engine — so a set going live with
+no scans shows the player a grid of broken images with every test green. `selftest.js` now
+prints an `ART MISSING` warning for any live set whose asset folder is short, but it is a
+warning and not a failure, because a fresh clone legitimately has none of it.
+
 ## data/decks.json is source, not output
 
 The four theme deck lists came from named sheets in Trevor's `P_TCG_Data.xlsx` and **cannot be

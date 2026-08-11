@@ -47,7 +47,8 @@ eq(pools.uncommon.length, 32, 'thirty-two Uncommon');
 eq(pools.energy.length, 6, 'six basic Energy');
 eq(pools.common.length, 38, 'the Common bucket is 32 Common plus the 6 Energy');
 const allPooled = pools.rareHolo.length + pools.rare.length + pools.uncommon.length + pools.common.length;
-eq(allPooled, 102, 'every one of the 102 cards is reachable from a pack');
+const setSize = Object.keys(CARD_DB).filter(id => CARD_DB[id].set === SET).length;
+eq(allPooled, setSize, `every one of the ${setSize} cards is reachable from a pack`);
 
 // Double Colorless is Energy by kind but Uncommon by rarity, and is NOT basic
 // Energy — the floor is about basic Energy for a first deck.
@@ -132,7 +133,7 @@ eq(dupes, 0, 'no pack ever repeated a non-Energy card');
 eq(feStraggler, 0, '1st Edition is all-or-nothing across a pack');
 eq(rareRH, 0, 'Reverse Holo never lands on the Rare slot');
 eq(tally.intrusion, 0, 'no intrusion is possible with no promo pool loaded');
-eq(Object.keys(seenIds).length, 102, 'all 102 Base Set cards are actually reachable');
+eq(Object.keys(seenIds).length, setSize, `all ${setSize} ${SET} cards are actually reachable`);
 eq(Object.keys(mpFlavour).length, 3, 'all three Misprint flavours occur');
 
 // The floor is a floor, not a quota — Energy should sometimes exceed 2,

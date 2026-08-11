@@ -55,13 +55,6 @@ for (const name of DECK_NAMES) {
 }
 
 // --- 2. card coverage ----------------------------------------------------
-// CARD_DB holds the whole set, implemented or not, so 100% is not the bar yet.
-// Instead: pin the cards known to be unimplemented. A card that drops off this
-// list is progress; a card that appears on it unexpectedly is a regression.
-// Keep this list in step with the missing-cards section of CLAUDE.md.
-// Base Set is COMPLETE — all 102 cards. Keep this list here rather than deleting
-// the check: Job 6 widens the pool to Jungle and Fossil, and everything new
-// arrives unimplemented. An empty set means "nothing is allowed to be missing".
 // Job 6 replaced a pinned list of ids with two claims, because a set arriving
 // 64 cards at a time makes the list the thing you maintain instead of the code.
 //
@@ -94,6 +87,28 @@ const liveGaps = sets.filter(s => REMAINING[s] === undefined && bySet[s]);
 check(liveGaps.length === 0, 'no live set contains an unimplemented card',
   liveGaps.map(s => `${s}: ${unscripted.filter(id => CARD_DB[id].set === s)
     .map(id => CARD_DB[id].name).join(', ')}`).join(' | '));
+
+// Card art is a DERIVED, gitignored asset fetched per set. Nothing else in the
+// project can see it: the suites never touch the filesystem and smoke.js has no
+// layout engine, so a set going live without its scans would show the player a
+// grid of broken images with every test green. A warning rather than a failure,
+// because a fresh clone legitimately has none of it.
+{
+  const fs = require('fs'), path = require('path');
+  const dir = s => path.join(__dirname, '..', 'assets', 'cards', s);
+  const anyFetched = sets.some(s => fs.existsSync(dir(s)));
+  if (anyFetched) {
+    const short = [];
+    for (const s of sets) {
+      if (REMAINING[s] !== undefined) continue;            // not live yet, art not needed
+      const want = Object.keys(CARD_DB).filter(id => CARD_DB[id].set === s).length;
+      const have = fs.existsSync(dir(s)) ? fs.readdirSync(dir(s)).length : 0;
+      if (have < want) short.push(`${s} (${have}/${want})`);
+    }
+    if (short.length) console.log('  ART MISSING for live set(s): ' + short.join(', ')
+      + ' — run `node tools/fetch_art.js <set>`; nothing else can see this');
+  }
+}
 
 const wentUp = Object.keys(REMAINING).filter(s => (bySet[s] || 0) > REMAINING[s]);
 check(wentUp.length === 0, 'no in-progress set went backwards',
