@@ -171,3 +171,24 @@ optional decoration on a preserved artifact. It is the half that rots.
   specificity fight against `min-height:249px`, empties matching filled footprints). What is
   genuinely not visual is one 37-line section, which is not a file. Trevor's constraint was that the
   visual material stay together, and honouring it meant not splitting at all.
+
+  **Then a second stretch, which found more than the pass proper did, and only because I asked about
+  five untracked files instead of ignoring them.** `tools/gen_cards.js` had **`base4` and `base5`
+  swapped** — `base4` is Base Set 2, `base5` is Team Rocket, and the codes read backwards from what
+  everyone assumes. It would have shipped 130 Base Set 2 cards in a pack labelled "Team Rocket", and
+  the generator's refuse-to-name-an-unknown-set guard could never have caught it: **that guard fires
+  on a missing name, and a wrong one is present.** It changed no output at all — `SET_INFO` only
+  emits live sets, so `cards.js` came back byte-identical — which is exactly why it survived three
+  sets and a documentation pass, and why it would have surfaced for the first time on the day
+  somebody added a fourth. If you take one thing from this entry: a guard against *absence* is not a
+  guard against *error*, and I only caught it because a spreadsheet cited `base4-127` in a set I
+  believed had 82 cards. Follow the number that doesn't fit.
+
+  Also: `TOOLING.md` had said for a week that the theme-deck spreadsheet was lost with the Chat
+  sandbox and that `decks.json` could not be rebuilt from anything in the repo. It was in the
+  working tree the whole time — `data/Deck Lists/Base1 Decks.xlsx`, matching Brushfire entry for
+  entry. Nobody had looked locally, because the doc said not to bother. **A confident absence claim
+  stops the search that would disprove it**, which makes it worse than an unknown; it is the same
+  shape as the Packs Turn Log dying of a deleted pointer. With it came the two Jungle theme decks,
+  now corrected and validated into `data/jungle_decks.json` — the sheet had given Rhyhorn and Meowth
+  their own evolutions' ids, and uncorrected, Water Blast is an illegal deck the validator refuses.
