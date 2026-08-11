@@ -495,13 +495,85 @@ class Engine {
   // Every Base Set Power is switched off by Sleep, Confusion and Paralysis, so
   // the gate lives here rather than being restated on each card. A Power also
   // stops working if the Pokemon is having all effects prevented (Barrier).
-  powerUsable(slot) {
+  //
+  // Jungle and Fossil break the blanket gate in one direction and add a master
+  // switch above it, so it is now two steps:
+  //
+  //   powerActive()  the card's own condition — status, Barrier, and `always`
+  //                  for the handful of cards that print no status clause at
+  //                  all (Dodrio's Retreat Aid, Dragonite's Step In).
+  //   powerUsable()  that, AND not suppressed by somebody's Toxic Gas.
+  //
+  // Splitting them is what stops Toxic Gas asking whether Toxic Gas is on.
+  powerActive(slot) {
     const p = this.powerOf(slot);
     if (!p) return false;
     const st = slot.status;
-    if (st.asleep || st.confused || st.paralyzed) return false;
+    if (!p.always && (st.asleep || st.confused || st.paralyzed)) return false;
     if (this.effectsBlocked(slot)) return false;
     return true;
+  }
+
+  // Muk. "Ignore all Pokemon Powers other than Toxic Gases" — plural, so several
+  // Muks coexist and none switches the others off. Either side of the board, and
+  // from the Bench.
+  //
+  // CONSULTED, never materialised. Passive Powers are asked at the moment they
+  // matter rather than pushed into slot.effects when a card enters play, because
+  // this switch flips constantly — Muk falls asleep, is Knocked Out, retreats,
+  // or evolves out of a Grimer mid-turn — and a materialised copy of every
+  // passive in the game would have to be resynchronised on all of those. See
+  // ENGINE.md.
+  toxicGasActive() {
+    for (let i = 0; i < 2; i++) {
+      for (const sl of this.allSlots(i)) {
+        const p = this.powerOf(sl);
+        if (p && p.kind === 'TOXIC_GAS' && this.powerActive(sl)) return true;
+      }
+    }
+    return false;
+  }
+
+  powerUsable(slot) {
+    if (!this.powerActive(slot)) return false;
+    if (this.powerOf(slot).kind === 'TOXIC_GAS') return true;   // never itself
+    return !this.toxicGasActive();
+  }
+
+  // The switched-on Power of a given kind on this slot, or null. The one way
+  // anything should ask "does this Pokemon currently have X".
+  activePower(slot, kind) {
+    const p = this.powerOf(slot);
+    return (p && p.kind === kind && this.powerUsable(slot)) ? p : null;
+  }
+
+  // Aerodactyl. Applies to BOTH players — the card says "no more Evolution cards
+  // can be played", not "your opponent can't". Order of arrival decides an
+  // Aerodactyl/Muk standoff, and the reasoning is in RULINGS.md.
+  evolutionLocked() {
+    for (let i = 0; i < 2; i++) {
+      for (const sl of this.allSlots(i)) if (this.activePower(sl, 'NO_EVOLUTION')) return true;
+    }
+    return false;
+  }
+
+  // Dodrio. Bench-only, by the card's own wording, and it stacks.
+  retreatCostOf(slot) {
+    const base = topCard(this.db, slot).retreat;
+    let off = 0;
+    const owner = this.sideOf(slot);
+    if (owner !== null) {
+      for (const b of this.state.players[owner].bench) {
+        const p = this.activePower(b, 'RETREAT_DISCOUNT');
+        if (p) off += (p.n || 1);
+      }
+    }
+    return Math.max(0, base - off);
+  }
+
+  sideOf(slot) {
+    for (let i = 0; i < 2; i++) if (this.allSlots(i).indexOf(slot) >= 0) return i;
+    return null;
   }
 
   // Energy symbols a slot currently provides, honouring an ENERGY_AS override
@@ -715,6 +787,7 @@ class Engine {
 
   canEvolve(pi, slot, evoCard) {
     const s = this.state;
+    if (this.evolutionLocked()) return false;                          // Prehistoric Power
     if (topCard(this.db, slot).name !== evoCard.evolvesFrom) return false;
     if (slot.playedTurn >= s.turn) return false;                       // played this turn
     if (slot.evolvedTurn === s.turn) return false;                     // already evolved this turn
@@ -737,7 +810,7 @@ class Engine {
   canRetreat(slot) {
     if (this.playsAsPokemon(slot)) return false;          // "can't retreat", flatly
     if (slot.status.asleep || slot.status.paralyzed) return false;
-    return symbolCount(this.db, slot.energy) >= topCard(this.db, slot).retreat;
+    return symbolCount(this.db, slot.energy) >= this.retreatCostOf(slot);
   }
 
   canAttackAtAll(pi) {
@@ -944,7 +1017,7 @@ class Engine {
     if (!p.active) return this.fail('No Active Pokemon');
     if (!this.canRetreat(p.active)) return this.fail('Cannot retreat (status or insufficient Energy)');
     const b = p.bench[a.bench]; if (!b) return this.fail('No such benched Pokemon');
-    const cost = topCard(this.db, p.active).retreat;
+    const cost = this.retreatCostOf(p.active);
     let pay = a.pay;
     if (!pay) {
       pay = [];
@@ -1644,14 +1717,30 @@ class Engine {
     // prose for humans and would have to be parsed back into numbers.
     const stBefore = def ? Object.assign({}, def.status) : null;
 
-    const res = this.dealDamage(atk, def, base);
+    // Haunter. ONE coin for the whole attack, flipped before anything resolves,
+    // because the card is "whenever an attack does anything" rather than a
+    // per-instance shield. It lives here and not in computeDamage() for the same
+    // reason: computeDamage is pure and the AI forecasts with it, so a flip in
+    // there would consume RNG every time the bot thought about attacking.
+    //
+    // Only what is done TO Haunter is prevented. Recoil, bench splash and the
+    // attacker's own buffs are untouched, which falls out of `blocked` gating
+    // exactly the defender-targeting verbs and nothing else.
+    const veil = def ? this.activePower(def, 'FLIP_TO_NEGATE') : null;
+    let negated = false;
+    if (veil) {
+      negated = this.flip(`${veil.name}: prevent the attack?`);
+      if (negated) this.log(`${veil.name}: everything done to ${this.nameOf(def)} is prevented.`, 'eff');
+    }
+
+    const res = negated ? { dealt: 0, prevented: true } : this.dealDamage(atk, def, base);
     if (pendingRecoil > 0) {
       atk.dmg += pendingRecoil;
       this.log(`${card.name} does ${pendingRecoil} damage to itself. (${atk.dmg} total)`, 'eff');
     }
 
     // post-damage verbs
-    const blocked = this.effectsBlocked(def);
+    const blocked = negated || this.effectsBlocked(def);
     for (const v of script) {
       switch (v.v) {
         case 'STATUS':
@@ -1885,6 +1974,15 @@ class Engine {
       this.log(`${this.nameOf(slot)} can't be ${s}.`, 'eff');
       return;
     }
+    // Snorlax. Note the card's own joke, which is faithfully reproduced by the
+    // shared gate rather than special-cased: "can't be used if Snorlax is
+    // ALREADY Asleep, Confused, or Paralyzed" — so the Power that prevents
+    // those conditions stops working once one of them lands by another route.
+    const skin = this.activePower(slot, 'STATUS_IMMUNE');
+    if (skin) {
+      this.log(`${skin.name}: ${this.nameOf(slot)} can't be ${s}.`, 'eff');
+      return;
+    }
     if (s === 'Poisoned') { slot.status.poisoned = true; if (!slot.poisonDamage) slot.poisonDamage = 10; }
     else {
       slot.status.asleep = false; slot.status.paralyzed = false; slot.status.confused = false;
@@ -1931,14 +2029,33 @@ class Engine {
       }
       if (dmg < 0) dmg = 0;
     }
+    // Passive Powers that reshape incoming damage. CONSULTED here rather than
+    // living in defSlot.effects, so Muk switching them off is one question asked
+    // at the moment it matters instead of a cache to keep in step. Both are
+    // "after applying Weakness and Resistance" by their own text, which is why
+    // they sit below the W/R block and inside the same band as PlusPower and
+    // Defender. Deterministic on purpose: this function is PURE and the AI
+    // forecasts with it, so Haunter's coin lives in dealDamage instead.
+    if (dmg > 0) {
+      const halve = this.activePower(defSlot, 'DAMAGE_HALVE');
+      if (halve) {
+        dmg = Math.floor(dmg / 2 / 10) * 10;                 // "rounded DOWN to the nearest 10"
+        steps.push(`${halve.name}: halved to ${dmg}.`);
+      }
+    }
     let prevented = false;
     const absolute = defSlot.effects.find(e => e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS');
     const threshold = defSlot.effects.find(e => e.kind === 'PREVENT_UP_TO');
+    // Mr. Mime. The inverse of Harden: big hits bounce, small ones land.
+    const wall = this.activePower(defSlot, 'PREVENT_AT_LEAST');
     if (absolute) {
       if (dmg > 0) { steps.push(`All damage to ${D.name} is prevented.`); prevented = true; }
       dmg = 0;
     } else if (threshold && dmg > 0 && dmg <= threshold.threshold) {
       steps.push(`${D.name} is Hardened: ${dmg} damage (${threshold.threshold} or less) is prevented.`);
+      dmg = 0; prevented = true;
+    } else if (wall && dmg >= wall.n) {
+      steps.push(`${wall.name}: ${dmg} damage (${wall.n} or more) is prevented.`);
       dmg = 0; prevented = true;
     }
     return { dmg, prevented, steps };

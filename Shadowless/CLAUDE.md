@@ -29,7 +29,7 @@ of them unless you are working on that thing** — that is the point of the spli
 
 | File | Read it when |
 |---|---|
-| [ENGINE.md](ENGINE.md) | Adding or changing cards. The five systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`. Also: why full games never test any of it |
+| [ENGINE.md](ENGINE.md) | Adding or changing cards. The six systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, and the passive-Power layer. Also: why full games never test any of it |
 | [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap — and `tools/shot.js` |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
@@ -104,10 +104,10 @@ node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,b
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
-node tools/powertest.js                  # 91 tests for Powers, the bespoke cards and setup
+node tools/powertest.js                  # 102 tests for Powers, the bespoke cards and setup
 node tools/smoke.js shadowless.html      # 108 integration tests against the built file
 node tools/collectiontest.js             # 105 tests for the save file, decks and variants
-node tools/packtest.js                   # 44 tests, 200k packs (takes a count: `20000` is fast)
+node tools/packtest.js                   # 57 tests, 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 ```
 
@@ -221,13 +221,13 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
     guarantee settled — Jungle and Fossil print **no basic Energy at all**, so they get a stipend
     beside the pack rather than a floor inside it. See [PACKS.md](PACKS.md). Also the verb-reference
     refresh and the AI coverage check, which found eleven Base Set verbs the AI had never scored.
-  - **6b — the continuous-effects layer.** No cards. Jungle and Fossil add ~8 **passive** Powers to
-    a system that has one, two of them global: Muk's Toxic Gas switches every other Power off from
-    either side, and Aerodactyl's Prehistoric Power stops all evolution. **Passive Powers must be
-    consulted at `powerUsable`/`computeDamage`, never materialised into `slot.effects`** — Muk
-    turns them on and off transiently, and baking them in makes him a cache-invalidation problem
-    across evolution, KO, benching and his own status. Also: a per-card opt-out for the blanket
-    Asleep/Confused/Paralyzed gate, which Dodrio and Dragonite do not carry.
+  - **6b — the continuous-effects layer. DONE, 10 Aug 2026.** No cards. Seven passive Power kinds,
+    all **consulted rather than materialised** — `activePower(slot, kind)` is the one way to ask.
+    `powerUsable` split into `powerActive` (the card's own condition, plus `always` for cards
+    printing no status clause) and the Toxic Gas suppression above it. Deterministic passives sit
+    in `computeDamage`, so the AI sees them for free; Transparency's coin sits in `runAttack`,
+    because `computeDamage` is pure. Eleven tests against a synthetic database. See
+    [ENGINE.md](ENGINE.md).
   - **6c — the ~55 cards needing no new verb**, both sets at once, plus the alias table for the 31
     duplicate Rares. Alias rather than copy-paste: two Vileplume entries that drift apart is a bug
     nobody would ever find.

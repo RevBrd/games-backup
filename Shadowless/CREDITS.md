@@ -80,4 +80,8 @@ below is the worked example, and it is why this file exists at the size it does.
   `HOME_SET` replaced by a derived `homeSet()`, per-set pack buttons, and the Energy question
   settled as a **stipend beside the pack** for the sets printing none — with thirteen `packtest.js`
   cases written against a synthetic database, because base2 and base3 do not generate until 6c and a
-  test that only starts working later is a test nobody runs when the mechanism is written.
+  test that only starts working later is a test nobody runs when the mechanism is written. Then 6b,
+  the continuous-effects layer: seven passive Power kinds consulted rather than materialised, the
+  `powerActive`/`powerUsable` split that lets Toxic Gas suppress everything without suppressing
+  itself, Transparency's coin kept out of the pure forecaster, and `STATUS_IMMUNE` separated from
+  `blocked` after an early version quietly told the AI that Snorlax could not be dragged.

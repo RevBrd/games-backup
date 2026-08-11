@@ -210,8 +210,21 @@ class AI {
       expDmg += o.p * r.dmg;
       if (r.dmg >= hpLeft) pLethal += o.p;
     }
+    // Kabuto Armor and Invisible Wall need nothing here — they live inside
+    // computeDamage, which is the whole reason the bot can never predict a
+    // number the engine would not actually produce.
+    //
+    // Haunter's Transparency does, because its coin is deliberately NOT in
+    // computeDamage (that function is pure). Half the time the attack does
+    // nothing at all, so halve both the damage and the odds of the Knock Out.
+    if (E.activePower(defSlot, 'FLIP_TO_NEGATE')) { expDmg *= 0.5; pLethal *= 0.5; }
+
     const blocked = E.effectsBlocked(defSlot);
-    return { expDmg, pLethal, hpLeft, blocked, ...raw };
+    // Snorlax cannot be given a CONDITION — but it can still be Smokescreened,
+    // dragged, and stripped of Energy, so this is its own flag rather than
+    // reusing `blocked`, which suppresses all of those too.
+    const statusProof = !!E.activePower(defSlot, 'STATUS_IMMUNE');
+    return { expDmg, pLethal, hpLeft, blocked, statusProof, ...raw };
   }
 
   // ------------------------------------------------------------ attack score
@@ -229,7 +242,7 @@ class AI {
 
     // status conditions - suppressed entirely if they're behind a Barrier
     if (!f.blocked) {
-      for (const st in f.statuses) {
+      if (!f.statusProof) for (const st in f.statuses) {
         const key = STATUS_VALUE[st];
         if (key) s += f.statuses[st] * W[key];
       }

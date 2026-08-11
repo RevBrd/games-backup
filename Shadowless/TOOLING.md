@@ -80,7 +80,7 @@ anything done.
   every verb in `effects.js` must be scored by `ai.js` or sit on `UNSCORED_ON_PURPOSE`. That list is
   the deliverable — a verb on it is a decision, a verb missing from it is an oversight, and before
   this check the two were indistinguishable. See [ENGINE.md](ENGINE.md).
-- **`powertest.js`** (91 tests) builds boards by hand — no decks, no setup — fires a Power and
+- **`powertest.js`** (102 tests) builds boards by hand — no decks, no setup — fires a Power and
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
   Power working. See [ENGINE.md](ENGINE.md).
@@ -99,7 +99,7 @@ anything done.
   `localStorage` rather than skipping persistence**, because "does a save survive a round trip" is
   the whole point and testing everything except that would be testing the easy half. Its sharper
   cases are the failures — see [COLLECTION.md](COLLECTION.md).
-- **`packtest.js`** (44 tests) opens 200,000 packs against a fixed seed and checks every row of the
+- **`packtest.js`** (57 tests) opens 200,000 packs against a fixed seed and checks every row of the
   odds table in [PACKS.md](PACKS.md). Deterministic, so it cannot flake; the tolerances are sized to
   catch a wrong denominator, not to absorb noise. **It takes a count** — `node tools/packtest.js
   20000` is a fast pass while iterating. It also prints, without asserting, how many packs it takes

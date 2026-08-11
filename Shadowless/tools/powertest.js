@@ -1044,6 +1044,190 @@ T('setup: a taken-back Pokemon can be placed again and keeps nothing', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Passive Powers — the continuous-effects layer (Job 6b).
+//
+// Built against a SYNTHETIC database. Jungle and Fossil do not generate until
+// 6c, and the whole point of doing the machinery first is that it must be
+// provable before a single card depends on it. Each stand-in carries the exact
+// Power its real card will, so 6e swaps the id and deletes nothing.
+//
+// The thing under test is that these are CONSULTED rather than materialised:
+// every assertion below turns a Power on or off underneath a board that has
+// already been built, which a slot.effects cache would get wrong.
+// ---------------------------------------------------------------------------
+console.log('\nPassive Powers (6b)');
+
+const P_DB = Object.assign({}, CARD_DB);
+const P_FX = Object.assign({}, EFFECTS);
+{
+  const mon = (id, name, hp, type, extra = {}) => Object.assign({
+    id, name, set: 'test', num: id, rarity: 'Rare', kind: 'pokemon', stage: 'Basic',
+    hp, type, evolvesFrom: '', wkType: '', wkVal: '', rsType: '', rsVal: '',
+    retreat: 2, attacks: [{ name: 'Poke', cost: 'C', dmg: '10', text: '' }],
+  }, extra);
+  const add = (card, power) => { P_DB[card.id] = card; P_FX[card.id] = { a: [[]], p: power }; };
+
+  add(mon('t-mime',    'Mr. Mime',   40, 'P'), { kind: 'PREVENT_AT_LEAST', n: 30, name: 'Invisible Wall' });
+  add(mon('t-kabuto',  'Kabuto',     30, 'F'), { kind: 'DAMAGE_HALVE', name: 'Kabuto Armor' });
+  add(mon('t-haunter', 'Haunter',    60, 'P'), { kind: 'FLIP_TO_NEGATE', name: 'Transparency' });
+  add(mon('t-snorlax', 'Snorlax',    90, 'C'), { kind: 'STATUS_IMMUNE', name: 'Thick Skinned' });
+  add(mon('t-aero',    'Aerodactyl', 60, 'C'), { kind: 'NO_EVOLUTION', name: 'Prehistoric Power' });
+  add(mon('t-muk',     'Muk',        70, 'G'), { kind: 'TOXIC_GAS', name: 'Toxic Gas' });
+  add(mon('t-dodrio',  'Dodrio',     70, 'C'), { kind: 'RETREAT_DISCOUNT', n: 1, name: 'Retreat Aid', always: true });
+}
+
+// Same shape as board(), on the synthetic database. Player 0 is the attacker.
+function pboard(mine, oppActive = 'base1-58', oppBench = []) {
+  const E = new Engine(P_DB, P_FX, { seed: 1 });
+  E.newGame(DECKS.Brushfire, DECKS.Zap, ['A', 'B']);
+  const mk = id => E.mkSlot({ id, uid: E.uid++ });
+  const p = E.state.players[0], o = E.state.players[1];
+  p.active = mk(mine[0]); p.bench = mine.slice(1).map(mk);
+  o.active = mk(oppActive); o.bench = oppBench.map(mk);
+  const prize = () => ({ id: 'base1-99', uid: E.uid++ });
+  p.prizes = Array.from({ length: 6 }, prize);
+  o.prizes = Array.from({ length: 6 }, prize);
+  E.state.phase = 'main'; E.state.active = 0;
+  E.state.pendingPromote = null; E.state.turn = 3;
+  // Both sides have had a turn, or cfg.noEvolveFirstTurn refuses every evolution
+  // and the Prehistoric Power cases pass for entirely the wrong reason.
+  p.turnsTaken = 2; o.turnsTaken = 2;
+  [...E.allSlots(0), ...E.allSlots(1)].forEach(s => { s.playedTurn = 0; });
+  return E;
+}
+
+T('Invisible Wall bounces 30 or more and lets 20 through', () => {
+  const E = pboard(['base1-58'], 't-mime');
+  const [atk, def] = [E.state.players[0].active, E.state.players[1].active];
+  eq(E.computeDamage(atk, def, 20).dmg, 20, '20 lands');
+  eq(E.computeDamage(atk, def, 30).dmg, 0, '30 bounces');
+  eq(E.computeDamage(atk, def, 90).dmg, 0, '90 bounces');
+  eq(E.computeDamage(atk, def, 30).prevented, true, 'and reports itself prevented');
+  return true;
+});
+
+T('Kabuto Armor halves and rounds DOWN to the nearest 10', () => {
+  const E = pboard(['base1-58'], 't-kabuto');
+  const [atk, def] = [E.state.players[0].active, E.state.players[1].active];
+  eq(E.computeDamage(atk, def, 40).dmg, 20, '40 -> 20');
+  eq(E.computeDamage(atk, def, 30).dmg, 10, '30 -> 15 -> rounds DOWN to 10');
+  eq(E.computeDamage(atk, def, 10).dmg, 0, '10 -> 5 -> rounds down to nothing');
+  return true;
+});
+
+T('a Power switched off by Sleep stops protecting', () => {
+  const E = pboard(['base1-58'], 't-kabuto');
+  const [atk, def] = [E.state.players[0].active, E.state.players[1].active];
+  eq(E.computeDamage(atk, def, 40).dmg, 20, 'halved while awake');
+  def.status.asleep = true;
+  eq(E.computeDamage(atk, def, 40).dmg, 40, 'and full while asleep');
+  return true;
+});
+
+T('Thick Skinned refuses every condition, and Poison too', () => {
+  const E = pboard(['base1-58'], 't-snorlax');
+  const def = E.state.players[1].active;
+  for (const st of ['Asleep', 'Confused', 'Paralyzed', 'Poisoned']) E.applyStatus(def, st);
+  eq(Object.values(def.status).some(Boolean), false, 'nothing stuck');
+  return true;
+});
+
+T('Transparency is one coin for the whole attack, and only shields itself', () => {
+  const E = pboard(['base1-58'], 't-haunter', ['base1-58']);
+  const def = E.state.players[1].active, ob = E.state.players[1].bench[0];
+  E.flip = () => true;                                        // heads: negated
+  E.runAttack(0, E.state.players[0].active, def, top(E, E.state.players[0].active),
+    { name: 'Test', cost: 'C', dmg: '40' }, [{ v: 'STATUS', s: 'Poisoned' }], {});
+  eq(def.dmg, 0, 'no damage got through');
+  eq(def.status.poisoned, false, 'and no status either — "prevent all effects"');
+
+  const E2 = pboard(['base1-58'], 't-haunter');
+  const d2 = E2.state.players[1].active;
+  E2.flip = () => false;                                      // tails: it lands
+  E2.runAttack(0, E2.state.players[0].active, d2, top(E2, E2.state.players[0].active),
+    { name: 'Test', cost: 'C', dmg: '40' }, [{ v: 'STATUS', s: 'Poisoned' }], {});
+  eq(d2.dmg, 40, 'tails and the damage lands');
+  eq(d2.status.poisoned, true, 'and so does the status');
+  return true;
+});
+
+T('Prehistoric Power stops BOTH players evolving', () => {
+  const evo = Object.values(CARD_DB).find(c => c.kind === 'pokemon' && c.evolvesFrom === 'Charmander');
+  const base = Object.values(CARD_DB).find(c => c.name === 'Charmander');
+  const E = pboard([base.id], 'base1-58');
+  const mine = E.state.players[0].active;
+  eq(E.canEvolve(0, mine, evo), true, 'legal with no Aerodactyl');
+  E.state.players[1].active = E.mkSlot({ id: 't-aero', uid: E.uid++ });
+  E.state.players[1].active.playedTurn = 0;
+  eq(E.canEvolve(0, mine, evo), false, 'and refused once it is out, from the OTHER side of the board');
+  E.state.players[1].active.status.confused = true;
+  eq(E.canEvolve(0, mine, evo), true, 'Confused Aerodactyl stops stopping it');
+  return true;
+});
+
+T('Toxic Gas switches every other Power off, from the Bench, both sides', () => {
+  const E = pboard(['base1-58'], 't-kabuto');
+  const [atk, def] = [E.state.players[0].active, E.state.players[1].active];
+  eq(E.computeDamage(atk, def, 40).dmg, 20, 'Kabuto Armor working');
+  // A Muk on the ATTACKER's bench — the opposite side from the Power it kills.
+  E.state.players[0].bench.push(E.mkSlot({ id: 't-muk', uid: E.uid++ }));
+  eq(E.computeDamage(atk, def, 40).dmg, 40, 'and gone the moment Muk arrives');
+  E.state.players[0].bench[0].status.asleep = true;
+  eq(E.computeDamage(atk, def, 40).dmg, 20, 'a sleeping Muk suppresses nothing');
+  return true;
+});
+
+T('Toxic Gas never switches off another Toxic Gas', () => {
+  const E = pboard(['t-muk'], 't-muk');
+  eq(E.powerUsable(E.state.players[0].active), true, 'ours still on');
+  eq(E.powerUsable(E.state.players[1].active), true, 'and so is theirs');
+  eq(E.toxicGasActive(), true, 'the suppression itself is live');
+  return true;
+});
+
+T('Muk stops Aerodactyl, and Aerodactyl stops Muk arriving — order decides it', () => {
+  const evo = Object.values(CARD_DB).find(c => c.kind === 'pokemon' && c.evolvesFrom === 'Charmander');
+  const base = Object.values(CARD_DB).find(c => c.name === 'Charmander');
+  const E = pboard([base.id, 't-muk'], 't-aero');
+  eq(E.canEvolve(0, E.state.players[0].active, evo), true,
+    'a Muk already in play unlocks evolution again');
+  // And with no Muk, the lock holds — which is what keeps Grimer from ever
+  // becoming one. RULINGS.md.
+  const E2 = pboard([base.id], 't-aero');
+  eq(E2.canEvolve(0, E2.state.players[0].active, evo), false, 'no Muk, no evolution, no future Muk');
+  return true;
+});
+
+T('Retreat Aid discounts from the Bench, stacks, and ignores the status gate', () => {
+  const E = pboard(['base1-58']);
+  const act = E.state.players[0].active;
+  const printed = top(E, act).retreat;
+  eq(E.retreatCostOf(act), printed, 'printed cost with no Dodrio');
+  const d1 = E.mkSlot({ id: 't-dodrio', uid: E.uid++ });
+  const d2 = E.mkSlot({ id: 't-dodrio', uid: E.uid++ });
+  E.state.players[0].bench.push(d1, d2);
+  eq(E.retreatCostOf(act), Math.max(0, printed - 2), 'two Dodrio, two off');
+  d1.status.asleep = true;
+  eq(E.retreatCostOf(act), Math.max(0, printed - 2), 'and `always` means Sleep does not switch it off');
+  E.state.players[0].bench.push(E.mkSlot({ id: 't-muk', uid: E.uid++ }));
+  eq(E.retreatCostOf(act), printed, 'but Toxic Gas does');
+  return true;
+});
+
+T('the AI halves its forecast against Transparency and stops paying for status against Snorlax', () => {
+  const plain = pboard(['base1-58'], 'base1-58');
+  const veiled = pboard(['base1-58'], 't-haunter');
+  const proof = pboard(['base1-58'], 't-snorlax');
+  const fc = E => { E.aiChoose(0, 'expert'); return E._ai.forecast(0, 1); };  // Thunder Jolt, 30
+  const a = fc(plain), b = fc(veiled), c = fc(proof);
+  if (!(b.expDmg < a.expDmg)) throw new Error(`Transparency ignored: ${b.expDmg} vs ${a.expDmg}`);
+  eq(c.statusProof, true, 'Snorlax is flagged status-proof');
+  eq(b.statusProof, false, 'and Haunter is not');
+  eq(c.blocked, false, 'status-proof is NOT the same as blocked — drag and jam still work on it');
+  return true;
+});
+
+// ---------------------------------------------------------------------------
 // AI verb scoring (Job 6a).
 //
 // Eleven verbs were reaching ai.js with no case and scoring as plain base

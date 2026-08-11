@@ -132,6 +132,35 @@
 //                            `targetType`. Does NOT consume the turn's one
 //                            Energy attachment.
 //
+//   PASSIVE POWERS (Job 6b). Nothing fires these — they are CONSULTED at the
+//   moment they matter, via engine.activePower(slot, kind). Never push one into
+//   slot.effects: Toxic Gas switches every one of them on and off from either
+//   side of the board, and a materialised copy would need resynchronising on
+//   evolution, Knock Out, retreat and status. See ENGINE.md.
+//
+//     DAMAGE_HALVE           incoming damage is halved, rounded DOWN to the
+//                            nearest 10, after Weakness and Resistance.
+//                            (Kabuto Armor)
+//     PREVENT_AT_LEAST {n}   incoming damage of n or MORE is prevented entirely.
+//                            The inverse of HARDEN: big hits bounce, small ones
+//                            land. (Invisible Wall)
+//     FLIP_TO_NEGATE         one coin for the whole attack; heads prevents
+//                            everything done to this Pokemon. Damage aimed
+//                            elsewhere, and the attacker's own recoil, still
+//                            happen. (Transparency)
+//     STATUS_IMMUNE          cannot be given a Special Condition. (Thick Skinned)
+//     NO_EVOLUTION           NEITHER player may play an Evolution card.
+//                            (Prehistoric Power)
+//     TOXIC_GAS              every Power except other Toxic Gases is switched
+//                            off, both sides, from anywhere. (Muk)
+//     RETREAT_DISCOUNT {n}   while BENCHED, this side's retreat costs n less.
+//                            Stacks. (Retreat Aid)
+//
+//   `always: true` on a Power means the card prints no "can't be used if Asleep,
+//   Confused or Paralyzed" clause and the blanket gate must not apply — Dodrio
+//   and Dragonite. Every Base Set Power carries the clause; do not add `always`
+//   without checking the printed text.
+//
 //   "1 <Type> Energy card" means a BASIC one. Double Colorless is excluded by
 //   type anyway, but Rainbow Energy later on would not be, so the check is on
 //   cls === 'Basic' rather than on the type alone.

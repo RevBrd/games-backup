@@ -87,6 +87,12 @@ const PACKS_PER_WIN = 2;      // PACKS.md's yardstick, and now the real rule
 // what eventually replaces it. It is deliberately not a constant named after
 // Base Set: that constant was threaded through nine call sites and every one of
 // them had to be found again to widen the game.
+// What retreating this Pokemon ACTUALLY costs right now. Dodrio's Retreat Aid
+// discounts it from the Bench, so the printed number on the card face and the
+// number the player is about to pay are two different things — the card preview
+// keeps the printed one, every actionable surface uses this.
+const retreatCost = (slot, card) =>
+  (UI.E && slot) ? UI.E.retreatCostOf(slot) : (card ? card.retreat : 0);
 const setName = code => (SET_INFO[code] || {}).name || code;
 const setShort = code => (SET_INFO[code] || {}).short || code;
 const homeSet = () => Object.keys(SET_INFO)[0];
@@ -1079,7 +1085,7 @@ function renderSlot(slot, pi, where, idx) {
   bar.appendChild(fill); info.appendChild(bar);
 
   const en = energyPips(slot, 'full');
-  en.appendChild(el('span', 'retreatnote', 'retreat ' + c.retreat));
+  en.appendChild(el('span', 'retreatnote', 'retreat ' + retreatCost(slot, c)));
   info.appendChild(en);
 
   // Always appended, even empty. The status row is what made the Active card
@@ -1162,7 +1168,7 @@ function retreatRow(slot, c) {
     const why = p.retreated ? 'Already retreated this turn'
       : slot.status.asleep ? 'Asleep — cannot retreat'
       : slot.status.paralyzed ? 'Paralyzed — cannot retreat'
-      : `Needs ${c.retreat} Energy to retreat`;
+      : `Needs ${retreatCost(slot, c)} Energy to retreat`;
     return el('div', 'retreatrow off', why);
   }
 
@@ -1179,7 +1185,8 @@ function retreatRow(slot, c) {
     return row;
   }
   row.appendChild(el('span', 'rr-lbl', 'Retreat'));
-  row.appendChild(el('span', 'rr-cost', c.retreat ? `discard ${c.retreat} Energy` : 'free'));
+  const rc = retreatCost(slot, c);
+  row.appendChild(el('span', 'rr-cost', rc ? `discard ${rc} Energy` : 'free'));
   row.onclick = () => {
     UI.retreatArmed = true;
     UI.targeting = { scope: 'ownBench', prompt: `Retreating ${c.name} — choose a Benched Pokemon to bring up`,
