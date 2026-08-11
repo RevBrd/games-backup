@@ -1344,5 +1344,103 @@ T('the AI refuses Earthquake when it would wipe its own bench', () => {
   return true;
 });
 
+// ---------------------------------------------------------------------------
+// Job 6d — the verbs whose semantics are easy to get subtly wrong.
+// ---------------------------------------------------------------------------
+console.log('\nJob 6d verbs');
+
+// Fire an attack directly, so the test controls the coin instead of the deck.
+function fire(E, idx, heads) {
+  const me = E.state.players[0], you = E.state.players[1];
+  E.flip = () => heads;
+  const card = top(E, me.active);
+  const scr = (EFFECTS[card.id] && EFFECTS[card.id].a && EFFECTS[card.id].a[idx]) || [];
+  return E.runAttack(0, me.active, you.active, card, card.attacks[idx], scr, {});
+}
+
+T('Clamp is ONE coin governing damage and Paralysis together', () => {
+  const heads = board('base3-32', [], 'base1-3');            // Cloyster vs Chansey
+  fire(heads, 0, true);
+  eq(heads.state.players[1].active.dmg, 30, 'heads: the damage lands');
+  eq(heads.state.players[1].active.status.paralyzed, true, 'and so does the Paralysis');
+
+  const tails = board('base3-32', [], 'base1-3');
+  fire(tails, 0, false);
+  eq(tails.state.players[1].active.dmg, 0, 'tails: NOT EVEN DAMAGE, as the card says');
+  eq(tails.state.players[1].active.status.paralyzed, false, 'and no Paralysis either');
+  return true;
+});
+
+T('Swords Dance raises Slash next turn, and only Slash', () => {
+  const E = board('base2-10', [], 'base1-3');                 // Scyther vs Chansey 120
+  fire(E, 0, true);                                           // Swords Dance
+  E.state.turn += 2;                                          // our next turn
+  fire(E, 1, true);                                           // Slash
+  eq(E.state.players[1].active.dmg, 60, 'Slash does 60, not its printed 30');
+
+  const plain = board('base2-10', [], 'base1-3');
+  fire(plain, 1, true);
+  eq(plain.state.players[1].active.dmg, 30, 'and 30 with no Swords Dance');
+  return true;
+});
+
+T('Tail Wag stops every attack, but only against Eevee', () => {
+  const E = board('base2-51', [], 'base1-3');                 // Eevee vs Chansey
+  fire(E, 0, true);                                           // Tail Wag, heads
+  const chansey = E.state.players[1].active;
+  eq(chansey.effects.some(e => e.kind === 'CANT_ATTACK'), true, 'the lock landed');
+  // Chansey must be ABLE to attack for any of this to mean anything. Without
+  // Energy, canUseAttack refuses on cost and every assertion below passes for
+  // entirely the wrong reason — which is what the first version of this test did.
+  attach(E, chansey, 'base1-99', 4);
+  E.state.active = 1;
+  eq(E.costSatisfied(chansey, 'CCCC'), true, 'and it can actually pay for one');
+  eq(E.canUseAttack(1, 0).ok, false, 'Chansey cannot attack Eevee');
+  eq(E.canUseAttack(1, 1).ok, false, 'and not with its other attack either');
+  // Swapping Eevee out ends it, which is the card's "benching either" clause.
+  E.state.players[0].active = E.mkSlot({ id: 'base1-58', uid: E.uid++ });
+  eq(E.canUseAttack(1, 0).ok, true, 'and a different Active is fair game');
+  return true;
+});
+
+T('Pounce reduces damage from that defender and nobody else', () => {
+  const E = board('base2-42', [], 'base1-3');                 // Persian vs Chansey
+  fire(E, 1, true);                                           // Pounce
+  const persian = E.state.players[0].active, chansey = E.state.players[1].active;
+  eq(E.computeDamage(chansey, persian, 50).dmg, 40, 'Chansey hits for 10 less');
+  const other = E.mkSlot({ id: 'base1-58', uid: E.uid++ });
+  eq(E.computeDamage(other, persian, 50).dmg, 50, 'anything else hits for full');
+  return true;
+});
+
+T('Chain Lightning does nothing at all against a Colorless defender', () => {
+  // Chansey is Colorless, so the card stops there by its own clause.
+  const none = board('base2-2', [], 'base1-3');
+  none.state.players[1].bench = [none.mkSlot({ id: 'base1-58', uid: none.uid++ })];
+  fire(none, 1, true);
+  eq(none.state.players[1].bench[0].dmg, 0, 'no Bench damage against Colorless');
+  eq(none.state.players[1].active.dmg, 20, 'but the attack itself still lands');
+
+  // Pikachu is Lightning, so every Lightning on either Bench takes 10.
+  const hit = board('base2-2', ['base1-58'], 'base1-58');
+  hit.state.players[1].bench = [hit.mkSlot({ id: 'base1-58', uid: hit.uid++ }),
+                                hit.mkSlot({ id: 'base1-3', uid: hit.uid++ })];
+  fire(hit, 1, true);
+  eq(hit.state.players[1].bench[0].dmg, 10, 'their Lightning Bench takes it');
+  eq(hit.state.players[1].bench[1].dmg, 0, 'their Colorless Bench does not');
+  eq(hit.state.players[0].bench[0].dmg, 10, 'and so does OUR own Lightning Bench');
+  return true;
+});
+
+T('Headache stops the opponent playing Trainers, for one turn', () => {
+  const E = board('base3-53', [], 'base1-3');                 // Psyduck
+  fire(E, 0, true);                                           // Headache
+  eq(E.trainersLocked(1), true, 'locked now');
+  eq(E.trainersLocked(0), false, 'and only on their side');
+  E.state.turn += 2;
+  eq(E.trainersLocked(1), false, 'and it expires');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

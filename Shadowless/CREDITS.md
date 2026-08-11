@@ -89,6 +89,11 @@ below is the worked example, and it is why this file exists at the size it does.
   Base Set (including a pacing measurement that went from 0.8s to 6m17s chasing cards it could never
   pull), built the 31-entry alias table with a test proving it in both directions, and wrote the
   first 34 card scripts — six of which are one-line Power declarations only because 6b existed.
+  Then 6d across two passes: 24 new verbs and the 43 cards they unlock, taking Jungle to 52/64 and
+  Fossil to 42/62. Cloyster turned out to need nothing new at all — FLIP_OR_NOTHING already returns
+  before the post-damage loop, so a plain STATUS beside it is governed by that same coin. Also
+  caught a test of its own that was passing for the wrong reason: Chansey had no Energy, so
+  canUseAttack was refusing on cost rather than on the attack lock being tested.
 - **Sonnet 4.6** (10 Aug 2026) — Job 7 groundwork: researched and built `data/gbc_decks.json`, the
   GBC opponent deck reference. All 16 decks from the first Game Boy Color game — eight Club Masters,
   four Grand Masters, and Ronald's four escalating rival decks — sourced from Bulbapedia character

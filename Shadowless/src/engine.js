@@ -441,6 +441,7 @@ class Engine {
         this.allSlots(pi).forEach(sl => acts.push({ t: 'attachEnergy', hand: i, target: sl.uid, label: `Attach ${c.name} to ${this.nameOf(sl)}` }));
       }
       if (c.kind === 'trainer' && c.playsAs !== 'pokemon'
+          && !this.trainersLocked(pi)
           && p.trainersPlayed < this.cfg.trainersPerTurn && this.trainerPlayable(pi, inst))
         acts.push({ t: 'playTrainer', hand: i, label: `Play ${c.name}` });
     });
@@ -545,6 +546,13 @@ class Engine {
   activePower(slot, kind) {
     const p = this.powerOf(slot);
     return (p && p.kind === kind && this.powerUsable(slot)) ? p : null;
+  }
+
+  // Psyduck's Headache. The first PLAYER-scoped continuous effect in the game —
+  // everything else so far attaches to a Pokemon.
+  trainersLocked(pi) {
+    const p = this.state.players[pi];
+    return !!p.noTrainersUntil && this.state.turn < p.noTrainersUntil;
   }
 
   // Aerodactyl. Applies to BOTH players — the card says "no more Evolution cards
@@ -810,6 +818,7 @@ class Engine {
   canRetreat(slot) {
     if (this.playsAsPokemon(slot)) return false;          // "can't retreat", flatly
     if (slot.status.asleep || slot.status.paralyzed) return false;
+    if (slot.effects.some(e => e.kind === 'CANT_RETREAT')) return false;   // Victreebel's Acid
     return symbolCount(this.db, slot.energy) >= this.retreatCostOf(slot);
   }
 
@@ -848,6 +857,14 @@ class Engine {
       return { ok: false, why: 'Already used while this Pokemon has been in play' };
     const locked = p.active.effects.find(e => e.kind === 'ATTACK_DISABLED' && e.idx === idx);
     if (locked) return { ok: false, why: `${a.name} is disabled this turn` };
+    // Tail Wag, Leer. Blocks EVERY attack, and only against the Pokemon that
+    // used it — "benching either Pokemon ends this effect", which falls out of
+    // the uid no longer being the Active one.
+    const cant = p.active.effects.find(e => e.kind === 'CANT_ATTACK');
+    if (cant) {
+      const foe = this.state.players[1 - pi].active;
+      if (foe && foe.uid === cant.fromUid) return { ok: false, why: `Can't attack ${this.nameOf(foe)} this turn` };
+    }
     for (const v of script) {
       if (v.v === 'COST_DISCARD_ENERGY') {
         // No `t` means any Energy card will do (Charizard's Fire Spin discards 2
@@ -1126,6 +1143,7 @@ class Engine {
     const inst = p.hand[a.hand]; if (!inst) return this.fail('No such card');
     const c = this.db[inst.id];
     if (c.kind !== 'trainer') return this.fail('Not a Trainer card');
+    if (this.trainersLocked(pi)) return this.fail('Trainer cards cannot be played this turn');
     if (p.trainersPlayed >= this.cfg.trainersPerTurn) return this.fail('Trainer limit reached this turn');
     const script = (this.effects[inst.id] && this.effects[inst.id].t);
     if (!script) return this.fail(`${c.name} is not implemented`);
@@ -1660,6 +1678,13 @@ class Engine {
 
     // base damage / damage-shaping verbs
     let base = parseDamage(attack.dmg);
+    // Scyther's Swords Dance armed this attack last turn. Read before anything
+    // else shapes it, so a later verb still overrides in the normal way.
+    const buff = atk.effects.find(e => e.kind === 'ATTACK_BUFF' && e.name === attack.name);
+    if (buff) {
+      base = buff.base;
+      this.log(`${buff.label || 'A buff'} raises ${attack.name} to ${base}.`, 'eff');
+    }
     let nothing = false;
     let pendingRecoil = 0;
     for (const v of script) {
@@ -1712,6 +1737,24 @@ class Engine {
         const c2 = Math.floor(atk.dmg / 10);
         base = Math.max(0, v.base - v.per * c2);
         this.log(`${v.base} minus ${v.per} per counter (${c2}) -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_HEAD_UNTIL_TAILS') {
+        // Geodude's Stone Barrage. Unbounded in principle; capped at 20 flips so
+        // a pathological seed cannot hang a turn, which is far beyond any
+        // reachable outcome (1 in a million past 20).
+        let h2 = 0;
+        while (h2 < 20 && this.flip(`Stone Barrage ${h2 + 1}`)) h2++;
+        base = v.per * h2;
+        this.log(`${h2} head(s) before tails -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_ENERGY_HEADS') {
+        // Big Eggsplosion: one coin per Energy ATTACHED, not per Energy paid.
+        const n6 = atk.energy.length;
+        let h3 = 0;
+        for (let i = 0; i < n6; i++) if (this.flip(`coin ${i + 1}/${n6}`)) h3++;
+        base = v.per * h3;
+        this.log(`${h3} of ${n6} heads -> ${base} damage.`);
+      } else if (v.v === 'BUFF_OWN_ATTACK') {
+        // Swords Dance does no damage itself; it arms the NEXT turn's Slash.
+        // Handled below as a lasting effect, so nothing to shape here.
       } else if (v.v === 'DMG_PER_OWN_BENCH') {
         // Wigglytuff's Do the Wave. A Clefairy Doll on the Bench DOES count —
         // it is a Pokemon while in play. Settled with Trevor, see RULINGS.md.
@@ -1895,6 +1938,107 @@ class Engine {
         // both cards printing it say; the plain version removes the damage dealt.
         // Capped at what is actually on the Pokemon, which is the "if it has
         // fewer damage counters than that, remove all of them" clause.
+        case 'WHIRLWIND_ON_FLIP':
+          // Arbok's Terror Strike. The damage lands either way; only the switch
+          // is on the coin.
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (this.flip(v.label || 'force a switch?')) {
+            if (!you.bench.length) this.log(`${you.name} has no Benched Pokemon to switch to.`, 'eff');
+            else { s.pendingSwitch = 1 - pi; this.log(`${you.name} must choose a Benched Pokemon to switch in.`, 'eff'); }
+          }
+          break;
+        case 'DAMAGE_REDUCTION_SELF':
+          atk.effects.push({ kind: 'DAMAGE_REDUCTION', amount: v.n, label: v.label || 'Minimize',
+                             expireAtStartOfTurn: s.turn + 2 });
+          this.log(`Damage to ${card.name} is reduced by ${v.n} during the opponent's next turn.`, 'eff');
+          break;
+        case 'DAMAGE_REDUCTION_FROM':
+          // Pounce, Snivel. Only from THIS defender — `fromUid` is what
+          // computeDamage checks, and it doubles as the "benching either Pokemon
+          // ends this effect" clause, since a benched attacker stops being the
+          // Active one whose uid it names.
+          if (!def) break;
+          atk.effects.push({ kind: 'DAMAGE_REDUCTION', amount: v.n, fromUid: def.uid,
+                             label: v.label || 'a flinch', expireAtStartOfTurn: s.turn + 2 });
+          this.log(`Damage from ${this.nameOf(def)} is reduced by ${v.n} next turn.`, 'eff');
+          break;
+        case 'CANT_ATTACK_ON_FLIP':
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (!def) break;
+          if (this.flip(v.label || 'stop them attacking?')) {
+            def.effects.push({ kind: 'CANT_ATTACK', fromUid: atk.uid, label: v.label || 'Tail Wag',
+                               expireAtStartOfTurn: s.turn + 2 });
+            this.log(`${this.nameOf(def)} can't attack ${card.name} during the opponent's next turn.`, 'eff');
+          }
+          break;
+        case 'CANT_RETREAT_ON_FLIP':
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (!def) break;
+          if (this.flip(v.label || 'stop them retreating?')) {
+            def.effects.push({ kind: 'CANT_RETREAT', label: v.label || 'Acid',
+                               expireAtStartOfTurn: s.turn + 2 });
+            this.log(`${this.nameOf(def)} can't retreat during the opponent's next turn.`, 'eff');
+          }
+          break;
+        case 'BENCH_SPLASH_FLIP_SIDE': {
+          // Articuno's Blizzard. One coin decides WHOSE bench takes it.
+          const mineSide = !this.flip(v.label || 'their bench?');
+          const side = mineSide ? me.bench : you.bench;
+          for (const b of side) this.dealDamage(atk, b, v.n, { noWR: true });
+          this.log(`${v.n} to each of ${(mineSide ? me : you).name}'s Benched Pokemon.`, 'eff');
+          break;
+        }
+        case 'BENCH_SPLASH_PER_FLIP': {
+          // Zapdos' Thunderstorm. A coin per benched Pokemon, then self-damage
+          // for every tail — so a wide opposing bench is a real risk to take.
+          let tails = 0;
+          for (const b of you.bench) {
+            if (this.flip(`hit ${this.nameOf(b)}?`)) this.dealDamage(atk, b, v.dmg, { noWR: true });
+            else tails++;
+          }
+          if (tails > 0) {
+            atk.dmg += tails * v.selfPerTail;
+            this.log(`${tails} tail(s): ${card.name} takes ${tails * v.selfPerTail}. (${atk.dmg} total)`, 'eff');
+          }
+          break;
+        }
+        case 'BENCH_SPLASH_TYPED': {
+          // Electrode's Chain Lightning. Nothing happens at all against a
+          // Colorless defender, which is the card's own clause and not a guard.
+          if (!def) break;
+          const dt = topCard(this.db, def).type;
+          if (!dt || dt === 'C') { this.log('The Defending Pokemon is Colorless - Chain Lightning stops there.', 'eff'); break; }
+          for (let pi2 = 0; pi2 < 2; pi2++) {
+            for (const b of s.players[pi2].bench) {
+              if (topCard(this.db, b).type === dt) this.dealDamage(atk, b, v.n, { noWR: true });
+            }
+          }
+          this.log(`${v.n} to every Benched ${dt} Pokemon on both sides.`, 'eff');
+          break;
+        }
+        case 'SWITCH_SELF_CHOOSE': {
+          // Exeggutor's Teleport. A free switch the ATTACKER chooses, with no
+          // retreat cost and no Energy paid.
+          if (!me.bench.length) { this.log('No Benched Pokemon to switch with.', 'eff'); break; }
+          const bi2 = (a && a.opts && a.opts.bench !== undefined) ? a.opts.bench : this.pick(me.bench.length);
+          const b2 = me.bench[bi2];
+          if (b2) {
+            const old2 = me.active;
+            clearStatus(old2);
+            me.active = b2; me.bench.splice(bi2, 1); me.bench.push(old2);
+            this.log(`${card.name} switches out for ${this.nameOf(b2)}.`, 'eff');
+          }
+          break;
+        }
+        case 'NO_TRAINERS_NEXT_TURN':
+          you.noTrainersUntil = s.turn + 2;
+          this.log(`${you.name} can't play Trainer cards during their next turn.`, 'eff');
+          break;
+        case 'BUFF_OWN_ATTACK':
+          atk.effects.push({ kind: 'ATTACK_BUFF', name: v.attack, base: v.base,
+                             label: v.label || 'Swords Dance', expireAtStartOfTurn: s.turn + 2 });
+          this.log(`${card.name}'s ${v.attack} does ${v.base} during your next turn.`, 'eff');
+          break;
         case 'HEAL_SELF_EQUAL_DAMAGE': {
           const dealt = res.dealt || 0;
           if (dealt > 0 && atk.dmg > 0) {
@@ -2098,6 +2242,10 @@ class Engine {
     if (dmg > 0) {
       for (const e of defSlot.effects) {
         if (e.kind === 'DAMAGE_REDUCTION') {
+          // Pounce and Snivel reduce damage only from the Pokemon that used
+          // them; Minimize and Defender reduce it from anything. `fromUid` is
+          // what tells them apart.
+          if (e.fromUid !== undefined && (!atkSlot || atkSlot.uid !== e.fromUid)) continue;
           dmg -= e.amount;
           steps.push(`-${e.amount} from ${e.label || 'a shield'} -> ${Math.max(0, dmg)}.`);
         }

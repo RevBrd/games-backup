@@ -752,6 +752,75 @@ const EFFECTS = {
     [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Supersonic
     [{ v: 'HEAL_SELF_EQUAL_DAMAGE' }],                 //   Leech Life
   ]},
+
+  // ============================================================================
+  // JOB 6d, second batch — lasting effects, restrictions and bench geometry.
+  // ============================================================================
+
+  'base2-1': { a: [                                    // Clefable
+    [{ v: 'METRONOME' }],                              //   Metronome
+    [{ v: 'DAMAGE_REDUCTION_SELF', n: 20, label: 'Minimize' }],
+  ]},
+  'base2-2': { a: [                                    // Electrode
+    [],                                                //   Tackle
+    [{ v: 'BENCH_SPLASH_TYPED', n: 10 }],              //   Chain Lightning
+  ]},
+  'base2-10': { a: [                                   // Scyther
+    [{ v: 'BUFF_OWN_ATTACK', attack: 'Slash', base: 60, label: 'Swords Dance' }],
+    [],                                                //   Slash
+  ]},
+  'base2-14': { a: [                                   // Victreebel
+    [{ v: 'SWITCH_DEFENDER_CHOOSE' }],                 //   Lure
+    [{ v: 'CANT_RETREAT_ON_FLIP', label: 'Acid' }],    //   Acid
+  ]},
+  'base2-35': { a: [                                   // Exeggutor
+    [{ v: 'SWITCH_SELF_CHOOSE' }],                     //   Teleport
+    [{ v: 'DMG_PER_ENERGY_HEADS', per: 20 }],          //   Big Eggsplosion
+  ]},
+  'base2-42': { a: [                                   // Persian
+    [],                                                //   Scratch
+    [{ v: 'DAMAGE_REDUCTION_FROM', n: 10, label: 'Pounce' }],
+  ]},
+  'base2-50': { a: [                                   // Cubone
+    [{ v: 'DAMAGE_REDUCTION_FROM', n: 20, label: 'Snivel' }],
+    [{ v: 'DMG_PER_COUNTER_SELF', base: 10, per: 10 }],   // Rage
+  ]},
+  'base2-51': { a: [                                   // Eevee
+    [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Tail Wag' }],
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Quick Attack' }],
+  ]},
+  'base2-61': { a: [                                   // Rhyhorn
+    [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Leer' }],     //   Leer
+    [],                                                //   Horn Attack
+  ]},
+
+  'base3-2': { a: [                                    // Articuno
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Freeze Dry
+    [{ v: 'BENCH_SPLASH_FLIP_SIDE', n: 10, label: 'Blizzard' }],
+  ]},
+  'base3-15': { a: [                                   // Zapdos
+    [{ v: 'BENCH_SPLASH_PER_FLIP', dmg: 20, selfPerTail: 10 }],   // Thunderstorm
+  ]},
+  'base3-31': { a: [                                   // Arbok
+    [{ v: 'WHIRLWIND_ON_FLIP', label: 'Terror Strike' }],
+    [{ v: 'STATUS', s: 'Poisoned' }],                  //   Poison Fang
+  ]},
+  // Cloyster's Clamp needed nothing new: FLIP_OR_NOTHING returns before the
+  // post-damage loop runs, so the plain STATUS beside it is governed by that
+  // same coin instead of flipping a second one. "Not even damage" falls out too.
+  'base3-32': { a: [
+    [{ v: 'FLIP_OR_NOTHING' }, { v: 'STATUS', s: 'Paralyzed' }],   // Clamp
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 30 }],        //   Spike Cannon
+  ]},
+  'base3-47': { a: [ [{ v: 'DMG_PER_HEAD_UNTIL_TAILS', per: 10 }] ]},   // Geodude
+  'base3-48': { a: [                                   // Grimer
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Nasty Goo
+    [{ v: 'DAMAGE_REDUCTION_SELF', n: 20, label: 'Minimize' }],
+  ]},
+  'base3-53': { a: [                                   // Psyduck
+    [{ v: 'NO_TRAINERS_NEXT_TURN' }],                  //   Headache
+    [{ v: 'DMG_PER_HEAD', coins: 3, per: 10 }],        //   Fury Swipes
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --

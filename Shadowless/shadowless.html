@@ -2413,6 +2413,75 @@ const EFFECTS = {
     [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Supersonic
     [{ v: 'HEAL_SELF_EQUAL_DAMAGE' }],                 //   Leech Life
   ]},
+
+  // ============================================================================
+  // JOB 6d, second batch — lasting effects, restrictions and bench geometry.
+  // ============================================================================
+
+  'base2-1': { a: [                                    // Clefable
+    [{ v: 'METRONOME' }],                              //   Metronome
+    [{ v: 'DAMAGE_REDUCTION_SELF', n: 20, label: 'Minimize' }],
+  ]},
+  'base2-2': { a: [                                    // Electrode
+    [],                                                //   Tackle
+    [{ v: 'BENCH_SPLASH_TYPED', n: 10 }],              //   Chain Lightning
+  ]},
+  'base2-10': { a: [                                   // Scyther
+    [{ v: 'BUFF_OWN_ATTACK', attack: 'Slash', base: 60, label: 'Swords Dance' }],
+    [],                                                //   Slash
+  ]},
+  'base2-14': { a: [                                   // Victreebel
+    [{ v: 'SWITCH_DEFENDER_CHOOSE' }],                 //   Lure
+    [{ v: 'CANT_RETREAT_ON_FLIP', label: 'Acid' }],    //   Acid
+  ]},
+  'base2-35': { a: [                                   // Exeggutor
+    [{ v: 'SWITCH_SELF_CHOOSE' }],                     //   Teleport
+    [{ v: 'DMG_PER_ENERGY_HEADS', per: 20 }],          //   Big Eggsplosion
+  ]},
+  'base2-42': { a: [                                   // Persian
+    [],                                                //   Scratch
+    [{ v: 'DAMAGE_REDUCTION_FROM', n: 10, label: 'Pounce' }],
+  ]},
+  'base2-50': { a: [                                   // Cubone
+    [{ v: 'DAMAGE_REDUCTION_FROM', n: 20, label: 'Snivel' }],
+    [{ v: 'DMG_PER_COUNTER_SELF', base: 10, per: 10 }],   // Rage
+  ]},
+  'base2-51': { a: [                                   // Eevee
+    [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Tail Wag' }],
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Quick Attack' }],
+  ]},
+  'base2-61': { a: [                                   // Rhyhorn
+    [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Leer' }],     //   Leer
+    [],                                                //   Horn Attack
+  ]},
+
+  'base3-2': { a: [                                    // Articuno
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Freeze Dry
+    [{ v: 'BENCH_SPLASH_FLIP_SIDE', n: 10, label: 'Blizzard' }],
+  ]},
+  'base3-15': { a: [                                   // Zapdos
+    [{ v: 'BENCH_SPLASH_PER_FLIP', dmg: 20, selfPerTail: 10 }],   // Thunderstorm
+  ]},
+  'base3-31': { a: [                                   // Arbok
+    [{ v: 'WHIRLWIND_ON_FLIP', label: 'Terror Strike' }],
+    [{ v: 'STATUS', s: 'Poisoned' }],                  //   Poison Fang
+  ]},
+  // Cloyster's Clamp needed nothing new: FLIP_OR_NOTHING returns before the
+  // post-damage loop runs, so the plain STATUS beside it is governed by that
+  // same coin instead of flipping a second one. "Not even damage" falls out too.
+  'base3-32': { a: [
+    [{ v: 'FLIP_OR_NOTHING' }, { v: 'STATUS', s: 'Paralyzed' }],   // Clamp
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 30 }],        //   Spike Cannon
+  ]},
+  'base3-47': { a: [ [{ v: 'DMG_PER_HEAD_UNTIL_TAILS', per: 10 }] ]},   // Geodude
+  'base3-48': { a: [                                   // Grimer
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Nasty Goo
+    [{ v: 'DAMAGE_REDUCTION_SELF', n: 20, label: 'Minimize' }],
+  ]},
+  'base3-53': { a: [                                   // Psyduck
+    [{ v: 'NO_TRAINERS_NEXT_TURN' }],                  //   Headache
+    [{ v: 'DMG_PER_HEAD', coins: 3, per: 10 }],        //   Fury Swipes
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -2993,6 +3062,40 @@ class AI {
         case 'DRAW': flags.draw = v.n; break;
         case 'DRAW_ON_FLIP': flags.draw = 0.5; break;
         case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg }; break;
+
+        // ---- Job 6d, second batch ----
+        case 'DMG_PER_HEAD_UNTIL_TAILS': {
+          // Geometric: p(k heads) = 0.5^(k+1). Enumerated to 6 with the tail
+          // lumped in, which is ~1.5% of the mass and keeps pLethal honest
+          // rather than collapsing the whole thing to its mean.
+          const dist = [];
+          let acc = 0;
+          for (let k = 0; k <= 6; k++) { const pk = Math.pow(0.5, k + 1); acc += pk; dist.push([pk, v.per * k]); }
+          dist.push([1 - acc, v.per * 7]);
+          split(() => dist);
+          break;
+        }
+        case 'DMG_PER_ENERGY_HEADS': {
+          const n = atkSlot.energy.length, dist = [];
+          for (let h = 0; h <= n; h++) {
+            let ways = 1;
+            for (let k = 0; k < h; k++) ways = ways * (n - k) / (k + 1);
+            dist.push([ways / Math.pow(2, n), v.per * h]);
+          }
+          split(() => (n ? dist : [[1, 0]]));
+          break;
+        }
+        case 'WHIRLWIND_ON_FLIP': flags.dragWeak = 0.5; break;
+        case 'DAMAGE_REDUCTION_SELF': flags.softShield = v.n; break;
+        case 'DAMAGE_REDUCTION_FROM': flags.softShield = v.n; break;
+        case 'CANT_ATTACK_ON_FLIP': flags.lockAttack = 0.5; break;
+        case 'CANT_RETREAT_ON_FLIP': flags.lockRetreat = 0.5; break;
+        case 'BENCH_SPLASH_FLIP_SIDE': flags.splashEither = v.n; break;
+        case 'BENCH_SPLASH_PER_FLIP': flags.splashPerFlip = v; break;
+        case 'BENCH_SPLASH_TYPED': flags.splashTyped = v.n; break;
+        case 'SWITCH_SELF_CHOOSE': flags.selfSwitch = true; break;
+        case 'NO_TRAINERS_NEXT_TURN': flags.lockTrainers = true; break;
+        case 'BUFF_OWN_ATTACK': flags.buff = v; break;
       }
     }
     // FLIP_OR_NOTHING suppresses the whole attack, statuses included.
@@ -3053,7 +3156,7 @@ class AI {
       if (f.flags.jam) s += W.confuse;          // same shape as Confusion
       if (f.flags.drag && you.bench.length) s += W.drag;
       // Whirlwind drags too, but THEY choose, so they send up their best answer.
-      if (f.flags.dragWeak && you.bench.length) s += W.drag * 0.5;
+      if (f.flags.dragWeak && you.bench.length) s += W.drag * 0.5 * (f.flags.dragWeak === true ? 1 : f.flags.dragWeak);
       // Amnesia. Shuts off one attack rather than making them flip for all of
       // them, so it is worth somewhat less than a jam.
       if (f.flags.attackLock) s += W.confuse * 0.6;
@@ -3112,6 +3215,44 @@ class AI {
         if (this.remainingHP(b) <= dmg) s += W.knockout * 0.6;
       }
     }
+
+    // ---- Job 6d, second batch ----
+    // Blizzard is a coin on WHOSE bench takes it, so it is worth the average of
+    // a good outcome and a bad one rather than either.
+    if (f.flags.splashEither) {
+      const n = f.flags.splashEither;
+      for (const b of you.bench) s += 0.5 * Math.min(n, this.remainingHP(b)) * W.benchDamageFoe;
+      for (const b of me.bench) s -= 0.5 * Math.min(n, this.remainingHP(b)) * W.benchDamageMine;
+    }
+    if (f.flags.splashPerFlip) {
+      const { dmg, selfPerTail } = f.flags.splashPerFlip;
+      for (const b of you.bench) {
+        s += 0.5 * Math.min(dmg, this.remainingHP(b)) * W.benchDamageFoe;
+        if (this.remainingHP(b) <= dmg) s += 0.5 * W.knockout * 0.6;
+      }
+      // Half the bench comes back at us on average, and it can be lethal.
+      const expSelf = 0.5 * selfPerTail * you.bench.length;
+      s -= expSelf * W.selfDamage;
+      if (atkSlot.dmg + expSelf >= this.top(atkSlot).hp) s -= W.selfKO * 0.5;
+    }
+    if (f.flags.splashTyped && you.active) {
+      const t = this.top(you.active).type;
+      if (t && t !== 'C') {
+        const n = f.flags.splashTyped;
+        for (const b of you.bench) if (this.top(b).type === t) s += Math.min(n, this.remainingHP(b)) * W.benchDamageFoe;
+        for (const b of me.bench) if (this.top(b).type === t) s -= Math.min(n, this.remainingHP(b)) * W.benchDamageMine;
+      }
+    }
+    // A flat reduction is a weaker shield than preventing everything, and worth
+    // more the harder we are about to be hit.
+    if (f.flags.softShield) s += Math.min(f.flags.softShield, danger) / 20 * W.shieldSelf;
+    // Stopping them attacking at all is close to Paralysis in effect.
+    if (f.flags.lockAttack) s += f.flags.lockAttack * W.paralyze * 0.9;
+    if (f.flags.lockRetreat) s += f.flags.lockRetreat * W.drag * 0.4;
+    if (f.flags.lockTrainers) s += W.drawCard;
+    if (f.flags.selfSwitch && me.bench.length) s += frail ? W.dangerSwap : 2;
+    // Swords Dance only pays off if we are still here next turn to use it.
+    if (f.flags.buff) s += frail ? 4 : (f.flags.buff.base || 0) * 0.35;
 
     // don't burn a once-per-stay attack on a whiff-heavy turn for nothing
     if (f.flags.oncePerStay && f.expDmg <= 0 && !Object.keys(f.statuses).length) s -= 10;
@@ -4320,6 +4461,7 @@ class Engine {
         this.allSlots(pi).forEach(sl => acts.push({ t: 'attachEnergy', hand: i, target: sl.uid, label: `Attach ${c.name} to ${this.nameOf(sl)}` }));
       }
       if (c.kind === 'trainer' && c.playsAs !== 'pokemon'
+          && !this.trainersLocked(pi)
           && p.trainersPlayed < this.cfg.trainersPerTurn && this.trainerPlayable(pi, inst))
         acts.push({ t: 'playTrainer', hand: i, label: `Play ${c.name}` });
     });
@@ -4424,6 +4566,13 @@ class Engine {
   activePower(slot, kind) {
     const p = this.powerOf(slot);
     return (p && p.kind === kind && this.powerUsable(slot)) ? p : null;
+  }
+
+  // Psyduck's Headache. The first PLAYER-scoped continuous effect in the game —
+  // everything else so far attaches to a Pokemon.
+  trainersLocked(pi) {
+    const p = this.state.players[pi];
+    return !!p.noTrainersUntil && this.state.turn < p.noTrainersUntil;
   }
 
   // Aerodactyl. Applies to BOTH players — the card says "no more Evolution cards
@@ -4689,6 +4838,7 @@ class Engine {
   canRetreat(slot) {
     if (this.playsAsPokemon(slot)) return false;          // "can't retreat", flatly
     if (slot.status.asleep || slot.status.paralyzed) return false;
+    if (slot.effects.some(e => e.kind === 'CANT_RETREAT')) return false;   // Victreebel's Acid
     return symbolCount(this.db, slot.energy) >= this.retreatCostOf(slot);
   }
 
@@ -4727,6 +4877,14 @@ class Engine {
       return { ok: false, why: 'Already used while this Pokemon has been in play' };
     const locked = p.active.effects.find(e => e.kind === 'ATTACK_DISABLED' && e.idx === idx);
     if (locked) return { ok: false, why: `${a.name} is disabled this turn` };
+    // Tail Wag, Leer. Blocks EVERY attack, and only against the Pokemon that
+    // used it — "benching either Pokemon ends this effect", which falls out of
+    // the uid no longer being the Active one.
+    const cant = p.active.effects.find(e => e.kind === 'CANT_ATTACK');
+    if (cant) {
+      const foe = this.state.players[1 - pi].active;
+      if (foe && foe.uid === cant.fromUid) return { ok: false, why: `Can't attack ${this.nameOf(foe)} this turn` };
+    }
     for (const v of script) {
       if (v.v === 'COST_DISCARD_ENERGY') {
         // No `t` means any Energy card will do (Charizard's Fire Spin discards 2
@@ -5005,6 +5163,7 @@ class Engine {
     const inst = p.hand[a.hand]; if (!inst) return this.fail('No such card');
     const c = this.db[inst.id];
     if (c.kind !== 'trainer') return this.fail('Not a Trainer card');
+    if (this.trainersLocked(pi)) return this.fail('Trainer cards cannot be played this turn');
     if (p.trainersPlayed >= this.cfg.trainersPerTurn) return this.fail('Trainer limit reached this turn');
     const script = (this.effects[inst.id] && this.effects[inst.id].t);
     if (!script) return this.fail(`${c.name} is not implemented`);
@@ -5539,6 +5698,13 @@ class Engine {
 
     // base damage / damage-shaping verbs
     let base = parseDamage(attack.dmg);
+    // Scyther's Swords Dance armed this attack last turn. Read before anything
+    // else shapes it, so a later verb still overrides in the normal way.
+    const buff = atk.effects.find(e => e.kind === 'ATTACK_BUFF' && e.name === attack.name);
+    if (buff) {
+      base = buff.base;
+      this.log(`${buff.label || 'A buff'} raises ${attack.name} to ${base}.`, 'eff');
+    }
     let nothing = false;
     let pendingRecoil = 0;
     for (const v of script) {
@@ -5591,6 +5757,24 @@ class Engine {
         const c2 = Math.floor(atk.dmg / 10);
         base = Math.max(0, v.base - v.per * c2);
         this.log(`${v.base} minus ${v.per} per counter (${c2}) -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_HEAD_UNTIL_TAILS') {
+        // Geodude's Stone Barrage. Unbounded in principle; capped at 20 flips so
+        // a pathological seed cannot hang a turn, which is far beyond any
+        // reachable outcome (1 in a million past 20).
+        let h2 = 0;
+        while (h2 < 20 && this.flip(`Stone Barrage ${h2 + 1}`)) h2++;
+        base = v.per * h2;
+        this.log(`${h2} head(s) before tails -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_ENERGY_HEADS') {
+        // Big Eggsplosion: one coin per Energy ATTACHED, not per Energy paid.
+        const n6 = atk.energy.length;
+        let h3 = 0;
+        for (let i = 0; i < n6; i++) if (this.flip(`coin ${i + 1}/${n6}`)) h3++;
+        base = v.per * h3;
+        this.log(`${h3} of ${n6} heads -> ${base} damage.`);
+      } else if (v.v === 'BUFF_OWN_ATTACK') {
+        // Swords Dance does no damage itself; it arms the NEXT turn's Slash.
+        // Handled below as a lasting effect, so nothing to shape here.
       } else if (v.v === 'DMG_PER_OWN_BENCH') {
         // Wigglytuff's Do the Wave. A Clefairy Doll on the Bench DOES count —
         // it is a Pokemon while in play. Settled with Trevor, see RULINGS.md.
@@ -5774,6 +5958,107 @@ class Engine {
         // both cards printing it say; the plain version removes the damage dealt.
         // Capped at what is actually on the Pokemon, which is the "if it has
         // fewer damage counters than that, remove all of them" clause.
+        case 'WHIRLWIND_ON_FLIP':
+          // Arbok's Terror Strike. The damage lands either way; only the switch
+          // is on the coin.
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (this.flip(v.label || 'force a switch?')) {
+            if (!you.bench.length) this.log(`${you.name} has no Benched Pokemon to switch to.`, 'eff');
+            else { s.pendingSwitch = 1 - pi; this.log(`${you.name} must choose a Benched Pokemon to switch in.`, 'eff'); }
+          }
+          break;
+        case 'DAMAGE_REDUCTION_SELF':
+          atk.effects.push({ kind: 'DAMAGE_REDUCTION', amount: v.n, label: v.label || 'Minimize',
+                             expireAtStartOfTurn: s.turn + 2 });
+          this.log(`Damage to ${card.name} is reduced by ${v.n} during the opponent's next turn.`, 'eff');
+          break;
+        case 'DAMAGE_REDUCTION_FROM':
+          // Pounce, Snivel. Only from THIS defender — `fromUid` is what
+          // computeDamage checks, and it doubles as the "benching either Pokemon
+          // ends this effect" clause, since a benched attacker stops being the
+          // Active one whose uid it names.
+          if (!def) break;
+          atk.effects.push({ kind: 'DAMAGE_REDUCTION', amount: v.n, fromUid: def.uid,
+                             label: v.label || 'a flinch', expireAtStartOfTurn: s.turn + 2 });
+          this.log(`Damage from ${this.nameOf(def)} is reduced by ${v.n} next turn.`, 'eff');
+          break;
+        case 'CANT_ATTACK_ON_FLIP':
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (!def) break;
+          if (this.flip(v.label || 'stop them attacking?')) {
+            def.effects.push({ kind: 'CANT_ATTACK', fromUid: atk.uid, label: v.label || 'Tail Wag',
+                               expireAtStartOfTurn: s.turn + 2 });
+            this.log(`${this.nameOf(def)} can't attack ${card.name} during the opponent's next turn.`, 'eff');
+          }
+          break;
+        case 'CANT_RETREAT_ON_FLIP':
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (!def) break;
+          if (this.flip(v.label || 'stop them retreating?')) {
+            def.effects.push({ kind: 'CANT_RETREAT', label: v.label || 'Acid',
+                               expireAtStartOfTurn: s.turn + 2 });
+            this.log(`${this.nameOf(def)} can't retreat during the opponent's next turn.`, 'eff');
+          }
+          break;
+        case 'BENCH_SPLASH_FLIP_SIDE': {
+          // Articuno's Blizzard. One coin decides WHOSE bench takes it.
+          const mineSide = !this.flip(v.label || 'their bench?');
+          const side = mineSide ? me.bench : you.bench;
+          for (const b of side) this.dealDamage(atk, b, v.n, { noWR: true });
+          this.log(`${v.n} to each of ${(mineSide ? me : you).name}'s Benched Pokemon.`, 'eff');
+          break;
+        }
+        case 'BENCH_SPLASH_PER_FLIP': {
+          // Zapdos' Thunderstorm. A coin per benched Pokemon, then self-damage
+          // for every tail — so a wide opposing bench is a real risk to take.
+          let tails = 0;
+          for (const b of you.bench) {
+            if (this.flip(`hit ${this.nameOf(b)}?`)) this.dealDamage(atk, b, v.dmg, { noWR: true });
+            else tails++;
+          }
+          if (tails > 0) {
+            atk.dmg += tails * v.selfPerTail;
+            this.log(`${tails} tail(s): ${card.name} takes ${tails * v.selfPerTail}. (${atk.dmg} total)`, 'eff');
+          }
+          break;
+        }
+        case 'BENCH_SPLASH_TYPED': {
+          // Electrode's Chain Lightning. Nothing happens at all against a
+          // Colorless defender, which is the card's own clause and not a guard.
+          if (!def) break;
+          const dt = topCard(this.db, def).type;
+          if (!dt || dt === 'C') { this.log('The Defending Pokemon is Colorless - Chain Lightning stops there.', 'eff'); break; }
+          for (let pi2 = 0; pi2 < 2; pi2++) {
+            for (const b of s.players[pi2].bench) {
+              if (topCard(this.db, b).type === dt) this.dealDamage(atk, b, v.n, { noWR: true });
+            }
+          }
+          this.log(`${v.n} to every Benched ${dt} Pokemon on both sides.`, 'eff');
+          break;
+        }
+        case 'SWITCH_SELF_CHOOSE': {
+          // Exeggutor's Teleport. A free switch the ATTACKER chooses, with no
+          // retreat cost and no Energy paid.
+          if (!me.bench.length) { this.log('No Benched Pokemon to switch with.', 'eff'); break; }
+          const bi2 = (a && a.opts && a.opts.bench !== undefined) ? a.opts.bench : this.pick(me.bench.length);
+          const b2 = me.bench[bi2];
+          if (b2) {
+            const old2 = me.active;
+            clearStatus(old2);
+            me.active = b2; me.bench.splice(bi2, 1); me.bench.push(old2);
+            this.log(`${card.name} switches out for ${this.nameOf(b2)}.`, 'eff');
+          }
+          break;
+        }
+        case 'NO_TRAINERS_NEXT_TURN':
+          you.noTrainersUntil = s.turn + 2;
+          this.log(`${you.name} can't play Trainer cards during their next turn.`, 'eff');
+          break;
+        case 'BUFF_OWN_ATTACK':
+          atk.effects.push({ kind: 'ATTACK_BUFF', name: v.attack, base: v.base,
+                             label: v.label || 'Swords Dance', expireAtStartOfTurn: s.turn + 2 });
+          this.log(`${card.name}'s ${v.attack} does ${v.base} during your next turn.`, 'eff');
+          break;
         case 'HEAL_SELF_EQUAL_DAMAGE': {
           const dealt = res.dealt || 0;
           if (dealt > 0 && atk.dmg > 0) {
@@ -5977,6 +6262,10 @@ class Engine {
     if (dmg > 0) {
       for (const e of defSlot.effects) {
         if (e.kind === 'DAMAGE_REDUCTION') {
+          // Pounce and Snivel reduce damage only from the Pokemon that used
+          // them; Minimize and Defender reduce it from anything. `fromUid` is
+          // what tells them apart.
+          if (e.fromUid !== undefined && (!atkSlot || atkSlot.uid !== e.fromUid)) continue;
           dmg -= e.amount;
           steps.push(`-${e.amount} from ${e.label || 'a shield'} -> ${Math.max(0, dmg)}.`);
         }

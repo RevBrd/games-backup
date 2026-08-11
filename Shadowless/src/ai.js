@@ -212,6 +212,40 @@ class AI {
         case 'DRAW': flags.draw = v.n; break;
         case 'DRAW_ON_FLIP': flags.draw = 0.5; break;
         case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg }; break;
+
+        // ---- Job 6d, second batch ----
+        case 'DMG_PER_HEAD_UNTIL_TAILS': {
+          // Geometric: p(k heads) = 0.5^(k+1). Enumerated to 6 with the tail
+          // lumped in, which is ~1.5% of the mass and keeps pLethal honest
+          // rather than collapsing the whole thing to its mean.
+          const dist = [];
+          let acc = 0;
+          for (let k = 0; k <= 6; k++) { const pk = Math.pow(0.5, k + 1); acc += pk; dist.push([pk, v.per * k]); }
+          dist.push([1 - acc, v.per * 7]);
+          split(() => dist);
+          break;
+        }
+        case 'DMG_PER_ENERGY_HEADS': {
+          const n = atkSlot.energy.length, dist = [];
+          for (let h = 0; h <= n; h++) {
+            let ways = 1;
+            for (let k = 0; k < h; k++) ways = ways * (n - k) / (k + 1);
+            dist.push([ways / Math.pow(2, n), v.per * h]);
+          }
+          split(() => (n ? dist : [[1, 0]]));
+          break;
+        }
+        case 'WHIRLWIND_ON_FLIP': flags.dragWeak = 0.5; break;
+        case 'DAMAGE_REDUCTION_SELF': flags.softShield = v.n; break;
+        case 'DAMAGE_REDUCTION_FROM': flags.softShield = v.n; break;
+        case 'CANT_ATTACK_ON_FLIP': flags.lockAttack = 0.5; break;
+        case 'CANT_RETREAT_ON_FLIP': flags.lockRetreat = 0.5; break;
+        case 'BENCH_SPLASH_FLIP_SIDE': flags.splashEither = v.n; break;
+        case 'BENCH_SPLASH_PER_FLIP': flags.splashPerFlip = v; break;
+        case 'BENCH_SPLASH_TYPED': flags.splashTyped = v.n; break;
+        case 'SWITCH_SELF_CHOOSE': flags.selfSwitch = true; break;
+        case 'NO_TRAINERS_NEXT_TURN': flags.lockTrainers = true; break;
+        case 'BUFF_OWN_ATTACK': flags.buff = v; break;
       }
     }
     // FLIP_OR_NOTHING suppresses the whole attack, statuses included.
@@ -272,7 +306,7 @@ class AI {
       if (f.flags.jam) s += W.confuse;          // same shape as Confusion
       if (f.flags.drag && you.bench.length) s += W.drag;
       // Whirlwind drags too, but THEY choose, so they send up their best answer.
-      if (f.flags.dragWeak && you.bench.length) s += W.drag * 0.5;
+      if (f.flags.dragWeak && you.bench.length) s += W.drag * 0.5 * (f.flags.dragWeak === true ? 1 : f.flags.dragWeak);
       // Amnesia. Shuts off one attack rather than making them flip for all of
       // them, so it is worth somewhat less than a jam.
       if (f.flags.attackLock) s += W.confuse * 0.6;
@@ -331,6 +365,44 @@ class AI {
         if (this.remainingHP(b) <= dmg) s += W.knockout * 0.6;
       }
     }
+
+    // ---- Job 6d, second batch ----
+    // Blizzard is a coin on WHOSE bench takes it, so it is worth the average of
+    // a good outcome and a bad one rather than either.
+    if (f.flags.splashEither) {
+      const n = f.flags.splashEither;
+      for (const b of you.bench) s += 0.5 * Math.min(n, this.remainingHP(b)) * W.benchDamageFoe;
+      for (const b of me.bench) s -= 0.5 * Math.min(n, this.remainingHP(b)) * W.benchDamageMine;
+    }
+    if (f.flags.splashPerFlip) {
+      const { dmg, selfPerTail } = f.flags.splashPerFlip;
+      for (const b of you.bench) {
+        s += 0.5 * Math.min(dmg, this.remainingHP(b)) * W.benchDamageFoe;
+        if (this.remainingHP(b) <= dmg) s += 0.5 * W.knockout * 0.6;
+      }
+      // Half the bench comes back at us on average, and it can be lethal.
+      const expSelf = 0.5 * selfPerTail * you.bench.length;
+      s -= expSelf * W.selfDamage;
+      if (atkSlot.dmg + expSelf >= this.top(atkSlot).hp) s -= W.selfKO * 0.5;
+    }
+    if (f.flags.splashTyped && you.active) {
+      const t = this.top(you.active).type;
+      if (t && t !== 'C') {
+        const n = f.flags.splashTyped;
+        for (const b of you.bench) if (this.top(b).type === t) s += Math.min(n, this.remainingHP(b)) * W.benchDamageFoe;
+        for (const b of me.bench) if (this.top(b).type === t) s -= Math.min(n, this.remainingHP(b)) * W.benchDamageMine;
+      }
+    }
+    // A flat reduction is a weaker shield than preventing everything, and worth
+    // more the harder we are about to be hit.
+    if (f.flags.softShield) s += Math.min(f.flags.softShield, danger) / 20 * W.shieldSelf;
+    // Stopping them attacking at all is close to Paralysis in effect.
+    if (f.flags.lockAttack) s += f.flags.lockAttack * W.paralyze * 0.9;
+    if (f.flags.lockRetreat) s += f.flags.lockRetreat * W.drag * 0.4;
+    if (f.flags.lockTrainers) s += W.drawCard;
+    if (f.flags.selfSwitch && me.bench.length) s += frail ? W.dangerSwap : 2;
+    // Swords Dance only pays off if we are still here next turn to use it.
+    if (f.flags.buff) s += frail ? 4 : (f.flags.buff.base || 0) * 0.35;
 
     // don't burn a once-per-stay attack on a whiff-heavy turn for nothing
     if (f.flags.oncePerStay && f.expDmg <= 0 && !Object.keys(f.statuses).length) s -= 10;
