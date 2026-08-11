@@ -66,7 +66,7 @@ for (const name of DECK_NAMES) {
 // The SOFT one is a high-water mark per set still being written. One number,
 // which only ever moves down. It catches a script being deleted or an id being
 // misspelled, without anybody hand-editing a list of 126 ids as they go.
-const REMAINING = { base2: 41, base3: 43 };
+const REMAINING = { base2: 25, base3: 29 };
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');

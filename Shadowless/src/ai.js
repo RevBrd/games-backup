@@ -141,8 +141,9 @@ class AI {
           split(() => [[1, v.base + v.per * (defSlot ? defSlot.energy.length : 0)]]); break;
         case 'DMG_PER_DEF_COUNTER':
           split(() => [[1, v.base + v.per * (defSlot ? Math.floor(defSlot.dmg / 10) : 0)]]); break;
-        case 'STATUS': statuses[v.s] = 1; break;
-        case 'STATUS_ON_FLIP': statuses[v.s] = 0.5; break;
+        // `s` may be a list — Venom Powder lands Confused AND Poisoned on one coin.
+        case 'STATUS': for (const st of [].concat(v.s)) statuses[st] = 1; break;
+        case 'STATUS_ON_FLIP': for (const st of [].concat(v.s)) statuses[st] = 0.5; break;
         case 'RECOIL': selfDmg += v.n; break;
         case 'RECOIL_ON_FLIP': selfDmg += v.n * 0.5; break;
         case 'BENCH_SPLASH': flags.benchSplash = v.n; break;
@@ -189,6 +190,28 @@ class AI {
         case 'ATTACK_LOCK': flags.attackLock = true; break;
         case 'BARRIER_ON_FLIP': flags.shield = 0.5; break;
         case 'WHIRLWIND': flags.dragWeak = true; break;
+
+        // ---- Job 6d ----
+        case 'NO_WR': flags.flat = true; break;      // forecast past W/R, as the card says
+        case 'DMG_PER_OWN_BENCH': {
+          const side = this.E.sideOf(atkSlot);
+          const nb = side === null ? 0 : this.E.state.players[side].bench.length;
+          split(() => [[1, v.base + v.per * nb]]);
+          break;
+        }
+        case 'DMG_PER_NAMED_IN_PLAY': {
+          const side2 = this.E.sideOf(atkSlot);
+          let n5 = 0;
+          if (side2 !== null) for (const sl of this.E.allSlots(side2)) if (this.top(sl).name === v.name) n5++;
+          split(() => [[1, v.base + v.per * n5]]);
+          break;
+        }
+        case 'HEAL_SELF_EQUAL_DAMAGE': flags.leech = v.half ? 0.5 : 1; break;
+        case 'STATUS_SELF': flags.selfStatus = 1; break;
+        case 'STATUS_SELF_ON_TAILS': flags.selfStatus = 0.5; break;
+        case 'DRAW': flags.draw = v.n; break;
+        case 'DRAW_ON_FLIP': flags.draw = 0.5; break;
+        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg }; break;
       }
     }
     // FLIP_OR_NOTHING suppresses the whole attack, statuses included.
@@ -294,6 +317,20 @@ class AI {
     if (f.flags.destinyBond) s += frail ? W.destinyBond * 1.8 : W.destinyBond * 0.3;
     if (f.flags.healAll) s += Math.min(atkSlot.dmg, this.top(atkSlot).hp) / 10 * W.healPer10;
     if (f.flags.heal) s += Math.min(f.flags.heal * 10, atkSlot.dmg) / 10 * W.healPer10;
+    // Leech Life and friends heal from the damage actually dealt, so it is worth
+    // nothing on an undamaged attacker and nothing against a Barrier.
+    if (f.flags.leech) s += Math.min(f.expDmg * f.flags.leech, atkSlot.dmg) / 10 * W.healPer10;
+    if (f.flags.draw) s += f.flags.draw * W.drawCard;
+    // Confusing or poisoning yourself is a real cost, priced as the mirror of
+    // doing it to them.
+    if (f.flags.selfStatus) s -= f.flags.selfStatus * W.confuse * 0.8;
+    if (f.flags.snipe) {
+      const { n, dmg } = f.flags.snipe;
+      for (const b of you.bench.slice(0, n)) {
+        s += Math.min(dmg, this.remainingHP(b)) * W.benchDamageFoe;
+        if (this.remainingHP(b) <= dmg) s += W.knockout * 0.6;
+      }
+    }
 
     // don't burn a once-per-stay attack on a whiff-heavy turn for nothing
     if (f.flags.oncePerStay && f.expDmg <= 0 && !Object.keys(f.statuses).length) s -= 10;

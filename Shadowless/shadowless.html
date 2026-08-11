@@ -2322,6 +2322,97 @@ const EFFECTS = {
   // Mysterious Fossil. Needs no machinery at all — gen_cards sets playsAs from
   // the upstream `hp`, exactly as it does for Clefairy Doll. See ENGINE.md.
   'base3-62': { t: [] },
+
+  // ============================================================================
+  // JOB 6d — the cards unlocked by the first batch of new verbs.
+  // ============================================================================
+
+  'base2-5': { a: [                                    // Kangaskhan
+    [{ v: 'DRAW', n: 1 }],                             //   Fetch
+    [{ v: 'DMG_PER_HEAD', coins: 4, per: 20 }],        //   Comet Punch
+  ]},
+  'base2-7': { a: [                                    // Nidoqueen
+    // Matched on card NAME, per Trevor. Counts every slot you have, which in
+    // practice is the Bench — Nidoqueen is the one attacking. See RULINGS.md.
+    [{ v: 'DMG_PER_NAMED_IN_PLAY', name: 'Nidoking', base: 20, per: 20 }],
+    [],                                                //   Mega Punch
+  ]},
+  'base2-12': { a: [                                   // Vaporeon
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Quick Attack' }],
+    // "Extra Water Energy after the 2nd doesn't count" — a cap on the COUNT,
+    // where the Fossil Water Guns cap the BONUS. Same cap, stated two ways.
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 30, per: 10, t: 'W', maxSpare: 2 }],
+  ]},
+  'base2-16': { a: [                                   // Wigglytuff
+    [{ v: 'STATUS', s: 'Asleep' }],                    //   Lullaby
+    [{ v: 'DMG_PER_OWN_BENCH', base: 10, per: 10 }],   //   Do the Wave
+  ]},
+  'base2-33': { a: [                                   // Butterfree
+    [{ v: 'WHIRLWIND' }],                              //   Whirlwind
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE', half: true }],     //   Mega Drain
+  ]},
+  'base2-34': {                                        // Dodrio
+    // No status clause printed on this card, so `always` — see ENGINE.md.
+    p: { kind: 'RETREAT_DISCOUNT', n: 1, name: 'Retreat Aid', always: true },
+    a: [[{ v: 'DMG_PER_COUNTER_SELF', base: 10, per: 10 }]],   // Rage
+  },
+  'base2-37': { a: [                                   // Gloom
+    [{ v: 'STATUS', s: 'Poisoned' }],                  //   Poisonpowder
+    [{ v: 'STATUS', s: 'Confused' }, { v: 'STATUS_SELF', s: 'Confused' }],   // Foul Odor
+  ]},
+  'base2-43': { a: [                                   // Primeape
+    [{ v: 'DMG_PER_HEAD', coins: 3, per: 20 }],        //   Fury Swipes
+    [{ v: 'STATUS_SELF_ON_TAILS', s: 'Confused', label: 'Tantrum' }],
+  ]},
+  'base2-47': { a: [                                   // Tauros
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 20, bonus: 10, recoil: 0, label: 'Stomp' }],
+    [{ v: 'DMG_PER_COUNTER_SELF', base: 20, per: 10 },
+     { v: 'STATUS_SELF_ON_TAILS', s: 'Confused', label: 'Rampage' }],
+  ]},
+  'base2-56': { a: [ [{ v: 'DRAW_ON_FLIP' }] ]},       // Meowth / Pay Day
+  'base2-60': { a: [ [{ v: 'BENCH_SNIPE', n: 1, dmg: 10 }] ]},   // Pikachu / Spark
+  'base2-63': { a: [                                   // Venonat
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Stun Spore
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE' }],                 //   Leech Life
+  ]},
+
+  'base3-7': { a: [                                    // Hitmonlee
+    [{ v: 'BENCH_SNIPE', n: 1, dmg: 20 }],             //   Stretch Kick
+    [],                                                //   High Jump Kick
+  ]},
+  'base3-9': { a: [                                    // Kabutops
+    [],                                                //   Sharp Sickle
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE', half: true }],     //   Absorb
+  ]},
+  'base3-10': { a: [                                   // Lapras
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 10, per: 10, t: 'W', maxSpare: 2 }],
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Confuse Ray
+  ]},
+  'base3-11': { a: [                                   // Magneton
+    [{ v: 'NO_WR' }],                                  //   Sonicboom
+    [{ v: 'BENCH_SPLASH', n: 20 }, { v: 'RECOIL', n: 100 }],   // Selfdestruct
+  ]},
+  'base3-14': { a: [                                   // Raichu
+    // "If your opponent has fewer than 3 Benched Pokemon, do the damage to each
+    // of them" — BENCH_SNIPE already clamps n to the bench size.
+    [{ v: 'BENCH_SNIPE', n: 3, dmg: 10 }],             //   Gigashock
+  ]},
+  'base3-34': { a: [                                   // Golbat
+    [],                                                //   Wing Attack
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE' }],                 //   Leech Life
+  ]},
+  'base3-40': { a: [                                   // Omastar
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 20, per: 10, t: 'W', maxSpare: 2 }],
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 30 }],        //   Spike Cannon
+  ]},
+  'base3-42': { a: [                                   // Seadra
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 20, per: 10, t: 'W', maxSpare: 2 }],
+    [{ v: 'BARRIER_ON_FLIP', label: 'Agility' }],      //   Agility
+  ]},
+  'base3-57': { a: [                                   // Zubat
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Supersonic
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE' }],                 //   Leech Life
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -2831,8 +2922,9 @@ class AI {
           split(() => [[1, v.base + v.per * (defSlot ? defSlot.energy.length : 0)]]); break;
         case 'DMG_PER_DEF_COUNTER':
           split(() => [[1, v.base + v.per * (defSlot ? Math.floor(defSlot.dmg / 10) : 0)]]); break;
-        case 'STATUS': statuses[v.s] = 1; break;
-        case 'STATUS_ON_FLIP': statuses[v.s] = 0.5; break;
+        // `s` may be a list — Venom Powder lands Confused AND Poisoned on one coin.
+        case 'STATUS': for (const st of [].concat(v.s)) statuses[st] = 1; break;
+        case 'STATUS_ON_FLIP': for (const st of [].concat(v.s)) statuses[st] = 0.5; break;
         case 'RECOIL': selfDmg += v.n; break;
         case 'RECOIL_ON_FLIP': selfDmg += v.n * 0.5; break;
         case 'BENCH_SPLASH': flags.benchSplash = v.n; break;
@@ -2879,6 +2971,28 @@ class AI {
         case 'ATTACK_LOCK': flags.attackLock = true; break;
         case 'BARRIER_ON_FLIP': flags.shield = 0.5; break;
         case 'WHIRLWIND': flags.dragWeak = true; break;
+
+        // ---- Job 6d ----
+        case 'NO_WR': flags.flat = true; break;      // forecast past W/R, as the card says
+        case 'DMG_PER_OWN_BENCH': {
+          const side = this.E.sideOf(atkSlot);
+          const nb = side === null ? 0 : this.E.state.players[side].bench.length;
+          split(() => [[1, v.base + v.per * nb]]);
+          break;
+        }
+        case 'DMG_PER_NAMED_IN_PLAY': {
+          const side2 = this.E.sideOf(atkSlot);
+          let n5 = 0;
+          if (side2 !== null) for (const sl of this.E.allSlots(side2)) if (this.top(sl).name === v.name) n5++;
+          split(() => [[1, v.base + v.per * n5]]);
+          break;
+        }
+        case 'HEAL_SELF_EQUAL_DAMAGE': flags.leech = v.half ? 0.5 : 1; break;
+        case 'STATUS_SELF': flags.selfStatus = 1; break;
+        case 'STATUS_SELF_ON_TAILS': flags.selfStatus = 0.5; break;
+        case 'DRAW': flags.draw = v.n; break;
+        case 'DRAW_ON_FLIP': flags.draw = 0.5; break;
+        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg }; break;
       }
     }
     // FLIP_OR_NOTHING suppresses the whole attack, statuses included.
@@ -2984,6 +3098,20 @@ class AI {
     if (f.flags.destinyBond) s += frail ? W.destinyBond * 1.8 : W.destinyBond * 0.3;
     if (f.flags.healAll) s += Math.min(atkSlot.dmg, this.top(atkSlot).hp) / 10 * W.healPer10;
     if (f.flags.heal) s += Math.min(f.flags.heal * 10, atkSlot.dmg) / 10 * W.healPer10;
+    // Leech Life and friends heal from the damage actually dealt, so it is worth
+    // nothing on an undamaged attacker and nothing against a Barrier.
+    if (f.flags.leech) s += Math.min(f.expDmg * f.flags.leech, atkSlot.dmg) / 10 * W.healPer10;
+    if (f.flags.draw) s += f.flags.draw * W.drawCard;
+    // Confusing or poisoning yourself is a real cost, priced as the mirror of
+    // doing it to them.
+    if (f.flags.selfStatus) s -= f.flags.selfStatus * W.confuse * 0.8;
+    if (f.flags.snipe) {
+      const { n, dmg } = f.flags.snipe;
+      for (const b of you.bench.slice(0, n)) {
+        s += Math.min(dmg, this.remainingHP(b)) * W.benchDamageFoe;
+        if (this.remainingHP(b) <= dmg) s += W.knockout * 0.6;
+      }
+    }
 
     // don't burn a once-per-stay attack on a whiff-heavy turn for nothing
     if (f.flags.oncePerStay && f.expDmg <= 0 && !Object.keys(f.statuses).length) s -= 10;
@@ -3746,7 +3874,8 @@ class AI {
     best.__score = bestScore;
     return best;
   }
-}
+}
+
 
 // ============================================================================
 // RULES ENGINE  —  WOTC-era (Base Set) Pokemon TCG
@@ -5420,14 +5549,20 @@ class Engine {
         base = v.per * h;
         this.log(`${h} head(s) -> ${base} damage.`);
       } else if (v.v === 'DMG_PER_COUNTER_SELF') {
-        base = v.per * (atk.dmg / 10);
+        // `base` is optional and defaults to 0. Flail is pure multiplication;
+        // Rage is "10 damage plus 10 more for each counter".
+        base = (v.base || 0) + v.per * Math.floor(atk.dmg / 10);
         this.log(`${Math.floor(atk.dmg / 10)} damage counter(s) -> ${base} damage.`);
       } else if (v.v === 'DMG_PER_SPARE_ENERGY') {
         // "plus 10 more for each Water Energy attached but not used to pay
         // for this attack's cost"
         const need = attack.cost.split('').filter(x => x === v.t).length;
         const have = atk.energy.filter(e => energyProvides(this.db, e) === v.t).length;
-        const spare = Math.max(0, have - need);
+        let spare = Math.max(0, have - need);
+        // Lapras, Omastar, Seadra and Omanyte all cap the bonus; Vaporeon caps
+        // the COUNT ("extra Water Energy after the 2nd doesn't count"), which is
+        // the same cap expressed the other way round.
+        if (v.maxSpare !== undefined) spare = Math.min(spare, v.maxSpare);
         base = v.base + v.per * spare;
         this.log(`${v.base} plus ${v.per} per spare ${v.t} Energy (${spare}) -> ${base} damage.`);
       } else if (v.v === 'DMG_HALF_REMAINING') {
@@ -5456,6 +5591,20 @@ class Engine {
         const c2 = Math.floor(atk.dmg / 10);
         base = Math.max(0, v.base - v.per * c2);
         this.log(`${v.base} minus ${v.per} per counter (${c2}) -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_OWN_BENCH') {
+        // Wigglytuff's Do the Wave. A Clefairy Doll on the Bench DOES count —
+        // it is a Pokemon while in play. Settled with Trevor, see RULINGS.md.
+        const n3 = me.bench.length;
+        base = v.base + v.per * n3;
+        this.log(`${v.base} plus ${v.per} per Benched Pokemon (${n3}) -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_NAMED_IN_PLAY') {
+        // Nidoqueen's Boyfriends. Matched on card NAME rather than species, so a
+        // differently-named Nidoking would not count. Counts every slot you have,
+        // which in practice is the Bench — the attacker is Nidoqueen herself.
+        let n4 = 0;
+        for (const sl of this.allSlots(pi)) if (topCard(this.db, sl).name === v.name) n4++;
+        base = v.base + v.per * n4;
+        this.log(`${v.base} plus ${v.per} per ${v.name} in play (${n4}) -> ${base} damage.`);
       }
     }
 
@@ -5483,7 +5632,12 @@ class Engine {
       if (negated) this.log(`${veil.name}: everything done to ${this.nameOf(def)} is prevented.`, 'eff');
     }
 
-    const res = negated ? { dealt: 0, prevented: true } : this.dealDamage(atk, def, base);
+    // Magneton's Sonicboom. "Don't apply Weakness and Resistance for this
+    // attack" — everything AFTER W/R (PlusPower, Defender, Kabuto Armor) still
+    // applies, which is exactly what dealDamage's existing noWR already means.
+    const flat = script.some(v => v.v === 'NO_WR');
+    const res = negated ? { dealt: 0, prevented: true }
+      : this.dealDamage(atk, def, base, { noWR: flat });
     if (pendingRecoil > 0) {
       atk.dmg += pendingRecoil;
       this.log(`${card.name} does ${pendingRecoil} damage to itself. (${atk.dmg} total)`, 'eff');
@@ -5493,14 +5647,17 @@ class Engine {
     const blocked = negated || this.effectsBlocked(def);
     for (const v of script) {
       switch (v.v) {
+        // `s` may be a list. Venom Powder applies Confused AND Poisoned on one
+        // coin, which is legal because Poison sits outside the
+        // Asleep/Confused/Paralyzed group rather than replacing it.
         case 'STATUS':
           if (blocked) this.log(`${this.nameOf(def)} is protected - no ${v.s}.`, 'eff');
-          else this.applyStatus(def, v.s);
+          else for (const st of [].concat(v.s)) this.applyStatus(def, st);
           break;
         case 'STATUS_ON_FLIP':
-          if (this.flip(`${v.s}?`)) {
+          if (this.flip(`${[].concat(v.s).join(' and ')}?`)) {
             if (blocked) this.log(`${this.nameOf(def)} is protected - no ${v.s}.`, 'eff');
-            else this.applyStatus(def, v.s);
+            else for (const st of [].concat(v.s)) this.applyStatus(def, st);
           }
           break;
         case 'BARRIER_ON_FLIP':
@@ -5613,6 +5770,53 @@ class Engine {
         case 'HEAL_SELF_ALL':
           if (atk.dmg > 0) { this.log(`${card.name} removes all ${atk.dmg} damage from itself.`, 'eff'); atk.dmg = 0; }
           break;
+        // Leech Life, Mega Drain, Absorb. `half` rounds UP to the nearest 10, as
+        // both cards printing it say; the plain version removes the damage dealt.
+        // Capped at what is actually on the Pokemon, which is the "if it has
+        // fewer damage counters than that, remove all of them" clause.
+        case 'HEAL_SELF_EQUAL_DAMAGE': {
+          const dealt = res.dealt || 0;
+          if (dealt > 0 && atk.dmg > 0) {
+            const want = v.half ? Math.ceil(dealt / 2 / 10) * 10 : dealt;
+            const h2 = Math.min(want, atk.dmg);
+            atk.dmg -= h2;
+            this.log(`${card.name} removes ${h2} damage from itself.`, 'eff');
+          }
+          break;
+        }
+        case 'STATUS_SELF':
+          // Petal Dance, Foul Odor. On SELF, so Barrier on the defender is
+          // irrelevant and `blocked` is deliberately not consulted.
+          this.applyStatus(atk, v.s);
+          break;
+        case 'STATUS_SELF_ON_TAILS':
+          if (!this.flip(v.label || `${v.s}?`)) this.applyStatus(atk, v.s);
+          break;
+        case 'DRAW':
+          for (let i = 0; i < v.n && me.deck.length; i++) me.hand.push(me.deck.shift());
+          this.log(`${me.name} draws ${v.n}.`, 'eff');
+          break;
+        case 'DRAW_ON_FLIP':
+          if (this.flip('draw a card?')) {
+            if (me.deck.length) { me.hand.push(me.deck.shift()); this.log(`${me.name} draws a card.`, 'eff'); }
+          }
+          break;
+        // Dark Mind, Spark, Stretch Kick, Gigashock. The ATTACKER chooses, and
+        // Weakness and Resistance never apply to Bench damage.
+        case 'BENCH_SNIPE': {
+          const bench = you.bench;
+          if (!bench.length) { this.log('No Benched Pokemon to hit.', 'eff'); break; }
+          const want = Math.min(v.n || 1, bench.length);
+          let picks = (a && a.opts && a.opts.bench) || [];
+          if (!Array.isArray(picks)) picks = [picks];
+          picks = picks.filter(i => i >= 0 && i < bench.length).slice(0, want);
+          for (let i = 0; picks.length < want; i++) if (picks.indexOf(i) < 0) picks.push(i);
+          for (const i of picks) {
+            this.dealDamage(atk, bench[i], v.dmg, { noWR: true });
+            this.log(`${v.dmg} to ${this.nameOf(bench[i])} on the Bench.`, 'eff');
+          }
+          break;
+        }
         case 'HEAL_SELF_IF_DAMAGED':
           if (!res.prevented && atk.dmg > 0) {
             const h = Math.min(v.n * 10, atk.dmg); atk.dmg -= h;

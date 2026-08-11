@@ -661,6 +661,97 @@ const EFFECTS = {
   // Mysterious Fossil. Needs no machinery at all — gen_cards sets playsAs from
   // the upstream `hp`, exactly as it does for Clefairy Doll. See ENGINE.md.
   'base3-62': { t: [] },
+
+  // ============================================================================
+  // JOB 6d — the cards unlocked by the first batch of new verbs.
+  // ============================================================================
+
+  'base2-5': { a: [                                    // Kangaskhan
+    [{ v: 'DRAW', n: 1 }],                             //   Fetch
+    [{ v: 'DMG_PER_HEAD', coins: 4, per: 20 }],        //   Comet Punch
+  ]},
+  'base2-7': { a: [                                    // Nidoqueen
+    // Matched on card NAME, per Trevor. Counts every slot you have, which in
+    // practice is the Bench — Nidoqueen is the one attacking. See RULINGS.md.
+    [{ v: 'DMG_PER_NAMED_IN_PLAY', name: 'Nidoking', base: 20, per: 20 }],
+    [],                                                //   Mega Punch
+  ]},
+  'base2-12': { a: [                                   // Vaporeon
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Quick Attack' }],
+    // "Extra Water Energy after the 2nd doesn't count" — a cap on the COUNT,
+    // where the Fossil Water Guns cap the BONUS. Same cap, stated two ways.
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 30, per: 10, t: 'W', maxSpare: 2 }],
+  ]},
+  'base2-16': { a: [                                   // Wigglytuff
+    [{ v: 'STATUS', s: 'Asleep' }],                    //   Lullaby
+    [{ v: 'DMG_PER_OWN_BENCH', base: 10, per: 10 }],   //   Do the Wave
+  ]},
+  'base2-33': { a: [                                   // Butterfree
+    [{ v: 'WHIRLWIND' }],                              //   Whirlwind
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE', half: true }],     //   Mega Drain
+  ]},
+  'base2-34': {                                        // Dodrio
+    // No status clause printed on this card, so `always` — see ENGINE.md.
+    p: { kind: 'RETREAT_DISCOUNT', n: 1, name: 'Retreat Aid', always: true },
+    a: [[{ v: 'DMG_PER_COUNTER_SELF', base: 10, per: 10 }]],   // Rage
+  },
+  'base2-37': { a: [                                   // Gloom
+    [{ v: 'STATUS', s: 'Poisoned' }],                  //   Poisonpowder
+    [{ v: 'STATUS', s: 'Confused' }, { v: 'STATUS_SELF', s: 'Confused' }],   // Foul Odor
+  ]},
+  'base2-43': { a: [                                   // Primeape
+    [{ v: 'DMG_PER_HEAD', coins: 3, per: 20 }],        //   Fury Swipes
+    [{ v: 'STATUS_SELF_ON_TAILS', s: 'Confused', label: 'Tantrum' }],
+  ]},
+  'base2-47': { a: [                                   // Tauros
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 20, bonus: 10, recoil: 0, label: 'Stomp' }],
+    [{ v: 'DMG_PER_COUNTER_SELF', base: 20, per: 10 },
+     { v: 'STATUS_SELF_ON_TAILS', s: 'Confused', label: 'Rampage' }],
+  ]},
+  'base2-56': { a: [ [{ v: 'DRAW_ON_FLIP' }] ]},       // Meowth / Pay Day
+  'base2-60': { a: [ [{ v: 'BENCH_SNIPE', n: 1, dmg: 10 }] ]},   // Pikachu / Spark
+  'base2-63': { a: [                                   // Venonat
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Stun Spore
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE' }],                 //   Leech Life
+  ]},
+
+  'base3-7': { a: [                                    // Hitmonlee
+    [{ v: 'BENCH_SNIPE', n: 1, dmg: 20 }],             //   Stretch Kick
+    [],                                                //   High Jump Kick
+  ]},
+  'base3-9': { a: [                                    // Kabutops
+    [],                                                //   Sharp Sickle
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE', half: true }],     //   Absorb
+  ]},
+  'base3-10': { a: [                                   // Lapras
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 10, per: 10, t: 'W', maxSpare: 2 }],
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Confuse Ray
+  ]},
+  'base3-11': { a: [                                   // Magneton
+    [{ v: 'NO_WR' }],                                  //   Sonicboom
+    [{ v: 'BENCH_SPLASH', n: 20 }, { v: 'RECOIL', n: 100 }],   // Selfdestruct
+  ]},
+  'base3-14': { a: [                                   // Raichu
+    // "If your opponent has fewer than 3 Benched Pokemon, do the damage to each
+    // of them" — BENCH_SNIPE already clamps n to the bench size.
+    [{ v: 'BENCH_SNIPE', n: 3, dmg: 10 }],             //   Gigashock
+  ]},
+  'base3-34': { a: [                                   // Golbat
+    [],                                                //   Wing Attack
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE' }],                 //   Leech Life
+  ]},
+  'base3-40': { a: [                                   // Omastar
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 20, per: 10, t: 'W', maxSpare: 2 }],
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 30 }],        //   Spike Cannon
+  ]},
+  'base3-42': { a: [                                   // Seadra
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 20, per: 10, t: 'W', maxSpare: 2 }],
+    [{ v: 'BARRIER_ON_FLIP', label: 'Agility' }],      //   Agility
+  ]},
+  'base3-57': { a: [                                   // Zubat
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Supersonic
+    [{ v: 'HEAL_SELF_EQUAL_DAMAGE' }],                 //   Leech Life
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --
