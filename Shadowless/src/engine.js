@@ -548,6 +548,18 @@ class Engine {
     return (p && p.kind === kind && this.powerUsable(slot)) ? p : null;
   }
 
+  // Every card physically on a slot — the evolution stack, the Energy, and any
+  // Trainer still attached to it. Hurricane sends the lot to hand and Mr. Fuji
+  // shuffles the lot into the deck, so both need it whole rather than scrapped.
+  gatherSlot(slot) {
+    const out = [];
+    slot.stack.forEach(x => out.push(x));
+    slot.energy.forEach(x => out.push(x));
+    slot.effects.forEach(e => { if (e.card) out.push(e.card); });
+    slot.stack = []; slot.energy = []; slot.effects = [];
+    return out;
+  }
+
   // Psyduck's Headache. The first PLAYER-scoped continuous effect in the game —
   // everything else so far attaches to a Pokemon.
   trainersLocked(pi) {
@@ -875,6 +887,12 @@ class Engine {
       if (v.v === 'COST_DISCARD_ALL_ENERGY') {
         if (p.active.energy.length === 0) return { ok: false, why: 'No Energy to discard' };
       }
+      if (v.v === 'REQUIRE_SELF_DAMAGED') {
+        if (p.active.dmg <= 0) return { ok: false, why: 'No damage counters to remove' };
+      }
+      if (v.v === 'SEARCH_BASIC_TO_BENCH') {
+        if (p.bench.length >= this.cfg.benchMax) return { ok: false, why: 'Bench is full' };
+      }
       if (v.v === 'REQUIRE_DEF_STATUS') {
         const def = this.state.players[1 - pi].active;
         if (!def || !def.status[v.s]) return { ok: false, why: `Defending Pokemon must be ${v.label || v.s}` };
@@ -943,6 +961,13 @@ class Engine {
           if (!ok) return false;
           break;
         }
+        case 'T_POKE_BALL': if (p.deck.length === 0) return false; break;
+        case 'T_ENERGY_SEARCH':
+          if (!p.deck.some(x => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; })) return false;
+          break;
+        case 'T_MR_FUJI': if (!p.bench.length) return false; break;
+        case 'T_GAMBLER': break;   // always legal; an empty hand still shuffles and draws
+        case 'T_RECYCLE': if (!p.discard.length) return false; break;
         case 'T_COMPUTER_SEARCH':
           if (p.deck.length === 0) return false;
           if (p.hand.length < 3) return false;   // the card itself + 2 to discard
@@ -1210,6 +1235,71 @@ class Engine {
           });
           this.log(`Defender attached to ${this.nameOf(tgt)} (-20 damage until the end of the opponent's next turn).`, 'eff');
           toDiscard = false;   // discarded when the effect expires
+          break;
+        }
+        case 'T_POKE_BALL': {
+          if (!this.flip('Poke Ball finds something?')) { this.log('Poke Ball: tails, nothing found.'); break; }
+          const eligible = p.deck.map((x, i) => [x, i]).filter(([x]) => this.db[x.id].kind === 'pokemon');
+          if (!eligible.length) { this.log('Poke Ball: no Pokemon left in the deck.'); this.shuffle(p.deck); break; }
+          let at = -1;
+          if (a.opts && a.opts.pickUid !== undefined) at = p.deck.findIndex(x => x.uid === a.opts.pickUid);
+          if (at === -1) at = eligible[this.pick(eligible.length)][1];
+          const got = p.deck.splice(at, 1)[0];
+          p.hand.push(got);
+          this.log(`Poke Ball: found ${this.db[got.id].name}.`);
+          this.shuffle(p.deck);
+          break;
+        }
+        case 'T_ENERGY_SEARCH': {
+          const eligible = p.deck.map((x, i) => [x, i])
+            .filter(([x]) => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; });
+          if (!eligible.length) { this.log('Energy Search: no basic Energy left.'); this.shuffle(p.deck); break; }
+          let at = -1;
+          if (a.opts && a.opts.pickUid !== undefined) at = p.deck.findIndex(x => x.uid === a.opts.pickUid);
+          if (at === -1) at = eligible[this.pick(eligible.length)][1];
+          const got = p.deck.splice(at, 1)[0];
+          p.hand.push(got);
+          this.log(`Energy Search: found ${this.db[got.id].name}.`);
+          this.shuffle(p.deck);
+          break;
+        }
+        case 'T_MR_FUJI': {
+          // A Benched Pokemon only, and the WHOLE slot goes back — evolution
+          // stack, Energy, everything attached — shuffled into the deck rather
+          // than discarded, which is what makes it a rescue and not a scoop.
+          const tgt = (a.opts && a.opts.targetUid)
+            ? p.bench.find(x => x.uid === a.opts.targetUid) : p.bench[this.pick(p.bench.length)];
+          if (!tgt) return this.fail('No Benched Pokemon to return');
+          const nm = this.nameOf(tgt);
+          this.removeSlot(pi, tgt);
+          const cards = this.gatherSlot(tgt);
+          cards.forEach(x => p.deck.push(x));
+          this.shuffle(p.deck);
+          this.log(`Mr. Fuji: ${nm} and everything attached are shuffled into the deck (${cards.length} cards).`);
+          break;
+        }
+        case 'T_GAMBLER': {
+          // Shuffle the hand in FIRST, then draw — so the cards you gave up are
+          // themselves candidates to come back.
+          const gave = p.hand.length;
+          while (p.hand.length) p.deck.push(p.hand.pop());
+          this.shuffle(p.deck);
+          const heads = this.flip('Gambler pays off?');
+          const want = heads ? 8 : 1;
+          let drew = 0;
+          for (let i = 0; i < want && p.deck.length; i++) { p.hand.push(p.deck.shift()); drew++; }
+          this.log(`Gambler: ${gave} shuffled away, ${heads ? 'heads' : 'tails'}, ${drew} drawn.`);
+          break;
+        }
+        case 'T_RECYCLE': {
+          if (!this.flip('Recycle?')) { this.log('Recycle: tails, nothing comes back.'); break; }
+          let k = -1;
+          if (a.opts && a.opts.pickUid !== undefined) k = p.discard.findIndex(x => x.uid === a.opts.pickUid);
+          if (k === -1) k = p.discard.length - 1;
+          if (k < 0) { this.log('Recycle: the discard pile is empty.'); break; }
+          const got = p.discard.splice(k, 1)[0];
+          p.deck.unshift(got);              // ON TOP, so it is the next card drawn
+          this.log(`Recycle: ${this.db[got.id].name} goes on top of the deck.`);
           break;
         }
         case 'T_COMPUTER_SEARCH': {
@@ -1498,6 +1588,13 @@ class Engine {
           if (!ok) return false;
           break;
         }
+        case 'T_POKE_BALL': if (p.deck.length === 0) return false; break;
+        case 'T_ENERGY_SEARCH':
+          if (!p.deck.some(x => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; })) return false;
+          break;
+        case 'T_MR_FUJI': if (!p.bench.length) return false; break;
+        case 'T_GAMBLER': break;   // always legal; an empty hand still shuffles and draws
+        case 'T_RECYCLE': if (!p.discard.length) return false; break;
         case 'T_COMPUTER_SEARCH':
           if (p.deck.length === 0) return false;
           if (p.hand.length < 3) return false;   // the card itself + 2 to discard
@@ -1938,6 +2035,117 @@ class Engine {
         // both cards printing it say; the plain version removes the damage dealt.
         // Capped at what is actually on the Pokemon, which is the "if it has
         // fewer damage counters than that, remove all of them" clause.
+        case 'SEARCH_BASIC_TO_BENCH': {
+          // Call for Family / Call for Friend / Sprout. Named, or by type for
+          // Marowak. Legality already refused a full Bench.
+          const wants = (c2) => {
+            if (c2.kind !== 'pokemon' || c2.stage !== 'Basic') return false;
+            if (v.names) return v.names.indexOf(c2.name) >= 0;
+            if (v.name) return c2.name === v.name;
+            if (v.type) return c2.type === v.type;
+            return true;
+          };
+          const eligible = me.deck.map((x, i) => [x, i]).filter(([x]) => wants(this.db[x.id]));
+          if (!eligible.length) { this.log('Nothing in the deck to call.', 'eff'); this.shuffle(me.deck); break; }
+          let at = -1;
+          if (a && a.opts && a.opts.pickUid !== undefined) at = me.deck.findIndex(x => x.uid === a.opts.pickUid);
+          if (at === -1) at = eligible[this.pick(eligible.length)][1];
+          const got = me.deck.splice(at, 1)[0];
+          me.bench.push(this.mkSlot(got));
+          me.bench[me.bench.length - 1].playedTurn = s.turn;
+          this.log(`${card.name} calls ${this.db[got.id].name} to the Bench.`, 'eff');
+          this.shuffle(me.deck);
+          break;
+        }
+        case 'HEAL_SELF_ON_FLIP':
+          if (this.flip(v.label || 'remove a damage counter?')) {
+            const h4 = Math.min((v.n || 1) * 10, atk.dmg);
+            atk.dmg -= h4;
+            this.log(`${card.name} removes ${h4} damage from itself.`, 'eff');
+          }
+          break;
+        case 'ENERGY_FROM_DISCARD': {
+          // Gastly's Energy Conversion: UP TO n, so an empty discard is fine.
+          const picks = (a && a.opts && a.opts.uids) || null;
+          const taken2 = [];
+          if (picks) {
+            for (const u of picks.slice(0, v.n)) {
+              const k = me.discard.findIndex(x => x.uid === u);
+              if (k >= 0 && this.db[me.discard[k].id].kind === 'energy') taken2.push(me.discard.splice(k, 1)[0]);
+            }
+          } else {
+            // Unattended fallback: the most recently discarded Energy, which is
+            // deterministic and therefore keeps a seeded game reproducible.
+            for (let i = me.discard.length - 1; i >= 0 && taken2.length < v.n; i--) {
+              if (this.db[me.discard[i].id].kind === 'energy') taken2.push(me.discard.splice(i, 1)[0]);
+            }
+          }
+          taken2.forEach(x => me.hand.push(x));
+          this.log(`${card.name} takes back ${taken2.length} Energy.`, 'eff');
+          break;
+        }
+        case 'TRAINER_FROM_DISCARD': {
+          let k2 = -1;
+          if (a && a.opts && a.opts.pickUid !== undefined) k2 = me.discard.findIndex(x => x.uid === a.opts.pickUid);
+          if (k2 === -1) k2 = me.discard.map((x, i) => [x, i])
+            .filter(([x]) => this.db[x.id].kind === 'trainer').map(([, i]) => i).pop() ?? -1;
+          if (k2 === -1) { this.log('No Trainer card in the discard pile.', 'eff'); break; }
+          const got2 = me.discard.splice(k2, 1)[0];
+          me.hand.push(got2);
+          this.log(`${card.name} salvages ${this.db[got2.id].name}.`, 'eff');
+          break;
+        }
+        case 'WILDFIRE': {
+          // Moltres. The player chooses how many Fire to burn, capped at what is
+          // attached — Trevor, 10 Aug. Each one mills a card from their deck.
+          const fire = atk.energy.filter(e => energyProvides(this.db, e) === 'R');
+          const max = fire.length;
+          let n7 = (a && a.opts && a.opts.count !== undefined) ? a.opts.count : max;
+          n7 = Math.max(0, Math.min(n7, max));
+          if (n7 === 0) { this.log('No Fire Energy discarded, so nothing burns.', 'eff'); break; }
+          for (let i = 0; i < n7; i++) {
+            const k3 = atk.energy.findIndex(e => energyProvides(this.db, e) === 'R');
+            if (k3 >= 0) me.discard.push(atk.energy.splice(k3, 1)[0]);
+          }
+          let burned = 0;
+          for (let i = 0; i < n7 && you.deck.length; i++) { you.discard.push(you.deck.shift()); burned++; }
+          this.log(`Wildfire: ${n7} Fire discarded, ${burned} card(s) burned off ${you.name}'s deck.`, 'eff');
+          break;
+        }
+        case 'REARRANGE_TOP': {
+          // Hypno's Prophecy. Either deck — rearranging THEIRS is a real effect
+          // even against an opponent that sees everything, because it decides
+          // what they draw and when. See RULINGS.md.
+          const side = (a && a.opts && a.opts.side === 'them') ? you : me;
+          const n8 = Math.min(v.n, side.deck.length);
+          if (n8 === 0) { this.log('That deck is empty.', 'eff'); break; }
+          const order = (a && a.opts && a.opts.order) || null;
+          if (order && order.length === n8) {
+            const head = side.deck.slice(0, n8);
+            const seen = {};
+            const rebuilt = [];
+            for (const i of order) {
+              if (i >= 0 && i < n8 && !seen[i]) { seen[i] = 1; rebuilt.push(head[i]); }
+            }
+            for (let i = 0; i < n8; i++) if (!seen[i]) rebuilt.push(head[i]);
+            side.deck.splice(0, n8, ...rebuilt);
+          }
+          this.log(`${card.name} looks at the top ${n8} of ${side.name}'s deck.`, 'eff');
+          break;
+        }
+        case 'RETURN_DEFENDER_TO_HAND': {
+          // Pidgeot's Hurricane. "Unless this attack Knocks Out the Defending
+          // Pokemon" — so a lethal hit simply Knocks it Out in the normal way.
+          if (!def) break;
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (def.dmg >= topCard(this.db, def).hp) { this.log('It was Knocked Out instead.', 'eff'); break; }
+          const nm = this.nameOf(def);
+          const where2 = this.removeSlot(1 - pi, def);
+          this.gatherSlot(def).forEach(x => you.hand.push(x));
+          this.log(`${nm} and everything attached go back to ${you.name}'s hand.`, 'eff');
+          if (where2 === 'active' && you.bench.length) this.addPromote(1 - pi);
+          break;
+        }
         case 'WHIRLWIND_ON_FLIP':
           // Arbok's Terror Strike. The damage lands either way; only the switch
           // is on the coin.

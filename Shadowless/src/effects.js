@@ -821,6 +821,61 @@ const EFFECTS = {
     [{ v: 'NO_TRAINERS_NEXT_TURN' }],                  //   Headache
     [{ v: 'DMG_PER_HEAD', coins: 3, per: 10 }],        //   Fury Swipes
   ]},
+
+  // ============================================================================
+  // JOB 6d, third batch — deck search, deck order, and the discard pile.
+  // This finishes every Jungle and Fossil card that is not a Power or Ditto.
+  // ============================================================================
+
+  'base2-8': { a: [                                    // Pidgeot
+    [],                                                //   Wing Attack
+    [{ v: 'RETURN_DEFENDER_TO_HAND' }],                //   Hurricane
+  ]},
+  'base2-39': { a: [                                   // Marowak
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 30 }],        //   Bonemerang
+    [{ v: 'SEARCH_BASIC_TO_BENCH', type: 'F' }],       //   Call for Friend
+  ]},
+  'base2-49': { a: [                                   // Bellsprout
+    [],                                                //   Vine Whip
+    [{ v: 'SEARCH_BASIC_TO_BENCH', name: 'Bellsprout' }],
+  ]},
+  'base2-57': { a: [                                   // Nidoran F
+    [{ v: 'DMG_PER_HEAD', coins: 3, per: 10 }],        //   Fury Swipes
+    // Either Nidoran, which is why the verb takes a list as well as a name.
+    [{ v: 'SEARCH_BASIC_TO_BENCH', names: ['Nidoran ♂', 'Nidoran ♀'] }],
+  ]},
+  'base2-58': { a: [                                   // Oddish
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Stun Spore
+    [{ v: 'SEARCH_BASIC_TO_BENCH', name: 'Oddish' }],  //   Sprout
+  ]},
+  'base2-64': { t: [{ v: 'T_POKE_BALL' }] },           // Poke Ball
+
+  'base3-8': { a: [                                    // Hypno
+    // Either deck. Rearranging THEIRS is a real effect even against an opponent
+    // that sees everything — it decides what they draw and when. See RULINGS.md.
+    [{ v: 'REARRANGE_TOP', n: 3 }],                    //   Prophecy
+    [{ v: 'BENCH_SNIPE', n: 1, dmg: 10 }],             //   Dark Mind
+  ]},
+  'base3-12': { a: [                                   // Moltres
+    [{ v: 'WILDFIRE' }],                               //   Wildfire
+    [{ v: 'FLIP_OR_NOTHING' }],                        //   Dive Bomb
+  ]},
+  'base3-33': { a: [                                   // Gastly
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Lick
+    [{ v: 'ENERGY_FROM_DISCARD', n: 2 }, { v: 'RECOIL', n: 10 }],   // Energy Conversion
+  ]},
+  'base3-51': { a: [                                   // Krabby
+    [{ v: 'SEARCH_BASIC_TO_BENCH', name: 'Krabby' }],  //   Call for Family
+    [],                                                //   Irongrip
+  ]},
+  'base3-55': { a: [                                   // Slowpoke
+    [{ v: 'REQUIRE_SELF_DAMAGED' }, { v: 'HEAL_SELF_ON_FLIP', n: 1, label: 'Spacing Out' }],
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'P' }, { v: 'TRAINER_FROM_DISCARD' }],   // Scavenge
+  ]},
+  'base3-58': { t: [{ v: 'T_MR_FUJI' }] },             // Mr. Fuji
+  'base3-59': { t: [{ v: 'T_ENERGY_SEARCH' }] },       // Energy Search
+  'base3-60': { t: [{ v: 'T_GAMBLER' }] },             // Gambler
+  'base3-61': { t: [{ v: 'T_RECYCLE' }] },             // Recycle
 };
 
 // ---------------------------------------------------------------- ALIASES --

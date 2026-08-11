@@ -93,7 +93,9 @@ below is the worked example, and it is why this file exists at the size it does.
   Fossil to 42/62. Cloyster turned out to need nothing new at all — FLIP_OR_NOTHING already returns
   before the post-damage loop, so a plain STATUS beside it is governed by that same coin. Also
   caught a test of its own that was passing for the wrong reason: Chansey had no Energy, so
-  canUseAttack was refusing on cost rather than on the attack lock being tested.
+  canUseAttack was refusing on cost rather than on the attack lock being tested. A third pass
+  finished everything that is not a Power or Ditto — deck search, deck ordering, discard retrieval
+  and five Trainers — leaving Jungle at 59/64 and Fossil at 53/62.
 - **Sonnet 4.6** (10 Aug 2026) — Job 7 groundwork: researched and built `data/gbc_decks.json`, the
   GBC opponent deck reference. All 16 decks from the first Game Boy Color game — eight Club Masters,
   four Grand Masters, and Ronald's four escalating rival decks — sourced from Bulbapedia character

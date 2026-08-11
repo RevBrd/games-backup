@@ -1350,12 +1350,12 @@ T('the AI refuses Earthquake when it would wipe its own bench', () => {
 console.log('\nJob 6d verbs');
 
 // Fire an attack directly, so the test controls the coin instead of the deck.
-function fire(E, idx, heads) {
+function fire(E, idx, heads, act) {
   const me = E.state.players[0], you = E.state.players[1];
   E.flip = () => heads;
   const card = top(E, me.active);
   const scr = (EFFECTS[card.id] && EFFECTS[card.id].a && EFFECTS[card.id].a[idx]) || [];
-  return E.runAttack(0, me.active, you.active, card, card.attacks[idx], scr, {});
+  return E.runAttack(0, me.active, you.active, card, card.attacks[idx], scr, act || {});
 }
 
 T('Clamp is ONE coin governing damage and Paralysis together', () => {
@@ -1439,6 +1439,116 @@ T('Headache stops the opponent playing Trainers, for one turn', () => {
   eq(E.trainersLocked(0), false, 'and only on their side');
   E.state.turn += 2;
   eq(E.trainersLocked(1), false, 'and it expires');
+  return true;
+});
+
+// ---------------------------------------------------------------------------
+// Job 6d third batch — deck search, deck order, the discard pile.
+// ---------------------------------------------------------------------------
+console.log('\nDeck, discard and search');
+
+// Put a Trainer in hand and play it, so the test drives the real action path.
+function playTrainer(E, id, opts) {
+  const p = E.state.players[0];
+  p.hand.push({ id, uid: E.uid++ });
+  return E.act(0, { t: 'playTrainer', hand: p.hand.length - 1, opts });
+}
+
+T('Hurricane returns the whole Pokemon and everything on it, unless it kills', () => {
+  const E = board('base2-8', [], 'base1-3');                  // Pidgeot vs Chansey 120
+  const you = E.state.players[1];
+  attach(E, you.active, 'base1-99', 3);
+  you.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  const handBefore = you.hand.length;
+  fire(E, 1, true);                                            // Hurricane, 30
+  eq(you.active, null, 'the Defending Pokemon left the board');
+  eq(you.hand.length, handBefore + 4, 'Chansey plus its three Energy went to hand');
+  eq(E.state.pendingPromote, 1, 'and they owe a promotion');
+
+  // A lethal Hurricane is a Knock Out instead, by the card's own wording.
+  const kill = board('base2-8', [], 'base1-58');               // Pikachu, 40 HP
+  kill.state.players[1].active.dmg = 20;                       // 30 will finish it
+  const hand2 = kill.state.players[1].hand.length;
+  fire(kill, 1, true);
+  eq(kill.state.players[1].hand.length, hand2, 'nothing went back to hand');
+  return true;
+});
+
+T('Call for Family refuses a full Bench and pulls only the named card', () => {
+  const E = board('base2-49');                                 // Bellsprout
+  const me = E.state.players[0];
+  me.deck = [{ id: 'base2-49', uid: E.uid++ }, { id: 'base1-58', uid: E.uid++ }];
+  fire(E, 1, true);
+  eq(me.bench.length, 1, 'one came out');
+  eq(top(E, me.bench[0]).name, 'Bellsprout', 'and it was the named one, not the Pikachu');
+
+  const full = board('base2-49', ['base1-58', 'base1-58', 'base1-58', 'base1-58', 'base1-58']);
+  eq(full.canUseAttack(0, 1).ok, false, 'and a full Bench makes the attack illegal');
+  return true;
+});
+
+T('Mr. Fuji shuffles the whole slot into the deck, not the discard', () => {
+  const E = board('base1-58', ['base1-3']);
+  const me = E.state.players[0];
+  attach(E, me.bench[0], 'base1-99', 2);
+  const deckBefore = me.deck.length, discardBefore = me.discard.length;
+  playTrainer(E, 'base3-58', { targetUid: me.bench[0].uid });
+  eq(me.bench.length, 0, 'the Pokemon left the Bench');
+  eq(me.deck.length, deckBefore + 3, 'Chansey and both Energy went into the deck');
+  eq(me.discard.length, discardBefore + 1, 'and only Mr. Fuji itself was discarded');
+  return true;
+});
+
+T('Recycle puts its card on TOP of the deck, where it is drawn next', () => {
+  const E = board('base1-58');
+  const me = E.state.players[0];
+  const want = { id: 'base1-4', uid: E.uid++ };                // Charizard
+  me.discard.push(want);
+  E.flip = () => true;
+  playTrainer(E, 'base3-61', { pickUid: want.uid });
+  eq(me.deck[0].uid, want.uid, 'it is the very next card');
+  return true;
+});
+
+T('Gambler shuffles the hand in FIRST, so what you gave up can come back', () => {
+  const E = board('base1-58');
+  const me = E.state.players[0];
+  me.hand = [];
+  for (let i = 0; i < 5; i++) me.hand.push({ id: 'base1-99', uid: E.uid++ });
+  const total = me.hand.length + me.deck.length;              // conserved, plus Gambler
+  E.flip = () => true;
+  playTrainer(E, 'base3-60');
+  eq(me.hand.length, 8, 'heads draws eight');
+  eq(me.hand.length + me.deck.length, total, 'and no card was created or lost — Gambler itself is in the discard');
+  return true;
+});
+
+T('Wildfire burns exactly as many cards as Fire discarded, capped at what is attached', () => {
+  const E = board('base3-12', [], 'base1-3');                  // Moltres
+  const me = E.state.players[0], you = E.state.players[1];
+  attach(E, me.active, 'base1-98', 3);                         // 3 Fire
+  const deckBefore = you.deck.length;
+  fire(E, 0, true, { opts: { count: 2 } });
+  eq(me.active.energy.length, 1, 'two Fire discarded');
+  eq(you.deck.length, deckBefore - 2, 'two cards burned off their deck');
+
+  const over = board('base3-12', [], 'base1-3');
+  attach(over, over.state.players[0].active, 'base1-98', 1);
+  const d2 = over.state.players[1].deck.length;
+  fire(over, 0, true, { opts: { count: 99 } });
+  eq(over.state.players[1].deck.length, d2 - 1, 'and asking for more than you have burns only what you have');
+  return true;
+});
+
+T('Prophecy reorders the top of either deck without changing its size', () => {
+  const E = board('base3-8', [], 'base1-3');                   // Hypno
+  const me = E.state.players[0];
+  const before = me.deck.slice(0, 3).map(x => x.uid);
+  const n = me.deck.length;
+  fire(E, 0, true, { opts: { side: 'me', order: [2, 0, 1] } });
+  eq(me.deck.length, n, 'the deck is the same size');
+  eq(me.deck[0].uid, before[2], 'and the third card is now on top');
+  eq(me.deck[1].uid, before[0], 'followed by the first');
   return true;
 });
 

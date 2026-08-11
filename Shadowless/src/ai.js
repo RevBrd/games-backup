@@ -246,6 +246,18 @@ class AI {
         case 'SWITCH_SELF_CHOOSE': flags.selfSwitch = true; break;
         case 'NO_TRAINERS_NEXT_TURN': flags.lockTrainers = true; break;
         case 'BUFF_OWN_ATTACK': flags.buff = v; break;
+
+        // ---- Job 6d, third batch ----
+        case 'SEARCH_BASIC_TO_BENCH': flags.callFamily = true; break;
+        case 'HEAL_SELF_ON_FLIP': flags.heal = (flags.heal || 0) + (v.n || 1) * 0.5; break;
+        case 'ENERGY_FROM_DISCARD': flags.recover = v.n; break;
+        case 'TRAINER_FROM_DISCARD': flags.recover = (flags.recover || 0) + 1; break;
+        case 'RETURN_DEFENDER_TO_HAND': flags.bounce = true; break;
+        case 'REARRANGE_TOP': flags.peek = v.n; break;
+        case 'WILDFIRE': flags.wildfire = true; break;
+        // Legality gate, like REQUIRE_DEF_STATUS: the engine never offers the
+        // attack when it would be illegal, so there is nothing to price.
+        case 'REQUIRE_SELF_DAMAGED': break;
       }
     }
     // FLIP_OR_NOTHING suppresses the whole attack, statuses included.
@@ -403,6 +415,27 @@ class AI {
     if (f.flags.selfSwitch && me.bench.length) s += frail ? W.dangerSwap : 2;
     // Swords Dance only pays off if we are still here next turn to use it.
     if (f.flags.buff) s += frail ? 4 : (f.flags.buff.base || 0) * 0.35;
+
+    // ---- Job 6d, third batch ----
+    // A free Basic onto the Bench is worth roughly what benching one from hand
+    // is, and much more when the Bench is nearly empty.
+    if (f.flags.callFamily) s += me.bench.length === 0 ? W.benchFirst : W.benchMore;
+    if (f.flags.recover) s += f.flags.recover * W.drawCard * 0.8;
+    // Hurricane undoes an entire investment — every Energy on it goes back to
+    // hand with it — so it scales with what they have committed, and is worth
+    // nothing at all if the hit would Knock the target Out anyway.
+    if (f.flags.bounce && you.active && f.pLethal < 0.9) {
+      s += W.drag + you.active.energy.length * W.energyDiscard * 0.5;
+    }
+    if (f.flags.peek) s += f.flags.peek * 1.5;
+    // Wildfire trades our Energy for their deck. Worth real points only when
+    // they are close to decking out, and a cost the rest of the time.
+    if (f.flags.wildfire) {
+      const fire = atkSlot.energy.filter(e => {
+        const c2 = this.db[e.id]; return c2 && c2.provides === 'R';
+      }).length;
+      s += you.deck.length <= 12 ? fire * 9 : -fire * W.energyDiscard * 0.4;
+    }
 
     // don't burn a once-per-stay attack on a whiff-heavy turn for nothing
     if (f.flags.oncePerStay && f.expDmg <= 0 && !Object.keys(f.statuses).length) s -= 10;
@@ -784,6 +817,31 @@ class AI {
 
     for (const v of script) {
       switch (v.v) {
+        case 'T_POKE_BALL': s += 0.5 * W.drawCard * 2; break;
+        case 'T_ENERGY_SEARCH': s += W.drawCard; break;
+        case 'T_MR_FUJI': {
+          // A rescue, so it is only worth anything on something badly hurt —
+          // and it costs us the whole investment on that Pokemon.
+          let best = -Infinity;
+          for (const b of me.bench) {
+            const hurt = b.dmg, inv = b.energy.length;
+            best = Math.max(best, hurt * 0.5 - inv * W.energyDiscard * 0.5);
+          }
+          s += Math.max(0, best === -Infinity ? 0 : best);
+          break;
+        }
+        case 'T_GAMBLER': {
+          // Expected 4.5 cards for the hand we give up. Good when nearly empty,
+          // a bad trade when holding a strong hand.
+          s += (4.5 - me.hand.length) * W.drawCard * 0.6;
+          break;
+        }
+        case 'T_RECYCLE': {
+          // Half the time it does nothing at all; when it lands it is one
+          // specific card, on top, next draw.
+          s += 0.5 * W.drawCard * 1.4;
+          break;
+        }
         case 'T_DRAW': s += v.n * W.drawCard; break;
 
         case 'T_PROFESSOR_OAK': {
