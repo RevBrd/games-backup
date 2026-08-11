@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volley</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1c16;
+    overflow: hidden;
+    font-family: Georgia, 'Times New Roman', serif;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  canvas { display: block; cursor: crosshair; }
+  #cmdPanel {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 72px;
+    background: rgba(22, 24, 18, 0.92);
+    border-top: 1px solid #3a3c32;
+    display: flex; align-items: center;
+    padding: 0 20px; gap: 16px; z-index: 10;
+  }
+  #cmdPanel.hidden { display: none; }
+  .cmd-info {
+    color: #c8bfa8; font-size: 13px; line-height: 1.4; min-width: 160px;
+  }
+  .cmd-info .reg-name {
+    font-size: 15px; font-weight: bold; color: #ddd5c0; margin-bottom: 2px;
+  }
+  .cmd-bars {
+    display: flex; flex-direction: column; gap: 6px; min-width: 180px;
+  }
+  .bar-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: #8a8270;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .bar-track {
+    flex: 1; height: 8px; background: #2a2c22;
+    border-radius: 2px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 2px; transition: width 0.2s; }
+  #moraleBar { background: #6a8a4a; }
+  #reloadBar { background: #8a7a4a; }
+  .cmd-btn {
+    padding: 8px 18px;
+    font-family: Georgia, serif; font-size: 13px; font-weight: bold;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    background: #2a3a2a; color: #a0a888;
+    border: 1px solid #3a4a3a; border-radius: 3px;
+    cursor: pointer; transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .cmd-btn:hover { background: #3a4a3a; }
+  .cmd-btn.active { background: #3a5a3a; color: #c0d8a8; border-color: #5a7a5a; }
+  #fireBtn {
+    padding: 8px 24px;
+    font-family: Georgia, serif; font-size: 14px; font-weight: bold;
+    letter-spacing: 2px; text-transform: uppercase;
+    background: #6a3a2a; color: #d4cbb8;
+    border: 1px solid #8a5a3a; border-radius: 3px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  #fireBtn:hover:not(:disabled) { background: #8a4a2a; }
+  #fireBtn:disabled {
+    background: #2a2c22; color: #4a4a3a;
+    border-color: #3a3c32; cursor: default;
+  }
+  .cmd-hint {
+    color: #5a5848; font-size: 10px; font-style: italic;
+    margin-left: auto; text-align: right; line-height: 1.4;
+  }
+  #noSelection {
+    color: #5a5848; font-size: 13px; font-style: italic;
+  }
+  /* Pause overlay */
+  #pauseOverlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(15,17,12,0.82);
+    z-index: 50;
+    flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+  }
+  #pauseOverlay.show { display: flex; }
+  #pauseOverlay h1 {
+    font-family: Georgia, serif; font-size: 48px; font-weight: bold;
+    color: #c8bfa8; letter-spacing: 6px;
+  }
+  .pause-btn {
+    padding: 12px 40px;
+    font-family: Georgia, serif; font-size: 16px;
+    letter-spacing: 2px; text-transform: uppercase;
+    background: #2a3a2a; color: #a0a888;
+    border: 1px solid #4a5a4a; border-radius: 3px;
+    cursor: pointer; transition: background 0.15s;
+    min-width: 200px;
+  }
+  .pause-btn:hover { background: #3a5a3a; color: #c0d8a8; }
+  .pause-btn.quit { background: #3a2a2a; color: #a08888; border-color: #5a4a4a; }
+  .pause-btn.quit:hover { background: #5a2a2a; color: #c0a8a8; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="cmdPanel">
+  <span id="noSelection">Select a regiment to issue orders</span>
+  <div id="selectionUI" style="display:none;">
+    <div style="display:flex;align-items:center;gap:16px;width:100%;">
+      <div class="cmd-info">
+        <div class="reg-name" id="regName">—</div>
+        <div id="regMen">— men</div>
+      </div>
+      <div class="cmd-bars">
+        <div class="bar-row">
+          <span style="width:52px">Morale</span>
+          <div class="bar-track"><div class="bar-fill" id="moraleBar" style="width:100%"></div></div>
+        </div>
+        <div class="bar-row">
+          <span style="width:52px">Reload</span>
+          <div class="bar-track"><div class="bar-fill" id="reloadBar" style="width:100%"></div></div>
+        </div>
+      </div>
+      <button class="cmd-btn" id="formationBtn">Line</button>
+      <button class="cmd-btn" id="chargeBtn">Charge</button>
+      <button class="cmd-btn" id="disengageBtn" style="display:none;background:#5a2a2a;color:#c0a8a8;border-color:#7a4a4a;">Disengage</button>
+      <button id="fireBtn" disabled>Fire</button>
+      <span class="cmd-hint">R-click: move · Drag: facing · F: fire<br>C: charge · D: disengage · Tab: formation</span>
+    </div>
+  </div>
+</div>
+<div id="pauseOverlay">
+  <h1>PAUSED</h1>
+  <button class="pause-btn" id="resumeBtn">Resume</button>
+  <button class="pause-btn quit" id="quitBtn">Quit to Menu</button>
+</div>
+<script>
+// ====== CONFIG ======
+const CFG = {
+  MOVE_SPEED: 21,
+  RELOAD_TIME: 18,
+  FIRE_RANGE: 260,
+  FIRE_ARC: Math.PI / 2.2,
+  VOLLEY_BASE_DMG: 48,
+  MORALE_ROUT: 8,
+  MORALE_WAVER: 30,
+  MORALE_RECOVERY: 2.5,
+  MORALE_RECOVERY_DELAY: 4,
+  FLANK_ANGLE: Math.PI * 0.42,
+  REAR_ANGLE: Math.PI * 0.75,
+  FLANK_MULT: 2.0,
+  REAR_MULT: 3.2,
+  DOT_SPACING: 7,
+  DOT_RADIUS: 2.8,
+  MEN_PER_REGIMENT: 400,
+  ROUT_SPEED_MULT: 1.6,
+  SOLDIER_LERP: 3.5,
+  REFORM_TIME: 4.5,
+  // Charge / melee
+  FIX_BAYONETS_TIME: 2.5,
+  CHARGE_SPEED_MULT: 2.0,
+  COLLISION_DMG_DEF: 30,
+  COLLISION_MORALE_DEF: 20,
+  COLLISION_DMG_ATK: 12,
+  COLLISION_MORALE_ATK: 8,
+  MELEE_DMG_PER_SEC: 3.5,
+  MELEE_MORALE_DRAIN: 2.0,
+  MELEE_RANGE: 18,
+  DISENGAGE_CASUALTIES: 15,
+  DISENGAGE_MORALE: 12,
+  DISENGAGE_RETREAT_DIST: 150,
+  DISENGAGE_RECOVERY_TIME: 3.0,
+};
+// Formation layouts: [cols, rows]
+const FORMATIONS = {
+  line:   { cols: 10, rows: 4 },
+  column: { cols: 4,  rows: 10 },
+};
+const TOTAL_DOTS = FORMATIONS.line.cols * FORMATIONS.line.rows; // 40
+const MEN_PER_DOT = CFG.MEN_PER_REGIMENT / TOTAL_DOTS;
+
+// ====== COLORS ======
+const COL = {
+  fieldBase: [72, 98, 55],
+  union: '#2e5088',
+  unionLight: '#4a78b8',
+  confed: '#7a6952',
+  confedLight: '#a08a6a',
+  selection: '#c9a84c',
+  smoke: [195, 190, 178],
+};
+
+// ====== CANVAS SETUP ======
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('cmdPanel');
+const pauseOverlay = document.getElementById('pauseOverlay');
+let W, H;
+let state = 'MENU';
+let paused = false;
+let regiments = [];
+let particles = [];
+let selectedId = null;
+let moveMarker = null;
+let moveMarkerTimer = 0;
+let lastTime = 0;
+let battleTime = 0;
+let terrainData = null;
+let dragState = null; // { startX, startY, currentX, currentY }
+let aiFireCooldown = 0;
+let chargeMode = false; // waiting for charge target click
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight - 72;
+  canvas.width = W;
+  canvas.height = H;
+  generateTerrain();
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ====== UTILITIES ======
+function dist(x1, y1, x2, y2) {
+  return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+}
+function angleTo(x1, y1, x2, y2) {
+  return Math.atan2(y2 - y1, x2 - x1);
+}
+function normalizeAngle(a) {
+  while (a > Math.PI) a -= 2 * Math.PI;
+  while (a < -Math.PI) a += 2 * Math.PI;
+  return a;
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function rand(lo, hi) { return lo + Math.random() * (hi - lo); }
+
+// ====== TERRAIN ======
+function generateTerrain() {
+  terrainData = ctx.createImageData(W, H);
+  const d = terrainData.data;
+  const base = COL.fieldBase;
+  for (let i = 0; i < d.length; i += 4) {
+    const px = (i / 4) % W;
+    const py = Math.floor((i / 4) / W);
+    const noise = (Math.sin(px * 0.02 + py * 0.015) * 4 +
+                   Math.sin(px * 0.007 - py * 0.01) * 6 +
+                   (Math.random() - 0.5) * 8);
+    d[i]     = clamp(base[0] + noise, 0, 255);
+    d[i + 1] = clamp(base[1] + noise * 1.1, 0, 255);
+    d[i + 2] = clamp(base[2] + noise * 0.7, 0, 255);
+    d[i + 3] = 255;
+  }
+}
+
+// ====== REGIMENT CLASS ======
+class Regiment {
+  constructor(id, name, x, y, facing, side) {
+    this.id = id;
+    this.name = name;
+    this.x = x; this.y = y;
+    this.targetX = x; this.targetY = y;
+    this.facing = facing;
+    this.targetFacing = facing;
+    this.side = side;
+    this.men = CFG.MEN_PER_REGIMENT;
+    this.maxMen = CFG.MEN_PER_REGIMENT;
+    this.morale = 100;
+    this.reloadProgress = 1.0;
+    this.routing = false;
+    this.routed = false;
+    this.lastDmgTime = -999;
+    this.moving = false;
+    this.formation = 'line'; // 'line' or 'column'
+    this.reformTimer = 0; // seconds remaining in formation change
+    // Charge / melee state
+    this.chargeState = null; // null, 'fixing', 'charging', 'melee', 'disengaging'
+    this.chargeTarget = null;
+    this.meleePartner = null;
+    this.fixTimer = 0;
+    this.disengageTimer = 0;
+    this.soldiers = [];
+    this.buildSoldierSlots();
+    // AI
+    this.aiState = 'ADVANCE';
+    this.aiTargetX = x;
+    this.aiTargetY = y;
+  }
+
+  buildSoldierSlots() {
+    const f = FORMATIONS[this.formation];
+    if (this.soldiers.length === 0) {
+      // First init
+      for (let r = 0; r < f.rows; r++) {
+        for (let c = 0; c < f.cols; c++) {
+          const sx = (c - f.cols / 2 + 0.5) * CFG.DOT_SPACING;
+          const sy = (r - f.rows / 2 + 0.5) * CFG.DOT_SPACING;
+          this.soldiers.push({
+            slotX: sx, slotY: sy,
+            offX: sx, offY: sy,
+            alive: true,
+            lagFactor: 0.7 + Math.random() * 0.6,
+            wobble: Math.random() * Math.PI * 2,
+          });
+        }
+      }
+    } else {
+      // Remap existing soldiers to new formation slots
+      let idx = 0;
+      for (let r = 0; r < f.rows; r++) {
+        for (let c = 0; c < f.cols; c++) {
+          if (idx < this.soldiers.length) {
+            this.soldiers[idx].slotX = (c - f.cols / 2 + 0.5) * CFG.DOT_SPACING;
+            this.soldiers[idx].slotY = (r - f.rows / 2 + 0.5) * CFG.DOT_SPACING;
+          }
+          idx++;
+        }
+      }
+    }
+  }
+
+  setFormation(type) {
+    if (this.formation === type || this.reformTimer > 0) return;
+    this.formation = type;
+    this.reformTimer = CFG.REFORM_TIME;
+    this.buildSoldierSlots();
+  }
+
+  get reforming() { return this.reformTimer > 0; }
+
+  get alive() { return this.men > 0 && !this.routed; }
+  get aliveDots() { return this.soldiers.filter(s => s.alive).length; }
+
+  update(dt) {
+    if (!this.alive) return;
+
+    // Reform timer
+    if (this.reformTimer > 0) {
+      this.reformTimer = Math.max(0, this.reformTimer - dt);
+      this.moving = false;
+      // Still update soldier positions (they're shuffling into new formation)
+      const cosF = Math.cos(this.facing);
+      const sinF = Math.sin(this.facing);
+      for (const s of this.soldiers) {
+        if (!s.alive) continue;
+        const tx = -s.slotX * sinF - s.slotY * cosF;
+        const ty =  s.slotX * cosF - s.slotY * sinF;
+        s.wobble += dt * (1.5 + s.lagFactor);
+        const wx = Math.sin(s.wobble) * 1.0;
+        const wy = Math.cos(s.wobble * 0.7) * 1.0;
+        const lerpRate = CFG.SOLDIER_LERP * 0.6 * s.lagFactor * dt;
+        s.offX = lerp(s.offX, tx + wx, clamp(lerpRate, 0, 1));
+        s.offY = lerp(s.offY, ty + wy, clamp(lerpRate, 0, 1));
+      }
+      // Morale still recovers, reload still ticks
+      if (this.reloadProgress < 1.0)
+        this.reloadProgress = Math.min(1.0, this.reloadProgress + dt / CFG.RELOAD_TIME);
+      if (!this.routing && battleTime - this.lastDmgTime > CFG.MORALE_RECOVERY_DELAY)
+        this.morale = Math.min(100, this.morale + CFG.MORALE_RECOVERY * dt);
+      if (!this.routing && this.morale <= CFG.MORALE_ROUT) this.routing = true;
+      return;
+    }
+
+    // Charge / melee state machine
+    if (this.chargeState === 'fixing') {
+      this.fixTimer -= dt;
+      this.moving = false;
+      if (this.fixTimer <= 0) this.chargeState = 'charging';
+      // Update soldier positions but don't move or fire
+      this._updateSoldiers(dt);
+      if (!this.routing && this.morale <= CFG.MORALE_ROUT) {
+        this.routing = true; this.chargeState = null; this.chargeTarget = null;
+      }
+      return;
+    }
+
+    if (this.chargeState === 'melee') {
+      this.moving = false;
+      const mp = this.meleePartner;
+      if (!mp || !mp.alive || mp.chargeState !== 'melee') {
+        // Partner died or routed — free from melee
+        this.chargeState = null; this.meleePartner = null;
+      } else {
+        // Deal melee damage proportional to remaining men
+        const dmgRaw = (this.men / this.maxMen) * CFG.MELEE_DMG_PER_SEC * dt;
+        // Accumulate fractional damage
+        if (!this._meleeDmgAccum) this._meleeDmgAccum = 0;
+        this._meleeDmgAccum += dmgRaw;
+        if (this._meleeDmgAccum >= 1) {
+          const dealt = Math.floor(this._meleeDmgAccum);
+          this._meleeDmgAccum -= dealt;
+          mp.takeDamage(dealt, 1.0);
+        }
+        // Morale drain
+        this.morale = Math.max(0, this.morale - CFG.MELEE_MORALE_DRAIN * dt);
+        // Face partner
+        this.targetFacing = angleTo(this.x, this.y, mp.x, mp.y);
+      }
+      this._updateSoldiers(dt);
+      if (!this.routing && this.morale <= CFG.MORALE_ROUT) {
+        this.routing = true;
+        // Free partner
+        if (this.meleePartner && this.meleePartner.chargeState === 'melee') {
+          this.meleePartner.chargeState = null;
+          this.meleePartner.meleePartner = null;
+        }
+        this.chargeState = null; this.meleePartner = null;
+      }
+      return;
+    }
+
+    if (this.chargeState === 'disengaging') {
+      this.disengageTimer -= dt;
+      if (this.disengageTimer <= 0) this.chargeState = null;
+      // Movement handled below (targetX/Y already set to retreat point)
+    }
+
+    // Routing behavior
+    if (this.routing) {
+      // Clear any charge state
+      if (this.chargeState) {
+        if (this.meleePartner && this.meleePartner.chargeState === 'melee') {
+          this.meleePartner.chargeState = null;
+          this.meleePartner.meleePartner = null;
+        }
+        this.chargeState = null; this.chargeTarget = null; this.meleePartner = null;
+      }
+      const nearest = this.findNearestEnemy();
+      if (nearest) {
+        const away = angleTo(nearest.x, nearest.y, this.x, this.y);
+        this.targetX = this.x + Math.cos(away) * 300;
+        this.targetY = this.y + Math.sin(away) * 300;
+        this.targetFacing = away;
+      } else {
+        this.targetY = this.side === 'union' ? H + 100 : -100;
+        this.targetX = this.x;
+      }
+      if (this.y < -50 || this.y > H + 50 || this.x < -50 || this.x > W + 50) {
+        this.routed = true;
+        return;
+      }
+    }
+
+    // Charging: override movement toward target
+    if (this.chargeState === 'charging') {
+      if (!this.chargeTarget || !this.chargeTarget.alive) {
+        this.chargeState = null; this.chargeTarget = null;
+      } else {
+        this.targetX = this.chargeTarget.x;
+        this.targetY = this.chargeTarget.y;
+        this.targetFacing = angleTo(this.x, this.y, this.chargeTarget.x, this.chargeTarget.y);
+      }
+    }
+
+    // Movement
+    const dx = this.targetX - this.x;
+    const dy = this.targetY - this.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    let speed = this.routing ? CFG.MOVE_SPEED * CFG.ROUT_SPEED_MULT
+              : this.chargeState === 'charging' ? CFG.MOVE_SPEED * CFG.CHARGE_SPEED_MULT
+              : this.chargeState === 'disengaging' ? CFG.MOVE_SPEED * 1.4
+              : this.formation === 'column' ? CFG.MOVE_SPEED * 1.5
+              : CFG.MOVE_SPEED;
+    if (d > 3) {
+      this.moving = true;
+      const step = Math.min(speed * dt, d);
+      this.x += (dx / d) * step;
+      this.y += (dy / d) * step;
+      // In column formation (or AI/routing), facing follows movement
+      // In line formation for player, facing is independent
+      if (this.formation === 'column' || this.side === 'confederate' || this.routing || this.chargeState) {
+        this.targetFacing = Math.atan2(dy, dx);
+      }
+    } else {
+      this.moving = false;
+    }
+
+    // Collision check when charging
+    if (this.chargeState === 'charging' && this.chargeTarget && this.chargeTarget.alive) {
+      if (dist(this.x, this.y, this.chargeTarget.x, this.chargeTarget.y) < CFG.MELEE_RANGE) {
+        this._resolveCollision();
+      }
+    }
+
+    // Facing (smooth rotation)
+    const facingDiff = normalizeAngle(this.targetFacing - this.facing);
+    this.facing += facingDiff * Math.min(1, dt * 3);
+
+    this._updateSoldiers(dt);
+
+    // Reload (not during charge/melee)
+    if (this.reloadProgress < 1.0 && !this.chargeState) {
+      this.reloadProgress = Math.min(1.0, this.reloadProgress + dt / CFG.RELOAD_TIME);
+    }
+
+    // Morale recovery (not during melee)
+    if (!this.routing && !this.chargeState && battleTime - this.lastDmgTime > CFG.MORALE_RECOVERY_DELAY) {
+      this.morale = Math.min(100, this.morale + CFG.MORALE_RECOVERY * dt);
+    }
+
+    // Check routing
+    if (!this.routing && this.morale <= CFG.MORALE_ROUT) {
+      this.routing = true;
+      if (this.meleePartner && this.meleePartner.chargeState === 'melee') {
+        this.meleePartner.chargeState = null;
+        this.meleePartner.meleePartner = null;
+      }
+      this.chargeState = null; this.chargeTarget = null; this.meleePartner = null;
+    }
+  }
+
+  _updateSoldiers(dt) {
+    const facingDiff2 = normalizeAngle(this.targetFacing - this.facing);
+    const f2 = this.facing + facingDiff2 * Math.min(1, dt * 3);
+    const cosF = Math.cos(this.facing);
+    const sinF = Math.sin(this.facing);
+    for (const s of this.soldiers) {
+      if (!s.alive) continue;
+      const tx = -s.slotX * sinF - s.slotY * cosF;
+      const ty =  s.slotX * cosF - s.slotY * sinF;
+      const wobbleAmt = this.moving ? 1.5 : 0.3;
+      s.wobble += dt * (1.5 + s.lagFactor);
+      const wx = Math.sin(s.wobble) * wobbleAmt;
+      const wy = Math.cos(s.wobble * 0.7) * wobbleAmt;
+      const lerpRate = CFG.SOLDIER_LERP * s.lagFactor * dt;
+      s.offX = lerp(s.offX, tx + wx, clamp(lerpRate, 0, 1));
+      s.offY = lerp(s.offY, ty + wy, clamp(lerpRate, 0, 1));
+    }
+  }
+
+  _resolveCollision() {
+    const target = this.chargeTarget;
+    // Collision damage: attacker hits defender hard
+    target.takeDamage(CFG.COLLISION_DMG_DEF, 1.0);
+    target.morale = Math.max(0, target.morale - CFG.COLLISION_MORALE_DEF);
+    target.lastDmgTime = battleTime;
+    // Attacker takes some damage too
+    this.takeDamage(CFG.COLLISION_DMG_ATK, 1.0);
+    this.morale = Math.max(0, this.morale - CFG.COLLISION_MORALE_ATK);
+    this.lastDmgTime = battleTime;
+    // Enter melee for both
+    this.chargeState = 'melee';
+    this.meleePartner = target;
+    this._meleeDmgAccum = 0;
+    target.chargeState = 'melee';
+    target.meleePartner = this;
+    target._meleeDmgAccum = 0;
+    target.chargeTarget = null;
+  }
+
+  initiateCharge(target) {
+    if (this.chargeState || this.routing || this.reforming) return;
+    this.chargeTarget = target;
+    this.chargeState = 'fixing';
+    this.fixTimer = CFG.FIX_BAYONETS_TIME;
+  }
+
+  disengage() {
+    if (this.chargeState !== 'melee' || !this.meleePartner) return;
+    // Free partner
+    const partner = this.meleePartner;
+    partner.chargeState = null;
+    partner.meleePartner = null;
+    // Apply disengage penalty
+    this.takeDamage(CFG.DISENGAGE_CASUALTIES, 1.0);
+    this.morale = Math.max(0, this.morale - CFG.DISENGAGE_MORALE);
+    // Set retreat
+    this.chargeState = 'disengaging';
+    this.meleePartner = null;
+    this.chargeTarget = null;
+    this._meleeDmgAccum = 0;
+    const retreatDir = this.side === 'union' ? Math.PI / 2 : -Math.PI / 2;
+    this.targetX = this.x + Math.cos(retreatDir) * CFG.DISENGAGE_RETREAT_DIST;
+    this.targetY = this.y + Math.sin(retreatDir) * CFG.DISENGAGE_RETREAT_DIST;
+    this.targetX = clamp(this.targetX, 30, W - 30);
+    this.targetY = clamp(this.targetY, 30, H - 30);
+    this.disengageTimer = CFG.DISENGAGE_RECOVERY_TIME;
+  }
+
+  findNearestEnemy() {
+    let nearest = null, best = Infinity;
+    for (const r of regiments) {
+      if (r.side === this.side || !r.alive) continue;
+      const d = dist(this.x, this.y, r.x, r.y);
+      if (d < best) { best = d; nearest = r; }
+    }
+    return nearest;
+  }
+
+  findTarget() {
+    let best = null, bestScore = Infinity;
+    for (const r of regiments) {
+      if (r.side === this.side || !r.alive) continue;
+      const d = dist(this.x, this.y, r.x, r.y);
+      if (d > CFG.FIRE_RANGE) continue;
+      const angle = angleTo(this.x, this.y, r.x, r.y);
+      const diff = Math.abs(normalizeAngle(angle - this.facing));
+      if (diff > CFG.FIRE_ARC) continue;
+      // Score: prefer most aligned with facing (diff near 0), distance as tiebreaker
+      const score = diff * 200 + d * 0.1;
+      if (score < bestScore) { bestScore = score; best = r; }
+    }
+    return best;
+  }
+
+  fire() {
+    if (this.reloadProgress < 1.0 || this.routing || this.reforming || this.chargeState) return false;
+    const target = this.findTarget();
+    if (!target) return false;
+
+    const d = dist(this.x, this.y, target.x, target.y);
+    const rangeFactor = 1.0 - (d / CFG.FIRE_RANGE) * 0.7;
+    const manpowerFactor = this.men / this.maxMen;
+    // Line formation gets full broadside; column only front rank fires
+    const formationFactor = this.formation === 'line' ? 1.0 : 0.28;
+
+    // Enfilade: target's exposed cross-section based on attack angle vs their formation
+    const attackAngle = angleTo(this.x, this.y, target.x, target.y);
+    const angleDiff = Math.abs(normalizeAngle(attackAngle - target.facing - Math.PI));
+    const sinA = Math.abs(Math.sin(angleDiff));
+    const cosA = Math.abs(Math.cos(angleDiff));
+    const tf = FORMATIONS[target.formation];
+    const crossSection = tf.cols * sinA + tf.rows * cosA;
+    const exposureMult = 0.85 + 0.65 * (crossSection / Math.max(tf.cols, tf.rows));
+
+    const casualties = Math.round(
+      CFG.VOLLEY_BASE_DMG * manpowerFactor * rangeFactor * formationFactor * exposureMult * rand(0.8, 1.2)
+    );
+
+    // Flanking (morale)
+    let flankMult = 1.0;
+    if (angleDiff > CFG.REAR_ANGLE) {
+      flankMult = CFG.REAR_MULT;
+    } else if (angleDiff > CFG.FLANK_ANGLE) {
+      flankMult = CFG.FLANK_MULT;
+    }
+
+    target.takeDamage(casualties, flankMult);
+
+    // Smoke particles (corrected rotation: lateral=slotX axis, front=-Y)
+    const cosF = Math.cos(this.facing);
+    const sinF = Math.sin(this.facing);
+    const f = FORMATIONS[this.formation];
+    const frontY = -(f.rows / 2) * CFG.DOT_SPACING - 4;
+    const halfW = (f.cols / 2) * CFG.DOT_SPACING;
+    for (let i = 0; i < 14; i++) {
+      const sx = rand(-halfW, halfW);
+      const wx = this.x + (-sx * sinF - frontY * cosF);
+      const wy = this.y + ( sx * cosF - frontY * sinF);
+      particles.push({
+        x: wx, y: wy,
+        vx: Math.cos(this.facing) * rand(15, 40) + rand(-8, 8),
+        vy: Math.sin(this.facing) * rand(15, 40) + rand(-8, 8),
+        life: rand(0.8, 1.8), maxLife: 1.8,
+        size: rand(4, 10), type: 'smoke',
+      });
+    }
+    for (let i = 0; i < 6; i++) {
+      const sx = rand(-halfW * 0.8, halfW * 0.8);
+      const wx = this.x + (-sx * sinF - frontY * cosF);
+      const wy = this.y + ( sx * cosF - frontY * sinF);
+      particles.push({
+        x: wx, y: wy,
+        vx: Math.cos(this.facing) * rand(5, 15),
+        vy: Math.sin(this.facing) * rand(5, 15),
+        life: rand(0.1, 0.25), maxLife: 0.25,
+        size: rand(3, 6), type: 'flash',
+      });
+    }
+
+    this.reloadProgress = 0;
+    return true;
+  }
+
+  takeDamage(casualties, flankMult) {
+    const actual = Math.min(this.men, Math.max(1, casualties));
+    this.men -= actual;
+    this.lastDmgTime = battleTime;
+
+    const targetDots = Math.round(this.men / MEN_PER_DOT);
+    let currentAlive = this.aliveDots;
+    while (currentAlive > targetDots) {
+      const aliveList = this.soldiers.filter(s => s.alive);
+      if (aliveList.length === 0) break;
+      aliveList[Math.floor(Math.random() * aliveList.length)].alive = false;
+      currentAlive--;
+    }
+
+    const moraleLoss = (actual / this.maxMen) * 120 * flankMult;
+    this.morale = Math.max(0, this.morale - moraleLoss);
+
+    if (this.men <= 0) { this.men = 0; this.routed = true; }
+  }
+}
+
+// ====== SCENARIO SETUP ======
+function initBattle() {
+  regiments = [];
+  particles = [];
+  selectedId = null;
+  battleTime = 0;
+  paused = false;
+  pauseOverlay.classList.remove('show');
+
+  const cx = W / 2;
+  const baseY = H * 0.78;
+  const spacing = Math.min(140, W * 0.14);
+
+  const unionFacing = -Math.PI / 2;
+  regiments.push(new Regiment(0, '1st Maine', cx - spacing * 1.5, baseY, unionFacing, 'union'));
+  regiments.push(new Regiment(1, '2nd New York', cx - spacing * 0.5, baseY, unionFacing, 'union'));
+  regiments.push(new Regiment(2, '14th Connecticut', cx + spacing * 0.5, baseY, unionFacing, 'union'));
+  regiments.push(new Regiment(3, '20th Massachusetts', cx + spacing * 1.5, baseY, unionFacing, 'union'));
+
+  const confFacing = Math.PI / 2;
+  const eBaseY = H * 0.08;
+  regiments.push(new Regiment(4, '1st Virginia', cx - spacing * 0.6, eBaseY, confFacing, 'confederate'));
+  regiments.push(new Regiment(5, '5th Alabama', cx + spacing * 0.6, eBaseY, confFacing, 'confederate'));
+  regiments.push(new Regiment(6, '3rd Georgia', cx - spacing * 2.2, eBaseY - 20, confFacing, 'confederate'));
+  regiments.push(new Regiment(7, '15th N. Carolina', cx + spacing * 2.2, eBaseY - 20, confFacing, 'confederate'));
+
+  const advanceY = H * 0.52;
+  regiments[4].aiTargetX = cx - spacing * 0.5;
+  regiments[4].aiTargetY = advanceY;
+  regiments[5].aiTargetX = cx + spacing * 0.5;
+  regiments[5].aiTargetY = advanceY;
+  regiments[6].aiTargetX = cx - spacing * 2.0;
+  regiments[6].aiTargetY = advanceY + 40;
+  regiments[7].aiTargetX = cx + spacing * 2.0;
+  regiments[7].aiTargetY = advanceY + 40;
+
+  for (const r of regiments) {
+    if (r.side === 'confederate') {
+      r.targetX = r.aiTargetX;
+      r.targetY = r.aiTargetY;
+    }
+  }
+
+  generateTerrain();
+  state = 'PLAYING';
+}
+
+// ====== AI ======
+function updateAI(dt) {
+  if (aiFireCooldown > 0) aiFireCooldown -= dt;
+
+  for (const r of regiments) {
+    if (r.side !== 'confederate' || !r.alive || r.routing) continue;
+
+    const nearestEnemy = r.findNearestEnemy();
+    if (!nearestEnemy) continue;
+    const d = dist(r.x, r.y, nearestEnemy.x, nearestEnemy.y);
+
+    if (r.aiState === 'ADVANCE') {
+      const toTarget = dist(r.x, r.y, r.aiTargetX, r.aiTargetY);
+      if (toTarget < 20 || d < CFG.FIRE_RANGE * 0.85) {
+        r.aiState = 'FIRING';
+        r.targetX = r.x;
+        r.targetY = r.y;
+        r.setFormation('line');
+      }
+    }
+
+    if (r.aiState === 'FIRING') {
+      r.targetFacing = angleTo(r.x, r.y, nearestEnemy.x, nearestEnemy.y);
+      if (r.reloadProgress >= 1.0 && aiFireCooldown <= 0) {
+        const target = r.findTarget();
+        if (target) {
+          r.fire();
+          aiFireCooldown = 0.75;
+        } else {
+          r.targetX = r.x + Math.cos(r.targetFacing) * 60;
+          r.targetY = r.y + Math.sin(r.targetFacing) * 60;
+        }
+      }
+    }
+  }
+}
+
+// ====== WIN/LOSS CHECK ======
+function checkVictory() {
+  const unionAlive = regiments.filter(r => r.side === 'union' && r.alive).length;
+  const confAlive = regiments.filter(r => r.side === 'confederate' && r.alive).length;
+  if (confAlive === 0 && state === 'PLAYING') state = 'VICTORY';
+  if (unionAlive === 0 && state === 'PLAYING') state = 'DEFEAT';
+}
+
+// ====== PARTICLES ======
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 0.96;
+    p.vy *= 0.96;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+// ====== INPUT ======
+function getSelected() {
+  return selectedId !== null ? regiments[selectedId] : null;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  if (state !== 'PLAYING' || paused) return;
+  if (e.button === 0) {
+    // Charge mode: click on enemy to charge
+    if (chargeMode) {
+      const sel = getSelected();
+      if (sel) {
+        for (const r of regiments) {
+          if (r.side === 'union' || !r.alive) continue;
+          if (dist(e.offsetX, e.offsetY, r.x, r.y) < 36) {
+            sel.initiateCharge(r);
+            chargeMode = false;
+            updatePanel();
+            return;
+          }
+        }
+      }
+      chargeMode = false; // clicked on nothing, cancel
+      updatePanel();
+      return;
+    }
+    // Normal: select regiment
+    let clicked = null;
+    for (const r of regiments) {
+      if (r.side !== 'union' || !r.alive) continue;
+      if (dist(e.offsetX, e.offsetY, r.x, r.y) < 32) { clicked = r; break; }
+    }
+    selectedId = clicked ? clicked.id : null;
+    chargeMode = false;
+    updatePanel();
+  }
+  if (e.button === 2) {
+    // Start right-click drag for move + facing
+    const sel = getSelected();
+    if (!sel || sel.routing || sel.reforming || sel.chargeState === 'melee' || sel.chargeState === 'disengaging') return;
+    dragState = { startX: e.offsetX, startY: e.offsetY, currentX: e.offsetX, currentY: e.offsetY };
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (dragState) {
+    dragState.currentX = e.offsetX;
+    dragState.currentY = e.offsetY;
+  }
+});
+
+canvas.addEventListener('mouseup', (e) => {
+  if (e.button === 2 && dragState) {
+    const sel = getSelected();
+    if (sel && sel.alive && !sel.routing && !sel.reforming) {
+      // Can't move during melee or disengaging
+      if (sel.chargeState === 'melee' || sel.chargeState === 'disengaging') {
+        dragState = null;
+        return;
+      }
+      // Cancel fix-bayonets or charging if player issues a move order
+      if (sel.chargeState === 'fixing' || sel.chargeState === 'charging') {
+        sel.chargeState = null;
+        sel.chargeTarget = null;
+      }
+      // Set move destination to drag start point
+      sel.targetX = clamp(dragState.startX, 30, W - 30);
+      sel.targetY = clamp(dragState.startY, 30, H - 30);
+      moveMarker = { x: sel.targetX, y: sel.targetY };
+      moveMarkerTimer = 1.5;
+      // If dragged far enough, set facing from drag direction
+      const dragDist = dist(dragState.startX, dragState.startY, dragState.currentX, dragState.currentY);
+      if (dragDist > 18) {
+        sel.targetFacing = angleTo(dragState.startX, dragState.startY, dragState.currentX, dragState.currentY);
+      }
+    }
+    dragState = null;
+  }
+});
+
+canvas.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+
+document.addEventListener('keydown', (e) => {
+  // Menu
+  if (state === 'MENU' && (e.key === 'Enter' || e.key === ' ')) {
+    initBattle();
+    return;
+  }
+  // End screen restart
+  if ((state === 'VICTORY' || state === 'DEFEAT') && (e.key === 'Enter' || e.key === ' ')) {
+    initBattle();
+    return;
+  }
+  // Pause toggle
+  if (state === 'PLAYING' && e.key === 'Escape') {
+    paused = !paused;
+    pauseOverlay.classList.toggle('show', paused);
+    return;
+  }
+  if (state !== 'PLAYING' || paused) return;
+
+  if (e.key === 'f' || e.key === 'F') {
+    attemptFire();
+  }
+  // C: enter charge mode
+  if (e.key === 'c' || e.key === 'C') {
+    const sel = getSelected();
+    if (sel && sel.alive && !sel.routing && !sel.reforming && !sel.chargeState) {
+      chargeMode = true;
+      updatePanel();
+    }
+  }
+  // D: disengage from melee
+  if (e.key === 'd' || e.key === 'D') {
+    const sel = getSelected();
+    if (sel && sel.chargeState === 'melee') {
+      sel.disengage();
+      updatePanel();
+    }
+  }
+  // Escape also cancels charge mode
+  if (e.key === 'Escape' && chargeMode) {
+    chargeMode = false;
+    updatePanel();
+    return;
+  }
+  // Quick-select
+  if (e.key >= '1' && e.key <= '4') {
+    const idx = parseInt(e.key) - 1;
+    if (regiments[idx] && regiments[idx].alive) {
+      selectedId = idx;
+      updatePanel();
+    }
+  }
+  // Tab: toggle formation
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const sel = getSelected();
+    if (sel && sel.alive && !sel.routing && !sel.reforming) {
+      sel.setFormation(sel.formation === 'line' ? 'column' : 'line');
+      updatePanel();
+    }
+  }
+});
+
+// Pause buttons
+document.getElementById('resumeBtn').addEventListener('click', () => {
+  paused = false;
+  pauseOverlay.classList.remove('show');
+});
+document.getElementById('quitBtn').addEventListener('click', () => {
+  paused = false;
+  pauseOverlay.classList.remove('show');
+  state = 'MENU';
+});
+
+document.getElementById('fireBtn').addEventListener('click', () => { attemptFire(); });
+document.getElementById('chargeBtn').addEventListener('click', () => {
+  const sel = getSelected();
+  if (sel && sel.alive && !sel.routing && !sel.reforming && !sel.chargeState) {
+    chargeMode = true;
+    updatePanel();
+  }
+});
+document.getElementById('disengageBtn').addEventListener('click', () => {
+  const sel = getSelected();
+  if (sel && sel.chargeState === 'melee') {
+    sel.disengage();
+    updatePanel();
+  }
+});
+document.getElementById('formationBtn').addEventListener('click', () => {
+  const sel = getSelected();
+  if (sel && sel.alive && !sel.routing && !sel.reforming) {
+    sel.setFormation(sel.formation === 'line' ? 'column' : 'line');
+    updatePanel();
+  }
+});
+
+function attemptFire() {
+  const sel = getSelected();
+  if (!sel || sel.routing) return;
+  sel.fire();
+  updatePanel();
+}
+
+// ====== UI PANEL ======
+function updatePanel() {
+  const noSel = document.getElementById('noSelection');
+  const selUI = document.getElementById('selectionUI');
+  const sel = getSelected();
+  if (!sel || sel.side !== 'union') {
+    noSel.style.display = 'inline';
+    selUI.style.display = 'none';
+    return;
+  }
+  noSel.style.display = 'none';
+  selUI.style.display = 'block';
+
+  document.getElementById('regName').textContent = sel.name;
+  // Status text
+  let statusText;
+  if (sel.routing) statusText = 'ROUTING';
+  else if (sel.reforming) statusText = `REFORMING · ${sel.men} men`;
+  else if (sel.chargeState === 'fixing') statusText = `FIX BAYONETS · ${sel.men} men`;
+  else if (sel.chargeState === 'charging') statusText = `CHARGING · ${sel.men} men`;
+  else if (sel.chargeState === 'melee') statusText = `IN MELEE · ${sel.men} men`;
+  else if (sel.chargeState === 'disengaging') statusText = `RETREATING · ${sel.men} men`;
+  else statusText = `${sel.men} / ${sel.maxMen} men`;
+  document.getElementById('regMen').textContent = statusText;
+
+  const mb = document.getElementById('moraleBar');
+  mb.style.width = sel.morale + '%';
+  mb.style.background = sel.morale > 60 ? '#6a8a4a' :
+                         sel.morale > 30 ? '#8a8a3a' : '#8a3a2a';
+
+  const rb = document.getElementById('reloadBar');
+  rb.style.width = (sel.reloadProgress * 100) + '%';
+
+  const fb = document.getElementById('fireBtn');
+  fb.disabled = sel.reloadProgress < 1.0 || sel.routing || sel.reforming || sel.chargeState || !sel.findTarget();
+
+  const fmBtn = document.getElementById('formationBtn');
+  fmBtn.textContent = sel.formation === 'line' ? 'Line' : 'Column';
+  fmBtn.classList.toggle('active', sel.formation === 'line');
+
+  // Charge button
+  const chBtn = document.getElementById('chargeBtn');
+  const disBtn = document.getElementById('disengageBtn');
+  if (sel.chargeState === 'melee') {
+    chBtn.style.display = 'none';
+    disBtn.style.display = 'inline-block';
+  } else {
+    disBtn.style.display = 'none';
+    chBtn.style.display = 'inline-block';
+    chBtn.classList.toggle('active', chargeMode);
+    chBtn.textContent = chargeMode ? 'Select Target' : 'Charge';
+  }
+}
+
+// ====== RENDERING ======
+function drawRegiment(r) {
+  if (r.routed) return;
+
+  const isSelected = selectedId === r.id;
+  const isPlayer = r.side === 'union';
+  const baseColor = isPlayer ? COL.union : COL.confed;
+  const lightColor = isPlayer ? COL.unionLight : COL.confedLight;
+  const dotColor = r.routing ? '#666'
+    : r.chargeState === 'charging' || r.chargeState === 'melee' ? (isPlayer ? '#5a88c8' : '#a08060')
+    : (isSelected ? lightColor : baseColor);
+
+  // Firing arc indicator (selected player regiment only)
+  if (isSelected && !r.routing) {
+    const arcRadius = 50;
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = COL.selection;
+    ctx.beginPath();
+    ctx.moveTo(r.x, r.y);
+    ctx.arc(r.x, r.y, arcRadius, r.facing - CFG.FIRE_ARC, r.facing + CFG.FIRE_ARC);
+    ctx.closePath();
+    ctx.fill();
+    // Range ring hint
+    ctx.globalAlpha = 0.06;
+    ctx.strokeStyle = COL.selection;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, CFG.FIRE_RANGE, r.facing - CFG.FIRE_ARC, r.facing + CFG.FIRE_ARC);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Selection glow
+  if (isSelected) {
+    ctx.strokeStyle = COL.selection;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.5 + Math.sin(battleTime * 4) * 0.2;
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, 34, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // Soldier dots
+  ctx.fillStyle = dotColor;
+  for (const s of r.soldiers) {
+    if (!s.alive) continue;
+    ctx.beginPath();
+    ctx.arc(r.x + s.offX, r.y + s.offY, CFG.DOT_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Facing indicator line
+  if (!r.routing) {
+    ctx.strokeStyle = isSelected ? COL.selection : 'rgba(200,190,170,0.3)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(r.x, r.y);
+    ctx.lineTo(r.x + Math.cos(r.facing) * 24, r.y + Math.sin(r.facing) * 24);
+    ctx.stroke();
+    // Small arrowhead
+    const tipX = r.x + Math.cos(r.facing) * 24;
+    const tipY = r.y + Math.sin(r.facing) * 24;
+    const aLen = 6, aAng = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(tipX, tipY);
+    ctx.lineTo(tipX - Math.cos(r.facing - aAng) * aLen, tipY - Math.sin(r.facing - aAng) * aLen);
+    ctx.moveTo(tipX, tipY);
+    ctx.lineTo(tipX - Math.cos(r.facing + aAng) * aLen, tipY - Math.sin(r.facing + aAng) * aLen);
+    ctx.stroke();
+  }
+
+  // "READY" indicator above regiment when reload complete (not during charge)
+  if (!r.routing && !r.reforming && !r.chargeState && r.reloadProgress >= 1.0 && isPlayer) {
+    const ry = r.y - 34;
+    const pulse = 0.6 + Math.sin(battleTime * 4) * 0.3;
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#c9a84c';
+    ctx.beginPath();
+    ctx.moveTo(r.x, ry - 6);
+    ctx.lineTo(r.x + 5, ry);
+    ctx.lineTo(r.x, ry + 6);
+    ctx.lineTo(r.x - 5, ry);
+    ctx.closePath();
+    ctx.fill();
+    ctx.font = 'bold 8px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('READY', r.x, ry - 9);
+    ctx.globalAlpha = 1;
+  }
+
+  // Label (fixed position)
+  ctx.fillStyle = r.routing ? '#884433' : 'rgba(200,190,170,0.75)';
+  ctx.font = '10px Georgia';
+  ctx.textAlign = 'center';
+  const labelY = r.y - 46;
+  ctx.fillText(r.name, r.x, labelY);
+
+  // Men count
+  ctx.fillStyle = r.routing ? '#884433' : 'rgba(200,190,170,0.55)';
+  ctx.font = '9px Georgia';
+  ctx.fillText(r.routing ? 'ROUTING' : r.men + ' men', r.x, labelY + 11);
+
+  // Status label for player
+  if (isPlayer && !r.routing) {
+    let statusLabel = r.formation;
+    let statusColor = 'rgba(200,190,170,0.3)';
+    let statusFont = '8px Georgia';
+    if (r.chargeState === 'fixing') {
+      statusLabel = 'FIX BAYONETS'; statusColor = '#c94c4c'; statusFont = 'bold 9px Georgia';
+    } else if (r.chargeState === 'charging') {
+      statusLabel = 'CHARGING'; statusColor = '#c94c4c'; statusFont = 'bold 9px Georgia';
+    } else if (r.chargeState === 'melee') {
+      statusLabel = 'MELEE'; statusColor = '#c94c4c'; statusFont = 'bold 9px Georgia';
+    } else if (r.chargeState === 'disengaging') {
+      statusLabel = 'RETREATING'; statusColor = '#c9884c'; statusFont = 'bold 9px Georgia';
+    } else if (r.reforming) {
+      statusLabel = 'REFORMING'; statusColor = '#c9884c'; statusFont = 'bold 9px Georgia';
+    }
+    ctx.fillStyle = statusColor;
+    ctx.font = statusFont;
+    ctx.fillText(statusLabel, r.x, labelY + 20);
+  }
+
+  // Morale bar
+  if (!r.routing) {
+    const barW = 36, barH = 2.5;
+    const barX = r.x - barW / 2;
+    const barY = r.y + 22;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.fillStyle = r.morale > 60 ? '#6a8a4a' : r.morale > 30 ? '#8a8a3a' : '#8a3a2a';
+    ctx.fillRect(barX, barY, barW * (r.morale / 100), barH);
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    const alpha = p.life / p.maxLife;
+    if (p.type === 'smoke') {
+      ctx.fillStyle = `rgba(${COL.smoke[0]},${COL.smoke[1]},${COL.smoke[2]},${alpha * 0.5})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * (1 + (1 - alpha) * 0.8), 0, Math.PI * 2);
+      ctx.fill();
+    } else if (p.type === 'flash') {
+      ctx.fillStyle = `rgba(230,210,160,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawMoveMarker() {
+  if (!moveMarker || moveMarkerTimer <= 0) return;
+  const alpha = Math.min(1, moveMarkerTimer);
+  ctx.strokeStyle = `rgba(201,168,76,${alpha * 0.6})`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(moveMarker.x, moveMarker.y, 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(moveMarker.x - 4, moveMarker.y);
+  ctx.lineTo(moveMarker.x + 4, moveMarker.y);
+  ctx.moveTo(moveMarker.x, moveMarker.y - 4);
+  ctx.lineTo(moveMarker.x, moveMarker.y + 4);
+  ctx.stroke();
+}
+
+function drawMenu() {
+  ctx.fillStyle = '#1a1c16';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(72,98,55,0.08)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#c8bfa8';
+  ctx.font = 'bold 64px Georgia';
+  ctx.fillText('VOLLEY', W / 2, H * 0.28);
+
+  ctx.fillStyle = '#7a7262';
+  ctx.font = 'italic 18px Georgia';
+  ctx.fillText('A Civil War Tactics Game', W / 2, H * 0.28 + 40);
+
+  ctx.strokeStyle = '#3a3c32';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 100, H * 0.28 + 58);
+  ctx.lineTo(W / 2 + 100, H * 0.28 + 58);
+  ctx.stroke();
+
+  ctx.fillStyle = '#8a8270';
+  ctx.font = '13px Georgia';
+  const instructions = [
+    'Left-click to select a regiment',
+    'Right-click to move  ·  Drag to set facing on arrival',
+    'F or FIRE button to order a volley',
+    'C then click enemy to charge  ·  D to disengage from melee',
+    'Tab to toggle Line / Column formation',
+    'Keys 1–4 for quick selection  ·  Esc to pause',
+    '',
+    'Hold the line against the Confederate advance.',
+    'Watch your flanks — morale crumbles fast under enfilade.',
+  ];
+  instructions.forEach((line, i) => {
+    ctx.fillText(line, W / 2, H * 0.45 + i * 22);
+  });
+
+  ctx.fillStyle = '#c9a84c';
+  ctx.font = '16px Georgia';
+  ctx.globalAlpha = 0.6 + Math.sin(Date.now() / 500) * 0.4;
+  ctx.fillText('Press ENTER or SPACE to begin', W / 2, H * 0.78);
+  ctx.globalAlpha = 1;
+}
+
+function drawEndScreen(won) {
+  ctx.fillStyle = 'rgba(20,22,16,0.75)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = won ? '#c9a84c' : '#8a3a2a';
+  ctx.font = 'bold 48px Georgia';
+  ctx.fillText(won ? 'VICTORY' : 'DEFEAT', W / 2, H * 0.35);
+
+  ctx.fillStyle = '#8a8270';
+  ctx.font = '14px Georgia';
+  const unionLeft = regiments.filter(r => r.side === 'union' && r.alive);
+  const totalMen = unionLeft.reduce((s, r) => s + r.men, 0);
+  const elapsed = Math.floor(battleTime);
+  ctx.fillText(
+    won ? `${unionLeft.length} regiment${unionLeft.length !== 1 ? 's' : ''} standing · ${totalMen} men remain · ${elapsed}s`
+        : `The line has broken · ${elapsed}s`,
+    W / 2, H * 0.35 + 40
+  );
+
+  ctx.fillStyle = '#c9a84c';
+  ctx.font = '15px Georgia';
+  ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 500) * 0.5;
+  ctx.fillText('Press ENTER to play again', W / 2, H * 0.55);
+  ctx.globalAlpha = 1;
+}
+
+// ====== MAIN LOOP ======
+function gameLoop(ts) {
+  const dt = Math.min(0.05, (ts - lastTime) / 1000);
+  lastTime = ts;
+
+  if (state === 'MENU') {
+    panel.classList.add('hidden');
+    drawMenu();
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  if (state === 'VICTORY' || state === 'DEFEAT') {
+    renderBattle();
+    drawEndScreen(state === 'VICTORY');
+    panel.classList.add('hidden');
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  // PLAYING
+  panel.classList.remove('hidden');
+
+  if (!paused) {
+    battleTime += dt;
+    for (const r of regiments) r.update(dt);
+    updateAI(dt);
+    updateParticles(dt);
+    if (moveMarkerTimer > 0) moveMarkerTimer -= dt;
+    checkVictory();
+    updatePanel();
+  }
+
+  renderBattle();
+  requestAnimationFrame(gameLoop);
+}
+
+function renderBattle() {
+  if (terrainData) ctx.putImageData(terrainData, 0, 0);
+
+  drawMoveMarker();
+
+  // Move order line for selected
+  const sel = getSelected();
+  if (sel && sel.alive && !sel.routing) {
+    const d = dist(sel.x, sel.y, sel.targetX, sel.targetY);
+    if (d > 5) {
+      ctx.strokeStyle = 'rgba(201,168,76,0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(sel.x, sel.y);
+      ctx.lineTo(sel.targetX, sel.targetY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  drawParticles();
+
+  // Drag-to-face indicator
+  if (dragState) {
+    const dd = dist(dragState.startX, dragState.startY, dragState.currentX, dragState.currentY);
+    // Destination marker
+    ctx.strokeStyle = 'rgba(201,168,76,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(dragState.startX, dragState.startY, 8, 0, Math.PI * 2);
+    ctx.stroke();
+    // Facing direction arrow (only if dragged far enough)
+    if (dd > 18) {
+      const ang = angleTo(dragState.startX, dragState.startY, dragState.currentX, dragState.currentY);
+      const arrowLen = Math.min(dd, 50);
+      const tipX = dragState.startX + Math.cos(ang) * arrowLen;
+      const tipY = dragState.startY + Math.sin(ang) * arrowLen;
+      ctx.strokeStyle = 'rgba(201,168,76,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(dragState.startX, dragState.startY);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+      // Arrowhead
+      const aLen = 8, aAng = 2.6;
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(tipX - Math.cos(ang - aAng) * aLen, tipY - Math.sin(ang - aAng) * aLen);
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(tipX - Math.cos(ang + aAng) * aLen, tipY - Math.sin(ang + aAng) * aLen);
+      ctx.stroke();
+    }
+  }
+
+  for (const r of regiments) {
+    if (r.side === 'confederate') drawRegiment(r);
+  }
+  for (const r of regiments) {
+    if (r.side === 'union') drawRegiment(r);
+  }
+
+  // Battle timer
+  ctx.fillStyle = 'rgba(200,190,170,0.3)';
+  ctx.font = '11px Georgia';
+  ctx.textAlign = 'right';
+  const mins = Math.floor(battleTime / 60);
+  const secs = Math.floor(battleTime % 60);
+  ctx.fillText(`${mins}:${secs.toString().padStart(2, '0')}`, W - 12, 18);
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
