@@ -66,7 +66,7 @@ memoised pools, a set-scoped `packsToComplete`, and a `--check` that reads the c
    the generator refuses to emit a set it cannot name, so this fails loud rather than
    shipping a pack called `neo3`.
 2. **An `ENERGY_GRANT` entry, or deliberately none.** No entry means the set guarantees no
-   basic Energy, which is correct from Team Rocket on and is the reason the table stops at
+   basic Energy, which is correct from the fourth set on and is the reason the table stops at
    three. See [PACKS.md](PACKS.md).
 3. **`REMAINING` in `selftest.js`**, while the set is being written. Forgetting it is safe:
    the live-set assertion fires immediately and names the set, because a set with gaps and
@@ -89,13 +89,33 @@ warning and not a failure, because a fresh clone legitimately has none of it.
 
 ## data/decks.json is source, not output
 
-The four theme deck lists came from named sheets in Trevor's `P_TCG_Data.xlsx` and **cannot be
-rebuilt from anything in the repo** — the card corpus has no notion of a theme deck. They were
-extracted verbatim into `data/decks.json`, which is now their only home. Back it up like source,
-because it is.
+The four theme deck lists came from named sheets in a spreadsheet of Trevor's, and **cannot be
+rebuilt from the card corpus** — it has no notion of a theme deck. They were extracted verbatim into
+`data/decks.json`. Back it up like source, because it is.
 
-They are Trevor's authentic Base Set theme decks, not something a model assembled — so their
-lopsided win rates are probably faithful rather than broken. Ask before "fixing" them.
+**The spreadsheet was recovered on 11 Aug 2026 and is now in the repo**, at
+`data/Deck Lists/Base1 Decks.xlsx`. This file said for a week that it was lost with the Chat sandbox;
+it had simply never been looked for in the working tree. Its Brushfire tab matches `decks.json`
+entry for entry in the same order, which is what identifies it. It also carries **three
+competition-level decks** — Haymaker, Rain Dance, Buzzapdos — which are *not* wanted: Trevor's call,
+on the grounds that they would make for a miserable opponent. Don't add them without asking.
+
+`data/Deck Lists/` holds two more workbooks, and **both are reference data that nothing reads yet**:
+
+- **`Jungle Decks.xlsx`** — Water Blast and Power Reserve, the two authentic Jungle theme decks, and
+  the valuable one. Converted, corrected and validated into **`data/jungle_decks.json`**; use that
+  rather than re-reading the sheet, because it carries three id corrections without which Water
+  Blast is an illegal deck. Its `_meta` has the table and the reasoning.
+- **`Base4 Decks.xlsx`** — Base Set 2 theme decks (Charmander & Friends, Squirtle & Friends…),
+  incomplete. Kept, not converted. Note it is named for the set code, and **`base4` is Base Set 2,
+  not Team Rocket** — see `CLAUDE.md`.
+
+Converting a sheet is not the same as adopting it. **Wiring either set of decks into `decks.json`
+makes them playable and is a job**, not a maintenance action: deck select, the starter pick and the
+balance figures all move.
+
+The four in play are Trevor's authentic Base Set theme decks, not something a model assembled — so
+their lopsided win rates are probably faithful rather than broken. Ask before "fixing" them.
 
 `gen_cards.js` fails loudly if `decks.json` references a card outside the generated sets, which is
 what stops a careless `--sets` from silently producing decks full of undefined ids.

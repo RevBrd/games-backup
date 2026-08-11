@@ -24,8 +24,9 @@ natural alternative and do **not** work from `file://` — see `~/.claude/refere
 
 ## Where the depth lives
 
-This file is the orientation. Ten siblings hold the detail, and **you should not need to read any
-of them unless you are working on that thing** — that is the point of the split.
+This file is the orientation. Nine siblings hold the detail — ten counting `LOGBOOK.md`, which is
+reached through `CREDITS.md` rather than from here — and **you should not need to read any of them
+unless you are working on that thing**. That is the point of the split.
 
 | File | Read it when |
 |---|---|
@@ -36,8 +37,7 @@ of them unless you are working on that thing** — that is the point of the spli
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
-| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, one row per model per stretch |
-| [LOGBOOK.md](LOGBOOK.md) | What an instance did, in its own words. An append-only archive — write as much as you like, but never edit or condense what is already there |
+| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, one row per model per stretch — and it points at `LOGBOOK.md`, the append-only archive of what each instance did in its own words |
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
 
 ## Status
@@ -84,6 +84,10 @@ src/  cards.js         CARD_DB + the theme deck lists. GENERATED — see TOOLING
       style.css        dark instrument-panel palette, one `:root` block
 data/ raw/*.json       THE card source: the pokemon-tcg-data corpus, 14 sets, 1,251 cards
       decks.json       the four theme deck lists. SOURCE, not output — see TOOLING.md
+      Deck Lists/      the spreadsheets those came from, recovered 11 Aug. Also two
+                       workbooks nothing uses yet — see TOOLING.md before adopting one
+      jungle_decks.json  Water Blast and Power Reserve, corrected and validated.
+                       Reference data; wiring them in is a job, not a chore
       fullpool.json    completion manifest: id/name/kind for all 1,251 cards
       gbc_decks.json   all 16 GBC opponent decks, mapped to our ids. Job 7's
                        groundwork — reference data, nothing reads it yet. Its
@@ -202,13 +206,18 @@ The CSVs are an **independent cross-check, not a second source of truth**, and t
 them is what justifies trusting the corpus — see [TOOLING.md](TOOLING.md). Don't add to them, and
 don't generate from them.
 
-Set codes: `base1` Base · `base2` Jungle · `base3` Fossil · `base4` Team Rocket · `base5` Base Set 2
-· `base6` Legendary Collection · `gym1` Gym Heroes · `gym2` Gym Challenge · `neo1`–`neo4` Neo
-Genesis/Discovery/Revelation/Destiny · `basep` promos · `si1` Southern Islands.
+Set codes: `base1` Base · `base2` Jungle · `base3` Fossil · **`base4` Base Set 2 · `base5` Team
+Rocket** · `base6` Legendary Collection · `gym1` Gym Heroes · `gym2` Gym Challenge · `neo1`–`neo4`
+Neo Genesis/Discovery/Revelation/Destiny · `basep` promos · `si1` Southern Islands.
+
+**Those two are the wrong way round from what everyone guesses**, this file included until 11 Aug
+2026 — and `gen_cards.js` had them swapped too, which would have shipped 130 Base Set 2 cards in a
+pack labelled "Team Rocket". Check against the data, never against the number: `base4` is 130 cards
+with 6 basic Energy and no Dark Pokémon; `base5` is 83 cards, no Energy, 45 of them Dark.
 
 **Scope is settled: everything in the data, promos and Southern Islands included.** That makes
 `basep` and `si1` a pack-table and dex question rather than a scope question — they are odd shapes
-for boosters, and `base5`/`base6` are reprint sets that will hand the player cards they already own.
+for boosters, and `base4`/`base6` are reprint sets that will hand the player cards they already own.
 
 ## Job plan
 

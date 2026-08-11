@@ -33,6 +33,10 @@ Energies are #97–102 of 102. Base Set's real breakdown is 16 Rare Holo / 16 Ra
 |---|---|---|
 | `base1` `base4` `gym1` `gym2` `neo1` | 6 cards, blank `rarity` | at the end of the set's own range |
 | `base2` `base3` `base5` `base6` `basep` `neo2` `neo3` `neo4` | **none at all** | n/a |
+
+Both rows were derived from the data and are correct, but note that **`base4` is Base Set 2 and
+`base5` is Team Rocket**, not the reverse — the codes read backwards and `gen_cards.js` named them
+backwards until 11 Aug 2026. It is Base Set 2 that reprints Energy and Team Rocket that prints none.
 | `si1` | n/a — all 18 cards blank | Southern Islands had no rarity concept; it was a fixed boxed set |
 
 Rarity tiers present in `CARD_DB` across all 14 sets: Common 359 · Uncommon 358 · Rare 214 · Rare
@@ -62,8 +66,9 @@ inside that 7-slot bucket rather than a separate slot, which is what the sets ac
 
 **Base, Jungle and Fossil guarantee ≥2 basic Energy per pack** (`ENERGY_GRANT`) — early game the
 player is starved for Energy building a first deck, and this reproduces that pressure on purpose.
-From Team Rocket on there is no guarantee, so Energy goes scarce exactly when a stocked player stops
-needing it.
+From the fourth set on there is no guarantee, so Energy goes scarce exactly when a stocked player
+stops needing it. (That fourth set is **Base Set 2**, `base4`; this line said "from Team Rocket on"
+while the codes were the wrong way round.)
 
 **Jungle and Fossil print no basic Energy at all**, so for them the guarantee is delivered as a
 **stipend beside the pack** rather than as a floor inside it. `ENERGY_GRANT` is one number per set

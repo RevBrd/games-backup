@@ -45,12 +45,21 @@ const SETS = argSets ? argSets.split(',')
 // NAME a set — the pack reveal, pack select, the dex — reads one table rather
 // than growing its own. `short` is for chrome with no room for "Legendary
 // Collection".
+//
+// base4 and base5 were SWAPPED here until 11 Aug 2026, and the generator's
+// refuse-to-name-an-unknown-set guard could never have caught it: that fires on
+// a MISSING name, and a wrong one is present. Verify a code against the data
+// before trusting the label, because nothing downstream can:
+//   base4  130 cards, 6 basic Energy, no Dark cards, ends Water Energy #130
+//   base5   83 cards, 0 basic Energy, 45 Dark cards, ends Dark Raichu #83
+// Team Rocket is the one with the Dark Pokémon in it. Base Set 2 is the reprint
+// set, and it is the one that comes first — Feb 2000 against Apr 2000.
 const SET_INFO = {
   base1: { name: 'Base Set',             short: 'Base' },
   base2: { name: 'Jungle',               short: 'Jungle' },
   base3: { name: 'Fossil',               short: 'Fossil' },
-  base4: { name: 'Team Rocket',          short: 'Rocket' },
-  base5: { name: 'Base Set 2',           short: 'Base 2' },
+  base4: { name: 'Base Set 2',           short: 'Base 2' },
+  base5: { name: 'Team Rocket',          short: 'Rocket' },
   base6: { name: 'Legendary Collection', short: 'Legendary' },
   gym1:  { name: 'Gym Heroes',           short: 'Heroes' },
   gym2:  { name: 'Gym Challenge',        short: 'Challenge' },

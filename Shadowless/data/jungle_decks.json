@@ -1,0 +1,209 @@
+{
+  "_meta": {
+    "source": "Jungle Decks.xlsx, in data/Deck Lists/ — Trevor's own spreadsheet, the same workbook family as Base1 Decks.xlsx that data/decks.json came from",
+    "retrieved": "2026-08-11, from files already in the working tree",
+    "scope": "The two authentic WotC Jungle theme decks. Reference data — NOTHING READS THIS YET. Wiring them into data/decks.json makes them playable and is a job, not a maintenance action: deck select, the starter pick and the balance numbers in CLAUDE.md all move.",
+    "status": "Both validate clean against Engine.prototype.validateDeck: 60 cards, no errors, no warnings.",
+    "corrections": {
+      "Rhyhorn": {
+        "was": "base2-45",
+        "use": "base2-61",
+        "reason": "base2-45 is Rhydon. The spreadsheet gave the pre-evolution its evolution's id, which made the deck 4x Rhydon with no Rhyhorn."
+      },
+      "Meowth": {
+        "was": "base2-42",
+        "use": "base2-56",
+        "reason": "base2-42 is Persian. Same error, and worse: it produced 6x Persian, which breaks the 4-copy limit outright."
+      },
+      "Professor Oak": {
+        "was": "base88",
+        "use": "base1-88",
+        "reason": "Malformed id, missing the set separator."
+      }
+    },
+    "correction_note": "Uncorrected, Water Blast fails validateDeck: one error (6x Persian) and four warnings (both evolution lines broken). Power Reserve was already clean. Do not re-derive these ids from the spreadsheet without re-applying the table above.",
+    "naming": "The sheet writes Nidoran (F) and Pokedex; the corpus writes Nidoran ♀ and Pokédex. Ids are correct in both cases — match on id, never on name."
+  },
+  "water_blast": {
+    "name": "Water Blast",
+    "set": "base2",
+    "list": [
+      [
+        1,
+        "base2-12",
+        "Vaporeon"
+      ],
+      [
+        3,
+        "base2-61",
+        "Rhyhorn"
+      ],
+      [
+        4,
+        "base2-56",
+        "Meowth"
+      ],
+      [
+        4,
+        "base2-51",
+        "Eevee"
+      ],
+      [
+        1,
+        "base2-45",
+        "Rhydon"
+      ],
+      [
+        2,
+        "base2-42",
+        "Persian"
+      ],
+      [
+        4,
+        "base1-59",
+        "Poliwag"
+      ],
+      [
+        2,
+        "base1-52",
+        "Machop"
+      ],
+      [
+        1,
+        "base1-41",
+        "Seel"
+      ],
+      [
+        2,
+        "base1-38",
+        "Poliwhirl"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        2,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        14,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        14,
+        "base1-97",
+        "Fighting Energy"
+      ]
+    ]
+  },
+  "power_reserve": {
+    "name": "Power Reserve",
+    "set": "base2",
+    "list": [
+      [
+        1,
+        "base2-5",
+        "Kangaskhan"
+      ],
+      [
+        2,
+        "base2-58",
+        "Oddish"
+      ],
+      [
+        4,
+        "base2-57",
+        "Nidoran ♀"
+      ],
+      [
+        4,
+        "base2-49",
+        "Bellsprout"
+      ],
+      [
+        2,
+        "base2-48",
+        "Weepinbell"
+      ],
+      [
+        2,
+        "base2-40",
+        "Nidorina"
+      ],
+      [
+        1,
+        "base2-37",
+        "Gloom"
+      ],
+      [
+        4,
+        "base1-43",
+        "Abra"
+      ],
+      [
+        2,
+        "base1-32",
+        "Kadabra"
+      ],
+      [
+        1,
+        "base1-31",
+        "Jynx"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        3,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        2,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-87",
+        "Pokédex"
+      ],
+      [
+        11,
+        "base1-101",
+        "Psychic Energy"
+      ],
+      [
+        17,
+        "base1-99",
+        "Grass Energy"
+      ]
+    ]
+  }
+}

@@ -6,3 +6,8 @@ assets/cards/
 # Trevor's own exported collection save. Personal state, not source — the game
 # writes it from the collection screen's Export button. See COLLECTION.md.
 Save File/
+
+# Google Drive desktop shortcut stubs. 177 bytes of JSON holding a doc_id and an
+# email — no card data of any kind, and they only resolve on Trevor's machine
+# while signed in. The real spreadsheets are the .xlsx files, which ARE tracked.
+*.gsheet
