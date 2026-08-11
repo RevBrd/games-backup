@@ -61,7 +61,13 @@ class AI {
 
   get db() { return this.E.db; }
   get eff() { return this.E.effects; }
-  top(slot) { return this.db[slot.stack[slot.stack.length - 1].id]; }
+  // Honours Transform, exactly as the engine's topCard does. Without this the
+  // bot would forecast every Ditto as a 50 HP Basic with no attacks at all —
+  // it would never attack with one and would badly misjudge attacking into one.
+  top(slot) {
+    return (slot && slot.transformedId && this.db[slot.transformedId])
+      || this.db[slot.stack[slot.stack.length - 1].id];
+  }
   script(slot, idx) {
     const c = this.top(slot);
     const e = this.eff[c.id];

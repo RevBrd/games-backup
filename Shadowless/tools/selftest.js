@@ -66,7 +66,10 @@ for (const name of DECK_NAMES) {
 // The SOFT one is a high-water mark per set still being written. One number,
 // which only ever moves down. It catches a script being deleted or an id being
 // misspelled, without anybody hand-editing a list of 126 ids as they go.
-const REMAINING = { base3: 2 };
+// Empty: every set this build generates is complete, so the live-set assertion
+// above now covers all of them and nothing is exempt. Add a set here the moment
+// you generate one, and take it out again when its last script lands.
+const REMAINING = {};
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');
@@ -215,6 +218,9 @@ console.log('\nAI verb coverage');
     'RETALIATE', 'PREVENT_AT_LEAST', 'DAMAGE_HALVE', 'FLIP_TO_NEGATE',
     'STATUS_IMMUNE', 'NO_EVOLUTION', 'TOXIC_GAS', 'RETREAT_DISCOUNT',
     'REVEAL_OPP_HAND',
+    // Transform fires from settleTransforms after every action rather than being
+    // an action the player takes, so scorePower never sees it.
+    'TRANSFORM',
   ]);
   const kinds = new Set([...effSrc.matchAll(/\bkind:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
   const blindKinds = [...kinds].filter(k => !handled.has(k) && !PASSIVE_POWERS.has(k)).sort();

@@ -15,6 +15,13 @@ const DECKGEN_DEFAULTS = {
   maxCopies: 4,
   minBasics: 12,
   trainerTarget: 8,
+  // Room held back from the evolution lines for Basics that have no line at
+  // all. Without it, step 1 fills the whole Pokemon budget with four chains and
+  // step 2 never runs: measured at 6 decks in 2998 containing ANY standalone
+  // Basic, which quietly made 23 cards — Ditto, Chansey, Mewtwo, all three
+  // Legendary birds, Scyther, Snorlax — unreachable in Sandbox. That matters
+  // because CLAUDE.md calls Sandbox the way to play the bespoke cards for real.
+  standaloneReserve: 10,
 };
 
 function generateDeck(db, poolIds, rand, opts = {}) {
@@ -60,9 +67,16 @@ function generateDeck(db, poolIds, rand, opts = {}) {
   for (let i = seeds.length - 1; i > 0; i--) { const j = pick(i + 1); [seeds[i], seeds[j]] = [seeds[j], seeds[i]]; }
 
   const monTarget = cfg.size - cfg.energy - cfg.trainerTarget;
+  // Basics nothing evolves from. They are complete on their own, so they are
+  // what the reserved room is for — a lone Charmander with no Charmeleon behind
+  // it would be worse than no top-up at all.
+  const evolvesInto = {};
+  mons.forEach(id => { if (db[id].evolvesFrom) evolvesInto[db[id].evolvesFrom] = 1; });
+  const standalone = basics.filter(id => !evolvesInto[db[id].name]);
+
   let lines = 0;
   for (const baseId of seeds) {
-    if (total >= monTarget) break;
+    if (total >= monTarget - cfg.standaloneReserve) break;
     if (lines >= 4) break;
     const name = db[baseId].name;
     const chain = [];
@@ -79,7 +93,15 @@ function generateDeck(db, poolIds, rand, opts = {}) {
       lines++;
     }
   }
-  // --- 2. top up with standalone Basics so we always open with something
+  // --- 2. spend the reserve on Basics with no evolution line, THEN fall back to
+  // anything. Shuffled so it is a different few every seed rather than whichever
+  // happens to sort first.
+  const solo = standalone.slice();
+  for (let i = solo.length - 1; i > 0; i--) { const j = pick(i + 1); [solo[i], solo[j]] = [solo[j], solo[i]]; }
+  for (const baseId of solo) {
+    if (total >= monTarget) break;
+    add(baseId, 3);
+  }
   for (const baseId of seeds) {
     if (total >= monTarget) break;
     add(baseId, 3);

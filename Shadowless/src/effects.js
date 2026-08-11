@@ -926,6 +926,19 @@ const EFFECTS = {
     p: { kind: 'COWARDICE', name: 'Cowardice' },
     a: [[]],                                           //   Acid
   },
+
+  // ============================================================================
+  // JOB 6f — Ditto. The last card in Fossil, and the only one that needed a job.
+  //
+  // 50 HP, Basic, retreat 1, and NO ATTACKS AT ALL — so with Transform switched
+  // off it is a body that cannot do anything. Everything it can ever do comes
+  // from the copy. See RULINGS.md for the snapshot rule and why it is not the
+  // printed continuous reading.
+  // ============================================================================
+  'base3-3': {
+    p: { kind: 'TRANSFORM', name: 'Transform' },
+    a: [],
+  },
 };
 
 // ---------------------------------------------------------------- ALIASES --

@@ -160,6 +160,17 @@ for a Basic from hand, carrying damage, Energy and status across. No card named 
 anywhere in the 1,251-card corpus, and Fossil Ditto (`base3-3` / `base3-18`) is a 50 HP Basic with
 **no attacks at all** and one Power, Transform. Verified by grep across all 14 sets, not by memory.
 
+**Built 11 Aug 2026 and it behaves as described.** The mechanism is a `baseCard` / `topCard` split
+in `engine.js`: `topCard` is what a slot is *treated as* and returns the copy, so HP, type, Weakness,
+Resistance, retreat cost, name and the entire attack list all come from one override instead of
+seven. `baseCard` is the physical card and answers the three questions that are still about Ditto —
+which Power it has, whether it may evolve, and what goes to the discard when it dies. `powerOf`
+reads `baseCard`, which is what stops it inheriting the copied Pokémon's Power.
+
+Transform settles in `settleTransforms()`, called after **every** action rather than at the eight
+separate places a Pokémon can reach the Active spot. It is idempotent, and that is deliberate: a
+ninth entry path added later cannot forget about Ditto.
+
 One rule covers three interactions, and it is the reason snapshot semantics are cheap:
 **anything that switches the Power off blocks the firing but never reverses one already made.**
 

@@ -38,7 +38,19 @@ function clearStatus(slot) {
 
 const cardOf = (db, inst) => db[inst.id];
 const topInst = (slot) => slot.stack[slot.stack.length - 1];
-const topCard = (db, slot) => db[topInst(slot).id];
+// TWO views of what a slot is, and the difference is Ditto.
+//
+//   baseCard  the card actually sitting there — always Ditto, for Ditto.
+//   topCard   what it is TREATED as, which is the transformed copy.
+//
+// topCard is the one nearly everything wants: HP, type, Weakness, Resistance,
+// retreat cost, attacks and name all come from it, so Transform gets all of
+// them from one override instead of seven. baseCard is for the handful of
+// questions about the physical card — which Power it has, whether it may
+// evolve, and what goes to the discard pile when it dies.
+const baseCard = (db, slot) => db[topInst(slot).id];
+const topCard = (db, slot) =>
+  (slot && slot.transformedId && db[slot.transformedId]) || db[topInst(slot).id];
 
 function parseDamage(d) {
   if (!d) return 0;
@@ -281,7 +293,7 @@ class Engine {
       // Job 6e. `powerTurn` is the turn a once-per-turn Power last fired;
       // `typeAs` is Venomoth's Shift, read through typeOf() rather than
       // baked into the card, exactly like energyAs and wkOverride.
-      powerTurn: -1, typeAs: null,
+      powerTurn: -1, typeAs: null, transformedId: null,
     };
   }
 
@@ -493,7 +505,9 @@ class Engine {
   // Power loses it and evolving into one gains it, both immediately.
   powerOf(slot) {
     if (!slot) return null;
-    const e = this.effects[topCard(this.db, slot).id];
+    // baseCard, not topCard: Ditto keeps Transform and does NOT gain the copied
+    // Pokemon's Power. "Always has this Pokemon Power" is read as *this one*.
+    const e = this.effects[baseCard(this.db, slot).id];
     return (e && e.p) ? e.p : null;
   }
 
@@ -551,6 +565,57 @@ class Engine {
     return slot.powerTurn === this.state.turn;
   }
   markPower(slot) { slot.powerTurn = this.state.turn; }
+
+  // Is this slot a Ditto — the physical card, whatever it is currently pretending
+  // to be?
+  isTransformer(slot) {
+    if (!slot) return false;
+    const e = this.effects[baseCard(this.db, slot).id];
+    return !!(e && e.p && e.p.kind === 'TRANSFORM');
+  }
+
+  // Transform, settled after every action rather than at the eight separate
+  // places a Pokemon can reach the Active spot. Idempotent, so calling it
+  // unconditionally is both safe and the reason a ninth entry path added later
+  // cannot forget about Ditto.
+  //
+  // The rule, settled with Trevor 10 Aug and written up in RULINGS.md:
+  // Transform is a SNAPSHOT taken when Ditto enters the Active spot, not a live
+  // mirror. It holds until Ditto is benched, at which point it becomes a Ditto
+  // again and re-snapshots on its way back up. Anything that switches the Power
+  // off blocks the firing but never reverses one already made.
+  settleTransforms() {
+    let changed = false;
+    for (let i = 0; i < 2; i++) {
+      const me = this.state.players[i], foe = this.state.players[1 - i];
+      for (const sl of this.allSlots(i)) {
+        if (!this.isTransformer(sl)) continue;
+        const base = baseCard(this.db, sl);
+
+        if (me.active !== sl) {
+          if (sl.transformedId) {
+            sl.transformedId = null;
+            changed = true;
+            this.log(`${base.name} is itself again.`, 'eff');
+          }
+          continue;
+        }
+        if (sl.transformedId) continue;          // snapshot holds while it is Active
+        if (!this.powerUsable(sl)) continue;     // status or Toxic Gas blocks the FIRING
+        const target = foe.active;
+        if (!target) continue;                   // deferred: copies the first thing it sees
+        const copy = topCard(this.db, target);   // whatever that Pokemon currently IS
+        if (copy.id === base.id) continue;       // a Ditto facing an untransformed Ditto
+        sl.transformedId = copy.id;
+        changed = true;
+        this.log(`Transform: ${base.name} becomes ${copy.name}.`, 'eff');
+      }
+    }
+    // A transform in either direction changes maximum HP without touching the
+    // damage on the card, so it can be lethal both ways. Deliberate — see
+    // RULINGS.md for the damage pump that killed the first version of this rule.
+    if (changed) this.checkKOs();
+  }
 
   // The switched-on Power of a given kind on this slot, or null. The one way
   // anything should ask "does this Pokemon currently have X".
@@ -978,6 +1043,7 @@ class Engine {
   canEvolve(pi, slot, evoCard) {
     const s = this.state;
     if (this.evolutionLocked()) return false;                          // Prehistoric Power
+    if (this.isTransformer(slot)) return false;                        // "except Ditto can't evolve"
     if (topCard(this.db, slot).name !== evoCard.evolvesFrom) return false;
     if (slot.playedTurn >= s.turn) return false;                       // played this turn
     if (slot.evolvedTurn === s.turn) return false;                     // already evolved this turn
@@ -1015,6 +1081,14 @@ class Engine {
   // Does the attached Energy satisfy the cost string (e.g. "RRC")?
   costSatisfied(slot, cost) {
     const pool = this.slotSymbols(slot);
+    // "You may treat any Energy attached to Ditto as Energy of any type."
+    // QUANTITY matters and quality does not, so Double Colorless still pays for
+    // two. Keyed on being transformed rather than on the Power being switched
+    // on, because a transform already made is never reversed — same rule that
+    // stops Toxic Gas undoing one. Note this covers attack COSTS only: a
+    // "discard 1 Fire Energy" cost still wants real Fire, matching the Buzzap
+    // ruling that a card standing in for Energy is not that Energy card.
+    if (slot && slot.transformedId) return pool.length >= cost.length;
     const need = cost.split('').filter(x => x !== 'C');
     const generic = cost.length - need.length;
     const used = new Array(pool.length).fill(false);
@@ -1166,6 +1240,12 @@ class Engine {
       } else return this.fail('Waiting on the other player');
     } else if (s.active !== pi) return this.fail('Not your turn');
 
+    const r = this.dispatchAction(pi, a);
+    this.settleTransforms();
+    return r;
+  }
+
+  dispatchAction(pi, a) {
     switch (a.t) {
       case 'playBasic':    return this.doPlayBasic(pi, a);
       case 'evolve':       return this.doEvolve(pi, a);
@@ -1816,6 +1896,7 @@ class Engine {
   }
   // Discard a whole slot's contents (Scoop Up, KO cleanup).
   scrapSlot(pi, slot, keepBottom) {
+    slot.transformedId = null;
     const p = this.state.players[pi];
     const kept = keepBottom ? slot.stack.shift() : null;
     slot.stack.forEach(x => p.discard.push(x));

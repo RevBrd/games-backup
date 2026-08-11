@@ -45,8 +45,11 @@ function board(activeId, benchIds = [], oppActiveId = 'base1-58') {
   [...E.allSlots(0), ...E.allSlots(1)].forEach(s => { s.playedTurn = 0; });
   return E;
 }
-// engine.js keeps topCard module-scoped, so the harness needs its own.
-const top = (E, slot) => E.db[slot.stack[slot.stack.length - 1].id];
+// engine.js keeps topCard module-scoped, so the harness needs its own — and it
+// has to honour Transform the same way, or every Ditto assertion reads the card
+// underneath instead of what the game is treating it as.
+const top = (E, slot) => (slot && slot.transformedId && E.db[slot.transformedId])
+  || E.db[slot.stack[slot.stack.length - 1].id];
 const attach = (E, slot, energyId, n = 1) => {
   for (let i = 0; i < n; i++) slot.energy.push({ id: energyId, uid: E.uid++ });
 };
@@ -1663,6 +1666,144 @@ T('Peek reveals without moving the card', () => {
   eq(r.ok, true, 'it looked');
   eq(r.peeked.id, topId, 'at the right card');
   eq(them.deck.length, n, 'and the deck is untouched');
+  return true;
+});
+
+// ---------------------------------------------------------------------------
+// Job 6f — Ditto. Every assertion here is a DESIGN DECISION rather than a
+// reading of the card, so each one is a thing that could be changed on purpose
+// later. The rule and its reasoning are in RULINGS.md.
+// ---------------------------------------------------------------------------
+console.log('\nDitto (6f)');
+
+// Ditto is 'base3-3'. board() places the Active directly, so settleTransforms
+// has to be nudged the way act() would.
+function dittoBoard(oppId, oppBench) {
+  const E = board('base3-3', [], oppId);
+  if (oppBench) E.state.players[1].bench = oppBench.map(id => E.mkSlot({ id, uid: E.uid++ }));
+  E.settleTransforms();
+  return E;
+}
+
+T('Ditto becomes whatever it finds, and gets its HP and attacks', () => {
+  const E = dittoBoard('base1-3');                              // Chansey, 120 HP
+  const d = E.state.players[0].active;
+  eq(top(E, d).name, 'Chansey', 'it is a Chansey');
+  eq(top(E, d).hp, 120, 'with Chansey HP');
+  eq(top(E, d).attacks.length, 2, 'and Chansey attacks — Ditto itself has none');
+  return true;
+});
+
+T('the snapshot HOLDS: evolving or switching opposite it changes nothing', () => {
+  const E = dittoBoard('base1-58');                             // Pikachu
+  const d = E.state.players[0].active;
+  eq(top(E, d).name, 'Pikachu', 'copied Pikachu');
+  // They switch to something else entirely.
+  E.state.players[1].active = E.mkSlot({ id: 'base1-3', uid: E.uid++ });
+  E.settleTransforms();
+  eq(top(E, d).name, 'Pikachu', 'still Pikachu — a snapshot, not a mirror');
+  return true;
+});
+
+T('benching it makes it a Ditto again, and it re-snapshots on the way back', () => {
+  const E = dittoBoard('base1-58');
+  const me = E.state.players[0], d = me.active;
+  eq(top(E, d).name, 'Pikachu', 'Pikachu to start');
+  // Bench it.
+  me.bench.push(d); me.active = E.mkSlot({ id: 'base1-58', uid: E.uid++ });
+  E.settleTransforms();
+  eq(top(E, d).name, 'Ditto', 'itself again on the Bench');
+  eq(top(E, d).hp, 50, 'and back to 50 HP');
+  // Send it back up against something different.
+  E.state.players[1].active = E.mkSlot({ id: 'base1-3', uid: E.uid++ });
+  me.bench.pop(); me.active = d;
+  E.settleTransforms();
+  eq(top(E, d).name, 'Chansey', 're-snapshots against whatever is there now');
+  return true;
+});
+
+T('it does NOT gain the copied Pokemon Power, and keeps Transform', () => {
+  const E = dittoBoard('base1-1');                              // Alakazam, Damage Swap
+  const d = E.state.players[0].active;
+  eq(top(E, d).name, 'Alakazam', 'it looks like Alakazam');
+  eq(E.powerOf(d).kind, 'TRANSFORM', 'but the Power is still Transform');
+  return true;
+});
+
+T('its Energy pays for anything, by quantity', () => {
+  const E = dittoBoard('base1-4');                              // Charizard, Fire Spin RRRR
+  const d = E.state.players[0].active;
+  attach(E, d, 'base1-102', 4);                                 // four WATER
+  eq(E.costSatisfied(d, 'RRRR'), true, 'four Water pay a four-Fire cost');
+  eq(E.costSatisfied(d, 'RRRRR'), false, 'but four cannot pay five — quantity still counts');
+  return true;
+});
+
+T('Ditto cannot evolve', () => {
+  const E = dittoBoard('base1-58');                             // copied Pikachu
+  const d = E.state.players[0].active;
+  const raichu = Object.values(CARD_DB).find(c => c.name === 'Raichu' && c.set === 'base1');
+  eq(E.canEvolve(0, d, raichu), false, 'no evolving a Ditto, even one wearing a Pikachu');
+  return true;
+});
+
+T('Toxic Gas blocks the transform, but never reverses one already made', () => {
+  // Muk out FIRST: Ditto never transforms and is a 50 HP body with no attacks.
+  const first = board('base3-3', [], 'base3-13');               // Muk opposite
+  first.settleTransforms();
+  const d1 = first.state.players[0].active;
+  eq(top(first, d1).name, 'Ditto', 'no transform while Toxic Gas is up');
+  eq(top(first, d1).attacks.length, 0, 'and Ditto has no attacks of its own');
+
+  // Muk arriving AFTER: the snapshot stands.
+  const later = dittoBoard('base1-58');
+  const d2 = later.state.players[0].active;
+  eq(top(later, d2).name, 'Pikachu', 'transformed first');
+  later.state.players[1].bench = [later.mkSlot({ id: 'base3-13', uid: later.uid++ })];
+  later.settleTransforms();
+  eq(top(later, d2).name, 'Pikachu', 'and Muk does not undo it');
+  return true;
+});
+
+T('a Ditto opposite a Ditto copies what that one currently IS', () => {
+  // Theirs is already a Chansey; ours copies the Chansey, not the Ditto.
+  const E = board('base3-3', [], 'base3-3');
+  E.state.players[1].active.transformedId = 'base1-3';
+  E.settleTransforms();
+  eq(top(E, E.state.players[0].active).name, 'Chansey', 'no regress');
+
+  // Both untransformed: nothing to copy, and no infinite loop.
+  const both = board('base3-3', [], 'base3-3');
+  both.settleTransforms();
+  eq(top(both, both.state.players[0].active).name, 'Ditto', 'they stay themselves');
+  return true;
+});
+
+T('the transform can Knock It Out, in either direction', () => {
+  // Copying something SMALLER than the damage already on it.
+  const down = dittoBoard('base1-3');                           // Chansey, 120
+  const d = down.state.players[0].active;
+  down.state.players[0].bench = [down.mkSlot({ id: 'base1-58', uid: down.uid++ })];
+  d.dmg = 100;                                                  // fine on a 120 body
+  down.state.players[1].active = down.mkSlot({ id: 'base1-58', uid: down.uid++ });
+  // Bench and re-promote so it re-snapshots against a 40 HP Pikachu.
+  const me = down.state.players[0];
+  me.bench.push(d); me.active = me.bench.shift();
+  down.settleTransforms();                                       // reverts to 50 HP Ditto...
+  eq(me.bench.indexOf(d) < 0 && me.active !== d, true,
+    'reverting to a 50 HP Ditto with 100 damage Knocked It Out');
+  return true;
+});
+
+T('Ditto is what goes to the discard pile, not the copy', () => {
+  const E = dittoBoard('base1-3');
+  const me = E.state.players[0], d = me.active;
+  me.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  d.dmg = 999;
+  E.checkKOs();
+  const names = me.discard.map(x => CARD_DB[x.id].name);
+  eq(names.indexOf('Ditto') >= 0, true, 'the Ditto card is in the discard');
+  eq(names.indexOf('Chansey') >= 0, false, 'and no Chansey was ever created');
   return true;
 });
 

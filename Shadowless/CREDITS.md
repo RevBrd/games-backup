@@ -99,7 +99,11 @@ below is the worked example, and it is why this file exists at the size it does.
   Curse, Strange Behavior, Heal, Shift, Step In, Peek and Cowardice, plus the shared Peek and
   Clairvoyance panel. Caught the AI scoring Curse at -Infinity because it looked both slots up on
   the wrong side of the board — a Power the bot would never once have used. **Jungle went LIVE at
-  64/64.**
+  64/64.** Finally 6f, Ditto: Transform as a snapshot, built on a `baseCard`/`topCard` split so one
+  override carries HP, type, Weakness, retreat and the whole attack list. Measured on the way past
+  that Sandbox could produce a standalone Basic in 6 decks out of 2998 — which had quietly made 23
+  cards, Ditto among them, impossible to playtest — and fixed the generator. **Job 6 complete: all
+  221 cards across Base Set, Jungle and Fossil.**
 - **Sonnet 4.6** (10 Aug 2026) — Job 7 groundwork: researched and built `data/gbc_decks.json`, the
   GBC opponent deck reference. All 16 decks from the first Game Boy Color game — eight Club Masters,
   four Grand Masters, and Ronald's four escalating rival decks — sourced from Bulbapedia character

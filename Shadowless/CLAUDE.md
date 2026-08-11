@@ -41,7 +41,7 @@ of them unless you are working on that thing** — that is the point of the spli
 
 ## Status
 
-Jobs 1–5 are complete. The engine and AI came out of Claude Chat; Job 5 built everything a
+Jobs 1–6 are complete. The engine and AI came out of Claude Chat; Job 5 built everything a
 *collection* game needs on top of them — you can pick a starter deck, play, win packs, open them,
 browse what you own, and build decks from it, and all of it persists.
 
@@ -50,14 +50,14 @@ browse what you own, and build decks from it, and all of it persists.
 | Rules engine | Complete for Base Set, every card |
 | Opponent AI | Four tiers, expected-value based. Beats its own baselines |
 | Base Set cards | **All 102 implemented.** Base Set is done |
-| Jungle cards | **All 64 implemented. Jungle is LIVE** — art fetched, collectable, in the dex |
-| Fossil cards | 60 of 62. Only Ditto remains (Job 6f) |
+| Jungle cards | **All 64 implemented. LIVE** — art fetched, collectable, in the dex |
+| Fossil cards | **All 62 implemented. LIVE** — Ditto included |
 | Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen, dex, pack reveal. In play, cards keep a rendered face and a deterministic sigil |
 | Collection / packs / dex | **Done.** Starter pick, win 2 packs, open them, browse what you own. CARDS and DEX views, owned/missing filters, per-card counts, variant dots, export/import |
 | Deck building | **Done.** Pool grid with filters, live legality, save-as-layout vs save-and-build, and variant picking — you choose which physical copy goes in. Sandbox ignores ownership on purpose |
 | Persistence | **Live.** Versioned save, migration, validation — see [COLLECTION.md](COLLECTION.md) |
 | Progression / named opponents | Not started (Job 7) |
-| Sets beyond Base | Not started, but **no longer data-blocked** — all 14 sets generate cleanly |
+| Sets beyond Base | **Jungle and Fossil are done and live.** The other 11 are unblocked — all 14 sets generate cleanly |
 | Audio | None |
 
 Don't trust that table — the five suites below take about a minute between them and check most of
@@ -106,7 +106,7 @@ node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,b
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
-node tools/powertest.js                  # 123 tests for Powers, the bespoke cards and setup
+node tools/powertest.js                  # 133 tests for Powers, the bespoke cards and setup
 node tools/smoke.js shadowless.html      # 108 integration tests against the built file
 node tools/collectiontest.js             # 105 tests for the save file, decks and variants
 node tools/packtest.js                   # 57 tests, 200k packs (takes a count: `20000` is fast)
