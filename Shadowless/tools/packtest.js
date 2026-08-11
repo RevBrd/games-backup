@@ -20,6 +20,9 @@ const P = require('../src/packs.js');
 const C = require('../src/collection.js');
 
 const N = parseInt(process.argv[2], 10) || 200000;
+// The set every measurement below is taken against. Base Set remains the one
+// the pacing schedule in PACKS.md was designed around.
+const SET = 'base1';
 let fail = 0, pass = 0;
 const check = (ok, label, detail = '') => {
   if (ok) pass++; else fail++;
@@ -71,7 +74,9 @@ eq(JSON.stringify(again), JSON.stringify(one), 'the same seed opens the same pac
 const other = P.openPack(CARD_DB, 'base1', mulberry32(8));
 check(JSON.stringify(other) !== JSON.stringify(one), 'a different seed does not');
 
-throws_(() => P.openPack(CARD_DB, 'base2', mulberry32(1)), 'a set with no cards loaded refuses to fill a pack');
+// A set code this build has no cards for. Was 'base2' until Jungle generated,
+// at which point it started asserting that a real set was empty.
+throws_(() => P.openPack(CARD_DB, 'neo4', mulberry32(1)), 'a set with no cards loaded refuses to fill a pack');
 function throws_(fn, label) {
   try { fn(); check(false, label, 'did not throw'); } catch (e) { check(true, label); }
 }
@@ -217,15 +222,23 @@ check(C.vflags(C.bestVariant(feSave, fePack.cards[0].id)).indexOf('fe') >= 0,
 // pack. Commons and Uncommons finish long before them.
 head('How many packs to finish Base Set?  (informational)');
 
-function packsToComplete(seed, predicate) {
+// Scoped to the set whose packs it opens. It used to build `need` from the
+// whole of CARD_DB, which was correct while Base Set was the only set and
+// became a six-minute hang the moment Jungle generated: it chased 126 cards no
+// base1 pack can contain, hit the 200,000 cap on all five measurements, forty
+// times over, and reported the cap as the answer.
+function packsToComplete(seed, predicate, setCode = SET) {
   const r = mulberry32(seed);
   const need = {};
   let missing = 0;
-  for (const id in CARD_DB) if (predicate(CARD_DB[id])) { need[id] = 1; missing++; }
+  for (const id in CARD_DB) {
+    if (CARD_DB[id].set !== setCode) continue;
+    if (predicate(CARD_DB[id])) { need[id] = 1; missing++; }
+  }
   let opened = 0;
   while (missing > 0 && opened < 200000) {
     opened++;
-    for (const c of P.openPack(CARD_DB, 'base1', r, { pools }).cards) {
+    for (const c of P.openPack(CARD_DB, setCode, r, { pools }).cards) {
       if (need[c.id]) { delete need[c.id]; missing--; }
     }
   }
@@ -234,15 +247,16 @@ function packsToComplete(seed, predicate) {
 
 const TRIALS = 40;
 const median = xs => xs.slice().sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+const ALL_LABEL = `ALL ${Object.keys(CARD_DB).filter(id => CARD_DB[id].set === SET).length}`;
 const runs = {
-  'Commons + Energy': [], 'Uncommons': [], 'Rares (non-holo)': [], 'Rare Holos': [], 'ALL 102': [],
+  'Commons + Energy': [], 'Uncommons': [], 'Rares (non-holo)': [], 'Rare Holos': [], [ALL_LABEL]: [],
 };
 for (let t = 0; t < TRIALS; t++) {
   runs['Commons + Energy'].push(packsToComplete(500 + t, c => c.rarity === 'Common' || (c.kind === 'energy' && c.cls === 'Basic')));
   runs['Uncommons'].push(packsToComplete(600 + t, c => c.rarity === 'Uncommon'));
   runs['Rares (non-holo)'].push(packsToComplete(700 + t, c => c.rarity === 'Rare'));
   runs['Rare Holos'].push(packsToComplete(800 + t, c => c.rarity === 'Rare Holo'));
-  runs['ALL 102'].push(packsToComplete(900 + t, () => true));
+  runs[ALL_LABEL].push(packsToComplete(900 + t, () => true));
 }
 for (const k in runs) {
   const xs = runs[k];

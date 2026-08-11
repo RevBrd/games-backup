@@ -23,7 +23,21 @@ const OUT = path.join(HERE, 'src', 'cards.js');
 const flagIdx = process.argv.indexOf('--sets');
 const argSets = (process.argv.find(a => a.startsWith('--sets=')) || '=').split('=')[1]
   || (flagIdx > -1 ? (process.argv[flagIdx + 1] || '') : '');
-const SETS = argSets ? argSets.split(',') : ['base1'];
+
+// --check with no --sets means "is the COMMITTED file a faithful generation",
+// so it has to regenerate the sets that file was built from rather than the
+// default. Reading them back from its own SET_INFO is what stops --check
+// reporting drift on a widened build and training everyone to ignore it.
+function committedSets() {
+  try {
+    const cur = require(OUT);
+    const keys = Object.keys(cur.SET_INFO || {});
+    if (keys.length) return keys;
+  } catch (e) { /* no committed file yet, or an older one without SET_INFO */ }
+  return null;
+}
+const SETS = argSets ? argSets.split(',')
+  : (process.argv.includes('--check') && committedSets()) || ['base1'];
 
 // Set display names. HAND-AUTHORED, unavoidably: data/raw/*.json are bare arrays
 // of cards with no set metadata on them at all, and the code is only known from

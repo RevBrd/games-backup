@@ -101,7 +101,23 @@ const HOLO_RARITIES = { 'Rare Holo': 1, 'Rare Shining': 1, 'Rare Secret': 1 };
 // Common-tier card, so it goes in `common` AND is tracked separately in
 // `energy` for the floor. Double Colorless is Uncommon and is not Energy for
 // the floor's purposes — the floor is about basic Energy for a first deck.
+//
+// Memoised per (database, set). openPack() calls this once per pack, and the
+// scan is O(whole database) — invisible when a player opens one, and the
+// dominant cost when packtest.js opens 200,000. It was already 3x worse the
+// moment Jungle and Fossil generated, and would be 12x worse at fourteen sets.
+//
+// Safe because pools are READ-ONLY downstream (pickFrom and drawSlots only
+// read) and a card database is built once and not mutated. If you ever do
+// mutate one, build it fully before opening a pack against it.
+const POOL_CACHE = new WeakMap();
+
 function buildPools(db, setCode) {
+  let perSet = POOL_CACHE.get(db);
+  if (!perSet) { perSet = {}; POOL_CACHE.set(db, perSet); }
+  const key = setCode || '*';
+  if (perSet[key]) return perSet[key];
+
   const pools = { rareHolo: [], rare: [], uncommon: [], common: [], energy: [] };
   for (const id in db) {
     const c = db[id];
@@ -117,6 +133,7 @@ function buildPools(db, setCode) {
     // dropped rather than guessed into a bucket.
   }
   for (const k in pools) pools[k].sort();     // deterministic given a seed
+  perSet[key] = pools;
   return pools;
 }
 

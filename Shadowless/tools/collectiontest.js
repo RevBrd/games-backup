@@ -193,13 +193,15 @@ const dx = C.newSave({ now: 1 });
 let stats = C.collectionStats(dx, CARD_DB);
 eq(stats.cards.owned, 0, 'an empty collection owns no cards');
 eq(stats.cards.total, Object.keys(CARD_DB).length, 'the denominator is the live database');
-eq(stats.species.total, 69, 'Base Set holds 69 distinct species');
+const speciesInDb = new Set(Object.values(CARD_DB).filter(c => c.dex).map(c => c.dex)).size;
+eq(stats.species.total, speciesInDb, 'the species count comes from the database, not a constant');
 check(stats.species.total < stats.cards.total, 'species and cards are counted separately');
 
 C.grantDeck(dx, DECKS.Brushfire);
 stats = C.collectionStats(dx, CARD_DB);
 check(stats.cards.owned > 0 && stats.cards.owned < stats.cards.total, 'a starter deck is a partial collection');
-eq(stats.bySet.base1.total, Object.keys(CARD_DB).length, 'per-set totals add up to the pool');
+const setSum = Object.values(stats.bySet).reduce((a, x) => a + x.total, 0);
+eq(setSum, Object.keys(CARD_DB).length, 'per-set totals add up to the pool');
 check(stats.bySet.base1.owned === stats.cards.owned, 'with one set loaded, the set is the collection');
 
 // Owning four copies of one card must not count as four cards collected.
@@ -223,7 +225,10 @@ check(!!C.validate(C.newSave({ now: 1 })), 'a fresh save validates');
 // shows what it can rather than refusing — the alternative is a player who
 // rebuilds and finds their collection gone.
 const future = C.newSave({ now: 1 });
-C.grant(future, 'base2-15', '', 1);          // a Jungle card this build has never heard of
+// Deliberately an id no set will ever mint. This was 'base2-15' until Jungle
+// generated and the card became real, at which point the test asserted the
+// opposite of what it meant.
+C.grant(future, 'zz9-999', '', 1);
 check(!!C.validate(future), 'a save naming cards outside the current pool still validates');
 eq(C.collectionStats(future, CARD_DB).cards.owned, 0, 'and the unknown card simply is not counted');
 

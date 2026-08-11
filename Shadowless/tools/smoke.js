@@ -62,10 +62,10 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
-const { UI, render, newGame, CARD_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
+const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
   bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace,
   addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY } = ctx;
 
@@ -961,9 +961,15 @@ T('the collection screen renders in every view and filter', () => {
   return created > 0;
 });
 T('CARDS and DEX count different things', () => {
-  const st = collectionStats(UI.save, CARD_DB);
-  // 102 printings, 69 species. A dex that reported 102 would be lying.
-  return st.cards.total === 102 && st.species.total === 69;
+  // Against LIVE_DB, which is what the screen actually counts — CARD_DB holds
+  // every set that GENERATES, including ones still being written. Derived
+  // rather than hardcoded at 102/69, because those two numbers stopped being
+  // the whole database the moment Jungle did.
+  const st = collectionStats(UI.save, LIVE_DB);
+  const printings = Object.keys(LIVE_DB).length;
+  const species = new Set(Object.values(LIVE_DB).filter(c => c.dex).map(c => c.dex)).size;
+  // A dex reporting the printing count would be lying, and vice versa.
+  return st.cards.total === printings && st.species.total === species && species < printings;
 });
 T('an unowned card still opens, so you can read what you are chasing', () => {
   const missing = Object.keys(CARD_DB).find(id => ownedTotal(UI.save, id) === 0);

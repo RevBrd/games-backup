@@ -87,6 +87,35 @@ const PACKS_PER_WIN = 2;      // PACKS.md's yardstick, and now the real rule
 // what eventually replaces it. It is deliberately not a constant named after
 // Base Set: that constant was threaded through nine call sites and every one of
 // them had to be found again to widen the game.
+// A set is LIVE once every card in it is playable. CLAUDE.md's rule — no
+// collecting a card you cannot play, and no half-open sets — now enforces
+// ITSELF from this rather than from anyone remembering it. That is what lets
+// Jungle and Fossil sit in CARD_DB half-scripted through 6c-6e: they generate,
+// they are testable, and they stay invisible to the collection until the last
+// script lands.
+//
+// Derived, never declared. A set goes live the moment its final effect script
+// exists, with nothing to flip by hand and nothing to forget.
+const SET_LIVE = (() => {
+  const incomplete = {};
+  for (const id in CARD_DB) {
+    const c = CARD_DB[id];
+    if (c.kind !== 'energy' && !EFFECTS[id]) incomplete[c.set] = 1;
+  }
+  const out = {};
+  for (const code in SET_INFO) if (!incomplete[code]) out[code] = 1;
+  return out;
+})();
+const setIsLive = code => !!SET_LIVE[code];
+
+// The card pool the collection, the dex, the stats and the packs all work from.
+// CARD_DB is everything that GENERATES; this is everything that COUNTS.
+const LIVE_DB = (() => {
+  const out = {};
+  for (const id in CARD_DB) if (SET_LIVE[CARD_DB[id].set]) out[id] = CARD_DB[id];
+  return out;
+})();
+
 // What retreating this Pokemon ACTUALLY costs right now. Dodrio's Retreat Aid
 // discounts it from the Bench, so the printed number on the card face and the
 // number the player is about to pay are two different things — the card preview
@@ -95,8 +124,8 @@ const retreatCost = (slot, card) =>
   (UI.E && slot) ? UI.E.retreatCostOf(slot) : (card ? card.retreat : 0);
 const setName = code => (SET_INFO[code] || {}).name || code;
 const setShort = code => (SET_INFO[code] || {}).short || code;
-const homeSet = () => Object.keys(SET_INFO)[0];
-const packSets = save => Object.keys(SET_INFO).filter(s => packsHeld(save, s) > 0);
+const homeSet = () => Object.keys(SET_INFO).find(setIsLive) || Object.keys(SET_INFO)[0];
+const packSets = save => Object.keys(SET_INFO).filter(s => setIsLive(s) && packsHeld(save, s) > 0);
 
 const SANDBOX = 'Sandbox';
 const DECK_NAMES = Object.keys(DECKS).concat([SANDBOX]);
@@ -108,7 +137,10 @@ const DECK_NAMES = Object.keys(DECKS).concat([SANDBOX]);
 // for it, so it is a dev affordance rather than a deck you own.
 function resolveDeck(name, seed) {
   if (name === SANDBOX) {
-    const pool = Object.keys(CARD_DB);
+    // Deliberately gated on IMPLEMENTED rather than on a live set: reaching a
+    // newly scripted card before its set opens is the entire point of Sandbox.
+    // It does have to be implemented, though — validateDeck refuses the rest.
+    const pool = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind === 'energy' || EFFECTS[id]);
     const d = generateDeck(CARD_DB, pool, mulberry32(seed), { name: SANDBOX });
     return d || DECKS[Object.keys(DECKS)[0]];
   }
@@ -2014,7 +2046,7 @@ function collTile(id, count, best, label) {
 
 function renderCollection() {
   const save = UI.save;
-  const st = collectionStats(save, CARD_DB);
+  const st = collectionStats(save, LIVE_DB);
   const ov = el('div', 'collscreen');
   const box = el('div', 'collbox');
 
@@ -2046,7 +2078,7 @@ function renderCollection() {
     // One row per species, represented by the best card of it that you own —
     // or the lowest-numbered printing as a placeholder if you own none.
     const species = {};
-    Object.keys(CARD_DB).forEach(id => {
+    Object.keys(LIVE_DB).forEach(id => {
       const c = CARD_DB[id];
       if (!c.dex) return;
       const s = species[c.dex] || (species[c.dex] = { dex: c.dex, name: c.name, ids: [] });
@@ -2278,7 +2310,7 @@ function renderBuilder() {
 
   // ---- the pool ----
   const grid = el('div', 'collgrid');
-  Object.keys(CARD_DB).forEach(id => {
+  Object.keys(LIVE_DB).forEach(id => {
     const card = CARD_DB[id];
     if (!poolMatches(card)) return;
     const owned = ownedTotal(UI.save, id);
@@ -2498,13 +2530,13 @@ function renderDeckSelect() {
   title.appendChild(el('h1', 'gametitle', 'SHADOWLESS'));
   title.appendChild(el('div', 'gamesub', 'The Wizards of the Coast era, played to the letter of the original rules.'));
   title.appendChild(el('div', 'gamenote',
-    `Named for the early Base Set sheets, printed before the drop shadow. ${Object.keys(CARD_DB).length} cards implemented.`));
+    `Named for the early Base Set sheets, printed before the drop shadow. ${Object.keys(LIVE_DB).length} cards implemented.`));
   box.appendChild(title);
 
   // What you own, and what is waiting to be opened. This is the first thing on
   // the screen after the title because in a collection game it is the score.
   if (UI.save) {
-    const st = collectionStats(UI.save, CARD_DB);
+    const st = collectionStats(UI.save, LIVE_DB);
     const strip = el('div', 'collstrip');
     const stat = (n, label) => {
       const s = el('div', 'collstat');

@@ -62,19 +62,49 @@ for (const name of DECK_NAMES) {
 // Base Set is COMPLETE — all 102 cards. Keep this list here rather than deleting
 // the check: Job 6 widens the pool to Jungle and Fossil, and everything new
 // arrives unimplemented. An empty set means "nothing is allowed to be missing".
-const EXPECTED_UNIMPLEMENTED = new Set([]);
+// Job 6 replaced a pinned list of ids with two claims, because a set arriving
+// 64 cards at a time makes the list the thing you maintain instead of the code.
+//
+// The HARD one is CLAUDE.md's gating rule stated as an assertion: a set is live
+// only when every card in it is playable, so no live set may contain a gap.
+// That is what makes "Base Set is complete" a checked fact rather than a note,
+// and it cannot regress no matter how many half-finished sets sit beside it.
+//
+// The SOFT one is a high-water mark per set still being written. One number,
+// which only ever moves down. It catches a script being deleted or an id being
+// misspelled, without anybody hand-editing a list of 126 ids as they go.
+const REMAINING = { base2: 64, base3: 62 };
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');
 const unscripted = all.filter(id => !EFFECTS[id]);
-const surprises = unscripted.filter(id => !EXPECTED_UNIMPLEMENTED.has(id));
-const done = [...EXPECTED_UNIMPLEMENTED].filter(id => EFFECTS[id]);
+const bySet = {};
+for (const id of unscripted) bySet[CARD_DB[id].set] = (bySet[CARD_DB[id].set] || 0) + 1;
+const sets = [...new Set(all.map(id => CARD_DB[id].set))];
 
 console.log(`  ${all.length - unscripted.length} of ${all.length} scriptable cards implemented`);
-check(surprises.length === 0, 'no unexpected gaps in card coverage',
-  surprises.map(id => `${id} ${CARD_DB[id].name}`).join(', '));
-if (done.length) console.log(`  newly implemented since this list was written: `
-  + done.map(id => CARD_DB[id].name).join(', ') + ' — trim EXPECTED_UNIMPLEMENTED');
+for (const s of sets) {
+  const left = bySet[s] || 0;
+  const total = all.filter(id => CARD_DB[id].set === s).length;
+  console.log(`  ${s.padEnd(6)} ${String(total - left).padStart(3)}/${total}`
+    + (left ? `   ${left} to go` : '   LIVE'));
+}
+
+const liveGaps = sets.filter(s => REMAINING[s] === undefined && bySet[s]);
+check(liveGaps.length === 0, 'no live set contains an unimplemented card',
+  liveGaps.map(s => `${s}: ${unscripted.filter(id => CARD_DB[id].set === s)
+    .map(id => CARD_DB[id].name).join(', ')}`).join(' | '));
+
+const wentUp = Object.keys(REMAINING).filter(s => (bySet[s] || 0) > REMAINING[s]);
+check(wentUp.length === 0, 'no in-progress set went backwards',
+  wentUp.map(s => `${s}: ${bySet[s]} > ${REMAINING[s]}`).join(', '));
+
+const ahead = Object.keys(REMAINING).filter(s => (bySet[s] || 0) < REMAINING[s]);
+if (ahead.length) console.log('  progress since REMAINING was last set: '
+  + ahead.map(s => `${s} ${REMAINING[s]} -> ${bySet[s] || 0}`).join(', ') + ' — lower it');
+const finished = Object.keys(REMAINING).filter(s => !bySet[s]);
+if (finished.length) console.log(`  ${finished.join(', ')} now complete `
+  + '— remove from REMAINING to make the live-set assertion cover it');
 
 // Whatever else is missing, the playable decks must be fully implemented.
 const inDecks = new Set();
