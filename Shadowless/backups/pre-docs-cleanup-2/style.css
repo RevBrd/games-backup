@@ -964,7 +964,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .searchrow.on{background:#3A2F1C;border-color:var(--amber)}
 
 
-/* ============== WIDE LAYOUT — must stay after CARD SYSTEM ==============
+/* ===================== WIDE LAYOUT — must stay last =====================
    Stand the field (prizes + bench) beside the Active instead of under it. That
    is the good trade on a screen: the mat has width going spare and no height at
    all, and this takes roughly 75px per side out of the stack.
@@ -975,16 +975,9 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    `min-width:1560px` rule never fires on the machine it was written for. That
    is exactly how this silently reverted to stacked once already.
 
-   THIS BLOCK MUST COME AFTER THE CARD SYSTEM SECTION. It overrides widths set
-   there at equal specificity, so moving it earlier silently loses to those
-   rules and the two Actives stop lining up.
-
-   It said "must be the last thing in the file" until 11 Aug 2026, which the
-   file stopped being true of the moment Job 5 appended its own section below.
-   Nothing down there touches board widths, so nothing broke — but a rule that
-   reads as violated is worse than no rule, because the next reader either
-   "fixes" a non-bug or trusts the wording and appends a board rule below. What
-   matters is the section order, not the end of the file. */
+   THIS BLOCK MUST BE THE LAST THING IN THE FILE. It overrides widths set in
+   the CARD SYSTEM section at equal specificity, so moving it earlier silently
+   loses to those rules and the two Actives stop lining up. */
 .boardcol.wide .playarea{flex-direction:row;align-items:stretch;gap:16px;justify-content:center}
 /* Both halves lay out Active-then-field here, and the two Actives are the same
    width, so each pair centres identically and they line up across the centre

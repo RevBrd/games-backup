@@ -22,18 +22,6 @@ Not on a schedule. The triggers that actually mean something:
   the duplication was the disease, and it was already there when they agreed.
 - **A count, a version or a filename in prose can be checked by running something.** They rot
   silently. Nobody notices "48 tests" is now 96.
-- **A doc describes a plan the implementation then improved on.** Added after the third pass, which
-  found two: `RULINGS.md` telling a reader to move a working `ai.js` case onto an opt-out list, and
-  `ENGINE.md` proposing a check that had shipped four commits later. This is the nastiest kind
-  because the file is not vague or old — it is *specific, confident and actionable*, and acting on
-  it makes the code worse. **Grep the doc's own symbols against the source.** If a file names
-  `UNSCORED_ON_PURPOSE`, go and read what is actually in it.
-- **An invariant stated in terms that stopped being true, while the invariant itself holds.**
-  `.boardcol.wide` "must stay last in `style.css`" had not been last since Job 5, and nothing was
-  broken, because the real rule was *after the CARD SYSTEM section*. A rule that reads as violated
-  is worse than no rule: the next reader either "fixes" a non-bug or trusts the wording and breaks
-  the real one. State invariants against the thing that matters, not against a position that
-  happened to coincide with it.
 
 ## The rules that did the work
 
@@ -73,14 +61,7 @@ turns a settled question back into an open one.
   decision was his, say so — it changes how much authority a future instance has to overturn it.
 - **Anything a screenshot or a test run cannot re-derive.** Measured card heights, the reason a
   media query was replaced by measurement, why the coin lands on the centre line.
-- **Credits** and anything the original instance intended to persist, especially anything that reads
-  as a documentation of their accomplishments. It can be moved to a reference file for organization
-  but it cannot be lost. — *Trevor, 11 Aug 2026.* The third pass acted on this by splitting
-  [LOGBOOK.md](LOGBOOK.md) out of `CREDITS.md` and moving the narratives across **verbatim, as a
-  block**, rather than deciding sentence by sentence what earned its place. That is the safer shape
-  when the instruction is "preserve": move the whole document into the archive and write the short
-  version fresh, so the judgement call is about what to *summarise* and never about what to *drop*.
-  The logbook is append-only and exempt from the line target; say so in any file like it.
+- **Credits** and anything the original instance intended to persist, especially anything that reads as a documentation of their accomplishments. It can be moved to a reference file for organization but it cannot be lost.
 
 ## What is safe to cut
 
@@ -100,33 +81,14 @@ turns a settled question back into an open one.
 document nobody recognises. `LAYOUT.md` came through this pass at exactly its original length
 because it was already the right shape, and shortening it would have meant deleting specifics.
 
-**The 200-line target is a target**, and two files are exempt from it outright. Being 8% over beats
-cutting the paragraph that stops the next session losing a morning. If you go over, say why in the
-commit.
-
-- **Exempt: `LOGBOOK.md` and `RULINGS.md`.** Both are append-only registers, and neither can be
-  shortened without deleting something — a session's account of its own work, or a ruling somebody
-  then has to make again. Correct entries in them; never condense them. Any future file of this
-  shape should say so in its own header, as those two do.
-- **`LAYOUT.md` is the one to watch.** 243 after the first pass, 277 after the second, 283 after the
-  third — and it is the file where cutting specifics costs the most, because every rule in it was
-  paid for with a wrong version first. A split was proposed at the third pass and **withdrawn**: the
-  obvious cleave (sizing vs. interaction) does not survive contact, because the coin toss and the
-  opening-setup screen are both mostly geometry, and what is left over is one 37-line section. If
-  you are about to propose it again, read those two sections first and see whether you still agree.
-  Trevor's constraint is that the visual material stays together.
+**The 200-line target is a target.** `LAYOUT.md` at 243 and `CLAUDE.md` at 217 are deliberate. Being
+8% over beats cutting the paragraph that stops the next session losing a morning. If you go over,
+say why in the commit.
 
 ## The procedure
 
-1. **Back up first** — `backups/pre-docs-cleanup-N/` or equivalent. Cheap, and this pass rewrites
+1. **Back up first** — `backups/pre-docs-cleanup/` or equivalent. Cheap, and this pass rewrites
    whole files rather than editing them.
-
-   **`backups/pre-docs-cleanup/` is not only a backup.** It holds `Packs Turn Log.txt`, an
-   instance's own per-pass credits preserved verbatim by the first pass. Do not prune that folder
-   as routine clutter, and **if you move it, move the pointer in [LOGBOOK.md](LOGBOOK.md) with it.**
-   That log spent one pass unreachable — intact, indexed nowhere, cited by a sentence that had been
-   deleted — which is worth remembering as the failure mode: preserved material dies by losing its
-   pointer far more often than by being deleted.
 2. Read everything, including the parent `Games/CLAUDE.md` and the global files it hangs off.
 3. **Report before acting.** Trevor's pattern is to approve a shape, not a diff. Name the real
    defects you found — those are the most useful part and they are what justifies the pass.

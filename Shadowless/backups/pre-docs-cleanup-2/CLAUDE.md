@@ -24,32 +24,30 @@ natural alternative and do **not** work from `file://` — see `~/.claude/refere
 
 ## Where the depth lives
 
-This file is the orientation. Ten siblings hold the detail, and **you should not need to read any
+This file is the orientation. Nine siblings hold the detail, and **you should not need to read any
 of them unless you are working on that thing** — that is the point of the split.
 
 | File | Read it when |
 |---|---|
-| [ENGINE.md](ENGINE.md) | Adding or changing cards. The seven systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer and the `baseCard`/`topCard` split. Also: why full games never test any of it |
+| [ENGINE.md](ENGINE.md) | Adding or changing cards. The six systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, and the passive-Power layer. Also: why full games never test any of it |
 | [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap — and `tools/shot.js` |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
-| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, one row per model per stretch |
-| [LOGBOOK.md](LOGBOOK.md) | What an instance did, in its own words. An append-only archive — write as much as you like, but never edit or condense what is already there |
+| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing |
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
 
 ## Status
 
 Jobs 1–6 are complete. The engine and AI came out of Claude Chat; Job 5 built everything a
-*collection* game needs on top of them, and Job 6 took the card pool to three sets — you can pick a
-starter deck, play, win packs of any live set, open them, browse what you own, and build decks from
-it, and all of it persists.
+*collection* game needs on top of them — you can pick a starter deck, play, win packs, open them,
+browse what you own, and build decks from it, and all of it persists.
 
 | Area | State |
 |---|---|
-| Rules engine | Complete for all three live sets. **221 of 221 cards, no gaps** |
+| Rules engine | Complete for Base Set, every card |
 | Opponent AI | Four tiers, expected-value based. Beats its own baselines |
 | Base Set cards | **All 102 implemented.** Base Set is done |
 | Jungle cards | **All 64 implemented. LIVE** — art fetched, collectable, in the dex |
@@ -85,10 +83,6 @@ src/  cards.js         CARD_DB + the theme deck lists. GENERATED — see TOOLING
 data/ raw/*.json       THE card source: the pokemon-tcg-data corpus, 14 sets, 1,251 cards
       decks.json       the four theme deck lists. SOURCE, not output — see TOOLING.md
       fullpool.json    completion manifest: id/name/kind for all 1,251 cards
-      gbc_decks.json   all 16 GBC opponent decks, mapped to our ids. Job 7's
-                       groundwork — reference data, nothing reads it yet. Its
-                       own `_meta` documents scope, substitutions and the three
-                       decks whose counts want re-checking
       *.csv            superseded by raw/. Kept as an independent cross-check
 assets/cards/<set>/    the real printed card faces. GITIGNORED and DERIVED —
                        `node tools/fetch_art.js base1` rebuilds them. Base Set is fetched
@@ -215,21 +209,42 @@ for boosters, and `base5`/`base6` are reprint sets that will hand the player car
 Trevor's ordering, and he is explicit that it is yours to rearrange and to break into sub-jobs.
 
 - **Jobs 1–4** — the engine, the AI, the art system, the board, the Powers and the Base Set
-  oddities, the mat and the fitter. **Done.**
+  oddities, the mat and the fitter. **Done.** What each one added is in [HISTORY.md](HISTORY.md).
 - **Job 5** — collection mechanics, packs, deck building, persistence. **Done, 9 Aug 2026.**
-- **Job 6** — Jungle and Fossil, all 126 printings. **Done, 11 Aug 2026.** Split by machinery rather
-  than by set, in six sub-jobs. What each one left behind is in [HISTORY.md](HISTORY.md), and it is
-  worth ten minutes before planning the next set — the estimates it ran on were close, and the
-  reason 126 printings were only **95 distinct behaviours** is the kind of count that decides how
-  big a job actually is.
-- **Job 7 — progression and named opponents. Next, and already part-scouted.**
-  `data/gbc_decks.json` holds all 16 GBC opponent decks — eight Club Masters, four Grand Masters and
-  Ronald's four — verified to 60 cards and mapped to our set IDs, with every out-of-scope card
-  substituted and reasoned in its own `_meta`. Nothing reads it yet. Three decks are flagged for a
-  count re-check before use. Note the ruling policy's known limit below: the GBC game is silent from
-  Team Rocket on, and these decks are GBC1, so they need nothing beyond the three live sets.
-- **Job 8+** — the remaining 11 sets. Unblocked; all 14 generate cleanly. The order of operations
-  for adding one is in [TOOLING.md](TOOLING.md) and it is the reverse of what feels natural.
+- **Job 6** — Jungle and Fossil. **126 cards, but only 95 distinct behaviours**: both sets print
+  every Rare twice, so Jungle's 64 collapse to 48 and Fossil's 62 to 47. Verified mechanically
+  across name, HP, stage, weakness, retreat and every attack and Power. Running `gen_cards.js
+  --sets` before the scripts exist just turns `selftest.js` red, which is the guard working.
+  **Split by machinery rather than by set** — planned 10 Aug, and deliberately not one sub-job per
+  set: Jungle is nearly all bulk and Fossil holds nearly all the architecture, so a by-set split
+  front-loads the easy half and defers every hard decision, without either set shipping any sooner.
+  - **6a — the plumbing. DONE, 10 Aug 2026.** `SET_INFO` generated into `cards.js`, set identity in
+    the reveal, `HOME_SET` replaced by a derived `homeSet()`, per-set pack buttons, and the Energy
+    guarantee settled — Jungle and Fossil print **no basic Energy at all**, so they get a stipend
+    beside the pack rather than a floor inside it. See [PACKS.md](PACKS.md). Also the verb-reference
+    refresh and the AI coverage check, which found eleven Base Set verbs the AI had never scored.
+  - **6b — the continuous-effects layer. DONE, 10 Aug 2026.** No cards. Seven passive Power kinds,
+    all **consulted rather than materialised** — `activePower(slot, kind)` is the one way to ask.
+    `powerUsable` split into `powerActive` (the card's own condition, plus `always` for cards
+    printing no status clause) and the Toxic Gas suppression above it. Deterministic passives sit
+    in `computeDamage`, so the AI sees them for free; Transparency's coin sits in `runAttack`,
+    because `computeDamage` is pure. Eleven tests against a synthetic database. See
+    [ENGINE.md](ENGINE.md).
+  - **6c — the ~55 cards needing no new verb**, both sets at once, plus the alias table for the 31
+    duplicate Rares. Alias rather than copy-paste: two Vileplume entries that drift apart is a bug
+    nobody would ever find.
+  - **6d — the ~37 new verbs. 6e — the 13 Powers.** Each needs an `ai.js` case or an
+    `UNSCORED_ON_PURPOSE` entry; the check in `selftest.js` enforces it.
+  - **6f — Ditto, alone.** Transform is **snapshot-on-entry**, settled with Trevor 10 Aug: it copies
+    whatever is Active opposite it at the moment it is promoted and stays that until it is benched.
+    Not the printed continuous reading, and better — no re-evaluation loop, no killing a Ditto by
+    retreating, and Ditto-vs-Ditto resolves for free. It gets no copied Power, its Energy is wild by
+    quantity, and **the transform may Knock It Out in either direction**. See [RULINGS.md](RULINGS.md).
+  - Fossil needs only an `effects.js` entry for Mysterious Fossil rather than new machinery —
+    `playsAs` already covers it, see [ENGINE.md](ENGINE.md). A set goes live in packs only when its
+    last script lands, per the gating rule above, so both flip together at the end.
+- **Job 7** — progression, named opponents.
+- **Job 8+** — remaining sets. No longer blocked.
 
 ## Open
 

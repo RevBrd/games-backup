@@ -90,13 +90,9 @@ written for: a media query tests CSS pixels, and with Windows display scaling at
 screen is a 1536-wide page. `fitBoard()` also scales the column, which changes the available CSS
 width again. There is no honest static threshold.
 
-**`.boardcol.wide` must come AFTER the CARD SYSTEM section in `style.css`.** It overrides widths set
-there at equal specificity, so moving it earlier silently loses and the two Actives stop lining up.
-
-Both this file and the stylesheet said *last in the file* until 11 Aug 2026, and it had not been
-last since Job 5 appended its collection section below it. Nothing broke, because none of that
-touches board widths — but **an invariant that reads as violated is worse than no invariant**: the
-next reader either hoists a working block or trusts the wording and appends a board rule underneath.
+**`.boardcol.wide` must stay LAST in `style.css`.** It overrides widths set in the CARD SYSTEM
+section at equal specificity, so moving it earlier silently loses and the two Actives stop lining
+up.
 
 ## Rules that look wrong and are not
 
@@ -151,31 +147,27 @@ of empty mat around 800px of content — sprawl rather than a mat.
 cards fan instead: they overlap only as far as they have to, measured after layout rather than
 assumed, so it holds at any window width.
 
-**The hand face is `handCard()`, and it deliberately carries no attack names or rules text.** A card
-in hand is a thing you are deciding whether to play, and what you decide on is its name, its kind,
-and what its attacks cost against what they do. The words were the whole of the problem:
-"Poisonpowder" cannot wrap inside a 95px column, so it broke mid-word into three lines, and a
-clamped Trainer paragraph was cut off mid-sentence anyway — which is worse than not showing it.
-Hovering peeks the real printed card into the rail; that is where the words live.
+**The hand face is `handCard()`, not `miniCard()`.** A card in hand is a thing you are deciding
+whether to play, and what you decide on is its name, its kind, and what its attacks cost against
+what they do. Attack *names* and rules text were the whole of the problem: "Poisonpowder" cannot
+wrap inside a 95px column, so it broke mid-word into three lines, and a clamped Trainer paragraph
+was cut off mid-sentence anyway — which is worse than not showing it. Hovering peeks the real
+printed card into the rail; that is where the words live.
 
 **A dialog does not have more room, and this file used to claim it did.** The line here said the
-overlay sheets could keep the old compact face "because there is room in a dialog and nothing
-competing for it". They cannot: `.sheet .hand .pcard` is the same 150px, so the opening-setup screen
-printed "Flamethrower" as `Fla/met/hro/wer` for as long as that sentence stood. **Opening setup now
-uses `handCard`** like the real hand — see the section below.
+overlay sheets could keep `miniCard` "because there is room in a dialog and nothing competing for
+it". They cannot: `.sheet .hand .pcard` is the same 150px, so the opening-setup screen printed
+"Flamethrower" as `Fla/met/hro/wer` for as long as that sentence stood. **Opening setup now uses
+`handCard`** like the real hand — see the section below.
 
-**The Trainer pickers were worse, and they use the real scans.** The guess was that they might
-legitimately keep a text-carrying face for the rules text, and one screenshot settled it: in the
-picker's column "Fire Spin" rendered *one letter per line*, "Twineedle" as `Tw/ine/edl/e`, and every
-Trainer's text was clamped mid-sentence — so the information the guess was protecting was the
-information being destroyed.
-
-**`miniCard()` was that face, and it is gone as of 11 Aug 2026.** It was kept unused for a job on
-the argument that it was the only compact text-carrying face we had and the next session wanting one
-should find it rather than rebuild it. Nothing claimed it, the trigger this file set — *if nothing
-has by the time Job 6 lands* — fired, and Trevor called it. A comment at [ui.js:389](src/ui.js:389)
-marks where it was and why. **Do not rebuild one**: three separate screens replaced it for the same
-reason, and `smoke.js` asserts a picker renders no `pc-atkname` specifically to stop a fourth trying.
+**The Trainer pickers were worse, and they use the real scans.** I guessed they might legitimately
+keep `miniCard` for its rules text, and one screenshot settled it: in the picker's column
+"Fire Spin" rendered *one letter per line*, "Twineedle" as `Tw/ine/edl/e`, and every Trainer's text
+was clamped mid-sentence — so the information the guess was protecting was the information being
+destroyed. **`miniCard()` now has no callers in the game** — `smoke.js` still renders it, so it is
+not unreachable, just unused. Deliberately left rather than deleted: it is the only compact
+text-carrying face we have, and the next session that wants one should find it rather than rebuild
+it. If nothing has claimed it by the time Job 6 lands, delete it and its test together.
 
 A picker shows `pullFace()`, the printed scan, because a picker is the surface where the card is
 most completely the **subject** — you are choosing which physical card, not steering a token in

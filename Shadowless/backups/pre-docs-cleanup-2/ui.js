@@ -386,15 +386,41 @@ function cardAccent(card) {
   return '#6F4C86';
 }
 
-// There was a `miniCard()` here: a compact face carrying attack names and
-// clamped rules text, used by the hand, opening setup and the Trainer pickers.
-// Every one of those replaced it — attack names cannot wrap in a ~100px column
-// ("Fire Spin" rendered one letter per line) and a clamped Trainer paragraph is
-// cut off mid-sentence, so the text it existed to carry was the text it
-// destroyed. It survived unused for a job in case something wanted a compact
-// text face; nothing did, and it was deleted 11 Aug 2026. See LAYOUT.md.
+// Compact face: hand, setup, search lists.
+function miniCard(card) {
+  const d = el('div', 'pcard mini k-' + card.kind);
+  d.style.borderLeftColor = cardAccent(card);
+  const head = el('div', 'pc-head');
+  head.appendChild(el('div', 'pc-name', card.name));
+  if (card.kind === 'pokemon') head.appendChild(el('div', 'pc-hp', card.hp + ' HP'));
+  d.appendChild(head);
 
-// The hand face. A card in hand is a thing you are
+  const body = el('div', 'pc-body');
+  body.appendChild(sigilBox(card, 'sm'));
+  const info = el('div', 'pc-info');
+  if (card.kind === 'pokemon') {
+    info.appendChild(typeTag(card.type));
+    info.appendChild(el('div', 'pc-line', card.stage + (card.evolvesFrom ? ' · from ' + card.evolvesFrom : '')));
+    (card.attacks || []).forEach(a => {
+      const r = el('div', 'pc-atkline');
+      r.appendChild(costRow(a.cost));
+      r.appendChild(el('span', 'pc-atkname', a.name));
+      r.appendChild(el('span', 'pc-atkdmg', a.dmg || ''));
+      info.appendChild(r);
+    });
+  } else if (card.kind === 'energy') {
+    info.appendChild(typeTag(card.provides));
+    info.appendChild(el('div', 'pc-line', card.cls + ' Energy'));
+  } else {
+    info.appendChild(el('span', 'typetag trainer', card.sub));
+    info.appendChild(el('div', 'pc-line clamp', card.text));
+  }
+  body.appendChild(info);
+  d.appendChild(body);
+  return d;
+}
+
+// The hand face. Deliberately NOT miniCard: a card in hand is a thing you are
 // deciding whether to play, and what you decide on is name, kind, and what the
 // attacks cost against what they do. Attack NAMES and rules text were the whole
 // of the problem — "Poisonpowder" cannot wrap inside a 95px column, so it broke

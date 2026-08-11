@@ -1,14 +1,14 @@
 # Shadowless — the engine's awkward-card machinery
 
-Depth behind the card rows in `CLAUDE.md`'s status table. Read this before adding cards, and
-before writing a special case for one — seven systems already exist for the shapes that do not fit
+Depth behind the "Base Set is complete" line in `CLAUDE.md`. Read this before adding cards, and
+before writing a special case for one — six systems already exist for the shapes that do not fit
 the DSL, and every set after Base Set leans on them.
 
 Ordinary cards need none of this. A `cards.js` entry plus an `effects.js` entry is the whole job,
 and the DSL verb reference is the comment block at the top of `effects.js`. **If a card needs
 behaviour the DSL cannot express, add a verb rather than special-casing it**, and document it there.
 
-## The seven systems
+## The six systems
 
 ### Pokémon Powers
 
@@ -104,27 +104,6 @@ Three consequences worth knowing before you add one:
 condition, but it can still be Smokescreened, dragged and stripped of Energy, and an early version
 that reused `blocked` quietly told the AI otherwise.
 
-### `baseCard` / `topCard`
-
-Added in Job 6f for Ditto, and the system to reach for whenever a card changes **what another card
-is** rather than what it does. 47 references in `engine.js`; the ruling it implements is in
-`RULINGS.md`.
-
-| | |
-|---|---|
-| `topCard(slot)` | what the slot is **treated as**. HP, type, Weakness, Resistance, retreat cost, name and the whole attack list |
-| `baseCard(slot)` | the **physical card**. Which Power it has, whether it may evolve, what goes to the discard when it dies |
-
-One override carries seven properties, which is the entire reason this is a system and not seven
-special cases. **`powerOf` reads `baseCard`** — that single choice is what stops a transformed Ditto
-inheriting the Power of whatever it copied, and it is what keeps the passive-Power surface finite.
-
-Two properties to preserve if you add a second card here. **`settleTransforms()` is called after
-every action**, not at the eight separate places a Pokémon can reach the Active spot, and it is
-**idempotent** — a ninth entry path added later cannot forget about it. And **anything that switches
-the Power off blocks a transform but never reverses one already made**, which is the one rule that
-covers status, Toxic Gas and an empty opposing Active between them.
-
 ## Testing them
 
 **The four playable theme decks contain none of the bespoke cards, so full games never exercise
@@ -153,20 +132,10 @@ level up: an unimplemented *card* can never silently do nothing, but an unscored
 can.
 
 The runtime behaviour is right — throwing mid-game over a scoring gap would be worse than
-misplaying — so the guard belongs in the tooling. **It was built in Job 6a and it lives in
-`selftest.js`:** walk every verb appearing in `effects.js`, and assert `ai.js` either scores it or
-it sits on `UNSCORED_ON_PURPOSE`. It reports `96 of 97 verbs scored` today and it found **eleven**
-the first time it ran — Thunderbolt believed free, Super Fang valued at zero, Earthquake's damage to
-its own bench invisible. None of the eleven appears in a theme deck, so 480 full games ran
-byte-identical before and after the fix; nothing but this check could see them.
+misplaying — so the guard belongs in the tooling. The check: walk every verb appearing in
+`effects.js` and assert `ai.js` either scores it or it is on an explicit opt-out list.
 
-**The opt-out list is the point, and it is deliberately almost empty.** One verb is on it
-(`REQUIRE_DEF_STATUS`, a legality gate the engine refuses outright, so an illegal attack never
-reaches the AI to be scored). Putting a verb there is a decision somebody made; leaving one off is
-an oversight, and before the check the two were indistinguishable from outside.
-
-**A verb that must not be *worth* anything is not the same as one that must not be scored**, and the
-distinction matters because the list is the smaller of the two. Peek and Clairvoyance are worthless
-to a bot that already reads full engine state — so `ai.js` scores `PEEK` at `-Infinity` on purpose,
-with a comment saying why. That is a live declaration in the file that does the work, which beats an
-entry on an opt-out list in a file that does not.
+**The opt-out list is the point.** Some verbs genuinely need no scoring — pure costs, legality
+gates, and the information Powers, which are no-ops against an opponent that already reads full
+state. Putting a verb on that list is a decision somebody made; leaving one off is an oversight, and
+right now the two are indistinguishable from the outside.

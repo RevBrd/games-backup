@@ -41,38 +41,6 @@ mat and the fitter and the real card scans, 5a–5e the collection.
 screens did not exist, so anything mocked up would have been thrown away. It was built for real in
 Job 5, and that was the right call.
 
-**Job 5 — the collection, 9 Aug 2026.** Everything a collection game needs, in one session:
-`collection.js` and the versioned save, `packs.js` and booster generation, the pack reveal, the
-variant renderers, the CARDS and DEX browsers, export/import, and the deck builder. Two test suites
-arrived with it. The decisions it settled are live in [COLLECTION.md](COLLECTION.md) and
-[PACKS.md](PACKS.md) rather than here.
-
-**Job 6 — Jungle and Fossil, 10–11 Aug 2026.** Also one session, and **split by machinery rather
-than by set**, which is the part worth keeping: Jungle is nearly all bulk and Fossil holds nearly
-all the architecture, so a by-set split would have front-loaded the easy half and deferred every
-hard decision without either set shipping sooner. What each sub-job actually left behind:
-
-| | |
-|---|---|
-| 6a | `SET_INFO`, set identity through the reveal, `homeSet()`, per-set pack buttons, the Energy **stipend** for sets printing none. Also the AI verb coverage check, which found eleven Base Set verbs the bot had never scored |
-| 6b | The passive-Power layer — **consulted, never materialised** — and the `powerActive`/`powerUsable` split. Built before any card needed it. See [ENGINE.md](ENGINE.md) |
-| 6c | Both sets generated behind a derived live-set gate; six things that had quietly hardcoded Base Set; the 31-entry alias table for the duplicate Rares |
-| 6d–6e | The new verbs, the cards they unlock, and the thirteen Powers including the shared Peek/Clairvoyance panel. Jungle went live here |
-| 6f | Ditto, on the `baseCard`/`topCard` split. See [ENGINE.md](ENGINE.md) for the machinery and [RULINGS.md](RULINGS.md) for the call |
-
-**The estimates it was planned against were close and are worth recording**, because the next set
-will be planned the same way: ~55 cards needing no new verb, ~37 new verbs, 13 Powers. The count
-that mattered most was the one that stopped 126 printings being 126 jobs — both sets print every
-Rare twice, so the real figure was **95 distinct behaviours**, verified mechanically across name,
-HP, stage, weakness, retreat and every attack and Power rather than by eye.
-
-Two things Job 6 discovered about its own tooling, both now permanent. **A test written against a
-synthetic database beats a test that starts working later** — 6a's Energy cases had to run before
-base2 and base3 existed, and a test nobody can run when the mechanism is written is a test nobody
-runs at all. And **a green suite can be green for the wrong reason**: a Chansey attack-lock case was
-passing because Chansey had no Energy, so `canUseAttack` was refusing on cost rather than on the
-lock under test.
-
 ## Pack research: two things that were wrong
 
 Both were found on 9 Aug 2026 at the start of Job 5, by re-checking `data/raw/` rather than

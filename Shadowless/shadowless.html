@@ -971,7 +971,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .searchrow.on{background:#3A2F1C;border-color:var(--amber)}
 
 
-/* ===================== WIDE LAYOUT — must stay last =====================
+/* ============== WIDE LAYOUT — must stay after CARD SYSTEM ==============
    Stand the field (prizes + bench) beside the Active instead of under it. That
    is the good trade on a screen: the mat has width going spare and no height at
    all, and this takes roughly 75px per side out of the stack.
@@ -982,9 +982,16 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    `min-width:1560px` rule never fires on the machine it was written for. That
    is exactly how this silently reverted to stacked once already.
 
-   THIS BLOCK MUST BE THE LAST THING IN THE FILE. It overrides widths set in
-   the CARD SYSTEM section at equal specificity, so moving it earlier silently
-   loses to those rules and the two Actives stop lining up. */
+   THIS BLOCK MUST COME AFTER THE CARD SYSTEM SECTION. It overrides widths set
+   there at equal specificity, so moving it earlier silently loses to those
+   rules and the two Actives stop lining up.
+
+   It said "must be the last thing in the file" until 11 Aug 2026, which the
+   file stopped being true of the moment Job 5 appended its own section below.
+   Nothing down there touches board widths, so nothing broke — but a rule that
+   reads as violated is worse than no rule, because the next reader either
+   "fixes" a non-bug or trusts the wording and appends a board rule below. What
+   matters is the section order, not the end of the file. */
 .boardcol.wide .playarea{flex-direction:row;align-items:stretch;gap:16px;justify-content:center}
 /* Both halves lay out Active-then-field here, and the two Actives are the same
    width, so each pair centres identically and they line up across the centre
@@ -8368,41 +8375,15 @@ function cardAccent(card) {
   return '#6F4C86';
 }
 
-// Compact face: hand, setup, search lists.
-function miniCard(card) {
-  const d = el('div', 'pcard mini k-' + card.kind);
-  d.style.borderLeftColor = cardAccent(card);
-  const head = el('div', 'pc-head');
-  head.appendChild(el('div', 'pc-name', card.name));
-  if (card.kind === 'pokemon') head.appendChild(el('div', 'pc-hp', card.hp + ' HP'));
-  d.appendChild(head);
+// There was a `miniCard()` here: a compact face carrying attack names and
+// clamped rules text, used by the hand, opening setup and the Trainer pickers.
+// Every one of those replaced it — attack names cannot wrap in a ~100px column
+// ("Fire Spin" rendered one letter per line) and a clamped Trainer paragraph is
+// cut off mid-sentence, so the text it existed to carry was the text it
+// destroyed. It survived unused for a job in case something wanted a compact
+// text face; nothing did, and it was deleted 11 Aug 2026. See LAYOUT.md.
 
-  const body = el('div', 'pc-body');
-  body.appendChild(sigilBox(card, 'sm'));
-  const info = el('div', 'pc-info');
-  if (card.kind === 'pokemon') {
-    info.appendChild(typeTag(card.type));
-    info.appendChild(el('div', 'pc-line', card.stage + (card.evolvesFrom ? ' · from ' + card.evolvesFrom : '')));
-    (card.attacks || []).forEach(a => {
-      const r = el('div', 'pc-atkline');
-      r.appendChild(costRow(a.cost));
-      r.appendChild(el('span', 'pc-atkname', a.name));
-      r.appendChild(el('span', 'pc-atkdmg', a.dmg || ''));
-      info.appendChild(r);
-    });
-  } else if (card.kind === 'energy') {
-    info.appendChild(typeTag(card.provides));
-    info.appendChild(el('div', 'pc-line', card.cls + ' Energy'));
-  } else {
-    info.appendChild(el('span', 'typetag trainer', card.sub));
-    info.appendChild(el('div', 'pc-line clamp', card.text));
-  }
-  body.appendChild(info);
-  d.appendChild(body);
-  return d;
-}
-
-// The hand face. Deliberately NOT miniCard: a card in hand is a thing you are
+// The hand face. A card in hand is a thing you are
 // deciding whether to play, and what you decide on is name, kind, and what the
 // attacks cost against what they do. Attack NAMES and rules text were the whole
 // of the problem — "Poisonpowder" cannot wrap inside a 95px column, so it broke

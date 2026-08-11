@@ -11,11 +11,6 @@ has nothing to say, the WotC-era rulings are the next authority, and the call ge
 
 Add an entry whenever you make a judgement call. An unlogged one will be re-litigated.
 
-**This file is append-only and the 200-line target does not apply to it.** It is a register, not an
-explanation — one entry per call, and there is no way to shorten it that does not delete a ruling
-somebody has to make again. Entries are only ever *corrected*, never condensed. Same category as
-[LOGBOOK.md](LOGBOOK.md); see [MAINTENANCE.md](MAINTENANCE.md).
-
 ---
 
 ## Buzzap — Electrode (base1-21)
@@ -242,12 +237,8 @@ card at a time, in the same window Clairvoyance opens. Note the third includes *
 finding out whether your Charizard got prized is the most useful thing the card does, and it would
 be easy to build only the opponent-facing half.
 
-Both are **no-ops for the AI**, which reads full engine state already — it would be spending a Power
-to learn something it knows. This file said they belonged on `UNSCORED_ON_PURPOSE`; **they don't,
-and the implementation is better.** `ai.js` scores `PEEK` at `-Infinity` as an explicit case, with a
-comment pointing back here. Deliberately worthless beats deliberately unscored: the declaration
-lives in the file that does the scoring, and the opt-out list stays reserved for verbs the AI is
-never even offered. Don't "fix" this by moving it.
+Both are **no-ops for the AI**, which reads full engine state already. They belong on
+`UNSCORED_ON_PURPOSE` in `selftest.js` as a deliberate declaration rather than looking like a gap.
 
 ---
 

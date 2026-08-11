@@ -23,10 +23,9 @@ Reads `data/raw/*.json` and `data/decks.json`, writes `src/cards.js`. Defaults t
 node tools/gen_cards.js --sets base1,base2,base3
 ```
 
-which is what the three live sets are generated with today. All 14 sets generate cleanly — 1,251
-cards, 189 Trainers, none missing text — so nothing downstream is data-blocked. Cards come out
-sorted by set then card number; the Chat-era file was in deck-discovery order, which was an artifact
-of how it was built.
+which is how Job 6 begins. All 14 sets generate cleanly today — 1,251 cards, 189 Trainers, none
+missing text — so nothing downstream is data-blocked. Cards come out sorted by set then card number;
+the Chat-era file was in deck-discovery order, which was an artifact of how it was built.
 
 Field mapping worth knowing:
 
@@ -167,15 +166,10 @@ declaring the file binary. Editors hide them. The fix is to retype the literal, 
 
 ### Coverage
 
-The check in `selftest.js` reports **221 of 221 scriptable cards implemented**, per set, with each
-set's live/in-progress state beside it. A card missing a script fails the run if its set is live,
-which is what keeps the counts in `CLAUDE.md` honest.
-
-**A set being written carries a `REMAINING` entry and the run stays green while it shrinks** — that
-is how Job 6 was worked, one sub-job at a time, and it is the mechanism to use for the next set
-rather than a long red suite. Drop the entry when the count reaches zero and the set goes live by
-itself. The suite also asserts **no in-progress set went backwards**, so a script deleted by a bad
-merge is caught the same way a missing one is.
+The check in `selftest.js` pins `EXPECTED_UNIMPLEMENTED`. **It is empty, because Base Set
+is complete** — every card has an effect script. A card appearing on that list unexpectedly fails
+the run, which is what keeps the card counts in `CLAUDE.md` honest. When Job 6 lands Jungle and
+Fossil, expect it to hold the not-yet-scripted cards until they are done.
 
 ## tools/chat-era/ — provenance only
 

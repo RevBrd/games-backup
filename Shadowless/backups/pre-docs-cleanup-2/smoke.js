@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, miniCard, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -569,16 +569,16 @@ T('card faces render for every card in play, all three kinds', () => {
   for (const id in CARD_DB) {
     const c = CARD_DB[id];
     kinds.add(c.kind);
+    ctx.miniCard(c);
     ctx.fullCard(c);
   }
   UI.flipDelay = 2000;
   return kinds.size === 3;
 });
 
-// The hand face must render for all three kinds, and it must NOT carry attack
-// names or rules text — those are what broke mid-word inside a 116px card and
-// sent us here in the first place. The compact face that did carry them
-// (miniCard) is gone; this assertion is what stops one coming back.
+// The hand face is deliberately not miniCard. It must render for all three
+// kinds, and it must NOT carry attack names or rules text — those are what
+// broke mid-word inside a 116px card and sent us here in the first place.
 T('the hand face renders every card and carries no attack names or rules text', () => {
   // The stub's textContent is per-node, not a subtree walk like the real DOM's,
   // so gather the tree by hand rather than reading the root and seeing nothing.
@@ -1331,7 +1331,7 @@ T('cancelling an armed retreat leaves the board untouched', () => {
 
 
 // --- the Trainer pickers show the real cards ---------------------------------
-T('a picker renders the printed scans, not a text-carrying face', () => {
+T('a picker renders the printed scans, not miniCard faces', () => {
   actionBoard();
   ctx.openPicker({ title: 'Pokemon Trader', prompt: 'Choose one',
     items: [{ uid: 1, id: 'base1-4' }, { uid: 2, id: 'base1-17' }],
@@ -1344,10 +1344,9 @@ T('a picker renders the printed scans, not a text-carrying face', () => {
   if (!grid) throw new Error('no pick grid');
   if (!findByClass(grid, 'picktile')) throw new Error('no pick tiles');
   if (!findByClass(grid, 'cardface')) throw new Error('no scan rendered');
-  // Attack NAMES are what broke this screen: in a 150px column "Fire Spin" came
-  // out one letter per line. pc-atkname still has four producers elsewhere, so
-  // this stays a real assertion and not a vacuous one.
-  if (findByClass(grid, 'pc-atkname')) throw new Error('rendering a text-carrying face');
+  // miniCard prints attack NAMES, which is what broke this screen: in a 150px
+  // column "Fire Spin" came out one letter per line.
+  if (findByClass(grid, 'pc-atkname')) throw new Error('still rendering miniCard');
   return true;
 });
 
