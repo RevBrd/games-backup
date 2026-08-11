@@ -84,7 +84,11 @@ below is the worked example, and it is why this file exists at the size it does.
   the continuous-effects layer: seven passive Power kinds consulted rather than materialised, the
   `powerActive`/`powerUsable` split that lets Toxic Gas suppress everything without suppressing
   itself, Transparency's coin kept out of the pure forecaster, and `STATUS_IMMUNE` separated from
-  `blocked` after an early version quietly told the AI that Snorlax could not be dragged.
+  `blocked` after an early version quietly told the AI that Snorlax could not be dragged. Then 6c:
+  generated both sets behind a derived live-set gate, found six things that had quietly hardcoded
+  Base Set (including a pacing measurement that went from 0.8s to 6m17s chasing cards it could never
+  pull), built the 31-entry alias table with a test proving it in both directions, and wrote the
+  first 34 card scripts — six of which are one-line Power declarations only because 6b existed.
 - **Sonnet 4.6** (10 Aug 2026) — Job 7 groundwork: researched and built `data/gbc_decks.json`, the
   GBC opponent deck reference. All 16 decks from the first Game Boy Color game — eight Club Masters,
   four Grand Masters, and Ronald's four escalating rival decks — sourced from Bulbapedia character

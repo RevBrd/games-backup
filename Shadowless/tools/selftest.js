@@ -66,7 +66,7 @@ for (const name of DECK_NAMES) {
 // The SOFT one is a high-water mark per set still being written. One number,
 // which only ever moves down. It catches a script being deleted or an id being
 // misspelled, without anybody hand-editing a list of 126 ids as they go.
-const REMAINING = { base2: 64, base3: 62 };
+const REMAINING = { base2: 41, base3: 43 };
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');
@@ -120,6 +120,52 @@ if (ahead.length) console.log('  progress since REMAINING was last set: '
 const finished = Object.keys(REMAINING).filter(s => !bySet[s]);
 if (finished.length) console.log(`  ${finished.join(', ')} now complete `
   + '— remove from REMAINING to make the live-set assertion cover it');
+
+// --- 2a. the alias table is justified, and complete -----------------------
+// 31 of Jungle and Fossil's cards are exact mechanical duplicates of another
+// card in their own set, and share one effect script rather than a copy of it.
+// Proved in BOTH directions: no alias may flatten a real difference, and no
+// real duplicate may be missed. Structure only — attack TEXT is excluded
+// deliberately, because the corpus words Raichu's reminder line two different
+// ways across its two printings and means the same rule both times.
+{
+  const { EFFECT_ALIASES } = require('../src/effects.js');
+  const sig = c => JSON.stringify({
+    n: c.name, hp: c.hp, st: c.stage, ev: c.evolvesFrom, t: c.type,
+    wk: c.wkType + c.wkVal, rs: c.rsType + c.rsVal, r: c.retreat,
+    a: (c.attacks || []).map(x => [x.name, x.cost, x.dmg]),
+    p: c.power ? c.power.name : null,
+  });
+
+  const wrong = Object.keys(EFFECT_ALIASES).filter(dup => {
+    const src = CARD_DB[EFFECT_ALIASES[dup]];
+    return !CARD_DB[dup] || !src || sig(CARD_DB[dup]) !== sig(src);
+  });
+  check(wrong.length === 0, 'every alias points at a mechanically identical card',
+    wrong.map(d => `${d} -> ${EFFECT_ALIASES[d]}`).join(', '));
+
+  const groups = {};
+  for (const id of all) (groups[sig(CARD_DB[id])] = groups[sig(CARD_DB[id])] || []).push(id);
+  const missed = [];
+  for (const g of Object.values(groups)) {
+    if (g.length < 2) continue;
+    // Same card printed twice in ONE set. Across sets is a reprint, which is a
+    // separate collectible and may legitimately want its own script.
+    const bySetGroup = {};
+    for (const id of g) (bySetGroup[CARD_DB[id].set] = bySetGroup[CARD_DB[id].set] || []).push(id);
+    for (const ids of Object.values(bySetGroup)) {
+      if (ids.length < 2) continue;
+      const canon = ids.slice().sort((a, b) => CARD_DB[a].num - CARD_DB[b].num)[0];
+      for (const id of ids) {
+        if (id === canon) continue;
+        if (EFFECT_ALIASES[id] !== canon) missed.push(`${id} should alias ${canon}`);
+      }
+    }
+  }
+  check(missed.length === 0, 'every in-set duplicate is aliased rather than duplicated',
+    missed.join(', '));
+  console.log(`  ${Object.keys(EFFECT_ALIASES).length} duplicate printings share a script`);
+}
 
 // Whatever else is missing, the playable decks must be fully implemented.
 const inDecks = new Set();

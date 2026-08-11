@@ -515,6 +515,209 @@ const EFFECTS = {
       [{ v: 'RECOIL_ON_FLIP', n: 10, label: 'Electric Shock' }],     // Electric Shock
     ],
   },
+
+  // ============================================================================
+  // JOB 6c — Jungle and Fossil, the cards needing no verb that did not exist.
+  //
+  // Only CANONICAL printings appear here. Each set prints its Rares twice and
+  // the second printing is aliased at the bottom of this file, never copied.
+  //
+  // Four of these are playable only because 6b built the passive-Power layer
+  // first: Mr. Mime, Snorlax, Aerodactyl, Haunter, Muk and Kabuto are one-line
+  // `p:` declarations against kinds the engine already consults.
+  // ============================================================================
+
+  // ---- Jungle ----
+  'base2-3': { a: [                                    // Flareon
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Quick Attack' }],
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'R' }],      //   Flamethrower
+  ]},
+  'base2-4': { a: [                                    // Jolteon
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Quick Attack' }],
+    [{ v: 'DMG_PER_HEAD', coins: 4, per: 20 }],        //   Pin Missile
+  ]},
+  'base2-6': {                                         // Mr. Mime
+    p: { kind: 'PREVENT_AT_LEAST', n: 30, name: 'Invisible Wall' },
+    a: [[{ v: 'DMG_PER_DEF_COUNTER', base: 10, per: 10 }]],   // Meditate
+  },
+  'base2-9': { a: [                                    // Pinsir
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Irongrip
+    [],                                                //   Guillotine
+  ]},
+  'base2-11': {                                        // Snorlax
+    p: { kind: 'STATUS_IMMUNE', name: 'Thick Skinned' },
+    a: [[{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }]],    //   Body Slam
+  },
+  'base2-36': { a: [                                   // Fearow
+    [{ v: 'BARRIER_ON_FLIP', label: 'Agility' }],      //   Agility
+    [],                                                //   Drill Peck
+  ]},
+  'base2-38': { a: [                                   // Lickitung
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Tongue Wrap
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Supersonic
+  ]},
+  'base2-40': { a: [                                   // Nidorina
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Supersonic
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 30 }],        //   Double Kick
+  ]},
+  'base2-41': { a: [                                   // Parasect
+    [{ v: 'STATUS', s: 'Asleep' }],                    //   Spore
+    [],                                                //   Slash
+  ]},
+  'base2-44': { a: [                                   // Rapidash
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 20, bonus: 10, recoil: 0, label: 'Stomp' }],
+    [{ v: 'BARRIER_ON_FLIP', label: 'Agility' }],      //   Agility
+  ]},
+  'base2-45': { a: [                                   // Rhydon
+    [],                                                //   Horn Attack
+    // Ram. RECOIL then WHIRLWIND, in that order, because the card says "switch
+    // the Pokemon even if Rhydon is knocked out" — pendingSwitch is set after
+    // the self-damage and survives the Knock Out that may follow.
+    [{ v: 'RECOIL', n: 20 }, { v: 'WHIRLWIND' }],
+  ]},
+  'base2-46': { a: [ [], [] ]},                        // Seaking / Horn Attack, Waterfall
+  'base2-48': { a: [                                   // Weepinbell
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],          //   Poisonpowder
+    [],                                                //   Razor Leaf
+  ]},
+  'base2-52': { a: [                                   // Exeggcute
+    [{ v: 'STATUS', s: 'Asleep' }],                    //   Hypnosis
+    [{ v: 'HEAL_SELF_IF_DAMAGED', n: 1 }],             //   Leech Seed
+  ]},
+  'base2-53': { a: [ [] ]},                            // Goldeen / Horn Attack
+  'base2-54': { a: [                                   // Jigglypuff
+    [{ v: 'STATUS', s: 'Asleep' }],                    //   Lullaby
+    [],                                                //   Pound
+  ]},
+  'base2-59': { a: [                                   // Paras
+    [],                                                //   Scratch
+    [{ v: 'STATUS', s: 'Asleep' }],                    //   Spore
+  ]},
+  'base2-62': { a: [                                   // Spearow
+    [],                                                //   Peck
+    [{ v: 'MIRROR_MOVE' }],                            //   Mirror Move
+  ]},
+
+  // ---- Fossil ----
+  'base3-1': {                                         // Aerodactyl
+    p: { kind: 'NO_EVOLUTION', name: 'Prehistoric Power' },
+    a: [[]],                                           //   Wing Attack
+  },
+  'base3-6': {                                         // Haunter
+    p: { kind: 'FLIP_TO_NEGATE', name: 'Transparency' },
+    a: [[{ v: 'STATUS', s: 'Asleep' }]],               //   Nightmare
+  },
+  'base3-13': {                                        // Muk
+    p: { kind: 'TOXIC_GAS', name: 'Toxic Gas' },
+    a: [[{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }]],     //   Sludge
+  },
+  'base3-35': { a: [                                   // Golduck
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Psyshock
+    [{ v: 'DISCARD_DEF_ENERGY' }],                     //   Hyper Beam
+  ]},
+  'base3-36': { a: [                                   // Golem
+    [],                                                //   Avalanche
+    [{ v: 'BENCH_SPLASH', n: 20 }, { v: 'RECOIL', n: 100 }],   // Selfdestruct
+  ]},
+  'base3-37': { a: [                                   // Graveler
+    [{ v: 'HARDEN', threshold: 30 }],                  //   Harden
+    [],                                                //   Rock Throw
+  ]},
+  'base3-38': { a: [                                   // Kingler
+    [{ v: 'DMG_PER_COUNTER_SELF', per: 10 }],          //   Flail
+    [],                                                //   Crabhammer
+  ]},
+  'base3-39': { a: [                                   // Magmar
+    [{ v: 'JAM_DEFENDER', label: 'Smokescreen' }],     //   Smokescreen
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],          //   Smog
+  ]},
+  'base3-41': { a: [                                   // Sandslash
+    [],                                                //   Slash
+    [{ v: 'DMG_PER_HEAD', coins: 3, per: 20 }],        //   Fury Swipes
+  ]},
+  'base3-44': { a: [                                   // Tentacruel
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Supersonic
+    [{ v: 'STATUS', s: 'Poisoned' }],                  //   Jellyfish Sting
+  ]},
+  'base3-45': { a: [                                   // Weezing
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],          //   Smog
+    [{ v: 'BENCH_SPLASH', n: 10 }, { v: 'RECOIL', n: 60 }],    // Selfdestruct
+  ]},
+  'base3-46': { a: [                                   // Ekans
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],          //   Spit Poison
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Wrap
+  ]},
+  'base3-49': { a: [                                   // Horsea
+    [{ v: 'JAM_DEFENDER', label: 'Smokescreen' }],     //   Smokescreen
+  ]},
+  'base3-50': {                                        // Kabuto
+    p: { kind: 'DAMAGE_HALVE', name: 'Kabuto Armor' },
+    a: [[]],                                           //   Scratch
+  },
+  'base3-54': { a: [                                   // Shellder
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],          //   Supersonic
+    [{ v: 'PREVENT_ALL_DMG_SELF_ON_FLIP' }],           //   Hide in Shell
+  ]},
+  // Mysterious Fossil. Needs no machinery at all — gen_cards sets playsAs from
+  // the upstream `hp`, exactly as it does for Clefairy Doll. See ENGINE.md.
+  'base3-62': { t: [] },
 };
 
-if (typeof module !== 'undefined') module.exports = { EFFECTS };
+// ---------------------------------------------------------------- ALIASES --
+// Jungle and Fossil each print every Rare TWICE — once as Rare Holo and once as
+// a non-holo Rare, the same character with the same everything. 31 of the 126
+// new cards are exact mechanical duplicates of another card in their own set.
+//
+// They are aliased rather than copy-pasted. Two Vileplume entries that drift
+// apart is a bug nobody would ever find: the game would play correctly right up
+// until the moment you happened to own the other printing.
+//
+// `selftest.js` proves this table rather than trusting it, in both directions —
+// every alias points at a mechanically identical card, and every mechanically
+// identical pair is aliased. So a set that turns out to print a Rare twice with
+// a real difference between them cannot be silently flattened, and a new
+// duplicate pair cannot be silently missed.
+const EFFECT_ALIASES = {
+  'base2-17': 'base2-1',   // Clefable
+  'base2-18': 'base2-2',   // Electrode
+  'base2-19': 'base2-3',   // Flareon
+  'base2-20': 'base2-4',   // Jolteon
+  'base2-21': 'base2-5',   // Kangaskhan
+  'base2-22': 'base2-6',   // Mr. Mime
+  'base2-23': 'base2-7',   // Nidoqueen
+  'base2-24': 'base2-8',   // Pidgeot
+  'base2-25': 'base2-9',   // Pinsir
+  'base2-26': 'base2-10',  // Scyther
+  'base2-27': 'base2-11',  // Snorlax
+  'base2-28': 'base2-12',  // Vaporeon
+  'base2-29': 'base2-13',  // Venomoth
+  'base2-30': 'base2-14',  // Victreebel
+  'base2-31': 'base2-15',  // Vileplume
+  'base2-32': 'base2-16',  // Wigglytuff
+  'base3-16': 'base3-1',   // Aerodactyl
+  'base3-17': 'base3-2',   // Articuno
+  'base3-18': 'base3-3',   // Ditto
+  'base3-19': 'base3-4',   // Dragonite
+  'base3-20': 'base3-5',   // Gengar
+  'base3-21': 'base3-6',   // Haunter
+  'base3-22': 'base3-7',   // Hitmonlee
+  'base3-23': 'base3-8',   // Hypno
+  'base3-24': 'base3-9',   // Kabutops
+  'base3-25': 'base3-10',  // Lapras
+  'base3-26': 'base3-11',  // Magneton
+  'base3-27': 'base3-12',  // Moltres
+  'base3-28': 'base3-13',  // Muk
+  'base3-29': 'base3-14',  // Raichu — the corpus words its reminder text a
+                           //   fraction differently on the two printings
+                           //   ("do the damage" / "do that damage"). Same rule.
+  'base3-30': 'base3-15',  // Zapdos
+};
+
+// Applied by reference on purpose: the two ids resolve to the SAME object, so
+// they cannot drift even if somebody mutates one at runtime.
+for (const dup in EFFECT_ALIASES) {
+  const src = EFFECTS[EFFECT_ALIASES[dup]];
+  if (src) EFFECTS[dup] = src;
+}
+
+if (typeof module !== 'undefined') module.exports = { EFFECTS, EFFECT_ALIASES };
