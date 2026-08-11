@@ -876,6 +876,56 @@ const EFFECTS = {
   'base3-59': { t: [{ v: 'T_ENERGY_SEARCH' }] },       // Energy Search
   'base3-60': { t: [{ v: 'T_GAMBLER' }] },             // Gambler
   'base3-61': { t: [{ v: 'T_RECYCLE' }] },             // Recycle
+
+  // ============================================================================
+  // JOB 6e — the interactive Powers. The seven passive ones shipped with their
+  // cards in 6c; these are the ones the player drives.
+  // ============================================================================
+
+  'base2-13': {                                        // Venomoth
+    p: { kind: 'CHANGE_OWN_TYPE', name: 'Shift' },
+    a: [
+      // One coin, two conditions. Poison sits outside the
+      // Asleep/Confused/Paralyzed group, so both can be held at once.
+      [{ v: 'STATUS_ON_FLIP', s: ['Confused', 'Poisoned'] }],   // Venom Powder
+    ],
+  },
+  'base2-15': {                                        // Vileplume
+    p: { kind: 'HEAL_ON_FLIP', n: 1, name: 'Heal' },
+    a: [
+      [{ v: 'DMG_PER_HEAD', coins: 3, per: 40 },
+       { v: 'STATUS_SELF', s: 'Confused' }],           //   Petal Dance
+    ],
+  },
+  'base2-55': {                                        // Mankey
+    p: { kind: 'PEEK', name: 'Peek' },
+    a: [[]],                                           //   Scratch
+  },
+
+  'base3-4': {                                         // Dragonite
+    // No status clause printed at all, so `always` — see ENGINE.md.
+    p: { kind: 'STEP_IN', name: 'Step In', always: true },
+    a: [[{ v: 'DMG_PER_HEAD', coins: 2, per: 40 }]],   //   Slam
+  },
+  'base3-5': {                                         // Gengar
+    // The only Power in the game that may deliberately Knock something Out, and
+    // it hands over a Prize when it does. Confirmed intended by Trevor, who
+    // names it his favourite thing about playing Psychic in the GBC game.
+    p: { kind: 'MOVE_DAMAGE', name: 'Curse', side: 'opponent', allowKO: true, once: true },
+    a: [[{ v: 'BENCH_SNIPE', n: 1, dmg: 10 }]],        //   Dark Mind
+  },
+  'base3-43': {                                        // Slowbro
+    p: { kind: 'MOVE_DAMAGE', name: 'Strange Behavior', toSelf: true },
+    a: [[{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }]],    //   Psyshock
+  },
+  'base3-52': {                                        // Omanyte
+    p: { kind: 'REVEAL_OPP_HAND', name: 'Clairvoyance' },
+    a: [[{ v: 'DMG_PER_SPARE_ENERGY', base: 10, per: 10, t: 'W', maxSpare: 2 }]],
+  },
+  'base3-56': {                                        // Tentacool
+    p: { kind: 'COWARDICE', name: 'Cowardice' },
+    a: [[]],                                           //   Acid
+  },
 };
 
 // ---------------------------------------------------------------- ALIASES --

@@ -112,7 +112,7 @@ anything done.
   every verb in `effects.js` must be scored by `ai.js` or sit on `UNSCORED_ON_PURPOSE`. That list is
   the deliverable — a verb on it is a decision, a verb missing from it is an oversight, and before
   this check the two were indistinguishable. See [ENGINE.md](ENGINE.md).
-- **`powertest.js`** (115 tests) builds boards by hand — no decks, no setup — fires a Power and
+- **`powertest.js`** (123 tests) builds boards by hand — no decks, no setup — fires a Power and
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
   Power working. See [ENGINE.md](ENGINE.md).

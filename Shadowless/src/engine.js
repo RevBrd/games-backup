@@ -278,6 +278,10 @@ class Engine {
       status: { asleep: false, paralyzed: false, confused: false, poisoned: false },
       poisonDamage: 10,
       paralyzedTurn: -1, playedTurn: 0, effects: [], usedAttacks: {}, forcedKO: false,
+      // Job 6e. `powerTurn` is the turn a once-per-turn Power last fired;
+      // `typeAs` is Venomoth's Shift, read through typeOf() rather than
+      // baked into the card, exactly like energyAs and wkOverride.
+      powerTurn: -1, typeAs: null,
     };
   }
 
@@ -541,6 +545,13 @@ class Engine {
     return !this.toxicGasActive();
   }
 
+  // A Power printed "once during your turn". Tracked per slot rather than per
+  // player, so two Gengars each get their own Curse.
+  powerSpent(slot) {
+    return slot.powerTurn === this.state.turn;
+  }
+  markPower(slot) { slot.powerTurn = this.state.turn; }
+
   // The switched-on Power of a given kind on this slot, or null. The one way
   // anything should ask "does this Pokemon currently have X".
   activePower(slot, kind) {
@@ -596,6 +607,27 @@ class Engine {
     return null;
   }
 
+  // A slot's CURRENT type, honouring Venomoth's Shift. Weakness and Resistance
+  // are matched against the attacker's type, so this is what makes Shift do
+  // anything at all. Same shape as energyAs and the Porygon overrides: read
+  // through a helper, never written onto the card.
+  typeOf(slot) {
+    return (slot && slot.typeAs) || topCard(this.db, slot).type;
+  }
+
+  // Every type in play right now, which is what Shift may choose from.
+  typesInPlay(exceptSlot) {
+    const out = [];
+    for (let i = 0; i < 2; i++) {
+      for (const sl of this.allSlots(i)) {
+        if (sl === exceptSlot) continue;
+        const t = this.typeOf(sl);
+        if (t && t !== 'C' && out.indexOf(t) < 0) out.push(t);
+      }
+    }
+    return out;
+  }
+
   // Energy symbols a slot currently provides, honouring an ENERGY_AS override
   // (Charizard's Energy Burn). Count is preserved — Double Colorless still pays
   // twice — only the type changes.
@@ -629,18 +661,79 @@ class Engine {
           if (!slot.energy.length) break;
           acts.push({ t: 'power', uid: slot.uid, kind: p.kind, label: `${owner}: ${p.name}` });
           break;
-        case 'MOVE_DAMAGE':
-          for (const from of this.allSlots(pi)) {
+        case 'MOVE_DAMAGE': {
+          // Damage Swap, Gengar's Curse and Slowbro's Strange Behavior are one
+          // mechanism with three settings:
+          //   side       whose Pokemon the counters move among (Curse: theirs)
+          //   allowKO    Curse explicitly may Knock Out the receiver
+          //   toSelf     Strange Behavior only ever moves damage ONTO Slowbro
+          //   once       Heal and Curse are once a turn; the others repeat
+          if (p.once && this.powerSpent(slot)) break;
+          const side = p.side === 'opponent' ? 1 - pi : pi;
+          const froms = this.allSlots(side);
+          const tos = p.toSelf ? [slot] : this.allSlots(side);
+          for (const from of froms) {
             if (from.dmg < 10) continue;
-            for (const to of this.allSlots(pi)) {
+            for (const to of tos) {
               if (to === from) continue;
-              if (to.dmg + 10 >= topCard(this.db, to).hp) continue;   // may not Knock Out
+              if (!p.allowKO && to.dmg + 10 >= topCard(this.db, to).hp) continue;
               acts.push({
                 t: 'power', uid: slot.uid, kind: p.kind, from: from.uid, to: to.uid,
                 label: `${p.name}: ${this.nameOf(from)} → ${this.nameOf(to)}`,
               });
             }
           }
+          break;
+        }
+        case 'HEAL_ON_FLIP':
+          // Vileplume. The coin is flipped when it resolves, not now — the
+          // player is choosing a target, not a gamble.
+          if (this.powerSpent(slot)) break;
+          for (const to of this.allSlots(pi)) {
+            if (to.dmg < 10) continue;
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, to: to.uid,
+                        label: `${p.name}: flip to heal ${this.nameOf(to)}` });
+          }
+          break;
+        case 'CHANGE_OWN_TYPE':
+          if (this.powerSpent(slot)) break;
+          for (const t of this.typesInPlay(slot)) {
+            if (t === this.typeOf(slot)) continue;
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, type: t,
+                        label: `${p.name}: become ${t}` });
+          }
+          break;
+        case 'STEP_IN':
+          // Bench only, and it swaps with the Active rather than retreating —
+          // no Energy, no retreat cost, and it does not use up the retreat.
+          if (this.powerSpent(slot)) break;
+          if (me.bench.indexOf(slot) < 0 || !me.active) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
+                      label: `${p.name}: switch in for ${this.nameOf(me.active)}` });
+          break;
+        case 'PEEK':
+          if (this.powerSpent(slot)) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'deck', side: 'me',
+                      label: `${p.name}: the top of your deck` });
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'deck', side: 'them',
+                      label: `${p.name}: the top of their deck` });
+          if (this.state.players[1 - pi].hand.length)
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'hand', side: 'them',
+                        label: `${p.name}: a random card from their hand` });
+          for (let k = 0; k < me.prizes.length; k++)
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'prize', side: 'me', idx: k,
+                        label: `${p.name}: your Prize ${k + 1}` });
+          for (let k = 0; k < this.state.players[1 - pi].prizes.length; k++)
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'prize', side: 'them', idx: k,
+                        label: `${p.name}: their Prize ${k + 1}` });
+          break;
+        case 'COWARDICE':
+          // "Can't be used the turn you put Tentacool into play" — playedTurn is
+          // already on every slot for exactly this shape of rule.
+          if (slot.playedTurn >= this.state.turn) break;
+          if (me.active === slot && !me.bench.length) break;   // nothing to promote
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
+                      label: `${p.name}: return ${this.nameOf(slot)} to hand` });
           break;
         case 'MOVE_ENERGY':
           for (const from of this.allSlots(pi)) {
@@ -719,15 +812,92 @@ class Engine {
         return { ok: true };
       }
       case 'MOVE_DAMAGE': {
-        const from = this.findSlot(pi, a.from), to = this.findSlot(pi, a.to);
+        if (p.once && this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const side = p.side === 'opponent' ? 1 - pi : pi;
+        const from = this.findSlot(side, a.from);
+        const to = p.toSelf ? slot : this.findSlot(side, a.to);
         if (!from || !to) return this.fail('No such Pokemon');
         if (from === to) return this.fail('Pick two different Pokemon');
         if (from.dmg < 10) return this.fail(`${this.nameOf(from)} has no damage counters`);
         const tc = topCard(this.db, to);
-        if (to.dmg + 10 >= tc.hp) return this.fail(`That would Knock Out ${tc.name}`);
+        if (!p.allowKO && to.dmg + 10 >= tc.hp) return this.fail(`That would Knock Out ${tc.name}`);
         from.dmg -= 10; to.dmg += 10;
+        if (p.once) this.markPower(slot);
         this.log(`${p.name}: 1 damage counter moved from ${this.nameOf(from)} `
           + `to ${this.nameOf(to)}. (${to.dmg}/${tc.hp})`, 'eff');
+        // Curse can deliberately Knock Out, which hands over a Prize like any
+        // other Knock Out. Trevor confirms it is the point of the card.
+        if (p.allowKO) this.checkKOs();
+        return { ok: true };
+      }
+      case 'HEAL_ON_FLIP': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const to = this.findSlot(pi, a.to);
+        if (!to) return this.fail('No such Pokemon');
+        if (to.dmg < 10) return this.fail(`${this.nameOf(to)} has no damage counters`);
+        this.markPower(slot);
+        if (this.flip(`${p.name}?`)) {
+          const h = Math.min((p.n || 1) * 10, to.dmg);
+          to.dmg -= h;
+          this.log(`${p.name}: ${h} damage removed from ${this.nameOf(to)}.`, 'eff');
+        } else {
+          this.log(`${p.name}: tails, nothing healed.`, 'eff');
+        }
+        return { ok: true };
+      }
+      case 'CHANGE_OWN_TYPE': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const t = a.type;
+        if (!t || t === 'C') return this.fail('Pick a type other than Colorless');
+        if (this.typesInPlay(slot).indexOf(t) < 0) return this.fail(`No ${t} Pokemon is in play`);
+        slot.typeAs = t;
+        this.markPower(slot);
+        this.log(`${p.name}: ${this.nameOf(slot)} is now ${t}.`, 'eff');
+        return { ok: true };
+      }
+      case 'STEP_IN': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const me3 = this.state.players[pi];
+        const k = me3.bench.indexOf(slot);
+        if (k < 0) return this.fail(`${this.nameOf(slot)} is not on the Bench`);
+        if (!me3.active) return this.fail('No Active Pokemon to switch with');
+        const old = me3.active;
+        clearStatus(old);
+        me3.active = slot; me3.bench.splice(k, 1); me3.bench.push(old);
+        this.markPower(slot);
+        this.log(`${p.name}: ${this.nameOf(slot)} steps in for ${this.nameOf(old)}.`, 'eff');
+        return { ok: true };
+      }
+      case 'PEEK': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const them = this.state.players[1 - pi], mine = this.state.players[pi];
+        const who = a.side === 'them' ? them : mine;
+        let seen = null;
+        if (a.look === 'deck') seen = who.deck[0];
+        else if (a.look === 'hand') seen = them.hand[this.pick(them.hand.length)];
+        else if (a.look === 'prize') seen = who.prizes[a.idx];
+        if (!seen) return this.fail('There is nothing there to look at');
+        this.markPower(slot);
+        // The card is REVEALED to the player, not moved. The UI shows it; the
+        // log records only that a look happened, so a shared screen stays fair.
+        this.state.peeked = { id: seen.id, uid: seen.uid, what: a.look, side: a.side };
+        this.log(`${p.name}: ${mine.name} takes a look.`, 'eff');
+        return { ok: true, peeked: this.state.peeked };
+      }
+      case 'COWARDICE': {
+        if (slot.playedTurn >= this.state.turn) return this.fail(`${this.nameOf(slot)} only just came into play`);
+        const me4 = this.state.players[pi];
+        const wasActive = me4.active === slot;
+        if (wasActive && !me4.bench.length) return this.fail('Nothing could take its place');
+        const nm = this.nameOf(slot);
+        this.removeSlot(pi, slot);
+        // "Discard all cards attached" — the Pokemon itself returns to hand and
+        // everything else is lost, which is what makes it a cost and not a free
+        // reset. scrapSlot already does exactly that.
+        const kept = this.scrapSlot(pi, slot, true);
+        if (kept) me4.hand.push(kept);
+        this.log(`${p.name}: ${nm} returns to hand; everything attached is discarded.`, 'eff');
+        if (wasActive && me4.bench.length) this.addPromote(pi);
         return { ok: true };
       }
       case 'MOVE_ENERGY': {
@@ -2432,11 +2602,12 @@ class Engine {
     if (dmg > 0 && !opts.noWR) {
       // Read through the per-slot overrides — Porygon's Conversion rewrites these.
       const wk = this.weaknessOf(defSlot), rs = this.resistanceOf(defSlot);
-      if (wk && wk === A.type) {
+      const at = this.typeOf(atkSlot);          // Shift can change this mid-game
+      if (wk && wk === at) {
         dmg *= this.cfg.weaknessMultiplier;
         steps.push(`Weakness: ${D.name} takes double -> ${dmg}.`);
       }
-      if (rs && rs === A.type) {
+      if (rs && rs === at) {
         dmg -= this.cfg.resistanceFlat;
         steps.push(`Resistance: -${this.cfg.resistanceFlat} -> ${Math.max(0, dmg)}.`);
       }

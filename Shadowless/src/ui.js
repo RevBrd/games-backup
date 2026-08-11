@@ -37,6 +37,7 @@ const UI = {
   // your turn" means one move must not close the mode. It auto-exits when no
   // legal move remains, which also covers the turn ending.
   powerMode: null,
+  reveal: null,        // Peek / Clairvoyance panel — see renderReveal
   aiMode: 'expert',
   aiDelay: 1000,
   aiTimer: null,
@@ -218,7 +219,7 @@ function startMatch() {
 
 function backToDeckSelect() {
   clearTimeout(UI.aiTimer); clearTimeout(UI.presTimer);
-  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.retreatArmed = false;
+  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.retreatArmed = false;
   UI.screen = 'decks';
   render();
 }
@@ -232,7 +233,7 @@ function newGame() {
   // seeds differ, so they shuffle and draw independently.
   UI.E.newGame(resolveDeck(UI.myDeck, seed), resolveDeck(UI.foeDeck, seed ^ 0x5f5f), ['You', 'Opponent']);
   UI.E.setupAuto(1);                     // opponent sets itself up
-  UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.retreatArmed = false;
+  UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.retreatArmed = false;
   UI.awarded = false;                    // this game has not paid out yet
   render();
 }
@@ -285,7 +286,19 @@ function dispatch(pi, action) {
   if (presenting()) return;
   const before = JSON.parse(JSON.stringify(UI.E.state));
   const mark = UI.E.state.log.length;
+  UI.E.state.peeked = null;
   UI.E.act(pi, action);
+  // Peek reveals rather than moves, so the engine leaves the card it looked at
+  // on the state and the UI is what actually shows it.
+  const pk = UI.E.state.peeked;
+  if (pi === 0 && pk) {
+    const whose = pk.side === 'them' ? "your opponent's" : 'your';
+    const where = pk.what === 'deck' ? `the top of ${whose} deck`
+      : pk.what === 'hand' ? "a random card from your opponent's hand"
+      : `one of ${whose} Prizes`;
+    openReveal('Peek', where, [{ id: pk.id, uid: pk.uid }]);
+    UI.E.state.peeked = null;
+  }
   UI.sel = null; UI.targeting = null; UI.retreatArmed = false;
   diffForFx(before, UI.E.state);
   const fresh = UI.E.state.log.slice(mark);
@@ -643,6 +656,7 @@ function render() {
   root.appendChild(wrap);
 
   if (UI.picker) root.appendChild(renderPicker());
+  if (UI.reveal) root.appendChild(renderReveal());
   if (S().phase === 'setup') root.appendChild(renderSetup());
   if (S().phase === 'over') root.appendChild(renderOver());
 
@@ -1488,6 +1502,30 @@ function renderActionBar() {
       return bar;
     }
 
+    // Peek chooses WHAT to look at rather than picking things off the board, so
+    // its options are listed in the bar. The Prizes fold into one button a side
+    // rather than one per Prize, because which of six face-down cards you turn
+    // over is not a decision anybody can make informedly.
+    if (pm.kind === 'PEEK') {
+      bar.appendChild(el('div', 'barmsg', pm.name + ': choose what to look at'));
+      const seen = new Set();
+      moves.forEach(a => {
+        const key = a.look + a.side;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const label = a.look === 'deck' ? (a.side === 'me' ? 'Top of your deck' : 'Top of their deck')
+          : a.look === 'hand' ? 'A card from their hand'
+          : (a.side === 'me' ? 'One of your Prizes' : 'One of their Prizes');
+        const pb = el('button', 'btn', label);
+        pb.onclick = () => { dispatch(0, a); UI.powerMode = null; render(); };
+        bar.appendChild(pb);
+      });
+      const cancel = el('button', 'btn ghost', 'Cancel');
+      cancel.onclick = () => { UI.powerMode = null; render(); };
+      bar.appendChild(cancel);
+      return bar;
+    }
+
     const twoStep = powerIsTwoStep(pm);
     bar.appendChild(el('div', 'barmsg',
       `${pm.name}: ${POWER_PROMPT[pm.kind][(twoStep && pm.from === null) ? 0 : 1]}`));
@@ -1557,11 +1595,24 @@ function renderActionBar() {
     b.title = def.name + ' — ' + topCard(CARD_DB, slot).name;
     b.onclick = () => {
       // Anything with a prompt is an interactive mode; the rest fire on the spot.
-      if (POWER_PROMPT[a.kind]) { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null, to: null }; render(); }
+      if (a.kind === 'PEEK' || POWER_PROMPT[a.kind]) { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null, to: null }; render(); }
       else dispatch(0, a);
     };
     bar.appendChild(b);
   });
+
+  // Clairvoyance is passive, so the engine offers no action for it. The button
+  // exists for as long as the Power is switched on and opens the same panel
+  // Peek uses: their hand is yours to look at whenever you like, on your turn.
+  if (clairvoyanceOn()) {
+    const cl = el('button', 'btn power', 'Clairvoyance');
+    cl.onclick = () => {
+      const hand = UI.E.state.players[1].hand.map(x => ({ id: x.id, uid: x.uid }));
+      openReveal('Clairvoyance', 'your opponent plays with their hand face up', hand);
+      render();
+    };
+    bar.appendChild(cl);
+  }
 
   // Retreat is not here any more — it is a row on the Active card, under the
   // attacks, next to the retreat cost it charges. See retreatRow().
@@ -2703,6 +2754,57 @@ function pickerReady() {
   if (!pk) return false;
   if (pk.mode === 'order') return true;
   return pk.chosen.length >= pk.min && pk.chosen.length <= pk.max;
+}
+
+// ---------------------------------------------------------------------------
+// Peek and Clairvoyance share ONE panel, and differ only in how often it opens.
+//
+// Trevor's recollection of the GBC game: it showed you what you had earned and
+// waited for you to close it, so the only cost was the time you spent not
+// playing. That is a better answer for Clairvoyance than a panel permanently
+// eating board space, and "your turn only" comes with it.
+//
+// Peek follows the printed card rather than the GBC version, which was more
+// generous: one item at a time, chosen from the top of either deck, a random
+// card from their hand, or one of EITHER player's Prizes — that last is the
+// most useful thing the card does and the easiest half to forget to build.
+// See RULINGS.md.
+// ---------------------------------------------------------------------------
+function openReveal(title, sub, cards) {
+  UI.reveal = { title, sub, cards };
+}
+
+function renderReveal() {
+  const r = UI.reveal;
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet wide');
+  box.appendChild(el('h2', null, r.title));
+  box.appendChild(el('p', 'dimtxt', r.sub));
+
+  const row = el('div', 'revealrow');
+  if (!r.cards.length) row.appendChild(el('div', 'dimtxt', 'Nothing to see.'));
+  r.cards.forEach(c => {
+    const cell = el('div', 'revealcard');
+    cell.appendChild(pullFace(CARD_DB[c.id], []));
+    cell.appendChild(el('div', 'revealname', CARD_DB[c.id].name));
+    row.appendChild(cell);
+  });
+  box.appendChild(row);
+
+  const bar = el('div', 'actionbar');
+  const done = el('button', 'btn end', 'Close');
+  done.onclick = () => { UI.reveal = null; render(); };
+  bar.appendChild(done);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
+}
+
+// Clairvoyance is passive and permanent, so it is not an action the engine
+// offers — it is a button that exists for as long as the Power is switched on.
+function clairvoyanceOn() {
+  if (!UI.E || S().phase !== 'main' || S().active !== 0) return false;
+  return UI.E.allSlots(0).some(sl => UI.E.activePower(sl, 'REVEAL_OPP_HAND'));
 }
 
 function renderPicker() {

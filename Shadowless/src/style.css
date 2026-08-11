@@ -1326,3 +1326,13 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .colltile.unowned{opacity:.5}
 .buildhead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .buildhead h2{margin:0;font-family:var(--serif);font-weight:600;font-size:18px;color:var(--stock)}
+
+/* Peek / Clairvoyance. Faces big enough to read at a glance, because the whole
+   point of the panel is that you close it when you are done looking. */
+.revealrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:6px 0 2px}
+.revealcard{display:flex;flex-direction:column;align-items:center;gap:3px}
+.revealcard .cardface{width:auto;max-width:100%;height:clamp(96px,20vh,190px);margin:0}
+.revealname{font-size:9.5px;letter-spacing:.06em;color:var(--matink);text-align:center;max-width:120px}
+/* The panel is centred, so its one button should be too — .actionbar is built
+   for the board, where it sits left. */
+.sheet .revealrow + .actionbar{justify-content:center}

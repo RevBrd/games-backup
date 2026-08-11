@@ -569,9 +569,27 @@ class AI {
       }
 
       case 'MOVE_DAMAGE': {
-        const from = E.allSlots(pi).find(x => x.uid === a.from);
-        const to = E.allSlots(pi).find(x => x.uid === a.to);
+        // Gengar's Curse moves the OPPONENT's counters, so both slots live on
+        // the other side of the board. Looking them up on ours returned
+        // undefined and scored -Infinity, which is a Power the bot would simply
+        // never have used — the Energy Burn failure again. See ENGINE.md.
+        const pw = E.powerOf(slot) || {};
+        const side = pw.side === 'opponent' ? 1 - pi : pi;
+        const from = E.allSlots(side).find(x => x.uid === a.from);
+        const to = E.allSlots(side).find(x => x.uid === a.to);
         if (!from || !to) return -Infinity;
+
+        if (pw.side === 'opponent') {
+          // Curse. Piling damage onto something already hurt is how it wins a
+          // Prize outright; short of that, concentrating damage is mildly good
+          // because it shortens the next Knock Out.
+          const lethal = to.dmg + 10 >= this.top(to).hp;
+          if (lethal) {
+            const them = E.state.players[1 - pi];
+            return them.prizes.length <= 1 ? W.lastPrize : W.knockout + 12;
+          }
+          return 4 + Math.min(to.dmg, 40) * 0.12;
+        }
 
         // Never move damage the wrong way: onto something more valuable, or off
         // a Pokemon that was in no danger to begin with.
@@ -592,6 +610,49 @@ class AI {
         return score;
       }
 
+      case 'HEAL_ON_FLIP': {
+        const to = E.allSlots(pi).find(x => x.uid === a.to);
+        if (!to) return -Infinity;
+        // Half a counter on average, and worth more on something about to die.
+        const p2 = E.powerOf(slot) || {};
+        const heal = Math.min((p2.n || 1) * 10, to.dmg);
+        const urgent = to === E.state.players[pi].active
+          && this.incomingThreat(pi) >= this.remainingHP(to) - heal;
+        return 0.5 * (heal / 10 * W.healPer10) + (urgent ? 6 : 0);
+      }
+      case 'CHANGE_OWN_TYPE': {
+        // Measured the same way Energy Burn is: change it, ask how much better
+        // our attacks got, change it back. Never guessed from the type chart.
+        const before = (() => { const b = this.bestAttackScore(pi); return b.score === -Infinity ? 0 : b.score; })();
+        const saved = slot.typeAs;
+        slot.typeAs = a.type;
+        const after = (() => { const b = this.bestAttackScore(pi); return b.score === -Infinity ? 0 : b.score; })();
+        slot.typeAs = saved;
+        return after - before;
+      }
+      case 'STEP_IN': {
+        // Free, so it is worth taking whenever the Active is in trouble or
+        // Dragonite simply hits harder than what is up there.
+        const me = E.state.players[pi];
+        if (!me.active) return -Infinity;
+        const danger = this.incomingThreat(pi);
+        const dying = danger >= this.remainingHP(me.active);
+        const mine = Math.max(0, this.potential(pi, slot).best);
+        const theirs = Math.max(0, this.potential(pi, me.active).best);
+        return (dying ? W.dangerSwap : 0) + (mine - theirs) * 0.3;
+      }
+      // Peek is a no-op for a bot that already reads full state — it would be
+      // spending its Power to learn something it knows. Deliberately worthless
+      // rather than accidentally unscored. See RULINGS.md.
+      case 'PEEK': return -Infinity;
+      case 'COWARDICE': {
+        // A rescue that costs everything attached. Only when it is about to die
+        // and there is something worth saving.
+        const me = E.state.players[pi];
+        const danger = slot === me.active ? this.incomingThreat(pi) : 0;
+        if (danger < this.remainingHP(slot)) return -Infinity;
+        return 8 - slot.energy.length * W.energyDiscard * 0.5;
+      }
       // Rain Dance. Mechanically an Energy attachment that costs nothing, so it
       // reuses the attachEnergy scoring and adds a premium for being free — the
       // bot should always prefer the free attachment over spending its one.

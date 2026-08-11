@@ -746,7 +746,12 @@ T('the Sandbox deck is selectable and plays to completion', () => {
   let guard = 0;
   while (UI.E.state.phase !== 'over' && guard++ < 1200) {
     const s = UI.E.state;
-    const pi = s.pendingPromote !== null ? s.pendingPromote : s.active;
+    // Whirlwind asks the DEFENDER to choose, so pendingSwitch owes an action
+    // just as pendingPromote does. This loop ignored it, which was harmless
+    // only while no card in the Sandbox pool had Whirlwind — Jungle and Fossil
+    // brought four, and the game sat waiting for an answer nobody gave.
+    const pi = s.pendingSwitch !== null && s.pendingSwitch !== undefined ? s.pendingSwitch
+      : s.pendingPromote !== null ? s.pendingPromote : s.active;
     const a = UI.E.aiChoose(pi, 'expert');
     if (!a) break;
     dispatch(pi, a); render();

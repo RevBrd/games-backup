@@ -1552,5 +1552,119 @@ T('Prophecy reorders the top of either deck without changing its size', () => {
   return true;
 });
 
+// ---------------------------------------------------------------------------
+// Job 6e — the interactive Powers.
+// ---------------------------------------------------------------------------
+console.log('\nInteractive Powers (6e)');
+
+const powerAct = (E, uid, kind, extra) => Object.assign({ t: 'power', uid, kind }, extra || {});
+
+T('Curse moves the OPPONENT’s counters, and may Knock Out on purpose', () => {
+  const E = board('base3-5', [], 'base1-58');                  // Gengar vs Pikachu
+  const you = E.state.players[1];
+  you.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  you.active.dmg = 30; you.bench[0].dmg = 10;                  // Pikachu is 40 HP
+  const gengar = E.state.players[0].active;
+  const prizes = E.state.players[0].prizes.length;
+
+  const r = E.act(0, powerAct(E, gengar.uid, 'MOVE_DAMAGE',
+    { from: you.bench[0].uid, to: you.active.uid }));
+  eq(r.ok, true, 'the move was legal');
+  eq(you.active, null, 'and it Knocked the Defending Pokemon Out');
+  eq(E.state.players[0].prizes.length, prizes - 1, 'we took a Prize for it');
+  return true;
+});
+
+T('Curse is once a turn; Strange Behavior is not', () => {
+  const E = board('base3-5', [], 'base1-3');
+  const you = E.state.players[1];
+  you.bench = [E.mkSlot({ id: 'base1-3', uid: E.uid++ })];
+  you.active.dmg = 30; you.bench[0].dmg = 30;
+  const g = E.state.players[0].active;
+  E.act(0, powerAct(E, g.uid, 'MOVE_DAMAGE', { from: you.bench[0].uid, to: you.active.uid }));
+  const second = E.act(0, powerAct(E, g.uid, 'MOVE_DAMAGE', { from: you.bench[0].uid, to: you.active.uid }));
+  eq(second.ok, false, 'the second Curse this turn is refused');
+
+  const S2 = board('base3-43', ['base1-3']);                   // Slowbro + Chansey
+  const slowbro = S2.state.players[0].active;
+  S2.state.players[0].bench[0].dmg = 40;
+  eq(S2.act(0, powerAct(S2, slowbro.uid, 'MOVE_DAMAGE', { from: S2.state.players[0].bench[0].uid })).ok,
+    true, 'Strange Behavior once');
+  eq(S2.act(0, powerAct(S2, slowbro.uid, 'MOVE_DAMAGE', { from: S2.state.players[0].bench[0].uid })).ok,
+    true, 'and again, because it is not once a turn');
+  eq(slowbro.dmg, 20, 'both counters landed on Slowbro');
+  return true;
+});
+
+T('Strange Behavior refuses a move that would Knock Slowbro Out', () => {
+  const E = board('base3-43', ['base1-3']);
+  const slowbro = E.state.players[0].active;
+  slowbro.dmg = top(E, slowbro).hp - 10;                        // one counter from death
+  E.state.players[0].bench[0].dmg = 40;
+  eq(E.act(0, powerAct(E, slowbro.uid, 'MOVE_DAMAGE', { from: E.state.players[0].bench[0].uid })).ok,
+    false, 'refused');
+  return true;
+});
+
+T('Shift changes the type Weakness is matched against', () => {
+  const E = board('base2-13', [], 'base1-2');                   // Venomoth vs Blastoise (weak to L)
+  const [v, b] = [E.state.players[0].active, E.state.players[1].active];
+  eq(E.computeDamage(v, b, 20).dmg, 20, 'Grass Venomoth hits for 20');
+  // A Lightning Pokemon has to be in play for Shift to be able to choose it.
+  E.state.players[0].bench.push(E.mkSlot({ id: 'base1-58', uid: E.uid++ }));
+  eq(E.act(0, powerAct(E, v.uid, 'CHANGE_OWN_TYPE', { type: 'L' })).ok, true, 'Shift to Lightning');
+  eq(E.computeDamage(v, b, 20).dmg, 40, 'and now Blastoise takes double');
+  return true;
+});
+
+T('Step In swaps a Benched Dragonite with the Active, once a turn, free', () => {
+  const E = board('base1-58', ['base3-4']);                     // Pikachu active, Dragonite benched
+  const drag = E.state.players[0].bench[0];
+  eq(E.act(0, powerAct(E, drag.uid, 'STEP_IN')).ok, true, 'it stepped in');
+  eq(E.state.players[0].active.uid, drag.uid, 'Dragonite is Active');
+  eq(E.state.players[0].retreated, false, 'and it did NOT use up the retreat');
+  return true;
+});
+
+T('Cowardice returns Tentacool to hand and discards what was attached', () => {
+  const E = board('base3-56', ['base1-58']);
+  const tenta = E.state.players[0].active;
+  attach(E, tenta, 'base1-102', 2);
+  const me = E.state.players[0];
+  const hand = me.hand.length, disc = me.discard.length;
+  eq(E.act(0, powerAct(E, tenta.uid, 'COWARDICE')).ok, true, 'it fled');
+  eq(me.hand.length, hand + 1, 'Tentacool itself came back to hand');
+  eq(me.discard.length, disc + 2, 'and both Energy were discarded');
+
+  const fresh = board('base3-56', ['base1-58']);
+  fresh.state.players[0].active.playedTurn = fresh.state.turn;
+  eq(fresh.act(0, powerAct(fresh, fresh.state.players[0].active.uid, 'COWARDICE')).ok,
+    false, 'and not on the turn it was played');
+  return true;
+});
+
+T('Vileplume’s Heal is a coin, and only once a turn', () => {
+  const E = board('base2-15', ['base1-3']);
+  const plume = E.state.players[0].active;
+  E.state.players[0].bench[0].dmg = 30;
+  E.flip = () => true;
+  eq(E.act(0, powerAct(E, plume.uid, 'HEAL_ON_FLIP', { to: E.state.players[0].bench[0].uid })).ok, true, 'heads heals');
+  eq(E.state.players[0].bench[0].dmg, 20, 'one counter removed');
+  eq(E.act(0, powerAct(E, plume.uid, 'HEAL_ON_FLIP', { to: E.state.players[0].bench[0].uid })).ok, false, 'and only once');
+  return true;
+});
+
+T('Peek reveals without moving the card', () => {
+  const E = board('base2-55', [], 'base1-3');                   // Mankey
+  const mankey = E.state.players[0].active;
+  const them = E.state.players[1];
+  const topId = them.deck[0].id, n = them.deck.length;
+  const r = E.act(0, powerAct(E, mankey.uid, 'PEEK', { look: 'deck', side: 'them' }));
+  eq(r.ok, true, 'it looked');
+  eq(r.peeked.id, topId, 'at the right card');
+  eq(them.deck.length, n, 'and the deck is untouched');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

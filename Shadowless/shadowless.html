@@ -1334,6 +1334,16 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .buildhead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .buildhead h2{margin:0;font-family:var(--serif);font-weight:600;font-size:18px;color:var(--stock)}
 
+/* Peek / Clairvoyance. Faces big enough to read at a glance, because the whole
+   point of the panel is that you close it when you are done looking. */
+.revealrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:6px 0 2px}
+.revealcard{display:flex;flex-direction:column;align-items:center;gap:3px}
+.revealcard .cardface{width:auto;max-width:100%;height:clamp(96px,20vh,190px);margin:0}
+.revealname{font-size:9.5px;letter-spacing:.06em;color:var(--matink);text-align:center;max-width:120px}
+/* The panel is centred, so its one button should be too — .actionbar is built
+   for the board, where it sits left. */
+.sheet .revealrow + .actionbar{justify-content:center}
+
 </style>
 </head>
 <body>
@@ -2537,6 +2547,56 @@ const EFFECTS = {
   'base3-59': { t: [{ v: 'T_ENERGY_SEARCH' }] },       // Energy Search
   'base3-60': { t: [{ v: 'T_GAMBLER' }] },             // Gambler
   'base3-61': { t: [{ v: 'T_RECYCLE' }] },             // Recycle
+
+  // ============================================================================
+  // JOB 6e — the interactive Powers. The seven passive ones shipped with their
+  // cards in 6c; these are the ones the player drives.
+  // ============================================================================
+
+  'base2-13': {                                        // Venomoth
+    p: { kind: 'CHANGE_OWN_TYPE', name: 'Shift' },
+    a: [
+      // One coin, two conditions. Poison sits outside the
+      // Asleep/Confused/Paralyzed group, so both can be held at once.
+      [{ v: 'STATUS_ON_FLIP', s: ['Confused', 'Poisoned'] }],   // Venom Powder
+    ],
+  },
+  'base2-15': {                                        // Vileplume
+    p: { kind: 'HEAL_ON_FLIP', n: 1, name: 'Heal' },
+    a: [
+      [{ v: 'DMG_PER_HEAD', coins: 3, per: 40 },
+       { v: 'STATUS_SELF', s: 'Confused' }],           //   Petal Dance
+    ],
+  },
+  'base2-55': {                                        // Mankey
+    p: { kind: 'PEEK', name: 'Peek' },
+    a: [[]],                                           //   Scratch
+  },
+
+  'base3-4': {                                         // Dragonite
+    // No status clause printed at all, so `always` — see ENGINE.md.
+    p: { kind: 'STEP_IN', name: 'Step In', always: true },
+    a: [[{ v: 'DMG_PER_HEAD', coins: 2, per: 40 }]],   //   Slam
+  },
+  'base3-5': {                                         // Gengar
+    // The only Power in the game that may deliberately Knock something Out, and
+    // it hands over a Prize when it does. Confirmed intended by Trevor, who
+    // names it his favourite thing about playing Psychic in the GBC game.
+    p: { kind: 'MOVE_DAMAGE', name: 'Curse', side: 'opponent', allowKO: true, once: true },
+    a: [[{ v: 'BENCH_SNIPE', n: 1, dmg: 10 }]],        //   Dark Mind
+  },
+  'base3-43': {                                        // Slowbro
+    p: { kind: 'MOVE_DAMAGE', name: 'Strange Behavior', toSelf: true },
+    a: [[{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }]],    //   Psyshock
+  },
+  'base3-52': {                                        // Omanyte
+    p: { kind: 'REVEAL_OPP_HAND', name: 'Clairvoyance' },
+    a: [[{ v: 'DMG_PER_SPARE_ENERGY', base: 10, per: 10, t: 'W', maxSpare: 2 }]],
+  },
+  'base3-56': {                                        // Tentacool
+    p: { kind: 'COWARDICE', name: 'Cowardice' },
+    a: [[]],                                           //   Acid
+  },
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -3474,9 +3534,27 @@ class AI {
       }
 
       case 'MOVE_DAMAGE': {
-        const from = E.allSlots(pi).find(x => x.uid === a.from);
-        const to = E.allSlots(pi).find(x => x.uid === a.to);
+        // Gengar's Curse moves the OPPONENT's counters, so both slots live on
+        // the other side of the board. Looking them up on ours returned
+        // undefined and scored -Infinity, which is a Power the bot would simply
+        // never have used — the Energy Burn failure again. See ENGINE.md.
+        const pw = E.powerOf(slot) || {};
+        const side = pw.side === 'opponent' ? 1 - pi : pi;
+        const from = E.allSlots(side).find(x => x.uid === a.from);
+        const to = E.allSlots(side).find(x => x.uid === a.to);
         if (!from || !to) return -Infinity;
+
+        if (pw.side === 'opponent') {
+          // Curse. Piling damage onto something already hurt is how it wins a
+          // Prize outright; short of that, concentrating damage is mildly good
+          // because it shortens the next Knock Out.
+          const lethal = to.dmg + 10 >= this.top(to).hp;
+          if (lethal) {
+            const them = E.state.players[1 - pi];
+            return them.prizes.length <= 1 ? W.lastPrize : W.knockout + 12;
+          }
+          return 4 + Math.min(to.dmg, 40) * 0.12;
+        }
 
         // Never move damage the wrong way: onto something more valuable, or off
         // a Pokemon that was in no danger to begin with.
@@ -3497,6 +3575,49 @@ class AI {
         return score;
       }
 
+      case 'HEAL_ON_FLIP': {
+        const to = E.allSlots(pi).find(x => x.uid === a.to);
+        if (!to) return -Infinity;
+        // Half a counter on average, and worth more on something about to die.
+        const p2 = E.powerOf(slot) || {};
+        const heal = Math.min((p2.n || 1) * 10, to.dmg);
+        const urgent = to === E.state.players[pi].active
+          && this.incomingThreat(pi) >= this.remainingHP(to) - heal;
+        return 0.5 * (heal / 10 * W.healPer10) + (urgent ? 6 : 0);
+      }
+      case 'CHANGE_OWN_TYPE': {
+        // Measured the same way Energy Burn is: change it, ask how much better
+        // our attacks got, change it back. Never guessed from the type chart.
+        const before = (() => { const b = this.bestAttackScore(pi); return b.score === -Infinity ? 0 : b.score; })();
+        const saved = slot.typeAs;
+        slot.typeAs = a.type;
+        const after = (() => { const b = this.bestAttackScore(pi); return b.score === -Infinity ? 0 : b.score; })();
+        slot.typeAs = saved;
+        return after - before;
+      }
+      case 'STEP_IN': {
+        // Free, so it is worth taking whenever the Active is in trouble or
+        // Dragonite simply hits harder than what is up there.
+        const me = E.state.players[pi];
+        if (!me.active) return -Infinity;
+        const danger = this.incomingThreat(pi);
+        const dying = danger >= this.remainingHP(me.active);
+        const mine = Math.max(0, this.potential(pi, slot).best);
+        const theirs = Math.max(0, this.potential(pi, me.active).best);
+        return (dying ? W.dangerSwap : 0) + (mine - theirs) * 0.3;
+      }
+      // Peek is a no-op for a bot that already reads full state — it would be
+      // spending its Power to learn something it knows. Deliberately worthless
+      // rather than accidentally unscored. See RULINGS.md.
+      case 'PEEK': return -Infinity;
+      case 'COWARDICE': {
+        // A rescue that costs everything attached. Only when it is about to die
+        // and there is something worth saving.
+        const me = E.state.players[pi];
+        const danger = slot === me.active ? this.incomingThreat(pi) : 0;
+        if (danger < this.remainingHP(slot)) return -Infinity;
+        return 8 - slot.energy.length * W.energyDiscard * 0.5;
+      }
       // Rain Dance. Mechanically an Energy attachment that costs nothing, so it
       // reuses the attachEnergy scoring and adds a premium for being free — the
       // bot should always prefer the free attachment over spending its one.
@@ -4411,6 +4532,10 @@ class Engine {
       status: { asleep: false, paralyzed: false, confused: false, poisoned: false },
       poisonDamage: 10,
       paralyzedTurn: -1, playedTurn: 0, effects: [], usedAttacks: {}, forcedKO: false,
+      // Job 6e. `powerTurn` is the turn a once-per-turn Power last fired;
+      // `typeAs` is Venomoth's Shift, read through typeOf() rather than
+      // baked into the card, exactly like energyAs and wkOverride.
+      powerTurn: -1, typeAs: null,
     };
   }
 
@@ -4674,6 +4799,13 @@ class Engine {
     return !this.toxicGasActive();
   }
 
+  // A Power printed "once during your turn". Tracked per slot rather than per
+  // player, so two Gengars each get their own Curse.
+  powerSpent(slot) {
+    return slot.powerTurn === this.state.turn;
+  }
+  markPower(slot) { slot.powerTurn = this.state.turn; }
+
   // The switched-on Power of a given kind on this slot, or null. The one way
   // anything should ask "does this Pokemon currently have X".
   activePower(slot, kind) {
@@ -4729,6 +4861,27 @@ class Engine {
     return null;
   }
 
+  // A slot's CURRENT type, honouring Venomoth's Shift. Weakness and Resistance
+  // are matched against the attacker's type, so this is what makes Shift do
+  // anything at all. Same shape as energyAs and the Porygon overrides: read
+  // through a helper, never written onto the card.
+  typeOf(slot) {
+    return (slot && slot.typeAs) || topCard(this.db, slot).type;
+  }
+
+  // Every type in play right now, which is what Shift may choose from.
+  typesInPlay(exceptSlot) {
+    const out = [];
+    for (let i = 0; i < 2; i++) {
+      for (const sl of this.allSlots(i)) {
+        if (sl === exceptSlot) continue;
+        const t = this.typeOf(sl);
+        if (t && t !== 'C' && out.indexOf(t) < 0) out.push(t);
+      }
+    }
+    return out;
+  }
+
   // Energy symbols a slot currently provides, honouring an ENERGY_AS override
   // (Charizard's Energy Burn). Count is preserved — Double Colorless still pays
   // twice — only the type changes.
@@ -4762,18 +4915,79 @@ class Engine {
           if (!slot.energy.length) break;
           acts.push({ t: 'power', uid: slot.uid, kind: p.kind, label: `${owner}: ${p.name}` });
           break;
-        case 'MOVE_DAMAGE':
-          for (const from of this.allSlots(pi)) {
+        case 'MOVE_DAMAGE': {
+          // Damage Swap, Gengar's Curse and Slowbro's Strange Behavior are one
+          // mechanism with three settings:
+          //   side       whose Pokemon the counters move among (Curse: theirs)
+          //   allowKO    Curse explicitly may Knock Out the receiver
+          //   toSelf     Strange Behavior only ever moves damage ONTO Slowbro
+          //   once       Heal and Curse are once a turn; the others repeat
+          if (p.once && this.powerSpent(slot)) break;
+          const side = p.side === 'opponent' ? 1 - pi : pi;
+          const froms = this.allSlots(side);
+          const tos = p.toSelf ? [slot] : this.allSlots(side);
+          for (const from of froms) {
             if (from.dmg < 10) continue;
-            for (const to of this.allSlots(pi)) {
+            for (const to of tos) {
               if (to === from) continue;
-              if (to.dmg + 10 >= topCard(this.db, to).hp) continue;   // may not Knock Out
+              if (!p.allowKO && to.dmg + 10 >= topCard(this.db, to).hp) continue;
               acts.push({
                 t: 'power', uid: slot.uid, kind: p.kind, from: from.uid, to: to.uid,
                 label: `${p.name}: ${this.nameOf(from)} → ${this.nameOf(to)}`,
               });
             }
           }
+          break;
+        }
+        case 'HEAL_ON_FLIP':
+          // Vileplume. The coin is flipped when it resolves, not now — the
+          // player is choosing a target, not a gamble.
+          if (this.powerSpent(slot)) break;
+          for (const to of this.allSlots(pi)) {
+            if (to.dmg < 10) continue;
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, to: to.uid,
+                        label: `${p.name}: flip to heal ${this.nameOf(to)}` });
+          }
+          break;
+        case 'CHANGE_OWN_TYPE':
+          if (this.powerSpent(slot)) break;
+          for (const t of this.typesInPlay(slot)) {
+            if (t === this.typeOf(slot)) continue;
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, type: t,
+                        label: `${p.name}: become ${t}` });
+          }
+          break;
+        case 'STEP_IN':
+          // Bench only, and it swaps with the Active rather than retreating —
+          // no Energy, no retreat cost, and it does not use up the retreat.
+          if (this.powerSpent(slot)) break;
+          if (me.bench.indexOf(slot) < 0 || !me.active) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
+                      label: `${p.name}: switch in for ${this.nameOf(me.active)}` });
+          break;
+        case 'PEEK':
+          if (this.powerSpent(slot)) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'deck', side: 'me',
+                      label: `${p.name}: the top of your deck` });
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'deck', side: 'them',
+                      label: `${p.name}: the top of their deck` });
+          if (this.state.players[1 - pi].hand.length)
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'hand', side: 'them',
+                        label: `${p.name}: a random card from their hand` });
+          for (let k = 0; k < me.prizes.length; k++)
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'prize', side: 'me', idx: k,
+                        label: `${p.name}: your Prize ${k + 1}` });
+          for (let k = 0; k < this.state.players[1 - pi].prizes.length; k++)
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'prize', side: 'them', idx: k,
+                        label: `${p.name}: their Prize ${k + 1}` });
+          break;
+        case 'COWARDICE':
+          // "Can't be used the turn you put Tentacool into play" — playedTurn is
+          // already on every slot for exactly this shape of rule.
+          if (slot.playedTurn >= this.state.turn) break;
+          if (me.active === slot && !me.bench.length) break;   // nothing to promote
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
+                      label: `${p.name}: return ${this.nameOf(slot)} to hand` });
           break;
         case 'MOVE_ENERGY':
           for (const from of this.allSlots(pi)) {
@@ -4852,15 +5066,92 @@ class Engine {
         return { ok: true };
       }
       case 'MOVE_DAMAGE': {
-        const from = this.findSlot(pi, a.from), to = this.findSlot(pi, a.to);
+        if (p.once && this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const side = p.side === 'opponent' ? 1 - pi : pi;
+        const from = this.findSlot(side, a.from);
+        const to = p.toSelf ? slot : this.findSlot(side, a.to);
         if (!from || !to) return this.fail('No such Pokemon');
         if (from === to) return this.fail('Pick two different Pokemon');
         if (from.dmg < 10) return this.fail(`${this.nameOf(from)} has no damage counters`);
         const tc = topCard(this.db, to);
-        if (to.dmg + 10 >= tc.hp) return this.fail(`That would Knock Out ${tc.name}`);
+        if (!p.allowKO && to.dmg + 10 >= tc.hp) return this.fail(`That would Knock Out ${tc.name}`);
         from.dmg -= 10; to.dmg += 10;
+        if (p.once) this.markPower(slot);
         this.log(`${p.name}: 1 damage counter moved from ${this.nameOf(from)} `
           + `to ${this.nameOf(to)}. (${to.dmg}/${tc.hp})`, 'eff');
+        // Curse can deliberately Knock Out, which hands over a Prize like any
+        // other Knock Out. Trevor confirms it is the point of the card.
+        if (p.allowKO) this.checkKOs();
+        return { ok: true };
+      }
+      case 'HEAL_ON_FLIP': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const to = this.findSlot(pi, a.to);
+        if (!to) return this.fail('No such Pokemon');
+        if (to.dmg < 10) return this.fail(`${this.nameOf(to)} has no damage counters`);
+        this.markPower(slot);
+        if (this.flip(`${p.name}?`)) {
+          const h = Math.min((p.n || 1) * 10, to.dmg);
+          to.dmg -= h;
+          this.log(`${p.name}: ${h} damage removed from ${this.nameOf(to)}.`, 'eff');
+        } else {
+          this.log(`${p.name}: tails, nothing healed.`, 'eff');
+        }
+        return { ok: true };
+      }
+      case 'CHANGE_OWN_TYPE': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const t = a.type;
+        if (!t || t === 'C') return this.fail('Pick a type other than Colorless');
+        if (this.typesInPlay(slot).indexOf(t) < 0) return this.fail(`No ${t} Pokemon is in play`);
+        slot.typeAs = t;
+        this.markPower(slot);
+        this.log(`${p.name}: ${this.nameOf(slot)} is now ${t}.`, 'eff');
+        return { ok: true };
+      }
+      case 'STEP_IN': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const me3 = this.state.players[pi];
+        const k = me3.bench.indexOf(slot);
+        if (k < 0) return this.fail(`${this.nameOf(slot)} is not on the Bench`);
+        if (!me3.active) return this.fail('No Active Pokemon to switch with');
+        const old = me3.active;
+        clearStatus(old);
+        me3.active = slot; me3.bench.splice(k, 1); me3.bench.push(old);
+        this.markPower(slot);
+        this.log(`${p.name}: ${this.nameOf(slot)} steps in for ${this.nameOf(old)}.`, 'eff');
+        return { ok: true };
+      }
+      case 'PEEK': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const them = this.state.players[1 - pi], mine = this.state.players[pi];
+        const who = a.side === 'them' ? them : mine;
+        let seen = null;
+        if (a.look === 'deck') seen = who.deck[0];
+        else if (a.look === 'hand') seen = them.hand[this.pick(them.hand.length)];
+        else if (a.look === 'prize') seen = who.prizes[a.idx];
+        if (!seen) return this.fail('There is nothing there to look at');
+        this.markPower(slot);
+        // The card is REVEALED to the player, not moved. The UI shows it; the
+        // log records only that a look happened, so a shared screen stays fair.
+        this.state.peeked = { id: seen.id, uid: seen.uid, what: a.look, side: a.side };
+        this.log(`${p.name}: ${mine.name} takes a look.`, 'eff');
+        return { ok: true, peeked: this.state.peeked };
+      }
+      case 'COWARDICE': {
+        if (slot.playedTurn >= this.state.turn) return this.fail(`${this.nameOf(slot)} only just came into play`);
+        const me4 = this.state.players[pi];
+        const wasActive = me4.active === slot;
+        if (wasActive && !me4.bench.length) return this.fail('Nothing could take its place');
+        const nm = this.nameOf(slot);
+        this.removeSlot(pi, slot);
+        // "Discard all cards attached" — the Pokemon itself returns to hand and
+        // everything else is lost, which is what makes it a cost and not a free
+        // reset. scrapSlot already does exactly that.
+        const kept = this.scrapSlot(pi, slot, true);
+        if (kept) me4.hand.push(kept);
+        this.log(`${p.name}: ${nm} returns to hand; everything attached is discarded.`, 'eff');
+        if (wasActive && me4.bench.length) this.addPromote(pi);
         return { ok: true };
       }
       case 'MOVE_ENERGY': {
@@ -6565,11 +6856,12 @@ class Engine {
     if (dmg > 0 && !opts.noWR) {
       // Read through the per-slot overrides — Porygon's Conversion rewrites these.
       const wk = this.weaknessOf(defSlot), rs = this.resistanceOf(defSlot);
-      if (wk && wk === A.type) {
+      const at = this.typeOf(atkSlot);          // Shift can change this mid-game
+      if (wk && wk === at) {
         dmg *= this.cfg.weaknessMultiplier;
         steps.push(`Weakness: ${D.name} takes double -> ${dmg}.`);
       }
-      if (rs && rs === A.type) {
+      if (rs && rs === at) {
         dmg -= this.cfg.resistanceFlat;
         steps.push(`Resistance: -${this.cfg.resistanceFlat} -> ${Math.max(0, dmg)}.`);
       }
@@ -7605,6 +7897,7 @@ const UI = {
   // your turn" means one move must not close the mode. It auto-exits when no
   // legal move remains, which also covers the turn ending.
   powerMode: null,
+  reveal: null,        // Peek / Clairvoyance panel — see renderReveal
   aiMode: 'expert',
   aiDelay: 1000,
   aiTimer: null,
@@ -7786,7 +8079,7 @@ function startMatch() {
 
 function backToDeckSelect() {
   clearTimeout(UI.aiTimer); clearTimeout(UI.presTimer);
-  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.retreatArmed = false;
+  UI.pres = null; UI.view = null; UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.retreatArmed = false;
   UI.screen = 'decks';
   render();
 }
@@ -7800,7 +8093,7 @@ function newGame() {
   // seeds differ, so they shuffle and draw independently.
   UI.E.newGame(resolveDeck(UI.myDeck, seed), resolveDeck(UI.foeDeck, seed ^ 0x5f5f), ['You', 'Opponent']);
   UI.E.setupAuto(1);                     // opponent sets itself up
-  UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.retreatArmed = false;
+  UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.retreatArmed = false;
   UI.awarded = false;                    // this game has not paid out yet
   render();
 }
@@ -7853,7 +8146,19 @@ function dispatch(pi, action) {
   if (presenting()) return;
   const before = JSON.parse(JSON.stringify(UI.E.state));
   const mark = UI.E.state.log.length;
+  UI.E.state.peeked = null;
   UI.E.act(pi, action);
+  // Peek reveals rather than moves, so the engine leaves the card it looked at
+  // on the state and the UI is what actually shows it.
+  const pk = UI.E.state.peeked;
+  if (pi === 0 && pk) {
+    const whose = pk.side === 'them' ? "your opponent's" : 'your';
+    const where = pk.what === 'deck' ? `the top of ${whose} deck`
+      : pk.what === 'hand' ? "a random card from your opponent's hand"
+      : `one of ${whose} Prizes`;
+    openReveal('Peek', where, [{ id: pk.id, uid: pk.uid }]);
+    UI.E.state.peeked = null;
+  }
   UI.sel = null; UI.targeting = null; UI.retreatArmed = false;
   diffForFx(before, UI.E.state);
   const fresh = UI.E.state.log.slice(mark);
@@ -8211,6 +8516,7 @@ function render() {
   root.appendChild(wrap);
 
   if (UI.picker) root.appendChild(renderPicker());
+  if (UI.reveal) root.appendChild(renderReveal());
   if (S().phase === 'setup') root.appendChild(renderSetup());
   if (S().phase === 'over') root.appendChild(renderOver());
 
@@ -9056,6 +9362,30 @@ function renderActionBar() {
       return bar;
     }
 
+    // Peek chooses WHAT to look at rather than picking things off the board, so
+    // its options are listed in the bar. The Prizes fold into one button a side
+    // rather than one per Prize, because which of six face-down cards you turn
+    // over is not a decision anybody can make informedly.
+    if (pm.kind === 'PEEK') {
+      bar.appendChild(el('div', 'barmsg', pm.name + ': choose what to look at'));
+      const seen = new Set();
+      moves.forEach(a => {
+        const key = a.look + a.side;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const label = a.look === 'deck' ? (a.side === 'me' ? 'Top of your deck' : 'Top of their deck')
+          : a.look === 'hand' ? 'A card from their hand'
+          : (a.side === 'me' ? 'One of your Prizes' : 'One of their Prizes');
+        const pb = el('button', 'btn', label);
+        pb.onclick = () => { dispatch(0, a); UI.powerMode = null; render(); };
+        bar.appendChild(pb);
+      });
+      const cancel = el('button', 'btn ghost', 'Cancel');
+      cancel.onclick = () => { UI.powerMode = null; render(); };
+      bar.appendChild(cancel);
+      return bar;
+    }
+
     const twoStep = powerIsTwoStep(pm);
     bar.appendChild(el('div', 'barmsg',
       `${pm.name}: ${POWER_PROMPT[pm.kind][(twoStep && pm.from === null) ? 0 : 1]}`));
@@ -9125,11 +9455,24 @@ function renderActionBar() {
     b.title = def.name + ' — ' + topCard(CARD_DB, slot).name;
     b.onclick = () => {
       // Anything with a prompt is an interactive mode; the rest fire on the spot.
-      if (POWER_PROMPT[a.kind]) { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null, to: null }; render(); }
+      if (a.kind === 'PEEK' || POWER_PROMPT[a.kind]) { UI.powerMode = { uid: a.uid, kind: a.kind, name: def.name, from: null, to: null }; render(); }
       else dispatch(0, a);
     };
     bar.appendChild(b);
   });
+
+  // Clairvoyance is passive, so the engine offers no action for it. The button
+  // exists for as long as the Power is switched on and opens the same panel
+  // Peek uses: their hand is yours to look at whenever you like, on your turn.
+  if (clairvoyanceOn()) {
+    const cl = el('button', 'btn power', 'Clairvoyance');
+    cl.onclick = () => {
+      const hand = UI.E.state.players[1].hand.map(x => ({ id: x.id, uid: x.uid }));
+      openReveal('Clairvoyance', 'your opponent plays with their hand face up', hand);
+      render();
+    };
+    bar.appendChild(cl);
+  }
 
   // Retreat is not here any more — it is a row on the Active card, under the
   // attacks, next to the retreat cost it charges. See retreatRow().
@@ -10271,6 +10614,57 @@ function pickerReady() {
   if (!pk) return false;
   if (pk.mode === 'order') return true;
   return pk.chosen.length >= pk.min && pk.chosen.length <= pk.max;
+}
+
+// ---------------------------------------------------------------------------
+// Peek and Clairvoyance share ONE panel, and differ only in how often it opens.
+//
+// Trevor's recollection of the GBC game: it showed you what you had earned and
+// waited for you to close it, so the only cost was the time you spent not
+// playing. That is a better answer for Clairvoyance than a panel permanently
+// eating board space, and "your turn only" comes with it.
+//
+// Peek follows the printed card rather than the GBC version, which was more
+// generous: one item at a time, chosen from the top of either deck, a random
+// card from their hand, or one of EITHER player's Prizes — that last is the
+// most useful thing the card does and the easiest half to forget to build.
+// See RULINGS.md.
+// ---------------------------------------------------------------------------
+function openReveal(title, sub, cards) {
+  UI.reveal = { title, sub, cards };
+}
+
+function renderReveal() {
+  const r = UI.reveal;
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet wide');
+  box.appendChild(el('h2', null, r.title));
+  box.appendChild(el('p', 'dimtxt', r.sub));
+
+  const row = el('div', 'revealrow');
+  if (!r.cards.length) row.appendChild(el('div', 'dimtxt', 'Nothing to see.'));
+  r.cards.forEach(c => {
+    const cell = el('div', 'revealcard');
+    cell.appendChild(pullFace(CARD_DB[c.id], []));
+    cell.appendChild(el('div', 'revealname', CARD_DB[c.id].name));
+    row.appendChild(cell);
+  });
+  box.appendChild(row);
+
+  const bar = el('div', 'actionbar');
+  const done = el('button', 'btn end', 'Close');
+  done.onclick = () => { UI.reveal = null; render(); };
+  bar.appendChild(done);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
+}
+
+// Clairvoyance is passive and permanent, so it is not an action the engine
+// offers — it is a button that exists for as long as the Power is switched on.
+function clairvoyanceOn() {
+  if (!UI.E || S().phase !== 'main' || S().active !== 0) return false;
+  return UI.E.allSlots(0).some(sl => UI.E.activePower(sl, 'REVEAL_OPP_HAND'));
 }
 
 function renderPicker() {

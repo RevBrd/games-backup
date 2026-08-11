@@ -95,7 +95,11 @@ below is the worked example, and it is why this file exists at the size it does.
   caught a test of its own that was passing for the wrong reason: Chansey had no Energy, so
   canUseAttack was refusing on cost rather than on the attack lock being tested. A third pass
   finished everything that is not a Power or Ditto — deck search, deck ordering, discard retrieval
-  and five Trainers — leaving Jungle at 59/64 and Fossil at 53/62.
+  and five Trainers — leaving Jungle at 59/64 and Fossil at 53/62. Then 6e, the interactive Powers:
+  Curse, Strange Behavior, Heal, Shift, Step In, Peek and Cowardice, plus the shared Peek and
+  Clairvoyance panel. Caught the AI scoring Curse at -Infinity because it looked both slots up on
+  the wrong side of the board — a Power the bot would never once have used. **Jungle went LIVE at
+  64/64.**
 - **Sonnet 4.6** (10 Aug 2026) — Job 7 groundwork: researched and built `data/gbc_decks.json`, the
   GBC opponent deck reference. All 16 decks from the first Game Boy Color game — eight Club Masters,
   four Grand Masters, and Ronald's four escalating rival decks — sourced from Bulbapedia character

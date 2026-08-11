@@ -66,7 +66,7 @@ for (const name of DECK_NAMES) {
 // The SOFT one is a high-water mark per set still being written. One number,
 // which only ever moves down. It catches a script being deleted or an id being
 // misspelled, without anybody hand-editing a list of 126 ids as they go.
-const REMAINING = { base2: 5, base3: 9 };
+const REMAINING = { base3: 2 };
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');
@@ -206,6 +206,23 @@ console.log('\nAI verb coverage');
     ...[...aiSrc.matchAll(/case\s*'([A-Z_0-9]+)'/g)].map(m => m[1]),
     ...[...aiSrc.matchAll(/\.v\s*===\s*'([A-Z_0-9]+)'/g)].map(m => m[1]),
   ]);
+
+  // The same check one level down, for Pokemon Powers. Energy Burn is the
+  // reason this exists: it worked perfectly and the AI never once used it.
+  // PASSIVE powers produce no action at all, so scorePower never sees them and
+  // they belong on the opt-out list by their nature rather than by choice.
+  const PASSIVE_POWERS = new Set([
+    'RETALIATE', 'PREVENT_AT_LEAST', 'DAMAGE_HALVE', 'FLIP_TO_NEGATE',
+    'STATUS_IMMUNE', 'NO_EVOLUTION', 'TOXIC_GAS', 'RETREAT_DISCOUNT',
+    'REVEAL_OPP_HAND',
+  ]);
+  const kinds = new Set([...effSrc.matchAll(/\bkind:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
+  const blindKinds = [...kinds].filter(k => !handled.has(k) && !PASSIVE_POWERS.has(k)).sort();
+  check(blindKinds.length === 0, 'every interactive Power kind is scored by ai.js',
+    blindKinds.join(', '));
+  const notPassive = [...PASSIVE_POWERS].filter(k => handled.has(k)).sort();
+  check(notPassive.length === 0, 'nothing on PASSIVE_POWERS is secretly being scored',
+    notPassive.join(', '));
 
   const blind = [...used].filter(v => !handled.has(v) && !UNSCORED_ON_PURPOSE.has(v)).sort();
   const stale = [...UNSCORED_ON_PURPOSE].filter(v => !used.has(v)).sort();
