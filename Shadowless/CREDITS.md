@@ -71,4 +71,8 @@ below is the worked example, and it is why this file exists at the size it does.
   a planning pass rediscovering `DMG_PER_SPARE_ENERGY`, `BARRIER_ON_FLIP` and `WHIRLWIND` as things
   Jungle needed and already had. Documented `ai.js` as a silent-failure surface in
   [ENGINE.md](ENGINE.md). Settled Transform as snapshot-on-entry with Trevor and found the damage
-  pump hiding in the first version of its HP rule.
+  pump hiding in the first version of its HP rule. Then built the coverage check that documentation
+  described, which immediately found **eleven Base Set verbs the AI had never scored** — Thunderbolt
+  believed free, Super Fang valued at zero, Earthquake's damage to its own bench invisible — and
+  fixed all eleven. None of them appears in a theme deck, so 480 `selftest.js` games ran identical
+  before and after; the ten new `powertest.js` cases are the only thing that can see them.

@@ -76,10 +76,20 @@ anything done.
   engine is DOM-free. Validates the decks, checks card coverage, plays ~100 AI-vs-AI games to
   completion, and asserts the AI difficulty ladder is ordered. Catches rules and AI regressions.
   Takes a seed-count argument for a deeper pass.
-- **`powertest.js`** (81 tests) builds boards by hand — no decks, no setup — fires a Power and
+  It also carries the **AI verb coverage** check, which scans source rather than playing anything:
+  every verb in `effects.js` must be scored by `ai.js` or sit on `UNSCORED_ON_PURPOSE`. That list is
+  the deliverable — a verb on it is a decision, a verb missing from it is an oversight, and before
+  this check the two were indistinguishable. See [ENGINE.md](ENGINE.md).
+- **`powertest.js`** (91 tests) builds boards by hand — no decks, no setup — fires a Power and
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
   Power working. See [ENGINE.md](ENGINE.md).
+  Its **AI verb scoring** section exists because of a measured blind spot: eleven verbs were
+  reaching `ai.js` with no case and scoring as plain base damage, and *none of the eleven appears in
+  a theme deck*, so 480 full `selftest.js` games produced byte-identical output before and after the
+  fix. This is the only suite that can see them, for the same reason it is the only one that can see
+  a Power. Those cases assert `rawOutcomes()` — the raw distribution, before weights — so retuning a
+  weight cannot fail them for the wrong reason.
 - **`smoke.js`** (108 tests) is the original Chat-era harness, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
   presentation and freeze, the deck-select flow, the collection screens and the card renderer.

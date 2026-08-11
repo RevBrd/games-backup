@@ -1043,5 +1043,122 @@ T('setup: a taken-back Pokemon can be placed again and keeps nothing', () => {
   return true;
 });
 
+// ---------------------------------------------------------------------------
+// AI verb scoring (Job 6a).
+//
+// Eleven verbs were reaching ai.js with no case and scoring as plain base
+// damage. selftest.js could never have caught it: NONE of the eleven appears in
+// a theme deck, so 480 full games produced byte-identical output before and
+// after the fix. This is the only suite that can see them, for the same reason
+// it is the only one that can see a Power.
+//
+// These assert rawOutcomes() — the raw distribution, before weights — so tuning
+// a weight later cannot make them fail for the wrong reason.
+// ---------------------------------------------------------------------------
+console.log('\nAI verb scoring');
+
+// The engine builds its AI lazily on the first aiChoose and caches it on _ai.
+function scorer(E) { E.aiChoose(0, 'expert'); return E._ai; }
+function raw(E, idx) {
+  return scorer(E).rawOutcomes(E.state.players[0].active, E.state.players[1].active, idx);
+}
+const expected = o => o.outcomes.reduce((a, x) => a + x.p * x.dmg, 0);
+
+T('Thunderbolt is costed at the Energy it burns, not as free', () => {
+  const E = board('base1-16', [], 'base1-2');               // Zapdos vs Blastoise
+  attach(E, E.state.players[0].active, 'base1-100', 4);     // 4 Lightning
+  eq(raw(E, 1).energyCost, 4, 'Thunderbolt energyCost');
+  eq(raw(E, 0).energyCost, 0, 'Thunder costs no discard');
+  return true;
+});
+
+T('Super Fang forecasts half the target, not the blank damage box', () => {
+  const E = board('base1-40', [], 'base1-3');               // Raticate vs Chansey 120
+  eq(expected(raw(E, 1)), 60, 'half of 120');
+  E.state.players[1].active.dmg = 40;                       // 80 left
+  eq(expected(raw(E, 1)), 40, 'half of 80');
+  return true;
+});
+
+T('Hydro Pump counts the Energy the cost does not eat', () => {
+  const E = board('base1-2', [], 'base1-3');                // Blastoise, cost WWW
+  attach(E, E.state.players[0].active, 'base1-102', 5);     // 5 Water -> 2 spare
+  eq(expected(raw(E, 0)), 60, '40 + 10 per spare Water');
+  return true;
+});
+
+T('Thrash splits its own coin, recoil included', () => {
+  const E = board('base1-11', [], 'base1-2');               // Nidoking
+  const o = raw(E, 0);
+  eq(expected(o), 35, 'half 40, half 30');
+  eq(o.selfDmg, 5, 'half of 10 recoil');
+  return true;
+});
+
+T('Toxic is worth more than ordinary Poison', () => {
+  const E = board('base1-11', [], 'base1-2');
+  eq(raw(E, 1).statuses.Poisoned, 2, '20 per turn rather than 10');
+  return true;
+});
+
+T('Foul Gas always lands something, so both halves are counted', () => {
+  const E = board('base1-51', [], 'base1-2');               // Koffing
+  const st = raw(E, 0).statuses;
+  eq(st.Poisoned, 0.5, 'heads'); eq(st.Confused, 0.5, 'tails');
+  return true;
+});
+
+T('the remaining five verbs set the flags the scorer reads', () => {
+  const eq2 = (id, idx, key, want) => {
+    const E = board(id, [], 'base1-2');
+    eq(raw(E, idx).flags[key], want, `${top(E, E.state.players[0].active).name} ${key}`);
+  };
+  eq2('base1-19', 1, 'benchSplashOwn', 10);   // Dugtrio   Earthquake
+  eq2('base1-13', 1, 'stripEnergy', 1);       // Poliwrath Whirlpool
+  eq2('base1-38', 0, 'attackLock', true);     // Poliwhirl Amnesia
+  eq2('base1-14', 0, 'shield', 0.5);          // Raichu    Agility
+  eq2('base1-22', 0, 'dragWeak', true);       // Pidgeotto Whirlwind
+  return true;
+});
+
+// Whirlwind is a drag the OPPONENT steers, so it must be worth something, worth
+// nothing against an empty bench, and never worth as much as a chosen drag.
+T('a Whirlwind drag is priced below a chosen one, and at nothing with no bench', () => {
+  const bare = board('base1-22', [], 'base1-2');
+  const empty = scorer(bare).scoreAttack(0, 0);
+
+  const E = board('base1-22', [], 'base1-2');
+  E.state.players[1].bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  const ai = scorer(E);
+  const weak = ai.scoreAttack(0, 0);
+
+  if (!(weak > empty)) throw new Error('the drag was worth nothing even with a bench to drag from');
+  // Same board, same damage — only the flag differs, so the gap IS the pricing.
+  const chosen = empty + ai.W.drag;
+  if (!(weak < chosen)) throw new Error(`weak drag ${weak} not discounted below chosen ${chosen}`);
+  eq(raw(E, 0).flags.drag, undefined, 'and Whirlwind never sets the attacker-chooses flag');
+  return true;
+});
+
+// The two that change a real decision rather than a number.
+T('the AI now takes Super Fang over Bite against a healthy target', () => {
+  const E = board('base1-40', [], 'base1-3');               // 60 vs Bite's 20
+  attach(E, E.state.players[0].active, 'base1-99', 3);
+  const ai = scorer(E);
+  if (!(ai.scoreAttack(0, 1) > ai.scoreAttack(0, 0))) throw new Error('Bite still preferred');
+  return true;
+});
+
+T('the AI refuses Earthquake when it would wipe its own bench', () => {
+  const E = board('base1-19', ['base1-58', 'base1-58'], 'base1-2');
+  attach(E, E.state.players[0].active, 'base1-97', 4);      // 4 Fighting
+  const ai = scorer(E);
+  const better = () => ai.scoreAttack(0, 1) > ai.scoreAttack(0, 0);
+  eq(better(), true, 'Earthquake wins outright on an empty-risk bench');
+  E.state.players[0].bench.forEach(b => { b.dmg = 30; });   // Pikachu 40 HP: 10 left each
+  eq(better(), false, 'and loses to Slash once the bench would die for it');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

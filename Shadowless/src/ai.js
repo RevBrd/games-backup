@@ -155,6 +155,40 @@ class AI {
         case 'HEAL_SELF_ALL': flags.healAll = true; break;
         case 'HEAL_SELF_IF_DAMAGED': flags.heal = v.n; break;
         case 'ONCE_WHILE_IN_PLAY': flags.oncePerStay = true; break;
+
+        // Everything below scored as plain base damage until 10 Aug 2026. See
+        // ENGINE.md, "The silent-failure surface", and the coverage check in
+        // selftest.js that now refuses to let a verb land here unnoticed.
+        case 'COST_DISCARD_ALL_ENERGY':
+          // Thunderbolt. The bot thought this was free and fired it on sight.
+          energyCost += atkSlot.energy.length; break;
+        case 'DMG_PER_SPARE_ENERGY': {
+          // The Water Gun / Hydro Pump family. Mirrors the engine's arithmetic:
+          // Energy of type t attached, minus what this attack's own cost eats.
+          const need = (atk.cost || '').split('').filter(x => x === v.t).length;
+          const have = atkSlot.energy.filter(e =>
+            this.db[e.id] && this.db[e.id].provides === v.t).length;
+          split(() => [[1, v.base + v.per * Math.max(0, have - need)]]);
+          break;
+        }
+        case 'DMG_HALF_REMAINING':
+          // Super Fang prints no damage number, so the bot valued it at zero.
+          split(() => [[1, defSlot ? Math.ceil(this.remainingHP(defSlot) / 2 / 10) * 10 : 0]]);
+          break;
+        case 'FLIP_BONUS_OR_RECOIL':
+          split(() => [[0.5, v.base + v.bonus], [0.5, v.base]]);
+          selfDmg += v.recoil * 0.5; break;
+        case 'STATUS_COIN_EITHER':
+          statuses[v.heads] = 0.5; statuses[v.tails] = 0.5; break;
+        case 'TOXIC':
+          // Poison at v.n per turn rather than the usual 10, so scale the weight
+          // rather than treating it as ordinary Poison.
+          statuses.Poisoned = Math.max(1, v.n / 10); break;
+        case 'DISCARD_DEF_ENERGY': flags.stripEnergy = 1; break;
+        case 'BENCH_SPLASH_OWN': flags.benchSplashOwn = v.n; break;
+        case 'ATTACK_LOCK': flags.attackLock = true; break;
+        case 'BARRIER_ON_FLIP': flags.shield = 0.5; break;
+        case 'WHIRLWIND': flags.dragWeak = true; break;
       }
     }
     // FLIP_OR_NOTHING suppresses the whole attack, statuses included.
@@ -201,6 +235,12 @@ class AI {
       }
       if (f.flags.jam) s += W.confuse;          // same shape as Confusion
       if (f.flags.drag && you.bench.length) s += W.drag;
+      // Whirlwind drags too, but THEY choose, so they send up their best answer.
+      if (f.flags.dragWeak && you.bench.length) s += W.drag * 0.5;
+      // Amnesia. Shuts off one attack rather than making them flip for all of
+      // them, so it is worth somewhat less than a jam.
+      if (f.flags.attackLock) s += W.confuse * 0.6;
+      if (f.flags.stripEnergy && you.active && you.active.energy.length) s += W.stripEnergy;
     }
 
     // self-harm
@@ -217,6 +257,16 @@ class AI {
         s += Math.min(n, this.remainingHP(b)) * W.benchDamageFoe;
         if (this.remainingHP(b) <= n) s += W.knockout * 0.6;
       }
+      for (const b of me.bench) {
+        s -= Math.min(n, this.remainingHP(b)) * W.benchDamageMine;
+        if (this.remainingHP(b) <= n) s -= W.selfKO * 0.6;
+      }
+    }
+
+    // Earthquake hits ONLY our own bench — pure downside, and the bot used to
+    // see none of it.
+    if (f.flags.benchSplashOwn) {
+      const n = f.flags.benchSplashOwn;
       for (const b of me.bench) {
         s -= Math.min(n, this.remainingHP(b)) * W.benchDamageMine;
         if (this.remainingHP(b) <= n) s -= W.selfKO * 0.6;

@@ -83,6 +83,50 @@ const brokenDeckCards = [...inDecks].filter(id => CARD_DB[id].kind !== 'energy' 
 check(brokenDeckCards.length === 0, 'every card in a playable deck is implemented',
   brokenDeckCards.join(', '));
 
+// --- 2b. AI verb coverage ------------------------------------------------
+// The card check above exists because an unimplemented card must never silently
+// do nothing. This is the same failure one level up: ai.js scores attacks with a
+// switch over verb names, and a verb it has no case for is valued as PLAIN BASE
+// DAMAGE — no throw, no red suite, and the card works perfectly for the human.
+// The AI just misplays it forever. See ENGINE.md, "The silent-failure surface".
+//
+// Source-scanned rather than introspected, because a `switch` is not reflectable
+// at runtime. Comment lines are stripped from effects.js first, or the verb
+// reference in its own header would count as usage.
+//
+// UNSCORED_ON_PURPOSE is the whole point of this check. A verb on it is a
+// decision somebody made; a verb missing from it is an oversight. Before adding
+// one, be sure it genuinely cannot change what the AI should choose.
+const UNSCORED_ON_PURPOSE = new Set([
+  // Legality gates. The engine refuses the attack outright, so an illegal one is
+  // never in the action list for the AI to score in the first place.
+  'REQUIRE_DEF_STATUS',
+]);
+
+console.log('\nAI verb coverage');
+{
+  const fs = require('fs');
+  const rd = f => fs.readFileSync(require('path').join(__dirname, '..', 'src', f), 'utf8');
+  const effSrc = rd('effects.js').replace(/^\s*\/\/.*$/gm, '');
+  const aiSrc = rd('ai.js');
+
+  const used = new Set([...effSrc.matchAll(/\bv:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
+  const handled = new Set([
+    ...[...aiSrc.matchAll(/case\s*'([A-Z_0-9]+)'/g)].map(m => m[1]),
+    ...[...aiSrc.matchAll(/\.v\s*===\s*'([A-Z_0-9]+)'/g)].map(m => m[1]),
+  ]);
+
+  const blind = [...used].filter(v => !handled.has(v) && !UNSCORED_ON_PURPOSE.has(v)).sort();
+  const stale = [...UNSCORED_ON_PURPOSE].filter(v => !used.has(v)).sort();
+
+  console.log(`  ${[...used].filter(v => handled.has(v)).length} of ${used.size} verbs scored`
+    + `, ${UNSCORED_ON_PURPOSE.size} unscored on purpose`);
+  check(blind.length === 0, 'every verb in effects.js is scored by ai.js or opted out',
+    blind.join(', '));
+  check(stale.length === 0, 'nothing on UNSCORED_ON_PURPOSE has left effects.js',
+    stale.join(', '));
+}
+
 // --- 3. games finish, without throwing and without stalling --------------
 console.log('\nFull games');
 const rec = {}; let games = 0, turns = 0, stalls = 0, threw = [];
