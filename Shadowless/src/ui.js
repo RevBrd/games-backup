@@ -76,7 +76,21 @@ const UI = {
 };
 
 const PACKS_PER_WIN = 2;      // PACKS.md's yardstick, and now the real rule
-const HOME_SET = 'base1';     // the only set generated today; Job 6 widens this
+
+// Set identity (Job 6a). `SET_INFO` comes from cards.js and holds only the sets
+// this build actually generated, so anything derived from it can never offer a
+// pack whose cards do not exist.
+//
+// homeSet() is DERIVED rather than declared — whichever generated set comes
+// first, which is base1 today and stays correct in a build generated without
+// it. It answers "which set does a win pay out in", and Job 7's progression is
+// what eventually replaces it. It is deliberately not a constant named after
+// Base Set: that constant was threaded through nine call sites and every one of
+// them had to be found again to widen the game.
+const setName = code => (SET_INFO[code] || {}).name || code;
+const setShort = code => (SET_INFO[code] || {}).short || code;
+const homeSet = () => Object.keys(SET_INFO)[0];
+const packSets = save => Object.keys(SET_INFO).filter(s => packsHeld(save, s) > 0);
 
 const SANDBOX = 'Sandbox';
 const DECK_NAMES = Object.keys(DECKS).concat([SANDBOX]);
@@ -1692,22 +1706,29 @@ function vribbon(flags) {
 // ------------------------------------------------------------ opening it ---
 // The cards are granted the MOMENT the pack is opened, not as they are flipped.
 // Closing the tab halfway through a reveal must not cost you the pack.
-function openNextPack() {
-  if (!UI.save || !takePack(UI.save, HOME_SET)) return false;
+function openNextPack(setCode) {
+  // Told which set, or the first one the player is actually holding, or home.
+  const set = setCode || (UI.save ? packSets(UI.save)[0] : null) || homeSet();
+  if (!UI.save || !takePack(UI.save, set)) return false;
   const seed = (Math.random() * 2147483647) | 0;
-  const pk = openPack(CARD_DB, HOME_SET, mulberry32(seed));
+  const pk = openPack(CARD_DB, set, mulberry32(seed));
   // The Rare comes out of packs.js first; it is shown LAST, because a reveal
   // that opens on the best card has nowhere to go.
   const order = pk.cards.slice(1).concat([pk.cards[0]]);
+  const stipend = pk.stipend || [];
   UI.pack = {
-    set: pk.set, firstEd: pk.firstEd, seed, order,
+    set: pk.set, firstEd: pk.firstEd, seed, order, stipend,
     revealed: order.map(() => false),
     // Computed BEFORE granting, or every card is already owned by the time we ask.
     isNew: order.map(c => !isOwned(UI.save, c.id)),
+    stipendNew: stipend.map(c => !isOwned(UI.save, c.id)),
   };
   for (const c of order) grant(UI.save, c.id, c.flags);
+  // The stipend is granted immediately and unconditionally, like the pack — it
+  // is not a reveal, it is a top-up, and it is shown as one.
+  for (const c of stipend) grant(UI.save, c.id, c.flags);
   UI.save.stats.packsOpened++;
-  UI.save.stats.cardsPulled += order.length;
+  UI.save.stats.cardsPulled += order.length + stipend.length;
   persist();
   UI.detail = null;
   UI.screen = 'packs';
@@ -1722,7 +1743,7 @@ function settleResult() {
   const s = UI.E.state;                       // never S(): a frozen flip view lags
   if (s.phase !== 'over' || s.winner === null) return;   // winner can be 0
   UI.awarded = true;
-  if (s.winner === 0) { UI.save.stats.wins++; addPacks(UI.save, HOME_SET, PACKS_PER_WIN); }
+  if (s.winner === 0) { UI.save.stats.wins++; addPacks(UI.save, homeSet(), PACKS_PER_WIN); }
   else UI.save.stats.losses++;
   persist();
 }
@@ -1789,12 +1810,15 @@ function renderNewSave() {
 function renderPackScreen() {
   const p = UI.pack;
   const ov = el('div', 'packscreen');
-  const box = el('div', 'packbox');
+  // A stipend adds a whole extra row, which at 768px pushed the action bar off
+  // the bottom. The class tightens the eleven rather than letting a reveal
+  // scroll — see LAYOUT.md: this screen has to fit, like every other.
+  const box = el('div', 'packbox' + (p.stipend && p.stipend.length ? ' hasstipend' : ''));
   const anyRevealed = p.revealed.some(Boolean);
   const allRevealed = p.revealed.every(Boolean);
 
   const head = el('div', 'packhead');
-  head.appendChild(el('h2', null, 'Base Set booster'));
+  head.appendChild(el('h2', null, `${setName(p.set)} booster`));
   // The 1st Edition line is held back until something has been flipped, so the
   // whole-pack roll lands as a discovery rather than as a spoiler in the header.
   head.appendChild(el('div', 'sub', anyRevealed && p.firstEd
@@ -1837,17 +1861,50 @@ function renderPackScreen() {
     box.appendChild(sum);
   }
 
+  // The stipend, for a set that prints no basic Energy of its own. Shown under
+  // the eleven rather than among them, and named, because it is not a pull —
+  // pretending otherwise would make an eleven-card pack look like a thirteen.
+  if (p.stipend && p.stipend.length) {
+    const strip = el('div', 'packstipend');
+    strip.appendChild(el('div', 'sub',
+      `${setName(p.set)} printed no Energy — ${p.stipend.length} basic Energy included`));
+    const row = el('div', 'stipendrow');
+    p.stipend.forEach((c, i) => {
+      const slot = el('div', 'pullslot small');
+      slot.appendChild(pullFace(CARD_DB[c.id], c.flags));
+      const tag = el('div', 'vribbon');
+      if (p.stipendNew[i]) tag.appendChild(el('span', 'pullnew', 'NEW'));
+      c.flags.forEach(f => {
+        const v = VARIANT_BY_KEY[f];
+        if (v) tag.appendChild(el('span', 'vchip c-' + v.family, v.label));
+      });
+      slot.appendChild(tag);
+      slot.onclick = () => { UI.detail = { id: c.id, flags: c.flags }; render(); };
+      row.appendChild(slot);
+    });
+    strip.appendChild(row);
+    box.appendChild(strip);
+  }
+
   const bar = el('div', 'packbar');
   if (!allRevealed) {
     const all = el('button', 'btn', 'Reveal all');
     all.onclick = () => { p.revealed = p.revealed.map(() => true); render(); };
     bar.appendChild(all);
   }
-  const left = packsHeld(UI.save, HOME_SET);
-  if (left > 0) {
-    const more = el('button', 'btn end', `Open another (${left})`);
-    more.onclick = () => { openNextPack(); render(); };
+  // Another of the SAME set first — you are usually working through a stack of
+  // one thing — then anything else you hold, named so the choice is visible.
+  const sameLeft = packsHeld(UI.save, p.set);
+  if (sameLeft > 0) {
+    const more = el('button', 'btn end', `Open another (${sameLeft})`);
+    more.onclick = () => { openNextPack(p.set); render(); };
     bar.appendChild(more);
+  }
+  for (const s of packSets(UI.save)) {
+    if (s === p.set) continue;
+    const other = el('button', 'btn', `${setShort(s)} (${packsHeld(UI.save, s)})`);
+    other.onclick = () => { openNextPack(s); render(); };
+    bar.appendChild(other);
   }
   const done = el('button', 'btn ghost', 'Done');
   done.onclick = () => { UI.pack = null; UI.detail = null; UI.screen = 'decks'; render(); };
@@ -2472,7 +2529,7 @@ function renderDeckSelect() {
       lay.onclick = () => { UI.showLayouts = !UI.showLayouts; render(); };
       strip.appendChild(lay);
     }
-    const held = packsHeld(UI.save, HOME_SET);
+    const held = packsTotal(UI.save);
     if (held > 0) {
       const go = el('button', 'btn end', `Open ${held} pack${held === 1 ? '' : 's'}`);
       go.onclick = () => { if (openNextPack()) render(); };
@@ -2923,7 +2980,7 @@ function renderOver() {
 
   // The reward. Straight from the win into the reveal, with no inventory screen
   // in between — Trevor, 9 Aug: the immediate feedback loop is the point.
-  const held = UI.save ? packsHeld(UI.save, HOME_SET) : 0;
+  const held = UI.save ? packsTotal(UI.save) : 0;
   if (UI.save && s.winner === 0) {
     box.appendChild(el('p', null, `You won ${PACKS_PER_WIN} booster packs.`));
   }
@@ -2999,13 +3056,13 @@ function renderDev() {
 
     const packRow = el('div', 'row');
     packRow.appendChild(el('label', null, 'packs'));
-    const held = el('span', null, String(packsHeld(UI.save, HOME_SET)));
+    const held = el('span', null, String(packsTotal(UI.save)));
     packRow.appendChild(held);
     const give = el('button', 'btn tiny', '+5');
     // Grinding out wins to test a 1-in-2200 pull is not a reasonable ask, so
     // there is a hatch. It writes to the real save deliberately: a fake save
     // would test a code path nobody ships.
-    give.onclick = () => { addPacks(UI.save, HOME_SET, 5); persist(); render(); };
+    give.onclick = () => { addPacks(UI.save, homeSet(), 5); persist(); render(); };
     packRow.appendChild(give);
     const openb = el('button', 'btn tiny', 'open');
     openb.onclick = () => { if (openNextPack()) render(); };

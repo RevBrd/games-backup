@@ -43,17 +43,39 @@ const PACK_ODDS = {
 // keys, so two differently-broken cards are different collectibles.
 const MISPRINT_FLAVOURS = ['mp1', 'mp2', 'mp3'];
 
-// Sets that guarantee a minimum of basic Energy in the Common-tier bucket.
-// Early game the player is starved for Energy building a first deck and this
-// reproduces that pressure on purpose; from Team Rocket on there is no floor,
-// so Energy goes scarce exactly when a stocked player stops needing it.
+// How much basic Energy a pack of this set is guaranteed to DELIVER. Early game
+// the player is starved for Energy building a first deck and this reproduces
+// that pressure on purpose; from Team Rocket on there is no guarantee, so Energy
+// goes scarce exactly when a stocked player stops needing it.
 //
-// KNOWN GAP, for Job 6: base2 (Jungle) and base3 (Fossil) print no basic
-// Energy at all, so the floor has nothing to draw from in two of the three
-// sets it was written for. buildPools() degrades to whatever exists rather
-// than looping forever, but the real decision — draw Base's Energy into a
-// Jungle pack, or drop the floor for those sets — is not made here.
-const ENERGY_FLOOR = { base1: 2, base2: 2, base3: 2 };
+// Settled in Job 6a. Jungle and Fossil print no basic Energy AT ALL, so the
+// original floor had nothing to draw from in two of the three sets it was
+// written for. One number, two delivery mechanisms:
+//
+//   set prints Energy  -> a FLOOR inside the 7 Common-tier slots (base1)
+//   set prints none    -> a STIPEND alongside the pack (base2, base3)
+//
+// The stipend is deliberately NOT inside the pack. A Jungle booster is eleven
+// Jungle cards; smuggling Base Set cards into it would undercut the set identity
+// that the reveal exists to show, and quietly make the pack a 9-card pack. The
+// reason it exists at all is a pacing one rather than a supply one — reservation
+// returns Energy when a deck is un-built, so nobody can be permanently stuck —
+// it is that opening the exciting new set should not tax the boring necessary
+// grind. See PACKS.md.
+const ENERGY_GRANT = { base1: 2, base2: 2, base3: 2 };
+
+// Where a stipend's Energy comes from. Only consulted for sets printing none,
+// and resolved from the database rather than hardcoded, so a build generated
+// without base1 still works instead of silently granting nothing.
+function stipendSource(db) {
+  let best = null;
+  for (const id in db) {
+    const c = db[id];
+    if (c.kind !== 'energy' || c.cls !== 'Basic') continue;
+    if (best === null || c.set < best) best = c.set;
+  }
+  return best;
+}
 
 // Not boosters. Southern Islands was a fixed boxed set and promos came from
 // magazines, tins and events, so neither belongs in a normal pack's pools —
@@ -199,7 +221,7 @@ function openPack(db, setCode, rand, opts = {}) {
   // The floor slots draw from `energy`; the rest draw from `common`, which
   // CONTAINS energy — so Energy can still turn up above the floor at its
   // natural share, which is what "no floor" means for the later sets.
-  const floor = Math.min(ENERGY_FLOOR[setCode] || 0, pools.energy.length ? PACK_SHAPE.common : 0);
+  const floor = Math.min(ENERGY_GRANT[setCode] || 0, pools.energy.length ? PACK_SHAPE.common : 0);
   const commonIds = [];
   if (floor > 0) commonIds.push(...drawSlots(pools.energy, floor, rand, isEnergy, taken));
   commonIds.push(...drawSlots(pools.common, PACK_SHAPE.common - floor, rand, isEnergy, taken));
@@ -219,7 +241,23 @@ function openPack(db, setCode, rand, opts = {}) {
     }
   }
 
-  return { set: setCode, firstEd, intrusion, cards };
+  // --- the stipend, for a set that prints no basic Energy of its own. Granted
+  // BESIDE the pack, never inside it, so `cards` stays exactly PACK_SIZE and the
+  // reveal can name it as what it is. It rolls variants like anything else: a
+  // Shiny Energy falling out of a Jungle pack is the convergence PACKS.md calls
+  // a feature, not an accident to be suppressed.
+  const stipend = [];
+  const owed = pools.energy.length ? 0 : (ENERGY_GRANT[setCode] || 0);
+  if (owed > 0) {
+    const src = stipendSource(db);
+    const from = src ? buildPools(db, src).energy : [];
+    for (let i = 0; i < owed && from.length; i++) {
+      stipend.push({ id: pickFrom(from, rand), slot: 'stipend', holo: false,
+                     flags: rollVariants(rand, 'common', odds, firstEd) });
+    }
+  }
+
+  return { set: setCode, firstEd, intrusion, cards, stipend };
 }
 
-if (typeof module !== 'undefined') module.exports = { PACK_SHAPE, PACK_SIZE, PACK_ODDS, MISPRINT_FLAVOURS, ENERGY_FLOOR, NON_BOOSTER_SETS, HOLO_RARITIES, buildPools, promoPool, openPack };
+if (typeof module !== 'undefined') module.exports = { PACK_SHAPE, PACK_SIZE, PACK_ODDS, MISPRINT_FLAVOURS, ENERGY_GRANT, NON_BOOSTER_SETS, HOLO_RARITIES, buildPools, promoPool, stipendSource, openPack };

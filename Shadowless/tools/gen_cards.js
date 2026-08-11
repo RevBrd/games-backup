@@ -25,6 +25,29 @@ const argSets = (process.argv.find(a => a.startsWith('--sets=')) || '=').split('
   || (flagIdx > -1 ? (process.argv[flagIdx + 1] || '') : '');
 const SETS = argSets ? argSets.split(',') : ['base1'];
 
+// Set display names. HAND-AUTHORED, unavoidably: data/raw/*.json are bare arrays
+// of cards with no set metadata on them at all, and the code is only known from
+// the filename. Emitted into cards.js as SET_INFO so everything that needs to
+// NAME a set — the pack reveal, pack select, the dex — reads one table rather
+// than growing its own. `short` is for chrome with no room for "Legendary
+// Collection".
+const SET_INFO = {
+  base1: { name: 'Base Set',             short: 'Base' },
+  base2: { name: 'Jungle',               short: 'Jungle' },
+  base3: { name: 'Fossil',               short: 'Fossil' },
+  base4: { name: 'Team Rocket',          short: 'Rocket' },
+  base5: { name: 'Base Set 2',           short: 'Base 2' },
+  base6: { name: 'Legendary Collection', short: 'Legendary' },
+  gym1:  { name: 'Gym Heroes',           short: 'Heroes' },
+  gym2:  { name: 'Gym Challenge',        short: 'Challenge' },
+  neo1:  { name: 'Neo Genesis',          short: 'Genesis' },
+  neo2:  { name: 'Neo Discovery',        short: 'Discovery' },
+  neo3:  { name: 'Neo Revelation',       short: 'Revelation' },
+  neo4:  { name: 'Neo Destiny',          short: 'Destiny' },
+  basep: { name: 'Wizards Black Star Promos', short: 'Promo' },
+  si1:   { name: 'Southern Islands',     short: 'Islands' },
+};
+
 // Upstream spells types out; the engine uses single letters throughout.
 const T = {
   Grass: 'G', Fire: 'R', Water: 'W', Lightning: 'L', Psychic: 'P',
@@ -156,7 +179,18 @@ for (const k of Object.keys(decks)) {
   for (const [q, id] of decks[k].list) out += `    [${q}, ${JSON.stringify(id)}],  // ${byId[id].name}\n`;
   out += '  ]},\n';
 }
-out += '};\n\nif (typeof module !== \'undefined\') module.exports = { CARD_DB, DECKS };\n';
+out += '};\n\n';
+
+// Only the sets actually generated. A name for a set whose cards do not exist
+// would let the UI offer a pack nobody can open.
+const unnamed = SETS.filter(s => !SET_INFO[s]);
+if (unnamed.length) {
+  console.error(`ERROR: no display name for set(s): ${unnamed.join(', ')} — add them to SET_INFO in tools/gen_cards.js`);
+  process.exit(1);
+}
+out += 'const SET_INFO = {\n';
+for (const s of SETS) out += `  ${JSON.stringify(s)}: ${JSON.stringify(SET_INFO[s])},\n`;
+out += '};\n\nif (typeof module !== \'undefined\') module.exports = { CARD_DB, DECKS, SET_INFO };\n';
 
 if (process.argv.includes('--check')) {
   if (fs.readFileSync(OUT, 'utf8') === out) { console.log('src/cards.js is in sync with data/raw/.'); process.exit(0); }

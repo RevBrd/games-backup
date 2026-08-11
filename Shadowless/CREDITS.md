@@ -75,4 +75,9 @@ below is the worked example, and it is why this file exists at the size it does.
   described, which immediately found **eleven Base Set verbs the AI had never scored** — Thunderbolt
   believed free, Super Fang valued at zero, Earthquake's damage to its own bench invisible — and
   fixed all eleven. None of them appears in a theme deck, so 480 `selftest.js` games ran identical
-  before and after; the ten new `powertest.js` cases are the only thing that can see them.
+  before and after; the ten new `powertest.js` cases are the only thing that can see them. Then
+  Job 6a itself: `SET_INFO` generated into `cards.js`, set identity through the pack reveal,
+  `HOME_SET` replaced by a derived `homeSet()`, per-set pack buttons, and the Energy question
+  settled as a **stipend beside the pack** for the sets printing none — with thirteen `packtest.js`
+  cases written against a synthetic database, because base2 and base3 do not generate until 6c and a
+  test that only starts working later is a test nobody runs when the mechanism is written.

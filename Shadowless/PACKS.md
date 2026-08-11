@@ -60,15 +60,25 @@ indefinitely.
 **Pack shape is constant: 1 Rare + 3 Uncommon + 7 Common-tier = 11.** Energy is a Common-tier card
 inside that 7-slot bucket rather than a separate slot, which is what the sets actually did.
 
-**Base, Jungle and Fossil floor the bucket at ≥2 Energy** — early game the player is starved for
-Energy building a first deck, and this reproduces that pressure on purpose. From Team Rocket on
-there is no floor, so Energy goes scarce exactly when a stocked player stops needing it.
+**Base, Jungle and Fossil guarantee ≥2 basic Energy per pack** (`ENERGY_GRANT`) — early game the
+player is starved for Energy building a first deck, and this reproduces that pressure on purpose.
+From Team Rocket on there is no guarantee, so Energy goes scarce exactly when a stocked player stops
+needing it.
 
-> **Known gap for Job 6: Jungle and Fossil print no basic Energy at all**, so the floor has nothing
-> to draw from in two of the three sets it was written for. `buildPools()` currently degrades to
-> whatever exists rather than failing. The real choice is whether the floor draws Energy from Base's
-> pool — which is what actually happened, since players used the Energy they already had — or
-> whether those two sets simply get no floor. Not urgent, but settle it before Job 6.
+**Jungle and Fossil print no basic Energy at all**, so for them the guarantee is delivered as a
+**stipend beside the pack** rather than as a floor inside it. `ENERGY_GRANT` is one number per set
+and `openPack()` picks the mechanism: a set that prints Energy is floored, a set that prints none is
+stipended from whichever set does print it. The pack itself stays eleven cards of its own set.
+
+Settled 10 Aug 2026, in Job 6a. The reasoning is a **pacing** one rather than a supply one — nobody
+can be permanently stuck, because reservation returns Energy the moment a deck is un-built — it is
+that opening the exciting new set must not tax the boring necessary grind. The rejected alternatives
+were drawing Base's Energy into the pack proper, which makes an eleven-card Jungle booster secretly
+nine Jungle cards and undercuts the set identity the reveal exists to show; and moving basic Energy
+out of the sets entirely into one shared pool, which would make Base Set a 96-card set when its
+Energies are printed as #97–102 of 102, and would collapse five sets' genuinely distinct Energy
+printings into one. The stipend rolls variants like any other card, so a Shiny Energy out of a
+Jungle pack is possible and is the convergence this table calls a feature.
 
 **The Rare slot rolls holo-vs-non-holo first at a flat 2:1**, then picks the card from within that
 tier's pool. Deliberately not each set's real ratio, which drifts 45–55% and isn't worth chasing.
@@ -136,12 +146,11 @@ tier, so two players can have wildly different experiences of the same economy.
 
 ## Still open
 
-1. **The Jungle/Fossil Energy floor** — see the block quote above. Blocks nothing until Job 6.
-2. **Southern Islands' fixed distribution vs. our intrusion model.** SI was a real boxed set with
+1. **Southern Islands' fixed distribution vs. our intrusion model.** SI was a real boxed set with
    guaranteed contents, not a randomised pack, so folding 18 fixed cards into a probabilistic
    intrusion chance is itself an invented mechanic wearing a real set's name. Flagged rather than
    let ride on the promo idea by association.
-3. **Progression-gating the intrusion pool.** A promo from an era the player hasn't reached would
+2. **Progression-gating the intrusion pool.** A promo from an era the player hasn't reached would
    read as broken rather than delightful, so the eligible pool should track whatever era is
    unlocked — which depends on Job 7's progression design and cannot be settled here.
 

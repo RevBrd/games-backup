@@ -209,19 +209,38 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 - **Jobs 1–4** — the engine, the AI, the art system, the board, the Powers and the Base Set
   oddities, the mat and the fitter. **Done.** What each one added is in [HISTORY.md](HISTORY.md).
 - **Job 5** — collection mechanics, packs, deck building, persistence. **Done, 9 Aug 2026.**
-- **Job 6** — Jungle and Fossil. **Bigger than it looks, and it splits in three.** `effects.js` has
-  102 entries and all 102 are `base1`; Jungle is 64 cards and Fossil 62, so this needs **126 new
-  effect scripts — more than all of Base Set.** Running `gen_cards.js --sets` before they exist just
-  turns `selftest.js` red, which is the guard working.
-  - **6a — the plumbing.** Small, and worth doing on its own. The pack machinery is already
-    multi-set: `openPack(db, setCode, rng)`, `buildPools(db, setCode)`, a per-set `ENERGY_FLOOR`,
-    and per-set pack counts in the save. What pins it to Base Set is one constant (`HOME_SET`,
-    ~9 call sites) and the literal `'Base Set booster'`. 6a adds set names, set identity in the
-    reveal, and settles the Energy floor — Jungle and Fossil print **no basic Energy at all**, so
-    the ≥2 floor has nothing to draw from. See [PACKS.md](PACKS.md).
-  - **6b — Jungle's 64 scripts. 6c — Fossil's 62.** A set goes live in packs only when its last
-    script lands, per the gating rule above. Fossil needs only an `effects.js` entry for Mysterious
-    Fossil rather than new machinery — `playsAs` already covers it, see [ENGINE.md](ENGINE.md).
+- **Job 6** — Jungle and Fossil. **126 cards, but only 95 distinct behaviours**: both sets print
+  every Rare twice, so Jungle's 64 collapse to 48 and Fossil's 62 to 47. Verified mechanically
+  across name, HP, stage, weakness, retreat and every attack and Power. Running `gen_cards.js
+  --sets` before the scripts exist just turns `selftest.js` red, which is the guard working.
+  **Split by machinery rather than by set** — planned 10 Aug, and deliberately not one sub-job per
+  set: Jungle is nearly all bulk and Fossil holds nearly all the architecture, so a by-set split
+  front-loads the easy half and defers every hard decision, without either set shipping any sooner.
+  - **6a — the plumbing. DONE, 10 Aug 2026.** `SET_INFO` generated into `cards.js`, set identity in
+    the reveal, `HOME_SET` replaced by a derived `homeSet()`, per-set pack buttons, and the Energy
+    guarantee settled — Jungle and Fossil print **no basic Energy at all**, so they get a stipend
+    beside the pack rather than a floor inside it. See [PACKS.md](PACKS.md). Also the verb-reference
+    refresh and the AI coverage check, which found eleven Base Set verbs the AI had never scored.
+  - **6b — the continuous-effects layer.** No cards. Jungle and Fossil add ~8 **passive** Powers to
+    a system that has one, two of them global: Muk's Toxic Gas switches every other Power off from
+    either side, and Aerodactyl's Prehistoric Power stops all evolution. **Passive Powers must be
+    consulted at `powerUsable`/`computeDamage`, never materialised into `slot.effects`** — Muk
+    turns them on and off transiently, and baking them in makes him a cache-invalidation problem
+    across evolution, KO, benching and his own status. Also: a per-card opt-out for the blanket
+    Asleep/Confused/Paralyzed gate, which Dodrio and Dragonite do not carry.
+  - **6c — the ~55 cards needing no new verb**, both sets at once, plus the alias table for the 31
+    duplicate Rares. Alias rather than copy-paste: two Vileplume entries that drift apart is a bug
+    nobody would ever find.
+  - **6d — the ~37 new verbs. 6e — the 13 Powers.** Each needs an `ai.js` case or an
+    `UNSCORED_ON_PURPOSE` entry; the check in `selftest.js` enforces it.
+  - **6f — Ditto, alone.** Transform is **snapshot-on-entry**, settled with Trevor 10 Aug: it copies
+    whatever is Active opposite it at the moment it is promoted and stays that until it is benched.
+    Not the printed continuous reading, and better — no re-evaluation loop, no killing a Ditto by
+    retreating, and Ditto-vs-Ditto resolves for free. It gets no copied Power, its Energy is wild by
+    quantity, and **the transform may Knock It Out in either direction**. See [RULINGS.md](RULINGS.md).
+  - Fossil needs only an `effects.js` entry for Mysterious Fossil rather than new machinery —
+    `playsAs` already covers it, see [ENGINE.md](ENGINE.md). A set goes live in packs only when its
+    last script lands, per the gating rule above, so both flip together at the end.
 - **Job 7** — progression, named opponents.
 - **Job 8+** — remaining sets. No longer blocked.
 

@@ -253,5 +253,67 @@ for (const k in runs) {
 console.log('  Nothing here is asserted — it is the pacing measurement Job 5 should design against.');
 
 // ===========================================================================
+// The Energy stipend (Job 6a).
+//
+// Jungle and Fossil print no basic Energy, so their guarantee is delivered
+// BESIDE the pack rather than inside it. Tested against a synthetic database
+// rather than the real one on purpose: base2 and base3 do not generate until
+// 6c, and a test that only starts working once the cards land is a test nobody
+// runs at the moment the mechanism is written.
+// ===========================================================================
+head('Energy stipend');
+{
+  // Real set CODES over synthetic cards, so ENERGY_GRANT applies for real:
+  // base1 prints Energy and is floored, base2 prints none and is stipended.
+  const mk = (set, num, rarity, extra = {}) => Object.assign(
+    { id: `${set}-${num}`, set, num: String(num), name: `${set} ${num}`, rarity, kind: 'pokemon' }, extra);
+  const DB = {};
+  const fill = (set, energy) => {
+    for (let i = 1; i <= 4; i++) DB[`${set}-${i}`] = mk(set, i, 'Rare Holo');
+    for (let i = 5; i <= 8; i++) DB[`${set}-${i}`] = mk(set, i, 'Rare');
+    for (let i = 9; i <= 16; i++) DB[`${set}-${i}`] = mk(set, i, 'Uncommon');
+    for (let i = 17; i <= 30; i++) DB[`${set}-${i}`] = mk(set, i, 'Common');
+    if (energy) for (let i = 31; i <= 36; i++)
+      DB[`${set}-${i}`] = mk(set, i, '', { kind: 'energy', cls: 'Basic', provides: 'R' });
+  };
+  fill('base1', true);
+  fill('base2', false);
+
+  const GRANT = P.ENERGY_GRANT.base2;
+  const isEnergy = id => DB[id].kind === 'energy';
+
+  eq(P.stipendSource(DB), 'base1', 'the stipend source is the set that actually prints Energy');
+  eq(P.buildPools(DB, 'base2').energy.length, 0, 'and base2 genuinely prints none');
+
+  let wrongSize = 0, floorShort = 0, baseStipended = 0, stray = 0, shortStipend = 0;
+  for (let i = 0; i < 3000; i++) {
+    const a = P.openPack(DB, 'base1', mulberry32(i + 1));
+    const b = P.openPack(DB, 'base2', mulberry32(i + 1));
+    if (a.cards.length !== P.PACK_SIZE || b.cards.length !== P.PACK_SIZE) wrongSize++;
+    if (a.cards.filter(c => isEnergy(c.id)).length < P.ENERGY_GRANT.base1) floorShort++;
+    if (a.stipend.length !== 0) baseStipended++;
+    if (b.cards.some(c => DB[c.id].set !== 'base2')) stray++;
+    if (b.stipend.length !== GRANT) shortStipend++;
+  }
+  eq(wrongSize, 0, 'every pack is still exactly PACK_SIZE, stipend or not');
+  eq(floorShort, 0, 'a set that prints Energy still meets its floor inside the pack');
+  eq(baseStipended, 0, 'and is never ALSO handed a stipend');
+  eq(stray, 0, 'no Base Set card is ever smuggled into a Jungle-shaped pack');
+  eq(shortStipend, 0, `a set printing no Energy gets exactly ${GRANT} alongside`);
+
+  const one = P.openPack(DB, 'base2', mulberry32(7));
+  check(one.stipend.every(c => isEnergy(c.id)), 'every stipend card is basic Energy');
+  check(one.stipend.every(c => DB[c.id].set === 'base1'), 'drawn from the set that prints it');
+  check(one.stipend.every(c => c.slot === 'stipend'), 'tagged so the reveal can name it separately');
+  check(one.cards.filter(c => isEnergy(c.id)).length === 0, 'with none of it inside the pack proper');
+
+  // A set nobody guaranteed anything to gets nothing, by either mechanism.
+  fill('neo2', false);
+  const late = P.openPack(DB, 'neo2', mulberry32(3));
+  eq(P.ENERGY_GRANT.neo2, undefined, 'Neo Discovery has no entry in ENERGY_GRANT');
+  eq(late.stipend.length, 0, 'so it is handed no Energy at all — scarcity, as designed');
+}
+
+// ===========================================================================
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail ? 1 : 0);

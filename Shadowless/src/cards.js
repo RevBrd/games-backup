@@ -185,4 +185,8 @@ const DECKS = {
   ]},
 };
 
-if (typeof module !== 'undefined') module.exports = { CARD_DB, DECKS };
+const SET_INFO = {
+  "base1": {"name":"Base Set","short":"Base"},
+};
+
+if (typeof module !== 'undefined') module.exports = { CARD_DB, DECKS, SET_INFO };
