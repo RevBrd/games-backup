@@ -192,6 +192,15 @@ played **twice, mirrored**, so the bias cancels exactly instead of on average, a
 50.0% by construction. A harness that agrees with you is worth nothing until it has disagreed with
 you once.
 
+**Check the game you are measuring is the game that exists.** Every harness in this repo drove
+setup as `setupAuto(0); setupConfirm(0); setupAuto(1); setupConfirm(1)` — and `setupAuto` ends by
+calling `setupConfirm`, so the fourth call re-ran `beginPlay()` and dealt a second set of Prizes.
+**Every scripted game from Job 4 to 11 Aug 2026 ran at 12 Prizes instead of 6.** Nothing failed;
+the games were simply twice as long, and the deck balance table reversed when it was fixed — Zap
+went from worst at 22% to second at 53%. A/B comparisons survived it, because both sides played the
+same wrong game, but every absolute figure taken before the fix is void. **Print the opening
+position once in a while and look at it.** This was found by reading a match log, not by a test.
+
 **A duel cannot see a rare catastrophic error, and those are the ones that matter to a human.** The
 bot used to decline game-winning attacks — 35 times in 96 games, measured. Fixing it moved the duel
 by nothing at all (49.8% ± 3.9), because the position is uncommon and *both sides of an AI-vs-AI game

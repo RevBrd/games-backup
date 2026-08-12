@@ -235,7 +235,77 @@ function newGame() {
   UI.E.setupAuto(1);                     // opponent sets itself up
   UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.retreatArmed = false;
   UI.awarded = false;                    // this game has not paid out yet
+  startMatchLog(seed);
   render();
+}
+
+// --------------------------------------------------------------- match log -
+// See src/eventlog.js for what this is for. Recording is always on; the AI's
+// own reasoning is switched on with it, which is the only part that costs
+// anything and only ever runs against one opponent in a browser.
+function startMatchLog(seed) {
+  UI.elog = newEventLog({
+    started: new Date().toISOString().replace('T', ' ').slice(0, 19),
+    seed,
+    decks: [UI.myDeck, UI.foeDeck],
+    tier: UI.aiMode,
+    prizes: (UI.cfgDraft && UI.cfgDraft.prizes) || null,
+  });
+  UI.elogLen = 0;
+  UI.elogTurn = null;
+  if (UI.E._ai) UI.E._ai.explain = true;
+
+  // The opening position, all of it. This is the half a player never sees, and
+  // it is what makes a replayed seed readable after the fact.
+  const s = UI.E.state;
+  const nm = uid => { const c = CARD_DB[uid.id]; return c ? c.name : uid.id; };
+  logEvent(UI.elog, 'hidden', 0, `opponent's opening hand: ${s.players[1].hand.map(nm).join(', ')}`);
+  logEvent(UI.elog, 'hidden', 0, `your opening hand: ${s.players[0].hand.map(nm).join(', ')}`);
+  logEvent(UI.elog, 'hidden', 0, `opponent's Prizes: ${s.players[1].prizes.map(nm).join(', ')}`);
+  logEvent(UI.elog, 'hidden', 0, `your Prizes: ${s.players[0].prizes.map(nm).join(', ')}`);
+}
+
+// Pull anything new off the engine's own log and mirror it in order. The engine
+// log is the narrative; this keeps the file readable as a story rather than as a
+// list of AI decisions with no context between them.
+function drainEngineLog() {
+  if (!UI.elog || !UI.E) return;
+  const lg = UI.E.state.log;
+  // The engine stores its log OLDEST-FIRST; renderLog() is what reverses it, not
+  // the log itself. Reading it backwards here re-emitted the opening lines on
+  // every drain, so the first version of this file said "New game. Seed 4242."
+  // about thirty times.
+  if (lg.length < UI.elogLen) {
+    // The engine caps its log at 4000 entries and shifts off the front, which
+    // moves every index. Far beyond a normal match, but say so rather than
+    // silently duplicating or dropping.
+    logEvent(UI.elog, 'public', 0, '[engine log hit its 4000-line cap; earlier lines were dropped]');
+    UI.elogLen = 0;
+  }
+  for (let i = UI.elogLen; i < lg.length; i++) {
+    const e = lg[i];
+    if (!e) continue;
+    // The engine already prints its own turn banner. Promote it to a separator
+    // rather than emitting a second marker beside it.
+    const m = /^---\s*Turn (\d+):\s*(.+?)\s*---$/.exec(e.text || '');
+    if (m) logEvent(UI.elog, 'turn', Number(m[1]), m[2]);
+    else logEvent(UI.elog, 'public', e.t, e.text);
+  }
+  UI.elogLen = lg.length;
+}
+
+// One AI decision, with what it passed over and what it was holding.
+function logAIChoice(a) {
+  if (!UI.elog || !a) return;
+  const s = UI.E.state;
+  const ai = UI.E._ai;
+  const nm = uid => { const c = CARD_DB[uid.id]; return c ? c.name : uid.id; };
+  const label = (ai && ai.actionLabel) ? ai.actionLabel(a) : a.t;
+  logDecision(UI.elog, s.turn,
+    a.__why ? `${label} — ${a.__why}` : label,
+    a.__score,
+    a.__considered,
+    s.players[1].hand.map(nm).join(', ') || '(empty)');
 }
 
 // ------------------------------------------------------------------- fx ----
@@ -1787,6 +1857,19 @@ function openNextPack(setCode) {
     isNew: order.map(c => !isOwned(UI.save, c.id)),
     stipendNew: stipend.map(c => !isOwned(UI.save, c.id)),
   };
+  // Recorded before granting so the log can say what was NEW, which is the
+  // interesting half of a pull.
+  if (UI.elog) {
+    const face = (c, isNew) => {
+      const card = CARD_DB[c.id];
+      const flags = (c.flags && c.flags.length) ? `  [${c.flags.join('+')}]` : '';
+      return `${card ? card.name : c.id}  ${card ? card.rarity || '' : ''}${flags}${isNew ? '   NEW' : ''}`;
+    };
+    const setName = (SET_INFO[pk.set] && SET_INFO[pk.set].name) || pk.set;
+    logPack(UI.elog, setName + (pk.firstEd ? '  (1st Edition pack)' : ''),
+      order.map((c, i) => face(c, UI.pack.isNew[i]))
+        .concat(stipend.map((c, i) => face(c, UI.pack.stipendNew[i]) + '   (stipend)')));
+  }
   for (const c of order) grant(UI.save, c.id, c.flags);
   // The stipend is granted immediately and unconditionally, like the pack — it
   // is not a reveal, it is a top-up, and it is shown as one.
@@ -1807,9 +1890,33 @@ function settleResult() {
   const s = UI.E.state;                       // never S(): a frozen flip view lags
   if (s.phase !== 'over' || s.winner === null) return;   // winner can be 0
   UI.awarded = true;
+  drainEngineLog();
+  logResult(UI.elog, s.winner === 0 ? 'You' : 'Opponent', s.winReason || '', s.turn);
   if (s.winner === 0) { UI.save.stats.wins++; addPacks(UI.save, homeSet(), PACKS_PER_WIN); }
   else UI.save.stats.losses++;
   persist();
+}
+
+// The match log, as a file. Offered on the game-over screen and again after a
+// pack is opened — Trevor's idea, and it is the right moment: the pulls are the
+// payoff, and a log that arrives with them gets read.
+function downloadMatchLog() {
+  if (!UI.elog) return;
+  drainEngineLog();
+  const text = renderEventLog(UI.elog);
+  const stamp = (UI.elog.meta.started || '').replace(/[: ]/g, '-') || 'match';
+  try {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `shadowless-log-${stamp}.txt`;
+    if (typeof a.click === 'function') a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  } catch (e) {
+    // Same fallback as the save export: show it rather than lose it.
+    UI.importText = text; UI.importErr = 'Copy this out — the download was refused.';
+    UI.importing = true; render();
+  }
 }
 
 // ------------------------------------------------------------- the screens -
@@ -1969,6 +2076,14 @@ function renderPackScreen() {
     const other = el('button', 'btn', `${setShort(s)} (${packsHeld(UI.save, s)})`);
     other.onclick = () => { openNextPack(s); render(); };
     bar.appendChild(other);
+  }
+  // Trevor's idea, and the right moment for it: by the time the pulls are on
+  // screen you know whether the match was worth reading back, and the log now
+  // carries the pulls too.
+  if (UI.elog && UI.elog.result) {
+    const dl = el('button', 'btn ghost', 'Save match log');
+    dl.onclick = downloadMatchLog;
+    bar.appendChild(dl);
   }
   const done = el('button', 'btn ghost', 'Done');
   done.onclick = () => { UI.pack = null; UI.detail = null; UI.screen = 'decks'; render(); };
@@ -3111,7 +3226,12 @@ function renderOver() {
   again.onclick = () => { UI.seedDraft = ''; backToDeckSelect(); };
   const rerun = el('button', 'btn ghost', 'Replay this seed');
   rerun.onclick = () => { UI.seedDraft = String(UI.E.seed); newGame(); };
-  bar.appendChild(again); bar.appendChild(rerun);
+  // The match log holds what the screen log could not: the opponent's hand, both
+  // Prize piles, and every score the AI weighed. Offered here because this is
+  // the moment you know whether the game was worth reading back.
+  const dl = el('button', 'btn ghost', 'Save match log');
+  dl.onclick = downloadMatchLog;
+  bar.appendChild(again); bar.appendChild(rerun); bar.appendChild(dl);
   box.appendChild(bar);
   ov.appendChild(box);
   return ov;
@@ -3417,7 +3537,10 @@ function maybeRunAI() {
     || (s.pendingSwitch === null && s.pendingPromote === null && s.active === 1);
   if (!aiTurn) return;
   UI.aiTimer = setTimeout(() => {
+    if (UI.E._ai) UI.E._ai.explain = true;   // survives the AI being rebuilt on a tier change
+    drainEngineLog();
     const a = UI.E.aiChoose(1, UI.aiMode);
+    logAIChoice(a);
     if (a) dispatch(1, a); else render();
   }, Math.max(30, UI.aiDelay));
 }

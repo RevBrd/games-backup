@@ -1506,6 +1506,10 @@ class AI {
       const me = s.players[pi], you = s.players[1 - pi];
       if (me.prizes.length <= 1 || you.bench.length === 0) {
         a.__score = this.W.lastPrize;
+        a.__why = you.bench.length === 0
+          ? 'this Knock Out leaves them with no Pokemon'
+          : 'this Knock Out takes our last Prize';
+        if (this.explain) a.__considered = [{ label: this.actionLabel(a), score: this.W.lastPrize }];
         return a;
       }
     }
@@ -1548,7 +1552,42 @@ class AI {
       }
     }
     best.__score = bestScore;
+    // The runners-up, for the match log. Gated on `explain` because populating
+    // it on every decision would cost the test suites real time for nothing —
+    // selftest alone plays a few hundred games. See src/eventlog.js.
+    if (this.explain) best.__considered = this.explainScored(scored);
     return best;
+  }
+
+  // Sort and label a pickBest score list for a human reading the match log.
+  // Labels are the action's shape rather than its card name; the log line above
+  // already names what was actually played.
+  explainScored(scored) {
+    return scored
+      .filter(x => isFinite(x.sc))
+      .sort((a, b) => b.sc - a.sc)
+      .slice(0, 6)
+      .map(x => ({ label: this.actionLabel(x.a), score: Math.round(x.sc * 10) / 10 }));
+  }
+
+  actionLabel(a) {
+    switch (a.t) {
+      case 'attack': {
+        const act = this.E.state.players[this.E.state.active];
+        const c = act && act.active && this.top(act.active);
+        const atk = c && (c.attacks || [])[a.idx];
+        return atk ? `attack:${atk.name}` : `attack#${a.idx}`;
+      }
+      case 'attachEnergy': return 'attach';
+      case 'playTrainer': return 'trainer';
+      case 'playBasic': return 'bench';
+      case 'evolve': return 'evolve';
+      case 'retreat': return 'retreat';
+      case 'power': return `power:${a.kind || ''}`;
+      case 'promote': return 'promote';
+      case 'switchIn': return 'switchIn';
+      default: return a.t;
+    }
   }
 }
 

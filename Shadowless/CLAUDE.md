@@ -80,6 +80,8 @@ src/  cards.js         CARD_DB + the theme deck lists. GENERATED — see TOOLING
                        no engine. Read its header before touching a variant key
       packs.js         booster generation. PACK_ODDS is the whole rarity table
                        in one object
+      eventlog.js      the match recorder — the opponent's hand, both Prize piles
+                       and every score the AI weighed. Pure data; see below
       ui.js            everything that touches `document`
       style.css        dark instrument-panel palette, one `:root` block
 data/ raw/*.json       THE card source: the pokemon-tcg-data corpus, 14 sets, 1,251 cards
@@ -128,6 +130,22 @@ node tools/aiduel.js 8                   # AI vs HEAD's AI; add --control first
 **The two AI tools measure whether the bot plays *well*, which no suite can see.** They are not
 pass/fail and they are easy to fool — `--control` and the reasons it exists are in
 [TOOLING.md](TOOLING.md), and skipping it has already produced one confident wrong answer.
+
+## The match log
+
+**"Save match log" on the game-over screen and after a pack.** It writes the file the LOG tab
+cannot: the opponent's opening hand, **both** Prize piles, and — the part that matters — every
+option the AI weighed with its score and what it passed over. The seed is in the header, so any
+match in it replays exactly.
+
+**Ask Trevor for one whenever the AI does something baffling.** He reconstructed four separate AI
+bugs from a pasted screen log in a single session, and that log had none of the hidden half. The
+`setupConfirm` bug in the Open list was found by reading one of these and noticing a deck lose seven
+cards between two identical turn banners.
+
+`src/eventlog.js` is pure data — no DOM, no engine, handed strings by the UI. The AI's reasoning is
+gated behind `ai.explain`, set only by the browser, because populating it in `selftest.js` would
+cost a few hundred games' worth of time for nothing.
 
 **A module's CommonJS export must be ONE line**, and no source file may contain a NUL byte. The
 builder refuses both, naming the file and line; the reasons each cost a session are in
@@ -248,11 +266,25 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 
 ## Open
 
-1. **Deck balance.** The four theme decks are Trevor's authentic lists and run roughly
-   **75 / 65 / 38 / 22** percent (Brushfire / Blackout / Overgrowth / Zap) across ~100 AI games.
-   The real ones were never balanced against each other either, so this may simply be correct.
-   Confirm before touching them. **These figures move whenever the AI changes** — they were
-   74/60/42/25 before the retreat rework — so re-run `selftest.js` rather than trusting the line.
+1. **Deck balance — and every figure before 11 Aug 2026 was measuring the wrong game.** The four
+   theme decks are Trevor's authentic lists and run roughly **72 / 53 / 42 / 33** percent
+   (Blackout / Zap / Brushfire / Overgrowth) across ~144 AI games at 40 turns each.
+   The real ones were never balanced against each other either, so this may simply be correct, and
+   it is a good deal tighter than it used to look. Confirm before touching them.
+
+   **The old figures said 75 / 65 / 38 / 22 with Brushfire best and Zap worst by a mile.** Those
+   came from games running at 12 Prizes because of the `setupConfirm` bug in item 3, and the
+   ordering *reverses* at the correct length: Zap is a fast deck that wins a short game and loses a
+   grind. Do not compare against any deck figure quoted before that fix. **These also move whenever
+   the AI changes**, so re-run `selftest.js` rather than trusting the line.
+4. **The AI weights were tuned against the 12-Prize game and want re-tuning.** The retreat rework
+   measured 55.6% ± 3.3 against its predecessor at 12 Prizes; re-run at the correct 6, the whole
+   AI stretch comes to **52.5% ± 4.6 — no longer significant**. Still positive on both independent
+   measurements, and the behaviour counters in `aitest.js` are unambiguous, so nothing here is
+   *worse* — but `retreatPrize` in particular divides by the Prizes remaining, so it is worth
+   exactly twice as much in the real game as in the one it was fitted to. A deliberate re-tune with
+   `aiduel.js` is the next AI job.
+
 2. **Possible first-player advantage. Now confirmed real, and it has a measured size.** Expert
    mirrors had suggested 58–67% for whoever is seated first. `aiduel.js --control` settles it: the
    baseline AI played against *itself* over mirrored games sat at exactly 50%, but the same harness
@@ -260,9 +292,15 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
    advantage, and it is large enough to have faked a six-point AI improvement once. It may still be
    a true property of the ruleset rather than a bug. What is settled is that **no AI measurement
    here is trustworthy unless it mirrors seats**; see [TOOLING.md](TOOLING.md).
-3. **`setupConfirm()` is not idempotent.** Calling it twice re-runs `beginPlay()` and deals a second
-   set of prizes. Unreachable through the UI — the setup overlay is gone by then — so it is a
-   robustness nit rather than a bug, but it will bite anyone driving the engine from a script.
+3. **`setupConfirm()` was not idempotent. FIXED 11 Aug 2026, and it was never a nit.** This entry
+   used to call it a robustness concern that was unreachable through the UI. It was reachable from
+   every script in the repo: **`setupAuto()` ends by calling `setupConfirm()`**, so the natural
+   `setupAuto(0); setupConfirm(0); setupAuto(1); setupConfirm(1)` confirms each player twice and the
+   fourth call re-ran `beginPlay()`. `selftest.js`, `aitest.js` and `aiduel.js` all used that
+   pattern, so **every scripted game since Job 4 ran at 12 Prizes instead of 6** — twice the length
+   and a different game. Found by reading a match log and noticing the deck lose seven cards between
+   two identical turn banners. The guard is in `setupConfirm`; the call sites are left as they are
+   precisely because they now prove it works.
 
 ## Known platform issue: a blank answer is not a refusal
 

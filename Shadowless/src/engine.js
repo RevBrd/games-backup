@@ -276,9 +276,22 @@ class Engine {
     return this.setupConfirm(pi);
   }
 
+  // Idempotent, and it has to be. `setupAuto` ends by calling this, so the
+  // natural-looking script `setupAuto(0); setupConfirm(0); setupAuto(1);
+  // setupConfirm(1)` confirms each player TWICE — and the fourth call found both
+  // players done and ran beginPlay() a second time, dealing a second opening
+  // hand and a second set of Prizes.
+  //
+  // That is exactly the "robustness nit" CLAUDE.md listed as unreachable through
+  // the UI, and it had been biting every harness in the repo since Job 4:
+  // selftest.js, aitest.js and aiduel.js all used that pattern, so every scripted
+  // game ran at **12 Prizes instead of 6** — twice the length and a completely
+  // different pace. Found on 11 Aug 2026 by reading a match log and noticing the
+  // deck drop seven cards between two identical turn banners.
   setupConfirm(pi) {
     const p = this.state.players[pi];
     if (!p.active) return this.fail('You must place an Active Pokemon');
+    if (this.state.setupDone[pi]) return { ok: true };      // already confirmed
     this.state.setupDone[pi] = true;
     if (this.state.setupDone[0] && this.state.setupDone[1]) this.beginPlay();
     return { ok: true };
