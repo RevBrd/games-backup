@@ -22,20 +22,26 @@ The build concatenates the modules into one `<script>` rather than emitting `<sc
 which is what keeps the game a single double-clickable file with no server. ES modules would be the
 natural alternative and do **not** work from `file://` — see `~/.claude/reference/building.md`.
 
+Two things the builder refuses, each of which cost a session: **a module's CommonJS export must be
+ONE line**, and **no source file may contain a NUL byte**. It names the file and line. The reasons
+are in [TOOLING.md](TOOLING.md).
+
 ## Where the depth lives
 
-This file is the orientation. Nine siblings hold the detail — ten counting `LOGBOOK.md`, which is
-reached through `CREDITS.md` rather than from here — and **you should not need to read any of them
-unless you are working on that thing**. That is the point of the split.
+This file is the orientation. The siblings below hold the detail, and **you should not need to read
+any of them unless you are working on that thing**. That is the point of the split. `LOGBOOK.md` is
+the eleventh and is reached through `CREDITS.md`.
 
 | File | Read it when |
 |---|---|
 | [ENGINE.md](ENGINE.md) | Adding or changing cards. The seven systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer and the `baseCard`/`topCard` split. Also: why full games never test any of it |
-| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap — and `tools/shot.js` |
+| [AI.md](AI.md) | Touching `ai.js`, or quoting a number about how well the bot plays. The two instruments, the four ways that measurement lies, the silent-failure surface, and the weight re-tune that is the next AI job |
+| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source |
-| [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers |
+| [DATA.md](DATA.md) | Generating a set, trusting a set code, or adopting one of the deck spreadsheets. The corpus, the two set codes that read backwards, and what is reference-only |
+| [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, looking at the board with `tools/shot.js`, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, one row per model per stretch — and it points at `LOGBOOK.md`, the append-only archive of what each instance did in its own words |
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
@@ -47,66 +53,53 @@ Jobs 1–6 are complete. The engine and AI came out of Claude Chat; Job 5 built 
 starter deck, play, win packs of any live set, open them, browse what you own, and build decks from
 it, and all of it persists.
 
+**Three sets are live and complete: Base, Jungle and Fossil — 221 of 221 scriptable cards.** Run
+`node tools/selftest.js` for the live figures rather than trusting a number in prose; it prints
+coverage per set. (**Card counts come in two units.** A set's *printings* include basic Energy, which
+needs no effect script; `selftest.js` counts *scriptable* cards. Base Set is 102 printings and 95
+scriptable. Mixing the two has already confused this section once.)
+
 | Area | State |
 |---|---|
-| Rules engine | Complete for all three live sets. **221 of 221 cards, no gaps** |
-| Opponent AI | Four tiers, expected-value based. Beats its own baselines |
-| Base Set cards | **All 102 implemented.** Base Set is done |
-| Jungle cards | **All 64 implemented. LIVE** — art fetched, collectable, in the dex |
-| Fossil cards | **All 62 implemented. LIVE** — Ditto included |
+| Rules engine · cards | Complete for all three live sets, no gaps |
+| Opponent AI | Four tiers, expected-value based. Beats its own baselines — see [AI.md](AI.md) |
 | Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen, dex, pack reveal. In play, cards keep a rendered face and a deterministic sigil |
 | Collection / packs / dex | **Done.** Starter pick, win 2 packs, open them, browse what you own. CARDS and DEX views, owned/missing filters, per-card counts, variant dots, export/import |
 | Deck building | **Done.** Pool grid with filters, live legality, save-as-layout vs save-and-build, and variant picking — you choose which physical copy goes in. Sandbox ignores ownership on purpose |
 | Persistence | **Live.** Versioned save, migration, validation — see [COLLECTION.md](COLLECTION.md) |
 | Progression / named opponents | Not started (Job 7) |
-| Sets beyond Base | **Jungle and Fossil are done and live.** The other 11 are unblocked — all 14 sets generate cleanly |
+| The other 11 sets | Unblocked — all 14 generate cleanly |
 | Audio | None |
-
-Don't trust that table — the five suites below take about a minute between them and check most of
-it.
 
 ## Layout
 
 ```
-shadowless.html        GENERATED — the playable game. Never hand-edit
-src/  cards.js         CARD_DB + the theme deck lists. GENERATED — see TOOLING.md
-      effects.js       one effect script per card. Its DSL verb reference is the
-                       comment block at the top — read that before adding cards
-      art.js           deterministic sigils. Petals = attack count, rings = retreat
-      deckgen.js       builds a legal 60-card deck from a pool (Sandbox; later, opponents)
-      ai.js            expected-value scoring over enumerated coin-flip outcomes
-      engine.js        the whole ruleset. Pure logic, no DOM
-      collection.js    what the player owns + the save file. Pure data, no DOM,
-                       no engine. Read its header before touching a variant key
-      packs.js         booster generation. PACK_ODDS is the whole rarity table
-                       in one object
-      eventlog.js      the match recorder — the opponent's hand, both Prize piles
-                       and every score the AI weighed. Pure data; see below
-      ui.js            everything that touches `document`
-      style.css        dark instrument-panel palette, one `:root` block
-data/ raw/*.json       THE card source: the pokemon-tcg-data corpus, 14 sets, 1,251 cards
-      decks.json       the four theme deck lists. SOURCE, not output — see TOOLING.md
-      Deck Lists/      the spreadsheets those came from, recovered 11 Aug. Also two
-                       workbooks nothing uses yet — see TOOLING.md before adopting one
-      jungle_decks.json  Water Blast and Power Reserve, corrected and validated.
-                       Reference data; wiring them in is a job, not a chore
-      fullpool.json    completion manifest: id/name/kind for all 1,251 cards
-      gbc_decks.json   all 16 GBC opponent decks, mapped to our ids. Job 7's
-                       groundwork — reference data, nothing reads it yet. Its
-                       own `_meta` documents scope, substitutions and the three
-                       decks whose counts want re-checking
-      *.csv            superseded by raw/. Kept as an independent cross-check
-assets/cards/<set>/    the real printed card faces. GITIGNORED and DERIVED —
-                       `node tools/fetch_art.js base1` rebuilds them. Base Set is fetched
-backups/               pre-job safety copies, including the ten Claude Chat snapshots
-tools/                 two generators, five test suites, a screenshotter and an art
-                       fetcher — all listed below and detailed in TOOLING.md
-       chat-era/       the original Python tools, superseded. Kept for provenance
+shadowless.html   GENERATED — the playable game. Never hand-edit
+src/  engine.js   the whole ruleset. Pure logic, no DOM
+      ai.js       expected-value scoring over enumerated coin-flip outcomes
+      cards.js    CARD_DB + the theme deck lists. GENERATED
+      effects.js  one effect script per card. Its DSL verb reference is the
+                  comment block at the top — read that before adding cards
+      collection.js  what the player owns + the save file. Pure data
+      packs.js    booster generation. PACK_ODDS is the whole rarity table
+      eventlog.js the match recorder. Pure data
+      deckgen.js  builds a legal 60-card deck from a pool
+      art.js      deterministic sigils. Petals = attack count, rings = retreat
+      ui.js       everything that touches `document`
+      style.css   dark instrument-panel palette, one `:root` block
+data/             the card corpus, the deck lists and the Job 7 reference data.
+                  ALL OF IT IS DOCUMENTED IN DATA.md
+assets/cards/<set>/  the real printed card faces. GITIGNORED and DERIVED —
+                  `node tools/fetch_art.js base1` rebuilds them
+backups/          pre-job safety copies, including the ten Claude Chat snapshots
+tools/            two generators, five suites, a screenshotter, an art fetcher
+       chat-era/  the original Python tools, superseded. Kept for provenance
 ```
 
-`src/` modules each end with a one-line `if (typeof module …) module.exports` so they `require`
-cleanly in Node; the build strips those on the way in. **Keep that property** — it is what makes
-every test harness possible without a browser.
+Four modules are **pure** — `engine.js`, `collection.js`, `packs.js` and `eventlog.js` touch no DOM
+— which is what lets four of the five suites run with no browser at all. And `src/` modules each end
+with a one-line `if (typeof module …) module.exports`; the build strips those on the way in.
+**Keep both properties.**
 
 ## Tooling
 
@@ -127,29 +120,17 @@ node tools/aitest.js 6                   # AI behaviour counts — not pass/fail
 node tools/aiduel.js 8                   # AI vs HEAD's AI; add --control first
 ```
 
-**The two AI tools measure whether the bot plays *well*, which no suite can see.** They are not
-pass/fail and they are easy to fool — `--control` and the reasons it exists are in
-[TOOLING.md](TOOLING.md), and skipping it has already produced one confident wrong answer.
+**The last two measure whether the bot plays *well*, which no suite can see.** They are not pass/fail
+and they are easy to fool — run `--control` first; skipping it has already produced one confident
+wrong answer. See [AI.md](AI.md).
 
-## The match log
-
-**"Save match log" on the game-over screen and after a pack.** It writes the file the LOG tab
-cannot: the opponent's opening hand, **both** Prize piles, and — the part that matters — every
-option the AI weighed with its score and what it passed over. The seed is in the header, so any
-match in it replays exactly.
-
-**Ask Trevor for one whenever the AI does something baffling.** He reconstructed four separate AI
-bugs from a pasted screen log in a single session, and that log had none of the hidden half. The
-`setupConfirm` bug in the Open list was found by reading one of these and noticing a deck lose seven
-cards between two identical turn banners.
-
-`src/eventlog.js` is pure data — no DOM, no engine, handed strings by the UI. The AI's reasoning is
-gated behind `ai.explain`, set only by the browser, because populating it in `selftest.js` would
-cost a few hundred games' worth of time for nothing.
-
-**A module's CommonJS export must be ONE line**, and no source file may contain a NUL byte. The
-builder refuses both, naming the file and line; the reasons each cost a session are in
-[TOOLING.md](TOOLING.md).
+**The match log is the third instrument, and the only one that shows the hidden half.** "Save match
+log" on the game-over screen and after a pack writes what the LOG tab cannot: the opponent's opening
+hand, **both** Prize piles, and every option the AI weighed with its score and what it passed over.
+The seed is in the header, so any match replays exactly. **Ask Trevor for one whenever you need it** —
+when the AI does something baffling, when a number looks wrong, or just to see a real game. He
+reconstructed four separate AI bugs from a pasted screen log that had none of the hidden half.
+*[How to read one, and what it can settle →](AI.md)*
 
 ## Standing design decisions
 
@@ -170,15 +151,12 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
 - **Card art is split by function.** The scans are *complete printed cards*, not illustration crops,
   and no crop exists anywhere — so they appear only where the card is the **subject**: the preview
   rail, the title screen, the dex, the pack reveal. In play, cards keep the rendered face, which is
-  an instrument you can overlay damage onto. They are derived assets, not source: ~16 MB per set,
-  fetched per set and gitignored.
+  an instrument you can overlay damage onto. Derived assets, ~16 MB per set, gitignored.
 - **A set is gated as a whole, and goes live only when every card in it is playable.** Settled with
-  Trevor 10 Aug. No half-open sets, and **no collecting a card you cannot play** — the game's pitch
-  is building decks from what you actually own, and a card that every deck refuses inverts that. It
-  is also a soft version of the thing the deck validator exists to prevent: a Jungle Scyther sitting
-  in your binder rejecting every deck *is* a card silently doing nothing. Edge cases get handled
-  individually rather than by loosening the rule. The practical consequence is that
-  `gen_cards.js --sets` is the *last* step of adding a set, not the first — see the Job plan.
+  Trevor 10 Aug. No half-open sets, and **no collecting a card you cannot play** — a Jungle Scyther
+  sitting in your binder rejecting every deck *is* a card silently doing nothing, which inverts the
+  whole pitch. Edge cases get handled individually rather than by loosening the rule. The practical
+  consequence is that `gen_cards.js --sets` is the *last* step of adding a set, not the first.
 - **The board's design is locked** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
   bench tiles without asking. Every variant treatment is confined to collectible surfaces for
   exactly this reason.
@@ -196,17 +174,16 @@ game-over screen offers "Replay this seed". Use it when chasing a bug. **Mirror 
 allowed**: both sides may take the same deck, including Sandbox, and still shuffle independently.
 
 **The board fits itself to the window — never hand-tune it to a resolution.** A "1920x1080 laptop"
-is not a 1920x1080 page; display scaling can leave it as little as 1280x600 CSS pixels. The DEV tab
-prints the real numbers, and `tools/shot.js` shows you any viewport you like. The rules that keep it
-working are in [LAYOUT.md](LAYOUT.md), and several look wrong until you know what they protect —
-read it before changing anything sized.
+is not a 1920x1080 page; display scaling can leave it as little as 1280x600 CSS pixels. The rules
+that keep it working are in [LAYOUT.md](LAYOUT.md), and several look wrong until you know what they
+protect — read it before changing anything sized.
 
 Three facts that have each cost a session an hour. **`state.winner` can legitimately be `0`** — test
 it against `null`, never for truthiness. **Unimplemented cards can never silently do nothing**:
 the deck validator refuses any deck containing a card with no effect script, which is why the card
 counts above can be trusted. Preserve that property. And **a verb `ai.js` cannot score is that same
 failure one level up** — free at runtime, misplayed forever, invisible to every suite. See
-[ENGINE.md](ENGINE.md).
+[AI.md](AI.md).
 
 **Adding a card** means a `cards.js` entry plus an `effects.js` entry. If the card needs behaviour
 the DSL cannot express, add a verb rather than special-casing it, and document it in the verb
@@ -216,97 +193,60 @@ together and is not trying to read the code.
 
 **The smoke stub has no layout engine and no real DOM, so a green suite proves nothing visual.**
 `tools/shot.js` is not optional polish on a UI change — it is the only test that exists for a whole
-class of bug, and two of them have already got through 68 passing tests in a single session. What
-they were, and how to measure a screenshot instead of squinting at it, is in
-[TOOLING.md](TOOLING.md).
+class of bug, and two of them have already got through 68 passing tests in a single session.
+*[What they were, and how to measure a screenshot instead of squinting at it →](TOOLING.md)*
 
 ## Data
 
-**`data/raw/*.json` is the card source** — the `pokemon-tcg-data` corpus, downloaded 4 Aug 2026,
-14 sets and 1,251 cards. All 189 Trainers carry rules text, none missing. **Nothing in the project
-is data-blocked.**
+**`data/raw/*.json` is the card source** — the `pokemon-tcg-data` corpus, 14 sets and 1,251 cards,
+all 189 Trainers carrying rules text. **Nothing in the project is data-blocked.** The CSVs are an
+independent cross-check, not a second source of truth; don't add to them and don't generate from them.
 
-The CSVs are an **independent cross-check, not a second source of truth**, and the agreement between
-them is what justifies trusting the corpus — see [TOOLING.md](TOOLING.md). Don't add to them, and
-don't generate from them.
+**Scope is settled: everything in the data, promos and Southern Islands included.**
 
-Set codes: `base1` Base · `base2` Jungle · `base3` Fossil · **`base4` Base Set 2 · `base5` Team
-Rocket** · `base6` Legendary Collection · `gym1` Gym Heroes · `gym2` Gym Challenge · `neo1`–`neo4`
-Neo Genesis/Discovery/Revelation/Destiny · `basep` promos · `si1` Southern Islands.
-
-**Those two are the wrong way round from what everyone guesses**, this file included until 11 Aug
-2026 — and `gen_cards.js` had them swapped too, which would have shipped 130 Base Set 2 cards in a
-pack labelled "Team Rocket". Check against the data, never against the number: `base4` is 130 cards
-with 6 basic Energy and no Dark Pokémon; `base5` is 83 cards, no Energy, 45 of them Dark.
-
-**Scope is settled: everything in the data, promos and Southern Islands included.** That makes
-`basep` and `si1` a pack-table and dex question rather than a scope question — they are odd shapes
-for boosters, and `base4`/`base6` are reprint sets that will hand the player cards they already own.
+**Two set codes read backwards from what everyone guesses: `base4` is Base Set 2 and `base5` is Team
+Rocket.** `gen_cards.js` had them swapped until 11 Aug 2026 and would have shipped 130 Base Set 2
+cards in a pack labelled "Team Rocket". The full code list, the check that catches it, and everything
+else in `data/` is in **[DATA.md](DATA.md)**.
 
 ## Job plan
 
 Trevor's ordering, and he is explicit that it is yours to rearrange and to break into sub-jobs.
 
-- **Jobs 1–4** — the engine, the AI, the art system, the board, the Powers and the Base Set
-  oddities, the mat and the fitter. **Done.**
-- **Job 5** — collection mechanics, packs, deck building, persistence. **Done, 9 Aug 2026.**
-- **Job 6** — Jungle and Fossil, all 126 printings. **Done, 11 Aug 2026.** Split by machinery rather
-  than by set, in six sub-jobs. What each one left behind is in [HISTORY.md](HISTORY.md), and it is
-  worth ten minutes before planning the next set — the estimates it ran on were close, and the
-  reason 126 printings were only **95 distinct behaviours** is the kind of count that decides how
-  big a job actually is.
+- **Jobs 1–6 are done** — the engine, the AI, the art system, the board, the Powers, the collection
+  and packs, and Jungle and Fossil. **What each one left behind is in [HISTORY.md](HISTORY.md)**, and
+  Job 6's entry is worth ten minutes before planning the next set: it was split by *machinery* rather
+  than by set, and the reason 126 printings were only **95 distinct behaviours** is the kind of count
+  that decides how big a job actually is.
 - **Job 7 — progression and named opponents. Next, and already part-scouted.**
-  `data/gbc_decks.json` holds all 16 GBC opponent decks — eight Club Masters, four Grand Masters and
-  Ronald's four — verified to 60 cards and mapped to our set IDs, with every out-of-scope card
-  substituted and reasoned in its own `_meta`. Nothing reads it yet. Three decks are flagged for a
-  count re-check before use. Note the ruling policy's known limit below: the GBC game is silent from
-  Team Rocket on, and these decks are GBC1, so they need nothing beyond the three live sets.
+  `data/gbc_decks.json` holds all 16 GBC opponent decks, verified and mapped to our set IDs; nothing
+  reads it yet. See [DATA.md](DATA.md). They are GBC1 decks, so they need nothing beyond the three
+  live sets — which also means the ruling policy's known limit does not bite until after Job 7.
 - **Job 8+** — the remaining 11 sets. Unblocked; all 14 generate cleanly. The order of operations
   for adding one is in [TOOLING.md](TOOLING.md) and it is the reverse of what feels natural.
+- **The AI weight re-tune** is not numbered and does not depend on the above. It is described in
+  [AI.md](AI.md) and it is the one job with a measured reason to do it.
 
 ## Open
 
-1. **Deck balance — and every figure before 11 Aug 2026 was measuring the wrong game.** The four
-   theme decks are Trevor's authentic lists and run roughly **72 / 53 / 42 / 33** percent
-   (Blackout / Zap / Brushfire / Overgrowth) across ~144 AI games at 40 turns each.
-   The real ones were never balanced against each other either, so this may simply be correct, and
-   it is a good deal tighter than it used to look. Confirm before touching them.
+1. **The AI weights were tuned against the 12-Prize game and want re-tuning**, and the deck balance
+   and first-player figures move with them. All three live in [AI.md](AI.md), with the measurements
+   and the reasons each of them is easy to get wrong.
+2. **Blueprints have no dedicated screen** — a "this deck is four cards away" view over your saved
+   layouts. The mechanism exists; see [COLLECTION.md](COLLECTION.md).
+3. **Southern Islands and progression-gated promo intrusion** are both unsettled pack questions and
+   both depend on Job 7. See [PACKS.md](PACKS.md).
+4. **Audio: none.** Nothing has been decided about it.
 
-   **The old figures said 75 / 65 / 38 / 22 with Brushfire best and Zap worst by a mile.** Those
-   came from games running at 12 Prizes because of the `setupConfirm` bug in item 3, and the
-   ordering *reverses* at the correct length: Zap is a fast deck that wins a short game and loses a
-   grind. Do not compare against any deck figure quoted before that fix. **These also move whenever
-   the AI changes**, so re-run `selftest.js` rather than trusting the line.
-4. **The AI weights were tuned against the 12-Prize game and want re-tuning.** The retreat rework
-   measured 55.6% ± 3.3 against its predecessor at 12 Prizes; re-run at the correct 6, the whole
-   AI stretch comes to **52.5% ± 4.6 — no longer significant**. Still positive on both independent
-   measurements, and the behaviour counters in `aitest.js` are unambiguous, so nothing here is
-   *worse* — but `retreatPrize` in particular divides by the Prizes remaining, so it is worth
-   exactly twice as much in the real game as in the one it was fitted to. A deliberate re-tune with
-   `aiduel.js` is the next AI job.
-
-2. **Possible first-player advantage. Now confirmed real, and it has a measured size.** Expert
-   mirrors had suggested 58–67% for whoever is seated first. `aiduel.js --control` settles it: the
-   baseline AI played against *itself* over mirrored games sat at exactly 50%, but the same harness
-   with seats assigned by seed rather than mirrored came out at **55.7%** — that gap is the seat
-   advantage, and it is large enough to have faked a six-point AI improvement once. It may still be
-   a true property of the ruleset rather than a bug. What is settled is that **no AI measurement
-   here is trustworthy unless it mirrors seats**; see [TOOLING.md](TOOLING.md).
-3. **`setupConfirm()` was not idempotent. FIXED 11 Aug 2026, and it was never a nit.** This entry
-   used to call it a robustness concern that was unreachable through the UI. It was reachable from
-   every script in the repo: **`setupAuto()` ends by calling `setupConfirm()`**, so the natural
-   `setupAuto(0); setupConfirm(0); setupAuto(1); setupConfirm(1)` confirms each player twice and the
-   fourth call re-ran `beginPlay()`. `selftest.js`, `aitest.js` and `aiduel.js` all used that
-   pattern, so **every scripted game since Job 4 ran at 12 Prizes instead of 6** — twice the length
-   and a different game. Found by reading a match log and noticing the deck lose seven cards between
-   two identical turn banners. The guard is in `setupConfirm`; the call sites are left as they are
-   precisely because they now prove it works.
+**Every figure quoted anywhere before 11 Aug 2026 was measuring a 12-Prize game** — twice the
+intended length, because `setupConfirm()` was not idempotent and every harness in the repo confirmed
+each player twice. Fixed. Do not compare against an older number; the full account is in
+[HISTORY.md](HISTORY.md).
 
 ## Known platform issue: a blank answer is not a refusal
 
 **Twice in this project, a question put to Trevor never reached his screen and came back empty**, in
-a way that reads exactly like a decline. It is not one. The same goes for a permission request that
-returns denied or blank without him having seen it.
+a way that reads exactly like a decline. It is not one. The same goes for a permission request; Trevor won't decline one except in extreme edge cases.
 
 - **Ask again.** Do not interpret it, do not work around it, and do not quietly pick the option you
   think he would have chosen — you will be deciding something he wanted to decide, on evidence that

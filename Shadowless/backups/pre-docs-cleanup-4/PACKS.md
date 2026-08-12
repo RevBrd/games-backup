@@ -33,12 +33,11 @@ Energies are #97–102 of 102. Base Set's real breakdown is 16 Rare Holo / 16 Ra
 |---|---|---|
 | `base1` `base4` `gym1` `gym2` `neo1` | 6 cards, blank `rarity` | at the end of the set's own range |
 | `base2` `base3` `base5` `base6` `basep` `neo2` `neo3` `neo4` | **none at all** | n/a |
-| `si1` | n/a — all 18 cards blank | Southern Islands had no rarity concept; it was a fixed boxed set |
 
-Every row was derived from the data and is correct, but note that **`base4` is Base Set 2 and
+Both rows were derived from the data and are correct, but note that **`base4` is Base Set 2 and
 `base5` is Team Rocket**, not the reverse — the codes read backwards and `gen_cards.js` named them
 backwards until 11 Aug 2026. It is Base Set 2 that reprints Energy and Team Rocket that prints none.
-See [DATA.md](DATA.md).
+| `si1` | n/a — all 18 cards blank | Southern Islands had no rarity concept; it was a fixed boxed set |
 
 Rarity tiers present in `CARD_DB` across all 14 sets: Common 359 · Uncommon 358 · Rare 214 · Rare
 Holo 208 · **Rare Shining 10** · Rare Secret 1 · Promo 53.

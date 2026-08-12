@@ -10,12 +10,6 @@ proposed again, or when you want to know why something looks the way it does.
 Live decisions live in `CLAUDE.md` and `COLLECTION.md`. Card-level judgement calls live in
 `RULINGS.md`. This file is the losing side of settled arguments.
 
-**This file is an append-only register and the 200-line target does not apply to it.** Same category
-as [RULINGS.md](RULINGS.md) and [LOGBOOK.md](LOGBOOK.md), and for the same reason: a rejection cannot
-be condensed without deleting the *why*, which is the only part that stops the idea coming back.
-Entries are corrected, never shortened. Added 11 Aug 2026, when this became the destination for
-material trimmed out of the live files — see [MAINTENANCE.md](MAINTENANCE.md).
-
 ## The job history
 
 **Jobs 1 through 4b were built in Claude Chat.** The ten snapshots survive in
@@ -161,92 +155,6 @@ the announcement, the shadow is the fidelity.
 was built alongside `shadow` and lost the A/B — real-world scarcity points the other way. Trevor's
 call was "back pocket, not discarded", so it stays live in the DEV tab and `smoke.js` covers it.
 Do not delete it while tidying.
-
-## `miniCard()` — one face, three screens, and a sentence in the docs that defended it
-
-The live rule is in [LAYOUT.md](LAYOUT.md): there is no compact text-carrying face and do not build
-one. This is the reason there were three attempts.
-
-`miniCard()` printed attack names and rules text in a 150px column. It was the game's only compact
-face, so three separate screens reached for it, and it failed on all three in the same way — a 150px
-column cannot wrap a long word, so it breaks mid-word instead. Opening setup printed "Flamethrower"
-as `Fla/met/hro/wer`. The Trainer pickers were worse: "Fire Spin" rendered **one letter per line**,
-"Twineedle" as `Tw/ine/edl/e`, and every Trainer's rules text was clamped mid-sentence anyway — so
-the information the face existed to carry was the information being destroyed.
-
-**`LAYOUT.md` itself was part of the problem for a job**, which is the part worth remembering. It
-said the overlay sheets could keep the compact face "because there is room in a dialog and nothing
-competing for it". There is not: `.sheet .hand .pcard` is the same 150px as the hand. That sentence
-was a confident, specific, actionable claim, and it kept a broken screen broken for as long as it
-stood — the same failure mode as a confident absence claim, one level up.
-
-The pickers took `pullFace()`, the printed scan, instead. A picker is the surface where the card is
-most completely the **subject** — you are choosing which physical card, not steering a token in play
-— and the scan also solves the layout problem by not having one: it is a picture of the answer.
-
-`miniCard()` itself was then kept unused for a job, on the argument that it was the only compact
-text-carrying face we had and the next session wanting one should find it rather than rebuild it.
-`LAYOUT.md` set its own trigger — *if nothing has claimed it by the time Job 6 lands* — Job 6 landed
-with it still at zero callers, and Trevor called it. Deleted 11 Aug 2026, after checking that
-`pc-atkname` has four other producers so the picker's guard test stays real rather than vacuous.
-
-## The coin toss: moving it into the ticker
-
-**Proposed and rejected, 10 Aug 2026.** The live rule it produced is in [LAYOUT.md](LAYOUT.md):
-anywhere the coin might move to has to clear the ticker.
-
-Trevor's report was that the centre line gets in the way, and testing had convinced him the
-attribution worry — that a coin on your side of the table reads as *your* coin, when roughly half of
-all flips are the opponent's — was overblown. Both fair, and the ticker looked like the right home
-because it is already where flip *results* print, which would have put the coin and its outcome in
-one place instead of two.
-
-**It was wrong for a reason neither of us had written down: you read the log underneath the coin
-while it spins.** The centre line puts the toss directly above the ticker, so the text explaining
-what is being flipped for stays legible for the whole animation. Landing the coin *in* the ticker
-would cover the one thing a player is doing during the two seconds the coin is in the air.
-
-Trevor caught this himself, and it is a better argument than the attribution one — that one is about
-what a position *implies*, this one is about what it *costs you*. Worth keeping as a pattern: when a
-placement argument is about connotation, look for the one about occlusion.
-
-## Every scripted game ran at 12 Prizes, from Job 4 to 11 Aug 2026
-
-Fixed, and it was never a nit. The Open list in `CLAUDE.md` used to call `setupConfirm()`'s lack of
-idempotence a robustness concern that was unreachable through the UI. It was reachable from every
-script in the repo: **`setupAuto()` ends by calling `setupConfirm()`**, so the natural
-`setupAuto(0); setupConfirm(0); setupAuto(1); setupConfirm(1)` confirms each player twice, and the
-fourth call re-ran `beginPlay()` and dealt a second set of Prizes.
-
-`selftest.js`, `aitest.js` and `aiduel.js` all used that pattern. Nothing failed — the games were
-simply twice as long and a different game. **The deck balance table reversed when it was fixed**, Zap
-going from worst at 22% to second at 53%, because Zap is a fast deck that wins a short game and loses
-a grind. A/B comparisons survived it, since both sides played the same wrong game, but every absolute
-figure taken before the fix is void.
-
-Found by reading a match log and noticing the deck lose seven cards between two identical turn
-banners — not by a test. The guard is now in `setupConfirm`; the call sites were deliberately left as
-they were, because they now prove it works. See [AI.md](AI.md) for what it means for the measurements.
-
-## Tooling provenance
-
-**Why `tools/chat-era/` cannot run**, which matters because it looks like a one-line fix.
-`gen_cards.py` reads a clone of the `pokemon-tcg-data` repo from `/tmp/ptcg/*.json` and a
-spreadsheet from `/mnt/user-data/uploads/` — both Claude Chat sandbox paths, neither of which
-survived the port. The JSON corpus has since been re-downloaded to `data/raw/`, so that half is
-recovered. It also imports `openpyxl`, which is not installed. Python *is* installed on this machine
-now, which is exactly why this needs writing down. Keep the files: `gen_cards.py` is a clear
-specification of what the output must look like, and it is how we know the deck lists came from
-named spreadsheet sheets.
-
-**How the Node replacements were verified**, which is the check to reproduce if either changes.
-`build.js` was run against the recovered sources and its output diffed against the artifact as it
-arrived from Chat — byte-identical, title line aside, which is what established that the recovered
-sources are the real ones and not a stale copy. `gen_cards.js` was verified twice: against the CSVs
-it reproduced all 90 pre-existing cards exactly, field by field, before being widened to 102; then,
-migrated to read the upstream corpus instead, the two independent sources were diffed against each
-other and produced **byte-identical output for all 102 Base Set cards**. That agreement is what
-justifies trusting the corpus, and it is repeatable if anyone ever doubts it.
 
 ## Ideas raised and shelved, with the reason
 

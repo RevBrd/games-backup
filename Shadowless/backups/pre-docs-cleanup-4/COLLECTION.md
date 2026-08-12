@@ -80,7 +80,7 @@ already caps it in a way the player can see and fix. The second because the labo
 what makes a collection mean anything — `~/.claude/reference/game-design.md` says the work is the
 setup. `deckgen.js` stays for **opponent** decks in Job 7, and behind the DEV tab for testing.
 
-**Deck legality already exists: `Engine.prototype.validateDeck` in [engine.js](src/engine.js).**
+**Deck legality already exists: `Engine.prototype.validateDeck`, [engine.js:114](src/engine.js:114).**
 Exactly 60, four-by-name with basic Energy correctly exempt, at least one Basic, the
 unimplemented-card refusal, and an evolution-line warning. **Do not write a second one.**
 `collection.js` adds only the ownership layer on top; the two are deliberately separate because

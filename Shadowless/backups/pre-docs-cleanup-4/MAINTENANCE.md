@@ -1,7 +1,7 @@
 # Shadowless — maintaining the documentation
 
-This tree is a dozen files and it will drift. This is how to bring it back, written 10 Aug 2026 by
-the instance that did the second split and extended by each one since, for whoever does the next.
+This tree is nine files and it will drift. This is how to bring it back, written 10 Aug 2026 by the
+instance that did the second split, for whoever does the third.
 
 It is about **the docs**, not the code. It generalises to any game whose docs outgrew one file, but
 the examples are from here.
@@ -100,37 +100,21 @@ turns a settled question back into an open one.
 document nobody recognises. `LAYOUT.md` came through this pass at exactly its original length
 because it was already the right shape, and shortening it would have meant deleting specifics.
 
-**The target is 200 TOTAL lines — `wc -l`, blanks included.** Trevor settled the unit on 11 Aug 2026
-after the fourth pass found the tree had been measured two ways: the third pass reported `LAYOUT.md`
-"ends at 283" for a file `wc -l` calls 357, because it had counted non-blank lines. Nobody noticed,
-and the file everyone was protecting as slightly over was 78% over. **Quote the unit whenever you
-quote a number**, and prefer running the command to reading a figure in prose.
+**The 200-line target is a target**, and two files are exempt from it outright. Being 8% over beats
+cutting the paragraph that stops the next session losing a morning. If you go over, say why in the
+commit.
 
-Being over beats cutting the paragraph that stops the next session losing a morning. If you go over,
-say why in the commit.
-
-- **Exempt: `LOGBOOK.md`, `RULINGS.md` and `HISTORY.md`.** All three are append-only registers, and
-  none can be shortened without deleting something — a session's account of its own work, a ruling
-  somebody then has to make again, or a rejection's *why*, which is the only part that stops the idea
-  coming back. Correct entries in them; never condense them. `HISTORY.md` joined the list on the
-  fourth pass, when it became the destination for material trimmed out of the live files. Any future
-  file of this shape should say so in its own header, as all three now do.
-- **`LAYOUT.md` is the one to watch, and it has now survived two split proposals.** The third pass
-  proposed *sizing vs. interaction* and withdrew it, correctly: the coin toss and the opening-setup
-  screen are both mostly geometry. The fourth pass took it to **302** without splitting — by moving
-  `tools/shot.js` and the DEV tab to `TOOLING.md` (they are instruments, and that reverses an earlier
-  call that they belonged where they are used) and two settled narratives to `HISTORY.md`. It is
-  still over, deliberately: every rule in it was paid for with a wrong version first, and Trevor's
-  constraint is that the visual material stays together. **The seam that is still available** is
-  *how the board sizes itself* vs. *what happens when you touch it* — the coin toss, opening setup
-  and the action bar are ~100 lines that never mention the fitter. Trevor has seen that proposal and
-  not taken it. Don't take it for him.
-- **`CLAUDE.md` has an honest floor around 250 and this is worth knowing before you try.** The fourth
-  pass took it from 313 to 259 by moving out everything that was not orientation — the AI material,
-  the data material, the job history, three settled arguments. What is left is the index, the status,
-  the tree, the commands, the standing decisions and the six facts that have each cost a session an
-  hour. Getting under 200 from there means deleting orientation, which is the one thing this file is
-  for. Don't spend an hour rediscovering that.
+- **Exempt: `LOGBOOK.md` and `RULINGS.md`.** Both are append-only registers, and neither can be
+  shortened without deleting something — a session's account of its own work, or a ruling somebody
+  then has to make again. Correct entries in them; never condense them. Any future file of this
+  shape should say so in its own header, as those two do.
+- **`LAYOUT.md` is the one to watch.** 243 after the first pass, 277 after the second, 283 after the
+  third — and it is the file where cutting specifics costs the most, because every rule in it was
+  paid for with a wrong version first. A split was proposed at the third pass and **withdrawn**: the
+  obvious cleave (sizing vs. interaction) does not survive contact, because the coin toss and the
+  opening-setup screen are both mostly geometry, and what is left over is one 37-line section. If
+  you are about to propose it again, read those two sections first and see whether you still agree.
+  Trevor's constraint is that the visual material stays together.
 
 ## The procedure
 
@@ -171,30 +155,3 @@ Worth matching, because the tree reads as one voice and that is load-bearing for
 - **Tables for parallel facts, prose for reasoning.** Don't put an argument in a table cell.
 - **Every file opens by saying who should read it and when**, and points back at `CLAUDE.md`. That
   header is what makes the tree navigable rather than a pile.
-- **Never cite a line number.** `COLLECTION.md` pointed at `engine.js:114` for a function that had
-  moved to 126, and `LAYOUT.md` at `ui.js:389` for a comment at 459. Both rotted silently within a
-  job. Cite the **symbol** and let the reader grep — that reference cannot go stale, and it survives
-  the edit that moves the code.
-
-### The one-line why, plus the link
-
-**Trevor's shape, agreed 12 Aug 2026: leave the finding in the live file, move the account to the
-register, and link between them.** Adopted, with one boundary, because the tree contains the evidence
-for both halves.
-
-The boundary is that **the why is usually what makes the rule get obeyed.** `LAYOUT.md`'s own header
-warns that several of its rules look wrong until you know what they protect. Strip those to bare
-claims and the next reader skims, sees a rule that looks wrong, does not click, and "fixes" it. The
-click is cheap for a human, who can hover and bail; it is expensive for an instance, which has to
-decide whether to open the file *before* knowing what is in it. And every link is a new thing that
-can rot — `LOGBOOK.md` exists because the Packs Turn Log died of a deleted pointer while the file
-itself sat untouched.
-
-So the pattern is neither the full account nor a bare claim. **One line of why, then the link:**
-
-> **Anywhere the coin might move to has to clear the ticker.** You read the log underneath the coin
-> while it spins. *[Both arguments, and why this one won →](HISTORY.md)*
-
-The test for what stays: **would someone about to break this rule be stopped by this sentence?** If
-yes, inline. If it is how-we-got-here — alternatives weighed, who proposed what, the two versions
-that failed first — it links out.

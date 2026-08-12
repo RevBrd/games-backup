@@ -8,14 +8,49 @@ know what they are protecting against.
 The one-line summary: **the board fits itself to the window by measuring, never by targeting a
 number, and never by a media query.**
 
-## Looking at it, and reading it back
+## Seeing it: `tools/shot.js`
 
-**You do not have to guess and you do not have to ask for a screenshot.** `tools/shot.js` renders the
-built game at any exact viewport, and the DEV tab prints what the fitter actually did with it — the
-applied zoom, the layout chosen, the mat cloth width, the spare desk. Both are documented where they
-are run, in **[TOOLING.md](TOOLING.md)**, along with the two traps that will otherwise bite: the
-screenshot is stretched relative to the layout, so **judge proportion from the DEV tab and not off
-the PNG**.
+You do not have to guess and you do not have to ask for a screenshot.
+
+```bash
+node tools/shot.js out.png --size 1366x768 --board --seed 4242 --turns 4
+node tools/shot.js out.png --size 1915x863 --board --js "UI.devTab='dev'; render()"
+```
+
+It drives the locally installed Chrome headless against the built file. `--board` skips the title
+screen and deals a real game; `--turns N` lets the AI play N plies synchronously so the shot is of
+a board with something on it; `--js` runs anything you like in the page first. Chrome cannot be
+handed a script on the command line, so the tool copies the built HTML **beside itself** — the card
+scans load from a relative path, and a copy in the system temp folder would show a board with every
+face missing and look like a regression.
+
+Two things about it that will bite otherwise:
+
+- **`--window-size` is not the viewport.** Headless Chrome reserves a virtual frame and a scrollbar
+  gutter, so asking for `1366x768` lays the page out at **1348x672** — 96px short, which is more
+  than the whole action bar. The tool measures the offset every run (via a `--dump-dom` probe) and
+  corrects the window so `--size` really is the viewport. Do not replace that with a constant.
+- **The PNG is stretched.** The image comes out at the *window* size while the page was laid out at
+  the *viewport* size, and the frame is 96px tall against an 18px gutter, so the bitmap is stretched
+  about 1.13x vertically and 1.01x horizontally. Fine for "is the text clipped", wrong for "is that
+  gap too big". The tool prints the skew. **Judge proportion from the DEV tab, not off the PNG.**
+
+## Reading it: the DEV tab
+
+The DEV tab's Viewport panel prints the page size, the device pixels, the display scaling, and then
+what the fitter actually did with all of it — the applied zoom, which layout was chosen, the board
+column's size, the mat cloth's width and whether it got the height it wanted, and the desk showing
+between the mat and the hand.
+
+Those bottom lines are filled by `writeViewportDump()`, which `render()` calls **after**
+`chooseLayout()` and `layoutHand()`. It has to: `renderDev()` runs while the rail is still being
+built, so the board column it wants to measure is not in the document yet and every size reads 0.
+That is not a hypothetical — it shipped that way for one build and reported a confident row of
+zeroes.
+
+The "spare desk" figure measures `handpanel.offsetTop` against the mat's bottom rather than
+subtracting heights, because the gap is made by the hand panel's `margin-top:auto` and therefore
+lives *inside* `scrollHeight` where a height subtraction cannot see it.
 
 ## Why the mat has a visible rim
 
@@ -123,13 +158,24 @@ and what its attacks cost against what they do. The words were the whole of the 
 clamped Trainer paragraph was cut off mid-sentence anyway — which is worse than not showing it.
 Hovering peeks the real printed card into the rail; that is where the words live.
 
-**There is no compact text-carrying face any more, and do not rebuild one.** `miniCard()` was it,
-and it was deleted on 11 Aug 2026 — a gravestone comment in `ui.js` marks where it was. **A dialog
-does not have more room than the hand**, which this file claimed for a job and which is why opening
-setup printed "Flamethrower" as `Fla/met/hro/wer`: `.sheet .hand .pcard` is the same 150px. Three
-separate screens replaced that face for the same reason, and `smoke.js` asserts a picker renders no
-`pc-atkname` specifically to stop a fourth trying. **Opening setup uses `handCard`** like the real
-hand. *[The three screens, and the sentence in this file that caused it →](HISTORY.md)*
+**A dialog does not have more room, and this file used to claim it did.** The line here said the
+overlay sheets could keep the old compact face "because there is room in a dialog and nothing
+competing for it". They cannot: `.sheet .hand .pcard` is the same 150px, so the opening-setup screen
+printed "Flamethrower" as `Fla/met/hro/wer` for as long as that sentence stood. **Opening setup now
+uses `handCard`** like the real hand — see the section below.
+
+**The Trainer pickers were worse, and they use the real scans.** The guess was that they might
+legitimately keep a text-carrying face for the rules text, and one screenshot settled it: in the
+picker's column "Fire Spin" rendered *one letter per line*, "Twineedle" as `Tw/ine/edl/e`, and every
+Trainer's text was clamped mid-sentence — so the information the guess was protecting was the
+information being destroyed.
+
+**`miniCard()` was that face, and it is gone as of 11 Aug 2026.** It was kept unused for a job on
+the argument that it was the only compact text-carrying face we had and the next session wanting one
+should find it rather than rebuild it. Nothing claimed it, the trigger this file set — *if nothing
+has by the time Job 6 lands* — fired, and Trevor called it. A comment at [ui.js:389](src/ui.js:389)
+marks where it was and why. **Do not rebuild one**: three separate screens replaced it for the same
+reason, and `smoke.js` asserts a picker renders no `pc-atkname` specifically to stop a fourth trying.
 
 A picker shows `pullFace()`, the printed scan, because a picker is the surface where the card is
 most completely the **subject** — you are choosing which physical card, not steering a token in
@@ -208,10 +254,19 @@ That no-reflow property is load-bearing rather than tidy. The board behind it is
 pre-action snapshot for the duration, and a coin that resized the mat would move the very cards you
 are waiting on.
 
-**Anywhere the coin might move to has to clear the ticker.** You read the log underneath the coin
-while it spins, so landing the coin *in* the ticker would cover the one thing a player is doing
-during the two seconds it is in the air. Moving it there was proposed and rejected on 10 Aug 2026;
-*[both arguments, and why this one beat the attribution one →](HISTORY.md)*
+**Proposed and rejected, 10 Aug 2026: moving it into the on-mat ticker zone.** Trevor's report was
+that the centre line gets in the way, and testing had convinced him the attribution worry above was
+overblown — a coin on your side does not actually read as only your coin. Both fair, and the ticker
+looked like the right home because it is already where flip *results* print, which would have put
+the coin and its outcome in one place instead of two.
+
+**It was wrong for a reason neither of us had written down: you read the log underneath the coin
+while it spins.** The centre line puts the toss directly above the ticker, so the text explaining
+what is being flipped for stays legible for the whole animation. Landing the coin *in* the ticker
+would cover the one thing a player is doing during the two seconds the coin is in the air. Trevor
+caught this himself, and it is a better argument than the attribution one — that one is about what a
+position implies, this one is about what it costs you. **Anywhere the coin might move to has to
+clear the ticker.**
 
 **The result is announced in exactly one place.** It used to be in the action bar; the bar now says
 only *why* the game has stopped. Having it in both made the mat's version read as decoration rather

@@ -144,8 +144,57 @@ passed every unit test while the AI silently never used it, because `bestAttackS
 `{score, idx}` and the first scorer compared the objects. A Power the AI never reaches for is not
 a working Power, and no other suite can see it.
 
-## What this file deliberately does not cover
+## The silent-failure surface
 
-**How `ai.js` scores any of it is in [AI.md](AI.md)**, and it is not a footnote: a verb the AI
-cannot score is free at runtime, misplayed forever, and invisible to every suite. If you add a verb,
-you are not done when `powertest.js` goes green — read the silent-failure surface there.
+`ai.js` scores attacks with a `switch` over the verb list, and **a verb it has no case for scores as
+plain base damage**. Nothing throws, no suite goes red, and the card works perfectly for the human —
+the AI just misvalues it forever. That is the same failure the deck validator exists to prevent, one
+level up: an unimplemented *card* can never silently do nothing, but an unscored *verb* currently
+can.
+
+The runtime behaviour is right — throwing mid-game over a scoring gap would be worse than
+misplaying — so the guard belongs in the tooling. **It was built in Job 6a and it lives in
+`selftest.js`:** walk every verb appearing in `effects.js`, and assert `ai.js` either scores it or
+it sits on `UNSCORED_ON_PURPOSE`. It reports `96 of 97 verbs scored` today and it found **eleven**
+the first time it ran — Thunderbolt believed free, Super Fang valued at zero, Earthquake's damage to
+its own bench invisible. None of the eleven appears in a theme deck, so 480 full games ran
+byte-identical before and after the fix; nothing but this check could see them.
+
+**The opt-out list is the point, and it is deliberately almost empty.** One verb is on it
+(`REQUIRE_DEF_STATUS`, a legality gate the engine refuses outright, so an illegal attack never
+reaches the AI to be scored). Putting a verb there is a decision somebody made; leaving one off is
+an oversight, and before the check the two were indistinguishable from outside.
+
+## The Active and the Bench are scored in different units
+
+`potential()` values an Active's attacks with `scoreAttackHypothetical` — full expected value — and
+a benched Pokemon's with the printed damage number. **Anything comparing the two is comparing two
+scales**, and `bestAffordableDamage()` exists as the honest comparator for decisions that must.
+
+Measured across ~64 games before assuming the worst, because the obvious story turned out to be
+wrong. **The means are nearly identical** (27.0 EV against 25.4 raw) — `scoreAttack` is calibrated
+so a point is roughly a damage, so most of the time the two agree. It is the **tail** that diverges:
+
+| | p50 | p90 | p95 | p99 |
+|---|---|---|---|---|
+| Active, expected value | 20 | 81 | 99 | 115 |
+| Bench, printed damage | 30 | 50 | 50 | 60 |
+
+**16.7% of Active evaluations exceed 55**, which is knockout scale — a number the bench branch
+cannot produce at any merit, because printed damage stops around 60.
+
+So state the fault precisely, since the loose version invites a bad fix: the Active is **not**
+over-valued. Its number is right, a knockout really is worth more, and the Active deserves a premium
+anyway for being the one that can act this turn — `teamReadiness` weights it ×4 deliberately. What
+is wrong is that **a benched Pokemon has no way to say "I could take a Prize if you promoted me."**
+
+Left unfixed on purpose. Closing it means making expected value computable for a slot that is not
+Active, which is a real refactor of `scoreAttack`'s relationship with engine state, and the measured
+prize is one in six comparisons in a direction that is partly correct already. **If you do take it
+on, duel it** — and read the tail, not the mean, or you will conclude there was never a problem.
+
+**A verb that must not be *worth* anything is not the same as one that must not be scored**, and the
+distinction matters because the list is the smaller of the two. Peek and Clairvoyance are worthless
+to a bot that already reads full engine state — so `ai.js` scores `PEEK` at `-Infinity` on purpose,
+with a comment saying why. That is a live declaration in the file that does the work, which beats an
+entry on an opt-out list in a file that does not.
