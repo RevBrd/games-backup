@@ -62,12 +62,12 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
   bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace,
-  addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY } = ctx;
+  addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, deckSummary } = ctx;
 
 console.log('\n=== BUILT ARTIFACT SMOKE ===');
 
@@ -174,7 +174,7 @@ T('targeting scopes referenced by the UI all exist in the engine', () => {
 });
 
 T('log renders newest-first', () => {
-  UI.seedDraft = '3'; startMatch(); UI.E.setupAuto(0);
+  UI.seedDraft = '3'; UI.flipDelay = 0; startMatch(); UI.E.setupAuto(0);
   for (let i = 0; i < 6; i++) {
     const s = UI.E.state;
     const pi = s.pendingPromote !== null ? s.pendingPromote : s.active;
@@ -226,8 +226,12 @@ T('both sides are playable to completion', () => {
 
 // --- coin-flip presentation -------------------------------------------------
 // Build a board where the player's next attack definitely flips a coin.
+// startMatch() now presents the opening who-goes-first flip, so a helper that
+// wants a board to poke at has to get past it first — hence flipDelay 0 for the
+// deal, and the real value set once the board is rigged. Tests ABOUT the opening
+// flip are the only ones that want it the other way round.
 function riggedFlipBoard(flipDelay) {
-  UI.seedDraft = '5'; startMatch(); UI.E.setupAuto(0);
+  UI.seedDraft = '5'; UI.flipDelay = 0; startMatch(); UI.E.setupAuto(0);
   const E = UI.E, s = E.state;
   s.active = 0; s.phase = 'main'; s.pendingPromote = null; s.promoteQueue = [];
   const vulpix = E.mkSlot({ uid: 90001, id: 'base1-68' });      // Confuse Ray: STATUS_ON_FLIP
@@ -238,6 +242,68 @@ function riggedFlipBoard(flipDelay) {
   UI.flipDelay = flipDelay;
   return E;
 }
+
+// The flip that decides who goes first was resolved inside newGame() and only
+// ever reported as a line of log text — the one coin in the match the player was
+// told about rather than shown. It is also the flip with the largest measured
+// consequence in the game.
+T('the game opens by presenting the who-goes-first flip', () => {
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth';
+  UI.seedDraft = '5'; UI.flipDelay = 2000; startMatch();
+  if (!presenting()) throw new Error('the opening flip was not presented');
+  if (!UI.pres.banner || UI.pres.banner.reason !== 'who goes first')
+    throw new Error('wrong banner: ' + JSON.stringify(UI.pres.banner));
+  drain();
+  return !presenting() && UI.E.state.phase === 'setup';
+});
+
+// The coin lands on the mat's centre line and the setup sheet is an overlay, so
+// a sheet drawn during the flip covers the thing being presented.
+T('the setup sheet waits until the opening flip has landed', () => {
+  const hasSetup = () => {
+    const deep = n => String(n.className || '').split(' ').indexOf('setupmat') >= 0
+      || (n.children || []).some(deep);
+    return deep(document.getElementById('app'));
+  };
+  UI.seedDraft = '5'; UI.flipDelay = 2000; startMatch();
+  render();
+  const hiddenDuring = !hasSetup();
+  drain();
+  render();
+  return hiddenDuring && hasSetup();
+});
+
+// Suppressing the setup sheet for the flip exposed the board behind it — and
+// `newGame` has already auto-set-up the opponent by then, so their whole opening
+// position was on show before you chose yours. Both sides place face down and
+// turn up together; the frozen snapshot is where that is enforced.
+T('the opening flip does not reveal the opponent\'s setup', () => {
+  UI.seedDraft = '5'; UI.flipDelay = 2000; startMatch();
+  const hiddenInView = UI.view.players[1].active === null
+                    && UI.view.players[1].bench.length === 0;
+  // ...while the real state has them set up all along, so nothing was destroyed.
+  const realBehind = UI.E.state.players[1].active !== null;
+  drain();
+  return hiddenInView && realBehind && UI.E.state.players[1].active !== null;
+});
+
+// THE LEAK: diffForFx reads the real post-action state, so arming it at dispatch
+// time lit the prize tile, the KO flash and the hit flash while the coin was
+// still in the air. On a flip that decides whether something survives, the
+// flashing prizes announced the result about two seconds early. The board was
+// always frozen behind the coin; the effects were what escaped the freeze.
+T('no visual effect fires while the coin is still in the air', () => {
+  riggedFlipBoard(2000);
+  UI.fx = {};
+  dispatch(0, { t: 'attack', idx: 0 });     // Confuse Ray: 10 damage plus a flip
+  if (!presenting()) throw new Error('presentation did not start');
+  const quietDuring = Object.keys(UI.fx).length === 0;
+  drain();
+  // ...and the effects land the moment the board unfreezes, in the same frame.
+  const firedAfter = Object.keys(UI.fx).length > 0;
+  UI.flipDelay = 2000;
+  return quietDuring && firedAfter;
+});
 
 T('an attack with a coin flip enters presentation and freezes the board', () => {
   riggedFlipBoard(2000);
@@ -390,6 +456,46 @@ T('a mirror match is allowed and both sides keep the chosen deck', () => {
   const ok = UI.E.state.players[0].deckDef.name === 'Blackout'
           && UI.E.state.players[1].deckDef.name === 'Blackout';
   UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth';
+  return ok;
+});
+
+// The starter deck is created in the save under the THEME DECK'S OWN NAME, so a
+// name alone stopped identifying a deck the moment you edited yours. A name-only
+// lookup handed the opponent your edited list — and it was only ever visible in
+// a mirror, which is why it survived. Your side reads the save; theirs never does.
+T('editing your copy of a theme deck does not change the opponent\'s', () => {
+  const mine = UI.save.decks.find(d => d.name === 'Brushfire');
+  const original = mine.list.map(e => e.slice());
+  // Drop the two Tangela and pay for them in Grass Energy. Still 60, still legal.
+  mine.list = mine.list
+    .filter(e => e[1] !== 'base1-66')
+    .map(e => (e[1] === 'base1-99' ? [e[0] + 2, e[1]] : e.slice()));
+
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Brushfire';
+  UI.seedDraft = '13'; startMatch();
+  const tangela = p => (UI.E.state.players[p].deckDef.list
+    .find(e => e[1] === 'base1-66') || [0])[0];
+
+  const ok = tangela(0) === 0 && tangela(1) === 2;
+  mine.list = original;
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth';
+  return ok;
+});
+
+// Same bug, display side: the select screen's OPPONENT panel is drawn from the
+// same lookup, so it described your deck under their heading.
+T('the opponent panel summarises the theme deck, not your edited copy', () => {
+  const mine = UI.save.decks.find(d => d.name === 'Brushfire');
+  const original = mine.list.map(e => e.slice());
+  mine.list = mine.list
+    .filter(e => e[1] !== 'base1-66')
+    .map(e => (e[1] === 'base1-99' ? [e[0] + 2, e[1]] : e.slice()));
+
+  const theirs = deckSummary('Brushfire', 'theme');
+  const yours = deckSummary('Brushfire', 'mine');
+  const ok = theirs.k.pokemon === 22 && yours.k.pokemon === 20;
+
+  mine.list = original;
   return ok;
 });
 
@@ -1041,6 +1147,27 @@ T('adding and removing changes the working copy, not the save', () => {
   ctx.builderAdd('base1-58', '', -1);
   return ctx.builderTotal(UI.builder) === 1 && JSON.stringify(UI.save.decks) === savedBefore;
 });
+
+// render() rebuilds the DOM, so a scroll position survives only if something
+// carries it across. Building a deck means clicking the same grid dozens of
+// times, and every click used to return you to the top of it.
+T('the pool keeps its scroll position when you add a card', () => {
+  ctx.openBuilder(null);
+  UI.scrollers['builder-pool'].scrollTop = 640;   // as if you had scrolled down
+  ctx.poolClick('base1-58');                      // adds a card and re-renders
+  return UI.scrollers['builder-pool'].scrollTop === 640;
+});
+
+// ...and does not keep it when the list underneath has been replaced, which is
+// the other half: holding position through a filter change lands you in the
+// middle of results you never scrolled past.
+T('changing a pool filter returns you to the top', () => {
+  UI.scrollers['builder-pool'].scrollTop = 640;
+  UI.poolFilter.type = 'F'; ctx.resetScroll('builder-pool'); render();
+  const top = UI.scrollers['builder-pool'].scrollTop === 0;
+  UI.poolFilter.type = 'all'; ctx.resetScroll('builder-pool'); render();
+  return top;
+});
 T('removing the last copy drops the row entirely', () => {
   ctx.builderAdd('base1-58', '', -1);
   return UI.builder.list.length === 0;
@@ -1217,6 +1344,7 @@ function findByClass(node, cls) {
 
 function actionBoard() {
   UI.seedDraft = '4242';
+  UI.flipDelay = 0;              // skip the opening flip; these tests are about the bar
   startMatch();
   UI.E.setupAuto(0);
   const s = UI.E.state;

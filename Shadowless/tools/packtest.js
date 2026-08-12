@@ -146,7 +146,7 @@ check(energyPerPack > 2.0 && energyPerPack < 3.2, 'Energy averages a little abov
 head('Do the odds match the pacing schedule in PACKS.md?');
 
 near(N / tally.holo, 3, 2, 'Rare slot is holo about one time in three');
-near(N / tally.firstEd, 25, 4, '1st Edition: one pack in ~25');
+near(N / tally.firstEd, 20, 3, '1st Edition: one pack in ~20');
 near(N / tally.rh, 10, 4, 'Reverse Holo: one pack in ~10');
 near(N / tally.sh, 40, 6, 'Shiny: one pack in ~40');
 near(N / tally.sl, 200, 12, 'Shadowless: one pack in ~200');

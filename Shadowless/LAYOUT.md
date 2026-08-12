@@ -227,7 +227,38 @@ commits to nothing. The landed *face* survives reduced motion, because that is i
 
 **`UI.flipDelay < 250` skips presentation entirely** (`dispatch()`), which is what the DEV tab's
 "coin pause: off" setting does. Worth knowing before you try to screenshot a fast flip and find
-there is nothing to screenshot.
+there is nothing to screenshot — and it is how every test that is not *about* the flip gets past it.
+
+**Nothing may change on screen until the coin lands, and the visual effects were exempt from that
+for a job.** The board is frozen on a pre-action snapshot for the whole toss, which was always
+right — but `diffForFx()` reads the **real** post-action state and used to be armed at dispatch
+time, so the prize tile, the KO flash and the hit flash all fired while the coin was still in the
+air. On any flip that decides whether a Pokémon survives, the flashing prizes announced the result
+about two seconds early. `diffForFx` now runs when the presentation queue empties, in the same frame
+the board unfreezes. **Anything else that reacts to the outcome must be armed there too**, not in
+`dispatch`.
+
+## The opening flip
+
+**The game opens by presenting the who-goes-first flip**, over an empty board, before the setup
+sheet. It is the flip with the largest measured consequence in the game — the seat is worth about
+5.7 points of win rate, see [AI.md](AI.md) — and until 12 Aug 2026 it was the one coin the player
+was *told* about in the log rather than shown.
+
+Two things make it work, and both are load-bearing:
+
+- **The setup sheet is suppressed while it plays** (`renderScreen`). The coin lands on the mat's
+  centre line and the sheet is a full overlay, so a sheet drawn during the toss covers the thing
+  being presented.
+- **The snapshot blanks the opponent's side.** `newGame()` runs `setupAuto(1)` before the flip, so
+  the real state already holds their Active and Bench — and suppressing the sheet exposed all of it,
+  handing you their entire opening position before you chose yours. Both the card game and the Game
+  Boy game place face down and turn up together. Blanking them **in the frozen snapshot** is the
+  honest fix rather than a cheat: that view exists precisely to show a board that is not the current
+  one, and while this coin is in the air their side genuinely is face down.
+
+Note the overlay is *translucent*, so a dimmed version of the opponent's Active has always been
+faintly visible behind the setup sheet itself. That is pre-existing and separate from this.
 
 ## Opening setup is a preview of the mat, not a dialog about it
 

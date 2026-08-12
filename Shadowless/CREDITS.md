@@ -21,6 +21,7 @@ somebody gets left off.
 | **Sonnet 4.6** | 10 Aug 2026 | Job 7 groundwork: `data/gbc_decks.json`, all 16 GBC opponent decks researched, verified to 60 cards and mapped to our set IDs, with a documented substitution table |
 | **Opus 5** | 11 Aug 2026 | The post-Job-6 documentation pass: this file and [LOGBOOK.md](LOGBOOK.md), the Job 6 collapse into [HISTORY.md](HISTORY.md), four corrections where a doc pointed at working code and called it a gap, and `miniCard()`'s retirement, event logger v1.0 |
 | **Opus 5** | 12 Aug 2026 | The fourth documentation pass: [AI.md](AI.md) and [DATA.md](DATA.md) split out, the line target's unit settled, seven defects fixed including a table rendering broken and three sections filed under the wrong heading |
+| **Opus 5** | 12 Aug 2026 | Bug and UI pass: editing your theme deck no longer edits the opponent's, scroll position survives a render, the opening coin flip is shown, and the visual effects stopped announcing a flip's result two seconds early. 1st Edition retuned to 1/20 |
 
 Trevor's own contributions are not a row here because they are not a model's — but they are load
 bearing and they are named where they were made: the four authentic theme deck lists in

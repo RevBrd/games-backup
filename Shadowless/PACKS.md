@@ -98,7 +98,7 @@ should be able to happen, and should be funny when it does.
 | Axis | Invented? | Rolls against | Odds | Packs to expect one | Wins @2/win |
 |---|---|---|---|---|---|
 | Holo Rare | no | the Rare slot | 1/3 | — | — |
-| 1st Edition | yes | **whole pack** | 1/25 | ~25 | ~13 |
+| 1st Edition | yes | **whole pack** | 1/20 | ~20 | ~10 |
 | Reverse Holo | yes | each of the 10 Common/Uncommon slots | 1/100 | 10 | 5 |
 | Promo/SI intrusion | yes | whole pack, replaces 1 Common | 1/100 | ~100 | ~50 |
 | Shiny | yes | each of 11 slots | 1/440 | 40 | 20 |
@@ -109,6 +109,10 @@ Notes on the invented ones:
 
 - **1st Edition is a whole-pack roll.** When it hits, every card in that pack renders as its 1st
   Edition version — a single flashy moment, distinct in kind from the long-tail per-card chases.
+  **Retuned from 1/25 to 1/20 on 12 Aug 2026, Trevor's call.** It is the only axis that dresses a
+  whole pack rather than one card, so it is the one the player experiences as an *event*; at 1/25 it
+  was rare enough to be forgettable between sightings. It sits outside the ~5x ladder below on
+  purpose — that ladder is the per-card chases, and this is not one.
   It is **independent of Shadowless**, because across the full 14-set pool the two are independent
   facts about a print run; the nesting only holds for Base Set. See [HISTORY.md](HISTORY.md).
 - **Reverse Holo borrows a later-era term.** Real reverse holo did not exist until the e-Card era
@@ -124,9 +128,9 @@ Notes on the invented ones:
 - **Promo/SI intrusion replaces a Common slot, never the Rare** — the Rare stays the pack's
   emotional centre and intrusion is a bonus surprise, not competition for the headline pull.
 
-Verified at 200,000 packs: holo 1-in-3.0, 1st Edition 1-in-25.1, Reverse Holo 1-in-9.9, Shiny
-1-in-39.3, Shadowless 1-in-200.2, Misprint 1-in-897. The ~5x ladder between tiers holds at 3.96x /
-5.09x / 4.48x, so it survives as the rule for extending the table.
+Verified at 200,000 packs: holo 1-in-3.0, 1st Edition 1-in-20.1, Reverse Holo 1-in-9.9, Shiny
+1-in-39.3, Shadowless 1-in-200.2, Misprint 1-in-897. The ~5x ladder between the per-card tiers holds
+at 3.96x / 5.09x / 4.48x, so it survives as the rule for extending the table.
 
 ## The pacing number the economy turns on
 

@@ -89,6 +89,44 @@ legality is a property of the deck and availability is a property of the save.
 **Sandbox ignores ownership on purpose.** It draws from everything implemented, which is what makes
 it the deck for playing against the bespoke cards.
 
+## A deck name does not identify a deck
+
+**The starter is created in your save under the theme deck's own name**, so from your first edit
+onwards "Brushfire" means two different 60-card lists — yours and the printed one. `deckFor(name,
+side)` is the single lookup and **the side is required**:
+
+| | |
+|---|---|
+| `'mine'` | your save's deck. The only kind you can field |
+| `'theme'` | the printed theme deck. What the opponent always gets |
+
+Until 12 Aug 2026 the lookup took a name alone and preferred the save, so **editing your Brushfire
+silently rewrote the opponent's Brushfire too** — in the match and on the select screen's OPPONENT
+panel. Only the save was ever touched; `DECKS` in `cards.js` is never mutated. It survived because
+it is invisible outside a mirror match, which is exactly the case nobody plays by accident.
+
+**Never restore a default for `side`.** A call site that has not decided is a call site with the bug.
+Two `smoke.js` tests cover it, and both were confirmed to fail without the fix.
+
+## Scroll position survives a render
+
+`render()` throws the whole DOM away and rebuilds it, so every scroll position in the game is
+destroyed on every click. On the board that is invisible — nothing there scrolls. In these screens it
+was the worst friction in the game: adding one card to a deck threw you back to the top of a
+221-card grid, so putting 18 Fire Energy into a deck meant re-scrolling eighteen times.
+
+`keepScroll(node, key)` opts an element in; positions are read from the old elements before the wipe
+and written to the new ones **after everything is in the document**, because a `scrollTop` set on a
+detached node is silently discarded. `resetScroll(key)` sends one back to the top, and the filter
+chips use it — holding position through a filter change lands you in the middle of results you never
+scrolled past.
+
+Two things to preserve. **Harvest runs before resets are honoured**: every caller does its work and
+*then* calls `render()`, so a reset applied first is read straight back off the element about to be
+thrown away — which made `resetScroll` do nothing at all until a test tried to prove it worked.
+And it deliberately avoids `querySelectorAll` and `data-` attributes, because `smoke.js` stubs the
+DOM and implements neither; **a UI mechanism that cannot run in the suite is one with no tests.**
+
 ## How each variant is drawn
 
 All confined to **collectible surfaces** — the preview rail, the dex, the pack reveal, the detail

@@ -250,3 +250,54 @@ optional decoration on a preserved artifact. It is the half that rots.
   should respond to it, and it is sitting in one game's orientation file where only sessions working
   on this game will ever read it. It belongs in the global tree. I did not move it, because that is
   his tree and a cross-project change, not part of the pass he approved.
+
+- **Opus 5** (12 Aug 2026) — a bug and UI pass, five of Trevor's six items. Each shipped with a test
+  that was **confirmed to fail without the fix**, which is the only way to know a green suite is
+  green for the right reason — and one of those confirmations found a second bug.
+
+  **Editing your theme deck also edited the opponent's**, which Trevor had filed as "pretty sure"
+  and was exactly right about, including that it only ever touched the save. The starter deck is
+  created under the theme deck's own name, and the lookup took a name alone and preferred the save —
+  so from the first edit "Brushfire" meant two lists and the code could not tell them apart. The
+  comment sitting directly above the bug said the theme decks stay canonical *so the opponent can
+  still field any of them*: the intent was written down and the implementation had never matched it.
+  It survived because it is invisible outside a mirror match. `deckFor(name, side)` now requires the
+  side, with no default, because a call site that has not decided is a call site with the bug.
+
+  **The deck builder reset its scroll on every click**, which made putting 18 Fire Energy into a deck
+  eighteen separate scrolls. `render()` rebuilds the whole DOM, so positions are now harvested before
+  the wipe and reapplied after everything is in the document. Deliberately not `querySelectorAll` and
+  `data-` attributes: `smoke.js` stubs the DOM and implements neither, and a UI mechanism that cannot
+  run in the suite is one with no tests. **Writing the test found that `resetScroll` did nothing at
+  all** — every caller resets and then calls `render()`, whose first act was to harvest the position
+  straight back off the element about to be destroyed. Harvest now runs before resets are honoured.
+
+  **The flashing prizes gave away a coin flip about two seconds early**, which is Trevor's sharpest
+  catch of the set. The board was always frozen behind the coin — that was designed in from the
+  start — but `diffForFx()` reads the *real* post-action state and was armed at dispatch time, so
+  the prize tile, the KO flash and the hit flash all escaped the freeze. On a flip deciding whether
+  something survives, the prizes announced the answer before the coin landed. It now runs when the
+  presentation queue empties, in the same frame the board unfreezes.
+
+  **The opening who-goes-first flip is now shown.** It was resolved inside `newGame()` and reported
+  only as a line of log text — the one coin in the match the player was told about rather than shown,
+  and the one with the largest measured consequence, since the seat is worth about 5.7 points.
+
+  That one is worth recording because **the first version introduced a worse bug than the one it
+  fixed**, and only a screenshot caught it. Suppressing the setup sheet so the coin is visible
+  exposed the board behind it — and `newGame` auto-sets-up the opponent *before* the flip, so the
+  finished build handed you their entire opening position before you chose yours. Every test passed;
+  the stub has no layout engine and no concept of an overlay covering something. The fix is to blank
+  the opponent's side **in the frozen snapshot**, which is honest rather than a cheat: that view
+  exists precisely to show a board that is not the current one, and while the coin is in the air
+  their side genuinely is face down. `tools/shot.js` is not optional polish on a UI change. This is
+  the third time that sentence has been earned.
+
+  Also 1st Edition retuned 1/25 → 1/20 (Trevor's call), verified at 200,000 packs as 1-in-20.1. It
+  sits outside the ~5x per-card ladder on purpose — it dresses a whole pack rather than one card, so
+  it is the axis the player experiences as an *event*.
+
+  Left for Trevor: the setup overlay is translucent, so a dimmed opponent Active has always been
+  faintly visible behind it. Pre-existing, unrelated to any of this, and a board-adjacent visual
+  call rather than mine to make. The energy-discard selection interface is the sixth item and is not
+  started — it is a design conversation before it is a build.

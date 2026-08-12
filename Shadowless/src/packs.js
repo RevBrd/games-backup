@@ -26,7 +26,7 @@ const PACK_ODDS = {
   holo: 1 / 3,
 
   // Whole-pack rolls.
-  firstEd: 1 / 25,
+  firstEd: 1 / 20,
   intrusion: 1 / 100,      // a promo or Southern Islands card replaces one Common
 
   // Per-card rolls. reverseHolo is offered only on the 10 Common/Uncommon

@@ -136,7 +136,26 @@ const DECK_NAMES = Object.keys(DECKS).concat([SANDBOX]);
 // deckbuilder. It deliberately IGNORES the collection — agreed with Trevor,
 // 9 Aug: it is the only way to test a newly implemented card without grinding
 // for it, so it is a dev affordance rather than a deck you own.
-function resolveDeck(name, seed) {
+// A NAME DOES NOT IDENTIFY A DECK. The starter is created in your save under the
+// theme deck's own name, so from the first edit onwards "Brushfire" means two
+// different 60-card lists — yours and the printed one. Every lookup must say
+// which it wants, and the answer is never ambiguous:
+//
+//   'mine'   your save's deck. The only kind you can field.
+//   'theme'  the printed theme deck. What the opponent always gets.
+//
+// Getting this wrong is invisible except in a mirror, which is how a name-only
+// lookup shipped for a job handing the opponent your edited list. Never restore
+// a default here — a call site that has not decided is a call site with the bug.
+function deckFor(name, side) {
+  if (side === 'theme') return DECKS[name] || null;
+  const mine = UI.save && UI.save.decks.find(d => d.name === name);
+  // Your side falls back to the printed list, which is safe precisely because a
+  // save that lacks the deck is a save that cannot be the ambiguous one.
+  return mine || DECKS[name] || null;
+}
+
+function resolveDeck(name, side, seed) {
   if (name === SANDBOX) {
     // Deliberately gated on IMPLEMENTED rather than on a live set: reaching a
     // newly scripted card before its set opens is the entire point of Sandbox.
@@ -145,10 +164,7 @@ function resolveDeck(name, seed) {
     const d = generateDeck(CARD_DB, pool, mulberry32(seed), { name: SANDBOX });
     return d || DECKS[Object.keys(DECKS)[0]];
   }
-  // A deck you built or were given comes from the save; the theme decks remain
-  // as definitions so the OPPONENT can still field any of them.
-  const mine = UI.save && UI.save.decks.find(d => d.name === name);
-  return mine || DECKS[name];
+  return deckFor(name, side) || DECKS[Object.keys(DECKS)[0]];
 }
 
 // Decks YOU may field: only what you own, and only what is BUILT. A draft or a
@@ -231,12 +247,49 @@ function newGame() {
   UI.E = new Engine(CARD_DB, EFFECTS, { seed, cfg: Object.assign({}, UI.cfgDraft) });
   // Mirror matches are allowed. Both sides build from the same list, but the two
   // seeds differ, so they shuffle and draw independently.
-  UI.E.newGame(resolveDeck(UI.myDeck, seed), resolveDeck(UI.foeDeck, seed ^ 0x5f5f), ['You', 'Opponent']);
+  UI.E.newGame(resolveDeck(UI.myDeck, 'mine', seed),
+               resolveDeck(UI.foeDeck, 'theme', seed ^ 0x5f5f), ['You', 'Opponent']);
   UI.E.setupAuto(1);                     // opponent sets itself up
   UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.retreatArmed = false;
   UI.awarded = false;                    // this game has not paid out yet
   startMatchLog(seed);
-  render();
+  presentOpeningFlip();
+}
+
+// The very first flip of the game decides who goes first, and until now it was
+// resolved inside `newGame()` and reported only as a line of log text — the one
+// coin in the match that the player was told about instead of shown. It is also
+// the flip with the largest measured consequence: the seat is worth about 5.7
+// points of win rate (see AI.md), so it deserves the same two seconds as a
+// Poison Sting.
+//
+// It plays over the empty board, BEFORE the setup sheet, for two reasons: the
+// coin lives on the mat's centre line and a sheet would cover it, and knowing
+// who goes first is information you want while you are arranging your Bench.
+function presentOpeningFlip() {
+  const log = UI.E.state.log;
+  const at = log.findIndex(e => e.kind === 'flip');
+  if (at < 0 || UI.flipDelay < 250) { render(); return; }
+  const before = JSON.parse(JSON.stringify(UI.E.state));
+  before.log = log.slice(0, at);
+  // THE OPPONENT HAS NOT REVEALED YET. `newGame` runs `setupAuto(1)` before this,
+  // so the real state already holds their Active and Bench — and the setup sheet,
+  // which normally hides all of it until you commit, is suppressed for the flip.
+  // Showing the frozen board as-is therefore handed you their whole opening
+  // position before you chose yours, which is worth a great deal and is not how
+  // either the card game or the Game Boy game deals it: both sides place face
+  // down and turn up together.
+  //
+  // Blanking them in the SNAPSHOT is the honest fix rather than a cheat. The
+  // frozen view exists precisely to show a board that is not the current one, and
+  // at the moment this coin is in the air their side genuinely is face down.
+  before.players[1].active = null;
+  before.players[1].bench = [];
+  UI.view = before;
+  // No `before` on the presentation itself: there is nothing to diff at the start
+  // of a game, and handing one over would flash effects for the opening deal.
+  UI.pres = { queue: log.slice(at), banner: null, before: null };
+  stepPresentation();
 }
 
 // --------------------------------------------------------------- match log -
@@ -370,11 +423,18 @@ function dispatch(pi, action) {
     UI.E.state.peeked = null;
   }
   UI.sel = null; UI.targeting = null; UI.retreatArmed = false;
-  diffForFx(before, UI.E.state);
   const fresh = UI.E.state.log.slice(mark);
-  if (!fresh.some(e => e.kind === 'flip') || UI.flipDelay < 250) { render(); return; }
+  if (!fresh.some(e => e.kind === 'flip') || UI.flipDelay < 250) {
+    diffForFx(before, UI.E.state); render(); return;
+  }
+  // THE FX MUST NOT FIRE UNTIL THE COIN HAS LANDED. `diffForFx` reads the real
+  // post-action state, so arming it here lights the prize tile, the KO flash and
+  // the hit flash while the coin is still in the air — and on a flip that decides
+  // whether something survives, the flashing prizes announce the result about two
+  // seconds early. The board itself was always frozen behind the coin; the effects
+  // were the one thing that escaped the freeze, which is why it went unnoticed.
   UI.view = before;
-  UI.pres = { queue: fresh.slice(), banner: null };
+  UI.pres = { queue: fresh.slice(), banner: null, before };
   stepPresentation();
 }
 
@@ -382,7 +442,14 @@ function stepPresentation() {
   const p = UI.pres;
   if (!p) return;
   while (p.queue.length && p.queue[0].kind !== 'flip') UI.view.log.push(p.queue.shift());
-  if (!p.queue.length) { UI.pres = null; UI.view = null; render(); return; }
+  if (!p.queue.length) {
+    UI.pres = null; UI.view = null;
+    // Unfrozen at last: the board and its effects update in the same frame, which
+    // is the whole point. `presenting()` is already false, so diffForFx's own
+    // follow-up render will fire and clear them when they expire.
+    if (p.before) diffForFx(p.before, UI.E.state);
+    render(); return;
+  }
 
   const entry = p.queue.shift();
   const m = entry.text.match(/^Coin flip(?: \((.*?)\))?: (HEADS|TAILS)$/);
@@ -664,7 +731,61 @@ function armForcedChoice() {
     dispatch: (opts) => dispatch(0, { t: promote ? 'promote' : 'switchIn', bench: opts.bench }),
   };
 }
+// ---------------------------------------------------------- scroll memory --
+// `render()` throws the whole DOM away and rebuilds it, so every scroll position
+// in the game is destroyed on every click. On the board that is invisible —
+// nothing there scrolls. In the collection screens it was the single worst piece
+// of friction in the game: adding one card to a deck threw you back to the top of
+// a 221-card grid, so building anything meant re-scrolling once per card, and
+// putting in 18 Fire Energy meant doing it eighteen times.
+//
+// `keepScroll(node, key)` opts an element in. Positions are read from the OLD
+// elements before the wipe and written to the NEW ones after everything is in the
+// document — a scrollTop set on a detached node is silently discarded, which is
+// the whole reason this is two passes rather than one.
+//
+// Deliberately not `querySelectorAll` + `data-` attributes: `smoke.js` stubs the
+// DOM and implements neither, and a UI mechanism that cannot run in the suite is
+// a UI mechanism with no tests.
+UI.scrollKeep = {};        // key -> last known scrollTop
+UI.scrollers = {};         // key -> element from the render in progress
+UI.scrollReset = {};       // keys to send back to the top on the next render
+function keepScroll(node, key) { UI.scrollers[key] = node; return node; }
+
+// Harvest FIRST, then honour resets. Every caller of `resetScroll` does its work
+// and then calls `render()`, so a reset applied before the harvest is read
+// straight back off the element that is about to be thrown away — which is
+// exactly what happened, and made `resetScroll` do nothing at all until a test
+// tried to prove it worked.
+function harvestScroll() {
+  for (const k in UI.scrollers) {
+    const n = UI.scrollers[k];
+    if (n && typeof n.scrollTop === 'number') UI.scrollKeep[k] = n.scrollTop;
+  }
+  for (const k in UI.scrollReset) delete UI.scrollKeep[k];
+  UI.scrollReset = {};
+}
+// Always writes, and no entry means the top. Writing 0 to a freshly built element
+// is a no-op in a browser — it is already 0 — but it makes "we deliberately reset
+// this one" a thing the code states rather than a thing that happens by omission.
+function applyScroll() {
+  for (const k in UI.scrollers) {
+    const n = UI.scrollers[k];
+    if (n) n.scrollTop = UI.scrollKeep[k] || 0;
+  }
+}
+// Call when the list underneath a scroller changes so much that holding position
+// would be meaningless — switching collection tab, or opening a different deck.
+function resetScroll(key) { UI.scrollReset[key] = 1; }
+
 function render() {
+  harvestScroll();
+  UI.scrollers = {};
+  renderScreen();
+  applyScroll();
+}
+
+function renderScreen() {
   const root = document.getElementById('app');
   armForcedChoice();
   root.innerHTML = '';
@@ -701,7 +822,9 @@ function render() {
 
   if (UI.picker) root.appendChild(renderPicker());
   if (UI.reveal) root.appendChild(renderReveal());
-  if (S().phase === 'setup') root.appendChild(renderSetup());
+  // The setup sheet would cover the centre line, which is where the coin lands —
+  // so the opening flip gets the board to itself and the sheet arrives after it.
+  if (S().phase === 'setup' && !presenting()) root.appendChild(renderSetup());
   if (S().phase === 'over') root.appendChild(renderOver());
 
   chooseLayout();
@@ -1688,18 +1811,14 @@ function doAttack(i) {
 }
 
 // ------------------------------------------------------- deck select ------
-// A deck by name, wherever it lives: your save first, then the theme decks.
-// Both summary and hero go through this so a deck you BUILT renders on the
-// select screen exactly like a theme deck does.
-function deckByName(name) {
-  const mine = UI.save && UI.save.decks.find(d => d.name === name);
-  return mine || DECKS[name] || null;
-}
-
-function deckSummary(name) {
+// Both summary and hero go through `deckFor` so a deck you BUILT renders on the
+// select screen exactly like a theme deck does — and so the OPPONENT's panel
+// describes the opponent's actual deck. They take the same `side` as everything
+// else; see the note on `deckFor`.
+function deckSummary(name, side) {
   const d = name === SANDBOX
     ? generateDeck(CARD_DB, Object.keys(CARD_DB), mulberry32(1), { name: SANDBOX })
-    : deckByName(name);
+    : deckFor(name, side);
   if (!d) return { k: { pokemon: 0, trainer: 0, energy: 0 }, types: {}, basics: 0, stage2: 0 };
   const k = { pokemon: 0, trainer: 0, energy: 0 };
   const types = {};
@@ -1720,8 +1839,8 @@ function deckSummary(name) {
 // give each theme deck a face on the select screen, since we have the real
 // printed cards sitting right there. Sandbox has no fixed list, so it gets a
 // card back instead, which is honest: you don't know what you're getting.
-function deckHero(name) {
-  const d = deckByName(name);
+function deckHero(name, side) {
+  const d = deckFor(name, side);
   if (!d) return null;
   const rank = { 'Basic': 0, 'Stage 1': 1, 'Stage 2': 2 };
   let best = null, bestScore = -1;
@@ -1936,11 +2055,13 @@ function renderNewSave() {
   if (UI.saveNote) box.appendChild(el('div', 'collwarn', UI.saveNote));
 
   const grid = el('div', 'deckgrid');
+  // The starter pick is always the PRINTED deck — you have no save yet, and this
+  // screen is the one place that is guaranteed true rather than merely usually.
   Object.keys(DECKS).forEach(n => {
-    const s = deckSummary(n);
+    const s = deckSummary(n, 'theme');
     const c = el('div', 'deckcard');
     const art = el('div', 'dart');
-    const hero = deckHero(n);
+    const hero = deckHero(n, 'theme');
     if (hero) { const img = cardFaceImage(CARD_DB[hero], null); if (img) art.appendChild(img); }
     c.appendChild(art);
     c.appendChild(el('div', 'dname', n));
@@ -2205,13 +2326,16 @@ function renderCollection() {
     c.onclick = fn;
     bar.appendChild(c);
   };
-  chip('CARDS', UI.collView !== 'dex', () => { UI.collView = 'cards'; render(); });
-  chip('DEX', UI.collView === 'dex', () => { UI.collView = 'dex'; render(); });
+  // Switching view or filter replaces the list wholesale, so holding the old
+  // scroll position would land you in the middle of something you never scrolled.
+  chip('CARDS', UI.collView !== 'dex', () => { UI.collView = 'cards'; resetScroll('collection'); render(); });
+  chip('DEX', UI.collView === 'dex', () => { UI.collView = 'dex'; resetScroll('collection'); render(); });
   bar.appendChild(el('span', null, ' '));
-  COLL_FILTERS.forEach(([k, label]) => chip(label, UI.collFilter === k, () => { UI.collFilter = k; render(); }));
+  COLL_FILTERS.forEach(([k, label]) => chip(label, UI.collFilter === k,
+    () => { UI.collFilter = k; resetScroll('collection'); render(); }));
   box.appendChild(bar);
 
-  const grid = el('div', 'collgrid');
+  const grid = keepScroll(el('div', 'collgrid'), 'collection');
   const show = have => UI.collFilter === 'all' || (UI.collFilter === 'owned') === have;
 
   if (UI.collView === 'dex') {
@@ -2302,6 +2426,7 @@ function openBuilder(deckId) {
     list: d ? d.list.map(e => e.slice()) : [],
   };
   UI.poolFilter = UI.poolFilter || { kind: 'all', type: 'all', text: '', owned: true };
+  resetScroll('builder-pool'); resetScroll('builder-list');
   UI.screen = 'builder';
   render();
 }
@@ -2434,14 +2559,17 @@ function renderBuilder() {
     const c = el('div', 'collchip' + (on ? ' on' : ''), label);
     c.onclick = fn; fbar.appendChild(c);
   };
-  POOL_KINDS.forEach(([k, label]) => chip(label, f.kind === k, () => { f.kind = k; render(); }));
-  chip('ANY TYPE', f.type === 'all', () => { f.type = 'all'; render(); });
-  POOL_TYPES.forEach(t => chip(ENERGY_NAME[t] || t, f.type === t, () => { f.type = t; render(); }));
-  chip('OWNED ONLY', f.owned, () => { f.owned = !f.owned; render(); });
+  // Any filter change rebuilds the pool from scratch, so the old scroll position
+  // means nothing — but adding a card does not, which is the case that matters.
+  const refilter = fn => () => { fn(); resetScroll('builder-pool'); render(); };
+  POOL_KINDS.forEach(([k, label]) => chip(label, f.kind === k, refilter(() => { f.kind = k; })));
+  chip('ANY TYPE', f.type === 'all', refilter(() => { f.type = 'all'; }));
+  POOL_TYPES.forEach(t => chip(ENERGY_NAME[t] || t, f.type === t, refilter(() => { f.type = t; })));
+  chip('OWNED ONLY', f.owned, refilter(() => { f.owned = !f.owned; }));
   const search = el('input');
   search.type = 'text'; search.placeholder = 'search'; search.value = f.text;
   search.className = 'buildname'; search.style.width = '120px'; search.style.fontSize = '11px';
-  search.oninput = () => { f.text = search.value; render(); };
+  search.oninput = refilter(() => { f.text = search.value; });
   fbar.appendChild(search);
   head.appendChild(fbar);
   box.appendChild(head);
@@ -2449,7 +2577,7 @@ function renderBuilder() {
   const main = el('div', 'buildmain');
 
   // ---- the pool ----
-  const grid = el('div', 'collgrid');
+  const grid = keepScroll(el('div', 'collgrid'), 'builder-pool');
   Object.keys(LIVE_DB).forEach(id => {
     const card = CARD_DB[id];
     if (!poolMatches(card)) return;
@@ -2495,7 +2623,7 @@ function renderBuilder() {
   cnt.appendChild(el('span', null, 'of 60 cards'));
   side.appendChild(cnt);
 
-  const list = el('div', 'decklist');
+  const list = keepScroll(el('div', 'decklist'), 'builder-list');
   const GROUPS = [['pokemon', 'POKÉMON'], ['trainer', 'TRAINER'], ['energy', 'ENERGY']];
   GROUPS.forEach(([kind, label]) => {
     const rows = b.list.filter(e => CARD_DB[e[1]] && CARD_DB[e[1]].kind === kind);
@@ -2725,13 +2853,14 @@ function renderDeckSelect() {
     const sec = el('div', 'deckgrp');
     sec.appendChild(el('div', 'grphead', heading));
     const grid = el('div', 'deckgrid');
+    const side = key === 'myDeck' ? 'mine' : 'theme';
     (key === 'myDeck' && UI.save ? myDeckNames() : DECK_NAMES).forEach(n => {
-      const s = deckSummary(n);
+      const s = deckSummary(n, side);
       const isSandbox = n === SANDBOX;
       const c = el('div', 'deckcard' + (UI[key] === n ? ' on' : ''));
 
       const art = el('div', 'dart');
-      const hero = isSandbox ? null : deckHero(n);
+      const hero = isSandbox ? null : deckHero(n, side);
       if (hero) {
         const img = cardFaceImage(CARD_DB[hero], null);
         if (img) art.appendChild(img);
