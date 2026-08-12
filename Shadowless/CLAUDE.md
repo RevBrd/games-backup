@@ -236,24 +236,12 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
    layouts. The mechanism exists; see [COLLECTION.md](COLLECTION.md).
 3. **Southern Islands and progression-gated promo intrusion** are both unsettled pack questions and
    both depend on Job 7. See [PACKS.md](PACKS.md).
-4. **Audio: none.** Nothing has been decided about it.
+4. **Energy discard needs a selection interface** — Energy Removal, a retreat costing less than the
+   Energy attached, and attack costs like Flamethrower all currently discard in the order attached.
+   Trevor's item; a design conversation before it is a build.
+5. **Audio: none.** Nothing has been decided about it.
 
 **Every figure quoted anywhere before 11 Aug 2026 was measuring a 12-Prize game** — twice the
 intended length, because `setupConfirm()` was not idempotent and every harness in the repo confirmed
 each player twice. Fixed. Do not compare against an older number; the full account is in
 [HISTORY.md](HISTORY.md).
-
-## Known platform issue: a blank answer is not a refusal
-
-**Twice in this project, a question put to Trevor never reached his screen and came back empty**, in
-a way that reads exactly like a decline. It is not one. The same goes for a permission request; Trevor won't decline one except in extreme edge cases.
-
-- **Ask again.** Do not interpret it, do not work around it, and do not quietly pick the option you
-  think he would have chosen — you will be deciding something he wanted to decide, on evidence that
-  is an artifact.
-- **If it comes back blank a second time, the channel is broken.** Stop asking, say so in the reply,
-  put the question in plain text, and carry on with your own best call while flagging it as yours.
-  Trevor's rule, and it exists so a bug cannot deadlock a session.
-
-Worth knowing because the failure is silent and asymmetric: a real decline and a lost question look
-identical from here, and only one of them means "he decided".
