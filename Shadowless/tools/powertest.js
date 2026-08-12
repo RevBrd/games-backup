@@ -1,10 +1,10 @@
-// Behavioural tests for the Pokemon Power system (Job 4d).
+﻿// Behavioural tests for the Pokemon Power system (Job 4d).
 //
 //   node tools/powertest.js
 //
 // selftest.js proves games don't crash; this proves the Powers do what the cards
 // say. Each case builds a board by hand, fires the Power, and asserts the exact
-// state change — including the cases where it must be ILLEGAL, which is where
+// state change â€” including the cases where it must be ILLEGAL, which is where
 // these rules actually live.
 
 const { CARD_DB, DECKS } = require('../src/cards.js');
@@ -33,7 +33,7 @@ function board(activeId, benchIds = [], oppActiveId = 'base1-58') {
   p.bench = benchIds.map(mk);
   o.active = mk(oppActiveId);
   o.bench = [];
-  // Prizes matter as soon as anything can Knock a Pokemon Out — Buzzap hands one
+  // Prizes matter as soon as anything can Knock a Pokemon Out â€” Buzzap hands one
   // over. Without them the engine reads "no Prizes left" as someone having won.
   const prize = () => ({ id: 'base1-99', uid: E.uid++ });
   p.prizes = Array.from({ length: 6 }, prize);
@@ -45,7 +45,7 @@ function board(activeId, benchIds = [], oppActiveId = 'base1-58') {
   [...E.allSlots(0), ...E.allSlots(1)].forEach(s => { s.playedTurn = 0; });
   return E;
 }
-// engine.js keeps topCard module-scoped, so the harness needs its own — and it
+// engine.js keeps topCard module-scoped, so the harness needs its own â€” and it
 // has to honour Transform the same way, or every Ditto assertion reads the card
 // underneath instead of what the game is treating it as.
 const top = (E, slot) => (slot && slot.transformedId && E.db[slot.transformedId])
@@ -57,7 +57,7 @@ const attach = (E, slot, energyId, n = 1) => {
 console.log('\nPokemon Power behaviour\n');
 
 // ---------------------------------------------------------------- Damage Swap
-console.log('Alakazam — Damage Swap');
+console.log('Alakazam â€” Damage Swap');
 
 T('moves one damage counter between your own Pokemon', () => {
   const E = board('base1-1', ['base1-3']);                 // Alakazam active, Chansey benched
@@ -117,13 +117,13 @@ T('every enumerated move is legal when played', () => {
     ps[0].dmg = 40; ps[1].dmg = 20; ps[3].dmg = 10;
     // uids are allocated in the same order, so the action transfers cleanly
     const r = probe.act(0, a);
-    if (!r.ok) throw new Error(`enumerated action was rejected: ${a.label} — ${r.error}`);
+    if (!r.ok) throw new Error(`enumerated action was rejected: ${a.label} â€” ${r.error}`);
   }
   return true;
 });
 
 // ---------------------------------------------------------------- Energy Burn
-console.log('\nCharizard — Energy Burn');
+console.log('\nCharizard â€” Energy Burn');
 
 T('lets non-Fire Energy pay a Fire cost', () => {
   const E = board('base1-4');                               // Fire Spin costs RRRR
@@ -166,7 +166,7 @@ T('is not offered twice in the same turn', () => {
 });
 
 // --------------------------------------------------------------- Strikes Back
-console.log('\nMachamp — Strikes Back');
+console.log('\nMachamp â€” Strikes Back');
 
 // Pikachu's Gnaw (idx 0) is used throughout rather than Thunder Jolt, because
 // Thunder Jolt damages itself on tails and the tests could not then tell
@@ -178,7 +178,7 @@ T('damages the attacker when Machamp is hit', () => {
   attach(E, pika, 'base1-100', 1);
   const r = E.act(1, { t: 'attack', idx: 0 });              // Gnaw, 10, no recoil
   if (!r.ok) throw new Error(r.error);
-  if (champ.dmg <= 0) throw new Error('Machamp took no damage — test setup wrong');
+  if (champ.dmg <= 0) throw new Error('Machamp took no damage â€” test setup wrong');
   eq(pika.dmg, 10, 'attacker took exactly the retaliation damage');
   if (!E.state.log.some(l => (l.text || '').includes('Strikes Back'))) throw new Error('no Strikes Back in the log');
   return true;
@@ -227,7 +227,7 @@ T('two Machamps do not retaliate at each other forever', () => {
 });
 
 // ----------------------------------------------------------------- Rain Dance
-console.log('\nBlastoise — Rain Dance');
+console.log('\nBlastoise â€” Rain Dance');
 
 T('attaches a Water Energy from hand to a Water Pokemon', () => {
   const E = board('base1-2', ['base1-63']);                 // Blastoise, Squirtle
@@ -282,7 +282,7 @@ T('is not offered with no Water Energy in hand', () => {
 });
 
 // ---------------------------------------------------------------- Energy Trans
-console.log('\nVenusaur — Energy Trans');
+console.log('\nVenusaur â€” Energy Trans');
 
 T('moves a Grass Energy between your own Pokemon', () => {
   const E = board('base1-15', ['base1-44']);                // Venusaur, Bulbasaur
@@ -338,7 +338,7 @@ T('is switched off by Asleep, Confused and Paralyzed', () => {
 });
 
 // --------------------------------------------------------------------- Buzzap
-console.log('\nElectrode — Buzzap');
+console.log('\nElectrode â€” Buzzap');
 
 const buzzap = (E, fromSlot, toSlot, type = 'L') =>
   E.act(0, { t: 'power', uid: fromSlot.uid, kind: 'BUZZAP', to: toSlot.uid, type });
@@ -471,7 +471,7 @@ T('handing over the last Prize ends the game', () => {
 // engine machinery, and the theme decks contain none of them, so nothing else
 // exercises these paths.
 
-console.log('\nPoliwhirl — Amnesia');
+console.log('\nPoliwhirl â€” Amnesia');
 
 T('disables the chosen attack, and only that one', () => {
   const E = board('base1-38', [], 'base1-20');              // Poliwhirl vs Electabuzz
@@ -485,7 +485,7 @@ T('disables the chosen attack, and only that one', () => {
   return true;
 });
 
-console.log('\nClefairy — Metronome');
+console.log('\nClefairy â€” Metronome');
 
 T('copies a chosen attack from the Defending Pokemon', () => {
   const E = board('base1-5', [], 'base1-3');                // Clefairy vs Chansey
@@ -508,7 +508,7 @@ T('the recoil lands on Clefairy, not on the card it was copied from', () => {
   const dbl = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 1)
     .find(a => /Double-edge/.test(a.label));
   E.act(0, dbl);
-  // Clefairy has 40 HP and Double-edge self-inflicts 80, so it dies — which is
+  // Clefairy has 40 HP and Double-edge self-inflicts 80, so it dies â€” which is
   // the point: "does damage to itself" means the Pokemon USING the attack.
   eq(E.state.players[0].discard.some(c => c.id === 'base1-5'), true, 'Clefairy took its own recoil');
   return true;
@@ -537,7 +537,7 @@ T('cannot copy another Metronome', () => {
   return true;
 });
 
-console.log('\nPidgeotto — Mirror Move');
+console.log('\nPidgeotto â€” Mirror Move');
 
 T('returns the damage that was dealt to it last turn', () => {
   const E = board('base1-22', [], 'base1-20');            // Pidgeotto vs Electabuzz
@@ -581,7 +581,7 @@ T('mirrors the Special Condition too, not just the damage', () => {
   return true;
 });
 
-console.log('\nPidgey / Pidgeotto — Whirlwind');
+console.log('\nPidgey / Pidgeotto â€” Whirlwind');
 
 T('damage lands first, then the DEFENDER owes a choice', () => {
   const E = board('base1-57', [], 'base1-20');             // Pidgey vs Electabuzz
@@ -628,12 +628,12 @@ T('is skipped when the damage Knocked the Defending Pokemon Out', () => {
   opp.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
   attach(E, E.state.players[0].active, 'base1-99', 2);
   E.act(0, { t: 'attack', idx: 0 });
-  eq(E.state.pendingSwitch, null, 'no switch owed — they are promoting instead');
+  eq(E.state.pendingSwitch, null, 'no switch owed â€” they are promoting instead');
   eq(E.state.pendingPromote, 1, 'promotion owed');
   return true;
 });
 
-console.log('\nPorygon — Conversion');
+console.log('\nPorygon â€” Conversion');
 
 T('Conversion 1 rewrites the defender\'s Weakness, and it bites', () => {
   const E = board('base1-39', [], 'base1-58');             // Pikachu, weak to Fighting
@@ -670,7 +670,7 @@ T('Conversion 2 rewrites Porygon\'s own Resistance', () => {
 });
 
 // ------------------------------------------------------------- Clefairy Doll
-console.log('\nClefairy Doll — a Trainer played as a Basic Pokemon');
+console.log('\nClefairy Doll â€” a Trainer played as a Basic Pokemon');
 
 // It is not in any theme deck and is played from hand rather than placed, so
 // these build the hand rather than the board.
@@ -696,7 +696,7 @@ T('is never offered as an ordinary Trainer play', () => {
   return true;
 });
 
-T('cannot be your opening Pokemon — in hand it is still a Trainer', () => {
+T('cannot be your opening Pokemon â€” in hand it is still a Trainer', () => {
   const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
   E.newGame(DECKS.Brushfire, DECKS.Zap, ['A', 'B']);
   const p = E.state.players[0];
@@ -773,7 +773,7 @@ T('discarding it from the Active spot forces a promotion', () => {
   return true;
 });
 
-T('Revive cannot reach one in the discard — there it is a Trainer again', () => {
+T('Revive cannot reach one in the discard â€” there it is a Trainer again', () => {
   const E = board('base1-58');
   E.state.players[0].discard = [{ id: 'base1-70', uid: E.uid++ }];
   eq(E.basicsIn(E.state.players[0].discard).length, 0, 'offered as a Basic in the discard');
@@ -877,7 +877,7 @@ T('the AI does not strip Energy off the Pokemon that is about to attack', () => 
 
 T('Energy Trans does not send the AI into an infinite shuffle', () => {
   // The regression this exists for: with the source's loss ignored, moving
-  // Energy A→B and B→A both scored as gains, so the bot moved Energy 44,000
+  // Energy Aâ†’B and Bâ†’A both scored as gains, so the bot moved Energy 44,000
   // times across 80 games and hung eleven of them. A whole turn should need a
   // handful of moves, not hundreds.
   const E = board('base1-15', ['base1-44', 'base1-30', 'base1-45']);
@@ -929,7 +929,7 @@ T('the AI values a Metronome copy by what it would actually do', () => {
   const ai = new (require('../src/ai.js').AI)(E, { mode: 'expert' });
   const opts = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 1);
   const scores = opts.map(a => ai.scoreAction(0, a));
-  if (scores.every(x => x === scores[0])) throw new Error('every copy option scored the same — forecast is blind');
+  if (scores.every(x => x === scores[0])) throw new Error('every copy option scored the same â€” forecast is blind');
   // Double-edge self-inflicts 80 onto a 40 HP Clefairy; it must be scored as suicide.
   const dbl = opts.findIndex(a => /copy Double-edge/.test(a.label));
   eq(scores[dbl] < 0, true, `Double-edge should score negative, got ${scores[dbl]}`);
@@ -977,7 +977,7 @@ T('no Power can leave one of your own Pokemon Knocked Out', () => {
 });
 
 // ---------------------------------------------------------------------------
-// setupTakeBack — added with the rebuilt opening-setup screen, which shows real
+// setupTakeBack â€” added with the rebuilt opening-setup screen, which shows real
 // ACTIVE and BENCH slots and therefore has to let you click one back off.
 // ---------------------------------------------------------------------------
 
@@ -1009,7 +1009,7 @@ T('setup: a benched Pokemon goes back to hand, and the card is the same one', ()
 
 T('setup: taking the Active back also clears the bench', () => {
   // A bench with no Active is not a legal board, and nothing downstream knows
-  // how to dig the player out of it — so the take-back returns the lot.
+  // how to dig the player out of it â€” so the take-back returns the lot.
   const E = setupBoard();
   const p = E.state.players[0];
   E.setupPlace(0, 0, 'active');
@@ -1047,7 +1047,7 @@ T('setup: a taken-back Pokemon can be placed again and keeps nothing', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Passive Powers — the continuous-effects layer (Job 6b).
+// Passive Powers â€” the continuous-effects layer (Job 6b).
 //
 // Built against a SYNTHETIC database. Jungle and Fossil do not generate until
 // 6c, and the whole point of doing the machinery first is that it must be
@@ -1142,7 +1142,7 @@ T('Transparency is one coin for the whole attack, and only shields itself', () =
   E.runAttack(0, E.state.players[0].active, def, top(E, E.state.players[0].active),
     { name: 'Test', cost: 'C', dmg: '40' }, [{ v: 'STATUS', s: 'Poisoned' }], {});
   eq(def.dmg, 0, 'no damage got through');
-  eq(def.status.poisoned, false, 'and no status either — "prevent all effects"');
+  eq(def.status.poisoned, false, 'and no status either â€” "prevent all effects"');
 
   const E2 = pboard(['base1-58'], 't-haunter');
   const d2 = E2.state.players[1].active;
@@ -1172,7 +1172,7 @@ T('Toxic Gas switches every other Power off, from the Bench, both sides', () => 
   const E = pboard(['base1-58'], 't-kabuto');
   const [atk, def] = [E.state.players[0].active, E.state.players[1].active];
   eq(E.computeDamage(atk, def, 40).dmg, 20, 'Kabuto Armor working');
-  // A Muk on the ATTACKER's bench — the opposite side from the Power it kills.
+  // A Muk on the ATTACKER's bench â€” the opposite side from the Power it kills.
   E.state.players[0].bench.push(E.mkSlot({ id: 't-muk', uid: E.uid++ }));
   eq(E.computeDamage(atk, def, 40).dmg, 40, 'and gone the moment Muk arrives');
   E.state.players[0].bench[0].status.asleep = true;
@@ -1188,13 +1188,13 @@ T('Toxic Gas never switches off another Toxic Gas', () => {
   return true;
 });
 
-T('Muk stops Aerodactyl, and Aerodactyl stops Muk arriving — order decides it', () => {
+T('Muk stops Aerodactyl, and Aerodactyl stops Muk arriving â€” order decides it', () => {
   const evo = Object.values(CARD_DB).find(c => c.kind === 'pokemon' && c.evolvesFrom === 'Charmander');
   const base = Object.values(CARD_DB).find(c => c.name === 'Charmander');
   const E = pboard([base.id, 't-muk'], 't-aero');
   eq(E.canEvolve(0, E.state.players[0].active, evo), true,
     'a Muk already in play unlocks evolution again');
-  // And with no Muk, the lock holds — which is what keeps Grimer from ever
+  // And with no Muk, the lock holds â€” which is what keeps Grimer from ever
   // becoming one. RULINGS.md.
   const E2 = pboard([base.id], 't-aero');
   eq(E2.canEvolve(0, E2.state.players[0].active, evo), false, 'no Muk, no evolution, no future Muk');
@@ -1226,7 +1226,7 @@ T('the AI halves its forecast against Transparency and stops paying for status a
   if (!(b.expDmg < a.expDmg)) throw new Error(`Transparency ignored: ${b.expDmg} vs ${a.expDmg}`);
   eq(c.statusProof, true, 'Snorlax is flagged status-proof');
   eq(b.statusProof, false, 'and Haunter is not');
-  eq(c.blocked, false, 'status-proof is NOT the same as blocked — drag and jam still work on it');
+  eq(c.blocked, false, 'status-proof is NOT the same as blocked â€” drag and jam still work on it');
   return true;
 });
 
@@ -1239,7 +1239,7 @@ T('the AI halves its forecast against Transparency and stops paying for status a
 // after the fix. This is the only suite that can see them, for the same reason
 // it is the only one that can see a Power.
 //
-// These assert rawOutcomes() — the raw distribution, before weights — so tuning
+// These assert rawOutcomes() â€” the raw distribution, before weights â€” so tuning
 // a weight later cannot make them fail for the wrong reason.
 // ---------------------------------------------------------------------------
 console.log('\nAI verb scoring');
@@ -1320,7 +1320,7 @@ T('a Whirlwind drag is priced below a chosen one, and at nothing with no bench',
   const weak = ai.scoreAttack(0, 0);
 
   if (!(weak > empty)) throw new Error('the drag was worth nothing even with a bench to drag from');
-  // Same board, same damage — only the flag differs, so the gap IS the pricing.
+  // Same board, same damage â€” only the flag differs, so the gap IS the pricing.
   const chosen = empty + ai.W.drag;
   if (!(weak < chosen)) throw new Error(`weak drag ${weak} not discounted below chosen ${chosen}`);
   eq(raw(E, 0).flags.drag, undefined, 'and Whirlwind never sets the attacker-chooses flag');
@@ -1348,7 +1348,7 @@ T('the AI refuses Earthquake when it would wipe its own bench', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Job 6d — the verbs whose semantics are easy to get subtly wrong.
+// Job 6d â€” the verbs whose semantics are easy to get subtly wrong.
 // ---------------------------------------------------------------------------
 console.log('\nJob 6d verbs');
 
@@ -1394,7 +1394,7 @@ T('Tail Wag stops every attack, but only against Eevee', () => {
   eq(chansey.effects.some(e => e.kind === 'CANT_ATTACK'), true, 'the lock landed');
   // Chansey must be ABLE to attack for any of this to mean anything. Without
   // Energy, canUseAttack refuses on cost and every assertion below passes for
-  // entirely the wrong reason — which is what the first version of this test did.
+  // entirely the wrong reason â€” which is what the first version of this test did.
   attach(E, chansey, 'base1-99', 4);
   E.state.active = 1;
   eq(E.costSatisfied(chansey, 'CCCC'), true, 'and it can actually pay for one');
@@ -1446,7 +1446,7 @@ T('Headache stops the opponent playing Trainers, for one turn', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Job 6d third batch — deck search, deck order, the discard pile.
+// Job 6d third batch â€” deck search, deck order, the discard pile.
 // ---------------------------------------------------------------------------
 console.log('\nDeck, discard and search');
 
@@ -1522,7 +1522,7 @@ T('Gambler shuffles the hand in FIRST, so what you gave up can come back', () =>
   E.flip = () => true;
   playTrainer(E, 'base3-60');
   eq(me.hand.length, 8, 'heads draws eight');
-  eq(me.hand.length + me.deck.length, total, 'and no card was created or lost — Gambler itself is in the discard');
+  eq(me.hand.length + me.deck.length, total, 'and no card was created or lost â€” Gambler itself is in the discard');
   return true;
 });
 
@@ -1556,13 +1556,13 @@ T('Prophecy reorders the top of either deck without changing its size', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Job 6e — the interactive Powers.
+// Job 6e â€” the interactive Powers.
 // ---------------------------------------------------------------------------
 console.log('\nInteractive Powers (6e)');
 
 const powerAct = (E, uid, kind, extra) => Object.assign({ t: 'power', uid, kind }, extra || {});
 
-T('Curse moves the OPPONENT’s counters, and may Knock Out on purpose', () => {
+T('Curse moves the OPPONENTâ€™s counters, and may Knock Out on purpose', () => {
   const E = board('base3-5', [], 'base1-58');                  // Gengar vs Pikachu
   const you = E.state.players[1];
   you.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
@@ -1646,7 +1646,7 @@ T('Cowardice returns Tentacool to hand and discards what was attached', () => {
   return true;
 });
 
-T('Vileplume’s Heal is a coin, and only once a turn', () => {
+T('Vileplumeâ€™s Heal is a coin, and only once a turn', () => {
   const E = board('base2-15', ['base1-3']);
   const plume = E.state.players[0].active;
   E.state.players[0].bench[0].dmg = 30;
@@ -1670,7 +1670,7 @@ T('Peek reveals without moving the card', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Job 6f — Ditto. Every assertion here is a DESIGN DECISION rather than a
+// Job 6f â€” Ditto. Every assertion here is a DESIGN DECISION rather than a
 // reading of the card, so each one is a thing that could be changed on purpose
 // later. The rule and its reasoning are in RULINGS.md.
 // ---------------------------------------------------------------------------
@@ -1690,7 +1690,7 @@ T('Ditto becomes whatever it finds, and gets its HP and attacks', () => {
   const d = E.state.players[0].active;
   eq(top(E, d).name, 'Chansey', 'it is a Chansey');
   eq(top(E, d).hp, 120, 'with Chansey HP');
-  eq(top(E, d).attacks.length, 2, 'and Chansey attacks — Ditto itself has none');
+  eq(top(E, d).attacks.length, 2, 'and Chansey attacks â€” Ditto itself has none');
   return true;
 });
 
@@ -1701,7 +1701,7 @@ T('the snapshot HOLDS: evolving or switching opposite it changes nothing', () =>
   // They switch to something else entirely.
   E.state.players[1].active = E.mkSlot({ id: 'base1-3', uid: E.uid++ });
   E.settleTransforms();
-  eq(top(E, d).name, 'Pikachu', 'still Pikachu — a snapshot, not a mirror');
+  eq(top(E, d).name, 'Pikachu', 'still Pikachu â€” a snapshot, not a mirror');
   return true;
 });
 
@@ -1735,7 +1735,7 @@ T('its Energy pays for anything, by quantity', () => {
   const d = E.state.players[0].active;
   attach(E, d, 'base1-102', 4);                                 // four WATER
   eq(E.costSatisfied(d, 'RRRR'), true, 'four Water pay a four-Fire cost');
-  eq(E.costSatisfied(d, 'RRRRR'), false, 'but four cannot pay five — quantity still counts');
+  eq(E.costSatisfied(d, 'RRRRR'), false, 'but four cannot pay five â€” quantity still counts');
   return true;
 });
 
@@ -1804,6 +1804,106 @@ T('Ditto is what goes to the discard pile, not the copy', () => {
   const names = me.discard.map(x => CARD_DB[x.id].name);
   eq(names.indexOf('Ditto') >= 0, true, 'the Ditto card is in the discard');
   eq(names.indexOf('Chansey') >= 0, false, 'and no Chansey was ever created');
+  return true;
+});
+
+// ------------------------------------------------- the AI must take a win ---
+// All four found in one game of Trevor's: his last Pokemon sat on 10 HP, the bot
+// held a lethal Beedrill, and it spent the turn on a Super Potion and a retreat.
+// Three separate faults compounded, and no existing suite could see any of them â€”
+// selftest only proves games finish, and a bot that declines to win still
+// finishes the game.
+console.log('\nThe AI takes a win when it has one');
+
+const { AI } = require('../src/ai.js');
+
+// Charmeleon with four Fire against a Mewtwo on 10 HP, and a Super Potion in
+// hand. Every case below is that position with one thing varied.
+function endgame() {
+  const E = board('base1-24', [], 'base1-10');
+  const p = E.state.players[0], o = E.state.players[1];
+  attach(E, p.active, 'base1-98', 4);
+  attach(E, o.active, 'base1-101', 1);
+  o.active.dmg = 50;                 // 10 HP left of 60
+  p.active.dmg = 40;                 // hurt enough that healing looks attractive
+  p.hand = [{ id: 'base1-90', uid: E.uid++ }];      // Super Potion
+  return E;
+}
+
+T('attacks for the win when the opponent has no Bench left', () => {
+  const E = endgame();
+  const a = new AI(E, { mode: 'expert' }).choose(0);
+  return !!a && a.t === 'attack';
+});
+
+T('...and that is a WIN condition the scorer knew nothing about', () => {
+  const E = endgame();
+  const ai = new AI(E, { mode: 'expert' });
+  const withNoBench = ai.scoreAttack(0, 0);
+  // Same board, but they have somewhere to promote from, so the KO is worth a
+  // Prize rather than the game. The gap between these two IS the fix.
+  const E2 = endgame();
+  E2.state.players[1].bench = [E2.mkSlot({ id: 'base1-58', uid: E2.uid++ })];
+  E2.state.players[1].bench[0].playedTurn = 0;
+  const withBench = new AI(E2, { mode: 'expert' }).scoreAttack(0, 0);
+  if (!(withNoBench > withBench)) throw new Error(`no-bench ${withNoBench.toFixed(1)} should beat bench ${withBench.toFixed(1)}`);
+  return true;
+});
+
+T('attacks for the win when its OWN Prize pile is down to one', () => {
+  const E = endgame();
+  // Give them a Bench so the board-empty condition cannot be what fires, and
+  // put US one Prize from victory.
+  E.state.players[1].bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  E.state.players[1].bench[0].playedTurn = 0;
+  E.state.players[0].prizes = [{ id: 'base1-99', uid: E.uid++ }];
+  const a = new AI(E, { mode: 'expert' }).choose(0);
+  return !!a && a.t === 'attack';
+});
+
+T('the winning Prize is OURS, not theirs â€” the check was inverted', () => {
+  const E = endgame();
+  E.state.players[1].bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  E.state.players[1].bench[0].playedTurn = 0;
+  const ai = new AI(E, { mode: 'expert' });
+  E.state.players[0].prizes = [{ id: 'base1-99', uid: E.uid++ }];   // WE are one away
+  const oursLow = ai.scoreAttack(0, 0);
+  E.state.players[0].prizes = Array.from({ length: 6 }, () => ({ id: 'base1-99', uid: E.uid++ }));
+  E.state.players[1].prizes = [{ id: 'base1-99', uid: E.uid++ }];   // THEY are one away
+  const theirsLow = ai.scoreAttack(0, 0);
+  if (!(oursLow > theirsLow)) throw new Error(`our last Prize ${oursLow.toFixed(1)} must beat their last Prize ${theirsLow.toFixed(1)}`);
+  return true;
+});
+
+T('refuses a heal that would discard the Energy its own attack needs', () => {
+  const E = board('base1-24', [], 'base1-10');
+  const p = E.state.players[0];
+  attach(E, p.active, 'base1-98', 3);      // exactly enough for Flamethrower
+  p.active.dmg = 40;
+  p.hand = [{ id: 'base1-90', uid: E.uid++ }];
+  const ai = new AI(E, { mode: 'expert' });
+  const trainer = E.legalActions(0).find(x => x.t === 'playTrainer');
+  if (!trainer) throw new Error('Super Potion was not even legal');
+  // It may still be worth playing in some spots, but never at a score that
+  // beats swinging with the attack it is about to switch off.
+  const heal = ai.scoreAction(0, trainer);
+  const swing = ai.bestAttackScore(0).score;
+  if (!(swing > heal)) throw new Error(`heal ${heal.toFixed(1)} must not beat attack ${swing.toFixed(1)}`);
+  return true;
+});
+
+T('prefers on-type Energy over a Colorless-filler for the same slot', () => {
+  const E = board('base1-24', [], 'base1-58');        // Charmeleon: RRC and RC costs
+  const p = E.state.players[0];
+  p.hand = [{ id: 'base1-98', uid: E.uid++ },     // Fire  â€” pays the typed half
+            { id: 'base1-99', uid: E.uid++ }];    // Grass â€” can only pay Colorless
+  const ai = new AI(E, { mode: 'expert' });
+  const acts = E.legalActions(0).filter(x => x.t === 'attachEnergy' && x.target === p.active.uid);
+  const fire = acts.find(x => p.hand[x.hand].id === 'base1-98');
+  const grass = acts.find(x => p.hand[x.hand].id === 'base1-99');
+  if (!fire || !grass) throw new Error('both attachments should be legal');
+  const fs = ai.scoreAction(0, fire), gs = ai.scoreAction(0, grass);
+  if (!(fs > gs)) throw new Error(`Fire ${fs.toFixed(1)} must beat Grass ${gs.toFixed(1)} on a Fire Pokemon`);
   return true;
 });
 

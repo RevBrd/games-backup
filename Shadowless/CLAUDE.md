@@ -116,7 +116,7 @@ node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,b
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
-node tools/powertest.js                  # 133 tests for Powers, the bespoke cards and setup
+node tools/powertest.js                  # 139 tests for Powers, the bespoke cards and setup
 node tools/smoke.js shadowless.html      # 108 integration tests against the built file
 node tools/collectiontest.js             # 105 tests for the save file, decks and variants
 node tools/packtest.js                   # 57 tests, 200k packs (takes a count: `20000` is fast)
@@ -249,7 +249,7 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 ## Open
 
 1. **Deck balance.** The four theme decks are Trevor's authentic lists and run roughly
-   **72 / 60 / 40 / 28** percent (Brushfire / Blackout / Overgrowth / Zap) across ~100 AI games.
+   **75 / 65 / 38 / 22** percent (Brushfire / Blackout / Overgrowth / Zap) across ~100 AI games.
    The real ones were never balanced against each other either, so this may simply be correct.
    Confirm before touching them. **These figures move whenever the AI changes** — they were
    74/60/42/25 before the retreat rework — so re-run `selftest.js` rather than trusting the line.

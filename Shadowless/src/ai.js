@@ -29,6 +29,8 @@ const AI_WEIGHTS = {
   dragNoKill: -30,      // ...onto something we can neither kill nor silence,
                         // which is a free switch for them, not a tempo gain.
                         // Must outweigh `drag` plus the selection term above it
+  healDisarm: 22,       // healing that discards the Energy its own Active needed
+                        // to attack. A heal is not worth a turn of offence
   healWaste: 4.0,       // per 10 HP of healing poured past the damage. Sized so
                         // a 20-heal on a 10-damage Pokemon lands UNDER threshold
                         // rather than exactly on it — at 3.0 it scored 0.5
@@ -37,6 +39,9 @@ const AI_WEIGHTS = {
   destinyBond: 18,      // arming Destiny Bond when death looks likely
   attachEnable: 1.0,    // scale on "how much better my attacks get"
   attachBuild: 3.5,     // progress toward an attack we can't afford yet
+  attachOnType: 4,      // the card pays a TYPED symbol this Pokemon actually
+                        // needs, not just its Colorless. Breaks the tie toward
+                        // Fire-on-Arcanine over Grass-on-Arcanine
   attachSurplus: -2,    // attaching to a Pokemon that needs nothing. Negative so
                         // it falls under `threshold` and the card is HELD
   evolveHP: 0.45,       // per point of max-HP gained
@@ -329,7 +334,24 @@ class AI {
 
     let s = f.expDmg * W.damage;
     if (f.pLethal > 0) {
-      s += f.pLethal * (you.prizes.length <= 1 ? W.lastPrize : W.knockout);
+      // A Knock Out ends the game two different ways and the bot could see
+      // NEITHER of them. Both were found from one of Trevor's games, where it
+      // held a lethal attack against his last Pokemon and spent the turn on a
+      // Super Potion instead.
+      //
+      // 1. Taking your last Prize. This read `you.prizes` — the OPPONENT's pile
+      //    — which is inverted. Verified against the engine: the player who
+      //    scores a KO draws from their OWN pile and wins when it empties
+      //    (engine.js checkKOs, `opp.prizes.shift()` then `endGame(1 - pi)`).
+      //    So the bonus was firing when the opponent was about to win, and
+      //    never when we were. The defensive checks elsewhere — Buzzap, and the
+      //    Prize term in retreat — genuinely do mean `you`, and are untouched.
+      // 2. Emptying their board. Knocking out their only Pokemon wins on the
+      //    spot whatever the Prize count says, and nothing in the AI knew this
+      //    win condition existed at all.
+      const takesLastPrize = me.prizes.length <= 1;
+      const emptiesTheirBoard = you.bench.length === 0;
+      s += f.pLethal * ((takesLastPrize || emptiesTheirBoard) ? W.lastPrize : W.knockout);
     }
 
     // status conditions - suppressed entirely if they're behind a Barrier
@@ -531,6 +553,41 @@ class AI {
     return { best: best === -Infinity ? 0 : best, short: bestShort };
   }
 
+  // What putting `energyId` on `slot` is worth. ONE home, used by both the
+  // normal one-per-turn attachment and by Rain Dance's free one.
+  //
+  // It lives here because it used to live in two places. Adding the on-type
+  // preference to `attachEnergy` alone left `EXTRA_ATTACH` with the old formula,
+  // and since Rain Dance's whole advantage is a +attachBuild premium of 3.5, a
+  // 4-point bonus on the ordinary path silently made spending your one
+  // attachment look better than the free unlimited Power. `powertest.js` caught
+  // it immediately. **Any new attachment term goes here, not in a caller.**
+  attachValue(pi, slot, energyId) {
+    const W = this.W, E = this.E;
+    const before = this.potential(pi, slot, null);
+    const after = this.potential(pi, slot, energyId);
+    let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
+    if (after.short < before.short) s += W.attachBuild * (before.short - after.short) * 2;
+    else if (after.best > before.best) s += W.attachBuild;
+    else s += 0.4;
+    s += (slot === E.state.players[pi].active) ? 4 : 1;   // the Active uses it soonest
+
+    // Prefer ON-TYPE Energy. Colorless accepts anything, so a Grass really can
+    // pay an Arcanine's CC — the cost solver in potential() is right about that
+    // and stays as it is. But the TYPED half of a cost is the binding
+    // constraint, and the two cards are not interchangeable: a Fire helps
+    // Arcanine twice over, a Grass only once. Untied, the bot picked whichever
+    // action came first and stranded Pokemon one on-type Energy short while
+    // their Colorless sat paid. Trevor's call, from play.
+    const gives = (this.db[energyId].provides || 'C').split('');
+    const typedNeed = new Set();
+    for (const atk of (this.top(slot).attacks || [])) {
+      for (const ch of (atk.cost || '').split('')) if (ch !== 'C') typedNeed.add(ch);
+    }
+    if (gives.some(x => x !== 'C' && typedNeed.has(x))) s += W.attachOnType;
+    return s;
+  }
+
   // Best printed damage this slot could actually pay for right now, ignoring
   // Weakness, Resistance and coin flips.
   //
@@ -648,8 +705,12 @@ class AI {
           // because it shortens the next Knock Out.
           const lethal = to.dmg + 10 >= this.top(to).hp;
           if (lethal) {
-            const them = E.state.players[1 - pi];
-            return them.prizes.length <= 1 ? W.lastPrize : W.knockout + 12;
+            // Same inversion as scoreAttack had: winning means OUR pile empties,
+            // and emptying their board wins outright too. See the note there.
+            const mine = E.state.players[pi], them = E.state.players[1 - pi];
+            const wins = mine.prizes.length <= 1
+              || (them.bench.length === 0 && to === them.active);
+            return wins ? W.lastPrize : W.knockout + 12;
           }
           return 4 + Math.min(to.dmg, 40) * 0.12;
         }
@@ -723,14 +784,10 @@ class AI {
         const to = E.allSlots(pi).find(x => x.uid === a.to);
         const inst = E.state.players[pi].hand[a.hand];
         if (!to || !inst) return -Infinity;
-        const before = this.potential(pi, to, null);
-        const after = this.potential(pi, to, inst.id);
-        let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
-        if (after.short < before.short) s += W.attachBuild * (before.short - after.short) * 2;
-        else if (after.best > before.best) s += W.attachBuild;
-        else s += 0.4;
-        s += (to === E.state.players[pi].active) ? 4 : 1;
-        return s + W.attachBuild;                        // free, so worth more than the normal one
+        // Same valuation as a normal attachment, plus a premium: this one is
+        // free and does not spend the turn's attachment. Shared deliberately —
+        // see attachValue.
+        return this.attachValue(pi, to, inst.id) + W.attachBuild;
       }
 
       // Energy Trans. Scored against a single board-wide figure that the move
@@ -869,13 +926,10 @@ class AI {
         const canPayRetreat = slot.energy.length >= this.top(slot).retreat;
         if (paidUp && canPayRetreat) return W.attachSurplus;
 
-        let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
-        if (after.short < before.short) s += W.attachBuild * (before.short - after.short) * 2;
-        else if (after.best > before.best) s += W.attachBuild;
-        else s += 0.4;
-        if (slot === me.active) s += 4;                 // the Active uses it soonest
-        else s += 1;
-        return s;
+        // The surplus rule above is deliberately NOT in attachValue: it is about
+        // whether to spend the once-per-turn attachment, and Rain Dance does not
+        // spend one. Everything about the attachment's actual worth is shared.
+        return this.attachValue(pi, slot, inst.id);
       }
 
       case 'evolve': {
@@ -1078,6 +1132,22 @@ class AI {
           for (const c of cands) if (c.dmg > best.dmg) best = c;
           a.opts.targetUid = best.uid;
           s += Math.min(v.n * 10, best.dmg) / 10 * W.healPer10 - W.energyDiscard;
+          s -= Math.max(0, v.n * 10 - best.dmg) / 10 * W.healWaste;
+
+          // The Energy it discards can switch the target's OWN attack off, which
+          // turns a heal into a disarm. This is the first half of a compound
+          // Trevor caught: Super Potion healed a lethal Beedrill and stripped
+          // the Energy it needed to swing, and the retreat logic then correctly
+          // observed that the Active could no longer attack and swapped it out.
+          // Two defensible decisions, one disastrous turn — and the fault is
+          // here, in the one that created the situation.
+          const held = best.energy.pop();
+          const shortAfter = this.potential(pi, best, null).short;
+          best.energy.push(held);
+          const shortBefore = this.potential(pi, best, null).short;
+          if (shortAfter > shortBefore) s -= (best === me.active) ? W.healDisarm : W.healDisarm * 0.3;
+
+          if (best === me.active && this.incomingThreat(pi) >= this.remainingHP(best)) s += 12;
           break;
         }
 
@@ -1410,6 +1480,35 @@ class AI {
 
     const acts = E.legalActions(pi);
     if (!acts.length) return null;
+
+    // WIN THE GAME IF YOU CAN WIN THE GAME.
+    //
+    // Everything below this is a greedy setup loop: any non-attack action
+    // scoring over `threshold` is taken, one per call, and attacking is only
+    // considered once nothing else clears the bar. That ordering is right in
+    // general — setup does not end your turn and attacking does, so you should
+    // always spend your Energy and Trainers first.
+    //
+    // It is catastrophically wrong in exactly one case. From one of Trevor's
+    // games: his last Pokemon was on 10 HP, the bot had a lethal Beedrill, and
+    // it spent the turn on a Super Potion and a retreat instead of winning. No
+    // score could have saved it, because the attack was never in the comparison
+    // — a 0.6-point Trainer beats a 240-point attack when the attack is not on
+    // the table. So a winning attack is checked FIRST and taken outright.
+    //
+    // The bar is deliberately near-certain. A coin-flip lethal is not a win, and
+    // setup that turns 50% into 100% is worth doing first — that case belongs to
+    // the scoring, which now knows what a win is worth.
+    const attacksNow = acts.filter(a => a.t === 'attack');
+    for (const a of attacksNow) {
+      const f = this.forecast(pi, a.idx, a.opts);
+      if (!f || f.pLethal < 0.99) continue;
+      const me = s.players[pi], you = s.players[1 - pi];
+      if (me.prizes.length <= 1 || you.bench.length === 0) {
+        a.__score = this.W.lastPrize;
+        return a;
+      }
+    }
 
     const setup = acts.filter(a => a.t !== 'attack' && a.t !== 'pass');
     const best = setup.length ? this.pickBest(pi, setup) : null;

@@ -40,7 +40,7 @@ const blank = () => ({
   attachSurplus: 0, attachMisdirected: 0,
   heals: 0, healWasted: 0, healWastedHP: 0,
   gusts: 0, gustNoKill: 0, gustFreeSwitch: 0,
-  kosSuffered: 0,
+  kosSuffered: 0, declinedWin: 0,
 });
 
 const add = (a, b) => { for (const k in b) a[k] += b[k]; return a; };
@@ -52,7 +52,24 @@ function classify(E, pi, a, st) {
   const ai = E._ai;
   if (!ai || !a) return;
   const me = E.state.players[pi];
+  const you = E.state.players[1 - pi];
   const active = me.active;
+
+  // DECLINED A WIN. The rarest and worst class of error: a lethal attack was on
+  // the table, taking it would have ended the game, and the bot did something
+  // else. A duel cannot see this — the position is uncommon and both sides of an
+  // AI-vs-AI game share the fault, so it cancels — but a human watching sees it
+  // once and never trusts the opponent again. Trevor caught it in one game.
+  if (a.t !== 'attack' && me.active && you.active) {
+    const wins = me.prizes.length <= 1 || you.bench.length === 0;
+    if (wins) {
+      for (const act of E.legalActions(pi)) {
+        if (act.t !== 'attack') continue;
+        const f = ai.forecast(pi, act.idx, act.opts);
+        if (f && f.pLethal >= 0.99) { st.declinedWin++; break; }
+      }
+    }
+  }
 
   if (a.t === 'retreat' && active) {
     st.retreats++;
@@ -202,6 +219,10 @@ const per100 = v => (v / total.turns * 100).toFixed(1);
 const pct = (v, d) => d ? (v / d * 100).toFixed(0) + '%' : '—';
 
 console.log(`  ${total.games} games, ${total.turns} turns, seat-0 win rate ${pct(total.wins, total.games)}\n`);
+
+console.log('Declining to win');
+console.log(`  ${String(total.declinedWin).padStart(5)}  turns holding a lethal that ends the game, spent on something else`);
+console.log('         (must be 0 — a duel cannot see this, both sides share the fault)\n');
 
 console.log('Retreat');
 console.log(`  ${String(total.retreats).padStart(5)}  retreats                        ${per100(total.retreats)} per 100 turns`);

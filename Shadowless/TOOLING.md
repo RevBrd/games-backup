@@ -133,7 +133,7 @@ anything done.
   every verb in `effects.js` must be scored by `ai.js` or sit on `UNSCORED_ON_PURPOSE`. That list is
   the deliverable — a verb on it is a decision, a verb missing from it is an oversight, and before
   this check the two were indistinguishable. See [ENGINE.md](ENGINE.md).
-- **`powertest.js`** (133 tests) builds boards by hand — no decks, no setup — fires a Power and
+- **`powertest.js`** (139 tests) builds boards by hand — no decks, no setup — fires a Power and
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
   Power working. See [ENGINE.md](ENGINE.md).
@@ -191,6 +191,14 @@ which correlated the seat with a deterministic opening coin flip — and the con
 played **twice, mirrored**, so the bias cancels exactly instead of on average, and the control reads
 50.0% by construction. A harness that agrees with you is worth nothing until it has disagreed with
 you once.
+
+**A duel cannot see a rare catastrophic error, and those are the ones that matter to a human.** The
+bot used to decline game-winning attacks — 35 times in 96 games, measured. Fixing it moved the duel
+by nothing at all (49.8% ± 3.9), because the position is uncommon and *both sides of an AI-vs-AI game
+share the fault*, so it cancels. A player who watches it happen once never trusts the opponent again.
+**When a fault is rare, symmetric, or about what the AI can perceive rather than how it scores,
+assert it in `powertest.js` and count it in `aitest.js` — do not ask the duel.** The duel measures
+average strength and nothing else.
 
 **The per-deck table is not a per-deck verdict.** The four theme decks are not balanced against each
 other, so the deck rows show deck strength, not AI quality. Zap sits at 25% in the control because
