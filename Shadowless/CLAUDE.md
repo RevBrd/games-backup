@@ -249,7 +249,7 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 ## Open
 
 1. **Deck balance.** The four theme decks are Trevor's authentic lists and run roughly
-   **71 / 60 / 42 / 28** percent (Brushfire / Blackout / Overgrowth / Zap) across ~100 AI games.
+   **72 / 60 / 40 / 28** percent (Brushfire / Blackout / Overgrowth / Zap) across ~100 AI games.
    The real ones were never balanced against each other either, so this may simply be correct.
    Confirm before touching them. **These figures move whenever the AI changes** — they were
    74/60/42/25 before the retreat rework — so re-run `selftest.js` rather than trusting the line.

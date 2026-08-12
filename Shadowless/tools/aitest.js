@@ -39,6 +39,7 @@ const blank = () => ({
   attaches: 0, attachDoomed: 0, attachDoomedUseless: 0,
   attachSurplus: 0, attachMisdirected: 0,
   heals: 0, healWasted: 0, healWastedHP: 0,
+  gusts: 0, gustNoKill: 0, gustFreeSwitch: 0,
   kosSuffered: 0,
 });
 
@@ -119,6 +120,30 @@ function classify(E, pi, a, st) {
   if (a.t === 'playTrainer') {
     const inst = me.hand[a.hand];
     const script = (EFFECTS[inst.id] && EFFECTS[inst.id].t) || [];
+
+    // Gust of Wind. Trevor's read of what it is FOR: drag up something hurt and
+    // finish it. Dragging up a Pokemon we cannot punish just hands the opponent
+    // a free switch — they promote whatever they wanted next turn anyway.
+    if (script.some(v => v.v === 'T_SWITCH_OPPONENT')) {
+      st.gusts++;
+      return () => {
+        const foe = E.state.players[1 - pi].active;
+        if (!foe) return;
+        const best = ai.bestAttackScore(pi);
+        let lethal = false;
+        if (best.idx >= 0) {
+          const f = ai.forecast(pi, best.idx);
+          if (f && f.pLethal >= 0.5) lethal = true;
+        }
+        if (!lethal) st.gustNoKill++;
+        // The drag that is actually WASTED: we cannot kill what we pulled and it
+        // can pay for an attack, so they simply carry on. Dragging up something
+        // that cannot swing is tempo denial and belongs in neither bucket —
+        // counting it as a fault is what made this metric look stuck at 78%.
+        if (!lethal && ai.potential(1 - pi, foe, null).short === 0) st.gustFreeSwitch++;
+      };
+    }
+
     for (const v of script) {
       if (v.v !== 'T_HEAL' && v.v !== 'T_DISCARD_ENERGY_THEN_HEAL') continue;
       st.heals++;
@@ -197,5 +222,10 @@ console.log('\nHealing');
 console.log(`  ${String(total.heals).padStart(5)}  heals played`);
 console.log(`  ${String(total.healWasted).padStart(5)}  ...on a target not hurt enough  ${pct(total.healWasted, total.heals)} of heals`);
 console.log(`  ${String(total.healWastedHP).padStart(5)}  HP of healing thrown away       ${total.heals ? (total.healWastedHP / total.heals).toFixed(1) : '—'} per heal`);
+
+console.log('\nGust of Wind');
+console.log(`  ${String(total.gusts).padStart(5)}  dragged an opponent up`);
+console.log(`  ${String(total.gustNoKill).padStart(5)}  ...and could not then kill it   ${pct(total.gustNoKill, total.gusts)} of drags`);
+console.log(`  ${String(total.gustFreeSwitch).padStart(5)}  ...nor even silence it (WASTE)  ${pct(total.gustFreeSwitch, total.gusts)} of drags`);
 
 console.log('\nNothing here is a failure. Compare two runs; do not judge one.\n');

@@ -3032,6 +3032,14 @@ const AI_WEIGHTS = {
   poison: 12,           // 10/turn until they switch
   energyDiscard: 7,     // per Energy burned as an attack cost
   drag: 14,             // forcing a benched Pokemon into the Active spot
+  dragKill: 40,         // ...onto something we can finish once it is up
+  dragNoKill: -30,      // ...onto something we can neither kill nor silence,
+                        // which is a free switch for them, not a tempo gain.
+                        // Must outweigh `drag` plus the selection term above it
+  healWaste: 4.0,       // per 10 HP of healing poured past the damage. Sized so
+                        // a 20-heal on a 10-damage Pokemon lands UNDER threshold
+                        // rather than exactly on it — at 3.0 it scored 0.5
+                        // against a 0.5 gate and still went through
   shieldSelf: 20,       // Stiffen / Withdraw / Barrier
   destinyBond: 18,      // arming Destiny Bond when death looks likely
   attachEnable: 1.0,    // scale on "how much better my attacks get"
@@ -3552,6 +3560,24 @@ class AI {
     return best;
   }
 
+  // Expected damage our Active would land on a chosen defender, which may be a
+  // Pokemon that is not currently Active — that is the whole point. Used to ask
+  // "if I drag this one up, can I actually punish it?", a question the bot had
+  // no way to pose before: `forecast` only ever looks at who is opposite now.
+  bestDamageAgainst(pi, defSlot) {
+    const E = this.E, me = E.state.players[pi];
+    if (!me.active || !defSlot) return 0;
+    let best = 0;
+    (this.top(me.active).attacks || []).forEach((atk, i) => {
+      if (!E.canUseAttack(pi, i).ok) return;
+      const raw = this.rawOutcomes(me.active, defSlot, i);
+      let exp = 0;
+      for (const o of raw.outcomes) exp += (o.p || 0) * E.computeDamage(me.active, defSlot, o.dmg).dmg;
+      if (exp > best) best = exp;
+    });
+    return best;
+  }
+
   // --------------------------------------------------------- power score ---
   // How good a place to dump damage counters is this Pokemon? Trevor's
   // recollection of how the GBC game played Alakazam, which turns out to be
@@ -4039,6 +4065,15 @@ class AI {
           for (const c of cands) if (c.dmg > best.dmg) best = c;
           a.opts.targetUid = best.uid;
           s += Math.min(v.n * 10, best.dmg) / 10 * W.healPer10;
+          // Healing poured past the damage is thrown away, and nothing charged
+          // for it: a Potion on a Pokemon with 10 damage still scored 3.5 and
+          // cleared the action threshold, so 34% of heals were premature.
+          // Super Potion never had this problem, purely by accident — its Energy
+          // cost happens to cancel the value at exactly 20 damage. This is that
+          // brake, made deliberate and applied to the card that lacked it.
+          s -= Math.max(0, v.n * 10 - best.dmg) / 10 * W.healWaste;
+          // ...unless it is about to die, where topping off a scratch is still
+          // the difference between surviving the turn and not.
           if (best === me.active && this.incomingThreat(pi) >= this.remainingHP(best)) s += 12;
           break;
         }
@@ -4069,18 +4104,38 @@ class AI {
           break;
         }
 
+        // Gust of Wind. What it is FOR is dragging up something hurt and
+        // finishing it. What it was DOING is dragging up whatever looked
+        // weakest and then failing to punish it — 80% of drags could not kill
+        // what they pulled, measured by tools/aitest.js.
+        //
+        // That is worse than wasting the card. An unpunished drag is a free
+        // switch for the opponent: they were going to promote something next
+        // turn anyway, and we just did it for them at the cost of a Trainer.
         case 'T_SWITCH_OPPONENT': {
           if (!you.bench.length) return -Infinity;
           if (killingActiveNow) return -Infinity;   // don't rescue a doomed Active
-          // drag up whatever we can kill fastest / whatever is least ready
-          let bestI = 0, bestV = -Infinity;
+          // "Cannot kill it" is NOT the fault on its own, and treating it as one
+          // throws away the card's other real use. Dragging up a Pokemon that
+          // cannot pay for an attack costs them a whole turn — tempo denial is a
+          // perfectly good reason to spend a Gust. The genuinely bad drag is the
+          // one that pulls up something we can neither kill NOR silence, which
+          // is a free switch performed on the opponent's behalf.
+          let bestI = 0, bestV = -Infinity, bestKills = false, bestSwings = true;
           you.bench.forEach((b, i) => {
             const pot = this.potential(1 - pi, b, null);
-            const v2 = (100 - this.remainingHP(b)) * 0.4 + (pot.short > 0 ? 18 : 0);
-            if (v2 > bestV) { bestV = v2; bestI = i; }
+            // Can we finish it once it is up? bestDamageAgainst forecasts our
+            // Active against a defender that is still on their Bench, which is
+            // the only way to ask this before committing the card.
+            const kills = this.bestDamageAgainst(pi, b) >= this.remainingHP(b);
+            const canSwing = pot.short === 0;
+            let v2 = (100 - this.remainingHP(b)) * 0.4 + (canSwing ? 0 : 18);
+            if (kills) v2 += W.dragKill;
+            if (v2 > bestV) { bestV = v2; bestI = i; bestKills = kills; bestSwings = canSwing; }
           });
           a.opts.bench = bestI;
           s += W.drag + bestV * 0.3;
+          if (!bestKills && bestSwings) s += W.dragNoKill;
           break;
         }
 
