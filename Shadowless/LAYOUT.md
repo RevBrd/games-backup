@@ -238,6 +238,35 @@ about two seconds early. `diffForFx` now runs when the presentation queue emptie
 the board unfreezes. **Anything else that reacts to the outcome must be armed there too**, not in
 `dispatch`.
 
+## The Energy picker shares the coin's spot
+
+**Which Energy gets discarded is asked on the centre line, in the coin's own place** — Trevor's call,
+12 Aug 2026. A picker that appears wherever the action is makes you hunt for it with your eye every
+time; a fixed place is learned once. The two are never live together, because a coin is presentation
+and this is an interaction the game is waiting on, so they share the strip rather than compete.
+
+It also beats an overlay sheet for a reason specific to this choice: **a sheet would cover the board,
+and you are choosing from a Pokémon you want to look at while you choose.**
+
+Three things it inherits and one it must not:
+
+- The zero-height absolutely-positioned strip, so it overhangs both halves without reflowing either.
+- The rule that it **must clear the ticker**, for the same reason the coin does — the ticker is what
+  says *why* you are being asked.
+- The capsule styling, so it reads as the same object the game uses to stop and ask you something.
+- **It must NOT inherit `pointer-events:none`.** `.cointoss` sets it so a landing coin cannot swallow
+  a click on the board underneath; a picker that ignores clicks is not a picker. `.pickcap` turns
+  them back on.
+
+**The action bar has to say what is happening now.** It kept printing "choose a Benched Pokemon to
+bring up" while the bench was long since chosen and the board was asking which Energy to spend —
+`UI.energyPick` outranks targeting in `renderActionBar`, and arming the picker clears `UI.targeting`
+so the bench stops being highlighted for a question already answered.
+
+**The picker only appears when the choice is real.** Three identical Fire Energy is not a decision.
+The rule lives in the engine (`energyChoiceIsReal`) rather than here, so the AI and the UI cannot
+disagree about it — see [ENGINE.md](ENGINE.md).
+
 ## The opening flip
 
 **The game opens by presenting the who-goes-first flip**, over an empty board, before the setup

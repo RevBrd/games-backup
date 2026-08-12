@@ -391,6 +391,28 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .coincap.landed.tails .coinresult{color:#9AA5B0}
 .coinreason{font-size:9.5px;letter-spacing:.06em;color:#5E6E68}
 
+/* ---- which Energy gets discarded ----
+   Shares the coin's zero-height strip on the centre line, because a picker that
+   appears wherever the action is makes you hunt for it every time and a fixed
+   place is learned once (Trevor, 12 Aug). The coin and this are never live
+   together. Unlike the coin it must TAKE pointer events — .cointoss turns them
+   off so a landing coin cannot swallow a click on the board underneath. */
+.energypick{pointer-events:none}
+.pickcap{pointer-events:auto;gap:12px;padding:10px 14px;max-width:min(92vw,860px);flex-wrap:wrap}
+.picklabel{display:flex;flex-direction:column;gap:2px;min-width:132px}
+.pickrow{display:flex;gap:7px;align-items:stretch;flex-wrap:wrap}
+.picken{width:58px;cursor:pointer;border:1px solid transparent;border-radius:4px;padding:2px;
+  display:flex;flex-direction:column;gap:2px;line-height:0}
+.picken .cardface{width:100%;max-width:none;margin:0;border-radius:2px}
+.picken:hover{border-color:var(--matline);background:rgba(255,255,255,.04)}
+/* The chosen ones read as LIFTED rather than merely outlined: at 58px an outline
+   alone is a hairline and gets lost against the card art behind it. */
+.picken.on{border-color:var(--amber);background:rgba(214,158,74,.14);
+  box-shadow:0 0 0 1px var(--amber), 0 6px 14px -6px #000}
+.pickname{font-size:8.5px;line-height:1.15;color:var(--matink);text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.picken.on .pickname{color:var(--amber)}
+
 /* ---- rail ---- */
 .rail{border-left:1px solid var(--line);background:#0F1419;display:flex;flex-direction:column;min-height:0}
 .tabs{display:flex;border-bottom:1px solid var(--line);flex:0 0 auto}
@@ -5681,7 +5703,13 @@ class Engine {
     if (this.playsAsPokemon(slot)) return false;          // "can't retreat", flatly
     if (slot.status.asleep || slot.status.paralyzed) return false;
     if (slot.effects.some(e => e.kind === 'CANT_RETREAT')) return false;   // Victreebel's Acid
-    return symbolCount(this.db, slot.energy) >= this.retreatCostOf(slot);
+    // A RETREAT COST IS PAID IN CARDS, NOT SYMBOLS. Settled with Trevor 12 Aug
+    // 2026 against the Game Boy game: a Double Colorless is one physical Energy
+    // card and discards as one, so a Pokemon with a retreat cost of 2 and only a
+    // DCE attached CANNOT retreat. This is deliberately not the official TCG
+    // rule, which counts the printed value — see RULINGS.md. Attack costs are
+    // unaffected and still read symbols; it is only the discard that counts cards.
+    return slot.energy.length >= this.retreatCostOf(slot);
   }
 
   canAttackAtAll(pi) {
@@ -5924,23 +5952,13 @@ class Engine {
     if (!this.canRetreat(p.active)) return this.fail('Cannot retreat (status or insufficient Energy)');
     const b = p.bench[a.bench]; if (!b) return this.fail('No such benched Pokemon');
     const cost = this.retreatCostOf(p.active);
+    // Cards, not symbols — see canRetreat. One card pays one, whatever it prints.
     let pay = a.pay;
-    if (!pay) {
-      pay = [];
-      let paid = 0;
-      for (const e of this.retreatPayOrder(p.active)) {
-        if (paid >= cost) break;
-        pay.push(e.uid);
-        paid += energySymbols(this.db, e).length;
-      }
-    }
-    let paidSymbols = 0;
+    if (!pay) pay = this.energyPayOrder(p.active).slice(0, cost).map(e => e.uid);
     for (const uid of pay) {
-      const e = p.active.energy.find(x => x.uid === uid);
-      if (!e) return this.fail('Energy not attached');
-      paidSymbols += energySymbols(this.db, e).length;
+      if (!p.active.energy.some(x => x.uid === uid)) return this.fail('Energy not attached');
     }
-    if (paidSymbols < cost) return this.fail(`Must discard Energy worth ${cost}`);
+    if (pay.length < cost) return this.fail(`Must discard ${cost} Energy card(s)`);
     for (const uid of pay) {
       const k = p.active.energy.findIndex(e => e.uid === uid);
       if (k === -1) return this.fail('Energy not attached');
@@ -5954,14 +5972,76 @@ class Engine {
     return { ok: true };
   }
 
-  // When the caller doesn't specify which Energy to discard for retreat, spend
-  // the ones this Pokemon's own attacks don't ask for, so we never eat the last
-  // Fire off a Charmeleon to pay a Colorless cost.
-  retreatPayOrder(slot) {
+  // ---- WHICH Energy gets discarded ------------------------------------------
+  // Seven places in this file discard Energy off a slot, and each used to decide
+  // for itself — "the first one attached", or "the first one of the right type".
+  // That is a real decision being made by array order: which Fire Energy leaves
+  // a Charizard is the difference between attacking next turn and not.
+  //
+  // These four are the single decision point, so the player's pick, the AI's and
+  // the fallback all agree and there is one thing to test.
+  //
+  // `chosen` is a list of uids in the order the player picked them. Anything not
+  // supplied, or no longer attached, falls back to `energyPayOrder` — which is
+  // what keeps every existing caller, the whole AI and every older test working
+  // unchanged, and is already better than the index 0 that most sites used.
+  //
+  // Two option keys, named by ROLE rather than by site, because one attack can
+  // do both and a single list would be split by a rule the caller cannot see:
+  //   opts.costUids    Energy discarded off YOUR attacker to pay a cost
+  //                    (COST_DISCARD_ENERGY, Wildfire, Super Energy Removal's half)
+  //   opts.energyUids  Energy the effect TARGETS, on either side
+  //                    (Energy Removal, Super Potion, DISCARD_DEF_ENERGY)
+  // Retreat is the exception and predates both: it takes `a.pay`, because it
+  // validates against a symbol total rather than a card count.
+
+  // The entries a given discard is allowed to take. `filter` is by provided type
+  // ('R' for a Fire cost), or null for "anything attached".
+  energyChoices(slot, filter) {
+    if (!slot) return [];
+    return slot.energy.filter(e => !filter || energyProvides(this.db, e) === filter);
+  }
+
+  // Worth stopping to ask? Only when there is slack AND the eligible cards are
+  // not all the same thing. Three basic Fire is not a decision and a prompt for
+  // it is pure friction — this is what keeps the picker rare enough to be
+  // meaningful. Buzzap'd Electrodes count as distinct, which is correct: one is
+  // a Pokemon you may want back.
+  energyChoiceIsReal(slot, n, filter) {
+    const pool = this.energyChoices(slot, filter);
+    if (pool.length <= n) return false;
+    const kinds = new Set(pool.map(e => e.id + '/' + (e.asEnergy || '')));
+    return kinds.size > 1;
+  }
+
+  // Takes n CARDS and returns them, already removed from the slot. The caller
+  // decides which discard pile they land in, because that differs by effect.
+  takeEnergy(slot, n, filter, chosen) {
+    const out = [];
+    const queue = (chosen || []).slice();
+    while (out.length < n) {
+      const pool = this.energyChoices(slot, filter);
+      if (!pool.length) break;
+      let pick = null;
+      while (queue.length && !pick) {
+        const uid = queue.shift();
+        pick = pool.find(e => e.uid === uid) || null;
+      }
+      if (!pick) pick = this.energyPayOrder(slot, filter)[0];
+      if (!pick) break;
+      out.push(slot.energy.splice(slot.energy.indexOf(pick), 1)[0]);
+    }
+    return out;
+  }
+
+  // When the caller doesn't specify which Energy to discard, spend the ones this
+  // Pokemon's own attacks don't ask for, so we never eat the last Fire off a
+  // Charmeleon to pay a Colorless cost. Also the AI's choice, for free.
+  energyPayOrder(slot, filter) {
     const c = topCard(this.db, slot);
     const needed = new Set();
     (c.attacks || []).forEach(a => a.cost.split('').forEach(x => { if (x !== 'C') needed.add(x); }));
-    return slot.energy.slice().sort((x, y) => {
+    return this.energyChoices(slot, filter).sort((x, y) => {
       const nx = needed.has(energyProvides(this.db, x)) ? 1 : 0;
       const ny = needed.has(energyProvides(this.db, y)) ? 1 : 0;
       return nx - ny;
@@ -6068,7 +6148,8 @@ class Engine {
           const slots = this.allSlots(1 - pi).filter(s => s.energy.length);
           const tgt = (a.opts && a.opts.targetUid) ? slots.find(s => s.uid === a.opts.targetUid) : slots[this.pick(slots.length)];
           if (!tgt) return this.fail('No Energy to remove');
-          const e = tgt.energy.splice((a.opts && a.opts.energyIdx) || 0, 1)[0];
+          const e = this.takeEnergy(tgt, 1, null, a.opts && a.opts.energyUids)[0];
+          if (!e) return this.fail('No Energy to remove');
           o.discard.push(e);
           this.log(`${this.db[e.id].name} discarded from ${this.nameOf(tgt)}.`); break;
         }
@@ -6084,7 +6165,9 @@ class Engine {
           const slots = this.allSlots(pi).filter(s => s.dmg > 0 && s.energy.length);
           const tgt = (a.opts && a.opts.targetUid) ? slots.find(s => s.uid === a.opts.targetUid) : slots[this.pick(slots.length)];
           if (!tgt) return this.fail('No valid target');
-          p.discard.push(tgt.energy.splice(0, 1)[0]);
+          const se = this.takeEnergy(tgt, 1, null, a.opts && a.opts.energyUids)[0];
+          if (!se) return this.fail('No Energy to discard');
+          p.discard.push(se);
           const heal = Math.min(v.n * 10, tgt.dmg);
           tgt.dmg -= heal;
           this.log(`${this.nameOf(tgt)} discards Energy and heals ${heal}.`); break;
@@ -6388,9 +6471,14 @@ class Engine {
           const theirs = this.allSlots(1 - pi).filter(x => x.energy.length);
           const tgt = (a.opts && a.opts.targetUid) ? theirs.find(x => x.uid === a.opts.targetUid) : theirs[this.pick(theirs.length)];
           if (!tgt) return this.fail('Opponent has no Energy to remove');
-          p.discard.push(src.energy.splice(0, 1)[0]);
-          let removed = 0;
-          for (let i = 0; i < 2 && tgt.energy.length; i++) { o.discard.push(tgt.energy.splice(0, 1)[0]); removed++; }
+          // Two separate choices in one card: which of YOURS you pay with, then
+          // which two of THEIRS go. Hence the two keys — see takeEnergy.
+          const cost = this.takeEnergy(src, 1, null, a.opts && a.opts.costUids)[0];
+          if (!cost) return this.fail('You have no Energy to discard');
+          p.discard.push(cost);
+          const taken = this.takeEnergy(tgt, 2, null, a.opts && a.opts.energyUids);
+          taken.forEach(e => o.discard.push(e));
+          const removed = taken.length;
           this.log(`${this.nameOf(src)} discards 1 Energy; ${removed} Energy discarded from ${this.nameOf(tgt)}.`);
           break;
         }
@@ -6629,11 +6717,9 @@ class Engine {
         this.log(`${card.name} discards all ${n} Energy as a cost.`);
       }
       if (v.v === 'COST_DISCARD_ENERGY') {
-        for (let i = 0; i < v.n; i++) {
-          const k = atk.energy.findIndex(e => !v.t || energyProvides(this.db, e) === v.t);
-          if (k === -1) return this.fail('Cost could not be paid');
-          me.discard.push(atk.energy.splice(k, 1)[0]);
-        }
+        if (this.energyChoices(atk, v.t || null).length < v.n) return this.fail('Cost could not be paid');
+        this.takeEnergy(atk, v.n, v.t || null, a.opts && a.opts.costUids)
+          .forEach(e => me.discard.push(e));
         this.log(`${card.name} discards ${v.n} ${v.t || ''} Energy as a cost.`.replace('  ', ' '));
       }
     }
@@ -6807,8 +6893,8 @@ class Engine {
         case 'DISCARD_DEF_ENERGY': {
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def || !def.energy.length) { this.log('No Energy to discard.', 'eff'); break; }
-          const k = (a.opts && a.opts.energyIdx !== undefined) ? a.opts.energyIdx : 0;
-          const e2 = def.energy.splice(Math.min(k, def.energy.length - 1), 1)[0];
+          const e2 = this.takeEnergy(def, 1, null, a.opts && a.opts.energyUids)[0];
+          if (!e2) { this.log('No Energy to discard.', 'eff'); break; }
           you.discard.push(e2);
           this.log(`${this.db[e2.id].name} is discarded from ${this.nameOf(def)}.`, 'eff');
           break;
@@ -6968,10 +7054,7 @@ class Engine {
           let n7 = (a && a.opts && a.opts.count !== undefined) ? a.opts.count : max;
           n7 = Math.max(0, Math.min(n7, max));
           if (n7 === 0) { this.log('No Fire Energy discarded, so nothing burns.', 'eff'); break; }
-          for (let i = 0; i < n7; i++) {
-            const k3 = atk.energy.findIndex(e => energyProvides(this.db, e) === 'R');
-            if (k3 >= 0) me.discard.push(atk.energy.splice(k3, 1)[0]);
-          }
+          this.takeEnergy(atk, n7, 'R', a.opts && a.opts.costUids).forEach(e => me.discard.push(e));
           let burned = 0;
           for (let i = 0; i < n7 && you.deck.length; i++) { you.discard.push(you.deck.shift()); burned++; }
           this.log(`Wildfire: ${n7} Fire discarded, ${burned} card(s) burned off ${you.name}'s deck.`, 'eff');
@@ -9518,6 +9601,125 @@ function renderCoinToss(b) {
   return box;
 }
 
+// ------------------------------------------------- choosing which Energy ---
+// Seven effects discard Energy off a Pokemon and the engine used to pick by
+// array order. Which Fire leaves a Charizard is the difference between attacking
+// next turn and not, so it is the player's call — but only when it IS a call:
+// `energyChoiceIsReal` suppresses the picker whenever the eligible cards are all
+// the same thing, which is most of the time.
+//
+// It lives on the centre line, in the coin's own spot, on Trevor's call (12 Aug):
+// a picker that appears wherever the action is makes you hunt for it with your
+// eye every time, and a fixed place is learned once. The two are never live
+// together — a coin is presentation, this is an interaction the game is waiting
+// on — so they share the strip rather than competing for it. Unlike the coin it
+// takes pointer events, and like the coin it must clear the ticker underneath,
+// because the ticker is what says WHY you are being asked.
+function renderEnergyPick(p) {
+  const box = el('div', 'cointoss energypick');
+  const cap = el('div', 'coincap pickcap');
+
+  const need = el('div', 'picklabel');
+  need.appendChild(el('div', 'coinresult', p.title));
+  need.appendChild(el('div', 'coinreason', p.hint));
+  cap.appendChild(need);
+
+  const row = el('div', 'pickrow');
+  p.pool.forEach(e => {
+    const on = p.chosen.indexOf(e.uid) >= 0;
+    const card = CARD_DB[e.id];
+    const t = el('div', 'picken' + (on ? ' on' : ''));
+    const face = pullFace(card, []);
+    if (face) t.appendChild(face);
+    t.appendChild(el('div', 'pickname', card.name + (e.asEnergy ? ` → ${ENERGY_NAME[e.asEnergy] || e.asEnergy}` : '')));
+    t.title = card.name;
+    t.onclick = () => toggleEnergyPick(e.uid);
+    row.appendChild(t);
+  });
+  cap.appendChild(row);
+
+  if (p.cancel) {
+    const x = el('button', 'btn small', 'Cancel');
+    x.onclick = () => { UI.energyPick = null; render(); };
+    cap.appendChild(x);
+  }
+  box.appendChild(cap);
+  return box;
+}
+
+// Clicking an Energy toggles it. The pick commits the moment it is satisfied
+// rather than needing a Done — every one of these is "choose exactly N", so a
+// confirmation step would be a click with no choice in it, which is the same
+// argument that took the verb menu off the action bar.
+function toggleEnergyPick(uid) {
+  const p = UI.energyPick;
+  if (!p) return;
+  const at = p.chosen.indexOf(uid);
+  if (at >= 0) p.chosen.splice(at, 1);
+  else p.chosen.push(uid);
+  if (p.satisfied(p.chosen)) {
+    const done = p.onDone, chosen = p.chosen.slice();
+    UI.energyPick = null;
+    done(chosen);
+    return;
+  }
+  render();
+}
+
+// Arms the picker if the choice is real, and otherwise runs the action straight
+// through — the engine's fallback picks, exactly as it did before there was a
+// picker. Returns true if it took over.
+function askEnergy(opts) {
+  const pool = UI.E.energyChoices(opts.slot, opts.filter || null);
+  const real = opts.real !== undefined ? opts.real
+    : UI.E.energyChoiceIsReal(opts.slot, opts.n, opts.filter || null);
+  if (!real) return false;
+  // The choice that led here is made, so the targeting that made it must go —
+  // otherwise the bench stays highlighted and the bar keeps printing the prompt
+  // for a question already answered.
+  UI.targeting = null;
+  UI.energyPick = {
+    title: opts.title, hint: opts.hint, pool, chosen: [],
+    cancel: opts.cancel !== false,
+    satisfied: opts.satisfied || (c => c.length >= opts.n),
+    onDone: opts.onDone,
+  };
+  render();
+  return true;
+}
+
+// Three Trainers ask a second, finer question once you have picked the Pokemon:
+// which Energy on it. Each step names the uid field holding its slot and the
+// engine option key its answer fills — see `takeEnergy` for why there are two.
+const TRAINER_ENERGY = {
+  'base1-92': [{ uidKey: 'targetUid', n: 1, key: 'energyUids', title: 'ENERGY REMOVAL', hint: 'choose the Energy to discard' }],
+  'base1-90': [{ uidKey: 'targetUid', n: 1, key: 'energyUids', title: 'SUPER POTION', hint: 'choose the Energy to discard' }],
+  'base1-79': [{ uidKey: 'selfUid',   n: 1, key: 'costUids',   title: 'SUPER ENERGY REMOVAL', hint: 'choose YOUR Energy to discard as the cost' },
+               { uidKey: 'targetUid', n: 2, key: 'energyUids', title: 'SUPER ENERGY REMOVAL', hint: 'choose 2 of theirs to strip' }],
+};
+
+// Walks the steps in order, skipping any whose choice is not real, and plays the
+// card once they are answered. Cancelling any step abandons the whole play,
+// which is right — you have not committed the card until it resolves.
+function playTrainerEnergy(hand, card, opts, step) {
+  const steps = TRAINER_ENERGY[card.id] || [];
+  let k = step || 0;
+  const play = () => dispatch(0, { t: 'playTrainer', hand, opts });
+  while (k < steps.length) {
+    const s = steps[k];
+    const slot = UI.E.allSlots(0).concat(UI.E.allSlots(1)).find(x => x.uid === opts[s.uidKey]);
+    const next = k + 1;
+    if (slot && askEnergy({
+      slot, n: s.n, title: s.title, hint: `${slot ? nameOfSlot(slot) : ''} — ${s.hint}`,
+      onDone: (uids) => { opts[s.key] = uids; playTrainerEnergy(hand, card, opts, next); },
+    })) return;
+    k = next;
+  }
+  play();
+}
+
+const nameOfSlot = slot => (CARD_DB[(slot.stack && slot.stack.length ? slot.stack[slot.stack.length - 1].id : slot.id)] || {}).name || '';
+
 function renderCentreLine() {
   const m = el('div', 'centreline');
   // The toss outranks both of the others: it is the only one of the three that
@@ -9525,6 +9727,13 @@ function renderCentreLine() {
   // action still gets its banner once the coin has landed and play resumes.
   const b = UI.pres && UI.pres.banner;
   if (b) { m.classList.add('tossing'); m.appendChild(renderCoinToss(b)); return m; }
+  // Same slot as the coin, and they cannot both be live: a coin is presentation
+  // and this is an interaction the game is waiting on.
+  if (UI.energyPick) {
+    m.classList.add('tossing');
+    m.appendChild(renderEnergyPick(UI.energyPick));
+    return m;
+  }
   if (UI.fxActive('ko0') || UI.fxActive('ko1')) {
     m.appendChild(el('div', 'kobanner', 'KNOCKED OUT'));
   } else if (UI.targeting) {
@@ -9836,10 +10045,30 @@ function retreatRow(slot, c) {
   row.onclick = () => {
     UI.retreatArmed = true;
     UI.targeting = { scope: 'ownBench', prompt: `Retreating ${c.name} — choose a Benched Pokemon to bring up`,
-      dispatch: (opts) => { UI.retreatArmed = false; dispatch(0, { t: 'retreat', bench: opts.bench }); } };
+      dispatch: (opts) => { UI.retreatArmed = false; retreatTo(opts.bench, slot, c, rc); } };
     render();
   };
   return row;
+}
+
+// Bench chosen; now WHICH Energy pays for it. Retreat is the one discard measured
+// in symbols rather than cards, so it satisfies on the symbol total — a Double
+// Colorless can cover a cost of 2 on its own, and the picker has to know that or
+// it would sit there waiting for a second card that is not needed.
+function retreatTo(bench, slot, c, rc) {
+  const go = pay => dispatch(0, pay ? { t: 'retreat', bench, pay } : { t: 'retreat', bench });
+  if (!rc) return go(null);
+  // Cards, not symbols — a Double Colorless pays one, same as a basic. That is
+  // the 12 Aug ruling, and it is what lets this use the generic card-count test
+  // rather than a bespoke one; an earlier version reasoned in symbols and had to
+  // special-case the DCE to avoid asking a question that was not there.
+  const armed = askEnergy({
+    slot, n: rc, filter: null,
+    title: 'DISCARD TO RETREAT',
+    hint: `${c.name} — choose ${rc} Energy card${rc > 1 ? 's' : ''} to discard`,
+    onDone: go,
+  });
+  if (!armed) go(null);
 }
 
 // Shared by the Active card and the bench tiles — a benched Pokemon is just as
@@ -10019,8 +10248,8 @@ function handVerbs(i) {
       if (need.then) {
         UI.targeting = { scope: need.scope, prompt: need.prompt, dispatch: (first) => {
           UI.targeting = { scope: need.then.scope, prompt: need.then.prompt,
-            dispatch: (second) => dispatch(0, { t: 'playTrainer', hand: i,
-              opts: { selfUid: first.targetUid, targetUid: second.targetUid } }) };
+            dispatch: (second) => playTrainerEnergy(i, c,
+              { selfUid: first.targetUid, targetUid: second.targetUid }) };
           render();
         } };
         render(); return;
@@ -10040,7 +10269,7 @@ function handVerbs(i) {
         render(); return;
       }
       UI.targeting = { scope: need.scope, prompt: need.prompt,
-        dispatch: (opts) => dispatch(0, { t: 'playTrainer', hand: i, opts }) };
+        dispatch: (opts) => playTrainerEnergy(i, c, opts) };
       render();
     } });
   }
@@ -10140,6 +10369,16 @@ function renderActionBar() {
     return bar;
   }
 
+  // An Energy pick outranks everything below it: it is the thing the game is
+  // waiting on, and the choice that led to it is already made. The bar is a
+  // status line, so it has to say what is happening NOW — it read "choose a
+  // Benched Pokemon to bring up" while the bench was long since chosen and the
+  // board was asking which Energy to spend.
+  if (UI.energyPick) {
+    bar.appendChild(el('div', 'barmsg', UI.energyPick.hint));
+    return bar;
+  }
+
   // `forced` targeting falls through to the promote/send-up branch below, which
   // re-arms it and prints the prompt WITHOUT a Cancel. Cancelling a forced
   // promote would strand the game with no Active and no way to choose one.
@@ -10227,7 +10466,9 @@ function resolveTarget(slot, pi, where, idx) {
   const t = UI.targeting; if (!t) return;
   if (t.scope === 'attachTo' || t.scope === 'evolveOn' || t.scope === 'breederTarget') return t.dispatch(slot.uid);
   if (t.scope === 'ownBench' || t.scope === 'oppBench' || t.scope === 'promote') return t.dispatch({ bench: idx });
-  if (t.scope === 'oppEnergy' || t.scope === 'ownEnergy') return t.dispatch({ targetUid: slot.uid, energyIdx: 0 });
+  // `energyIdx: 0` used to be sent here — "the first one attached", the very
+  // thing the picker replaced. Which Energy is now asked downstream, once the
+  // Pokemon is known, in playTrainerEnergy().
   return t.dispatch({ targetUid: slot.uid });
 }
 
@@ -10237,10 +10478,50 @@ function doAttack(i) {
   const needsBench = script.some(v => v.v === 'SWITCH_DEFENDER_CHOOSE') && foe().bench.length > 0;
   if (needsBench) {
     UI.targeting = { scope: 'oppBench', prompt: 'Choose which Benched Pokemon to drag into the Active spot',
-      dispatch: (opts) => dispatch(0, { t: 'attack', idx: i, opts }) };
+      dispatch: (opts) => attackWithEnergy(i, c, script, opts) };
     render(); return;
   }
-  dispatch(0, { t: 'attack', idx: i });
+  attackWithEnergy(i, c, script, null);
+}
+
+// An attack can ask two separate Energy questions and they are asked in the order
+// the engine resolves them: first what YOU discard to pay (Flamethrower's Fire,
+// Wildfire's however-many), then what you strip off the DEFENDER. Both are asked
+// BEFORE the attack is dispatched, because the engine resolves an attack
+// synchronously — there is no point mid-resolution at which the UI could stop and
+// ask, which is the same constraint that produced the coin-flip replay.
+function attackWithEnergy(i, c, script, opts) {
+  const o = opts || {};
+  const go = () => dispatch(0, { t: 'attack', idx: i, opts: o });
+
+  const cost = script.find(v => v.v === 'COST_DISCARD_ENERGY');
+  const strip = script.find(v => v.v === 'DISCARD_DEF_ENERGY');
+
+  const askDefender = () => {
+    if (!strip || !foe().active) return go();
+    if (askEnergy({
+      slot: foe().active, n: 1,
+      title: 'STRIP ENERGY',
+      hint: `${nameOfSlot(foe().active)} — choose the Energy to discard`,
+      onDone: (uids) => { o.energyUids = uids; go(); },
+    })) return;
+    go();
+  };
+
+  // Wildfire is not here on purpose: it discards as many Fire as you choose and
+  // defaults to ALL of them, so there is no slack and `energyChoiceIsReal` would
+  // decline to ask anyway. It routes through `takeEnergy` in the engine, so the
+  // day a count prompt is built, the which-prompt is a `costUids` away.
+  const n = cost ? cost.n : 0;
+  const t = cost ? (cost.t || null) : null;
+  if (cost && askEnergy({
+    slot: me().active, n, filter: t,
+    title: 'DISCARD TO ATTACK',
+    hint: `${c.name} — choose ${n} ${t ? (ENERGY_NAME[t] || t) + ' ' : ''}Energy to discard`,
+    onDone: (uids) => { o.costUids = uids; askDefender(); },
+  })) return;
+  askDefender();
+  void wild;   // Wildfire's own count prompt already runs upstream of this
 }
 
 // ------------------------------------------------------- deck select ------

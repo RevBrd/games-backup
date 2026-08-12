@@ -301,3 +301,55 @@ optional decoration on a preserved artifact. It is the half that rots.
   faintly visible behind it. Pre-existing, unrelated to any of this, and a board-adjacent visual
   call rather than mine to make. The energy-discard selection interface is the sixth item and is not
   started — it is a design conversation before it is a build.
+
+- **Opus 5** (12 Aug 2026) — the energy-discard picker, Trevor's sixth item, which turned out to be
+  larger and smaller than it looked at once.
+
+  **Smaller, because two of the three sites already had the plumbing and the UI simply never used
+  it.** `retreat` has accepted a `pay` list of uids since Job 4; `T_DISCARD_OPP_ENERGY` has accepted
+  an `energyIdx`. Nothing was passing them. **Larger, because there were seven sites, not three** —
+  Trevor named the ones he could remember and the sweep found Super Potion, Super Energy Removal,
+  Wildfire and the attacks that strip the defender. Also a correction to the premise worth recording:
+  **retreat was never "order attached"**; `retreatPayOrder` already preferred Energy the Pokémon's
+  own attacks did not need. It was the other six that picked by array index.
+
+  Built as one decision point rather than seven fixes — `energyChoices` / `energyChoiceIsReal` /
+  `takeEnergy` / `energyPayOrder` — so the player's pick, the AI's and the fallback cannot disagree.
+  **The AI needed no change at all**, which is the part I would not have predicted: anything
+  supplying no choice gets the pay-order heuristic, which is strictly better than the index 0 six of
+  the sites used before. The silent-failure surface in `AI.md` was the thing to worry about here and
+  the fallback design walked around it.
+
+  Two option keys named by ROLE and not by site — `costUids` for what leaves your own attacker,
+  `energyUids` for what the effect targets — because Super Energy Removal asks twice on opposite
+  sides of the board and one list would have to be split by a rule the caller cannot see.
+
+  **The picker lives on the centre line, in the coin's own place, and that was Trevor's call over
+  mine.** I had argued for clicking the Energy pips directly, on the standing "actions live where the
+  thing they act on is" rule. He pointed out the thing that beats it: a picker that appears wherever
+  the action is makes you hunt for it with your eye every time, and a fixed place is learned once.
+  He is right, and the centre line has a second advantage neither of us said first — unlike an
+  overlay sheet it does **not cover the board**, so you can still see the Pokémon you are choosing
+  from. The two are never live together, a coin being presentation and this being an interaction the
+  game is waiting on.
+
+  **The ruling underneath it changed a rule.** I asked whether a Double Colorless covers a retreat
+  cost of 2 alone; Trevor's answer from the GBC game is that it does not — a retreat cost is paid in
+  **cards**, not printed symbols, and a Double Colorless discards as one. That is deliberately not
+  the official TCG rule. It removed a special case rather than adding one: the picker had been
+  reasoning in symbols and needed bespoke logic to decide whether a DCE beside a basic was a real
+  choice, and with retreat measured in cards the generic test is simply correct. A `powertest.js`
+  case asserting the old behaviour was **rewritten rather than deleted**, because the pair of tests
+  either side of it is now what states the distinction: the same Buzzap'd Electrode still counts two
+  symbols toward an *attack* cost and one card toward a *retreat*.
+
+  **Two of my nine new engine tests were green against a build with the choice plumbing torn out**,
+  which I only found because I tore it out to check. Both named an Energy the fallback heuristic
+  would have picked anyway, so they proved nothing. Rewritten to name the card the fallback would
+  refuse — and after that, four of them fail without the fix. Confirming a test fails is not
+  ceremony; it is the only thing separating a test from a comment.
+
+  The screenshot earned its keep again, twice: the action bar was still printing "choose a Benched
+  Pokemon to bring up" while the bench was long since chosen and the board was asking which Energy
+  to spend, and the bench stayed highlighted for a question already answered. Neither is visible to
+  a suite that cannot lay anything out.

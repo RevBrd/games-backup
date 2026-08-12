@@ -273,6 +273,62 @@ correct if a later card ever attacks from somewhere else.
 
 ---
 
+## A retreat cost is paid in CARDS, not Energy symbols
+
+**Settled 12 Aug 2026, with Trevor, from the Game Boy game. Deliberately not the official rule.**
+
+The printed TCG rule is that you discard Energy cards whose **total value** meets the retreat cost,
+so a Double Colorless — printing two Colorless — covers a cost of 2 on its own. The GBC game counts
+the **physical card**: a Double Colorless discards as one Energy, and a Pokémon with a retreat cost
+of 2 needs two cards however they print.
+
+Trevor's call, and the standing policy hands ambiguity to the GBC game. The consequences are worth
+writing down because two of them look like bugs:
+
+- **A Pokémon with retreat 2 and only a Double Colorless attached cannot retreat.** It could before
+  12 Aug 2026.
+- **A Buzzap'd Electrode pays one toward a retreat**, despite providing `CC`. `powertest.js` asserted
+  the opposite until this ruling and the test was rewritten rather than deleted, because the pair of
+  tests either side of it is now what states the distinction.
+- **Attack costs are untouched and still read symbols.** A Double Colorless still pays two toward
+  `LC`. Only the *discard* counts cards, which is the whole distinction: paying a cost you keep the
+  Energy, paying a retreat you lose the card.
+
+This also removed a special case rather than adding one. The Energy picker had been reasoning in
+symbols and needed bespoke logic to work out whether a Double Colorless beside a basic was a real
+choice; with retreat measured in cards, the generic "is there slack, and are the cards different"
+test is simply correct.
+
+**The four theme decks re-measured at 75 / 50 / 43 / 32** (Blackout / Zap / Brushfire / Overgrowth)
+against 72 / 53 / 42 / 33 before. That is within noise at this sample size and the direction is
+right — decks leaning on Double Colorless retreat slightly less freely. Re-run `selftest.js` rather
+than trusting the line; see [AI.md](AI.md).
+
+---
+
+## Which Energy gets discarded is the player's choice
+
+**Settled 12 Aug 2026, with Trevor.** Not a reading of any card — a decision about who decides.
+
+Seven effects discard Energy off a Pokémon: retreat, Energy Removal, Super Energy Removal, Super
+Potion, an attack cost like Flamethrower's, Wildfire, and the attacks that strip the defender. Every
+one of them used to pick by array order — "the first one attached", or "the first of the right
+type". Which Fire leaves a Charizard is the difference between attacking next turn and not, so the
+cards were being chosen by an implementation detail.
+
+**The player is asked, but only when it is a real choice.** If the eligible Energy are all the same
+card, or there is no slack because they are all going anyway, the game does not stop — a prompt to
+choose between three identical Fire Energy is friction with no decision in it. A Buzzap'd Electrode
+counts as distinct from a basic of the same type, which is correct: one of them is a Pokémon you may
+want back.
+
+**The AI is not asked and does not need to be.** Where no choice is supplied the engine falls back to
+`energyPayOrder`, which spends what the Pokémon's own attacks do not ask for — so the bot gets a
+sensible answer for free, and it is strictly better than the index 0 that six of the seven sites used
+before.
+
+---
+
 ## Pending
 
 Calls we already know are coming, so nobody is surprised by them.

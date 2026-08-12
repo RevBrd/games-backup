@@ -403,13 +403,21 @@ T('the resulting Energy actually pays for an attack', () => {
   return true;
 });
 
-T('it counts as two symbols for retreat as well', () => {
+// UPDATED 12 Aug 2026, and the update is the interesting part. This asserted
+// that a Buzzap'd Electrode counts TWO toward a retreat cost, because it
+// provides 'CC'. Retreat is now paid in CARDS — Trevor's ruling from the GBC
+// game, see RULINGS.md — so the same Electrode pays exactly one, and Onix needs
+// three separate cards. It still counts as two symbols for an ATTACK cost; that
+// is the whole distinction and the test above this one still proves it.
+T('it pays only ONE toward a retreat cost, however many symbols it provides', () => {
   const E = board('base1-21', ['base1-56']);                // Onix, retreat 3
   const [trode, onix] = E.allSlots(0);
   eq(E.canRetreat(onix), false, 'cannot retreat with nothing attached');
   buzzap(E, trode, onix, 'F');
   attach(E, onix, 'base1-97', 1);
-  eq(E.canRetreat(onix), true, 'two from Buzzap plus one is enough for retreat 3');
+  eq(E.canRetreat(onix), false, 'two cards is not enough for retreat 3, whatever they print');
+  attach(E, onix, 'base1-97', 1);
+  eq(E.canRetreat(onix), true, 'three cards is');
   return true;
 });
 
@@ -1904,6 +1912,143 @@ T('prefers on-type Energy over a Colorless-filler for the same slot', () => {
   if (!fire || !grass) throw new Error('both attachments should be legal');
   const fs = ai.scoreAction(0, fire), gs = ai.scoreAction(0, grass);
   if (!(fs > gs)) throw new Error(`Fire ${fs.toFixed(1)} must beat Grass ${gs.toFixed(1)} on a Fire Pokemon`);
+  return true;
+});
+
+// ===========================================================================
+// WHICH ENERGY GETS DISCARDED  (12 Aug 2026)
+// Seven effects discard Energy off a slot and every one of them used to decide
+// by array order — "the first attached", or "the first of the right type".
+// Which Fire leaves a Charizard is the difference between attacking next turn
+// and not. These cover the single decision point they now share.
+// ===========================================================================
+
+const en = (E, id) => ({ id, uid: E.uid++ });
+
+T('takeEnergy honours the caller\'s choice, in the order given', () => {
+  const E = board('base1-24');                       // Charmeleon
+  const p = E.state.players[0];
+  const fire = en(E, 'base1-98'), grass = en(E, 'base1-99'), dce = en(E, 'base1-96');
+  p.active.energy = [fire, grass, dce];
+  const got = E.takeEnergy(p.active, 2, null, [dce.uid, grass.uid]);
+  if (got.map(x => x.uid).join() !== [dce.uid, grass.uid].join())
+    throw new Error('took the wrong cards: ' + got.map(x => CARD_DB[x.id].name).join('/'));
+  if (p.active.energy.length !== 1 || p.active.energy[0].uid !== fire.uid)
+    throw new Error('the Fire should be what is left');
+  return true;
+});
+
+// The fallback matters more than the choice: it is what the AI and every older
+// caller get, and it must be the heuristic rather than the array order.
+T('a stale uid falls back to the pay order, never to index 0', () => {
+  const E = board('base1-24');                       // Charmeleon wants its Fire
+  const p = E.state.players[0];
+  const fire = en(E, 'base1-98'), grass = en(E, 'base1-99');
+  p.active.energy = [fire, grass];                   // the Fire is FIRST in the array
+  const got = E.takeEnergy(p.active, 1, null, [999999]);
+  if (CARD_DB[got[0].id].name !== 'Grass Energy')
+    throw new Error('should spend the Grass its attacks do not need, got ' + CARD_DB[got[0].id].name);
+  return true;
+});
+
+T('a type filter refuses a choice that does not match it', () => {
+  const E = board('base1-24');
+  const p = E.state.players[0];
+  const fire = en(E, 'base1-98'), grass = en(E, 'base1-99');
+  p.active.energy = [grass, fire];
+  const got = E.takeEnergy(p.active, 1, 'R', [grass.uid]);   // naming the illegal one
+  if (CARD_DB[got[0].id].name !== 'Fire Energy')
+    throw new Error('a Grass cannot pay a Fire cost, got ' + CARD_DB[got[0].id].name);
+  return true;
+});
+
+// The rule that keeps the picker rare enough to mean anything. A prompt for
+// three identical Fire is pure friction.
+T('identical Energy is not a choice worth stopping for', () => {
+  const E = board('base1-24');
+  const p = E.state.players[0];
+  p.active.energy = [en(E, 'base1-98'), en(E, 'base1-98'), en(E, 'base1-98')];
+  if (E.energyChoiceIsReal(p.active, 1, null)) throw new Error('three identical Fire is not a decision');
+  p.active.energy.push(en(E, 'base1-99'));
+  if (!E.energyChoiceIsReal(p.active, 1, null)) throw new Error('a Grass among them IS a decision');
+  return true;
+});
+
+T('no slack is no choice: taking everything eligible needs no prompt', () => {
+  const E = board('base1-24');
+  const p = E.state.players[0];
+  p.active.energy = [en(E, 'base1-98'), en(E, 'base1-99')];
+  if (E.energyChoiceIsReal(p.active, 2, null)) throw new Error('both are going regardless');
+  return true;
+});
+
+// A Buzzap'd Electrode is an Energy card that is also a Pokemon you may want
+// back, so it must never collapse into "another Lightning" for this test.
+T('a Buzzap\'d Electrode is distinct from a basic of the same type', () => {
+  const E = board('base1-24');
+  const p = E.state.players[0];
+  const a = en(E, 'base1-100'), b = en(E, 'base1-100');
+  p.active.energy = [a, b];
+  if (E.energyChoiceIsReal(p.active, 1, null)) throw new Error('two identical Lightning is not a choice');
+  b.asEnergy = 'L';
+  if (!E.energyChoiceIsReal(p.active, 1, null)) throw new Error('the Buzzap\'d one is a different card');
+  return true;
+});
+
+// Each of these names the card the FALLBACK would refuse to take, so passing
+// cannot mean "the heuristic happened to agree". Two of them originally did
+// agree, and were green against a build with the choice plumbing torn out.
+T('Energy Removal discards the Energy the player named', () => {
+  const E = board('base1-24', [], 'base1-58');       // their Pikachu wants Lightning
+  const p = E.state.players[0], o = E.state.players[1];
+  const spare = en(E, 'base1-99'), wanted = en(E, 'base1-100');
+  o.active.energy = [spare, wanted];
+  p.hand = [{ id: 'base1-92', uid: E.uid++ }];
+  // Naming the Lightning is the better play and the opposite of the fallback,
+  // which spends what the Pokemon does not need.
+  const r = E.act(0, { t: 'playTrainer', hand: 0,
+    opts: { targetUid: o.active.uid, energyUids: [wanted.uid] } });
+  if (!r.ok) throw new Error('Energy Removal failed: ' + r.error);
+  if (o.active.energy.length !== 1 || o.active.energy[0].uid !== spare.uid)
+    throw new Error('took the fallback\'s pick, not the player\'s');
+  return true;
+});
+
+T('an attack cost discards the Fire the player named', () => {
+  const E = board('base1-24', [], 'base1-58');       // Charmeleon: Flamethrower
+  const p = E.state.players[0];
+  const keep = en(E, 'base1-98'), spend = en(E, 'base1-98');
+  spend.asEnergy = 'R';                              // same type, different card
+  p.active.energy = [keep, spend, en(E, 'base1-98'), en(E, 'base1-98')];
+  const r = E.act(0, { t: 'attack', idx: 1, opts: { costUids: [spend.uid] } });
+  if (!r.ok) throw new Error('Flamethrower failed: ' + r.error);
+  if (p.active.energy.some(e => e.uid === spend.uid))
+    throw new Error('the named Energy is still attached');
+  if (!p.active.energy.some(e => e.uid === keep.uid))
+    throw new Error('it took one that was not named');
+  return true;
+});
+
+// Super Energy Removal asks twice, on opposite sides of the board, which is why
+// the option keys are named by role rather than by site.
+T('Super Energy Removal keeps its two choices apart', () => {
+  const E = board('base1-24', [], 'base1-58');
+  const p = E.state.players[0], o = E.state.players[1];
+  // Pay with the FIRE your Charmeleon wants — the fallback would spend the Grass.
+  const mineSpare = en(E, 'base1-99'), minePay = en(E, 'base1-98');
+  p.active.energy = [mineSpare, minePay];
+  // Strip the two LIGHTNING their Pikachu wants — the fallback would take Grass.
+  const theirSpare = en(E, 'base1-99'), a = en(E, 'base1-100'), b = en(E, 'base1-100');
+  o.active.energy = [theirSpare, a, b];
+  p.hand = [{ id: 'base1-79', uid: E.uid++ }];
+  const r = E.act(0, { t: 'playTrainer', hand: 0, opts: {
+    selfUid: p.active.uid, targetUid: o.active.uid,
+    costUids: [minePay.uid], energyUids: [a.uid, b.uid] } });
+  if (!r.ok) throw new Error('Super Energy Removal failed: ' + r.error);
+  if (p.active.energy.length !== 1 || p.active.energy[0].uid !== mineSpare.uid)
+    throw new Error('paid with the fallback\'s pick, not the player\'s');
+  if (o.active.energy.length !== 1 || o.active.energy[0].uid !== theirSpare.uid)
+    throw new Error('stripped the fallback\'s pick, not the player\'s');
   return true;
 });
 

@@ -34,7 +34,7 @@ the eleventh and is reached through `CREDITS.md`.
 
 | File | Read it when |
 |---|---|
-| [ENGINE.md](ENGINE.md) | Adding or changing cards. The seven systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer and the `baseCard`/`topCard` split. Also: why full games never test any of it |
+| [ENGINE.md](ENGINE.md) | Adding or changing cards. The eight systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer, the `baseCard`/`topCard` split and `takeEnergy`. Also: why full games never test any of it |
 | [AI.md](AI.md) | Touching `ai.js`, or quoting a number about how well the bot plays. The two instruments, the four ways that measurement lies, the silent-failure surface, and the weight re-tune that is the next AI job |
 | [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
@@ -236,10 +236,7 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
    layouts. The mechanism exists; see [COLLECTION.md](COLLECTION.md).
 3. **Southern Islands and progression-gated promo intrusion** are both unsettled pack questions and
    both depend on Job 7. See [PACKS.md](PACKS.md).
-4. **Energy discard needs a selection interface** — Energy Removal, a retreat costing less than the
-   Energy attached, and attack costs like Flamethrower all currently discard in the order attached.
-   Trevor's item; a design conversation before it is a build.
-5. **Audio: none.** Nothing has been decided about it.
+4. **Audio: none.** Nothing has been decided about it.
 
 **Every figure quoted anywhere before 11 Aug 2026 was measuring a 12-Prize game** — twice the
 intended length, because `setupConfirm()` was not idempotent and every harness in the repo confirmed

@@ -1080,7 +1080,13 @@ class Engine {
     if (this.playsAsPokemon(slot)) return false;          // "can't retreat", flatly
     if (slot.status.asleep || slot.status.paralyzed) return false;
     if (slot.effects.some(e => e.kind === 'CANT_RETREAT')) return false;   // Victreebel's Acid
-    return symbolCount(this.db, slot.energy) >= this.retreatCostOf(slot);
+    // A RETREAT COST IS PAID IN CARDS, NOT SYMBOLS. Settled with Trevor 12 Aug
+    // 2026 against the Game Boy game: a Double Colorless is one physical Energy
+    // card and discards as one, so a Pokemon with a retreat cost of 2 and only a
+    // DCE attached CANNOT retreat. This is deliberately not the official TCG
+    // rule, which counts the printed value — see RULINGS.md. Attack costs are
+    // unaffected and still read symbols; it is only the discard that counts cards.
+    return slot.energy.length >= this.retreatCostOf(slot);
   }
 
   canAttackAtAll(pi) {
@@ -1323,23 +1329,13 @@ class Engine {
     if (!this.canRetreat(p.active)) return this.fail('Cannot retreat (status or insufficient Energy)');
     const b = p.bench[a.bench]; if (!b) return this.fail('No such benched Pokemon');
     const cost = this.retreatCostOf(p.active);
+    // Cards, not symbols — see canRetreat. One card pays one, whatever it prints.
     let pay = a.pay;
-    if (!pay) {
-      pay = [];
-      let paid = 0;
-      for (const e of this.retreatPayOrder(p.active)) {
-        if (paid >= cost) break;
-        pay.push(e.uid);
-        paid += energySymbols(this.db, e).length;
-      }
-    }
-    let paidSymbols = 0;
+    if (!pay) pay = this.energyPayOrder(p.active).slice(0, cost).map(e => e.uid);
     for (const uid of pay) {
-      const e = p.active.energy.find(x => x.uid === uid);
-      if (!e) return this.fail('Energy not attached');
-      paidSymbols += energySymbols(this.db, e).length;
+      if (!p.active.energy.some(x => x.uid === uid)) return this.fail('Energy not attached');
     }
-    if (paidSymbols < cost) return this.fail(`Must discard Energy worth ${cost}`);
+    if (pay.length < cost) return this.fail(`Must discard ${cost} Energy card(s)`);
     for (const uid of pay) {
       const k = p.active.energy.findIndex(e => e.uid === uid);
       if (k === -1) return this.fail('Energy not attached');
@@ -1353,14 +1349,76 @@ class Engine {
     return { ok: true };
   }
 
-  // When the caller doesn't specify which Energy to discard for retreat, spend
-  // the ones this Pokemon's own attacks don't ask for, so we never eat the last
-  // Fire off a Charmeleon to pay a Colorless cost.
-  retreatPayOrder(slot) {
+  // ---- WHICH Energy gets discarded ------------------------------------------
+  // Seven places in this file discard Energy off a slot, and each used to decide
+  // for itself — "the first one attached", or "the first one of the right type".
+  // That is a real decision being made by array order: which Fire Energy leaves
+  // a Charizard is the difference between attacking next turn and not.
+  //
+  // These four are the single decision point, so the player's pick, the AI's and
+  // the fallback all agree and there is one thing to test.
+  //
+  // `chosen` is a list of uids in the order the player picked them. Anything not
+  // supplied, or no longer attached, falls back to `energyPayOrder` — which is
+  // what keeps every existing caller, the whole AI and every older test working
+  // unchanged, and is already better than the index 0 that most sites used.
+  //
+  // Two option keys, named by ROLE rather than by site, because one attack can
+  // do both and a single list would be split by a rule the caller cannot see:
+  //   opts.costUids    Energy discarded off YOUR attacker to pay a cost
+  //                    (COST_DISCARD_ENERGY, Wildfire, Super Energy Removal's half)
+  //   opts.energyUids  Energy the effect TARGETS, on either side
+  //                    (Energy Removal, Super Potion, DISCARD_DEF_ENERGY)
+  // Retreat is the exception and predates both: it takes `a.pay`, because it
+  // validates against a symbol total rather than a card count.
+
+  // The entries a given discard is allowed to take. `filter` is by provided type
+  // ('R' for a Fire cost), or null for "anything attached".
+  energyChoices(slot, filter) {
+    if (!slot) return [];
+    return slot.energy.filter(e => !filter || energyProvides(this.db, e) === filter);
+  }
+
+  // Worth stopping to ask? Only when there is slack AND the eligible cards are
+  // not all the same thing. Three basic Fire is not a decision and a prompt for
+  // it is pure friction — this is what keeps the picker rare enough to be
+  // meaningful. Buzzap'd Electrodes count as distinct, which is correct: one is
+  // a Pokemon you may want back.
+  energyChoiceIsReal(slot, n, filter) {
+    const pool = this.energyChoices(slot, filter);
+    if (pool.length <= n) return false;
+    const kinds = new Set(pool.map(e => e.id + '/' + (e.asEnergy || '')));
+    return kinds.size > 1;
+  }
+
+  // Takes n CARDS and returns them, already removed from the slot. The caller
+  // decides which discard pile they land in, because that differs by effect.
+  takeEnergy(slot, n, filter, chosen) {
+    const out = [];
+    const queue = (chosen || []).slice();
+    while (out.length < n) {
+      const pool = this.energyChoices(slot, filter);
+      if (!pool.length) break;
+      let pick = null;
+      while (queue.length && !pick) {
+        const uid = queue.shift();
+        pick = pool.find(e => e.uid === uid) || null;
+      }
+      if (!pick) pick = this.energyPayOrder(slot, filter)[0];
+      if (!pick) break;
+      out.push(slot.energy.splice(slot.energy.indexOf(pick), 1)[0]);
+    }
+    return out;
+  }
+
+  // When the caller doesn't specify which Energy to discard, spend the ones this
+  // Pokemon's own attacks don't ask for, so we never eat the last Fire off a
+  // Charmeleon to pay a Colorless cost. Also the AI's choice, for free.
+  energyPayOrder(slot, filter) {
     const c = topCard(this.db, slot);
     const needed = new Set();
     (c.attacks || []).forEach(a => a.cost.split('').forEach(x => { if (x !== 'C') needed.add(x); }));
-    return slot.energy.slice().sort((x, y) => {
+    return this.energyChoices(slot, filter).sort((x, y) => {
       const nx = needed.has(energyProvides(this.db, x)) ? 1 : 0;
       const ny = needed.has(energyProvides(this.db, y)) ? 1 : 0;
       return nx - ny;
@@ -1467,7 +1525,8 @@ class Engine {
           const slots = this.allSlots(1 - pi).filter(s => s.energy.length);
           const tgt = (a.opts && a.opts.targetUid) ? slots.find(s => s.uid === a.opts.targetUid) : slots[this.pick(slots.length)];
           if (!tgt) return this.fail('No Energy to remove');
-          const e = tgt.energy.splice((a.opts && a.opts.energyIdx) || 0, 1)[0];
+          const e = this.takeEnergy(tgt, 1, null, a.opts && a.opts.energyUids)[0];
+          if (!e) return this.fail('No Energy to remove');
           o.discard.push(e);
           this.log(`${this.db[e.id].name} discarded from ${this.nameOf(tgt)}.`); break;
         }
@@ -1483,7 +1542,9 @@ class Engine {
           const slots = this.allSlots(pi).filter(s => s.dmg > 0 && s.energy.length);
           const tgt = (a.opts && a.opts.targetUid) ? slots.find(s => s.uid === a.opts.targetUid) : slots[this.pick(slots.length)];
           if (!tgt) return this.fail('No valid target');
-          p.discard.push(tgt.energy.splice(0, 1)[0]);
+          const se = this.takeEnergy(tgt, 1, null, a.opts && a.opts.energyUids)[0];
+          if (!se) return this.fail('No Energy to discard');
+          p.discard.push(se);
           const heal = Math.min(v.n * 10, tgt.dmg);
           tgt.dmg -= heal;
           this.log(`${this.nameOf(tgt)} discards Energy and heals ${heal}.`); break;
@@ -1787,9 +1848,14 @@ class Engine {
           const theirs = this.allSlots(1 - pi).filter(x => x.energy.length);
           const tgt = (a.opts && a.opts.targetUid) ? theirs.find(x => x.uid === a.opts.targetUid) : theirs[this.pick(theirs.length)];
           if (!tgt) return this.fail('Opponent has no Energy to remove');
-          p.discard.push(src.energy.splice(0, 1)[0]);
-          let removed = 0;
-          for (let i = 0; i < 2 && tgt.energy.length; i++) { o.discard.push(tgt.energy.splice(0, 1)[0]); removed++; }
+          // Two separate choices in one card: which of YOURS you pay with, then
+          // which two of THEIRS go. Hence the two keys — see takeEnergy.
+          const cost = this.takeEnergy(src, 1, null, a.opts && a.opts.costUids)[0];
+          if (!cost) return this.fail('You have no Energy to discard');
+          p.discard.push(cost);
+          const taken = this.takeEnergy(tgt, 2, null, a.opts && a.opts.energyUids);
+          taken.forEach(e => o.discard.push(e));
+          const removed = taken.length;
           this.log(`${this.nameOf(src)} discards 1 Energy; ${removed} Energy discarded from ${this.nameOf(tgt)}.`);
           break;
         }
@@ -2028,11 +2094,9 @@ class Engine {
         this.log(`${card.name} discards all ${n} Energy as a cost.`);
       }
       if (v.v === 'COST_DISCARD_ENERGY') {
-        for (let i = 0; i < v.n; i++) {
-          const k = atk.energy.findIndex(e => !v.t || energyProvides(this.db, e) === v.t);
-          if (k === -1) return this.fail('Cost could not be paid');
-          me.discard.push(atk.energy.splice(k, 1)[0]);
-        }
+        if (this.energyChoices(atk, v.t || null).length < v.n) return this.fail('Cost could not be paid');
+        this.takeEnergy(atk, v.n, v.t || null, a.opts && a.opts.costUids)
+          .forEach(e => me.discard.push(e));
         this.log(`${card.name} discards ${v.n} ${v.t || ''} Energy as a cost.`.replace('  ', ' '));
       }
     }
@@ -2206,8 +2270,8 @@ class Engine {
         case 'DISCARD_DEF_ENERGY': {
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def || !def.energy.length) { this.log('No Energy to discard.', 'eff'); break; }
-          const k = (a.opts && a.opts.energyIdx !== undefined) ? a.opts.energyIdx : 0;
-          const e2 = def.energy.splice(Math.min(k, def.energy.length - 1), 1)[0];
+          const e2 = this.takeEnergy(def, 1, null, a.opts && a.opts.energyUids)[0];
+          if (!e2) { this.log('No Energy to discard.', 'eff'); break; }
           you.discard.push(e2);
           this.log(`${this.db[e2.id].name} is discarded from ${this.nameOf(def)}.`, 'eff');
           break;
@@ -2367,10 +2431,7 @@ class Engine {
           let n7 = (a && a.opts && a.opts.count !== undefined) ? a.opts.count : max;
           n7 = Math.max(0, Math.min(n7, max));
           if (n7 === 0) { this.log('No Fire Energy discarded, so nothing burns.', 'eff'); break; }
-          for (let i = 0; i < n7; i++) {
-            const k3 = atk.energy.findIndex(e => energyProvides(this.db, e) === 'R');
-            if (k3 >= 0) me.discard.push(atk.energy.splice(k3, 1)[0]);
-          }
+          this.takeEnergy(atk, n7, 'R', a.opts && a.opts.costUids).forEach(e => me.discard.push(e));
           let burned = 0;
           for (let i = 0; i < n7 && you.deck.length; i++) { you.discard.push(you.deck.shift()); burned++; }
           this.log(`Wildfire: ${n7} Fire discarded, ${burned} card(s) burned off ${you.name}'s deck.`, 'eff');

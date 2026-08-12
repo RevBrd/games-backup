@@ -8,7 +8,7 @@ Ordinary cards need none of this. A `cards.js` entry plus an `effects.js` entry 
 and the DSL verb reference is the comment block at the top of `effects.js`. **If a card needs
 behaviour the DSL cannot express, add a verb rather than special-casing it**, and document it there.
 
-## The seven systems
+## The eight systems
 
 ### Pokémon Powers
 
@@ -124,6 +124,35 @@ every action**, not at the eight separate places a Pokémon can reach the Active
 **idempotent** — a ninth entry path added later cannot forget about it. And **anything that switches
 the Power off blocks a transform but never reverses one already made**, which is the one rule that
 covers status, Toxic Gas and an empty opposing Active between them.
+
+### `takeEnergy` — which Energy leaves
+
+Added 12 Aug 2026. **Seven effects discard Energy off a slot** — retreat, Energy Removal, Super
+Energy Removal, Super Potion, an attack cost like Flamethrower's, Wildfire, and the attacks that
+strip the defender — and every one of them used to decide for itself, by array order. Which Fire
+leaves a Charizard is the difference between attacking next turn and not.
+
+They now share one decision point, which is what lets the player's pick, the AI's and the fallback
+agree and gives the whole thing one place to test:
+
+| | |
+|---|---|
+| `energyChoices(slot, filter)` | what this discard is allowed to take |
+| `energyChoiceIsReal(slot, n, filter)` | is it worth stopping to ask — slack, **and** the cards are not all the same |
+| `takeEnergy(slot, n, filter, chosen)` | takes n cards and returns them; the caller decides which discard pile |
+| `energyPayOrder(slot, filter)` | the fallback: spend what this Pokémon's own attacks do not ask for |
+
+**The fallback is the load-bearing part.** Anything that supplies no choice — the AI, every older
+call site, every test written before this existed — gets `energyPayOrder`, which is strictly better
+than the index 0 that six of the seven sites used. So the AI needed no change at all.
+
+**Two option keys, named by role rather than by site**, because one attack can do both and a single
+list would have to be split by a rule the caller cannot see: `opts.costUids` is Energy discarded off
+**your** attacker to pay, `opts.energyUids` is Energy the effect **targets**, on either side. Retreat
+predates both and takes `a.pay`.
+
+**Retreat is measured in cards, not symbols** — a Double Colorless pays one. That is a ruling, not an
+implementation detail, and it is in [RULINGS.md](RULINGS.md).
 
 ## Testing them
 

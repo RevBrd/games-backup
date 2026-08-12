@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -1409,6 +1409,57 @@ T('promoting by bench click puts up the one you clicked', () => {
   if (s.players[0].bench.indexOf(second) >= 0) throw new Error('still on the bench too');
   if (s.pendingPromote !== null) throw new Error('pendingPromote still ' + s.pendingPromote);
   return true;
+});
+
+// Which Energy pays for a retreat is a real decision, and the engine used to make
+// it by array order. The picker asks -- but ONLY when there is something to ask.
+function retreatBoard(energy) {
+  const s = actionBoard();
+  const p = s.players[0];
+  p.active = UI.E.mkSlot({ uid: 90040, id: 'base1-58' });   // Pikachu, retreat 1
+  p.active.energy = energy.map((id, k) => ({ uid: 90041 + k, id }));
+  p.bench = [UI.E.mkSlot({ uid: 90050, id: 'base1-58' })];
+  p.retreated = false;
+  UI.energyPick = null;
+  render();
+  const row = findByClass(document.getElementById('app'), 'retreatrow');
+  if (!row || !row.onclick) throw new Error('retreat row not clickable');
+  row.onclick();
+  UI.targeting.dispatch({ bench: 0 });
+  return p;
+}
+
+T('retreating with mixed Energy asks which to discard', () => {
+  const p = retreatBoard(['base1-99', 'base1-100', 'base1-100']);
+  if (!UI.energyPick) throw new Error('the picker should have opened');
+  if (p.active.energy.length !== 3) throw new Error('nothing may be discarded until you choose');
+  // Naming the Grass keeps both Lightning, which is the point of asking.
+  ctx.toggleEnergyPick(90041);
+  if (UI.energyPick) throw new Error('one card covers a retreat cost of 1; it should have committed');
+  const left = UI.E.state.players[0].bench[UI.E.state.players[0].bench.length - 1].energy;
+  return left.length === 2 && left.every(e => e.id === 'base1-100');
+});
+
+T('retreating with identical Energy does not stop to ask', () => {
+  const p = retreatBoard(['base1-100', 'base1-100', 'base1-100']);
+  if (UI.energyPick) throw new Error('three identical Lightning is not a decision');
+  return p.retreated === true;
+});
+
+// A Double Colorless beside one basic is a real decision even though either card
+// alone settles the cost -- you are choosing which one you would rather keep, and
+// a DCE is worth two symbols to whatever comes next.
+T('a Double Colorless beside a basic is still a decision', () => {
+  const s = actionBoard();
+  const p = s.players[0];
+  p.active = UI.E.mkSlot({ uid: 90060, id: 'base1-24' });   // Charmeleon, retreat 1
+  p.active.energy = [{ uid: 90061, id: 'base1-96' }, { uid: 90062, id: 'base1-98' }];
+  p.bench = [UI.E.mkSlot({ uid: 90063, id: 'base1-58' })];
+  p.retreated = false; UI.energyPick = null;
+  render();
+  findByClass(document.getElementById('app'), 'retreatrow').onclick();
+  UI.targeting.dispatch({ bench: 0 });
+  return !!UI.energyPick && UI.energyPick.pool.length === 2;
 });
 
 T('retreat is a row on the Active card, not a button in the bar', () => {
