@@ -37,6 +37,7 @@ const blank = () => ({
   retreats: 0, retreatAbandonedAttack: 0, retreatNoThreat: 0, retreatEnergyBurned: 0,
   retreatScoreLost: 0, retreatImproved: 0,
   attaches: 0, attachDoomed: 0, attachDoomedUseless: 0,
+  attachSurplus: 0, attachMisdirected: 0,
   heals: 0, healWasted: 0, healWastedHP: 0,
   kosSuffered: 0,
 });
@@ -75,6 +76,33 @@ function classify(E, pi, a, st) {
   if (a.t === 'attachEnergy') {
     st.attaches++;
     const slot = E.allSlots(pi).find(x => x.uid === a.target);
+    const inst0 = me.hand[a.hand];
+
+    // Trevor's report: it attaches Energy its Pokemon do not need. Two different
+    // faults wear that description, and they want different fixes.
+    if (slot) {
+      const b4 = ai.potential(pi, slot, null);
+      const af = ai.potential(pi, slot, inst0 && inst0.id);
+      // (a) SURPLUS — the target could already pay for everything it owns, and
+      //     the card buys no new attack either. Pure overflow.
+      if (b4.short === 0 && af.best <= b4.best) st.attachSurplus++;
+      // (b) MISDIRECTED — somewhere else on the board could not afford an attack
+      //     at all, and would have been made able to. Only one attachment
+      //     happens per turn, so picking the wrong slot is the whole cost.
+      // Requires SURPLUS as well, not just a paid-up target: a slot that gains a
+      // bigger attack from the card has a real claim on it, and counting those
+      // as misdirected inflated this from the true figure to 7%.
+      if (b4.short === 0 && af.best <= b4.best) {
+        const needier = E.allSlots(pi).some(x => {
+          if (x === slot) return false;
+          const s0 = ai.potential(pi, x, null);
+          if (s0.short === 0) return false;
+          return ai.potential(pi, x, inst0 && inst0.id).short < s0.short;
+        });
+        if (needier) st.attachMisdirected++;
+      }
+    }
+
     if (slot && slot === active) {
       const doomed = ai.incomingThreat(pi) >= ai.remainingHP(active);
       if (doomed) {
@@ -162,6 +190,8 @@ console.log('\nEnergy attachment');
 console.log(`  ${String(total.attaches).padStart(5)}  attachments`);
 console.log(`  ${String(total.attachDoomed).padStart(5)}  ...onto an Active that dies     ${pct(total.attachDoomed, total.attaches)} of attachments`);
 console.log(`  ${String(total.attachDoomedUseless).padStart(5)}  ...and could not attack anyway  ${pct(total.attachDoomedUseless, total.attaches)} of attachments`);
+console.log(`  ${String(total.attachSurplus).padStart(5)}  ...onto a fully-paid Pokemon    ${pct(total.attachSurplus, total.attaches)} of attachments`);
+console.log(`  ${String(total.attachMisdirected).padStart(5)}  ...while something else needed  ${pct(total.attachMisdirected, total.attaches)} of attachments`);
 
 console.log('\nHealing');
 console.log(`  ${String(total.heals).padStart(5)}  heals played`);

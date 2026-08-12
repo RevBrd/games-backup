@@ -29,6 +29,8 @@ const AI_WEIGHTS = {
   destinyBond: 18,      // arming Destiny Bond when death looks likely
   attachEnable: 1.0,    // scale on "how much better my attacks get"
   attachBuild: 3.5,     // progress toward an attack we can't afford yet
+  attachSurplus: -2,    // attaching to a Pokemon that needs nothing. Negative so
+                        // it falls under `threshold` and the card is HELD
   evolveHP: 0.45,       // per point of max-HP gained
   evolveBase: 16,       // evolving is good almost always
   benchFirst: 26,       // first spare Basic on the bench is important
@@ -818,6 +820,29 @@ class AI {
         const inst = me.hand[a.hand];
         const before = this.potential(pi, slot, null);
         const after = this.potential(pi, slot, inst.id);
+
+        // SURPLUS. The target can already pay for every attack it owns and this
+        // card buys it no new one, so the attachment achieves nothing at all.
+        // It was still being made: the branches below have a floor of 0.4 and
+        // then add 4 for the Active, which clears the 0.5 action threshold, so
+        // the bot attached Energy every single turn whether or not it helped.
+        // 18% of its attachments were this.
+        //
+        // Hold it instead. The ATTACHMENT is one per turn and expires, but the
+        // CARD does not — and a Pokemon that actually needs this type turns up
+        // soon enough. Measured: when this fires there is never a better target
+        // on the board (0% misdirected in aitest.js), so the choice really is
+        // attach-or-keep and not attach-here-or-there.
+        //
+        // Two exceptions, both cases where "spare" Energy is not spare:
+        //   - it cannot cover its own retreat cost yet, so the Energy is an
+        //     escape route rather than an attack cost;
+        //   - an attack that scales with leftover Energy would improve, which
+        //     shows up as after.best rising and so is already excluded.
+        const paidUp = before.short === 0 && after.best <= before.best;
+        const canPayRetreat = slot.energy.length >= this.top(slot).retreat;
+        if (paidUp && canPayRetreat) return W.attachSurplus;
+
         let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
         if (after.short < before.short) s += W.attachBuild * (before.short - after.short) * 2;
         else if (after.best > before.best) s += W.attachBuild;

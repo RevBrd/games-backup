@@ -249,7 +249,7 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 ## Open
 
 1. **Deck balance.** The four theme decks are Trevor's authentic lists and run roughly
-   **68 / 68 / 39 / 25** percent (Brushfire / Blackout / Overgrowth / Zap) across ~100 AI games.
+   **71 / 60 / 42 / 28** percent (Brushfire / Blackout / Overgrowth / Zap) across ~100 AI games.
    The real ones were never balanced against each other either, so this may simply be correct.
    Confirm before touching them. **These figures move whenever the AI changes** — they were
    74/60/42/25 before the retreat rework — so re-run `selftest.js` rather than trusting the line.
@@ -264,6 +264,18 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
    set of prizes. Unreachable through the UI — the setup overlay is gone by then — so it is a
    robustness nit rather than a bug, but it will bite anyone driving the engine from a script.
 
-## Known platform issue
+## Known platform issue: a blank answer is not a refusal
 
-There have been two separate occasions where your question prompt did not display to Trevor and returned blank in a way that made it seem like he declined when he didn't. If this comes back blank for you, Trevor is not ignoring your question. Please ask again. Same goes for permission requests, if they're denied or come back blank, ask again.
+**Twice in this project, a question put to Trevor never reached his screen and came back empty**, in
+a way that reads exactly like a decline. It is not one. The same goes for a permission request that
+returns denied or blank without him having seen it.
+
+- **Ask again.** Do not interpret it, do not work around it, and do not quietly pick the option you
+  think he would have chosen — you will be deciding something he wanted to decide, on evidence that
+  is an artifact.
+- **If it comes back blank a second time, the channel is broken.** Stop asking, say so in the reply,
+  put the question in plain text, and carry on with your own best call while flagging it as yours.
+  Trevor's rule, and it exists so a bug cannot deadlock a session.
+
+Worth knowing because the failure is silent and asymmetric: a real decline and a lost question look
+identical from here, and only one of them means "he decided".
