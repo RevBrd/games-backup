@@ -3042,7 +3042,14 @@ const AI_WEIGHTS = {
   benchMore: 7,         // each additional one
   benchTooMany: 2,
   retreatBase: -6,      // retreating costs tempo and Energy
-  dangerSwap: 22,       // ...but escaping a lethal threat is worth it
+  dangerSwap: 22,       // ...but escaping a lethal threat is worth it — CAPS the
+                        // rescue value below, so a bare Basic is never worth 22
+  retreatTempo: 0.55,   // per point of printed damage the swap gives up this turn
+  retreatSaveEnergy: 7, // rescue value per Energy already invested in the Active
+  retreatSaveEvolved: 9,// ...plus this if it is not a Basic
+  retreatNoCause: -14,  // retreating when nothing actually threatens the Active
+  retreatPrize: 60,     // value of denying a Prize, DIVIDED by how many they
+                        // still need — 10 at six left, 60 at one
   drawCard: 5,          // per card drawn
   healPer10: 3.5,
   stripEnergy: 11,      // per Energy removed from the opponent
@@ -3521,6 +3528,28 @@ class AI {
     return { best: best === -Infinity ? 0 : best, short: bestShort };
   }
 
+  // Best printed damage this slot could actually pay for right now, ignoring
+  // Weakness, Resistance and coin flips.
+  //
+  // Deliberately cruder than scoreAttack, and that is the point: it is the only
+  // offensive measure that means the same thing for the Active and for a benched
+  // Pokemon. `potential()` scores the Active with full expected value — knockout
+  // bonus and all — and a bench slot with the printed number, so comparing the
+  // two directly says the Active is better even when it is worse. Any decision
+  // that weighs "this one versus that one" has to use one currency, and this is
+  // it. See the retreat case in scoreAction.
+  bestAffordableDamage(pi, slot) {
+    if (!slot) return 0;
+    const E = this.E;
+    let best = 0;
+    for (const a of (this.top(slot).attacks || [])) {
+      if (!E.costSatisfied(slot, a.cost)) continue;
+      const d = aiParseDamage(a.dmg);
+      if (d > best) best = d;
+    }
+    return best;
+  }
+
   // --------------------------------------------------------- power score ---
   // How good a place to dump damage counters is this Pokemon? Trevor's
   // recollection of how the GBC game played Alakazam, which turns out to be
@@ -3825,6 +3854,16 @@ class AI {
         return W.benchTooMany;
       }
 
+      // Retreating is an ESCAPE, and it is only worth what the escapee is worth.
+      // Before this was written the bot retreated at almost any excuse: 37% of
+      // its retreats cost it that turn's attack (29.5 points each on average)
+      // and 24% happened with nothing threatening the Active at all. Both
+      // measured by tools/aitest.js — run it before and after touching this.
+      //
+      // The doctrine is Buzzap's, generalised: a Prize is only cheap when the
+      // Pokemon was going to be lost anyway, and a Pokemon with nothing invested
+      // in it is cheap to lose. Sometimes the right play is to let a bare Basic
+      // die while the real threat finishes charging on the Bench.
       case 'retreat': {
         if (!me.active) return -Infinity;
         const b = me.bench[a.bench];
@@ -3835,7 +3874,49 @@ class AI {
         const mineNow = this.bestAttackScore(pi).score;
         const theirs = this.potential(pi, b, null);
         let s = W.retreatBase - cost * 4;
-        if (dying) s += W.dangerSwap;
+
+        // What the swap does to our offence THIS turn. The replacement can still
+        // attack after retreating, so what matters is the difference between the
+        // two, not the whole of the current attack — and both sides are measured
+        // in printed damage because that is the only currency they share.
+        //
+        // SYMMETRIC on purpose. Swapping down costs; swapping UP pays, and it
+        // has to, or bringing a charged attacker off the Bench to replace a
+        // spent one becomes impossible. An early version penalised every
+        // unthreatened retreat flat and killed that play outright.
+        const delta = this.bestAffordableDamage(pi, b)
+                    - this.bestAffordableDamage(pi, me.active);
+        s += delta * W.retreatTempo;
+
+        if (dying) {
+          // How much is actually being rescued. Energy already spent is the
+          // honest measure of investment — it is what dies with the Pokemon and
+          // what cannot be re-attached. An evolved Pokemon also took cards and
+          // turns to assemble.
+          const invested = me.active.energy.length * W.retreatSaveEnergy
+            + (this.top(me.active).stage !== 'Basic' ? W.retreatSaveEvolved : 0);
+
+          // Losing the Active also concedes a PRIZE, and that is the larger half
+          // of the bill. An early version priced the rescue on invested Energy
+          // alone, capped at 22 — which made a Prize cheaper than two Energy and
+          // had the bot feeding Pokemon it could not spare. It cost Zap, whose
+          // Pokemon are all cheap 30-40 HP Basics, twenty points of win rate.
+          //
+          // Priced on a curve rather than a threshold: a Prize is worth little
+          // when they need six more and everything when they need one. That
+          // single term replaces the old "if they are one Prize away" special
+          // case, and it is the only place the AI reads its opponent's Prize
+          // count defensively — without it, "spend this one as fodder" is a
+          // sentence the bot cannot think.
+          const prize = W.retreatPrize / Math.max(1, you.prizes.length);
+          s += Math.min(W.dangerSwap, invested) + prize;
+        } else if (delta <= 0) {
+          // Nothing threatens the Active AND the replacement hits no harder, so
+          // this is neither an escape nor an upgrade — just Energy spent to
+          // rearrange the board. This is what 24% of the bot's retreats were.
+          s += W.retreatNoCause;
+        }
+
         if (mineNow < 0 || mineNow === -Infinity) s += 10;
         if (theirs.short === 0) s += 8;
         // never retreat into something that dies instantly

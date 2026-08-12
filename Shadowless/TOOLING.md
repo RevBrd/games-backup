@@ -158,6 +158,45 @@ anything done.
   20000` is a fast pass while iterating. It also prints, without asserting, how many packs it takes
   to finish a set. That number is the one the economy turns on and nothing else computes it.
 
+## The two AI instruments — measuring "well", not "correct"
+
+`selftest.js` proves the AI is *correct* and that the difficulty ladder is ordered. Neither it nor
+any other suite can tell you whether the bot plays **well**, which is a different question and the
+one that matters for a quality pass. Two tools answer it, and **neither is pass/fail**.
+
+- **`tools/aitest.js`** counts specific decisions across a few hundred games: retreats that cost the
+  turn's attack, retreats with nothing threatening the Active, Energy attached to an Active that
+  dies before spending it, healing poured into a barely-scratched Pokemon. Every counter is a
+  *suspicion*, not a bug — each of those is occasionally the right play. **Read the rates, compare
+  two runs, and never judge a single one.**
+- **`tools/aiduel.js`** seats the working-tree AI against a committed one and returns a win rate with
+  a confidence interval. This is the only tool that answers "is it better than it was an hour ago".
+
+```bash
+node tools/aitest.js 6                  # behaviour counts
+node tools/aiduel.js 8                  # vs HEAD
+node tools/aiduel.js 8 HEAD --control   # baseline vs ITSELF — run this too
+```
+
+### Three ways this measurement lies, all of them paid for
+
+**Never read selftest's win rates as AI quality.** Both seats run the same AI there, so seat 0's
+figure measures first-player advantage and drifts several points from any change that alters game
+length. It moved 54% → 51% on a change the duel then proved was a *gain*.
+
+**Always run `--control` before believing a duel.** It seats the baseline against itself, so the
+answer must be 50%. The first version of `aiduel.js` alternated seats by seed (`newSeat = i % 2`),
+which correlated the seat with a deterministic opening coin flip — and the control came back at
+**55.7%**. It had been reporting a six-point edge for a change that did not exist. Every seed is now
+played **twice, mirrored**, so the bias cancels exactly instead of on average, and the control reads
+50.0% by construction. A harness that agrees with you is worth nothing until it has disagreed with
+you once.
+
+**The per-deck table is not a per-deck verdict.** The four theme decks are not balanced against each
+other, so the deck rows show deck strength, not AI quality. Zap sits at 25% in the control because
+Zap is a 25% deck. Reading its 39% in a duel as a *regression* sent one session chasing a phantom
+and "fixing" it — compare each row against the control's row, never against 50.
+
 ### What the smoke stub cannot see
 
 A green `smoke.js` run proves nothing visual, and the gap is not theoretical — two bugs got through

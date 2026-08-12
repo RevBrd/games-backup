@@ -121,7 +121,13 @@ node tools/smoke.js shadowless.html      # 108 integration tests against the bui
 node tools/collectiontest.js             # 105 tests for the save file, decks and variants
 node tools/packtest.js                   # 57 tests, 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
+node tools/aitest.js 6                   # AI behaviour counts — not pass/fail
+node tools/aiduel.js 8                   # AI vs HEAD's AI; add --control first
 ```
+
+**The two AI tools measure whether the bot plays *well*, which no suite can see.** They are not
+pass/fail and they are easy to fool — `--control` and the reasons it exists are in
+[TOOLING.md](TOOLING.md), and skipping it has already produced one confident wrong answer.
 
 **A module's CommonJS export must be ONE line**, and no source file may contain a NUL byte. The
 builder refuses both, naming the file and line; the reasons each cost a session are in
@@ -243,11 +249,21 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 ## Open
 
 1. **Deck balance.** The four theme decks are Trevor's authentic lists and run roughly
-   74 / 60 / 42 / 25 percent across ~100 AI games. The real ones were never balanced against each
-   other either, so this may simply be correct. Confirm before touching them.
-2. **Possible first-player advantage.** Expert-vs-expert mirrors came in around 58–67% for whoever
-   is seated first, over a few hundred games. Suggestive rather than proven, and it may be a true
-   property of the ruleset. Worth a dedicated run before concluding anything.
+   **68 / 68 / 39 / 25** percent (Brushfire / Blackout / Overgrowth / Zap) across ~100 AI games.
+   The real ones were never balanced against each other either, so this may simply be correct.
+   Confirm before touching them. **These figures move whenever the AI changes** — they were
+   74/60/42/25 before the retreat rework — so re-run `selftest.js` rather than trusting the line.
+2. **Possible first-player advantage. Now confirmed real, and it has a measured size.** Expert
+   mirrors had suggested 58–67% for whoever is seated first. `aiduel.js --control` settles it: the
+   baseline AI played against *itself* over mirrored games sat at exactly 50%, but the same harness
+   with seats assigned by seed rather than mirrored came out at **55.7%** — that gap is the seat
+   advantage, and it is large enough to have faked a six-point AI improvement once. It may still be
+   a true property of the ruleset rather than a bug. What is settled is that **no AI measurement
+   here is trustworthy unless it mirrors seats**; see [TOOLING.md](TOOLING.md).
 3. **`setupConfirm()` is not idempotent.** Calling it twice re-runs `beginPlay()` and deals a second
    set of prizes. Unreachable through the UI — the setup overlay is gone by then — so it is a
    robustness nit rather than a bug, but it will bite anyone driving the engine from a script.
+
+## Known platform issue
+
+There have been two separate occasions where your question prompt did not display to Trevor and returned blank in a way that made it seem like he declined when he didn't. If this comes back blank for you, Trevor is not ignoring your question. Please ask again. Same goes for permission requests, if they're denied or come back blank, ask again.
