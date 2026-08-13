@@ -62,12 +62,14 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
   bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace,
-  addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, deckSummary } = ctx;
+  addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, deckSummary,
+  LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin,
+  availableOpponents, bracketOpen, bossAvailable, hasBeaten } = ctx;
 
 console.log('\n=== BUILT ARTIFACT SMOKE ===');
 
@@ -82,6 +84,12 @@ T('the starter pick renders all four theme decks without throwing', () => {
 });
 T('picking a starter grants exactly that deck and lands on deck select', () => {
   startNewSave('Brushfire');
+  // Job 7b. Almost every test below drives a match by setting UI.myDeck and
+  // UI.foeDeck, which is free play's contract — on the ladder the opponent's
+  // deck comes off the roster entry and UI.foeDeck is ignored. Declaring the
+  // mode once here keeps those tests testing what they say they test. The
+  // ladder path has its own section at the bottom, which turns this back off.
+  UI.freePlay = true;
   let n = 0;
   for (const id in UI.save.owned) n += ownedTotal(UI.save, id);
   return UI.screen === 'decks' && n === 60 && UI.save.starter === 'Brushfire';
@@ -1015,9 +1023,14 @@ T('the Sigil Card carries a print run that the scan cannot', () => {
     && art.children.some(c => c.className === 'festamp');
 });
 
+// Job 7b: the payout moved onto the ladder, so this has to leave free play to
+// see one at all. The invariant it guards is unchanged and still the important
+// one — settleResult() runs from inside render(), and render() runs on every
+// redraw, so an unguarded payout pays forever.
 T('winning pays packs exactly once, however many times the board redraws', () => {
   UI.pack = null; UI.detail = null; UI.screen = 'decks';
-  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Zap';
+  UI.freePlay = false; pickFirstOpponent();
+  UI.myDeck = 'Brushfire';
   startMatch();
   UI.E.setupAuto(0); UI.E.setupConfirm(0);
   const before = packsHeld(UI.save, 'base1');
@@ -1026,7 +1039,9 @@ T('winning pays packs exactly once, however many times the board redraws', () =>
   // the payout, not about the rules.
   UI.E.state.phase = 'over'; UI.E.state.winner = 0; UI.E.state.winReason = 'test';
   render(); render(); render();
-  return packsHeld(UI.save, 'base1') === before + 2 && UI.save.stats.wins === wins + 1;
+  const r = packsHeld(UI.save, 'base1') === before + 2 && UI.save.stats.wins === wins + 1;
+  UI.freePlay = true;      // hand the suite back the mode it declared
+  return r;
 });
 T('a loss pays nothing and is still recorded', () => {
   newGame();
@@ -1342,6 +1357,26 @@ function findByClass(node, cls) {
   return null;
 }
 
+// The stub's textContent is per-node rather than a subtree walk, so anything
+// asking "does this screen say X" has to gather the tree by hand.
+function deepText(n) {
+  if (!n) return '';
+  return (n._text || '') + (n.children || []).map(deepText).join(' ');
+}
+
+// Job 7b wants counts, not the first hit — "every locked tile is unclickable"
+// is a claim about all of them, and findByClass would only ever check one.
+function allByClass(node, cls, out) {
+  out = out || [];
+  if (!node) return out;
+  const c = String(node.className || '');
+  if (c.split(/\s+/).indexOf(cls) >= 0) out.push(node);
+  else if (node.classList && node.classList.contains(cls)) out.push(node);
+  const kids = node.children || [];
+  for (let i = 0; i < kids.length; i++) allByClass(kids[i], cls, out);
+  return out;
+}
+
 function actionBoard() {
   UI.seedDraft = '4242';
   UI.flipDelay = 0;              // skip the opening flip; these tests are about the bar
@@ -1609,6 +1644,132 @@ T('picking a card in the grid toggles it', () => {
   render();
   findByClass(document.getElementById('app'), 'picktile').onclick();
   return UI.picker.chosen.length === 0;
+});
+
+// ---------------------------------------------------------------------------
+// JOB 7b — THE LADDER, THROUGH THE BUILT FILE
+//
+// progresstest.js already proves the rules. What only this file can check is
+// that the SCREEN reaches them: that the roster renders, that a locked bracket
+// stays unclickable, and that picking a challenger actually changes who turns
+// up. Everything above this line runs in free play — see the starter test.
+// ---------------------------------------------------------------------------
+console.log('\n--- the ladder ---');
+
+T('leaving free play lands on a challenger you are allowed to play', () => {
+  UI.freePlay = false;
+  pickFirstOpponent();
+  return !!UI.foe && !!currentFoe();
+});
+
+T('a fresh save can only reach the first bracket', () => {
+  const open = availableOpponents(UI.save, LADDER_VIEW);
+  return bracketOpen(UI.save, LADDER_VIEW, 0)
+      && !bracketOpen(UI.save, LADDER_VIEW, 1)
+      && open.every(o => o.set === LADDER_VIEW[0].set);
+});
+
+T('the ladder renders every bracket, locked ones included', () => {
+  UI.screen = 'decks'; render();
+  const app = document.getElementById('app');
+  const brackets = allByClass(app, 'ladbracket');
+  const shut = brackets.filter(n => String(n.className).indexOf('shut') >= 0);
+  return brackets.length === LADDER_VIEW.length && shut.length === LADDER_VIEW.length - 1;
+});
+
+T('a locked challenger has no click handler', () => {
+  const app = document.getElementById('app');
+  const locked = allByClass(app, 'foecard').filter(n => String(n.className).indexOf('locked') >= 0);
+  return locked.length > 0 && locked.every(n => !n.onclick);
+});
+
+T('the boss tile is locked until five distinct challengers have lost', () => {
+  const b = LADDER_VIEW[0];
+  const before = bossAvailable(UI.save, b);
+  b.roster.slice(0, 5).forEach(o => recordWin(UI.save, LADDER_VIEW, o.id));
+  return !before && bossAvailable(UI.save, b);
+});
+
+T('the boss becomes clickable once it is available', () => {
+  render();
+  const app = document.getElementById('app');
+  const boss = allByClass(app, 'foecard').filter(n => String(n.className).indexOf('boss') >= 0);
+  return boss.length > 0 && !!boss[0].onclick;
+});
+
+T('picking a challenger is who actually turns up', () => {
+  const foe = LADDER_VIEW[0].roster.find(o => o.deck.indexOf('gbc:') === 0);
+  UI.foe = foe.id;
+  const want = opponentDeckFor(foe);
+  UI.myDeck = 'Brushfire'; UI.seedDraft = '77'; UI.flipDelay = 0;
+  startMatch();
+  const got = UI.E.state.players[1].deckDef;
+  return got.name === want.name && JSON.stringify(got.list) === JSON.stringify(want.list);
+});
+
+T('and the board names them rather than "Opponent"', () => {
+  const foe = currentFoe();
+  return UI.E.state.players[1].name === foe.name;
+});
+
+T('a ladder win pays packs of that bracket\'s set', () => {
+  const foe = LADDER_VIEW[0].roster[0];
+  UI.foe = foe.id; UI.seedDraft = '78'; startMatch();
+  const held = packsHeld(UI.save, LADDER_VIEW[0].set);
+  // Force the win rather than playing one out: the payout is the thing under
+  // test, and settleResult reads the engine's own result either way.
+  UI.E.state.phase = 'over'; UI.E.state.winner = 0; UI.E.state.winReason = 'test';
+  UI.awarded = false;
+  settleResult();
+  return packsHeld(UI.save, LADDER_VIEW[0].set) === held + 2 && UI.reward && UI.reward.packs === 2;
+});
+
+T('free play pays nothing at all', () => {
+  UI.freePlay = true;
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth'; UI.seedDraft = '79'; startMatch();
+  const before = packsHeld(UI.save, LADDER_VIEW[0].set);
+  UI.E.state.phase = 'over'; UI.E.state.winner = 0; UI.E.state.winReason = 'test';
+  UI.awarded = false;
+  const wins = UI.save.stats.wins;
+  settleResult();
+  // The win still counts as a win; it just does not fund the collection.
+  return packsHeld(UI.save, LADDER_VIEW[0].set) === before
+      && UI.save.stats.wins === wins + 1 && UI.reward === null;
+});
+
+T('the game-over sheet says so instead of going quiet', () => {
+  render();
+  return deepText(document.getElementById('app')).indexOf('Free play pays no packs') >= 0;
+});
+
+T('beating a boss opens the next bracket, and the sheet announces it', () => {
+  UI.freePlay = false;
+  const boss = LADDER_VIEW[0].boss;
+  UI.foe = boss.id; UI.seedDraft = '80'; startMatch();
+  UI.E.state.phase = 'over'; UI.E.state.winner = 0; UI.E.state.winReason = 'test';
+  UI.awarded = false;
+  settleResult();
+  const opened = bracketOpen(UI.save, LADDER_VIEW, 1);
+  const paid = UI.reward && UI.reward.packs === 3 && UI.reward.unlocks === LADDER_VIEW[1].set;
+  render();
+  const said = deepText(document.getElementById('app')).indexOf('is open.') >= 0;
+  return opened && paid && said;
+});
+
+T('a second win over the same boss pays the plain rate', () => {
+  UI.seedDraft = '81'; startMatch();
+  UI.E.state.phase = 'over'; UI.E.state.winner = 0; UI.E.state.winReason = 'test';
+  UI.awarded = false;
+  settleResult();
+  return UI.reward.packs === 2 && UI.reward.bonus === 0 && UI.reward.unlocks === null;
+});
+
+T('the newly opened bracket is now on screen and clickable', () => {
+  backToDeckSelect();
+  const app = document.getElementById('app');
+  const brackets = allByClass(app, 'ladbracket');
+  const shut = brackets.filter(n => String(n.className).indexOf('shut') >= 0);
+  return shut.length === LADDER_VIEW.length - 2;
 });
 
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);

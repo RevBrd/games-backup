@@ -52,6 +52,12 @@ const UI = {
   railEl: null, railBody: null, peekEl: null,
   myDeck: 'Brushfire',
   foeDeck: 'Overgrowth',
+  // --- Job 7 ---
+  foe: null,            // the ladder opponent's id, or null in free play
+  freePlay: false,      // OPPONENT section shows the raw deck grid instead of
+                        // the ladder. Mirror matches and seed-chasing live here,
+                        // and it pays nothing — see settleResult().
+  reward: null,         // what the finished match paid; renderOver() reads it
   cfgDraft: { prizeCount: 6, firstPlayerMayAttack: true, noEvolveFirstTurn: true },
   seedDraft: '',
   screen: 'decks',      // 'newsave' -> 'decks' -> 'setup' -> board; 'packs' from either end
@@ -128,6 +134,57 @@ const setShort = code => (SET_INFO[code] || {}).short || code;
 const homeSet = () => Object.keys(SET_INFO).find(setIsLive) || Object.keys(SET_INFO)[0];
 const packSets = save => Object.keys(SET_INFO).filter(s => setIsLive(s) && packsHeld(save, s) > 0);
 
+// ------------------------------------------------------------ the ladder ---
+// Job 7b. The live sets IN ORDER are the brackets, and progress.js turns them
+// into one. Built once: it depends only on which sets are live and on LADDER,
+// neither of which changes at runtime. What changes is the SAVE, and every
+// question about what is open takes the save as an argument rather than being
+// baked in here — see progress.js's header on why unlock is derived.
+const LIVE_SETS = Object.keys(SET_INFO).filter(setIsLive);
+
+// The three authored deck sources, keyed the way a ladder entry names them.
+const DECK_SOURCES = (() => {
+  const out = { theme: DECKS, gbc: {}, jungle: {} };
+  for (const k in OPPONENT_DECKS) {
+    const cut = k.indexOf(':');
+    const kind = k.slice(0, cut);
+    (out[kind] = out[kind] || {})[k.slice(cut + 1)] = OPPONENT_DECKS[k];
+  }
+  return out;
+})();
+
+const LADDER_VIEW = buildLadder(LIVE_SETS, LADDER, {
+  hasDeck: ref => ref.startsWith('theme:') ? !!DECKS[ref.slice(6)] : !!OPPONENT_DECKS[ref],
+});
+
+// A generated challenger's deck. Seeded off the OPPONENT rather than off the
+// match, so the same challenger brings the same deck every time you face them —
+// a rival whose deck is different every match is not a rival, it is noise.
+function opponentDeckFor(opp) {
+  if (!opp) return null;
+  const bracket = bracketOf(LADDER_VIEW, opp.id);
+  const poolSets = bracket ? poolSetsFor(LADDER_VIEW, bracket) : LIVE_SETS;
+  return resolveOpponentDeck(opp, DECK_SOURCES, {
+    poolSets,
+    generate: (sets, seed, o) => {
+      const pool = Object.keys(LIVE_DB).filter(id => sets.indexOf(LIVE_DB[id].set) >= 0);
+      return generateDeck(LIVE_DB, pool, mulberry32(seed), { name: `${o.name}'s deck` });
+    },
+  });
+}
+
+// ONE switch decides which opponent you are facing, and it is `freePlay`.
+// `UI.foe` is only the remembered ladder selection — it deliberately survives a
+// trip through free play so coming back does not lose your place.
+//
+// Written the other way first, with the toggle clearing UI.foe on the way in:
+// that put the invariant in an event handler instead of in the accessor, so
+// anything setting UI.foeDeck without going through the toggle got silently
+// ignored. Three smoke tests found it immediately. Same lesson as deckFor's
+// mandatory `side` — a call site that has not said which mode it wants is a
+// call site with the bug.
+const currentFoe = () => (!UI.freePlay && UI.foe) ? findOpponent(LADDER_VIEW, UI.foe) : null;
+
 const SANDBOX = 'Sandbox';
 const DECK_NAMES = Object.keys(DECKS).concat([SANDBOX]);
 
@@ -198,6 +255,9 @@ function bootSave() {
 function afterLoad() {
   const names = myDeckNames();
   if (names.indexOf(UI.myDeck) < 0) UI.myDeck = names[0];
+  // Same reasoning one level along: the ladder selection has to point at
+  // somebody this save is allowed to play, or Play is dead on arrival.
+  pickFirstOpponent();
   UI.screen = 'decks';
 }
 
@@ -222,6 +282,7 @@ function startNewSave(deckName) {
     list: DECKS[deckName].list.map(e => [e[0], e[1]]),
   });
   UI.myDeck = deckName;
+  pickFirstOpponent();
   persist();
   UI.screen = 'decks';
   render();
@@ -247,8 +308,16 @@ function newGame() {
   UI.E = new Engine(CARD_DB, EFFECTS, { seed, cfg: Object.assign({}, UI.cfgDraft) });
   // Mirror matches are allowed. Both sides build from the same list, but the two
   // seeds differ, so they shuffle and draw independently.
+  //
+  // Job 7: in ladder play the opponent IS a named challenger, so their deck and
+  // their AI tier both come off the roster entry rather than off the controls.
+  // Free play keeps the old behaviour exactly — that is what it is for.
+  const foe = currentFoe();
+  const foeDeck = foe ? opponentDeckFor(foe) : null;
+  UI.foeTier = foe ? foe.ai : UI.aiMode;
   UI.E.newGame(resolveDeck(UI.myDeck, 'mine', seed),
-               resolveDeck(UI.foeDeck, 'theme', seed ^ 0x5f5f), ['You', 'Opponent']);
+               foeDeck || resolveDeck(UI.foeDeck, 'theme', seed ^ 0x5f5f),
+               ['You', foe ? foe.name : 'Opponent']);
   startMatchLog(seed);                   // BEFORE setupAuto — see startMatchLog
   UI.E.setupAuto(1);                     // opponent sets itself up
   UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.retreatArmed = false;
@@ -300,8 +369,10 @@ function startMatchLog(seed) {
   UI.elog = newEventLog({
     started: new Date().toISOString().replace('T', ' ').slice(0, 19),
     seed,
-    decks: [UI.myDeck, UI.foeDeck],
-    tier: UI.aiMode,
+    // In ladder play the opponent's "deck" is the challenger, which is what you
+    // would want to read back off a log six matches later.
+    decks: [UI.myDeck, currentFoe() ? `${currentFoe().name} — ${currentFoe().title}` : UI.foeDeck],
+    tier: UI.foeTier || UI.aiMode,
     prizes: (UI.cfgDraft && UI.cfgDraft.prizes) || null,
   });
   UI.elogLen = 0;
@@ -2050,18 +2121,24 @@ function deckSummary(name, side) {
 // give each theme deck a face on the select screen, since we have the real
 // printed cards sitting right there. Sandbox has no fixed list, so it gets a
 // card back instead, which is honest: you don't know what you're getting.
-function deckHero(name, side) {
-  const d = deckFor(name, side);
-  if (!d) return null;
+// The biggest thing in a list, by stage then HP. Split from deckHero so a
+// ladder challenger — whose deck is a definition rather than a name — can have
+// a face by the same rule the deck tiles use. See renderLadder().
+function heroOfList(list) {
   const rank = { 'Basic': 0, 'Stage 1': 1, 'Stage 2': 2 };
   let best = null, bestScore = -1;
-  for (const [, id] of d.list) {
+  for (const [, id] of list) {
     const c = CARD_DB[id];
     if (!c || c.kind !== 'pokemon') continue;
     const score = (rank[c.stage] || 0) * 1000 + (c.hp || 0);
     if (score > bestScore) { bestScore = score; best = id; }
   }
   return best;
+}
+
+function deckHero(name, side) {
+  const d = deckFor(name, side);
+  return d ? heroOfList(d.list) : null;
 }
 
 // ======================================================================
@@ -2222,8 +2299,27 @@ function settleResult() {
   UI.awarded = true;
   drainEngineLog();
   logResult(UI.elog, s.winner === 0 ? 'You' : 'Opponent', s.winReason || '', s.turn);
-  if (s.winner === 0) { UI.save.stats.wins++; addPacks(UI.save, homeSet(), PACKS_PER_WIN); }
-  else UI.save.stats.losses++;
+
+  // Job 7. Packs come from BEATING SOMEBODY, and which set they are packs of is
+  // the bracket's, not homeSet()'s — that constant was the only reason Jungle
+  // and Fossil packs were unreachable, since every win paid out in base1.
+  //
+  // Free play deliberately pays nothing. It exists for mirror matches and seed
+  // chasing, and a mode that both ignores the ladder and funds the collection
+  // would make the ladder optional. The DEV tab's +5 hatch is still there for
+  // testing a pull.
+  const foe = currentFoe();
+  UI.reward = null;
+  if (s.winner === 0) {
+    UI.save.stats.wins++;
+    if (foe) {
+      const r = recordWin(UI.save, LADDER_VIEW, foe.id);
+      if (r) { addPacks(UI.save, r.set, r.packs); UI.reward = r; }
+    }
+  } else {
+    UI.save.stats.losses++;
+    if (foe) recordLoss(UI.save, foe.id);
+  }
   persist();
 }
 
@@ -3060,11 +3156,8 @@ function renderDeckSelect() {
   // YOUR side lists only decks you can legally field. The OPPONENT side lists
   // everything — their deck is the game's, not yours, and never was a
   // collection question.
-  const mkGrid = (key, heading) => {
-    const sec = el('div', 'deckgrp');
-    sec.appendChild(el('div', 'grphead', heading));
+  const mkDeckGrid = (key, side) => {
     const grid = el('div', 'deckgrid');
-    const side = key === 'myDeck' ? 'mine' : 'theme';
     (key === 'myDeck' && UI.save ? myDeckNames() : DECK_NAMES).forEach(n => {
       const s = deckSummary(n, side);
       const isSandbox = n === SANDBOX;
@@ -3093,7 +3186,12 @@ function renderDeckSelect() {
       c.onclick = () => { UI[key] = n; render(); };
       grid.appendChild(c);
     });
-    sec.appendChild(grid);
+    return grid;
+  };
+  const mkGrid = (key, heading) => {
+    const sec = el('div', 'deckgrp');
+    sec.appendChild(el('div', 'grphead', heading));
+    sec.appendChild(mkDeckGrid(key, key === 'myDeck' ? 'mine' : 'theme'));
     return sec;
   };
 
@@ -3124,7 +3222,34 @@ function renderDeckSelect() {
     box.appendChild(sec);
   }
 
-  box.appendChild(mkGrid('foeDeck', 'OPPONENT'));
+  // OPPONENT is the ladder, unless you have asked for free play. The toggle is
+  // in the section heading rather than beside the seed, because it changes what
+  // this whole section IS rather than tuning the match.
+  // `ladgrp` is the flexible child of the box: everything else on this screen is
+  // fixed-height, so the ladder takes exactly what is left and scrolls inside
+  // it. See style.css — the screen has to fit without a JS fitter.
+  const foeSec = el('div', 'deckgrp ladgrp');
+  const foeHead = el('div', 'grphead');
+  foeHead.appendChild(el('span', null, UI.freePlay ? 'OPPONENT — free play' : 'OPPONENT'));
+  const swap = el('button', 'btn tiny ghost', UI.freePlay ? 'Back to the ladder' : 'Free play');
+  swap.onclick = () => {
+    UI.freePlay = !UI.freePlay;
+    // Coming back has to land on somebody you are allowed to play, or Play is
+    // dead. Going out changes nothing — UI.foe is kept, so your place is still
+    // there when you return.
+    if (!UI.freePlay) pickFirstOpponent();
+    render();
+  };
+  foeHead.appendChild(swap);
+  foeSec.appendChild(foeHead);
+  if (UI.freePlay) {
+    foeSec.appendChild(el('div', 'dimtxt ladnote',
+      'Any deck against any deck, mirrors included. Pays no packs and records nothing.'));
+    foeSec.appendChild(mkDeckGrid('foeDeck', 'theme'));
+  } else {
+    foeSec.appendChild(renderLadder());
+  }
+  box.appendChild(foeSec);
 
   const opts = el('div', 'deckopts');
   const field = (lbl, node) => {
@@ -3151,13 +3276,141 @@ function renderDeckSelect() {
   box.appendChild(opts);
 
   const bar = el('div', 'deckgo');
-  const go = el('button', 'btn end big', `Play ${UI.myDeck} vs ${UI.foeDeck}`);
+  const foeNow = currentFoe();
+  const go = el('button', 'btn end big', foeNow
+    ? `Play ${UI.myDeck} against ${foeNow.name}`
+    : `Play ${UI.myDeck} vs ${UI.foeDeck}`);
+  // Only reachable if the ladder somehow has nobody open, which cannot happen
+  // while the first bracket exists — but a dead Play button is worse than a
+  // disabled one, so it says why rather than doing nothing.
+  if (!UI.freePlay && !foeNow) { go.disabled = true; go.textContent = 'No challenger selected'; }
   go.onclick = () => startMatch();
   bar.appendChild(go);
   box.appendChild(bar);
 
   ov.appendChild(box);
   return ov;
+}
+
+// ---------------------------------------------------------- the ladder ----
+// Job 7b. One section per bracket, in order, with the locked ones still drawn
+// so the shape of what is ahead is visible from the first match. A challenger
+// you have beaten stays fightable forever — that is what makes a set's ~79 wins
+// reachable, and it is why nothing here is ever removed from the list.
+
+// Keeps the selection pointing at somebody you are allowed to play. Called on
+// load, on leaving free play, and after any win that opens a bracket.
+function pickFirstOpponent() {
+  if (!UI.save) { UI.foe = null; return; }
+  const open = availableOpponents(UI.save, LADDER_VIEW);
+  if (!open.length) { UI.foe = null; return; }
+  if (UI.foe && open.some(o => o.id === UI.foe)) return;
+  // Prefer somebody unbeaten, since that is what a player is looking for.
+  const next = open.find(o => !hasBeaten(UI.save, o.id));
+  UI.foe = (next || open[0]).id;
+}
+
+function opponentTile(opp, state) {
+  // state: 'open' | 'locked'
+  const beaten = UI.save ? timesBeaten(UI.save, opp.id) : 0;
+  // `deckcard` carries the whole tile look; `foecard` only adds what differs.
+  const c = el('div', 'deckcard foecard'
+    + (UI.foe === opp.id ? ' on' : '')
+    + (state === 'locked' ? ' locked' : '')
+    + (opp.isBoss ? ' boss' : '')
+    + (opp.isExtra ? ' extra' : ''));
+
+  const art = el('div', 'dart');
+  // A challenger's face is the deck's own hero card where there is one, which
+  // reuses the deck-select idiom rather than inventing a portrait system. There
+  // is no character art in this project and Trevor has said he does not want any.
+  const deck = state === 'open' ? opponentDeckFor(opp) : null;
+  const hero = deck ? heroOfList(deck.list) : null;
+  if (hero && CARD_DB[hero]) {
+    const img = cardFaceImage(CARD_DB[hero], null);
+    if (img) art.appendChild(img);
+  }
+  if (!art.firstChild) art.appendChild(cardBack('deckback'));
+  c.appendChild(art);
+
+  c.appendChild(el('div', 'dname', opp.name));
+  c.appendChild(el('div', 'dstat', opp.title));
+
+  const tag = el('div', 'dstat dim');
+  if (state === 'locked') tag.textContent = 'locked';
+  else if (opp.isBoss) tag.textContent = beaten ? `rival · beaten ${beaten}×` : 'rival';
+  else tag.textContent = beaten ? `beaten ${beaten}×` : 'not yet beaten';
+  c.appendChild(tag);
+
+  if (state === 'open') c.onclick = () => { UI.foe = opp.id; render(); };
+  return c;
+}
+
+function renderLadder() {
+  // Two regions, and the split is the point. OPEN brackets scroll — the roster
+  // grows every time a set goes live and there is no viewport that fits all of
+  // it. LOCKED brackets sit BELOW the scroller and never move, because "what is
+  // ahead of me" is worth a permanent two lines and is worthless if you have to
+  // scroll past everything you can already play to find it. They were inside
+  // the scroller first and were simply never on screen.
+  //
+  // keepScroll on the scroller, not the wrapper: winning re-renders this list,
+  // and being thrown back to the first bracket after every match is exactly the
+  // friction COLLECTION.md describes.
+  const wrap = el('div', 'ladwrap');
+  const openBox = keepScroll(el('div', 'ladder'), 'ladder');
+  const shutBox = el('div', 'ladlocked');
+  wrap.appendChild(openBox);
+  wrap.appendChild(shutBox);
+  if (!UI.save) return wrap;
+
+  LADDER_VIEW.forEach((b, i) => {
+    const open = bracketOpen(UI.save, LADDER_VIEW, i);
+    const sec = el('div', 'ladbracket' + (open ? '' : ' shut'));
+
+    // A LOCKED bracket is one line, not a grid of tiles you cannot click.
+    // Drawn as a full roster first, and it was wrong twice over: six greyed
+    // tiles cost ~150px each bracket and pushed the Play button off a 768px
+    // screen, and none of that space said anything a line could not. What the
+    // player needs from a bracket they cannot enter is that it exists, what it
+    // is called, and what opens it.
+    if (!open) {
+      const row = el('div', 'ladshut');
+      row.appendChild(el('b', null, b.name));
+      row.appendChild(el('span', 'ladset', setName(b.set)));
+      // The TITLE, not the name: every boss on the authored ladder is Ronald, so
+      // "beat Ronald to open" appeared twice and told you nothing about which.
+      const prev = LADDER_VIEW[i - 1].boss;
+      row.appendChild(el('span', 'ladprog', `beat ${prev.title || prev.name} to open`));
+      sec.appendChild(row);
+      shutBox.appendChild(sec);
+      return;
+    }
+
+    const head = el('div', 'ladhead');
+    head.appendChild(el('b', null, b.name));
+    head.appendChild(el('span', 'ladset', setName(b.set)));
+    const cleared = rosterCleared(UI.save, b);
+    if (bracketCleared(UI.save, b)) {
+      head.appendChild(el('span', 'ladprog done', `cleared · ${setName(b.set)} packs`));
+    } else if (bossAvailable(UI.save, b)) {
+      head.appendChild(el('span', 'ladprog ready', `${b.boss.name} is waiting`));
+    } else {
+      head.appendChild(el('span', 'ladprog', `${cleared}/${b.cfg.bossAfter} beaten — then ${b.boss.name}`));
+    }
+    sec.appendChild(head);
+    if (b.blurb) sec.appendChild(el('div', 'dimtxt ladnote', b.blurb));
+
+    const grid = el('div', 'deckgrid foegrid');
+    b.roster.forEach(o => grid.appendChild(opponentTile(o, 'open')));
+    // The boss is drawn even while locked, because it is the thing the counter
+    // in the heading is counting toward.
+    grid.appendChild(opponentTile(b.boss, bossAvailable(UI.save, b) ? 'open' : 'locked'));
+    if (bracketCleared(UI.save, b)) b.extra.forEach(o => grid.appendChild(opponentTile(o, 'open')));
+    sec.appendChild(grid);
+    openBox.appendChild(sec);
+  });
+  return wrap;
 }
 
 // ----------------------------------------------------- generic picker -----
@@ -3544,20 +3797,37 @@ function renderOver() {
   const s = S();
   const ov = el('div', 'overlay');
   const box = el('div', 'sheet');
-  box.appendChild(el('h2', null, s.winner === 0 ? 'You win' : 'Opponent wins'));
+  const foe = currentFoe();
+  box.appendChild(el('h2', null, s.winner === 0
+    ? (foe ? `You beat ${foe.name}` : 'You win')
+    : (foe ? `${foe.name} wins` : 'Opponent wins')));
   box.appendChild(el('p', null, s.winReason));
   box.appendChild(el('p', 'dimtxt', `Game lasted ${s.turn} turns. Seed ${UI.E.seed}.`));
 
   // The reward. Straight from the win into the reveal, with no inventory screen
   // in between — Trevor, 9 Aug: the immediate feedback loop is the point.
   const held = UI.save ? packsTotal(UI.save) : 0;
+  const rw = UI.reward;
   if (UI.save && s.winner === 0) {
-    box.appendChild(el('p', null, `You won ${PACKS_PER_WIN} booster packs.`));
+    if (rw) {
+      box.appendChild(el('p', null, `You won ${rw.packs} ${setName(rw.set)} booster pack${rw.packs === 1 ? '' : 's'}`
+        + (rw.bonus ? ` — ${rw.packs - rw.bonus}, and ${rw.bonus} more for a first win over a rival.` : '.')));
+      // The unlock is the whole point of a boss, so it gets its own line rather
+      // than a clause on the end of the pack sentence.
+      if (rw.unlocks) {
+        const u = el('p', 'unlocknote');
+        u.appendChild(el('b', null, `${setName(rw.unlocks)} is open.`));
+        u.appendChild(el('span', null, ` Its challengers are on the deck screen, and wins there pay in ${setName(rw.unlocks)} packs.`));
+        box.appendChild(u);
+      }
+    } else {
+      box.appendChild(el('p', 'dimtxt', 'Free play pays no packs. Beat a challenger on the ladder for those.'));
+    }
   }
 
   const bar = el('div', 'actionbar');
   if (held > 0) {
-    const open = el('button', 'btn end', held === PACKS_PER_WIN && s.winner === 0
+    const open = el('button', 'btn end', (rw && held === rw.packs && s.winner === 0)
       ? `Open ${held} packs` : `Open packs (${held})`);
     open.onclick = () => { if (openNextPack()) render(); };
     bar.appendChild(open);
@@ -3879,7 +4149,8 @@ function maybeRunAI() {
   UI.aiTimer = setTimeout(() => {
     if (UI.E._ai) UI.E._ai.explain = true;   // survives the AI being rebuilt on a tier change
     drainEngineLog();
-    const a = UI.E.aiChoose(1, UI.aiMode);
+    // The tier a ladder challenger plays at is theirs, not the control's.
+    const a = UI.E.aiChoose(1, UI.foeTier || UI.aiMode);
     logAIChoice(a);
     if (a) dispatch(1, a); else render();
   }, Math.max(30, UI.aiDelay));

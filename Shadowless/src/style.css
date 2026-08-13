@@ -505,6 +505,14 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .dstat{font-size:10px;color:#8A9A93}
 .dstat.dim{color:var(--matink);font-size:9.5px}
 
+/* The deck tiles' 124px ceiling was chosen when this screen stacked TWO card
+   rows, a stat bar, an options row and a button. Job 7b replaced the second row
+   with a ladder that grows without bound, so the ceiling is lower here and the
+   reclaimed height goes to the thing that actually needs it. The starter pick
+   keeps the big faces — it is one row on an empty page. */
+.deckscreen:not(.starter) .dart .cardface,
+.deckscreen:not(.starter) .dart .cardback.deckback{height:clamp(56px,9vh,96px)}
+
 /* ---- the starter pick ---- */
 /* One row of four on an otherwise empty page, where every other screen in this
    game grows into spare room rather than leaving a band of it — `fitBoard()`
@@ -1365,3 +1373,111 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 /* The panel is centred, so its one button should be too — .actionbar is built
    for the board, where it sits left. */
 .sheet .revealrow + .actionbar{justify-content:center}
+
+/* ============================ THE LADDER (Job 7b) ============================
+   The OPPONENT half of deck select. It replaces a four-tile deck grid with a
+   roster that grows every time a set goes live, so it gets its own bounded
+   scroll box rather than making the page taller — same call the 221-card
+   collection grid made, and `keepScroll` holds your place through the render a
+   win triggers. */
+/* Deck select is the ONE screen whose content grows without bound — the roster
+   gains a bracket every time a set goes live. So it is pinned to the viewport
+   and the ladder is the single flexible child: everything else on the screen is
+   fixed-height, the ladder takes what is left, and it scrolls inside itself
+   rather than pushing the Play button off the bottom. Which is what happened
+   the first time, at 1366x768: 864px of content, button gone.
+
+   Still CSS-only. LAYOUT.md's rule for this screen is that there is nothing to
+   measure and no fitter is needed, and flexbox is enough to keep that true.
+   `.starter` is excluded — it is one row on an empty page and wants to grow. */
+/* overflow-y:auto is the escape hatch, and it is not optional. Pinning the
+   screen to 100vh without it means a viewport too short for the content spills
+   it below the fold with NO scrollbar — the Play button simply unreachable.
+   1280x600 is the real worst case (CLAUDE.md: display scaling can leave a
+   "1080p laptop" at 1280x600 CSS pixels) and it lands there. */
+.deckscreen:not(.starter){height:100vh;min-height:0;align-items:stretch;overflow-y:auto}
+.deckscreen:not(.starter) .deckbox{max-height:100%;margin:auto;overflow-y:auto}
+/* NO min-height:0 on these two. They must stay at least as tall as their own
+   content, or the locked strips escape the wrapper and paint straight over the
+   options row below — which is what happened at 1280x600 the first time. Only
+   `.ladder` may shrink, and only down to its floor; it is a scroll container,
+   so its own min-content contribution is already zero and the explicit
+   min-height is what the wrappers end up sized against. */
+.ladgrp{flex:1 1 auto}
+.ladwrap{display:flex;flex-direction:column;gap:6px;flex:1 1 auto}
+/* The locked strips never scroll away — see renderLadder(). */
+.ladlocked{flex:0 0 auto;display:flex;flex-direction:column;gap:4px}
+/* The Play bar STICKS to the bottom of the scrolling box. This is the fix that
+   actually holds, and it replaces three rounds of shaving pixels off other
+   things. The arithmetic is unwinnable otherwise: at 1366x768 the fixed chrome
+   (title, collection strip, your decks, the locked strips, the options row)
+   comes to about 590px, and ONE full row of challengers plus its heading needs
+   172. There is no viewport-independent way to fit both, and the ladder only
+   grows — every set that goes live adds a bracket. So the box scrolls, and the
+   one control you always need stays put instead of being shaved into. */
+.deckscreen:not(.starter) .deckgo{
+  position:sticky;bottom:0;z-index:2;padding-top:8px;margin-top:auto;
+  background:linear-gradient(to bottom,rgba(24,32,29,0) 0%,var(--mat2) 45%,var(--mat2) 100%);
+}
+
+/* The min-height is a FLOOR OF ONE FULL TILE, and it is the important number.
+   Without it the flex squeeze wins on a short viewport: at 1280x600 the ladder
+   collapsed to about 70px and rendered a row of card art with every name, title
+   and status clipped off — unusable, and the shot is the only thing that could
+   have shown it. With the floor, a viewport too short to fit everything scrolls
+   the whole box (see .deckbox above) instead of crushing one child. */
+.ladder{
+  display:flex;flex-direction:column;gap:clamp(7px,1.5vh,13px);
+  flex:1 1 auto;min-height:clamp(172px,24vh,205px);
+  overflow-y:auto;overflow-x:hidden;padding-right:4px;
+}
+.ladbracket{display:flex;flex-direction:column;gap:5px}
+
+/* A locked bracket is still SHOWN — seeing the shape of what is ahead from the
+   first match is why the ladder is visible at all, and hiding it would make the
+   game look like it has eight opponents in it. It is shown as one line, though.
+   A grid of tiles nobody can click is the same information at ten times the
+   height, and it cost the Play button its place on a 768px screen. */
+.ladshut{
+  display:flex;align-items:baseline;gap:8px;
+  border:1px dashed var(--matline);border-radius:4px;padding:4px 9px;opacity:.6;
+}
+.ladshut b{font-family:var(--serif);font-weight:600;font-size:13px;color:var(--stock)}
+
+.ladhead{
+  display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+  border-bottom:1px solid var(--matline);padding-bottom:3px;
+}
+.ladhead b{font-family:var(--serif);font-weight:600;font-size:14px;color:var(--stock)}
+.ladset{font-size:9px;letter-spacing:.2em;color:var(--matink);text-transform:uppercase}
+/* The progress clause sits at the far end because it is the thing that changes
+   between visits, and a moving value in a fixed place is easier to find. */
+.ladprog{margin-left:auto;font-size:10px;color:#8A9A93}
+.ladprog.ready{color:var(--amber)}
+.ladprog.done{color:var(--grn)}
+.ladnote{font-size:10px;padding-bottom:2px}
+
+/* Smaller than a deck tile: there can be twenty of these where there were four. */
+.foegrid{justify-content:flex-start;gap:7px}
+.foecard{flex:0 0 132px;max-width:132px;padding:6px 7px}
+.foecard .dart .cardface,.foecard .dart .cardback.deckback{height:clamp(52px,8.5vh,86px)}
+.foecard .dname{font-size:13px}
+
+/* Locked reads as unavailable rather than as absent — no hover lift, no
+   pointer, and the face is withheld because you have not met them yet. */
+.foecard.locked{opacity:.45;cursor:default;filter:grayscale(.7)}
+.foecard.locked:hover{border-color:var(--matline);transform:none}
+/* The rival is the only tile with a warm edge, so the eye lands on the thing
+   the bracket is counting toward. */
+.foecard.boss{border-color:#6B5330;background:rgba(226,168,75,.045)}
+.foecard.boss.locked{border-color:var(--matline)}
+.foecard.extra{border-style:dashed}
+
+/* The unlock line on the game-over sheet. A boss opening a set is the largest
+   thing that happens outside a pack, and it was a clause on a sentence first. */
+.unlocknote{
+  border-left:2px solid var(--amber);padding:4px 0 4px 9px;margin:6px 0 0;
+  font-size:12px;
+}
+.unlocknote b{color:var(--amber)}
+.unlocknote span{color:#8A9A93}
