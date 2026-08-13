@@ -1402,8 +1402,15 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    it below the fold with NO scrollbar — the Play button simply unreachable.
    1280x600 is the real worst case (CLAUDE.md: display scaling can leave a
    "1080p laptop" at 1280x600 CSS pixels) and it lands there. */
-.deckscreen:not(.starter){height:100vh;min-height:0;align-items:stretch;overflow-y:auto}
-.deckscreen:not(.starter) .deckbox{max-height:100%;margin:auto;overflow-y:auto}
+.deckscreen:not(.starter){height:100vh;min-height:0;overflow-y:auto}
+/* NO auto margins here. LAYOUT.md bans them inside `.boardcol` because an auto
+   margin resolved in a `zoom`ed flex column is invisible to both offsetTop and
+   getBoundingClientRect — this screen has no zoom, so that exact trap does not
+   apply, but both margins I reached for first were redundant anyway. The base
+   rule's `align-items:center` already centres the box, and `.ladgrp` already
+   absorbs the leftover height, which is the same fix LAYOUT.md describes for
+   the board: stop needing the measurement and let a flex child take the slack. */
+.deckscreen:not(.starter) .deckbox{max-height:100%;overflow-y:auto}
 /* NO min-height:0 on these two. They must stay at least as tall as their own
    content, or the locked strips escape the wrapper and paint straight over the
    options row below — which is what happened at 1280x600 the first time. Only
@@ -1423,7 +1430,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    grows — every set that goes live adds a bracket. So the box scrolls, and the
    one control you always need stays put instead of being shaved into. */
 .deckscreen:not(.starter) .deckgo{
-  position:sticky;bottom:0;z-index:2;padding-top:8px;margin-top:auto;
+  position:sticky;bottom:0;z-index:2;padding-top:8px;
   background:linear-gradient(to bottom,rgba(24,32,29,0) 0%,var(--mat2) 45%,var(--mat2) 100%);
 }
 
