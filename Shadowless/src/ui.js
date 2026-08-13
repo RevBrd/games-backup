@@ -249,10 +249,10 @@ function newGame() {
   // seeds differ, so they shuffle and draw independently.
   UI.E.newGame(resolveDeck(UI.myDeck, 'mine', seed),
                resolveDeck(UI.foeDeck, 'theme', seed ^ 0x5f5f), ['You', 'Opponent']);
+  startMatchLog(seed);                   // BEFORE setupAuto — see startMatchLog
   UI.E.setupAuto(1);                     // opponent sets itself up
   UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.retreatArmed = false;
   UI.awarded = false;                    // this game has not paid out yet
-  startMatchLog(seed);
   presentOpeningFlip();
 }
 
@@ -308,14 +308,27 @@ function startMatchLog(seed) {
   UI.elogTurn = null;
   if (UI.E._ai) UI.E._ai.explain = true;
 
-  // The opening position, all of it. This is the half a player never sees, and
-  // it is what makes a replayed seed readable after the fact.
+  // The opening hands, as dealt. THIS HAS TO RUN BEFORE `setupAuto(1)`: the
+  // opponent places its Active out of hand during setup, so capturing afterwards
+  // logged six cards and called them an opening hand of seven.
   const s = UI.E.state;
-  const nm = uid => { const c = CARD_DB[uid.id]; return c ? c.name : uid.id; };
-  logEvent(UI.elog, 'hidden', 0, `opponent's opening hand: ${s.players[1].hand.map(nm).join(', ')}`);
-  logEvent(UI.elog, 'hidden', 0, `your opening hand: ${s.players[0].hand.map(nm).join(', ')}`);
-  logEvent(UI.elog, 'hidden', 0, `opponent's Prizes: ${s.players[1].prizes.map(nm).join(', ')}`);
-  logEvent(UI.elog, 'hidden', 0, `your Prizes: ${s.players[0].prizes.map(nm).join(', ')}`);
+  logEvent(UI.elog, 'hidden', 0, `opponent's opening hand: ${s.players[1].hand.map(cardName).join(', ')}`);
+  logEvent(UI.elog, 'hidden', 0, `your opening hand: ${s.players[0].hand.map(cardName).join(', ')}`);
+}
+
+const cardName = uid => { const c = CARD_DB[uid.id]; return c ? c.name : uid.id; };
+
+// Prizes are dealt by `beginPlay()`, which does not run until BOTH players have
+// confirmed setup — so the header promised both Prize piles and the file printed
+// two empty lines for the first week this existed. Idempotent, because more than
+// one path reaches the start of play.
+function logOpeningPrizes() {
+  if (!UI.elog || UI.elog.prizesLogged) return;
+  const s = UI.E && UI.E.state;
+  if (!s || !s.players[0].prizes.length) return;
+  UI.elog.prizesLogged = true;
+  logEvent(UI.elog, 'hidden', 0, `opponent's Prizes: ${s.players[1].prizes.map(cardName).join(', ')}`);
+  logEvent(UI.elog, 'hidden', 0, `your Prizes: ${s.players[0].prizes.map(cardName).join(', ')}`);
 }
 
 // Pull anything new off the engine's own log and mirror it in order. The engine
@@ -3517,9 +3530,9 @@ function renderSetup() {
 
   const bar = el('div', 'actionbar');
   const auto = el('button', 'btn ghost', 'Fill automatically');
-  auto.onclick = () => { UI.E.setupAuto(0); render(); };
+  auto.onclick = () => { UI.E.setupAuto(0); logOpeningPrizes(); render(); };
   const done = el('button', 'btn end', 'Ready');
-  done.onclick = () => { const r = UI.E.setupConfirm(0); if (!r.ok) alert(r.error); render(); };
+  done.onclick = () => { const r = UI.E.setupConfirm(0); if (!r.ok) alert(r.error); logOpeningPrizes(); render(); };
   if (!p.active) done.classList.add('off');
   bar.appendChild(auto); bar.appendChild(done);
   box.appendChild(bar);

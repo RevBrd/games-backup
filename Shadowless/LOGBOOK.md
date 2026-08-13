@@ -353,3 +353,37 @@ optional decoration on a preserved artifact. It is the half that rots.
   Pokemon to bring up" while the bench was long since chosen and the board was asking which Energy
   to spend, and the bench stayed highlighted for a question already answered. Neither is visible to
   a suite that cannot lay anything out.
+
+- **Opus 5** (12 Aug 2026) — two bugs found by Trevor reading his own match logs, plus a correction
+  to a ruling I had written down with more authority than it earned.
+
+  **Both Prize piles printed as empty lines**, in a file whose own header promises them as one of
+  the three things it exists to show. `startMatchLog` runs inside `newGame()`; Prizes are dealt by
+  `beginPlay()`, which does not run until both players have confirmed setup. The capture was simply
+  earlier than the thing it captured. **And the opponent's "opening hand" was six cards, not seven**,
+  for the mirror-image reason: `newGame()` calls `setupAuto(1)` before the capture, so their Active
+  had already left hand. Hands are now captured before setup and Prizes when play begins.
+
+  **The match log had no test coverage at all**, which is exactly why both survived — it is written
+  to a file the suite never opened, so every assertion in the project was looking somewhere else.
+  Three cases now cover it. Worth generalising: a feature whose output nothing reads is a feature
+  with no tests, however green the run is.
+
+  **The damage line counted up while the board counts down.** `(40/40)` on a 40 HP Staryu meant forty
+  damage of forty, printed directly above "is Knocked Out!" — it reads as untouched. The board shows
+  HP remaining and always has, so the log now does too.
+
+  **The ruling correction is the part worth reading.** Yesterday I recorded "a retreat cost is paid
+  in cards" as settled *from the Game Boy game*. Trevor pushed back on my claim that it contradicts
+  the TCG rule, and offered his evidence: Charizard's Fire Spin needs two cards discarded, and a
+  Double Colorless made Fire by Energy Burn still only counts as one of them. That memory is right —
+  and it is about **attack-cost discards**, where the card text says *cards*, counting cards is
+  uncontroversial, and our engine already behaved that way. **It does not establish what GBC did for
+  a retreat, and neither of us knows.** So the entry now stands on Trevor's actual reason, which is
+  a better one: it silently balances Double Colorless, the strongest Energy card in the format, by
+  making its two symbols cost the same single card to walk away from.
+
+  The lesson is one `MAINTENANCE.md` already states and I still walked into: a confident, specific,
+  actionable citation is worse than none, because the next instance acts on it. I had generalised
+  "GBC counts the physical card" from a case about attack costs to a case about retreat, in the same
+  paragraph, without noticing they were different mechanisms.

@@ -902,7 +902,7 @@ class Engine {
         from.dmg -= 10; to.dmg += 10;
         if (p.once) this.markPower(slot);
         this.log(`${p.name}: 1 damage counter moved from ${this.nameOf(from)} `
-          + `to ${this.nameOf(to)}. (${to.dmg}/${tc.hp})`, 'eff');
+          + `to ${this.nameOf(to)}. (${Math.max(0, tc.hp - to.dmg)}/${tc.hp} left)`, 'eff');
         // Curse can deliberately Knock Out, which hands over a Prize like any
         // other Knock Out. Trevor confirms it is the point of the card.
         if (p.allowKO) this.checkKOs();
@@ -1080,12 +1080,12 @@ class Engine {
     if (this.playsAsPokemon(slot)) return false;          // "can't retreat", flatly
     if (slot.status.asleep || slot.status.paralyzed) return false;
     if (slot.effects.some(e => e.kind === 'CANT_RETREAT')) return false;   // Victreebel's Acid
-    // A RETREAT COST IS PAID IN CARDS, NOT SYMBOLS. Settled with Trevor 12 Aug
-    // 2026 against the Game Boy game: a Double Colorless is one physical Energy
-    // card and discards as one, so a Pokemon with a retreat cost of 2 and only a
-    // DCE attached CANNOT retreat. This is deliberately not the official TCG
-    // rule, which counts the printed value — see RULINGS.md. Attack costs are
-    // unaffected and still read symbols; it is only the discard that counts cards.
+    // A RETREAT COST IS PAID IN CARDS, NOT SYMBOLS. Trevor's design call, 12 Aug
+    // 2026: a Double Colorless is one physical Energy card and discards as one,
+    // so a Pokemon with a retreat cost of 2 and only a DCE attached CANNOT
+    // retreat. Deliberately not the official rule, which counts the printed
+    // value — it silently balances the format's strongest Energy card. Attack
+    // costs are unaffected and still read symbols. See RULINGS.md.
     return slot.energy.length >= this.retreatCostOf(slot);
   }
 
@@ -2826,7 +2826,12 @@ class Engine {
     if (r.dmg > 0) {
       defSlot.dmg += r.dmg;
       defSlot.lastHitBy = { uid: atkSlot.uid, turn: this.state.turn };
-      this.log(`${D.name} takes ${r.dmg}. (${defSlot.dmg}/${D.hp})`, 'dmg');
+      // HP REMAINING, not damage dealt — the same way round as the board reads.
+      // It printed `dmg/hp`, so a Staryu on exactly lethal damage logged
+      // "(40/40)" on the line directly above "is Knocked Out!", which reads as
+      // untouched. One convention across the game; the board's is the one every
+      // player is already looking at.
+      this.log(`${D.name} takes ${r.dmg}. (${Math.max(0, D.hp - defSlot.dmg)}/${D.hp} left)`, 'dmg');
       this.retaliate(atkSlot, defSlot, opts);
     }
     return { dealt: r.dmg, prevented: r.prevented };

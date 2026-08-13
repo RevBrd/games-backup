@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -1409,6 +1409,50 @@ T('promoting by bench click puts up the one you clicked', () => {
   if (s.players[0].bench.indexOf(second) >= 0) throw new Error('still on the bench too');
   if (s.pendingPromote !== null) throw new Error('pendingPromote still ' + s.pendingPromote);
   return true;
+});
+
+// ---- the match log ----------------------------------------------------------
+// It had NO coverage at all until 12 Aug 2026, which is exactly why two bugs
+// lived in it: it is written to a file the suite never opened. Both were found
+// by Trevor reading a real one.
+T('the match log records both Prize piles, not two empty lines', () => {
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth';
+  UI.seedDraft = '77'; UI.flipDelay = 0; startMatch();
+  // Prizes are dealt by beginPlay(), which does not run until BOTH players have
+  // confirmed setup -- long after newGame(), where the capture used to sit.
+  UI.E.setupAuto(0); ctx.logOpeningPrizes();
+  const txt = ctx.renderEventLog(UI.elog);
+  const line = txt.split('\n').find(l => l.indexOf('your Prizes:') >= 0) || '';
+  const named = line.split('your Prizes:')[1] || '';
+  if (named.trim().length === 0) throw new Error('your Prizes line is empty');
+  return named.split(',').length === 6;
+});
+
+T('the opening hand is the hand as DEALT, before the opponent sets up', () => {
+  UI.seedDraft = '77'; UI.flipDelay = 0; startMatch();
+  const txt = ctx.renderEventLog(UI.elog);
+  const line = txt.split('\n').find(l => l.indexOf("opponent's opening hand:") >= 0) || '';
+  const cards = (line.split(':')[1] || '').split(',').filter(x => x.trim());
+  // newGame() runs setupAuto(1), which plays their Active out of hand. Capturing
+  // after that logged six cards and called them an opening hand.
+  return cards.length === UI.E.cfg.handSize;
+});
+
+// The log counted damage UP while the board counts HP DOWN, so a Pokemon on
+// exactly lethal damage logged "(40/40)" on the line above "is Knocked Out!".
+T('damage lines report HP remaining, the same way round as the board', () => {
+  const E = riggedFlipBoard(0);
+  E.state.players[1].active.dmg = 0;
+  dispatch(0, { t: 'attack', idx: 0 });
+  const dmgLine = E.state.log.filter(l => l.kind === 'dmg').pop();
+  if (!dmgLine) throw new Error('no damage was logged');
+  const m = dmgLine.text.match(/takes (\d+)\. \((\d+)\/(\d+) left\)/);
+  if (!m) throw new Error('unexpected damage line: ' + dmgLine.text);
+  const [, dealt, left, total] = m.map(Number);
+  UI.flipDelay = 2000;
+  // The old format printed damage-so-far here, so on a fresh Pokemon it read
+  // `dealt/total` -- which is the case this arithmetic pins down.
+  return left === total - dealt && left < total;
 });
 
 // Which Energy pays for a retreat is a real decision, and the engine used to make
