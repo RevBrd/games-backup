@@ -41,6 +41,7 @@ the eleventh and is reached through `CREDITS.md`.
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source |
 | [DATA.md](DATA.md) | Generating a set, trusting a set code, or adopting one of the deck spreadsheets. The corpus, the two set codes that read backwards, and what is reference-only |
+| [PROGRESSION.md](PROGRESSION.md) | Touching the ladder, an opponent, or anything that grants a pack. How brackets are derived from the live sets rather than declared, the tunables, why free play pays nothing, and the four layout defects only a screenshot caught |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, looking at the board with `tools/shot.js`, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, one row per model per stretch — and it points at `LOGBOOK.md`, the append-only archive of what each instance did in its own words |
@@ -48,10 +49,16 @@ the eleventh and is reached through `CREDITS.md`.
 
 ## Status
 
-Jobs 1–6 are complete. The engine and AI came out of Claude Chat; Job 5 built everything a
-*collection* game needs on top of them, and Job 6 took the card pool to three sets — you can pick a
-starter deck, play, win packs of any live set, open them, browse what you own, and build decks from
-it, and all of it persists.
+Jobs 1–7 are complete. The engine and AI came out of Claude Chat; Job 5 built everything a
+*collection* game needs on top of them, Job 6 took the card pool to three sets, and Job 7 built the
+ladder that makes two of those sets reachable. You pick a starter deck, work down a roster of named
+challengers, beat a rival to open the next set, earn packs of whatever set you are on, open them,
+browse what you own, and build decks from it — and all of it persists.
+
+**Until Job 7 every win in the game paid out in Base Set**, because both `addPacks` call sites
+passed `homeSet()`. This file claimed "packs of any live set" for two days and the machinery was all
+there; nothing called it. 119 of the 221 cards were unobtainable. *[What that means for how the
+gating reads →](PROGRESSION.md)*
 
 **Three sets are live and complete: Base, Jungle and Fossil — 221 of 221 scriptable cards.** Run
 `node tools/selftest.js` for the live figures rather than trusting a number in prose; it prints
@@ -67,7 +74,7 @@ scriptable. Mixing the two has already confused this section once.)
 | Collection / packs / dex | **Done.** Starter pick, win 2 packs, open them, browse what you own. CARDS and DEX views, owned/missing filters, per-card counts, variant dots, export/import |
 | Deck building | **Done.** Pool grid with filters, live legality, save-as-layout vs save-and-build, and variant picking — you choose which physical copy goes in. Sandbox ignores ownership on purpose |
 | Persistence | **Live.** Versioned save, migration, validation — see [COLLECTION.md](COLLECTION.md) |
-| Progression / named opponents | Not started (Job 7) |
+| Progression / named opponents | **Done.** One bracket per live set, DERIVED from the live-set list so a new set adds a bracket with no code change. Named challengers, a rival per bracket, wins paying in that bracket's set — see [PROGRESSION.md](PROGRESSION.md) |
 | The other 11 sets | Unblocked — all 14 generate cleanly |
 | Audio | None |
 
@@ -82,6 +89,8 @@ src/  engine.js   the whole ruleset. Pure logic, no DOM
                   comment block at the top — read that before adding cards
       collection.js  what the player owns + the save file. Pure data
       packs.js    booster generation. PACK_ODDS is the whole rarity table
+      progress.js the opponent ladder. Brackets DERIVED from the live sets, and
+                  what a win is worth. Pure data
       eventlog.js the match recorder. Pure data
       deckgen.js  builds a legal 60-card deck from a pool
       art.js      deterministic sigils. Petals = attack count, rings = retreat
@@ -96,14 +105,15 @@ tools/            two generators, five suites, a screenshotter, an art fetcher
        chat-era/  the original Python tools, superseded. Kept for provenance
 ```
 
-Four modules are **pure** — `engine.js`, `collection.js`, `packs.js` and `eventlog.js` touch no DOM
-— which is what lets four of the five suites run with no browser at all. And `src/` modules each end
-with a one-line `if (typeof module …) module.exports`; the build strips those on the way in.
+Five modules are **pure** — `engine.js`, `collection.js`, `packs.js`, `eventlog.js` and
+`progress.js` touch no DOM — which is what lets five of the six suites run with no browser at all.
+And `src/` modules each end with a one-line `if (typeof module …) module.exports`; the build strips
+those on the way in.
 **Keep both properties.**
 
 ## Tooling
 
-Run the last five before calling anything done. What each one actually covers, and why none of them
+Run the last six before calling anything done. What each one actually covers, and why none of them
 subsumes the others, is in [TOOLING.md](TOOLING.md).
 
 ```bash
@@ -114,6 +124,7 @@ node tools/selftest.js                   # rules + AI regression (add a number f
 node tools/powertest.js                  # 139 tests for Powers, the bespoke cards and setup
 node tools/smoke.js shadowless.html      # 108 integration tests against the built file
 node tools/collectiontest.js             # 105 tests for the save file, decks and variants
+node tools/progresstest.js               # 71 tests for the ladder, unlocks and rewards
 node tools/packtest.js                   # 57 tests, 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 node tools/aitest.js 6                   # AI behaviour counts — not pass/fail
@@ -213,15 +224,16 @@ else in `data/` is in **[DATA.md](DATA.md)**.
 
 Trevor's ordering, and he is explicit that it is yours to rearrange and to break into sub-jobs.
 
-- **Jobs 1–6 are done** — the engine, the AI, the art system, the board, the Powers, the collection
-  and packs, and Jungle and Fossil. **What each one left behind is in [HISTORY.md](HISTORY.md)**, and
+- **Jobs 1–7 are done** — the engine, the AI, the art system, the board, the Powers, the collection
+  and packs, Jungle and Fossil, and the ladder. **What each one left behind is in [HISTORY.md](HISTORY.md)**, and
   Job 6's entry is worth ten minutes before planning the next set: it was split by *machinery* rather
   than by set, and the reason 126 printings were only **95 distinct behaviours** is the kind of count
   that decides how big a job actually is.
-- **Job 7 — progression and named opponents. Next, and already part-scouted.**
-  `data/gbc_decks.json` holds all 16 GBC opponent decks, verified and mapped to our set IDs; nothing
-  reads it yet. See [DATA.md](DATA.md). They are GBC1 decks, so they need nothing beyond the three
-  live sets — which also means the ruling policy's known limit does not bite until after Job 7.
+- **Job 7 — progression and named opponents. Done, 12 Aug 2026.** All 16 GBC decks are assigned to
+  a challenger and none is stranded. The brackets are derived from the live sets rather than
+  declared, so Job 8's real work is adding sets and not rewiring this. See
+  [PROGRESSION.md](PROGRESSION.md). **The decks and names are placeholders** — Trevor's call: real
+  per-set decks, hand-built and better-generated, are a job of their own.
 - **Job 8+** — the remaining 11 sets. Unblocked; all 14 generate cleanly. The order of operations
   for adding one is in [TOOLING.md](TOOLING.md) and it is the reverse of what feels natural.
 - **The AI weight re-tune** is not numbered and does not depend on the above. It is described in

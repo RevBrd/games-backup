@@ -356,7 +356,25 @@ The armed row says only "Retreating" and "Cancel". The instruction is already on
 in the bar, and a third copy would make the card's version read as decoration — the same mistake the
 coin toss made when its result was announced in two places.
 
-## The title screen is not fitted
+## The title screen is not fitted, and deck select is now bounded
 
-`.deckscreen` sizes itself with `clamp(..vh..)` rather than the board's JS fitter. It is static —
-CSS is enough, and there is nothing to measure.
+`.deckscreen` sizes itself with `clamp(..vh..)` rather than the board's JS fitter. **Still no JS
+fitter, and do not add one** — CSS is enough here and there is nothing to measure.
+
+What changed in Job 7b is that **deck select is the one screen whose content grows without bound**:
+the opponent ladder gains a bracket every time a set goes live. So `.deckscreen:not(.starter)` is
+pinned to `100vh`, the ladder is the single `flex:1 1 auto` child that absorbs the leftover, and the
+Play bar is `position:sticky`. The starter pick is excluded — it is one row on an empty page and
+wants to grow.
+
+Two rules in there were each paid for with a wrong version first, and both are the same mistake in
+opposite directions. **The ladder needs a `min-height` floor of one full tile**: without it the flex
+squeeze wins on a short viewport and at 1280x600 it collapsed to ~70px of card art with every name
+clipped off. **Its two wrapper divs must NOT have `min-height:0`**: with the floor in place but the
+wrappers allowed to shrink below their contents, the locked strips escaped and painted straight over
+the options row. Only the scroll container may shrink, and only to its floor.
+
+**The sticky Play bar is what actually holds.** The fixed chrome plus one full row of challengers
+exceeds 768px and no amount of shaving fixes that as the ladder grows, so the box scrolls and the
+one control you always need stays put. *[The four defects a screenshot caught here, and what 136
+passing tests could not see →](PROGRESSION.md)*

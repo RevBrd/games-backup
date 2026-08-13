@@ -387,3 +387,76 @@ optional decoration on a preserved artifact. It is the half that rots.
   actionable citation is worse than none, because the next instance acts on it. I had generalised
   "GBC counts the physical card" from a case about attack costs to a case about retreat, in the same
   paragraph, without noticing they were different mechanisms.
+
+- **Opus 5** (12 Aug 2026) — Job 7, start to finish, plus the groundwork repair in front of it.
+
+  **The groundwork was not usable as it stood, and finding that out first was the whole value of
+  the pre-flight.** Seven of the sixteen GBC decks named `basep` cards. `basep` is not a live set,
+  so every one of them would have been refused by the deck validator the moment anything read them
+  — a fidelity-correct substitution made against a constraint that does not hold here. Fossil
+  prints all four Legendary birds, so it was ten references and not a set job.
+
+  **I also reported a defect that was not one, and the correction is the part worth keeping.** Ken's
+  Fire Charge was flagged as missing five Trainers and padded with Energy, and its own `_meta` said
+  so, so I repeated it. Pulling Bulbapedia's *raw wikitext* rather than a summary showed 18 Pokémon
+  / 17 Trainers / 25 Energy = 60, matching our extraction entry for entry. The deck really does run
+  21 Fire Energy. Sonnet 4.6's extraction was faithful; only its note was wrong. Amy and Mitch are
+  genuinely ambiguous — Bulbapedia's own lists for both total **61** — so a judgement call was
+  unavoidable there, and I left Sonnet's calls in place and rewrote the notes to stand on their own
+  reasoning rather than on a "deck page header" citation I could not reproduce. Two lessons, one
+  old: a summarising model gave me different card counts on two fetches of the same page, and the
+  raw source settled in one request what argument would not have.
+
+  **The design question I brought to Trevor was the one that mattered.** Zero of the sixteen GBC
+  decks is Base-Set-only — every one plays Jungle or Fossil cards. So a set-tiered ladder cannot
+  mean "opponents playing that set's cards" without throwing away all the authentic content, and a
+  bracket is named for what beating it *unlocks*. He then made it better than I proposed by putting
+  the theme decks on the early rungs, which is what stopped the Jungle bracket being all
+  placeholder.
+
+  **Brackets are derived, not declared, and that was Trevor's ask rather than my instinct.** I had
+  drafted a LADDER constant. He asked for something that would take Team Rocket and the other ten
+  sets without rework, and the answer was to build the ladder from the live-set list at runtime: an
+  authored bracket if one exists, a generated one if not. It costs about forty lines and it means
+  Job 8 is adding sets rather than rewiring this. The test that proves it passes an unlive set code
+  into the live list and checks a working bracket comes out.
+
+  **Unlock is derived too, and I nearly stored it.** There is no `unlocked` list in the save; a
+  bracket is open if the previous boss has been beaten, recomputed every time. The save already
+  carries the fact that settles it, and a second copy is a second thing to drift.
+
+  **The constant that was hiding.** Trevor told me his save could not earn Jungle or Fossil packs
+  and I had said otherwise, from the docs. He was right: both `addPacks` call sites passed
+  `homeSet()`, which is always base1, so 119 of 221 cards were unobtainable and `CLAUDE.md` had
+  claimed the opposite for two days. That inverted the framing of the whole job — I had been
+  planning a save migration to grandfather a freedom nobody had. The ladder does not gate the sets,
+  it is the wiring that makes them reachable. **Ask the person playing it; the docs describe
+  intent and the code describes behaviour.**
+
+  **One switch, checked in the accessor.** `freePlay` decides who you face, and I first put that
+  invariant in the toggle's click handler instead — so anything setting `UI.foeDeck` any other way
+  was silently ignored. Three smoke tests found it in a single run. Exactly `deckFor`'s mandatory
+  `side` one level up, and I had read that comment the same afternoon.
+
+  **Four layout defects were live while 136 smoke tests passed**, and `tools/shot.js` is the only
+  reason any of them was found: 864px of content in a 768px viewport with the Play button gone;
+  locked brackets drawn as grids of unclickable tiles, ~150px each, which caused it; the ladder
+  squeezed to 70px of nameless card art at 1280x600; and then, after I gave it a floor, the locked
+  strips escaping their wrapper to paint over the options row. I spent three rounds shaving pixels
+  before accepting that the arithmetic is unwinnable — the fixed chrome plus one row of challengers
+  exceeds 768px and the ladder only grows — and made the Play bar sticky instead.
+
+  **Trevor left a note in `CLAUDE.md` mid-session pointing me at `LAYOUT.md`**, which I had read the
+  relevant section of but not the auto-margin warning. That rule is scoped to `.boardcol` and its
+  `zoom`, so it did not strictly apply — but both auto margins I had reached for were redundant, and
+  the section's actual lesson is the shape I had already converged on: stop needing the measurement
+  and let a flex child take the slack. I removed them. Worth recording that a screenshot tells you
+  *that* something is wrong and measuring tells you *which box*; I wasted two rounds on the former
+  before printing the numbers, and `LAYOUT.md` says so already under "colour in the boxes".
+
+  Two landmines found in passing, neither Job 7's. `node tools/gen_cards.js` with no `--sets` — the
+  command `CLAUDE.md` documents — silently narrowed a three-set build to Base Set, dropping 126
+  cards and printing what looked like success. It clobbered my `cards.js` and I restored from the
+  backup. And `tools/build.js` held a literal NUL byte inside the search string of the function that
+  refuses NUL bytes, which made `grep` call the file binary in a project whose navigation rule is to
+  cite the symbol and let the reader grep.

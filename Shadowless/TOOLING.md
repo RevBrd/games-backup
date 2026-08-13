@@ -108,15 +108,27 @@ anything done.
   for the same reason it is the only suite that can see a Power. Those cases assert `rawOutcomes()`
   — the raw distribution, before weights — so retuning a weight cannot fail them for the wrong
   reason. *[The blind spot they were built for →](AI.md)*
-- **`smoke.js`** (108 tests) is the original Chat-era harness, driving the **built** HTML through a
+- **`smoke.js`** (136 tests) is the original Chat-era harness, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
-  presentation and freeze, the deck-select flow, the collection screens and the card renderer.
-  Catches build and UI regressions — but it has no layout engine, so a green run proves nothing
-  visual. `tools/shot.js` is the only test for that class of bug.
+  presentation and freeze, the deck-select flow, the collection screens, the ladder and the card
+  renderer. Catches build and UI regressions — but it has no layout engine, so a green run proves
+  nothing visual. `tools/shot.js` is the only test for that class of bug, and Job 7b is the sharpest
+  example yet: **four layout defects were live while all 136 of these passed.** See
+  [PROGRESSION.md](PROGRESSION.md).
+  **It declares free play once, at the top.** Almost every test in it drives a match by setting
+  `UI.myDeck` and `UI.foeDeck`, which is free play's contract — on the ladder the opponent's deck
+  comes off the roster entry and `UI.foeDeck` is ignored. Without that declaration those tests
+  quietly stop testing what they say they test.
 - **`collectiontest.js`** (105 tests) drives `src/collection.js`, which is pure data. It **stubs
   `localStorage` rather than skipping persistence**, because "does a save survive a round trip" is
   the whole point and testing everything except that would be testing the easy half. Its sharper
   cases are the failures — see [COLLECTION.md](COLLECTION.md).
+- **`progresstest.js`** (71 tests) drives `src/progress.js`, which is pure data, against the real
+  card database. Two kinds of case matter here and neither is obvious. It asserts the ladder is
+  **derived** — passing an unlive set code into the live list must produce a working generated
+  bracket — and it asserts every authored opponent fields a **legal 60-card deck** through the real
+  `validateDeck`, which is what stops a roster entry rotting silently when a set is regenerated.
+  See [PROGRESSION.md](PROGRESSION.md).
 - **`packtest.js`** (57 tests) opens 200,000 packs against a fixed seed and checks every row of the
   odds table in [PACKS.md](PACKS.md). Deterministic, so it cannot flake; the tolerances are sized to
   catch a wrong denominator, not to absorb noise. **It takes a count** — `node tools/packtest.js
