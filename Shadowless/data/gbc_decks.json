@@ -9,59 +9,12 @@
       "Rival": "Ronald, the repeating rival. Encounters escalate across the game from mixed-type to full Legendary build."
     },
     "count_notes": [
-      "Most decks verified to 60 cards. Those with count uncertainty are flagged with 'count_approximate: true'.",
-      "Ken Fire Charge: 5 trainer cards not captured in extraction (total is definitely 60 — see _missing note).",
-      "Amy Rain Dancer and Mitch First-Strike: minor count adjustments to reach 60; quantities flagged in-deck.",
-      "Verify all approximate decks against Bulbapedia before implementing in Job 7."
+      "All 16 decks total exactly 60 and reference only live sets (base1, base2, base3).",
+      "Ken, Amy and Mitch were re-checked against Bulbapedia raw wikitext on 12 Aug 2026; see each deck's `_source`.",
+      "Amy and Mitch are reconciliations — Bulbapedia's own lists for both total 61."
     ],
-    "substitutions": {
-      "Electrode (Pokémon Web 26)": {
-        "use": "base1-21",
-        "reason": "Pokémon Web was a Japanese e-Reader exclusive with no English release. Base Set Electrode is the functional equivalent."
-      },
-      "Ninetales (Laboratory D12)": {
-        "use": "base1-12",
-        "reason": "Laboratory is a GBC-exclusive booster set. This is the same physical card as Base Set Ninetales."
-      },
-      "Ditto (Laboratory D42)": {
-        "use": "base3-18",
-        "reason": "Same physical card as Fossil Ditto."
-      },
-      "Flareon (Mystery C13)": {
-        "use": "base2-19",
-        "reason": "Mystery is a GBC-exclusive booster set. This is the same physical card as Jungle Flareon."
-      },
-      "Vaporeon (Mystery C18)": {
-        "use": "base2-12",
-        "reason": "Same physical card as Jungle Vaporeon."
-      },
-      "Jolteon (Mystery C26)": {
-        "use": "base2-4",
-        "reason": "Same physical card as Jungle Jolteon."
-      },
-      "Moltres (Promotional Card P02)": {
-        "use": "basep-21",
-        "reason": "GBC game-completion promo. Nearest in-corpus equivalent is Black Star Promo Moltres."
-      },
-      "Articuno (Promotional Card P03)": {
-        "use": "basep-22",
-        "reason": "GBC game-completion promo. Nearest in-corpus equivalent is Black Star Promo Articuno."
-      },
-      "Zapdos (Promotional Card P10)": {
-        "use": "basep-23",
-        "reason": "GBC game-completion promo. Nearest in-corpus equivalent is Black Star Promo Zapdos."
-      },
-      "Dragonite (TCG GB promo)": {
-        "use": "basep-5",
-        "reason": "GBC-exclusive promo with no physical counterpart. Black Star Promo Dragonite is the nearest equivalent."
-      },
-      "Super Energy Retrieval (Neo Genesis 89 / Fan Book promo)": {
-        "use": "base1-81",
-        "reason": "Super Energy Retrieval not available until neo1. Substituted with Energy Retrieval as the weaker in-scope equivalent. Adds one more copy to any existing ER count in that deck."
-      }
-    }
+    "substitutions_note": "Per-deck `subs` arrays replaced the old free-text `subs_applied` strings and this table on 12 Aug 2026. `kind: \"placeholder\"` means a card we do not have yet — swap `playing` back to `restore` when that set goes live; `restoreIsExact: false` means even `restore` approximates a GBC-exclusive card that exists in no set, so the substitute is permanent. `kind: \"mapping\"` is a GBC booster label for a card we already have and needs no future action."
   },
-
   "nikki_flower_power": {
     "character": "Nikki",
     "club": "Grass Club",
@@ -70,25 +23,72 @@
     "count_approximate": false,
     "strategy": "Energy Trans engine via Venusaur. Runs two Grass lines (Bulbasaur, Oddish) plus Exeggutor. Exeggcute's Hypnosis costs 2 Psychic — the four Psychic Energy are specifically for it.",
     "list": [
-      [4, "base1-44"],
-      [3, "base1-30"],
-      [2, "base1-15"],
-      [4, "base2-58"],
-      [3, "base2-37"],
-      [2, "base2-15"],
-      [4, "base2-52"],
-      [3, "base2-35"],
-      [2, "base1-88"],
-      [3, "base1-91"],
-      [2, "base1-76"],
-      [2, "base1-81"],
-      [2, "base1-95"],
-      [2, "base1-94"],
-      [18, "base1-99"],
-      [4, "base1-101"]
+      [
+        4,
+        "base1-44"
+      ],
+      [
+        3,
+        "base1-30"
+      ],
+      [
+        2,
+        "base1-15"
+      ],
+      [
+        4,
+        "base2-58"
+      ],
+      [
+        3,
+        "base2-37"
+      ],
+      [
+        2,
+        "base2-15"
+      ],
+      [
+        4,
+        "base2-52"
+      ],
+      [
+        3,
+        "base2-35"
+      ],
+      [
+        2,
+        "base1-88"
+      ],
+      [
+        3,
+        "base1-91"
+      ],
+      [
+        2,
+        "base1-76"
+      ],
+      [
+        2,
+        "base1-81"
+      ],
+      [
+        2,
+        "base1-95"
+      ],
+      [
+        2,
+        "base1-94"
+      ],
+      [
+        18,
+        "base1-99"
+      ],
+      [
+        4,
+        "base1-101"
+      ]
     ]
   },
-
   "rick_wonders_of_science": {
     "character": "Rick",
     "club": "Science Club",
@@ -96,91 +96,271 @@
     "name": "Wonders of Science",
     "count_approximate": false,
     "strategy": "Poison/Grass Pokémon (Muk/Weezing) backed by two Mewtwo variants. Heavy Trainer engine with Computer Search, Pokédex and Maintenance for consistency. Grass Energy powers the Poison types (Grass-type in original TCG); Psychic for Mewtwo.",
-    "subs_applied": ["Mewtwo (Wizards Promo 3) → basep-3"],
     "list": [
-      [4, "base3-48"],
-      [3, "base3-13"],
-      [4, "base1-51"],
-      [3, "base3-45"],
-      [2, "base1-10"],
-      [2, "basep-3"],
-      [2, "base1-39"],
-      [1, "base1-73"],
-      [2, "base1-88"],
-      [2, "base1-91"],
-      [2, "base3-59"],
-      [2, "base1-95"],
-      [2, "base1-71"],
-      [2, "base1-87"],
-      [2, "base1-83"],
-      [2, "base1-82"],
-      [15, "base1-99"],
-      [8, "base1-101"]
+      [
+        4,
+        "base3-48"
+      ],
+      [
+        3,
+        "base3-13"
+      ],
+      [
+        4,
+        "base1-51"
+      ],
+      [
+        3,
+        "base3-45"
+      ],
+      [
+        4,
+        "base1-10"
+      ],
+      [
+        2,
+        "base1-39"
+      ],
+      [
+        1,
+        "base1-73"
+      ],
+      [
+        2,
+        "base1-88"
+      ],
+      [
+        2,
+        "base1-91"
+      ],
+      [
+        2,
+        "base3-59"
+      ],
+      [
+        2,
+        "base1-95"
+      ],
+      [
+        2,
+        "base1-71"
+      ],
+      [
+        2,
+        "base1-87"
+      ],
+      [
+        2,
+        "base1-83"
+      ],
+      [
+        2,
+        "base1-82"
+      ],
+      [
+        15,
+        "base1-99"
+      ],
+      [
+        8,
+        "base1-101"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "placeholder",
+        "qty": 2,
+        "playing": "base1-10",
+        "wanted": "Mewtwo (Wizards Promo 3)",
+        "restore": "basep-3",
+        "restoreIsExact": true,
+        "note": "The GBC deck plays the Wizards Promo printing. Base Set Mewtwo until basep is live."
+      }
     ]
   },
-
   "ken_fire_charge": {
     "character": "Ken",
     "club": "Fire Club",
     "tier": "Club Master",
     "name": "Fire Charge",
-    "count_approximate": true,
-    "_missing": "5 trainer cards not captured in extraction. The deck is confirmed 60 cards; sources list Trainers(26) including 4 DCE. 17 real trainer cards and 4 DCE are documented below (55 total). The remaining 5 trainers are unlisted — likely additional draw or disruption cards.",
     "strategy": "Arcanine beatdown with high-HP walls (Chansey, Tauros, Jigglypuff/Wigglytuff). Jigglypuff Promo is distinct from the Jungle printing — both are in the deck. Heavy Energy with DCE to accelerate Arcanine.",
-    "subs_applied": ["Jigglypuff (Wizards Promo 7) → basep-7"],
     "list": [
-      [4, "base1-28"],
-      [3, "base1-23"],
-      [2, "base1-36"],
-      [3, "basep-7"],
-      [1, "base2-54"],
-      [1, "base2-16"],
-      [2, "base1-3"],
-      [2, "base2-47"],
-      [1, "base1-88"],
-      [2, "base1-91"],
-      [2, "base1-81"],
-      [1, "base2-64"],
-      [1, "base1-71"],
-      [2, "base1-80"],
-      [3, "base1-94"],
-      [1, "base1-82"],
-      [3, "base3-61"],
-      [1, "base3-60"],
-      [4, "base1-96"],
-      [21, "base1-98"]
-    ]
+      [
+        4,
+        "base1-28"
+      ],
+      [
+        3,
+        "base1-23"
+      ],
+      [
+        2,
+        "base1-36"
+      ],
+      [
+        4,
+        "base2-54"
+      ],
+      [
+        1,
+        "base2-16"
+      ],
+      [
+        2,
+        "base1-3"
+      ],
+      [
+        2,
+        "base2-47"
+      ],
+      [
+        1,
+        "base1-88"
+      ],
+      [
+        2,
+        "base1-91"
+      ],
+      [
+        2,
+        "base1-81"
+      ],
+      [
+        1,
+        "base2-64"
+      ],
+      [
+        1,
+        "base1-71"
+      ],
+      [
+        2,
+        "base1-80"
+      ],
+      [
+        3,
+        "base1-94"
+      ],
+      [
+        1,
+        "base1-82"
+      ],
+      [
+        3,
+        "base3-61"
+      ],
+      [
+        1,
+        "base3-60"
+      ],
+      [
+        4,
+        "base1-96"
+      ],
+      [
+        21,
+        "base1-98"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "placeholder",
+        "qty": 3,
+        "playing": "base2-54",
+        "wanted": "Jigglypuff (Wizards Promo 7)",
+        "restore": "basep-7",
+        "restoreIsExact": true,
+        "note": "The GBC deck plays promo and Jungle Jigglypuff as distinct cards; both collapse onto the Jungle printing until basep is live."
+      }
+    ],
+    "_source": "Verified 12 Aug 2026 against the raw wikitext of Bulbapedia's \"Fire Charge Deck (TCG)\": 18 Pokémon / 17 Trainers / 25 Energy = 60, entry for entry. The earlier note claiming five uncaptured Trainers was wrong — the deck really does run 21 Fire Energy."
   },
-
   "amy_rain_dancer": {
     "character": "Amy",
     "club": "Water Club",
     "tier": "Club Master",
     "name": "Rain Dancer",
     "count_approximate": true,
-    "_missing": "Seaking quantity adjusted from source (3→4) to reach 24 Pokémon per deck page header. Super Energy Retrieval (Fan Book promo, out-of-scope) replaced by a third Energy Retrieval. Gambler and one Potion dropped to reach 12 trainer count per deck page header.",
     "strategy": "Blastoise Rain Dance engine: attach as many Water Energy as you want per turn. Goldeen/Seaking and Horsea/Seadra provide secondary attackers that scale with Rain Dance. Pure Water Energy — no Color required.",
-    "subs_applied": ["Super Energy Retrieval (Fan Book promo) → base1-81 (3rd copy of Energy Retrieval)"],
     "list": [
-      [4, "base1-63"],
-      [3, "base1-42"],
-      [2, "base1-2"],
-      [4, "base2-53"],
-      [4, "base2-46"],
-      [3, "base3-49"],
-      [2, "base3-42"],
-      [2, "base3-10"],
-      [2, "base1-88"],
-      [1, "base1-76"],
-      [3, "base1-81"],
-      [2, "base1-92"],
-      [1, "base1-79"],
-      [2, "base1-95"],
-      [1, "base1-94"],
-      [24, "base1-102"]
-    ]
+      [
+        4,
+        "base1-63"
+      ],
+      [
+        3,
+        "base1-42"
+      ],
+      [
+        2,
+        "base1-2"
+      ],
+      [
+        4,
+        "base2-53"
+      ],
+      [
+        4,
+        "base2-46"
+      ],
+      [
+        3,
+        "base3-49"
+      ],
+      [
+        2,
+        "base3-42"
+      ],
+      [
+        2,
+        "base3-10"
+      ],
+      [
+        2,
+        "base1-88"
+      ],
+      [
+        1,
+        "base1-76"
+      ],
+      [
+        3,
+        "base1-81"
+      ],
+      [
+        2,
+        "base1-92"
+      ],
+      [
+        1,
+        "base1-79"
+      ],
+      [
+        2,
+        "base1-95"
+      ],
+      [
+        1,
+        "base1-94"
+      ],
+      [
+        24,
+        "base1-102"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "placeholder",
+        "qty": 1,
+        "playing": "base1-81",
+        "wanted": "Super Energy Retrieval (Neo Genesis 89 / Fan Book promo)",
+        "restore": "neo1-89",
+        "restoreIsExact": true,
+        "note": "Out of scope until neo1. Playing Energy Retrieval, the weaker in-scope equivalent, as an extra copy."
+      }
+    ],
+    "_source": "Bulbapedia's \"Rain Dancer Deck (TCG)\" list totals 61, not 60 (23 Pokémon / 14 Trainers / 24 Energy), counted from raw wikitext 12 Aug 2026. A judgement call was therefore unavoidable. Ours: Seaking 3->4, drop Gambler and one Potion, Super Energy Retrieval -> a third Energy Retrieval. An earlier note cited a \"deck page header\" giving 24/12/24 as the authority for this; that header could not be found on Bulbapedia and the reconciliation stands on its own merits, not on that citation."
   },
-
   "isaac_zapping_selfdestruct": {
     "character": "Isaac",
     "club": "Lightning Club",
@@ -188,26 +368,76 @@
     "name": "Zapping Selfdestruct",
     "count_approximate": false,
     "strategy": "Voltorb/Electrode self-destruct threats backed by Magnemite/Magneton and Electabuzz. Defender spam lets Electrode survive long enough to threaten Selfdestruct. Kangaskhan and Tauros are high-HP backup attackers.",
-    "subs_applied": ["Electrode (Pokémon Web 26) → base1-21"],
     "list": [
-      [4, "base1-53"],
-      [3, "base1-9"],
-      [4, "base1-67"],
-      [2, "base1-21"],
-      [4, "base1-20"],
-      [2, "base2-5"],
-      [1, "base2-47"],
-      [1, "base1-88"],
-      [2, "base1-91"],
-      [2, "base1-95"],
-      [4, "base1-80"],
-      [1, "base1-93"],
-      [4, "base1-94"],
-      [2, "base1-96"],
-      [24, "base1-100"]
+      [
+        4,
+        "base1-53"
+      ],
+      [
+        3,
+        "base1-9"
+      ],
+      [
+        4,
+        "base1-67"
+      ],
+      [
+        2,
+        "base1-21"
+      ],
+      [
+        4,
+        "base1-20"
+      ],
+      [
+        2,
+        "base2-5"
+      ],
+      [
+        1,
+        "base2-47"
+      ],
+      [
+        1,
+        "base1-88"
+      ],
+      [
+        2,
+        "base1-91"
+      ],
+      [
+        2,
+        "base1-95"
+      ],
+      [
+        4,
+        "base1-80"
+      ],
+      [
+        1,
+        "base1-93"
+      ],
+      [
+        4,
+        "base1-94"
+      ],
+      [
+        2,
+        "base1-96"
+      ],
+      [
+        24,
+        "base1-100"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "mapping",
+        "playing": "base1-21",
+        "note": "Electrode (Pokémon Web 26) — Japanese e-Reader exclusive; same card as Base Set Electrode"
+      }
     ]
   },
-
   "murray_strange_psyshock": {
     "character": "Murray",
     "club": "Psychic Club",
@@ -216,24 +446,68 @@
     "count_approximate": false,
     "strategy": "Alakazam Damage Swap engine: move damage counters onto high-HP Chansey and Kangaskhan, then Scoop Up to heal. Mr. Mime walls certain attacks. Snorlax is a colorless stall wall. Switch and Scoop Up are both high-copy for maximum mobility.",
     "list": [
-      [4, "base1-43"],
-      [3, "base1-32"],
-      [2, "base1-1"],
-      [2, "base2-6"],
-      [3, "base1-3"],
-      [3, "base2-5"],
-      [2, "base2-11"],
-      [2, "base1-88"],
-      [2, "base1-85"],
-      [3, "base1-92"],
-      [3, "base1-93"],
-      [4, "base1-78"],
-      [4, "base1-95"],
-      [1, "base3-60"],
-      [22, "base1-101"]
+      [
+        4,
+        "base1-43"
+      ],
+      [
+        3,
+        "base1-32"
+      ],
+      [
+        2,
+        "base1-1"
+      ],
+      [
+        2,
+        "base2-6"
+      ],
+      [
+        3,
+        "base1-3"
+      ],
+      [
+        3,
+        "base2-5"
+      ],
+      [
+        2,
+        "base2-11"
+      ],
+      [
+        2,
+        "base1-88"
+      ],
+      [
+        2,
+        "base1-85"
+      ],
+      [
+        3,
+        "base1-92"
+      ],
+      [
+        3,
+        "base1-93"
+      ],
+      [
+        4,
+        "base1-78"
+      ],
+      [
+        4,
+        "base1-95"
+      ],
+      [
+        1,
+        "base3-60"
+      ],
+      [
+        22,
+        "base1-101"
+      ]
     ]
   },
-
   "gene_rock_crusher": {
     "character": "Gene",
     "club": "Rock Club",
@@ -242,52 +516,143 @@
     "count_approximate": false,
     "strategy": "Three Fighting evolution lines: Diglett/Dugtrio, Geodude/Graveler/Golem, plus standalone Onix and Rhyhorn walls. Pokémon Breeder accelerates Golem. Double Colorless supplements the Fighting costs for the higher evolutions.",
     "list": [
-      [4, "base1-47"],
-      [2, "base1-19"],
-      [4, "base3-47"],
-      [3, "base3-37"],
-      [2, "base3-36"],
-      [3, "base1-56"],
-      [3, "base2-61"],
-      [2, "base1-88"],
-      [1, "base1-76"],
-      [2, "base1-92"],
-      [2, "base1-95"],
-      [1, "base1-71"],
-      [2, "base1-80"],
-      [1, "base1-90"],
-      [2, "base1-94"],
-      [2, "base1-96"],
-      [24, "base1-97"]
+      [
+        4,
+        "base1-47"
+      ],
+      [
+        2,
+        "base1-19"
+      ],
+      [
+        4,
+        "base3-47"
+      ],
+      [
+        3,
+        "base3-37"
+      ],
+      [
+        2,
+        "base3-36"
+      ],
+      [
+        3,
+        "base1-56"
+      ],
+      [
+        3,
+        "base2-61"
+      ],
+      [
+        2,
+        "base1-88"
+      ],
+      [
+        1,
+        "base1-76"
+      ],
+      [
+        2,
+        "base1-92"
+      ],
+      [
+        2,
+        "base1-95"
+      ],
+      [
+        1,
+        "base1-71"
+      ],
+      [
+        2,
+        "base1-80"
+      ],
+      [
+        1,
+        "base1-90"
+      ],
+      [
+        2,
+        "base1-94"
+      ],
+      [
+        2,
+        "base1-96"
+      ],
+      [
+        24,
+        "base1-97"
+      ]
     ]
   },
-
   "mitch_first_strike": {
     "character": "Mitch",
     "club": "Fighting Club",
     "tier": "Club Master",
     "name": "First-Strike",
     "count_approximate": true,
-    "_missing": "Hitmonlee quantity reduced from 3× to 2× to reach exactly 60. Source lists 21 Pokémon but deck totals as 61 with the listed trainer and energy counts — one Pokémon count is off. Verify against Bulbapedia before implementing.",
     "strategy": "Pure Fighting aggression. Machamp evolution line is the power core. Hitmonchan, Hitmonlee, and Mankey are aggressive basics. No Energy acceleration — just Fighting Energy and heavy support trainers.",
     "list": [
-      [4, "base1-52"],
-      [3, "base1-34"],
-      [2, "base1-8"],
-      [4, "base1-7"],
-      [2, "base3-7"],
-      [4, "base2-55"],
-      [1, "base2-43"],
-      [2, "base1-95"],
-      [4, "base1-91"],
-      [3, "base1-93"],
-      [2, "base1-80"],
-      [2, "base1-84"],
-      [2, "base1-94"],
-      [25, "base1-97"]
-    ]
+      [
+        4,
+        "base1-52"
+      ],
+      [
+        3,
+        "base1-34"
+      ],
+      [
+        2,
+        "base1-8"
+      ],
+      [
+        4,
+        "base1-7"
+      ],
+      [
+        2,
+        "base3-7"
+      ],
+      [
+        4,
+        "base2-55"
+      ],
+      [
+        1,
+        "base2-43"
+      ],
+      [
+        2,
+        "base1-95"
+      ],
+      [
+        4,
+        "base1-91"
+      ],
+      [
+        3,
+        "base1-93"
+      ],
+      [
+        2,
+        "base1-80"
+      ],
+      [
+        2,
+        "base1-84"
+      ],
+      [
+        2,
+        "base1-94"
+      ],
+      [
+        25,
+        "base1-97"
+      ]
+    ],
+    "_source": "Bulbapedia's \"First-Strike Deck (TCG)\" list totals 61, not 60 (21 Pokémon / 15 Trainers / 25 Energy), counted from raw wikitext 12 Aug 2026. Ours drops Hitmonlee 3->2, which is the smallest change that reaches 60 and the least damaging to the deck's plan."
   },
-
   "courtney_legendary_moltres": {
     "character": "Courtney",
     "club": "Pokémon Dome",
@@ -295,32 +660,98 @@
     "name": "Legendary Moltres",
     "count_approximate": false,
     "strategy": "Double Moltres (Fossil + Promo) backed by the full Ninetales and Arcanine lines. Lass disrupts the opponent's hand. Two Magmar variants provide early beatdown. Pure Fire — no Energy acceleration, just raw power.",
-    "subs_applied": [
-      "Ninetales (Laboratory D12) → base1-12",
-      "Moltres (Promotional Card P02) → basep-21",
-      "Super Energy Retrieval (Neo Genesis 89) → base1-81 (added to existing 1× Energy Retrieval)"
-    ],
     "list": [
-      [4, "base1-68"],
-      [3, "base1-12"],
-      [4, "base1-28"],
-      [2, "base1-23"],
-      [2, "base1-36"],
-      [2, "base3-39"],
-      [2, "base3-12"],
-      [2, "basep-21"],
-      [3, "base1-91"],
-      [2, "base1-75"],
-      [1, "base1-77"],
-      [2, "base1-81"],
-      [2, "base1-92"],
-      [2, "base1-95"],
-      [1, "base1-94"],
-      [1, "base1-90"],
-      [25, "base1-98"]
+      [
+        4,
+        "base1-68"
+      ],
+      [
+        3,
+        "base1-12"
+      ],
+      [
+        4,
+        "base1-28"
+      ],
+      [
+        2,
+        "base1-23"
+      ],
+      [
+        2,
+        "base1-36"
+      ],
+      [
+        2,
+        "base3-39"
+      ],
+      [
+        4,
+        "base3-12"
+      ],
+      [
+        3,
+        "base1-91"
+      ],
+      [
+        2,
+        "base1-75"
+      ],
+      [
+        1,
+        "base1-77"
+      ],
+      [
+        2,
+        "base1-81"
+      ],
+      [
+        2,
+        "base1-92"
+      ],
+      [
+        2,
+        "base1-95"
+      ],
+      [
+        1,
+        "base1-94"
+      ],
+      [
+        1,
+        "base1-90"
+      ],
+      [
+        25,
+        "base1-98"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "placeholder",
+        "qty": 2,
+        "playing": "base3-12",
+        "wanted": "Moltres (GBC promo P02)",
+        "restore": "basep-21",
+        "restoreIsExact": false,
+        "note": "GBC game-completion promo, in no set we can generate. basep-21 (Black Star Promo) is the nearest corpus card and is itself an approximation."
+      },
+      {
+        "kind": "placeholder",
+        "qty": 1,
+        "playing": "base1-81",
+        "wanted": "Super Energy Retrieval (Neo Genesis 89 / Fan Book promo)",
+        "restore": "neo1-89",
+        "restoreIsExact": true,
+        "note": "Out of scope until neo1. Playing Energy Retrieval, the weaker in-scope equivalent, as an extra copy."
+      },
+      {
+        "kind": "mapping",
+        "playing": "base1-12",
+        "note": "Ninetales (Laboratory D12) — GBC-exclusive booster label for the Base Set card"
+      }
     ]
   },
-
   "steve_legendary_zapdos": {
     "character": "Steve",
     "club": "Pokémon Dome",
@@ -328,29 +759,86 @@
     "name": "Legendary Zapdos",
     "count_approximate": false,
     "strategy": "Triple Zapdos (Fossil, Base, Promo) backed by Electabuzz beatdown and Voltorb/Electrode pressure. Eevee plus Jolteon provide an Eeveelution angle. PlusPower stacks damage for key KOs.",
-    "subs_applied": [
-      "Electrode (Pokémon Web 26) → base1-21",
-      "Zapdos (Promotional Card P10) → basep-23"
-    ],
     "list": [
-      [4, "base1-67"],
-      [3, "base1-21"],
-      [4, "base1-20"],
-      [2, "base2-4"],
-      [1, "base3-15"],
-      [1, "base1-16"],
-      [2, "basep-23"],
-      [3, "base2-51"],
-      [4, "base1-91"],
-      [2, "base1-81"],
-      [2, "base1-95"],
-      [3, "base1-84"],
-      [3, "base1-94"],
-      [1, "base3-60"],
-      [25, "base1-100"]
+      [
+        4,
+        "base1-67"
+      ],
+      [
+        3,
+        "base1-21"
+      ],
+      [
+        4,
+        "base1-20"
+      ],
+      [
+        2,
+        "base2-4"
+      ],
+      [
+        3,
+        "base3-15"
+      ],
+      [
+        1,
+        "base1-16"
+      ],
+      [
+        3,
+        "base2-51"
+      ],
+      [
+        4,
+        "base1-91"
+      ],
+      [
+        2,
+        "base1-81"
+      ],
+      [
+        2,
+        "base1-95"
+      ],
+      [
+        3,
+        "base1-84"
+      ],
+      [
+        3,
+        "base1-94"
+      ],
+      [
+        1,
+        "base3-60"
+      ],
+      [
+        25,
+        "base1-100"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "placeholder",
+        "qty": 2,
+        "playing": "base3-15",
+        "wanted": "Zapdos (GBC promo P10)",
+        "restore": "basep-23",
+        "restoreIsExact": false,
+        "note": "As Moltres. Fossil Zapdos over Base Set Zapdos on HP."
+      },
+      {
+        "kind": "mapping",
+        "playing": "base1-21",
+        "note": "Electrode (Pokémon Web 26) — Japanese e-Reader exclusive; same card as Base Set Electrode"
+      },
+      {
+        "kind": "mapping",
+        "playing": "base2-4",
+        "note": "Jolteon (Mystery C26) — GBC-exclusive booster label for the Jungle card"
+      }
     ]
   },
-
   "jack_legendary_articuno": {
     "character": "Jack",
     "club": "Pokémon Dome",
@@ -358,28 +846,77 @@
     "name": "Legendary Articuno",
     "count_approximate": false,
     "strategy": "Dual Articuno (Fossil + Promo) backed by Seel/Dewgong and Lapras walls. Chansey and Ditto are Colorless tanks. Scoop Up keeps damaged Pokémon alive. Pokémon Trader finds the right piece when needed.",
-    "subs_applied": [
-      "Articuno (Promotional Card P03) → basep-22",
-      "Ditto (Laboratory D42) → base3-18"
-    ],
     "list": [
-      [4, "base1-41"],
-      [3, "base1-25"],
-      [4, "base3-10"],
-      [2, "base3-2"],
-      [2, "basep-22"],
-      [3, "base1-3"],
-      [2, "base3-18"],
-      [2, "base1-88"],
-      [2, "base1-77"],
-      [3, "base1-81"],
-      [3, "base1-95"],
-      [4, "base1-78"],
-      [1, "base3-60"],
-      [25, "base1-102"]
+      [
+        4,
+        "base1-41"
+      ],
+      [
+        3,
+        "base1-25"
+      ],
+      [
+        4,
+        "base3-10"
+      ],
+      [
+        4,
+        "base3-2"
+      ],
+      [
+        3,
+        "base1-3"
+      ],
+      [
+        2,
+        "base3-18"
+      ],
+      [
+        2,
+        "base1-88"
+      ],
+      [
+        2,
+        "base1-77"
+      ],
+      [
+        3,
+        "base1-81"
+      ],
+      [
+        3,
+        "base1-95"
+      ],
+      [
+        4,
+        "base1-78"
+      ],
+      [
+        1,
+        "base3-60"
+      ],
+      [
+        25,
+        "base1-102"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "placeholder",
+        "qty": 2,
+        "playing": "base3-2",
+        "wanted": "Articuno (GBC promo P03)",
+        "restore": "basep-22",
+        "restoreIsExact": false,
+        "note": "As Moltres."
+      },
+      {
+        "kind": "mapping",
+        "playing": "base3-18",
+        "note": "Ditto (Laboratory D42) — GBC-exclusive booster label for the Fossil card"
+      }
     ]
   },
-
   "rod_legendary_dragonite": {
     "character": "Rod",
     "club": "Pokémon Dome",
@@ -387,32 +924,101 @@
     "name": "Legendary Dragonite",
     "count_approximate": false,
     "strategy": "Three evolution lines: Charizard, Gyarados, and Dratini/Dragonair/Dragonite — the full Dragon family. Lapras and Kangaskhan are standalone walls. Pokémon Breeder and Trader fetch evolution pieces. Runs Water Energy because Gyarados and Lapras need it; Charizard is primarily a bench-warmer here.",
-    "subs_applied": [
-      "Dragonite (TCG GB promo) → basep-5",
-      "Super Energy Retrieval (Neo Genesis 89) → base1-81 (added to existing 1× Energy Retrieval)"
-    ],
     "list": [
-      [3, "base1-46"],
-      [2, "base1-24"],
-      [2, "base1-4"],
-      [3, "base1-35"],
-      [2, "base1-6"],
-      [2, "base3-10"],
-      [2, "base2-5"],
-      [4, "base1-26"],
-      [3, "base1-18"],
-      [2, "basep-5"],
-      [2, "base1-88"],
-      [2, "base1-77"],
-      [2, "base1-76"],
-      [2, "base1-81"],
-      [2, "base1-95"],
-      [1, "base3-60"],
-      [4, "base1-96"],
-      [20, "base1-102"]
+      [
+        3,
+        "base1-46"
+      ],
+      [
+        2,
+        "base1-24"
+      ],
+      [
+        2,
+        "base1-4"
+      ],
+      [
+        3,
+        "base1-35"
+      ],
+      [
+        2,
+        "base1-6"
+      ],
+      [
+        2,
+        "base3-10"
+      ],
+      [
+        2,
+        "base2-5"
+      ],
+      [
+        4,
+        "base1-26"
+      ],
+      [
+        3,
+        "base1-18"
+      ],
+      [
+        2,
+        "base3-4"
+      ],
+      [
+        2,
+        "base1-88"
+      ],
+      [
+        2,
+        "base1-77"
+      ],
+      [
+        2,
+        "base1-76"
+      ],
+      [
+        2,
+        "base1-81"
+      ],
+      [
+        2,
+        "base1-95"
+      ],
+      [
+        1,
+        "base3-60"
+      ],
+      [
+        4,
+        "base1-96"
+      ],
+      [
+        20,
+        "base1-102"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "placeholder",
+        "qty": 2,
+        "playing": "base3-4",
+        "wanted": "Dragonite (TCG GB promo)",
+        "restore": "basep-5",
+        "restoreIsExact": false,
+        "note": "As Moltres."
+      },
+      {
+        "kind": "placeholder",
+        "qty": 1,
+        "playing": "base1-81",
+        "wanted": "Super Energy Retrieval (Neo Genesis 89 / Fan Book promo)",
+        "restore": "neo1-89",
+        "restoreIsExact": true,
+        "note": "Out of scope until neo1. Playing Energy Retrieval, the weaker in-scope equivalent, as an extra copy."
+      }
     ]
   },
-
   "ronald_im_ronald": {
     "character": "Ronald",
     "club": null,
@@ -422,30 +1028,92 @@
     "count_approximate": false,
     "strategy": "Ronald's first serious deck — three mixed types with no Energy synergy. Charmander/Arcanine line, Squirtle/Wartortle line, and Cubone/Marowak. Thin on trainers; the challenge here is the type spread requiring three Energy types.",
     "list": [
-      [3, "base1-46"],
-      [2, "base1-24"],
-      [3, "base1-28"],
-      [1, "base1-23"],
-      [3, "base1-63"],
-      [2, "base1-42"],
-      [2, "base1-41"],
-      [1, "base1-25"],
-      [2, "base3-10"],
-      [3, "base2-50"],
-      [2, "base2-39"],
-      [1, "base1-88"],
-      [1, "base1-81"],
-      [2, "base3-59"],
-      [1, "base1-95"],
-      [1, "base1-84"],
-      [1, "base1-80"],
-      [2, "base1-93"],
-      [9, "base1-98"],
-      [10, "base1-102"],
-      [8, "base1-97"]
+      [
+        3,
+        "base1-46"
+      ],
+      [
+        2,
+        "base1-24"
+      ],
+      [
+        3,
+        "base1-28"
+      ],
+      [
+        1,
+        "base1-23"
+      ],
+      [
+        3,
+        "base1-63"
+      ],
+      [
+        2,
+        "base1-42"
+      ],
+      [
+        2,
+        "base1-41"
+      ],
+      [
+        1,
+        "base1-25"
+      ],
+      [
+        2,
+        "base3-10"
+      ],
+      [
+        3,
+        "base2-50"
+      ],
+      [
+        2,
+        "base2-39"
+      ],
+      [
+        1,
+        "base1-88"
+      ],
+      [
+        1,
+        "base1-81"
+      ],
+      [
+        2,
+        "base3-59"
+      ],
+      [
+        1,
+        "base1-95"
+      ],
+      [
+        1,
+        "base1-84"
+      ],
+      [
+        1,
+        "base1-80"
+      ],
+      [
+        2,
+        "base1-93"
+      ],
+      [
+        9,
+        "base1-98"
+      ],
+      [
+        10,
+        "base1-102"
+      ],
+      [
+        8,
+        "base1-97"
+      ]
     ]
   },
-
   "ronald_invincible": {
     "character": "Ronald",
     "club": null,
@@ -455,29 +1123,88 @@
     "count_approximate": false,
     "strategy": "Fossil-heavy multi-type aggression. Scyther is a free-retreater and strong attacker. Muk/Weezing threaten disruption. Geodude/Graveler pressure the bench. Chansey and Kangaskhan absorb hits. Four Energy types keeps the opponent guessing.",
     "list": [
-      [3, "base3-48"],
-      [2, "base3-13"],
-      [4, "base2-10"],
-      [3, "base3-39"],
-      [3, "base3-47"],
-      [2, "base3-37"],
-      [2, "base1-3"],
-      [2, "base2-5"],
-      [2, "base1-88"],
-      [2, "base1-91"],
-      [2, "base1-81"],
-      [2, "base1-92"],
-      [2, "base1-78"],
-      [2, "base1-93"],
-      [2, "base1-84"],
-      [1, "base3-60"],
-      [7, "base1-99"],
-      [6, "base1-98"],
-      [7, "base1-97"],
-      [4, "base1-96"]
+      [
+        3,
+        "base3-48"
+      ],
+      [
+        2,
+        "base3-13"
+      ],
+      [
+        4,
+        "base2-10"
+      ],
+      [
+        3,
+        "base3-39"
+      ],
+      [
+        3,
+        "base3-47"
+      ],
+      [
+        2,
+        "base3-37"
+      ],
+      [
+        2,
+        "base1-3"
+      ],
+      [
+        2,
+        "base2-5"
+      ],
+      [
+        2,
+        "base1-88"
+      ],
+      [
+        2,
+        "base1-91"
+      ],
+      [
+        2,
+        "base1-81"
+      ],
+      [
+        2,
+        "base1-92"
+      ],
+      [
+        2,
+        "base1-78"
+      ],
+      [
+        2,
+        "base1-93"
+      ],
+      [
+        2,
+        "base1-84"
+      ],
+      [
+        1,
+        "base3-60"
+      ],
+      [
+        7,
+        "base1-99"
+      ],
+      [
+        6,
+        "base1-98"
+      ],
+      [
+        7,
+        "base1-97"
+      ],
+      [
+        4,
+        "base1-96"
+      ]
     ]
   },
-
   "ronald_powerful": {
     "character": "Ronald",
     "club": null,
@@ -486,34 +1213,112 @@
     "name": "Powerful Ronald",
     "count_approximate": false,
     "strategy": "Spread damage across three Energy types: Electabuzz and Hitmonchan hit hard early, Jynx and Mewtwo carry late. Doduo/Dodrio and Lickitung/Kangaskhan/Tauros are disposable high-HP bodies. PlusPower pushes KOs across thresholds.",
-    "subs_applied": ["Super Energy Retrieval (Neo Genesis 89) → base1-81 (added to existing 2× Energy Retrieval)"],
     "list": [
-      [3, "base1-20"],
-      [2, "base3-7"],
-      [2, "base1-7"],
-      [1, "base2-6"],
-      [2, "base1-31"],
-      [1, "base1-10"],
-      [2, "base1-48"],
-      [1, "base2-34"],
-      [2, "base2-38"],
-      [2, "base2-5"],
-      [3, "base2-47"],
-      [3, "base1-81"],
-      [1, "base3-59"],
-      [2, "base1-92"],
-      [1, "base1-95"],
-      [2, "base1-84"],
-      [2, "base1-93"],
-      [1, "base1-82"],
-      [1, "base3-60"],
-      [7, "base1-100"],
-      [9, "base1-97"],
-      [7, "base1-101"],
-      [3, "base1-96"]
+      [
+        3,
+        "base1-20"
+      ],
+      [
+        2,
+        "base3-7"
+      ],
+      [
+        2,
+        "base1-7"
+      ],
+      [
+        1,
+        "base2-6"
+      ],
+      [
+        2,
+        "base1-31"
+      ],
+      [
+        1,
+        "base1-10"
+      ],
+      [
+        2,
+        "base1-48"
+      ],
+      [
+        1,
+        "base2-34"
+      ],
+      [
+        2,
+        "base2-38"
+      ],
+      [
+        2,
+        "base2-5"
+      ],
+      [
+        3,
+        "base2-47"
+      ],
+      [
+        3,
+        "base1-81"
+      ],
+      [
+        1,
+        "base3-59"
+      ],
+      [
+        2,
+        "base1-92"
+      ],
+      [
+        1,
+        "base1-95"
+      ],
+      [
+        2,
+        "base1-84"
+      ],
+      [
+        2,
+        "base1-93"
+      ],
+      [
+        1,
+        "base1-82"
+      ],
+      [
+        1,
+        "base3-60"
+      ],
+      [
+        7,
+        "base1-100"
+      ],
+      [
+        9,
+        "base1-97"
+      ],
+      [
+        7,
+        "base1-101"
+      ],
+      [
+        3,
+        "base1-96"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "placeholder",
+        "qty": 1,
+        "playing": "base1-81",
+        "wanted": "Super Energy Retrieval (Neo Genesis 89 / Fan Book promo)",
+        "restore": "neo1-89",
+        "restoreIsExact": true,
+        "note": "Out of scope until neo1. Playing Energy Retrieval, the weaker in-scope equivalent, as an extra copy."
+      }
     ]
   },
-
   "ronald_legendary": {
     "character": "Ronald",
     "club": null,
@@ -522,36 +1327,140 @@
     "name": "Legendary Ronald",
     "count_approximate": false,
     "strategy": "The full Ronald showpiece. Eevee evolves into all three Eeveelutions backed by the three promo Legendary Birds. Dratini/Dragonair/Dragonite is the Dragon line. Kangaskhan pads the bench. Pokémon Trader and Breeder find the evolution chain. Scoop Up protects key Pokémon. Primarily Fire Energy for Flareon and Moltres.",
-    "subs_applied": [
-      "Flareon (Mystery C13) → base2-19",
-      "Vaporeon (Mystery C18) → base2-12",
-      "Jolteon (Mystery C26) → base2-4",
-      "Moltres (Promotional Card P02) → basep-21",
-      "Articuno (Promotional Card P03) → basep-22",
-      "Zapdos (Promotional Card P10) → basep-23",
-      "Dragonite (TCG GB promo) → basep-5"
-    ],
     "list": [
-      [1, "base2-19"],
-      [2, "basep-21"],
-      [1, "base2-12"],
-      [1, "basep-22"],
-      [1, "base2-4"],
-      [1, "basep-23"],
-      [2, "base2-5"],
-      [4, "base2-51"],
-      [4, "base1-26"],
-      [3, "base1-18"],
-      [2, "basep-5"],
-      [1, "base1-88"],
-      [3, "base1-91"],
-      [1, "base1-77"],
-      [2, "base1-76"],
-      [3, "base1-92"],
-      [3, "base1-78"],
-      [1, "base3-60"],
-      [4, "base1-96"],
-      [20, "base1-98"]
+      [
+        1,
+        "base2-19"
+      ],
+      [
+        2,
+        "base3-12"
+      ],
+      [
+        1,
+        "base2-12"
+      ],
+      [
+        1,
+        "base3-2"
+      ],
+      [
+        1,
+        "base2-4"
+      ],
+      [
+        1,
+        "base3-15"
+      ],
+      [
+        2,
+        "base2-5"
+      ],
+      [
+        4,
+        "base2-51"
+      ],
+      [
+        4,
+        "base1-26"
+      ],
+      [
+        3,
+        "base1-18"
+      ],
+      [
+        2,
+        "base3-4"
+      ],
+      [
+        1,
+        "base1-88"
+      ],
+      [
+        3,
+        "base1-91"
+      ],
+      [
+        1,
+        "base1-77"
+      ],
+      [
+        2,
+        "base1-76"
+      ],
+      [
+        3,
+        "base1-92"
+      ],
+      [
+        3,
+        "base1-78"
+      ],
+      [
+        1,
+        "base3-60"
+      ],
+      [
+        4,
+        "base1-96"
+      ],
+      [
+        20,
+        "base1-98"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "placeholder",
+        "qty": 2,
+        "playing": "base3-12",
+        "wanted": "Moltres (GBC promo P02)",
+        "restore": "basep-21",
+        "restoreIsExact": false,
+        "note": "GBC game-completion promo, in no set we can generate. basep-21 (Black Star Promo) is the nearest corpus card and is itself an approximation."
+      },
+      {
+        "kind": "placeholder",
+        "qty": 1,
+        "playing": "base3-2",
+        "wanted": "Articuno (GBC promo P03)",
+        "restore": "basep-22",
+        "restoreIsExact": false,
+        "note": "As Moltres."
+      },
+      {
+        "kind": "placeholder",
+        "qty": 1,
+        "playing": "base3-15",
+        "wanted": "Zapdos (GBC promo P10)",
+        "restore": "basep-23",
+        "restoreIsExact": false,
+        "note": "As Moltres. Fossil Zapdos over Base Set Zapdos on HP."
+      },
+      {
+        "kind": "placeholder",
+        "qty": 2,
+        "playing": "base3-4",
+        "wanted": "Dragonite (TCG GB promo)",
+        "restore": "basep-5",
+        "restoreIsExact": false,
+        "note": "As Moltres."
+      },
+      {
+        "kind": "mapping",
+        "playing": "base2-19",
+        "note": "Flareon (Mystery C13) — GBC-exclusive booster label for the Jungle card"
+      },
+      {
+        "kind": "mapping",
+        "playing": "base2-12",
+        "note": "Vaporeon (Mystery C18) — GBC-exclusive booster label for the Jungle card"
+      },
+      {
+        "kind": "mapping",
+        "playing": "base2-4",
+        "note": "Jolteon (Mystery C26) — GBC-exclusive booster label for the Jungle card"
+      }
     ]
   }
 }
