@@ -24,10 +24,22 @@ const flagIdx = process.argv.indexOf('--sets');
 const argSets = (process.argv.find(a => a.startsWith('--sets=')) || '=').split('=')[1]
   || (flagIdx > -1 ? (process.argv[flagIdx + 1] || '') : '');
 
-// --check with no --sets means "is the COMMITTED file a faithful generation",
-// so it has to regenerate the sets that file was built from rather than the
-// default. Reading them back from its own SET_INFO is what stops --check
-// reporting drift on a widened build and training everyone to ignore it.
+// With no --sets, regenerate WHATEVER THE COMMITTED FILE WAS BUILT FROM, read
+// back out of its own SET_INFO. Two reasons, and the second one cost a session:
+//
+//   --check has to compare against the sets that file was built from, or it
+//   reports drift on a widened build and trains everyone to ignore it.
+//
+//   And a bare `node tools/gen_cards.js` — the command CLAUDE.md documents —
+//   has to be non-destructive. Until 12 Aug 2026 the SET_INFO read was gated
+//   behind --check, so the bare command silently narrowed a three-set build
+//   back to Base Set: 221 cards to 102, Jungle and Fossil gone, every opponent
+//   deck dropped, and the only sign of it was a stdout line reading "102 cards
+//   from base1" that looks exactly like success. Widening is now the only thing
+//   --sets is needed for; regenerating in place never narrows.
+//
+// ['base1'] survives as the fresh-checkout fallback only, for when there is no
+// committed cards.js to read a set list out of.
 function committedSets() {
   try {
     const cur = require(OUT);
@@ -36,8 +48,7 @@ function committedSets() {
   } catch (e) { /* no committed file yet, or an older one without SET_INFO */ }
   return null;
 }
-const SETS = argSets ? argSets.split(',')
-  : (process.argv.includes('--check') && committedSets()) || ['base1'];
+const SETS = argSets ? argSets.split(',') : (committedSets() || ['base1']);
 
 // Set display names. HAND-AUTHORED, unavoidably: data/raw/*.json are bare arrays
 // of cards with no set metadata on them at all, and the code is only known from
@@ -204,6 +215,62 @@ for (const k of Object.keys(decks)) {
 }
 out += '};\n\n';
 
+// --- Job 7: the opponent decks and the ladder -------------------------------
+// OPPONENT_DECKS is source-qualified — 'gbc:ken_fire_charge', 'jungle:water_blast'
+// — because Job 7 already has three deck sources and will grow more as real
+// per-set decks get authored. A ladder entry names a source and a key; nothing
+// downstream has to know which file a deck came from.
+//
+// A deck referencing a card outside the generated sets is DROPPED with a
+// warning rather than being a fatal error, which is the opposite of the rule
+// for data/decks.json above, and deliberately so. decks.json decks are the
+// player's — a missing one is a broken game. Opponent decks are one rung of a
+// ladder that backfills itself: progress.js replaces a dropped entry with a
+// generated challenger, so `--sets base1` still produces a working ladder
+// instead of refusing to build.
+const OPPONENT_SOURCES = [
+  ['gbc', 'gbc_decks.json'],
+  ['jungle', 'jungle_decks.json'],
+];
+const opponentDecks = {}, droppedDecks = [];
+for (const [prefix, file] of OPPONENT_SOURCES) {
+  const raw = JSON.parse(fs.readFileSync(path.join(HERE, 'data', file), 'utf8'));
+  for (const key of Object.keys(raw)) {
+    if (key === '_meta') continue;
+    const deck = raw[key];
+    if (!deck || !Array.isArray(deck.list)) continue;
+    const absent = deck.list.filter(([, id]) => !byId[id]).map(([, id]) => id);
+    if (absent.length) { droppedDecks.push(`${prefix}:${key} (${[...new Set(absent)].join(', ')})`); continue; }
+    opponentDecks[`${prefix}:${key}`] = { name: deck.name || key, list: deck.list };
+  }
+}
+if (droppedDecks.length)
+  console.error(`WARNING: ${droppedDecks.length} opponent deck(s) reference cards outside the generated sets and were dropped:\n  ${droppedDecks.join('\n  ')}`);
+
+out += 'const OPPONENT_DECKS = {\n';
+for (const k of Object.keys(opponentDecks)) {
+  out += `  ${JSON.stringify(k)}: { name: ${JSON.stringify(opponentDecks[k].name)}, list: [\n`;
+  for (const [q, id] of opponentDecks[k].list) out += `    [${q}, ${JSON.stringify(id)}],  // ${byId[id].name}\n`;
+  out += '  ]},\n';
+}
+out += '};\n\n';
+
+// The ladder ships as data, not as a built structure: src/progress.js derives
+// the live brackets from it at runtime, so a bracket for a set that is not in
+// this build simply never appears. Only `_meta` is stripped.
+const ladder = JSON.parse(fs.readFileSync(path.join(HERE, 'data', 'ladder.json'), 'utf8'));
+delete ladder._meta;
+for (const setCode of Object.keys(ladder.brackets || {})) {
+  if (!SETS.includes(setCode)) continue;      // not in this build; progress.js drops it
+  const b = ladder.brackets[setCode];
+  for (const o of (b.roster || []).concat(b.boss ? [b.boss] : [], b.extra || [])) {
+    if (o.deck === 'generate') continue;
+    const known = opponentDecks[o.deck] || (o.deck.startsWith('theme:') && decks[o.deck.slice(6)]);
+    if (!known) console.error(`WARNING: ladder ${setCode}/${o.id} wants deck "${o.deck}", which is not available — progress.js will substitute a generated challenger`);
+  }
+}
+out += `const LADDER = ${JSON.stringify(ladder, null, 2)};\n\n`;
+
 // Only the sets actually generated. A name for a set whose cards do not exist
 // would let the UI offer a pack nobody can open.
 const unnamed = SETS.filter(s => !SET_INFO[s]);
@@ -213,7 +280,7 @@ if (unnamed.length) {
 }
 out += 'const SET_INFO = {\n';
 for (const s of SETS) out += `  ${JSON.stringify(s)}: ${JSON.stringify(SET_INFO[s])},\n`;
-out += '};\n\nif (typeof module !== \'undefined\') module.exports = { CARD_DB, DECKS, SET_INFO };\n';
+out += '};\n\nif (typeof module !== \'undefined\') module.exports = { CARD_DB, DECKS, SET_INFO, OPPONENT_DECKS, LADDER };\n';
 
 if (process.argv.includes('--check')) {
   if (fs.readFileSync(OUT, 'utf8') === out) { console.log('src/cards.js is in sync with data/raw/.'); process.exit(0); }

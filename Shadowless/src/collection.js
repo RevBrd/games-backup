@@ -102,6 +102,10 @@ function newSave(opts = {}) {
     packs: {},                 // setCode -> unopened packs held
     starter: opts.starter || '',
     stats: { wins: 0, losses: 0, packsOpened: 0, cardsPulled: 0 },
+    // Job 7. Which named opponents you have beaten, and how often. There is no
+    // `unlocked` list beside it on purpose — progress.js derives what is open
+    // from this map every time it is asked, so the two can never disagree.
+    progress: { beaten: {}, lost: {} },
   };
 }
 
@@ -128,6 +132,12 @@ function ensureShape(s) {
     if (typeof s.stats[k] !== 'number') s.stats[k] = 0;
   });
   if (typeof s.starter !== 'string') s.starter = '';
+  // Additive field (Job 7), so it belongs here rather than in a migration: a
+  // save written before progression existed has beaten nobody, which is exactly
+  // what an empty map means. Absent and empty are the same thing.
+  if (s.progress == null || typeof s.progress !== 'object') s.progress = {};
+  if (s.progress.beaten == null || typeof s.progress.beaten !== 'object') s.progress.beaten = {};
+  if (s.progress.lost == null || typeof s.progress.lost !== 'object') s.progress.lost = {};
   // Decks predate both `id` and `built`. Absent id gets one; absent `built`
   // means true, because every deck that existed before the flag was a real,
   // playable, card-reserving deck. Filling only what is ABSENT, as above.

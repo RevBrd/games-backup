@@ -1,0 +1,66 @@
+{
+  "_meta": {
+    "what": "Job 7's opponent ladder. One BRACKET per set. Nothing in here names the set it unlocks or its own position — buildLadder() in src/progress.js derives both from the live-set order, so a bracket for a set that is not live simply does not appear, and a live set with no bracket here gets a generated one automatically. Adding Team Rocket is adding a key, or adding nothing at all.",
+    "authored": "2026-08-12, Job 7a.",
+    "deck refs": "'theme:NAME' is DECKS in cards.js (data/decks.json). 'gbc:KEY' and 'jungle:NAME' are OPPONENT_DECKS (data/gbc_decks.json, data/jungle_decks.json). 'generate' is a pool spec handed to deckgen at match time, seeded off the opponent id so the same challenger always brings the same deck.",
+    "names": "GBC characters keep their real names. Anything marked placeholder:true is ours and is meant to be replaced — Trevor's note, 12 Aug 2026: the decks and names are easily reshapable, the structure is what has to be right.",
+    "ronald": "Ronald is the recurring rival, one deck per bracket in the order the GBC escalates them. His fourth, ronald_legendary, is the post-boss challenge in the last authored bracket; when a fourth set goes live it should probably move to being that bracket's boss instead.",
+    "unassigned": "No GBC deck is unused. All 16 appear exactly once."
+  },
+
+  "defaults": {
+    "bossAfter": 5,
+    "packsPerWin": 2,
+    "bossFirstWinBonus": 1,
+    "ai": "expert"
+  },
+
+  "brackets": {
+    "base1": {
+      "name": "The Clubs",
+      "blurb": "Eight challengers and a rival. Beat five of them and Ronald turns up.",
+      "roster": [
+        { "id": "base1-brushfire",  "name": "Corey",  "title": "Brushfire",       "deck": "theme:Brushfire",   "ai": "novice", "placeholder": true },
+        { "id": "base1-overgrowth", "name": "Marla",  "title": "Overgrowth",      "deck": "theme:Overgrowth",  "ai": "novice", "placeholder": true },
+        { "id": "base1-zap",        "name": "Dez",    "title": "Zap!",            "deck": "theme:Zap",         "ai": "novice", "placeholder": true },
+        { "id": "base1-blackout",   "name": "Hollis", "title": "Blackout",        "deck": "theme:Blackout",    "ai": "novice", "placeholder": true },
+        { "id": "gbc-isaac",        "name": "Isaac",  "title": "Lightning Club",  "deck": "gbc:isaac_zapping_selfdestruct" },
+        { "id": "gbc-mitch",        "name": "Mitch",  "title": "Fighting Club",   "deck": "gbc:mitch_first_strike" },
+        { "id": "gbc-murray",       "name": "Murray", "title": "Psychic Club",    "deck": "gbc:murray_strange_psyshock" },
+        { "id": "gbc-rick",         "name": "Rick",   "title": "Science Club",    "deck": "gbc:rick_wonders_of_science" }
+      ],
+      "boss": { "id": "gbc-ronald-1", "name": "Ronald", "title": "I'm Ronald!", "deck": "gbc:ronald_im_ronald" }
+    },
+
+    "base2": {
+      "name": "The Jungle",
+      "blurb": "The clubs' harder half, and two decks built out of Jungle itself.",
+      "roster": [
+        { "id": "base2-waterblast",   "name": "Petra", "title": "Water Blast",   "deck": "jungle:water_blast",   "ai": "novice", "placeholder": true },
+        { "id": "base2-powerreserve", "name": "Odell", "title": "Power Reserve", "deck": "jungle:power_reserve", "ai": "novice", "placeholder": true },
+        { "id": "gbc-nikki",          "name": "Nikki", "title": "Grass Club",    "deck": "gbc:nikki_flower_power" },
+        { "id": "gbc-amy",            "name": "Amy",   "title": "Water Club",    "deck": "gbc:amy_rain_dancer" },
+        { "id": "gbc-ken",            "name": "Ken",   "title": "Fire Club",     "deck": "gbc:ken_fire_charge" },
+        { "id": "gbc-gene",           "name": "Gene",  "title": "Rock Club",     "deck": "gbc:gene_rock_crusher" }
+      ],
+      "boss": { "id": "gbc-ronald-2", "name": "Ronald", "title": "Invincible Ronald", "deck": "gbc:ronald_invincible" }
+    },
+
+    "base3": {
+      "name": "The Dome",
+      "blurb": "The Grand Masters. They brought the Legendary birds.",
+      "roster": [
+        { "id": "gbc-courtney", "name": "Courtney", "title": "Grand Master",  "deck": "gbc:courtney_legendary_moltres" },
+        { "id": "gbc-steve",    "name": "Steve",    "title": "Grand Master",  "deck": "gbc:steve_legendary_zapdos" },
+        { "id": "gbc-jack",     "name": "Jack",     "title": "Grand Master",  "deck": "gbc:jack_legendary_articuno" },
+        { "id": "gbc-rod",      "name": "Rod",      "title": "Grand Master",  "deck": "gbc:rod_legendary_dragonite" },
+        { "id": "base3-gen1",   "name": "Wren",     "title": "Challenger",    "deck": "generate", "placeholder": true },
+        { "id": "base3-gen2",   "name": "Tobin",    "title": "Challenger",    "deck": "generate", "placeholder": true }
+      ],
+      "boss": { "id": "gbc-ronald-3", "name": "Ronald", "title": "Powerful Ronald", "deck": "gbc:ronald_powerful" },
+      "extra": [
+        { "id": "gbc-ronald-4", "name": "Ronald", "title": "Legendary Ronald", "deck": "gbc:ronald_legendary" }
+      ]
+    }
+  }
+}

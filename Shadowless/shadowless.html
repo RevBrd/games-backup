@@ -1691,6 +1691,542 @@ const DECKS = {
   ]},
 };
 
+const OPPONENT_DECKS = {
+  "gbc:nikki_flower_power": { name: "Flower Power", list: [
+    [4, "base1-44"],  // Bulbasaur
+    [3, "base1-30"],  // Ivysaur
+    [2, "base1-15"],  // Venusaur
+    [4, "base2-58"],  // Oddish
+    [3, "base2-37"],  // Gloom
+    [2, "base2-15"],  // Vileplume
+    [4, "base2-52"],  // Exeggcute
+    [3, "base2-35"],  // Exeggutor
+    [2, "base1-88"],  // Professor Oak
+    [3, "base1-91"],  // Bill
+    [2, "base1-76"],  // Pokémon Breeder
+    [2, "base1-81"],  // Energy Retrieval
+    [2, "base1-95"],  // Switch
+    [2, "base1-94"],  // Potion
+    [18, "base1-99"],  // Grass Energy
+    [4, "base1-101"],  // Psychic Energy
+  ]},
+  "gbc:rick_wonders_of_science": { name: "Wonders of Science", list: [
+    [4, "base3-48"],  // Grimer
+    [3, "base3-13"],  // Muk
+    [4, "base1-51"],  // Koffing
+    [3, "base3-45"],  // Weezing
+    [4, "base1-10"],  // Mewtwo
+    [2, "base1-39"],  // Porygon
+    [1, "base1-73"],  // Impostor Professor Oak
+    [2, "base1-88"],  // Professor Oak
+    [2, "base1-91"],  // Bill
+    [2, "base3-59"],  // Energy Search
+    [2, "base1-95"],  // Switch
+    [2, "base1-71"],  // Computer Search
+    [2, "base1-87"],  // Pokédex
+    [2, "base1-83"],  // Maintenance
+    [2, "base1-82"],  // Full Heal
+    [15, "base1-99"],  // Grass Energy
+    [8, "base1-101"],  // Psychic Energy
+  ]},
+  "gbc:ken_fire_charge": { name: "Fire Charge", list: [
+    [4, "base1-28"],  // Growlithe
+    [3, "base1-23"],  // Arcanine
+    [2, "base1-36"],  // Magmar
+    [4, "base2-54"],  // Jigglypuff
+    [1, "base2-16"],  // Wigglytuff
+    [2, "base1-3"],  // Chansey
+    [2, "base2-47"],  // Tauros
+    [1, "base1-88"],  // Professor Oak
+    [2, "base1-91"],  // Bill
+    [2, "base1-81"],  // Energy Retrieval
+    [1, "base2-64"],  // Poké Ball
+    [1, "base1-71"],  // Computer Search
+    [2, "base1-80"],  // Defender
+    [3, "base1-94"],  // Potion
+    [1, "base1-82"],  // Full Heal
+    [3, "base3-61"],  // Recycle
+    [1, "base3-60"],  // Gambler
+    [4, "base1-96"],  // Double Colorless Energy
+    [21, "base1-98"],  // Fire Energy
+  ]},
+  "gbc:amy_rain_dancer": { name: "Rain Dancer", list: [
+    [4, "base1-63"],  // Squirtle
+    [3, "base1-42"],  // Wartortle
+    [2, "base1-2"],  // Blastoise
+    [4, "base2-53"],  // Goldeen
+    [4, "base2-46"],  // Seaking
+    [3, "base3-49"],  // Horsea
+    [2, "base3-42"],  // Seadra
+    [2, "base3-10"],  // Lapras
+    [2, "base1-88"],  // Professor Oak
+    [1, "base1-76"],  // Pokémon Breeder
+    [3, "base1-81"],  // Energy Retrieval
+    [2, "base1-92"],  // Energy Removal
+    [1, "base1-79"],  // Super Energy Removal
+    [2, "base1-95"],  // Switch
+    [1, "base1-94"],  // Potion
+    [24, "base1-102"],  // Water Energy
+  ]},
+  "gbc:isaac_zapping_selfdestruct": { name: "Zapping Selfdestruct", list: [
+    [4, "base1-53"],  // Magnemite
+    [3, "base1-9"],  // Magneton
+    [4, "base1-67"],  // Voltorb
+    [2, "base1-21"],  // Electrode
+    [4, "base1-20"],  // Electabuzz
+    [2, "base2-5"],  // Kangaskhan
+    [1, "base2-47"],  // Tauros
+    [1, "base1-88"],  // Professor Oak
+    [2, "base1-91"],  // Bill
+    [2, "base1-95"],  // Switch
+    [4, "base1-80"],  // Defender
+    [1, "base1-93"],  // Gust of Wind
+    [4, "base1-94"],  // Potion
+    [2, "base1-96"],  // Double Colorless Energy
+    [24, "base1-100"],  // Lightning Energy
+  ]},
+  "gbc:murray_strange_psyshock": { name: "Strange Psyshock", list: [
+    [4, "base1-43"],  // Abra
+    [3, "base1-32"],  // Kadabra
+    [2, "base1-1"],  // Alakazam
+    [2, "base2-6"],  // Mr. Mime
+    [3, "base1-3"],  // Chansey
+    [3, "base2-5"],  // Kangaskhan
+    [2, "base2-11"],  // Snorlax
+    [2, "base1-88"],  // Professor Oak
+    [2, "base1-85"],  // Pokémon Center
+    [3, "base1-92"],  // Energy Removal
+    [3, "base1-93"],  // Gust of Wind
+    [4, "base1-78"],  // Scoop Up
+    [4, "base1-95"],  // Switch
+    [1, "base3-60"],  // Gambler
+    [22, "base1-101"],  // Psychic Energy
+  ]},
+  "gbc:gene_rock_crusher": { name: "Rock Crusher", list: [
+    [4, "base1-47"],  // Diglett
+    [2, "base1-19"],  // Dugtrio
+    [4, "base3-47"],  // Geodude
+    [3, "base3-37"],  // Graveler
+    [2, "base3-36"],  // Golem
+    [3, "base1-56"],  // Onix
+    [3, "base2-61"],  // Rhyhorn
+    [2, "base1-88"],  // Professor Oak
+    [1, "base1-76"],  // Pokémon Breeder
+    [2, "base1-92"],  // Energy Removal
+    [2, "base1-95"],  // Switch
+    [1, "base1-71"],  // Computer Search
+    [2, "base1-80"],  // Defender
+    [1, "base1-90"],  // Super Potion
+    [2, "base1-94"],  // Potion
+    [2, "base1-96"],  // Double Colorless Energy
+    [24, "base1-97"],  // Fighting Energy
+  ]},
+  "gbc:mitch_first_strike": { name: "First-Strike", list: [
+    [4, "base1-52"],  // Machop
+    [3, "base1-34"],  // Machoke
+    [2, "base1-8"],  // Machamp
+    [4, "base1-7"],  // Hitmonchan
+    [2, "base3-7"],  // Hitmonlee
+    [4, "base2-55"],  // Mankey
+    [1, "base2-43"],  // Primeape
+    [2, "base1-95"],  // Switch
+    [4, "base1-91"],  // Bill
+    [3, "base1-93"],  // Gust of Wind
+    [2, "base1-80"],  // Defender
+    [2, "base1-84"],  // PlusPower
+    [2, "base1-94"],  // Potion
+    [25, "base1-97"],  // Fighting Energy
+  ]},
+  "gbc:courtney_legendary_moltres": { name: "Legendary Moltres", list: [
+    [4, "base1-68"],  // Vulpix
+    [3, "base1-12"],  // Ninetales
+    [4, "base1-28"],  // Growlithe
+    [2, "base1-23"],  // Arcanine
+    [2, "base1-36"],  // Magmar
+    [2, "base3-39"],  // Magmar
+    [4, "base3-12"],  // Moltres
+    [3, "base1-91"],  // Bill
+    [2, "base1-75"],  // Lass
+    [1, "base1-77"],  // Pokémon Trader
+    [2, "base1-81"],  // Energy Retrieval
+    [2, "base1-92"],  // Energy Removal
+    [2, "base1-95"],  // Switch
+    [1, "base1-94"],  // Potion
+    [1, "base1-90"],  // Super Potion
+    [25, "base1-98"],  // Fire Energy
+  ]},
+  "gbc:steve_legendary_zapdos": { name: "Legendary Zapdos", list: [
+    [4, "base1-67"],  // Voltorb
+    [3, "base1-21"],  // Electrode
+    [4, "base1-20"],  // Electabuzz
+    [2, "base2-4"],  // Jolteon
+    [3, "base3-15"],  // Zapdos
+    [1, "base1-16"],  // Zapdos
+    [3, "base2-51"],  // Eevee
+    [4, "base1-91"],  // Bill
+    [2, "base1-81"],  // Energy Retrieval
+    [2, "base1-95"],  // Switch
+    [3, "base1-84"],  // PlusPower
+    [3, "base1-94"],  // Potion
+    [1, "base3-60"],  // Gambler
+    [25, "base1-100"],  // Lightning Energy
+  ]},
+  "gbc:jack_legendary_articuno": { name: "Legendary Articuno", list: [
+    [4, "base1-41"],  // Seel
+    [3, "base1-25"],  // Dewgong
+    [4, "base3-10"],  // Lapras
+    [4, "base3-2"],  // Articuno
+    [3, "base1-3"],  // Chansey
+    [2, "base3-18"],  // Ditto
+    [2, "base1-88"],  // Professor Oak
+    [2, "base1-77"],  // Pokémon Trader
+    [3, "base1-81"],  // Energy Retrieval
+    [3, "base1-95"],  // Switch
+    [4, "base1-78"],  // Scoop Up
+    [1, "base3-60"],  // Gambler
+    [25, "base1-102"],  // Water Energy
+  ]},
+  "gbc:rod_legendary_dragonite": { name: "Legendary Dragonite", list: [
+    [3, "base1-46"],  // Charmander
+    [2, "base1-24"],  // Charmeleon
+    [2, "base1-4"],  // Charizard
+    [3, "base1-35"],  // Magikarp
+    [2, "base1-6"],  // Gyarados
+    [2, "base3-10"],  // Lapras
+    [2, "base2-5"],  // Kangaskhan
+    [4, "base1-26"],  // Dratini
+    [3, "base1-18"],  // Dragonair
+    [2, "base3-4"],  // Dragonite
+    [2, "base1-88"],  // Professor Oak
+    [2, "base1-77"],  // Pokémon Trader
+    [2, "base1-76"],  // Pokémon Breeder
+    [2, "base1-81"],  // Energy Retrieval
+    [2, "base1-95"],  // Switch
+    [1, "base3-60"],  // Gambler
+    [4, "base1-96"],  // Double Colorless Energy
+    [20, "base1-102"],  // Water Energy
+  ]},
+  "gbc:ronald_im_ronald": { name: "I'm Ronald", list: [
+    [3, "base1-46"],  // Charmander
+    [2, "base1-24"],  // Charmeleon
+    [3, "base1-28"],  // Growlithe
+    [1, "base1-23"],  // Arcanine
+    [3, "base1-63"],  // Squirtle
+    [2, "base1-42"],  // Wartortle
+    [2, "base1-41"],  // Seel
+    [1, "base1-25"],  // Dewgong
+    [2, "base3-10"],  // Lapras
+    [3, "base2-50"],  // Cubone
+    [2, "base2-39"],  // Marowak
+    [1, "base1-88"],  // Professor Oak
+    [1, "base1-81"],  // Energy Retrieval
+    [2, "base3-59"],  // Energy Search
+    [1, "base1-95"],  // Switch
+    [1, "base1-84"],  // PlusPower
+    [1, "base1-80"],  // Defender
+    [2, "base1-93"],  // Gust of Wind
+    [9, "base1-98"],  // Fire Energy
+    [10, "base1-102"],  // Water Energy
+    [8, "base1-97"],  // Fighting Energy
+  ]},
+  "gbc:ronald_invincible": { name: "Invincible Ronald", list: [
+    [3, "base3-48"],  // Grimer
+    [2, "base3-13"],  // Muk
+    [4, "base2-10"],  // Scyther
+    [3, "base3-39"],  // Magmar
+    [3, "base3-47"],  // Geodude
+    [2, "base3-37"],  // Graveler
+    [2, "base1-3"],  // Chansey
+    [2, "base2-5"],  // Kangaskhan
+    [2, "base1-88"],  // Professor Oak
+    [2, "base1-91"],  // Bill
+    [2, "base1-81"],  // Energy Retrieval
+    [2, "base1-92"],  // Energy Removal
+    [2, "base1-78"],  // Scoop Up
+    [2, "base1-93"],  // Gust of Wind
+    [2, "base1-84"],  // PlusPower
+    [1, "base3-60"],  // Gambler
+    [7, "base1-99"],  // Grass Energy
+    [6, "base1-98"],  // Fire Energy
+    [7, "base1-97"],  // Fighting Energy
+    [4, "base1-96"],  // Double Colorless Energy
+  ]},
+  "gbc:ronald_powerful": { name: "Powerful Ronald", list: [
+    [3, "base1-20"],  // Electabuzz
+    [2, "base3-7"],  // Hitmonlee
+    [2, "base1-7"],  // Hitmonchan
+    [1, "base2-6"],  // Mr. Mime
+    [2, "base1-31"],  // Jynx
+    [1, "base1-10"],  // Mewtwo
+    [2, "base1-48"],  // Doduo
+    [1, "base2-34"],  // Dodrio
+    [2, "base2-38"],  // Lickitung
+    [2, "base2-5"],  // Kangaskhan
+    [3, "base2-47"],  // Tauros
+    [3, "base1-81"],  // Energy Retrieval
+    [1, "base3-59"],  // Energy Search
+    [2, "base1-92"],  // Energy Removal
+    [1, "base1-95"],  // Switch
+    [2, "base1-84"],  // PlusPower
+    [2, "base1-93"],  // Gust of Wind
+    [1, "base1-82"],  // Full Heal
+    [1, "base3-60"],  // Gambler
+    [7, "base1-100"],  // Lightning Energy
+    [9, "base1-97"],  // Fighting Energy
+    [7, "base1-101"],  // Psychic Energy
+    [3, "base1-96"],  // Double Colorless Energy
+  ]},
+  "gbc:ronald_legendary": { name: "Legendary Ronald", list: [
+    [1, "base2-19"],  // Flareon
+    [2, "base3-12"],  // Moltres
+    [1, "base2-12"],  // Vaporeon
+    [1, "base3-2"],  // Articuno
+    [1, "base2-4"],  // Jolteon
+    [1, "base3-15"],  // Zapdos
+    [2, "base2-5"],  // Kangaskhan
+    [4, "base2-51"],  // Eevee
+    [4, "base1-26"],  // Dratini
+    [3, "base1-18"],  // Dragonair
+    [2, "base3-4"],  // Dragonite
+    [1, "base1-88"],  // Professor Oak
+    [3, "base1-91"],  // Bill
+    [1, "base1-77"],  // Pokémon Trader
+    [2, "base1-76"],  // Pokémon Breeder
+    [3, "base1-92"],  // Energy Removal
+    [3, "base1-78"],  // Scoop Up
+    [1, "base3-60"],  // Gambler
+    [4, "base1-96"],  // Double Colorless Energy
+    [20, "base1-98"],  // Fire Energy
+  ]},
+  "jungle:water_blast": { name: "Water Blast", list: [
+    [1, "base2-12"],  // Vaporeon
+    [3, "base2-61"],  // Rhyhorn
+    [4, "base2-56"],  // Meowth
+    [4, "base2-51"],  // Eevee
+    [1, "base2-45"],  // Rhydon
+    [2, "base2-42"],  // Persian
+    [4, "base1-59"],  // Poliwag
+    [2, "base1-52"],  // Machop
+    [1, "base1-41"],  // Seel
+    [2, "base1-38"],  // Poliwhirl
+    [1, "base1-95"],  // Switch
+    [2, "base1-94"],  // Potion
+    [2, "base1-93"],  // Gust of Wind
+    [2, "base1-90"],  // Super Potion
+    [1, "base1-88"],  // Professor Oak
+    [14, "base1-102"],  // Water Energy
+    [14, "base1-97"],  // Fighting Energy
+  ]},
+  "jungle:power_reserve": { name: "Power Reserve", list: [
+    [1, "base2-5"],  // Kangaskhan
+    [2, "base2-58"],  // Oddish
+    [4, "base2-57"],  // Nidoran ♀
+    [4, "base2-49"],  // Bellsprout
+    [2, "base2-48"],  // Weepinbell
+    [2, "base2-40"],  // Nidorina
+    [1, "base2-37"],  // Gloom
+    [4, "base1-43"],  // Abra
+    [2, "base1-32"],  // Kadabra
+    [1, "base1-31"],  // Jynx
+    [1, "base1-95"],  // Switch
+    [3, "base1-94"],  // Potion
+    [2, "base1-93"],  // Gust of Wind
+    [2, "base1-91"],  // Bill
+    [1, "base1-87"],  // Pokédex
+    [11, "base1-101"],  // Psychic Energy
+    [17, "base1-99"],  // Grass Energy
+  ]},
+};
+
+const LADDER = {
+  "defaults": {
+    "bossAfter": 5,
+    "packsPerWin": 2,
+    "bossFirstWinBonus": 1,
+    "ai": "expert"
+  },
+  "brackets": {
+    "base1": {
+      "name": "The Clubs",
+      "blurb": "Eight challengers and a rival. Beat five of them and Ronald turns up.",
+      "roster": [
+        {
+          "id": "base1-brushfire",
+          "name": "Corey",
+          "title": "Brushfire",
+          "deck": "theme:Brushfire",
+          "ai": "novice",
+          "placeholder": true
+        },
+        {
+          "id": "base1-overgrowth",
+          "name": "Marla",
+          "title": "Overgrowth",
+          "deck": "theme:Overgrowth",
+          "ai": "novice",
+          "placeholder": true
+        },
+        {
+          "id": "base1-zap",
+          "name": "Dez",
+          "title": "Zap!",
+          "deck": "theme:Zap",
+          "ai": "novice",
+          "placeholder": true
+        },
+        {
+          "id": "base1-blackout",
+          "name": "Hollis",
+          "title": "Blackout",
+          "deck": "theme:Blackout",
+          "ai": "novice",
+          "placeholder": true
+        },
+        {
+          "id": "gbc-isaac",
+          "name": "Isaac",
+          "title": "Lightning Club",
+          "deck": "gbc:isaac_zapping_selfdestruct"
+        },
+        {
+          "id": "gbc-mitch",
+          "name": "Mitch",
+          "title": "Fighting Club",
+          "deck": "gbc:mitch_first_strike"
+        },
+        {
+          "id": "gbc-murray",
+          "name": "Murray",
+          "title": "Psychic Club",
+          "deck": "gbc:murray_strange_psyshock"
+        },
+        {
+          "id": "gbc-rick",
+          "name": "Rick",
+          "title": "Science Club",
+          "deck": "gbc:rick_wonders_of_science"
+        }
+      ],
+      "boss": {
+        "id": "gbc-ronald-1",
+        "name": "Ronald",
+        "title": "I'm Ronald!",
+        "deck": "gbc:ronald_im_ronald"
+      }
+    },
+    "base2": {
+      "name": "The Jungle",
+      "blurb": "The clubs' harder half, and two decks built out of Jungle itself.",
+      "roster": [
+        {
+          "id": "base2-waterblast",
+          "name": "Petra",
+          "title": "Water Blast",
+          "deck": "jungle:water_blast",
+          "ai": "novice",
+          "placeholder": true
+        },
+        {
+          "id": "base2-powerreserve",
+          "name": "Odell",
+          "title": "Power Reserve",
+          "deck": "jungle:power_reserve",
+          "ai": "novice",
+          "placeholder": true
+        },
+        {
+          "id": "gbc-nikki",
+          "name": "Nikki",
+          "title": "Grass Club",
+          "deck": "gbc:nikki_flower_power"
+        },
+        {
+          "id": "gbc-amy",
+          "name": "Amy",
+          "title": "Water Club",
+          "deck": "gbc:amy_rain_dancer"
+        },
+        {
+          "id": "gbc-ken",
+          "name": "Ken",
+          "title": "Fire Club",
+          "deck": "gbc:ken_fire_charge"
+        },
+        {
+          "id": "gbc-gene",
+          "name": "Gene",
+          "title": "Rock Club",
+          "deck": "gbc:gene_rock_crusher"
+        }
+      ],
+      "boss": {
+        "id": "gbc-ronald-2",
+        "name": "Ronald",
+        "title": "Invincible Ronald",
+        "deck": "gbc:ronald_invincible"
+      }
+    },
+    "base3": {
+      "name": "The Dome",
+      "blurb": "The Grand Masters. They brought the Legendary birds.",
+      "roster": [
+        {
+          "id": "gbc-courtney",
+          "name": "Courtney",
+          "title": "Grand Master",
+          "deck": "gbc:courtney_legendary_moltres"
+        },
+        {
+          "id": "gbc-steve",
+          "name": "Steve",
+          "title": "Grand Master",
+          "deck": "gbc:steve_legendary_zapdos"
+        },
+        {
+          "id": "gbc-jack",
+          "name": "Jack",
+          "title": "Grand Master",
+          "deck": "gbc:jack_legendary_articuno"
+        },
+        {
+          "id": "gbc-rod",
+          "name": "Rod",
+          "title": "Grand Master",
+          "deck": "gbc:rod_legendary_dragonite"
+        },
+        {
+          "id": "base3-gen1",
+          "name": "Wren",
+          "title": "Challenger",
+          "deck": "generate",
+          "placeholder": true
+        },
+        {
+          "id": "base3-gen2",
+          "name": "Tobin",
+          "title": "Challenger",
+          "deck": "generate",
+          "placeholder": true
+        }
+      ],
+      "boss": {
+        "id": "gbc-ronald-3",
+        "name": "Ronald",
+        "title": "Powerful Ronald",
+        "deck": "gbc:ronald_powerful"
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-4",
+          "name": "Ronald",
+          "title": "Legendary Ronald",
+          "deck": "gbc:ronald_legendary"
+        }
+      ]
+    }
+  }
+};
+
 const SET_INFO = {
   "base1": {"name":"Base Set","short":"Base"},
   "base2": {"name":"Jungle","short":"Jungle"},
@@ -7744,6 +8280,10 @@ function newSave(opts = {}) {
     packs: {},                 // setCode -> unopened packs held
     starter: opts.starter || '',
     stats: { wins: 0, losses: 0, packsOpened: 0, cardsPulled: 0 },
+    // Job 7. Which named opponents you have beaten, and how often. There is no
+    // `unlocked` list beside it on purpose — progress.js derives what is open
+    // from this map every time it is asked, so the two can never disagree.
+    progress: { beaten: {}, lost: {} },
   };
 }
 
@@ -7770,6 +8310,12 @@ function ensureShape(s) {
     if (typeof s.stats[k] !== 'number') s.stats[k] = 0;
   });
   if (typeof s.starter !== 'string') s.starter = '';
+  // Additive field (Job 7), so it belongs here rather than in a migration: a
+  // save written before progression existed has beaten nobody, which is exactly
+  // what an empty map means. Absent and empty are the same thing.
+  if (s.progress == null || typeof s.progress !== 'object') s.progress = {};
+  if (s.progress.beaten == null || typeof s.progress.beaten !== 'object') s.progress.beaten = {};
+  if (s.progress.lost == null || typeof s.progress.lost !== 'object') s.progress.lost = {};
   // Decks predate both `id` and `built`. Absent id gets one; absent `built`
   // means true, because every deck that existed before the flag was a real,
   // playable, card-reserving deck. Filling only what is ABSENT, as above.
@@ -8516,6 +9062,258 @@ function renderEventLog(el) {
 
   L.push('');
   return L.join('\n');
+}
+
+
+// ============================================================================
+// PROGRESSION — the opponent ladder, and what beating one is worth.
+//
+// Job 7a. Pure data, in the same shape as collection.js: no DOM, no engine, no
+// CARD_DB import. Anything needing the card database takes a `db` argument, and
+// anything needing a deck takes a resolver. That is what lets
+// tools/progresstest.js drive the whole module with no browser. Keep it.
+//
+// THE LADDER IS DERIVED, NOT DECLARED. data/ladder.json holds one BRACKET per
+// set and no bracket names its position or what it unlocks. buildLadder() walks
+// the live sets in order and, for each, uses the authored bracket if there is
+// one and synthesises a generated bracket if there is not. So:
+//
+//   * a set going live adds a bracket with no code change and no data change
+//   * authoring real opponents later is an override, not a prerequisite
+//   * a bracket for a set that is NOT live never appears
+//
+// That is the whole reason this file exists rather than a LADDER constant.
+// Trevor's ask, 12 Aug 2026: brackets, not defined sets, because we will not
+// have authored decks for most of the fourteen sets for a long time.
+//
+// UNLOCK IS DERIVED TOO. There is no `unlocked` list in the save. A bracket is
+// open if it is the first or if the previous bracket's boss has been beaten,
+// computed fresh every time from `save.progress.beaten`. A stored list would be
+// a second source of truth that can drift from the one the player can see.
+// ============================================================================
+
+const PROGRESS_DEFAULTS = {
+  bossAfter: 5,           // distinct roster opponents beaten before the boss appears
+  packsPerWin: 2,         // PACKS.md's yardstick, unchanged
+  bossFirstWinBonus: 1,   // an extra pack the FIRST time you beat a boss, and only a boss
+  ai: 'expert',
+};
+
+// A generated bracket needs enough opponents for its boss to be reachable at
+// all, so it is never shorter than bossAfter. Authored brackets are backfilled
+// to the same floor if a deck reference goes missing under a narrow --sets.
+const GENERATED_SUFFIX = ['Challenger', 'Challenger', 'Challenger', 'Challenger',
+                          'Challenger', 'Challenger', 'Challenger', 'Challenger'];
+
+// Stable per-opponent seed, so "Wren" brings the same generated deck in every
+// session rather than a fresh one each match. Same mixer as art.js's hash32.
+function opponentSeed(id) {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0) || 1;
+}
+
+// ---------------------------------------------------------------- the ladder
+
+function normaliseOpponent(raw, bracketSet, cfg, index) {
+  return {
+    id: raw.id,
+    name: raw.name,
+    title: raw.title || '',
+    deck: raw.deck || 'generate',
+    ai: raw.ai || cfg.ai,
+    placeholder: !!raw.placeholder,
+    set: bracketSet,
+    seed: opponentSeed(raw.id),
+    index,
+  };
+}
+
+function generatedOpponent(setCode, n, cfg) {
+  return normaliseOpponent({
+    id: `${setCode}-gen${n}`,
+    name: `${GENERATED_SUFFIX[n % GENERATED_SUFFIX.length]} ${n + 1}`,
+    title: 'Challenger',
+    deck: 'generate',
+    placeholder: true,
+  }, setCode, cfg, n);
+}
+
+// liveSets  ordered set codes that actually have cards (ui.js derives this)
+// data      the parsed data/ladder.json
+// opts.hasDeck(ref) -> bool. Optional. A roster entry whose deck cannot be
+//           resolved is DROPPED and backfilled with a generated one rather than
+//           throwing, so a narrow `gen_cards.js --sets base1` still produces a
+//           working ladder instead of a broken one.
+function buildLadder(liveSets, data, opts = {}) {
+  const cfg = Object.assign({}, PROGRESS_DEFAULTS, (data && data.defaults) || {});
+  const brackets = (data && data.brackets) || {};
+  const hasDeck = opts.hasDeck || (() => true);
+  const usable = o => o.deck === 'generate' || hasDeck(o.deck);
+
+  return liveSets.map((setCode, i) => {
+    const src = brackets[setCode];
+    const bcfg = Object.assign({}, cfg, (src && src.cfg) || {});
+
+    let roster = ((src && src.roster) || [])
+      .map((o, n) => normaliseOpponent(o, setCode, bcfg, n))
+      .filter(usable);
+
+    // Backfill to the floor. Covers both an unauthored set and an authored one
+    // whose decks are not all present in this build.
+    for (let n = roster.length; n < bcfg.bossAfter; n++) roster.push(generatedOpponent(setCode, n, bcfg));
+    roster.forEach((o, n) => { o.index = n; });
+
+    let boss = src && src.boss ? normaliseOpponent(src.boss, setCode, bcfg, -1) : null;
+    if (!boss || !usable(boss)) {
+      boss = normaliseOpponent({ id: `${setCode}-boss`, name: 'Champion', title: 'Champion',
+                                 deck: 'generate', placeholder: true }, setCode, bcfg, -1);
+    }
+    boss.isBoss = true;
+
+    const extra = ((src && src.extra) || [])
+      .map((o, n) => normaliseOpponent(o, setCode, bcfg, n))
+      .filter(usable);
+    extra.forEach(o => { o.isExtra = true; });
+
+    return {
+      set: setCode,
+      index: i,
+      name: (src && src.name) || setCode,
+      blurb: (src && src.blurb) || '',
+      generated: !src,
+      cfg: bcfg,
+      roster, boss, extra,
+    };
+  });
+}
+
+const allOpponents = bracket => bracket.roster.concat([bracket.boss], bracket.extra);
+const findOpponent = (ladder, id) => {
+  for (const b of ladder) for (const o of allOpponents(b)) if (o.id === id) return o;
+  return null;
+};
+const bracketOf = (ladder, id) => ladder.find(b => allOpponents(b).some(o => o.id === id)) || null;
+
+// ------------------------------------------------------------- save reading
+
+// Distinct from a win COUNT on purpose: the boss gate is "five different
+// opponents have each lost at least once", not "five wins".
+const timesBeaten = (save, id) => ((save.progress && save.progress.beaten) || {})[id] || 0;
+const hasBeaten = (save, id) => timesBeaten(save, id) > 0;
+const rosterCleared = (save, bracket) => bracket.roster.filter(o => hasBeaten(save, o.id)).length;
+
+function bossAvailable(save, bracket) {
+  return rosterCleared(save, bracket) >= bracket.cfg.bossAfter;
+}
+
+const bracketCleared = (save, bracket) => hasBeaten(save, bracket.boss.id);
+
+// The first bracket is always open; every other one waits on the previous
+// bracket's boss. Derived, never stored — see the header.
+function bracketOpen(save, ladder, index) {
+  if (index <= 0) return true;
+  return bracketCleared(save, ladder[index - 1]);
+}
+
+function unlockedSets(save, ladder) {
+  return ladder.filter((b, i) => bracketOpen(save, ladder, i)).map(b => b.set);
+}
+
+// Everything you are allowed to play right now, bracket by bracket. An opponent
+// stays fightable forever once it is open — that is what makes the ~79 wins a
+// set takes reachable at all, and it is why nothing here consumes anything.
+function availableOpponents(save, ladder) {
+  const out = [];
+  ladder.forEach((b, i) => {
+    if (!bracketOpen(save, ladder, i)) return;
+    b.roster.forEach(o => out.push(o));
+    if (bossAvailable(save, b)) out.push(b.boss);
+    if (bracketCleared(save, b)) b.extra.forEach(o => out.push(o));
+  });
+  return out;
+}
+
+const canFight = (save, ladder, id) => availableOpponents(save, ladder).some(o => o.id === id);
+
+// ------------------------------------------------------------------ rewards
+
+// What a win pays, WITHOUT touching the save. Split from recordWin so the UI
+// can show the number before the match and the tests can assert it without
+// mutating anything.
+function winReward(save, ladder, id) {
+  const opp = findOpponent(ladder, id);
+  if (!opp) return null;
+  const bracket = bracketOf(ladder, id);
+  const first = !hasBeaten(save, id);
+  const bonus = (opp.isBoss && first) ? bracket.cfg.bossFirstWinBonus : 0;
+  return {
+    set: bracket.set,
+    packs: bracket.cfg.packsPerWin + bonus,
+    bonus,
+    firstWin: first,
+    // Beating a boss for the first time is the only thing that opens a bracket.
+    unlocks: (opp.isBoss && first && ladder[bracket.index + 1])
+      ? ladder[bracket.index + 1].set : null,
+  };
+}
+
+// Records the win and returns what it was worth. Does NOT grant the packs —
+// collection.js owns the save's card and pack data and this module does not
+// reach into it. The caller does `addPacks(save, r.set, r.packs)`, which keeps
+// the one place packs are created the one place packs are created.
+function recordWin(save, ladder, id) {
+  const r = winReward(save, ladder, id);
+  if (!r) return null;
+  if (!save.progress) save.progress = { beaten: {} };
+  if (!save.progress.beaten) save.progress.beaten = {};
+  save.progress.beaten[id] = (save.progress.beaten[id] || 0) + 1;
+  return r;
+}
+
+function recordLoss(save, id) {
+  if (!save.progress) save.progress = { beaten: {} };
+  if (!save.progress.lost) save.progress.lost = {};
+  save.progress.lost[id] = (save.progress.lost[id] || 0) + 1;
+}
+
+// ------------------------------------------------------------- deck lookup
+
+// Turns a roster entry's `deck` reference into a deck definition. The three
+// authored sources are pure lookups; 'generate' needs deckgen and a pool, which
+// is why the caller supplies them rather than this module importing either.
+//
+//   sources: { theme: {name->deck}, gbc: {key->deck}, jungle: {name->deck} }
+//   opts.generate(poolSets, seed, opponent) -> deck definition
+function resolveOpponentDeck(opp, sources, opts = {}) {
+  if (!opp) return null;
+  if (opp.deck === 'generate') {
+    if (!opts.generate) return null;
+    // A generated opponent draws from every set up to and including its own,
+    // so a late bracket's challengers get the deeper pool automatically.
+    return opts.generate(opts.poolSets || [opp.set], opp.seed, opp);
+  }
+  const cut = opp.deck.indexOf(':');
+  if (cut < 0) return null;
+  const kind = opp.deck.slice(0, cut), key = opp.deck.slice(cut + 1);
+  const table = sources && sources[kind];
+  return (table && table[key]) || null;
+}
+
+// The pool a generated opponent in this bracket should draw from: every live
+// set up to and including its own.
+const poolSetsFor = (ladder, bracket) =>
+  ladder.slice(0, bracket.index + 1).map(b => b.set);
+
+// ---------------------------------------------------------------- reporting
+
+function progressStats(save, ladder) {
+  let beaten = 0, total = 0, bosses = 0, bossTotal = 0;
+  for (const b of ladder) {
+    for (const o of b.roster) { total++; if (hasBeaten(save, o.id)) beaten++; }
+    bossTotal++; if (bracketCleared(save, b)) bosses++;
+  }
+  return { beaten, total, bosses, bossTotal, sets: unlockedSets(save, ladder) };
 }
 
 
