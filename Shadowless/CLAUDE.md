@@ -121,7 +121,7 @@ node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,b
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
-node tools/powertest.js                  # 162 tests for Powers, the bespoke cards and setup
+node tools/powertest.js                  # 168 tests for Powers, the bespoke cards and setup
 node tools/smoke.js shadowless.html      # 143 integration tests against the built file
 node tools/collectiontest.js             # 111 tests for the save file, decks and variants
 node tools/progresstest.js               # 71 tests for the ladder, unlocks and rewards

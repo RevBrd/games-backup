@@ -2251,5 +2251,73 @@ T('Weakness and Resistance reach the retreat comparison', () => {
   return true;
 });
 
+// ---------------------------------------- recoil, and damage nobody needed
+// From a match log of Trevor's, 14 Aug 2026. Two faults sharing one card.
+console.log('\nRecoil and overkill — Arcanine');
+
+// Arcanine: Flamethrower RRC 50 (discard a Fire), Take Down RRCC 80 (30 recoil).
+// Four Energy makes both affordable, so the ONLY thing separating them is cost.
+function arcanine(selfDmg, defId, defDmg) {
+  const E = board('base1-23', [], defId);
+  const p = E.state.players[0], o = E.state.players[1];
+  attach(E, p.active, 'base1-98', 4);
+  p.active.dmg = selfDmg; o.active.dmg = defDmg;
+  const A = new AI(E, { mode: 'expert' });
+  return { fl: A.scoreAttackHypothetical(0, p.active, 0),
+           td: A.scoreAttackHypothetical(0, p.active, 1) };
+}
+
+T('a fresh Arcanine still takes the recoil for the bigger hit', () => {
+  // The fix must not turn Take Down off. At full HP 30 recoil is cheap and 80
+  // beats 50, which is the whole reason the card prints the attack.
+  const r = arcanine(0, 'base1-2', 0);              // vs Blastoise, neither kills
+  if (!(r.td > r.fl)) throw new Error(`Take Down abandoned while healthy: ${r.fl} vs ${r.td}`);
+  return true;
+});
+
+T('a hurt one does not — recoil is priced on what is LEFT, not on its size', () => {
+  // The log: Arcanine on 60 damage of 100 chose Take Down anyway, ended on 90,
+  // and killed nothing with the extra 30.
+  const r = arcanine(60, 'base1-2', 0);
+  if (!(r.fl > r.td)) throw new Error(`still eating recoil at 60 damage: ${r.fl} vs ${r.td}`);
+  return true;
+});
+
+T('and the old cliff still stands where it always did', () => {
+  // 30 recoil on a Pokemon with 30 left is suicide, and always scored as such.
+  // The new curve has to MEET that, not replace it.
+  const r = arcanine(70, 'base1-2', 0);
+  return r.td < 0 && r.fl > r.td;
+});
+
+T('when both attacks kill, the cheaper one wins — overkill buys nothing', () => {
+  // Trevor's actual report. 80 into a Pokemon with 40 left removes 40 and
+  // wastes 40, so the two attacks are worth the same for killing and the
+  // decision is their cost. Take Down used to win this by a tenth of a point.
+  const r = arcanine(30, 'base1-18', 40);           // Dragonair, 40 HP remaining
+  if (!(r.fl > r.td)) throw new Error(`took recoil to overkill: ${r.fl} vs ${r.td}`);
+  return true;
+});
+
+T('...but the bigger hit is still taken when only IT reaches', () => {
+  // Both of the Take Downs in Trevor's log that actually knocked something out
+  // were correct, because Flamethrower's 50 could not have reached either one.
+  const r = arcanine(30, 'base1-18', 0);            // Dragonair at full 80
+  if (!(r.td > r.fl)) throw new Error(`declined the only lethal attack: ${r.fl} vs ${r.td}`);
+  return true;
+});
+
+T('expDmg keeps meaning the real number, because other rules read it', () => {
+  // The cap is a SECOND field on purpose. PlusPower asks "is this 10 short of
+  // lethal", which is a question about actual damage — capping in place makes
+  // it unanswerable for anything already lethal.
+  const E = board('base1-23', [], 'base1-61');      // Rattata, 30 HP, vastly overkilled
+  attach(E, E.state.players[0].active, 'base1-98', 4);
+  const f = new AI(E, { mode: 'expert' }).forecast(0, 1);
+  eq(f.expUseful, 30, 'useful damage stops at what is left');
+  if (!(f.expDmg > f.expUseful)) throw new Error('expDmg was capped and must not be');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

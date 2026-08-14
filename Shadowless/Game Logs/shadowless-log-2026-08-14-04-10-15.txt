@@ -1,0 +1,743 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-14 04:10:15
+decks    you: New deck 2   opponent: Ken — Fire Club
+opponent expert
+seed     1136442034   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Jigglypuff, Fire Energy, Professor Oak, Fire Energy, Fire Energy, Fire Energy, Fire Energy
+  HIDDEN  your opening hand: Fire Energy, Fire Energy, Energy Removal, Potion, Double Colorless Energy, Charmander, Bill
+  HIDDEN  opponent's Prizes: Fire Energy, Energy Retrieval, Energy Retrieval, Recycle, Fire Energy, Arcanine
+  HIDDEN  your Prizes: PlusPower, Super Potion, Switch, Charmeleon, Charmander, Potion
+          New game. Seed 1136442034.
+          Coin flip (who goes first): HEADS
+          You will go first.
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (46 left)
+          You plays Bill.
+          You draws 2.
+          You benches Magmar.
+          You attaches Fire Energy to Charmander.
+          Charmander uses Scratch.
+          Jigglypuff takes 10. (50/60 left)
+
+--- Turn 2 — Ken -------------------------------
+          Ken draws a card. (46 left)
+  AI      attach   [11]
+          holding: Fire Energy, Professor Oak, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy
+          Ken attaches Fire Energy to Jigglypuff.
+  AI      trainer   [10]
+          holding: Professor Oak, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy
+          Ken plays Professor Oak.
+          Ken discards 5 card(s) and draws 7.
+  AI      attack:Lullaby   [22]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Double Colorless Energy
+          Jigglypuff uses Lullaby.
+          Charmander is now Asleep.
+          Coin flip (Charmander waking): TAILS
+          Charmander is still Asleep.
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (43 left)
+          You plays Energy Removal.
+          Fire Energy discarded from Jigglypuff.
+          You attaches Fire Energy to Magmar.
+          You benches Charmander.
+          Coin flip (Charmander waking): TAILS
+          Charmander is still Asleep.
+
+--- Turn 4 — Ken -------------------------------
+          Ken draws a card. (38 left)
+  AI      attach   [31]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Double Colorless Energy, Potion
+          passed over: attach 11, attach 11, attach 11, attach 11, attach 11
+          Ken attaches Double Colorless Energy to Jigglypuff.
+  AI      attack:Lullaby   [22]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Potion
+          passed over: attack:Pound 20
+          Jigglypuff uses Lullaby.
+          Charmander is now Asleep.
+          Coin flip (Charmander waking): TAILS
+          Charmander is still Asleep.
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (42 left)
+          You attaches Fire Energy to Charmander.
+          Coin flip (Charmander waking): HEADS
+          Charmander woke up.
+
+--- Turn 6 — Ken -------------------------------
+          Ken draws a card. (37 left)
+  AI      bench   [26]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Potion, Growlithe
+          passed over: trainer -0.5, attach -2, attach -2, attach -2, attach -2
+          Ken benches Growlithe.
+  AI      attach   [12]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Potion
+          passed over: attach 12, attach 12, attach 12, attach 12, attach 12
+          Ken attaches Fire Energy to Growlithe.
+  AI      attack:Lullaby   [22]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Potion
+          passed over: attack:Pound 20
+          Jigglypuff uses Lullaby.
+          Charmander is now Asleep.
+          Coin flip (Charmander waking): HEADS
+          Charmander woke up.
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (41 left)
+          Illegal: No such benched Pokemon
+          You attaches Fire Energy to Charmander.
+          Charmander uses Ember.
+          Charmander discards 1 R Energy as a cost.
+          Jigglypuff takes 30. (20/60 left)
+
+--- Turn 8 — Ken -------------------------------
+          Ken draws a card. (36 left)
+  AI      evolve   [34]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Potion, Arcanine
+          passed over: attach 32, attach 32, attach 32, attach 32, attach 32
+          Growlithe evolves into Arcanine. Special Conditions removed.
+  AI      attach   [12]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Fire Energy, Potion
+          passed over: attach 12, attach 12, attach 12, attach 12, trainer 7
+          Ken attaches Fire Energy to Arcanine.
+  AI      trainer   [7]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Potion
+          passed over: retreat -35
+          Ken plays Potion.
+          Jigglypuff heals 20. (20 damage left)
+  AI      attack:Lullaby   [22]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy
+          passed over: attack:Pound 20
+          Jigglypuff uses Lullaby.
+          Charmander is now Asleep.
+          Coin flip (Charmander waking): TAILS
+          Charmander is still Asleep.
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (40 left)
+          You benches Lickitung.
+          Coin flip (Charmander waking): TAILS
+          Charmander is still Asleep.
+
+--- Turn 10 — Ken -------------------------------
+          Ken draws a card. (35 left)
+  AI      attach   [62]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Bill
+          passed over: attach 62, attach 62, attach 62, trainer 10, attach -2
+          Ken attaches Fire Energy to Arcanine.
+  AI      retreat   [14.5]
+          holding: Fire Energy, Fire Energy, Fire Energy, Bill
+          passed over: trainer 10
+          Ken retreats Jigglypuff; Arcanine is now Active.
+  AI      trainer   [10]
+          holding: Fire Energy, Fire Energy, Fire Energy, Bill
+          Ken plays Bill.
+          Ken draws 2.
+  AI      bench   [7]
+          holding: Fire Energy, Fire Energy, Fire Energy, Growlithe, Chansey
+          passed over: bench 7
+          Ken benches Growlithe.
+  AI      bench   [7]
+          holding: Fire Energy, Fire Energy, Fire Energy, Chansey
+          Ken benches Chansey.
+  AI      attack:Flamethrower   [98]
+          holding: Fire Energy, Fire Energy, Fire Energy
+          Arcanine uses Flamethrower.
+          Arcanine discards 1 R Energy as a cost.
+          Charmander takes 50. (0/50 left)
+          Charmander is Knocked Out!
+          Ken takes a Prize. (5 left)
+          You promotes Lickitung to Active.
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Fire Energy to Lickitung.
+          Lickitung uses Tongue Wrap.
+          Arcanine takes 10. (90/100 left)
+          Coin flip (Paralyzed?): HEADS
+          Arcanine is now Paralyzed.
+
+--- Turn 12 — Ken -------------------------------
+          Ken draws a card. (32 left)
+  AI      attach   [65]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Tauros
+          passed over: attach 65, attach 65, attach 65, attach 12, attach 12
+          Ken attaches Fire Energy to Arcanine.
+  AI      bench   [2]
+          holding: Fire Energy, Fire Energy, Fire Energy, Tauros
+          Ken benches Tauros.
+  AI      pass
+          holding: Fire Energy, Fire Energy, Fire Energy
+          Arcanine is no longer Paralyzed.
+
+--- Turn 13 — You -------------------------------
+          You draws a card. (38 left)
+          You benches Growlithe.
+          You attaches Double Colorless Energy to Charmander.
+          Lickitung uses Tongue Wrap.
+          Arcanine takes 10. (80/100 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 14 — Ken -------------------------------
+          Ken draws a card. (31 left)
+  AI      attach   [48.5]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy
+          passed over: attach 48.5, attach 48.5, attach 48.5, attach 12, attach 12
+          Ken attaches Fire Energy to Arcanine.
+  AI      attack:Take Down   [56]
+          holding: Fire Energy, Fire Energy, Fire Energy
+          passed over: attack:Flamethrower 43
+          Arcanine uses Take Down.
+          Lickitung takes 80. (10/90 left)
+          Arcanine does 30 damage to itself. (50 total)
+
+--- Turn 15 — You -------------------------------
+          You draws a card. (37 left)
+          You plays Potion.
+          Lickitung heals 20. (60 damage left)
+          Lickitung uses Tongue Wrap.
+          Arcanine takes 10. (40/100 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 16 — Ken -------------------------------
+          Ken draws a card. (30 left)
+  AI      evolve   [25]
+          holding: Fire Energy, Fire Energy, Fire Energy, Wigglytuff
+          passed over: attach 12, attach 12, attach 12, attach 8, attach 8
+          Jigglypuff evolves into Wigglytuff. Special Conditions removed.
+  AI      attach   [12]
+          holding: Fire Energy, Fire Energy, Fire Energy
+          passed over: attach 12, attach 12, attach 8, attach 8, attach 8
+          Ken attaches Fire Energy to Growlithe.
+  AI      attack:Take Down   [111]
+          holding: Fire Energy, Fire Energy
+          passed over: attack:Flamethrower 98
+          Arcanine uses Take Down.
+          Lickitung takes 80. (0/90 left)
+          Arcanine does 30 damage to itself. (90 total)
+          Lickitung is Knocked Out!
+          Ken takes a Prize. (4 left)
+          You promotes Magmar to Active.
+
+--- Turn 17 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Fire Energy to Magmar.
+          Magmar uses Fire Punch.
+          Arcanine takes 30. (0/100 left)
+          Arcanine is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [41.8]
+          holding: Fire Energy, Fire Energy, Energy Retrieval
+          passed over: promote 20.8, promote 20.8, promote 20.8
+          Ken promotes Chansey to Active.
+
+--- Turn 18 — Ken -------------------------------
+          Ken draws a card. (29 left)
+  AI      attach   [32]
+          holding: Fire Energy, Fire Energy, Energy Retrieval, Jigglypuff
+          passed over: attach 32, trainer 12, attach 11, attach 11, attach 8
+          Ken attaches Fire Energy to Growlithe.
+  AI      trainer   [12]
+          holding: Fire Energy, Energy Retrieval, Jigglypuff
+          passed over: bench 2
+          Ken plays Energy Retrieval.
+          Energy Retrieval: recovered 2 basic Energy.
+  AI      bench   [2]
+          holding: Jigglypuff, Fire Energy, Fire Energy
+          Ken benches Jigglypuff.
+  AI      pass
+          holding: Fire Energy, Fire Energy
+
+--- Turn 19 — You -------------------------------
+          You draws a card. (35 left)
+          Growlithe evolves into Arcanine. Special Conditions removed.
+          Magmar uses Fire Punch.
+          Chansey takes 30. (90/120 left)
+
+--- Turn 20 — Ken -------------------------------
+          Ken draws a card. (28 left)
+  AI      attach   [11]
+          holding: Fire Energy, Fire Energy, Jigglypuff
+          passed over: attach 11, attach 8, attach 8, attach 8, attach 8
+          Ken attaches Fire Energy to Chansey.
+  AI      retreat   [19]
+          holding: Fire Energy, Jigglypuff
+          passed over: bench 2, retreat -14, retreat -14, retreat -14
+          Ken retreats Chansey; Growlithe is now Active.
+  AI      bench   [2]
+          holding: Fire Energy, Jigglypuff
+          Ken benches Jigglypuff.
+  AI      attack:Flare   [20]
+          holding: Fire Energy
+          Growlithe uses Flare.
+          Magmar takes 20. (30/50 left)
+
+--- Turn 21 — You -------------------------------
+          You draws a card. (34 left)
+          You attaches Double Colorless Energy to Arcanine.
+          Magmar uses Fire Punch.
+          Growlithe takes 30. (30/60 left)
+
+--- Turn 22 — Ken -------------------------------
+          Ken draws a card. (27 left)
+  AI      attach   [8]
+          holding: Fire Energy, Fire Energy
+          passed over: attach 8, attach 8, attach 8, attach 8, attach 8
+          Ken attaches Fire Energy to Wigglytuff.
+  AI      retreat   [3.4]
+          holding: Fire Energy
+          passed over: retreat -4.6, retreat -4.6, retreat -4.6, retreat -4.6
+          Ken retreats Growlithe; Wigglytuff is now Active.
+  AI      attack:Lullaby   [22]
+          holding: Fire Energy
+          Wigglytuff uses Lullaby.
+          Magmar is now Asleep.
+          Coin flip (Magmar waking): TAILS
+          Magmar is still Asleep.
+
+--- Turn 23 — You -------------------------------
+          You draws a card. (33 left)
+          Charmander evolves into Charmeleon. Special Conditions removed.
+          Coin flip (Magmar waking): TAILS
+          Magmar is still Asleep.
+
+--- Turn 24 — Ken -------------------------------
+          Ken draws a card. (26 left)
+  AI      attach   [32]
+          holding: Fire Energy, Potion
+          passed over: attach 8, attach 8, attach 8, attach 8, trainer 7
+          Ken attaches Fire Energy to Growlithe.
+  AI      trainer   [7]
+          holding: Potion
+          Ken plays Potion.
+          Chansey heals 20. (10 damage left)
+  AI      attack:Lullaby   [22]
+          holding: (empty)
+          Wigglytuff uses Lullaby.
+          Magmar is now Asleep.
+          Coin flip (Magmar waking): TAILS
+          Magmar is still Asleep.
+
+--- Turn 25 — You -------------------------------
+          You draws a card. (32 left)
+          You plays Bill.
+          You draws 2.
+          You benches Magmar.
+          Coin flip (Magmar waking): TAILS
+          Magmar is still Asleep.
+
+--- Turn 26 — Ken -------------------------------
+          Ken draws a card. (25 left)
+  AI      attach   [35]
+          holding: Double Colorless Energy
+          passed over: attach 28, attach 28, attach 15, attach 4.4, attach -2
+          Ken attaches Double Colorless Energy to Tauros.
+  AI      attack:Lullaby   [22]
+          holding: (empty)
+          Wigglytuff uses Lullaby.
+          Magmar is now Asleep.
+          Coin flip (Magmar waking): TAILS
+          Magmar is still Asleep.
+
+--- Turn 27 — You -------------------------------
+          You draws a card. (29 left)
+          Coin flip (Magmar waking): HEADS
+          Magmar woke up.
+
+--- Turn 28 — Ken -------------------------------
+          Ken draws a card. (24 left)
+  AI      attach   [28]
+          holding: Double Colorless Energy
+          passed over: attach 28, attach 15, attach 4.4, attach 1.4, attach -2
+          Ken attaches Double Colorless Energy to Jigglypuff.
+  AI      attack:Lullaby   [22]
+          holding: (empty)
+          Wigglytuff uses Lullaby.
+          Magmar is now Asleep.
+          Coin flip (Magmar waking): HEADS
+          Magmar woke up.
+
+--- Turn 29 — You -------------------------------
+          You draws a card. (28 left)
+          You plays PlusPower.
+          PlusPower attached to Magmar (+10 this turn).
+          Magmar uses Fire Punch.
+          +10 from a bonus -> 40.
+          Wigglytuff takes 40. (20/80 left)
+          PlusPower is discarded.
+
+--- Turn 30 — Ken -------------------------------
+          Ken draws a card. (23 left)
+  AI      attack:Lullaby   [22]
+          holding: Full Heal
+          Wigglytuff uses Lullaby.
+          Magmar is now Asleep.
+          Coin flip (Magmar waking): HEADS
+          Magmar woke up.
+
+--- Turn 31 — You -------------------------------
+          You draws a card. (27 left)
+          You plays Bill.
+          You draws 2.
+          You benches Dratini.
+          You attaches Double Colorless Energy to Dratini.
+          Magmar uses Fire Punch.
+          Wigglytuff takes 30. (0/80 left)
+          Wigglytuff is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [50]
+          holding: Full Heal
+          passed over: promote 50, promote 39.5, promote 38.3, promote 20.8
+          Ken promotes Tauros to Active.
+
+--- Turn 32 — Ken -------------------------------
+          Ken draws a card. (22 left)
+  AI      trainer   [5]
+          holding: Full Heal, Poké Ball
+          Ken plays Poké Ball.
+          Coin flip (Poke Ball finds something?): HEADS
+          Poke Ball: found Arcanine.
+  AI      evolve   [34]
+          holding: Full Heal, Arcanine
+          Growlithe evolves into Arcanine. Special Conditions removed.
+  AI      attack:Stomp   [52.5]
+          holding: Full Heal
+          Tauros uses Stomp.
+          Coin flip (Stomp): TAILS
+          Tails -> 20 damage, and Tauros will take 0.
+          Magmar takes 20. (10/50 left)
+
+--- Turn 33 — You -------------------------------
+          You draws a card. (24 left)
+          You attaches Fire Energy to Dratini.
+          Dratini evolves into Dragonair. Special Conditions removed.
+          Magmar uses Fire Punch.
+          Tauros takes 30. (30/60 left)
+
+--- Turn 34 — Ken -------------------------------
+          Ken draws a card. (20 left)
+  AI      bench   [2]
+          holding: Full Heal, Chansey
+          Ken benches Chansey.
+  AI      attack:Stomp   [80]
+          holding: Full Heal
+          Tauros uses Stomp.
+          Coin flip (Stomp): HEADS
+          Heads -> 30 damage.
+          Magmar takes 30. (0/50 left)
+          Magmar is Knocked Out!
+          Ken takes a Prize. (3 left)
+          You promotes Dragonair to Active.
+
+--- Turn 35 — You -------------------------------
+          You draws a card. (23 left)
+          You attaches Fire Energy to Dragonair.
+          Dragonair uses Hyper Beam.
+          Tauros takes 20. (10/60 left)
+          Double Colorless Energy is discarded from Tauros.
+
+--- Turn 36 — Ken -------------------------------
+          Ken draws a card. (19 left)
+  AI      trainer   [12]
+          holding: Full Heal, Energy Retrieval, Bill
+          passed over: trainer 10
+          Ken plays Energy Retrieval.
+          Energy Retrieval: recovered 2 basic Energy.
+  AI      attach   [62]
+          holding: Bill, Fire Energy, Fire Energy
+          passed over: attach 62, attach 11, attach 11, trainer 10, attach 8
+          Ken attaches Fire Energy to Arcanine.
+  AI      trainer   [10]
+          holding: Bill, Fire Energy
+          Ken plays Bill.
+          Ken draws 2.
+  AI      trainer   [8]
+          holding: Fire Energy, Defender, Magmar
+          Ken plays Defender.
+          Defender attached to Tauros (-20 damage until the end of the opponent's next turn).
+  AI      pass
+          holding: Fire Energy, Magmar
+
+--- Turn 37 — You -------------------------------
+          You draws a card. (22 left)
+          You attaches Fire Energy to Charmeleon.
+          Dragonair uses Hyper Beam.
+          -20 from Defender -> 0.
+          No Energy to discard.
+          Defender is discarded.
+
+--- Turn 38 — Ken -------------------------------
+          Ken draws a card. (16 left)
+  AI      attach   [38.5]
+          holding: Fire Energy, Magmar, Fire Energy
+          passed over: attach 38.5, attach 11, attach 11, attach 8, attach 8
+          Ken attaches Fire Energy to Arcanine.
+  AI      pass
+          holding: Magmar, Fire Energy
+
+--- Turn 39 — You -------------------------------
+          You draws a card. (21 left)
+          Dragonair uses Hyper Beam.
+          Tauros takes 20. (0/60 left)
+          No Energy to discard.
+          Tauros is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [65.5]
+          holding: Magmar, Fire Energy
+          passed over: promote 50, promote 41.8, promote 38.3, promote 20.8
+          Ken promotes Arcanine to Active.
+
+--- Turn 40 — Ken -------------------------------
+          Ken draws a card. (15 left)
+  AI      attach   [8]
+          holding: Magmar, Fire Energy, Fire Energy
+          passed over: attach 8, attach 8, attach 8, attach 8, attach 8
+          Ken attaches Fire Energy to Chansey.
+  AI      bench   [2]
+          holding: Magmar, Fire Energy
+          passed over: retreat -75, retreat -76, retreat -76, retreat -94
+          Ken benches Magmar.
+  AI      attack:Take Down   [111]
+          holding: Fire Energy
+          passed over: attack:Flamethrower 43
+          Arcanine uses Take Down.
+          Dragonair takes 80. (0/80 left)
+          Arcanine does 30 damage to itself. (60 total)
+          Dragonair is Knocked Out!
+          Ken takes a Prize. (2 left)
+          You promotes Arcanine to Active.
+
+--- Turn 41 — You -------------------------------
+          You draws a card. (20 left)
+          You attaches Double Colorless Energy to Charmeleon.
+          You plays Professor Oak.
+          You discards 7 card(s) and draws 7.
+
+--- Turn 42 — Ken -------------------------------
+          Ken draws a card. (14 left)
+  AI      attach   [12]
+          holding: Fire Energy, Recycle, Recycle
+          passed over: attach 8, attach 8, attach 8, trainer 3.5, trainer 3.5
+          Ken attaches Fire Energy to Magmar.
+  AI      trainer   [3.5]
+          holding: Recycle, Recycle
+          passed over: trainer 3.5, retreat -57, retreat -76, retreat -76, retreat -76
+          Ken plays Recycle.
+          Coin flip (Recycle?): TAILS
+          Recycle: tails, nothing comes back.
+  AI      trainer   [3.5]
+          holding: Recycle
+          passed over: retreat -57, retreat -76, retreat -76, retreat -76, retreat -76
+          Ken plays Recycle.
+          Coin flip (Recycle?): TAILS
+          Recycle: tails, nothing comes back.
+  AI      attack:Take Down   [56]
+          holding: (empty)
+          passed over: attack:Flamethrower 43
+          Arcanine uses Take Down.
+          Arcanine takes 80. (20/100 left)
+          Arcanine does 30 damage to itself. (90 total)
+
+--- Turn 43 — You -------------------------------
+          You draws a card. (12 left)
+          You attaches Fire Energy to Arcanine.
+          You benches Growlithe.
+
+--- Turn 44 — Ken -------------------------------
+          Ken draws a card. (13 left)
+  AI      attach   [28]
+          holding: Double Colorless Energy
+          passed over: attach 15, attach 8, attach 1.4, attach -2, attach -2
+          Ken attaches Double Colorless Energy to Jigglypuff.
+  AI      attack:Flamethrower   [98]
+          holding: (empty)
+          passed over: attack:Take Down 41
+          Arcanine uses Flamethrower.
+          Arcanine discards 1 R Energy as a cost.
+          Arcanine takes 50. (0/100 left)
+          Arcanine is Knocked Out!
+          Ken takes a Prize. (1 left)
+          You promotes Charmeleon to Active.
+
+--- Turn 45 — You -------------------------------
+          You draws a card. (11 left)
+          Growlithe evolves into Arcanine. Special Conditions removed.
+          You attaches Fire Energy to Charmeleon.
+          Charmeleon uses Slash.
+          Arcanine takes 30. (0/100 left)
+          Arcanine is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [50]
+          holding: Fire Energy
+          passed over: promote 50, promote 41.8, promote 38.3, promote 17.3
+          Ken promotes Jigglypuff to Active.
+
+--- Turn 46 — Ken -------------------------------
+          Ken draws a card. (12 left)
+  AI      attach   [42]
+          holding: Fire Energy, Growlithe
+          passed over: attach 8, attach 8, bench 2, attach -2, attach -2
+          Ken attaches Fire Energy to Magmar.
+  AI      bench   [2]
+          holding: Growlithe
+          passed over: retreat -14.5, retreat -16, retreat -35, retreat -35
+          Ken benches Growlithe.
+  AI      attack:Lullaby   [22]
+          holding: (empty)
+          passed over: attack:Pound 20
+          Jigglypuff uses Lullaby.
+          Charmeleon is now Asleep.
+          Coin flip (Charmeleon waking): HEADS
+          Charmeleon woke up.
+
+--- Turn 47 — You -------------------------------
+          You draws a card. (10 left)
+          You attaches Fire Energy to Arcanine.
+          You plays Defender.
+          Defender attached to Charmeleon (-20 damage until the end of the opponent's next turn).
+          Charmeleon uses Flamethrower.
+          Charmeleon discards 1 R Energy as a cost.
+          Jigglypuff takes 50. (10/60 left)
+
+--- Turn 48 — Ken -------------------------------
+          Ken draws a card. (11 left)
+  AI      retreat   [20]
+          holding: Magmar
+          passed over: retreat 7.5, retreat 1, retreat 1, retreat 1
+          Ken retreats Jigglypuff; Jigglypuff is now Active.
+  AI      attack:Lullaby   [22]
+          holding: Magmar
+          passed over: attack:Pound 0
+          Jigglypuff uses Lullaby.
+          Charmeleon is now Asleep.
+          Defender is discarded.
+          Coin flip (Charmeleon waking): HEADS
+          Charmeleon woke up.
+
+--- Turn 49 — You -------------------------------
+          You draws a card. (9 left)
+          You attaches Fire Energy to Charmeleon.
+          Charmeleon uses Flamethrower.
+          Charmeleon discards 1 R Energy as a cost.
+          Jigglypuff takes 50. (10/60 left)
+
+--- Turn 50 — Ken -------------------------------
+          Ken draws a card. (10 left)
+  AI      retreat   [7.5]
+          holding: Magmar, Growlithe
+          passed over: retreat 1, retreat 1, retreat 1, retreat -17
+          Ken retreats Jigglypuff; Magmar is now Active.
+  AI      attack:Fire Punch   [30]
+          holding: Magmar, Growlithe
+          Magmar uses Fire Punch.
+          Charmeleon takes 30. (50/80 left)
+
+--- Turn 51 — You -------------------------------
+          You draws a card. (8 left)
+          You plays Energy Removal.
+          Fire Energy discarded from Magmar.
+          Charmeleon uses Flamethrower.
+          Charmeleon discards 1 R Energy as a cost.
+          Magmar takes 50. (0/50 left)
+          Magmar is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [41.8]
+          holding: Magmar, Growlithe
+          passed over: promote 38.3, promote 20.8, promote 3.3, promote 3.3
+          Ken promotes Chansey to Active.
+
+--- Turn 52 — Ken -------------------------------
+          Ken draws a card. (9 left)
+  AI      attach   [12]
+          holding: Magmar, Growlithe, Fire Energy
+          passed over: attach 11, attach 8, attach 8, attach 8, bench 2
+          Ken attaches Fire Energy to Growlithe.
+  AI      bench   [2]
+          holding: Magmar, Growlithe
+          passed over: bench 2
+          Ken benches Magmar.
+  AI      pass
+          holding: Growlithe
+
+--- Turn 53 — You -------------------------------
+          You draws a card. (7 left)
+          You attaches Fire Energy to Charmeleon.
+          Charmeleon uses Flamethrower.
+          Charmeleon discards 1 R Energy as a cost.
+          Chansey takes 50. (70/120 left)
+
+--- Turn 54 — Ken -------------------------------
+          Ken draws a card. (8 left)
+  AI      pass
+          holding: Growlithe, Jigglypuff
+
+--- Turn 55 — You -------------------------------
+          You draws a card. (6 left)
+          You attaches Fire Energy to Charmeleon.
+          Charmeleon uses Flamethrower.
+          Charmeleon discards 1 R Energy as a cost.
+          Chansey takes 50. (20/120 left)
+
+--- Turn 56 — Ken -------------------------------
+          Ken draws a card. (7 left)
+  AI      trainer   [34]
+          holding: Growlithe, Jigglypuff, Defender
+          Ken plays Defender.
+          Defender attached to Chansey (-20 damage until the end of the opponent's next turn).
+  AI      pass
+          holding: Growlithe, Jigglypuff
+
+--- Turn 57 — You -------------------------------
+          You draws a card. (5 left)
+          You attaches Fire Energy to Charmeleon.
+          Charmeleon uses Flamethrower.
+          Charmeleon discards 1 R Energy as a cost.
+          -20 from Defender -> 30.
+          Chansey takes 30. (0/120 left)
+          Chansey is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         57 turns
+
+==========================================================
+PACKS OPENED
+
+  Jungle
+    Primeape  Uncommon
+    Gloom  Uncommon   NEW
+    Weepinbell  Uncommon
+    Goldeen  Common
+    Meowth  Common
+    Spearow  Common
+    Pikachu  Common
+    Cubone  Common
+    Rhyhorn  Common
+    Nidoran ♀  Common
+    Venomoth  Rare Holo   NEW
+    Lightning Energy     (stipend)
+    Lightning Energy     (stipend)
+
+  Jungle  (1st Edition pack)
+    Rhydon  Uncommon  [fe]
+    Nidorina  Uncommon  [fe]
+    Dodrio  Uncommon  [fe]
+    Pikachu  Common  [fe]
+    Oddish  Common  [fe]
+    Spearow  Common  [fe]
+    Bellsprout  Common  [fe]
+    Nidoran ♀  Common  [fe]
+    Eevee  Common  [fe]
+    Mankey  Common  [fe]
+    Pinsir  Rare Holo  [fe]   NEW
+    Fighting Energy    [fe]   (stipend)
+    Psychic Energy    [fe]   (stipend)

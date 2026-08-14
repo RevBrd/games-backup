@@ -379,10 +379,24 @@ class AI {
     if (!atkSlot || !defSlot) return null;
     const raw = this.rawOutcomes(atkSlot, defSlot, idx, vopts);
     const hpLeft = this.remainingHP(defSlot);
-    let expDmg = 0, pLethal = 0;
+    // TWO damage numbers, because overkill is worth nothing and everything else
+    // here needs the real one.
+    //
+    //   expDmg     what the attack actually does. What "turns it lethal" and
+    //              the leech and Transparency checks all have to read.
+    //   expUseful  the same, with each outcome capped at what is left to kill.
+    //              There is no trample in this game: 80 into a Pokemon with 40
+    //              HP left removes 40 and wastes 40.
+    //
+    // Capped PER OUTCOME rather than on the mean, which is not the same number
+    // for anything that flips a coin — an attack that does 0 or 80 against 40 HP
+    // averages 40 raw and 20 useful, and the mean of the capped values is the
+    // one that is true.
+    let expDmg = 0, expUseful = 0, pLethal = 0;
     for (const o of raw.outcomes) {
       const r = E.computeDamage(atkSlot, defSlot, o.dmg, { noWR: !!raw.flags.flat });
       expDmg += o.p * r.dmg;
+      expUseful += o.p * Math.min(r.dmg, hpLeft);
       if (r.dmg >= hpLeft) pLethal += o.p;
     }
     // Kabuto Armor and Invisible Wall need nothing here — they live inside
@@ -392,14 +406,14 @@ class AI {
     // Haunter's Transparency does, because its coin is deliberately NOT in
     // computeDamage (that function is pure). Half the time the attack does
     // nothing at all, so halve both the damage and the odds of the Knock Out.
-    if (E.activePower(defSlot, 'FLIP_TO_NEGATE')) { expDmg *= 0.5; pLethal *= 0.5; }
+    if (E.activePower(defSlot, 'FLIP_TO_NEGATE')) { expDmg *= 0.5; expUseful *= 0.5; pLethal *= 0.5; }
 
     const blocked = E.effectsBlocked(defSlot);
     // Snorlax cannot be given a CONDITION — but it can still be Smokescreened,
     // dragged, and stripped of Energy, so this is its own flag rather than
     // reusing `blocked`, which suppresses all of those too.
     const statusProof = !!E.activePower(defSlot, 'STATUS_IMMUNE');
-    return { expDmg, pLethal, hpLeft, blocked, statusProof, ...raw };
+    return { expDmg, expUseful, pLethal, hpLeft, blocked, statusProof, ...raw };
   }
 
   // ------------------------------------------------------------ attack score
@@ -410,7 +424,11 @@ class AI {
     const me = E.state.players[pi], you = E.state.players[1 - pi];
     const atkSlot = me.active;
 
-    let s = f.expDmg * W.damage;
+    // USEFUL damage, not printed damage. Two attacks that both kill are worth
+    // the same for killing, so the choice between them is their COST — which is
+    // how Take Down stopped beating Flamethrower by a tenth of a point while
+    // eating 30 recoil to overkill something already dead.
+    let s = f.expUseful * W.damage;
     if (f.pLethal > 0) {
       // A Knock Out ends the game two different ways and the bot could see
       // NEITHER of them. Both were found from one of Trevor's games, where it
@@ -449,9 +467,35 @@ class AI {
     }
 
     // self-harm
+    //
+    // RECOIL IS PRICED ON HOW CLOSE IT LEAVES YOU, NOT ON ITS SIZE — 13 Aug
+    // 2026, from a match log of Trevor's. This was a flat charge with a cliff at
+    // the very end: 30 recoil cost the same 24 points whether Arcanine was
+    // untouched or already at 60 damage, and only the blow that killed outright
+    // paid `selfKO`.
+    //
+    // What the log showed. Ken's Arcanine, 60 damage on a 100 HP body, chose
+    // Take Down (56) over Flamethrower (43) for 30 extra damage that killed
+    // nothing, and finished the turn at 90 — one hit from handing over a Prize
+    // it did not need to give. It had done the same thing four turns earlier.
+    // The two Take Downs in that game that DID knock something out were both
+    // correct, because Flamethrower's 50 could not have reached either target;
+    // the fault is entirely in the ones that killed nothing.
+    //
+    // So the cost of recoil is not the HP. It is the share of what remains, and
+    // therefore how much closer the NEXT hit is to a Prize. Squared, for the
+    // same reason `retreatPrize` is: a tenth of your remaining HP is nothing and
+    // three quarters of it is nearly the whole cost of the Pokemon.
+    //
+    // It MEETS the old cliff rather than replacing it — at `frac` of 1 the term
+    // is exactly `selfKO`, which is what a lethal recoil always cost. Every
+    // decision the old rule got right is unchanged; only the slope below it is
+    // new.
     if (f.selfDmg > 0) {
       s -= f.selfDmg * W.selfDamage;
-      if (atkSlot.dmg + f.selfDmg >= this.top(atkSlot).hp) s -= W.selfKO;
+      const left = Math.max(1, this.remainingHP(atkSlot));
+      const frac = Math.min(1, f.selfDmg / left);
+      s -= W.selfKO * frac * frac;
     }
     if (f.energyCost > 0) s -= f.energyCost * W.energyDiscard;
 

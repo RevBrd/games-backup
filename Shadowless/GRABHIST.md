@@ -8,6 +8,28 @@ An item that was diagnosed and *parked* gets an entry too, so nobody re-derives 
 
 ---
 
+### 14 Aug 2026 — Opus 5, third pass (Arcanine)
+
+**"Used Take Down to KO instead of Flamethrower, eating the recoil."** The log did not contain that
+case — in both Take Downs that killed, Flamethrower's 50 could not have reached the target. Said
+plainly because taking a report at face value sends you fixing the wrong thing, and this one had a
+better bug hiding under it.
+
+The fault was in the two Take Downs that killed **nothing**. Arcanine on 60 damage of 100 took it
+anyway for 30 extra damage that achieved nothing and finished on 90, one hit from conceding a Prize.
+Recoil was charged flat with a cliff only at outright suicide, so it cost the same on a fresh Pokémon
+as on a dying one. Now priced on the share of HP remaining, squared, meeting the old cliff exactly
+where it always stood.
+
+**And then his actual report turned out to be real after all** — just absent from that game. When
+*both* attacks kill, Take Down was still winning, by a tenth of a point, because full damage was
+credited and overkill buys nothing. Capped per outcome into a second field, `expUseful`; `expDmg`
+must keep meaning the real number because PlusPower's "10 short of lethal" check reads it.
+
+*Both fixes are the same shape as `retreatPrize` and the `selftest` gate: a quantity that should
+scale with proximity to an edge, written flat with a cliff at the end. Third time in two days —
+worth suspecting on sight.*
+
 ### 13 Aug 2026 — Opus 5, second pass (the AI)
 
 **"Opponent retreated a Kangaskhan instead of tanking."** Built as a **derivation**, not the per-card

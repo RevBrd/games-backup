@@ -258,6 +258,53 @@ bias. Flat in a duel (50.8% ± 5.0), better on the independent yardstick — ret
 attack 25% → 23%, retreats improving the hit 61% → 63% — and kept on correctness: the engine's own
 comment promises the AI can never predict something the engine would not do.
 
+## Recoil, overkill, and a report that was right about the wrong game
+
+**14 Aug 2026, from a match log.** Trevor reported the bot using Arcanine's Take Down (80, 30 recoil)
+to knock something out where Flamethrower (50, discard a Fire) would have done. **The log did not
+contain that.** All four Take Downs in it are listed below, and in both cases that killed, Flamethrower
+could not have reached the target. Worth stating plainly, because a report you take at face value
+sends you fixing the wrong thing:
+
+| turn | outcome | could Flamethrower have killed? |
+|---|---|---|
+| 14 | Lickitung → 10/90, no KO | no |
+| 16 | Lickitung KO'd | no — it had 80 left |
+| ~38 | Dragonair KO'd | no — 80 HP, at full |
+| 42 | Arcanine → 20/100, no KO | no |
+
+**The instinct was right and the fault was in the other two.** On turn 42 Ken's Arcanine sat on 60
+damage of 100, took Take Down anyway for 30 extra damage that killed nothing, and finished on 90 —
+one hit from conceding a Prize it never had to give. It had done the same thing on turn 14.
+
+Two separate faults, and they need different fixes:
+
+**Recoil was flat with a cliff.** `selfDmg * 0.8`, the same charge whether the Pokémon was untouched
+or one hit from dead, and only a *lethal* recoil paid `selfKO`. It is now priced on the share of what
+remains — squared, and meeting the old cliff exactly at `frac` of 1, so every decision the cliff got
+right is unchanged and only the slope below it is new. Arcanine now takes Take Down at 0–20 damage
+and Flamethrower from 40 on.
+
+**Overkill was still being paid for.** `scoreAttack` credited full expected damage, so when *both*
+attacks killed, Take Down beat Flamethrower **by a tenth of a point** — which is Trevor's report
+exactly, just not the game he found it in. There is no trample here: 80 into a Pokémon with 40 left
+removes 40 and wastes 40. `forecast` now returns `expUseful` beside `expDmg`, capped **per outcome**
+rather than on the mean (an attack doing 0-or-80 into 40 HP averages 40 raw and 20 useful, and the
+mean of the capped values is the true one).
+
+**`expUseful` is a second field rather than a cap in place, and that is not caution.** PlusPower asks
+*"is this 10 short of lethal"* — a question about real damage that capping makes unanswerable for
+anything already lethal. Leech healing and the Transparency test read it too.
+
+**Flat on both duel pools** (51.0% ± 1.9 on `--gbc`), which by now is the expected reading for this
+whole family: rare, symmetric, and about a position a human recognises instantly. Six assertions in
+`powertest.js`, including the two that guard against over-correcting — a healthy Arcanine must still
+take the recoil, and the bigger attack must still be used when only it reaches.
+
+*Third instance in two days of the same shape: a quantity that should scale with proximity to an edge,
+written flat with a cliff at the end.* `retreatPrize`'s divisor, `selftest`'s threshold, and now this.
+Worth suspecting on sight.
+
 **Left open.** Stickiness only reads the *rescue*. A wall is not yet preferred when **promoting** off
 the Bench, and `potential()` still prices a benched Pokémon in printed damage — the Active/Bench unit
 split above. Those are the same refactor and it is still not obviously worth it.

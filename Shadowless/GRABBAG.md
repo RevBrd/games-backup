@@ -34,6 +34,14 @@ The list is in no meaningful order. Please edit or remove items appropriately if
   Right in exactly one place: three of the four forecast paths already did, `bestAffordableDamage`
   did not, and that is the one the retreat decision runs on.
 - The two free energies after base1 is proving too much. I would rather ditch them and include base1 energies in the card pool for subsequent sets but with their own card numbers.
+- Check if variant cards are displaying in game. Ideally the sigil cards should show their markings.
+- ~~Opponent used Arcanine's Takedown to knock out my pokemon instead of Flamethrower, eating the recoil damage~~ - log# 04-10-05
+  **DONE 14 Aug — and your log did not actually contain that case.** In both Take Downs that killed,
+  Flamethrower's 50 could not have reached the target. The fault was in the two that killed NOTHING:
+  Arcanine on 60 damage of 100 took Take Down anyway and finished on 90. Two fixes — recoil is now
+  priced on the share of HP remaining rather than flat, and overkill damage is no longer credited, so
+  when both attacks kill the cheaper one wins. That second one IS your report; it just needed
+  building to see. See `AI.md`.
 
 
 
