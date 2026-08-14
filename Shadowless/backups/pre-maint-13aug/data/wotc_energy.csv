@@ -1,0 +1,47 @@
+card_id,set_code,number,name,energy_class,provides,text,rarity,artist
+base1-96,base1,96,Double Colorless Energy,Special,any,"Provides ColorlessColorless energy.
+Doesn't count as a basic Energy card.",Uncommon,Keiji Kinebuchi
+base1-97,base1,97,Fighting Energy,Basic,,,,Keiji Kinebuchi
+base1-98,base1,98,Fire Energy,Basic,,,,Keiji Kinebuchi
+base1-99,base1,99,Grass Energy,Basic,,,,Keiji Kinebuchi
+base1-100,base1,100,Lightning Energy,Basic,,,,Keiji Kinebuchi
+base1-101,base1,101,Psychic Energy,Basic,,,,Keiji Kinebuchi
+base1-102,base1,102,Water Energy,Basic,,,,Keiji Kinebuchi
+base4-124,base4,124,Double Colorless Energy,Special,any,Provides Colorless Colorless energy. Doesn't count as a basic Energy card.,Uncommon,Keiji Kinebuchi
+base4-125,base4,125,Fighting Energy,Basic,,,,Keiji Kinebuchi
+base4-126,base4,126,Fire Energy,Basic,,,,Keiji Kinebuchi
+base4-127,base4,127,Grass Energy,Basic,,,,Keiji Kinebuchi
+base4-128,base4,128,Lightning Energy,Basic,,,,Keiji Kinebuchi
+base4-129,base4,129,Psychic Energy,Basic,,,,Keiji Kinebuchi
+base4-130,base4,130,Water Energy,Basic,,,,Keiji Kinebuchi
+base5-17,base5,17,Rainbow Energy,Special,any,"Attach Rainbow Energy to 1 of your Pokémon. While in play, Rainbow Energy counts as every type of basic Energy but only provides 1 Energy at a time. (Doesn't count as a basic Energy card when not in play.) When you attach this card from your hand to 1 of your Pokémon, it does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.)",Rare Holo,Takumi Akabane
+base5-80,base5,80,Rainbow Energy,Special,any,"Attach Rainbow Energy to 1 of your Pokémon. While in play, Rainbow Energy counts as every type of basic Energy but only provides 1 Energy at a time. (Doesn't count as a basic Energy card when not in play.) When you attach this card from your hand to 1 of your Pokémon, it does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.)",Rare,Takumi Akabane
+base5-81,base5,81,Full Heal Energy,Special,any,"If you play this card from your hand, the Pokémon you attach it to is no longer Asleep, Confused, Paralyzed, or Poisoned. Full Heal Energy provides Colorless energy. (Doesn't count as a basic Energy card.)",Uncommon,Keiji Kinebuchi
+base5-82,base5,82,Potion Energy,Special,any,"If you play this card from your hand, remove 1 damage counter from the Pokémon you attach it to, if it has any. Potion Energy provides Colorless energy. (Doesn't count as a basic Energy card.)",Uncommon,Keiji Kinebuchi
+base6-100,base6,100,Full Heal Energy,Special,any,"If you play this card from your hand, the Pokémon you attach it to is no longer affected by a Special Condition. Full Heal Energy provides Colorless energy. (Doesn't count as a basic Energy card.)",Uncommon,Keiji Kinebuchi
+base6-101,base6,101,Potion Energy,Special,any,"If you play this card from your hand, remove 1 damage counter from the Pokémon you attach it to, if it has any. Potion Energy provides Colorless energy. (Doesn't count as a basic Energy card.)",Uncommon,Keiji Kinebuchi
+gym1-127,gym1,127,Fighting Energy,Basic,,,,Keiji Kinebuchi
+gym1-128,gym1,128,Fire Energy,Basic,,,,Keiji Kinebuchi
+gym1-129,gym1,129,Grass Energy,Basic,,,,Keiji Kinebuchi
+gym1-130,gym1,130,Lightning Energy,Basic,,,,Keiji Kinebuchi
+gym1-131,gym1,131,Psychic Energy,Basic,,,,Keiji Kinebuchi
+gym1-132,gym1,132,Water Energy,Basic,,,,Keiji Kinebuchi
+gym2-127,gym2,127,Fighting Energy,Basic,,,,Keiji Kinebuchi
+gym2-128,gym2,128,Fire Energy,Basic,,,,Keiji Kinebuchi
+gym2-129,gym2,129,Grass Energy,Basic,,,,Keiji Kinebuchi
+gym2-130,gym2,130,Lightning Energy,Basic,,,,Keiji Kinebuchi
+gym2-131,gym2,131,Psychic Energy,Basic,,,,Keiji Kinebuchi
+gym2-132,gym2,132,Water Energy,Basic,,,,Keiji Kinebuchi
+neo1-19,neo1,19,Metal Energy,Special,any,"Damage done to the Pokémon Metal Energy is attached to is reduced by 10 (after applying Weakness and Resistance). If the Pokémon Metal Energy is attached to isn't Metal, whenever it damages a Pokémon, reduce that damage by 10 (before applying Weakness and Resistance).
+Metal Energy provides Metal Energy. (Doesn't count as a basic Energy card.)",Rare Holo,Milky Isobe
+neo1-104,neo1,104,Darkness Energy,Special,any,"If the Pokémon Darkness Energy is attached to damages the Defending Pokémon (after applying Weakness and Resistance), the attack does 10 more damage to the Defending Pokémon. At the end of every turn, put 1 damage counter on the Pokémon Darkness Energy is attached to, unless it's Darkness or has Dark in its name.
+Darkness Energy provides Darkness Energy. (Doesn't count as a basic Energy card.)",Rare,Milky Isobe
+neo1-105,neo1,105,Recycle Energy,Special,any,"Recycle Energy provides Colorless Energy. (Doesn't count as a basic Energy card.) If this card is put into your discard pile from play, return it to your hand.",Rare,Hideki Kazama
+neo1-106,neo1,106,Fighting Energy,Basic,,,,Keiji Kinebuchi
+neo1-107,neo1,107,Fire Energy,Basic,,,,Keiji Kinebuchi
+neo1-108,neo1,108,Grass Energy,Basic,,,,Keiji Kinebuchi
+neo1-109,neo1,109,Lightning Energy,Basic,,,,Keiji Kinebuchi
+neo1-110,neo1,110,Psychic Energy,Basic,,,,Keiji Kinebuchi
+neo1-111,neo1,111,Water Energy,Basic,,,,Keiji Kinebuchi
+neo4-16,neo4,16,Miracle Energy,Special,any,"You can't have more than 1 Miracle Energy in your deck. Attach Miracle Energy to 1 of your Shining or Light Pokémon. At the end of your turn, discard Miracle Energy.
+While in play, Miracle Energy counts as every type of Energy but provides only 2 Energy at a time.",Rare Holo,Milky Isobe

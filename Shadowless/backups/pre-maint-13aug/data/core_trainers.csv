@@ -1,0 +1,33 @@
+card_id,set_code,number,name,subtype,text,rarity,artist
+base1-70,base1,70,Clefairy Doll,Trainer,"Play Clefairy Doll as if it were a Basic Pokémon. While in play, Clefairy Doll counts as a Pokémon (instead of a Trainer card). Clefairy Doll has no attacks, can't retreat, and can't be Asleep, Confused, Paralyzed, or Poisoned. If Clefairy Doll is Knocked Out, it doesn't count as a Knocked Out Pokémon. At any time during your turn before your attack, you may discard Clefairy Doll.",Rare,Keiji Kinebuchi
+base1-71,base1,71,Computer Search,Trainer,Discard 2 of the other cards from your hand in order to search your deck for any card and put it into your hand. Shuffle your deck afterward.,Rare,Keiji Kinebuchi
+base1-72,base1,72,Devolution Spray,Trainer,"Choose 1 of your own Pokémon in play and a Stage of Evolution. Discard all Evolution cards of that Stage or higher attached to that Pokémon. That Pokémon is no longer Asleep, Confused, Paralyzed, Poisoned, or anything else that might be the result of an attack (just as if you had evolved it).",Rare,Keiji Kinebuchi
+base1-73,base1,73,Impostor Professor Oak,Trainer,"Your opponent shuffles his or her hand into his or her deck, then draws 7 cards.",Rare,Ken Sugimori
+base1-74,base1,74,Item Finder,Trainer,Discard 2 of the other cards from your hand in order to put a Trainer card from your discard pile into your hand.,Rare,Keiji Kinebuchi
+base1-75,base1,75,Lass,Trainer,"You and your opponent show each other your hands, then shuffle all the Trainer cards from your hands into your decks.",Rare,Ken Sugimori
+base1-76,base1,76,Pokémon Breeder,Trainer,Put a Stage 2 Evolution card from your hand on the matching Basic Pokémon. You can only play this card when you would be allowed to evolve that Pokémon anyway.,Rare,Ken Sugimori
+base1-77,base1,77,Pokémon Trader,Trainer,Trade 1 of the Basic Pokémon or Evolution cards in your hand for 1 of the Basic Pokémon or Evolution cards from your deck. Show both cards to your opponent. Shuffle your deck afterward.,Rare,Ken Sugimori
+base1-78,base1,78,Scoop Up,Trainer,Choose 1 of your Pokémon in play and return its Basic Pokémon card to your hand. (Discard all cards attached to that card.),Rare,Keiji Kinebuchi
+base1-79,base1,79,Super Energy Removal,Trainer,Discard 1 Energy card attached to 1 of your Pokémon in order to choose 1 of your opponent's Pokémon and up to 2 Energy cards attached to it. Discard those Energy cards.,Rare,Keiji Kinebuchi
+base1-80,base1,80,Defender,Trainer,"Attach Defender to 1 of your Pokémon. At the end of your opponent's next turn, discard Defender. Damage done to that Pokémon by attacks is reduced by 20 (after applying Weakness and Resistance).",Uncommon,Keiji Kinebuchi
+base1-81,base1,81,Energy Retrieval,Trainer,Trade 1 of the other cards in your hand for up to 2 basic Energy cards from your discard pile.,Uncommon,Keiji Kinebuchi
+base1-82,base1,82,Full Heal,Trainer,"Your Active Pokémon is no longer Asleep, Confused, Paralyzed, or Poisoned.",Uncommon,Keiji Kinebuchi
+base1-83,base1,83,Maintenance,Trainer,Shuffle 2 of the other cards from your hand into your deck in order to draw a card.,Uncommon,Keiji Kinebuchi
+base1-84,base1,84,PlusPower,Trainer,"Attach PlusPower to your Active Pokémon. At the end of your turn, discard PlusPower. If this Pokémon's attack does damage to the Defending Pokémon (after applying Weakness and Resistance), the attack does 10 more damage to the Defending Pokémon.",Uncommon,Keiji Kinebuchi
+base1-85,base1,85,Pokémon Center,Trainer,"Remove all damage counters from all of your own Pokémon with damage counters on them, then discard all Energy cards attached to those Pokémon.",Uncommon,Keiji Kinebuchi
+base1-86,base1,86,Pokémon Flute,Trainer,Choose 1 Basic Pokémon card from your opponent's discard pile and put it onto his or her Bench. (You can't play Pokémon Flute if your opponent's Bench is full.),Uncommon,Keiji Kinebuchi
+base1-87,base1,87,Pokédex,Trainer,Look at up to 5 cards from the top of your deck and rearrange them as you like.,Uncommon,Keiji Kinebuchi
+base1-88,base1,88,Professor Oak,Trainer,"Discard your hand, then draw 7 cards.",Uncommon,Ken Sugimori
+base1-89,base1,89,Revive,Trainer,Put 1 Basic Pokémon card from your discard pile onto your Bench. Put damage counters on that Pokémon equal to half its HP (rounded down to the nearest 10). (You can't play Revive if your Bench is full.),Uncommon,Keiji Kinebuchi
+base1-90,base1,90,Super Potion,Trainer,Discard 1 Energy card attached to your own Pokémon in order to remove up to 4 damage counters from that Pokémon.,Uncommon,Keiji Kinebuchi
+base1-91,base1,91,Bill,Trainer,Draw 2 cards.,Common,Ken Sugimori
+base1-92,base1,92,Energy Removal,Trainer,Choose 1 Energy card attached to 1 of your opponent's Pokémon and discard it.,Common,Keiji Kinebuchi
+base1-93,base1,93,Gust of Wind,Trainer,Choose 1 of your opponent's Benched Pokémon and switch it with his or her Active Pokémon.,Common,Keiji Kinebuchi
+base1-94,base1,94,Potion,Trainer,Remove up to 2 damage counters from 1 of your Pokémon.,Common,Keiji Kinebuchi
+base1-95,base1,95,Switch,Trainer,Switch 1 of your own Benched Pokémon with your Active Pokémon.,Common,Keiji Kinebuchi
+base2-64,base2,64,Poké Ball,Trainer,"Flip a coin. If heads, you may search your deck for any Basic Pokémon or Evolution card. Show that card to your opponent, then put it into your hand. Shuffle your deck afterward.",Common,Keiji Kinebuchi
+base3-58,base3,58,Mr. Fuji,Trainer,Choose a Pokémon on your Bench. Shuffle it and any cards attached to it into your deck.,Uncommon,Ken Sugimori
+base3-59,base3,59,Energy Search,Trainer,Search your deck for a basic Energy card and put it into your hand. Shuffle your deck afterward.,Common,Keiji Kinebuchi
+base3-60,base3,60,Gambler,Trainer,"Shuffle your hand into your deck. Flip a coin. If heads, draw 8 cards. If tails, draw 1 card.",Common,Keiji Kinebuchi
+base3-61,base3,61,Recycle,Trainer,"Flip a coin. If heads, put a card in your discard pile on top of your deck.",Common,Keiji Kinebuchi
+base3-62,base3,62,Mysterious Fossil,Trainer,"Play Mysterious Fossil as if it were a Basic Pokémon. While in play, Mysterious Fossil counts as a Pokémon (instead of a Trainer card). Mysterious Fossil has no attacks, can't retreat, and can't be Asleep, Confused, Paralyzed, or Poisoned. If Mysterious Fossil is Knocked Out, it doesn't count as a Knocked Out Pokémon. (Discard it anyway.) At any time during your turn before your attack, you may discard Mysterious Fossil from play.",Common,Keiji Kinebuchi
