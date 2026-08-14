@@ -56,6 +56,9 @@ const AI_WEIGHTS = {
   retreatSaveEnergy: 7, // rescue value per Energy already invested in the Active
   retreatSaveEvolved: 9,// ...plus this if it is not a Basic
   retreatNoCause: -14,  // retreating when nothing actually threatens the Active
+  wallStick: 1.0,       // how much a Pokemon's "stickiness" cancels the value of
+                        // rescuing it. 1.0 = a perfect wall is never worth
+                        // saving for its own sake; the Prize term still applies
   retreatPrize: 60,     // value of denying a Prize, over the SQUARE of how many
                         // they still need — 1.7 at six left, 60 at one
   drawCard: 5,          // per card drawn
@@ -73,6 +76,81 @@ function aiParseDamage(d) {
 }
 
 const STATUS_VALUE = { Paralyzed: 'paralyze', Asleep: 'sleep', Confused: 'confuse', Poisoned: 'poison' };
+
+// ============================================================================
+// WHAT A POKEMON IS FOR — "stickiness", 13 Aug 2026
+// ============================================================================
+// Trevor, from playtest: Kangaskhan, Chansey, Snorlax and that Electabuzz are
+// meant to stand in the Active spot and soak damage until they die. The bot
+// retreated them. No weight can express that, because it is not a claim about
+// this position — it is a claim about what the card is.
+//
+// PROPOSED AS A PER-CARD TAG AND BUILT AS A DERIVATION, deliberately. A tag is
+// per-card design labour on 221 cards going on 1,251, inherited by every set
+// added afterwards and skipped by the first session in a hurry. Everything that
+// makes those four walls is already sitting in the card data, so the tag is a
+// fact we would be re-typing rather than one we would be adding.
+//
+// TERMINAL BASICS ONLY, which is Trevor's refinement and the load-bearing part.
+// The tempting rule is "cannot evolve any further" and it is wrong: it calls
+// Charizard a wall. A Stage 2 is three cards of investment and you absolutely do
+// want to rescue it. A Basic with nowhere to go has no future to protect —
+// retreating it spends Energy to park a damaged card on the Bench.
+//
+// Three signals, each already true of the card before we ask:
+//   HP        the resource the Pokemon exists to spend. 50 is nothing, 100+ is
+//             the whole point. Chansey's 120 is why it is playable at all.
+//   RETREAT   what walking away actually costs. Snorlax's 4 is not a drawback
+//             bolted on, it is the card telling you it is not going anywhere.
+//   UTILITY   an attack that pays rent for standing there — drawing, stalling,
+//             or locking the opponent down. Listed by VERB rather than matched
+//             on text, because Tauros carries STATUS_SELF_ON_TAILS and that is
+//             self-confusion, the exact opposite of a stalling tool. A regex on
+//             "Confused" would have made Tauros a wall.
+const STALL_VERBS = {
+  DRAW: 1, DRAW_ON_FLIP: 1,                      // Kangaskhan's Fetch
+  STATUS: 1, STATUS_ON_FLIP: 1, STATUS_COIN_EITHER: 1,   // Snorlax, Electabuzz, Lapras
+  PREVENT_ALL_DMG_SELF_ON_FLIP: 1,               // Chansey's Scrunch
+  DAMAGE_REDUCTION_SELF: 1,
+  HEAL_SELF_ALL: 1, HEAL_SELF_IF_DAMAGED: 1, HEAL_SELF_ON_FLIP: 1,
+  HEAL_SELF_EQUAL_DAMAGE: 1,
+};
+// STATUS_SELF and STATUS_SELF_ON_TAILS are POINTEDLY absent. So is
+// DAMAGE_REDUCTION_FROM, which shields against one attacker for one turn —
+// a trick, not a job.
+
+const EVOLVED_NAMES = new WeakMap();   // db -> Set of names something evolves FROM
+function namesWithAnEvolution(db) {
+  let s = EVOLVED_NAMES.get(db);
+  if (!s) {
+    s = new Set();
+    for (const k in db) if (db[k].evolvesFrom) s.add(db[k].evolvesFrom);
+    EVOLVED_NAMES.set(db, s);
+  }
+  return s;
+}
+
+// 0 for everything that is not a wall, up to 1 for the most immovable thing in
+// the format. Memoised per db: the answer is a property of the card, and the
+// evolution scan is over the whole pool.
+const WALL_SCORES = new WeakMap();
+function wallScore(db, effects, card) {
+  if (!card || card.kind !== 'pokemon') return 0;
+  let m = WALL_SCORES.get(db);
+  if (!m) { m = new Map(); WALL_SCORES.set(db, m); }
+  if (m.has(card.id)) return m.get(card.id);
+
+  let v = 0;
+  if (card.stage === 'Basic' && !namesWithAnEvolution(db).has(card.name)) {
+    const hp = Math.min(1, Math.max(0, ((card.hp || 0) - 50) / 50));
+    const ret = Math.min(1, (card.retreat || 0) / 3);
+    const scripts = (effects[card.id] && effects[card.id].a) || [];
+    const util = scripts.some(l => (l || []).some(x => STALL_VERBS[x.v])) ? 1 : 0;
+    v = 0.5 * hp + 0.3 * ret + 0.2 * util;
+  }
+  m.set(card.id, v);
+  return v;
+}
 
 class AI {
   constructor(engine, opts = {}) {
@@ -598,13 +676,35 @@ class AI {
   // two directly says the Active is better even when it is worse. Any decision
   // that weighs "this one versus that one" has to use one currency, and this is
   // it. See the retreat case in scoreAction.
+  //
+  // WEAKNESS AND RESISTANCE ARE APPLIED — 13 Aug 2026, from Trevor's note that
+  // the bot was not reading them into its damage predictions. Three of the four
+  // forecast paths already went through `computeDamage`; this one did not, and
+  // it is the one the retreat decision runs on.
+  //
+  // The consequence was specific rather than diffuse. "Would the Pokemon I am
+  // swapping to hit harder than the one I am swapping out?" was answered in
+  // printed numbers, so a 30-damage attack that is really 60 against the thing
+  // actually standing opposite counted as 30, and a 40 that is really 10 counted
+  // as 40. Both sides of the comparison were wrong in different directions at
+  // once, which is why it never looked like a constant bias.
+  //
+  // Still printed damage rather than expected value, deliberately: this exists
+  // to be ONE currency shared across slots that cannot all be priced in EV (see
+  // the Active/Bench note in AI.md), and both operands are now measured against
+  // the same defender, so the comparison is honest even though the unit is
+  // coarse. Making it EV is a separate change and wants its own measurement.
   bestAffordableDamage(pi, slot) {
     if (!slot) return 0;
     const E = this.E;
+    const def = E.state.players[1 - pi].active;
     let best = 0;
     for (const a of (this.top(slot).attacks || [])) {
       if (!E.costSatisfied(slot, a.cost)) continue;
-      const d = aiParseDamage(a.dmg);
+      const base = aiParseDamage(a.dmg);
+      // No defender is the setup/knockout gap, not a matchup — fall back to the
+      // printed number rather than scoring every attack at zero.
+      const d = def ? E.computeDamage(slot, def, base).dmg : base;
       if (d > best) best = d;
     }
     return best;
@@ -1032,7 +1132,19 @@ class AI {
           // three, 60 at one — the curve the comment always claimed.
           const left = Math.max(1, you.prizes.length);
           const prize = W.retreatPrize / (left * left);
-          s += Math.min(W.dangerSwap, invested) + prize;
+
+          // STICKINESS SUPPRESSES THE RESCUE, NOT THE PRIZE. A wall being about
+          // to die is the card doing its job, so what it has "invested" is not
+          // really at risk — it was always going to be spent. But conceding the
+          // Prize can still lose the game outright, and that is what the term
+          // beside it is for, so it is left alone.
+          //
+          // This is also exactly Trevor's caveat — leave them in "unless the
+          // opponent has 1 prize". At one Prize the squared divisor puts `prize`
+          // at 60 and no amount of stickiness touches it, so the exception falls
+          // out of the two terms rather than needing to be written.
+          const stick = wallScore(E.db, this.eff, this.top(me.active));
+          s += Math.min(W.dangerSwap, invested) * (1 - stick * W.wallStick) + prize;
         } else if (delta <= 0) {
           // Nothing threatens the Active AND the replacement hits no harder, so
           // this is neither an escape nor an upgrade — just Energy spent to
@@ -1631,4 +1743,4 @@ class AI {
   }
 }
 
-if (typeof module !== 'undefined') module.exports = { AI, AI_WEIGHTS };
+if (typeof module !== 'undefined') module.exports = { AI, AI_WEIGHTS, wallScore };

@@ -100,7 +100,7 @@ anything done.
   It also carries the **AI verb coverage** check, which scans source rather than playing anything:
   every verb in `effects.js` must be scored by `ai.js` or sit on `UNSCORED_ON_PURPOSE`. That opt-out
   list is the deliverable, and *[why an unscored verb is invisible to everything else →](AI.md)*
-- **`powertest.js`** (154 tests) builds boards by hand — no decks, no setup — fires a Power and
+- **`powertest.js`** (162 tests) builds boards by hand — no decks, no setup — fires a Power and
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
   Power working. See [ENGINE.md](ENGINE.md).

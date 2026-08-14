@@ -24,7 +24,7 @@ const os = require('os');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const { CARD_DB, DECKS } = require('../src/cards.js');
+const { CARD_DB, DECKS, OPPONENT_DECKS } = require('../src/cards.js');
 const { EFFECTS } = require('../src/effects.js');
 const { Engine } = require('../src/engine.js');
 
@@ -36,6 +36,23 @@ const REF = process.argv[3] || 'HEAD';
 // deck sitting at 40% is only a regression if the control says it should be 50.
 const CONTROL = process.argv.includes('--control');
 const ROOT = path.join(__dirname, '..');
+
+// --gbc DUELS ON THE LADDER'S DECKS INSTEAD OF THE FOUR THEME DECKS, and it
+// exists because the default pool made this tool blind to a whole class of
+// change — 13 Aug 2026.
+//
+// The four theme decks are Base Set only and hold 11 "wall" cards between them
+// (240 cards), none of them Kangaskhan, Chansey, Snorlax or Electabuzz. So the
+// stickiness change, which is entirely about how those are played, measured at
+// 51.0% +/- 5.0 — and that number was not "no effect", it was "the harness
+// never dealt the situation". The 18 ladder decks hold 112, and they are what
+// the player actually faces now.
+//
+// Read the per-deck table with even more care here: 18 unbalanced decks across
+// three sets are further from each other than the four theme decks are, so a
+// row means very little without --control beside it.
+const GBC = process.argv.includes('--gbc');
+const POOL = GBC ? OPPONENT_DECKS : DECKS;
 
 // Pull the baseline out of git rather than keeping a copy around to rot.
 const baseSrc = execSync(`git show ${REF}:Shadowless/src/ai.js`, { cwd: path.join(ROOT, '..'), maxBuffer: 1 << 24 }).toString();
@@ -53,7 +70,7 @@ if (baseSrc === fs.readFileSync(path.join(ROOT, 'src/ai.js'), 'utf8')) {
 // One game. `newSeat` says which seat the working-tree AI takes.
 function playGame(deckA, deckB, seed, newSeat) {
   const E = new Engine(CARD_DB, EFFECTS, { seed });
-  E.newGame(DECKS[deckA], DECKS[deckB], ['A', 'B']);
+  E.newGame(POOL[deckA], POOL[deckB], ['A', 'B']);
   E.setupAuto(0); E.setupConfirm(0);
   E.setupAuto(1); E.setupConfirm(1);
   const Challenger = CONTROL ? OldAI : NewAI;
@@ -74,7 +91,7 @@ function playGame(deckA, deckB, seed, newSeat) {
   return E.state.winner === newSeat ? 'new' : 'old';
 }
 
-const names = Object.keys(DECKS);
+const names = Object.keys(POOL);
 let win = 0, loss = 0, dead = 0;
 const perDeck = {};
 

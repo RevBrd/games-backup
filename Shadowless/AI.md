@@ -31,7 +31,7 @@ node tools/aiduel.js 8                  # vs HEAD
 node tools/aiduel.js 8 HEAD --control   # baseline vs ITSELF — run this too
 ```
 
-### Five ways this measurement lies, all of them paid for
+### Six ways this measurement lies, all of them paid for
 
 **Never read selftest's win rates as AI quality.** Both seats run the same AI there, so seat 0's
 figure measures first-player advantage and drifts several points from any change that alters game
@@ -61,6 +61,21 @@ share the fault*, so it cancels. A player who watches it happen once never trust
 **When a fault is rare, symmetric, or about what the AI can perceive rather than how it scores,
 assert it in `powertest.js` and count it in `aitest.js` — do not ask the duel.** The duel measures
 average strength and nothing else.
+
+**`aiduel.js` played only the four Base Set theme decks, so it could not see a change about any
+other card.** The default pool is 240 cards holding **11** Pokémon the stickiness work classifies as
+walls — and not one Kangaskhan, Chansey, Snorlax or Electabuzz, which are the four the work is
+*for*. Overgrowth contains none at all. The change measured 51.0% ± 5.0 and the honest reading of
+that number is **not** "no effect"; it is "the harness never dealt the situation".
+
+This is the most dangerous entry in this list, because it fails *silently and in the safe direction*.
+A blind harness reports 50% for anything, which reads as "your change did nothing" — the one verdict
+nobody argues with. Everything above at least looked like a result.
+
+`--gbc` swaps the pool for the **18 ladder decks**, which hold 112 wall cards and are what the player
+actually faces now. Control run first, as ever: 50.0% ± 1.9 over 2,592 games. **The four theme decks
+were the whole game when this tool was written and they are now a sixth of the card pool** — assume
+the default pool is unrepresentative for anything touching a card outside Base Set.
 
 **`selftest.js`'s AI ladder was asserting a statistical claim at a sample that could not carry it,
 and it looked like a verdict rather than noise.** The check is `expert beats novice`, and it ran at
@@ -195,15 +210,57 @@ score given up 2928 → 1419, retreats that *improved* the hit 53% → 61%.
 fitted in a game whose state was wrong, and a scalar sweep could only trade one end of it against
 the other. When a sweep plateaus at zero, suspect the shape before you believe the conclusion.
 
-**Still open: the bot has no concept of a Pokémon whose job is to stand there.** The re-tune fixed
-*rescuing too eagerly*; it did not teach the AI that Kangaskhan, Chansey, Snorlax and Electabuzz are
-supposed to soak damage until they die. Trevor's proposal was a per-card tag; the counter-proposal is
-to **derive** it, since everything that makes those four walls is already in the card data — a Basic
-with **no evolution anywhere in its family** (Trevor's refinement, and the right one: "cannot evolve
-further" would call Charizard a wall), high HP, high retreat cost, and attacks that inflict status or
-draw. That composes to 1,251 cards with no authoring, where a tag is per-card labour every new set
-would inherit and some session would skip. Keep a short override list for what the derivation gets
-wrong — an override is a decision somebody made and can be counted; a tag on everything is not.
+## Stickiness — what a Pokémon is *for*
+
+**Built 13 Aug 2026**, from Trevor's playtest note that Kangaskhan, Chansey, Snorlax and an
+Electabuzz were being retreated when they should have stood and soaked. No weight can express that,
+because it is not a claim about the position — it is a claim about the card.
+
+**Proposed as a per-card tag and built as a derivation.** A tag is per-card labour on 221 cards going
+on 1,251, inherited by every set added afterwards and skipped by the first session in a hurry.
+Everything that makes those four walls is already in the data, so a tag would be re-typing a fact
+rather than adding one. Three signals — HP, retreat cost, and an attack that pays rent for standing
+there (drawing, stalling, or locking down) — over **terminal Basics only**.
+
+**That last restriction is Trevor's and it is the load-bearing part.** The tempting rule is "cannot
+evolve any further" and it calls **Charizard** a wall: 120 HP, retreat 3, nothing evolves from it. A
+Stage 2 is three cards of investment and you badly want to rescue it. A Basic with nowhere to go has
+no future to protect.
+
+Utility is matched by **effect verb, not card text** (`STALL_VERBS` in `ai.js`), because Tauros
+carries `STATUS_SELF_ON_TAILS` — it confuses *itself*. A regex on "Confused" makes Tauros a wall.
+
+It comes out sparse and it finds cards nobody named: **23 of 150 species** score above zero, with
+Kangaskhan, Snorlax and **Lickitung** at 0.90, Chansey 0.80, **Onix** and Lapras 0.70, Electabuzz
+0.60 — and Charizard, Blastoise, Alakazam and Pikachu at flat 0. Lickitung and Onix arriving
+unprompted is the argument for deriving rather than listing.
+
+**Stickiness suppresses the rescue, never the Prize.** A wall about to die is the card doing its job,
+so what it has "invested" was always going to be spent — but conceding a Prize can still lose the
+game outright. That split is also how Trevor's own caveat, *leave them in unless the opponent has one
+Prize*, falls out of the arithmetic rather than being written as a special case: at one Prize the
+squared divisor puts that term at 60 and no amount of stickiness reaches it.
+
+**Measured at +0.2 points and kept anyway** — 51.2% against 51.0% with the weight zeroed, over 2,592
+`--gbc` games. Not a hedge: the rescue branch requires `danger >= remainingHP`, and a wall's defining
+property is too much HP to be in that state until it is *already hurt*, which is exactly when Trevor
+watched it happen. This is the "rare, symmetric, about perception" case that this file has said twice
+already belongs in `powertest.js` rather than in a duel, and it has eight assertions there — including
+the Charizard exclusion and the one-Prize override.
+
+**Weakness and Resistance reach the retreat comparison now, too.** Trevor's note that the bot was not
+reading them into its damage predictions was right in exactly one place: three of the four forecast
+paths went through `computeDamage`, and `bestAffordableDamage` — the "one currency" comparator the
+retreat delta runs on — did not. It answered *"would the Pokémon I am swapping to hit harder?"* in
+printed numbers, so a 30 that is really 60 against the thing actually standing opposite counted as
+30. Both operands were wrong in different directions at once, which is why it never looked like a
+bias. Flat in a duel (50.8% ± 5.0), better on the independent yardstick — retreats costing the turn's
+attack 25% → 23%, retreats improving the hit 61% → 63% — and kept on correctness: the engine's own
+comment promises the AI can never predict something the engine would not do.
+
+**Left open.** Stickiness only reads the *rescue*. A wall is not yet preferred when **promoting** off
+the Bench, and `potential()` still prices a benched Pokémon in printed damage — the Active/Bench unit
+split above. Those are the same refactor and it is still not obviously worth it.
 
 **First-player advantage is real and it has a measured size.** Expert mirrors had suggested 58–67%
 for whoever is seated first. `aiduel.js --control` settles it: the baseline AI played against

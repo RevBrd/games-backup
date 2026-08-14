@@ -20,14 +20,20 @@ The list is in no meaningful order. Please edit or remove items appropriately if
   "New deck", and the name resolved to the blueprint. See `COLLECTION.md`.
 * AI is still attaching invalid energies to its pokemon when no other options exist. Maybe due to planning for future evolutions. We should consider changing even if so.
 * Opponent declined to attack - log# 22-12-05
-* Opponent retreated a Kangaskhan instead of tanking. Electabuzz should have been left in too - log# 22-20-14
-  — *the derived "stickiness" idea is for this one; see `GRABHIST.md`*
+* ~~Opponent retreated a Kangaskhan instead of tanking. Electabuzz should have been left in too~~ - log# 22-20-14
+  **DONE 13 Aug.** Derived stickiness, not a per-card tag — terminal Basics only, scored on HP,
+  retreat cost and stalling attacks. Kangaskhan/Snorlax 0.90, Chansey 0.80, Electabuzz 0.60, and it
+  found Lickitung and Onix on its own. See `AI.md`.
 * Opponent avoids powering up Arcanine because my Mewtwo's Psychic builds damage based on opp energy,
   ~~illegally retreats pokemon,~~ and uses Gust of Wind to drag out a pokemon already in the active spot,
   ~~illegally retreated a second time by not flipping the coin while confused~~ - log#
   **CONFUSION DONE 13 Aug** — the flip exists now, and the Energy is paid before it. The Gust item is
   real but is a different bug than it looks: see `GRABHIST.md`. The Arcanine half is still open.
 * Opponent should better calculate when to promote a pokemon from the bench, considering number of turns needed to power it up.
+- ~~Opponent should calculate weakness and resistance into its damage predictions.~~ **DONE 13 Aug.**
+  Right in exactly one place: three of the four forecast paths already did, `bestAffordableDamage`
+  did not, and that is the one the retreat decision runs on.
+- The two free energies after base1 is proving too much. I would rather ditch them and include base1 energies in the card pool for subsequent sets but with their own card numbers.
 
 
 

@@ -8,7 +8,36 @@ An item that was diagnosed and *parked* gets an entry too, so nobody re-derives 
 
 ---
 
-### 13 Aug 2026 — Opus 5
+### 13 Aug 2026 — Opus 5, second pass (the AI)
+
+**"Opponent retreated a Kangaskhan instead of tanking."** Built as a **derivation**, not the per-card
+tag Trevor proposed — everything that makes a wall a wall is already in the card data, so a tag would
+be re-typing a fact rather than adding one, on 221 cards going on 1,251. Terminal Basics only, which
+is Trevor's own refinement and the load-bearing part: *"cannot evolve further"* would call Charizard
+a wall, and a Stage 2 is three cards of investment you badly want to rescue.
+
+Two details worth not re-deriving. Utility is matched by **effect verb, not card text**, because
+Tauros carries `STATUS_SELF_ON_TAILS` — it confuses *itself*, and a regex on "Confused" promotes it
+to a wall. And stickiness suppresses the **rescue** but never the **Prize**, which is how Trevor's
+own caveat — leave them in *unless the opponent has one Prize* — falls out of the arithmetic instead
+of being written as a special case.
+
+**"Opponent should calculate weakness and resistance into its damage predictions."** True in exactly
+one place. Three of the four forecast paths already went through `computeDamage`; the fourth was
+`bestAffordableDamage`, which is the only thing the retreat delta runs on. Both operands of that
+comparison were wrong in different directions at once, which is why it never looked like a bias.
+
+**The finding that outlived both.** `aiduel.js` played only the four Base Set theme decks, which hold
+**11** wall cards between them and none of the four Trevor named. The stickiness change measured
+51.0% — and that was not "no effect", it was "the harness never dealt the situation". It now takes
+`--gbc` for the 18 ladder decks (112 wall cards), which is what the player actually faces. *A blind
+harness fails silently and in the safe direction: it reports 50% for everything, which reads as "your
+change did nothing" — the one verdict nobody argues with.* Written up as the sixth entry in `AI.md`.
+
+**Method note for next time.** Two of my own tests failed on wrong card ids — `base1-5` is Clefairy,
+not Kangaskhan — and both failures looked exactly like the feature not working. Look up the id.
+
+### 13 Aug 2026 — Opus 5, first pass (the rules)
 
 **Confused Pokémon retreated without flipping.** Real, and a flat rules gap rather than an AI
 misjudgement: `confused` appeared eight times in `engine.js` and exactly one was in the attack path.

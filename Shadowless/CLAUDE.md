@@ -121,14 +121,14 @@ node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,b
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
-node tools/powertest.js                  # 154 tests for Powers, the bespoke cards and setup
+node tools/powertest.js                  # 162 tests for Powers, the bespoke cards and setup
 node tools/smoke.js shadowless.html      # 143 integration tests against the built file
 node tools/collectiontest.js             # 111 tests for the save file, decks and variants
 node tools/progresstest.js               # 71 tests for the ladder, unlocks and rewards
 node tools/packtest.js                   # 57 tests, 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 node tools/aitest.js 6                   # AI behaviour counts — not pass/fail
-node tools/aiduel.js 8                   # AI vs HEAD's AI; add --control first
+node tools/aiduel.js 8                   # AI vs HEAD's AI; --control first, --gbc for ladder decks
 ```
 
 **The last two measure whether the bot plays *well*, which no suite can see.** They are not pass/fail
@@ -241,11 +241,12 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 
 ## Open
 
-1. **The AI has no concept of a Pokemon whose job is to stand there.** The 13 Aug retreat re-tune
-   fixed *rescuing too eagerly* — squaring `retreatPrize`'s divisor, 55.9% +/- 4.2 against its
-   predecessor — but Kangaskhan, Chansey and Snorlax are still retreated rather than left to soak.
-   The proposal is to DERIVE stickiness from the card data rather than tag it per card. That, the
-   deck balance it moved, and the first-player figure all live in [AI.md](AI.md).
+1. **The AI stretch of 13 Aug is done and [AI.md](AI.md) holds all of it** — the retreat re-tune
+   (squaring `retreatPrize`'s divisor, 55.9% +/- 4.2), Weakness and Resistance reaching the retreat
+   comparison, and DERIVED stickiness so the bot stops retreating Kangaskhan and Snorlax. What is
+   still open there: stickiness reads only the rescue, so a wall is not yet preferred when PROMOTING
+   off the Bench, and `potential()` still prices a benched Pokemon in printed damage. Same refactor,
+   still not obviously worth it. Deck balance and the first-player figure live there too.
 2. **Blueprints have no dedicated screen** — a "this deck is four cards away" view over your saved
    layouts. The mechanism exists; see [COLLECTION.md](COLLECTION.md).
 3. **Southern Islands and progression-gated promo intrusion** are both unsettled pack questions and

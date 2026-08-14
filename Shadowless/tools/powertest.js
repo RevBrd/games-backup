@@ -10,7 +10,7 @@
 const { CARD_DB, DECKS } = require('../src/cards.js');
 const { EFFECTS } = require('../src/effects.js');
 const { Engine } = require('../src/engine.js');
-require('../src/ai.js');
+const { wallScore } = require('../src/ai.js');   // `AI` is imported lower down
 
 let pass = 0, fail = 0;
 const T = (name, fn) => {
@@ -2152,6 +2152,102 @@ T('the AI values a Confused retreat at the Energy plus half of the rest', () => 
     throw new Error(`the flip is free to the bot: ${plain} unconfused, ${muddled} Confused, bill ${paid}`);
   if (Math.abs((paid + (plain - paid) / 2) - muddled) > 1e-9)
     throw new Error(`expected ${paid + (plain - paid) / 2}, got ${muddled}`);
+  return true;
+});
+
+// ------------------------------------------- what a Pokemon is FOR (walls)
+// Asserted here rather than dueled, and that is the doctrine in AI.md rather
+// than a shortcut. Stickiness measured at +0.2 points over 2,592 games even on
+// the ladder decks, which hold ten times the walls the theme decks do — because
+// the rescue branch needs `danger >= remainingHP`, and a wall's whole problem
+// is that it has too much HP to be in that state until it is already hurt.
+// Which is exactly when Trevor watched it happen.
+//
+// A duel measures average strength. This is a bot doing something visibly
+// stupid in a position a human recognises, and those are worth more than their
+// win rate.
+console.log('\nStickiness — Pokemon whose job is to stand there');
+
+const named = n => Object.values(CARD_DB).find(c => c.name === n && c.kind === 'pokemon');
+const stick = n => wallScore(CARD_DB, EFFECTS, named(n));
+
+T('the four Trevor named all derive as walls, with nobody tagging them', () => {
+  for (const n of ['Kangaskhan', 'Chansey', 'Snorlax', 'Electabuzz'])
+    if (stick(n) < 0.5) throw new Error(`${n} scored ${stick(n)}`);
+  return true;
+});
+
+T('and so do two he did not — the derivation is not a list in disguise', () => {
+  // Lickitung and Onix were never mentioned; they arrive on their own merits.
+  return stick('Lickitung') >= 0.5 && stick('Onix') >= 0.5;
+});
+
+T('TERMINAL BASICS ONLY — a Stage 2 is investment, not a wall', () => {
+  // The tempting rule is "cannot evolve any further", and it calls Charizard a
+  // wall: 120 HP, retreat 3, nothing evolves from it. Trevor's refinement is
+  // what keeps three cards of investment worth rescuing.
+  for (const n of ['Charizard', 'Blastoise', 'Alakazam'])
+    if (stick(n) !== 0) throw new Error(`${n} scored ${stick(n)} and must be 0`);
+  return eq(stick('Pikachu'), 0, 'a Basic that evolves is not terminal');
+});
+
+T('Tauros is not a wall, and the verb list is why', () => {
+  // Tauros carries STATUS_SELF_ON_TAILS — it confuses ITSELF. Matching card
+  // text for "Confused" would have promoted it; STALL_VERBS does not list it.
+  return stick('Tauros') < 0.5;
+});
+
+// A wall on death's door, with somewhere to run to. Scored twice off the same
+// board, so the ONLY difference is the weight under test.
+function dyingWall(activeId, prizesLeft) {
+  const E = board(activeId, ['base1-61'], 'base1-16');      // Rattata benched, vs Zapdos
+  const p = E.state.players[0], o = E.state.players[1];
+  attach(E, p.active, 'base1-97', 3);                       // something worth "rescuing"
+  attach(E, o.active, 'base1-100', 4);                      // Zapdos can afford Thunder
+  p.active.dmg = top(E, p.active).hp - 10;                  // one hit from gone
+  o.prizes = o.prizes.slice(0, prizesLeft);
+  const score = w => new AI(E, { mode: 'expert', weights: { wallStick: w } })
+    .scoreAction(0, { t: 'retreat', bench: 0 });
+  return { off: score(0), on: score(1.0) };
+}
+
+T('a dying wall is worth less to rescue than the same board says without it', () => {
+  const r = dyingWall('base2-5', 6);                        // Kangaskhan
+  if (!(r.on < r.off)) throw new Error(`rescue not suppressed: ${r.off} -> ${r.on}`);
+  return true;
+});
+
+T('a dying Stage 2 is unaffected — it is not a wall and must still be saved', () => {
+  const r = dyingWall('base1-4', 6);                        // Charizard
+  return Math.abs(r.on - r.off) < 1e-9;
+});
+
+T("...unless the opponent is one Prize from winning, which is Trevor's caveat", () => {
+  // Not written as a special case anywhere. At one Prize the squared divisor
+  // puts the Prize term at 60 and stickiness cannot reach it, so the exception
+  // falls out of the two terms sitting side by side.
+  const six = dyingWall('base2-5', 6), one = dyingWall('base2-5', 1);
+  if (!(one.on > six.on + 40))
+    throw new Error(`the last Prize did not override stickiness: ${six.on} vs ${one.on}`);
+  return true;
+});
+
+T('Weakness and Resistance reach the retreat comparison', () => {
+  // bestAffordableDamage was the one forecast path that never called
+  // computeDamage, and the retreat delta is its only consumer.
+  const E = board('base1-61', [], 'base1-2');               // Rattata vs Blastoise
+  attach(E, E.state.players[0].active, 'base1-99', 1);      // Bite is affordable
+  const A = new AI(E, { mode: 'expert' });
+  const plain = A.bestAffordableDamage(0, E.state.players[0].active);
+  eq(plain, 20, 'Bite prints 20');
+  // Rattata is Colorless. wkOverride is the per-slot hook Porygon's Conversion
+  // writes, which is the honest way to move a Weakness without inventing a field.
+  E.state.players[1].active.wkOverride = 'C';
+  const weak = A.bestAffordableDamage(0, E.state.players[0].active);
+  eq(weak, 40, 'and doubles against a defender Weak to Colorless');
+  E.state.players[1].active.wkOverride = undefined;
+  E.state.players[1].active.rsOverride = 'C';
+  eq(A.bestAffordableDamage(0, E.state.players[0].active), 0, 'Resistance subtracts too');
   return true;
 });
 
