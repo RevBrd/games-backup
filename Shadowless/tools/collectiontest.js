@@ -171,6 +171,22 @@ eq(C.available(bd, 'base1-61', ''), 4, 'and returns every card to the pool');
 
 eq(C.nextDeckId(bd), '4', 'ids are sequential and predictable');
 
+// A NAME MUST IDENTIFY AT MOST ONE DECK. Ids are the real identity, but names
+// are what the player sees and what deck select carries — and the builder's
+// default name is "New deck", so two decks colliding is the DEFAULT path, not
+// bad luck. Trevor's save held a 41-card blueprint and a 60-card deck under
+// that one name; the resolver served the blueprint, and Play would have taken
+// the 41-card list into a match.
+eq(C.uniqueDeckName(bd, 'Fresh'), 'Fresh', 'a free name is returned untouched');
+eq(C.uniqueDeckName(bd, 'Built'), 'Built 2', 'a taken name is suffixed');
+bd.decks.push({ id: '4', name: 'Built 2', list: [], built: true });
+eq(C.uniqueDeckName(bd, 'Built'), 'Built 3', 'and keeps counting past the suffix it just made');
+eq(C.uniqueDeckName(bd, 'Built', '1'), 'Built', 'a deck does not collide with itself when re-saved');
+eq(C.uniqueDeckName(bd, 'Built', '2'), 'Built 3', 'but it does collide with everyone else');
+// Layouts count. The collision that actually happened was built-vs-unbuilt, so
+// excluding drafts here would have let the exact reported bug straight back in.
+eq(C.uniqueDeckName(bd, 'Draft'), 'Draft 2', 'an unbuilt layout still owns its name');
+
 // A save written before either field existed must gain both, and every deck
 // in it was by definition a real reserving deck.
 const old = C.validate(C.migrate({ v: 1, owned: {}, decks: [{ name: 'Legacy', list: [] }] }));

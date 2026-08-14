@@ -1076,6 +1076,10 @@ class Engine {
     return !!slot && topCard(this.db, slot).playsAs === 'pokemon';
   }
 
+  // Whether a retreat may be ATTEMPTED. Confusion is deliberately not here:
+  // under the original ruleset a Confused Pokemon may try, and pays whether or
+  // not it succeeds. The flip lives in doRetreat because it has a cost, and a
+  // predicate that charges you is a predicate nobody can call twice.
   canRetreat(slot) {
     if (this.playsAsPokemon(slot)) return false;          // "can't retreat", flatly
     if (slot.status.asleep || slot.status.paralyzed) return false;
@@ -1340,6 +1344,23 @@ class Engine {
       const k = p.active.energy.findIndex(e => e.uid === uid);
       if (k === -1) return this.fail('Energy not attached');
       p.discard.push(p.active.energy.splice(k, 1)[0]);
+    }
+    // CONFUSION IS PAID FOR BEFORE IT IS ROLLED. Settled with Trevor 13 Aug
+    // 2026 from the GBC game: a Confused Pokemon may attempt to retreat, the
+    // Energy is discarded up front, and on tails the retreat simply fails —
+    // Energy gone, Pokemon still Active, still Confused. The discard above has
+    // already happened by the time we get here, which is the whole point of
+    // doing it in this order rather than flipping first.
+    //
+    // A failed attempt still uses up the turn's retreat. Otherwise a Confused
+    // Pokemon with spare Energy just re-rolls until it succeeds, which turns a
+    // real decision — is this worth the Energy? — into a formality. It is also
+    // what makes "end the turn doing nothing" a live option, which Trevor names
+    // as the correct play often enough that the rule has to permit it.
+    if (p.active.status.confused && !this.flip('Confused - retreat?')) {
+      p.retreated = true;
+      this.log(`${this.nameOf(p.active)} is Confused - the retreat fails, and the Energy is still discarded.`, 'status');
+      return { ok: true };
     }
     const old = p.active;
     clearStatus(old);

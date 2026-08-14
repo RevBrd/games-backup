@@ -31,7 +31,7 @@ node tools/aiduel.js 8                  # vs HEAD
 node tools/aiduel.js 8 HEAD --control   # baseline vs ITSELF — run this too
 ```
 
-### Four ways this measurement lies, all of them paid for
+### Five ways this measurement lies, all of them paid for
 
 **Never read selftest's win rates as AI quality.** Both seats run the same AI there, so seat 0's
 figure measures first-player advantage and drifts several points from any change that alters game
@@ -61,6 +61,27 @@ share the fault*, so it cancels. A player who watches it happen once never trust
 **When a fault is rare, symmetric, or about what the AI can perceive rather than how it scores,
 assert it in `powertest.js` and count it in `aitest.js` — do not ask the duel.** The duel measures
 average strength and nothing else.
+
+**`selftest.js`'s AI ladder was asserting a statistical claim at a sample that could not carry it,
+and it looked like a verdict rather than noise.** The check is `expert beats novice`, and it ran at
+36 games against a true rate near 61% — one standard error is 8 points, so the 50% threshold sat 1.6
+of them away and the gate went red for roughly one change in twenty on merit alone. Worse than
+flaky: the seeds are fixed, so it is *deterministic per tree*. It fails identically every run and
+reads as a finding.
+
+It cost a diagnosis on 13 Aug 2026. The confusion-on-retreat fix tripped it at 61% against a 66%
+baseline — and the **control in the same table**, expert against itself, had moved half as far in the
+same direction. Both trees passed comfortably at 90 games. The tell was there on screen and had no
+label on it.
+
+Fixed rather than tuned around, and neither half costs anything — the whole suite runs in **under
+three seconds**, so the sample was never a runtime tradeoff. The section has a floor of 90 games per
+tier, the assertion fails only on a **significant** inversion (the interval is printed beside each
+row, matching `aiduel.js`), and `expert vs expert` is now labelled as the control it always was.
+**Raising `N` narrows the interval**, so a session that wants a tighter number can still have one.
+
+The general lesson is the one this whole file keeps paying for: *a threshold is only as meaningful as
+the sample under it, and a green suite that flickers teaches sessions to distrust the suite.*
 
 **The per-deck table is not a per-deck verdict.** The four theme decks are not balanced against each
 other, so the deck rows show deck strength, not AI quality. Zap sits at 25% in the control because

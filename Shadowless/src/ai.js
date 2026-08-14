@@ -1019,6 +1019,21 @@ class AI {
         if (theirs.short === 0) s += 8;
         // never retreat into something that dies instantly
         if (danger >= this.remainingHP(b)) s -= 18;
+
+        // A CONFUSED RETREAT IS A COIN FLIP THAT CHARGES BEFORE IT ROLLS. The
+        // Energy is discarded either way, so the cost is certain and only the
+        // escape is a gamble — expected value is the guaranteed bill plus half
+        // of everything above it.
+        //
+        // Without this the bot pays full price for a 50% product and does it
+        // repeatedly, which is exactly the behaviour that made the rule worth
+        // implementing. It also, correctly, makes Switch worth more than
+        // retreating while Confused rather than merely different: T_SWITCH_OWN
+        // already scores +20 for a statused Active and skips the flip entirely.
+        if (me.active.status.confused) {
+          const paid = W.retreatBase - cost * 4;   // charged on heads and tails alike
+          s = paid + (s - paid) * 0.5;
+        }
         return s;
       }
 

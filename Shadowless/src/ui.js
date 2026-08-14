@@ -204,9 +204,26 @@ const DECK_NAMES = Object.keys(DECKS).concat([SANDBOX]);
 // Getting this wrong is invisible except in a mirror, which is how a name-only
 // lookup shipped for a job handing the opponent your edited list. Never restore
 // a default here — a call site that has not decided is a call site with the bug.
+// BUILT WINS, and that is an invariant rather than a preference. myDeckNames()
+// offers only BUILT decks, so a name arriving here on the 'mine' side is by
+// construction the name of a built deck — and a flat search could answer it
+// with an unbuilt layout that happens to share the name.
+//
+// Not hypothetical, and not an edge case: the builder's default name is "New
+// deck", so a player who saves a draft and then builds a deck without renaming
+// either gets two. Trevor's save held a 41-card blueprint and a 60-card deck
+// both called "New deck"; deck select drew the blueprint's hero card and its
+// card count under the built deck's name. resolveDeck() shares this function,
+// so Play would have handed the engine the 41-card list — nothing on the path
+// from deck select into a match calls validateDeck().
+//
+// commitBuilder() now keeps names unique, so the collision cannot recur. This
+// stays anyway: the two guards fail in opposite directions, and this is the one
+// that holds for a save written before that.
 function deckFor(name, side) {
   if (side === 'theme') return DECKS[name] || null;
-  const mine = UI.save && UI.save.decks.find(d => d.name === name);
+  const mine = UI.save && (UI.save.decks.find(d => d.name === name && deckIsBuilt(d))
+                        || UI.save.decks.find(d => d.name === name));
   // Your side falls back to the printed list, which is safe precisely because a
   // save that lacks the deck is a save that cannot be the ambiguous one.
   return mine || DECKS[name] || null;
@@ -2997,7 +3014,9 @@ function renderBuilder() {
 // select with nothing but Sandbox on it.
 function commitBuilder(built) {
   const b = UI.builder;
-  const name = (b.name || '').trim() || 'Untitled deck';
+  // Unique across the save, excluding this deck so re-saving an edit does not
+  // suffix a deck against itself. See uniqueDeckName in collection.js.
+  const name = uniqueDeckName(UI.save, (b.name || '').trim() || 'Untitled deck', b.deckId);
   let d = b.deckId != null ? findDeck(UI.save, b.deckId) : null;
   if (d && deckIsBuilt(d) && !built) {
     const can = canUnbuild(UI.save, d.id);
@@ -3130,9 +3149,13 @@ function renderDeckSelect() {
     // Edits whatever you currently have selected, which is almost always the
     // one you want — and is one click rather than a per-tile control that
     // would compete with selecting the deck in the first place.
+    // Resolved by the same rule as everything else on this screen. This used to
+    // do its own `builtDecks().concat(decks).find(byName)` — a local patch for
+    // the shadowing bug, applied at one call site out of three. deckFor now
+    // owns the rule, so there is one place it can be wrong.
     edit.onclick = () => {
-      const d = builtDecks(UI.save).concat(UI.save.decks).find(x => x.name === UI.myDeck);
-      openBuilder(d ? d.id : null);
+      const d = deckFor(UI.myDeck, 'mine');
+      openBuilder(d && d.id != null ? d.id : null);
     };
     strip.appendChild(edit);
     const nu = el('button', 'btn', 'New deck');

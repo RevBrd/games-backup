@@ -1,0 +1,626 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-13 22:29:31
+decks    you: Zap   opponent: Ronald — I'm Ronald!
+opponent expert
+seed     32538631   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Growlithe, Energy Retrieval, Growlithe, Gust of Wind, Gust of Wind, Fighting Energy, Water Energy
+  HIDDEN  your opening hand: Psychic Energy, Bill, Super Potion, Psychic Energy, Mewtwo, Psychic Energy, Gastly
+  HIDDEN  opponent's Prizes: Water Energy, Charmeleon, Growlithe, Lapras, Water Energy, Water Energy
+  HIDDEN  your Prizes: Full Heal, Drowzee, Potion, Professor Oak, Drowzee, Psychic Energy
+          New game. Seed 32538631.
+          Ronald has no Basic Pokemon - mulligan.
+          Coin flip (who goes first): TAILS
+          Ronald will go first.
+          You draws 1 extra (opponent mulligans).
+
+--- Turn 1 — Ronald ----------------------------
+          Ronald draws a card. (46 left)
+  AI      trainer   [27.8]
+          holding: Energy Retrieval, Gust of Wind, Gust of Wind, Fighting Energy, Water Energy, Charmeleon
+          Ronald plays Gust of Wind.
+          You's Gastly is dragged into the Active spot.
+  AI      trainer   [24.2]
+          holding: Energy Retrieval, Gust of Wind, Fighting Energy, Water Energy, Charmeleon
+          passed over: attach 11, attach 11, attach 8, attach 8
+          Ronald plays Gust of Wind.
+          You's Mewtwo is dragged into the Active spot.
+  AI      attach   [11]
+          holding: Energy Retrieval, Fighting Energy, Water Energy, Charmeleon
+          passed over: attach 11, attach 8, attach 8
+          Ronald attaches Fighting Energy to Growlithe.
+  AI      pass
+          holding: Energy Retrieval, Water Energy, Charmeleon
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (45 left)
+          You attaches Psychic Energy to Mewtwo.
+          You plays Bill.
+          You draws 2.
+          You plays Gust of Wind.
+          Ronald's Growlithe is dragged into the Active spot.
+
+--- Turn 3 — Ronald ----------------------------
+          Ronald draws a card. (45 left)
+  AI      attach   [11]
+          holding: Energy Retrieval, Water Energy, Charmeleon, Switch
+          passed over: attach 1.4, trainer -4
+          Ronald attaches Water Energy to Growlithe.
+  AI      pass
+          holding: Energy Retrieval, Charmeleon, Switch
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (42 left)
+          You attaches Psychic Energy to Mewtwo.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Growlithe takes 20. (40/60 left)
+
+--- Turn 5 — Ronald ----------------------------
+          Ronald draws a card. (44 left)
+  AI      trainer   [8]
+          holding: Energy Retrieval, Charmeleon, Switch, Defender
+          passed over: trainer -4, retreat -14
+          Ronald plays Defender.
+          Defender attached to Growlithe (-20 damage until the end of the opponent's next turn).
+  AI      pass
+          holding: Energy Retrieval, Charmeleon, Switch
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (41 left)
+          You benches Abra.
+          You attaches Psychic Energy to Abra.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          -20 from Defender -> 0.
+          Defender is discarded.
+
+--- Turn 7 — Ronald ----------------------------
+          Ronald draws a card. (43 left)
+  AI      evolve   [40]
+          holding: Energy Retrieval, Charmeleon, Switch, Arcanine
+          passed over: evolve 34, trainer -4, retreat -14
+          Growlithe evolves into Arcanine. Special Conditions removed.
+  AI      pass
+          holding: Energy Retrieval, Charmeleon, Switch
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (40 left)
+          You benches Jynx.
+          You attaches Psychic Energy to Jynx.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Arcanine takes 20. (60/100 left)
+
+--- Turn 9 — Ronald ----------------------------
+          Ronald draws a card. (42 left)
+  AI      attach   [32]
+          holding: Energy Retrieval, Charmeleon, Switch, Fire Energy
+          passed over: attach 15, trainer -4
+          Ronald attaches Fire Energy to Growlithe.
+  AI      pass
+          holding: Energy Retrieval, Charmeleon, Switch
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Psychic Energy to Jynx.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Arcanine takes 20. (40/100 left)
+
+--- Turn 11 — Ronald ----------------------------
+          Ronald draws a card. (41 left)
+  AI      bench   [7]
+          holding: Energy Retrieval, Charmeleon, Switch, Squirtle
+          passed over: trainer -4
+          Ronald benches Squirtle.
+  AI      pass
+          holding: Energy Retrieval, Charmeleon, Switch
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (38 left)
+          You plays Bill.
+          You draws 2.
+          You attaches Psychic Energy to Jynx.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Arcanine takes 20. (20/100 left)
+
+--- Turn 13 — Ronald ----------------------------
+          Ronald draws a card. (40 left)
+  AI      trainer   [24]
+          holding: Energy Retrieval, Charmeleon, Switch, Cubone
+          passed over: bench 7
+          Ronald plays Switch.
+          Growlithe is now Active.
+  AI      bench   [7]
+          holding: Energy Retrieval, Charmeleon, Cubone
+          passed over: retreat -35, retreat -53
+          Ronald benches Cubone.
+  AI      attack:Flare   [20]
+          holding: Energy Retrieval, Charmeleon
+          Growlithe uses Flare.
+          Mewtwo takes 20. (40/60 left)
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (35 left)
+          You plays Defender.
+          Defender attached to Mewtwo (-20 damage until the end of the opponent's next turn).
+          You plays Energy Removal.
+          Fire Energy discarded from Growlithe.
+          You attaches Psychic Energy to Abra.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Growlithe takes 20. (40/60 left)
+
+--- Turn 15 — Ronald ----------------------------
+          Ronald draws a card. (39 left)
+  AI      attach   [35]
+          holding: Energy Retrieval, Charmeleon, Fire Energy
+          passed over: attach 12, attach 8, trainer 6, attach 1.4, retreat -14
+          Ronald attaches Fire Energy to Growlithe.
+  AI      trainer   [6]
+          holding: Energy Retrieval, Charmeleon
+          passed over: retreat -35, retreat -35, retreat -53
+          Ronald plays Energy Retrieval.
+          Energy Retrieval: recovered 1 basic Energy.
+  AI      pass
+          holding: Fire Energy
+          Defender is discarded.
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (34 left)
+          You plays Bill.
+          You draws 2.
+          You attaches Psychic Energy to Gastly.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (2) -> 30 damage.
+          Growlithe takes 30. (10/60 left)
+
+--- Turn 17 — Ronald ----------------------------
+          Ronald draws a card. (38 left)
+  AI      attach   [12]
+          holding: Fire Energy, Energy Search
+          passed over: attach 8, trainer 5, retreat 3, retreat 3, attach 1.4
+          Ronald attaches Fire Energy to Arcanine.
+  AI      trainer   [5]
+          holding: Energy Search
+          passed over: retreat 3, retreat 3, retreat -15
+          Ronald plays Energy Search.
+          Energy Search: found Fighting Energy.
+  AI      retreat   [3]
+          holding: Fighting Energy
+          passed over: retreat 3, retreat -15
+          Ronald retreats Growlithe; Squirtle is now Active.
+  AI      pass
+          holding: Fighting Energy
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (31 left)
+          You plays Switch.
+          Jynx is now Active.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (0) -> 20 damage.
+          Squirtle takes 20. (20/40 left)
+
+--- Turn 19 — Ronald ----------------------------
+          Ronald draws a card. (36 left)
+  AI      attach   [28]
+          holding: Fighting Energy, Fighting Energy
+          passed over: attach 28, attach 12, attach 12, attach 4.4, attach 4.4
+          Ronald attaches Fighting Energy to Growlithe.
+  AI      pass
+          holding: Fighting Energy
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (30 left)
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (2) -> 40 damage.
+          Squirtle takes 40. (0/40 left)
+          Squirtle is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [32.5]
+          holding: Fighting Energy
+          passed over: promote 13.8, promote 6.8
+          Ronald promotes Growlithe to Active.
+
+--- Turn 21 — Ronald ----------------------------
+          Ronald draws a card. (35 left)
+  AI      attach   [12]
+          holding: Fighting Energy, Cubone
+          passed over: bench 7, attach 1.4, attach -2, retreat -13, retreat -13
+          Ronald attaches Fighting Energy to Cubone.
+  AI      bench   [7]
+          holding: Cubone
+          passed over: retreat -5, retreat -13
+          Ronald benches Cubone.
+  AI      attack:Flare   [20]
+          holding: (empty)
+          Growlithe uses Flare.
+          Jynx takes 20. (50/70 left)
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (29 left)
+          Abra evolves into Kadabra. Special Conditions removed.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (5) -> 70 damage.
+          Growlithe takes 70. (0/60 left)
+          Growlithe is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [39]
+          holding: (empty)
+          passed over: promote 13.8, promote 6.8
+          Ronald promotes Cubone to Active.
+
+--- Turn 23 — Ronald ----------------------------
+          Ronald draws a card. (34 left)
+  AI      attach   [62]
+          holding: Fire Energy
+          passed over: attach 8, attach -2, retreat -24, retreat -42
+          Ronald attaches Fire Energy to Arcanine.
+  AI      retreat   [7.5]
+          holding: (empty)
+          passed over: retreat -24
+          Ronald retreats Cubone; Arcanine is now Active.
+  AI      attack:Flamethrower   [98]
+          holding: (empty)
+          Arcanine uses Flamethrower.
+          Arcanine discards 1 R Energy as a cost.
+          Jynx takes 50. (0/70 left)
+          Jynx is Knocked Out!
+          Ronald takes a Prize. (5 left)
+          You promotes Mewtwo to Active.
+
+--- Turn 24 — You -------------------------------
+          You draws a card. (28 left)
+          You benches Drowzee.
+          You benches Mewtwo.
+          You attaches Psychic Energy to Kadabra.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (2) -> 30 damage.
+          Arcanine takes 30. (0/100 left)
+          Arcanine is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [13.8]
+          holding: Water Energy
+          passed over: promote 13.8
+          Ronald promotes Cubone to Active.
+
+--- Turn 25 — Ronald ----------------------------
+          Ronald draws a card. (33 left)
+  AI      attach   [11]
+          holding: Water Energy, Energy Search
+          passed over: attach 8, trainer 5
+          Ronald attaches Water Energy to Cubone.
+  AI      trainer   [5]
+          holding: Energy Search
+          passed over: retreat -24
+          Ronald plays Energy Search.
+          Energy Search: found Water Energy.
+  AI      attack:Snivel   [20]
+          holding: Water Energy
+          Cubone uses Snivel.
+          Damage from Mewtwo is reduced by 20 next turn.
+
+--- Turn 26 — You -------------------------------
+          You draws a card. (27 left)
+          You attaches Psychic Energy to Mewtwo.
+          You plays Potion.
+          Mewtwo heals 20. (0 damage left)
+          Kadabra evolves into Alakazam. Special Conditions removed.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          -20 from Snivel -> 0.
+          Cubone: DAMAGE_REDUCTION wears off.
+
+--- Turn 27 — Ronald ----------------------------
+          Ronald draws a card. (31 left)
+  AI      trainer   [30]
+          holding: Water Energy, Professor Oak
+          passed over: attach 8, attach -2, retreat -24
+          Ronald plays Professor Oak.
+          Ronald discards 1 card(s) and draws 7.
+  AI      attach   [8]
+          holding: Fire Energy, Dewgong, PlusPower, Water Energy, Squirtle, Charmander, Water Energy
+          passed over: attach 8, attach 8, bench 7, bench 7, attach -2
+          Ronald attaches Fire Energy to Cubone.
+  AI      bench   [7]
+          holding: Dewgong, PlusPower, Water Energy, Squirtle, Charmander, Water Energy
+          passed over: bench 7, retreat -16
+          Ronald benches Squirtle.
+  AI      bench   [7]
+          holding: Dewgong, PlusPower, Water Energy, Charmander, Water Energy
+          passed over: retreat -16, retreat -24
+          Ronald benches Charmander.
+  AI      attack:Snivel   [20]
+          holding: Dewgong, PlusPower, Water Energy, Water Energy
+          Cubone uses Snivel.
+          Damage from Mewtwo is reduced by 20 next turn.
+
+--- Turn 28 — You -------------------------------
+          You draws a card. (26 left)
+          You plays Gust of Wind.
+          Ronald's Charmander is dragged into the Active spot.
+          You attaches Psychic Energy to Mewtwo.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (0) -> 10 damage.
+          Charmander takes 10. (40/50 left)
+          Cubone: DAMAGE_REDUCTION wears off.
+
+--- Turn 29 — Ronald ----------------------------
+          Ronald draws a card. (23 left)
+  AI      attach   [22]
+          holding: Dewgong, PlusPower, Water Energy, Water Energy, Fighting Energy
+          passed over: attach 22, attach 21, attach 21, attach 21, attach 1.4
+          Ronald attaches Water Energy to Squirtle.
+  AI      pass
+          holding: Dewgong, PlusPower, Water Energy, Fighting Energy
+
+--- Turn 30 — You -------------------------------
+          You draws a card. (25 left)
+          You plays Energy Removal.
+          Fire Energy discarded from Cubone.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (0) -> 10 damage.
+          Charmander takes 10. (30/50 left)
+
+--- Turn 31 — Ronald ----------------------------
+          Ronald draws a card. (22 left)
+  AI      attach   [21]
+          holding: Dewgong, PlusPower, Water Energy, Fighting Energy, Fighting Energy
+          passed over: attach 21, attach 21, attach 12, attach 12, attach 8
+          Ronald attaches Water Energy to Charmander.
+  AI      trainer   [6]
+          holding: Dewgong, PlusPower, Fighting Energy, Fighting Energy
+          passed over: retreat -16, retreat -21.5, retreat -29.5
+          Ronald plays PlusPower.
+          PlusPower attached to Charmander (+10 this turn).
+  AI      attack:Scratch   [20]
+          holding: Dewgong, Fighting Energy, Fighting Energy
+          Charmander uses Scratch.
+          +10 from a bonus -> 20.
+          Mewtwo takes 20. (40/60 left)
+          PlusPower is discarded.
+
+--- Turn 32 — You -------------------------------
+          You draws a card. (24 left)
+          You retreats Mewtwo; Alakazam is now Active.
+          Alakazam uses Confuse Ray.
+          Charmander takes 30. (0/50 left)
+          Coin flip (Confused?): TAILS
+          Charmander is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [41]
+          holding: Dewgong, Fighting Energy, Fighting Energy
+          passed over: promote 39, promote 13.8
+          Ronald promotes Squirtle to Active.
+
+--- Turn 33 — Ronald ----------------------------
+          Ronald draws a card. (21 left)
+  AI      attach   [12]
+          holding: Dewgong, Fighting Energy, Fighting Energy, Fire Energy
+          passed over: attach 12, attach 8, attach -2, attach -2, attach -2
+          Ronald attaches Fighting Energy to Cubone.
+  AI      attack:Bubble   [23]
+          holding: Dewgong, Fighting Energy, Fire Energy
+          Squirtle uses Bubble.
+          Alakazam takes 10. (70/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Alakazam is now Paralyzed.
+
+--- Turn 34 — You -------------------------------
+          You draws a card. (23 left)
+          You plays Full Heal.
+          Alakazam is healed of all Special Conditions.
+          Alakazam uses Confuse Ray.
+          Squirtle takes 30. (10/40 left)
+          Coin flip (Confused?): TAILS
+
+--- Turn 35 — Ronald ----------------------------
+          Ronald draws a card. (20 left)
+  AI      retreat   [29.5]
+          holding: Dewgong, Fighting Energy, Fire Energy, Water Energy
+          passed over: retreat 29.5, attach 18.5, attach -2, attach -2, attach -2
+          Ronald retreats Squirtle; Cubone is now Active.
+  AI      attach   [22]
+          holding: Dewgong, Fighting Energy, Fire Energy, Water Energy
+          passed over: attach 1.4, attach 1.4, attach -2, attach -2, attach -2
+          Ronald attaches Water Energy to Squirtle.
+  AI      attack:Snivel   [20]
+          holding: Dewgong, Fighting Energy, Fire Energy
+          Cubone uses Snivel.
+          Damage from Alakazam is reduced by 20 next turn.
+
+--- Turn 36 — You -------------------------------
+          You draws a card. (22 left)
+          You attaches Psychic Energy to Mewtwo.
+          Alakazam uses Confuse Ray.
+          -20 from Snivel -> 10.
+          Cubone takes 10. (30/40 left)
+          Coin flip (Confused?): TAILS
+          Cubone: DAMAGE_REDUCTION wears off.
+
+--- Turn 37 — Ronald ----------------------------
+          Ronald draws a card. (19 left)
+  AI      retreat   [35]
+          holding: Dewgong, Fighting Energy, Fire Energy, Fighting Energy
+          passed over: retreat 22.5, attach -2, attach -2, attach -2, attach -2
+          Ronald retreats Cubone; Cubone is now Active.
+  AI      attach   [12]
+          holding: Dewgong, Fighting Energy, Fire Energy, Fighting Energy
+          passed over: attach 12, attach 8, attach -2, attach -2, attach -2
+          Ronald attaches Fighting Energy to Cubone.
+  AI      attack:Snivel   [20]
+          holding: Dewgong, Fire Energy, Fighting Energy
+          Cubone uses Snivel.
+          Damage from Alakazam is reduced by 20 next turn.
+
+--- Turn 38 — You -------------------------------
+          You draws a card. (21 left)
+          You attaches Psychic Energy to Drowzee.
+          Alakazam uses Confuse Ray.
+          -20 from Snivel -> 10.
+          Cubone takes 10. (30/40 left)
+          Coin flip (Confused?): HEADS
+          Cubone is now Confused.
+          Cubone: DAMAGE_REDUCTION wears off.
+
+--- Turn 39 — Ronald ----------------------------
+          Ronald draws a card. (18 left)
+  AI      evolve   [45]
+          holding: Dewgong, Fire Energy, Fighting Energy, Marowak
+          passed over: evolve 25, retreat 22.5, attach 18.5, retreat 17, attach -2
+          Cubone evolves into Marowak. Special Conditions removed.
+  AI      attach   [18.5]
+          holding: Dewgong, Fire Energy, Fighting Energy
+          passed over: attach 15, attach 4.4, attach -2, attach -2, attach -2
+          Ronald attaches Fighting Energy to Cubone.
+  AI      pass
+          holding: Dewgong, Fire Energy
+
+--- Turn 40 — You -------------------------------
+          You draws a card. (20 left)
+          Alakazam uses Confuse Ray.
+          Marowak takes 30. (20/60 left)
+          Coin flip (Confused?): TAILS
+
+--- Turn 41 — Ronald ----------------------------
+          Ronald draws a card. (17 left)
+  AI      retreat   [41.5]
+          holding: Dewgong, Fire Energy, Seel
+          passed over: retreat 41.5, bench 7, attach 4.4, attach -2, attach -2
+          Ronald retreats Marowak; Squirtle is now Active.
+  AI      bench   [7]
+          holding: Dewgong, Fire Energy, Seel
+          passed over: attach 1.4, attach -2, attach -2
+          Ronald benches Seel.
+  AI      attach   [1.4]
+          holding: Dewgong, Fire Energy
+          passed over: attach 1.4, attach -2, attach -2
+          Ronald attaches Fire Energy to Marowak.
+  AI      attack:Bubble   [23]
+          holding: Dewgong
+          Squirtle uses Bubble.
+          Alakazam takes 10. (60/80 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 42 — You -------------------------------
+          You draws a card. (19 left)
+          Alakazam uses Confuse Ray.
+          Squirtle takes 30. (0/40 left)
+          Coin flip (Confused?): HEADS
+          Squirtle is now Confused.
+          Squirtle is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [37.5]
+          holding: Dewgong
+          passed over: promote 20.8, promote 6.8
+          Ronald promotes Cubone to Active.
+
+--- Turn 43 — Ronald ----------------------------
+          Ronald draws a card. (16 left)
+  AI      retreat   [58.5]
+          holding: Dewgong, Fighting Energy
+          passed over: retreat 40.5, evolve 25, attach 12, attach 1.4, attach -2
+          Ronald retreats Cubone; Seel is now Active.
+  AI      evolve   [31]
+          holding: Dewgong, Fighting Energy
+          passed over: attach 18.5, attach 12, attach 4.4
+          Seel evolves into Dewgong. Special Conditions removed.
+  AI      attach   [18.5]
+          holding: Fighting Energy
+          passed over: attach 12, attach 11
+          Ronald attaches Fighting Energy to Cubone.
+  AI      pass
+          holding: (empty)
+
+--- Turn 44 — You -------------------------------
+          You draws a card. (18 left)
+          You attaches Psychic Energy to Drowzee.
+          Alakazam uses Confuse Ray.
+          Dewgong takes 30. (50/80 left)
+          Coin flip (Confused?): TAILS
+
+--- Turn 45 — Ronald ----------------------------
+          Ronald draws a card. (15 left)
+  AI      bench   [7]
+          holding: Lapras
+          Ronald benches Lapras.
+  AI      pass
+          holding: (empty)
+
+--- Turn 46 — You -------------------------------
+          You draws a card. (17 left)
+          Alakazam uses Confuse Ray.
+          Dewgong takes 30. (20/80 left)
+          Coin flip (Confused?): HEADS
+          Dewgong is now Confused.
+
+--- Turn 47 — Ronald ----------------------------
+          Ronald draws a card. (14 left)
+  AI      bench   [2]
+          holding: Charmander
+          Ronald benches Charmander.
+  AI      pass
+          holding: (empty)
+
+--- Turn 48 — You -------------------------------
+          You draws a card. (16 left)
+          Alakazam uses Confuse Ray.
+          Dewgong takes 30. (0/80 left)
+          Coin flip (Confused?): HEADS
+          Dewgong is now Confused.
+          Dewgong is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         48 turns
+
+==========================================================
+PACKS OPENED
+
+  Base Set
+    PlusPower  Uncommon
+    Charmeleon  Uncommon
+    Dratini  Uncommon
+    Fire Energy  
+    Fire Energy  
+    Squirtle  Common
+    Onix  Common
+    Switch  Common
+    Grass Energy  
+    Potion  Common
+    Scoop Up  Rare
+
+  Base Set
+    Defender  Uncommon
+    Professor Oak  Uncommon
+    Double Colorless Energy  Uncommon
+    Psychic Energy  
+    Lightning Energy  
+    Doduo  Common
+    Squirtle  Common
+    Potion  Common
+    Switch  Common
+    Charmander  Common
+    Dragonair  Rare
+
+  Base Set
+    Magmar  Uncommon
+    Haunter  Uncommon
+    Wartortle  Uncommon
+    Fire Energy  
+    Psychic Energy  
+    Pidgey  Common
+    Diglett  Common
+    Potion  Common
+    Voltorb  Common
+    Charmander  Common
+    Poliwrath  Rare Holo   NEW

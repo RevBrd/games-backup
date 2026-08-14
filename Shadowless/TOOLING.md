@@ -100,7 +100,7 @@ anything done.
   It also carries the **AI verb coverage** check, which scans source rather than playing anything:
   every verb in `effects.js` must be scored by `ai.js` or sit on `UNSCORED_ON_PURPOSE`. That opt-out
   list is the deliverable, and *[why an unscored verb is invisible to everything else →](AI.md)*
-- **`powertest.js`** (139 tests) builds boards by hand — no decks, no setup — fires a Power and
+- **`powertest.js`** (154 tests) builds boards by hand — no decks, no setup — fires a Power and
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
   Power working. See [ENGINE.md](ENGINE.md).
@@ -119,7 +119,7 @@ anything done.
   `UI.myDeck` and `UI.foeDeck`, which is free play's contract — on the ladder the opponent's deck
   comes off the roster entry and `UI.foeDeck` is ignored. Without that declaration those tests
   quietly stop testing what they say they test.
-- **`collectiontest.js`** (105 tests) drives `src/collection.js`, which is pure data. It **stubs
+- **`collectiontest.js`** (111 tests) drives `src/collection.js`, which is pure data. It **stubs
   `localStorage` rather than skipping persistence**, because "does a save survive a round trip" is
   the whole point and testing everything except that would be testing the easy half. Its sharper
   cases are the failures — see [COLLECTION.md](COLLECTION.md).

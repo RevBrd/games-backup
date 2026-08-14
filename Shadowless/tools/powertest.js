@@ -2052,5 +2052,108 @@ T('Super Energy Removal keeps its two choices apart', () => {
   return true;
 });
 
+// ------------------------------------------------- Confusion and retreating
+// Settled with Trevor 13 Aug 2026 from the GBC game, and asserted here rather
+// than measured by a duel: this is a RULE, so it is about what the AI is
+// allowed to do rather than how well it scores. See AI.md.
+//
+// Found by reading a saved match log — the bot retreated out of Confusion four
+// times in one game without a single flip, because `confused` appeared exactly
+// once in engine.js and it was in the attack path.
+console.log('\nConfusion — retreating');
+
+// Machoke: retreat cost 3, so the Energy bill is unmistakable in the discard.
+function confusedRetreat(flip) {
+  const E = board('base1-34', ['base1-58']);            // Machoke active, Rattata benched
+  const p = E.state.players[0];
+  attach(E, p.active, 'base1-97', 3);                   // Fighting ×3
+  p.active.status.confused = true;
+  E.dev.forceFlip = flip;
+  const r = E.act(0, { t: 'retreat', bench: 0 });
+  E.dev.forceFlip = null;
+  return { E, p, r };
+}
+
+T('a Confused Pokemon may still attempt to retreat', () => {
+  const E = board('base1-34', ['base1-58']);
+  attach(E, E.state.players[0].active, 'base1-97', 3);
+  E.state.players[0].active.status.confused = true;
+  if (!E.canRetreat(E.state.players[0].active)) throw new Error('Confusion blocked the attempt outright');
+  // ...and the attempt is offered, or the human never gets to make the call.
+  const acts = E.legalActions(0);
+  if (!acts.some(a => a.t === 'retreat')) throw new Error('no retreat was offered');
+  return true;
+});
+
+T('on heads it retreats normally and the Confusion is left behind', () => {
+  const { p, r } = confusedRetreat('H');
+  if (!r.ok) throw new Error(r.error);
+  eq(p.active.stack[0].id, 'base1-58', 'Rattata is now Active');
+  eq(p.bench[0].status.confused, false, 'the retreating Pokemon sheds its status');
+  eq(p.discard.length, 3, 'three Energy paid');
+  return true;
+});
+
+T('on tails the retreat fails, and the Energy is still gone', () => {
+  const { p, r } = confusedRetreat('T');
+  // The ACTION succeeded — it is the retreat that failed. A rejected action
+  // would let the UI offer it again for free, which is the whole point.
+  if (!r.ok) throw new Error('the attempt should resolve, not be refused: ' + r.error);
+  eq(p.active.stack[0].id, 'base1-34', 'Machoke is still Active');
+  eq(p.active.status.confused, true, 'and still Confused');
+  eq(p.active.energy.length, 0, 'the Energy was paid before the flip');
+  eq(p.discard.length, 3, 'and it is in the discard pile');
+  return true;
+});
+
+T('a failed retreat uses up the turn — no re-rolling until it works', () => {
+  const { E, p } = confusedRetreat('T');
+  attach(E, p.active, 'base1-97', 3);                   // fresh Energy to try again with
+  const r2 = E.act(0, { t: 'retreat', bench: 0 });
+  if (r2.ok) throw new Error('a second attempt was allowed in the same turn');
+  eq(p.discard.length, 3, 'and the second attempt cost nothing');
+  return true;
+});
+
+T('Asleep and Paralyzed still block the attempt outright, flip or no flip', () => {
+  for (const st of ['asleep', 'paralyzed']) {
+    const E = board('base1-34', ['base1-58']);
+    const p = E.state.players[0];
+    attach(E, p.active, 'base1-97', 3);
+    p.active.status[st] = true;
+    if (E.canRetreat(p.active)) throw new Error(`${st} allowed a retreat`);
+    const r = E.act(0, { t: 'retreat', bench: 0 });
+    if (r.ok) throw new Error(`${st} let a retreat through act()`);
+    if (p.discard.length) throw new Error(`${st} charged Energy for a refused action`);
+  }
+  return true;
+});
+
+// NOT "a Confused retreat scores lower" — that is false, and the reason is the
+// interesting part. The Energy is certain but everything else the retreat does
+// is a coin flip, INCLUDING the parts that were bad. A retreat the bot already
+// hated really is less bad when half of it may not happen; it still loses to
+// passing, which is where that decision actually gets made.
+//
+// So the invariant is about the DISTANCE from the certain bill: whatever the
+// retreat was worth above or below the Energy it costs, the flip halves it.
+T('the AI values a Confused retreat at the Energy plus half of the rest', () => {
+  const score = confused => {
+    const E = board('base1-34', ['base1-58']);
+    const p = E.state.players[0];
+    attach(E, p.active, 'base1-97', 3);
+    p.active.status.confused = confused;
+    return scorer(E).scoreAction(0, { t: 'retreat', bench: 0 });
+  };
+  const E0 = board('base1-34', ['base1-58']);
+  const paid = scorer(E0).W.retreatBase - 3 * 4;      // Machoke retreats for 3
+  const plain = score(false), muddled = score(true);
+  if (Math.abs(muddled - paid) >= Math.abs(plain - paid))
+    throw new Error(`the flip is free to the bot: ${plain} unconfused, ${muddled} Confused, bill ${paid}`);
+  if (Math.abs((paid + (plain - paid) / 2) - muddled) > 1e-9)
+    throw new Error(`expected ${paid + (plain - paid) / 2}, got ${muddled}`);
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

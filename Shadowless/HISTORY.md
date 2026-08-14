@@ -250,11 +250,6 @@ justifies trusting the corpus, and it is repeatable if anyone ever doubts it.
 
 ## Ideas raised and shelved, with the reason
 
-- **A curated escalating alt-art tier** — Trevor's read on TCG Pocket's approach: pick specific
-  cards, give them an extra rarer version. Genuinely interesting, and shelved 8 Aug because it does
-  not *compose* the way the existing axes do. Each of those is "one flag, roll it against any card,
-  done"; this one needs someone to choose and tag specific cards, which is per-card design labour
-  rather than a system. Worth a firm yes/no eventually so it stops being a vague someday-idea.
 - **Opponent cards getting variant treatment** — wanted, and started deliberately small. Agreed
   8 Aug: roll it live at play time, purely cosmetic, no persistence, same render function on both
   sides of the board. The deeper version — Job 7 named opponents with their own persistent pulled

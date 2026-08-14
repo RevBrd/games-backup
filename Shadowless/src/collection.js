@@ -252,6 +252,27 @@ function nextDeckId(save) {
 
 const findDeck = (save, id) => save.decks.find(d => String(d.id) === String(id)) || null;
 
+// A NAME MUST IDENTIFY AT MOST ONE DECK. Ids are the real identity and always
+// were, but names are what the player sees, what deck select lists, and what
+// `UI.myDeck` holds — so a duplicate name is an ambiguity the player has no way
+// to see and no way to resolve.
+//
+// The builder's default name is "New deck", which makes the collision the
+// DEFAULT path rather than an unlucky one: save a draft, build a deck, rename
+// neither. That is exactly how Trevor's save came to hold a 41-card blueprint
+// and a 60-card deck under one name, and `deckFor` served the blueprint.
+//
+// Suffixed rather than refused. The name that collides is nearly always the one
+// the player never chose, so refusing would be friction over a decision they did
+// not make — and the new name is on the tile the moment they return, which is
+// the feedback. Renaming afterwards is one click and costs nothing.
+function uniqueDeckName(save, name, exceptId) {
+  const taken = n => save.decks.some(d =>
+    String(d.id) !== String(exceptId) && d.name === n);
+  if (!taken(name)) return name;
+  for (let i = 2; ; i++) if (!taken(`${name} ${i}`)) return `${name} ${i}`;
+}
+
 // The last BUILT deck may not be un-built or deleted. With un-building now
 // lossless this is no longer protection against losing work — it is protection
 // against a confusing empty state where deck select offers nothing but
@@ -473,4 +494,4 @@ function importSave(text) {
 // ONE LINE, deliberately. tools/build.js strips this with a line-anchored
 // regex, so a multi-line export leaves its own body behind in the bundle and
 // breaks the built HTML. The builder now refuses that rather than emitting it.
-if (typeof module !== 'undefined') module.exports = { SAVE_VERSION, SAVE_KEY, SAVE_BACKUP_KEY, PLAIN, VARIANTS, VARIANT_ORDER, VARIANT_BY_KEY, vkey, vflags, isPlain, vscore, vlabel, newSave, ensureShape, grant, grantDeck, ownedOf, ownedTotal, isOwned, bestVariant, pilesOf, packsHeld, packsTotal, addPacks, takePack, deckIsBuilt, builtDecks, nextDeckId, findDeck, canUnbuild, deckShortfall, reservedCounts, available, copiesByNameIn, collectionStats, MIGRATIONS, migrate, validate, loadSave, writeSave, exportSave, importSave };
+if (typeof module !== 'undefined') module.exports = { SAVE_VERSION, SAVE_KEY, SAVE_BACKUP_KEY, PLAIN, VARIANTS, VARIANT_ORDER, VARIANT_BY_KEY, vkey, vflags, isPlain, vscore, vlabel, newSave, ensureShape, grant, grantDeck, ownedOf, ownedTotal, isOwned, bestVariant, pilesOf, packsHeld, packsTotal, addPacks, takePack, deckIsBuilt, builtDecks, nextDeckId, findDeck, uniqueDeckName, canUnbuild, deckShortfall, reservedCounts, available, copiesByNameIn, collectionStats, MIGRATIONS, migrate, validate, loadSave, writeSave, exportSave, importSave };

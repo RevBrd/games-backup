@@ -10,7 +10,7 @@ somebody gets left off.
 
 | Model | When | What |
 |---|---|---|
-| **Opus 5** — Claude Chat | through 10 Aug 2026 | Jobs 1–4b: the rules engine, the AI, every Base Set card script, the art system, the UI, the module layout and the first smoke suite. The ten snapshots are in `backups/pre-job4c/Claude Chat Version History/` |
+| **Opus 5** — Claude Chat | through 3 Aug 2026 | Jobs 1–4b: the rules engine, the AI, every Base Set card script, the art system, the UI, the module layout and the first smoke suite. The name "Shadowless". The ten snapshots are in `backups/pre-job4c/Claude Chat Version History/` |
 | **Opus 5** | 4 Aug 2026 | Port into the collection, the naming, the data audit, `selftest.js`, the Node build port, the repo layout |
 | **Opus 5** | 5–6 Aug 2026 | Job 4: Pokémon Powers and the Base Set oddities. Job 4g: the mat, the fitter, the title screen, the real card scans |
 | **Opus 5** | 7–8 Aug 2026 | `tools/shot.js` and the DEV fit readout, the hand face, the mat's edge, the first documentation split |
@@ -24,7 +24,11 @@ somebody gets left off.
 
 | **Opus 5** | 12 Aug 2026 | **Job 7 entire** — progression and named opponents. `src/progress.js` and `data/ladder.json`, with brackets derived from the live-set list rather than declared, so a set going live adds one with no code change. The opponent screen, the payout moved off `homeSet()` (which is why Jungle and Fossil packs had been unreachable), free play, `tools/progresstest.js`, and a ladder section in `smoke.js`. Beforehand: repaired the Job 7 groundwork — ten card references onto live sets, and Ken's deck cleared of a defect it never had. Also two landmines found in passing, a silently narrowing `gen_cards.js` and a NUL byte inside the NUL-byte checker |
 
+| **Opus 5** | 13 Aug 2026 | Maintenance from Trevor's playtest logs and [GRABBAG.md](GRABBAG.md). Confusion now flips on retreat and charges before it rolls, with the AI taught to price it. A deck name resolves to the deck deck select is offering — a blueprint and a built deck sharing the builder's default name had the tile drawing the wrong one and Play fielding a 41-card list. And `selftest.js`'s AI-ladder gate, which was asserting a statistical claim at a sample that could not carry it |
+
 Trevor's own contributions are not a row here because they are not a model's — but they are load
 bearing and they are named where they were made: the four authentic theme deck lists in
 `data/decks.json`, the Shadowless watermark, the 1st Edition correction from his own collection, the
 board design lock, and every ruling in [RULINGS.md](RULINGS.md) marked *settled with Trevor*.
+
+Trevor's save file progression log: [TREVOR.md](TREVOR.md)

@@ -1,0 +1,534 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-13 22:20:14
+decks    you: Zap   opponent: Isaac — Lightning Club
+opponent expert
+seed     1575823547   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Voltorb, Lightning Energy, Lightning Energy, Lightning Energy, Potion, Magneton, Voltorb
+  HIDDEN  your opening hand: Psychic Energy, Psychic Energy, Potion, Energy Removal, Gust of Wind, Haunter, Abra
+  HIDDEN  opponent's Prizes: Defender, Lightning Energy, Lightning Energy, Magneton, Lightning Energy, Switch
+  HIDDEN  your Prizes: Psychic Energy, Psychic Energy, Professor Oak, Bill, Computer Search, Psychic Energy
+          New game. Seed 1575823547.
+          Isaac has no Basic Pokemon - mulligan.
+          Coin flip (who goes first): TAILS
+          Isaac will go first.
+          You draws 1 extra (opponent mulligans).
+
+--- Turn 1 — Isaac -----------------------------
+          Isaac draws a card. (46 left)
+  AI      attach   [21]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Potion, Magneton, Lightning Energy
+          Isaac attaches Lightning Energy to Voltorb.
+  AI      attack:Tackle   [10]
+          holding: Lightning Energy, Lightning Energy, Potion, Magneton, Lightning Energy
+          Voltorb uses Tackle.
+          Abra takes 10. (20/30 left)
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (45 left)
+          You plays Potion.
+          Abra heals 10. (0 damage left)
+          You plays Defender.
+          Defender attached to Abra (-20 damage until the end of the opponent's next turn).
+          You attaches Psychic Energy to Abra.
+          Abra uses Psyshock.
+          Voltorb takes 10. (30/40 left)
+          Coin flip (Paralyzed?): HEADS
+          Voltorb is now Paralyzed.
+
+--- Turn 3 — Isaac -----------------------------
+          Isaac draws a card. (45 left)
+  AI      attach   [18]
+          holding: Lightning Energy, Lightning Energy, Potion, Magneton, Lightning Energy, Magnemite
+          passed over: attach 18, attach 18, bench 7, trainer -0.5, attach -2
+          Isaac attaches Lightning Energy to Voltorb.
+  AI      bench   [7]
+          holding: Lightning Energy, Potion, Magneton, Lightning Energy, Magnemite
+          passed over: trainer -0.5
+          Isaac benches Magnemite.
+  AI      pass
+          holding: Lightning Energy, Potion, Magneton, Lightning Energy
+          Defender is discarded.
+          Voltorb is no longer Paralyzed.
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (44 left)
+          You benches Drowzee.
+          You attaches Psychic Energy to Abra.
+          You plays Energy Removal.
+          Lightning Energy discarded from Voltorb.
+          Abra uses Psyshock.
+          Voltorb takes 10. (20/40 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 5 — Isaac -----------------------------
+          Isaac draws a card. (44 left)
+  AI      evolve   [25]
+          holding: Lightning Energy, Potion, Magneton, Lightning Energy, Magneton
+          passed over: evolve 25, attach 22, attach 22, attach 21, attach 21
+          Magnemite evolves into Magneton. Special Conditions removed.
+  AI      attach   [21]
+          holding: Lightning Energy, Potion, Lightning Energy, Magneton
+          passed over: attach 21, attach 12, attach 12, trainer 7, attach -2
+          Isaac attaches Lightning Energy to Voltorb.
+  AI      trainer   [7]
+          holding: Potion, Lightning Energy, Magneton
+          passed over: retreat -16, retreat -29.5
+          Isaac plays Potion.
+          Voltorb heals 20. (0 damage left)
+  AI      attack:Tackle   [10]
+          holding: Lightning Energy, Magneton
+          Voltorb uses Tackle.
+          Abra takes 10. (20/30 left)
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (43 left)
+          You plays Bill.
+          You draws 2.
+          You attaches Psychic Energy to Abra.
+          Abra evolves into Kadabra. Special Conditions removed.
+          You plays Energy Removal.
+          Lightning Energy discarded from Voltorb.
+          Kadabra uses Super Psy.
+          Voltorb takes 50. (0/40 left)
+          Voltorb is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [20.8]
+          holding: Lightning Energy, Magneton
+          passed over: promote 13.8
+          Isaac promotes Magneton to Active.
+
+--- Turn 7 — Isaac -----------------------------
+          Isaac draws a card. (43 left)
+  AI      attach   [18]
+          holding: Lightning Energy, Magneton, Tauros
+          passed over: attach 15, bench 7
+          Isaac attaches Lightning Energy to Voltorb.
+  AI      bench   [7]
+          holding: Magneton, Tauros
+          Isaac benches Tauros.
+  AI      pass
+          holding: Magneton
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (40 left)
+          You attaches Psychic Energy to Drowzee.
+          Kadabra uses Super Psy.
+          Magneton takes 50. (10/60 left)
+
+--- Turn 9 — Isaac -----------------------------
+          Isaac draws a card. (42 left)
+  AI      bench   [7]
+          holding: Magneton, Kangaskhan
+          Isaac benches Kangaskhan.
+  AI      pass
+          holding: Magneton
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (39 left)
+          You benches Abra.
+          Kadabra uses Super Psy.
+          Magneton takes 50. (0/60 left)
+          Magneton is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [41]
+          holding: Magneton
+          passed over: promote 31.3, promote 20.8
+          Isaac promotes Voltorb to Active.
+
+--- Turn 11 — Isaac -----------------------------
+          Isaac draws a card. (41 left)
+  AI      attach   [8]
+          holding: Magneton, Lightning Energy
+          passed over: attach 8, retreat 6.5, retreat 6.5, attach -2
+          Isaac attaches Lightning Energy to Tauros.
+  AI      retreat   [6.5]
+          holding: Magneton
+          passed over: retreat 6.5
+          Isaac retreats Voltorb; Tauros is now Active.
+  AI      pass
+          holding: Magneton
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (38 left)
+          You attaches Psychic Energy to Abra.
+          Kadabra uses Super Psy.
+          Resistance: -30 -> 20.
+          Tauros takes 20. (40/60 left)
+
+--- Turn 13 — Isaac -----------------------------
+          Isaac draws a card. (40 left)
+  AI      trainer   [10]
+          holding: Magneton, Bill
+          Isaac plays Bill.
+          Isaac draws 2.
+  AI      bench   [7]
+          holding: Magneton, Switch, Electabuzz
+          passed over: trainer -4
+          Isaac benches Electabuzz.
+  AI      pass
+          holding: Magneton, Switch
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (37 left)
+          You plays Gust of Wind.
+          Isaac's Voltorb is dragged into the Active spot.
+          You attaches Psychic Energy to Drowzee.
+          Kadabra uses Super Psy.
+          Voltorb takes 50. (0/40 left)
+          Voltorb is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [31.3]
+          holding: Magneton, Switch
+          passed over: promote 24.3, promote 13.8
+          Isaac promotes Kangaskhan to Active.
+
+--- Turn 15 — Isaac -----------------------------
+          Isaac draws a card. (37 left)
+  AI      attach   [28]
+          holding: Magneton, Switch, Lightning Energy
+          passed over: attach 22, attach 11, trainer -4
+          Isaac attaches Lightning Energy to Tauros.
+  AI      pass
+          holding: Magneton, Switch
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Psychic Energy to Abra.
+          You plays Professor Oak.
+          You discards 3 card(s) and draws 7.
+          You benches Gastly.
+          Kadabra uses Super Psy.
+          Resistance: -30 -> 20.
+          Kangaskhan takes 20. (70/90 left)
+
+--- Turn 17 — Isaac -----------------------------
+          Isaac draws a card. (36 left)
+  AI      trainer   [8]
+          holding: Magneton, Switch, Defender
+          passed over: trainer -4
+          Isaac plays Defender.
+          Defender attached to Kangaskhan (-20 damage until the end of the opponent's next turn).
+  AI      pass
+          holding: Magneton, Switch
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (28 left)
+          You attaches Psychic Energy to Gastly.
+          Kadabra uses Super Psy.
+          Resistance: -30 -> 20.
+          -20 from Defender -> 0.
+          Defender is discarded.
+
+--- Turn 19 — Isaac -----------------------------
+          Isaac draws a card. (35 left)
+  AI      attach   [22]
+          holding: Magneton, Switch, Lightning Energy
+          passed over: attach 11, attach -2, trainer -4
+          Isaac attaches Lightning Energy to Electabuzz.
+  AI      pass
+          holding: Magneton, Switch
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (27 left)
+          You benches Jynx.
+          You attaches Psychic Energy to Jynx.
+          Kadabra uses Super Psy.
+          Resistance: -30 -> 20.
+          Kangaskhan takes 20. (50/90 left)
+
+--- Turn 21 — Isaac -----------------------------
+          Isaac draws a card. (34 left)
+  AI      trainer   [7]
+          holding: Magneton, Switch, Potion
+          passed over: trainer -4
+          Isaac plays Potion.
+          Kangaskhan heals 20. (20 damage left)
+  AI      pass
+          holding: Magneton, Switch
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (26 left)
+          You attaches Psychic Energy to Jynx.
+          Kadabra uses Super Psy.
+          Resistance: -30 -> 20.
+          Kangaskhan takes 20. (50/90 left)
+
+--- Turn 23 — Isaac -----------------------------
+          Isaac draws a card. (33 left)
+  AI      bench   [7]
+          holding: Magneton, Switch, Electabuzz
+          passed over: trainer -4
+          Isaac benches Electabuzz.
+  AI      pass
+          holding: Magneton, Switch
+
+--- Turn 24 — You -------------------------------
+          You draws a card. (25 left)
+          You attaches Psychic Energy to Jynx.
+          You plays PlusPower.
+          PlusPower attached to Kadabra (+10 this turn).
+          Kadabra uses Super Psy.
+          Resistance: -30 -> 20.
+          +10 from a bonus -> 30.
+          Kangaskhan takes 30. (20/90 left)
+          PlusPower is discarded.
+
+--- Turn 25 — Isaac -----------------------------
+          Isaac draws a card. (32 left)
+  AI      attach   [28.5]
+          holding: Magneton, Switch, Lightning Energy
+          passed over: trainer 24, attach 22, attach 11, attach -2
+          Isaac attaches Lightning Energy to Electabuzz.
+  AI      trainer   [24]
+          holding: Magneton, Switch
+          Isaac plays Switch.
+          Electabuzz is now Active.
+  AI      attack:Thunderpunch   [31]
+          holding: Magneton
+          passed over: attack:Thundershock 23
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): TAILS
+          Tails -> 30 damage, and Electabuzz will take 10.
+          Kadabra takes 30. (20/60 left)
+          Electabuzz does 10 damage to itself. (10 total)
+
+--- Turn 26 — You -------------------------------
+          You draws a card. (24 left)
+          You attaches Psychic Energy to Abra.
+          Kadabra uses Super Psy.
+          Electabuzz takes 50. (10/70 left)
+
+--- Turn 27 — Isaac -----------------------------
+          Isaac draws a card. (31 left)
+  AI      retreat   [4.5]
+          holding: Magneton, Magnemite
+          passed over: retreat 3.5, bench 2, retreat -14.5
+          Isaac retreats Electabuzz; Tauros is now Active.
+  AI      bench   [2]
+          holding: Magneton, Magnemite
+          Isaac benches Magnemite.
+  AI      attack:Stomp   [80]
+          holding: Magneton
+          Tauros uses Stomp.
+          Coin flip (Stomp): HEADS
+          Heads -> 30 damage.
+          Kadabra takes 30. (0/60 left)
+          Kadabra is Knocked Out!
+          Isaac takes a Prize. (5 left)
+          You promotes Jynx to Active.
+
+--- Turn 28 — You -------------------------------
+          You draws a card. (23 left)
+          You benches Jynx.
+          You attaches Psychic Energy to Jynx.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (2) -> 40 damage.
+          Resistance: -30 -> 10.
+          Tauros takes 10. (30/60 left)
+
+--- Turn 29 — Isaac -----------------------------
+          Isaac draws a card. (30 left)
+  AI      evolve   [25]
+          holding: Magneton, Defender, Voltorb
+          passed over: trainer 8, bench 2, retreat -39, retreat -39, retreat -57
+          Magnemite evolves into Magneton. Special Conditions removed.
+  AI      trainer   [8]
+          holding: Defender, Voltorb
+          passed over: bench 2, retreat -39, retreat -39, retreat -57, retreat -57
+          Isaac plays Defender.
+          Defender attached to Tauros (-20 damage until the end of the opponent's next turn).
+  AI      bench   [2]
+          holding: Voltorb
+          passed over: retreat -39, retreat -39, retreat -39, retreat -39
+          Isaac benches Voltorb.
+  AI      attack:Stomp   [25]
+          holding: (empty)
+          Tauros uses Stomp.
+          Coin flip (Stomp): TAILS
+          Tails -> 20 damage, and Tauros will take 0.
+          Jynx takes 20. (50/70 left)
+
+--- Turn 30 — You -------------------------------
+          You draws a card. (22 left)
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (3) -> 50 damage.
+          Resistance: -30 -> 20.
+          -20 from Defender -> 0.
+          Defender is discarded.
+
+--- Turn 31 — Isaac -----------------------------
+          Isaac draws a card. (29 left)
+  AI      attach   [22]
+          holding: Lightning Energy
+          passed over: attach 22, attach 18, attach 12, attach 8, attach -2
+          Isaac attaches Lightning Energy to Electabuzz.
+  AI      attack:Stomp   [25]
+          holding: (empty)
+          Tauros uses Stomp.
+          Coin flip (Stomp): HEADS
+          Heads -> 30 damage.
+          Jynx takes 30. (20/70 left)
+
+--- Turn 32 — You -------------------------------
+          You draws a card. (21 left)
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (3) -> 50 damage.
+          Resistance: -30 -> 20.
+          Tauros takes 20. (10/60 left)
+
+--- Turn 33 — Isaac -----------------------------
+          Isaac draws a card. (28 left)
+  AI      evolve   [34]
+          holding: Electrode
+          passed over: retreat 22.5, retreat 9, retreat -9, retreat -9, retreat -9
+          Voltorb evolves into Electrode. Special Conditions removed.
+  AI      retreat   [22.5]
+          holding: (empty)
+          passed over: retreat 9, retreat 9, retreat -9, retreat -9
+          Isaac retreats Tauros; Electabuzz is now Active.
+  AI      attack:Thundershock   [23]
+          holding: (empty)
+          Electabuzz uses Thundershock.
+          Jynx takes 10. (10/70 left)
+          Coin flip (Paralyzed?): HEADS
+          Jynx is now Paralyzed.
+
+--- Turn 34 — You -------------------------------
+          You draws a card. (20 left)
+          Jynx is no longer Paralyzed.
+
+--- Turn 35 — Isaac -----------------------------
+          Isaac draws a card. (27 left)
+  AI      trainer   [7]
+          holding: Potion
+          Isaac plays Potion.
+          Kangaskhan heals 20. (50 damage left)
+  AI      attack:Thundershock   [78]
+          holding: (empty)
+          Electabuzz uses Thundershock.
+          Jynx takes 10. (0/70 left)
+          Coin flip (Paralyzed?): TAILS
+          Jynx is Knocked Out!
+          Isaac takes a Prize. (4 left)
+          You promotes Drowzee to Active.
+
+--- Turn 36 — You -------------------------------
+          You draws a card. (19 left)
+          You attaches Psychic Energy to Jynx.
+          Drowzee uses Confuse Ray.
+          Electabuzz takes 10. (60/70 left)
+          Coin flip (Confused?): HEADS
+          Electabuzz is now Confused.
+
+--- Turn 37 — Isaac -----------------------------
+          Isaac draws a card. (26 left)
+  AI      attach   [22]
+          holding: Lightning Energy, Voltorb
+          passed over: attach 18.5, attach 12, attach 12, attach 8, attach 8
+          Isaac attaches Lightning Energy to Electabuzz.
+  AI      attack:Thundershock   [23]
+          holding: Voltorb
+          Electabuzz uses Thundershock.
+          Coin flip (Confusion): TAILS
+          Electabuzz is Confused - the attack fails and it hits itself for 30.
+
+--- Turn 38 — You -------------------------------
+          You draws a card. (18 left)
+          You attaches Psychic Energy to Jynx.
+          You retreats Drowzee; Jynx is now Active.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (4) -> 60 damage.
+          Electabuzz takes 60. (0/70 left)
+          Electabuzz is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [30.5]
+          holding: Voltorb
+          passed over: promote 27.8, promote 20.8, promote 13.8, promote 3.3
+          Isaac promotes Electabuzz to Active.
+
+--- Turn 39 — Isaac -----------------------------
+          Isaac draws a card. (25 left)
+  AI      bench   [2]
+          holding: Voltorb, Magnemite
+          passed over: bench 2
+          Isaac benches Voltorb.
+  AI      attack:Thundershock   [23]
+          holding: Magnemite
+          Electabuzz uses Thundershock.
+          Jynx takes 10. (60/70 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 40 — You -------------------------------
+          You draws a card. (17 left)
+          You plays Bill.
+          You draws 2.
+          You attaches Psychic Energy to Drowzee.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (6) -> 80 damage.
+          Electabuzz takes 80. (0/70 left)
+          Electabuzz is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [27.8]
+          holding: Magnemite
+          passed over: promote 20.8, promote 13.8, promote 13.8, promote 3.3
+          Isaac promotes Electrode to Active.
+
+--- Turn 41 — Isaac -----------------------------
+          Isaac draws a card. (24 left)
+  AI      bench   [2]
+          holding: Magnemite, Kangaskhan
+          passed over: bench 2
+          Isaac benches Magnemite.
+  AI      pass
+          holding: Kangaskhan
+
+--- Turn 42 — You -------------------------------
+          You draws a card. (14 left)
+          You plays Gust of Wind.
+          Isaac's Tauros is dragged into the Active spot.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (5) -> 70 damage.
+          Resistance: -30 -> 40.
+          Tauros takes 40. (0/60 left)
+          Tauros is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         42 turns
+
+==========================================================
+PACKS OPENED
+
+  Base Set
+    Magikarp  Uncommon
+    Arcanine  Uncommon
+    Kadabra  Uncommon
+    Water Energy  
+    Fighting Energy  
+    Fighting Energy  
+    Ponyta  Common
+    Lightning Energy  
+    Metapod  Common
+    Fire Energy  
+    Super Energy Removal  Rare   NEW
+
+  Base Set
+    Defender  Uncommon
+    Arcanine  Uncommon
+    Ivysaur  Uncommon
+    Grass Energy  
+    Fighting Energy  
+    Fire Energy  
+    Squirtle  Common
+    Metapod  Common
+    Lightning Energy  
+    Starmie  Common
+    Mewtwo  Rare Holo

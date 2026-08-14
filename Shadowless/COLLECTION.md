@@ -108,6 +108,47 @@ it is invisible outside a mirror match, which is exactly the case nobody plays b
 **Never restore a default for `side`.** A call site that has not decided is a call site with the bug.
 Two `smoke.js` tests cover it, and both were confirmed to fail without the fix.
 
+### The same heading, the second half of the same bug — 13 Aug 2026
+
+Saying which *side* a name belongs to was only half of it. Within your own save a name still had to
+identify **one** deck, and it did not: `deckFor` searched `save.decks` flat and took the first match,
+while `myDeckNames()` — which decides what deck select is even allowed to offer — lists **built decks
+only**. So the screen offered one deck and the resolver answered with another.
+
+Reported by Trevor from a real save, and the numbers are worth keeping because they say how ordinary
+it was:
+
+```
+id=2  "New deck"  built=false  41 cards      a blueprint he had saved earlier
+id=3  "New deck"  built=true   60 cards      the deck he had just built
+```
+
+The tile carried the built deck's name and the blueprint's hero art and card count. **The builder's
+default name is "New deck"**, so this is the *default path* — save a draft, build a deck, rename
+neither — rather than an unlucky collision.
+
+And it was not cosmetic. `resolveDeck()` shares `deckFor`, and **nothing between deck select and a
+match calls `validateDeck()`**, so pressing Play would have taken an illegal 41-card list into a
+scored ladder game.
+
+Two guards now, failing in opposite directions:
+
+- **`deckFor` prefers a BUILT deck**, which simply makes the resolver agree with the list of names
+  the screen is willing to show. The unbuilt fallback is outranked, not deleted — a layout is still
+  reachable by name when nothing built claims it.
+- **`commitBuilder` keeps names unique**, suffixing rather than refusing. The colliding name is
+  nearly always the one the player never chose, so refusing would be friction over a decision they
+  did not make, and the new name is on the tile the moment they return.
+
+The first is what repairs a save written before this; the second is what stops it recurring. Trevor's
+save needed no migration — it resolves correctly the moment the rule changes.
+
+**A local patch for this already existed at one call site and hid how general it was.** The Edit
+button did its own `builtDecks().concat(decks).find(byName)` — correct, unexplained, and applied to
+one of the three places that needed it. It now goes through `deckFor` like everything else. *If you
+find yourself hand-rolling a deck lookup, the bug is that `deckFor` is wrong, not that your call site
+is special.*
+
 ## Scroll position survives a render
 
 `render()` throws the whole DOM away and rebuilds it, so every scroll position in the game is

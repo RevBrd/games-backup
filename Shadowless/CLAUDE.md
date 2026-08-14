@@ -36,7 +36,7 @@ the eleventh and is reached through `CREDITS.md`.
 |---|---|
 | [ENGINE.md](ENGINE.md) | Adding or changing cards. The eight systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer, the `baseCard`/`topCard` split and `takeEnergy`. Also: why full games never test any of it |
 | [AI.md](AI.md) | Touching `ai.js`, or quoting a number about how well the bot plays. The two instruments, the four ways that measurement lies, the silent-failure surface, and the weight re-tune that is the next AI job |
-| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect |
+| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. If you have trouble with the layout, re-read this section. It's long enough to have missed something |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source |
@@ -121,9 +121,9 @@ node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,b
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
-node tools/powertest.js                  # 139 tests for Powers, the bespoke cards and setup
-node tools/smoke.js shadowless.html      # 108 integration tests against the built file
-node tools/collectiontest.js             # 105 tests for the save file, decks and variants
+node tools/powertest.js                  # 154 tests for Powers, the bespoke cards and setup
+node tools/smoke.js shadowless.html      # 143 integration tests against the built file
+node tools/collectiontest.js             # 111 tests for the save file, decks and variants
 node tools/progresstest.js               # 71 tests for the ladder, unlocks and rewards
 node tools/packtest.js                   # 57 tests, 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it

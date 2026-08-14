@@ -1,0 +1,438 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-13 22:12:05
+decks    you: Zap   opponent: Hollis — Blackout
+opponent novice
+seed     1296055239   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Water Energy, Fighting Energy, Staryu, Water Energy, Squirtle, Water Energy, Machoke
+  HIDDEN  your opening hand: Gust of Wind, Psychic Energy, Kadabra, Gastly, Haunter, Item Finder, Psychic Energy
+  HIDDEN  opponent's Prizes: Energy Removal, Sandshrew, Machop, Fighting Energy, Fighting Energy, Machop
+  HIDDEN  your Prizes: Potion, Bill, Psychic Energy, Bill, Psychic Energy, Bill
+          New game. Seed 1296055239.
+          Coin flip (who goes first): TAILS
+          Hollis will go first.
+
+--- Turn 1 — Hollis ----------------------------
+          Hollis draws a card. (46 left)
+  AI      attach   [40.1]
+          holding: Water Energy, Fighting Energy, Water Energy, Water Energy, Machoke, Squirtle
+          Hollis attaches Water Energy to Staryu.
+  AI      bench   [9.7]
+          holding: Water Energy, Fighting Energy, Water Energy, Machoke, Squirtle
+          passed over: retreat -29.9
+          Hollis benches Squirtle.
+  AI      attack:Slap   [16.4]
+          holding: Water Energy, Fighting Energy, Water Energy, Machoke
+          Staryu uses Slap.
+          Gastly takes 20. (10/30 left)
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (46 left)
+          You benches Drowzee.
+          You attaches Psychic Energy to Drowzee.
+
+--- Turn 3 — Hollis ----------------------------
+          Hollis draws a card. (45 left)
+  AI      attach   [21.8]
+          holding: Water Energy, Fighting Energy, Water Energy, Machoke, Farfetch'd
+          passed over: attach 21.3, attach 20.4, attach 17.5, bench 10.7, attach 7.3
+          Hollis attaches Water Energy to Squirtle.
+  AI      bench   [6.5]
+          holding: Water Energy, Fighting Energy, Machoke, Farfetch'd
+          passed over: retreat -24.3, retreat -38.1
+          Hollis benches Farfetch'd.
+  AI      attack:Slap   [75.5]
+          holding: Water Energy, Fighting Energy, Machoke
+          Staryu uses Slap.
+          Gastly takes 20. (0/30 left)
+          Gastly is Knocked Out!
+          Hollis takes a Prize. (5 left)
+          You promotes Drowzee to Active.
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (45 left)
+          You attaches Psychic Energy to Drowzee.
+          Drowzee uses Confuse Ray.
+          Staryu takes 10. (30/40 left)
+          Coin flip (Confused?): TAILS
+
+--- Turn 5 — Hollis ----------------------------
+          Hollis draws a card. (44 left)
+  AI      attach   [43.2]
+          holding: Water Energy, Fighting Energy, Machoke, Energy Removal, Machop
+          passed over: attach 38.7, attach 27, trainer 22.9, attach 6.9, bench 5.9
+          Hollis attaches Water Energy to Farfetch'd.
+  AI      trainer   [21.3]
+          holding: Fighting Energy, Machoke, Energy Removal, Machop
+          passed over: retreat 6.8, bench 0.3, retreat -27.1, retreat -30.4
+          Hollis plays Energy Removal.
+          Psychic Energy discarded from Drowzee.
+  AI      retreat   [0.9]
+          holding: Fighting Energy, Machoke, Machop
+          passed over: bench -2.9, retreat -21, retreat -40.4
+          Hollis retreats Staryu; Farfetch'd is now Active.
+  AI      bench   [8]
+          holding: Fighting Energy, Machoke, Machop
+          Hollis benches Machop.
+  AI      attack:Leek Slap   [12.2]
+          holding: Fighting Energy, Machoke
+          Farfetch'd uses Leek Slap.
+          Coin flip (attack succeeds?): HEADS
+          Drowzee takes 30. (20/50 left)
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (44 left)
+          You attaches Psychic Energy to Drowzee.
+          You plays Gust of Wind.
+          Hollis's Squirtle is dragged into the Active spot.
+          You plays Professor Oak.
+          You discards 3 card(s) and draws 7.
+          You plays Energy Removal.
+          Water Energy discarded from Farfetch'd.
+          Drowzee uses Confuse Ray.
+          Squirtle takes 10. (30/40 left)
+          Coin flip (Confused?): HEADS
+          Squirtle is now Confused.
+
+--- Turn 7 — Hollis ----------------------------
+          Hollis draws a card. (43 left)
+  AI      attach   [37.7]
+          holding: Fighting Energy, Machoke, Water Energy
+          passed over: attach 35, attach 34.2, attach 28.1, evolve 27.8, attach 27.1
+          Hollis attaches Fighting Energy to Farfetch'd.
+  AI      evolve   [23.6]
+          holding: Machoke, Water Energy
+          Machop evolves into Machoke. Special Conditions removed.
+  AI      pass
+          holding: Water Energy
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (36 left)
+          You plays Professor Oak.
+          You discards 6 card(s) and draws 7.
+          You benches Abra.
+          You attaches Psychic Energy to Abra.
+          You plays Energy Removal.
+          Water Energy discarded from Squirtle.
+          Drowzee uses Pound.
+          Squirtle takes 10. (20/40 left)
+
+--- Turn 9 — Hollis ----------------------------
+          Hollis draws a card. (42 left)
+  AI      attach   [36.7]
+          holding: Water Energy, PlusPower
+          passed over: attach 30.7, attach 18.9, attach 10.5, attach -2.1
+          Hollis attaches Water Energy to Staryu.
+  AI      pass
+          holding: PlusPower
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (28 left)
+          You benches Jynx.
+          You attaches Psychic Energy to Jynx.
+          You plays PlusPower.
+          PlusPower attached to Drowzee (+10 this turn).
+          Drowzee uses Pound.
+          +10 from a bonus -> 20.
+          Squirtle takes 20. (0/40 left)
+          Squirtle is Knocked Out!
+          You takes a Prize. (5 left)
+          PlusPower is discarded.
+  AI      promote   [50.9]
+          holding: PlusPower
+          passed over: promote 40.1, promote 27.3, promote 14.8
+          Hollis promotes Farfetch'd to Active.
+
+--- Turn 11 — Hollis ----------------------------
+          Hollis draws a card. (41 left)
+  AI      attach   [18.4]
+          holding: PlusPower, Water Energy
+          passed over: attach 8, attach 3.9, attach -3.7, retreat -17.4, retreat -29.7
+          Hollis attaches Water Energy to Squirtle.
+  AI      pass
+          holding: PlusPower
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (27 left)
+          You plays Potion.
+          Drowzee heals 20. (10 damage left)
+          You attaches Psychic Energy to Abra.
+          Drowzee uses Pound.
+          Farfetch'd takes 10. (40/50 left)
+
+--- Turn 13 — Hollis ----------------------------
+          Hollis draws a card. (40 left)
+  AI      attach   [6.4]
+          holding: PlusPower, Water Energy
+          passed over: attach -2.8, attach -6, attach -6.5, retreat -15.6, retreat -19.4
+          Hollis attaches Water Energy to Machoke.
+  AI      pass
+          holding: PlusPower
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (26 left)
+          You benches Gastly.
+          You attaches Psychic Energy to Jynx.
+          Drowzee uses Confuse Ray.
+          Farfetch'd takes 10. (30/50 left)
+          Coin flip (Confused?): HEADS
+          Farfetch'd is now Confused.
+
+--- Turn 15 — Hollis ----------------------------
+          Hollis draws a card. (39 left)
+  AI      attach   [11.8]
+          holding: PlusPower, Fighting Energy
+          passed over: attach 0, attach -1.1, attach -1.9, retreat -10.2, retreat -20.2
+          Hollis attaches Fighting Energy to Machoke.
+  AI      pass
+          holding: PlusPower
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (25 left)
+          You attaches Psychic Energy to Jynx.
+          Drowzee uses Pound.
+          Farfetch'd takes 10. (20/50 left)
+
+--- Turn 17 — Hollis ----------------------------
+          Hollis draws a card. (38 left)
+  AI      attach   [58.1]
+          holding: PlusPower, Fighting Energy
+          passed over: attach -2.4, attach -4.6, attach -5, retreat -15, retreat -17.8
+          Hollis attaches Fighting Energy to Machoke.
+  AI      retreat   [18.1]
+          holding: PlusPower
+          passed over: retreat -15.1, retreat -16.1
+          Hollis retreats Farfetch'd; Machoke is now Active.
+  AI      trainer   [9.1]
+          holding: PlusPower
+          Hollis plays PlusPower.
+          PlusPower attached to Machoke (+10 this turn).
+  AI      attack:Karate Chop   [118.9]
+          holding: (empty)
+          Machoke uses Karate Chop.
+          50 minus 10 per counter (0) -> 50 damage.
+          +10 from a bonus -> 60.
+          Drowzee takes 60. (0/50 left)
+          Drowzee is Knocked Out!
+          Hollis takes a Prize. (4 left)
+          PlusPower is discarded.
+          You promotes Jynx to Active.
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (24 left)
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (0) -> 20 damage.
+          Weakness: Machoke takes double -> 40.
+          Machoke takes 40. (40/80 left)
+
+--- Turn 19 — Hollis ----------------------------
+          Hollis draws a card. (37 left)
+  AI      bench   [6.2]
+          holding: Sandshrew, Fighting Energy
+          Hollis benches Sandshrew.
+  AI      attach   [56.5]
+          holding: Fighting Energy
+          passed over: attach 39.2, attach 17.4, attach 0.8, attach -3.4, retreat -11.4
+          Hollis attaches Fighting Energy to Machoke.
+  AI      attack:Karate Chop   [13.3]
+          holding: (empty)
+          Machoke uses Karate Chop.
+          50 minus 10 per counter (4) -> 10 damage.
+          Jynx takes 10. (60/70 left)
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (23 left)
+          You attaches Psychic Energy to Abra.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (4) -> 60 damage.
+          Weakness: Machoke takes double -> 120.
+          Machoke takes 120. (0/80 left)
+          Machoke is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [43.8]
+          holding: (empty)
+          passed over: promote 34.8, promote 13.1, promote 10.7
+          Hollis promotes Squirtle to Active.
+
+--- Turn 21 — Hollis ----------------------------
+          Hollis draws a card. (36 left)
+  AI      evolve   [35.7]
+          holding: Wartortle
+          passed over: retreat -2.2, retreat -23.7, retreat -51.2
+          Squirtle evolves into Wartortle. Special Conditions removed.
+  AI      retreat   [15.8]
+          holding: (empty)
+          passed over: retreat -9.4, retreat -33.9
+          Hollis retreats Wartortle; Staryu is now Active.
+  AI      attack:Slap   [25.5]
+          holding: (empty)
+          Staryu uses Slap.
+          Jynx takes 20. (40/70 left)
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (22 left)
+          You plays Bill.
+          You draws 2.
+          You benches Mewtwo.
+          You attaches Psychic Energy to Mewtwo.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (1) -> 30 damage.
+          Staryu takes 30. (0/40 left)
+          Staryu is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [14.6]
+          holding: (empty)
+          Hollis promotes Sandshrew to Active.
+
+--- Turn 23 — Hollis ----------------------------
+          Hollis draws a card. (35 left)
+  AI      bench   [4.4]
+          holding: Squirtle
+          Hollis benches Squirtle.
+  AI      pass
+          holding: (empty)
+
+--- Turn 24 — You -------------------------------
+          You draws a card. (19 left)
+          Abra evolves into Kadabra. Special Conditions removed.
+          You plays Potion.
+          Jynx heals 20. (10 damage left)
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (0) -> 20 damage.
+          Sandshrew takes 20. (20/40 left)
+
+--- Turn 25 — Hollis ----------------------------
+          Hollis draws a card. (34 left)
+  AI      bench   [0.7]
+          holding: Sandshrew
+          Hollis benches Sandshrew.
+  AI      pass
+          holding: (empty)
+
+--- Turn 26 — You -------------------------------
+          You draws a card. (18 left)
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (2) -> 40 damage.
+          Sandshrew takes 40. (0/40 left)
+          Sandshrew is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [26.5]
+          holding: (empty)
+          passed over: promote 12.6, promote 11.5, promote 0.9
+          Hollis promotes Wartortle to Active.
+
+--- Turn 27 — Hollis ----------------------------
+          Hollis draws a card. (33 left)
+  AI      pass
+          holding: Staryu
+
+--- Turn 28 — You -------------------------------
+          You draws a card. (17 left)
+          You plays Bill.
+          You draws 2.
+          Kadabra evolves into Alakazam. Special Conditions removed.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (0) -> 20 damage.
+          Wartortle takes 20. (50/70 left)
+
+--- Turn 29 — Hollis ----------------------------
+          Hollis draws a card. (32 left)
+  AI      bench   [7.1]
+          holding: Staryu, Machop
+          passed over: bench 3.1
+          Hollis benches Machop.
+  AI      bench   [0.9]
+          holding: Staryu
+          Hollis benches Staryu.
+  AI      pass
+          holding: (empty)
+
+--- Turn 30 — You -------------------------------
+          You draws a card. (14 left)
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (2) -> 40 damage.
+          Wartortle takes 40. (10/70 left)
+
+--- Turn 31 — Hollis ----------------------------
+          Hollis draws a card. (31 left)
+  AI      attach   [37.3]
+          holding: Fighting Energy
+          Hollis attaches Fighting Energy to Machop.
+  AI      pass
+          holding: (empty)
+
+--- Turn 32 — You -------------------------------
+          You draws a card. (13 left)
+          You attaches Psychic Energy to Mewtwo.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (6) -> 80 damage.
+          Wartortle takes 80. (0/70 left)
+          Wartortle is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [41.8]
+          holding: (empty)
+          passed over: promote 18.5, promote 16.4, promote 15.4, promote 6.9
+          Hollis promotes Machop to Active.
+
+--- Turn 33 — Hollis ----------------------------
+          Hollis draws a card. (30 left)
+  AI      trainer   [4.6]
+          holding: Super Energy Removal
+          passed over: retreat -47.9, retreat -55.9, retreat -58.4, retreat -58.6
+          Hollis plays Super Energy Removal.
+          Machop discards 1 Energy; 2 Energy discarded from Jynx.
+  AI      pass
+          holding: (empty)
+
+--- Turn 34 — You -------------------------------
+          You draws a card. (12 left)
+          You attaches Psychic Energy to Jynx.
+          You retreats Jynx; Alakazam is now Active.
+          You plays Defender.
+          Defender attached to Alakazam (-20 damage until the end of the opponent's next turn).
+          Alakazam uses Confuse Ray.
+          Weakness: Machop takes double -> 60.
+          Machop takes 60. (0/50 left)
+          Coin flip (Confused?): HEADS
+          Machop is now Confused.
+          Machop is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         34 turns
+
+==========================================================
+PACKS OPENED
+
+  Base Set
+    Magmar  Uncommon
+    Double Colorless Energy  Uncommon
+    Wartortle  Uncommon
+    Lightning Energy  
+    Grass Energy  
+    Weedle  Common
+    Psychic Energy  
+    Psychic Energy  
+    Voltorb  Common
+    Vulpix  Common
+    Venusaur  Rare Holo
+
+  Base Set
+    Raticate  Uncommon
+    Pokémon Flute  Uncommon
+    Charmeleon  Uncommon
+    Fighting Energy  
+    Fire Energy  
+    Gastly  Common
+    Psychic Energy  
+    Fire Energy  
+    Switch  Common
+    Fire Energy  
+    Electabuzz  Rare

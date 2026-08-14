@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, deckFor, resolveDeck, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -1272,6 +1272,67 @@ T('shortfall says WHY, not just that you are short', () => {
   return /own 0/.test(none) && !/other decks/.test(none)
     && /other decks/.test(held) && /dismantle/.test(held)
     && /other decks/.test(part) && /3 short/.test(part);
+});
+
+// ---- a name resolves to the deck deck select is OFFERING -----------------
+// Reported by Trevor from a real save, 13 Aug 2026: a deck he had just built
+// showed a Kakuna on its tile and too few cards. His save held BOTH of these,
+// and the builder's default name is why:
+//
+//   id=2  "New deck"  built=false  41 cards      the blueprint
+//   id=3  "New deck"  built=true   60 cards      what he actually built
+//
+// myDeckNames() lists only built decks, so the tile came from id=3. deckFor()
+// searched save.decks flat and answered with id=2. resolveDeck() shares that
+// function and nothing between deck select and a match calls validateDeck(),
+// so pressing Play would have taken the 41-card list into a scored ladder game.
+console.log('\n--- a deck name is not a deck ---');
+
+ctx.UI.save = ctx.newSave({ starter: 'Brushfire', now: 1 });
+ctx.grantDeck(UI.save, DECKS.Brushfire);
+UI.save.decks.push({ id: '1', name: 'Brushfire', built: true, list: DECKS.Brushfire.list.map(e => [e[0], e[1]]) });
+// The blueprint FIRST, which is what makes a flat find() pick it.
+UI.save.decks.push({ id: '2', name: 'New deck', built: false, list: [[41, 'base1-98']] });
+UI.save.decks.push({ id: '3', name: 'New deck', built: true, list: DECKS.Zap.list.map(e => [e[0], e[1]]) });
+
+T('deck select offers only the built deck', () => {
+  const names = ctx.myDeckNames();
+  return names.filter(n => n === 'New deck').length === 1;
+});
+T('and the name resolves to that deck, not the layout sharing its name', () => {
+  const d = ctx.deckFor('New deck', 'mine');
+  return d && d.id === '3' && d.list.reduce((a, e) => a + e[0], 0) === 60;
+});
+T('so the match gets the 60-card list, not the 41-card blueprint', () => {
+  const d = ctx.resolveDeck('New deck', 'mine', 7);
+  return d.list.reduce((a, e) => a + e[0], 0) === 60;
+});
+T('the deck tile is drawn from the deck it names', () => {
+  // The visible symptom: hero art and counts came off the blueprint.
+  const s = deckSummary('New deck', 'mine');
+  return s.k.pokemon + s.k.trainer + s.k.energy === 60;
+});
+T('a layout can still be resolved by name when nothing built claims it', () => {
+  // The fallback is not deleted, only outranked.
+  UI.save.decks.push({ id: '4', name: 'Someday', built: false, list: [[12, 'base1-98']] });
+  const d = ctx.deckFor('Someday', 'mine');
+  return d && d.id === '4';
+});
+
+T('and the builder refuses to create the collision in the first place', () => {
+  ctx.openBuilder(null);
+  ctx.builderAdd('base1-98', '', 5);
+  UI.builder.name = 'New deck';
+  ctx.commitBuilder(false);
+  const named = UI.save.decks.filter(d => d.name === 'New deck');
+  const suffixed = UI.save.decks.filter(d => d.name === 'New deck 2');
+  return named.length === 2 && suffixed.length === 1;
+});
+T('re-saving an existing deck does not suffix it against itself', () => {
+  const d = UI.save.decks.find(x => x.name === 'New deck 2');
+  ctx.openBuilder(d.id);
+  ctx.commitBuilder(false);
+  return ctx.findDeck(UI.save, d.id).name === 'New deck 2';
 });
 
 // ---- Job 5e-4: choosing which physical copy goes in the deck ------------
