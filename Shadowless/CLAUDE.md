@@ -241,9 +241,11 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
 
 ## Open
 
-1. **The AI weights were tuned against the 12-Prize game and want re-tuning**, and the deck balance
-   and first-player figures move with them. All three live in [AI.md](AI.md), with the measurements
-   and the reasons each of them is easy to get wrong.
+1. **The AI has no concept of a Pokemon whose job is to stand there.** The 13 Aug retreat re-tune
+   fixed *rescuing too eagerly* — squaring `retreatPrize`'s divisor, 55.9% +/- 4.2 against its
+   predecessor — but Kangaskhan, Chansey and Snorlax are still retreated rather than left to soak.
+   The proposal is to DERIVE stickiness from the card data rather than tag it per card. That, the
+   deck balance it moved, and the first-player figure all live in [AI.md](AI.md).
 2. **Blueprints have no dedicated screen** — a "this deck is four cards away" view over your saved
    layouts. The mechanism exists; see [COLLECTION.md](COLLECTION.md).
 3. **Southern Islands and progression-gated promo intrusion** are both unsettled pack questions and

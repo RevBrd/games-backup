@@ -163,13 +163,47 @@ on, duel it** — and read the tail, not the mean, or you will conclude there wa
 
 ## Open
 
-**The weights were tuned against the 12-Prize game and want re-tuning. This is the next AI job.**
-The retreat rework measured 55.6% ± 3.3 against its predecessor at 12 Prizes; re-run at the correct
-6, the whole AI stretch comes to **52.5% ± 4.6 — no longer significant**. Still positive on both
-independent measurements, and the behaviour counters in `aitest.js` are unambiguous, so nothing here
-is *worse* — but `retreatPrize` in particular divides by the Prizes remaining, so it is worth
-exactly twice as much in the real game as in the one it was fitted to. Do it with `aiduel.js`, and
-run `--control` first.
+**The retreat re-tune is DONE — 13 Aug 2026 — and what it found was a curve, not a number.**
+`retreatPrize` divides by the Prizes the opponent still needs, so the 12-Prize repair silently
+doubled it and left the bot twice as eager to run away. The obvious response is to shrink the
+scalar, and measured against the old value it plainly works:
+
+| `retreatPrize` | vs previous AI |
+|---|---|
+| 30, flat | 51.3% ± 5.0 |
+| 20, flat | 55.2% ± 5.0 |
+| 10, flat | 57.0% ± 5.0 |
+| 0 (term deleted) | 56.8% ± 5.0 |
+
+**Read that table the wrong way and you delete the term.** It plateaus at nothing, and a duel will
+happily tell you a capability it cannot see is worthless — the endgame case is rare, symmetric and
+shared by both seats, which is this file's oldest warning. The scalar moves *both* ends of the curve
+at once, so every row above buys the early game by selling the last Prize.
+
+The comment on the weight claimed it was worth *"little when they need six more and everything when
+they need one"*, and it never was: `60/6` is **10**, a sixth of the endgame value, paid on every
+rescue from turn one. **Squaring the divisor** delivers the curve as described — 1.7 at six Prizes,
+6.7 at three, 60 at one — and it moves only the end that was wrong.
+
+**55.7% ± 5.0, then 55.9% ± 4.2 on an independent sample.** Significant twice, and the Zap row is
+the one that matters, because Zap's cheap 30–40 HP Basics are why this term exists at all: **53% and
+51% against 44% in the control**, the best of any variant tried. Every deck improved over control.
+The counters agree — retreats 323 → 260, those costing the turn's attack 33% → 25%, total attack
+score given up 2928 → 1419, retreats that *improved* the hit 53% → 61%.
+
+**The lesson is worth more than the weight.** A term whose magnitude is a function of game state was
+fitted in a game whose state was wrong, and a scalar sweep could only trade one end of it against
+the other. When a sweep plateaus at zero, suspect the shape before you believe the conclusion.
+
+**Still open: the bot has no concept of a Pokémon whose job is to stand there.** The re-tune fixed
+*rescuing too eagerly*; it did not teach the AI that Kangaskhan, Chansey, Snorlax and Electabuzz are
+supposed to soak damage until they die. Trevor's proposal was a per-card tag; the counter-proposal is
+to **derive** it, since everything that makes those four walls is already in the card data — a Basic
+with **no evolution anywhere in its family** (Trevor's refinement, and the right one: "cannot evolve
+further" would call Charizard a wall), high HP, high retreat cost, and attacks that inflict status or
+draw. That composes to 1,251 cards with no authoring, where a tag is per-card labour every new set
+would inherit and some session would skip. Keep a short override list for what the derivation gets
+wrong — an override is a decision somebody made and can be counted; a tag on everything is not.
 
 **First-player advantage is real and it has a measured size.** Expert mirrors had suggested 58–67%
 for whoever is seated first. `aiduel.js --control` settles it: the baseline AI played against
@@ -179,9 +213,12 @@ to have faked a six-point AI improvement once. It may still be a true property o
 than a bug. What is settled is that **no AI measurement here is trustworthy unless it mirrors
 seats**.
 
-**Deck balance moves whenever the AI changes, so it is measured here rather than fixed.** The four
-theme decks are Trevor's authentic lists and run roughly **72 / 53 / 42 / 33** percent (Blackout /
-Zap / Brushfire / Overgrowth) across ~144 AI games at 40 turns each. The real ones were never
+**Deck balance moves whenever the AI changes, so it is measured here rather than fixed.** After the
+13 Aug retreat re-tune the four decks read **67 / 50 / 46 / 38** percent (Blackout / Brushfire / Zap
+/ Overgrowth) — and the interesting part is the *spread*, which closed from 42 points to 29 with no
+deck touched. A bot that runs away less is a bot whose weaker decks get to attack. Before the
+re-tune they ran roughly **72 / 53 / 42 / 33** (Blackout / Zap / Brushfire / Overgrowth) across ~144
+AI games at 40 turns each. The real ones were never
 balanced against each other either, so this may simply be correct, and it is a good deal tighter
 than it used to look. **Confirm with `selftest.js` before touching them**, and never compare against
 a figure quoted before 11 Aug 2026 — those were measured at 12 Prizes and the ordering *reverses* at

@@ -56,8 +56,8 @@ const AI_WEIGHTS = {
   retreatSaveEnergy: 7, // rescue value per Energy already invested in the Active
   retreatSaveEvolved: 9,// ...plus this if it is not a Basic
   retreatNoCause: -14,  // retreating when nothing actually threatens the Active
-  retreatPrize: 60,     // value of denying a Prize, DIVIDED by how many they
-                        // still need — 10 at six left, 60 at one
+  retreatPrize: 60,     // value of denying a Prize, over the SQUARE of how many
+                        // they still need — 1.7 at six left, 60 at one
   drawCard: 5,          // per card drawn
   healPer10: 3.5,
   stripEnergy: 11,      // per Energy removed from the opponent
@@ -1006,7 +1006,32 @@ class AI {
           // case, and it is the only place the AI reads its opponent's Prize
           // count defensively — without it, "spend this one as fodder" is a
           // sentence the bot cannot think.
-          const prize = W.retreatPrize / Math.max(1, you.prizes.length);
+          // SQUARED, and the square is the whole correction — 13 Aug 2026.
+          //
+          // The line above this one used to divide by the Prize count flat,
+          // which the comment described as "little when they need six more and
+          // everything when they need one". It was never little: 60/6 is 10,
+          // a sixth of the endgame value rather than a rounding error, and it
+          // was paid on EVERY rescue from the first turn onwards.
+          //
+          // That is also why the 12-Prize bug hid it. The term was fitted in a
+          // game that opened at 60/12 = 5 and it doubled the day the Prize
+          // count was fixed, so the AI came out of that repair quietly twice as
+          // eager to run away — nothing failed, and the weights had been
+          // measured against the wrong game.
+          //
+          // Measured by aiduel against the flat divisor at 60: shrinking the
+          // scalar to 30 / 20 / 10 / 0 gave 51.3 / 55.2 / 57.0 / 56.8 percent,
+          // a clean plateau. Every one of those buys the early game by selling
+          // the endgame, because the scalar moves both ends at once — at 0 the
+          // bot will happily feed the last Prize it can afford to lose, which
+          // AI.md records as costing Zap twenty points and which a duel is the
+          // wrong instrument to see (rare, endgame, and shared by both seats).
+          //
+          // The square moves only the end that was wrong. 1.7 early, 6.7 at
+          // three, 60 at one — the curve the comment always claimed.
+          const left = Math.max(1, you.prizes.length);
+          const prize = W.retreatPrize / (left * left);
           s += Math.min(W.dangerSwap, invested) + prize;
         } else if (delta <= 0) {
           // Nothing threatens the Active AND the replacement hits no harder, so
