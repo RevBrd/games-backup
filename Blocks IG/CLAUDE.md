@@ -4,7 +4,7 @@ A game about a developer who couldn't be bothered. You press play, someone upend
 tetrominoes into a box, they pile up until they hit the top, and you are awarded a random number.
 It lasts about thirteen seconds. That's the whole thing, and it is finished.
 
-**Credits:** concept by Trevor. Built in Claude Chat by **Fable 5** over two turns (5 Aug 2026) —
+**Credits:** concept by Trevor. Built in Claude Chat by **Fable 5** over two turns (11 Jul 2026) —
 the anti-design wrapper, the physics engine, every gag. Port into the collection, measurement pass
 and this file by **Claude Opus 5** (10 Aug 2026).
 
@@ -62,7 +62,9 @@ gag has nothing to push against. **Do not simplify this into a grid of falling r
 do not treat its complexity as accidental — a future instance skimming a ten-second joke game is
 exactly the reader who would "clean it up."
 
-Trevor's verdict on it, first playtest: *"The physics feels perfect right now."* It is done.
+Trevor's verdict on it, first playtest: *"The physics feels perfect right now."* It is done — with
+one real flaw that nobody can see, documented under **Known defect: square interpenetration** below.
+Read that before you either "improve" the solver or repeat the claim that it's flawless.
 
 **The pile is slightly sticky and that is comedy-positive.** Sleeping bodies resist being shoved
 awake, which reads as "packed." Fable ruled on this deliberately. Only revisit it if it crosses
@@ -107,22 +109,70 @@ Two things this settles:
 - **The old "~38 seconds to top-out" figure is stale.** That was measured before the bag-dump
   pass, which roughly tripled the pour rate. 13 s is the current number.
 
-### `nice` has drifted from its intent
+### `nice` — settled at once-ish per run
 
-`nice` was designed as **an achievement for an act of God** — if the tumbling pieces ever
-accidentally fill about a full row, a small "nice" appears and nothing else happens. Fable's stated
-intent: *"you will almost certainly never see it, which is the point."*
+`nice` is **an achievement for an act of God**: if the tumbling pieces ever accidentally fill about
+a full row, a small "nice" appears and nothing else happens. It is the only moment in the entire
+game that acknowledges the player exists, and it is addressed to nobody in particular — the game
+complimenting its own pile.
 
-That was true of the pre-dump build. It is no longer true: it fires about **once per run**. The
-mechanism is that `checkNice` scans **bottom-up and returns on the first hit**, so what it actually
-measures is whether the bottom of the pile is packed — and after a bag dump it reliably is. It
-needs 15 of 16 sample columns covered (`NICE_FRAC: 0.93`, 16 columns across 360px).
+**Fable designed it to be near-impossible** — *"you will almost certainly never see it, which is
+the point"* — and that was true of the build they wrote it for. It stopped being true in the same
+turn that fixed the pour. The bag-dump pass packs the bottom of the pile, and `checkNice` scans
+**bottom-up and returns on the first hit**, so what it now measures is whether the *bottom* of the
+pile is dense rather than whether a row formed by luck. It needs 15 of 16 sample columns covered
+(`NICE_FRAC: 0.93`, 16 columns across 360px). Measured rate: about once per run.
 
-**This is a live discrepancy, not a decision.** It is documented here rather than fixed because the
-rarity was Fable's design call and Trevor's to re-rule on. If you want the original intent back,
-raise `NICE_FRAC` to 1.0 and/or scan top-down instead of bottom-up so it tests the *loose* part of
-the pile. If once-a-run turns out to be the better game, delete this section and update the intent
-above rather than leaving the two in contradiction.
+**Trevor ruled on this 10 Aug 2026: once-ish per run is the keeper rate, and it should not go
+higher.** A gag nobody ever sees isn't a gag, and at this rate it lands often enough to read as a
+small recurring grace note without ever becoming a system. The near-impossible version is recorded
+above as history, not as a target — **do not "restore" it.**
+
+If it ever does need pulling back down, the knobs are `NICE_FRAC` toward 1.0 and/or scanning
+top-down so it tests the loose part of the pile instead of the packed part. Raising it further is
+out of bounds.
+
+---
+
+## Known defect: square interpenetration
+
+**Found 10 Aug 2026 while building `validate.js`, confirmed visually, and deliberately left alone.**
+It is the one place where this file's praise of the physics engine needs qualifying.
+
+**What happens.** Two pieces that get more than about half overlapped are driven into *perfect*
+coincidence rather than being pushed apart, and then go to sleep there permanently. It is not rare
+and it is not an edge case: **about 28 deeply-overlapped pairs per run, involving roughly half of
+all bodies, in every run measured.** A confirmed example had an S and a J piece sharing two entire
+22×22 squares, both asleep.
+
+**Why nobody has ever noticed.** The renderer draws opaque squares in array order, so the piece
+underneath is simply painted over. A merged pair looks exactly like one piece. You can only see it
+by drawing the pair in isolation with alpha, which is how it was confirmed.
+
+**Mechanism.** `pointVsSquare` resolves a contact along the *nearest face* of the square the corner
+is inside. That is correct for shallow contacts and backwards for deep ones: once a corner is past
+the square's midline the nearest face is the *far* side, so the impulse pushes it further through
+instead of back out. Full overlap is therefore a stable attractor rather than something the solver
+resists. And at exact coincidence the four corners land precisely on the other square's boundary,
+where the test's `>=` on the half-extent counts them as outside — so **zero contacts are generated**,
+the pair stops interacting entirely, and both bodies sleep.
+
+**Consequences, such as they are.** The pile is denser than it looks and holds more pieces than it
+appears to. This very likely contributes to the packed bottom that makes `nice` fire once a run.
+Nothing destabilises: no escapes, no explosions, no non-finite state, and the pile still settles
+convincingly, which is the only thing this game actually needs from its physics.
+
+**Why it is not fixed.** The player cannot see it, Trevor signed off on how the pile feels, and the
+game is finished. The honest fix means replacing the corner-based contact generator with real SAT
+or clipping — the single riskiest change available, aimed at the one system that already feels
+right, to correct something invisible. That trade is bad.
+
+**If it ever does get fixed**, the cheap targeted version is roughly five lines: in
+`pointVsSquare`, when penetration exceeds about half the square, take the normal from the vector
+between the two square centres instead of from the nearest face. That turns the attractor around
+without touching the solver. **It will change how the pile settles**, so it needs a fresh feel
+check from Trevor rather than a green harness — and a green harness is not evidence here, because
+`validate.js` deliberately guards this defect at its current level rather than asserting it away.
 
 ---
 
@@ -172,11 +222,44 @@ making it into a five-minute one.
 - `backups/blocks_i_guess_job1.html` — the Chat original under its original name. That's history,
   leave the name alone.
 
-**No validation harness yet.** `window.__blocksTest` exposes `S`, `CONFIG`, `stepSim`,
-`spawnPiece`, `spawnBurst`, `startGame`, `checkTopOut`, `checkNice`, `makePiece` and `bodyMinY`,
-so the physics is fully drivable headlessly — the measurement table above was produced through it.
-A harness would be cheap and would protect the one part of this game worth protecting. Worth
-building if anyone ever touches the solver.
+- `validate.js` — headless Node harness, **43 assertions**. Run before delivering any change:
+
+  ```
+  & "C:\Program Files\nodejs\node.exe" validate.js
+  ```
+
+  (node is installed on this machine but is **not** on PATH.) It takes an optional path argument
+  so a mutated copy can be checked without touching the real file.
+
+### The harness asserts the jokes, and that is the point
+
+Half of it is ordinary engine protection — piece construction, resting, stacking, containment,
+determinism under a seeded RNG, the `dt` clamp, wake-on-impact, no NaN, no escapes.
+
+The other half asserts **the register**, because in this game the jokes *are* the spec. There are
+tests that fail if someone adds a stylesheet, sorts the leaderboard, resets it in `startGame()`,
+makes the score meaningful, deletes the 700ms thinking beat, puts a real name in the credits, adds
+a second difficulty option, or guards the premature top-out. There is a test that fails if the
+player ever gets a verb. The harness prints a warning on failure telling you to read this file
+before "fixing" anything in those two groups.
+
+This is the transferable idea from this game: **where authored defects are the design, a harness
+that only tests correctness will happily watch someone dismantle the product.** Worth stealing for
+any parody build in the collection.
+
+**It was mutation-tested.** Twelve deliberate breakages were introduced into a scratch copy and the
+harness was checked for catching each one. It caught 11 — and the miss mattered: a handler that
+nudged a piece's *velocity* slipped past the "player never gets a verb" test, because that test
+compared positions at the instant of the key press and velocity does not become position until the
+next step. It is now an A/B against an identical seeded run, comparing full body state after the
+sim has had 90 steps to carry any injected impulse into position. 12/12 after the fix. **If you add
+a test here, break the thing on purpose and confirm it goes red** — the first version of that test
+passed happily against a game that had been broken exactly as forbidden.
+
+`window.__blocksTest` exposes `S`, `CONFIG`, `stepSim`, `spawnPiece`, `spawnBurst`, `startGame`,
+`checkTopOut`, `checkNice`, `makePiece` and `bodyMinY`. The harness needs a few DOM-side functions
+too and gets them by appending its own export line to the extracted script rather than editing the
+game — **the game file is never modified by the harness.**
 
 ## Architecture
 
