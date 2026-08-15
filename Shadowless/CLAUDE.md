@@ -30,7 +30,11 @@ are in [TOOLING.md](TOOLING.md).
 
 This file is the orientation. The siblings below hold the detail, and **you should not need to read
 any of them unless you are working on that thing**. That is the point of the split. `LOGBOOK.md` is
-the eleventh and is reached through `CREDITS.md`.
+reached through `CREDITS.md` rather than listed here.
+
+**Three of these are Trevor's own files rather than the project's**, and they are listed last:
+`GRABBAG.md` is where he jots what he notices while playing, `GRABHIST.md` is what came of each one,
+and `TREVOR.md` tracks where his save stood as each set went live.
 
 | File | Read it when |
 |---|---|
@@ -46,6 +50,10 @@ the eleventh and is reached through `CREDITS.md`.
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, one row per model per stretch — and it points at `LOGBOOK.md`, the append-only archive of what each instance did in its own words |
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
+| [PLAYTEST.md](PLAYTEST.md) | Trevor points you at `GRABBAG.md`, hands you a match log, or says something felt off while playing. How to work a report from a human: why it is a symptom and not a diagnosis, what to do when it turns out to be wrong, and the two traps that make a real fix look like it did nothing |
+| [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one |
+| [GRABHIST.md](GRABHIST.md) | What each grab bag item actually turned out to be, which has repeatedly not been what it said |
+| [TREVOR.md](TREVOR.md) | **Trevor's.** Where his collection stood as each set went live |
 
 ## Status
 
