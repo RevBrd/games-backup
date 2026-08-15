@@ -379,16 +379,5 @@ before.
 ## Pending
 
 Calls we already know are coming, so nobody is surprised by them.
-
-- **The arbiter runs out at Fossil, and Job 8 is where that starts to bite.** The standing policy
-  hands an ambiguous card to the Game Boy Color game, which contains only Base, Jungle and Fossil —
-  so from **Team Rocket onward there is no arbiter at all**, and every set Job 8 adds is on the far
-  side of that line. Nothing is settled about what replaces it. The two candidates are the WotC
-  Rulings Compendium, which this file has already used twice where the GBC game was silent (Buzzap
-  and Ditto), and Trevor's own judgement, which is what actually settled the retreat-cost entry when
-  the citation for it turned out not to hold. **Both are already precedents in this file** — the
-  question is only which one leads. Raise it with Trevor before the first Team Rocket card, not
-  during it. This was flagged in `CLAUDE.md` as needed "around Job 7, not before" and Job 7 has
-  shipped.
 - **Baby Pokémon (Neo era, 10 cards)** — the Baby Rule is a coin flip that can negate an attack
   entirely. Not a Base Set problem, but it is a whole rule, not a card effect.

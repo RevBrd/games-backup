@@ -2,7 +2,7 @@
 
 Depth behind the collection rows in `CLAUDE.md`'s status table. Read this before touching
 `src/collection.js`, the collection browser, the dex, or the deck builder. Everything here was
-settled with Trevor on 9 Aug 2026 and is tested by `tools/collectiontest.js` (111 tests).
+settled with Trevor on 9 Aug 2026 and is tested by `tools/collectiontest.js` (105 tests).
 
 If you are working on the board, the engine or a card, you need none of it.
 

@@ -8,11 +8,8 @@ files and none of them announced it. The next AI job — the weight re-tune in *
 be assembled from all three.
 
 The one-line summary: **`selftest.js` proves the AI is *correct*; nothing but the two instruments
-below can tell you whether it plays *well*, and all six of the ways that measurement lies have
+below can tell you whether it plays *well*, and all three of the ways that measurement lies have
 already been paid for.**
-
-**What is actually open is at the bottom of this file**, under `Open`. Everything between here and
-there is either a standing property of the tooling or an account of work that has shipped.
 
 ## The two instruments — measuring "well", not "correct"
 
@@ -179,11 +176,9 @@ Active, which is a real refactor of `scoreAttack`'s relationship with engine sta
 prize is one in six comparisons in a direction that is partly correct already. **If you do take it
 on, duel it** — and read the tail, not the mean, or you will conclude there was never a problem.
 
-## The retreat re-tune — a curve, not a number
+## Open
 
-**Done 13 Aug 2026.** This section sat under a heading reading `Open` for a day after it shipped,
-which is the exact trap `MAINTENANCE.md` names: a reader looking for the next AI job found finished
-work under the word that promises unfinished work.
+**The retreat re-tune is DONE — 13 Aug 2026 — and what it found was a curve, not a number.**
 `retreatPrize` divides by the Prizes the opponent still needs, so the 12-Prize repair silently
 doubled it and left the bot twice as eager to run away. The obvious response is to shrink the
 scalar, and measured against the old value it plainly works:
@@ -310,14 +305,9 @@ take the recoil, and the bigger attack must still be used when only it reaches.
 written flat with a cliff at the end.* `retreatPrize`'s divisor, `selftest`'s threshold, and now this.
 Worth suspecting on sight.
 
-**Left open**, and carried down to the `Open` list at the bottom of this file: stickiness only reads
-the *rescue*, so a wall is not yet preferred when **promoting** off the Bench, and `potential()`
-still prices a benched Pokémon in printed damage.
-
-## Standing measurements
-
-Neither of these is a job. They are properties of the game that move when the AI moves, recorded here
-so nobody re-derives them and nobody quotes a stale one.
+**Left open.** Stickiness only reads the *rescue*. A wall is not yet preferred when **promoting** off
+the Bench, and `potential()` still prices a benched Pokémon in printed damage — the Active/Bench unit
+split above. Those are the same refactor and it is still not obviously worth it.
 
 **First-player advantage is real and it has a measured size.** Expert mirrors had suggested 58–67%
 for whoever is seated first. `aiduel.js --control` settles it: the baseline AI played against
@@ -327,39 +317,13 @@ to have faked a six-point AI improvement once. It may still be a true property o
 than a bug. What is settled is that **no AI measurement here is trustworthy unless it mirrors
 seats**.
 
-**Deck balance moves whenever the AI changes, so it is measured here rather than fixed.** Every
-figure below is a snapshot with a date on it, and **the snapshot is the point** — read the trend, not
-the row.
-
-| Measured | Blackout | Brushfire | Zap | Overgrowth | Spread |
-|---|---|---|---|---|---|
-| before the retreat re-tune, ~144 games | 72 | 42 | 53 | 33 | 39 |
-| after it, 13 Aug | 67 | 50 | 46 | 38 | 29 |
-| after Arcanine, 14 Aug (`selftest.js` default, 72 games per deck) | 68 | 56 | 46 | 31 | 37 |
-
-The interesting part was the *spread*, which the retreat re-tune closed from 39 points to 29 with no
-deck touched — a bot that runs away less is a bot whose weaker decks get to attack. It reads 37 again
-after the recoil work, and **that is not evidence of anything**: at 72 games a row carries about ±12,
-so not one deck's movement between those last two lines clears its own interval. The spread is a
-difference of differences and is wider still. Raise the seed count if you actually need to know. The
-real decks were never balanced against each other either, so a wide spread may simply be correct.
-
-**Run `selftest.js` for today's figures rather than quoting the table**, and never compare against
-anything from before 11 Aug 2026 — those were measured at 12 Prizes and the ordering *reverses* at
+**Deck balance moves whenever the AI changes, so it is measured here rather than fixed.** After the
+13 Aug retreat re-tune the four decks read **67 / 50 / 46 / 38** percent (Blackout / Brushfire / Zap
+/ Overgrowth) — and the interesting part is the *spread*, which closed from 42 points to 29 with no
+deck touched. A bot that runs away less is a bot whose weaker decks get to attack. Before the
+re-tune they ran roughly **72 / 53 / 42 / 33** (Blackout / Zap / Brushfire / Overgrowth) across ~144
+AI games at 40 turns each. The real ones were never
+balanced against each other either, so this may simply be correct, and it is a good deal tighter
+than it used to look. **Confirm with `selftest.js` before touching them**, and never compare against
+a figure quoted before 11 Aug 2026 — those were measured at 12 Prizes and the ordering *reverses* at
 the correct length, because Zap is a fast deck that wins a short game and loses a grind.
-
-## Open
-
-1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
-   damage while an Active gets full expected value, and stickiness only suppresses the *rescue*, so a
-   wall is not preferred when **promoting**. Both are the same refactor — making expected value
-   computable for a slot that is not Active — and it is still not obviously worth it. The measured
-   size is in *The Active and the Bench are scored in different units* above. **If you take it on,
-   duel it, and read the tail rather than the mean.**
-2. **Nothing has re-tuned the weights as a set.** Every AI change since 13 Aug has been one term at a
-   time, each with a reason and a measurement. A sweep over `AI_WEIGHTS` as a whole has never been
-   done and there is no measured reason to think it would pay — recorded so nobody proposes it as a
-   known-good job. It is a speculative one.
-3. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
-   Every opponent plays at the tier deck select hands them. Whether a named rival should play better
-   than a Club Master is an unasked design question — see [PROGRESSION.md](PROGRESSION.md).

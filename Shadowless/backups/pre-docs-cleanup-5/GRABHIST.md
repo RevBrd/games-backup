@@ -3,15 +3,8 @@
 This is optional, I just thought you might want to a place to document what you did. Edit this header or add your own instructions if you'd like.
 
 Kept newest-first. One entry per item taken off [GRABBAG.md](GRABBAG.md), with what it actually
-turned out to be — which has now been something other than what the note said **three times out of
-three**, and that is the useful part. An item that was diagnosed and *parked* gets an entry too, so
-nobody re-derives the diagnosis.
-
-**This file is append-only, like [RULINGS.md](RULINGS.md), [HISTORY.md](HISTORY.md) and
-[LOGBOOK.md](LOGBOOK.md).** Add at the top, correct an entry if it turns out wrong, and never
-shorten one — the whole value of an entry is the gap between what was reported and what was found,
-and a condensed entry keeps the fix and loses the gap. The 200-line target does not apply. The method
-for working an item in the first place is [PLAYTEST.md](PLAYTEST.md).
+turned out to be — which has twice now not been what the note said, and that is the useful part.
+An item that was diagnosed and *parked* gets an entry too, so nobody re-derives the diagnosis.
 
 ---
 

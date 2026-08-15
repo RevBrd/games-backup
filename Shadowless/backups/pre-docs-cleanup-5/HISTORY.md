@@ -79,38 +79,6 @@ runs at all. And **a green suite can be green for the wrong reason**: a Chansey 
 passing because Chansey had no Energy, so `canUseAttack` was refusing on cost rather than on the
 lock under test.
 
-**Job 7 — progression and named opponents, 12 Aug 2026.** One session again, on groundwork #8 had
-laid two days earlier. The live account is in [PROGRESSION.md](PROGRESSION.md); what belongs here is
-the shape, because the next set-adding job inherits it.
-
-**The structural decision was Trevor's, not the building instance's.** A `LADDER` constant had been
-drafted; he asked for something that would take the other eleven sets without rework, and the answer
-was to build the ladder from the live-set list at runtime — an authored bracket where one exists, a
-generated one where it does not. About forty lines, and it is why **Job 8 is adding sets rather than
-rewiring progression**. Unlock is derived the same way and deliberately not stored: a bracket is open
-if the previous boss has been beaten, recomputed from the save every time it is asked.
-
-Three things it turned up that were not Job 7's:
-
-- **Every win in the game had been paying out in Base Set.** Both `addPacks` call sites passed
-  `homeSet()`, which is always `base1`, so 119 of 221 cards were unobtainable and `CLAUDE.md` had
-  claimed the opposite for two days. That inverted the framing of the whole job — a save migration
-  was being planned to grandfather a freedom nobody had. **The ladder does not gate the other sets;
-  it is the wiring that makes them reachable.** Found by Trevor saying his save could not earn them,
-  against a doc that said it could.
-- **The groundwork was not usable as it stood**, and the pre-flight that found this out was worth
-  more than the time it cost: seven of the sixteen decks named `basep` cards, which is not a live
-  set, so the validator would have refused them. Ten references, not a set job. One deck flagged as
-  defective in its own notes turned out to be fine — the extraction was faithful and only the note
-  was wrong.
-- **Four layout defects were live while 136 smoke tests passed**, all four found by `tools/shot.js`.
-  That is the sharpest case in the project's history for the rule that a green suite proves nothing
-  visual. See [PROGRESSION.md](PROGRESSION.md).
-
-**What it deliberately did not do: the decks and names are placeholders.** Real per-set opponents,
-hand-built and better-generated, are a job of their own — Trevor's call. The candidate pool for that
-job is in `data/OPPONENT_DECK_POOL.md`; see [DATA.md](DATA.md).
-
 ## Pack research: two things that were wrong
 
 Both were found on 9 Aug 2026 at the start of Job 5, by re-checking `data/raw/` rather than

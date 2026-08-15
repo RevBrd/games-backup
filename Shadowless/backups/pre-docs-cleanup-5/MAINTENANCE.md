@@ -1,7 +1,7 @@
 # Shadowless — maintaining the documentation
 
-This tree is around twenty files and it will drift. This is how to bring it back, written 10 Aug 2026
-by the instance that did the second split and extended by each one since, for whoever does the next.
+This tree is a dozen files and it will drift. This is how to bring it back, written 10 Aug 2026 by
+the instance that did the second split and extended by each one since, for whoever does the next.
 
 It is about **the docs**, not the code. It generalises to any game whose docs outgrew one file, but
 the examples are from here.
@@ -28,14 +28,6 @@ Not on a schedule. The triggers that actually mean something:
   because the file is not vague or old — it is *specific, confident and actionable*, and acting on
   it makes the code worse. **Grep the doc's own symbols against the source.** If a file names
   `UNSCORED_ON_PURPOSE`, go and read what is actually in it.
-- **A file got long enough that a working session stops reading all of it.** Added on the fifth pass,
-  and it is the only trigger here that is about the *reader* rather than the text. Long context gets
-  summarised, and a rule that has been summarised away is not in the file as far as that session is
-  concerned — it will be confidently believed absent. Two attested cases: Job 7 lost time to
-  `LAYOUT.md` sections that had been compacted out of view while the instance believed it had read
-  the file, and an instance appended its logbook entry into the *middle* of another's because the end
-  of the file was not where it looked. **This trigger can justify a split that topic purity cannot**,
-  and it is why the seam below was finally taken. Watch for it above ~300 lines.
 - **An invariant stated in terms that stopped being true, while the invariant itself holds.**
   `.boardcol.wide` "must stay last in `style.css`" had not been last since Job 5, and nothing was
   broken, because the real rule was *after the CARD SYSTEM section*. A rule that reads as violated
@@ -90,13 +82,6 @@ turns a settled question back into an open one.
   version fresh, so the judgement call is about what to *summarise* and never about what to *drop*.
   The logbook is append-only and exempt from the line target; say so in any file like it.
 
-  **`CREDITS.md`'s two-or-three-line rule needs re-imposing about once a week.** The fifth pass found
-  it abandoned by every instance since it was set, including the one that set it, with rows grown to
-  a paragraph each. **Trimming is safe only where that instance has a logbook entry** — that is the
-  test to apply row by row. Where one exists the row is a duplicate and the logbook holds more; where
-  none exists, move the row's text into the logbook **verbatim first**, then write the short version.
-  #12 was the only row in that state. Do not decide sentence by sentence what earned its place.
-
 ## What is safe to cut
 
 - **The narrative of how a settled decision was reached**, once it is settled. The v1/v2/v3 history
@@ -124,38 +109,22 @@ quote a number**, and prefer running the command to reading a figure in prose.
 Being over beats cutting the paragraph that stops the next session losing a morning. If you go over,
 say why in the commit.
 
-- **Exempt: `LOGBOOK.md`, `LOGBOOK-ARCHIVE-1.md`, `RULINGS.md`, `HISTORY.md` and `GRABHIST.md`.**
-  All five are append-only registers, and none can be shortened without deleting something — a
-  session's account of its own work, a ruling somebody then has to make again, a rejection's *why*,
-  or the gap between what a playtest report said and what was actually found. Correct entries in
-  them; never condense them. `HISTORY.md` joined on the fourth pass, when it became the destination
-  for material trimmed out of the live files; `GRABHIST.md` and the logbook archive joined on the
-  fifth. **Any future file of this shape must say so in its own header**, as all five now do —
-  `GRABHIST.md` spent two days without the label, which is how one of these gets tidied by mistake.
-- **`LAYOUT.md` survived two split proposals and was split on the third — by Trevor, on a different
-  argument.** Worth reading in order, because it is the clearest case in this tree of a right
-  decision reached by the wrong criterion twice. The third pass proposed *sizing vs. interaction* and
-  withdrew it, correctly on its own terms: the coin toss and the opening-setup screen are both mostly
-  geometry, so the seam is not clean by topic. The fourth pass took the file to **302** by moving the
-  instruments out, left the seam explicitly available and *not taken*, and told the next pass not to
-  take it for him. The fifth pass measured it at **380** and reported that, expecting the same answer.
-  **Trevor took it, and the criterion he used is the better one:** not is-this-topic-pure but *would a
-  session working on something else need this?* — the split test that produced `COLLECTION.md`. A
-  session fixing the hand fan never needs the coin's reduced-motion tilt, however geometric it is.
-  What settled it was the compaction trigger above, not tidiness. [INTERACTION.md](INTERACTION.md)
-  took the coin toss, the Energy picker, the opening flip, opening setup and the action bar; the
-  one genuinely-sizing rule among them (the coin's zero-height strip) stayed behind as a one-liner
-  with a link. **The lesson to carry: when a split feels right but the topic argument keeps failing,
-  the criterion is probably wrong, not the instinct.**
-- **`AI.md` is the one to watch now, and the fifth pass left its seam available and not taken.** It
-  reached **365** — the longest live file in the tree — because three AI stretches landed in two
-  days and each wrote its account into it. The available cleave is *how the bot is measured* (the two
-  instruments, the six ways measurement lies, the match log) against *how the bot thinks and what has
-  shipped*. It is a genuine seam: the measurement half is what `PLAYTEST.md`, `TOOLING.md` and
-  `CLAUDE.md` all link to, and none of them wants the weights. **Reported to Trevor and not taken by
-  the pass that found it**, deliberately — the same shape as `LAYOUT.md`, and the file was assembled
-  out of three others only three days earlier, which is a real argument against churning it again.
-  Apply the compaction trigger and ask him.
+- **Exempt: `LOGBOOK.md`, `RULINGS.md` and `HISTORY.md`.** All three are append-only registers, and
+  none can be shortened without deleting something — a session's account of its own work, a ruling
+  somebody then has to make again, or a rejection's *why*, which is the only part that stops the idea
+  coming back. Correct entries in them; never condense them. `HISTORY.md` joined the list on the
+  fourth pass, when it became the destination for material trimmed out of the live files. Any future
+  file of this shape should say so in its own header, as all three now do.
+- **`LAYOUT.md` is the one to watch, and it has now survived two split proposals.** The third pass
+  proposed *sizing vs. interaction* and withdrew it, correctly: the coin toss and the opening-setup
+  screen are both mostly geometry. The fourth pass took it to **302** without splitting — by moving
+  `tools/shot.js` and the DEV tab to `TOOLING.md` (they are instruments, and that reverses an earlier
+  call that they belonged where they are used) and two settled narratives to `HISTORY.md`. It is
+  still over, deliberately: every rule in it was paid for with a wrong version first, and Trevor's
+  constraint is that the visual material stays together. **The seam that is still available** is
+  *how the board sizes itself* vs. *what happens when you touch it* — the coin toss, opening setup
+  and the action bar are ~100 lines that never mention the fitter. Trevor has seen that proposal and
+  not taken it. Don't take it for him.
 - **`CLAUDE.md` has an honest floor around 250 and this is worth knowing before you try.** The fourth
   pass took it from 313 to 259 by moving out everything that was not orientation — the AI material,
   the data material, the job history, three settled arguments. What is left is the index, the status,
@@ -184,12 +153,8 @@ say why in the commit.
 grep -oh "](\([A-Za-z0-9_./-]*\.md\)[^)]*)" *.md | sed 's/](\([^):]*\).*/\1/' | sort -u | while read f; do [ -f "$f" ] || echo "MISSING: $f"; done
 ```
 
-   **Run it in `data/` too.** That folder has its own markdown now, and the fifth pass found a link
-   there pointing one directory too high — a root-only sweep cannot see it.
-
-   Then `node tools/gen_cards.js --check`, `node tools/build.js --check`, and the six suites — a
-   docs pass should not touch code, and that proves it didn't. If it did touch code (the fifth pass
-   fixed one wrong string in `selftest.js`), say so in the commit and keep it to its own hunk.
+   Then `node tools/gen_cards.js --check`, `node tools/build.js --check`, and the five suites — a
+   docs pass should not touch code, and that proves it didn't.
 6. **Commit in two parts:** the game's own files, then the catalog row in `Games/CLAUDE.md` as its
    own commit. The catalog is shared with parallel sessions; edit only your row, never rewrite the
    file, and check `git diff CLAUDE.md` shows one row before staging.
@@ -203,11 +168,7 @@ Worth matching, because the tree reads as one voice and that is load-bearing for
   the bold and come away with the rules.
 - **Say what it cost.** "This cost a session an hour" is the single most effective sentence in this
   tree at making someone actually read the next line.
-- **Tables for parallel facts, prose for reasoning.** Don't put an argument in a table cell. **And
-  never leave a blank line between rows** — it ends the table, and the rows below it render as stray
-  one-cell fragments with no header. It has happened twice: a `PACKS.md` row in the third pass, and
-  three `CREDITS.md` rows that spent two days that way. It looks fine in the source and only wrong
-  when rendered, which is why it survives.
+- **Tables for parallel facts, prose for reasoning.** Don't put an argument in a table cell.
 - **Every file opens by saying who should read it and when**, and points back at `CLAUDE.md`. That
   header is what makes the tree navigable rather than a pile.
 - **Never cite a line number.** `COLLECTION.md` pointed at `engine.js:114` for a function that had

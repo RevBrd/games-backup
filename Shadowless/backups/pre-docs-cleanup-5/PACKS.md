@@ -162,10 +162,7 @@ tier, so two players can have wildly different experiences of the same economy.
    let ride on the promo idea by association.
 2. **Progression-gating the intrusion pool.** A promo from an era the player hasn't reached would
    read as broken rather than delightful, so the eligible pool should track whatever era is
-   unlocked. **This was blocked on Job 7 and no longer is** — Job 7 shipped 12 Aug 2026, and the
-   fact it needed exists: a bracket is open if the previous boss has been beaten, derived from
-   `save.progress.beaten` rather than stored. So the eligible pool is computable from the save
-   without adding anything to it. Nobody has built it. See [PROGRESSION.md](PROGRESSION.md).
+   unlocked — which depends on Job 7's progression design and cannot be settled here.
 
 ## Sources
 

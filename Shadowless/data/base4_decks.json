@@ -1,0 +1,382 @@
+{
+  "_meta": {
+    "source": "Bulbapedia, Special:Export wikitext for Grass Chopper, Hot Water, Lightning Bug and Psych Out (TCG) -- the {{decklist/entry}} tables",
+    "retrieved": "2026-08-14",
+    "scope": "The four authentic WotC Base Set 2 theme decks. Reference data -- NOTHING READS THIS YET. base4 is not a live set yet (Job 8+). See data/Deck Lists/Base4 Decks.xlsx for Trevor's earlier, incomplete pass at this same set -- that workbook covers different (unofficial, Charmander & Friends-style) decks and neither supersedes the other; ask before picking one over the other for decks.json.",
+    "status": "All four resolved against data/raw/base4.json by exact (set, printed number) -- every card name matched the corpus, all total exactly 60, no 4-copy violations."
+  },
+  "grass_chopper": {
+    "name": "Grass Chopper",
+    "set": "base4",
+    "list": [
+      [
+        1,
+        "base4-6",
+        "Clefairy"
+      ],
+      [
+        2,
+        "base4-83",
+        "Nidoran ♂"
+      ],
+      [
+        1,
+        "base4-53",
+        "Nidorina"
+      ],
+      [
+        3,
+        "base4-82",
+        "Nidoran ♀"
+      ],
+      [
+        2,
+        "base4-64",
+        "Weepinbell"
+      ],
+      [
+        4,
+        "base4-66",
+        "Bellsprout"
+      ],
+      [
+        4,
+        "base4-91",
+        "Sandshrew"
+      ],
+      [
+        2,
+        "base4-49",
+        "Machoke"
+      ],
+      [
+        4,
+        "base4-78",
+        "Machop"
+      ],
+      [
+        1,
+        "base4-119",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "base4-108",
+        "Super Energy Removal"
+      ],
+      [
+        1,
+        "base4-117",
+        "Super Potion"
+      ],
+      [
+        2,
+        "base4-113",
+        "PlusPower"
+      ],
+      [
+        1,
+        "base4-120",
+        "Gust of Wind"
+      ],
+      [
+        3,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        14,
+        "base4-125",
+        "Fighting Energy"
+      ],
+      [
+        14,
+        "base4-127",
+        "Grass Energy"
+      ]
+    ]
+  },
+  "hot_water": {
+    "name": "Hot Water",
+    "set": "base4",
+    "list": [
+      [
+        1,
+        "base4-15",
+        "Poliwrath"
+      ],
+      [
+        1,
+        "base4-37",
+        "Dodrio"
+      ],
+      [
+        3,
+        "base4-72",
+        "Doduo"
+      ],
+      [
+        2,
+        "base4-51",
+        "Magmar"
+      ],
+      [
+        1,
+        "base4-35",
+        "Charmeleon"
+      ],
+      [
+        3,
+        "base4-69",
+        "Charmander"
+      ],
+      [
+        3,
+        "base4-76",
+        "Goldeen"
+      ],
+      [
+        2,
+        "base4-57",
+        "Poliwhirl"
+      ],
+      [
+        4,
+        "base4-88",
+        "Poliwag"
+      ],
+      [
+        1,
+        "base4-106",
+        "Pokémon Trader"
+      ],
+      [
+        2,
+        "base4-110",
+        "Energy Retrieval"
+      ],
+      [
+        3,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        2,
+        "base4-121",
+        "Poké Ball"
+      ],
+      [
+        3,
+        "base4-119",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "base4-120",
+        "Gust of Wind"
+      ],
+      [
+        15,
+        "base4-130",
+        "Water Energy"
+      ],
+      [
+        13,
+        "base4-126",
+        "Fire Energy"
+      ]
+    ]
+  },
+  "lightning_bug": {
+    "name": "Lightning Bug",
+    "set": "base4",
+    "list": [
+      [
+        1,
+        "base4-3",
+        "Chansey"
+      ],
+      [
+        3,
+        "base4-79",
+        "Magnemite"
+      ],
+      [
+        4,
+        "base4-87",
+        "Pikachu"
+      ],
+      [
+        1,
+        "base4-21",
+        "Beedrill"
+      ],
+      [
+        2,
+        "base4-47",
+        "Kakuna"
+      ],
+      [
+        4,
+        "base4-100",
+        "Weedle"
+      ],
+      [
+        1,
+        "base4-81",
+        "Metapod"
+      ],
+      [
+        4,
+        "base4-68",
+        "Caterpie"
+      ],
+      [
+        1,
+        "base4-115",
+        "Pokédex"
+      ],
+      [
+        1,
+        "base4-113",
+        "PlusPower"
+      ],
+      [
+        2,
+        "base4-109",
+        "Defender"
+      ],
+      [
+        2,
+        "base4-110",
+        "Energy Retrieval"
+      ],
+      [
+        1,
+        "base4-123",
+        "Switch"
+      ],
+      [
+        2,
+        "base4-120",
+        "Gust of Wind"
+      ],
+      [
+        3,
+        "base4-118",
+        "Bill"
+      ],
+      [
+        16,
+        "base4-127",
+        "Grass Energy"
+      ],
+      [
+        12,
+        "base4-128",
+        "Lightning Energy"
+      ]
+    ]
+  },
+  "psych_out": {
+    "name": "Psych Out",
+    "set": "base4",
+    "list": [
+      [
+        1,
+        "base4-19",
+        "Wigglytuff"
+      ],
+      [
+        3,
+        "base4-77",
+        "Jigglypuff"
+      ],
+      [
+        2,
+        "base4-45",
+        "Jynx"
+      ],
+      [
+        2,
+        "base4-73",
+        "Drowzee"
+      ],
+      [
+        1,
+        "base4-46",
+        "Kadabra"
+      ],
+      [
+        3,
+        "base4-65",
+        "Abra"
+      ],
+      [
+        1,
+        "base4-63",
+        "Wartortle"
+      ],
+      [
+        4,
+        "base4-93",
+        "Squirtle"
+      ],
+      [
+        1,
+        "base4-61",
+        "Seel"
+      ],
+      [
+        1,
+        "base4-94",
+        "Starmie"
+      ],
+      [
+        3,
+        "base4-95",
+        "Staryu"
+      ],
+      [
+        1,
+        "base4-101",
+        "Computer Search"
+      ],
+      [
+        1,
+        "base4-117",
+        "Super Potion"
+      ],
+      [
+        1,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        2,
+        "base4-123",
+        "Switch"
+      ],
+      [
+        2,
+        "base4-109",
+        "Defender"
+      ],
+      [
+        3,
+        "base4-120",
+        "Gust of Wind"
+      ],
+      [
+        15,
+        "base4-130",
+        "Water Energy"
+      ],
+      [
+        13,
+        "base4-129",
+        "Psychic Energy"
+      ]
+    ]
+  }
+}

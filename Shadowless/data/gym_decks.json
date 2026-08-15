@@ -1,0 +1,751 @@
+{
+  "_meta": {
+    "source": "Bulbapedia, Special:Export wikitext for Brock, Misty, Lt. Surge, Erika, Sabrina, Koga, Blaine and Giovanni (TCG) -- the {{decklist/entry}} tables",
+    "retrieved": "2026-08-14",
+    "scope": "All eight authentic WotC Gym Leader theme decks (Gym Heroes + Gym Challenge). Reference data -- NOTHING READS THIS YET. gym1/gym2 are not live sets yet. The most personality-forward official product found: every Pokemon card in each deck is printed as \"<Leader>'s <Pokemon>\", not the generic name.",
+    "status": "All eight resolved against data/raw/gym1.json and data/raw/gym2.json (plus Base Set 2 for shared generic Trainers/Energy) by exact (set, printed number) -- every card name matched the corpus, all eight total exactly 60, no 4-copy violations. Two decks (Blaine, Sabrina) pull a Trainer card printed in the *other* Gym set (Blaine's Gamble from Gym Heroes, Sabrina's Gaze likewise) -- that is correct per the wikitext, not a transcription slip."
+  },
+  "brock": {
+    "name": "Brock",
+    "set": "gym1",
+    "list": [
+      [
+        1,
+        "gym1-2",
+        "Brock's Rhydon"
+      ],
+      [
+        2,
+        "gym1-71",
+        "Brock's Sandshrew"
+      ],
+      [
+        3,
+        "gym1-70",
+        "Brock's Rhyhorn"
+      ],
+      [
+        4,
+        "gym1-69",
+        "Brock's Onix"
+      ],
+      [
+        3,
+        "gym1-67",
+        "Brock's Mankey"
+      ],
+      [
+        1,
+        "gym1-72",
+        "Brock's Sandshrew"
+      ],
+      [
+        3,
+        "gym1-66",
+        "Brock's Geodude"
+      ],
+      [
+        1,
+        "gym1-41",
+        "Brock's Lickitung"
+      ],
+      [
+        1,
+        "gym1-40",
+        "Brock's Graveler"
+      ],
+      [
+        1,
+        "gym1-98",
+        "Brock"
+      ],
+      [
+        3,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        2,
+        "base4-110",
+        "Energy Retrieval"
+      ],
+      [
+        2,
+        "gym1-106",
+        "Brock's Training Method"
+      ],
+      [
+        1,
+        "base4-111",
+        "Full Heal"
+      ],
+      [
+        2,
+        "base4-123",
+        "Switch"
+      ],
+      [
+        1,
+        "base4-118",
+        "Bill"
+      ],
+      [
+        1,
+        "gym1-115",
+        "Pewter City Gym"
+      ],
+      [
+        28,
+        "gym1-127",
+        "Fighting Energy"
+      ]
+    ]
+  },
+  "misty": {
+    "name": "Misty",
+    "set": "gym1",
+    "list": [
+      [
+        1,
+        "gym1-10",
+        "Misty's Tentacruel"
+      ],
+      [
+        2,
+        "gym1-54",
+        "Misty's Psyduck"
+      ],
+      [
+        4,
+        "gym1-90",
+        "Misty's Staryu"
+      ],
+      [
+        3,
+        "gym1-87",
+        "Misty's Poliwag"
+      ],
+      [
+        4,
+        "gym1-86",
+        "Misty's Horsea"
+      ],
+      [
+        2,
+        "gym1-57",
+        "Misty's Tentacool"
+      ],
+      [
+        3,
+        "gym1-85",
+        "Misty's Goldeen"
+      ],
+      [
+        2,
+        "gym1-56",
+        "Misty's Starmie"
+      ],
+      [
+        1,
+        "gym1-53",
+        "Misty's Poliwhirl"
+      ],
+      [
+        1,
+        "gym1-102",
+        "Misty"
+      ],
+      [
+        2,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        3,
+        "base4-121",
+        "Poké Ball"
+      ],
+      [
+        2,
+        "base4-119",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "gym1-108",
+        "Cerulean City Gym"
+      ],
+      [
+        1,
+        "base4-123",
+        "Switch"
+      ],
+      [
+        28,
+        "gym1-132",
+        "Water Energy"
+      ]
+    ]
+  },
+  "lt_surge": {
+    "name": "Lt. Surge",
+    "set": "gym1",
+    "list": [
+      [
+        1,
+        "gym1-8",
+        "Lt. Surge's Magneton"
+      ],
+      [
+        3,
+        "gym1-84",
+        "Lt. Surge's Voltorb"
+      ],
+      [
+        4,
+        "gym1-80",
+        "Lt. Surge's Magnemite"
+      ],
+      [
+        4,
+        "gym1-82",
+        "Lt. Surge's Rattata"
+      ],
+      [
+        2,
+        "gym1-51",
+        "Lt. Surge's Raticate"
+      ],
+      [
+        2,
+        "gym1-83",
+        "Lt. Surge's Spearow"
+      ],
+      [
+        4,
+        "gym1-81",
+        "Lt. Surge's Pikachu"
+      ],
+      [
+        2,
+        "gym1-52",
+        "Lt. Surge's Spearow"
+      ],
+      [
+        1,
+        "gym1-101",
+        "Lt. Surge"
+      ],
+      [
+        1,
+        "gym1-120",
+        "Vermilion City Gym"
+      ],
+      [
+        2,
+        "base4-120",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "gym1-118",
+        "Secret Mission"
+      ],
+      [
+        2,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        1,
+        "base4-113",
+        "PlusPower"
+      ],
+      [
+        1,
+        "base4-119",
+        "Energy Removal"
+      ],
+      [
+        28,
+        "gym1-130",
+        "Lightning Energy"
+      ]
+    ]
+  },
+  "erika": {
+    "name": "Erika",
+    "set": "gym1",
+    "list": [
+      [
+        1,
+        "gym1-5",
+        "Erika's Vileplume"
+      ],
+      [
+        4,
+        "gym1-79",
+        "Erika's Tangela"
+      ],
+      [
+        4,
+        "gym1-78",
+        "Erika's Oddish"
+      ],
+      [
+        3,
+        "gym1-77",
+        "Erika's Exeggcute"
+      ],
+      [
+        1,
+        "gym1-42",
+        "Erika's Dratini"
+      ],
+      [
+        2,
+        "gym1-49",
+        "Erika's Weepinbell"
+      ],
+      [
+        4,
+        "gym1-76",
+        "Erika's Bellsprout"
+      ],
+      [
+        1,
+        "gym1-46",
+        "Erika's Gloom"
+      ],
+      [
+        1,
+        "gym1-45",
+        "Erika's Gloom"
+      ],
+      [
+        1,
+        "gym1-44",
+        "Erika's Exeggutor"
+      ],
+      [
+        1,
+        "gym1-100",
+        "Erika"
+      ],
+      [
+        1,
+        "gym1-110",
+        "Erika's Perfume"
+      ],
+      [
+        2,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        2,
+        "base4-121",
+        "Poké Ball"
+      ],
+      [
+        3,
+        "base4-123",
+        "Switch"
+      ],
+      [
+        1,
+        "gym1-107",
+        "Celadon City Gym"
+      ],
+      [
+        22,
+        "gym1-129",
+        "Grass Energy"
+      ],
+      [
+        6,
+        "gym1-131",
+        "Psychic Energy"
+      ]
+    ]
+  },
+  "sabrina": {
+    "name": "Sabrina",
+    "set": "gym2",
+    "list": [
+      [
+        1,
+        "gym2-16",
+        "Sabrina's Alakazam"
+      ],
+      [
+        3,
+        "gym2-98",
+        "Sabrina's Porygon"
+      ],
+      [
+        3,
+        "gym2-95",
+        "Sabrina's Drowzee"
+      ],
+      [
+        4,
+        "gym2-96",
+        "Sabrina's Gastly"
+      ],
+      [
+        2,
+        "gym2-58",
+        "Sabrina's Kadabra"
+      ],
+      [
+        2,
+        "gym2-93",
+        "Sabrina's Abra"
+      ],
+      [
+        2,
+        "gym2-94",
+        "Sabrina's Abra"
+      ],
+      [
+        2,
+        "gym2-57",
+        "Sabrina's Jynx"
+      ],
+      [
+        2,
+        "gym2-55",
+        "Sabrina's Haunter"
+      ],
+      [
+        1,
+        "gym2-110",
+        "Sabrina"
+      ],
+      [
+        2,
+        "base4-118",
+        "Bill"
+      ],
+      [
+        2,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        2,
+        "gym1-125",
+        "Sabrina's Gaze"
+      ],
+      [
+        1,
+        "gym2-121",
+        "Sabrina's Psychic Control"
+      ],
+      [
+        2,
+        "base4-123",
+        "Switch"
+      ],
+      [
+        1,
+        "gym2-122",
+        "Saffron City Gym"
+      ],
+      [
+        28,
+        "gym2-131",
+        "Psychic Energy"
+      ]
+    ]
+  },
+  "koga": {
+    "name": "Koga",
+    "set": "gym2",
+    "list": [
+      [
+        1,
+        "gym2-9",
+        "Koga's Beedrill"
+      ],
+      [
+        3,
+        "gym2-77",
+        "Koga's Ekans"
+      ],
+      [
+        3,
+        "gym2-80",
+        "Koga's Pidgey"
+      ],
+      [
+        2,
+        "gym2-50",
+        "Koga's Weezing"
+      ],
+      [
+        2,
+        "gym2-47",
+        "Koga's Kakuna"
+      ],
+      [
+        3,
+        "gym2-79",
+        "Koga's Koffing"
+      ],
+      [
+        4,
+        "gym2-82",
+        "Koga's Weedle"
+      ],
+      [
+        3,
+        "gym2-78",
+        "Koga's Grimer"
+      ],
+      [
+        1,
+        "gym2-48",
+        "Koga's Koffing"
+      ],
+      [
+        1,
+        "gym2-106",
+        "Koga"
+      ],
+      [
+        2,
+        "base4-120",
+        "Gust of Wind"
+      ],
+      [
+        3,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        1,
+        "base4-111",
+        "Full Heal"
+      ],
+      [
+        1,
+        "base4-119",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "base4-113",
+        "PlusPower"
+      ],
+      [
+        1,
+        "gym2-114",
+        "Fuchsia City Gym"
+      ],
+      [
+        28,
+        "gym2-129",
+        "Grass Energy"
+      ]
+    ]
+  },
+  "giovanni": {
+    "name": "Giovanni",
+    "set": "gym2",
+    "list": [
+      [
+        1,
+        "gym2-8",
+        "Giovanni's Persian"
+      ],
+      [
+        3,
+        "gym2-75",
+        "Giovanni's Nidoran ♀"
+      ],
+      [
+        1,
+        "gym2-44",
+        "Giovanni's Nidorina"
+      ],
+      [
+        1,
+        "gym2-43",
+        "Giovanni's Meowth"
+      ],
+      [
+        4,
+        "gym2-76",
+        "Giovanni's Nidoran ♂"
+      ],
+      [
+        4,
+        "gym2-72",
+        "Giovanni's Machop"
+      ],
+      [
+        3,
+        "gym2-74",
+        "Giovanni's Meowth"
+      ],
+      [
+        2,
+        "gym2-45",
+        "Giovanni's Nidorino"
+      ],
+      [
+        2,
+        "gym2-42",
+        "Giovanni's Machoke"
+      ],
+      [
+        1,
+        "gym2-104",
+        "Giovanni"
+      ],
+      [
+        2,
+        "base4-119",
+        "Energy Removal"
+      ],
+      [
+        2,
+        "gym2-126",
+        "Warp Point"
+      ],
+      [
+        2,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        2,
+        "base4-118",
+        "Bill"
+      ],
+      [
+        1,
+        "base4-111",
+        "Full Heal"
+      ],
+      [
+        1,
+        "gym2-123",
+        "Viridian City Gym"
+      ],
+      [
+        8,
+        "gym2-127",
+        "Fighting Energy"
+      ],
+      [
+        20,
+        "gym2-129",
+        "Grass Energy"
+      ]
+    ]
+  },
+  "blaine": {
+    "name": "Blaine",
+    "set": "gym2",
+    "list": [
+      [
+        1,
+        "gym2-1",
+        "Blaine's Arcanine"
+      ],
+      [
+        2,
+        "gym2-62",
+        "Blaine's Growlithe"
+      ],
+      [
+        2,
+        "gym1-62",
+        "Blaine's Growlithe"
+      ],
+      [
+        2,
+        "gym2-31",
+        "Blaine's Charmeleon"
+      ],
+      [
+        2,
+        "gym2-61",
+        "Blaine's Doduo"
+      ],
+      [
+        4,
+        "gym2-64",
+        "Blaine's Ponyta"
+      ],
+      [
+        3,
+        "gym2-60",
+        "Blaine's Charmander"
+      ],
+      [
+        2,
+        "gym2-66",
+        "Blaine's Vulpix"
+      ],
+      [
+        1,
+        "gym2-32",
+        "Blaine's Dodrio"
+      ],
+      [
+        2,
+        "gym2-33",
+        "Blaine's Rapidash"
+      ],
+      [
+        1,
+        "gym2-100",
+        "Blaine"
+      ],
+      [
+        2,
+        "base4-118",
+        "Bill"
+      ],
+      [
+        2,
+        "gym2-124",
+        "Fervor"
+      ],
+      [
+        1,
+        "gym1-121",
+        "Blaine's Gamble"
+      ],
+      [
+        2,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        1,
+        "base4-117",
+        "Super Potion"
+      ],
+      [
+        1,
+        "gym2-117",
+        "Max Revive"
+      ],
+      [
+        1,
+        "gym2-113",
+        "Cinnabar City Gym"
+      ],
+      [
+        28,
+        "gym2-128",
+        "Fire Energy"
+      ]
+    ]
+  }
+}

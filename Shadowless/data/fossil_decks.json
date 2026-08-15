@@ -1,0 +1,180 @@
+{
+  "_meta": {
+    "source": "Bulbapedia, Special:Export wikitext for BodyGuard (TCG) and LockDown (TCG) -- the {{decklist/entry}} table, not a paraphrase",
+    "retrieved": "2026-08-14",
+    "scope": "The two authentic WotC Fossil theme decks. Reference data -- NOTHING READS THIS YET, same status as jungle_decks.json before it gets wired in. Fossil is already a live set.",
+    "status": "Both resolved against data/raw/base3.json and data/raw/base1.json by exact (set, printed number) -- every card name matched the corpus, both total exactly 60, no 4-copy violations. No hand corrections were needed, unlike Water Blast in jungle_decks.json. Also run through the live Engine.prototype.validateDeck (Fossil is a live set, unlike base4/base5/gym1/gym2): both come back ok:true, no errors, no warnings -- BodyGuard 18 Basics, LockDown 17 Basics."
+  },
+  "bodyguard": {
+    "name": "BodyGuard",
+    "set": "base3",
+    "list": [
+      [
+        1,
+        "base3-13",
+        "Muk"
+      ],
+      [
+        3,
+        "base3-47",
+        "Geodude"
+      ],
+      [
+        2,
+        "base3-37",
+        "Graveler"
+      ],
+      [
+        4,
+        "base3-48",
+        "Grimer"
+      ],
+      [
+        4,
+        "base3-57",
+        "Zubat"
+      ],
+      [
+        2,
+        "base3-34",
+        "Golbat"
+      ],
+      [
+        1,
+        "base1-56",
+        "Onix"
+      ],
+      [
+        2,
+        "base1-44",
+        "Bulbasaur"
+      ],
+      [
+        4,
+        "base1-51",
+        "Koffing"
+      ],
+      [
+        4,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        1,
+        "base1-85",
+        "Pokémon Center"
+      ],
+      [
+        2,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        16,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        12,
+        "base1-97",
+        "Fighting Energy"
+      ]
+    ]
+  },
+  "lockdown": {
+    "name": "LockDown",
+    "set": "base3",
+    "list": [
+      [
+        1,
+        "base3-10",
+        "Lapras"
+      ],
+      [
+        2,
+        "base3-39",
+        "Magmar"
+      ],
+      [
+        4,
+        "base3-49",
+        "Horsea"
+      ],
+      [
+        2,
+        "base3-42",
+        "Seadra"
+      ],
+      [
+        4,
+        "base3-51",
+        "Krabby"
+      ],
+      [
+        2,
+        "base3-38",
+        "Kingler"
+      ],
+      [
+        3,
+        "base1-68",
+        "Vulpix"
+      ],
+      [
+        3,
+        "base1-60",
+        "Ponyta"
+      ],
+      [
+        1,
+        "base3-60",
+        "Gambler"
+      ],
+      [
+        1,
+        "base3-59",
+        "Energy Search"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        2,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        1,
+        "base1-82",
+        "Full Heal"
+      ],
+      [
+        14,
+        "base1-98",
+        "Fire Energy"
+      ],
+      [
+        14,
+        "base1-102",
+        "Water Energy"
+      ]
+    ]
+  }
+}

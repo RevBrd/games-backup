@@ -1,0 +1,220 @@
+{
+  "_meta": {
+    "source": "Bulbapedia, Special:Export wikitext for Devastation (TCG) and Trouble (TCG) -- the {{decklist/entry}} tables",
+    "retrieved": "2026-08-14",
+    "scope": "The two authentic WotC Team Rocket theme decks. Reference data -- NOTHING READS THIS YET. base5 is not a live set yet. Both decks mix Team Rocket cards with Base Set 2 reprints (energy, generic trainers) -- normal for a WotC theme deck, not an error.",
+    "status": "Both resolved against data/raw/base5.json and data/raw/base4.json by exact (set, printed number) -- every card name matched the corpus, both total exactly 60, no 4-copy violations."
+  },
+  "devastation": {
+    "name": "Devastation",
+    "set": "base5",
+    "list": [
+      [
+        1,
+        "base5-14",
+        "Dark Weezing"
+      ],
+      [
+        3,
+        "base5-55",
+        "Eevee"
+      ],
+      [
+        1,
+        "base4-63",
+        "Wartortle"
+      ],
+      [
+        3,
+        "base4-93",
+        "Squirtle"
+      ],
+      [
+        1,
+        "base4-50",
+        "Magikarp"
+      ],
+      [
+        1,
+        "base5-46",
+        "Dark Wartortle"
+      ],
+      [
+        2,
+        "base5-45",
+        "Dark Vaporeon"
+      ],
+      [
+        3,
+        "base4-100",
+        "Weedle"
+      ],
+      [
+        3,
+        "base4-96",
+        "Tangela"
+      ],
+      [
+        3,
+        "base5-63",
+        "Oddish"
+      ],
+      [
+        4,
+        "base5-58",
+        "Koffing"
+      ],
+      [
+        1,
+        "base5-36",
+        "Dark Gloom"
+      ],
+      [
+        1,
+        "base4-117",
+        "Super Potion"
+      ],
+      [
+        2,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        1,
+        "base5-76",
+        "Imposter Oak's Revenge"
+      ],
+      [
+        1,
+        "base4-120",
+        "Gust of Wind"
+      ],
+      [
+        1,
+        "base4-111",
+        "Full Heal"
+      ],
+      [
+        10,
+        "base4-130",
+        "Water Energy"
+      ],
+      [
+        18,
+        "base4-127",
+        "Grass Energy"
+      ]
+    ]
+  },
+  "trouble": {
+    "name": "Trouble",
+    "set": "base5",
+    "list": [
+      [
+        1,
+        "base5-2",
+        "Dark Arbok"
+      ],
+      [
+        2,
+        "base5-62",
+        "Meowth"
+      ],
+      [
+        2,
+        "base4-40",
+        "Farfetch'd"
+      ],
+      [
+        2,
+        "base4-100",
+        "Weedle"
+      ],
+      [
+        4,
+        "base5-56",
+        "Ekans"
+      ],
+      [
+        1,
+        "base4-46",
+        "Kadabra"
+      ],
+      [
+        1,
+        "base4-45",
+        "Jynx"
+      ],
+      [
+        1,
+        "base4-43",
+        "Haunter"
+      ],
+      [
+        2,
+        "base4-75",
+        "Gastly"
+      ],
+      [
+        3,
+        "base5-54",
+        "Drowzee"
+      ],
+      [
+        2,
+        "base4-65",
+        "Abra"
+      ],
+      [
+        2,
+        "base5-49",
+        "Abra"
+      ],
+      [
+        2,
+        "base5-39",
+        "Dark Kadabra"
+      ],
+      [
+        1,
+        "base4-123",
+        "Switch"
+      ],
+      [
+        2,
+        "base4-122",
+        "Potion"
+      ],
+      [
+        1,
+        "base4-120",
+        "Gust of Wind"
+      ],
+      [
+        1,
+        "base5-73",
+        "The Boss's Way"
+      ],
+      [
+        1,
+        "base4-118",
+        "Bill"
+      ],
+      [
+        1,
+        "base5-81",
+        "Full Heal Energy"
+      ],
+      [
+        10,
+        "base4-127",
+        "Grass Energy"
+      ],
+      [
+        18,
+        "base4-129",
+        "Psychic Energy"
+      ]
+    ]
+  }
+}

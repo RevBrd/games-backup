@@ -166,10 +166,7 @@ control you always need stays put. Verified at 1280x600, 1366x768, 1600x900 and 
    rather than inventing an art system.
 2. **The real per-set decks are a future job**, Trevor's and mine together: hand-built lists per set
    and a better automated builder. The GBC 16 are placeholders until then, and the `subs` records in
-   `data/gbc_decks.json` say which cards are standing in for something we cannot generate yet.
-   **The candidate pool for that job already exists and is researched** — 16 official WotC theme
-   decks, 8 Gym Leader decks and 8 GB2 flavour decks, ID-mapped and count-verified but read by
-   nothing. `data/OPPONENT_DECK_POOL.md` is the tracker; see [DATA.md](DATA.md) for what is in each
-   file and what "quarantined" means here.
+   `data/gbc_decks.json` say which cards are standing in for something we cannot generate yet. See
+   [DATA.md](DATA.md).
 3. **Nothing reads `progress.lost` yet.** It is recorded, and a "this one keeps beating you" surface
    is the obvious use.

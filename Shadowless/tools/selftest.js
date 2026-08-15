@@ -294,8 +294,12 @@ for (const mode of ['random', 'greedy', 'novice', 'expert']) {
     + (mode === 'expert' ? '   <- control: both seats are the same bot' : ''));
   // Only a ladder that has genuinely INVERTED should go red. "Expert did not
   // clear 50% this run" is a sentence about the sample, not about the AI.
-  if (mode !== 'expert') check(pct + ci > 50, `expert beats ${mode}`,
-    `${pct.toFixed(0)}% ±${ci.toFixed(0)} over ${n} games — significantly below even odds`);
+  // `detail` prints on PASS as well as FAIL, so the verdict half is conditional —
+  // it read "99% — significantly below even odds" on a passing row until 14 Aug 2026.
+  const inverted = !(pct + ci > 50);
+  if (mode !== 'expert') check(!inverted, `expert beats ${mode}`,
+    `${pct.toFixed(0)}% ±${ci.toFixed(0)} over ${n} games`
+    + (inverted ? ' — significantly below even odds' : ''));
 }
 
 // --- 5. deck balance, reported not asserted ------------------------------

@@ -59,29 +59,77 @@ what stops a careless `--sets` from silently producing decks full of undefined i
 lopsided win rates are probably faithful rather than broken. The figures are in [AI.md](AI.md); ask
 before "fixing" them.
 
-## The two workbooks nothing reads yet
+## Which deck files the game actually reads
 
-`data/Deck Lists/` holds two more, and **both are reference data**:
+**This is the question to check first, because it has been wrong in this file before.** Until 14 Aug
+2026 this section called `gbc_decks.json` unread and `jungle_decks.json` reference-only; Job 7 had
+wired both into the live ladder on 12 Aug. A doc that quarantines live data is worse than one that
+says nothing, because a session will treat the ladder's own decks as scratch.
 
-- **`Jungle Decks.xlsx`** — Water Blast and Power Reserve, the two authentic Jungle theme decks, and
-  the valuable one. Converted, corrected and validated into **`data/jungle_decks.json`**; use that
-  rather than re-reading the sheet, because it carries three id corrections without which Water
-  Blast is an illegal deck. Its `_meta` has the table and the reasoning.
-- **`Base4 Decks.xlsx`** — Base Set 2 theme decks (Charmander & Friends, Squirtle & Friends…),
-  incomplete. Kept, not converted. Note it is named for the set code, and `base4` is Base Set 2.
+`gen_cards.js` reads exactly four files out of `data/` besides the corpus, and the list is in the
+source — **grep `readFileSync` in the generator rather than trusting the table below.**
 
-**Converting a sheet is not the same as adopting it. Wiring either set of decks into `decks.json`
-makes them playable and is a job**, not a maintenance action: deck select, the starter pick and the
-balance figures all move.
+| File | Emitted as | Consumed by |
+|---|---|---|
+| `decks.json` | `DECKS` | the four playable theme decks. Player-facing; a missing card id is **fatal** |
+| `gbc_decks.json` | `OPPONENT_DECKS`, `gbc:` prefix | the ladder roster, `progresstest.js`, `aiduel.js --gbc` |
+| `jungle_decks.json` | `OPPONENT_DECKS`, `jungle:` prefix | the Jungle bracket's two authentic challengers |
+| `ladder.json` | `LADDER` | `buildLadder()`. See [PROGRESSION.md](PROGRESSION.md) |
 
-## `data/gbc_decks.json` — Job 7's groundwork
+**The opponent files fail soft where `decks.json` fails hard.** An opponent deck naming a card outside
+the generated sets is dropped with a warning; a player deck doing the same is a fatal error. A player
+deck that cannot be built is a broken game, an opponent deck that cannot be built is one rung of a
+ladder that backfills itself.
 
-All 16 GBC opponent decks — eight Club Masters, four Grand Masters and Ronald's four — verified to
-exactly 60 cards and mapped to our set IDs, with every out-of-scope card substituted and reasoned in
-its own `_meta`. **Nothing reads it yet.** Three decks are flagged for a count re-check before use.
+**`gbc_decks.json`** is all 16 GBC1 decks — eight Club Masters, four Grand Masters and Ronald's four —
+verified to 60 cards each with the substitutions reasoned in its own `_meta`. #8 researched it, and
+**#11 repaired it before Job 7 could use it**: seven decks named `basep` cards against a constraint
+that does not hold here, and one deck was flagged as defective in its own notes and turned out not to
+be. Do not re-open the three "count re-check" flags that older text mentions — they were resolved.
 
-They are GBC1 decks, so they need nothing beyond the three live sets — which also means the ruling
-policy's known limit (the GBC game is silent from Team Rocket on) does not bite until after Job 7.
+**`jungle_decks.json`** is Water Blast and Power Reserve, converted from `Jungle Decks.xlsx` with
+three id corrections without which Water Blast is an illegal deck. Use the JSON, never the sheet.
+
+## The workbooks and the research pool — reference only
+
+Everything in this section is **quarantined**: real material, ID-mapped in some cases, and read by
+nothing. Adopting any of it is a job rather than a maintenance action — deck select, the roster and
+the balance figures all move.
+
+**`data/Deck Lists/`** holds the spreadsheets. `Base1 Decks.xlsx` is the source of `decks.json`
+(above). `Jungle Decks.xlsx` is the source of `jungle_decks.json`. **`Base4 Decks.xlsx`** is Base
+Set 2 theme decks, incomplete, kept and not converted — and note it is named for the set code, so it
+is Base Set 2 and not Team Rocket. **`GB2 Opponent Deck Guide (Alamedyang, English-patch names).txt`**
+is the find of 14 Aug: a hex-extracted guide to ~90 opponents from *Pokémon Card GB2*, the Japan-only
+sequel, saved verbatim. It is the closest thing to a second `gbc_decks.json` source that exists, and
+its second half runs on Team Rocket cards in named, personality-forward decks.
+
+**`data/OPPONENT_DECK_POOL.md` is the tracker, and it is the file to open**, not this one, when you
+are picking opponents for a set going live. It carries a status per deck, a legend, and the record of
+what has been adopted. The five JSON files below are its output, all in the same `[qty, id, name]` /
+`subs` shape as `gbc_decks.json` so that adopting one is a wiring change and not a conversion:
+
+| File | Contents |
+|---|---|
+| `fossil_decks.json` | BodyGuard, LockDown — both pass the real `validateDeck`, since Fossil is live |
+| `base4_decks.json` | Grass Chopper, Hot Water, Lightning Bug, Psych Out |
+| `team_rocket_decks.json` | Devastation, Trouble |
+| `gym_decks.json` | all 8 Gym Leader decks |
+| `gbc2_flavor_decks.json` | the 8 GB2-Island flavour decks. Only `allison_psychic_battle` is clean; the other 7 carry `subs` entries needing a real substitution decision |
+
+**One lesson from that research is worth more than the decks and is recorded here so it is not
+re-learned.** A fetch through a page summariser gave counts that did not match the itemised lists
+under them; `Special:Export` for raw wikitext resolved all sixteen official decks to exactly 60 cards
+with zero hand corrections. And **a categorical scan is not a lookup** — checking whether a card name
+starts with a known-bad prefix passed a deck that runs 4x Bill's Teleporter, a Neo Genesis card with
+no prefix at all. Only a resolver against `data/raw/*.json` caught it. *[Both accounts, in the words
+of the instance that hit them →](LOGBOOK.md)*
+
+**`data/DECK_RESEARCH_NOTES.md` is the first draft of all of that and is superseded.** It holds the
+same card lists in prose, un-ID-mapped and with its own counts flagged unverified — so it is now the
+*less* reliable copy of data that exists as validated JSON. Kept for provenance, moved out of the
+working set on 14 Aug 2026 to `backups/deck-research-2026-08-14/`. Read it only if you want to know
+where a list came from; never type a card out of it.
 
 ## A confident absence claim is worse than an unknown
 

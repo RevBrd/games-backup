@@ -3,8 +3,8 @@
 Depth behind the Tooling section of `CLAUDE.md`. Read that first; come here when you are about to
 regenerate cards, widen a set, look at the board, or wonder what a suite actually covers.
 
-The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, six test suites, a
-screenshotter and an art fetcher; the command list is in `CLAUDE.md`. Two neighbours own the parts that are not build
+The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, five test suites and
+a screenshotter; the command list is in `CLAUDE.md`. Two neighbours own the parts that are not build
 steps — **what the inputs are** is in [DATA.md](DATA.md), and **the two instruments that measure
 whether the bot plays well** are in [AI.md](AI.md).
 
@@ -88,11 +88,10 @@ filesystem, so a set going live with no scans shows the player a grid of broken 
 test green. `selftest.js` prints an `ART MISSING` warning for any live set whose asset folder is
 short — a warning and not a failure, because a fresh clone legitimately has none of it.
 
-## The six test suites
+## The five test suites
 
-**None of them subsumes the others**, and they overlap barely at all. Run all six before calling
-anything done. **The counts below rot** — they are here to say roughly how heavy each suite is, not
-as a figure to quote. Run the suite for the real number.
+**None of them subsumes the others**, and they overlap barely at all. Run all five before calling
+anything done.
 
 - **`selftest.js`** requires the `src/` modules directly — no browser, no DOM stubs, because the
   engine is DOM-free. Validates the decks, checks card coverage, plays ~100 AI-vs-AI games to
@@ -109,12 +108,12 @@ as a figure to quote. Run the suite for the real number.
   for the same reason it is the only suite that can see a Power. Those cases assert `rawOutcomes()`
   — the raw distribution, before weights — so retuning a weight cannot fail them for the wrong
   reason. *[The blind spot they were built for →](AI.md)*
-- **`smoke.js`** (143 tests) is the original Chat-era harness, driving the **built** HTML through a
+- **`smoke.js`** (136 tests) is the original Chat-era harness, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
   presentation and freeze, the deck-select flow, the collection screens, the ladder and the card
   renderer. Catches build and UI regressions — but it has no layout engine, so a green run proves
   nothing visual. `tools/shot.js` is the only test for that class of bug, and Job 7b is the sharpest
-  example yet: **four layout defects were live while every one of these passed** (136 of them, then). See
+  example yet: **four layout defects were live while all 136 of these passed.** See
   [PROGRESSION.md](PROGRESSION.md).
   **It declares free play once, at the top.** Almost every test in it drives a match by setting
   `UI.myDeck` and `UI.foeDeck`, which is free play's contract — on the ladder the opponent's deck

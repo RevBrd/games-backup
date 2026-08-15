@@ -1,0 +1,747 @@
+{
+  "_meta": {
+    "source": "data/Deck Lists/GB2 Opponent Deck Guide (Alamedyang, English-patch names).txt -- Pokemon Card GB2: Here Comes The Great Team Rocket! (Japan-only GBC sequel), decks extracted by the guide's author from actual save data with a hex editor",
+    "retrieved": "2026-08-14",
+    "scope": "Eight named, flavor-titled opponent decks from GB2 Island (the guide's sections T1-T8) -- the personality-forward picks out of ~45 GB2-Island opponents, chosen over the plain numbered ones per Trevor's ask. Reference data -- NOTHING READS THIS YET.",
+    "resolution": "Every entry resolved against data/raw/base1-3.json and base5.json by name, preferring base1 > base2 > base3 > base5 when a name exists in more than one (a handful of cards -- Mr. Mime, Scyther, Kangaskhan, and a few Team Rocket Dark-Pokemon reprints -- exist at two printed numbers within the same set; the lower number was picked arbitrarily, it doesn't matter which for play). All eight total exactly 60 with subs included.",
+    "playable_today": "Only allison_psychic_battle needs nothing beyond base1/base2/base3, which are already live -- it's playable as-is right now, confirmed against the live Engine.prototype.validateDeck: ok:true, no errors, no warnings, 14 Basics. Every other deck in this file has at least one `subs` entry and needs base5 (Team Rocket) live at minimum.",
+    "subs_kinds": {
+      "future-set": "A real printed card that exists in the corpus, just not in a live set yet. Currently only Bill's Teleporter, which is a Neo Genesis (neo1) card -- every one of these eight decks that uses it needs Neo Genesis live, not just Team Rocket, which is a much later milestone than base5 alone would suggest.",
+      "unresolved-exclusive": "The GB2 guide's Vending/S-Deck/B-Deck/Gameboy-Dark prefixes -- promotional or video-game-only prints with no real TCG equivalent found anywhere in the corpus (checked against all 14 sets, not just the 3 live ones). These need an actual substitution decision (which real card stands in) before the deck is playable, the same kind of call gbc_decks.json's `subs` table already makes for the GBC1 roster -- not made here, since it wants a real decision rather than an automated one."
+    },
+    "correction": "The original research pass (DECK_RESEARCH_NOTES.md / OPPONENT_DECK_POOL.md) claimed Allison's Ultra Removal deck was playable today with zero substitution, on the grounds that it has no Rocket-prefixed cards. That was wrong -- it runs 4x Bill's Teleporter, a real card, but from Neo Genesis. Caught only once this file's automated name-resolution pass ran the card past the actual corpus instead of just scanning for known GBC-exclusive prefixes. OPPONENT_DECK_POOL.md's table has been corrected to match."
+  },
+  "allison_psychic_battle": {
+    "name": "Allison (Psychic Battle deck)",
+    "list": [
+      [
+        12,
+        "base1-97",
+        "Fighting Energy"
+      ],
+      [
+        10,
+        "base1-101",
+        "Psychic Energy"
+      ],
+      [
+        4,
+        "base1-62",
+        "Sandshrew"
+      ],
+      [
+        3,
+        "base3-41",
+        "Sandslash"
+      ],
+      [
+        4,
+        "base1-7",
+        "Hitmonchan"
+      ],
+      [
+        3,
+        "base2-6",
+        "Mr. Mime"
+      ],
+      [
+        3,
+        "base1-10",
+        "Mewtwo"
+      ],
+      [
+        2,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        2,
+        "base3-59",
+        "Energy Search"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        3,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        4,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-84",
+        "PlusPower"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        4,
+        "base1-91",
+        "Bill"
+      ]
+    ],
+    "subs": []
+  },
+  "allison_ultra_removal": {
+    "name": "Allison (Ultra Removal deck)",
+    "list": [
+      [
+        18,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        4,
+        "base1-63",
+        "Squirtle"
+      ],
+      [
+        3,
+        "base1-42",
+        "Wartortle"
+      ],
+      [
+        3,
+        "base1-2",
+        "Blastoise"
+      ],
+      [
+        4,
+        "base3-53",
+        "Psyduck"
+      ],
+      [
+        3,
+        "base3-35",
+        "Golduck"
+      ],
+      [
+        4,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        4,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        3,
+        "base1-79",
+        "Super Energy Removal"
+      ],
+      [
+        2,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        2,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        4,
+        "base1-91",
+        "Bill"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "future-set",
+        "qty": 4,
+        "wanted": "Bill's Teleporter",
+        "restore": "neo1-91",
+        "restoreIsExact": true,
+        "note": "Real printed card, but from Neo Genesis (neo1), not live yet."
+      }
+    ]
+  },
+  "allison_poison_mist": {
+    "name": "Allison (Poison Mist deck)",
+    "list": [
+      [
+        20,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        2,
+        "base5-81",
+        "Full Heal Energy"
+      ],
+      [
+        4,
+        "base5-57",
+        "Grimer"
+      ],
+      [
+        4,
+        "base5-41",
+        "Dark Muk"
+      ],
+      [
+        3,
+        "base2-10",
+        "Scyther"
+      ],
+      [
+        3,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        2,
+        "base4-109",
+        "Defender"
+      ],
+      [
+        2,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        2,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        4,
+        "base1-91",
+        "Bill"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 4,
+        "wanted": "Koffing (S-Deck print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 3,
+        "wanted": "Weezing (Vending print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 1,
+        "wanted": "Mr. Mime (Vending print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "future-set",
+        "qty": 4,
+        "wanted": "Bill's Teleporter",
+        "restore": "neo1-91",
+        "restoreIsExact": true,
+        "note": "Real printed card, but from Neo Genesis (neo1), not live yet."
+      }
+    ]
+  },
+  "clay": {
+    "name": "Clay",
+    "list": [
+      [
+        6,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        8,
+        "base1-98",
+        "Fire Energy"
+      ],
+      [
+        8,
+        "base1-101",
+        "Psychic Energy"
+      ],
+      [
+        3,
+        "base5-63",
+        "Oddish"
+      ],
+      [
+        2,
+        "base5-36",
+        "Dark Gloom"
+      ],
+      [
+        3,
+        "base5-50",
+        "Charmander"
+      ],
+      [
+        2,
+        "base5-32",
+        "Dark Charmeleon"
+      ],
+      [
+        3,
+        "base5-65",
+        "Psyduck"
+      ],
+      [
+        2,
+        "base5-37",
+        "Dark Golduck"
+      ],
+      [
+        3,
+        "base5-67",
+        "Slowpoke"
+      ],
+      [
+        2,
+        "base5-12",
+        "Dark Slowbro"
+      ],
+      [
+        3,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        2,
+        "base3-59",
+        "Energy Search"
+      ],
+      [
+        3,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        2,
+        "base5-73",
+        "The Boss's Way"
+      ],
+      [
+        4,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base5-77",
+        "Nightly Garbage Run"
+      ]
+    ],
+    "subs": []
+  },
+  "villicchi_stop_life": {
+    "name": "Villicchi (Stop Life! deck)",
+    "list": [
+      [
+        18,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        2,
+        "base2-10",
+        "Scyther"
+      ],
+      [
+        2,
+        "base2-5",
+        "Kangaskhan"
+      ],
+      [
+        3,
+        "base1-26",
+        "Dratini"
+      ],
+      [
+        2,
+        "base5-33",
+        "Dark Dragonair"
+      ],
+      [
+        3,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        3,
+        "base1-84",
+        "PlusPower"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        3,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        3,
+        "base5-73",
+        "The Boss's Way"
+      ],
+      [
+        4,
+        "base1-91",
+        "Bill"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 4,
+        "wanted": "Bulbasaur (B-Deck print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 3,
+        "wanted": "Dark Ivysaur (Gameboy-only, no printed equivalent)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 3,
+        "wanted": "Dark Venusaur (Gameboy-only, no printed equivalent)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 1,
+        "wanted": "Mr. Mime (Vending print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "future-set",
+        "qty": 4,
+        "wanted": "Bill's Teleporter",
+        "restore": "neo1-91",
+        "restoreIsExact": true,
+        "note": "Real printed card, but from Neo Genesis (neo1), not live yet."
+      }
+    ]
+  },
+  "villicchi_scorcher": {
+    "name": "Villicchi (Scorcher! deck)",
+    "list": [
+      [
+        18,
+        "base1-98",
+        "Fire Energy"
+      ],
+      [
+        4,
+        "base5-50",
+        "Charmander"
+      ],
+      [
+        3,
+        "base5-32",
+        "Dark Charmeleon"
+      ],
+      [
+        3,
+        "base5-4",
+        "Dark Charizard"
+      ],
+      [
+        3,
+        "base3-39",
+        "Magmar"
+      ],
+      [
+        2,
+        "base2-5",
+        "Kangaskhan"
+      ],
+      [
+        2,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        3,
+        "base4-109",
+        "Defender"
+      ],
+      [
+        3,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        3,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        3,
+        "base5-73",
+        "The Boss's Way"
+      ],
+      [
+        4,
+        "base1-91",
+        "Bill"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 1,
+        "wanted": "Mr. Mime (Vending print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 2,
+        "wanted": "Clefairy (Vending print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 2,
+        "wanted": "Dark Clefable (Gameboy-only, no printed equivalent)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "future-set",
+        "qty": 4,
+        "wanted": "Bill's Teleporter",
+        "restore": "neo1-91",
+        "restoreIsExact": true,
+        "note": "Real printed card, but from Neo Genesis (neo1), not live yet."
+      }
+    ]
+  },
+  "villicchi_tsunami_starter": {
+    "name": "Villicchi (Tsunami Starter! deck)",
+    "list": [
+      [
+        18,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        2,
+        "base2-10",
+        "Scyther"
+      ],
+      [
+        4,
+        "base1-63",
+        "Squirtle"
+      ],
+      [
+        1,
+        "base5-46",
+        "Dark Wartortle"
+      ],
+      [
+        3,
+        "base5-3",
+        "Dark Blastoise"
+      ],
+      [
+        3,
+        "base3-10",
+        "Lapras"
+      ],
+      [
+        3,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        2,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-84",
+        "PlusPower"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        2,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        3,
+        "base1-76",
+        "Pokémon Breeder"
+      ],
+      [
+        2,
+        "base5-73",
+        "The Boss's Way"
+      ],
+      [
+        4,
+        "base1-91",
+        "Bill"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 1,
+        "wanted": "Mr. Mime (Vending print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 2,
+        "wanted": "Clefairy (Vending print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 2,
+        "wanted": "Dark Clefable (Gameboy-only, no printed equivalent)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "future-set",
+        "qty": 4,
+        "wanted": "Bill's Teleporter",
+        "restore": "neo1-91",
+        "restoreIsExact": true,
+        "note": "Real printed card, but from Neo Genesis (neo1), not live yet."
+      }
+    ]
+  },
+  "villicchi_smash_to_mincemeat": {
+    "name": "Villicchi (Smash to Mincemeat! deck)",
+    "list": [
+      [
+        18,
+        "base1-97",
+        "Fighting Energy"
+      ],
+      [
+        2,
+        "base1-96",
+        "Double Colorless Energy"
+      ],
+      [
+        4,
+        "base1-52",
+        "Machop"
+      ],
+      [
+        3,
+        "base5-40",
+        "Dark Machoke"
+      ],
+      [
+        3,
+        "base5-10",
+        "Dark Machamp"
+      ],
+      [
+        2,
+        "base1-3",
+        "Chansey"
+      ],
+      [
+        3,
+        "base2-5",
+        "Kangaskhan"
+      ],
+      [
+        3,
+        "base4-109",
+        "Defender"
+      ],
+      [
+        3,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        2,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        2,
+        "base5-73",
+        "The Boss's Way"
+      ],
+      [
+        4,
+        "base1-91",
+        "Bill"
+      ]
+    ],
+    "subs": [
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 1,
+        "wanted": "Mr. Mime (Vending print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 2,
+        "wanted": "Clefairy (Vending print)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "unresolved-exclusive",
+        "qty": 2,
+        "wanted": "Dark Clefable (Gameboy-only, no printed equivalent)",
+        "note": "GBC-only print, no real printed equivalent found in the corpus. Needs a substitution decision before this deck is playable."
+      },
+      {
+        "kind": "future-set",
+        "qty": 4,
+        "wanted": "Bill's Teleporter",
+        "restore": "neo1-91",
+        "restoreIsExact": true,
+        "note": "Real printed card, but from Neo Genesis (neo1), not live yet."
+      }
+    ]
+  }
+}

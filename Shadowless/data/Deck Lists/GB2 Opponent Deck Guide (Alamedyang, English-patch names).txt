@@ -1,0 +1,5688 @@
+                                                ___     ___
+            | ()  |____ ----  --        ----  --\  \   /  /--
+         ---+--- /   |  _|__      /    /  /  |  |\  \ /  /|  |
+          / | \     /    |       /    /  /   |  | | //  / |  |
+         /  |  \  /      \__  __/    /  /    |  |/ / --- /  /
+                                     |  | -- |    /     /  /
+            _|___          |   \\    |  ||  ||     \   /  /
+             |   |  _____  |---      \  \ | ||  |\  \ /  /
+             |   |         |          \  \| ||  |/  //   ----|
+            /    |         |           \____||_____/ |_______|
+
+
+           ____    ______    _________   _/___\      |        ||
+         /     \   |     \   |    |  |  ___|____     |        ||
+        |          |    /    | ---+- |    / / \      +----    ||
+        |     ___  |---+     |  \ |  |  /  / / /\    |        ||
+        |      |   |    \    |   _|  |   /  / /      |        
+         \_____|   |     \   |_______|    /  /    ---+-----   ()
+
+
+
+                      Alamedyang's Ultimate Guide to
+           Pokemon Card GB2: Here Comes The Great Team Rocket!
+
+                           OPPONENT DECK GUIDE
+                         (English patch version)
+                                  v1.1
+
+
+
+                      by Alamedyang (c) 2001-2018
+                      alamedyang at gmail dot com
+                    http://alamedyang.tejat.net/tcg2/
+
+
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+=========================================================================
+==============|   T A B L E     O F     C O N T E N T S   |==============
+=========================================================================
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+ ---------------------------------------------------
+//  I. BEGINNING NOTES                            //
+---------------------------------------------------
+        A1 - Where the Deck Lists Came From
+        A2 - About the Names
+        A3 - Starter Deck
+
+ ---------------------------------------------------
+//  II. GB1 ISLAND: CLUB MEMBER / MASTER DECKS    //
+---------------------------------------------------
+   [B] ROCK CLUB (Stone Club)
+        B1 - MATTHEW (Yasutomo)
+        B2 - ANDREW (Joota)
+        B3 - RYAN (Norio)
+        B4 - GENE (Genzou)
+        
+   [C] FIGHTING CLUB (Battle Club)
+        C1 - MATT (Masahiro) ver. 1
+        C2 - MATT (Masahiro) ver. 2
+        C3 - CHRIS (Tatsuroo)
+        C4 - JESSICA (Natsuki)
+        C5 - MITCH (Yamaguchi)
+
+   [D] GRASS CLUB (Green Club)
+        D1 - BRITANNY (Ayako) ver. 1
+        D2 - BRITANNY (Ayako) ver. 2
+        D3 - HEATHER (Misao)
+        D4 - KRISTIN (Haruna)
+        D5 - NIKKI (Kunimi)
+
+   [E] SCIENCE CLUB (Science Club)
+        E1 - ERIK (Masashi)
+        E2 - DAVID (Yasuyuki)
+        E3 - JOSEPH (Souta)
+        E4 - RICK (Kurushima)
+
+   [F] WATER CLUB (Aqua Club)
+        F1 - SARA (Mari)
+        F2 - AMANDA (Megumi)
+        F3 - JOSHUA (Shintaroo) ver. 1
+        F4 - JOSHUA (Shintaroo) ver. 2
+        F5 - AMY (Utchii)
+
+   [G] FIRE CLUB (Fire Club)
+        G1 - JOHN (Takashi)
+        G2 - ADAM (Watarun)
+        G3 - JONATHON (Masatoshi)
+        G4 - KEN (Akabane)
+
+   [H] LIGHTNING CLUB (Elec Club)
+        H1 - NICHOLAS (Sousuke) ver. 1
+        H2 - NICHOLAS (Sousuke) ver. 2
+        H3 - JENNIFER (Yuka)
+        H4 - BRANDON (Toshihiko)
+        H5 - ISAAC (Takahashi) ver. 1
+        H6 - ISAAC (Takahashi) ver. 2
+
+   [I] PSYCHIC CLUB (Esper Club)
+        I1 - STEPHANIE (Rie)
+        I2 - ROBERT (Hiro)
+        I3 - DANIEL (Keita)
+        I4 - MURRAY (Miura) ver. 1
+        I5 - MURRAY (Miura) ver. 2
+
+ ---------------------------------------------------
+//  III. GB1 ISLAND: MISCELLANEOUS DECKS          //
+---------------------------------------------------
+   [J] DR. MASON'S LAB (Dr. Ooyama's Lab)
+        J1 - SAM (Mikasa)
+        J2 - AARON (Arai-Mon) Step 1
+        J3 - AARON (Arai-Mon) Step 2
+        J4 - AARON (Arai-Mon) Step 3
+        J5 - AARON (Arai-Mon) 
+
+   [K] GRAND MASTERS
+        K1 - COURTNEY (Hiroko)
+        K2 - STEVE (Steve)
+        K3 - JACK (Kanekooji)
+        K4 - ROD (Ryuudo)
+
+   [L] GRs
+        L1 - GR#1
+        L2 - GR#2
+        L3 - GR#3
+        L4 - GR#4
+        L5 - GRX - see RONALD (Rando), section U
+
+ ---------------------------------------------------
+//  IV. GB2 ISLAND: FORT MINION / MASTER DECKS    //
+---------------------------------------------------
+   [M] GRASS FORT
+        M1 - MELISSA (Midori)
+        M2 - JAMES (Yuuta)
+        M3 - LIZ (Miyuki)
+        M4 - PARKER (Morino)
+
+   [N] LIGHTNING FORT
+        N1 - PETER (Tap)
+        N2 - CASSIE (Renna)
+        N3 - CHIP (Ichikawa)
+        N4 - CATHERINE (Catherine)
+
+   [O] FIRE FORT
+        O1 - JESS (Jayce)
+        O2 - KARA (Yuuki)
+        O3 - ELLEN (Shouko)
+        O4 - BERNARD (Hiderou)
+
+   [P] WATER FORT
+        P1 - JACOB (Miyajima)
+        P2 - CODY (Senta)
+        P3 - ALEX (Aira)
+        P4 - BROOKE (Kanoko)
+
+   [Q] FIGHTING FORT
+        Q1 - GRACE (Grace)
+        Q2 - TONY (Gouda)
+        Q3 - BRUTUS (Kamiya)
+
+   [R] PSYCHIC FORT
+        R1 - KEVIN (Kevin)
+        R2 - VICTORIA (Miwa)
+        R3 - CLYDE (Yousuke)
+        R4 - HEIDI (Ryouko)
+        R5 - CLAIRE (Mami)
+
+   [S] COLORLESS SHRINE
+        S1 - SETH (Nishijima)
+        S2 - ALAN (Samejima)
+        S3 - AVERY (Ishii)
+
+   [T] ROCKET CASTLE
+        T1 - CLAY (Kanzaki)
+        T2 - ALLISON (Rui) Psychic Battle deck
+        T3 - ALLISON (Rui) Poison Mist deck
+        T4 - ALLISON (Rui) Ultra Removal deck
+        T5 - VILLICCHI (Biruricchi) Stop Life! deck
+        T6 - VILLICCHI (Biruricchi) Scorcher! deck
+        T7 - VILLICCHI (Biruricchi) Tsunami Starter! deck
+        T8 - VILLICCHI (Biruricchi) Smash to Minemeat! deck
+
+ ---------------------------------------------------
+//  V. GB2 ISLAND: MISCELLANEOUS DECKS           //
+---------------------------------------------------
+   [U] RONALD (Rando)
+        U1 - Half of the GR Coin
+        U2 - GRX Deck
+        U3 - Half Way Through GB2 Island
+        U4 - Just Outside Rocket Castle
+
+   [V] SEALED FORT
+        U1 - AXEL (Eji)
+        U2 - MAGICIAN (Magician)
+        U3 - WARREN (Toshiron)
+        U4 - PIERROT (Piero)
+        U5 - TOBY (Tobi-Chan)
+        U6 - FRANK (Dee/Dii)
+        U7 - MASQUERADE (Masquerade)
+        U8 - ANNA (Anna)
+        U9 - MARY (Yui)
+
+   [W] DUNGEON MASTERS
+        U1 - PAWN
+        U2 - KNIGHT
+        U3 - BISHOP
+        U4 - ROOK
+        U5 - QUEEN
+
+   [X] MISCELLANEOUS CHARACTERS
+        X1 - IMAKUNI?
+        X2 - RED IMAKUNI?
+        X3 - MR. ISHIHARA
+
+
+ ---------------------------------------------------
+//  VI. THE END                                  //
+---------------------------------------------------
+
+   [V] THE END
+        V1 - Also Available
+        V2 - Contacting Me
+
+
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+=========================================================================
+==============|   I.  B E G I N N I N G     N O T E S    |===============
+=========================================================================
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+=========================================================================
+  [A1]  WHERE THE DATA CAME FROM
+=========================================================================
+
+The contents of all decks were determined by looking at the saved game
+data using a hex editor, during or immediately after a duel with the
+opponent in question.
+
+
+=========================================================================
+  [A2]  ABOUT THE NAMES
+=========================================================================
+
+Two names are given for many characters in this guide. The first name is
+in English, the second name is in Japanese. English names are taken from
+the first Pokemon TCG gameboy game when possible, the unofficial English
+patch when not possible.
+
+
+=========================================================================
+  [A3]  STARTER DECK
+=========================================================================
+
+ --------------------------------------------
+//  STARTER DECK                           //   [A3]
+--------------------------------------------
+
+This is the deck Dr. Mason (Dr. Ooyama) gives you at the beginning of the
+game.
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  14x Fire Energy
+  12x Fighting Energy
+
+FIRE CARDS:
+   4x Base Charmander Lv10
+   3x Base Charmeleon Lv32
+   2x S-Deck Growlithe Lv12
+   3x Base Ponyta Lv10
+
+FIGHTING CARDS:
+   2x Base Diglett Lv8
+   4x Base Machop Lv20
+   3x Base Machoke Lv40
+
+COLORLESS CARDS:
+   2x Base Rattata Lv9
+   1x Base Raticate Lv41
+   2x S-Deck Spearow Lv9
+   1x B-Deck Meowth Lv17
+
+TRAINER CARDS:
+   1x Energy Retrieval
+   2x Potion
+   1x Gust of Wind
+   2x Switch
+   1x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 19)
+   Total Pokemon: 26
+   Trainer Cards: 7
+   
+
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+=========================================================================
+==========|   II.   GB1 ISLAND: CLUB MEMBER / MASTER DECKS   |===========
+=========================================================================
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+Each Club has three Club Members and one Club Master (which are semi-
+equivalent to Gym Leaders).
+
+
+=========================================================================
+  [B]  ROCK CLUB ("Stone Club" in Japanese)
+=========================================================================
+
+ --------------------------------------------
+//  MATT            (Japanese = Yasutomo)  //   [B1]
+--------------------------------------------
+
+LOCATION: top room, top left
+  PRIZES: 4
+ REWARDS: Bulbasaur (1) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   8x Fire Energy
+  16x Fighting Energy
+   2x Double Colorless Energy
+
+FIRE CARDS:
+   2x Base Charmander Lv10
+   1x Base Charmeleon Lv32
+   3x Base Ponyta Lv10
+   2x Jungle Rapidash Lv33
+
+FIGHTING CARDS:
+   3x Base Diglett Lv8
+   2x Base Dugtrio Lv36
+   3x Vending Geodude Lv15
+   1x Fossil Geodude Lv16
+   1x Vending Graveler Lv27
+   2x Vending Graveler Lv28
+   2x Fossil Golem Lv36
+   2x Jungle Rhyhorn Lv18
+
+TRAINER CARDS:
+   2x Potion
+   2x Defender
+   2x Gust of Wind
+   2x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 14)
+   Total Pokemon: 24
+   Trainer Cards: 10
+
+
+ --------------------------------------------
+//  ANDREW             (Japanese = Johta)  //   [B2]
+--------------------------------------------
+
+LOCATION: top room, bottom left
+  PRIZES: 4
+ REWARDS: Bulbasaur (1) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  27x Fighting Energy
+   4x Double Colorless Energy
+
+WATER CARDS:
+   2x Vending Omanyte Lv20
+
+FIGHTING CARDS:
+   2x Base Onix Lv12
+   4x Jungle Rhyhorn Lv18
+   1x Vending Rhydon Lv37
+   1x Jungle Rhydon Lv48
+   1x Fossil Kabuto Lv9
+   1x Vending Kabuto Lv22
+   1x Fossil Kabutops Lv30
+   1x Vending Aerodactyl Lv30
+
+COLORLESS CARDS:
+   2x Jungle Kangakshan Lv40
+   2x Jungle Snorlax Lv20
+
+TRAINER CARDS:
+   2x Itemfinder
+   4x Mysterious Fossil
+   3x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 31
+  (Basic Pokemon: 14) (counting 4x Mysterious Fossil)
+   Total Pokemon: 18
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  RYAN               (Japanese = Norio)  //   [B3]
+--------------------------------------------
+
+LOCATION: top room, right
+  PRIZES: 4
+ REWARDS: Moltres (2) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  26x Fighting Energy
+
+FIGHTING CARDS:
+   3x Base Sandshrew Lv12
+   1x Fossil Sandslash Lv33
+   3x Base Diglett Lv8
+   1x Promo Diglett Lv16
+   2x Base Dugtrio Lv36
+   1x Promo Dugtrio Lv40
+   4x Fossil Geodude Lv16
+   3x Vending Graveler Lv28
+   3x Jungle Cubone Lv13
+   1x Jungle Marowak Lv26
+   1x Gameboy Marowak Lv32
+
+TRAINER CARDS:
+   2x Energy Removal
+   2x Energy Retrieval
+   1x Professor Oak
+   2x Full Heal
+   2x PlusPower
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 14)
+   Total Pokemon: 23
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  GENE              (Japanese = Genzou)  //   [B4]
+--------------------------------------------
+
+LOCATION: top room, top
+  PRIZES: 6
+ REWARDS: Omanyte (3) Pack + Bulbasaur (1) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  26x Fighting Energy
+
+FIGHTING CARDS:
+   4x Fossil Geodude Lv16
+   3x Vending Graveler Lv28
+   4x Vending Onix Lv25
+   4x Jungle Cubone Lv13
+   3x Gameboy Marowak Lv32
+   4x Jungle Rhyhorn Lv18
+   3x Jungle Rhydon Lv48
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   1x Professor Oak
+   1x Gambler
+   2x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 16)
+   Total Pokemon: 25
+   Trainer Cards: 9
+
+
+=========================================================================
+  [C]  FIGHTING CLUB ("Battle Club" in Japanese)
+=========================================================================
+
+ ---------------------------------------------
+//  MICHAEL - ver. 1 (Japanese = Masahiro)  //   [C1]
+---------------------------------------------
+
+LOCATION: From the start =  side room
+          After you defeat GR#1 = top room, bottom
+  PRIZES: 4
+ REWARDS: Bulbasaur (1) Pack
+  UNLOCK: available from the start -- see Masahiro ver. 2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   5x Lightning Energy
+  22x Fighting Energy
+
+LIGHTNING CARDS:
+   2x Base Pikachu Lv12
+
+FIGHTING CARDS:
+   4x Base Machop Lv20
+   3x Base Machoke Lv40
+   1x Base Machamp Lv67
+
+COLORLESS CARDS:
+   2x Base Rattata Lv9
+   1x Base Raticate Lv41
+   2x B-Deck Meowth Lv17
+   4x Jungle Eevee Lv12
+   2x Base Porygon Lv12
+
+TRAINER CARDS:
+   2x Energy Search
+   1x Professor Oak
+   3x Potion
+   2x Full Heal
+   2x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 27
+  (Basic Pokemon: 16)
+   Total Pokemon: 21
+   Trainer Cards: 12
+
+
+ ---------------------------------------------
+//  MICHAEL - ver. 2 (Japanese = Masahiro)  //   [C2]
+---------------------------------------------
+
+LOCATION: top room, bottom
+  PRIZES: 4
+ REWARDS: 2x Omanyte (3) Pack
+  UNLOCK: assemble the GR Coin
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  21x Fighting Energy
+   6x Psychic Energy
+   1x Double Colorless Energy
+
+FIGHTING CARDS:
+   3x Jungle Mankey Lv7
+   2x Jungle Primeape Lv35
+   4x Base Machop Lv20
+   2x Vending Machoke Lv24
+   1x Base Machoke Lv40
+   2x Base Machamp Lv67
+   1x Vending Hitmonlee Lv23
+   1x Base Hitmonchan Lv33
+
+PSYCHIC CARDS:
+   3x Vending Gastly Lv13
+
+COLORLESS CARDS:
+   2x Jungle Meowth Lv15
+   1x Vending Tauros Lv35
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   2x Energy Search
+   1x Professor Oak
+   2x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 15)
+   Total Pokemon: 22
+   Trainer Cards: 10
+
+
+ --------------------------------------------
+//  CHRIS           (Japanese = Tatsuroo)  //   [C3]
+--------------------------------------------
+
+LOCATION: top room, left
+  PRIZES: 4
+ REWARDS: Bulbasaur (1) Pack + Moltres (2) Pack
+  UNLOCK: defeat GR#3 in the Aqua Club
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  25x Fighting Energy
+
+FIGHTING CARDS:
+   4x Base Sandshrew Lv12
+   3x Fossil Sandslash Lv33
+   4x Base Machop Lv20
+   3x Base Machoke Lv40
+   2x Vending Hitmonlee Lv23
+   1x Base Hitmonchan Lv33
+   2x Jungle Rhyhorn Lv18
+
+COLORLESS CARDS:
+   1x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   2x Energy Removal
+   2x Energy Retrieval
+   1x Energy Search
+   1x Professor Oak
+   2x Potion
+   2x Gust of Wind
+   2x Switch
+   1x Scoop Up
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 14)
+   Total Pokemon: 20
+   Trainer Cards: 15
+
+
+ --------------------------------------------
+//  JESSICA          (Japanese = Natsuki)  //   [C4]
+--------------------------------------------
+
+LOCATION: top room, right
+  PRIZES: 4
+ REWARDS: Mr. Mime (1) Pack
+  UNLOCK: rescue Steve from the Lightning Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  25x Fighting Energy
+
+FIGHTING CARDS:
+   3x Jungle Mankey Lv7
+   2x Jungle Primeape Lv35
+   4x Vending Machop Lv18
+   3x Vending Machoke Lv24
+   2x Base Machamp Lv67
+   2x Fossil Hitmonlee Lv30
+   2x Vending Hitmonchan Lv23
+
+COLORLESS CARDS:
+   3x Base Doduo Lv10
+   1x Jungle Dodrio Lv28
+   2x Vending Lickitung Lv20
+
+TRAINER CARDS:
+   4x Potion
+   1x Moon Stone
+   2x Defender
+   2x Full Heal
+   2x PlusPower
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 16)
+   Total Pokemon: 24
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  MITCH          (Japanese = Yamaguchi)  //   [C5]
+--------------------------------------------
+
+LOCATION: top room, top (eventually)
+  PRIZES: 6
+ REWARDS: 2x Pidgeot (5) Pack
+  UNLOCK: clear the Fighting Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  19x Fighting Energy
+   4x Psychic Energy
+   3x Double Colorless Energy
+   2x Rainbow Energy
+
+FIGHTING CARDS:
+   2x Vending Machop Lv18
+   2x Rocket Machop Lv24
+   2x Vending Machoke Lv24
+   1x Base Machoke Lv40
+   2x Promo Machamp Lv54
+   2x Vending Hitmonlee Lv23
+   2x Base Hitmonchan Lv33
+
+PSYCHIC CARDS:
+   3x Vending Mr. Mime Lv20
+
+COLORLESS CARDS:
+   2x Vending Lickitung Lv20
+   2x Promo Kangaskhan Lv38
+
+COLORLESS CARDS:
+   2x Energy Retrieval
+   1x Professor Oak
+   2x Gust of Wind
+   1x Full Heal
+   2x PlusPower
+   2x Scoop Up
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 15)
+   Total Pokemon: 20
+   Trainer Cards: 12
+
+
+=========================================================================
+  [D]  GRASS CLUB ("Green Club" in Japanese)
+=========================================================================
+
+ --------------------------------------------
+//  BRITANNY ver. 1    (Japanese = Ayako)  //   [D1]
+--------------------------------------------
+
+LOCATION: from the start: side room, table
+          after you defeat GR#1: top room, top right
+  PRIZES: 4
+ REWARDS: 2x Bulbasaur (1) Pack
+  UNLOCK: available from the start -- see Ayako ver. 2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  27x Grass Energy
+
+GRASS CARDS:
+   3x B-Deck Bulbasaur Lv12
+   1x B-Deck Ivysaur Lv26
+   4x Base Weedle Lv12
+   2x Base Kakuna Lv23
+   1x Base Beedrill Lv32
+   3x Base Nidoran M Lv20
+   1x Base Nidorino Lv25
+   3x Vending Venonat Lv15
+   3x Base Tangela Lv8
+
+TRAINER CARDS:
+   2x Energy Search
+   2x Potion
+   2x Full Heal
+   2x Bill
+   4x Poke Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 27
+  (Basic Pokemon: 16)
+   Total Pokemon: 21
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  BRITANNY ver. 2    (Japanese = Ayako)  //   [D2]
+--------------------------------------------
+
+LOCATION: top room, top right
+  PRIZES: 4
+ REWARDS: Bulbasaur (1) Pack + Mr. Mime (4) Pack
+  UNLOCK: rescue Steve from the Lightning Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   25x Grass Energy
+   1x Double Colorless Energy
+
+GRASS CARDS:
+   4x Vending Weedle Lv15
+   3x Vending Kakuna Lv20
+   2x Base Beedrill Lv32
+   3x Jungle Bellsprout Lv11
+   2x Jungle Weepinbell Lv28
+   1x Jungle Victreebel Lv42
+   2x Base Tangela Lv8
+   1x Gameboy Tangela Lv12
+   2x Vending Scyther Lv23
+   2x Jungle Pinsir Lv24
+
+TRAINER CARDS:
+   2x Energy Removal
+   1x Professor Oak
+   2x Potion
+   2x Super Energy Removal
+   2x Defender
+   2x Switch
+   1x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 14)
+   Total Pokemon: 22
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  HEATHER            (Japanese = Misao)  //   [D3]
+--------------------------------------------
+
+LOCATION: top room, center
+  PRIZES: 4
+ REWARDS: Omanyte (3) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   23x Grass Energy
+
+GRASS CARDS:
+   4x Jungle Oddish Lv8
+   3x Jungle Gloom Lv22
+   2x Jungle Vileplume Lv35
+   4x Vending Paras Lv15
+   3x Vending Parasect Lv29
+   4x Jungle Bellsprout Lv11
+   3x Jungle Weepinbell Lv28
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   1x Professor Oak
+   2x Potion
+   2x Defender
+   2x Full Heal
+   4x Mr. Fuji
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 23
+  (Basic Pokemon: 12)
+   Total Pokemon: 23
+   Trainer Cards: 14
+
+
+ --------------------------------------------
+//  KRISTIN           (Japanese = Haruna)  //   [D4]
+--------------------------------------------
+
+LOCATION: top room, left
+  PRIZES: 4
+ REWARDS: Moltres (2) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  24x Grass Energy
+
+GRASS CARDS:
+   3x B-Deck Bulbasaur Lv12
+   2x B-Deck Ivysaur Lv26
+   4x Vending Venonat Lv15
+   3x Jungle Venomoth Lv28
+   3x Base Tangela Lv8
+   2x Vending Scyther Lv23
+
+COLORLESS CARDS:
+   2x Jungle Jigglypuff Lv14
+   1x Jungle Wigglytuff Lv36
+   1x Base Chansey Lv55
+   1x Jungle Kangakshan Lv40
+   2x Base Porygon Lv12
+
+TRAINER CARDS:
+   2x Energy Removal
+   1x Professor Oak
+   3x Potion
+   2x Gust of Wind
+   2x Full Heal
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 18)
+   Total Pokemon: 24
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  NIKKI             (Japanese = Kunimi)  //   [D5]
+--------------------------------------------
+
+LOCATION: top room, top
+  PRIZES: 6
+ REWARDS: 2x Omanyte (3) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  20x Grass Energy
+   2x Double Colorless Energy
+
+GRASS CARDS:
+   4x B-Deck Bulbasaur Lv12
+   3x B-Deck Ivysaur Lv26
+   2x Base Venusaur Lv67
+   4x Base Caterpie Lv13
+   3x Vending Metapod Lv20
+   1x Jungle Butterfree Lv28
+   4x Jungle Exeggcute Lv14
+   3x Jungle Exeggutor Lv35
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   1x Professor Oak
+   2x Pokemon Center
+   2x Pokemon Breeder
+   4x Bill
+   2x Poke Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 12)
+   Total Pokemon: 24
+   Trainer Cards: 14
+
+
+=========================================================================
+  [A05]  SCIENCE CLUB (same in Japanese)
+=========================================================================
+
+ --------------------------------------------
+//  ERIK             (Japanese = Masashi)  //   [E1]
+--------------------------------------------
+
+LOCATION: top room, lower left
+  PRIZES: 4
+ REWARDS: 2x Omanyte (3) Pack
+  UNLOCK: assemble the GR Coin
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  23x Grass Energy
+   2x Double Colorless Energy
+
+GRASS CARDS:
+   2x Vending Nidoran F Lv12
+   2x Jungle Nidoran F Lv13
+   3x Vending Nidorina Lv22
+   2x Jungle Nidoqueen Lv43
+   4x Vending Nidoran M Lv22
+   2x Vending Nidorino Lv23
+   1x Base Nidorino Lv25
+   2x Base Nidoking Lv48
+
+COLORLESS CARDS:
+   2x Vending Clefairy Lv15
+   2x Vending Lickitung Lv20
+   2x Vending Tauros Lv35
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   1x Professor Oak
+   2x Pokemon Trader
+   2x Pokemon Breeder
+   2x Bill
+   2x Poke Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 14)
+   Total Pokemon: 24
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  DAVID           (Japanese = Yasuyuki)  //   [E2]
+--------------------------------------------
+
+LOCATION: top room, top right
+  PRIZES: 4
+ REWARDS: 2x Bulbasaur (1) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  24x Grass Energy
+   1x Double Colorless Energy
+
+GRASS CARDS:
+   3x B-Deck Bulbasaur Lv12
+   3x Jungle Nidoran F Lv13
+   4x Base Nidoran M Lv20
+   3x Base Nidorino Lv25
+   3x Fossil Zubat Lv10
+   2x Vending Golbat Lv25
+   3x Vending Venonat Lv15
+
+COLORLESS CARDS:
+   2x Base Porygon Lv12
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Energy Search
+   1x Professor Oak
+   3x Potion
+   2x Full Heal
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 18)
+   Total Pokemon: 23
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  JOSEPH             (Japanese = Souta)  //   [E3]
+--------------------------------------------
+
+LOCATION: top room, center
+  PRIZES: 4
+ REWARDS: 2x Moltres (2) Pack
+  UNLOCK: defeat GR#3 in the Aqua Club
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  25x Grass Energy
+
+GRASS CARDS:
+   4x Fossil Ekans Lv10
+   2x Vending Arbok Lv30
+   2x Base Nidoran M Lv20
+   2x Vending Nidoran M Lv22
+   3x Base Nidorino Lv25
+   2x Base Nidoking Lv48
+   2x Fossil Zubat Lv10
+   4x S-Deck Koffing Lv14
+   3x Fossil Weezing Lv27
+
+TRAINER CARDS:
+   1x Professor Oak
+   4x Potion
+   4x Defender
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 14)
+   Total Pokemon: 24
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  RICK           (Japanese = Kurushima)  //   [E4]
+--------------------------------------------
+
+LOCATION: top room, top left (after being rescued)
+  PRIZES: 6
+ REWARDS: at first: 2x Omanyte (3) Pack
+          after rescuing Yamaguchi: Omanyte (3) Pack + Pidgoet (5) Pack
+  UNLOCK: rescue him from the Grass Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  25x Grass Energy
+
+GRASS CARDS:
+   3x Rocket Ekans Lv15
+   2x Vending Arbok Lv30
+   3x Vending Zubat Lv12
+   4x Rocket Grimer Lv10
+   4x Base Koffing Lv13
+   3x Vending Weezing Lv26
+
+COLORLESS CARDS:
+   2x Base Chansey Lv55
+
+TRAINER CARDS:
+   1x Super Potion
+   2x Energy Retrieval
+   1x Professor Oak
+   1x Gambler
+   2x Defender
+   2x Bill
+   1x Bill's Teleporter
+   2x Master Ball
+   1x Lass
+   1x The Rocket's Trap
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 16)
+   Total Pokemon: 21
+   Trainer Cards: 14
+
+
+=========================================================================
+  [F]  WATER CLUB ("Aqua Club" in Japanese)
+=========================================================================
+
+ --------------------------------------------
+//  SARA                (Japanese = Mari)  //   [F1]
+--------------------------------------------
+
+LOCATION: top room, left
+  PRIZES: 4
+ REWARDS: 2x Moltres (2) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  26x Water Energy
+
+WATER CARDS:
+   4x S-Deck Squirtle Lv14
+   3x S-Deck Wartortle Lv24
+   3x Base Poliwag Lv13
+   4x Vending Horsea Lv20
+   2x Fossil Seadra Lv23
+   1x Vending Seadra Lv26
+   2x Vending Lapras Lv24
+   2x Jungle Vaporeon Lv42
+
+COLORLESS CARDS:
+   3x Jungle Eevee Lv12
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   1x Professor Oak
+   2x Switch
+   2x Scoop Up
+   3x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 16)
+   Total Pokemon: 24
+   Trainer Cards: 10
+
+
+ --------------------------------------------
+//  AMANDA            (Japanese = Megumi)  //   [F2]
+--------------------------------------------
+
+LOCATION: top room, bottom right
+  PRIZES: 4
+ REWARDS: Omanyte (3) Pack + Mr. Mime (4) Pack
+  UNLOCK: rescue Steve from the Lightning Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   24x Water Energy
+
+WATER CARDS:
+   3x Fossil Tentacool Lv10
+   2x Fossil Tentacruel Lv21
+   3x Vending Shellder Lv16
+   2x Fossil Cloyster Lv25
+   4x Vending Krabby Lv17
+   3x Vending Kingler Lv33
+   3x Base Staryu Lv15
+   2x Base Starmie Lv28
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   2x Potion
+   1x Revive
+   2x Gust of Wind
+   1x Full Heal
+   1x Imposter Professor Oak
+   1x Lass
+   2x Poke Ball
+   1x Recycle
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 13)
+   Total Pokemon: 22
+   Trainer Cards: 14
+
+
+ --------------------------------------------
+//  JOSHUA ver. 1  (Japanese = Shintaroo)  //   [F3]
+--------------------------------------------
+
+LOCATION: top room, center
+  PRIZES: 4
+ REWARDS: 2x Bulbasaur (1) Pack
+  UNLOCK: available from the start -- see Shintaro ver. 2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  25x Water Energy
+
+WATER CARDS:
+   4x Base Seel Lv12
+   2x Base Dewgong Lv42
+   4x Fossil Krabby Lv20
+   2x Fossil Kingler Lv27
+   4x Vending Staryu Lv17
+   2x Base Starmie Lv28
+   4x Base Magikarp Lv8
+   2x Base Gyarados Lv41
+
+TRAINER CARDS:
+   1x Energy Retrieval
+   1x Energy Search
+   1x Professor Oak
+   2x Potion
+   2x Full Heal
+   2x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 16)
+   Total Pokemon: 24
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  JOSHUA ver. 2  (Japanese = Shintaroo)  //   [F4]
+--------------------------------------------
+
+LOCATION: top room, center
+  PRIZES: 4
+ REWARDS: 2x Pidgeot (5) Pack
+  UNLOCK: rescue Yamaguchi from the Fighting Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   18x Water Energy
+   6x Psychic Energy
+   4x Double Colorless Energy
+
+WATER CARDS:
+   4x Rocket Psyduck Lv16
+   3x Fossil Golduck Lv27
+   4x Vending Poliwag Lv15
+   3x Vending Poliwhirl Lv30
+   2x Base Poliwrath Lv48
+
+PSYCHIC CARDS:
+   2x Vending Mewtwo Lv67
+
+COLORLESS CARDS:
+   3x Rocket Dratini Lv12
+   2x Base Dragonair Lv33
+
+TRAINER CARDS:
+   3x Energy Removal
+   1x Energy Retrieval
+   1x Energy Search
+   1x Professor Oak
+   1x Super Energy Removal
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 13)
+   Total Pokemon: 23
+   Trainer Cards: 9
+
+
+ --------------------------------------------
+//  AMY               (JAPANESE = Utchii)  //   [F5]
+--------------------------------------------
+
+LOCATION: top room, top
+  PRIZES: 6
+ REWARDS: 2x Mr. Mime (4) Pack
+  UNLOCK: rescue Steve from the Lightning Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  25x Water Energy
+
+WATER CARDS:
+   2x Vending Squirtle Lv15
+   2x Rocket Squirtle Lv16
+   3x Base Wartortle Lv22
+   2x Base Blastoise Lv52
+   4x Vending Seel Lv10
+   3x Vending Dewgong Lv24
+   2x Fossil Lapras Lv31
+
+COLORLESS CARDS:
+   2x Energy Retrieval
+   2x Professor Oak
+   2x Potion
+   2x Computer Search
+   2x Switch
+   2x Pokemon Trader
+   1x Pokemon Breeder
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 10)
+   Total Pokemon: 18
+   Trainer Cards: 17
+
+
+=========================================================================
+  [G]  FIRE CLUB (same in Japanese)
+=========================================================================
+
+ -------------------------------------------
+//  JOHN            (Japanese = Takashi)  //  [G1]
+-------------------------------------------
+
+LOCATION: top room, bottom
+  PRIZES: 4
+ REWARDS: 2x Mr. Mime (4) Pack
+  UNLOCK: rescue Steve from the Lightning Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  26x Fire Energy
+
+FIRE CARDS:
+   4x Vending Vulpix Lv13
+   3x Gameboy Ninetales Lv35
+   2x Vending Growlithe Lv16
+   1x Promo Arcanine Lv34
+   4x Vending Ponyta Lv8
+   3x Vending Rapidash Lv30
+   2x Vending Magmar Lv27
+   2x Fossil Magmar Lv31
+
+COLORLESS CARDS:
+   2x Promo Meowth Lv14
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   2x Potion
+   1x Super Energy Retrieval
+   2x Imposter Professor Oak
+   3x Bill
+
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 16)
+   Total Pokemon: 23
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  ADAM             (Japanese = Watarun)  //   [F2]
+--------------------------------------------
+
+LOCATION: top room, center left
+  PRIZES: 4
+ REWARDS: Bulbasaur (1) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  16x Fire Energy
+  12x Lightning Energy
+
+FIRE CARDS:
+   4x Base Vulpix Lv11
+   2x Base Ninetales Lv32
+   4x Base Ponyta Lv10
+   3x Jungle Rapidash Lv33
+   1x Fossil Moltres Lv35
+
+LIGHTNING CARDS:
+   2x Jungle Pikachu Lv14
+   1x Fossil Raichu Lv45
+   3x Base Magnemite Lv13
+   2x Vending Magneton Lv30
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Energy Search
+   2x Gust of Wind
+   2x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 14)
+   Total Pokemon: 22
+   Trainer Cards: 10
+
+
+ --------------------------------------------
+//  JONATHON       (Japanese = Masatoshi)  //   [G3]
+--------------------------------------------
+
+LOCATION: top room, top right
+  PRIZES: 4
+ REWARDS: 2x Moltres (2) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  25x Fire Energy
+
+FIRE CARDS:
+   4x Base Charmander Lv10
+   3x Base Charmeleon Lv32
+   4x S-Deck Growlithe Lv12
+   3x S-Deck Arcanine Lv35
+   3x Base Magmar Lv24
+   2x Jungle Flareon Lv28
+
+COLORLESS CARDS:
+   2x Jungle Kangakshan Lv40
+   3x Jungle Eevee Lv12
+
+TRAINER CARDS:
+   4x Energy Retrieval
+   1x Professor Oak
+   2x Potion
+   2x Full Heal
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 16)
+   Total Pokemon: 24
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  KEN              (Japanese = Akabane)  //   [G4]
+--------------------------------------------
+
+LOCATION: top room, top
+  PRIZES: 6
+ REWARDS: at first: Omanyte (3) Pack + Mr. Mime (4) Pack
+          after rescuing Yamaguchi: Mr. Mime (4) Pack + Pidgeot (5) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  12x Fire Energy
+   6x Water Energy
+   5x Fighting Energy
+   2x Double Colorless Energy
+
+FIRE CARDS:
+   2x S-Deck Growlithe Lv12
+   2x Base Growlithe Lv18
+   3x Base Arcanine Lv45
+   3x Fossil Magmar Lv31
+
+WATER CARDS:
+   2x Base Seel Lv12
+   1x Base Dewgong Lv42
+
+FIGHTING CARDS:
+   2x Vending Hitmonchan Lv23
+   1x Base Hitmonchan Lv33
+
+COLORLESS CARDS:
+   3x Base Doduo Lv10
+   2x Jungle Dodrio Lv28
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Professor Oak
+   2x PlusPower
+   2x Switch
+   2x Pokemon Trader
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 15)
+   Total Pokemon: 21
+   Trainer Cards: 14
+
+
+=========================================================================
+  [H]  LIGHTNING CLUB ("Elec Club" in Japanese)
+=========================================================================
+
+ --------------------------------------------
+//  NICHOLAS ver. 1  (Japanese = Sousuke)  //   [H1]
+--------------------------------------------
+
+LOCATION: top room, left
+  PRIZES: 4
+ REWARDS: Bulbasaur (1) Pack
+  UNLOCK: available from the start -- see Sousuke ver. 2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  23x Lightning Energy
+   2x Double Colorless Energy
+
+LIGHTNING CARDS:
+   4x Rocket Magnemite Lv12
+   3x Fossil Magneton Lv35
+   4x Vending Voltorb Lv8
+   3x Gameboy Electrode Lv35
+
+COLORLESS CARDS:
+   3x Jungle Spearow Lv13
+   2x Jungle Fearow Lv27
+   2x Base Farfetch'd Lv20
+   2x Base Doduo Lv10
+   1x Vending Dodrio Lv25
+
+TRAINER CARDS:
+   1x Professor Oak
+   2x Full Heal
+   2x Sleep!
+   2x PlusPower
+   2x Pokemon Recall
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 15)
+   Total Pokemon: 24
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  NICHOLAS ver. 2  (Japanese = Sousuke)  //   [H2]
+--------------------------------------------
+
+LOCATION: top room, left
+  PRIZES: 4
+ REWARDS: 2x Pidgeot (5) Pack
+  UNLOCK: rescue Yamaguchi from the Fighting Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   25x Lightning Energy
+   2x Double Colorless Energy
+   2x Potion Energy
+   
+LIGHTNING CARDS:
+   4x Vending Voltorb Lv8
+   3x Rocket Dark Electrode Lv24
+   2x Base Electabuzz Lv35
+   1x Vending Zapdos Lv28
+   1x Fossil Zapdos Lv40
+   1x Base Zapdos Lv64
+   
+COLORLESS CARDS:
+   1x Base Farfetch'd Lv20
+   3x Vending Doduo Lv8
+   2x Vending Dodrio Lv25
+   1x Vending Kangaskhan Lv36
+   
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Energy Search
+   1x Potion
+   1x Max Revive
+   2x Defender
+   2x Master Ball
+   2x Poke Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 29
+  (Basic Pokemon: 14)
+   Total Pokemon: 19
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  JENNIFER            (Japanese = Yuka)  //   [H3]
+--------------------------------------------
+
+LOCATION: top room, bottom
+  PRIZES: 4
+ REWARDS: Omanyte (3) Pack
+  UNLOCK: assemble the GR Coin
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   9x Water Energy
+   20x Lightning Energy
+   
+WATER CARDS:
+   3x Base Squirtle Lv8
+   2x Base Wartortle Lv22
+   
+LIGHTNING CARDS:
+   1x Vending Pikachu Lv5
+   1x Promo Pikachu Lv13
+   2x Promo Pikachu Lv16
+   4x Promo Flying Pikachu Lv12
+   4x Promo Surfing Pikachu Lv13
+   1x Vending Raichu Lv32
+   1x Base Raichu Lv40
+   1x Fossil Raichu Lv45
+   
+TRAINER CARDS:
+   2x Energy Search
+   2x Potion
+   1x Revive
+   2x Defender
+   2x Master Ball
+   2x Poke Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 29
+  (Basic Pokemon: 15)
+   Total Pokemon: 20
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  BRANDON        (Japanese = Toshihiko)  //   [H4]
+--------------------------------------------
+
+LOCATION: top room, right
+  PRIZES: 4
+ REWARDS: Moltres (2) Pack + Omanyte (3) Pack
+  UNLOCK: assemble the GR Coin
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   26x Lightning Energy
+
+LIGHTNING CARDS:
+   2x Base Pikachu Lv12
+   2x Jungle Pikachu Lv14
+   3x B-Deck Raichu Lv33
+   2x B-Deck Electabuzz Lv30
+   1x Base Electabuzz Lv35
+   3x Jungle Jolteon Lv29
+   2x Base Zapdos Lv64
+
+COLORLESS CARDS:
+   4x Jungle Eevee Lv12
+
+TRAINER CARDS:
+   4x Energy Retrieval
+   1x Professor Oak
+   2x Potion
+   2x Full Heal
+   2x Scoop Up
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 13)
+   Total Pokemon: 19
+   Trainer Cards: 15
+
+
+ --------------------------------------------
+//  ISAAC ver. 1   (Japanese = Takahashi)  //   [H5]
+--------------------------------------------
+
+LOCATION: top room, top
+  PRIZES: 6
+ REWARDS: 2x Bulbasaur (1) Pack
+  UNLOCK: available from the start -- see Takahashi ver. 2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  23x Lightning Energy
+   3x Double Colorless Energy
+
+LIGHTNING CARDS:
+   4x Jungle Pikachu Lv14
+   2x Fossil Raichu Lv45
+   1x Gameboy Dark Raichu Lv31
+   3x Rocket Voltorb Lv13
+   2x Rocket Dark Electrode Lv24
+   2x Fossil Zapdos Lv40
+
+COLORLESS CARDS:
+   3x Vending Pidgey Lv10
+   2x Base Pidgeotto Lv36
+   3x S-Deck Spearow Lv9
+   2x Vending Fearow Lv24
+
+TRAINER CARDS:
+   1x Professor Oak
+   3x Potion
+   2x Gust of Wind
+   2x Full Heal
+   2x Bill
+
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 15)
+   Total Pokemon: 24
+   Trainer Cards: 10
+
+
+ --------------------------------------------
+//  ISAAC ver. 2   (Japanese = Takahashi)  //   [H6]
+--------------------------------------------
+
+LOCATION: top room, top
+  PRIZES: 6
+ REWARDS: 2x Mr. Mime (4) Pack
+  UNLOCK: rescue Steve from the Lightning Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  16x Lightning Energy
+   4x Double Colorless Energy
+   2x Potion Energy
+   2x Full Heal Energy
+
+LIGHTNING CARDS:
+   2x Base Magnemite Lv13
+   2x Vending Magnemite Lv15
+   2x Base Magneton Lv28
+   4x Vending Voltorb Lv8
+   2x Gameboy Electrode Lv35
+   3x Base Electabuzz Lv35
+   2x Fossil Zapdos Lv40
+
+COLORLESS CARDS:
+   3x Base Doduo Lv10
+   2x Vending Dodrio Lv25
+
+TRAINER CARDS:
+   2x Energy Removal
+   2x Energy Retrieval
+   1x Professor Oak
+   4x Defender
+   2x Switch
+   3x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 16)
+   Total Pokemon: 22
+   Trainer Cards: 14
+
+
+=========================================================================
+  [I]  PSYCHIC CLUB ("Esper Club" in Japanese)
+=========================================================================
+
+ --------------------------------------------
+//  STEPHANIE            (Japanese = Rie)  //   [I1]
+--------------------------------------------
+
+LOCATION: top room, right
+  PRIZES: 4
+ REWARDS: at first: Bulbasaur (1) Pack
+          after rescuing Yamaguchi: Bulbasaur (1) Pack + Pidgeot (5) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  26x Psychic Energy
+
+PSYCHIC CARDS:
+   4x Vending Abra Lv8
+   3x Vending Kadabra Lv39
+   2x Promo Alakazam Lv45
+   3x Vending Gastly Lv13
+   2x Vending Haunter Lv26
+   1x Promo Gengar Lv40
+   2x S-Deck Jynx Lv27
+   2x Vending Mewtwo Lv54
+   1x Fossil Mew Lv23
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Energy Search
+   1x Professor Oak
+   2x Switch
+   2x Pokemon Trader
+   1x Pokemon Recall
+   1x Pokemon Breeder
+   2x Bill
+   1x Master Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 12)
+   Total Pokemon: 20
+   Trainer Cards: 14
+
+
+ --------------------------------------------
+//  ROBERT              (Japanese = Hiro)  //   [I2]
+--------------------------------------------
+
+LOCATION: top room, bottom left
+  PRIZES: 4
+ REWARDS: Mr. Mime (4) Pack
+  UNLOCK: rescue Steve from the Lightning Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   24x Psychic Energy
+   2x Double Colorless Energy
+
+PSYCHIC CARDS:
+   4x Base Gastly Lv8
+   1x Fossil Haunter Lv17
+   1x Base Haunter Lv22
+   1x Vending Haunter Lv26
+   2x Vending Gengar Lv38
+   3x Base Drowzee Lv12
+   2x Fossil Hypno Lv36
+   1x Base Jynx Lv23
+   1x S-Deck Jynx Lv27
+
+COLORLESS CARDS:
+   3x Jungle Jigglypuff Lv14
+   2x Jungle Wigglytuff Lv36
+
+TRAINER CARDS:
+   1x Energy Removal
+   1x Energy Retrieval
+   1x Energy Search
+   1x Professor Oak
+   2x Potion
+   1x Full Heal
+   2x Switch
+   2x Pokemon Trader
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 12)
+   Total Pokemon: 21
+   Trainer Cards: 13
+
+
+ --------------------------------------------
+//  DANIEL             (Japanese = Keita)  //   [I3]
+--------------------------------------------
+
+LOCATION: top room, center left
+  PRIZES: 4
+ REWARDS: Pidgeot (5) Pack
+  UNLOCK: rescue Yamaguchi from the Fighting Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   24x Psychic Energy
+
+PSYCHIC CARD:
+   4x Fossil Slowpoke Lv18
+   3x Fossil Slowbro Lv26
+   4x Base Drowzee Lv12
+   3x Vending Hypno Lv30
+   2x Jungle Mr. Mime Lv28
+
+TRAINER CARDS:
+   1x Professor Oak
+   2x Itemfinder
+   4x Defender
+   1x Gust of Wind
+   4x Clefairy Doll
+   2x PlusPower
+   2x Scoop Up
+   2x Bill
+   2x Master Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 10)
+   Total Pokemon: 16
+   Trainer Cards: 20
+
+
+ --------------------------------------------
+//  Murray ver. 1      (Japanese = MIURA)  //   [I4]
+--------------------------------------------
+
+LOCATION: top room, top
+  PRIZES: 6
+ REWARDS: 2x Bulbasaur (1) Pack
+  UNLOCK: available from the start -- see Miura ver. 2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  24x Psychic Energy
+   2x Double Colorless Energy
+
+PSYCHIC CARDS:
+   3x Vending Abra Lv8
+   2x Vending Kadabra Lv39
+   3x Promo Slowpoke Lv9
+   2x Vending Slowbro Lv35
+   2x Vending Mr. Mime Lv20
+   2x S-Deck Jynx Lv27
+   2x Fossil Mew Lv23
+
+COLORLESS CARDS:
+   2x Vending Clefairy Lv15
+   3x Gameboy Jigglypuff Lv13
+   2x Jungle Wigglytuff Lv36
+   2x Jungle Lickitung Lv26
+
+TRAINER CARDS:
+   1x Professor Oak
+   2x Potion
+   2x Moon Stone
+   2x Full Heal
+   2x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 19)
+   Total Pokemon: 25
+   Trainer Cards: 9
+
+
+ --------------------------------------------
+//  Murray ver. 2      (Japanese = MIURA)  //   [I5]
+--------------------------------------------
+
+LOCATION: top room, top
+  PRIZES: 6
+ REWARDS: Rocket R (6) Pack + Rocket Grunt (7) Pack
+  UNLOCK: rescue Yamaguchi from the Fighting Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  14x Psychic Energy
+   4x Double Colorless Energy
+
+PSYCHIC CARDS:
+   4x Rocket Abra Lv14
+   2x Vending Kadabra Lv39
+   2x Base Alakazam Lv42
+   4x Vending Gastly Lv13
+   3x Vending Haunter Lv26
+   2x Vending Mr. Mime Lv20
+   1x Jungle Mr. Mime Lv28
+   2x Promo Mewtwo Lv60
+
+COLORLESS CARDS:
+   3x Base Chansey Lv55
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Professor Oak
+   2x Switch
+   3x Scoop Up
+   2x Pokemon Trader
+   4x Bill
+   2x Bill's Teleporter
+   2x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 18
+  (Basic Pokemon: 16)
+   Total Pokemon: 23
+   Trainer Cards: 19
+
+
+
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+=========================================================================
+=============|   III.   GB1 ISLAND: MISCELLANEOUS DECKS   |==============
+=========================================================================
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+=========================================================================
+  [J]  DR. MASON'S LAB (Dr. Ooyama's Lab)
+=========================================================================
+
+Of all the people in the lab, only two will duel you. Both of them, for
+the most part, use stacked decks -- the lists presented below preserve
+the card order for your convenience.
+
+(NOTE: if you ever shuffle your deck, this card order will no longer be
+accurate.
+
+ --------------------------------------------
+//  SAM               (Japanese = Mikasa)  //   [J1]
+--------------------------------------------
+
+  PRIZES: 2
+ REWARDS: Present Pack (Energy)
+
+-------------                ------------
+* Your Deck *                * His Deck *
+-------------                ------------
+
+YOUR HAND:                   HIS HAND:
+   Grass Energy                 Jungle Goldeen Lv12
+   Grass Energy                 Base Seel Lv12
+   Fighting Energy              Water Energy
+   Fighting Energy              Water Energy
+   Base Pidgey Lv8              Water Energy
+   Base Dugtrio Lv36            Water Energy
+   Base Diglett Lv8             Water Energy
+
+YOUR PRIZES:                 HIS PRIZES:
+   Grass Energy                 Water Energy
+   Grass Energy                 Water Energy
+
+YOUR DECK:                  HIS DECK:
+   Fighting Energy              Water Energy
+   Base Nidorino Lv25           Potion
+   Grass Energy                 Jungle Seaking Lv28
+   Base Nidoran M Lv20          Potion
+   Base Machop Lv20             Vending Staryu Lv17
+   Grass Energy                 Lightning Energy
+   Bill                         Base Voltorb Lv10
+   Base Bulbasaur Lv13          Lightning Energy
+   Grass Energy                 Professor Oak
+   Fighting Energy              Jungle Eevee Lv12
+   Grass Energy                 Base Voltorb Lv10
+   Base Machop Lv20             Lightning Energy
+   Base Dugtrio Lv36            Lightning Energy
+   Base Onix Lv12               Base Seel Lv12
+   Bill                         Water Energy
+   Fighting Energy              Water Energy
+   Fighting Energy              Base Voltorb Lv10
+   Fighting Energy              Base Pikachu Lv12 00
+   Base Machoke Lv40            Base Starmie Lv28
+   Base Pidgey Lv8              Lightning Energy
+   Base Pidgeotto Lv36          Base Pikachu Lv12 00
+   Fighting Energy              Base Doduo Lv10
+   Fighting Energy              Jungle Goldeen Lv12
+   Potion                       Water Energy
+   Base Diglett Lv8             Jungle Eevee Lv12
+   Base Bulbasaur Lv13          Base Starmie Lv28
+   Base Machop Lv20             Water Energy
+   Fighting Energy              Vending Staryu Lv17
+   Grass Energy                 Lightning Energy
+   Base Pidgey Lv8              Full Heal
+   Gameboy Meowth Lv13          Base Pikachu Lv12 00
+   Fighting Energy              Potion
+   Potion                       Professor Oak
+   Grass Energy                 Water Energy
+   Base Nidoran M Lv20          Base Doduo Lv10
+   Base Nidorino Lv25           Lightning Energy
+   Base Diglett Lv8             Jungle Goldeen Lv12
+   Fighting Energy              Lightning Energy
+   Base Onix Lv12               Jungle Seaking Lv28
+   Base Nidoran M Lv20          Lightning Energy
+   Base Bulbasaur Lv13          Full Heal
+   Fighting Energy              Base Seel Lv12
+   Fighting Energy              Jungle Goldeen Lv12
+   Switch                       Water Energy
+   Fighting Energy              Base Pikachu Lv12 00
+   Base Machoke Lv40            Base Voltorb Lv10
+   Base Pidgeotto Lv36          Water Energy
+   Fighting Energy              Vending Staryu Lv17
+   Base Diglett Lv8             Lightning Energy
+   Fighting Energy              Vending Staryu Lv17
+   Base Nidoran M Lv20          Water Energy
+
+
+ --------------------------------------------
+//  AARON - Step 1 Decks  (Jpn: Arai-Mon) //   [J2]
+--------------------------------------------
+
+  PRIZES: 4
+ REWARDS: Present Pack (Energy)
+  
+-------------                ------------
+* Your Deck *                * His Deck *
+-------------                ------------
+
+YOUR HAND:                   HIS HAND:
+   Jungle Goldeen Lv12          Base Hitmonchan Lv33
+   Jungle Seaking Lv28          B-Deck Bulbasaur Lv12
+   Base Dratini Lv10            Potion
+   Fire Energy                  Grass Energy
+   Water Energy                 Grass Energy
+   Water Energy                 Grass Energy
+   Water Energy                 Fighting Energy
+
+YOUR PRIZES:                 HIS PRIZES:
+   Fire Energy                  Fighting Energy
+   Water Energy                 Fighting Energy
+   Water Energy                 Fighting Energy
+   Water Energy                 Fighting Energy
+
+YOUR DECK:                   HIS DECK:
+   Water Energy                 Grass Energy
+   Base Charmeleon Lv32         S-Deck Spearow Lv09
+   Base Raticate Lv41           Switch
+   Fire Energy                  B-Deck Ivysaur Lv26
+   Base Charmander Lv10         Bill
+   Bill                         Base Set Machop Lv20
+   Base Rattata Lv09            Base Set Machoke Lv40
+   Water Energy                 Fighting Energy
+   Bill                         Fighting Energy
+   Vending Staryu Lv17          Grass Energy
+   Energy Search                Base Set Diglett Lv08
+   Fire Energy                  B-Deck Bulbasaur Lv12
+   Fire Energy                  Grass Energy
+   Base Ponyta Lv08             Base Dugtrio Lv36
+   Fire Energy                  S-Deck Spearow Lv09
+   Jungle Rapidash              B-Deck Ivysaur Lv26
+   Jungle Goldeen Lv12          Grass Energy
+   Water Energy                 B-Deck Bulbasaur Lv12
+   Jungle Seaking Lv28          Energy Search
+   Water Energy                 Grass Energy
+   Fire Energy                  Base Diglett Lv08
+   Energy Search                Fighting Energy
+   Gust of Wind                 Switch
+   Water Energy                 Bill
+   Fire Energy                  Fighting Energy
+   Base Rattata Lv09            Base Set Machop Lv20
+   Fire Energy                  Base Dugtrio Lv36
+   Base Ponyta Lv08             Fighting Energy
+   Fire Energy                  Grass Energy
+   Base Staryu Lv15             Base Set Machop Lv20
+   Water Energy                 Potion
+   Potion                       Fighting Energy
+   Energy Search                Base Diglet Lv08
+   Water Energy                 Fighting Energy
+   Water Energy                 B-Deck Meowth Lv17
+   Bulbasaur Meowth Lv17        Energy Search
+   Water Energy                 Fighting Energy
+   Base Charmander Lv09         B-Deck Ivysaur Lv26
+   Base Charmander Lv09         Grass Energy
+   Base Charmeleon Lv32         Base Machoke Lv40
+   Base Ponyta Lv10             Fighting Energy
+   Jungle Rapidash Lv33         Professor Oak
+   Water Energy                 Base Hitmonchan Lv33
+   Jungle Goldeen Lv12          Base Hitmonchan Lv33
+   Base Staryu Lv15             Fighting Energy
+   Base Rattata Lv41            B-Deck Bulbasaur Lv12
+   Baes Raticate Lv41           Base Set Machop Lv20
+   Base Dratini Lv10            Fighting Energy
+   Potion                       B-Deck Meowth Lv17
+
+
+ --------------------------------------------
+//  AARON - Step 2 Decks  (Jpn: Arai-Mon) //   [J3]
+--------------------------------------------
+
+  PRIZES: 4
+ REWARDS: Bulbasaur (1) Pack
+  
+-------------                ------------
+* Your Deck *                * His Deck *
+-------------                ------------
+
+YOUR HAND:                   HIS HAND:
+   Jungle Goldeen Lv12          Rocket Grimer Lv10
+   Base Magikarp Lv8            Base Rattata Lv09
+   Fire Energy                  Grass Energy
+   Switch                       Grass Energy
+   Water Energy                 Psychic Energy
+   Water Energy                 Switch
+   S-Deck Wartortle Lv24        Grass Energy
+
+YOUR PRIZES:                 HIS PRIZES:
+   Water Energy                 Grass Energy
+   Water Energy                 Grass Energy
+   Water Energy                 Grass Energy
+   Water Energy                 Grass Energy
+
+YOUR DECK:                   HIS DECK:
+   Water Energy                 Potion
+   Full Heal                    Jungle Oddish Lv08
+   S-Deck Squirtle Lv14         Grass Energy
+   Fire Energy                  Jungle Gloom Lv22
+   Base Charmander Lv10         Grass Energy
+   Full Heal                    Base Haunter Lv22
+   Professor Oak                Psychic Energy
+   Base Charmeleon Lv32         Base Gastly Lv08
+   Vending Staryu Lv17          Bill
+   Fire Energy                  Jungle Paras Lv8
+   Fire Energy                  Psychic Energy
+   S-Deck Magmar Lv18           S-Deck Jynx Lv27
+   Base Starmie Lv28            Jungle Parasect Lv28
+   Water Energy                 Double Colorless Energy
+   Water Energy                 Energy Search
+   S-Deck Magmar Lv18           Grass Energy
+   Energy Search                Base Gastly Lv08
+   Fire Energy                  Potion
+   Water Energy                 Psychic Energy
+   Bill                         Full Heal
+   Base Charmeleon Lv32         Base Raticate Lv41
+   Energy Search                Grass Energy
+   Full Heal                    Jungle Oddish Lv08
+   Fire Energy                  Base Haunter Lv22
+   S-Deck Wartortle Lv24        Psychic Energy
+   Vending Staryu Lv17          Rocket Grimer Lv10
+   Water Energy                 Jungle Paras Lv8
+   Water Energy                 Grass Energy
+   Base Charmander Lv10         S-Deck Jynx Lv27
+   Base Starmie Lv28            Jungle Kangakshan Lv40
+   Fire Energy                  Bill
+   Water Energy                 Psychic Energy
+   Vending Staryu Lv17          Jungle Gloom Lv22
+   Fire Energy                  Grass Energy
+   Vending Staryu Lv17          Jungle Parasect Lv28
+   Water Energy                 Psychic Energy
+   Base Starmie Lv28            Base Rattata Lv09
+   Fire Energy                  Switch
+   Water Energy                 Grass Energy
+   Bill                         Rocket Grimer Lv10
+   Fire Energy                  Psychic Energy
+   Jungle Goldeen Lv12          Full Heal
+   Water Energy                 Grass Energy
+   Base Charmander Lv10         Jungle Oddish Lv08
+   Water Energy                 Grass Energy
+   S-Deck Squirtle Lv14         Jungle Paras Lv8
+   Water Energy                 Psychic Energy
+   S-Deck Squirtle Lv14         Base Gastly Lv08
+   Base Magikarp Lv8            Psychic Energy
+
+
+ --------------------------------------------
+//  AARON - Step 3 Decks  (Jpn: Arai-Mon) //   [J4]
+--------------------------------------------
+
+  PRIZES: 4
+ REWARDS: Moltres (2) Pack
+  
+-------------                ------------
+* Your Deck *                * His Deck *
+-------------                ------------
+
+YOUR HAND:                   HIS HAND:
+   Jungle Kangakshan Lv40       Base Chansey Lv55
+   S-Deck Squirtle Lv14         Base Abra Lv10
+   Base Blastoise Lv52          Base Alakazam Lv42
+   Water Energy                 Pokemon Breeder
+   Water Energy                 Double Colorless Energy
+   Base Magikarp Lv8            Pokemon Center
+   Potion                       Psychic Energy
+
+YOUR PRIZES:                 HIS PRIZES:
+   Fighting Energy              Psychic Energy
+   Fighting Energy              Psychic Energy
+   Fighting Energy              Psychic Energy
+   Water Energy                 Psychic Energy
+
+YOUR DECK:                   HIS DECK:
+   Base Wartortle Lv22          Double Colorless Energy
+   Base Hitmonchan Lv33         Base Chansey Lv55
+   Professor Oak                Psychic Energy
+   Water Energy                 Scoop Up
+   Water Energy                 Psychic Energy
+   Water Energy                 S-Deck Jynx Lv27
+   Water Energy                 Fossil Gastly Lv17
+   Water Energy                 Fossil Haunter Lv17
+   Water Energy                 Bill
+   Base Gyarados Lv41           Psychic Energy
+   Professor Oak                Psychic Energy
+   Fossil Lapras Lv31           Psychic Energy
+   Water Energy                 Vending Gengar Lv38
+   Water Energy                 Base Abra Lv10
+   Fighting Energy              Pokemon Breeder
+   S-Deck Squirtle Lv14         Base Kadabra Lv38
+   Pokemon Breeder              Jungle Pikachu Lv14
+   Base Blastoise Lv52          Energy Search
+   Base Hitmonchan Lv33         Fossil Raichu Lv45
+   Fighting Energy              Lightning Energy
+   Fighting Energy              Fossil Gastly Lv17
+   Base Dratini Lv10            Lightning Energy
+   Fighting Energy              Base Kadabra Lv38
+   Base Dragonair Lv33          Base Alakazam Lv42
+   Double Colorless Energy      Lightning Energy
+   Energy Search                Psychic Energy
+   Fighting Energy              Scoop Up
+   Pokemon Breeder              Psychic Energy
+   Water Energy                 Base Abra Lv10
+   Fossil Lapras Lv31           Psychic Energy
+   Base Wartortle Lv22          Lightning Energy
+   Water Energy                 Base Abra Lv10
+   Base Hitmonchan Lv33         Psychic Energy
+   Double Colorless Energy      Base Kadabra Lv38
+   Professor Oak                Double Colorless Energy
+   Water Energy                 Jungle Pikachu Lv14
+   Potion                       Psychic Energy
+   Base Magikarp Lv8            Base Chansey Lv55
+   Base Wartortle Lv22          Energy Search
+   Base Dratini Lv10            Psychic Energy
+   Water Energy                 Lightning Energy
+   Jungle Kangakshan Lv40       Fossil Gastly Lv17
+   Base Dragonair Lv33          Lightning Energy
+   Energy Search                Fossil Haunter Lv17
+   Water Energy                 Psychic Energy
+   S-Deck Squirtle Lv14         S-Deck Jynx Lv27
+   Base Dratini Lv10            Psychic Energy
+   S-Deck Squirtle Lv14         Base Chansey Lv55
+   Water Energy                 Scoop Up
+
+
+--------------------------------------------
+//  AARON - Normal Duel   (Jpn: Arai-Mon) //   [J5]
+--------------------------------------------
+
+  PRIZES: 4
+ REWARDS: Present Pack
+  
+-------------------                   -------------------
+* Deck 1 Contents *                   * Deck 2 Contents *
+-------------------                   -------------------
+
+ENERGY CARDS:                         ENERGY CARDS:
+  16x Grass Energy                      12x Lightning Energy
+  10x Water Energy                      12x Fighting Energy
+                                         2x Rainbow Energy
+GRASS CARDS:
+   2x Vending Bellsprout Lv10         LIGHTNING CARDS:
+   2x Jungle Bellsprout Lv11             4x Jungle Pikachu Lv14
+   2x Vending Weepinbell Lv23            2x Fossil Raichu Lv45
+   1x Jungle Weepinbell Lv28             3x Vending Voltorb Lv8
+   2x Jungle Victreebel Lv42             2x Jungle Electrode Lv42
+   4x Vending Pinsir Lv15                1x Fossil Zapdos Lv40
+
+WATER CARDS:                          FIGHTING CARDS:
+   2x Base Poliwag Lv13                  4x Fossil Hitmonlee Lv30
+   1x Vending Poliwag Lv15               4x Vending Hitmonchan Lv23
+   2x Base Poliwhirl Lv28
+   1x Vending Poliwrath Lv40          TRAINER CARDS:
+                                         4x Energy Removal
+COLORLESS CARDS:                         2x Energy Search
+   3x Gameboy Jigglypuff Lv13            2x Potion
+   2x Jungle Wigglytuff Lv36             2x Defender
+                                         2x Full Heal
+TRAINER CARDS:                           2x Bill
+   1x Super Potion
+   1x Professor Oak                   ------------- 
+   4x Potion                          * Subtotals * 
+   1x Full Heal                       -------------
+   2x Bill
+   1x Bill's Teleporter                   Energy Cards: 26
+                                        (Basic Pokemon: 16)
+-------------                            Total Pokemon: 20
+* Subtotals *                            Trainer Cards: 14
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 14)
+   Total Pokemon: 24
+   Trainer Cards: 10
+
+
+=========================================================================
+  [K]  Grand Masters
+=========================================================================
+
+You can fight each of the Grand Masters after one another in the normal
+course of the game as many times as you like (provided they've all been
+rescued). Then, after the storyline is cleared, you can fight one of them
+as the last opponent in the Grand Masters Cup.
+
+ --------------------------------------------
+//  COURTNEY          (Japanese = Hiroko)  //   [K1]
+--------------------------------------------
+
+LOCATION: left, at the left table
+  PRIZES: 6
+ REWARDS: Bulbasaur (1) Pack + Omanyte (3) Pack + Mr. Mime (4) Pack
+          (but only before Ryuudo is rescued)
+  UNLOCK: rescue her from the GR Fire Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   22x Fire Energy
+    2x Full Heal Energy
+
+FIRE CARDS:
+    2x Base Vulpix Lv11
+    1x Vending Vulpix Lv13
+    2x Gameboy Ninetales Lv35
+    4x Vending Ponyta Lv8
+    3x Jungle Rapidash Lv33
+    4x Fossil Magmar Lv31
+    2x Vending Moltres Lv37
+    2x Promo Moltres Lv40
+
+TRAINER CARDS:
+    2x Professor Oak
+    2x Switch
+    3x Scoop Up
+    2x Bill
+    2x Lass
+    2x Poke Ball
+    3x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 15)
+   Total Pokemon: 20
+   Trainer Cards: 16
+
+
+ --------------------------------------------
+//  STEVE              (Japanese = Steve)  //   [K2]
+--------------------------------------------
+
+LOCATION: left, at the right table
+  PRIZES: 6
+ REWARDS: Omanyte (3) Pack + Mr. Mime (4) Pack
+          (but only before Ryuudo is rescued)
+  UNLOCK: rescue him from the GR Lightning Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   21x Lightning Energy
+   2x Double Colorless Energy
+
+LIGHTNING CARDS:
+    3x Rocket Voltorb Lv13
+    2x Gameboy Electrode Lv35
+    4x Base Electabuzz Lv35
+    2x Vending Zapdos Lv28
+    2x Promo Zapdos Lv68
+
+FIGHTING CARDS:
+    2x Fossil Aerodactyl Lv28
+
+TRAINER CARDS:
+    1x Super Potion
+    2x Energy Retrieval
+    2x Professor Oak
+    2x Fossil Excavation
+    2x Potion
+    1x Gambler
+    4x Mysterious Fossil
+    1x Computer Search
+    2x PlusPower
+    2x Switch
+    2x Bill
+    1x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 23
+  (Basic Pokemon: 13)
+   Total Pokemon: 15
+   Trainer Cards: 22
+
+
+ --------------------------------------------
+//  JACK           (Japanese = Kanekooji)  //   [K3]
+--------------------------------------------
+
+LOCATION: right, at the right table
+  PRIZES: 6
+ REWARDS: Moltres (2) Pack + Omanyte (3) Pack + Mr. Mime (4) Pack
+          (but only before Ryuudo is rescued)
+  UNLOCK: rescue him from the GR Water Fort
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  20x Water Energy
+   3x Double Colorless Energy
+   2x Full Heal Energy
+
+WATER CARDS:
+   3x Vending Krabby Lv17
+   2x Vending Kingler Lv33
+   3x Rocket Magikarp Lv6
+   2x Rocket Dark Gyarados Lv31
+   2x Fossil Lapras Lv31
+   2x Vending Articuno Lv34
+   2x Promo Articuno Lv37
+
+PSYCHIC CARDS:
+   2x Vending Jynx Lv18
+
+COLORLESS CARDS:
+   2x Vending Chansey Lv40
+
+TRAINER CARDSL
+   2x Energy Removal
+   2x Energy Retrieval
+   2x Professor Oak
+   1x Super Energy Removal
+   3x Switch
+   2x Scoop Up
+   3x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 16)
+   Total Pokemon: 20
+   Trainer Cards: 15
+
+
+ --------------------------------------------
+//  ROD               (Japanese = Ryuudo)  //   [K4]
+--------------------------------------------
+
+LOCATION: right, at the right dable
+  PRIZES: 6
+  UNLOCK: rescue him from the GR Psychic Stronghold
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Fire Energy
+   4x Double Colorless Energy
+   2x Full Heal Energy
+
+GRASS CARDS:
+   2x Jungle Scyther Lv25
+
+FIRE CARDS:
+   2x Rocket Charmander Lv9
+   2x Base Charmander Lv10
+   3x Base Charmeleon Lv32
+   1x Base Charizard Lv76
+   1x Promo Charizard Lv76
+
+COLORLESS CARDS:
+   3x Jungle Kangakshan Lv40
+   2x Base Dratini Lv10
+   2x Rocket Dratini Lv12
+   2x Base Dragonair Lv33
+   2x Rocket Dark Dragonair Lv28
+   2x Promo Dragonite Lv41
+
+TRAINER CARDS:
+   2x Switch
+   2x Pokemon Breeder
+   4x Bill
+   2x Master Ball
+   2x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 9)
+   Total Pokemon: 24
+   Trainer Cards: 12
+
+
+=========================================================================
+  [L]  GRs
+=========================================================================
+
+You'll meet these thugs during story mode and the first island's
+Challenge Cups. (You don't win boosters from the Challenge Cups.)
+
+ --------------------------------------------
+//  GR#1                                   //   [L1]
+--------------------------------------------
+
+LOCATION: Battle Club
+  PRIZES: 6
+ REWARDS: Rocket R (6) Pack + Bulbasaur (1) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  13x Water Energy
+  13x Lightning Energy
+
+LIGHTNING CARDS:
+   4x Rocket Voltorb Lv13
+   2x Jungle Electrode Lv42
+   2x Rocket Magnemite Lv12
+   2x Vending Magnemite Lv15
+   2x Vending Pikachu Lv05
+
+WATER CARDS:
+   4x Vending Poliwag Lv15
+   2x Vending Poliwhirl Lv30
+   1x Vending Poliwrath Lv40
+   2x Vending Seel Lv12
+   1x Vending Dewgong Lv24
+   2x Vending Lapras Lv24
+
+COLORLESS CARDS:
+   2x Vending Kangaskhan Lv36
+
+TRAINER CARDS:
+   1x Professor Oak
+   2x Bill
+   2x Switch
+   2x Potion
+   1x Super Potion
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 27
+  (Basic Pokemon: 16)
+   Total Pokemon: 21
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  GR#2                                   //   [L2]
+--------------------------------------------
+
+LOCATION: Green Club/Science Club
+  PRIZES: 6
+ REWARDS: Rocket Grunt (6) Pack + Moltres (2) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  12x Grass Energy
+  15x Fighting Energy
+   1x Full Heal Energy
+
+GRASS CARDS:
+   2x Fossil Ekans Lv10
+   2x Rocket Ekans Lv15
+   2x Rocket Dark Arbok Lv25
+   2x Jungle Paras Lv08
+   1x Vending Parasect Lv29
+   1x Vending Pinsir Lv15
+
+FIGHTING CARDS:
+   3x Base Sandshrew Lv12
+   1x Fossil Sandslash Lv33
+   1x Vending Sandslash lv35
+   2x Base Diglett Lv08
+   2x Rocket Diglett Lv15
+   2x Rocket Dark Dugtrio Lv18
+   2x Vending Geodude Lv15
+   2x Vending Onix Lv12
+
+TRAINER CARDS:
+   1x Professor Oak
+   2x Bill
+   2x Energy Search
+   1x Full Heal
+   1x The Boss' Way
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 18)
+   Total Pokemon: 25
+   Trainer Cards: 7
+
+
+ --------------------------------------------
+//  GR#3                                   //   [L3]
+--------------------------------------------
+
+LOCATION: Aqua Club, Fire Club
+  PRIZES: 6
+ REWARDS: Rocket R (6) Pack + Omanyte (3) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  16x Grass Energy
+  10x Fire Energy
+   2x Double Colorless Energy
+
+GRASS CARDS:
+   3x Jungle Oddish Lv08
+   2x Rocket Dark Gloom Lv21
+   1x Rocket Dark Vileplume Lv29
+   3x Jungle Exeggcute Lv14
+   2x Jungle Exeggutor Lv35
+   2x Gameboy Tangela Lv12
+   1x Jungle Pinsir Lv23
+
+FIRE CARDS:
+   4x Vending Charmander Lv12
+   1x Base Charmeleon Lv32
+   2x Rocket Dark Charmeleon Lv23
+   2x S-Deck Magmar Lv18
+   1x Vending Moltres Lv37
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   1x Professor Oak
+   2x Gust of Wind
+   1x The Boss' Way
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 16)
+   Total Pokemon: 24
+   Trainer Cards: 8
+
+
+ --------------------------------------------
+//  GR#4                                   //   [L4]
+--------------------------------------------
+
+LOCATION: Elec Club, Psychic Club
+  PRIZES: 6
+ REWARDS: Rocket Grunt (6) Pack + Omanyte (3) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  15x Water Energy
+  12x Psychic Energy
+
+WATER CARDS:
+   3x Rocket Psyduck Lv16
+   2x Rocket Dark Golduck Lv23
+   3x Vending Krabby Lv17
+   2x Vending Kingler Lv33
+   2x Vending Horsea Lv20
+   1x Vending Seadra Lv26
+
+PSYCHIC CARDS:
+   1x Rocket Drowzee Lv10
+   2x Base Drowzee Lv12
+   2x Rocket Dark Hypno Lv26
+   1x Vending Jynx Lv18
+   2x S-Deck Jynx Lv27
+   2x Fossil Mew Lv23
+
+TRAINER CARDS:
+   2x Energy Removal
+   1x Professor Oak
+   1x Gust of Wind
+   2x Full Heal
+   1x Imposter Professor Oak
+   2x Bill
+   1x Lass
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 27
+  (Basic Pokemon: 16)
+   Total Pokemon: 23
+   Trainer Cards: 10
+
+
+ --------------------------------------------
+//  GR#X                                   //   [L5]
+--------------------------------------------
+
+See RONALD (Rando) in section U1 through U4
+
+
+
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+=========================================================================
+=========|   IV.   GB2 ISLAND: CLUB MINION / MASTER DECKS   |============
+=========================================================================
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+=========================================================================
+  [M]  GRASS FORT
+=========================================================================
+
+ --------------------------------------------
+//  MELISSA           (Japanese = Midori)  //   [M1]
+--------------------------------------------
+
+LOCATION: first room
+  PRIZES: 4
+    RULE: *none*
+ REWARDS: Rocket R (6) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  24x Grass Energy
+   2x Double Colorless Energy
+
+GRASS CARDS:
+   3x Base Caterpie Lv13
+   2x Vending Metapod Lv20
+   1x Jungle Butterfree Lv28
+   3x Base Weedle Lv12
+   2x Vending Kakuna Lv20
+   1x Base Beedrill Lv32
+   3x Jungle Venonat Lv12
+   2x Vending Venomoth Lv22
+   1x Jungle Scyther Lv25
+
+COLORLESS CARDS:
+   2x Rocket Rattata Lv12
+   1x Rocket Dark Raticate Lv25
+   3x Rocket Meowth Lv10
+   2x Rocket Dark Persian Lv28
+
+TRAINER CARDS:
+   2x Potion
+   2x Full Heal
+   2x Bill
+   2x Master Ball 
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 15)
+   Total Pokemon: 26
+   Trainer Cards: 8
+
+
+ --------------------------------------------
+//  JAMES              (Japanese = Yuuta)  //   [M2]
+--------------------------------------------
+
+LOCATION: second room
+  PRIZES: 4
+    RULE: *none*
+ REWARDS: Rocket R (6) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  15x Grass Energy
+  10x Psychic Energy
+
+GRASS CARDS:
+   4x Vending Bulbasaur Lv15
+   3x Gameboy Dark Ivysaur Lv16
+   2x Gameboy Dark Venusaur Lv37
+   4x Rocket Zubat Lv9
+   3x Rocket Dark Golbat Lv25
+
+PSYCHIC CARDS
+   4x Vending Gastly Lv13
+   3x Vending Haunter Lv25
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   3x Energy Search
+   1x Professor Oak
+   1x Switch
+   2x The Boss' Way
+   1x Bill
+   1x Master Ball
+   1x Poke Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 12)
+   Total Pokemon: 23
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  LIZ               (Japanese = Miyuki)  //   [M3]
+--------------------------------------------
+
+   LOCATION: third room
+     PRIZES: 4
+REQUIREMENT: Grass Energy only (not even Colorless)
+    REWARDS: Rocket R (6) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  24x Grass Energy
+
+GRASS CARDS:
+   4x Rocket Ekans Lv15
+   3x Rocket Dark Arbok Lv25
+   4x Rocket Grimer Lv10
+   3x Fossil Muk Lv34
+   3x Rocket Koffing Lv12
+   2x Rocket Dark Weezing Lv24
+
+FIRE CARDS:
+   3x Base Charmander Lv10
+   2x Base Charmeleon Lv32
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   1x Professor Oak
+   2x Revive
+   2x Goop Gas Attack
+   1x Bill
+   2x Master Ball
+   2x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 14)
+   Total Pokemon: 24
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  Parker           (Japanese = Morino)  //   [M4]
+--------------------------------------------
+
+LOCATION: last (fourth) room
+  PRIZES: 6
+    RULE: Grass cards cannot have a status condition (cannot become
+          Asleep, Confused, Paralyzed, or Poisoned). 
+ REWARDS: Rocket R (6) Pack x2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  17x Grass Energy
+   3x Double Colorless Energy
+   3x Rainbow Energy
+
+GRASS CARDS:
+   4x Rocket Oddish Lv21
+   2x Jungle Gloom Lv22
+   2x Rocket Dark Gloom Lv21
+   2x Jungle Vileplume Lv35
+   2x Rocket Dark Vileplume Lv29
+   2x Jungle Scyther Lv25
+
+WATER CARDS:
+   3x Rocket Squirtle Lv16
+   2x Base Wartortle Lv22
+
+COLORLESS CARDS:
+   3x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   2x Computer Search
+   2x Switch
+   3x Pokemon Trader
+   2x Pokemon Breeder
+   4x Bill
+   2x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 23
+  (Basic Pokemon: 12)
+   Total Pokemon: 22
+   Trainer Cards: 15
+
+
+=========================================================================
+  [N]  Lightning Fort
+=========================================================================
+
+ --------------------------------------------
+//  PETER                (Japanese = Tap)  //   [N1]
+--------------------------------------------
+
+LOCATION: side room, at table
+  PRIZES: 4
+ REWARDS: Moltres (2) Pack + Bulbasaur (1) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Lightning Energy
+   4x Double Colorless Energy
+   2x Recycle Energy
+
+LIGHTNING CARDS:
+   4x Jungle Pikachu Lv14
+   3x Gameboy Dark Raichu Lv31
+   2x Fossil Zapdos Lv40
+
+COLORLESS CARDS:
+   1x Jungle Snorlax Lv20
+   1x Vending Snorlax Lv35
+   1x Promo Snorlax Lv50
+   4x Rocket Dratini Lv12
+   3x Rocket Dark Dragonair Lv28
+   2x Rocket Dark Dragonite Lv33
+
+TRAINER CARDS:
+   2x Energy Removal
+   2x Energy Retrieval
+   2x Energy Search
+   1x Professor Oak
+   2x Switch
+   2x Pokemon Trader
+   2x The Boss' Way
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 13)
+   Total Pokemon: 21
+   Trainer Cards: 15
+
+
+ --------------------------------------------
+//  CASSIE             (Japanese = Renna)  //   [N2]
+--------------------------------------------
+
+LOCATION: first room
+  PRIZES: 4
+    RULE: 4x Pikachu (any kind) in your deck
+ REWARDS: Rocket R (6) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  15x Lightning Energy
+   8x Fighting Energy
+   2x Rainbow Energy
+
+LIGHTNING CARDS:
+   2x Vending Pikachu Lv5
+   2x Promo Pikachu Lv13
+   3x Vending Raichu Lv32
+   4x Base Electabuzz Lv35
+   2x Rocket Dark Jolteon Lv23
+
+FIGHTING CARDS:
+   3x Base Sandshrew Lv12
+   2x Vending Sandslash Lv35
+   2x Vending Cubone Lv14
+   1x Jungle Marowak Lv26
+
+COLORLESS CARDS:
+   3x Rocket Eevee Lv9
+
+TRAINER CARDS:
+   1x Professor Oak
+   2x Potion
+   2x Defender
+   2x Gust of Wind
+   2x Bill
+   2x Master Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 16)
+   Total Pokemon: 24
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  Chip            (Japanese = Ichikawa)  //   [N3]
+--------------------------------------------
+
+LOCATION: second room
+  PRIZES: 4
+    RULE: Lightning Energy only (not even Colorless)
+ REWARDS: Rocket R (6) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  26x Lightning Energy
+
+LIGHTNING ENERGY:
+   2x Promo Pikachu Lv13
+   2x Promo Flying Pikachu Lv12
+   4x Base Magnemite Lv13
+   1x Vending Magneton Lv30
+   2x Rocket Dark Magneton Lv26
+   2x Vending Voltorb Lv8
+   2x Rocket Voltorb Lv13
+   1x Jungle Electrode Lv42
+   2x Rocket Dark Electrode Lv24
+   2x Base Electabuzz Lv35
+   2x Base Zapdos Lv64
+
+TRAINER CARDS:
+   2x Energy Removal
+   2x Energy Retrieval
+   1x Professor Oak
+   4x Potion
+   1x Imposter Professor Oak
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 16)
+   Total Pokemon: 22
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  CATHERINE      (Japanese = Catherine)  //   [N4]
+--------------------------------------------
+
+LOCATION: last (third) room
+  PRIZES: 6
+    RULE: Lightning Pokemon do +10 whenever they do damage to the
+          Defending Pokemon, before Weakness and Resistance
+ REWARDS: Rocket R (6) Pack x2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  20x Lightning Energy
+
+LIGHTNING CARDS:
+   2x Vending Pikachu Lv5
+   2x Jungle Pikachu Lv14
+   3x Gameboy Dark Raichu Lv31
+   3x Rocket Voltorb Lv13
+   3x Rocket Dark Jolteon Lv23
+
+COLORLESS CARDS:
+   3x Base Doduo Lv10
+   4x Rocket Eevee Lv9
+
+TRAINER CARDS:
+   3x Energy Removal
+   2x Energy Retrieval
+   2x Professor Oak
+   3x Potion
+   4x Defender
+   2x PlusPower
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 20
+  (Basic Pokemon: 14)
+   Total Pokemon: 20
+   Trainer Cards: 20
+
+
+=========================================================================
+  [O]  Fire Fort
+=========================================================================
+
+ --------------------------------------------
+//  JESS               (Japanese = Jayce)  //   [O1]
+--------------------------------------------
+
+LOCATION: first room
+  PRIZES: 4
+ REWARDS: Omanyte (3) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  28x Fire Energy
+
+FIRE CARDS:
+   3x S-Deck Growlithe Lv12
+   2x Base Arcanine Lv45
+   4x Rocket Ponyta Lv15
+   3x Rocket Dark Rapidash Lv24
+   4x Vending Magmar Lv27
+   2x Promo Meowth Lv14
+
+COLORLESS CARDS:
+   2x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Energy Search
+   1x Professor Oak
+   2x Bill
+   2x Master Ball
+   2x Poke Ball
+   1x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 15)
+   Total Pokemon: 20
+   Trainer Cards: 12
+
+
+ --------------------------------------------
+//  KARA               (Japanese = Yuuki)  //   [O2]
+--------------------------------------------
+
+LOCATION: second room
+  PRIZES: 4
+    RULE: Fire Energy only
+ REWARDS: Rocket R (6) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  22x Fire Energy
+
+FIRE CARDS:
+   4x Rocket Charmander Lv9
+   3x Rocket Dark Charmeleon Lv23
+   2x Rocket Dark Charizard Lv38
+
+WATER CARDS:
+   3x Rocket Squirtle Lv16
+
+FIGHTING CARDS:
+   3x Rocket Machop Lv24
+
+COLORLESS CARDS:
+   3x Base Doduo Lv10
+   2x Jungle Dodrio Lv28
+
+TRAINER CARDS:
+   3x Energy Removal
+   2x Energy Retrieval
+   1x Professor Oak
+   1x Super Energy Removal
+   2x Defender
+   3x Scoop Up
+   4x Bill
+   2x Poke Ball 
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 13)
+   Total Pokemon: 20
+   Trainer Cards: 18
+
+
+ --------------------------------------------
+//  ELLEN             (Japanese = Shouko)  //   [O3]
+--------------------------------------------
+
+LOCATION: third room
+  PRIZES: 4
+    RULE: 4x Eevee (any kind) in your deck
+ REWARDS: Rocket R (6) Pack + Rocket Grunt (7) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  13x Fire Energy
+  9x Lightning Energy
+
+FIRE CARDS:
+   4x Vending Charmander Lv12
+   3x Base Charmeleon Lv32
+   3x Fossil Magmar Lv31
+   2x Rocket Dark Flareon Lv23
+
+LIGHTNING CARDS:
+   3x Base Electabuzz Lv35
+   2x Rocket Dark Jolteon Lv23
+
+COLORLESS CARDS:
+   4x Rocket Eevee Lv9
+
+TRAINER CARDS:
+   2x Energy Removal
+   2x Energy Retrieval
+   2x Energy Search
+   1x Professor Oak
+   2x Imposter Oak's Revenge
+   2x Swtich
+   2x Pokemon Trader
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 14)
+   Total Pokemon: 21
+   Trainer Cards: 17
+
+
+ --------------------------------------------
+//  BERNARD          (Japanese = Hiderou)  //   [O4]
+--------------------------------------------
+
+LOCATION: last (fourth) room
+  PRIZES: 6
+    RULE: Fire Pokemon's Weakness is ignored
+ REWARDS: Rocket R (6) Pack + Rocket Grunt (7) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  22x Fire Energy
+
+FIRE CARDS:
+   4x Rocket Charmander Lv9
+   2x Rocket Dark Charmeleon Lv23
+   2x Base Vulpix Lv11
+   3x Gameboy Dark Ninetales Lv28
+   4x Vending Ponyta Lv8
+   2x Jungle Rapidash Lv33
+   3x Fossil Magmar Lv31
+
+TRAINER CARDS:
+   2x Professor Oak
+   3x PlusPower
+   2x Switch
+   3x Pokemon Trader
+   4x Bill
+   2x Nightly Garbage Run 
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 13)
+   Total Pokemon: 20
+   Trainer Cards: 16
+
+
+=========================================================================
+  [P]  Water Fort
+=========================================================================
+
+ --------------------------------------------
+//  JACOB           (Japanese = Miyajima)  //   [P1]
+--------------------------------------------
+
+LOCATION: first room
+  PRIZES: 4
+    RULE: Water Energy only
+ REWARDS: Omanyte (3) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  23x Water Energy
+
+WATER CARDS:
+   4x Vending Staryu Lv17
+   3x Gameboy Dark Starmie Lv27
+   3x Rocket Dark Vaporeon Lv28
+
+LIGHTNING CARD:
+   4x Base Voltorb Lv10
+   3x Jungle Electrode Lv42
+
+COLORLESS CARDS:
+   4x Rocket Eevee Lv9
+
+TRAINER CARDS:
+   4x Energy Removal
+   2x Energy Retrieval
+   2x Super Energy Removal
+   2x A8 Switch
+   4x Bill
+   2x Poke Ball 
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 23
+  (Basic Pokemon: 12)
+   Total Pokemon: 21
+   Trainer Cards: 16
+
+
+ --------------------------------------------
+//  CODY               (Japanese = Senta)  //   [P2]
+--------------------------------------------
+
+LOCATION: second room
+  PRIZES: 4
+    RULE: 4x Magikarp (any kind) in your deck
+ REWARDS: Mr. Mime (4) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  20x Water Energy
+   2x Double Colorless Energy
+
+WAWTER CARDS:
+   4x Base Squirtle Lv8
+   3x S-Deck Wartortle Lv24
+   4x Vending Poliwag Lv15
+   3x Vending Poliwhirl Lv30
+   4x Rocket Magikarp Lv6
+   3x Rocket Dark Gyarados Lv31
+
+TRAINER CARDS:
+   3x Energy Removal
+   2x Energy Retrieval
+   1x Professor Oak
+   3x PlusPower
+   2x Switch
+   4x Bill
+   2x Poke Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 12)
+   Total Pokemon: 21
+   Trainer Cards: 17
+
+
+ --------------------------------------------
+//  ALEX                (Japanese = Aira)  //   [P3]
+--------------------------------------------
+
+LOCATION: third room
+  PRIZES: 4
+    RULE: Bench size is three instead of five
+ REWARDS: Rocket Grunt (7) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  23x Water Energy
+
+WATER CARDS:
+   4x Vending Seel Lv10
+   3x Vending Dewgong Lv24
+   4x Rocket Magikarp Lv6
+   3x Rocket Dark Gyarados Lv31
+
+LIGHTNING CARDS:
+   1x Promo Surfing Pikachu Lv13
+   1x Promo Surfing Pikachu Lv13
+
+PSYCHIC CARDS:
+   2x Vending Jynx Lv18
+
+COLORLESS:
+   2x Vending Tauros Lv35
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Energy Search
+   1x Professor Oak
+   4x Gust of Wind
+   2x Pokemon Trader
+   4x Poke Flute
+   2x Bill 
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 23
+  (Basic Pokemon: 14)
+   Total Pokemon: 20
+   Trainer Cards: 17
+
+
+ --------------------------------------------
+//  BROOKE            (Japanese = Kanoko)  //   [P4]
+--------------------------------------------
+
+LOCATION: last (fourth) room
+  PRIZES: 5
+    RULE: Water Pokemon need one less Energy to Retreat
+ REWARDS: Rocket R (6) Pack x2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  19x Water Energy
+   3x Double Colorless Energy
+
+WATER CARDS:
+   4x Jungle Goldeen Lv12
+   3x Jungle Seaking Lv28
+   4x Vending Staryu Lv17
+   3x Gameboy Dark Starmie Lv27
+   3x Fossil Lapras Lv31
+   3x Vending Articuno Lv34
+
+TRAINER CARDS:
+   2x Professor Oak
+   2x Gust of Wind
+   4x Mr. Fuji
+   3x PlusPower
+   3x Pokemon Trader
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 14)
+   Total Pokemon: 20
+   Trainer Cards: 18
+
+
+=========================================================================
+  [Q]  Fighting Fort
+=========================================================================
+
+ --------------------------------------------
+//  GRACE              (Japanese = Grace)  //   [Q1]
+--------------------------------------------
+
+LOCATION: right side of maze
+  PRIZES: 4
+    RULE: Fighting Energy only
+ REWARDS: Pidgeot (5) Pack + Rocket Grunt (7) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  20x Fighting Energy
+   3x Double Colorless Energy
+
+GRASS CARDS:
+   2x Jungle Scyther Lv25
+
+FIGHTING CARDS:
+   4x Rocket Machop Lv24
+   4x Rocket Dark Machoke Lv28
+   3x Rocket Dark Machamp Lv30
+   3x Vending Onix Lv25
+
+COLORLESS CARDS:
+   4x S-Deck Spearow Lv9
+   3x Gameboy Dark Fearow Lv25
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   1x Professor Oak
+   3x Switch
+   2x Pokemon Trader
+   3x The Boss' Way
+   3x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 23
+  (Basic Pokemon: 13)
+   Total Pokemon: 23
+   Trainer Cards: 14
+
+
+ --------------------------------------------
+//  TONY               (Japanese = Gouda)  //   [Q2]
+--------------------------------------------
+
+LOCATION: left side of maze
+  PRIZES: 4
+    RULE: no Energy Removal or Super Energy Removal
+ REWARDS: Mr. Mime (4) Pack + Rocket Grunt (7) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  22x Fighting Energy
+   2x Double Colorless Energy
+
+FIGHTING CARDS:
+   4x Rocket Diglett Lv15
+   3x Rocket Dark Dugtrio Lv18
+   4x Fossil Geodude Lv16
+   3x Vending Graveler Lv28
+   3x Promo Golem Lv37
+
+COLORLESS CARDS:
+   4x Jungle Lickitung Lv26
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   2x Defender
+   2x Digger
+   2x Pokemon Breeder
+   4x Bill
+   2x Poke Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 12)
+   Total Pokemon: 21
+   Trainer Cards: 15
+
+
+ --------------------------------------------
+//  BRUTUS            (Japanese = Kamiya)  //   [Q3]
+--------------------------------------------
+
+LOCATION: front room
+  PRIZES: 6
+    RULE: Fighting Resistance is ignored
+ REWARDS: Rocket R (6) Pack + Rocket Grunt (7) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Fighting Energy
+   3x Double Colorless Energy
+
+GRASS CARDS:
+   3x Jungle Scyther Lv25
+
+FIGHTING CARDS:
+   4x Rocket Mankey Lv14
+   3x Rocket Dark Primeape Lv23
+   4x Vending Cubone Lv14
+   3x Gameboy Dark Marowak Lv27
+
+COLORLESS CARDS:
+   3x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   4x Imakuni?
+   3x Energy Removal
+   2x Professor Oak
+   2x Itemfinder
+   4x Defender
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 21
+  (Basic Pokemon: 14)
+   Total Pokemon: 20
+   Trainer Cards: 19
+
+
+=========================================================================
+  [R]  Psychic Fort
+=========================================================================
+
+ --------------------------------------------
+//  Kevin             (Japanese = Kevin)  //   [R1]
+--------------------------------------------
+
+LOCATION: Left
+  PRIZES: 4
+    RULE: Resistance is -10 instead of -30
+ REWARDS: Rocket Grunt (7) Pack + Moltres (2) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  10x Fighting Energy
+  15x Psychic Energy
+   2x Double Colorless Energy
+
+FIGHTING CARDS:
+   2x Rocket Machop Lv24
+   2x Base Hitmonchan Lv33
+
+PSYCHIC CARDS:
+   4x Rocket Abra Lv14
+   3x Base Kadabra Lv38
+   4x Base Drowzee Lv12
+   3x Rocket Dark Hypno Lv26
+   2x Vending Mewtwo Lv54
+
+COLORLESS CARDS:
+   2x Vending Kangaskhan Lv36
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   4x Energy Search
+   1x Professor Oak
+   2x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 27
+  (Basic Pokemon: 16)
+   Total Pokemon: 22
+   Trainer Cards: 11
+
+
+ --------------------------------------------
+//  VICTORIA            (Japanese = Miwa)  //   [R2]
+--------------------------------------------
+
+LOCATION: second from left
+  PRIZES: 4
+    RULE: Psychic Energy only (not even Colorless)
+ REWARDS: Rocket Grunt (7) Pack + Bulbasaur (1) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  23x Psychic Energy
+
+WATER CARDS:
+   4x Rocket Psyduck Lv16
+   3x Rocket Dark Golduck Lv23
+
+PSYCHIC CARDS:
+   4x Vending Abra Lv8
+   3x Rocket Dark Kadabra Lv24
+   2x Rocket Dark Alakazam Lv30
+   2x Promo Mewtwo Lv30
+
+COLORLESS CARDS:
+   2x Vending Rattata Lv15
+   1x Rocket Dark Raticate Lv25
+   2x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   3x Energy Removal
+   3x Energy Retrieval
+   1x Professor Oak
+   2x Pokemon Trader
+   3x The Boss' Way
+   2x Bill 
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 23
+  (Basic Pokemon: 14)
+   Total Pokemon: 23
+   Trainer Cards: 14
+
+
+ --------------------------------------------
+//  CLYDE            (Japanese = Yousuke)  //   [R3]
+--------------------------------------------
+
+LOCATION: second from right
+  PRIZES: 4
+    RULE: 6x total Gastly and Haunter (any kinds) in your deck
+ REWARDS: Rocket R (6) Pack + Moltres (2) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Psychic Energy
+   4x Full Heal Energy
+
+PSYCHIC CARDS:
+   4x Vending Gastly Lv13
+   2x Fossil Haunter Lv17
+   2x Base Haunter Lv22
+   3x Promo Gengar Lv40
+   4x Rocket Drowzee Lv10
+   3x Rocket Dark Hypno Lv26
+
+COLORLESS CARDS:
+   4x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   1x Professor Oak
+   2x Full Heal
+   4x Sleep!
+   2x Pokemon Breeder
+   4x Bill
+   3x Poke Ball 
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 12)
+   Total Pokemon: 22
+   Trainer Cards: 16
+
+
+ --------------------------------------------
+//  HEIDI             (Japanese = Ryouko)  //   [R4]
+--------------------------------------------
+
+LOCATION: right
+  PRIZES: 4
+    RULE: no Trainer cards in your deck
+ REWARDS: Rocket R (6) Pack + Omanyte (3) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  20x Psychic Energy
+   4x Double Colorless Energy
+   4x Potion Energy
+   4x Full Heal Energy
+
+PSYCHIC CARDS:
+   4x Rocket Abra Lv14
+   3x Base Kadabra Lv38
+   2x Base Alakazam Lv42
+   4x Rocket Slowpoke Lv16
+   3x Fossil Slowbro Lv26
+
+COLORLESS CARDS:
+   3x Promo Meowth Lv14
+   2x Rocket Dark Persian Lv28
+   4x Rocket Dratini Lv12
+   3x Rocket Dark Dragonair Lv28
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 32
+  (Basic Pokemon: 15)
+   Total Pokemon: 28
+   Trainer Cards: 0
+
+
+ --------------------------------------------
+//  CLAIRE              (Japanese = Mami)  //   [R5]
+--------------------------------------------
+
+LOCATION: upstairs
+  PRIZES: 6
+    RULE: Energy cards normally send to your Discard Pile get sent to
+          your hand instead
+ REWARDS: Rocket Grunt (7) Pack x2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Psychic Energy
+
+PSYCHIC CARDS:
+   4x Rocket Slowpoke Lv16
+   4x Fossil Gastly Lv17
+   4x Gameboy Dark Haunter Lv23
+   3x Gameboy Dark Gengar Lv33
+   3x Jungle Mr. Mime Lv28
+
+COLORLESS CARDS:
+   4x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   4x Energy Removal
+   2x Professor Oak
+   2x Itemfinder
+   2x Super Energy Removal
+   2x Computer Search
+   2x Pokemon Breeder
+   4x Bill
+   2x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 18
+  (Basic Pokemon: 15)
+   Total Pokemon: 22
+   Trainer Cards: 20
+
+
+=========================================================================
+  [S]  Colorless Shrine
+=========================================================================
+
+All three of these guys have random deck requirements.
+
+ --------------------------------------------
+//  SETH           (Japanese = Nishijima)  //   [S1]
+--------------------------------------------
+
+LOCATION: bottom
+  PRIZES: 6
+    RULE: 4x Pidgey (any kind) in your deck
+      or: 4x Spearow (any kind) in your deck
+      or: 4x Double Colorless Energy in your deck
+ REWARDS: Moltres (2) Packs x2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   1x Grass Energy
+   1x Fire Energy
+   1x Water Energy
+   1x Lightning Energy
+   1x Fighting Energy
+   1x Psychic Energy
+   4x Double Colorless Energy
+   4x Potion Energy
+   4x Full Heal Energy
+   4x Recycle Energy
+
+COLORLESS CARDS:
+   4x Jungle Lickitung Lv26
+   2x Base Chansey Lv55
+   4x Jungle Kangakshan Lv40
+   4x Vending Snorlax Lv35
+
+TRAINER CARDS:
+   4x Energy Removal
+   2x Itemfinder
+   3x Super Energy Removal
+   2x PlusPower
+   4x Switch
+   2x Scoop Up
+   4x Bill
+   3x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 14)
+   Total Pokemon: 14
+   Trainer Cards: 24
+
+
+ --------------------------------------------
+//  ALAN            (Japanese = Samejima)  //   [S2]
+--------------------------------------------
+
+LOCATION: let
+  PRIZES: 6
+    RULE: 4x Dratini (any kind) in your deck
+      or: 4x Jigglypuff (any kind) in your deck
+      or: 4x Mysterious Fossil in your deck
+ REWARDS: Mr. Mime (4) Packs x2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   5x Fighting Energy
+   4x Double Colorless Energy
+   4x Potion Energy
+   4x Full Heal Energy
+   4x Recycle Energy
+
+FIGHTING CARDS:
+   2x Vending Onix Lv25
+   2x Vending Hitmonchan Lv23
+
+COLORLESS CARDS:
+   4x Vending Clefairy Lv15
+   3x Gameboy Dark Clefable Lv33
+   3x Gameboy Jigglypuff Lv13
+   4x Rocket Dratini Lv12
+   3x Rocket Dark Dragonair Lv28
+   2x Rocket Dark Dragonite Lv33
+
+TRAINER CARDS:
+   3x Super Potion
+   2x Professor Oak
+   1x Itemfinder
+   2x Moon Stone
+   1x Computer Search
+   2x The Boss' Way
+   2x Bill
+   3x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 21
+  (Basic Pokemon: 15)
+   Total Pokemon: 23
+   Trainer Cards: 16
+
+
+ --------------------------------------------
+//  AVERY              (Japanese = Ishii)  //   [S3]
+--------------------------------------------
+
+LOCATION: top
+  PRIZES: 6
+    RULE: 4x Rattata (any kind) in your deck
+      or: 4x Meowth (any kind) in your deck
+      or: 4x Dark Pokemon (any Pokemon) in your deck
+ REWARDS: Omanyte (3) Packs x2
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   8x Lightning Energy
+   4x Double Colorless Energy
+   4x Full Heal Energy
+   4x Recycle Energy
+
+LIGHTNING CARDS:
+   2x Promo Flying Pikachu Lv12
+
+COLORLESS CARDS:
+   4x Vending Pidgey Lv10
+   3x Vending Pidgeotto Lv38
+   2x Jungle Pidgeot Lv40
+   4x Jungle Spearow Lv13
+   3x Jungle Fearow Lv27
+   2x Vending Tauros Lv35
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Professor Oak
+   3x Potion
+   2x Moon Stone
+   2x Defender
+   3x Gust of Wind
+   2x Computer Search
+   2x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 20
+  (Basic Pokemon: 12)
+   Total Pokemon: 20
+   Trainer Cards: 20
+
+
+=========================================================================
+  [T]  Rocket Castle
+=========================================================================
+
+ --------------------------------------------
+//  CLAY            (Japanese = Kanzaki)   //   [T1]
+--------------------------------------------
+
+LOCATION: right of the table
+  PRIZES: 6
+    RULE: 1x each of the Legendary Cards in your deck: Moltres Lv40,
+          Zapdos Lv68, Articuno Lv37, and Dragonite Lv41.
+ REWARDS: Rocket R (6) Pack + Mr. Mime (4) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   6x Grass Energy
+   8x Fire Energy
+   8x Psychic Energy
+
+GRASS CARDS:
+   3x Rocket Oddish Lv21
+   2x Rocket Dark Gloom Lv21
+
+FIRE CARDS:
+   3x Rocket Charmander Lv9
+   2x Rocket Dark Charmeleon Lv23
+
+WATER CARDS:
+   3x Rocket Psyduck Lv16
+   2x Rocket Dark Golduck Lv23
+
+PSYCHIC CARDS:
+   3x Rocket Slowpoke Lv16
+   2x Rocket Dark Slowbro Lv27
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   2x Energy Search
+   3x Professor Oak
+   2x Pokemon Trader
+   2x The Boss' Way
+   4x Bill
+   2x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 12)
+   Total Pokemon: 20
+   Trainer Cards: 18
+
+
+ -------------------------------------------------
+//  ALLISON (Psychic Battle deck)  (Jpn = Rui)  //   [T2]
+-------------------------------------------------
+
+LOCATION: left of the table
+  PRIZES: 6
+    RULE: Resistance is -10 instead of -30
+ REWARDS: Rocket Grunt (7) Pack + Pidgeot (5) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  12x Fighting Energy
+  10x Psychic Energy
+
+FIGHTING CARDS:
+   4x Base Sandshrew Lv12
+   3x Fossil Sandslash Lv33
+   4x Base Hitmonchan Lv33
+
+PSYCHIC CARDS:
+   3x Jungle Mr. Mime Lv28
+   3x Base Mewtwo Lv53
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Energy Search
+   2x Professor Oak
+   3x Potion
+   4x Gust of Wind
+   2x PlusPower
+   2x Switch
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 14)
+   Total Pokemon: 17
+   Trainer Cards: 21
+
+
+ ----------------------------------------------
+//  ALLISON (Poison Mist deck)  (Jpn = Rui)  //   [T3]
+----------------------------------------------
+
+LOCATION: left of the table
+  PRIZES: 6
+    RULE: +1 to Retreat Cost
+ REWARDS: Rocket Grunt (7) Pack + Pidgeot (5) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   20x Grass Energy
+   2x Full Heal Energy
+
+GRASS CARDS:
+   4x Rocket Grimer Lv10
+   4x Rocket Dark Muk Lv25
+   4x S-Deck Koffing Lv14
+   3x Vending Weezing Lv26
+   3x Jungle Scyther Lv25
+
+PSYCHIC CARDS:
+   1x Vending Mr. Mime Lv20
+
+TRAINER CARDS:
+   3x Energy Removal
+   2x Defender
+   2x Gust of Wind
+   2x Switch
+   2x Pokemon Trader
+   4x Bill
+   4x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 12)
+   Total Pokemon: 19
+   Trainer Cards: 19
+
+
+ ------------------------------------------------
+//  ALLISON (Ultra Removal Deck)  (Jpn = Rui)  //   [T4]
+------------------------------------------------
+
+LOCATION: left of the table
+  PRIZES: 6
+    RULE: you can't retrieve cards out of the discard pile
+ REWARDS: Rocket Grunt (7) Pack + Pidgeot (5) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Water Energy
+
+WATER CARDS:
+   4x Base Squirtle Lv8
+   3x Base Wartortle Lv22
+   3x Base Blastoise Lv52
+   4x Fossil Psyduck Lv15
+   3x Fossil Golduck Lv27
+
+TRAINER CARDS:
+   4x Energy Removal
+   4x Professor Oak
+   3x Super Energy Removal
+   2x Gust of Wind
+   2x Switch
+   2x Pokemon Trader
+   4x Bill
+   4x Bill's Teleporter 
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 18
+  (Basic Pokemon: 8)
+   Total Pokemon: 17
+   Trainer Cards: 25
+
+
+ ------------------------------------------------------
+//  VILLICCHI (Stop Life! deck)  (Jpn = Biruricchi)  //   [T5]
+------------------------------------------------------
+
+LOCATION: cosmos room, Rocket Castle
+  PRIZES: 6
+ REWARDS: Rocket Grunt (7) Pack x2 (eventually)
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Grass Energy
+  
+GRASS CARDS:
+   4x B-Deck Bulbasaur Lv12
+   3x Gameboy Dark Ivysaur Lv16
+   3x Gameboy Dark Venusaur Lv37
+   2x Jungle Scyther Lv25
+
+PSYCHIC CARDS:
+   1x Vending Mr. Mime Lv20
+
+COLORLESS CARDS:
+   2x Jungle Kangakshan Lv40
+   3x Base Dratini Lv10
+   2x Rocket Dark Dragonair Lv28
+
+TRAINER CARDS:
+   3x Gust of Wind
+   3x PlusPower
+   2x Switch
+   3x Pokemon Trader
+   3x The Boss' Way
+   4x Bill
+   4x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 18
+  (Basic Pokemon: 12)
+   Total Pokemon: 20
+   Trainer Cards: 22
+
+
+ -----------------------------------------------------
+//  VILLICCHI (Scorcher! deck)  (Jpn = Biruricchi)  //   [T6]
+-----------------------------------------------------
+
+LOCATION: cosmos room, Rocket Castle
+  PRIZES: 6
+ REWARDS: Rocket Grunt (7) Pack x2 (eventually)
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Fire Energy
+
+FIRE CARDS:
+   4x Rocket Charmander Lv9
+   3x Rocket Dark Charmeleon Lv23
+   3x Rocket Dark Charizard Lv38
+   3x Fossil Magmar Lv31
+   
+PSYCHIC CARDS:
+   1x Vending Mr. Mime Lv20
+   
+COLORLESS CARDS:
+   2x Vending Clefairy Lv15
+   2x Gameboy Dark Clefable Lv33
+   2x Jungle Kangakshan Lv40
+   
+TRAINER CARDS:
+   2x Energy Retrieval
+   3x Defender
+   3x Switch
+   3x Pokemon Trader
+   3x The Boss' Way
+   4x Bill
+   4x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 18
+  (Basic Pokemon: 12)
+   Total Pokemon: 20
+   Trainer Cards: 22
+
+
+ -----------------------------------------------------------
+//  VILLICCHI (Tsunami Starter! deck)  (Jpn = Biruricchi) //   [T7]
+-----------------------------------------------------------
+
+LOCATION: cosmos room, Rocket Castle
+  PRIZES: 6
+ REWARDS: Rocket Grunt (7) Pack x2 (eventually)
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Water Energy
+
+GRASS CARDS:
+   2x Jungle Scyther Lv25
+
+WATER CARDS:
+   4x Base Squirtle Lv8
+   1x Rocket Dark Wartortle Lv21
+   3x Rocket Dark Blastoise Lv28
+   3x Fossil Lapras Lv31
+
+PSYCHIC CARDS:
+   1x Vending Mr. Mime Lv20
+
+COLORLESS CARDS:
+   2x Vending Clefairy Lv15
+   2x Gameboy Dark Clefable Lv33
+
+TRAINER CARDS:
+   3x Super Potion
+   2x Gust of Wind
+   2x PlusPower
+   2x Switch
+   2x Pokemon Trader
+   3x Pokemon Breeder
+   2x The Boss' Way
+   4x Bill
+   4x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 18
+  (Basic Pokemon: 12)
+   Total Pokemon: 18
+   Trainer Cards: 24
+
+
+ ---------------------------------------------------------------
+//  VILLICCHI (Smash to Mincemeat! deck)  (Jpn = Biruricchi)  //   [T8]
+---------------------------------------------------------------
+
+LOCATION: cosmos room, Rocket Castle
+  PRIZES: 6
+ REWARDS: Rocket Grunt (7) Pack x2 (eventually)
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Fighting Energy
+   2x Double Colorless Energy
+
+FIGHTING CARDS:
+   4x Base Machop Lv20
+   3x Rocket Dark Machoke Lv28
+   3x Rocket Dark Machamp Lv30
+
+PSYCHIC CARDS:
+   1x Vending Mr. Mime Lv20
+
+COLORLESS CARDS:
+   2x Vending Clefairy Lv15
+   2x Gameboy Dark Clefable Lv33
+   2x Base Chansey Lv55
+   3x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   3x Defender
+   3x Gust of Wind
+   2x Switch
+   2x Pokemon Trader
+   2x The Boss' Way
+   4x Bill
+   4x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 20
+  (Basic Pokemon: 12)
+   Total Pokemon: 20
+   Trainer Cards: 20
+
+
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+=========================================================================
+==============|   V.   GB2 ISLAND: MISCELLANEOUS DECKS   |===============
+=========================================================================
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+=========================================================================
+  [U]  RONALD (Rando)
+=========================================================================
+
+ --------------------------------------------
+//  Half of the GR Coin                    //   [U1]
+--------------------------------------------
+
+LOCATION: any club foyer
+  PRIZES: 6
+ REWARDS: Super Energy Retrieval
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  15x Water Energy
+  13x Fighting Energy
+
+WATER CARDS:
+   3x Fossil Tentacool Lv10
+   2x Fossil Tentacruel Lv21
+   3x Fossil Shellder Lv08
+   2x Fossil Cloyster Lv25
+   2x Vending Lapras Lv24
+
+WATER CARDS:
+   3x Base Machop Lv20
+   2x Base Machoke Lv40
+   1x Base Machamp Lv67
+   1x Vending Hitmonlee Lv23
+   2x Base Hitmonchan Lv33
+
+COLORLESS CARDS:
+   2x Base Chansey Lv55
+
+TRAINER CARDS:
+   2x Energy Search
+   1x Professor Oak
+   2x Super Energy Retrieval
+   2x Gust of Wind
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 26)
+   Total Pokemon: 23
+   Trainer Cards: 9
+
+
+ --------------------------------------------
+//  GRX Deck                               //   [U2]
+--------------------------------------------
+
+LOCATION: GR Grass Fort foyer
+  PRIZES: 6
+ REWARDS: Rocket Grunt (7) Pack + Rocket R (6) Pack
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  24x Grass Energy
+   2x Double Colorless Energy
+   2x Recycle Energy
+
+GRASS CARDS:
+   4x Rocket Zubat Lv09
+   3x Rocket Dark Golbat Lv25
+   3x Rocket Grimer Lv10
+   2x Rocket Dark Muk Lv25
+
+COLORLESS CARDS:
+   3x Rocket Rattata Lv12
+   2x Rocket Dark Raticate Lv25
+   3x Rocket Meowth Lv10
+   2x Rocket Dark Persian Lv28
+
+TRAINER CARDS:
+   1x Professor Oak
+   2x Gust of Wind
+   2x Full Heal
+   2x The Boss' Way
+   3x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 13)
+   Total Pokemon: 22
+   Trainer Cards: 10
+
+
+ --------------------------------------------
+//  Half Way Through GB2 Island            //   [U3]
+--------------------------------------------
+
+LOCATION: After either the GR Fire Fort or GR Water Fort completion,
+          whichever happens first.
+  PRIZES: 6
+ REWARDS: Computer Error!
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  16x Fighting Energy
+   4x Double Colorless Energy
+   2x Potion Energy
+   2x Full Heal Energy
+   2x Recycle Energy
+
+ENERGY CARDS:
+   2x Gameboy Flareon Lv22
+   2x Gameboy Vaporeon Lv29
+   2x Gameboy Jolteon Lv24
+
+ENERGY CARDS:
+   2x Vending Hitmonlee Lv23
+   2x Base Hitmonchan Lv33
+
+ENERGY CARDS:
+   2x Jungle Kangakshan Lv40
+   2x Jungle Tauros Lv32
+   2x Gameboy Ditto Lv19
+   4x Rocket Eevee Lv9
+
+ENERGY CARDS:
+   2x Super Scoop Up
+   2x Imposter Oak's Revenge
+   1x Computer Error
+   3x PlusPower
+   2x Switch
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 13)
+   Total Pokemon: 19
+   Trainer Cards: 14
+
+
+ --------------------------------------------
+//  Just Outside Rocket Castle             //   [U3]
+--------------------------------------------
+
+LOCATION: just outside the Rocket Castle
+      or: any of the Cups
+  PRIZES: 6
+ REWARDS: Super Energy Retrieval
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  23x Psychic Energy
+   2x Double Colorless Energy
+   2x Full Heal Energy
+
+PSYCHIC CARDS:
+   4x Vending Gastly Lv13
+   3x Vending Haunter Lv26
+   2x Promo Gengar Lv40
+   2x Vending Mewtwo Lv67
+   2x Fossil Mew Lv23
+
+COLORLESS CARDS:
+   2x Jungle Kangakshan Lv40
+   4x Base Dratini Lv10
+   3x Rocket Dark Dragonair Lv28
+   2x Rocket Dark Dragonite Lv33
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Gust of Wind
+   2x Pokemon Trader
+   2x Bill
+   1x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 27
+  (Basic Pokemon: 14)
+   Total Pokemon: 24
+   Trainer Cards: 9
+
+
+=========================================================================
+  [V]  SEALED FORT
+=========================================================================
+
+ --------------------------------------------
+//  AXEL                 (Japanese = Eji)  //   [V1]
+--------------------------------------------
+
+ENERGY CARDS:
+   5x Fire Energy
+   7x Fighting Energy
+   4x Double Colorless Energy
+
+GRASS CARDS:
+   3x Jungle Scyther Lv25
+
+FIRE CARDS:
+   3x Fossil Magmar Lv31
+
+FIGHTING CARDS:
+   3x Base Hitmonchan Lv33
+
+COLORLESS CARDS:
+   4x Jungle Jigglypuff Lv14
+   4x Jungle Wigglytuff Lv36
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   3x Professor Oak
+   2x Itemfinder
+   4x Gust of Wind
+   3x Computer Search
+   4x PlusPower
+   2x Switch
+   3x Scoop Up
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 16
+  (Basic Pokemon: 12)
+   Total Pokemon: 16
+   Trainer Cards: 27
+
+
+ --------------------------------------------
+//  MAGICIAN        (Japanese = Magician)  //   [V2]
+--------------------------------------------
+
+ENERGY CARDS:
+  16x Psychic Energy
+   2x Double Colorless Energy
+
+GRASS CARDS:
+   2x Jungle Scyther Lv25
+
+WATER CARDS:
+   2x Fossil Tentacool Lv10
+
+PSYCHIC CARDS:
+   4x Rocket Abra Lv14
+   3x Vending Kadabra Lv39
+   3x Base Alakazam Lv42
+   1x Vending Mr. Mime Lv20
+   3x Jungle Mr. Mime Lv28
+
+COLORLESS CARDS:
+   2x Base Chansey Lv55
+
+TRAINER CARDS:
+   2x Professor Oak
+   2x Computer Search
+   2x Switch
+   2x Pokemon Trader
+   2x Pokemon Center
+   2x Pokemon Breeder
+   4x Bill
+   2x Bill's Teleporter
+   4x Nightly Garbage Run
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 18
+  (Basic Pokemon: 14)
+   Total Pokemon: 20
+   Trainer Cards: 22
+
+
+ --------------------------------------------
+//  WARREN          (Japanese = Toshiron)  //   [V3]
+--------------------------------------------
+
+ENERGY CARDS:
+  18x Psychic Energy
+   2x Full Heal Energy
+
+GRASS CARDS:
+   3x Rocket Oddish Lv21
+   3x Rocket Dark Gloom Lv21
+   3x Rocket Dark Vileplume Lv29
+
+WATER CARDS:
+   4x Fossil Psyduck Lv15
+   3x Rocket Dark Golduck Lv23
+
+PSYCHIC CARDS:
+   4x Vending Gastly Lv13
+   1x Vending Haunter Lv25
+   3x Vending Haunter Lv26
+   1x Vending Mr. Mime Lv20
+
+TRAINER CARDS:
+   3x Professor Oak
+   4x Pokemon Trader
+   4x Bill
+   4x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 20
+  (Basic Pokemon: 12)
+   Total Pokemon: 25
+   Trainer Cards: 15
+
+
+ --------------------------------------------
+//  PIERROT            (Japanese = Piero)  //   [V4]
+--------------------------------------------
+
+ENERGY CARDS:
+  20x Fire Energy
+   2x Double Colorless Energy
+
+FIRE CARDS:
+   4x Vending Vulpix Lv13
+   3x Base Ninetales Lv32
+   4x Base Growlithe Lv18
+   2x Promo Arcanine Lv34
+   2x Base Arcanine Lv45
+   3x Fossil Magmar Lv31
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   2x Professor Oak
+   3x Potion
+   3x Defender
+   2x Computer Search
+   2x Switch
+   2x Pokemon Trader
+   3x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 11)
+   Total Pokemon: 18
+   Trainer Cards: 20
+
+
+ --------------------------------------------
+//  TOBY           (Japanese = Tobi-chan)  //   [V5]
+--------------------------------------------
+
+ENERGY CARDS:
+  11x Grass Energy
+  10x Fire Energy
+   4x Double Colorless Energy
+
+GRASS CARDS:
+   4x Vending Weedle Lv15
+   4x Jungle Scyther Lv25
+
+FIRE CARDS:
+   4x Base Charmander Lv10
+   2x Base Charmeleon Lv32
+   4x Fossil Magmar Lv31
+
+COLORLESS CARDS:
+   2x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   2x Energy Removal
+   2x Potion
+   3x Gust of Wind
+   2x Full Heal
+   3x PlusPower
+   1x Switch
+   2x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 18)
+   Total Pokemon: 20
+   Trainer Cards: 15
+
+
+ --------------------------------------------
+//  FRANK            (Japanese = Dee/Dii)  //   [V6]
+--------------------------------------------
+
+ENERGY CARDS:
+  22x Lightning Energy
+
+LIGHTNING CARDS:
+   4x Promo Zapdos Lv68
+   4x Base Chansey Lv55
+   4x Gameboy Ditto Lv19
+
+TRAINER CARDS:
+   2x Super Potion
+   4x Energy Removal
+   2x Energy Retrieval
+   3x Potion
+   1x Super Energy Removal
+   4x Defender
+   2x Scoop Up
+   2x Pokemon Trader
+   4x Bill
+   2x Master Ball
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 12)
+   Total Pokemon: 12
+   Trainer Cards: 26
+
+
+ --------------------------------------------
+//  MASQUERADE    (Japanese = Masquerade)  //   [V7]
+--------------------------------------------
+
+ENERGY CARDS:
+   3x Water Energy
+  14x Psychic Energy
+   4x Double Colorless Energy
+   4x Recycle Energy
+
+WATER CARDS:
+   3x Rocket Psyduck Lv16
+   3x Rocket Dark Golduck Lv23
+
+PSYCHIC CARDS:
+   2x Promo GR's Mewtwo Lv35
+
+COLORLESS CARDS:
+   2x Vending Clefairy Lv15
+   2x Gameboy Dark Clefable Lv33
+   2x Jungle Kangakshan Lv40
+   2x Rocket Dratini Lv12
+   2x Rocket Dark Dragonair Lv28
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Energy Search
+   1x Professor Oak
+   2x Switch
+   2x Pokemon Trader
+   2x The Boss' Way
+   4x Bill
+   2x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 11)
+   Total Pokemon: 18
+   Trainer Cards: 17
+
+
+ --------------------------------------------
+//  ANNA                (Japanese = Anna)  //   [V8]
+--------------------------------------------
+
+ENERGY CARDS:
+   2x Grass Energy
+  16x Psychic Energy
+   4x Double Colorless Energy
+   4x Recycle Energy
+
+GRASS CARDS:
+   2x Jungle Exeggcute Lv14
+   2x Jungle Exeggutor Lv35
+
+PSYCHIC CARDS:
+   2x Vending Gastly Lv13
+   2x Fossil Gastly Lv17
+   3x Gameboy Dark Haunter Lv23
+   2x Gameboy Dark Gengar Lv33
+   3x S-Deck Jynx Lv27
+
+COLORLESS CARDS:
+   3x Vending Clefairy Lv15
+   2x Gameboy Dark Clefable Lv33
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   1x Professor Oak
+   2x Switch
+   2x Pokemon Trader
+   2x The Boss' Way
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 26
+  (Basic Pokemon: 12)
+   Total Pokemon: 21
+   Trainer Cards: 13
+
+
+ --------------------------------------------
+//  MARY                 (Japanese = Yui)  //   [V9]
+--------------------------------------------
+
+ENERGY CARDS:
+  22x Water Energy
+
+WATER CARDS:
+   4x S-Deck Squirtle Lv14
+   3x S-Deck Wartortle Lv24
+   3x Base Blastoise Lv52
+   2x Fossil Lapras Lv31
+   2x Fossil Articuno Lv35
+   2x Promo Articuno Lv37
+
+TRAINER CARDS:
+   3x Energy Retrieval
+   2x Professor Oak
+   2x Potion
+   2x Computer Search
+   2x Switch
+   3x Pokemon Trader
+   2x Pokemon Breeder
+   4x Bill
+   2x Bill's Teleporter
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 10)
+   Total Pokemon: 16
+   Trainer Cards: 22
+
+
+=========================================================================
+  [A22]  DUNGEON MASTERS
+=========================================================================
+
+ --------------------------------------------
+//  PAWN                                   //   [W1]
+--------------------------------------------
+
+    BET: 10 coins
+ PRIZES: 4
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  21x Fire Energy
+   4x Double Colorless Energy
+
+FIRE CARDS:
+   4x Vending Magmar Lv27
+   4x Fossil Moltres Lv35
+
+COLORLESS CARDS:
+   4x Vending Lickitung Lv20
+   4x Vending Chansey Lv40
+   4x Vending Kangaskhan Lv36
+
+TRAINER CARDS:
+   4x Energy Removal
+   4x Energy Retrieval
+   4x Potion
+   3x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 20)
+   Total Pokemon: 20
+   Trainer Cards: 15
+
+
+ --------------------------------------------
+//  KNIGHT                                 //   [W2]
+--------------------------------------------
+
+    BET: 10 or 20 coins
+ PRIZES: 4
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+  18x Fighting Energy
+   4x Double Colorless Energy
+
+FIRE CARDS:
+   4x Base Charmander Lv10
+   3x Base Charmeleon Lv32
+   1x Base Charizard Lv76
+
+WATER CARDS:
+   2x Vending Omanyte Lv20
+
+FIGHTING CARDS:
+   1x Fossil Kabuto Lv9
+   1x Vending Kabuto Lv22
+   1x Fossil Kabutops Lv30
+   1x Vending Aerodactyl Lv30
+
+COLORLESS CARDS:
+   2x Vending Kangaskhan Lv36
+   2x Jungle Kangakshan Lv40
+
+TRAINER CARDS:
+   2x Energy Retrieval
+   2x Professor Oak
+   4x Fossil Excavation
+   4x Defender
+   4x Mysterious Fossil
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 22
+  (Basic Pokemon: 12 (counting 4x Mysterious Fossil))
+   Total Pokemon: 18
+   Trainer Cards: 20
+
+
+ --------------------------------------------
+//  BISHOP                                 //   [W3]
+--------------------------------------------
+
+    BET: 10 or 30 coins
+ PRIZES: 4
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   21x Grass Energy
+   3x Double Colorless Energy
+
+GRASS CARDS:
+   4x Vending Zubat Lv12
+   3x Fossil Golbat Lv29
+   3x Jungle Venonat Lv12
+   2x Vending Venomoth Lv22
+   2x Jungle Scyther Lv25
+
+COLORLESS CARDS:
+   2x Base Porygon Lv12
+   2x Vending Porygon Lv18
+   3x Promo Cool Porygon Lv15
+
+TRAINER CARDS:
+   2x Energy Removal
+   2x Energy Retrieval
+   1x Professor Oak
+   4x Switch
+   2x Scoop Up
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 16)
+   Total Pokemon: 21
+   Trainer Cards: 15
+
+
+ --------------------------------------------
+//  ROOK                                   //   [W4]
+--------------------------------------------
+
+    BET: 30 or 50 coins
+ PRIZES: 5
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   8x Water Energy
+   4x Double Colorless Energy
+   4x Potion Energy
+   4x Full Heal Energy
+   4x Recycle Energy
+
+FIRE CARDS:
+   1x Gameboy Flareon Lv22
+
+WATER CARDS:
+   1x Rocket Dark Vaporeon Lv28
+
+LIGHTNING CARDS:
+   1x Gameboy Jolteon Lv24
+
+COLORLESS CARDS:
+   1x S-Deck Spearow Lv9
+   1x Vending Spearow Lv12
+   1x Jungle Spearow Lv13
+   1x Vending Fearow Lv24
+   1x Jungle Fearow Lv27
+   4x Jungle Eevee Lv12
+   4x Base Dratini Lv10
+   3x Base Dragonair Lv33
+   1x Promo Dragonite Lv43
+   1x Fossil Dragonite Lv45
+
+TRAINER CARDS:
+   4x Energy Removal
+   1x Professor Oak
+   1x Gambler
+   4x Moon Stone
+   2x Pokemon Trader
+   3x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 24
+  (Basic Pokemon: 11)
+   Total Pokemon: 21
+   Trainer Cards: 15
+
+ --------------------------------------------
+//  QUEEN                                  //   [W5]
+--------------------------------------------
+
+    BET: 50 or 100 coins
+ PRIZES: 6
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   7x Fire Energy
+   5x Water Energy
+   3x Lightning Energy
+   6x Fighting Energy
+   2x Psychic Energy
+   4x Rainbow Energy
+
+FIRE CARDS:
+   4x Fossil Magmar Lv31
+
+WATER CARDS:
+   4x Fossil Lapras Lv31
+
+LIGHTNING CARDS:
+   4x Base Electabuzz Lv35
+
+FIGHTING CARDS:
+   4x Base Hitmonchan Lv33
+
+PSYCHIC CARDS:
+   4x S-Deck Jynx Lv27
+
+TRAINER CARDS:
+   4x Energy Search
+   1x Professor Oak
+   4x Switch
+   4x Bill
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 27
+  (Basic Pokemon: 20)
+   Total Pokemon: 20
+   Trainer Cards: 13
+
+
+=========================================================================
+  [X]  Miscellaneous Characters
+=========================================================================
+
+ --------------------------------------------
+//  IMAKUNI?                               //   [X1]
+--------------------------------------------
+
+LOCATION: side room of any random GB1 Island building
+  PRIZES: 6
+ REWARDS: 1-4 boosters, occasionally promos
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   10x Water Energy
+   16x Psychic Energy
+    2x Double Colorless Energy
+
+WATER CARDS:
+    4x Fossil Psyduck Lv15
+    3x Fossil Golduck Lv27
+
+PSYCHIC CARDS:
+    3x Promo Slowpoke Lv9
+    1x Fossil Slowbro Lv26
+    1x Vending Slowbro Lv35
+    3x Base Drowzee Lv12
+    1x Fossil Hypno Lv36
+    2x S-Deck Jynx Lv27
+
+COLORLESS CARDS:
+    3x Base Farfetch'd Lv20
+    2x Promo Snorlax Lv50
+
+TRAINER CARDS:
+    2x Imakuni?
+    1x Gambler
+    2x Imposter Professor Oak
+    2x Poke Flute
+    2x Goop Gas Attack
+
+
+ --------------------------------------------
+//  RED IMAKUNI?                           //   [X2]
+--------------------------------------------
+
+LOCATION: side room of any random GB2 Island building
+  PRIZES: 6
+ REWARDS: 1-4 boosters, occasionally promos
+
+-----------------
+* Deck Contents *
+-----------------
+
+ENERGY CARDS:
+   25x Psychic Energy
+
+WATER CARDS:
+   3x Rocket Psyduck Lv16
+   2x Rocket Dark Golduck Lv23
+
+PSYCHIC CARDS:
+   3x Rocket Slowpoke Lv16
+   2x Rocket Dark Slowbro Lv27
+   4x Rocket Drowzee Lv10
+   3x Rocket Dark Hypno Lv26
+   2x Vending Mr. Mime Lv20
+   2x Jungle Mr. Mime Lv28
+
+COLORLESS CARDS:
+   2x Gameboy Meowth Lv13
+   2x Promo Meowth Lv14
+
+TRAINER CARDS:
+   2x Imakuni?
+   2x Imposter Professor Oak
+   2x Computer Error
+   2x Digger
+   2x Poke Flute
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 25
+  (Basic Pokemon: 18)
+   Total Pokemon: 25
+   Trainer Cards: 10
+
+
+ --------------------------------------------
+//  MR. ISHIHARA                           //   [X3]
+--------------------------------------------
+
+LOCATION: his GR2 house
+  PRIZES: 6
+ REWARDS: 2 random boosters
+
+ENERGY CARDS:
+  22x Water Energy
+   2x Double Colorless Energy
+   2x Potion Energy
+   2x Full Heal Energy
+
+WATER CARDS:
+   3x Promo Magikarp Lv10
+   1x Base Gyarados Lv41
+   2x Promo Marill Lv17
+
+LIGHTNING CARDS:
+   2x Promo Surfing Pikachu Lv13
+   2x Promo Electabuzz Lv20
+
+COLORLESS CARDS:
+   2x Promo Jigglypuff Lv12
+   2x Promo Meowth Lv14
+   1x Promo Dark Persian Lv28
+   2x Promo Farfetch'd Lv20
+   2x Promo Kangaskhan Lv38
+   2x Promo Cool Porygon Lv15
+
+TRAINER CARDS:
+   2x Super Energy Retrieval
+   1x Super Energy Removal
+   1x Imposter Professor Oak
+   2x Computer Error
+   1x Scoop Up
+   2x Bill
+   1x Master Ball
+   1x Lass
+
+-------------
+* Subtotals *
+-------------
+
+    Energy Cards: 28
+  (Basic Pokemon: 19)
+   Total Pokemon: 21
+   Trainer Cards: 11
+
+
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+=========================================================================
+=====================|   VI.    T H E     E N D   |======================
+=========================================================================
+*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+=========================================================================
+  [Y1]  ALSO AVALIABLE
+=========================================================================
+
+I've also made the following guides for this game:
+  - Walkthrough and Translations
+  - Card Spoilers and Card Locations Guide
+  - Quick Ref
+
+
+=========================================================================
+  [Y2]  CONTACTING ME
+=========================================================================
+
+I can be reached at alamedyang at gmail dot com.
+
+Email me corrections, additions, complaints, whatever. (I will probably
+take forever to respond, though.)

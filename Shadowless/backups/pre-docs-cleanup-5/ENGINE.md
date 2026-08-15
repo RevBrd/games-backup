@@ -1,7 +1,7 @@
 # Shadowless — the engine's awkward-card machinery
 
 Depth behind the card rows in `CLAUDE.md`'s status table. Read this before adding cards, and
-before writing a special case for one — eight systems already exist for the shapes that do not fit
+before writing a special case for one — seven systems already exist for the shapes that do not fit
 the DSL, and every set after Base Set leans on them.
 
 Ordinary cards need none of this. A `cards.js` entry plus an `effects.js` entry is the whole job,
@@ -24,16 +24,6 @@ Six in Base Set. **182 cards carry a Power across the WotC era**, so this is the
 furthest. Neo adds one **Poké-Body**, which the generator already emits as a Power (filtered from
 upstream's `abilities`), and 10 **Baby** Pokémon whose coin-flip rule is a whole rule rather than a
 card effect — see the Pending section of `RULINGS.md`.
-
-**"As often as you like during your turn" is a mode you enter and leave, and that is a standing
-design decision rather than an implementation detail.** Click the power; the board enters that mode
-and says so; legal sources and targets highlight; click source then target as many times as you want;
-press Done. **One pattern serves Damage Swap, Energy Trans and Rain Dance** — build the fourth one
-the same way rather than inventing a second shape for it. Every individual move gets its own log
-line, because the log is what a player reads back to work out what just happened to their board.
-
-This lived in `CLAUDE.md`'s standing decisions until 14 Aug 2026 and moved here because the only
-person who needs it is adding a Power, which is what this file is for.
 
 ### `runAttack`
 

@@ -29,21 +29,18 @@ are in [TOOLING.md](TOOLING.md).
 ## Where the depth lives
 
 This file is the orientation. The siblings below hold the detail, and **you should not need to read
-any of them unless you are working on that thing**. That is the point of the split.
+any of them unless you are working on that thing**. That is the point of the split. `LOGBOOK.md` is
+reached through `CREDITS.md` rather than listed here.
 
-**Four files are deliberately NOT in this table, and it is an arrangement rather than an oversight.**
-They are reached from where somebody would actually want them. `LOGBOOK.md`,
-`LOGBOOK-ARCHIVE-1.md` and `TREVOR.md` — the last being where Trevor's own save stood as each set
-went live — all hang off [CREDITS.md](CREDITS.md), which is the quiet end of the tree and not
-orientation. `GRABHIST.md` hangs off `GRABBAG.md`, because the only reader who needs it is already
-in the grab bag.
+**Three of these are Trevor's own files rather than the project's**, and they are listed last:
+`GRABBAG.md` is where he jots what he notices while playing, `GRABHIST.md` is what came of each one,
+and `TREVOR.md` tracks where his save stood as each set went live.
 
 | File | Read it when |
 |---|---|
 | [ENGINE.md](ENGINE.md) | Adding or changing cards. The eight systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer, the `baseCard`/`topCard` split and `takeEnergy`. Also: why full games never test any of it |
-| [AI.md](AI.md) | Touching `ai.js`, or quoting a number about how well the bot plays. The two instruments, the six ways that measurement lies, the silent-failure surface, the standing measurements, and an `Open` list at the bottom that is the current one |
-| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything **sized**. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. If you have trouble with the layout, re-read this section — and check you can still see the top of the file, because a compacted read of it has cost a session before |
-| [INTERACTION.md](INTERACTION.md) | Moving the coin toss, the Energy picker, the opening flip, the opening-setup screen, or a control on the Active card. The specific pieces, split out of `LAYOUT.md` — you need none of it to change how the board sizes itself |
+| [AI.md](AI.md) | Touching `ai.js`, or quoting a number about how well the bot plays. The two instruments, the four ways that measurement lies, the silent-failure surface, and the weight re-tune that is the next AI job |
+| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything sized. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. If you have trouble with the layout, re-read this section. It's long enough to have missed something |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source |
@@ -51,7 +48,7 @@ in the grab bag.
 | [PROGRESSION.md](PROGRESSION.md) | Touching the ladder, an opponent, or anything that grants a pack. How brackets are derived from the live sets rather than declared, the tunables, why free play pays nothing, and the four layout defects only a screenshot caught |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, looking at the board with `tools/shot.js`, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
-| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md` and its archive, where each instance's own account of its work is kept verbatim |
+| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, one row per model per stretch — and it points at `LOGBOOK.md`, the append-only archive of what each instance did in its own words |
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
 | [PLAYTEST.md](PLAYTEST.md) | Trevor points you at `GRABBAG.md`, hands you a match log, or says something felt off while playing. How to work a report from a human: why it is a symptom and not a diagnosis, what to do when it turns out to be wrong, and the two traps that make a real fix look like it did nothing |
 | [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one |
@@ -105,13 +102,12 @@ src/  engine.js   the whole ruleset. Pure logic, no DOM
       art.js      deterministic sigils. Petals = attack count, rings = retreat
       ui.js       everything that touches `document`
       style.css   dark instrument-panel palette, one `:root` block
-data/             the card corpus, the deck lists the game reads, and the quarantined
-                  opponent-deck pool. ALL OF IT IS DOCUMENTED IN DATA.md — including
-                  which deck files the game actually reads, which that file got wrong once
+data/             the card corpus, the deck lists and the Job 7 reference data.
+                  ALL OF IT IS DOCUMENTED IN DATA.md
 assets/cards/<set>/  the real printed card faces. GITIGNORED and DERIVED —
                   `node tools/fetch_art.js base1` rebuilds them
 backups/          pre-job safety copies, including the ten Claude Chat snapshots
-tools/            two generators, six suites, a screenshotter, an art fetcher
+tools/            two generators, five suites, a screenshotter, an art fetcher
        chat-era/  the original Python tools, superseded. Kept for provenance
 ```
 
@@ -123,9 +119,8 @@ those on the way in.
 
 ## Tooling
 
-**Run the six suites — `selftest` through `packtest` — before calling anything done.** What each one
-actually covers, and why none of them subsumes the others, is in [TOOLING.md](TOOLING.md). The test
-counts in the comments below rot; run the suite rather than quoting one.
+Run the last six before calling anything done. What each one actually covers, and why none of them
+subsumes the others, is in [TOOLING.md](TOOLING.md).
 
 ```bash
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
@@ -164,12 +159,12 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
   official errata, not a period ruling — the GBC implementation. The reason is practical: it is a
   single consistent arbiter, and it is the version Trevor knows well enough to settle a call in
   plain English. Ask him when unsure; he expects to be asked and is a resource here.
-  **Its known limit now binds:** the GBC game holds only Base, Jungle and Fossil cards, so it is
-  silent from Team Rocket onward — which is every set Job 8 adds. *[What the fallback has to be, and
-  why it is not settled →](RULINGS.md)*
-- **"As often as you like during your turn" powers are a mode you enter and leave**, and one pattern
-  serves Damage Swap, Energy Trans and Rain Dance. Build the fourth the same way.
-  *[The pattern in full →](ENGINE.md)*
+  **Known limit:** the GBC game only contains Base, Jungle and Fossil cards, so it has nothing to
+  say from Team Rocket onward. A fallback will be needed around Job 7, not before.
+- **"As often as you like during your turn" powers are a mode you enter and leave.** Click the
+  power; the board enters that mode and says so; legal sources and targets highlight; click source
+  then target as many times as you want; press Done. One pattern serves Damage Swap, Energy Trans
+  and Rain Dance. Every individual move gets its own log line.
 - **Card art is split by function.** The scans are *complete printed cards*, not illustration crops,
   and no crop exists anywhere — so they appear only where the card is the **subject**: the preview
   rail, the title screen, the dex, the pack reveal. In play, cards keep the rendered face, which is
@@ -188,7 +183,8 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
 **Play it.** Open `shadowless.html`. The right-hand rail has four tabs: CARD (preview), LOG, DEV,
 CARDS (implementation coverage + live deck validation). **LOG is the working default and clicking a
 card no longer takes it away** — hovering any card peeks its real printed face into the rail and
-leaving puts the log straight back. *[Why that peek must not be a `render()` →](INTERACTION.md)*
+leaving puts the log straight back. That peek is a targeted DOM swap, not a `render()`, because the
+whole board is rebuilt on every render and doing that on `mouseenter` is visible.
 
 Deck select exposes prize count, AI tier and a **seed** — every match is reproducible, and the
 game-over screen offers "Replay this seed". Use it when chasing a bug. **Mirror matches are
@@ -245,30 +241,23 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
   [PROGRESSION.md](PROGRESSION.md). **The decks and names are placeholders** — Trevor's call: real
   per-set decks, hand-built and better-generated, are a job of their own.
 - **Job 8+** — the remaining 11 sets. Unblocked; all 14 generate cleanly. The order of operations
-  for adding one is in [TOOLING.md](TOOLING.md) and it is the reverse of what feels natural. **Two
-  things bind here that did not bind before:** the ruling arbiter runs out at Fossil, so Team Rocket
-  onward has none — see [RULINGS.md](RULINGS.md) — and the real per-set opponent decks are their own
-  job, with a candidate pool already researched in `data/OPPONENT_DECK_POOL.md`.
-- **The AI weight re-tune shipped on 13 Aug 2026** and this line used to say it was the next job.
-  What is genuinely open in the AI is at the bottom of [AI.md](AI.md), under `Open`, and none of it
-  has a measured reason to do it yet — which is a different thing from being unknown.
+  for adding one is in [TOOLING.md](TOOLING.md) and it is the reverse of what feels natural.
+- **The AI weight re-tune** is not numbered and does not depend on the above. It is described in
+  [AI.md](AI.md) and it is the one job with a measured reason to do it.
 
 ## Open
 
-The per-area open lists live in the files that own them; this is the index to them.
-
-1. **The AI** — the Bench cannot say "I could take a Prize", nothing has swept the weights as a set,
-   and no opponent plays differently for being a rival. All three, with what each would cost, are at
-   the bottom of [AI.md](AI.md).
+1. **The AI stretch of 13 Aug is done and [AI.md](AI.md) holds all of it** — the retreat re-tune
+   (squaring `retreatPrize`'s divisor, 55.9% +/- 4.2), Weakness and Resistance reaching the retreat
+   comparison, and DERIVED stickiness so the bot stops retreating Kangaskhan and Snorlax. What is
+   still open there: stickiness reads only the rescue, so a wall is not yet preferred when PROMOTING
+   off the Bench, and `potential()` still prices a benched Pokemon in printed damage. Same refactor,
+   still not obviously worth it. Deck balance and the first-player figure live there too.
 2. **Blueprints have no dedicated screen** — a "this deck is four cards away" view over your saved
    layouts. The mechanism exists; see [COLLECTION.md](COLLECTION.md).
-3. **Two pack questions, and one of them is no longer blocked.** Southern Islands' fixed 18-card
-   distribution against our probabilistic intrusion model is unsettled and always was. Progression-
-   gating the intrusion pool was waiting on Job 7 and is now buildable from the save. See
-   [PACKS.md](PACKS.md).
-4. **Opponents do not speak, and nothing reads `progress.lost`.** Both in
-   [PROGRESSION.md](PROGRESSION.md), both small, neither started.
-5. **Audio: none.** Nothing has been decided about it.
+3. **Southern Islands and progression-gated promo intrusion** are both unsettled pack questions and
+   both depend on Job 7. See [PACKS.md](PACKS.md).
+4. **Audio: none.** Nothing has been decided about it.
 
 **Every figure quoted anywhere before 11 Aug 2026 was measuring a 12-Prize game** — twice the
 intended length, because `setupConfirm()` was not idempotent and every harness in the repo confirmed
