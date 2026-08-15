@@ -168,9 +168,10 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
   official errata, not a period ruling — the GBC implementation. The reason is practical: it is a
   single consistent arbiter, and it is the version Trevor knows well enough to settle a call in
   plain English. Ask him when unsure; he expects to be asked and is a resource here.
-  **Its known limit now binds:** the GBC game holds only Base, Jungle and Fossil cards, so it is
-  silent from Team Rocket onward — which is every set Job 8 adds. *[What the fallback has to be, and
-  why it is not settled →](RULINGS.md)*
+  **It runs out at Fossil, and what replaces it is settled:** the GBC game holds only Base, Jungle
+  and Fossil, so from Team Rocket onward there is no arbiter and there does not need to be one — a
+  four-step order, ending in Trevor on playability, plus an index of the principles the existing
+  rulings already generalise to. *[The order, and the tiebreaker with evidence behind it →](RULINGS.md)*
 - **"As often as you like during your turn" powers are a mode you enter and leave**, and one pattern
   serves Damage Swap, Energy Trans and Rain Dance. Build the fourth the same way.
   *[The pattern in full →](ENGINE.md)*
@@ -256,14 +257,18 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
   onward has none — see
   [RULINGS.md](RULINGS.md) — and the real per-set opponent decks are their own job, with a candidate
   pool already researched in `data/OPPONENT_DECK_POOL.md`.
-- **The queue as it stands, proposed 15 Aug 2026 and Trevor's to reorder.** Two non-jobs first: the
-  ruling-arbiter conversation, and a session settling the *shape* of decks and progression, which is
-  what makes a better auto-builder specifiable. Then an AI and grab-bag pass **before** the next set,
+- **The queue as it stands, agreed 15 Aug 2026 and Trevor's to reorder.** One non-job first: a
+  session settling the *shape* of decks and progression, which is what makes a better auto-builder
+  specifiable. (The ruling-arbiter question was the other and is now settled — see above.) Then an
+  AI and grab-bag pass **before** the next set,
   because every set widens the bot's blind spots and it is cheaper to fix at three sets than at six.
-  Then Team Rocket; then the auto-builder; then promos and Base Set 2; then the Gym sets as two jobs;
-  then Neo, which is four jobs and a rules job. **The auto-builder's position is the uncertain one** —
-  it is placed after a set because its quality bar is "can the AI pilot this", but every set shipped
-  before it arrives has placeholder opponents.
+  Then Team Rocket; then the auto-builder, which Trevor confirmed at that position on 15 Aug so the
+  AI gets a couple of quality runs first; then promos; then the Gym sets as two jobs; then Neo, which
+  is four jobs and a rules job.
+- **Base Set 2 and Legendary Collection are deprioritised, and the reason is that they are cheap
+  rather than despite it.** 124 printings for **zero** new behaviours and 110 for twenty. They add
+  collectibles the player already owns, which is the worst version of the chase — Trevor's call,
+  15 Aug 2026, to bring one back later as an *improvement* to progression rather than as structure.
 - **The AI weight re-tune shipped on 13 Aug 2026** and this line used to say it was the next job.
   What is genuinely open in the AI is at the bottom of [AI.md](AI.md), under `Open`, and none of it
   has a measured reason to do it yet — which is a different thing from being unknown.

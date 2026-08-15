@@ -6,8 +6,58 @@ than re-deriving it — and can reverse it deliberately if it turns out wrong.
 
 The standing policy this operates under is in `CLAUDE.md`: **when the text is ambiguous, follow the
 Game Boy Color game.** It is a single consistent arbiter and it is the version Trevor knows well
-enough to settle a call in plain English, so ask him — he expects to be asked. Where the GBC game
-has nothing to say, the WotC-era rulings are the next authority, and the call gets logged here.
+enough to settle a call in plain English, so ask him — he expects to be asked.
+
+## After Fossil there is no arbiter, and this is what replaces it
+
+**Settled with Trevor 15 Aug 2026, before the first Team Rocket card rather than during it.** The GBC
+game holds only Base, Jungle and Fossil, so from Team Rocket onward the policy above simply runs out.
+Trevor's position, and it is the right one: **there is no arbiter past this point and it is up to us
+case by case**, weighing the real TCG rules, staying true to the GBC's spirit, and aiming at
+playability and at rulings that will not contradict each other — because future cards will reuse
+these rules or play off them. Taking an extra level of thought or discussion is fine.
+
+The one thing worth adding is structure, because *case by case* across the ~800 remaining cards is
+exactly how a tree accumulates contradictions. A single arbiter gave consistency for free; without
+one it has to be maintained on purpose. **So work down this order and stop at the first step that
+answers:**
+
+1. **The printed text, where it settles the question.** Most cards. This is not a ruling and does not
+   belong in this file.
+2. **A settled principle below, matched by *shape* rather than by card.** This is the step that
+   replaces the arbiter and it is the one that will get skipped. Aerodactyl versus Muk did not settle
+   "Aerodactyl beats Muk" — it settled what happens when two continuous effects would each disable
+   the other, which Neo will ask again and again.
+3. **The WotC Rulings Compendium and period rulings — read, never inferred.** Already the precedent
+   here twice, for Buzzap and Ditto. The Buzzap entry is the warning: two of us reasoned our way to
+   the opposite answer and the source was explicit all along.
+4. **Trevor, on playability.** His tie-break, in his words: prefer the reading that will not
+   contradict the others and that a later card can build on.
+
+**A tiebreaker with evidence behind it, for when "the GBC's spirit" needs an operational meaning:
+prefer the reading with fewer live dependencies.** Something that resolves once beats something that
+must be continuously re-checked. That is not a guess — three independent decisions in this file
+already have that shape: Transform is a snapshot rather than the printed live mirror, passive Powers
+are *consulted* rather than materialised, and Aerodactyl/Muk resolves at the moment of the attempted
+evolution. Each was chosen for its own reasons and they converged.
+
+### Settled principles, and the cards that produced them
+
+Extracted 15 Aug 2026 from the entries below, which are unchanged — **this index is a finding aid,
+not a summary, and the entry is always the authority.** Add a line when a new ruling generalises.
+
+| Principle | From |
+|---|---|
+| When two continuous effects would each disable the other, **whichever is already in play wins** — the question is asked at the moment of the attempt | Aerodactyl vs. Muk |
+| **A snapshot beats a live mirror**, and anything that switches the power off blocks a fresh copy but never reverses one already made | Ditto |
+| **A flag read at the point of *play*, not baked into the card kind** — so setup and discard-retrieval never consult it, for free | Clefairy Doll, `playsAs` |
+| **Discards count cards; costs count symbols.** A Double Colorless pays two toward `LC` and discards as one | retreat cost, Fire Spin |
+| **Replay a recorded result rather than recomputing it**, and record it as data — never parse the log, which holds prose | Mirror Move, `lastAttackResult` |
+| **Qualify an Energy by class, not only by type** — "1 Water Energy card" means a basic one | Rain Dance, Energy Trans |
+| **Ask the player only when the choice is real**; supply a sensible fallback so the AI never has to be asked | which Energy is discarded |
+| **Deliberately worthless is not the same as deliberately unscored** — declare it where the work happens | Peek, Clairvoyance |
+| **Count what the card says, not what the situation implies**, and match on card *name* | Do the Wave, Boyfriends |
+| **No unbounded recursion**: an option that could copy itself is simply not offered | Metronome |
 
 Add an entry whenever you make a judgement call. An unlogged one will be re-litigated.
 
@@ -392,15 +442,9 @@ before.
 
 Calls we already know are coming, so nobody is surprised by them.
 
-- **The arbiter runs out at Fossil, and Job 8 is where that starts to bite.** The standing policy
-  hands an ambiguous card to the Game Boy Color game, which contains only Base, Jungle and Fossil —
-  so from **Team Rocket onward there is no arbiter at all**, and every set Job 8 adds is on the far
-  side of that line. Nothing is settled about what replaces it. The two candidates are the WotC
-  Rulings Compendium, which this file has already used twice where the GBC game was silent (Buzzap
-  and Ditto), and Trevor's own judgement, which is what actually settled the retreat-cost entry when
-  the citation for it turned out not to hold. **Both are already precedents in this file** — the
-  question is only which one leads. Raise it with Trevor before the first Team Rocket card, not
-  during it. This was flagged in `CLAUDE.md` as needed "around Job 7, not before" and Job 7 has
-  shipped.
+- **~~The arbiter runs out at Fossil~~ — settled 15 Aug 2026**, before the first Team Rocket card
+  rather than during it. The replacement is the four-step order at the top of this file, and the
+  short version is that there is no single arbiter and there does not need to be one. Left here so
+  nobody re-opens it as an unknown.
 - **Baby Pokémon (Neo era, 10 cards)** — the Baby Rule is a coin flip that can negate an attack
   entirely. Not a Base Set problem, but it is a whole rule, not a card effect.
