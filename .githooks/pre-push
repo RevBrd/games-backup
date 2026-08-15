@@ -1,0 +1,58 @@
+#!/bin/sh
+# ---------------------------------------------------------------------------
+# Collection-wide pre-push hook — publication lock.
+#
+# Enable it (not automatic, and NOT carried by a clone -- git stores hooksPath
+# in .git/config, which is never committed):
+#
+#     git config core.hooksPath .githooks
+#
+# ---------------------------------------------------------------------------
+# Nothing in this collection is published yet.
+#
+# There IS a remote (origin -> github.com/RevBrd/browser-games), last pushed on
+# 3 Aug 2026. Local master ran far ahead of it and the documentation had drifted
+# into claiming no remote existed at all, which meant nobody could see that a
+# single `git push` would publish the entire collection -- every half-built
+# game, every design doc, every CLAUDE.md -- in whatever state it happened to
+# be in that afternoon.
+#
+# Trevor's call, 10 Aug 2026: the collection goes up when a few things are
+# finished and polished AT THE SAME TIME, as a deliberate release, not as a
+# side effect of somebody tidying a docs branch. Until then, pushing is off.
+#
+# This is a lock against ACCIDENT, not a security control. It is meant to make
+# publishing a decision somebody makes on purpose.
+#
+# TWO layers are armed. This hook is the second one; the first is a dead push
+# URL, which works even when hooksPath is unset (e.g. a fresh clone):
+#
+#     git remote set-url --push origin no_push
+#
+# To publish, deliberately, when the time comes:
+#
+#     git remote set-url --push origin https://github.com/RevBrd/browser-games.git
+#     git push --no-verify origin master
+#
+# Please put the URL back to no_push afterwards unless the decision was to
+# start publishing continuously -- and if it was, delete this hook and say so
+# in Games/CLAUDE.md rather than leaving a lock everyone routinely bypasses.
+# ---------------------------------------------------------------------------
+
+echo ''
+echo '  BLOCKED — pushing is disabled for this collection.'
+echo ''
+echo '  Nothing here is published yet. Trevor wants the collection to go up as'
+echo '  a deliberate release once several games are finished together, not as'
+echo '  a side effect of a session that happened to be committing.'
+echo ''
+echo '  A push from here would publish EVERY game in its current state,'
+echo '  including the unfinished ones and all of the design documentation.'
+echo ''
+echo '  If you are reading this because you were asked to publish, the steps'
+echo '  are in .githooks/pre-push and in Games/CLAUDE.md under "Git".'
+echo '  Ask Trevor first. This lock exists because the docs used to claim'
+echo '  there was no remote at all.'
+echo ''
+
+exit 1

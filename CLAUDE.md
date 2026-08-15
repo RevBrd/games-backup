@@ -66,8 +66,27 @@ If known, please credit the Claude model that assisted in its creation within th
 ## Git
 
 **One repository holds the whole collection, and it lives at `Projects/Games/`.** Every game is an
-ordinary subfolder of it. There is no remote — history is local to this machine, so nothing is
-recoverable from a server if it's lost here. A backup system is planned for the future.
+ordinary subfolder of it.
+
+**There is a remote, and pushing to it is deliberately blocked.** This file used to say there was
+no remote at all; that was wrong and it was the dangerous kind of wrong, because it meant nobody
+could see that one `git push` would publish the whole collection. `origin` is
+`github.com/RevBrd/browser-games`, last pushed **3 Aug 2026**, and local `master` has run far ahead
+of it since.
+
+Trevor's call, 10 Aug 2026: **the collection goes up as a deliberate release**, once several games
+are finished and polished together — not as a side effect of a session that happened to be
+committing. Two locks are armed, and both were tested when they went in:
+
+- the push URL is set to a dead value (`git remote set-url --push origin no_push`), which holds
+  even when `hooksPath` is unset, as on a fresh clone
+- `.githooks/pre-push` refuses and explains why
+
+Unblocking is a decision, and it is **Trevor's**, not a passing session's. The steps are written at
+the top of `.githooks/pre-push`. Fetching still works normally.
+
+**Local history is still the only real copy.** The remote is 140+ commits stale, so treat this
+machine as the sole backup — that part of the old warning stands.
 
 **A game folder should not contain its own `.git`.**
 
@@ -79,16 +98,19 @@ git rev-parse --show-toplevel
 
 If that doesn't print the path ending in `Projects/Games`, stop and say so before committing.
 
-**One hook is armed at the root:** `.githooks/pre-commit` locks `Asterism/asterism_job3.html`, the
+**Two hooks are armed at the root.** `.githooks/pre-push` is the publication lock described above.
+`.githooks/pre-commit` locks `Asterism/asterism_job3.html`, the
 preserved Fable 5 original, against any modification. Git keeps `hooksPath` in `.git/config`, which
-is **never committed** — so after any fresh clone the lock is disarmed until someone runs:
+is **never committed** — so after any fresh clone both hooks are disarmed until someone runs:
 
 ```bash
 git config core.hooksPath .githooks
 ```
 
-Verified working: a tampered copy is refused, an unmodified one passes. Escape hatch if you really
-mean it is `git commit --no-verify`.
+Verified working: for `pre-commit`, a tampered copy is refused and an unmodified one passes; for
+`pre-push`, the hook was run directly and exits 1, and a `--dry-run` push is refused at the dead
+URL before it even reaches the hook. Escape hatch for a commit, if you really mean it, is
+`git commit --no-verify` — but see above before reaching for the push equivalent.
 
 **Never `git add -A` in a tree you don't have to yourself.** Sessions run in parallel here and
 leave work uncommitted mid-task — a half-finished folder rename, an edit to this catalog. Stage
