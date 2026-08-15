@@ -5,8 +5,9 @@ tetrominoes into a box, they pile up until they hit the top, and you are awarded
 It lasts about thirteen seconds. That's the whole thing, and it is finished.
 
 **Credits:** concept by Trevor. Built in Claude Chat by **Fable 5** over two turns (11 Jul 2026) —
-the anti-design wrapper, the physics engine, every gag. Port into the collection, measurement pass
-and this file by **Claude Opus 5** (10 Aug 2026).
+the anti-design wrapper, the physics engine, every gag. Port into the collection, the measurement
+pass, `validate.js` — 43 assertions, the joke-as-spec idea, and the interpenetration defect it
+turned up — and this file by **Claude Opus 5** (10 Aug 2026).
 
 **State:** complete. Fable called it "possibly complete-complete; this might genuinely be a one-job
 game," and after a second pass for dump pacing that still looks right. Open to fine-tuning and to
