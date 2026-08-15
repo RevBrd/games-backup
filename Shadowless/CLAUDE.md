@@ -31,19 +31,21 @@ are in [TOOLING.md](TOOLING.md).
 This file is the orientation. The siblings below hold the detail, and **you should not need to read
 any of them unless you are working on that thing**. That is the point of the split.
 
-**Four files are deliberately NOT in this table, and it is an arrangement rather than an oversight.**
-They are reached from where somebody would actually want them. `LOGBOOK.md`,
+**Six files are deliberately NOT in this table, and it is an arrangement rather than an oversight.**
+Each is reached from the one document you would already have open. `LOGBOOK.md`,
 `LOGBOOK-ARCHIVE-1.md` and `TREVOR.md` — the last being where Trevor's own save stood as each set
-went live — all hang off [CREDITS.md](CREDITS.md), which is the quiet end of the tree and not
-orientation. `GRABHIST.md` hangs off `GRABBAG.md`, because the only reader who needs it is already
-in the grab bag.
+went live — hang off [CREDITS.md](CREDITS.md), which is the quiet end of the tree and not
+orientation. `GRABHIST.md` hangs off `GRABBAG.md`, `INTERACTION.md` off `LAYOUT.md`, and
+`MEASUREMENT.md` off `AI.md` — all three named in their parent's row below, so they are findable
+from here without costing a row.
+
+*[The test for when a file earns a row and when it hangs off its parent →](MAINTENANCE.md)*
 
 | File | Read it when |
 |---|---|
 | [ENGINE.md](ENGINE.md) | Adding or changing cards. The eight systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer, the `baseCard`/`topCard` split and `takeEnergy`. Also: why full games never test any of it |
-| [AI.md](AI.md) | Touching `ai.js`, or quoting a number about how well the bot plays. The two instruments, the six ways that measurement lies, the silent-failure surface, the standing measurements, and an `Open` list at the bottom that is the current one |
-| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything **sized**. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. If you have trouble with the layout, re-read this section — and check you can still see the top of the file, because a compacted read of it has cost a session before |
-| [INTERACTION.md](INTERACTION.md) | Moving the coin toss, the Energy picker, the opening flip, the opening-setup screen, or a control on the Active card. The specific pieces, split out of `LAYOUT.md` — you need none of it to change how the board sizes itself |
+| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, and an `Open` list at the bottom that is the current one. **It hands off to `MEASUREMENT.md` for anything about whether a change worked** — the two instruments, the six ways they have lied, and how to read a match log |
+| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything **sized**. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. **Its sibling `INTERACTION.md` has the specific pieces** — the coin toss, the pickers, the opening screens and the controls on the card. If you have trouble with the layout, re-read that section — and check you can still see the top of the file, because a compacted read of it has cost a session before |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source |
@@ -144,7 +146,7 @@ node tools/aiduel.js 8                   # AI vs HEAD's AI; --control first, --g
 
 **The last two measure whether the bot plays *well*, which no suite can see.** They are not pass/fail
 and they are easy to fool — run `--control` first; skipping it has already produced one confident
-wrong answer. See [AI.md](AI.md).
+wrong answer. See [MEASUREMENT.md](MEASUREMENT.md).
 
 **The match log is the third instrument, and the only one that shows the hidden half.** "Save match
 log" on the game-over screen and after a pack writes what the LOG tab cannot: the opponent's opening
@@ -152,7 +154,9 @@ hand, **both** Prize piles, and every option the AI weighed with its score and w
 The seed is in the header, so any match replays exactly. **Ask Trevor for one whenever you need it** —
 when the AI does something baffling, when a number looks wrong, or just to see a real game. He
 reconstructed four separate AI bugs from a pasted screen log that had none of the hidden half.
-*[How to read one, and what it can settle →](AI.md)*
+*[How to read one, and what it can settle →](MEASUREMENT.md)* — and **if he has handed you one, or
+said something felt off while playing, read [PLAYTEST.md](PLAYTEST.md) first.** A report is a symptom
+and it has three times out of three not meant what it said.
 
 ## Standing design decisions
 

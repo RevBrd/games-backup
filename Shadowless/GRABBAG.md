@@ -10,35 +10,30 @@ Descriptions often use shorthand and are left vague for ease of jotting down eve
 
 The list is in no meaningful order. Please edit or remove items appropriately if you finish one.
 
-* Block paralyzed pokemon from retreating — **PARKED 13 Aug.** The engine already blocked it, two
-  ways. Nothing to chase without a log; back on the list the moment one turns up. →
+**Take a finished item off the list rather than striking it with a note.** This list is a work
+surface, not a record — six closed items with their diagnoses attached had built up by 15 Aug, and
+somebody arriving to work an item during Neo Genesis should not have to read about yesterday's
+Arcanine. If the finding was worth keeping, [GRABHIST.md](GRABHIST.md) is where it goes, and telling
+Trevor in the reply is the part that always happens. **The exception is a PARKED item** — that one is
+still open, so it stays with its reason and with what evidence would revive it.
+
+* Block paralyzed pokemon from retreating — **PARKED 13 Aug.** `canRetreat` already refuses both
+  Asleep and Paralyzed, asserted two ways in `powertest.js`. Either this predates a fix or it was
+  something else. **Revive it with a log showing a paralyzed Pokémon leaving the Active spot.** →
   [GRABHIST](GRABHIST.md)
 * Cap energy drops at 2 per pack, even in base1
 * Booster pack selection screen (medium item)
 * Verify 1st Edition pack drop odds with simulation
-* ~~Building a new deck does not let you use the new deck you just built. Basic one instead.~~
-  **DONE 13 Aug — not a layout problem.** Two decks shared the builder's default name and the
-  resolver preferred the wrong one. → [GRABHIST](GRABHIST.md)
 * AI is still attaching invalid energies to its pokemon when no other options exist. Maybe due to planning for future evolutions. We should consider changing even if so.
 * Opponent declined to attack - log# 22-12-05
-* ~~Opponent retreated a Kangaskhan instead of tanking. Electabuzz should have been left in too~~ - log# 22-20-14
-  **DONE 13 Aug — built as a derivation, not the per-card tag.** It found Lickitung and Onix on its
-  own. → [GRABHIST](GRABHIST.md)
-* Opponent avoids powering up Arcanine because my Mewtwo's Psychic builds damage based on opp energy,
-  ~~illegally retreats pokemon,~~ and uses Gust of Wind to drag out a pokemon already in the active spot,
-  ~~illegally retreated a second time by not flipping the coin while confused~~ - log#
-  **CONFUSION DONE 13 Aug.** The Gust half is real and is a **different bug than it looks** — Gust
-  cannot target the Active at all. The Arcanine half is still open. → [GRABHIST](GRABHIST.md)
+* Opponent avoids powering up Arcanine because my Mewtwo's Psychic builds damage based on opp energy
+* Opponent uses Gust of Wind to drag out a pokemon already in the active spot — **diagnosed, not
+  taken.** It is not what it looks like: Gust picks a *bench* index and cannot target the Active at
+  all. What happened in log 22-29-31 is two Gusts in one turn undoing each other. Almost certainly
+  not Gust-specific. → [GRABHIST](GRABHIST.md)
 * Opponent should better calculate when to promote a pokemon from the bench, considering number of turns needed to power it up.
-- ~~Opponent should calculate weakness and resistance into its damage predictions.~~ **DONE 13 Aug.**
-  True in exactly one of the four forecast paths — the one the retreat decision runs on. →
-  [GRABHIST](GRABHIST.md)
 - The two free energies after base1 is proving too much. I would rather ditch them and include base1 energies in the card pool for subsequent sets but with their own card numbers.
 - Check if variant cards are displaying in game. Ideally the sigil cards should show their markings.
-- ~~Opponent used Arcanine's Takedown to knock out my pokemon instead of Flamethrower, eating the recoil damage~~ - log# 04-10-05
-  **DONE 14 Aug — and your log did not contain that case.** The real fault was in the two Take Downs
-  that killed *nothing*. Your report was right anyway, just absent from that game, and both halves
-  are fixed. → [GRABHIST](GRABHIST.md)
 
 
 

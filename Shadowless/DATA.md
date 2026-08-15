@@ -56,7 +56,7 @@ on the grounds that they would make for a miserable opponent. Don't add them wit
 what stops a careless `--sets` from silently producing decks full of undefined ids.
 
 **The four in play are Trevor's authentic lists, not something a model assembled** — so their
-lopsided win rates are probably faithful rather than broken. The figures are in [AI.md](AI.md); ask
+lopsided win rates are probably faithful rather than broken. The figures are in [MEASUREMENT.md](MEASUREMENT.md); ask
 before "fixing" them.
 
 ## Which deck files the game actually reads

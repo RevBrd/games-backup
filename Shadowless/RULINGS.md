@@ -11,6 +11,18 @@ has nothing to say, the WotC-era rulings are the next authority, and the call ge
 
 Add an entry whenever you make a judgement call. An unlogged one will be re-litigated.
 
+**What *settled with Trevor* means, since the tree had drifted into reading it wrong.** It marks a
+call that was **discussed and agreed** — not a directive handed down. Trevor's own words, 15 Aug
+2026: he has never said his design calls are final, and the early entries carrying the mark were
+recording a conversation, not an instruction. Two things follow. **The mark is not a lock**: bring
+new evidence and reopen the entry, exactly as you would one settled between two instances. And **the
+mark is still worth writing**, because it says a human who plays this game agreed with the reasoning,
+which is information a later pass genuinely wants. What it does *not* do is transfer authority.
+
+The clearest proof that the mark was never a lock is in this file already: the retreat-cost entry was
+recorded as settled *from the Game Boy game*, Trevor pushed back on the citation, and the entry now
+stands on his reasoning instead — corrected by the person the mark names.
+
 **This file is append-only and the 200-line target does not apply to it.** It is a register, not an
 explanation — one entry per call, and there is no way to shorten it that does not delete a ruling
 somebody has to make again. Entries are only ever *corrected*, never condensed. Same category as
@@ -312,7 +324,7 @@ test is simply correct.
 **The four theme decks re-measured at 75 / 50 / 43 / 32** (Blackout / Zap / Brushfire / Overgrowth)
 against 72 / 53 / 42 / 33 before. That is within noise at this sample size and the direction is
 right — decks leaning on Double Colorless retreat slightly less freely. Re-run `selftest.js` rather
-than trusting the line; see [AI.md](AI.md).
+than trusting the line; see [MEASUREMENT.md](MEASUREMENT.md).
 
 ---
 
@@ -342,7 +354,7 @@ here rather than buried so it can be reversed on its own if the GBC game turns o
 
 **Found by reading a saved match log, not by a test.** The bot retreated out of Confusion repeatedly
 in one game without a single flip. That is the second rules-level fault the logs have caught that no
-suite could see; see [AI.md](AI.md).
+suite could see; see [MEASUREMENT.md](MEASUREMENT.md).
 
 The AI was changed with it, because a rule the bot cannot price is a rule that only punishes the
 human. A Confused retreat is now valued at **the Energy it certainly costs, plus half of everything

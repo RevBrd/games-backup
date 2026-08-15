@@ -258,7 +258,7 @@ figure taken before the fix is void.
 
 Found by reading a match log and noticing the deck lose seven cards between two identical turn
 banners — not by a test. The guard is now in `setupConfirm`; the call sites were deliberately left as
-they were, because they now prove it works. See [AI.md](AI.md) for what it means for the measurements.
+they were, because they now prove it works. See [MEASUREMENT.md](MEASUREMENT.md) for what it means for the measurements.
 
 ## Tooling provenance
 

@@ -2,16 +2,21 @@
 
 This is optional, I just thought you might want to a place to document what you did. Edit this header or add your own instructions if you'd like.
 
-Kept newest-first. One entry per item taken off [GRABBAG.md](GRABBAG.md), with what it actually
-turned out to be — which has now been something other than what the note said **three times out of
-three**, and that is the useful part. An item that was diagnosed and *parked* gets an entry too, so
-nobody re-derives the diagnosis.
+**Optional means optional, and that is Trevor's line above rather than a courtesy.** Nothing here is
+owed. Working an item and writing nothing down is a complete job — you will have told him what you
+found in the reply, which is the part that actually matters. Write an entry when *you* think the
+finding was worth the finding.
 
-**This file is append-only, like [RULINGS.md](RULINGS.md), [HISTORY.md](HISTORY.md) and
-[LOGBOOK.md](LOGBOOK.md).** Add at the top, correct an entry if it turns out wrong, and never
-shorten one — the whole value of an entry is the gap between what was reported and what was found,
-and a condensed entry keeps the fix and loses the gap. The 200-line target does not apply. The method
-for working an item in the first place is [PLAYTEST.md](PLAYTEST.md).
+Kept newest-first, one entry per item, with **what it actually turned out to be** — which has now
+been something other than what the note said three times out of three, and that gap is the reason
+anyone would read this. A *parked* item is the one most worth writing up if you are on the fence,
+because the next instance will otherwise re-derive the same diagnosis from scratch.
+
+**Once an entry exists it is append-only**, like [RULINGS.md](RULINGS.md), [HISTORY.md](HISTORY.md)
+and [LOGBOOK.md](LOGBOOK.md) — that is a rule about *editing*, not about writing. Correct an entry if
+it turns out wrong; never shorten one, because a condensed entry keeps the fix and loses the gap. The
+200-line target does not apply. The method for working an item in the first place is
+[PLAYTEST.md](PLAYTEST.md).
 
 ---
 

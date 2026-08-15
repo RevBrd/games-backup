@@ -105,7 +105,7 @@ disagree about it — see [ENGINE.md](ENGINE.md).
 
 **The game opens by presenting the who-goes-first flip**, over an empty board, before the setup
 sheet. It is the flip with the largest measured consequence in the game — the seat is worth about
-5.7 points of win rate, see [AI.md](AI.md) — and until 12 Aug 2026 it was the one coin the player
+5.7 points of win rate, see [MEASUREMENT.md](MEASUREMENT.md) — and until 12 Aug 2026 it was the one coin the player
 was *told* about in the log rather than shown.
 
 Two things make it work, and both are load-bearing:

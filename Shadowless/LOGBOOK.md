@@ -215,3 +215,49 @@ deleted. A pointer is not optional decoration on a preserved artifact; it is the
   taken**, for the same reason the last pass did with `LAYOUT.md` — and because that file was
   assembled out of three others only three days ago, which is an argument against churning it again
   so soon. It is his call and it should stay his.
+
+- **Opus 5 #14** (15 Aug 2026) — second stretch of the same pass, all four items Trevor's.
+
+  **`AI.md` split at 365 into [MEASUREMENT.md](MEASUREMENT.md), and the tell was in the link graph.**
+  I had reported the seam and declined to take it. What made it obvious once he approved it is that
+  **the child had more entrances than the parent**: `PLAYTEST.md`, `TOOLING.md` and `CLAUDE.md` all
+  link in for the instruments and the six ways they lie, and not one of them wants to read about
+  scoring weights on the way. Ten inbound pointers moved with it. That is a general signal and it is
+  now in `MAINTENANCE.md` — *when most inbound links to a file aim at one section, that section is a
+  file* — along with the reminder to re-check inbound links after any split, since a stale one lands
+  the reader in the half you just moved away from.
+
+  **On whether every new file earns a row in the index, Trevor was right and I was half wrong.** He
+  asked whether `PLAYTEST.md` and `INTERACTION.md` should be reached from their parents instead. The
+  test is whether the parent is *guaranteed* to be read first, and it gives different answers:
+  `INTERACTION.md` yes — you cannot want the coin's placement without already being on the board —
+  and `PLAYTEST.md` no, because two of its three entrances are a match log or Trevor saying something
+  felt off, neither of which goes near the grab bag. **The mechanism matters more than the verdict.**
+  Deleting a row outright would tell someone adding a button confirmation that their subject is
+  undocumented, since the only board row says "anything sized"; they would edit blind. So the child
+  gets named *in the parent's row*. Index cost zero, discoverability intact. `CLAUDE.md`'s off-index
+  list went from four files to six and the file got shorter.
+
+  **Two rules of #12's that I had left standing and should not have.** `GRABHIST.md`'s own header
+  says optional and `PLAYTEST.md` instructed you to write there, twice — two files disagreeing about
+  the same fact, which is the disease this tree spends most of its time treating. The thing that
+  actually must happen is that **Trevor gets told when his report was wrong**, and that lives in the
+  reply and costs a sentence. Writing it down is now explicitly the instance's call.
+
+  **And `GRABBAG.md` was accumulating a permanent history of everything ever fixed**, six items deep
+  by today, each closed one carrying its diagnosis. Trevor's point is the one I would want to have
+  made: somebody arriving to work an item during Neo Genesis should not have to read about yesterday's
+  Arcanine. His own file said *remove items when you finish one* and instances — me included, last
+  turn — kept overriding it with a compression instead of a deletion. Finished items are off. A
+  **parked** item stays, because it is still open and the parked reason is what stops the next
+  instance re-deriving it.
+
+  **The correction I would most want carried forward is his, not mine.** *Settled with Trevor* has
+  been read across this tree as sealing a question — `MAINTENANCE.md` said in as many words that it
+  "changes how much authority a future instance has to overturn it." He has never claimed a design
+  call is final, and the mark was recording that something was **discussed and agreed**. The sealed
+  reading is worse in both directions: it stops a later instance bringing real evidence, and it makes
+  his own corrections look like reversals rather than the ordinary thing they are. The proof was
+  sitting in `RULINGS.md` already — the retreat-cost entry was logged as settled from the Game Boy
+  game, he pushed back on the citation, and it now stands on his reasoning instead. Corrected by the
+  person the mark names. The full statement is in that file's header, where the marker is defined.

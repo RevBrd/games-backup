@@ -6,7 +6,7 @@ regenerate cards, widen a set, look at the board, or wonder what a suite actuall
 The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, six test suites, a
 screenshotter and an art fetcher; the command list is in `CLAUDE.md`. Two neighbours own the parts that are not build
 steps — **what the inputs are** is in [DATA.md](DATA.md), and **the two instruments that measure
-whether the bot plays well** are in [AI.md](AI.md).
+whether the bot plays well** are in [MEASUREMENT.md](MEASUREMENT.md).
 
 Both generators accept `--check`: regenerate to memory, diff against what's committed, exit non-zero
 if they differ. Cheap to run and the fastest way to catch someone having hand-edited a generated file.
@@ -108,7 +108,7 @@ as a figure to quote. Run the suite for the real number.
   Its **AI verb scoring** section is the only place eleven unscored verbs could ever have been seen,
   for the same reason it is the only suite that can see a Power. Those cases assert `rawOutcomes()`
   — the raw distribution, before weights — so retuning a weight cannot fail them for the wrong
-  reason. *[The blind spot they were built for →](AI.md)*
+  reason. *[The blind spot they were built for →](MEASUREMENT.md)*
 - **`smoke.js`** (143 tests) is the original Chat-era harness, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
   presentation and freeze, the deck-select flow, the collection screens, the ladder and the card

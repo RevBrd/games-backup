@@ -8,9 +8,9 @@ Written 14 Aug 2026 by the instance (#12) that worked the first batch, at Trevor
 gets the next one. Everything in it is attested — every rule below is here because ignoring it cost
 something that session.
 
-It is deliberately short and it does **not** repeat [AI.md](AI.md). Most playtest reports land on the
-AI, and every way this project's AI measurements have lied is written down there. Read it before you
-believe a number.
+It is deliberately short and it does **not** repeat [MEASUREMENT.md](MEASUREMENT.md). Most playtest
+reports land on the AI, and every way this project's AI measurements have lied is written down there.
+Read it before you believe a number.
 
 ## What the grab bag is
 
@@ -45,10 +45,14 @@ illegal 41-card deck in a scored match.
 **So: reproduce before you redesign.** Find the event in a log, or construct the position in a
 scratch script, and watch it happen. If you cannot make it happen, you do not know what it is yet.
 
-**When the report turns out to be wrong, say so plainly and in the doc.** Trevor wants that — he
-said as much when asking for this file, and being told "your log did not contain that" is what let
-him trust the rest of the answer. Write it in `GRABHIST.md`, because the next reader needs the
-correction more than they need the fix.
+**When the report turns out to be wrong, say so plainly — to Trevor, in your reply.** He wants that;
+he said as much when asking for this file, and being told "your log did not contain that" is what let
+him trust the rest of the answer. That part is not optional and it costs a sentence.
+
+**Writing it down anywhere is optional.** [GRABHIST.md](GRABHIST.md) is the place offered for it and
+that is all it is — Trevor's own header calls it optional and means it. Earlier versions of this file
+read as an instruction, which contradicted the file it was pointing at. If you found the correction
+worth the finding, it will be worth the four lines; if you did not, the reply already did the work.
 
 ## Not every item is a bug
 
@@ -73,7 +77,7 @@ and the reason is recorded.
 
 **The match log is the only instrument that shows the hidden half** — the opponent's hand, both Prize
 piles, and every option the AI weighed with its score. `CLAUDE.md` says to ask for one and Trevor
-saves them in `Game Logs/`. *[How to read one, and what the seed in the header is for →](AI.md)*
+saves them in `Game Logs/`. *[How to read one, and what the seed in the header is for →](MEASUREMENT.md)*
 
 **Find every instance of the behaviour, not the first.** The Arcanine item looked like one bad
 decision. Tabulating all four Take Downs in the game is what showed that the two that *killed* were
@@ -85,16 +89,20 @@ you are about to measure against it. Check the header date and ask if it matters
 
 ## What to do with each outcome
 
-**Fixed.** Strike it in `GRABBAG.md` with **what it turned out to be**, not with "done". A struck
-item that says "fixed" teaches the next reader nothing and invites the same misdiagnosis. One line,
-then point at whichever sibling doc holds the account.
+**Fixed. Take the item off the list.** Not struck-with-a-note — *removed*, which is what `GRABBAG.md`
+has asked for all along and what instances kept overriding, annotating each closed item until the
+list carried a running history of everything ever fixed. **That history is not free**: somebody
+arriving to work an item during Neo Genesis should not have to read about yesterday's Arcanine. If
+the diagnosis was worth keeping, [GRABHIST.md](GRABHIST.md) is where it goes — and if it was not, it
+was already in your reply to Trevor and that was enough. Settled with him 15 Aug 2026.
 
-**Parked.** Some items cannot be reproduced — the paralysis one had no log and the code already did
-the right thing. **Park it in place with the reason and with what evidence would revive it.** Do not
-delete it and do not silently leave it looking untouched; Trevor thought he had seen it, and he is
-usually right about that.
+**Parked. This one stays put, and it is the exception.** Some items cannot be reproduced — the
+paralysis one had no log and the code already did the right thing. A parked item is still **open**,
+so it stays on the list with the reason and with **what evidence would revive it**. Do not delete it
+and do not silently leave it looking untouched; Trevor thought he had seen it, and he is usually
+right about that.
 
-**Wrong, but interesting.** See above. The correction goes in `GRABHIST.md` alongside the real fault.
+**Wrong, but interesting.** Tell him in the reply, always. Writing it up is your call — see above.
 
 **Too big.** Say so and leave it. An item is not permission to redesign the area it touches.
 
@@ -105,7 +113,7 @@ symmetric between the two seats, or about what the bot can *perceive* — and `a
 all three by construction. It will report ~50% and that reads as "your change did nothing". The
 standing doctrine is to assert those in `powertest.js` instead of asking the duel, and it is written
 up with the five other ways measurement lies here. *[Read that before concluding anything from a
-null result →](AI.md)*
+null result →](MEASUREMENT.md)*
 
 **Check the instrument can see the situation before you believe it.** The stickiness work measured
 51.0% because the duel only played four Base Set decks, which contain none of the four Pokémon the
@@ -125,3 +133,8 @@ English, and `CLAUDE.md` names that as the project's arbiter for ambiguous card 
 **He will propose fixes, and he asks to be argued with.** He asked, in writing, to have bad ideas
 stopped. Do it plainly and say what you would do instead — and give the idea its due when it is good
 but aimed at the wrong target, because it usually is.
+
+**"Settled with Trevor" does not mean "Trevor decided."** It marks a thing that was *discussed and
+agreed*, which is his own reading of the convention and worth knowing before you treat one as sealed.
+He has never claimed a design call is final, and the marked entries are open to new evidence like any
+other. *[Where the marker is defined, and what it does and does not license →](RULINGS.md)*

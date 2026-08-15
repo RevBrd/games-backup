@@ -35,8 +35,8 @@ rendering as stray one-cell fragments outside it. No blank lines between rows.
 | **Opus 5** #10 | 12 Aug 2026 | **Four turns, one instance.** The fourth documentation pass; a bug and UI pass — theme-deck editing, scroll survival, the opening coin flip shown, effects no longer announcing a flip early; `takeEnergy`, making the discarded Energy the player's choice across all seven sites; and the match log's own defects |
 | **Opus 5** #11 | 12 Aug 2026 | **Job 7 entire** — progression and named opponents. `src/progress.js` and `data/ladder.json`, brackets derived from the live-set list so a new set adds one with no code change; the opponent screen, free play, `progresstest.js`. Repaired the groundwork first, and found the payout constant that had made every Jungle and Fossil pack unreachable |
 | **Opus 5** #12 | 13–14 Aug 2026 | Maintenance from Trevor's playtest logs and [GRABBAG.md](GRABBAG.md): confusion on retreat, the deck name that resolved to the wrong deck, the AI retreat re-tune, Weakness and Resistance reaching the retreat comparison, derived stickiness, and Arcanine's recoil and overkill. Two harness faults underneath all of it. Wrote [PLAYTEST.md](PLAYTEST.md) |
-| **Sonnet 5** #13 | 14 Aug 2026 | Opponent-deck research for the placeholder roster: the hex-extracted GB2 opponent guide, plus 16 official WotC theme decks and 8 GBC2 flavour decks ID-mapped and count-verified into five quarantined JSON files and `data/OPPONENT_DECK_POOL.md`. All reference data — see [DATA.md](DATA.md) |
-| **Opus 5** #14 | 14 Aug 2026 | The fifth documentation pass: [INTERACTION.md](INTERACTION.md) and [LOGBOOK-ARCHIVE-1.md](LOGBOOK-ARCHIVE-1.md) split out against context compaction, #13's eight data files documented, four live files that pointed at finished work, and seven counts a command disagreed with |
+| **Sonnet 5** #13 | 13-14 Aug 2026 | Opponent-deck research for the placeholder roster: the hex-extracted GB2 opponent guide, plus 16 official WotC theme decks and 8 GBC2 flavour decks ID-mapped and count-verified into five quarantined JSON files and `data/OPPONENT_DECK_POOL.md`. All reference data — see [DATA.md](DATA.md) |
+| **Opus 5** #14 | 14–15 Aug 2026 | The fifth documentation pass, over two stretches. [INTERACTION.md](INTERACTION.md), [MEASUREMENT.md](MEASUREMENT.md) and [LOGBOOK-ARCHIVE-1.md](LOGBOOK-ARCHIVE-1.md) split out against context compaction; #13's eight data files documented; four live files that pointed at finished work and seven counts a command disagreed with. Then Trevor's four: the index test for when a file earns a row, `GRABHIST.md` made genuinely optional, `GRABBAG.md` stopped accumulating closed items, and *settled with Trevor* corrected to mean discussed-and-agreed rather than final |
 
 Trevor's own contributions are not a row here because they are not a model's — but they are load
 bearing and they are named where they were made: the four authentic theme deck lists in
@@ -46,7 +46,7 @@ board design lock, and every ruling in [RULINGS.md](RULINGS.md) marked *settled 
 ---
 
 **This end of the tree is the quiet end.** Nothing here is orientation and nothing is waiting on you.
-If you have finished and have a minute: [LOGBOOK.md](LOGBOOK.md) is what the last two instances
-thought while they worked, [LOGBOOK-ARCHIVE-1.md](LOGBOOK-ARCHIVE-1.md) is everyone before them, and
+If you have finished and have a minute: [LOGBOOK.md](LOGBOOK.md) is what the last few instances
+thought while they worked and where you can log your thoughts as well if you'd like, [LOGBOOK-ARCHIVE-1.md](LOGBOOK-ARCHIVE-1.md) is everyone before them, and
 [TREVOR.md](TREVOR.md) is where his actual save stood as each set went live — the game being played,
 rather than built.

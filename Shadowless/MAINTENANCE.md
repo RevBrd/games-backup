@@ -56,7 +56,17 @@ associated facts, which is how you end up back here.
 
 **The split test: would a session working on something *else* need this?** If a session touching the
 board never needs the variant storage model, that model is not orientation, however important it is.
-That single question produced `COLLECTION.md`.
+That single question produced `COLLECTION.md`, and then `INTERACTION.md` and `MEASUREMENT.md`.
+
+**A new file does not automatically earn a row in `CLAUDE.md`'s index. The test is: is its parent
+guaranteed to be read first?** If every route to a file passes through a sentence naming its parent,
+name it *in the parent's row* instead — findable from the index at no cost in lines. Trevor's call,
+15 Aug 2026, and it is what keeps the index from growing once per split forever. **Check the entrance
+count before applying it**, because the answer is not always the obvious one: `PLAYTEST.md` looks
+like a child of `GRABBAG.md` and kept its own row, because two of its three entrances (a match log,
+or Trevor saying something felt off) never touch the grab bag at all. **Naming the child in the
+parent's row is not optional** — a row that describes only the parent tells a reader their subject is
+undocumented, and they will edit blind rather than open a file the index never mentioned.
 
 **Read every file completely before changing any of them.** You cannot dedupe what you have not
 read, and the duplicates are never in the place you'd guess. This costs an hour and there is no
@@ -78,7 +88,13 @@ turns a settled question back into an open one.
 - **Anything that cost a session an hour**, stated with what it cost. The auto-margin trap in
   `LAYOUT.md`, `state.winner === 0`, the NUL byte. These read as trivia until they happen to you.
 - **Trevor's own material.** The theme decks, his design calls, the reasoning he supplied. Where a
-  decision was his, say so — it changes how much authority a future instance has to overturn it.
+  decision was his, say so — but **say so because the reasoning is worth attributing, not because it
+  seals the question.** This bullet used to end "it changes how much authority a future instance has
+  to overturn it," and Trevor corrected that on 15 Aug 2026: *settled with Trevor* marks a thing
+  **discussed and agreed**, not a directive, and he has never claimed a design call is final. The
+  sealed reading is worse in both directions — it stops a later instance bringing real evidence, and
+  it makes his actual corrections look like reversals rather than the ordinary thing they are. The
+  full statement is in the header of [RULINGS.md](RULINGS.md), where the marker is defined.
 - **Anything a screenshot or a test run cannot re-derive.** Measured card heights, the reason a
   media query was replaced by measurement, why the coin lands on the centre line.
 - **Credits** and anything the original instance intended to persist, especially anything that reads
@@ -147,15 +163,15 @@ say why in the commit.
   one genuinely-sizing rule among them (the coin's zero-height strip) stayed behind as a one-liner
   with a link. **The lesson to carry: when a split feels right but the topic argument keeps failing,
   the criterion is probably wrong, not the instinct.**
-- **`AI.md` is the one to watch now, and the fifth pass left its seam available and not taken.** It
-  reached **365** — the longest live file in the tree — because three AI stretches landed in two
-  days and each wrote its account into it. The available cleave is *how the bot is measured* (the two
-  instruments, the six ways measurement lies, the match log) against *how the bot thinks and what has
-  shipped*. It is a genuine seam: the measurement half is what `PLAYTEST.md`, `TOOLING.md` and
-  `CLAUDE.md` all link to, and none of them wants the weights. **Reported to Trevor and not taken by
-  the pass that found it**, deliberately — the same shape as `LAYOUT.md`, and the file was assembled
-  out of three others only three days earlier, which is a real argument against churning it again.
-  Apply the compaction trigger and ask him.
+- **`AI.md` reached 365 and was split the next turn**, on the same criterion. The cleave that worked
+  is *how the bot is measured* — the two instruments, the six ways measurement lies, the match log,
+  the standing figures — against *how the bot thinks and what has shipped*.
+  [MEASUREMENT.md](MEASUREMENT.md) took the first. **The tell that the seam was real: the child had
+  more entrances than the parent.** `PLAYTEST.md`, `TOOLING.md` and `CLAUDE.md` all link in for
+  measurement and not one of them wants to read about scoring weights on the way. That is a useful
+  signal generally — **when most inbound links to a file are aimed at one section, that section is a
+  file.** Ten pointers were re-routed with it; check inbound links after any split, because a stale
+  one lands the reader in the half you just moved away from.
 - **`CLAUDE.md` has an honest floor around 250 and this is worth knowing before you try.** The fourth
   pass took it from 313 to 259 by moving out everything that was not orientation — the AI material,
   the data material, the job history, three settled arguments. What is left is the index, the status,
