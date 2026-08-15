@@ -210,11 +210,11 @@ counts above can be trusted. Preserve that property. And **a verb `ai.js` cannot
 failure one level up** — free at runtime, misplayed forever, invisible to every suite. See
 [AI.md](AI.md).
 
-**Adding a card** means a `cards.js` entry plus an `effects.js` entry. If the card needs behaviour
-the DSL cannot express, add a verb rather than special-casing it, and document it in the verb
-reference — see [ENGINE.md](ENGINE.md) for the systems that already exist. Trevor is happy to work
-through new card logic in plain English; he has good instincts for how the logic should hang
-together and is not trying to read the code.
+**Adding a card is a `cards.js` entry plus an `effects.js` entry, and [ENGINE.md](ENGINE.md) has the
+rest** — including the eight systems that already exist for the shapes the DSL cannot express.
+**Trevor is happy to work through new card logic in plain English**, which is the part that is only
+written here: he has good instincts for how the logic should hang together and is not trying to read
+the code.
 
 **The smoke stub has no layout engine and no real DOM, so a green suite proves nothing visual.**
 `tools/shot.js` is not optional polish on a UI change — it is the only test that exists for a whole
@@ -248,11 +248,22 @@ Trevor's ordering, and he is explicit that it is yours to rearrange and to break
   declared, so Job 8's real work is adding sets and not rewiring this. See
   [PROGRESSION.md](PROGRESSION.md). **The decks and names are placeholders** — Trevor's call: real
   per-set decks, hand-built and better-generated, are a job of their own.
-- **Job 8+** — the remaining 11 sets. Unblocked; all 14 generate cleanly. The order of operations
-  for adding one is in [TOOLING.md](TOOLING.md) and it is the reverse of what feels natural. **Two
+- **Job 8+** — the remaining 11 sets. Unblocked; all 14 generate cleanly. The order of operations for
+  adding one is in [TOOLING.md](TOOLING.md) and it is the reverse of what feels natural. **The sets
+  are nowhere near equal in size and the measured table is there too** — a printing is not a job, and
+  the ratio between the two varies by set from 1:1 to about 1:124. Measure before you plan. **Two
   things bind here that did not bind before:** the ruling arbiter runs out at Fossil, so Team Rocket
-  onward has none — see [RULINGS.md](RULINGS.md) — and the real per-set opponent decks are their own
-  job, with a candidate pool already researched in `data/OPPONENT_DECK_POOL.md`.
+  onward has none — see
+  [RULINGS.md](RULINGS.md) — and the real per-set opponent decks are their own job, with a candidate
+  pool already researched in `data/OPPONENT_DECK_POOL.md`.
+- **The queue as it stands, proposed 15 Aug 2026 and Trevor's to reorder.** Two non-jobs first: the
+  ruling-arbiter conversation, and a session settling the *shape* of decks and progression, which is
+  what makes a better auto-builder specifiable. Then an AI and grab-bag pass **before** the next set,
+  because every set widens the bot's blind spots and it is cheaper to fix at three sets than at six.
+  Then Team Rocket; then the auto-builder; then promos and Base Set 2; then the Gym sets as two jobs;
+  then Neo, which is four jobs and a rules job. **The auto-builder's position is the uncertain one** —
+  it is placed after a set because its quality bar is "can the AI pilot this", but every set shipped
+  before it arrives has placeholder opponents.
 - **The AI weight re-tune shipped on 13 Aug 2026** and this line used to say it was the next job.
   What is genuinely open in the AI is at the bottom of [AI.md](AI.md), under `Open`, and none of it
   has a measured reason to do it yet — which is a different thing from being unknown.

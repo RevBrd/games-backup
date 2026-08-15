@@ -55,6 +55,44 @@ Neither Node tool was trusted on inspection — `build.js` was diffed byte-for-b
 artifact as it arrived from Chat, and `gen_cards.js` was checked against two independent sources
 that agreed exactly. The accounts are in [HISTORY.md](HISTORY.md).
 
+## How big is the set you are about to add
+
+**Ask this first, because printings are not jobs.** Job 6's most useful number was the one that
+stopped 126 Jungle and Fossil printings being 126 pieces of work: both sets print every Rare twice,
+so the real figure was **96 distinct behaviours**. The same measurement across the rest of the era,
+taken 15 Aug 2026 by de-duplicating on name + HP + subtypes + every attack and Power, and then
+subtracting anything already live:
+
+| Set | Scriptable | New behaviours | Powers | Trainers |
+|---|---|---|---|---|
+| `base4` Base Set 2 | 124 | **~1** plus ~123 aliases | 9 | 23 |
+| `si1` Southern Islands | 18 | 18 | 0 | 0 |
+| `basep` promos | 53 | 49 | 9 | 4 |
+| `base5` Team Rocket | 83 | 66 | 20 | 11 |
+| `base6` Legendary Collection | 110 | 48 — about 36 if Team Rocket lands first | 16 | 9 |
+| `gym1` Gym Heroes | 126 | 122 | 11 | 35 |
+| `gym2` Gym Challenge | 126 | 122 | 13 | 31 |
+| `neo1`–`neo4` | 359 | 344 | 72 | 44 |
+
+Read against Jungle + Fossil at 96, that says: Team Rocket is about two-thirds of Job 6; the two Gym
+sets together are **two and a half times** it and are Trainer-heavy, which is where new verbs come
+from; and Neo is larger than everything else combined.
+
+Three findings worth not re-deriving:
+
+- **Base Set 2 is almost entirely alias work.** One genuinely new card (Imposter Professor Oak); the
+  other 123 are reprints. Sixteen of them differ from their live originals in *wording only* —
+  Blastoise's "extra Water Energy after the 2nd doesn't count" became "you can't add more than 20
+  damage in this way", which is the same cap — so they need alias entries, not scripts. **Three of
+  the sixteen were checked by hand, not all sixteen**; check the rest before trusting the ~1.
+- **Promos are a job, not a ride-along.** 49 of 51 distinct. Attaching them to a set's job
+  understates that set by about half of Jungle.
+- **Team Rocket makes Legendary Collection cheaper**, because eight of LC's twelve new names are Dark
+  Pokémon that Team Rocket prints.
+
+The alias machinery this leans on already exists — Job 6c's table, with a test proving it in both
+directions, and `selftest.js` asserts every alias points at a mechanically identical card.
+
 ## Adding a set
 
 Written after Job 6c, where generating two sets broke six things that had quietly
