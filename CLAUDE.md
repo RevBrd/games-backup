@@ -74,7 +74,7 @@ could see that one `git push` would publish the whole collection. `origin` is
 `github.com/RevBrd/browser-games`, last pushed **3 Aug 2026**, and local `master` has run far ahead
 of it since.
 
-Trevor's call, 10 Aug 2026: **the collection goes up as a deliberate release**, once several games
+Trevor's call, 15 Aug 2026: **the collection goes up as a deliberate release**, once several games
 are finished and polished together — not as a side effect of a session that happened to be
 committing. Two locks are armed, and both were tested when they went in:
 

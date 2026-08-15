@@ -363,7 +363,7 @@ check('MAX_PIECES stays a safety net, never the reason a run ends', function () 
          capped.length + '/20 runs ended by hitting the ' + C.MAX_PIECES + '-piece cap';
 });
 check('"nice" holds Trevor\'s ruled rate of roughly once per run', function () {
-  // Ruled 10 Aug 2026: once-ish per run is the keeper rate and it must not go higher.
+  // Ruled 15 Aug 2026: once-ish per run is the keeper rate and it must not go higher.
   // See CLAUDE.md > "nice" — settled at once-ish per run.
   var total = RUNS.reduce(function (a, r) { return a + r.nice; }, 0);
   var mean = total / RUNS.length;
@@ -375,7 +375,7 @@ check('"nice" holds Trevor\'s ruled rate of roughly once per run', function () {
 // ---------------------------------------------------------------
 group('known defect — square interpenetration (documented, not fixed)');
 // ---------------------------------------------------------------
-// Found 10 Aug 2026 while writing this harness, and confirmed visually.
+// Found 15 Aug 2026 while writing this harness, and confirmed visually.
 // Pieces that get more than half-overlapped are driven into PERFECT coincidence
 // instead of being pushed apart, then sleep there forever. Mechanism and the
 // decision not to fix it are in CLAUDE.md > "Known defect: square interpenetration".
@@ -426,7 +426,7 @@ check('measure the overlap across 15 seeded runs (baseline: ~28 pairs, ~50% of b
 });
 check('regression guard: overlap has not got materially worse', function () {
   var mean = OVERLAP.reduce(function (a, o) { return a + o.deep; }, 0) / OVERLAP.length;
-  // baseline 28.4 pairs/run as measured 10 Aug 2026; 45 is a generous ceiling
+  // baseline 28.4 pairs/run as measured 15 Aug 2026; 45 is a generous ceiling
   return mean <= 45 || 'mean deep pairs per run rose to ' + mean.toFixed(1) +
                        ' (baseline 28.4). Something made the solver worse.';
 });
@@ -576,7 +576,7 @@ check('the rebuff message appears on any key', function () {
 check('mashing keys cannot influence the sim, now or on any later step', function () {
   // A/B against an identical seeded run. Comparing positions at the instant of the
   // key press is NOT enough -- a handler that only nudged VELOCITY would slip through,
-  // and did: mutation testing caught this test failing to catch it (10 Aug 2026).
+  // and did: mutation testing caught this test failing to catch it (15 Aug 2026).
   // So: same seed, same steps, keys in one run only, compare the full body state after
   // the sim has had time to carry any injected impulse into position.
   function fingerprint(withKeys) {

@@ -7,7 +7,7 @@ It lasts about thirteen seconds. That's the whole thing, and it is finished.
 **Credits:** concept by Trevor. Built in Claude Chat by **Fable 5** over two turns (11 Jul 2026) —
 the anti-design wrapper, the physics engine, every gag. Port into the collection, the measurement
 pass, `validate.js` — 43 assertions, the joke-as-spec idea, and the interpenetration defect it
-turned up — and this file by **Claude Opus 5** (10 Aug 2026).
+turned up — and this file by **Claude Opus 5** (15 Aug 2026).
 
 **State:** complete. Fable called it "possibly complete-complete; this might genuinely be a one-job
 game," and after a second pass for dump pacing that still looks right. Open to fine-tuning and to
@@ -40,7 +40,7 @@ silently fix a typo, a dead control, a missing stylesheet, or an unsorted table 
 6. **The leaderboard also never resets, and grows forever.** `S.lb` is built once at page load and
    `startGame()` doesn't touch it, so playing five times leaves five entries all marked "(you)"
    scattered through the table at random positions. This reads exactly like a state-teardown bug
-   and is funnier than anything that was designed on purpose. **Leave it.** (Verified 10 Aug 2026.)
+   and is funnier than anything that was designed on purpose. **Leave it.** (Verified 15 Aug 2026.)
 7. **The score is random** — `100 + floor(random * 900)` — and the card visibly *thinks* for 700ms
    before producing it, so you watch it decide.
 8. **The game can declare victory on a technicality.** A piece that wedges high on a loose pile and
@@ -78,7 +78,7 @@ into looking broken.
 **The apathy is the creator's, never the game's, and the player never gets to do anything.**
 
 Mash a key and small text appears: *"that doesn't do anything."* Click the canvas: *"no."* That is
-the entire input surface and it is permanent — asked and confirmed, 10 Aug 2026. The messages are
+the entire input surface and it is permanent — asked and confirmed, 15 Aug 2026. The messages are
 deliberately quiet because **discovering your own irrelevance is better than being told upfront**.
 
 The moment one input works, you have promised a system, and this game cannot pay that off. Any
@@ -92,7 +92,7 @@ any work. "good job or whatever" is aimed at the absent developer's indifference
 
 ## Measured behaviour
 
-Twelve headless runs through `window.__blocksTest`, 10 Aug 2026, current build:
+Twelve headless runs through `window.__blocksTest`, 15 Aug 2026, current build:
 
 | | |
 |---|---|
@@ -124,7 +124,7 @@ turn that fixed the pour. The bag-dump pass packs the bottom of the pile, and `c
 pile is dense rather than whether a row formed by luck. It needs 15 of 16 sample columns covered
 (`NICE_FRAC: 0.93`, 16 columns across 360px). Measured rate: about once per run.
 
-**Trevor ruled on this 10 Aug 2026: once-ish per run is the keeper rate, and it should not go
+**Trevor ruled on this 15 Aug 2026: once-ish per run is the keeper rate, and it should not go
 higher.** A gag nobody ever sees isn't a gag, and at this rate it lands often enough to read as a
 small recurring grace note without ever becoming a system. The near-impossible version is recorded
 above as history, not as a target — **do not "restore" it.**
@@ -137,7 +137,7 @@ out of bounds.
 
 ## Known defect: square interpenetration
 
-**Found 10 Aug 2026 while building `validate.js`, confirmed visually, and deliberately left alone.**
+**Found 15 Aug 2026 while building `validate.js`, confirmed visually, and deliberately left alone.**
 It is the one place where this file's praise of the physics engine needs qualifying.
 
 **What happens.** Two pieces that get more than about half overlapped are driven into *perfect*
@@ -218,7 +218,7 @@ making it into a five-minute one.
 ## Files
 
 - `blocks-i-guess.html` — the whole game, self-contained, runs by double-clicking. No external
-  dependencies of any kind. Renamed from `blocks_i_guess_job1.html` on 10 Aug 2026 via `git mv`,
+  dependencies of any kind. Renamed from `blocks_i_guess_job1.html` on 15 Aug 2026 via `git mv`,
   for the collection's kebab-case convention; history follows.
 - `backups/blocks_i_guess_job1.html` — the Chat original under its original name. That's history,
   leave the name alone.
