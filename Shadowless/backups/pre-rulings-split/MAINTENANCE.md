@@ -94,7 +94,7 @@ turns a settled question back into an open one.
   **discussed and agreed**, not a directive, and he has never claimed a design call is final. The
   sealed reading is worse in both directions — it stops a later instance bringing real evidence, and
   it makes his actual corrections look like reversals rather than the ordinary thing they are. The
-  full statement is in [RULINGS.md](RULINGS.md), where the marker is defined.
+  full statement is in the header of [RULINGS.md](RULINGS.md), where the marker is defined.
 - **Anything a screenshot or a test run cannot re-derive.** Measured card heights, the reason a
   media query was replaced by measurement, why the coin lands on the centre line.
 - **Credits** and anything the original instance intended to persist, especially anything that reads
@@ -140,21 +140,14 @@ quote a number**, and prefer running the command to reading a figure in prose.
 Being over beats cutting the paragraph that stops the next session losing a morning. If you go over,
 say why in the commit.
 
-- **Exempt: `LOGBOOK.md`, `LOGBOOK-ARCHIVE-1.md`, `Rulings/*.md`, `HISTORY.md` and `GRABHIST.md`.**
-  All are append-only registers, and none can be shortened without deleting something — a
+- **Exempt: `LOGBOOK.md`, `LOGBOOK-ARCHIVE-1.md`, `RULINGS.md`, `HISTORY.md` and `GRABHIST.md`.**
+  All five are append-only registers, and none can be shortened without deleting something — a
   session's account of its own work, a ruling somebody then has to make again, a rejection's *why*,
   or the gap between what a playtest report said and what was actually found. Correct entries in
   them; never condense them. `HISTORY.md` joined on the fourth pass, when it became the destination
   for material trimmed out of the live files; `GRABHIST.md` and the logbook archive joined on the
-  fifth. **Any future file of this shape must say so in its own header**, as all of them now do —
+  fifth. **Any future file of this shape must say so in its own header**, as all five now do —
   `GRABHIST.md` spent two days without the label, which is how one of these gets tidied by mistake.
-
-  **The exemption moved off `RULINGS.md` itself on 15 Aug 2026** and this is the shape to copy when a
-  register outgrows one file. It split into a directory page plus one file per ruling in `Rulings/`,
-  which means **the parent is no longer exempt** — it is method and an index, it will be revised, and
-  it should stay short. The register is the folder. Stating the exemption against `RULINGS.md` after
-  that split would have been the "invariant stated in terms that stopped being true" trigger above,
-  aimed at the very file that warns about it.
 - **`LAYOUT.md` survived two split proposals and was split on the third — by Trevor, on a different
   argument.** Worth reading in order, because it is the clearest case in this tree of a right
   decision reached by the wrong criterion twice. The third pass proposed *sizing vs. interaction* and
@@ -207,9 +200,8 @@ say why in the commit.
 grep -oh "](\([A-Za-z0-9_./-]*\.md\)[^)]*)" *.md | sed 's/](\([^):]*\).*/\1/' | sort -u | while read f; do [ -f "$f" ] || echo "MISSING: $f"; done
 ```
 
-   **Run it in `data/` and `Rulings/` too.** Both folders have their own markdown, and the fifth pass
-   found a link in `data/` pointing one directory too high — a root-only sweep cannot see it. Every
-   link out of `Rulings/` to a root doc needs the `../` prefix, which is the same trap one level over.
+   **Run it in `data/` too.** That folder has its own markdown now, and the fifth pass found a link
+   there pointing one directory too high — a root-only sweep cannot see it.
 
    Then `node tools/gen_cards.js --check`, `node tools/build.js --check`, and the six suites — a
    docs pass should not touch code, and that proves it didn't. If it did touch code (the fifth pass

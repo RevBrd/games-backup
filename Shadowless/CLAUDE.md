@@ -48,7 +48,7 @@ from here without costing a row.
 | [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything **sized**. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. **Its sibling `INTERACTION.md` has the specific pieces** — the coin toss, the pickers, the opening screens and the controls on the card. If you have trouble with the layout, re-read that section — and check you can still see the top of the file, because a compacted read of it has cost a session before |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
-| [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. One entry per judgement call, with its reasoning and source |
+| [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. The four-step order that replaced the arbiter, and the principles index you match a new card against by *shape*. **It is a directory: each ruling is its own file in `Rulings/`**, one per judgement call, with its reasoning and source |
 | [DATA.md](DATA.md) | Generating a set, trusting a set code, or adopting one of the deck spreadsheets. The corpus, the two set codes that read backwards, and what is reference-only |
 | [PROGRESSION.md](PROGRESSION.md) | Touching the ladder, an opponent, or anything that grants a pack. How brackets are derived from the live sets rather than declared, the tunables, why free play pays nothing, and the four layout defects only a screenshot caught |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, looking at the board with `tools/shot.js`, or wondering what each test suite actually covers |
@@ -237,41 +237,28 @@ else in `data/` is in **[DATA.md](DATA.md)**.
 
 ## Job plan
 
-Trevor's ordering, and he is explicit that it is yours to rearrange and to break into sub-jobs.
+The current ordering, decided collaboratively. Trevor is explicit that it is yours to rearrange and to break into sub-jobs.
 
 - **Jobs 1–7 are done** — the engine, the AI, the art system, the board, the Powers, the collection
   and packs, Jungle and Fossil, and the ladder. **What each one left behind is in [HISTORY.md](HISTORY.md)**, and
   Job 6's entry is worth ten minutes before planning the next set: it was split by *machinery* rather
   than by set, and the reason 126 printings were only **95 distinct behaviours** is the kind of count
   that decides how big a job actually is.
-- **Job 7 — progression and named opponents. Done, 12 Aug 2026.** All 16 GBC decks are assigned to
-  a challenger and none is stranded. The brackets are derived from the live sets rather than
-  declared, so Job 8's real work is adding sets and not rewiring this. See
-  [PROGRESSION.md](PROGRESSION.md). **The decks and names are placeholders** — Trevor's call: real
-  per-set decks, hand-built and better-generated, are a job of their own.
-- **Job 8+** — the remaining 11 sets. Unblocked; all 14 generate cleanly. The order of operations for
-  adding one is in [TOOLING.md](TOOLING.md) and it is the reverse of what feels natural. **The sets
-  are nowhere near equal in size and the measured table is there too** — a printing is not a job, and
-  the ratio between the two varies by set from 1:1 to about 1:124. Measure before you plan. **Two
-  things bind here that did not bind before:** the ruling arbiter runs out at Fossil, so Team Rocket
-  onward has none — see
-  [RULINGS.md](RULINGS.md) — and the real per-set opponent decks are their own job, with a candidate
-  pool already researched in `data/OPPONENT_DECK_POOL.md`.
-- **The queue as it stands, agreed 15 Aug 2026 and Trevor's to reorder.** One non-job first: a
-  session settling the *shape* of decks and progression, which is what makes a better auto-builder
-  specifiable. (The ruling-arbiter question was the other and is now settled — see above.) Then an
-  AI and grab-bag pass **before** the next set,
-  because every set widens the bot's blind spots and it is cheaper to fix at three sets than at six.
-  Then Team Rocket; then the auto-builder, which Trevor confirmed at that position on 15 Aug so the
-  AI gets a couple of quality runs first; then promos; then the Gym sets as two jobs; then Neo, which
-  is four jobs and a rules job.
+- **Job 8** - Deck and progression shape. Not the exact card and opponent names, but an outline of what the placeholders will eventually be replaced with.
+- **Job 9** - Major AI-related work, primarily drawn from Grab Bag items. Might run concurrently with Job 8.
+- **Job 9.5** - Scheduled pre-new set maintenance and grab bag run.
+- **Job 10** - Rulings and additions for the Team Rocket set.
+- **Job 10.5** - Scheduled post-new set maintenance, plugging in it in, grab bag.
+- **Job 11** - Deck autobuilder improvement pass.
+- **Job 12** - Rulings and additions for the Promo cards through the Team Rocket set.
+- **Job 12.5** - Scheduled pre-new set maintenance and grab bag run. Scheduling out future Job order.
+- **Job 13+** - Gym Leader sets and onwards.
+
 - **Base Set 2 and Legendary Collection are deprioritised, and the reason is that they are cheap
   rather than despite it.** 124 printings for **zero** new behaviours and 110 for twenty. They add
   collectibles the player already owns, which is the worst version of the chase — Trevor's call,
   15 Aug 2026, to bring one back later as an *improvement* to progression rather than as structure.
-- **The AI weight re-tune shipped on 13 Aug 2026** and this line used to say it was the next job.
-  What is genuinely open in the AI is at the bottom of [AI.md](AI.md), under `Open`, and none of it
-  has a measured reason to do it yet — which is a different thing from being unknown.
+
 
 ## Open
 

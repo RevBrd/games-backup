@@ -12,7 +12,7 @@ been something other than what the note said three times out of three, and that 
 anyone would read this. A *parked* item is the one most worth writing up if you are on the fence,
 because the next instance will otherwise re-derive the same diagnosis from scratch.
 
-**Once an entry exists it is append-only**, like [RULINGS.md](RULINGS.md), [HISTORY.md](HISTORY.md)
+**Once an entry exists it is append-only**, like [`Rulings/`](Rulings/), [HISTORY.md](HISTORY.md)
 and [LOGBOOK.md](LOGBOOK.md) — that is a rule about *editing*, not about writing. Correct an entry if
 it turns out wrong; never shorten one, because a condensed entry keeps the fix and loses the gap. The
 200-line target does not apply. The method for working an item in the first place is
