@@ -146,6 +146,20 @@ function buildPools(db, setCode) {
     // dropped rather than guessed into a bucket.
   }
 
+  // HOW OFTEN A COMMON SLOT IS ENERGY, as a share rather than as a side effect
+  // of how long an array is.
+  //
+  // Drawing uniformly from `common` looks like it means "at the set's natural
+  // rate" and does not, the moment a set borrows: base1's six Energy are six of
+  // its own 38 Commons (16%), but dropped into Jungle's 16 they become six of 22
+  // (27%). Jungle would get more Energy than Base Set for no reason other than
+  // having fewer Commons to dilute it. So a borrowing set inherits the SOURCE's
+  // share, and the roll is explicit.
+  //
+  // For a set that prints its own this is exactly what uniform drawing already
+  // did, so nothing about Base Set changes.
+  pools.energyShare = pools.common.length ? pools.energy.length / pools.common.length : 0;
+
   // A set that prints no basic Energy of its own borrows base1's, ids and all.
   // This is what replaced the stipend: the Energy is IN the Common pool and is
   // drawn like anything else, rather than handed over beside an eleven-card pack
@@ -155,11 +169,15 @@ function buildPools(db, setCode) {
   if (setCode && !pools.energy.length) {
     const src = energySource(db);
     if (src && src !== setCode) {
-      for (const id of buildPools(db, src).energy) { pools.energy.push(id); pools.common.push(id); }
+      const from = buildPools(db, src);
+      for (const id of from.energy) { pools.energy.push(id); pools.common.push(id); }
+      pools.energyShare = from.energyShare;
     }
   }
 
-  for (const k in pools) pools[k].sort();     // deterministic given a seed
+  const share = pools.energyShare;
+  for (const k in pools) if (Array.isArray(pools[k])) pools[k].sort();   // deterministic given a seed
+  pools.energyShare = share;
   perSet[key] = pools;
   return pools;
 }
@@ -278,8 +296,11 @@ function openPack(db, setCode, rand, opts = {}) {
     commonIds.push(...got);
   }
   while (commonIds.length < PACK_SHAPE.common) {
-    const capped = energyCount >= cap && pools.commonNoEnergy.length;
-    const [id] = drawSlots(capped ? pools.commonNoEnergy : pools.common, 1, rand, isEnergy, taken);
+    const roomLeft = energyCount < cap && pools.energy.length;
+    const wantEnergy = roomLeft && rand() < pools.energyShare;
+    const from = wantEnergy ? pools.energy
+      : (pools.commonNoEnergy.length ? pools.commonNoEnergy : pools.common);
+    const [id] = drawSlots(from, 1, rand, isEnergy, taken);
     if (isEnergy[id]) energyCount++;
     commonIds.push(id);
   }

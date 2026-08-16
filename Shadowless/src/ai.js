@@ -38,7 +38,12 @@ const AI_WEIGHTS = {
   shieldSelf: 20,       // Stiffen / Withdraw / Barrier
   destinyBond: 18,      // arming Destiny Bond when death looks likely
   attachEnable: 1.0,    // scale on "how much better my attacks get"
-  attachBuild: 3.5,     // progress toward an attack we can't afford yet
+  attachBuild: 3.5,     // finishing an attack we could not afford yet, per step
+  attachAmortise: 1.0,  // progress toward one we still cannot: a step is worth
+                        // this much of its share of the attack at the end.
+                        // 1.0 = one of the three Energy Zapdos still needs is
+                        // worth a third of Thunder. Discounted if the Pokemon
+                        // will not survive to fire it
   attachOnType: 4,      // the card pays a TYPED symbol this Pokemon actually
                         // needs, not just its Colorless. Breaks the tie toward
                         // Fire-on-Arcanine over Grass-on-Arcanine
@@ -731,7 +736,11 @@ class AI {
     // an Energy card may provide several symbols (Double Colorless)
     const pool = [];
     slot.energy.forEach(e => (this.db[e.id].provides || 'C').split('').forEach(x => pool.push(x)));
-    let best = -Infinity, bestShort = 99;
+    // `goal` is the printed damage of the attack we are actually working
+    // TOWARD — the cheapest one to reach, ties broken by size. It is what an
+    // Energy part-way there is a fraction OF, so it has to be the same attack
+    // `short` is counting down to and not simply the biggest number on the card.
+    let best = -Infinity, bestShort = 99, goal = 0;
     (c.attacks || []).forEach((a, i) => {
       const need = a.cost.split('').filter(x => x !== 'C');
       const generic = a.cost.length - need.length;
@@ -750,10 +759,12 @@ class AI {
       } else {
         val = -1;
       }
-      if (short < bestShort) bestShort = short;
+      const dmg = aiParseDamage(a.dmg);
+      if (short < bestShort) { bestShort = short; goal = dmg; }
+      else if (short === bestShort && dmg > goal) goal = dmg;
       if (val > best) best = val;
     });
-    return { best: best === -Infinity ? 0 : best, short: bestShort };
+    return { best: best === -Infinity ? 0 : best, short: bestShort, goal };
   }
 
   // What putting `energyId` on `slot` is worth. ONE home, used by both the
@@ -770,8 +781,33 @@ class AI {
     const before = this.potential(pi, slot, null);
     const after = this.potential(pi, slot, energyId);
     let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
-    if (after.short < before.short) s += W.attachBuild * (before.short - after.short) * 2;
-    else if (after.best > before.best) s += W.attachBuild;
+
+    // PROGRESS IS WORTH A SHARE OF WHAT IT IS PROGRESS TOWARD — 16 Aug 2026,
+    // from Trevor watching the bot feed a Voltorb while its Zapdos starved.
+    //
+    // Finishing an attack pays `attachEnable` for the whole of that attack.
+    // Advancing one paid a FLAT `attachBuild` per step, with no idea what was at
+    // the end of the road — so one Lightning completing a Voltorb's 10-damage
+    // Tackle beat one of four Lightning on the way to a 60, and would have
+    // forever. The card that can never do anything wins because it is cheap.
+    //
+    // Amortised instead: one Energy of the N a Pokemon still needs is worth
+    // roughly its share of the attack waiting at the end. A third of a 60 beats
+    // all of a 10, which is the answer Trevor gave in plain English.
+    //
+    // `goal` is the printed damage of the attack `short` is actually counting
+    // down to, not the biggest number on the card — amortising a step toward
+    // Thunder against a Thunderbolt the Pokemon will never afford would price
+    // the wrong road.
+    if (after.short === 0 && before.short > 0) {
+      // Completing. `attachEnable` has already paid the attack's real value, so
+      // this stays the flat finishing bonus it has always been.
+      s += W.attachBuild * before.short * 2;
+    } else if (after.short < before.short) {
+      const steps = before.short - after.short;
+      s += Math.max(10, before.goal) * (steps / before.short)
+         * W.attachAmortise * this.survivesCharge(pi, slot, after.short);
+    } else if (after.best > before.best) s += W.attachBuild;
     else s += 0.4;
     s += (slot === E.state.players[pi].active) ? 4 : 1;   // the Active uses it soonest
 
@@ -789,6 +825,23 @@ class AI {
     }
     if (gives.some(x => x !== 'C' && typedNeed.has(x))) s += W.attachOnType;
     return s;
+  }
+
+  // WILL IT STILL BE STANDING WHEN IT IS CHARGED? Trevor's own reasoning for
+  // preferring the Zapdos: it is in the Active spot and can *realistically
+  // survive* long enough to power its move up, and the alternatives — retreat
+  // with no Switch, or sacrifice it — are worse. An Energy toward a four-turn
+  // attack on something that dies in one is a card thrown away.
+  //
+  // Only the Active is being hit, so only the Active is discounted. Graded
+  // rather than a cliff, on the by-now well-earned suspicion of any quantity
+  // about proximity to an edge written as an equality test.
+  survivesCharge(pi, slot, turnsNeeded) {
+    if (turnsNeeded <= 0 || slot !== this.E.state.players[pi].active) return 1;
+    const threat = this.incomingThreat(pi);
+    if (threat <= 0) return 1;
+    const turnsLeft = Math.ceil(this.remainingHP(slot) / threat);
+    return Math.min(1, turnsLeft / turnsNeeded);
   }
 
   // Best printed damage this slot could actually pay for right now, ignoring

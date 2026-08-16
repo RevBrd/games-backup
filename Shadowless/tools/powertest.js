@@ -2487,5 +2487,99 @@ T('Switch brings in whoever promoting would have chosen', () => {
   return true;
 });
 
+// ===========================================================================
+// AMORTISED PROGRESS  (16 Aug 2026)
+// From Trevor's log 04-31-25 and, more usefully, from his reasoning about it:
+// the Zapdos is the better investment because it is Active, can realistically
+// survive long enough to charge, and nothing better is waiting on the Bench.
+// Advancing used to pay a flat amount per step with no idea what was at the end
+// of the road, so completing a Voltorb's 10-damage Tackle beat one of four
+// Lightning toward a real attack. Every time.
+//
+// The only significantly BETTER duel result of the batch: 52.2% +/-1.4, and
+// 51.9% +/-1.1 on an independent larger sample, control 50.0%.
+// ===========================================================================
+console.log('\nAmortised progress — a share of what it builds toward');
+
+const ZAPDOS = 'base3-15';          // 80 HP, Thunderstorm LLLL 40
+const VOLTORB = 'base1-67';         // 40 HP, Tackle C 10
+const attachTo = (E, uid, energyId) => {
+  E.state.players[0].hand = [{ id: energyId, uid: E.uid++ }];
+  const a = E.legalActions(0).find(x => x.t === 'attachEnergy' && x.target === uid);
+  if (!a) throw new Error('the attachment should be legal');
+  return new AI(E, { mode: 'expert' }).scoreAction(0, a);
+};
+
+T('one Lightning toward a real attack beats finishing a Voltorb', () => {
+  // The logged position. Voltorb came out at 18.0 then and comes out at 18.0
+  // now, which is the check that the rebuild is honest; Zapdos was 15.
+  const E = board(ZAPDOS, [VOLTORB], 'base1-46');       // Charmander opposite
+  attach(E, E.state.players[1].active, 'base1-98', 1);
+  E.state.players[0].active.dmg = 20;
+  attach(E, E.state.players[0].active, 'base1-100', 1);
+  const zap = attachTo(E, E.state.players[0].active.uid, 'base1-100');
+  const volt = attachTo(E, E.state.players[0].bench[0].uid, 'base1-100');
+  if (!(zap > volt)) throw new Error(`fed the Voltorb: ${volt.toFixed(1)} vs Zapdos ${zap.toFixed(1)}`);
+  return true;
+});
+
+T('progress is amortised against the attack `short` counts down to', () => {
+  // Charmander prints a cheap weak attack and a dearer strong one. With nothing
+  // attached, `short` is counting toward the CHEAP one, so that is the attack a
+  // step is a fraction of — pricing it against the big number on the card would
+  // value a road the Pokemon is not on.
+  //
+  // Charmeleon looks like the obvious card here and is useless for it: Slash CCC
+  // and Flamethrower RRC are the same total cost, so they tie on `short` and the
+  // documented tie-break (take the bigger) correctly returns the 50.
+  const E = board('base1-3', ['base1-46']);             // Charmander benched
+  const slot = E.state.players[0].bench[0];
+  const p = new AI(E, { mode: 'expert' }).potential(0, slot, null);
+  // Work out by hand which attack is the cheapest to reach from nothing, and
+  // what it hits for. With an empty slot that is simply the shortest cost.
+  const atks = CARD_DB['base1-46'].attacks;
+  const cheapest = atks.reduce((a, b) => (b.cost.length < a.cost.length ? b : a));
+  const biggest = atks.reduce((a, b) =>
+    (Number(String(b.dmg).match(/\d+/)[0]) > Number(String(a.dmg).match(/\d+/)[0]) ? b : a));
+  if (cheapest === biggest) throw new Error(
+    `this card cannot distinguish the two and the test proves nothing: ${cheapest.name}`);
+  eq(p.short, cheapest.cost.length, 'short counts down to the cheapest attack');
+  eq(p.goal, Number(String(cheapest.dmg).match(/\d+/)[0]),
+    'and the goal is that attack rather than the biggest number on the card');
+  return true;
+});
+
+T('a step is worth less than finishing the same attack', () => {
+  // Structural, and the guard against over-correcting: a share of a thing can
+  // never be worth more than the thing.
+  const far = board(ZAPDOS, [], 'base1-46');
+  attach(far, far.state.players[0].active, 'base1-100', 1);         // three short
+  const early = attachTo(far, far.state.players[0].active.uid, 'base1-100');
+  const near = board(ZAPDOS, [], 'base1-46');
+  attach(near, near.state.players[0].active, 'base1-100', 3);       // one short
+  const last = attachTo(near, near.state.players[0].active.uid, 'base1-100');
+  if (!(last > early)) throw new Error(`the last Energy must pay most: ${last.toFixed(1)} vs ${early.toFixed(1)}`);
+  return true;
+});
+
+T('and is discounted when the Pokemon will not live to fire it', () => {
+  // Trevor's own condition: it has to *realistically survive* until the move is
+  // powered up. Same board twice, one of them nearly dead.
+  // The attacker has to be one the healthy Zapdos actually outlasts. Against an
+  // Arcanine that one-shots it either way both sides read "one turn to live",
+  // the discount is identical, and the test proves nothing — which is how the
+  // first version of it failed.
+  const score = dmg => {
+    const E = board(ZAPDOS, [], 'base1-46');            // Charmander, Scratch 10
+    attach(E, E.state.players[1].active, 'base1-98', 1);
+    E.state.players[0].active.dmg = dmg;
+    attach(E, E.state.players[0].active, 'base1-100', 1);
+    return attachTo(E, E.state.players[0].active.uid, 'base1-100');
+  };
+  const healthy = score(0), dying = score(70);
+  if (!(healthy > dying)) throw new Error(`no discount applied: ${healthy.toFixed(1)} vs ${dying.toFixed(1)}`);
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

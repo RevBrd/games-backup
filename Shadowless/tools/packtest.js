@@ -306,6 +306,21 @@ head('Borrowed Energy and the cap');
   eq(b2.energy.length, 6, "base2 prints none, so it carries base1's six");
   check(b2.energy.every(id => DB[id].set === 'base1'), 'and they keep their base1 ids');
   check(b2.commonNoEnergy.every(id => !isEnergy(id)), 'the no-Energy Common pool has none in it');
+  // A borrowing set inherits the SOURCE's share, not the share its own array
+  // length happens to produce — six Energy among 14 Commons would otherwise be
+  // 30% of Jungle's slots against base1's 6-of-38.
+  const b1 = P.buildPools(DB, 'base1');
+  eq(b2.energyShare, b1.energyShare, 'a borrowing set draws Energy at the source set\'s rate');
+  // Shown against the REAL database, because the synthetic sets are the same
+  // size as each other and so cannot demonstrate the thing being prevented.
+  // Jungle has 16 Commons against Base Set's 32, which is where the gap lives.
+  const jungle = P.buildPools(CARD_DB, 'base2');
+  if (jungle.energy.length) {
+    const naive = jungle.energy.length / jungle.common.length;
+    check(jungle.energyShare < naive - 0.05,
+      'and in the real pools that is well under what array length would have given',
+      `${(jungle.energyShare * 100).toFixed(1)}% vs ${(naive * 100).toFixed(1)}%`);
+  }
 
   let wrongSize = 0, over = 0, baseShort = 0, strayNonEnergy = 0, everEnergy = 0;
   for (let i = 0; i < 3000; i++) {
