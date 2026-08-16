@@ -1,0 +1,240 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-16 04:31:25
+decks    you: New deck 2   opponent: Steve — Grand Master
+opponent expert
+seed     575031174   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Bill, PlusPower, Lightning Energy, Zapdos, Lightning Energy, Energy Retrieval, PlusPower
+  HIDDEN  your opening hand: Charmander, Dragonair, Fire Energy, Charmeleon, Fire Energy, Switch, Fire Energy
+  HIDDEN  opponent's Prizes: Zapdos, Lightning Energy, Lightning Energy, Switch, Lightning Energy, PlusPower
+  HIDDEN  your Prizes: Double Colorless Energy, Fire Energy, Full Heal, Professor Oak, Fire Energy, Bill
+          New game. Seed 575031174.
+          Coin flip (who goes first): HEADS
+          You will go first.
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (46 left)
+          You attaches Fire Energy to Charmander.
+          Charmander uses Scratch.
+          Zapdos takes 10. (70/80 left)
+
+--- Turn 2 — Steve -----------------------------
+          Steve draws a card. (46 left)
+  AI      attach   [15]
+          holding: Bill, PlusPower, Lightning Energy, Lightning Energy, Energy Retrieval, PlusPower, Lightning Energy
+          Steve attaches Lightning Energy to Zapdos.
+  AI      trainer   [10]
+          holding: Bill, PlusPower, Lightning Energy, Energy Retrieval, PlusPower, Lightning Energy
+          Steve plays Bill.
+          Steve draws 2.
+  AI      pass
+          holding: PlusPower, Lightning Energy, Energy Retrieval, PlusPower, Lightning Energy, Lightning Energy, Energy Retrieval
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (45 left)
+          You attaches Fire Energy to Charmander.
+          Charmander uses Scratch.
+          Zapdos takes 10. (60/80 left)
+
+--- Turn 4 — Steve -----------------------------
+          Steve draws a card. (43 left)
+  AI      bench   [26]
+          holding: PlusPower, Lightning Energy, Energy Retrieval, PlusPower, Lightning Energy, Lightning Energy, Energy Retrieval, Voltorb
+          passed over: attach 15, attach 15, attach 15
+          Steve benches Voltorb.
+  AI      attach   [18]
+          holding: PlusPower, Lightning Energy, Energy Retrieval, PlusPower, Lightning Energy, Lightning Energy, Energy Retrieval
+          passed over: attach 18, attach 18, attach 15, attach 15, attach 15
+          Steve attaches Lightning Energy to Voltorb.
+  AI      pass
+          holding: PlusPower, Energy Retrieval, PlusPower, Lightning Energy, Lightning Energy, Energy Retrieval
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (44 left)
+          Charmander evolves into Charmeleon. Special Conditions removed.
+          You attaches Fire Energy to Charmeleon.
+          Charmeleon uses Slash.
+          Zapdos takes 30. (30/80 left)
+
+--- Turn 6 — Steve -----------------------------
+          Steve draws a card. (42 left)
+  AI      attach   [15]
+          holding: PlusPower, Energy Retrieval, PlusPower, Lightning Energy, Lightning Energy, Energy Retrieval, Lightning Energy
+          passed over: attach 15, attach 15, attach -2, attach -2, attach -2
+          Steve attaches Lightning Energy to Zapdos.
+  AI      pass
+          holding: PlusPower, Energy Retrieval, PlusPower, Lightning Energy, Energy Retrieval, Lightning Energy
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (43 left)
+          You benches Dratini.
+          You attaches Fire Energy to Dratini.
+          Charmeleon uses Slash.
+          Zapdos takes 30. (0/80 left)
+          Zapdos is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [41]
+          holding: PlusPower, Energy Retrieval, PlusPower, Lightning Energy, Energy Retrieval, Lightning Energy
+          Steve promotes Voltorb to Active.
+
+--- Turn 8 — Steve -----------------------------
+          Steve draws a card. (41 left)
+  AI      trainer   [12]
+          holding: PlusPower, Energy Retrieval, PlusPower, Lightning Energy, Energy Retrieval, Lightning Energy, Bill
+          passed over: trainer 12, trainer 10, trainer 6, trainer 6, attach -2
+          Steve plays Energy Retrieval.
+          Energy Retrieval: recovered 2 basic Energy.
+  AI      trainer   [10]
+          holding: PlusPower, PlusPower, Energy Retrieval, Lightning Energy, Bill, Lightning Energy, Lightning Energy
+          passed over: trainer 6, trainer 6, trainer 6, attach -2, attach -2
+          Steve plays Bill.
+          Steve draws 2.
+  AI      trainer   [6]
+          holding: PlusPower, PlusPower, Energy Retrieval, Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy, Switch
+          passed over: trainer 6, trainer 6, attach -2, attach -2, attach -2
+          Steve plays PlusPower.
+          PlusPower attached to Voltorb (+10 this turn).
+  AI      trainer   [6]
+          holding: PlusPower, Energy Retrieval, Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy, Switch
+          passed over: trainer 6, attach -2, attach -2, attach -2, attach -2
+          Steve plays PlusPower.
+          PlusPower attached to Voltorb (+10 this turn).
+  AI      trainer   [6]
+          holding: Energy Retrieval, Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy, Switch
+          passed over: attach -2, attach -2, attach -2, attach -2
+          Steve plays Energy Retrieval.
+          Energy Retrieval: recovered 2 basic Energy.
+  AI      attack:Tackle   [30]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Switch, Lightning Energy, Lightning Energy
+          Voltorb uses Tackle.
+          +10 from a bonus -> 20.
+          +10 from a bonus -> 30.
+          Charmeleon takes 30. (50/80 left)
+          PlusPower is discarded.
+          PlusPower is discarded.
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (42 left)
+          You attaches Double Colorless Energy to Charmeleon.
+          Charmeleon uses Slash.
+          Voltorb takes 30. (10/40 left)
+
+--- Turn 10 — Steve -----------------------------
+          Steve draws a card. (38 left)
+  AI      bench   [26]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Switch, Lightning Energy, Lightning Energy, Zapdos
+          passed over: attach -2, attach -2, attach -2, attach -2, attach -2
+          Steve benches Zapdos.
+  AI      trainer   [24]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Switch, Lightning Energy, Lightning Energy
+          passed over: attach 12, attach 12, attach 12, attach 12, attach 12
+          Steve plays Switch.
+          Zapdos is now Active.
+  AI      attach   [15]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy
+          passed over: attach 15, attach 15, attach 15, attach 15, attach -2
+          Steve attaches Lightning Energy to Zapdos.
+  AI      pass
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (41 left)
+          You benches Charmander.
+          You attaches Fire Energy to Dratini.
+          Charmeleon uses Flamethrower.
+          Charmeleon discards 1 R Energy as a cost.
+          Zapdos takes 50. (30/80 left)
+
+--- Turn 12 — Steve -----------------------------
+          Steve draws a card. (37 left)
+  AI      attach   [15]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy
+          passed over: attach 15, attach 15, attach 15, attach 15, attach -2
+          Steve attaches Lightning Energy to Zapdos.
+  AI      retreat   [0.9]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy
+          Steve retreats Zapdos; Voltorb is now Active.
+  AI      attack:Tackle   [10]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy
+          Voltorb uses Tackle.
+          Charmeleon takes 10. (40/80 left)
+
+--- Turn 13 — You -------------------------------
+          You draws a card. (40 left)
+          You benches Magmar.
+          You plays Energy Removal.
+          Lightning Energy discarded from Voltorb.
+          Dratini evolves into Dragonair. Special Conditions removed.
+          Charmeleon uses Slash.
+          Voltorb takes 30. (0/40 left)
+          Voltorb is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [10.3]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy
+          Steve promotes Zapdos to Active.
+
+--- Turn 14 — Steve -----------------------------
+          Steve draws a card. (36 left)
+  AI      trainer   [19]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy, Potion
+          passed over: attach 15, attach 15, attach 15, attach 15
+          Steve plays Potion.
+          Zapdos heals 20. (30 damage left)
+  AI      attach   [15]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Lightning Energy
+          passed over: attach 15, attach 15, attach 15
+          Steve attaches Lightning Energy to Zapdos.
+  AI      pass
+          holding: Lightning Energy, Lightning Energy, Lightning Energy
+
+--- Turn 15 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Fire Energy to Dragonair.
+          Charmeleon uses Flamethrower.
+          Charmeleon discards 1 R Energy as a cost.
+          Zapdos takes 50. (0/80 left)
+          Zapdos is Knocked Out!
+          You takes a Prize. (3 left)
+          GAME OVER - You wins: Steve has no Pokemon left
+
+==========================================================
+RESULT   You wins — Steve has no Pokemon left
+         15 turns
+
+==========================================================
+PACKS OPENED
+
+  Fossil
+    Gastly  Uncommon   NEW
+    Graveler  Uncommon
+    Arbok  Uncommon
+    Krabby  Common
+    Psyduck  Common
+    Ekans  Common   NEW
+    Slowpoke  Common   NEW
+    Shellder  Common
+    Mysterious Fossil  Common
+    Gambler  Common   NEW
+    Zapdos  Rare   NEW
+    Water Energy     (stipend)
+    Psychic Energy     (stipend)
+
+  Fossil
+    Graveler  Uncommon
+    Cloyster  Uncommon   NEW
+    Seadra  Uncommon   NEW
+    Gambler  Common
+    Kabuto  Common
+    Grimer  Common
+    Zubat  Common
+    Tentacool  Common
+    Geodude  Common   NEW
+    Omanyte  Common   NEW
+    Raichu  Rare   NEW
+    Psychic Energy     (stipend)
+    Fighting Energy     (stipend)

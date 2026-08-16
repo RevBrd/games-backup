@@ -245,11 +245,11 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   Job 6's entry is worth ten minutes before planning the next set: it was split by *machinery* rather
   than by set, and the reason 126 printings were only **95 distinct behaviours** is the kind of count
   that decides how big a job actually is.
-- **Job 8** - Deck and progression shape. Not the exact card and opponent names, but an outline of what the placeholders will eventually be replaced with. **The spec is [OPPONENTS.md](OPPONENTS.md)**, written 15 Aug 2026; it is design and nothing in it is built.
-- **Job 9** - Major AI-related work, primarily drawn from Grab Bag items. Might run concurrently with Job 8.
+- **Job 8** - Deck and progression shape. Not the exact card and opponent names, but an outline of what the placeholders will eventually be replaced with. **The spec is [OPPONENTS.md](OPPONENTS.md)**, written 15 Aug 2026; it is design and nothing in it is built. Main Job is complete and with detail work still running.
+- **Job 9** - Major AI-related work, primarily drawn from Grab Bag items. Might run concurrently with Job 8. **First batch done 16 Aug:** three match-log gaps found while proving a report wrong, inert Energy attachments, the promote/Whirlwind/Switch decision unified, and the pack Energy stipend replaced by pool Energy under a cap. Accounts in [GRABHIST.md](GRABHIST.md); the AI half is in [AI.md](AI.md).
 - **Job 9.5** - Scheduled pre-new set maintenance and grab bag run.
 - **Job 10** - Rulings and additions for the Team Rocket set.
-- **Job 10.5** - Scheduled post-new set maintenance, plugging in it in, grab bag.
+- **Job 10.5** - Scheduled post-new set maintenance, plugging it in, grab bag.
 - **Job 11** - Deck autobuilder improvement pass.
 - **Job 12** - Rulings and additions for the Promo cards through the Team Rocket set.
 - **Job 12.5** - Scheduled pre-new set maintenance and grab bag run. Scheduling out future Job order.

@@ -20,7 +20,7 @@ while playing — and he says outright that anything urgent he would raise direc
 
 **Items appearing is a sign the project is being played, not that it is failing.** His words, and
 worth internalising before you read a list of twenty things that are wrong with something you just
-built. Every one crossed off came from someone enjoying it enough to keep going.
+built. Every one crossed off came from someone enjoying it enough to keep going. This can almost be considered alpha testing while the product is still being built. Bug and improvement runs are always needed and will flow in constantly until they don't, and as we're still building, they likely will for a while. It's to be expected. Your accomplishments here come from items crossed off and are not diminished by items added, because they will continue being added for a long time to come.
 
 **So pick what you want and leave the rest.** Taking two items well beats touching six. Nothing in
 the file expires.

@@ -235,7 +235,7 @@ choice rather than a toll. Also proposed and dropped on 15 Aug.
    Trevor's call, 15 Aug.
 2. **A set needs a flag saying whether it is ladder content, pack content, or both.**
    `buildLadder()` currently derives exactly one bracket per live set, and Southern Islands and the
-   promos are to be *sprinkled into packs* rather than laddered — Trevor, 15 Aug. Cheap now,
+   promos are to be *sprinkled into packs* rather than laddered — See [PACKS.md](PACKS.md) Cheap now,
    irritating once eleven sets are in.
 3. **The rival is loose on purpose** — not every bracket, tougher than T4, and hard to make so,
    because "mostly Colorless" is a deck constraint fighting a difficulty requirement. One exit that is

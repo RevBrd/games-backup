@@ -1,0 +1,336 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-16 04:22:45
+decks    you: New deck 2   opponent: Steve — Grand Master
+opponent expert
+seed     343639072   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Lightning Energy, Lightning Energy, Voltorb, Electabuzz, Lightning Energy, Switch, Lightning Energy
+  HIDDEN  your opening hand: Charmander, Dratini, Fire Energy, Arcanine, Bill, Charizard, Bill
+  HIDDEN  opponent's Prizes: Lightning Energy, Bill, Lightning Energy, Potion, Energy Retrieval, Potion
+  HIDDEN  your Prizes: Dratini, Poké Ball, Charmeleon, Double Colorless Energy, Fire Energy, Charmander
+          New game. Seed 343639072.
+          Coin flip (who goes first): TAILS
+          Steve will go first.
+
+--- Turn 1 — Steve -----------------------------
+          Steve draws a card. (46 left)
+  AI      attach   [25]
+          holding: Lightning Energy, Lightning Energy, Lightning Energy, Switch, Lightning Energy, Zapdos
+          Steve attaches Lightning Energy to Electabuzz.
+  AI      bench   [7]
+          holding: Lightning Energy, Lightning Energy, Switch, Lightning Energy, Zapdos
+          passed over: trainer -4
+          Steve benches Zapdos.
+  AI      attack:Thundershock   [23]
+          holding: Lightning Energy, Lightning Energy, Switch, Lightning Energy
+          Electabuzz uses Thundershock.
+          Dratini takes 10. (30/40 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (46 left)
+          You plays Bill.
+          You draws 2.
+          You plays Bill.
+          You draws 2.
+          You plays Energy Removal.
+          Lightning Energy discarded from Electabuzz.
+          You attaches Fire Energy to Dratini.
+          Dratini uses Pound.
+          Electabuzz takes 10. (60/70 left)
+
+--- Turn 3 — Steve -----------------------------
+          Steve draws a card. (45 left)
+  AI      attach   [25]
+          holding: Lightning Energy, Lightning Energy, Switch, Lightning Energy, Lightning Energy
+          passed over: attach 25, attach 25, attach 25, attach 18, attach 18
+          Steve attaches Lightning Energy to Electabuzz.
+  AI      attack:Thundershock   [23]
+          holding: Lightning Energy, Switch, Lightning Energy, Lightning Energy
+          Electabuzz uses Thundershock.
+          Dratini takes 10. (20/40 left)
+          Coin flip (Paralyzed?): HEADS
+          Dratini is now Paralyzed.
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (41 left)
+          You plays Energy Removal.
+          Lightning Energy discarded from Electabuzz.
+          You attaches Fire Energy to Charmander.
+          Dratini is no longer Paralyzed.
+
+--- Turn 5 — Steve -----------------------------
+          Steve draws a card. (44 left)
+  AI      attach   [25]
+          holding: Lightning Energy, Switch, Lightning Energy, Lightning Energy, PlusPower
+          passed over: attach 25, attach 25, attach 18, attach 18, attach 18
+          Steve attaches Lightning Energy to Electabuzz.
+  AI      trainer   [40]
+          holding: Switch, Lightning Energy, Lightning Energy, PlusPower
+          passed over: trainer -4
+          Steve plays PlusPower.
+          PlusPower attached to Electabuzz (+10 this turn).
+  AI      attack:Thundershock   [88]
+          holding: Switch, Lightning Energy, Lightning Energy
+          Electabuzz uses Thundershock.
+          +10 from a bonus -> 20.
+          Dratini takes 20. (0/40 left)
+          Coin flip (Paralyzed?): TAILS
+          Dratini is Knocked Out!
+          Steve takes a Prize. (5 left)
+          PlusPower is discarded.
+          You promotes Charmander to Active.
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (40 left)
+          You benches Growlithe.
+          You attaches Fire Energy to Growlithe.
+
+--- Turn 7 — Steve -----------------------------
+          Steve draws a card. (43 left)
+  AI      attach   [18.5]
+          holding: Switch, Lightning Energy, Lightning Energy, Lightning Energy, Eevee
+          passed over: attach 18.5, attach 18.5, attach 18, attach 18, attach 18
+          Steve attaches Lightning Energy to Electabuzz.
+  AI      bench   [7]
+          holding: Switch, Lightning Energy, Lightning Energy, Eevee
+          passed over: trainer -4, retreat -44.5, retreat -44.5
+          Steve benches Eevee.
+  AI      attack:Thunderpunch   [30.5]
+          holding: Switch, Lightning Energy, Lightning Energy
+          passed over: attack:Thundershock 23
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): HEADS
+          Heads -> 40 damage.
+          Charmander takes 40. (10/50 left)
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Fire Energy to Growlithe.
+
+--- Turn 9 — Steve -----------------------------
+          Steve draws a card. (42 left)
+  AI      attach   [18]
+          holding: Switch, Lightning Energy, Lightning Energy, Lightning Energy
+          passed over: attach 18, attach 18, attach 12, attach 12, attach 12
+          Steve attaches Lightning Energy to Voltorb.
+  AI      attack:Thundershock   [78]
+          holding: Switch, Lightning Energy, Lightning Energy
+          passed over: attack:Thunderpunch 60.5
+          Electabuzz uses Thundershock.
+          Charmander takes 10. (0/50 left)
+          Coin flip (Paralyzed?): HEADS
+          Charmander is now Paralyzed.
+          Charmander is Knocked Out!
+          Steve takes a Prize. (4 left)
+          You promotes Growlithe to Active.
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (38 left)
+          You attaches Double Colorless Energy to Growlithe.
+          Growlithe evolves into Arcanine. Special Conditions removed.
+          Arcanine uses Take Down.
+          Electabuzz takes 80. (0/70 left)
+          Arcanine does 30 damage to itself. (30 total)
+          Electabuzz is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [41]
+          holding: Switch, Lightning Energy, Lightning Energy, Bill
+          passed over: promote 31.3, promote 17.3
+          Steve promotes Voltorb to Active.
+
+--- Turn 11 — Steve -----------------------------
+          Steve draws a card. (41 left)
+  AI      trainer   [24]
+          holding: Switch, Lightning Energy, Lightning Energy, Bill, Eevee
+          passed over: attach 12, attach 12, trainer 10, attach 8, attach 8
+          Steve plays Switch.
+          Zapdos is now Active.
+  AI      attach   [15]
+          holding: Lightning Energy, Lightning Energy, Bill, Eevee
+          passed over: attach 15, trainer 10, attach 8, attach 8, bench 7
+          Steve attaches Lightning Energy to Zapdos.
+  AI      trainer   [10]
+          holding: Lightning Energy, Bill, Eevee
+          passed over: bench 7
+          Steve plays Bill.
+          Steve draws 2.
+  AI      bench   [7]
+          holding: Lightning Energy, Eevee, Zapdos, Lightning Energy
+          passed over: bench 7
+          Steve benches Eevee.
+  AI      bench   [2]
+          holding: Lightning Energy, Zapdos, Lightning Energy
+          Steve benches Zapdos.
+  AI      pass
+          holding: Lightning Energy, Lightning Energy
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (37 left)
+          You benches Dratini.
+          You attaches Fire Energy to Arcanine.
+          Arcanine uses Flamethrower.
+          Arcanine discards 1 R Energy as a cost.
+          Zapdos takes 50. (40/90 left)
+
+--- Turn 13 — Steve -----------------------------
+          Steve draws a card. (38 left)
+  AI      attach   [15]
+          holding: Lightning Energy, Lightning Energy, Electabuzz
+          passed over: attach 15, attach 12, attach 12, attach 8, attach 8
+          Steve attaches Lightning Energy to Zapdos.
+  AI      bench   [2]
+          holding: Lightning Energy, Electabuzz
+          Steve benches Electabuzz.
+  AI      pass
+          holding: Lightning Energy
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Fire Energy to Arcanine.
+          Arcanine uses Flamethrower.
+          Arcanine discards 1 R Energy as a cost.
+          Zapdos takes 50. (0/90 left)
+          Zapdos is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [41]
+          holding: Lightning Energy
+          passed over: promote 27.8, promote 24.3, promote 17.3, promote 17.3
+          Steve promotes Voltorb to Active.
+
+--- Turn 15 — Steve -----------------------------
+          Steve draws a card. (37 left)
+  AI      trainer   [24]
+          holding: Lightning Energy, Switch
+          passed over: attach 22, attach 12, attach 8, attach 8, attach -2
+          Steve plays Switch.
+          Zapdos is now Active.
+  AI      attach   [22]
+          holding: Lightning Energy
+          passed over: attach 15, attach 8, attach 8, attach -2
+          Steve attaches Lightning Energy to Electabuzz.
+  AI      pass
+          holding: (empty)
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (35 left)
+          Arcanine uses Take Down.
+          Zapdos takes 80. (0/80 left)
+          Arcanine does 30 damage to itself. (60 total)
+          Zapdos is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [51.5]
+          holding: (empty)
+          passed over: promote 41, promote 17.3, promote 17.3
+          Steve promotes Electabuzz to Active.
+
+--- Turn 17 — Steve -----------------------------
+          Steve draws a card. (36 left)
+  AI      attach   [18.5]
+          holding: Lightning Energy
+          passed over: attach 8, attach 8, attach -2
+          Steve attaches Lightning Energy to Electabuzz.
+  AI      attack:Thunderpunch   [58.1]
+          holding: (empty)
+          passed over: attack:Thundershock 23
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): HEADS
+          Heads -> 40 damage.
+          Arcanine takes 40. (0/100 left)
+          Arcanine is Knocked Out!
+          Steve takes a Prize. (3 left)
+          You promotes Dratini to Active.
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (34 left)
+          You plays Bill.
+          You draws 2.
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): HEADS
+          Poke Ball: found Charmeleon.
+          You attaches Fire Energy to Dratini.
+          Dratini uses Pound.
+          Electabuzz takes 10. (60/70 left)
+
+--- Turn 19 — Steve -----------------------------
+          Steve draws a card. (35 left)
+  AI      attach   [8]
+          holding: Lightning Energy, Zapdos
+          passed over: attach 8, bench 2, attach -2, attach -2, retreat -31
+          Steve attaches Lightning Energy to Eevee.
+  AI      bench   [2]
+          holding: Zapdos
+          passed over: retreat -31, retreat -36.5, retreat -44.5
+          Steve benches Zapdos.
+  AI      attack:Thunderpunch   [150.5]
+          holding: (empty)
+          passed over: attack:Thundershock 23
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): TAILS
+          Tails -> 30 damage, and Electabuzz will take 10.
+          Dratini takes 30. (10/40 left)
+          Electabuzz does 10 damage to itself. (20 total)
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (30 left)
+          You attaches Double Colorless Energy to Dratini.
+          You plays Super Potion.
+          Dratini discards Energy and heals 30.
+          You plays Defender.
+          Defender attached to Dratini (-20 damage until the end of the opponent's next turn).
+          Dratini uses Pound.
+          Electabuzz takes 10. (40/70 left)
+
+--- Turn 21 — Steve -----------------------------
+          Steve draws a card. (34 left)
+  AI      trainer   [10.5]
+          holding: Gambler
+          passed over: retreat -25.5, retreat -25.5, retreat -33.5, retreat -33.5
+          Steve plays Gambler.
+          Coin flip (Gambler pays off?): TAILS
+          Gambler: 0 shuffled away, tails, 1 drawn.
+  AI      attach   [14.5]
+          holding: Lightning Energy
+          passed over: attach 12, attach 8, attach -2, attach -2, retreat -25.5
+          Steve attaches Lightning Energy to Eevee.
+  AI      attack:Thundershock   [13]
+          holding: (empty)
+          passed over: attack:Thunderpunch 9.9
+          Electabuzz uses Thundershock.
+          -20 from Defender -> 0.
+          Coin flip (Paralyzed?): TAILS
+          Defender is discarded.
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (29 left)
+          You attaches Fire Energy to Dratini.
+          Dratini uses Pound.
+          Electabuzz takes 10. (30/70 left)
+
+--- Turn 23 — Steve -----------------------------
+          Steve draws a card. (32 left)
+  AI      trainer   [40]
+          holding: PlusPower
+          passed over: retreat -31, retreat -31, retreat -44.5, retreat -44.5
+          Steve plays PlusPower.
+          PlusPower attached to Electabuzz (+10 this turn).
+  AI      attack:Thunderpunch — this Knock Out leaves them with no Pokemon   [240]
+          holding: (empty)
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): TAILS
+          Tails -> 30 damage, and Electabuzz will take 10.
+          +10 from a bonus -> 40.
+          Dratini takes 40. (0/40 left)
+          Electabuzz does 10 damage to itself. (50 total)
+          Dratini is Knocked Out!
+          Steve takes a Prize. (2 left)
+          GAME OVER - Steve wins: You has no Pokemon left
+
+==========================================================
+RESULT   Opponent wins — You has no Pokemon left
+         23 turns
