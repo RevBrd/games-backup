@@ -400,12 +400,15 @@ class AI {
     // for anything that flips a coin — an attack that does 0 or 80 against 40 HP
     // averages 40 raw and 20 useful, and the mean of the capped values is the
     // one that is true.
-    let expDmg = 0, expUseful = 0, pLethal = 0;
+    let expDmg = 0, expUseful = 0, pLethal = 0, pStopped = 0;
     for (const o of raw.outcomes) {
       const r = E.computeDamage(atkSlot, defSlot, o.dmg, { noWR: !!raw.flags.flat });
       expDmg += o.p * r.dmg;
       expUseful += o.p * Math.min(r.dmg, hpLeft);
       if (r.dmg >= hpLeft) pLethal += o.p;
+      // How often the DEFENDER stops it outright, which as of 16 Aug 2026 is
+      // also how often the attack's recoil is waived. Same test the engine uses.
+      if (r.prevented || (o.dmg > 0 && r.dmg === 0)) pStopped += o.p;
     }
     // Kabuto Armor and Invisible Wall need nothing here — they live inside
     // computeDamage, which is the whole reason the bot can never predict a
@@ -414,14 +417,17 @@ class AI {
     // Haunter's Transparency does, because its coin is deliberately NOT in
     // computeDamage (that function is pure). Half the time the attack does
     // nothing at all, so halve both the damage and the odds of the Knock Out.
-    if (E.activePower(defSlot, 'FLIP_TO_NEGATE')) { expDmg *= 0.5; expUseful *= 0.5; pLethal *= 0.5; }
+    if (E.activePower(defSlot, 'FLIP_TO_NEGATE')) {
+      expDmg *= 0.5; expUseful *= 0.5; pLethal *= 0.5;
+      pStopped += 0.5 * (1 - pStopped);        // the coin stops it half the time on top
+    }
 
     const blocked = E.effectsBlocked(defSlot);
     // Snorlax cannot be given a CONDITION — but it can still be Smokescreened,
     // dragged, and stripped of Energy, so this is its own flag rather than
     // reusing `blocked`, which suppresses all of those too.
     const statusProof = !!E.activePower(defSlot, 'STATUS_IMMUNE');
-    return { expDmg, expUseful, pLethal, hpLeft, blocked, statusProof, ...raw };
+    return { expDmg, expUseful, pLethal, pStopped, hpLeft, blocked, statusProof, ...raw };
   }
 
   // ------------------------------------------------------------ attack score
@@ -499,10 +505,18 @@ class AI {
     // is exactly `selfKO`, which is what a lethal recoil always cost. Every
     // decision the old rule got right is unchanged; only the slope below it is
     // new.
-    if (f.selfDmg > 0) {
-      s -= f.selfDmg * W.selfDamage;
+    //
+    // RECOIL IS WAIVED WHEN THE DEFENDER STOPS THE DAMAGE — 16 Aug 2026, settled
+    // with Trevor and implemented in the engine. The bot has to know, or it goes
+    // on refusing Take Down into a Scrunched Chansey for a cost it will not pay.
+    // Charged at the odds the recoil actually lands rather than as an on/off
+    // switch, because Transparency is a coin and this must not become the fifth
+    // flat-with-a-cliff in this file.
+    const recoil = f.selfDmg * (1 - (f.pStopped || 0));
+    if (recoil > 0) {
+      s -= recoil * W.selfDamage;
       const left = Math.max(1, this.remainingHP(atkSlot));
-      const frac = Math.min(1, f.selfDmg / left);
+      const frac = Math.min(1, recoil / left);
       s -= W.selfKO * frac * frac;
     }
     if (f.energyCost > 0) s -= f.energyCost * W.energyDiscard;
@@ -614,6 +628,28 @@ class AI {
 
     // don't burn a once-per-stay attack on a whiff-heavy turn for nothing
     if (f.flags.oncePerStay && f.expDmg <= 0 && !Object.keys(f.statuses).length) s -= 10;
+
+    // ATTACKING WHILE CONFUSED IS A COIN FLIP THE BOT COULD NOT SEE — 16 Aug
+    // 2026, from Trevor watching a Confused Kangaskhan use Fetch on three
+    // separate turns to draw one card, and hit itself for 30 doing it.
+    //
+    // Nothing in this scorer knew Confusion existed. The retreat rule learned it
+    // on 13 Aug and the attack path never did, which is the same omission twice
+    // in the same engine — worth a look at any other decision that reads
+    // `status` for one branch and not the others.
+    //
+    // Half the time the whole attack simply does not happen AND the attacker
+    // takes 30, so the honest value is half of what it is worth against half of
+    // what it costs. That is why it lands on Fetch and not on a real attack: a
+    // 5-point draw goes deeply negative and the bot passes instead, while a
+    // 60-point swing halves to 30 and is still plainly worth taking. Trevor's
+    // note is exactly that — "it risks damage for little reward".
+    if (atkSlot.status.confused) {
+      const left = Math.max(1, this.remainingHP(atkSlot));
+      const frac = Math.min(1, 30 / left);
+      const tails = -(30 * W.selfDamage) - W.selfKO * frac * frac;
+      s = 0.5 * s + 0.5 * tails;
+    }
 
     return s;
   }

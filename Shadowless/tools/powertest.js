@@ -2517,6 +2517,116 @@ T('Switch brings in whoever promoting would have chosen', () => {
 // from "a slot that was here is gone", which is equally true of Scoop Up, Mr.
 // Fuji and Hurricane. The engine records the real thing per action now.
 // ===========================================================================
+// ===========================================================================
+// PREVENTED DAMAGE WAIVES THE RECOIL  (16 Aug 2026, settled with Trevor)
+// Take Down into a Scrunched Chansey was hurting Arcanine for 30 and achieving
+// nothing. It is how the Game Boy game and Pocket both play it, and the balance
+// reasoning is to reverse the viewpoint: preventing the hit is already the whole
+// reward for standing there.
+//
+// SCOPE: damage and defender-side consequences only. Self-inflicted status is
+// the attacker's own coin and still applies — that boundary is asserted below,
+// because it is the part a later session would most easily widen by accident.
+// ===========================================================================
+console.log('\nPrevented damage and recoil');
+
+// Arcanine's Take Down (idx 1): 80 damage, 30 to itself.
+function takeDownInto(shield) {
+  const E = board('base1-23', [], 'base1-3');            // Arcanine vs Chansey
+  attach(E, E.state.players[0].active, 'base1-98', 4);
+  if (shield) E.state.players[1].active.effects.push({ kind: 'PREVENT_ALL_DAMAGE' });
+  E.act(0, { t: 'attack', idx: 1 });
+  return E.state.players[0].active.dmg;
+}
+
+T('Arcanine still takes its recoil when the hit lands', () => {
+  eq(takeDownInto(false), 30, 'recoil on a normal hit');
+  return true;
+});
+
+T('...and takes none when the damage was prevented', () => {
+  eq(takeDownInto(true), 0, 'recoil against a prevented hit');
+  return true;
+});
+
+T('a defender-side punish does not fire either', () => {
+  // Already true before this change, because retaliate() sits inside the
+  // damage-landed branch — asserted so it stays true.
+  const E = board('base1-58', [], 'base1-8');            // Pikachu into Machamp
+  attach(E, E.state.players[0].active, 'base1-100', 2);
+  E.state.players[1].active.effects.push({ kind: 'PREVENT_ALL_DAMAGE' });
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(E.state.players[0].active.dmg, 0, 'Strikes Back on a prevented hit');
+  return true;
+});
+
+T('SELF-INFLICTED status still applies — the boundary of the rule', () => {
+  // Trevor's call: Tauros confusing itself is the attacker's own coin, not
+  // anything the defender did, so prevention has no claim on it. Rampage is
+  // idx 1 and confuses Tauros on tails.
+  // Both coin outcomes are forced rather than sampled, so the assertion cannot
+  // depend on a seed: one of the two must confuse Tauros, prevented or not.
+  let sawSelfStatus = false;
+  for (const r of [0, 0.99]) {
+    const E = board('base2-47', [], 'base1-3');          // Tauros vs Chansey
+    E.rand = () => r;
+    attach(E, E.state.players[0].active, 'base1-99', 4);
+    E.state.players[1].active.effects.push({ kind: 'PREVENT_ALL_DAMAGE' });
+    E.act(0, { t: 'attack', idx: 1 });                   // Rampage
+    eq(E.state.players[1].active.dmg, 0, 'the damage really was prevented');
+    if (E.state.players[0].active.status.confused) sawSelfStatus = true;
+  }
+  if (!sawSelfStatus) throw new Error('prevention swallowed the self-confusion too');
+  return true;
+});
+
+T('the AI stops paying for recoil it will not take', () => {
+  const score = shield => {
+    const E = board('base1-23', [], 'base1-3');
+    attach(E, E.state.players[0].active, 'base1-98', 4);
+    if (shield) E.state.players[1].active.effects.push({ kind: 'PREVENT_ALL_DAMAGE' });
+    return new AI(E, { mode: 'expert' }).scoreAttack(0, 1);
+  };
+  // Against a shield both attacks do nothing, so what is being asserted is that
+  // Take Down is no longer additionally punished for a cost it will not pay.
+  const plain = score(false), shielded = score(true);
+  if (!(shielded > plain - 80)) throw new Error(
+    `recoil still charged behind a shield: ${shielded.toFixed(1)} vs ${plain.toFixed(1)}`);
+  return true;
+});
+
+// ===========================================================================
+// ATTACKING WHILE CONFUSED  (16 Aug 2026)
+// From Trevor's log 06-13-50: a Confused Kangaskhan used Fetch on turns 32, 34
+// and 36 to draw one card, and hit itself for 30 doing it. Nothing in the
+// scorer knew Confusion existed — the retreat rule learned it on 13 Aug and the
+// attack path never did.
+// ===========================================================================
+console.log('\nAttacking while Confused');
+
+const confusedScore = (cardId, idx, confused) => {
+  const E = board(cardId, [], 'base1-3');
+  attach(E, E.state.players[0].active, 'base1-99', 4);
+  E.state.players[0].active.status.confused = confused;
+  return new AI(E, { mode: 'expert' }).scoreAttack(0, idx);
+};
+
+T("Kangaskhan's Fetch goes negative when Confused, so the bot passes", () => {
+  const sane = confusedScore('base2-5', 0, false);
+  const dizzy = confusedScore('base2-5', 0, true);
+  if (!(sane > 0)) throw new Error(`Fetch should be worth taking normally: ${sane.toFixed(1)}`);
+  if (!(dizzy < 0)) throw new Error(`Fetch is still worth taking Confused: ${dizzy.toFixed(1)}`);
+  return true;
+});
+
+T('...but a real attack is still worth the coin', () => {
+  // The rule has to bite on a 5-point draw and not on a 60-point swing, or it is
+  // just "never attack while Confused", which is worse play than the bug.
+  const dizzy = confusedScore('base2-5', 1, true);       // Comet Punch
+  if (!(dizzy > 0)) throw new Error(`over-corrected — real attacks refused too: ${dizzy.toFixed(1)}`);
+  return true;
+});
+
 console.log('\nWhat counts as a Knock Out');
 
 T('a Knock Out is recorded on the action that caused it', () => {

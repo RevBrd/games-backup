@@ -2278,7 +2278,33 @@ class Engine {
     const flat = script.some(v => v.v === 'NO_WR');
     const res = negated ? { dealt: 0, prevented: true }
       : this.dealDamage(atk, def, base, { noWR: flat });
-    if (pendingRecoil > 0) {
+
+    // RECOIL DOES NOT APPLY WHEN THE DEFENDER STOPPED THE DAMAGE — 16 Aug 2026,
+    // settled with Trevor. Take Down into Chansey's Scrunch was hurting Arcanine
+    // for 30 while achieving nothing.
+    //
+    // The printed text reads the other way and I argued for that: Scrunch
+    // prevents damage done to CHANSEY, and Take Down's 30 is damage Arcanine
+    // does to ITSELF, so they look like separate things. Trevor's answer is both
+    // the arbiter and the better argument — it is how the Game Boy game plays it
+    // and how Pocket plays it, and the balance reasoning is to reverse the
+    // viewpoint: preventing the damage is already the whole reward for standing
+    // there, and handing the preventer a free 30 on top swings it too far.
+    //
+    // SCOPE, and this is the part to read before widening it. It covers damage
+    // and DEFENDER-SIDE consequences only. Self-inflicted status — Tauros
+    // confusing itself on tails — still applies, because that is the attacker's
+    // own coin rather than anything the defender did. The defender-side half was
+    // already right by accident: `retaliate()` sits inside `if (r.dmg > 0)`, so
+    // a Strikes Back never fired on a prevented hit.
+    //
+    // Keyed on the DEFENDER having stopped it, not on "the number came out 0".
+    // A whiffed coin flip is the attacker's own bad luck and pays its recoil.
+    const stopped = res.prevented || (base > 0 && res.dealt === 0);
+    if (stopped && (pendingRecoil > 0 || script.some(v => v.v === 'RECOIL' || v.v === 'RECOIL_ON_FLIP'))) {
+      this.log(`${this.nameOf(def)} took no damage, so ${card.name} takes no recoil.`, 'eff');
+    }
+    if (pendingRecoil > 0 && !stopped) {
       atk.dmg += pendingRecoil;
       this.log(`${card.name} does ${pendingRecoil} damage to itself. (${atk.dmg} total)`, 'eff');
     }
@@ -2381,6 +2407,9 @@ class Engine {
           this.log(`${card.name} seals a Destiny Bond - whatever Knocks it out next turn goes down with it.`, 'eff');
           break;
         case 'RECOIL_ON_FLIP':
+          // The flip is skipped entirely rather than rolled and discarded: it is
+          // announced to the player, and a coin nobody is bound by is noise.
+          if (stopped) break;
           if (!this.flip(v.label || 'avoid recoil?')) {
             atk.dmg += v.n;
             this.log(`${card.name} does ${v.n} damage to itself. (${atk.dmg} total)`, 'eff');
@@ -2405,6 +2434,7 @@ class Engine {
           break;
         }
         case 'RECOIL':
+          if (stopped) break;
           atk.dmg += v.n;
           this.log(`${card.name} does ${v.n} damage to itself. (${atk.dmg} total)`, 'eff'); break;
         case 'HEAL_SELF_ALL':
