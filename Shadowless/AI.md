@@ -213,14 +213,78 @@ Worth suspecting on sight.
 the *rescue*, so a wall is not yet preferred when **promoting** off the Bench, and `potential()`
 still prices a benched Pokémon in printed damage.
 
+## Inert Energy, and an attachment that could never make anything bigger
+
+**16 Aug 2026, from Trevor's note that the bot attaches Energy its Pokémon cannot use "when no other
+options exist."** True, and **9% of every attachment it made** — three times the surplus fault Job 6
+fixed. Surplus caught *"the target needed nothing"*; this is *"the target needed something else"*, a
+Grass onto a cost of F, which leaves the slot exactly as short as it was and strands the card where
+it can never be spent.
+
+**The rule was the easy half. The exception was the whole job.** Widening the test to "no progress on
+either axis" moved 218 inert attachments to 190, which is nothing. Deleting the escape-route
+exception entirely took it to **zero** — every one of them was being waved through on *"but it could
+pay for a retreat"*, since retreat counts Energy cards rather than symbols. Only the Active can be
+made to retreat, and a benched Pokémon's retreat cost is a bill it is not handed until it is Active,
+by which time the Energy can be attached to a slot that actually wants it. One slot wide: **9% → 3%**,
+and the 3% left is the exception working.
+
+*Generalisable: when a rule already has a carve-out, measure the carve-out before you widen the rule.*
+
+**And a real bug fell out of a test written for something else.** `potential()` counted the
+hypothetical Energy against attack *costs* only and never put it on the slot, so
+`scoreAttackHypothetical` worked the damage out with the card absent. The consequence is bigger than
+it sounds: **no attack in the game could ever be known to get bigger from an attachment.** Every
+`DMG_PER_SPARE_ENERGY` card is one — Blastoise's Hydro Pump, Poliwrath, both Vaporeon, Lapras,
+Omastar, Seadra — and a paid-up Blastoise scored a fourth Water exactly as it scored the third, so
+the surplus rule held the card and Hydro Pump never grew. Rain Dance escaped by luck: `EXTRA_ATTACH`
+goes straight to `attachValue` and never meets that rule.
+
+Flat in a duel, as this whole family is (50.6% ± 1.4 on `--gbc`, control 50.0%). Seven assertions in
+`powertest.js`, one of which asserts the **Active/Bench split as it stands** so that whoever closes
+Open #1 below trips over a named case instead of a paragraph.
+
+## Who gets sent up
+
+**16 Aug 2026, from log `04-22-45`.** After a Knock Out the bot promoted a 40 HP Voltorb over a 90 HP
+Zapdos, into an Arcanine that had just dealt 80 — and spent a Switch on its next turn undoing it.
+
+**Both decisions were correct on their own scorer, and that is the fault.** Promoting, being
+Whirlwinded up and choosing a Switch target were three nearly-identical formulas with no obligation
+to agree, so a promotion the next turn reverses cost a card, a turn, and the player's belief that the
+opponent knows what it is doing. They are one `promoteValue` now, and it knows two things none of the
+three did.
+
+**Readiness is a countdown, not a switch.** `short === 0 ? 25 : 0` charged the same nothing for one
+Energy short as for four, so *"which of these can fight soonest"* was unaskable — which is Trevor's
+separate promotion note, from a different game. `promoteReady / (1 + min(short, 4))`: 25 ready, 12.5
+one away, 5 at four or more. **Fourth time in this file that a quantity which should fall away with
+distance from an edge turned out to be written flat with a cliff at the end.** `retreatPrize`'s
+divisor, `selftest`'s threshold, Arcanine's recoil, and now this. Suspect it on sight.
+
+**Surviving the turn, priced with the retreat rule's own arithmetic**, because it is the same bill
+read from the other side: the Energy invested dies with the Pokémon, and the Prize is the larger half
+and scales with how few they still need. Reusing it is the point — one formula cannot disagree with
+itself. `threatAgainst(pi, slot)` is the new half, asking what the opponent would hit a *candidate*
+for; `incomingThreat` is now a call to it. The **sacrificial promote survives for free**: a bare Basic
+has nothing invested, so feeding it stays cheap without a rule saying so.
+
+The old scores rebuild from the log exactly — 41 / 31.3 / 17.3 — and the choice flips to Zapdos.
+**Promotions into a hit that kills them: 32% → 21%** over 511, counted by `aitest.js`. Flat in a duel
+(49.4% ± 1.4), four assertions in `powertest.js` including one that pins Switch and promote to the
+same ranking.
+
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
-   damage while an Active gets full expected value, and stickiness only suppresses the *rescue*, so a
-   wall is not preferred when **promoting**. Both are the same refactor — making expected value
-   computable for a slot that is not Active — and it is still not obviously worth it. The measured
-   size is in *The Active and the Bench are scored in different units* above. **If you take it on,
-   duel it, and read the tail rather than the mean.**
+   damage while an Active gets full expected value. It is still not obviously worth the refactor; the
+   measured size is in *The Active and the Bench are scored in different units* above. **If you take
+   it on, duel it, and read the tail rather than the mean** — and there is a named case waiting for
+   you now rather than a paragraph: `powertest.js` asserts that a benched Poliwag is refused a second
+   Water because `aiParseDamage` reads Water Gun's "10+" as 10. That test is written to **fail when
+   you fix this**, and its comment says to delete it.
+   *(The promotion half of this entry is closed — a wall is preferred when promoting now, on
+   survival rather than on stickiness. See "Who gets sent up" above.)*
 2. **Nothing has re-tuned the weights as a set.** Every AI change since 13 Aug has been one term at a
    time, each with a reason and a measurement. A sweep over `AI_WEIGHTS` as a whole has never been
    done and there is no measured reason to think it would pay — recorded so nobody proposes it as a

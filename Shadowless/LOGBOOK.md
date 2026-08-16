@@ -261,3 +261,60 @@ deleted. A pointer is not optional decoration on a preserved artifact; it is the
   sitting in `RULINGS.md` already — the retreat-cost entry was logged as settled from the Game Boy
   game, he pushed back on the citation, and it now stands on his reasoning instead. Corrected by the
   person the mark names. The full statement is in that file's header, where the marker is defined.
+
+## #16 — Opus 5, 16 Aug 2026 (Job 9, first batch)
+
+Four items and one wrong report, and the wrong report was the most productive thing in the session.
+
+**Chase the report all the way down before you believe your own diagnosis of it.** Trevor's note said
+the opponent declined to attack. It hadn't — Farfetch'd had spent Leek Slap, which is
+once-while-in-play, and Trevor said so himself the moment I told him. But between reading the note
+and knowing that, I went a long way down a wrong road: I counted the `passed over` lines in the log,
+concluded the opponent had a fifth Pokémon nobody had put into play, and built two scratch scripts
+hunting an engine bug that duplicated a slot. Gust of Wind was clean. Knock Outs were clean. The
+answer was that `setupAuto` benches every Basic in the opening hand and **logs none of it**, so the
+board I was reconstructing had been wrong since before turn 1.
+
+That hour is the reason three of my five changes are to the instrument rather than the game, and I
+would spend it again. The log now records the opening board, a pass says why it did not attack, and
+`nameOf` puts a letter on duplicates so *"attaches Water Energy to Squirtle"* can be resolved when
+there are two of them. All three were invisible until somebody needed them, and all three were
+needed by the first question anyone asked.
+
+**The pass one is the one to steal.** Every other decision in this AI prints its runners-up; the pass
+printed nothing, because it is the bare action off `legalActions` and never goes through `pickBest`.
+So the file could not distinguish *"every attack scored zero or less"* from *"there was no legal
+attack"* — and the engine already knew the second, in plain English, in `canUseAttack().why`, and
+was throwing the string away. Look for that shape: a code path that skips the place where the
+explaining happens.
+
+**On the AI work, the thing I nearly got wrong.** The inert-Energy rule looked done when I widened
+it — 218 bad attachments to 190. That is nothing, and I could easily have written it up as a fix. The
+whole effect was in an **exception** the old rule already had: *"unless it could pay for a retreat"*,
+which was true of practically everything. Narrowing the exception to the Active (the only Pokémon
+that can be made to retreat) took it to 3%. **When a rule already has a carve-out, measure the
+carve-out before you widen the rule.**
+
+And a bug I did not go looking for. A test I wrote to prove I had *not* broken spare-Energy scaling
+failed, and the reason was that `potential()` never put the hypothetical Energy on the slot — only
+into a cost pool — so `scoreAttack` worked the damage out with the card absent. No attack in the
+game could be known to get bigger from an attachment. Hydro Pump has never grown. *Write the test for
+the case you think still works.*
+
+**The cliff, for the fourth time.** `AI.md` already noted three quantities that should fall away with
+distance from an edge and were written flat with a cliff at the end. Promotion's `short === 0 ? 25 : 0`
+is the fourth, and Trevor had independently reported the symptom ("consider the number of turns
+needed to power it up") without seeing the code. It is now a documented sniff test and I think it
+will keep paying: if a term is about *proximity* and it is written as an equality check, look again.
+
+**What I would tell #17.** The one I left is the interesting one. Trevor thinks the bot should have
+fed Zapdos instead of Voltorb, and he is right, and it is not a weight — completing a cheap attack
+pays for the whole attack while advancing an expensive one pays a flat per-step amount regardless of
+what is at the end of it. Fixing that means deciding how much a step toward a 60 is worth against
+finishing a 10, which is a design question rather than a bug, and he asked to discuss it. It is
+sitting in `GRABBAG.md` with the numbers.
+
+Also: he plays while you work. Items arrived mid-session and two of them were things I was already
+inside. That is a feature — the freshest ones came with logs.
+
+— Shadowless 16

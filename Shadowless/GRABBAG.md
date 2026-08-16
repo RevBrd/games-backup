@@ -21,19 +21,30 @@ still open, so it stays with its reason and with what evidence would revive it.
   Asleep and Paralyzed, asserted two ways in `powertest.js`. Either this predates a fix or it was
   something else. **Revive it with a log showing a paralyzed Pokémon leaving the Active spot.** →
   [GRABHIST](GRABHIST.md)
-* Cap energy drops at 2 per pack, even in base1
 * Booster pack selection screen (medium item)
 * Verify 1st Edition pack drop odds with simulation
-* AI is still attaching invalid energies to its pokemon when no other options exist. Maybe due to planning for future evolutions. We should consider changing even if so.
-* Opponent declined to attack - log# 22-12-05
-* Opponent avoids powering up Arcanine because my Mewtwo's Psychic builds damage based on opp energy
+* Opponent avoids powering up Arcanine because my Mewtwo's Psychic builds damage based on opp energy — **PARKED 16 Aug**, Trevor's call, no log survived. Worth knowing for
+  whoever revives it: there is no path by which the opponent's attack text reaches
+  the bot's own attachment decision, so it cannot have been doing it for that
+  reason. **Revive it with a log.** → [GRABHIST](GRABHIST.md)
 * Opponent uses Gust of Wind to drag out a pokemon already in the active spot — **diagnosed, not
   taken.** It is not what it looks like: Gust picks a *bench* index and cannot target the Active at
   all. What happened in log 22-29-31 is two Gusts in one turn undoing each other. Almost certainly
   not Gust-specific. → [GRABHIST](GRABHIST.md)
-* Opponent should better calculate when to promote a pokemon from the bench, considering number of turns needed to power it up.
-- The two free energies after base1 is proving too much. I would rather ditch them and include base1 energies in the card pool for subsequent sets but with their own card numbers.
 - Check if variant cards are displaying in game. Ideally the sigil cards should show their markings.
+- Visually display Double Colorless Energy as two energy dots even though the game treats it as just one energy card in terms of discarding. The visuals in this case should reflect energy provided instead for legibility to the player.
+- Add to the logic something about when to use Professor Oak and Gambler and when not to. Might be worth discussion first.
+- It's my opinion that the CPU should have powered up Zapdos instead of Voltorb on turn 4. Worth discussing if not obvious. Just don't judge my own blunder on Turn 9. - log# 04-31-25.
+  **Diagnosed 16 Aug, not taken — it wants the discussion you asked for.** Voltorb
+  scored 18 and Zapdos 15, and the reason is structural rather than a bad weight:
+  finishing a cheap attack pays `attachEnable` for the whole thing, while
+  advancing an expensive one pays a FLAT `attachBuild` per step no matter what is
+  being built toward. So one Lightning completing Voltorb's 10-damage Tackle beats
+  one of four Lightning on the way to Zapdos, forever. The fix is a real design
+  call — how much should a step toward a 60 beat completing a 10? — which is why
+  it is sitting here rather than done. → [GRABHIST](GRABHIST.md)
+- A way to cancel using a potion or other item after it's been selected but before its target has been chosen.
+- Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
 
 
 

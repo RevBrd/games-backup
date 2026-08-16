@@ -65,26 +65,37 @@ indefinitely.
 **Pack shape is constant: 1 Rare + 3 Uncommon + 7 Common-tier = 11.** Energy is a Common-tier card
 inside that 7-slot bucket rather than a separate slot, which is what the sets actually did.
 
-**Base, Jungle and Fossil guarantee ≥2 basic Energy per pack** (`ENERGY_GRANT`) — early game the
-player is starved for Energy building a first deck, and this reproduces that pressure on purpose.
-From the fourth set on there is no guarantee, so Energy goes scarce exactly when a stocked player
-stops needing it. (That fourth set is **Base Set 2**, `base4`; this line said "from Team Rocket on"
-while the codes were the wrong way round.)
+**A floor and a cap, and they are different things** — `ENERGY_FLOOR` and `ENERGY_CAP`, rebuilt
+16 Aug 2026 from two of Trevor's playtest notes. The floor is a per-set guarantee and **only base1
+has one**: early game the player is starved for Energy building a first deck and this reproduces that
+pressure on purpose. The cap is **two, everywhere**, and it is the actual fix.
 
-**Jungle and Fossil print no basic Energy at all**, so for them the guarantee is delivered as a
-**stipend beside the pack** rather than as a floor inside it. `ENERGY_GRANT` is one number per set
-and `openPack()` picks the mechanism: a set that prints Energy is floored, a set that prints none is
-stipended from whichever set does print it. The pack itself stays eleven cards of its own set.
+**A set that prints no basic Energy borrows base1's, into its Common pool, under base1's own ids.**
+Jungle and Fossil print none at all. The Energy is drawn like any other Common and **never counts
+toward the set it fell out of**, so the dex, the set-completion counters and the numbering need no
+special case for it. Setting `ENERGY_FLOOR.base1` to 0 is the one line that makes Base Set behave
+like every other set.
 
-Settled 10 Aug 2026, in Job 6a. The reasoning is a **pacing** one rather than a supply one — nobody
-can be permanently stuck, because reservation returns Energy the moment a deck is un-built — it is
-that opening the exciting new set must not tax the boring necessary grind. The rejected alternatives
-were drawing Base's Energy into the pack proper, which makes an eleven-card Jungle booster secretly
-nine Jungle cards and undercuts the set identity the reveal exists to show; and moving basic Energy
-out of the sets entirely into one shared pool, which would make Base Set a 96-card set when its
-Energies are printed as #97–102 of 102, and would collapse five sets' genuinely distinct Energy
-printings into one. The stipend rolls variants like any other card, so a Shiny Energy out of a
-Jungle pack is possible and is the convergence this table calls a feature.
+Measured over 40,000 packs each: base1 **2.79 → 2.00** per pack and now exactly two every time;
+Jungle and Fossil **2.00 mandatory → 1.63 drawn**, at 7% / 24% / 69% for zero, one and two.
+
+*That 1.63 is an artifact rather than a decision, and it is the open question here.* Jungle has only
+16 Commons, so six borrowed Energy is 27% of its pool against 16% of base1's. The cap bounds the
+worst case either way, and nothing yet weights a borrow by pool size.
+
+**What this replaced, and why the old reasoning stopped holding.** Job 6a delivered the guarantee for
+Jungle and Fossil as a **stipend beside the pack** — two extra cards hung off an eleven-card
+booster — specifically to protect set identity, on the grounds that drawing Base's Energy into the
+pack proper makes an eleven-card Jungle booster secretly nine Jungle cards. Trevor's call on 16 Aug
+overrides that: a thirteen-card pack with two mandatory cards in it reads to a player as *being
+robbed of cards*, which is a worse failure than the one the stipend was avoiding, and it was a
+thirteen-card pack every single time. **The other rejected alternative still stands**: basic Energy
+does not move out of the sets into one shared pool, because that would make Base Set a 96-card set
+when its Energies are printed as #97–102 of 102, and would collapse five sets' genuinely distinct
+Energy printings into one. Borrowed Energy keeps base1's ids precisely so that stays true.
+
+Borrowed Energy rolls variants like any other card, so a Shiny Water Energy out of a Jungle pack is
+possible and is the convergence this table calls a feature.
 
 **The Rare slot rolls holo-vs-non-holo first at a flat 2:1**, then picks the card from within that
 tier's pool. Deliberately not each set's real ratio, which drifts 45–55% and isn't worth chasing.

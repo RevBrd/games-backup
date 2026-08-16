@@ -117,9 +117,12 @@ memoised pools, a set-scoped `packsToComplete`, and a `--check` that reads the c
    shipping a pack called `neo3`. Note what that guard cannot catch: a name that is *present and
    wrong*, which is exactly how `base4` and `base5` stayed swapped for three sets. See
    [DATA.md](DATA.md).
-2. **An `ENERGY_GRANT` entry, or deliberately none.** No entry means the set guarantees no
-   basic Energy, which is correct from the fourth set on and is the reason the table stops at
-   three. See [PACKS.md](PACKS.md).
+2. **Nothing, usually — `ENERGY_FLOOR` is base1's alone.** A new set needs no entry: if it prints
+   basic Energy it draws its own, and if it prints none it borrows base1's into its Common pool
+   under base1's ids. Either way `ENERGY_CAP` holds it to two. An entry is only for a set you want
+   to *guarantee* Energy from, which so far is Base Set and the early-game pacing it carries. This
+   step used to read "an `ENERGY_GRANT` entry, or deliberately none" and described a stipend
+   mechanism that no longer exists. See [PACKS.md](PACKS.md).
 3. **`REMAINING` in `selftest.js`**, while the set is being written. Forgetting it is safe:
    the live-set assertion fires immediately and names the set, because a set with gaps and
    no `REMAINING` entry is by definition a live set with a hole in it.

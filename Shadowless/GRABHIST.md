@@ -20,6 +20,79 @@ it turns out wrong; never shorten one, because a condensed entry keeps the fix a
 
 ---
 
+### 16 Aug 2026 — Opus 5 #16 (Job 9, first batch)
+
+**"Opponent declined to attack" — the report was wrong, and the log was why.** Every pass in
+`22-12-05` was correct play: Farfetch'd had spent Leek Slap, which is once-while-in-play, and could
+not afford Pot Smash. I rebuilt the one position that looked live and the bot takes Bubble at 23.0
+at both tiers. *Three* instrument gaps came out of proving that, and they are worth more than the
+item was:
+
+- **a pass logged nothing at all.** Every other decision prints its runners-up; the pass is the bare
+  action off `legalActions` and never went through `pickBest`, so "why didn't it swing?" was the one
+  question the file could not answer. Two different silences were indistinguishable in it — *every
+  attack scored zero or less* and *there was no legal attack*. The engine already knows the second
+  in plain English (`canUseAttack().why`) and was throwing it away.
+- **the opening board was never recorded.** `setupAuto` places the Active and then benches every
+  Basic in hand with no action and no log line. A reader rebuilding the position from the narrative
+  starts short and stays wrong for the whole file. I spent an hour reconstructing a phantom fifth
+  Pokémon out of counting `passed over` entries before I found this.
+- **two identical cards were indistinguishable.** "attaches Water Energy to Squirtle" with two
+  Squirtle in play cannot be resolved, and that ambiguity is exactly what decided whether the report
+  was real. `nameOf` appends a letter now, only while a side has more than one in play.
+
+*The general shape, again: the item about the game was an item about the thing measuring the game.
+That is three sessions out of three where it paid.*
+
+**"AI is still attaching invalid energies when no other options exist."** Real, and **9% of every
+attachment** — three times the surplus fault fixed in Job 6. The surplus rule only caught "the target
+needed nothing"; this is "the target needed something *else*", a Grass onto a cost of F, and it fell
+straight through to a branch that floors at 0.4 and adds 4 for the Active.
+
+The load-bearing part was not the rule, it was **the exception**. Widening the rule moved 218 inert
+attachments to 190 — nothing. Deleting the escape-route exception took it to **0**. Every single one
+was being waved through on *"but it could pay for a retreat"*. Only the Active can be made to
+retreat, so the exception is one slot wide now: 9% → 3%, and the 3% left is that exception doing its
+job. **Measure the exception, not the rule** — I nearly shipped the wider rule and called it done.
+
+Trevor wondered if it was the bot planning a future evolution. It is not; `potential()` reads only
+the top of the stack and there is no lookahead anywhere.
+
+**And a bug found by a test written for something else.** `potential()` counted the hypothetical
+Energy against attack *costs* only, never putting it on the slot — so `scoreAttackHypothetical`
+worked the damage out with the card absent. **No attack in the game could be known to get bigger
+from an attachment.** Every `DMG_PER_SPARE_ENERGY` card, Hydro Pump included: a paid-up Blastoise
+scored a fourth Water exactly as it scored the third, so the surplus rule held the card and the
+attack never grew. Rain Dance was spared by accident — `EXTRA_ATTACH` goes straight to `attachValue`
+and never meets that rule.
+
+**"Promotes only to immediately Switch" (log `04-22-45`), and "should consider turns needed to power
+up" — one fix.** Promoting, being Whirlwinded up and choosing a Switch target were three
+nearly-identical formulas, and they disagreed: it promoted a 40 HP Voltorb over a 90 HP Zapdos into
+an Arcanine that had just dealt 80, then spent a Switch undoing it. Both were defensible *on their
+own scorer*, which is the whole fault.
+
+One `promoteValue`. Readiness became a countdown — `short === 0 ? 25 : 0` charged the same nothing
+for one Energy short as for four, which is **the fourth time in this file a quantity that should
+fall away with distance from an edge was written flat with a cliff at the end**. And survival is
+priced with the *retreat rule's own arithmetic*, because it is the same bill read from the other
+side; reusing it rather than inventing a second one is the point, since one formula cannot disagree
+with itself. The sacrificial promote falls out for free — a bare Basic has nothing invested.
+
+Rebuilding the position gave 41 / 31.3 / 17.3, matching the log line for line, which is the check
+that the repro is real. Promotions into a hit that kills them: **32% → 21%**.
+
+*Both AI changes duelled flat (50.6% and 49.4%, ±1.4 over ~5,200 `--gbc` games each, control 50.0%).
+That is the expected reading for a symmetric fault and not a verdict — they are asserted in
+`powertest.js` instead, which is the standing doctrine.*
+
+**Not taken, and diagnosed for whoever does.** *"Should have powered up Zapdos instead of Voltorb"*
+(log `04-31-25`) is real and structural: Voltorb 18, Zapdos 15. Completing a cheap attack pays
+`attachEnable` for the whole of it, while advancing an expensive one pays a **flat** `attachBuild`
+per step regardless of what is at the end of it — so one Lightning finishing a 10-damage Tackle
+beats one of four Lightning toward a 60, every time. Same cliff shape as everything above, but the
+fix has a genuine design question inside it and Trevor asked to discuss it.
+
 ### 14 Aug 2026 — Opus 5, third pass (Arcanine)
 
 **"Used Take Down to KO instead of Flamethrower, eating the recoil."** The log did not contain that
