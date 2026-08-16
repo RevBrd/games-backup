@@ -170,11 +170,24 @@ identically. What forces a new deck is meeting one that punishes something yours
 So every opponent deck carries a **pressure tag**, independent of tier: *Energy denial · bench sniping
 · status lock · single-target beatdown · Trainer denial · deck-out*. The rule that makes it work:
 
-> **A bracket may not repeat a pressure tag.**
+> **The gate and the boss must not share a pressure with each other or with anything in the body,
+> and no two body rungs in a row may share one.**
 
 That is what turns eight opponents into eight opponents rather than one opponent getting bigger, and
 it is a specifiable request for Job 11 in a way "make it harder" is not: *build a T3 Water deck whose
 pressure is Energy denial.*
+
+**The first draft of this rule said simply "a bracket may not repeat a pressure tag", and it was
+unsatisfiable.** A bracket runs 7–10 rungs against a vocabulary of six, so the rule failed arithmetic
+before it ever met a card. The version above binds where it actually matters — the rungs a player
+remembers are the gate and the boss, and consecutive sameness is what makes a body feel like one
+opponent — and it is satisfiable at every bracket length. **T1 intro decks carry no pressure tag at
+all**; they are theme decks, and having no identity is the identity.
+
+**Count a set's available pressures before authoring its roster.** Some are thin or absent early —
+there is no real deck-out enabler in Base Set and no Trainer lock before the Gym sets — so the number
+of distinct pressures a set can field is a fact about the set, and it is an input to how long that
+bracket should be. The vocabulary may also grow; it is not a closed list.
 
 **Assignment waits for the set, and this is deliberate.** Which pressures a bracket can field depends
 on what the set prints — Base Set has no deck-out enabler worth the name, and there is no real
