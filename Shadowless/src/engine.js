@@ -437,7 +437,32 @@ class Engine {
     }
   }
 
-  nameOf(slot) { return topCard(this.db, slot).name; }
+  // The name a log line, an action label or a picker button uses for a Pokemon
+  // that is in play.
+  //
+  // DISAMBIGUATED WHEN IT HAS TO BE — 16 Aug 2026. A deck runs three Squirtle,
+  // and a match log reading "attaches Water Energy to Squirtle" with two of them
+  // on the board is a line nobody can resolve. That is not hypothetical: a
+  // playtest report of the AI declining to attack turned entirely on which of
+  // two identical Squirtle was holding the Energy, and the file could not say.
+  //
+  // A letter is appended ONLY while a side genuinely has more than one in play
+  // under the same name, so an ordinary game never sees one. Letters run in uid
+  // order, which is fixed at creation, so they are stable for as long as both
+  // Pokemon are in play. If one leaves and a third arrives the letters are
+  // re-dealt over whatever is in play then — the alternative is per-side
+  // bookkeeping for a case that is already rare, and a suffix that reappears
+  // months later attached to nothing is worse than one that is re-used.
+  nameOf(slot) {
+    const name = topCard(this.db, slot).name;
+    const side = this.sideOf(slot);
+    if (side === null) return name;
+    const same = this.allSlots(side).filter(s => topCard(this.db, s).name === name);
+    if (same.length < 2) return name;
+    same.sort((a, b) => a.uid - b.uid);
+    const i = same.indexOf(slot);
+    return i < 0 ? name : `${name} ${String.fromCharCode(65 + i)}`;
+  }
 
   // ------------------------------------------------------------ actions ----
   legalActions(pi) {

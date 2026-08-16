@@ -646,10 +646,35 @@ class AI {
   potential(pi, slot, extraEnergyId) {
     const E = this.E;
     const c = this.top(slot);
+    // THE HYPOTHETICAL ENERGY GOES ON THE SLOT, not just into a local pool —
+    // 16 Aug 2026.
+    //
+    // It used to be counted only against attack COSTS, which answers "could it
+    // pay?" and nothing else. `scoreAttackHypothetical` reads the board, so the
+    // card it was being asked about was not there when the damage was worked
+    // out — and the consequence is that **no attack in the game could ever be
+    // known to get bigger from an attachment.** Every `DMG_PER_SPARE_ENERGY`
+    // card is one: Blastoise's Hydro Pump, Poliwrath, Lapras, both Vaporeon,
+    // Omastar, Seadra. A paid-up Blastoise scored a fourth Water at exactly the
+    // same value as the third, so the surplus rule held the card and Hydro Pump
+    // never grew.
+    //
+    // Found by a test written for something else. The push/pop-and-restore shape
+    // is the one `MOVE_ENERGY` and `BUZZAP` already use for the same reason.
+    const fake = extraEnergyId ? { id: extraEnergyId, uid: -1 } : null;
+    if (fake) slot.energy.push(fake);
+    try {
+      return this.potentialOf(pi, slot, c);
+    } finally {
+      if (fake) slot.energy.pop();
+    }
+  }
+
+  potentialOf(pi, slot, c) {
+    const E = this.E;
     // an Energy card may provide several symbols (Double Colorless)
     const pool = [];
     slot.energy.forEach(e => (this.db[e.id].provides || 'C').split('').forEach(x => pool.push(x)));
-    if (extraEnergyId) (this.db[extraEnergyId].provides || 'C').split('').forEach(x => pool.push(x));
     let best = -Infinity, bestShort = 99;
     (c.attacks || []).forEach((a, i) => {
       const need = a.cost.split('').filter(x => x !== 'C');
@@ -1066,9 +1091,43 @@ class AI {
         //     escape route rather than an attack cost;
         //   - an attack that scales with leftover Energy would improve, which
         //     shows up as after.best rising and so is already excluded.
-        const paidUp = before.short === 0 && after.best <= before.best;
-        const canPayRetreat = slot.energy.length >= this.top(slot).retreat;
-        if (paidUp && canPayRetreat) return W.attachSurplus;
+        // INERT is the same rule one step wider — 16 Aug 2026, from Trevor's
+        // note that the bot still attaches Energy its Pokemon cannot use "when
+        // no other options exist".
+        //
+        // SURPLUS was "the target needed nothing". INERT is "the target needed
+        // something else": a Grass onto a Pokemon whose only cost is RRR leaves
+        // it exactly as short as it was, buys no attack, and strands the card
+        // where it can never be spent. The old test only caught `short === 0`,
+        // so the whole of this case fell through to the branches below — which
+        // floor at 0.4 and then add 4 for the Active, clearing the 0.5 action
+        // threshold every time. Measured at **9% of all attachments** by
+        // `aitest.js`, against 3% for the surplus case that was already fixed.
+        //
+        // Stated as "no progress on either axis" rather than as a second
+        // special case, and it subsumes the old one exactly: when `before.short`
+        // is 0, `after.short >= before.short` is always true.
+        //
+        // Trevor wondered whether this was the bot planning for a future
+        // evolution. It is not — `potential()` reads only the card on top of the
+        // stack and the AI has no lookahead at all — so there is nothing here
+        // worth preserving.
+        // THE ESCAPE-ROUTE EXCEPTION IS THE ACTIVE'S ALONE — and this is where
+        // the whole of the above actually lives or dies. Measured: with the
+        // exception applying board-wide, the wider rule suppressed 218 inert
+        // attachments down to 190, which is nothing. Removing the exception
+        // entirely took it to 0. Every single one was being waved through on
+        // "but it could pay for a retreat".
+        //
+        // Only the Active can retreat, and only the Active can be forced to. A
+        // benched Pokemon's retreat cost is a bill it will not be handed until
+        // it is Active — at which point the Energy can be attached then, to a
+        // slot that by then may actually want it. So the exception is real, and
+        // it is one slot wide.
+        const noProgress = after.short >= before.short && after.best <= before.best;
+        const isActive = slot === me.active;
+        const needsEscape = isActive && slot.energy.length < this.top(slot).retreat;
+        if (noProgress && !needsEscape) return W.attachSurplus;
 
         // The surplus rule above is deliberately NOT in attachValue: it is about
         // whether to spend the once-per-turn attachment, and Rain Dance does not
@@ -1719,7 +1778,55 @@ class AI {
       const bestAtk = this.pickBest(pi, attacks);
       if (bestAtk && bestAtk.__score > 0) return bestAtk;
     }
-    return acts.find(a => a.t === 'pass') || null;
+    const passAct = acts.find(a => a.t === 'pass') || null;
+    if (passAct && this.explain) this.explainPass(pi, passAct, attacks);
+    return passAct;
+  }
+
+  // A PASS HAS TO SAY WHY IT DID NOT ATTACK — 16 Aug 2026.
+  //
+  // Every other decision the bot makes prints its runners-up. The pass printed
+  // nothing at all, because it is the bare action off `legalActions` and never
+  // went through `pickBest`. So the one question a reader has when they see the
+  // opponent do nothing — *why didn't it swing?* — was the one question the
+  // match log could not answer, and a playtest report sat open for two days on
+  // exactly that. Two different silences were indistinguishable in the file:
+  // "every attack scored zero or less" and "there was no legal attack".
+  //
+  // Gated on `explain` like the rest of the reasoning, so the suites pay nothing.
+  explainPass(pi, a, attacks) {
+    const E = this.E, me = E.state.players[pi];
+    a.__score = 0;
+    if (attacks && attacks.length) {
+      const rows = [];
+      for (const x of attacks) {
+        const sc = this.scoreAction(pi, x);
+        if (isFinite(sc)) rows.push({ label: this.actionLabel(x), score: Math.round(sc * 10) / 10 });
+      }
+      rows.sort((p, q) => q.score - p.score);
+      // The renderer treats the first entry as the one that was chosen and lists
+      // the rest as "passed over", so passing itself leads, scored as it scores.
+      a.__considered = [{ label: 'pass', score: 0 }].concat(rows.slice(0, 5));
+      a.__why = 'no attack was worth taking';
+      return;
+    }
+    // Nothing legal. The engine already knows the reason for each attack and
+    // says so in plain English — this just carries it out to the reader instead
+    // of throwing it away.
+    if (!me.active) { a.__why = 'no Active Pokemon'; return; }
+    if (!E.canAttackAtAll(pi)) {
+      const st = me.active.status;
+      a.__why = st.asleep ? 'the Active is Asleep'
+        : st.paralyzed ? 'the Active is Paralyzed'
+        : 'attacking is not allowed this turn';
+      return;
+    }
+    const c = this.top(me.active);
+    const why = (c.attacks || []).map((atk, i) => {
+      const chk = E.canUseAttack(pi, i);
+      return `${atk.name}: ${chk.ok ? 'legal' : chk.why}`;
+    });
+    a.__why = why.length ? `no attack available — ${why.join('; ')}` : 'this Pokemon has no attacks';
   }
 
   pickBest(pi, acts, allowNegative = false) {

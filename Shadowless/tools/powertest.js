@@ -2319,5 +2319,100 @@ T('expDmg keeps meaning the real number, because other rules read it', () => {
   return true;
 });
 
+// ===========================================================================
+// INERT ENERGY  (16 Aug 2026)
+// Trevor, from play: the bot attaches Energy its Pokemon cannot use "when no
+// other options exist". True, and 9% of every attachment it made — a Grass onto
+// something whose only cost is F leaves it exactly as short as it was, buys no
+// attack, and strands the card where it can never be spent.
+//
+// It belongs here rather than in a duel. The fault is symmetric — both seats do
+// it — so aiduel reports 50.0% +/-1.4 for the fix, which is the reading
+// MEASUREMENT.md tells you to expect and not a verdict on the change.
+// ===========================================================================
+console.log('\nInert Energy — attachments that achieve nothing');
+
+const attachScore = (E, slotUid, energyId) => {
+  const p = E.state.players[0];
+  p.hand = [{ id: energyId, uid: E.uid++ }];
+  const a = E.legalActions(0).find(x => x.t === 'attachEnergy' && x.target === slotUid);
+  if (!a) throw new Error('the attachment should be legal');
+  return new AI(E, { mode: 'expert' }).scoreAction(0, a);
+};
+const HELD = -1;                    // anything at or under this is not attached
+
+T('holds Energy that gets a BENCHED Pokemon no closer to any attack', () => {
+  const E = board('base1-3', ['base1-52']);          // Chansey active, Machop benched
+  const s = attachScore(E, E.state.players[0].bench[0].uid, 'base1-99');   // Grass on "F"
+  if (!(s < HELD)) throw new Error(`Grass onto a benched Machop scored ${s.toFixed(1)}; it should be held`);
+  return true;
+});
+
+T('...but attaches it to the ACTIVE that cannot yet pay its own retreat', () => {
+  // The exception is real and it is one slot wide. Only the Active can retreat,
+  // and retreat counts Energy CARDS rather than symbols, so even a useless type
+  // is a genuine escape route for the one Pokemon that might have to run.
+  const E = board('base1-52', ['base1-3']);          // Machop active, retreat 1, no Energy
+  const s = attachScore(E, E.state.players[0].active.uid, 'base1-99');
+  if (!(s > 0.5)) throw new Error(`the escape route was refused: ${s.toFixed(1)}`);
+  return true;
+});
+
+T('...and stops once that retreat is covered', () => {
+  const E = board('base1-52', ['base1-3']);
+  attach(E, E.state.players[0].active, 'base1-99', 1);   // retreat 1, already paid
+  const s = attachScore(E, E.state.players[0].active.uid, 'base1-99');
+  if (!(s < HELD)) throw new Error(`second useless Grass scored ${s.toFixed(1)}; it should be held`);
+  return true;
+});
+
+T('an Energy that shortens the wait is still attached', () => {
+  const E = board('base1-3', ['base1-52']);
+  const s = attachScore(E, E.state.players[0].bench[0].uid, 'base1-97');   // Fighting on "F"
+  if (!(s > 0.5)) throw new Error(`over-corrected: a useful attachment scored ${s.toFixed(1)}`);
+  return true;
+});
+
+T('an Energy that only makes an existing attack BIGGER is still attached', () => {
+  // Poliwag's Water Gun scales with spare Water, so a second Water buys no new
+  // attack and shortens nothing — `short` is already 0 — and is still worth
+  // making. This is the case the rule must not sweep up: it tests `best`, not
+  // just `short`, and this is why.
+  const E = board('base1-59', ['base1-3']);          // Poliwag ACTIVE — see below
+  attach(E, E.state.players[0].active, 'base1-102', 1);
+  const s = attachScore(E, E.state.players[0].active.uid, 'base1-102');
+  if (!(s > 0.5)) throw new Error(`spare-Energy scaling was ignored: ${s.toFixed(1)}`);
+  return true;
+});
+
+T('KNOWN GAP: the same Poliwag on the BENCH is refused that Water', () => {
+  // Not a regression and not this rule's doing — it is the Active/Bench unit
+  // split in `potential()`, which prices a benched Pokemon at PRINTED damage.
+  // Water Gun prints "10+", so `aiParseDamage` reads 10 and the scaling is
+  // invisible off the Active. The pre-existing surplus rule already refused this
+  // attachment for exactly the same reason.
+  //
+  // Asserted as it STANDS, deliberately, so that whoever closes AI.md's Open #1
+  // trips over a test that names the case rather than a paragraph describing it.
+  // If this starts failing, the bench learned to see its own attacks — delete
+  // this test and keep the one above.
+  //
+  // Rain Dance is NOT affected: EXTRA_ATTACH goes straight to `attachValue` and
+  // never meets this rule, so piling Water on a benched Blastoise still works.
+  const E = board('base1-3', ['base1-59']);
+  attach(E, E.state.players[0].bench[0], 'base1-102', 1);
+  const s = attachScore(E, E.state.players[0].bench[0].uid, 'base1-102');
+  if (!(s < HELD)) throw new Error(`the bench can see spare-Energy scaling now: ${s.toFixed(1)}`);
+  return true;
+});
+
+T('the original surplus rule still holds — a fully-paid Pokemon is passed over', () => {
+  const E = board('base1-3', ['base1-59']);
+  attach(E, E.state.players[0].bench[0], 'base1-102', 1);   // retreat 1, paid; Water Gun payable
+  const s = attachScore(E, E.state.players[0].bench[0].uid, 'base1-99');   // Grass adds nothing
+  if (!(s < HELD)) throw new Error(`surplus Grass scored ${s.toFixed(1)}; it should be held`);
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

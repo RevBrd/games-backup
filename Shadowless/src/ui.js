@@ -417,6 +417,23 @@ function logOpeningPrizes() {
   UI.elog.prizesLogged = true;
   logEvent(UI.elog, 'hidden', 0, `opponent's Prizes: ${s.players[1].prizes.map(cardName).join(', ')}`);
   logEvent(UI.elog, 'hidden', 0, `your Prizes: ${s.players[0].prizes.map(cardName).join(', ')}`);
+  // THE OPENING BOARD, which nothing recorded until 16 Aug 2026. `setupAuto`
+  // places the Active and then benches EVERY Basic in hand, and none of it goes
+  // through an action or an engine log line — so a reader reconstructing the
+  // board from the narrative starts one or more Pokemon short and stays wrong
+  // for the whole file. It cost a session an hour chasing a Pokemon that had
+  // simply been there since before turn 1.
+  //
+  // Not marked HIDDEN for our own side, but both are printed together: the point
+  // is that the file should let anyone rebuild the position at any turn.
+  const board = pi => {
+    const p = s.players[pi];
+    const nm = sl => UI.E.nameOf(sl);
+    return `${p.active ? nm(p.active) : '(none)'} active`
+      + (p.bench.length ? `, bench ${p.bench.map(nm).join(', ')}` : ', empty bench');
+  };
+  logEvent(UI.elog, 'hidden', 0, `opponent's opening board: ${board(1)}`);
+  logEvent(UI.elog, 'hidden', 0, `your opening board: ${board(0)}`);
 }
 
 // Pull anything new off the engine's own log and mirror it in order. The engine
