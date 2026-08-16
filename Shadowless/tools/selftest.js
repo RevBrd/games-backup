@@ -221,6 +221,12 @@ console.log('\nAI verb coverage');
     // Transform fires from settleTransforms after every action rather than being
     // an action the player takes, so scorePower never sees it.
     'TRANSFORM',
+    // ENERGY_AS joined this list on 16 Aug 2026, which is a small piece of
+    // history given the note above: Energy Burn is the reason this check exists,
+    // and it is now the passive it was always behaving like. `slotSymbols`
+    // consults it, `powerActions` never offers it, and there is nothing for
+    // scorePower to weigh. This check going red is what said so.
+    'ENERGY_AS',
   ]);
   const kinds = new Set([...effSrc.matchAll(/\bkind:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
   const blindKinds = [...kinds].filter(k => !handled.has(k) && !PASSIVE_POWERS.has(k)).sort();

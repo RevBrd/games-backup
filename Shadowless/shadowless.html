@@ -4616,27 +4616,9 @@ class AI {
     if (!slot) return -Infinity;
 
     switch (a.kind) {
-      // Only worth switching on when it actually unlocks an attack. Free
-      // otherwise, but a no-op action the bot could loop on forever.
-      case 'ENERGY_AS': {
-        // bestAttackScore returns {score, idx}, not a number, and its score is
-        // -Infinity when nothing is playable. Flatten both to a comparable
-        // figure before touching them.
-        const reach = () => {
-          const b = this.bestAttackScore(pi);
-          return b.score === -Infinity ? 0 : b.score;
-        };
-        const before = reach();
-        const saved = slot.energyAs;
-        slot.energyAs = (E.powerOf(slot) || {}).type;
-        const after = reach();
-        slot.energyAs = saved;
-        // Free and harmless, but a no-op action the bot could otherwise loop on,
-        // so only worth doing when it actually improves what we can attack with.
-        if (after <= before) return -Infinity;
-        return W.threshold + (after - before);
-      }
-
+      // ENERGY_AS is passive as of 16 Aug 2026 — Charizard's Energy Burn is
+      // simply always on, so there is no action to score and no flag to flip.
+      // `bestAttackScore` already sees Fire symbols wherever the engine does.
       case 'MOVE_DAMAGE': {
         // Gengar's Curse moves the OPPONENT's counters, so both slots live on
         // the other side of the board. Looking them up on ours returned
@@ -5672,7 +5654,8 @@ class AI {
       default: return a.t;
     }
   }
-}
+}
+
 
 // ============================================================================
 // RULES ENGINE  —  WOTC-era (Base Set) Pokemon TCG
@@ -5981,7 +5964,7 @@ class Engine {
       paralyzedTurn: -1, playedTurn: 0, effects: [], usedAttacks: {}, forcedKO: false,
       // Job 6e. `powerTurn` is the turn a once-per-turn Power last fired;
       // `typeAs` is Venomoth's Shift, read through typeOf() rather than
-      // baked into the card, exactly like energyAs and wkOverride.
+      // baked into the card, exactly like slotSymbols and wkOverride.
       powerTurn: -1, typeAs: null, transformedId: null,
     };
   }
@@ -6026,10 +6009,6 @@ class Engine {
     s.turn++;
     const p = this.cur();
     p.turnsTaken++; p.energyAttached = false; p.retreated = false; p.trainersPlayed = 0;
-
-    // ENERGY_AS lasts "for the rest of the turn", so it lapses on both sides at
-    // every turn boundary rather than only on its owner's.
-    this.eachSlot((slot) => { if (slot.energyAs) slot.energyAs = null; });
 
     // purge lasting effects that expire at the start of this turn
     this.eachSlot((slot) => {
@@ -6388,7 +6367,7 @@ class Engine {
 
   // A slot's CURRENT type, honouring Venomoth's Shift. Weakness and Resistance
   // are matched against the attacker's type, so this is what makes Shift do
-  // anything at all. Same shape as energyAs and the Porygon overrides: read
+  // anything at all. Same shape as slotSymbols and the Porygon overrides: read
   // through a helper, never written onto the card.
   typeOf(slot) {
     return (slot && slot.typeAs) || topCard(this.db, slot).type;
@@ -6407,12 +6386,26 @@ class Engine {
     return out;
   }
 
-  // Energy symbols a slot currently provides, honouring an ENERGY_AS override
-  // (Charizard's Energy Burn). Count is preserved — Double Colorless still pays
-  // twice — only the type changes.
+  // Energy symbols a slot currently provides, honouring Charizard's Energy Burn.
+  // Count is preserved — Double Colorless still pays twice — only the type
+  // changes.
+  //
+  // ENERGY BURN IS ALWAYS ON — Trevor, 16 Aug 2026, "similar to Muk's Toxic
+  // Gas". It used to be an interactive Power you switched on for the turn, which
+  // is a click with no decision behind it: Charizard's only attack is Fire Spin
+  // at RRRR, so there has never been a board on which you would decline. Now it
+  // is CONSULTED, the same way every other passive in this engine is, which also
+  // means it switches off under Sleep, Confusion, Paralysis and Toxic Gas for
+  // free instead of surviving them as a flag that was already set.
+  //
+  // Note what it deliberately does NOT reach: a cost that says "discard a FIRE
+  // Energy" still reads the real card through `energyProvides`, matching the
+  // Buzzap ruling that a card standing in for Energy is not that Energy card.
   slotSymbols(slot) {
+    const burn = this.activePower(slot, 'ENERGY_AS');
+    const as = burn ? burn.type : null;
     const out = [];
-    slot.energy.forEach(e => energySymbols(this.db, e).forEach(x => out.push(slot.energyAs || x)));
+    slot.energy.forEach(e => energySymbols(this.db, e).forEach(x => out.push(as || x)));
     return out;
   }
 
@@ -6435,11 +6428,9 @@ class Engine {
       if (!p || !this.powerUsable(slot)) continue;
       const owner = this.nameOf(slot);
       switch (p.kind) {
-        case 'ENERGY_AS':
-          if (slot.energyAs) break;                      // already on; no point offering it again
-          if (!slot.energy.length) break;
-          acts.push({ t: 'power', uid: slot.uid, kind: p.kind, label: `${owner}: ${p.name}` });
-          break;
+        // ENERGY_AS is passive as of 16 Aug 2026 and is not offered as an action
+        // at all — see slotSymbols. Nothing to choose, so nothing to click.
+        case 'ENERGY_AS': break;
         case 'MOVE_DAMAGE': {
           // Damage Swap, Gengar's Curse and Slowbro's Strange Behavior are one
           // mechanism with three settings:
@@ -6580,16 +6571,6 @@ class Engine {
     if (!this.powerUsable(slot)) return this.fail(`${this.nameOf(slot)} can't use ${p.name} right now`);
 
     switch (p.kind) {
-      case 'ENERGY_AS': {
-        if (!slot.energy.length) return this.fail('No Energy attached');
-        slot.energyAs = p.type;
-        // art.js owns the type names. Same bundle-or-Node guard used for AI below.
-        const names = (typeof ENERGY_NAME !== 'undefined')
-          ? ENERGY_NAME : require('./art.js').ENERGY_NAME;
-        this.log(`${p.name}: all Energy on ${this.nameOf(slot)} counts as `
-          + `${names[p.type] || p.type} for the rest of the turn.`, 'eff');
-        return { ok: true };
-      }
       case 'MOVE_DAMAGE': {
         if (p.once && this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
         const side = p.side === 'opponent' ? 1 - pi : pi;
@@ -6734,6 +6715,7 @@ class Engine {
         to.energy.push(card);
         const tn = (typeof ENERGY_NAME !== 'undefined')
           ? ENERGY_NAME : require('./art.js').ENERGY_NAME;
+        if (this.state.koThisAction) this.state.koThisAction.push({ uid: slot.uid, pi });
         this.log(`${p.name}: ${name} is Knocked Out and becomes an Energy card `
           + `providing 2 ${tn[a.type] || a.type} Energy, attached to ${this.nameOf(to)}.`, 'eff');
 
@@ -6956,6 +6938,12 @@ class Engine {
   act(pi, a) {
     const s = this.state;
     if (s.phase === 'over') return this.fail('Game is over');
+    // WHICH POKEMON WERE ACTUALLY KNOCKED OUT BY THIS ACTION — 16 Aug 2026.
+    // The UI used to infer it from "a slot that was there is gone", which is
+    // also true of Scoop Up, Mr. Fuji and Hurricane, so playing a Scoop Up threw
+    // the Knock Out banner. Recorded rather than inferred, and cleared per
+    // action like `peeked`.
+    s.koThisAction = [];
     if (s.pendingSwitch !== null || s.pendingPromote !== null) {
       if (s.pendingSwitch === pi) {
         if (a.t !== 'switchIn') return this.fail('A Pokemon must be sent up first');
@@ -8591,6 +8579,7 @@ class Engine {
         const kill = (slot, fromBench, idx) => {
           const c = topCard(this.db, slot);
           this.log(`${c.name} is Knocked Out!`, 'ko');
+          if (s.koThisAction) s.koThisAction.push({ uid: slot.uid, pi: i });
           // Destiny Bond: whatever Knocked this out is Knocked Out in turn.
           const bond = slot.effects.find(e => e.kind === 'DESTINY_BOND');
           if (bond && slot.lastHitBy) {
@@ -10458,9 +10447,11 @@ function diffForFx(before, after) {
   for (const uid in a) {
     if (b[uid] && a[uid].dmg > b[uid].dmg) UI.fxMark('hit' + uid);
   }
-  for (const uid in b) {
-    if (!a[uid]) UI.fxMark('ko' + b[uid].pi, 900);
-  }
+  // A KNOCK OUT, not merely a Pokemon that stopped being on the board. This read
+  // "a slot that was here is gone", which is equally true of Scoop Up, Mr. Fuji
+  // and Hurricane — so scooping your own Pokemon up threw the Knock Out banner.
+  // The engine records the real thing per action now; see `koThisAction`.
+  for (const k of (after.koThisAction || [])) UI.fxMark('ko' + k.pi, 900);
   for (let pi = 0; pi < 2; pi++) {
     if (after.players[pi].prizes.length < before.players[pi].prizes.length)
       UI.fxMark('prize' + pi, 900);

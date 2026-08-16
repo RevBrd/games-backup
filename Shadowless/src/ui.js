@@ -505,9 +505,11 @@ function diffForFx(before, after) {
   for (const uid in a) {
     if (b[uid] && a[uid].dmg > b[uid].dmg) UI.fxMark('hit' + uid);
   }
-  for (const uid in b) {
-    if (!a[uid]) UI.fxMark('ko' + b[uid].pi, 900);
-  }
+  // A KNOCK OUT, not merely a Pokemon that stopped being on the board. This read
+  // "a slot that was here is gone", which is equally true of Scoop Up, Mr. Fuji
+  // and Hurricane — so scooping your own Pokemon up threw the Knock Out banner.
+  // The engine records the real thing per action now; see `koThisAction`.
+  for (const k of (after.koThisAction || [])) UI.fxMark('ko' + k.pi, 900);
   for (let pi = 0; pi < 2; pi++) {
     if (after.players[pi].prizes.length < before.players[pi].prizes.length)
       UI.fxMark('prize' + pi, 900);

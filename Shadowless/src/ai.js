@@ -945,27 +945,9 @@ class AI {
     if (!slot) return -Infinity;
 
     switch (a.kind) {
-      // Only worth switching on when it actually unlocks an attack. Free
-      // otherwise, but a no-op action the bot could loop on forever.
-      case 'ENERGY_AS': {
-        // bestAttackScore returns {score, idx}, not a number, and its score is
-        // -Infinity when nothing is playable. Flatten both to a comparable
-        // figure before touching them.
-        const reach = () => {
-          const b = this.bestAttackScore(pi);
-          return b.score === -Infinity ? 0 : b.score;
-        };
-        const before = reach();
-        const saved = slot.energyAs;
-        slot.energyAs = (E.powerOf(slot) || {}).type;
-        const after = reach();
-        slot.energyAs = saved;
-        // Free and harmless, but a no-op action the bot could otherwise loop on,
-        // so only worth doing when it actually improves what we can attack with.
-        if (after <= before) return -Infinity;
-        return W.threshold + (after - before);
-      }
-
+      // ENERGY_AS is passive as of 16 Aug 2026 — Charizard's Energy Burn is
+      // simply always on, so there is no action to score and no flag to flip.
+      // `bestAttackScore` already sees Fire symbols wherever the engine does.
       case 'MOVE_DAMAGE': {
         // Gengar's Curse moves the OPPONENT's counters, so both slots live on
         // the other side of the board. Looking them up on ours returned

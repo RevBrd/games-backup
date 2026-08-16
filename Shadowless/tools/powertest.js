@@ -125,14 +125,16 @@ T('every enumerated move is legal when played', () => {
 // ---------------------------------------------------------------- Energy Burn
 console.log('\nCharizard â€” Energy Burn');
 
-T('lets non-Fire Energy pay a Fire cost', () => {
+// ALWAYS ON as of 16 Aug 2026 — Trevor, "similar to Muk's Toxic Gas". It was an
+// interactive Power you switched on for the turn, which is a click with no
+// decision behind it: Charizard's only attack is Fire Spin at RRRR, so there has
+// never been a board on which you would decline. These four tests used to drive
+// the toggle; they assert the consultation now.
+T('lets non-Fire Energy pay a Fire cost, with nothing switched on', () => {
   const E = board('base1-4');                               // Fire Spin costs RRRR
   const zard = E.state.players[0].active;
   attach(E, zard, 'base1-102', 4);                          // four Water Energy
-  eq(E.canUseAttack(0, 0).ok, false, 'Fire Spin before Energy Burn');
-  const r = E.act(0, { t: 'power', uid: zard.uid, kind: 'ENERGY_AS' });
-  if (!r.ok) throw new Error(r.error);
-  eq(E.canUseAttack(0, 0).ok, true, 'Fire Spin after Energy Burn');
+  eq(E.canUseAttack(0, 0).ok, true, 'Fire Spin is payable immediately');
   return true;
 });
 
@@ -140,28 +142,36 @@ T('preserves symbol count, so Double Colorless still pays for two', () => {
   const E = board('base1-4');
   const zard = E.state.players[0].active;
   attach(E, zard, 'base1-96', 2);                           // 2 x DCE = 4 symbols
-  E.act(0, { t: 'power', uid: zard.uid, kind: 'ENERGY_AS' });
-  eq(E.slotSymbols(zard).join(''), 'RRRR', 'symbols after Energy Burn');
+  eq(E.slotSymbols(zard).join(''), 'RRRR', 'symbols under Energy Burn');
   return true;
 });
 
-T('lapses at the turn boundary', () => {
+T('is never offered as an action, because there is nothing to choose', () => {
   const E = board('base1-4');
-  const zard = E.state.players[0].active;
-  attach(E, zard, 'base1-102', 4);
-  E.act(0, { t: 'power', uid: zard.uid, kind: 'ENERGY_AS' });
-  eq(zard.energyAs, 'R', 'set during the turn');
-  E.act(0, { t: 'pass' });
-  eq(zard.energyAs, null, 'cleared after the turn ends');
+  attach(E, E.state.players[0].active, 'base1-102', 4);
+  eq(E.legalActions(0).filter(a => a.t === 'power' && a.kind === 'ENERGY_AS').length, 0, 'offers');
   return true;
 });
 
-T('is not offered twice in the same turn', () => {
+T('switches off with the Power, which a set flag never did', () => {
+  // The real gain from making it passive rather than a toggle: it now respects
+  // everything that shuts a Power down. A flag set before falling asleep used to
+  // survive the turn.
   const E = board('base1-4');
   const zard = E.state.players[0].active;
   attach(E, zard, 'base1-102', 4);
-  E.act(0, { t: 'power', uid: zard.uid, kind: 'ENERGY_AS' });
-  eq(E.legalActions(0).filter(a => a.t === 'power' && a.kind === 'ENERGY_AS').length, 0, 'repeat offers');
+  zard.status.asleep = true;
+  eq(E.slotSymbols(zard).join(''), 'WWWW', 'asleep, so no Energy Burn');
+  eq(E.canUseAttack(0, 0).ok, false, 'and Fire Spin is unpayable again');
+  return true;
+});
+
+T('...and under Toxic Gas', () => {
+  const E = board('base1-4');
+  const zard = E.state.players[0].active;
+  attach(E, zard, 'base1-102', 4);
+  E.state.players[1].bench = [E.mkSlot({ id: 'base3-13', uid: E.uid++ })];   // Muk
+  eq(E.slotSymbols(zard).join(''), 'WWWW', 'Toxic Gas shuts Energy Burn off too');
   return true;
 });
 
@@ -830,24 +840,26 @@ T('the AI will not dump damage onto something it would Knock Out', () => {
 // This one is here because its absence hid a real bug: bestAttackScore returns
 // {score, idx}, the first version compared the objects, and Energy Burn was
 // silently never worth anything. Unit tests passed; the AI just never used it.
-T('the AI uses Energy Burn when it unlocks an attack', () => {
+// These two used to assert that the AI switched Energy Burn on when it helped
+// and left it alone when it did not. It is passive now, so there is no decision
+// left to get wrong — what matters is that the bot still ATTACKS with the Energy
+// it could not previously pay with, which is what the Power was for.
+T('the AI attacks with Energy Burn Energy without being told to', () => {
   const E = board('base1-4');
   const zard = E.state.players[0].active;
-  attach(E, zard, 'base1-102', 4);                          // Water, cannot pay RRRR
+  attach(E, zard, 'base1-102', 4);                          // Water, pays RRRR only via the Power
   E.state.players[0].hand = [];
-  eq(E.canUseAttack(0, 0).ok, false, 'Fire Spin blocked to start with');
   E.aiTurn(0, 'expert');
-  if (!E.state.log.some(l => (l.text || '').includes('Energy Burn'))) throw new Error('AI never used Energy Burn');
+  if (!E.state.log.some(l => (l.text || '').includes('Fire Spin'))) throw new Error('AI never attacked');
   return true;
 });
 
-T('the AI leaves Energy Burn alone when it changes nothing', () => {
+T('and never spends an action on it, because there is no longer one to spend', () => {
   const E = board('base1-4');
-  const zard = E.state.players[0].active;
-  attach(E, zard, 'base1-98', 4);                           // already four Fire
+  attach(E, E.state.players[0].active, 'base1-102', 4);
   E.state.players[0].hand = [];
   E.aiTurn(0, 'expert');
-  if (E.state.log.some(l => (l.text || '').includes('Energy Burn'))) throw new Error('AI used a pointless Energy Burn');
+  if (E.state.log.some(l => (l.text || '').includes('Energy Burn'))) throw new Error('a Power action was still taken');
   return true;
 });
 
@@ -2499,6 +2511,55 @@ T('Switch brings in whoever promoting would have chosen', () => {
 // The only significantly BETTER duel result of the batch: 52.2% +/-1.4, and
 // 51.9% +/-1.1 on an independent larger sample, control 50.0%.
 // ===========================================================================
+// ===========================================================================
+// A KNOCK OUT IS NOT MERELY A POKEMON LEAVING THE BOARD  (16 Aug 2026)
+// Trevor, from play: Scoop Up threw the Knock Out banner. The UI inferred a KO
+// from "a slot that was here is gone", which is equally true of Scoop Up, Mr.
+// Fuji and Hurricane. The engine records the real thing per action now.
+// ===========================================================================
+console.log('\nWhat counts as a Knock Out');
+
+T('a Knock Out is recorded on the action that caused it', () => {
+  const E = board('base1-58', [], 'base1-43');              // Pikachu vs Abra, 30 HP
+  attach(E, E.state.players[0].active, 'base1-100', 2);
+  E.state.players[1].active.dmg = 20;                       // Gnaw's 10 finishes it
+  E.act(0, { t: 'attack', idx: 0 });
+  eq((E.state.koThisAction || []).length, 1, 'exactly one Knock Out');
+  eq(E.state.koThisAction[0].pi, 1, 'and it was theirs');
+  return true;
+});
+
+T('Scoop Up records none, which is the bug', () => {
+  const E = board('base1-58', ['base1-43']);
+  const target = E.state.players[0].bench[0];
+  E.state.players[0].hand = [{ id: 'base1-78', uid: E.uid++ }];    // Scoop Up
+  const a = E.legalActions(0).find(x => x.t === 'playTrainer');
+  if (!a) throw new Error('Scoop Up should be playable');
+  a.opts = { targetUid: target.uid };
+  const r = E.act(0, a);
+  if (!r.ok) throw new Error(r.error);
+  eq(E.state.players[0].bench.length, 0, 'the Pokemon did leave the board');
+  eq((E.state.koThisAction || []).length, 0, '...but nothing was Knocked Out');
+  return true;
+});
+
+T('and the record is cleared per action, not per turn', () => {
+  const E = board('base1-58', [], 'base1-43');
+  attach(E, E.state.players[0].active, 'base1-100', 2);
+  // They need something to promote, or the Knock Out ends the game and `act`
+  // returns before it can clear anything.
+  E.state.players[1].bench = [E.mkSlot({ id: 'base1-43', uid: E.uid++ })];
+  E.state.players[1].active.dmg = 20;
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(E.state.koThisAction.length, 1, 'recorded');
+  // The promote that follows a Knock Out is the very next action, and it must
+  // come back clean — the banner is keyed on this and would otherwise re-fire.
+  const pro = E.legalActions(1).find(x => x.t === 'promote');
+  E.act(1, pro || { t: 'pass' });
+  eq(E.state.koThisAction.length, 0, 'and gone by the next action');
+  return true;
+});
+
 console.log('\nAmortised progress — a share of what it builds toward');
 
 const ZAPDOS = 'base3-15';          // 80 HP, Thunderstorm LLLL 40
