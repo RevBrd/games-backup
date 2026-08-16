@@ -38,12 +38,30 @@ const blank = () => ({
   retreatScoreLost: 0, retreatImproved: 0,
   attaches: 0, attachDoomed: 0, attachDoomedUseless: 0,
   attachSurplus: 0, attachInert: 0, attachMisdirected: 0,
+  promotes: 0, promoteDoomed: 0, promoteUndone: 0,
   heals: 0, healWasted: 0, healWastedHP: 0,
   gusts: 0, gustNoKill: 0, gustFreeSwitch: 0,
   kosSuffered: 0, declinedWin: 0,
 });
 
 const add = (a, b) => { for (const k in b) a[k] += b[k]; return a; };
+
+// Hardest single hit the opponent's Active could land on one of ours — asked
+// about a Pokemon that is not necessarily Active, which is the whole point when
+// the question is "what happens if I send this one up?".
+function threatAgainst(E, ai, pi, mySlot) {
+  const you = E.state.players[1 - pi];
+  if (!you.active || !mySlot) return 0;
+  let worst = 0;
+  (ai.top(you.active).attacks || []).forEach((a, i) => {
+    if (!E.costSatisfied(you.active, a.cost)) return;
+    for (const o of ai.rawOutcomes(you.active, mySlot, i).outcomes) {
+      const d = E.computeDamage(you.active, mySlot, o.dmg).dmg;
+      if (d > worst) worst = d;
+    }
+  });
+  return worst;
+}
 
 // Classify one chosen action against the state it was chosen in. Called after
 // aiChoose (so E._ai exists) and before act (so the state is the one the AI
@@ -89,6 +107,32 @@ function classify(E, pi, a, st) {
       if (b - c > 1) { st.retreatAbandonedAttack++; st.retreatScoreLost += (b - c); }
       else if (c - b > 1) st.retreatImproved++;   // swapped UP — this is good play
     };
+  }
+
+  // WHO GETS SENT UP, and whether the bot immediately regrets it. Trevor's log
+  // 04-22-45: it promoted a 40 HP Voltorb into an Arcanine that had just dealt
+  // 80, then spent a Switch on its next turn undoing the promotion. Both halves
+  // are counted, because the second is the one a human actually notices.
+  if (a.t === 'promote' || a.t === 'switchIn') {
+    const b = me.bench[a.bench];
+    if (b) {
+      st.promotes++;
+      // Worked out here rather than called off the AI on purpose: an instrument
+      // that borrows a method from the tree it is measuring cannot be pointed at
+      // an older tree, and comparing two trees is the only thing this file does.
+      if (threatAgainst(E, ai, pi, b) >= ai.remainingHP(b)) st.promoteDoomed++;
+      const uid = b.uid, turn = E.state.turn;
+      return () => { E.__promoted = { uid, turn }; };
+    }
+  }
+  // Undoing it: our own Switch or retreat moving that same Pokemon straight back
+  // out, within a turn of sending it up.
+  if ((a.t === 'retreat' || a.t === 'playTrainer') && active && E.__promoted
+      && E.__promoted.uid === active.uid && E.state.turn - E.__promoted.turn <= 2) {
+    const undo = a.t === 'retreat'
+      || ((EFFECTS[me.hand[a.hand] && me.hand[a.hand].id] || {}).t || [])
+           .some(v => v.v === 'T_SWITCH_OWN');
+    if (undo) { st.promoteUndone++; E.__promoted = null; }
   }
 
   if (a.t === 'attachEnergy') {
@@ -238,6 +282,11 @@ console.log(`  ${String(Math.round(total.retreatScoreLost)).padStart(5)}  attack
 console.log(`  ${String(total.retreatImproved).padStart(5)}  ...that IMPROVED our hit (good)  ${pct(total.retreatImproved, total.retreats)} of retreats`);
 console.log(`  ${String(total.retreatNoThreat).padStart(5)}  ...with nothing threatening it  ${pct(total.retreatNoThreat, total.retreats)} of retreats`);
 console.log(`  ${String(total.retreatEnergyBurned).padStart(5)}  Energy burned on retreat costs  ${per100(total.retreatEnergyBurned)} per 100 turns`);
+
+console.log('\nPromotion');
+console.log(`  ${String(total.promotes).padStart(5)}  Pokemon sent up`);
+console.log(`  ${String(total.promoteDoomed).padStart(5)}  ...into a hit that kills it     ${pct(total.promoteDoomed, total.promotes)} of promotions`);
+console.log(`  ${String(total.promoteUndone).padStart(5)}  ...undone by our own Switch     ${pct(total.promoteUndone, total.promotes)} of promotions`);
 
 console.log('\nEnergy attachment');
 console.log(`  ${String(total.attaches).padStart(5)}  attachments`);

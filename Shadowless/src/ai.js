@@ -61,6 +61,9 @@ const AI_WEIGHTS = {
                         // saving for its own sake; the Prize term still applies
   retreatPrize: 60,     // value of denying a Prize, over the SQUARE of how many
                         // they still need — 1.7 at six left, 60 at one
+  promoteReady: 25,     // sending up something that can attack NOW, divided by
+                        // one plus how many Energy it is short — 25 ready, 12.5
+                        // one away, 5 at four or more. Was a flat 25-or-nothing
   drawCard: 5,          // per card drawn
   healPer10: 3.5,
   stripEnergy: 11,      // per Energy removed from the opponent
@@ -612,20 +615,73 @@ class AI {
 
   // Biggest single hit the opponent's Active could land on ours right now.
   incomingThreat(pi) {
+    return this.threatAgainst(pi, this.E.state.players[pi].active);
+  }
+
+  // The same question asked about a Pokemon that is NOT our Active — "how hard
+  // would they hit this one if I sent it up?". `incomingThreat` could not ask it,
+  // which is why `promote` had no idea it was feeding a 40 HP Voltorb to an
+  // Arcanine that had just dealt 80.
+  threatAgainst(pi, mySlot) {
     const E = this.E;
-    const me = E.state.players[pi], you = E.state.players[1 - pi];
-    if (!you.active || !me.active) return 0;
+    const you = E.state.players[1 - pi];
+    if (!you.active || !mySlot) return 0;
     let worst = 0;
     const c = this.top(you.active);
     (c.attacks || []).forEach((a, i) => {
       if (!E.costSatisfied(you.active, a.cost)) return;
-      const raw = this.rawOutcomes(you.active, me.active, i);
+      const raw = this.rawOutcomes(you.active, mySlot, i);
       for (const o of raw.outcomes) {
-        const r = E.computeDamage(you.active, me.active, o.dmg);
+        const r = E.computeDamage(you.active, mySlot, o.dmg);
         if (r.dmg > worst) worst = r.dmg;
       }
     });
     return worst;
+  }
+
+  // WHAT SENDING THIS ONE UP IS WORTH. One home, shared by the three places that
+  // ask it — promoting after a Knock Out, being Whirlwinded up, and choosing who
+  // a Switch brings in.
+  //
+  // IT USED TO BE THREE NEARLY-IDENTICAL FORMULAS, and they disagreed. From
+  // Trevor's log 04-22-45: the bot promoted Voltorb over Zapdos after a Knock
+  // Out, then spent a Switch on its very next turn undoing it. Both decisions
+  // were defensible on their own scorer, which is the whole problem — a promote
+  // that the next turn immediately reverses cost a card, a turn, and any belief
+  // the player had that the opponent knew what it was doing.
+  //
+  // Two things it now knows that none of the three did:
+  //
+  // READY IS A COUNTDOWN, NOT A SWITCH. `short === 0 ? 25 : 0` charged the same
+  // nothing for one Energy short as for four, so "which of these can actually
+  // fight soonest" was a question the bot could not ask — which is Trevor's
+  // other note on promotion, from a different game. This is the fourth time in
+  // this file a quantity that should fall away with distance from an edge turned
+  // out to be written flat with a cliff at the end. Suspect it on sight.
+  //
+  // SURVIVING THE TURN, priced exactly as the retreat rule prices it, because it
+  // is the same bill read from the other side: what dies with the Pokemon is the
+  // Energy invested in it, and conceding the Prize is the larger half and scales
+  // with how few they still need. Reusing that arithmetic rather than inventing
+  // a second one is the point — the two decisions were inconsistent, and one
+  // formula cannot disagree with itself. It also keeps the sacrificial promote,
+  // which is real play: a bare Basic with nothing on it is CHEAP to feed, and
+  // falls out of `invested` being zero instead of needing a rule.
+  promoteValue(pi, b) {
+    const W = this.W, E = this.E;
+    const you = E.state.players[1 - pi];
+    const pot = this.potential(pi, b, null);
+    const hp = this.remainingHP(b);
+    let s = hp * 0.35
+          + W.promoteReady / (1 + Math.min(pot.short, 4))
+          + Math.max(0, pot.best) * 0.2;
+    if (this.threatAgainst(pi, b) >= hp) {
+      const invested = b.energy.length * W.retreatSaveEnergy
+        + (this.top(b).stage !== 'Basic' ? W.retreatSaveEvolved : 0);
+      const left = Math.max(1, you.prizes.length);
+      s -= Math.min(W.dangerSwap, invested) + W.retreatPrize / (left * left);
+    }
+    return s;
   }
 
   bestAttackScore(pi) {
@@ -1280,8 +1336,7 @@ class AI {
       case 'promote': {
         const b = me.bench[a.bench];
         if (!b) return -Infinity;
-        const pot = this.potential(pi, b, null);
-        return this.remainingHP(b) * 0.35 + (pot.short === 0 ? 25 : 0) + pot.best * 0.2;
+        return this.promoteValue(pi, b);
       }
 
       // Being Whirlwinded up is not the same as choosing to promote — the timing
@@ -1294,8 +1349,7 @@ class AI {
       case 'switchIn': {
         const b = me.bench[a.bench];
         if (!b) return -Infinity;
-        const pot = this.potential(pi, b, null);
-        return this.remainingHP(b) * 0.35 + (pot.short === 0 ? 25 : 0) + Math.max(0, pot.best) * 0.2;
+        return this.promoteValue(pi, b);
       }
 
       case 'playTrainer': return this.scoreTrainer(pi, a);
@@ -1408,10 +1462,12 @@ class AI {
 
         case 'T_SWITCH_OWN': {
           if (!me.bench.length || !me.active) return -Infinity;
+          // Same yardstick as promoting, deliberately. When these were two
+          // formulas they picked different Pokemon, and the visible symptom was
+          // the bot promoting one and then spending a Switch to undo it.
           let bestI = -1, bestV = -Infinity;
           me.bench.forEach((b, i) => {
-            const pot = this.potential(pi, b, null);
-            const v2 = this.remainingHP(b) * 0.3 + (pot.short === 0 ? 20 : 0);
+            const v2 = this.promoteValue(pi, b);
             if (v2 > bestV) { bestV = v2; bestI = i; }
           });
           a.opts.bench = bestI;

@@ -2414,5 +2414,78 @@ T('the original surplus rule still holds — a fully-paid Pokemon is passed over
   return true;
 });
 
+// ===========================================================================
+// WHO GETS SENT UP  (16 Aug 2026)
+// From Trevor's log 04-22-45: the bot promoted a 40 HP Voltorb over a 90 HP
+// Zapdos into an Arcanine that had just dealt 80, and then spent a Switch on its
+// next turn undoing it. Promoting, being Whirlwinded up and choosing a Switch
+// target were three nearly-identical formulas that disagreed; they are one now.
+// ===========================================================================
+console.log('\nPromotion — who gets sent up');
+
+// A board where the opponent's Active can actually hurt: Arcanine, Take Down 80.
+function facingArcanine(benchIds) {
+  const E = board('base1-3', benchIds, 'base1-23');
+  attach(E, E.state.players[1].active, 'base1-98', 4);
+  return E;
+}
+const promoteScore = (E, i) =>
+  new AI(E, { mode: 'expert' }).scoreAction(0, { t: 'promote', bench: i });
+
+T('sends up the one that SURVIVES over the one that can attack but dies', () => {
+  // The log, rebuilt: Voltorb charged and lethal-in-one, Zapdos big and still
+  // charging. The old scorer read 41 against 31.3 and took the Voltorb.
+  const E = facingArcanine(['base1-67', 'base1-16']);        // Voltorb, Zapdos
+  const p = E.state.players[0];
+  p.active = null;
+  attach(E, p.bench[0], 'base1-100', 1);                     // Voltorb can swing
+  attach(E, p.bench[1], 'base1-100', 1);                     // Zapdos 1 of 4
+  const volt = promoteScore(E, 0), zap = promoteScore(E, 1);
+  if (!(zap > volt)) throw new Error(`fed the Voltorb: ${volt.toFixed(1)} vs Zapdos ${zap.toFixed(1)}`);
+  return true;
+});
+
+T('readiness is a countdown — one Energy short beats three', () => {
+  // Both survive, both are the same card, so nothing but the wait separates
+  // them. Under `short === 0 ? 25 : 0` this was a dead tie.
+  const E = board('base1-3', ['base1-16', 'base1-16']);      // two Zapdos, no threat
+  E.state.players[0].active = null;
+  attach(E, E.state.players[0].bench[0], 'base1-100', 3);    // one Energy short
+  attach(E, E.state.players[0].bench[1], 'base1-100', 1);    // three short
+  const near = promoteScore(E, 0), far = promoteScore(E, 1);
+  if (!(near > far)) throw new Error(`ignored the countdown: ${near.toFixed(1)} vs ${far.toFixed(1)}`);
+  return true;
+});
+
+T('a Pokemon with nothing invested is the cheaper one to feed', () => {
+  // Both Machop are 50 HP, both die to Take Down, and both are one Fighting
+  // short — three Grass buys a cost of "F" exactly nothing, so readiness is
+  // identical and the only difference is what dies with them. The sacrificial
+  // promote is real play and this is the arithmetic it falls out of.
+  const E = facingArcanine(['base1-52', 'base1-52']);
+  E.state.players[0].active = null;
+  attach(E, E.state.players[0].bench[0], 'base1-99', 3);     // three Energy sunk in
+  const sunk = promoteScore(E, 0), bare = promoteScore(E, 1);
+  if (!(bare > sunk)) throw new Error(`threw away the invested one: ${sunk.toFixed(1)} vs bare ${bare.toFixed(1)}`);
+  return true;
+});
+
+T('Switch brings in whoever promoting would have chosen', () => {
+  // The visible symptom was these two disagreeing. Assert they cannot.
+  const E = facingArcanine(['base1-67', 'base1-16', 'base1-51']);
+  const p = E.state.players[0];
+  attach(E, p.bench[0], 'base1-100', 1);
+  attach(E, p.bench[1], 'base1-100', 1);
+  p.hand = [{ id: 'base1-95', uid: E.uid++ }];               // Switch
+  const ai = new AI(E, { mode: 'expert' });
+  const sw = E.legalActions(0).find(x => x.t === 'playTrainer');
+  if (!sw) throw new Error('Switch should be playable');
+  ai.scoreAction(0, sw);                                     // fills in a.opts.bench
+  let bestI = -1, bestV = -Infinity;
+  p.bench.forEach((b, i) => { const v = ai.promoteValue(0, b); if (v > bestV) { bestV = v; bestI = i; } });
+  eq(sw.opts.bench, bestI, 'Switch target vs promotion ranking');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
