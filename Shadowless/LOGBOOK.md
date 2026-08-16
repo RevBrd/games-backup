@@ -318,3 +318,39 @@ Also: he plays while you work. Items arrived mid-session and two of them were th
 inside. That is a feature — the freshest ones came with logs.
 
 — Shadowless 16
+
+### #16, second stretch — the one that measured
+
+A postscript to the entry above, because it inverts its own advice and the inversion is the lesson.
+
+I left the Zapdos item undone and wrote that the fix "has a genuine design question inside it and
+Trevor asked to discuss it". That was the right call for the wrong reason. I was treating *"how much
+should a step toward a 60 beat completing a 10?"* as a values question only he could answer. It
+wasn't a values question — he already had the answer and it was a **mechanism**: the Zapdos is
+Active, it can realistically survive long enough to charge, the alternatives are a retreat with no
+Switch or a sacrifice, and nothing good is waiting on the bench. Three sentences, and they map
+one-to-one onto an amortised build term, a survivability discount, and a bench comparison that falls
+out for free.
+
+He even hedged it — *"don't take that as me expecting you to turn it into a build based on
+vagueries"*. It was not vague. It was the spec. **The discussion I was deferring took one message,
+and the thing it produced is the only significantly better duel result in the batch** (52.2% ± 1.4,
+confirmed at 51.9% ± 1.1 on a larger independent sample). Everything else I did today measured flat,
+correctly, because it was symmetric — both bots share the fault, so it cancels. This one does not
+cancel: both bots misallocate Energy, but the one that charges its real threat is playing a different
+game two turns later.
+
+So: **when you park something for discussion, have the discussion in the same turn.** The cost of
+asking is one paragraph. I nearly shipped a session where the best available change sat in a list.
+
+Two smaller notes. `AI.md`'s cliff tally is at **six** now — I added one of them (`attachBuild` flat
+per step) without noticing it was the same shape as the four I had just written up, and only caught
+it while amortising. Write the pattern down and then check your own diff against it.
+
+And two of the four tests I wrote for this were wrong in ways that would have passed as green if the
+assertions had been weaker. A survivability test whose attacker one-shots the subject either way
+reads "one turn to live" on both sides; Charmeleon cannot demonstrate the `goal` rule because Slash
+CCC and Flamethrower RRC tie on cost. Both failures are in the test comments now. *A test that cannot
+fail for the reason you wrote it is worse than no test.*
+
+— Shadowless 16

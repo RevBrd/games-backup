@@ -34,17 +34,11 @@ still open, so it stays with its reason and with what evidence would revive it.
 - Check if variant cards are displaying in game. Ideally the sigil cards should show their markings.
 - Visually display Double Colorless Energy as two energy dots even though the game treats it as just one energy card in terms of discarding. The visuals in this case should reflect energy provided instead for legibility to the player.
 - Add to the logic something about when to use Professor Oak and Gambler and when not to. Might be worth discussion first.
-- It's my opinion that the CPU should have powered up Zapdos instead of Voltorb on turn 4. Worth discussing if not obvious. Just don't judge my own blunder on Turn 9. - log# 04-31-25.
-  **Diagnosed 16 Aug, not taken — it wants the discussion you asked for.** Voltorb
-  scored 18 and Zapdos 15, and the reason is structural rather than a bad weight:
-  finishing a cheap attack pays `attachEnable` for the whole thing, while
-  advancing an expensive one pays a FLAT `attachBuild` per step no matter what is
-  being built toward. So one Lightning completing Voltorb's 10-damage Tackle beats
-  one of four Lightning on the way to Zapdos, forever. The fix is a real design
-  call — how much should a step toward a 60 beat completing a 10? — which is why
-  it is sitting here rather than done. → [GRABHIST](GRABHIST.md)
-- A way to cancel using a potion or other item after it's been selected but before its target has been chosen.
+- A way to cancel using a potion or other item after it's been selected but before its target has been chosen. Also includes energy attachment.
 - Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
+- Scoop Up usage displays the "knocked out" visual banner. Possibly tied to a trigger when the active card is removed w/o being retreated or something.
+- If an attack does not do damage, its recoil or other negative effects should not apply. For example, Arcanine's Take Down being negated by Chansey's Scrunch.
+- Charizard's Energy Burn pokemon power should be on by default.
 
 
 

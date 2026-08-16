@@ -76,12 +76,20 @@ toward the set it fell out of**, so the dex, the set-completion counters and the
 special case for it. Setting `ENERGY_FLOOR.base1` to 0 is the one line that makes Base Set behave
 like every other set.
 
-Measured over 40,000 packs each: base1 **2.79 → 2.00** per pack and now exactly two every time;
-Jungle and Fossil **2.00 mandatory → 1.63 drawn**, at 7% / 24% / 69% for zero, one and two.
+**A borrowing set draws Energy at the SOURCE set's share, not at its own array length's.** Drawing
+uniformly from a Common pool looks like "the set's natural rate" and stops being that the moment a
+set borrows: base1's six Energy are six of its own 38 Commons (**16%**), but dropped into Jungle's 16
+they become six of 22 (**27%**). Jungle would get more Energy than Base Set purely for having fewer
+Commons to dilute it. So `pools.energyShare` is inherited and the roll is explicit. For a set that
+prints its own, the explicit roll is arithmetically identical to what uniform drawing already did,
+so **nothing about Base Set changes**.
 
-*That 1.63 is an artifact rather than a decision, and it is the open question here.* Jungle has only
-16 Commons, so six borrowed Energy is 27% of its pool against 16% of base1's. The cap bounds the
-worst case either way, and nothing yet weights a borrow by pool size.
+Measured over 40,000 packs each:
+
+| | before | after | 0 / 1 / 2 Energy |
+|---|---|---|---|
+| base1 | 2.79 | **2.00** | 0% / 0% / 100% (floor and cap meet) |
+| base2, base3 | 2.00, mandatory and beside the pack | **1.01**, drawn | 30% / 39% / 31% |
 
 **What this replaced, and why the old reasoning stopped holding.** Job 6a delivered the guarantee for
 Jungle and Fossil as a **stipend beside the pack** — two extra cards hung off an eleven-card

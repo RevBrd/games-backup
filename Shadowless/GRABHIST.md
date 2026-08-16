@@ -12,7 +12,7 @@ been something other than what the note said three times out of three, and that 
 anyone would read this. A *parked* item is the one most worth writing up if you are on the fence,
 because the next instance will otherwise re-derive the same diagnosis from scratch.
 
-**Once an entry exists it is append-only**, like [`Rulings/`](Rulings/), [HISTORY.md](HISTORY.md)
+**Once an entry exists it is append-only**, [HISTORY.md](HISTORY.md)
 and [LOGBOOK.md](LOGBOOK.md) — that is a rule about *editing*, not about writing. Correct an entry if
 it turns out wrong; never shorten one, because a condensed entry keeps the fix and loses the gap. The
 200-line target does not apply. The method for working an item in the first place is
@@ -86,14 +86,33 @@ that the repro is real. Promotions into a hit that kills them: **32% → 21%**.
 That is the expected reading for a symmetric fault and not a verdict — they are asserted in
 `powertest.js` instead, which is the standing doctrine.*
 
-**Not taken, and diagnosed for whoever does.** *"Should have powered up Zapdos instead of Voltorb"*
-(log `04-31-25`) is real and structural: Voltorb 18, Zapdos 15. Completing a cheap attack pays
-`attachEnable` for the whole of it, while advancing an expensive one pays a **flat** `attachBuild`
-per step regardless of what is at the end of it — so one Lightning finishing a 10-damage Tackle
-beats one of four Lightning toward a 60, every time. Same cliff shape as everything above, but the
-fix has a genuine design question inside it and Trevor asked to discuss it.
+**"Should have powered up Zapdos instead of Voltorb" (log `04-31-25`) — taken after asking, and the
+asking is the finding.** I diagnosed it as structural (Voltorb 18, Zapdos 15: completing a cheap
+attack pays `attachEnable` for the whole of it, advancing an expensive one pays a **flat**
+`attachBuild` per step regardless of what is at the end) and left it, because the fix contained a
+design question I did not think was mine — *how much should a step toward a 60 beat completing a 10?*
 
-### 14 Aug 2026 — Opus 5, third pass (Arcanine)
+**Trevor answered it in three sentences of plain English and they mapped one-to-one onto terms.** His
+reasoning: the Zapdos is Active, it can *realistically survive* long enough to charge, the
+alternatives are a retreat with no Switch or a sacrifice, and nothing better is waiting on the Bench.
+That is amortisation (a step is worth its share of the attack at the end), a survivability discount
+(only the Active is being hit, so only the Active is discounted, by turns-it-has over turns-it-needs),
+and the bench comparison falling out for free because a weak card has a small `goal`.
+
+He added *"don't take that as me expecting you to turn it into a build based on vagueries"*. It was
+not vague — it was the specification. **Ask him. The item had sat as "wants discussion" and the
+discussion took one message.**
+
+**And it is the only significantly BETTER duel result of the whole batch** — 52.2% ± 1.4, then
+51.9% ± 1.1 on an independent larger sample, control 50.0%. Everything else here was flat, correctly,
+because it was symmetric. This one is not: both seats misallocate Energy, but the bot that charges
+its real threat is playing a different game two turns later.
+
+*One more detail worth not re-deriving: `goal` has to be the printed damage of the attack `short` is
+counting down to, not the biggest number on the card. Amortising a step toward Thunder against a
+Thunderbolt the Pokémon will never afford prices a road it is not on.*
+
+### 14 Aug 2026 — Opus 5 #12, third pass (Arcanine)
 
 **"Used Take Down to KO instead of Flamethrower, eating the recoil."** The log did not contain that
 case — in both Take Downs that killed, Flamethrower's 50 could not have reached the target. Said
@@ -115,7 +134,7 @@ must keep meaning the real number because PlusPower's "10 short of lethal" check
 scale with proximity to an edge, written flat with a cliff at the end. Third time in two days —
 worth suspecting on sight.*
 
-### 13 Aug 2026 — Opus 5, second pass (the AI)
+### 13 Aug 2026 — Opus 5 #12, second pass (the AI)
 
 **"Opponent retreated a Kangaskhan instead of tanking."** Built as a **derivation**, not the per-card
 tag Trevor proposed — everything that makes a wall a wall is already in the card data, so a tag would
@@ -144,7 +163,7 @@ change did nothing" — the one verdict nobody argues with.* Written up as the s
 **Method note for next time.** Two of my own tests failed on wrong card ids — `base1-5` is Clefairy,
 not Kangaskhan — and both failures looked exactly like the feature not working. Look up the id.
 
-### 13 Aug 2026 — Opus 5, first pass (the rules)
+### 13 Aug 2026 — Opus 5 #12, first pass (the rules)
 
 **Confused Pokémon retreated without flipping.** Real, and a flat rules gap rather than an AI
 misjudgement: `confused` appeared eight times in `engine.js` and exactly one was in the attack path.

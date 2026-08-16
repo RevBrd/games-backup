@@ -244,6 +244,41 @@ Flat in a duel, as this whole family is (50.6% ± 1.4 on `--gbc`, control 50.0%)
 `powertest.js`, one of which asserts the **Active/Bench split as it stands** so that whoever closes
 Open #1 below trips over a named case instead of a paragraph.
 
+## Progress is worth a share of what it is progress toward
+
+**16 Aug 2026, from log `04-31-25` — and the design came out of Trevor's plain-English reasoning
+about it rather than out of the code.** He said the Zapdos was the better investment because it is
+Active, can *realistically survive* long enough to charge, and nothing better is waiting on the
+Bench. All three of those are in the fix.
+
+**This is the only significantly better duel result in the batch: 52.2% ± 1.4, then 51.9% ± 1.1 on an
+independent larger sample, control 50.0%.** Worth noting against the four flat results around it —
+this family of fault is *not* symmetric. Both seats misallocate, but the misallocation compounds:
+the bot that charges its real threat is playing a different game two turns later.
+
+**Finishing an attack pays `attachEnable` for the whole attack. Advancing one paid a flat
+`attachBuild` per step and had no idea what was at the end of the road.** So one Lightning completing
+a Voltorb's 10-damage Tackle beat one of four Lightning toward a 60 — permanently, and by
+construction, because the card that can never do anything is the cheap one to finish.
+
+Advancing is **amortised** now: one Energy of the N a Pokémon still needs is worth roughly its share
+of the attack waiting at the end. A third of a 60 beats all of a 10.
+
+Two details that are load-bearing:
+
+- **`potential()` returns `goal` beside `short`** — the printed damage of the attack `short` is
+  actually counting down to, ties broken by size. Amortising a step toward Thunder against a
+  Thunderbolt the Pokémon will never afford would price a road it is not on.
+- **`survivesCharge` is Trevor's other condition.** Only the Active is being hit, so only the Active
+  is discounted, by turns-it-has over turns-it-needs. Graded, not a cliff — see the running tally
+  below.
+
+Four assertions in `powertest.js`. **Two of them were written wrong first and both mistakes are worth
+knowing**: a survivability test whose attacker one-shots the subject either way reads "one turn to
+live" on both sides and proves nothing, and Charmeleon cannot demonstrate the `goal` rule at all
+because Slash CCC and Flamethrower RRC tie on cost, so the documented tie-break correctly returns
+the 50.
+
 ## Who gets sent up
 
 **16 Aug 2026, from log `04-22-45`.** After a Knock Out the bot promoted a 40 HP Voltorb over a 90 HP
@@ -258,9 +293,13 @@ three did.
 **Readiness is a countdown, not a switch.** `short === 0 ? 25 : 0` charged the same nothing for one
 Energy short as for four, so *"which of these can fight soonest"* was unaskable — which is Trevor's
 separate promotion note, from a different game. `promoteReady / (1 + min(short, 4))`: 25 ready, 12.5
-one away, 5 at four or more. **Fourth time in this file that a quantity which should fall away with
-distance from an edge turned out to be written flat with a cliff at the end.** `retreatPrize`'s
-divisor, `selftest`'s threshold, Arcanine's recoil, and now this. Suspect it on sight.
+one away, 5 at four or more.
+
+**This is the running tally of the same mistake, and it is now at six.** A quantity that should fall
+away with distance from an edge, written flat with a cliff at the end: `retreatPrize`'s divisor,
+`selftest`'s sample threshold, Arcanine's recoil, this, the flat `attachBuild` in the section above,
+and `survivesCharge` — which was written graded on purpose *because* of the other five. **Suspect it
+on sight.** If a term is about proximity and it is written as an equality check, look again.
 
 **Surviving the turn, priced with the retreat rule's own arithmetic**, because it is the same bill
 read from the other side: the Energy invested dies with the Pokémon, and the Prize is the larger half
