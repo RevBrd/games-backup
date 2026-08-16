@@ -1715,14 +1715,31 @@ function statusBadges(slot, terse) {
 
 function energyPips(slot, cls) {
   const en = el('div', 'energyrow');
+  // ONE PIP PER SYMBOL, NOT PER CARD — Trevor, 16 Aug 2026, from play.
+  //
+  // Double Colorless pays for two and showed one dot, so the row said "three
+  // Energy" about a Pokemon that could pay a cost of four. The row is what you
+  // read the board off, and it was answering a different question from the one
+  // being asked of it. Buzzap is the same shape and gets the same treatment: an
+  // Electrode standing in as two Fire now looks like two Fire.
+  //
+  // The card is STILL one card everywhere it matters — discarding, retreat cost,
+  // Energy Removal. Only the picture changed. Pips from one card carry `.multi`
+  // so they sit closer together than two separate cards do, which is what keeps
+  // the count honest without pretending you can discard half of one.
   slot.energy.forEach(e => {
-    const p = el('i', 'pip ink');
     // asEnergy is set on the card instance by Buzzap, which turns an Electrode
     // into an Energy card; the card definition still says Pokemon.
-    const prov = e.asEnergy || CARD_DB[e.id].provides;
-    p.style.background = ENERGY_INK[(prov || 'C')[0]] || ENERGY_INK.C;
-    p.title = CARD_DB[e.id].name + (e.asEnergy ? ` (Buzzap: ${e.asEnergy})` : '');
-    en.appendChild(p);
+    const prov = String(e.asEnergy || CARD_DB[e.id].provides || 'C');
+    const syms = prov.split('');
+    syms.forEach((sym, i) => {
+      const p = el('i', 'pip ink' + (syms.length > 1 ? ' multi' : '') + (i ? ' cont' : ''));
+      p.style.background = ENERGY_INK[sym] || ENERGY_INK.C;
+      p.title = CARD_DB[e.id].name
+        + (syms.length > 1 ? ` — one card, ${syms.length} Energy` : '')
+        + (e.asEnergy ? ` (Buzzap: ${e.asEnergy})` : '');
+      en.appendChild(p);
+    });
   });
   if (!slot.energy.length) en.appendChild(el('span', 'none', cls === 'terse' ? '—' : 'no energy'));
   return en;
