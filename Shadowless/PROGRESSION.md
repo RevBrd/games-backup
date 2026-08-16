@@ -165,7 +165,10 @@ control you always need stays put. Verified at 1280x600, 1366x768, 1600x900 and 
    portraits — a challenger's face is their deck's hero card, which reuses the deck-tile idiom
    rather than inventing an art system.
 2. **The real per-set decks are a future job**, Trevor's and mine together: hand-built lists per set
-   and a better automated builder. The GBC 16 are placeholders until then, and the `subs` records in
+   and a better automated builder. **What those decks have to hit is now specified —
+   [OPPONENTS.md](OPPONENTS.md)**, Job 8: tiers, rung composition, entry conditions and pressure
+   tags. This file stays the machinery; that one is the content.
+   The GBC 16 are placeholders until then, and the `subs` records in
    `data/gbc_decks.json` say which cards are standing in for something we cannot generate yet.
    **The candidate pool for that job already exists and is researched** — 16 official WotC theme
    decks, 8 Gym Leader decks and 8 GB2 flavour decks, ID-mapped and count-verified but read by

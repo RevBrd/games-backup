@@ -51,6 +51,7 @@ from here without costing a row.
 | [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. The four-step order that replaced the arbiter, and the principles index you match a new card against by *shape*. **It is a directory: each ruling is its own file in `Rulings/`**, one per judgement call, with its reasoning and source |
 | [DATA.md](DATA.md) | Generating a set, trusting a set code, or adopting one of the deck spreadsheets. The corpus, the two set codes that read backwards, and what is reference-only |
 | [PROGRESSION.md](PROGRESSION.md) | Touching the ladder, an opponent, or anything that grants a pack. How brackets are derived from the live sets rather than declared, the tunables, why free play pays nothing, and the four layout defects only a screenshot caught |
+| [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck, adding a set's roster, or working the auto-builder. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, the one entry-condition mechanism behind three different gates, and the pressure tags. **Design, not built** |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, looking at the board with `tools/shot.js`, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md` and its archive, where each instance's own account of its work is kept verbatim |
@@ -244,7 +245,7 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   Job 6's entry is worth ten minutes before planning the next set: it was split by *machinery* rather
   than by set, and the reason 126 printings were only **95 distinct behaviours** is the kind of count
   that decides how big a job actually is.
-- **Job 8** - Deck and progression shape. Not the exact card and opponent names, but an outline of what the placeholders will eventually be replaced with.
+- **Job 8** - Deck and progression shape. Not the exact card and opponent names, but an outline of what the placeholders will eventually be replaced with. **The spec is [OPPONENTS.md](OPPONENTS.md)**, written 15 Aug 2026; it is design and nothing in it is built.
 - **Job 9** - Major AI-related work, primarily drawn from Grab Bag items. Might run concurrently with Job 8.
 - **Job 9.5** - Scheduled pre-new set maintenance and grab bag run.
 - **Job 10** - Rulings and additions for the Team Rocket set.
