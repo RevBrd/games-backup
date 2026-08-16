@@ -32,13 +32,19 @@ still open, so it stays with its reason and with what evidence would revive it.
   all. What happened in log 22-29-31 is two Gusts in one turn undoing each other. Almost certainly
   not Gust-specific. → [GRABHIST](GRABHIST.md)
 - Check if variant cards are displaying in game. Ideally the sigil cards should show their markings.
-- Visually display Double Colorless Energy as two energy dots even though the game treats it as just one energy card in terms of discarding. The visuals in this case should reflect energy provided instead for legibility to the player.
 - Add to the logic something about when to use Professor Oak and Gambler and when not to. Might be worth discussion first.
 - A way to cancel using a potion or other item after it's been selected but before its target has been chosen. Also includes energy attachment.
 - Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
-- Scoop Up usage displays the "knocked out" visual banner. Possibly tied to a trigger when the active card is removed w/o being retreated or something.
 - If an attack does not do damage, its recoil or other negative effects should not apply. For example, Arcanine's Take Down being negated by Chansey's Scrunch.
-- Charizard's Energy Burn pokemon power should be on by default.
+  **Waiting on you, 16 Aug — this is a rules call and I think it may go the other
+  way.** Your diagnosis of the trigger was exactly right (the engine applies
+  `RECOIL` unconditionally after the damage step). What I am unsure of is whether
+  it *should*: Scrunch prevents damage done to Chansey, and Take Down's 30 is
+  damage Arcanine does to itself, so under the printed text I read them as
+  separate. But the arbiter is the GBC game and you know it far better than I do.
+  **Also worth pinning: how wide is the rule?** "Other negative effects" would
+  reach Thrash, Thunder's self-damage and Tauros' self-confusion too, and those
+  are four different cards' worth of behaviour rather than one.
 
 
 

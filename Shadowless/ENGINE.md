@@ -172,7 +172,7 @@ any of this.** A green `selftest.js` run says nothing about Powers. Use:
 - **`tools/powertest.js`** — builds boards by hand, fires a Power, asserts the exact state change.
   Half its cases assert that something is **illegal**, which is where these rules actually live:
   Damage Swap refusing a move that would Knock Out the receiver, a Power switched off by Sleep,
-  Energy Burn not being offered twice. Its 6b section runs against a **synthetic database**, because
+  Energy Burn never being offered at all. Its 6b section runs against a **synthetic database**, because
   the machinery was built before the cards: each stand-in carries the exact Power its real card
   will, and every assertion switches a Power on or off underneath an already-built board — which is
   precisely what a materialised cache would get wrong.
@@ -182,6 +182,13 @@ any of this.** A green `selftest.js` run says nothing about Powers. Use:
 passed every unit test while the AI silently never used it, because `bestAttackScore` returns
 `{score, idx}` and the first scorer compared the objects. A Power the AI never reaches for is not
 a working Power, and no other suite can see it.
+
+**Energy Burn is passive as of 16 Aug 2026** and no longer an action either side takes — Trevor's
+call, *"similar to Muk's Toxic Gas"*. Charizard's only attack is Fire Spin at RRRR, so declining was
+never a decision. `slotSymbols` consults the Power the way every other passive here is consulted,
+which is also why it now switches off under Sleep, Confusion, Paralysis and Toxic Gas; the old flag
+was set once and re-checked by nothing. It does **not** reach a cost demanding a specific Energy
+*card* — that still reads `energyProvides`, matching the Buzzap ruling.
 
 ## What this file deliberately does not cover
 

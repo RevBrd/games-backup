@@ -112,6 +112,45 @@ its real threat is playing a different game two turns later.
 counting down to, not the biggest number on the card. Amortising a step toward Thunder against a
 Thunderbolt the Pokémon will never afford prices a road it is not on.*
 
+### 16 Aug 2026 — Opus 5 #16 (Job 9, second batch)
+
+**"Scoop Up displays the knocked-out banner."** Trevor guessed the trigger correctly in the note
+itself — *"possibly tied to when the active card is removed w/o being retreated"* — and that is
+exactly what it was. `diffForFx` inferred a Knock Out from *"a slot that was here is gone"*, which is
+equally true of Scoop Up, Mr. Fuji and Hurricane. The engine records what was genuinely Knocked Out
+per action now (`state.koThisAction`, cleared like `peeked`) and the UI reads it instead of guessing.
+*A derived signal that is right 90% of the time is the kind of thing that survives for months,
+because the 10% looks like a different bug every time it fires.*
+
+**"Charizard's Energy Burn should be on by default, similar to Muk's Toxic Gas."** Agreed on sight:
+Charizard's only attack is Fire Spin at RRRR, so there has never been a board on which you would
+decline it — it was a click with no decision behind it. `slotSymbols` consults the Power now, and the
+action, the `energyAs` flag, the turn-boundary lapse and the AI's scoring case all went with it.
+
+**Making it a consultation rather than a flag bought a correctness gain nobody asked for.** It now
+switches off under Sleep, Confusion, Paralysis and Toxic Gas — a flag set before falling asleep used
+to survive the turn, because nothing re-checked it. Two assertions cover that. What it deliberately
+does **not** reach is a cost reading "discard a FIRE Energy", which still reads the real card,
+matching the Buzzap ruling that a card standing in for Energy is not that Energy card.
+
+*And a small piece of history: `selftest`'s Power-kind coverage check went red on this, and the
+comment above that opt-out list says Energy Burn is the reason the check exists. It is now on the
+list, as the passive it had been behaving like all along.*
+
+**"Show Double Colorless as two dots."** The row said "three Energy" about a Pokémon that could pay a
+cost of four. One pip per symbol now, with pips from a single card pulled tight and hairlined so a
+pair reads as linked — the row has to say *four Energy* and *three cards* simultaneously. Buzzap got
+it for free, being the same shape.
+
+**Not taken, and it is a rules question rather than a bug.** *"If an attack does not do damage, its
+recoil or other negative effects should not apply"* — Take Down into Chansey's Scrunch. The trigger
+is real and simple (`RECOIL` is applied unconditionally after the damage step) but I am not confident
+the rule should change: Scrunch prevents damage done *to Chansey*, and Take Down's 30 is damage
+Arcanine does *to itself*. Two separate things under the printed text. The arbiter is the GBC game
+and Trevor knows it far better than I do, so it went back to him with that stated rather than being
+built either way. **The scope also needs pinning**: "other negative effects" reaches Thrash,
+Thunder's self-damage and Tauros' self-confusion, which is four cards' behaviour rather than one.
+
 ### 14 Aug 2026 — Opus 5 #12, third pass (Arcanine)
 
 **"Used Take Down to KO instead of Flamethrower, eating the recoil."** The log did not contain that
