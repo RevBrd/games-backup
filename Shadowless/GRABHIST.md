@@ -180,6 +180,45 @@ should not — a 5-point draw goes negative and the bot passes, a 60-point swing
 still obviously worth taking. Asserted both ways, because "never attack while Confused" would be
 worse play than the bug.
 
+### 16 Aug 2026 — Opus 5 #16 (Job 9, later batches)
+
+**"Opponent lost the match due to self-kill from recoil."** The most valuable item of the day, and
+the one with the clearest general lesson.
+
+Log `06-53-35`, final turn. Electabuzz on 10 HP took Thunderpunch — a coin for either a bonus or
+30-plus-10-recoil — Knocked Arcanine out, killed itself on the recoil, handed Trevor his last Prize
+and lost the game on the turn it scored. It rated that **73.5** against a safe Thundershock at 33.
+
+**An average hid it.** Expected recoil on that attack is 5, and 5 never killed anybody. *The branch
+that ends the game becomes invisible the moment it is folded into a mean* — and this whole AI is
+built on expected value, so the same blind spot is structural rather than local. `rawOutcomes`
+carries the WORST case and its odds alongside the expected figure now.
+
+Priced at `lastPrize`, not `selfKO`. **Losing is not a big Knock Out.** `selfKO` at 70 could never
+outweigh a Knock Out worth 55 plus 35 damage, so no amount of tuning that weight would ever have
+fixed this; it needed to be a different kind of term. It is the exact mirror of the "win the game if
+you can win the game" rule from Job 6 — *and that rule needed its own guard too*, because it returns
+a near-certain lethal before any scoring runs and would have taken the mutual kill regardless.
+
+Rebuilt from the log: **73.5 → −79.0**, and the bot takes Thundershock. Still 41.0 and still preferred
+when the same board has them three Prizes away, which is the check that matters — the rule must not
+become "never recoil".
+
+*Test note worth keeping.* The assertions failed twice before I saw why: with the opponent's Bench
+empty, the Knock Out ALSO wins outright, the two game-enders cancel to roughly nothing, and the test
+silently measures a mutual-annihilation position instead of the one it means to. Give them a Bench.
+
+**"Opponent deck name says Overgrowth when the opponent is Jack."** Exactly what it says. `UI.foeDeck`
+is the *free play* selection and nothing clears it when you return to the ladder, so the board and
+the setup banner sat naming whichever theme deck was last picked in the other mode. **The match log
+had already solved this** and its expression is now a shared helper, so the file and the screen
+cannot drift apart again. Screenshotted with `foeDeck` deliberately left at "Overgrowth".
+
+**Gyarados on turn 18 — crossed off without being worked**, Trevor's call and mine agreeing. The
+promote/Switch unification and the recoil-suicide fix both landed after that game was recorded and
+both bear on it, so the old log is no longer evidence about the current tree. Same caution now sits
+on the Electabuzz-turn-30 item.
+
 ### 14 Aug 2026 — Opus 5 #12, third pass (Arcanine)
 
 **"Used Take Down to KO instead of Flamethrower, eating the recoil."** The log did not contain that

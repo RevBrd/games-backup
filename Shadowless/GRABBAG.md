@@ -33,11 +33,14 @@ still open, so it stays with its reason and with what evidence would revive it.
   not Gust-specific. → [GRABHIST](GRABHIST.md)
 - Check if variant cards are displaying in game. Ideally the sigil cards should show their markings.
 - Add to the logic something about when to use Professor Oak and Gambler and when not to. Might be worth discussion first.
-- A way to cancel using a potion or other item after it's been selected but before its target has been chosen. Also includes energy attachment.
 - Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
-- Gyarados probably should not have been switched out on turn 18. It would have been better to get that last hit in and potentially lose the card on the next turn, as saving it and missing that attack benefits nothing - log# 06-13-50.
 - If the opponent has a tank in the active spot and is starting to run out of cards in the deck before the player, it begins to power up that tank to attack with or retreat rather than tank to a loss. It should also stop using cards like Bill or Professor Oak, or moves like Fetch or Pay Day below ~20ish cards - Some preemptive, some log# 06-13-50.
-- Opponent deck name says "Overgrowth" in-game when the opponent is Jack.
+- Hand cards change size in different situations, sometimes as things are moving between turns or after a turn has ended. Please do not touch this one without carefully consulting LAYOUT.md and saving it for its own dedicated pass with minimal competing items, just in case. Trigger might be during coin flips, after which it reverts back.
+- Electabuzz shouldn't have been retreated Turn 30. Possibly same root case as example from 06-13-50 - log#16-06-53
+  **Not looked at yet, and worth a re-check before chasing.** The recoil-suicide
+  fix came out of the same log and changes what the bot thinks a damaged Active
+  is worth, and the promote/Switch unification landed after this game was
+  recorded. A fresh log would be better evidence than this one.
 
 
 

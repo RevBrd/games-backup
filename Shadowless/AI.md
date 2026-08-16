@@ -334,6 +334,32 @@ goes on refusing Take Down into a Scrunched Chansey for a cost it will not pay. 
 `f.pStopped`, the odds the recoil actually lands, rather than as an on/off switch — Transparency is a
 coin, and this must not become the next entry in the tally below.
 
+## Don't lose the game either
+
+**16 Aug 2026, from log `06-53-35`** — the exact mirror of the *win the game if you can win the game*
+rule, and found the same way: a match that turned on the bot not seeing a game-ending branch.
+
+Electabuzz on 10 HP took Thunderpunch, a coin for either a bonus or 30-plus-10-recoil. It Knocked
+Arcanine out, the recoil killed Electabuzz, that handed over the last Prize, and the game ended on
+the turn it scored. **73.5, against a safe Thundershock at 33.**
+
+**An average hid it, and that is the part that generalises.** Expected recoil on that attack is 5,
+and 5 never killed anybody. This entire scorer is built on expected value, so *any* catastrophic
+minority branch is invisible to it by construction — a mean cannot represent "and sometimes the game
+just ends". `rawOutcomes` now carries `selfWorst` and `pSelfWorst` beside `selfDmg`, and a
+self-Knock-Out that ends the match is charged `lastPrize` rather than `selfKO`.
+
+**It had to be a different kind of term, not a bigger one.** `selfKO` is 70; the Knock Out it was
+competing with was worth 55 plus 35 damage. No value of that weight would ever have fixed this
+without breaking every ordinary recoil decision. Losing is not a large Knock Out.
+
+The win shortcut in `choose()` needed its own guard, because it returns a near-certain lethal
+*before any scoring runs* — the rule above cannot reach it, and it would have taken the mutual kill.
+
+**Where to look for more of these:** anywhere the scorer averages over outcomes and one of those
+outcomes is terminal. Prizes, empty boards, and deck-out are the three ways this game ends, and only
+the first two are priced anywhere.
+
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
