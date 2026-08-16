@@ -185,6 +185,18 @@ function opponentDeckFor(opp) {
 // call site with the bug.
 const currentFoe = () => (!UI.freePlay && UI.foe) ? findOpponent(LADDER_VIEW, UI.foe) : null;
 
+// WHAT TO CALL THE OTHER SIDE'S DECK — 16 Aug 2026, from Trevor: the board said
+// "Overgrowth" while he was playing Jack.
+//
+// `UI.foeDeck` is the FREE PLAY selection and nothing clears it when you go back
+// to the ladder, so it sat there naming whichever theme deck was last chosen in
+// the other mode. Two places read it raw. The match log had already solved this
+// and its string is reused verbatim, so the file and the screen agree.
+const foeDeckLabel = () => {
+  const f = currentFoe();
+  return f ? `${f.name} — ${f.title}` : UI.foeDeck;
+};
+
 const SANDBOX = 'Sandbox';
 const DECK_NAMES = Object.keys(DECKS).concat([SANDBOX]);
 
@@ -388,7 +400,7 @@ function startMatchLog(seed) {
     seed,
     // In ladder play the opponent's "deck" is the challenger, which is what you
     // would want to read back off a log six matches later.
-    decks: [UI.myDeck, currentFoe() ? `${currentFoe().name} — ${currentFoe().title}` : UI.foeDeck],
+    decks: [UI.myDeck, foeDeckLabel()],
     tier: UI.foeTier || UI.aiMode,
     prizes: (UI.cfgDraft && UI.cfgDraft.prizes) || null,
   });
@@ -1402,7 +1414,7 @@ function renderSide(pi, isFoe) {
 
   const head = el('div', 'sidehead');
   head.appendChild(el('div', 'sidename', isFoe ? 'OPPONENT' : 'YOU'));
-  head.appendChild(el('div', 'sidedeck', isFoe ? UI.foeDeck : UI.myDeck));
+  head.appendChild(el('div', 'sidedeck', isFoe ? foeDeckLabel() : UI.myDeck));
   const hand = el('div', 'handcount');
   hand.appendChild(el('b', null, String(p.hand.length)));
   hand.appendChild(el('span', null, 'in hand'));
@@ -3732,7 +3744,7 @@ function renderSetup() {
   title.appendChild(el('p', 'dimtxt', 'Place one Basic Pokemon as your Active, then up to five more on your Bench. Click a placed Pokemon to take it back. Prizes are dealt once both players are ready.'));
   head.appendChild(title);
   const banner = el('div', 'setupdecks');
-  banner.appendChild(el('span', 'dimtxt small', `${UI.myDeck} vs ${UI.foeDeck}`));
+  banner.appendChild(el('span', 'dimtxt small', `${UI.myDeck} vs ${foeDeckLabel()}`));
   const back = el('button', 'btn ghost', 'Change decks');
   back.onclick = () => backToDeckSelect();
   banner.appendChild(back);

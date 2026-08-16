@@ -2602,6 +2602,74 @@ T('the AI stops paying for recoil it will not take', () => {
 // scorer knew Confusion existed — the retreat rule learned it on 13 Aug and the
 // attack path never did.
 // ===========================================================================
+// ===========================================================================
+// DON'T LOSE THE GAME EITHER  (16 Aug 2026)
+// The mirror of "win the game if you can win the game", and found the same way.
+// Log 06-53-35, final turn: Electabuzz on 10 HP took Thunderpunch — a coin for a
+// bonus or 30-plus-10-recoil — Knocked Arcanine out, killed itself on the
+// recoil, handed Trevor his last Prize and lost the match on the turn it scored.
+// It rated that 73.5 against a safe Thundershock at 33.
+//
+// An average hid it: expected recoil on that attack is 5, and 5 never killed
+// anybody. The worst case is carried alongside the mean now.
+// ===========================================================================
+console.log("\nDon't lose the game either");
+
+// Electabuzz, 70 HP, Thunderpunch is idx 1 (LC, 30+, 10 recoil on tails).
+function lastTurn(theirPrizesLeft, ourBench) {
+  const E = board('base1-20', ourBench, 'base1-23');     // Electabuzz vs Arcanine
+  const p = E.state.players[0], o = E.state.players[1];
+  attach(E, p.active, 'base1-100', 3);
+  p.active.dmg = 60;                                     // 10 HP left
+  o.active.dmg = 60;                                     // 40 left; Thunderpunch reaches
+  o.prizes = Array.from({ length: theirPrizesLeft }, () => ({ id: 'base1-99', uid: E.uid++ }));
+  // THEY NEED A BENCH, or the Knock Out empties their board and wins outright —
+  // the two game-enders then cancel to roughly nothing and the test measures a
+  // mutual-annihilation case instead of the one it means to. That confound cost
+  // this test two runs; it is a genuinely ambiguous position and not what the
+  // logged one was.
+  o.bench = [E.mkSlot({ id: 'base1-46', uid: E.uid++ })];
+  return new AI(E, { mode: 'expert' });
+}
+
+T('refuses a Knock Out whose own recoil hands over the last Prize', () => {
+  const ai = lastTurn(1, ['base1-48']);
+  const punch = ai.scoreAttack(0, 1), shock = ai.scoreAttack(0, 0);
+  if (!(punch < 0)) throw new Error(`suicidal attack still positive: ${punch.toFixed(1)}`);
+  if (!(shock > punch)) throw new Error('the safe attack must win');
+  return true;
+});
+
+T('...and when it would leave us with no Pokemon at all', () => {
+  const ai = lastTurn(6, []);                            // plenty of Prizes, empty Bench
+  if (!(ai.scoreAttack(0, 1) < 0)) throw new Error('emptying our own board is not a loss?');
+  return true;
+});
+
+T('but takes it happily when losing is not on the table', () => {
+  // The rule must not become "never recoil". Same board, they need three more.
+  const ai = lastTurn(3, ['base1-48']);
+  const punch = ai.scoreAttack(0, 1), shock = ai.scoreAttack(0, 0);
+  if (!(punch > shock)) throw new Error(
+    `over-corrected — the good attack was refused: ${punch.toFixed(1)} vs ${shock.toFixed(1)}`);
+  return true;
+});
+
+T('the win shortcut does not take a mutual kill', () => {
+  // `choose` returns a near-certain lethal outright, BEFORE any scoring, so the
+  // rule above cannot reach it. Arcanine on 10 HP: Take Down kills them and the
+  // 30 recoil kills us, and they are one Prize from winning.
+  const E = board('base1-23', [], 'base1-43');           // Arcanine vs Abra, 30 HP
+  const p = E.state.players[0], o = E.state.players[1];
+  attach(E, p.active, 'base1-98', 4);
+  p.active.dmg = 90;                                     // 10 left — the recoil is fatal
+  o.prizes = [{ id: 'base1-99', uid: E.uid++ }];
+  p.prizes = [{ id: 'base1-99', uid: E.uid++ }];         // our own lethal would win outright
+  const a = new AI(E, { mode: 'expert' }).choose(0);
+  if (a && a.t === 'attack' && a.idx === 1) throw new Error('took the mutual kill via the shortcut');
+  return true;
+});
+
 console.log('\nAttacking while Confused');
 
 const confusedScore = (cardId, idx, confused) => {

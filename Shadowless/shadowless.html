@@ -3865,9 +3865,9 @@ class AI {
   // Returns raw (pre-Weakness) damage outcomes plus effect probabilities.
   rawOutcomes(atkSlot, defSlot, idx, vopts) {
     const c = this.top(atkSlot);
-    const empty = { outcomes: [{ p: 1, dmg: 0 }], statuses: {}, selfDmg: 0, energyCost: 0, flags: {} };
+    const empty = { outcomes: [{ p: 1, dmg: 0 }], statuses: {}, selfDmg: 0, selfWorst: 0, pSelfWorst: 0, energyCost: 0, flags: {} };
     let atk = (c.attacks || [])[idx];
-    if (!atk) return { outcomes: [], statuses: {}, selfDmg: 0, energyCost: 0, flags: {} };
+    if (!atk) return { outcomes: [], statuses: {}, selfDmg: 0, selfWorst: 0, pSelfWorst: 0, energyCost: 0, flags: {} };
     let script = this.script(atkSlot, idx);
 
     // Metronome and Mirror Move resolve to something OTHER than their own
@@ -3892,7 +3892,7 @@ class AI {
       for (const x of (rec.statuses || [])) st[x] = 1;
       // A recorded final result is already past Weakness and Resistance.
       return { outcomes: [{ p: 1, dmg: rec.damage || 0 }], statuses: st,
-               selfDmg: 0, energyCost: 0, flags: { flat: true } };
+               selfDmg: 0, selfWorst: 0, pSelfWorst: 0, energyCost: 0, flags: { flat: true } };
     }
 
     let base = aiParseDamage(atk.dmg);
@@ -3900,6 +3900,10 @@ class AI {
     const statuses = {};
     const flags = {};
     let selfDmg = 0, energyCost = 0;
+    // WORST-CASE self-damage and how often it happens, alongside the expected
+    // figure. An average hides the branch that ends the game: 10 recoil on a
+    // coin is "5 expected", and 5 never killed anybody.
+    let selfWorst = 0, pSelfWorst = 1;
 
     const split = (fn) => {
       const next = [];
@@ -3935,8 +3939,8 @@ class AI {
         // `s` may be a list — Venom Powder lands Confused AND Poisoned on one coin.
         case 'STATUS': for (const st of [].concat(v.s)) statuses[st] = 1; break;
         case 'STATUS_ON_FLIP': for (const st of [].concat(v.s)) statuses[st] = 0.5; break;
-        case 'RECOIL': selfDmg += v.n; break;
-        case 'RECOIL_ON_FLIP': selfDmg += v.n * 0.5; break;
+        case 'RECOIL': selfDmg += v.n; selfWorst += v.n; break;
+        case 'RECOIL_ON_FLIP': selfDmg += v.n * 0.5; selfWorst += v.n; pSelfWorst *= 0.5; break;
         case 'BENCH_SPLASH': flags.benchSplash = v.n; break;
         case 'SWITCH_DEFENDER_CHOOSE': flags.drag = true; break;
         case 'PREVENT_ALL_DMG_SELF_ON_FLIP': flags.shield = 0.5; break;
@@ -3969,7 +3973,7 @@ class AI {
           break;
         case 'FLIP_BONUS_OR_RECOIL':
           split(() => [[0.5, v.base + v.bonus], [0.5, v.base]]);
-          selfDmg += v.recoil * 0.5; break;
+          selfDmg += v.recoil * 0.5; selfWorst += v.recoil; pSelfWorst *= 0.5; break;
         case 'STATUS_COIN_EITHER':
           statuses[v.heads] = 0.5; statuses[v.tails] = 0.5; break;
         case 'TOXIC':
@@ -4053,7 +4057,8 @@ class AI {
     }
     // FLIP_OR_NOTHING suppresses the whole attack, statuses included.
     if (flags.halfWhiff) for (const k in statuses) statuses[k] *= 0.5;
-    return { outcomes, statuses, selfDmg, energyCost, flags };
+    return { outcomes, statuses, selfDmg, selfWorst, pSelfWorst: selfWorst ? pSelfWorst : 0,
+             energyCost, flags };
   }
 
   // Run each raw outcome through the engine's own damage maths.
@@ -4189,12 +4194,41 @@ class AI {
     // Charged at the odds the recoil actually lands rather than as an on/off
     // switch, because Transparency is a coin and this must not become the fifth
     // flat-with-a-cliff in this file.
-    const recoil = f.selfDmg * (1 - (f.pStopped || 0));
+    const lands = 1 - (f.pStopped || 0);
+    const recoil = f.selfDmg * lands;
     if (recoil > 0) {
       s -= recoil * W.selfDamage;
       const left = Math.max(1, this.remainingHP(atkSlot));
       const frac = Math.min(1, recoil / left);
       s -= W.selfKO * frac * frac;
+    }
+
+    // DON'T LOSE THE GAME EITHER — 16 Aug 2026, the exact mirror of the "win the
+    // game if you can win the game" rule in `choose`, and found the same way: a
+    // match Trevor lost the other way round.
+    //
+    // Log 06-53-35, final turn. Electabuzz on 10 HP took Thunderpunch, which is
+    // a coin: heads a bonus, tails 30 and 10 recoil. It Knocked Arcanine out —
+    // and the recoil killed Electabuzz, handed Trevor his last Prize, and lost
+    // the game on the turn it scored. The bot rated it 73.5 against a safe
+    // Thundershock at 33.
+    //
+    // AN AVERAGE HID IT. `selfDmg` for that attack is "5 expected", and 5 never
+    // killed anybody — the branch that ends the game is invisible the moment it
+    // is folded into a mean. So the WORST case is carried alongside, with the
+    // odds of reaching it, and priced at `lastPrize` rather than `selfKO`
+    // whenever that death is the one that ends the match. Losing is not a big
+    // Knock Out; it is a different kind of thing, and `selfKO` at 70 could never
+    // outweigh a Knock Out worth 55 plus the damage.
+    //
+    // Note which pile is which, because the same inversion has bitten twice in
+    // this file: when OUR Pokemon dies the OPPONENT draws from THEIR OWN pile,
+    // so the pile to read is `you.prizes`.
+    const worst = (f.selfWorst || 0) * lands;
+    if (worst > 0 && worst >= this.remainingHP(atkSlot)) {
+      const givesTheirLastPrize = you.prizes.length <= 1;
+      const leavesUsEmpty = me.bench.length === 0;
+      if (givesTheirLastPrize || leavesUsEmpty) s -= (f.pSelfWorst || 1) * W.lastPrize;
     }
     if (f.energyCost > 0) s -= f.energyCost * W.energyDiscard;
 
@@ -5563,6 +5597,11 @@ class AI {
       const f = this.forecast(pi, a.idx, a.opts);
       if (!f || f.pLethal < 0.99) continue;
       const me = s.players[pi], you = s.players[1 - pi];
+      // ...unless taking it kills us too and hands them the game. The shortcut
+      // bypasses scoring entirely, so the rule above cannot save us here.
+      const suicide = (f.selfWorst || 0) >= this.remainingHP(me.active)
+        && (you.prizes.length <= 1 || me.bench.length === 0);
+      if (suicide) continue;
       if (me.prizes.length <= 1 || you.bench.length === 0) {
         a.__score = this.W.lastPrize;
         a.__why = you.bench.length === 0
@@ -10199,6 +10238,18 @@ function opponentDeckFor(opp) {
 // call site with the bug.
 const currentFoe = () => (!UI.freePlay && UI.foe) ? findOpponent(LADDER_VIEW, UI.foe) : null;
 
+// WHAT TO CALL THE OTHER SIDE'S DECK — 16 Aug 2026, from Trevor: the board said
+// "Overgrowth" while he was playing Jack.
+//
+// `UI.foeDeck` is the FREE PLAY selection and nothing clears it when you go back
+// to the ladder, so it sat there naming whichever theme deck was last chosen in
+// the other mode. Two places read it raw. The match log had already solved this
+// and its string is reused verbatim, so the file and the screen agree.
+const foeDeckLabel = () => {
+  const f = currentFoe();
+  return f ? `${f.name} — ${f.title}` : UI.foeDeck;
+};
+
 const SANDBOX = 'Sandbox';
 const DECK_NAMES = Object.keys(DECKS).concat([SANDBOX]);
 
@@ -10402,7 +10453,7 @@ function startMatchLog(seed) {
     seed,
     // In ladder play the opponent's "deck" is the challenger, which is what you
     // would want to read back off a log six matches later.
-    decks: [UI.myDeck, currentFoe() ? `${currentFoe().name} — ${currentFoe().title}` : UI.foeDeck],
+    decks: [UI.myDeck, foeDeckLabel()],
     tier: UI.foeTier || UI.aiMode,
     prizes: (UI.cfgDraft && UI.cfgDraft.prizes) || null,
   });
@@ -11416,7 +11467,7 @@ function renderSide(pi, isFoe) {
 
   const head = el('div', 'sidehead');
   head.appendChild(el('div', 'sidename', isFoe ? 'OPPONENT' : 'YOU'));
-  head.appendChild(el('div', 'sidedeck', isFoe ? UI.foeDeck : UI.myDeck));
+  head.appendChild(el('div', 'sidedeck', isFoe ? foeDeckLabel() : UI.myDeck));
   const hand = el('div', 'handcount');
   hand.appendChild(el('b', null, String(p.hand.length)));
   hand.appendChild(el('span', null, 'in hand'));
@@ -13746,7 +13797,7 @@ function renderSetup() {
   title.appendChild(el('p', 'dimtxt', 'Place one Basic Pokemon as your Active, then up to five more on your Bench. Click a placed Pokemon to take it back. Prizes are dealt once both players are ready.'));
   head.appendChild(title);
   const banner = el('div', 'setupdecks');
-  banner.appendChild(el('span', 'dimtxt small', `${UI.myDeck} vs ${UI.foeDeck}`));
+  banner.appendChild(el('span', 'dimtxt small', `${UI.myDeck} vs ${foeDeckLabel()}`));
   const back = el('button', 'btn ghost', 'Change decks');
   back.onclick = () => backToDeckSelect();
   banner.appendChild(back);
