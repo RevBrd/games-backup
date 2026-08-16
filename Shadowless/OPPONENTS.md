@@ -14,6 +14,10 @@ lists come per-set, when we can see what the set actually offers. **When a secti
 it in the past tense and say where it lives.** A planning document that outlives its plan is the
 nastiest thing in this tree: specific, confident, and wrong. See [MAINTENANCE.md](MAINTENANCE.md).
 
+**And when you rewrite a section, move its rejections to [HISTORY.md](HISTORY.md) first.** This file
+carries several ideas that were proposed and dropped *with the reason each one lost*, which is the
+only thing stopping them coming back. They would otherwise die with the paragraph around them.
+
 **Explicit non-goal: names, dialogue, gimmick rules and story.** Trevor's call — those come in a
 detailing pass after every set is in, so that nothing here has to be unpicked when the fiction
 arrives. Excluded on purpose, not forgotten.
@@ -59,17 +63,26 @@ is a wincon that demands an engine to pay for it. So:
 That is testable, it is what actually separated a good WotC-era deck from a theme deck, and it gives
 the auto-builder a rule rather than a vibe.
 
-### The AI is two tiers, not four
+### The AI is two tiers, not four — and that is probably fine
 
 `expert` and `novice` are the only ladder-appropriate settings. `greedy` (damage-only) and `random`
-are **measurement baselines** used by `selftest.js` and `smoke.js`, and the whole difference between
-the two real ones is one branch in `pickBest` — novice adds ±6 of score noise and takes the
-second-best *sensible* line 22% of the time.
+are **measurement baselines**, and the whole difference between the two real ones is one branch in
+`pickBest` — novice adds ±6 of score noise and takes the second-best *sensible* line 22% of the time.
 
 **So the AI cannot be the dial that separates T2 from T3 from T4.** It separates T1 from everything
-above it, and that is all. Every other rung of difficulty has to come from deck construction, prize
-count and entry conditions. That is workable, and it also hands Job 9 a concrete deliverable if we
-want one: an intermediate tier between novice and expert would give T2 somewhere of its own to stand.
+above it, and that is all. Every other rung of difficulty comes from deck construction, prize count
+and entry conditions.
+
+**Do not treat that as a gap to be closed before this can ship.** Trevor's position, 15 Aug, and the
+reasoning is good: deck quality may well carry the whole spread on its own, and if it does not, the
+existing shape extends almost for free — the novice/expert difference is *a noise constant*, so a
+third and fourth tier are a numbers change rather than an architecture change. The structure is
+already the right shape for an outcome we have not had to decide yet. Build the decks first and find
+out whether the AI needs to move at all.
+
+**`greedy` is retained on purpose and is not dead code.** Trevor proposed deleting it in an earlier
+session; it stayed because `selftest.js` and `smoke.js` drive games with it. If it ever *is* wanted as
+a difficulty setting, it is already there. See [HISTORY.md](HISTORY.md).
 
 ## The rung pattern, and what scales with it
 
@@ -99,6 +112,11 @@ content, or both. Cheap now, irritating later.
 grinding once the champions fell; that is the failure mode being designed against. A long ladder is
 the intent.
 
+**This pattern is not invented here.** Both the GBC game and TCG Pocket structure their opponent
+progressions this way, so the blueprint is in front of us and the open work is plugging cards into a
+known shape rather than proving the shape. That is also the reason to be suspicious of any future
+proposal to restructure it: the burden is on the new idea.
+
 ## Entry conditions — one mechanism, three uses
 
 Three separate ideas turned out to be the same object, and unifying them is the main structural call
@@ -120,8 +138,11 @@ banked eight-to-twelve packs of the set and would satisfy any sane requirement i
 conflated *owning* with *playing*. Owning thirty Fossil cards does not put one of them in the
 Charizard deck you have been carrying since Base — and a working deck gives its owner every reason to
 leave it alone. **The gate is on deck composition, so it fires every time regardless of collection
-size**, and scaling it between T3 and T4 makes it fire twice per bracket. Trevor's read, and it is
-right.
+size**, and scaling it between T3 and T4 makes it fire twice per bracket.
+
+**Trevor's read, and it has a source rather than being an instinct: this is what the modern TCG
+Pocket game does.** Worth recording, because the argument against it is genuinely plausible — it is
+the one I made — and "a shipped game does this and it works" is the evidence that settles it.
 
 **The constraints are crude on purpose, and gaming them is fine.** A player can satisfy "12 Fossil
 cards" by stuffing in twelve bad Fossil commons. Twelve dead cards in sixty is a real cost, so they
@@ -183,25 +204,32 @@ inventing one. What the better reward *is* — richer pack odds, or a differentl
 [PACKS.md](PACKS.md) question and is not settled here. Note it is not a tuning change: a pack with
 different odds is a new pack **type**.
 
+**Free play still pays nothing, and that is now re-confirmed rather than merely inherited.** Paying
+it out by chosen Prize count was proposed on 15 Aug and dropped the same day: the Job 7 reasoning
+holds — a mode that both ignores the ladder and funds the collection makes the ladder optional — and
+the challenge re-battles above deliver the identical loop (vary the difficulty, vary the reward)
+*on* the ladder, where it cannot undermine anything. See [PROGRESSION.md](PROGRESSION.md).
+
+**Dex completion % is not a gate on the main line**, for the same shape of reason. A requirement
+satisfied by *owning* is pack luck with no decision in it, and grind belongs in opt-in content. It is
+a good unlock for the optional challenge tier, where returning to an older bracket to fill a gap is a
+choice rather than a toll. Also proposed and dropped on 15 Aug.
+
 ## Open
 
-1. **Free play pays nothing, and changing that would reverse a Job 7 decision.** The proposal to vary
-   free-play rewards by chosen Prize count is reasonable on its own terms, but the reason free play
-   pays zero is recorded: *a mode that both ignores the ladder and funds the collection makes the
-   ladder optional* — see [PROGRESSION.md](PROGRESSION.md). The challenge re-battles above already
-   deliver the same loop (vary the difficulty, vary the reward) **on** the ladder, so the
-   recommendation is to keep free play at zero and spend the idea there instead. Trevor's call, and
-   it should be made knowingly rather than by drift.
-2. **Dex completion % is off the critical path**, and the recommendation is that it stays off. A gate
-   satisfied by *owning* is a grind gate — pack luck with no decision in it — and grind belongs in
-   opt-in content. It is a good **unlock for the optional challenge tier**, where returning to an
-   older bracket to fill a gap is a choice rather than a toll.
-3. **The player-facing Prize selector is going away** on the ladder, keeping the tier dial from being
-   opt-out. It survives in free play. Trevor's call, 15 Aug.
-4. **The rival is loose on purpose** — not every bracket, tougher than T4, and hard to make so,
+1. **The player-facing Prize selector is going away** on the ladder, keeping the tier dial from being
+   opt-out. It survives in free play, which is a relic of the early build rather than a design.
+   Trevor's call, 15 Aug.
+2. **A set needs a flag saying whether it is ladder content, pack content, or both.**
+   `buildLadder()` currently derives exactly one bracket per live set, and Southern Islands and the
+   promos are to be *sprinkled into packs* rather than laddered — Trevor, 15 Aug. Cheap now,
+   irritating once eleven sets are in.
+3. **The rival is loose on purpose** — not every bracket, tougher than T4, and hard to make so,
    because "mostly Colorless" is a deck constraint fighting a difficulty requirement. One exit that is
    not about card choice: make the rival the only opponent whose pool is **every set you have
    unlocked at once** while everyone else is set-flavoured. Identity and power without leaning on
    Colorless, and it scales for free. Parked, not proposed.
-5. **An intermediate AI tier** between novice and expert would give T2 its own footing. See the AI
-   section above and the `Open` list in [AI.md](AI.md).
+4. **Nothing here has met a real deck.** The obvious next step is to walk one bracket end to end
+   against hand-built Base Set opponents and find out where the spec does not survive contact. The
+   current `base1` roster cannot test it: those decks are theme decks and GBC decks carrying Jungle
+   and Fossil cards, so they are not what any of these tiers describes.

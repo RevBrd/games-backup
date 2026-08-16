@@ -291,3 +291,10 @@ justifies trusting the corpus, and it is repeatable if anyone ever doubts it.
   to be regex'd back out of prose and a reworded log line would silently break a card.
   `lastAttackResult` is the same idea done as data. See `RULINGS.md`.
 - **Reviving `tools/chat-era/`** — see `TOOLING.md`. It looks like a one-line fix and is not.
+- **Deleting the `greedy` AI mode** — Trevor's proposal, and reasonable on its face: it is a
+  damage-only bot that nothing in the game offers a player. It stayed because **`selftest.js` and
+  `smoke.js` drive whole games with it**, where a cheap deterministic mover is exactly what you want
+  and the real AI would be slower and noisier for no gain. Recorded 15 Aug 2026 because it was
+  otherwise written down nowhere and the same reasonable proposal will arrive again. It has since
+  acquired a second reason to exist: the ladder wants more than two difficulty settings eventually,
+  and `greedy` is one already built. See [OPPONENTS.md](OPPONENTS.md).
