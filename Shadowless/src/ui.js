@@ -2290,13 +2290,11 @@ function openNextPack(setCode) {
   // The Rare comes out of packs.js first; it is shown LAST, because a reveal
   // that opens on the best card has nowhere to go.
   const order = pk.cards.slice(1).concat([pk.cards[0]]);
-  const stipend = pk.stipend || [];
   UI.pack = {
-    set: pk.set, firstEd: pk.firstEd, seed, order, stipend,
+    set: pk.set, firstEd: pk.firstEd, seed, order,
     revealed: order.map(() => false),
     // Computed BEFORE granting, or every card is already owned by the time we ask.
     isNew: order.map(c => !isOwned(UI.save, c.id)),
-    stipendNew: stipend.map(c => !isOwned(UI.save, c.id)),
   };
   // Recorded before granting so the log can say what was NEW, which is the
   // interesting half of a pull.
@@ -2308,15 +2306,11 @@ function openNextPack(setCode) {
     };
     const setName = (SET_INFO[pk.set] && SET_INFO[pk.set].name) || pk.set;
     logPack(UI.elog, setName + (pk.firstEd ? '  (1st Edition pack)' : ''),
-      order.map((c, i) => face(c, UI.pack.isNew[i]))
-        .concat(stipend.map((c, i) => face(c, UI.pack.stipendNew[i]) + '   (stipend)')));
+      order.map((c, i) => face(c, UI.pack.isNew[i])));
   }
   for (const c of order) grant(UI.save, c.id, c.flags);
-  // The stipend is granted immediately and unconditionally, like the pack — it
-  // is not a reveal, it is a top-up, and it is shown as one.
-  for (const c of stipend) grant(UI.save, c.id, c.flags);
   UI.save.stats.packsOpened++;
-  UI.save.stats.cardsPulled += order.length + stipend.length;
+  UI.save.stats.cardsPulled += order.length;
   persist();
   UI.detail = null;
   UI.screen = 'packs';
@@ -2443,10 +2437,10 @@ function renderNewSave() {
 function renderPackScreen() {
   const p = UI.pack;
   const ov = el('div', 'packscreen');
-  // A stipend adds a whole extra row, which at 768px pushed the action bar off
-  // the bottom. The class tightens the eleven rather than letting a reveal
-  // scroll — see LAYOUT.md: this screen has to fit, like every other.
-  const box = el('div', 'packbox' + (p.stipend && p.stipend.length ? ' hasstipend' : ''));
+  // A stipend used to add a whole extra row here, and `hasstipend` tightened
+  // the eleven so the action bar still fitted at 768px. Borrowed Energy is drawn
+  // inside the pack now, so a pack is always eleven cards and the row is gone.
+  const box = el('div', 'packbox');
   const anyRevealed = p.revealed.some(Boolean);
   const allRevealed = p.revealed.every(Boolean);
 
@@ -2492,31 +2486,6 @@ function renderPackScreen() {
     sum.appendChild(el('span', null, nNew === 1 ? ' card you did not have' : ' cards you did not have'));
     if (nVar) { sum.appendChild(el('span', null, '  ·  ')); sum.appendChild(el('b', null, String(nVar))); sum.appendChild(el('span', null, ' with a variant')); }
     box.appendChild(sum);
-  }
-
-  // The stipend, for a set that prints no basic Energy of its own. Shown under
-  // the eleven rather than among them, and named, because it is not a pull —
-  // pretending otherwise would make an eleven-card pack look like a thirteen.
-  if (p.stipend && p.stipend.length) {
-    const strip = el('div', 'packstipend');
-    strip.appendChild(el('div', 'sub',
-      `${setName(p.set)} printed no Energy — ${p.stipend.length} basic Energy included`));
-    const row = el('div', 'stipendrow');
-    p.stipend.forEach((c, i) => {
-      const slot = el('div', 'pullslot small');
-      slot.appendChild(pullFace(CARD_DB[c.id], c.flags));
-      const tag = el('div', 'vribbon');
-      if (p.stipendNew[i]) tag.appendChild(el('span', 'pullnew', 'NEW'));
-      c.flags.forEach(f => {
-        const v = VARIANT_BY_KEY[f];
-        if (v) tag.appendChild(el('span', 'vchip c-' + v.family, v.label));
-      });
-      slot.appendChild(tag);
-      slot.onclick = () => { UI.detail = { id: c.id, flags: c.flags }; render(); };
-      row.appendChild(slot);
-    });
-    strip.appendChild(row);
-    box.appendChild(strip);
   }
 
   const bar = el('div', 'packbar');

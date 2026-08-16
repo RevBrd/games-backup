@@ -43,31 +43,44 @@ const PACK_ODDS = {
 // keys, so two differently-broken cards are different collectibles.
 const MISPRINT_FLAVOURS = ['mp1', 'mp2', 'mp3'];
 
-// How much basic Energy a pack of this set is guaranteed to DELIVER. Early game
-// the player is starved for Energy building a first deck and this reproduces
-// that pressure on purpose; from Team Rocket on there is no guarantee, so Energy
-// goes scarce exactly when a stocked player stops needing it.
+// HOW MUCH BASIC ENERGY A PACK CAN CONTAIN, AND HOW LITTLE — 16 Aug 2026, and
+// this replaced the stipend outright. Trevor, from play, in two notes:
 //
-// Settled in Job 6a. Jungle and Fossil print no basic Energy AT ALL, so the
-// original floor had nothing to draw from in two of the three sets it was
-// written for. One number, two delivery mechanisms:
+//   "There are just way too many and it ends up feeling to the player like
+//    they're being robbed of other cards when too many energies come in."
 //
-//   set prints Energy  -> a FLOOR inside the 7 Common-tier slots (base1)
-//   set prints none    -> a STIPEND alongside the pack (base2, base3)
+//   "...just including energies in the common pool for every set, and do that by
+//    pretty much just throwing them right into each set but with their original
+//    base1 card codes, and not tracking them as part of the number in the new
+//    set."
 //
-// The stipend is deliberately NOT inside the pack. A Jungle booster is eleven
-// Jungle cards; smuggling Base Set cards into it would undercut the set identity
-// that the reveal exists to show, and quietly make the pack a 9-card pack. The
-// reason it exists at all is a pacing one rather than a supply one — reservation
-// returns Energy when a deck is un-built, so nobody can be permanently stuck —
-// it is that opening the exciting new set should not tax the boring necessary
-// grind. See PACKS.md.
-const ENERGY_GRANT = { base1: 2, base2: 2, base3: 2 };
+// WHAT WENT. Jungle and Fossil print no basic Energy at all, so Job 6a handed
+// their packs two Energy BESIDE the eleven cards. That made a Jungle booster a
+// 13-card pack with two mandatory Energy in it, which is the thing being
+// complained about. base1's Energy now sits in every set's Common pool instead,
+// under its own base1 ids, so it is drawn rather than granted and it never
+// counts toward the set it turns up in.
+//
+// TWO NUMBERS, AND THEY MEAN DIFFERENT THINGS.
+//
+//   ENERGY_FLOOR   a guarantee, per set. Only base1 has one, and it is the same
+//                  early-game pacing the floor always was: the first packs a
+//                  player opens have to be able to build a deck. A set that is
+//                  not listed gets Energy at the pool's own natural rate, which
+//                  is what "include them in the common pool" means.
+//   ENERGY_CAP     a ceiling, everywhere, and the actual fix. base1's remaining
+//                  five Common slots drew from a pool CONTAINING Energy, so a
+//                  Base Set pack could and did run well past two.
+//
+// Set the floor to 0 to make base1 behave like every other set; that is the one
+// line, and it is the only thing separating the two readings of the note above.
+const ENERGY_FLOOR = { base1: 2 };
+const ENERGY_CAP = 2;
 
-// Where a stipend's Energy comes from. Only consulted for sets printing none,
-// and resolved from the database rather than hardcoded, so a build generated
-// without base1 still works instead of silently granting nothing.
-function stipendSource(db) {
+// Which set's basic Energy stands in for a set that prints none. Resolved from
+// the database rather than hardcoded, so a build generated without base1 still
+// works instead of silently borrowing nothing.
+function energySource(db) {
   let best = null;
   for (const id in db) {
     const c = db[id];
@@ -118,7 +131,7 @@ function buildPools(db, setCode) {
   const key = setCode || '*';
   if (perSet[key]) return perSet[key];
 
-  const pools = { rareHolo: [], rare: [], uncommon: [], common: [], energy: [] };
+  const pools = { rareHolo: [], rare: [], uncommon: [], common: [], commonNoEnergy: [], energy: [] };
   for (const id in db) {
     const c = db[id];
     if (setCode && c.set !== setCode) continue;
@@ -128,10 +141,24 @@ function buildPools(db, setCode) {
     if (HOLO_RARITIES[c.rarity]) pools.rareHolo.push(id);
     else if (c.rarity === 'Rare') pools.rare.push(id);
     else if (c.rarity === 'Uncommon') pools.uncommon.push(id);
-    else if (c.rarity === 'Common') pools.common.push(id);
+    else if (c.rarity === 'Common') { pools.common.push(id); pools.commonNoEnergy.push(id); }
     // Anything else (Promo, or a rarity we have not met) is deliberately
     // dropped rather than guessed into a bucket.
   }
+
+  // A set that prints no basic Energy of its own borrows base1's, ids and all.
+  // This is what replaced the stipend: the Energy is IN the Common pool and is
+  // drawn like anything else, rather than handed over beside an eleven-card pack
+  // as a twelfth and thirteenth card. It keeps its base1 number, so it is never
+  // part of the set it fell out of — Trevor's call, and the reason the dex and
+  // the set-completion counters need no special case for it.
+  if (setCode && !pools.energy.length) {
+    const src = energySource(db);
+    if (src && src !== setCode) {
+      for (const id of buildPools(db, src).energy) { pools.energy.push(id); pools.common.push(id); }
+    }
+  }
+
   for (const k in pools) pools[k].sort();     // deterministic given a seed
   perSet[key] = pools;
   return pools;
@@ -234,14 +261,28 @@ function openPack(db, setCode, rand, opts = {}) {
     cards.push({ id, slot: 'uncommon', holo: false, flags: rollVariants(rand, 'uncommon', odds, firstEd) });
   }
 
-  // --- 7 Common-tier, Energy floor first.
+  // --- 7 Common-tier: the floor first, then the rest against the cap.
+  //
   // The floor slots draw from `energy`; the rest draw from `common`, which
-  // CONTAINS energy — so Energy can still turn up above the floor at its
-  // natural share, which is what "no floor" means for the later sets.
-  const floor = Math.min(ENERGY_GRANT[setCode] || 0, pools.energy.length ? PACK_SHAPE.common : 0);
+  // CONTAINS Energy, so it can still turn up at its natural share — and that is
+  // exactly what used to let a base1 pack run to five or six of them. The draw
+  // is now one slot at a time so it can switch to `commonNoEnergy` the moment
+  // the cap is reached. `taken` is threaded through, so no-repeats still holds.
+  const cap = Math.max(0, opts.energyCap === undefined ? ENERGY_CAP : opts.energyCap);
+  const floor = Math.min(ENERGY_FLOOR[setCode] || 0, cap, pools.energy.length ? PACK_SHAPE.common : 0);
   const commonIds = [];
-  if (floor > 0) commonIds.push(...drawSlots(pools.energy, floor, rand, isEnergy, taken));
-  commonIds.push(...drawSlots(pools.common, PACK_SHAPE.common - floor, rand, isEnergy, taken));
+  let energyCount = 0;
+  if (floor > 0) {
+    const got = drawSlots(pools.energy, floor, rand, isEnergy, taken);
+    energyCount += got.length;
+    commonIds.push(...got);
+  }
+  while (commonIds.length < PACK_SHAPE.common) {
+    const capped = energyCount >= cap && pools.commonNoEnergy.length;
+    const [id] = drawSlots(capped ? pools.commonNoEnergy : pools.common, 1, rand, isEnergy, taken);
+    if (isEnergy[id]) energyCount++;
+    commonIds.push(id);
+  }
   for (const id of commonIds) {
     cards.push({ id, slot: 'common', holo: false, flags: rollVariants(rand, 'common', odds, firstEd) });
   }
@@ -258,23 +299,11 @@ function openPack(db, setCode, rand, opts = {}) {
     }
   }
 
-  // --- the stipend, for a set that prints no basic Energy of its own. Granted
-  // BESIDE the pack, never inside it, so `cards` stays exactly PACK_SIZE and the
-  // reveal can name it as what it is. It rolls variants like anything else: a
-  // Shiny Energy falling out of a Jungle pack is the convergence PACKS.md calls
-  // a feature, not an accident to be suppressed.
-  const stipend = [];
-  const owed = pools.energy.length ? 0 : (ENERGY_GRANT[setCode] || 0);
-  if (owed > 0) {
-    const src = stipendSource(db);
-    const from = src ? buildPools(db, src).energy : [];
-    for (let i = 0; i < owed && from.length; i++) {
-      stipend.push({ id: pickFrom(from, rand), slot: 'stipend', holo: false,
-                     flags: rollVariants(rand, 'common', odds, firstEd) });
-    }
-  }
-
-  return { set: setCode, firstEd, intrusion, cards, stipend };
+  // The STIPEND is gone — 16 Aug 2026. It hung two extra Energy off the side of
+  // a pack for any set printing none, which made a Jungle booster thirteen cards
+  // with two of them mandatory. Borrowed Energy is in the Common pool now and is
+  // drawn like anything else, so a pack is eleven cards again, always.
+  return { set: setCode, firstEd, intrusion, cards };
 }
 
-if (typeof module !== 'undefined') module.exports = { PACK_SHAPE, PACK_SIZE, PACK_ODDS, MISPRINT_FLAVOURS, ENERGY_GRANT, NON_BOOSTER_SETS, HOLO_RARITIES, buildPools, promoPool, stipendSource, openPack };
+if (typeof module !== 'undefined') module.exports = { PACK_SHAPE, PACK_SIZE, PACK_ODDS, MISPRINT_FLAVOURS, ENERGY_FLOOR, ENERGY_CAP, NON_BOOSTER_SETS, HOLO_RARITIES, buildPools, promoPool, energySource, openPack };

@@ -1220,23 +1220,6 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .packsum{font-size:10.5px;color:var(--matink);text-align:center}
 .packsum b{color:var(--stock);font-weight:600}
 
-/* The Energy stipend, for a set that printed none of its own. Deliberately set
-   APART from the eleven — a rule above it, smaller faces, its own caption — so
-   an 11-card pack never reads as a 13-card one. */
-.packstipend{border-top:1px solid var(--matline);padding-top:8px;margin-top:2px;
-  display:flex;flex-direction:column;align-items:center;gap:6px}
-.packstipend .sub{font-size:9.5px;letter-spacing:.1em;color:var(--matink);text-transform:uppercase}
-.stipendrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-/* The stipend row costs about 110px. Buy it back off the eleven so the action
-   bar stays above the fold at 1366x768 — measured, not guessed.
-   NOTE the `.small` rule is scoped under `.hasstipend` as well: `.packbox
-   .hasstipend .pullslot .cardface` out-specifies a bare `.pullslot.small`, and
-   the first version of this rendered the stipend BIGGER than the pack. */
-.packbox.hasstipend{gap:8px}
-.packbox.hasstipend .pullslot .cardface{height:clamp(64px,12.5vh,124px)}
-.packbox.hasstipend .pullslot.rare .cardface{height:clamp(88px,17vh,164px)}
-.packbox.hasstipend .pullslot.small .cardface{height:clamp(44px,8vh,78px)}
-
 /* Pull detail: the scan and your copy, side by side. The scan is what the card
    looks like; the Sigil Card is what YOUR copy looks like, and it is the only
    one of the two that can carry a print run. */

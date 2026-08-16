@@ -89,7 +89,7 @@ const t0 = Date.now();
 const rand = mulberry32(20260809);
 const tally = { firstEd: 0, rh: 0, sh: 0, sl: 0, mp: 0, holo: 0, intrusion: 0 };
 const mpFlavour = {};
-let energyShort = 0, dupes = 0, wrongSize = 0, rareRH = 0, feStraggler = 0;
+let energyShort = 0, energyOver = 0, dupes = 0, wrongSize = 0, rareRH = 0, feStraggler = 0;
 let totalCards = 0, energyCards = 0;
 const seenIds = {};
 
@@ -122,6 +122,7 @@ for (let i = 0; i < N; i++) {
     if (pk.firstEd !== (c.flags.indexOf('fe') >= 0)) feStraggler++;
   }
   if (nEnergy < 2) energyShort++;
+  if (nEnergy > P.ENERGY_CAP) energyOver++;
 }
 const secs = ((Date.now() - t0) / 1000).toFixed(1);
 console.log(`  (${secs}s)`);
@@ -136,11 +137,14 @@ eq(tally.intrusion, 0, 'no intrusion is possible with no promo pool loaded');
 eq(Object.keys(seenIds).length, setSize, `all ${setSize} ${SET} cards are actually reachable`);
 eq(Object.keys(mpFlavour).length, 3, 'all three Misprint flavours occur');
 
-// The floor is a floor, not a quota — Energy should sometimes exceed 2,
-// because the general Common pool contains it too.
+// THE FLOOR AND THE CAP MEET AT TWO for base1 — 16 Aug 2026. This used to
+// assert the opposite ("Energy averages a little above the floor", 2.0-3.2 per
+// pack) because the five non-floor Common slots drew from a pool containing
+// Energy. Trevor, from play: too many Energy reads as being robbed of cards.
 const energyPerPack = energyCards / N;
-check(energyPerPack > 2.0 && energyPerPack < 3.2, 'Energy averages a little above the floor',
+check(energyPerPack === 2, 'a floored set delivers exactly the cap, never more',
   `${energyPerPack.toFixed(3)} per pack`);
+eq(energyOver, 0, 'and no pack anywhere exceeds ENERGY_CAP');
 
 // ===========================================================================
 head('Do the odds match the pacing schedule in PACKS.md?');
@@ -268,18 +272,20 @@ for (const k in runs) {
 console.log('  Nothing here is asserted — it is the pacing measurement Job 5 should design against.');
 
 // ===========================================================================
-// The Energy stipend (Job 6a).
+// BORROWED ENERGY, and the cap (16 Aug 2026 — this replaced the stipend).
 //
-// Jungle and Fossil print no basic Energy, so their guarantee is delivered
-// BESIDE the pack rather than inside it. Tested against a synthetic database
-// rather than the real one on purpose: base2 and base3 do not generate until
-// 6c, and a test that only starts working once the cards land is a test nobody
-// runs at the moment the mechanism is written.
+// Jungle and Fossil print no basic Energy. Job 6a delivered their guarantee
+// BESIDE the pack, which made a Jungle booster thirteen cards with two of them
+// mandatory; Trevor's note from play is that this reads as being handed filler
+// instead of cards. base1's Energy is in every set's Common pool now, under its
+// own base1 ids, drawn like anything else and capped at two.
+//
+// Against a synthetic database rather than the real one, deliberately: this
+// mechanism has to be testable independently of which sets happen to have
+// generated, which is why the original was written this way too.
 // ===========================================================================
-head('Energy stipend');
+head('Borrowed Energy and the cap');
 {
-  // Real set CODES over synthetic cards, so ENERGY_GRANT applies for real:
-  // base1 prints Energy and is floored, base2 prints none and is stipended.
   const mk = (set, num, rarity, extra = {}) => Object.assign(
     { id: `${set}-${num}`, set, num: String(num), name: `${set} ${num}`, rarity, kind: 'pokemon' }, extra);
   const DB = {};
@@ -293,41 +299,46 @@ head('Energy stipend');
   };
   fill('base1', true);
   fill('base2', false);
-
-  const GRANT = P.ENERGY_GRANT.base2;
   const isEnergy = id => DB[id].kind === 'energy';
 
-  eq(P.stipendSource(DB), 'base1', 'the stipend source is the set that actually prints Energy');
-  eq(P.buildPools(DB, 'base2').energy.length, 0, 'and base2 genuinely prints none');
+  eq(P.energySource(DB), 'base1', 'the borrow source is the set that actually prints Energy');
+  const b2 = P.buildPools(DB, 'base2');
+  eq(b2.energy.length, 6, "base2 prints none, so it carries base1's six");
+  check(b2.energy.every(id => DB[id].set === 'base1'), 'and they keep their base1 ids');
+  check(b2.commonNoEnergy.every(id => !isEnergy(id)), 'the no-Energy Common pool has none in it');
 
-  let wrongSize = 0, floorShort = 0, baseStipended = 0, stray = 0, shortStipend = 0;
+  let wrongSize = 0, over = 0, baseShort = 0, strayNonEnergy = 0, everEnergy = 0;
   for (let i = 0; i < 3000; i++) {
     const a = P.openPack(DB, 'base1', mulberry32(i + 1));
     const b = P.openPack(DB, 'base2', mulberry32(i + 1));
     if (a.cards.length !== P.PACK_SIZE || b.cards.length !== P.PACK_SIZE) wrongSize++;
-    if (a.cards.filter(c => isEnergy(c.id)).length < P.ENERGY_GRANT.base1) floorShort++;
-    if (a.stipend.length !== 0) baseStipended++;
-    if (b.cards.some(c => DB[c.id].set !== 'base2')) stray++;
-    if (b.stipend.length !== GRANT) shortStipend++;
+    if (a.cards.filter(c => isEnergy(c.id)).length < P.ENERGY_FLOOR.base1) baseShort++;
+    for (const pk of [a, b]) if (pk.cards.filter(c => isEnergy(c.id)).length > P.ENERGY_CAP) over++;
+    // The ONLY base1 card allowed into a base2 pack is basic Energy.
+    if (b.cards.some(c => DB[c.id].set !== 'base2' && !isEnergy(c.id))) strayNonEnergy++;
+    if (b.cards.some(c => isEnergy(c.id))) everEnergy++;
   }
-  eq(wrongSize, 0, 'every pack is still exactly PACK_SIZE, stipend or not');
-  eq(floorShort, 0, 'a set that prints Energy still meets its floor inside the pack');
-  eq(baseStipended, 0, 'and is never ALSO handed a stipend');
-  eq(stray, 0, 'no Base Set card is ever smuggled into a Jungle-shaped pack');
-  eq(shortStipend, 0, `a set printing no Energy gets exactly ${GRANT} alongside`);
+  eq(wrongSize, 0, 'every pack is exactly PACK_SIZE — there is no twelfth card any more');
+  eq(baseShort, 0, 'a floored set still meets its floor');
+  eq(over, 0, 'and nothing, floored or not, exceeds the cap');
+  eq(strayNonEnergy, 0, 'the only Base Set card that reaches a Jungle-shaped pack is Energy');
+  check(everEnergy > 0 && everEnergy < 3000,
+    'an unfloored set gets Energy sometimes and not always — pool rate, not a quota',
+    `${(everEnergy / 30).toFixed(0)}% of packs`);
 
-  const one = P.openPack(DB, 'base2', mulberry32(7));
-  check(one.stipend.every(c => isEnergy(c.id)), 'every stipend card is basic Energy');
-  check(one.stipend.every(c => DB[c.id].set === 'base1'), 'drawn from the set that prints it');
-  check(one.stipend.every(c => c.slot === 'stipend'), 'tagged so the reveal can name it separately');
-  check(one.cards.filter(c => isEnergy(c.id)).length === 0, 'with none of it inside the pack proper');
+  const one2 = P.openPack(DB, 'base2', mulberry32(7));
+  check(!('stipend' in one2), 'openPack no longer returns a stipend at all');
+  check(one2.cards.filter(c => isEnergy(c.id)).every(c => c.slot === 'common'),
+    'borrowed Energy occupies an ordinary Common slot');
 
-  // A set nobody guaranteed anything to gets nothing, by either mechanism.
+  // A set nobody floored still gets pool Energy — scarcity is the cap and the
+  // pool rate now, not a missing entry in a table.
   fill('neo2', false);
-  const late = P.openPack(DB, 'neo2', mulberry32(3));
-  eq(P.ENERGY_GRANT.neo2, undefined, 'Neo Discovery has no entry in ENERGY_GRANT');
-  eq(late.stipend.length, 0, 'so it is handed no Energy at all — scarcity, as designed');
+  eq(P.ENERGY_FLOOR.neo2, undefined, 'Neo Discovery has no floor');
+  const late = P.openPack(DB, 'neo2', mulberry32(3), { energyCap: 0 });
+  eq(late.cards.filter(c => isEnergy(c.id)).length, 0, 'and a cap of 0 shuts Energy out entirely');
 }
+
 
 // ===========================================================================
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
