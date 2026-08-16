@@ -1,0 +1,665 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-16 06:53:35
+decks    you: New deck 2   opponent: Ronald — Powerful Ronald
+opponent expert
+seed     981770187   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Gust of Wind, Lightning Energy, Mewtwo, Lickitung, Jynx, PlusPower, Jynx
+  HIDDEN  your opening hand: Bill, Dratini, Growlithe, Bill, Fire Energy, Charmander, Charmander
+  HIDDEN  opponent's Prizes: Fighting Energy, Energy Retrieval, Psychic Energy, Fighting Energy, Lightning Energy, Fighting Energy
+  HIDDEN  your Prizes: Fire Energy, Fire Energy, Magmar, Charmeleon, Double Colorless Energy, Double Colorless Energy
+  HIDDEN  opponent's opening board: Lickitung active, bench Mewtwo, Jynx A, Jynx B
+  HIDDEN  your opening board: Charmander active, bench Growlithe, Dratini
+          New game. Seed 981770187.
+          Coin flip (who goes first): HEADS
+          You will go first.
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (46 left)
+          You plays Bill.
+          You draws 2.
+          You plays Bill.
+          You draws 2.
+          You attaches Fire Energy to Charmander.
+          Charmander uses Scratch.
+          Lickitung takes 10. (80/90 left)
+
+--- Turn 2 — Ronald ----------------------------
+          Ronald draws a card. (46 left)
+  AI      attach   [34]
+          holding: Gust of Wind, Lightning Energy, PlusPower, Energy Retrieval
+          Ronald attaches Lightning Energy to Lickitung.
+  AI      trainer   [26.6]
+          holding: Gust of Wind, PlusPower, Energy Retrieval
+          passed over: trainer 6
+          Ronald plays Gust of Wind.
+          You's Dratini is dragged into the Active spot.
+  AI      trainer   [6]
+          holding: PlusPower, Energy Retrieval
+          Ronald plays PlusPower.
+          PlusPower attached to Lickitung (+10 this turn).
+  AI      attack:Tongue Wrap   [33]
+          holding: Energy Retrieval
+          Lickitung uses Tongue Wrap.
+          +10 from a bonus -> 20.
+          Dratini takes 20. (20/40 left)
+          Coin flip (Paralyzed?): HEADS
+          Dratini is now Paralyzed.
+          PlusPower is discarded.
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (41 left)
+          You attaches Fire Energy to Dratini.
+          Dratini is no longer Paralyzed.
+
+--- Turn 4 — Ronald ----------------------------
+          Ronald draws a card. (45 left)
+  AI      bench   [2]
+          holding: Energy Retrieval, Electabuzz
+          Ronald benches Electabuzz.
+  AI      attack:Tongue Wrap   [23]
+          holding: Energy Retrieval
+          Lickitung uses Tongue Wrap.
+          Dratini takes 10. (10/40 left)
+          Coin flip (Paralyzed?): HEADS
+          Dratini is now Paralyzed.
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (40 left)
+          You attaches Double Colorless Energy to Charmander.
+          Dratini is no longer Paralyzed.
+
+--- Turn 6 — Ronald ----------------------------
+          Ronald draws a card. (44 left)
+  AI      attach   [6]
+          holding: Energy Retrieval, Double Colorless Energy
+          passed over: attach 4.4, attach -2, attach -2, attach -2
+          Ronald attaches Double Colorless Energy to Mewtwo.
+  AI      attack:Tongue Wrap   [78]
+          holding: Energy Retrieval
+          Lickitung uses Tongue Wrap.
+          Dratini takes 10. (0/40 left)
+          Coin flip (Paralyzed?): HEADS
+          Dratini is now Paralyzed.
+          Dratini is Knocked Out!
+          Ronald takes a Prize. (5 left)
+          You promotes Growlithe to Active.
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (39 left)
+          You benches Growlithe.
+          You attaches Fire Energy to Growlithe A.
+
+--- Turn 8 — Ronald ----------------------------
+          Ronald draws a card. (43 left)
+  AI      attach   [22]
+          holding: Energy Retrieval, Fighting Energy, Lightning Energy
+          passed over: attach 4.4, attach 4.4, attach -2, attach -2, attach -2
+          Ronald attaches Lightning Energy to Electabuzz.
+  AI      attack:Tongue Wrap   [23]
+          holding: Energy Retrieval, Fighting Energy
+          Lickitung uses Tongue Wrap.
+          Growlithe takes 10. (50/60 left)
+          Coin flip (Paralyzed?): HEADS
+          Growlithe A is now Paralyzed.
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (38 left)
+          Growlithe A is no longer Paralyzed.
+
+--- Turn 10 — Ronald ----------------------------
+          Ronald draws a card. (42 left)
+  AI      attach   [24.5]
+          holding: Energy Retrieval, Fighting Energy, Tauros
+          passed over: attach 4.4, bench 2, attach -2, attach -2, attach -2
+          Ronald attaches Fighting Energy to Electabuzz.
+  AI      bench   [2]
+          holding: Energy Retrieval, Tauros
+          Ronald benches Tauros.
+  AI      attack:Tongue Wrap   [23]
+          holding: Energy Retrieval
+          Lickitung uses Tongue Wrap.
+          Growlithe takes 10. (40/60 left)
+          Coin flip (Paralyzed?): HEADS
+          Growlithe A is now Paralyzed.
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (37 left)
+          You attaches Fire Energy to Growlithe B.
+          Growlithe A is no longer Paralyzed.
+
+--- Turn 12 — Ronald ----------------------------
+          Ronald draws a card. (41 left)
+  AI      attack:Tongue Wrap   [23]
+          holding: Energy Retrieval, Kangaskhan
+          Lickitung uses Tongue Wrap.
+          Growlithe takes 10. (30/60 left)
+          Coin flip (Paralyzed?): HEADS
+          Growlithe A is now Paralyzed.
+
+--- Turn 13 — You -------------------------------
+          You draws a card. (36 left)
+          You benches Dratini.
+          You attaches Fire Energy to Dratini.
+          Growlithe A is no longer Paralyzed.
+
+--- Turn 14 — Ronald ----------------------------
+          Ronald draws a card. (40 left)
+  AI      attach   [22]
+          holding: Energy Retrieval, Kangaskhan, Psychic Energy
+          passed over: attach 22, attach 22, attach 11, attach 4.4, attach -2
+          Ronald attaches Psychic Energy to Mewtwo.
+  AI      attack:Tongue Wrap   [23]
+          holding: Energy Retrieval, Kangaskhan
+          Lickitung uses Tongue Wrap.
+          Growlithe takes 10. (20/60 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 15 — You -------------------------------
+          You draws a card. (35 left)
+          Dratini evolves into Dragonair. Special Conditions removed.
+          You attaches Fire Energy to Growlithe A.
+          Growlithe uses Flare.
+          Lickitung takes 20. (60/90 left)
+
+--- Turn 16 — Ronald ----------------------------
+          Ronald draws a card. (39 left)
+  AI      attach   [22]
+          holding: Energy Retrieval, Kangaskhan, Psychic Energy
+          passed over: attach 22, attach 11, attach 4.4, attach -2, attach -2
+          Ronald attaches Psychic Energy to Jynx A.
+  AI      attack:Tongue Wrap   [23]
+          holding: Energy Retrieval, Kangaskhan
+          Lickitung uses Tongue Wrap.
+          Growlithe takes 10. (10/60 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 17 — You -------------------------------
+          You draws a card. (34 left)
+          Growlithe B evolves into Arcanine. Special Conditions removed.
+          Growlithe uses Flare.
+          Lickitung takes 20. (40/90 left)
+
+--- Turn 18 — Ronald ----------------------------
+          Ronald draws a card. (38 left)
+  AI      attach   [22]
+          holding: Energy Retrieval, Kangaskhan, Psychic Energy
+          passed over: attach 11, attach 4.4, attach -2, attach -2, attach -2
+          Ronald attaches Psychic Energy to Jynx B.
+  AI      attack:Tongue Wrap   [78]
+          holding: Energy Retrieval, Kangaskhan
+          Lickitung uses Tongue Wrap.
+          Growlithe takes 10. (0/60 left)
+          Coin flip (Paralyzed?): TAILS
+          Growlithe is Knocked Out!
+          Ronald takes a Prize. (4 left)
+          You promotes Charmander to Active.
+
+--- Turn 19 — You -------------------------------
+          You draws a card. (33 left)
+          You benches Charmander.
+          You plays Energy Removal.
+          Lightning Energy discarded from Lickitung.
+          Charmander uses Scratch.
+          Lickitung takes 10. (30/90 left)
+
+--- Turn 20 — Ronald ----------------------------
+          Ronald draws a card. (37 left)
+  AI      attach   [34]
+          holding: Energy Retrieval, Kangaskhan, Energy Retrieval, Lightning Energy
+          passed over: attach 11, trainer 6, trainer 6, attach -2, attach -2
+          Ronald attaches Lightning Energy to Lickitung.
+  AI      trainer   [6]
+          holding: Energy Retrieval, Kangaskhan, Energy Retrieval
+          passed over: trainer 6
+          Ronald plays Energy Retrieval.
+          Energy Retrieval: recovered 1 basic Energy.
+  AI      attack:Tongue Wrap   [23]
+          holding: Energy Retrieval, Lightning Energy
+          Lickitung uses Tongue Wrap.
+          Charmander takes 10. (40/50 left)
+          Coin flip (Paralyzed?): HEADS
+          Charmander A is now Paralyzed.
+
+--- Turn 21 — You -------------------------------
+          You draws a card. (32 left)
+          You attaches Fire Energy to Dragonair.
+          Charmander A is no longer Paralyzed.
+
+--- Turn 22 — Ronald ----------------------------
+          Ronald draws a card. (36 left)
+  AI      attach   [11]
+          holding: Energy Retrieval, Lightning Energy, Tauros
+          passed over: attach 4.4, attach -2, attach -2, attach -2, attach -2
+          Ronald attaches Lightning Energy to Tauros.
+  AI      attack:Tongue Wrap   [23]
+          holding: Energy Retrieval, Tauros
+          Lickitung uses Tongue Wrap.
+          Charmander takes 10. (30/50 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 23 — You -------------------------------
+          You draws a card. (31 left)
+          You attaches Double Colorless Energy to Dragonair.
+          Charmander uses Ember.
+          Charmander discards 1 R Energy as a cost.
+          Lickitung takes 30. (0/90 left)
+          Lickitung is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [55.5]
+          holding: Energy Retrieval, Tauros
+          passed over: promote 51.5, promote 51.5, promote 48, promote 33.5
+          Ronald promotes Electabuzz to Active.
+
+--- Turn 24 — Ronald ----------------------------
+          Ronald draws a card. (35 left)
+  AI      trainer   [6]
+          holding: Energy Retrieval, Tauros, Lickitung
+          passed over: bench 2, bench 2, retreat -31, retreat -31, retreat -31
+          Ronald plays Energy Retrieval.
+          Energy Retrieval: recovered 1 basic Energy.
+  AI      attach   [28]
+          holding: Lickitung, Lightning Energy
+          passed over: bench 2, attach -2, attach -2, attach -2, attach -2
+          Ronald attaches Lightning Energy to Tauros.
+  AI      bench   [2]
+          holding: Lickitung
+          passed over: retreat -25.5, retreat -31, retreat -31, retreat -31
+          Ronald benches Lickitung.
+  AI      attack:Thunderpunch   [80.6]
+          holding: (empty)
+          passed over: attack:Thundershock 23
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): HEADS
+          Heads -> 40 damage.
+          Charmander takes 40. (0/50 left)
+          Charmander is Knocked Out!
+          Ronald takes a Prize. (3 left)
+          You promotes Dragonair to Active.
+
+--- Turn 25 — You -------------------------------
+          You draws a card. (30 left)
+          You attaches Fire Energy to Arcanine.
+          Dragonair uses Hyper Beam.
+          Electabuzz takes 20. (50/70 left)
+          Lightning Energy is discarded from Electabuzz.
+
+--- Turn 26 — Ronald ----------------------------
+          Ronald draws a card. (34 left)
+  AI      attach   [18]
+          holding: Psychic Energy, Double Colorless Energy
+          passed over: attach 18, attach 4.4, attach 4.4, attach -2, attach -2
+          Ronald attaches Psychic Energy to Lickitung.
+  AI      pass — no attack available — Thundershock: Not enough Energy; Thunderpunch: Not enough Energy   [0]
+          holding: Double Colorless Energy
+
+--- Turn 27 — You -------------------------------
+          You draws a card. (29 left)
+          Dragonair uses Hyper Beam.
+          Electabuzz takes 20. (30/70 left)
+          Fighting Energy is discarded from Electabuzz.
+
+--- Turn 28 — Ronald ----------------------------
+          Ronald draws a card. (33 left)
+  AI      attach   [4.4]
+          holding: Double Colorless Energy, Hitmonchan
+          passed over: attach -2, attach -2, attach -2, attach -2, attach -2
+          Ronald attaches Double Colorless Energy to Electabuzz.
+  AI      pass — no attack available — Thundershock: Not enough Energy; Thunderpunch: Not enough Energy   [0]
+          holding: Hitmonchan
+
+--- Turn 29 — You -------------------------------
+          You draws a card. (28 left)
+          You attaches Fire Energy to Arcanine.
+          Dragonair uses Hyper Beam.
+          Electabuzz takes 20. (10/70 left)
+          Double Colorless Energy is discarded from Electabuzz.
+
+--- Turn 30 — Ronald ----------------------------
+          Ronald draws a card. (32 left)
+  AI      trainer   [24]
+          holding: Hitmonchan, Switch
+          Ronald plays Switch.
+          Lickitung is now Active.
+  AI      attack:Tongue Wrap   [23]
+          holding: Hitmonchan
+          Lickitung uses Tongue Wrap.
+          Dragonair takes 10. (70/80 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 31 — You -------------------------------
+          You draws a card. (27 left)
+          You attaches Fire Energy to Arcanine.
+          Dragonair uses Hyper Beam.
+          Lickitung takes 20. (70/90 left)
+          Psychic Energy is discarded from Lickitung.
+
+--- Turn 32 — Ronald ----------------------------
+          Ronald draws a card. (31 left)
+  AI      trainer   [11]
+          holding: Hitmonchan, Energy Removal
+          Ronald plays Energy Removal.
+          Fire Energy discarded from Arcanine.
+  AI      pass — no attack available — Tongue Wrap: Not enough Energy; Supersonic: Not enough Energy   [0]
+          holding: Hitmonchan
+
+--- Turn 33 — You -------------------------------
+          You draws a card. (26 left)
+          Dragonair uses Slam.
+          Coin flip (coin 1/2): TAILS
+          Coin flip (coin 2/2): TAILS
+          0 head(s) -> 0 damage.
+
+--- Turn 34 — Ronald ----------------------------
+          Ronald draws a card. (30 left)
+  AI      attach   [34]
+          holding: Hitmonchan, Fighting Energy
+          passed over: attach -2, attach -2, attach -2, attach -2, attach -2
+          Ronald attaches Fighting Energy to Lickitung.
+  AI      attack:Tongue Wrap   [23]
+          holding: Hitmonchan
+          Lickitung uses Tongue Wrap.
+          Dragonair takes 10. (60/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Dragonair is now Paralyzed.
+
+--- Turn 35 — You -------------------------------
+          You draws a card. (25 left)
+          You attaches Fire Energy to Arcanine.
+          You plays Potion.
+          Dragonair heals 20. (0 damage left)
+          Dragonair is no longer Paralyzed.
+
+--- Turn 36 — Ronald ----------------------------
+          Ronald draws a card. (29 left)
+  AI      trainer   [11]
+          holding: Hitmonchan, Energy Removal
+          Ronald plays Energy Removal.
+          Fire Energy discarded from Arcanine.
+  AI      attack:Tongue Wrap   [23]
+          holding: Hitmonchan
+          Lickitung uses Tongue Wrap.
+          Dragonair takes 10. (70/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Dragonair is now Paralyzed.
+
+--- Turn 37 — You -------------------------------
+          You draws a card. (24 left)
+          You plays Bill.
+          You draws 2.
+          You attaches Fire Energy to Charmander.
+          Charmander evolves into Charmeleon. Special Conditions removed.
+          Dragonair is no longer Paralyzed.
+
+--- Turn 38 — Ronald ----------------------------
+          Ronald draws a card. (28 left)
+  AI      trainer   [12]
+          holding: Hitmonchan, Energy Retrieval
+          Ronald plays Energy Retrieval.
+          Energy Retrieval: recovered 2 basic Energy.
+  AI      attach   [22]
+          holding: Lightning Energy, Fighting Energy
+          passed over: attach 4.4, attach 4.4, attach -2, attach -2, attach -2
+          Ronald attaches Lightning Energy to Electabuzz.
+  AI      attack:Tongue Wrap   [23]
+          holding: Fighting Energy
+          Lickitung uses Tongue Wrap.
+          Dragonair takes 10. (60/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Dragonair is now Paralyzed.
+
+--- Turn 39 — You -------------------------------
+          You draws a card. (21 left)
+          Dragonair is no longer Paralyzed.
+
+--- Turn 40 — Ronald ----------------------------
+          Ronald draws a card. (27 left)
+  AI      attach   [24.5]
+          holding: Fighting Energy, Tauros
+          passed over: attach 4.4, attach -2, attach -2, attach -2, attach -2
+          Ronald attaches Fighting Energy to Electabuzz.
+  AI      attack:Tongue Wrap   [23]
+          holding: Tauros
+          Lickitung uses Tongue Wrap.
+          Dragonair takes 10. (50/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Dragonair is now Paralyzed.
+
+--- Turn 41 — You -------------------------------
+          You draws a card. (20 left)
+          Dragonair is no longer Paralyzed.
+
+--- Turn 42 — Ronald ----------------------------
+          Ronald draws a card. (26 left)
+  AI      attack:Tongue Wrap   [23]
+          holding: Tauros, Hitmonchan
+          Lickitung uses Tongue Wrap.
+          Dragonair takes 10. (40/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Dragonair is now Paralyzed.
+
+--- Turn 43 — You -------------------------------
+          You draws a card. (19 left)
+          You benches Magmar.
+          Dragonair is no longer Paralyzed.
+
+--- Turn 44 — Ronald ----------------------------
+          Ronald draws a card. (25 left)
+  AI      attack:Tongue Wrap   [23]
+          holding: Tauros, Hitmonchan, Doduo
+          Lickitung uses Tongue Wrap.
+          Dragonair takes 10. (30/80 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 45 — You -------------------------------
+          You draws a card. (18 left)
+          You attaches Fire Energy to Charmeleon.
+          Dragonair uses Hyper Beam.
+          Lickitung takes 20. (50/90 left)
+          Fighting Energy is discarded from Lickitung.
+
+--- Turn 46 — Ronald ----------------------------
+          Ronald draws a card. (24 left)
+  AI      pass — no attack available — Tongue Wrap: Not enough Energy; Supersonic: Not enough Energy   [0]
+          holding: Tauros, Hitmonchan, Doduo, PlusPower
+
+--- Turn 47 — You -------------------------------
+          You draws a card. (17 left)
+          Dragonair uses Slam.
+          Coin flip (coin 1/2): HEADS
+          Coin flip (coin 2/2): TAILS
+          1 head(s) -> 30 damage.
+          Lickitung takes 30. (20/90 left)
+
+--- Turn 48 — Ronald ----------------------------
+          Ronald draws a card. (23 left)
+  AI      pass — no attack available — Tongue Wrap: Not enough Energy; Supersonic: Not enough Energy   [0]
+          holding: Tauros, Hitmonchan, Doduo, PlusPower, Doduo
+
+--- Turn 49 — You -------------------------------
+          You draws a card. (16 left)
+          Charmeleon evolves into Charizard. Special Conditions removed.
+          Dragonair uses Hyper Beam.
+          Lickitung takes 20. (0/90 left)
+          No Energy to discard.
+          Lickitung is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [51.5]
+          holding: Tauros, Hitmonchan, Doduo, PlusPower, Doduo
+          passed over: promote 51.5, promote 32.3, promote 30.3, promote 16.8
+          Ronald promotes Jynx A to Active.
+
+--- Turn 50 — Ronald ----------------------------
+          Ronald draws a card. (22 left)
+  AI      attach   [4.4]
+          holding: Tauros, Hitmonchan, Doduo, PlusPower, Doduo, Lightning Energy
+          passed over: bench 2, bench 2, bench 2, bench 2, attach -2
+          Ronald attaches Lightning Energy to Jynx A.
+  AI      bench   [2]
+          holding: Tauros, Hitmonchan, Doduo, PlusPower, Doduo
+          passed over: bench 2, bench 2, bench 2, retreat -7.5, retreat -13
+          Ronald benches Tauros.
+  AI      pass — no attack was worth taking   [0]
+          holding: Hitmonchan, Doduo, PlusPower, Doduo
+          passed over: attack:Doubleslap 0
+
+--- Turn 51 — You -------------------------------
+          You draws a card. (15 left)
+          You attaches Fire Energy to Arcanine.
+          Dragonair uses Hyper Beam.
+          Jynx takes 20. (50/70 left)
+          Psychic Energy is discarded from Jynx A.
+
+--- Turn 52 — Ronald ----------------------------
+          Ronald draws a card. (21 left)
+  AI      pass — no attack available — Doubleslap: Not enough Energy; Meditate: Not enough Energy   [0]
+          holding: Hitmonchan, Doduo, PlusPower, Doduo, Hitmonlee
+
+--- Turn 53 — You -------------------------------
+          You draws a card. (14 left)
+          You benches Lickitung.
+          You attaches Fire Energy to Charizard.
+          Dragonair uses Hyper Beam.
+          Jynx takes 20. (30/70 left)
+          Lightning Energy is discarded from Jynx A.
+
+--- Turn 54 — Ronald ----------------------------
+          Ronald draws a card. (20 left)
+  AI      attach   [11]
+          holding: Hitmonchan, Doduo, PlusPower, Doduo, Hitmonlee, Fighting Energy
+          passed over: attach 4.4, attach -2, attach -2, attach -2, attach -2
+          Ronald attaches Fighting Energy to Tauros B.
+  AI      pass — no attack available — Doubleslap: Not enough Energy; Meditate: Not enough Energy   [0]
+          holding: Hitmonchan, Doduo, PlusPower, Doduo, Hitmonlee
+
+--- Turn 55 — You -------------------------------
+          You draws a card. (13 left)
+          You plays PlusPower.
+          PlusPower attached to Dragonair (+10 this turn).
+          Dragonair uses Hyper Beam.
+          +10 from a bonus -> 30.
+          Jynx takes 30. (0/70 left)
+          No Energy to discard.
+          Jynx is Knocked Out!
+          You takes a Prize. (3 left)
+          PlusPower is discarded.
+  AI      promote   [51.5]
+          holding: Hitmonchan, Doduo, PlusPower, Doduo, Hitmonlee
+          passed over: promote 29.3, promote 27.3, promote 19.8, promote 13.8
+          Ronald promotes Jynx to Active.
+
+--- Turn 56 — Ronald ----------------------------
+          Ronald draws a card. (19 left)
+  AI      bench   [2]
+          holding: Hitmonchan, Doduo, PlusPower, Doduo, Hitmonlee, Mr. Mime
+          passed over: bench 2, bench 2, bench 2, bench 2
+          Ronald benches Hitmonchan.
+  AI      pass — no attack was worth taking   [0]
+          holding: Doduo, PlusPower, Doduo, Hitmonlee, Mr. Mime
+          passed over: attack:Doubleslap 0
+
+--- Turn 57 — You -------------------------------
+          You draws a card. (12 left)
+          You attaches Fire Energy to Charizard.
+          You retreats Dragonair; Arcanine is now Active.
+          Arcanine uses Take Down.
+          Jynx takes 80. (0/70 left)
+          Arcanine does 30 damage to itself. (30 total)
+          Jynx is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [22]
+          holding: Doduo, PlusPower, Doduo, Hitmonlee, Mr. Mime
+          passed over: promote 21, promote 19, promote 11.5, promote 5.5
+          Ronald promotes Hitmonchan to Active.
+
+--- Turn 58 — Ronald ----------------------------
+          Ronald draws a card. (18 left)
+  AI      bench   [2]
+          holding: Doduo, PlusPower, Doduo, Hitmonlee, Mr. Mime, Electabuzz
+          passed over: bench 2, bench 2, bench 2, bench 2
+          Ronald benches Doduo.
+  AI      pass — no attack available — Jab: Not enough Energy; Special Punch: Not enough Energy   [0]
+          holding: PlusPower, Doduo, Hitmonlee, Mr. Mime, Electabuzz
+
+--- Turn 59 — You -------------------------------
+          You draws a card. (11 left)
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): TAILS
+          Poke Ball: tails, nothing found.
+          Arcanine uses Take Down.
+          Hitmonchan takes 80. (0/70 left)
+          Arcanine does 30 damage to itself. (60 total)
+          Hitmonchan is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [-24]
+          holding: PlusPower, Doduo, Hitmonlee, Mr. Mime, Electabuzz
+          passed over: promote -26, promote -30, promote -33.5, promote -39.5
+          Ronald promotes Tauros A to Active.
+
+--- Turn 60 — Ronald ----------------------------
+          Ronald draws a card. (17 left)
+  AI      retreat   [51.3]
+          holding: PlusPower, Doduo, Hitmonlee, Mr. Mime, Electabuzz, Full Heal
+          passed over: retreat 40.3, retreat 26.8, retreat 26.8, trainer 6, bench 2
+          Ronald retreats Tauros A; Electabuzz is now Active.
+  AI      trainer   [40]
+          holding: PlusPower, Doduo, Hitmonlee, Mr. Mime, Electabuzz, Full Heal
+          passed over: bench 2, bench 2, bench 2, bench 2
+          Ronald plays PlusPower.
+          PlusPower attached to Electabuzz (+10 this turn).
+  AI      bench   [2]
+          holding: Doduo, Hitmonlee, Mr. Mime, Electabuzz, Full Heal
+          passed over: bench 2, bench 2, bench 2
+          Ronald benches Doduo.
+  AI      attack:Thunderpunch   [73.5]
+          holding: Hitmonlee, Mr. Mime, Electabuzz, Full Heal
+          passed over: attack:Thundershock 33
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): TAILS
+          Tails -> 30 damage, and Electabuzz will take 10.
+          +10 from a bonus -> 40.
+          Arcanine takes 40. (0/100 left)
+          Electabuzz does 10 damage to itself. (70 total)
+          Arcanine is Knocked Out!
+          Ronald takes a Prize. (2 left)
+          Electabuzz is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         60 turns
+
+==========================================================
+PACKS OPENED
+
+  Fossil
+    Graveler  Uncommon
+    Kingler  Uncommon  [rh]
+    Mr. Fuji  Uncommon
+    Krabby  Common
+    Water Energy  
+    Geodude  Common
+    Psyduck  Common
+    Slowpoke  Common
+    Psychic Energy  
+    Omanyte  Common
+    Kabutops  Rare
+
+  Fossil
+    Seadra  Uncommon
+    Arbok  Uncommon
+    Cloyster  Uncommon  [rh]
+    Mysterious Fossil  Common
+    Krabby  Common
+    Slowpoke  Common
+    Horsea  Common
+    Fighting Energy  
+    Fighting Energy  
+    Kabuto  Common
+    Ditto  Rare Holo   NEW
