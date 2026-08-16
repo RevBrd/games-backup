@@ -142,14 +142,43 @@ cost of four. One pip per symbol now, with pips from a single card pulled tight 
 pair reads as linked — the row has to say *four Energy* and *three cards* simultaneously. Buzzap got
 it for free, being the same shape.
 
-**Not taken, and it is a rules question rather than a bug.** *"If an attack does not do damage, its
-recoil or other negative effects should not apply"* — Take Down into Chansey's Scrunch. The trigger
-is real and simple (`RECOIL` is applied unconditionally after the damage step) but I am not confident
-the rule should change: Scrunch prevents damage done *to Chansey*, and Take Down's 30 is damage
-Arcanine does *to itself*. Two separate things under the printed text. The arbiter is the GBC game
-and Trevor knows it far better than I do, so it went back to him with that stated rather than being
-built either way. **The scope also needs pinning**: "other negative effects" reaches Thrash,
-Thunder's self-damage and Tauros' self-confusion, which is four cards' behaviour rather than one.
+**"If an attack does not do damage, its recoil should not apply" — I argued against it and lost, and
+the losing is the useful part.** Take Down into Chansey's Scrunch. My case was the printed text:
+Scrunch prevents damage done *to Chansey*, Take Down's 30 is damage Arcanine does *to itself*, two
+different things and only one of them mentioned. That is step one of the ruling order and it points
+the other way.
+
+Steps two and three both overrode it. Trevor: it is how the Game Boy game plays it **and** how Pocket
+plays it — two independent implementations of the era agreeing against the literal reading — and the
+reasoning is worth more than the ruling:
+
+> It's already benefit enough to the player on the receiving end to be preventing damage, and then
+> still adding damage to the opponent seems to swing the needle a little too much for them.
+
+*Reverse the viewpoint.* Preventing the hit is the entire reward for spending a turn on Scrunch;
+paying the preventer a free 30 on top pays them twice for one decision. **That is a better argument
+than mine and it is not a rules argument at all** — which is the thing to carry forward, because the
+four-step order puts playability last and this is a case where last was right.
+
+**The scope was the harder half and Trevor drew the line himself**: damage and defender-side
+consequences only. Self-inflicted status — Tauros confusing itself on tails — still applies, because
+it is the attacker's own coin rather than anything the defender did. He flagged his own uncertainty
+on that one (about 75% on Pocket, leaning no on the Game Boy game), so it is settled on the lean plus
+the principle, and it is the line most worth revisiting. The defender-side half turned out to be
+already correct by luck: `retaliate()` sits inside the damage-landed branch. It has an assertion now
+so it stays true rather than staying lucky. Full entry in
+[Rulings/PREVENTED-DAMAGE-RECOIL.md](Rulings/PREVENTED-DAMAGE-RECOIL.md).
+
+**"Kangaskhan shouldn't use Fetch while confused."** Real, and a straight omission rather than a
+misjudgement: **nothing in `scoreAttack` knew Confusion existed.** The retreat rule learned about it
+on 13 Aug and the attack path never did — *the same gap twice in one engine, one branch apart*. Worth
+a look at any other decision that reads `status` for one branch and not its siblings.
+
+Priced as what it is: half the time the attack does not happen and the attacker takes 30, so it is
+worth half its value against half that cost. It bites where Trevor said it should and not where it
+should not — a 5-point draw goes negative and the bot passes, a 60-point swing halves to 30 and is
+still obviously worth taking. Asserted both ways, because "never attack while Confused" would be
+worse play than the bug.
 
 ### 14 Aug 2026 — Opus 5 #12, third pass (Arcanine)
 

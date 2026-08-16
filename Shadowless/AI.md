@@ -313,6 +313,27 @@ The old scores rebuild from the log exactly — 41 / 31.3 / 17.3 — and the cho
 (49.4% ± 1.4), four assertions in `powertest.js` including one that pins Switch and promote to the
 same ranking.
 
+## Two things the scorer could not see at all
+
+**16 Aug 2026, both from Trevor's log 06-13-50 and the Scrunch report, and both omissions rather
+than misjudgements.**
+
+**Attacking while Confused had no price.** A Confused Kangaskhan used Fetch on three separate turns
+to draw one card and hit itself for 30 doing it. Half the time the attack simply does not happen
+*and* the attacker takes 30, so it is worth half its value against half that cost — which bites on a
+5-point draw and not on a 60-point swing, and that split is the whole point. "Never attack while
+Confused" would be worse play than the bug, so both directions are asserted.
+
+*The generalisable bit: the retreat rule learned about Confusion on 13 Aug and the attack path never
+did — the same gap twice in one engine, one branch apart.* **Worth checking any decision that reads
+`status` for one branch and not its siblings.**
+
+**Recoil is waived when the defender prevents the damage** — a rules change settled with Trevor, see
+[Rulings/PREVENTED-DAMAGE-RECOIL.md](Rulings/PREVENTED-DAMAGE-RECOIL.md). The bot has to know or it
+goes on refusing Take Down into a Scrunched Chansey for a cost it will not pay. Priced at
+`f.pStopped`, the odds the recoil actually lands, rather than as an on/off switch — Transparency is a
+coin, and this must not become the next entry in the tally below.
+
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed

@@ -32,6 +32,7 @@ enough to settle a call in plain English, so ask him — he expects to be asked.
 | A retreat cost is paid in CARDS, not Energy symbols | [RETREAT-COST.md](Rulings/RETREAT-COST.md) |
 | A Confused Pokémon flips to retreat, and pays before it flips | [CONFUSED-RETREAT.md](Rulings/CONFUSED-RETREAT.md) |
 | Which Energy gets discarded is the player's choice | [ENERGY-DISCARD-CHOICE.md](Rulings/ENERGY-DISCARD-CHOICE.md) |
+| Prevented damage waives the recoil, and nothing else | [PREVENTED-DAMAGE-RECOIL.md](Rulings/PREVENTED-DAMAGE-RECOIL.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were

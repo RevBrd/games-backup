@@ -35,16 +35,9 @@ still open, so it stays with its reason and with what evidence would revive it.
 - Add to the logic something about when to use Professor Oak and Gambler and when not to. Might be worth discussion first.
 - A way to cancel using a potion or other item after it's been selected but before its target has been chosen. Also includes energy attachment.
 - Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
-- If an attack does not do damage, its recoil or other negative effects should not apply. For example, Arcanine's Take Down being negated by Chansey's Scrunch.
-  **Waiting on you, 16 Aug — this is a rules call and I think it may go the other
-  way.** Your diagnosis of the trigger was exactly right (the engine applies
-  `RECOIL` unconditionally after the damage step). What I am unsure of is whether
-  it *should*: Scrunch prevents damage done to Chansey, and Take Down's 30 is
-  damage Arcanine does to itself, so under the printed text I read them as
-  separate. But the arbiter is the GBC game and you know it far better than I do.
-  **Also worth pinning: how wide is the rule?** "Other negative effects" would
-  reach Thrash, Thunder's self-damage and Tauros' self-confusion too, and those
-  are four different cards' worth of behaviour rather than one.
+- Gyarados probably should not have been switched out on turn 18. It would have been better to get that last hit in and potentially lose the card on the next turn, as saving it and missing that attack benefits nothing - log# 06-13-50.
+- If the opponent has a tank in the active spot and is starting to run out of cards in the deck before the player, it begins to power up that tank to attack with or retreat rather than tank to a loss. It should also stop using cards like Bill or Professor Oak, or moves like Fetch or Pay Day below ~20ish cards - Some preemptive, some log# 06-13-50.
+- Opponent deck name says "Overgrowth" in-game when the opponent is Jack.
 
 
 
