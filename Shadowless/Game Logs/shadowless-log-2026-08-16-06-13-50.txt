@@ -1,0 +1,689 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-16 06:13:50
+decks    you: Zap   opponent: Rod — Grand Master
+opponent expert
+seed     1716577975   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Lapras, Gyarados, Water Energy, Double Colorless Energy, Charizard, Water Energy, Dragonite
+  HIDDEN  your opening hand: Switch, Psychic Energy, Kadabra, Mewtwo, Psychic Energy, Mewtwo, Psychic Energy
+  HIDDEN  opponent's Prizes: Pokémon Trader, Dragonair, Pokémon Breeder, Dragonair, Water Energy, Water Energy
+  HIDDEN  your Prizes: Jynx, Professor Oak, Abra, Psychic Energy, Psychic Energy, Jynx
+  HIDDEN  opponent's opening board: Lapras active, empty bench
+  HIDDEN  your opening board: Mewtwo active, empty bench
+          New game. Seed 1716577975.
+          Coin flip (who goes first): HEADS
+          You will go first.
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (46 left)
+          You attaches Psychic Energy to Mewtwo.
+
+--- Turn 2 — Rod -------------------------------
+          Rod draws a card. (46 left)
+  AI      attach   [25]
+          holding: Gyarados, Water Energy, Double Colorless Energy, Charizard, Water Energy, Dragonite, Water Energy
+          Rod attaches Water Energy to Lapras.
+  AI      attack:Water Gun   [10]
+          holding: Gyarados, Double Colorless Energy, Charizard, Water Energy, Dragonite, Water Energy
+          Lapras uses Water Gun.
+          10 plus 10 per spare W Energy (0) -> 10 damage.
+          Mewtwo takes 10. (50/60 left)
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (45 left)
+          You attaches Psychic Energy to Mewtwo.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Lapras takes 20. (60/80 left)
+
+--- Turn 4 — Rod -------------------------------
+          Rod draws a card. (45 left)
+  AI      bench   [26]
+          holding: Gyarados, Double Colorless Energy, Charizard, Water Energy, Dragonite, Water Energy, Dratini
+          passed over: attach 21.5, attach 21.5, attach 4.4
+          Rod benches Dratini.
+  AI      attach   [21.5]
+          holding: Gyarados, Double Colorless Energy, Charizard, Water Energy, Dragonite, Water Energy
+          passed over: attach 21.5, attach 18, attach 18, attach 18, attach 4.4
+          Rod attaches Water Energy to Lapras.
+  AI      attack:Water Gun   [20]
+          holding: Gyarados, Double Colorless Energy, Charizard, Dragonite, Water Energy
+          passed over: attack:Confuse Ray 17.5
+          Lapras uses Water Gun.
+          10 plus 10 per spare W Energy (1) -> 20 damage.
+          Mewtwo takes 20. (30/60 left)
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (44 left)
+          You plays Potion.
+          Mewtwo heals 20. (10 damage left)
+          You benches Mewtwo.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (2) -> 30 damage.
+          Lapras takes 30. (30/80 left)
+
+--- Turn 6 — Rod -------------------------------
+          Rod draws a card. (44 left)
+  AI      attach   [21.5]
+          holding: Gyarados, Double Colorless Energy, Charizard, Dragonite, Water Energy, Water Energy
+          passed over: attach 21.5, attach 18, attach 18, attach 18, attach -2
+          Rod attaches Water Energy to Lapras.
+  AI      attack:Water Gun   [30]
+          holding: Gyarados, Double Colorless Energy, Charizard, Dragonite, Water Energy
+          passed over: attack:Confuse Ray 17.5
+          Lapras uses Water Gun.
+          10 plus 10 per spare W Energy (2) -> 30 damage.
+          Mewtwo takes 30. (20/60 left)
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (43 left)
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (3) -> 40 damage.
+          Lapras takes 40. (0/80 left)
+          Lapras is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [26.5]
+          holding: Gyarados, Double Colorless Energy, Charizard, Dragonite, Water Energy
+          Rod promotes Dratini to Active.
+
+--- Turn 8 — Rod -------------------------------
+          Rod draws a card. (43 left)
+  AI      bench   [26]
+          holding: Gyarados, Double Colorless Energy, Charizard, Dragonite, Water Energy, Magikarp
+          passed over: attach 21, attach 21
+          Rod benches Magikarp.
+  AI      attach   [22]
+          holding: Gyarados, Double Colorless Energy, Charizard, Dragonite, Water Energy
+          passed over: attach 21, attach 21, attach 18
+          Rod attaches Water Energy to Magikarp.
+  AI      pass — no attack available — Pound: Not enough Energy   [0]
+          holding: Gyarados, Double Colorless Energy, Charizard, Dragonite
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (42 left)
+          You benches Jynx.
+          You attaches Psychic Energy to Jynx.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (0) -> 10 damage.
+          Resistance: -30 -> 0.
+
+--- Turn 10 — Rod -------------------------------
+          Rod draws a card. (42 left)
+  AI      evolve   [47.5]
+          holding: Gyarados, Double Colorless Energy, Charizard, Dragonite, Kangaskhan
+          passed over: attach 21, bench 7, attach -2
+          Magikarp evolves into Gyarados. Special Conditions removed.
+  AI      attach   [21]
+          holding: Double Colorless Energy, Charizard, Dragonite, Kangaskhan
+          passed over: bench 7, attach -2
+          Rod attaches Double Colorless Energy to Dratini.
+  AI      bench   [7]
+          holding: Charizard, Dragonite, Kangaskhan
+          passed over: retreat -29.5
+          Rod benches Kangaskhan.
+  AI      attack:Pound   [10]
+          holding: Charizard, Dragonite
+          Dratini uses Pound.
+          Mewtwo takes 10. (10/60 left)
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (41 left)
+          You plays Potion.
+          Mewtwo A heals 20. (30 damage left)
+          You attaches Psychic Energy to Mewtwo B.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Resistance: -30 -> 0.
+
+--- Turn 12 — Rod -------------------------------
+          Rod draws a card. (41 left)
+  AI      attach   [30]
+          holding: Charizard, Dragonite, Water Energy
+          passed over: attach 8, attach -2, retreat -29.5, retreat -29.5
+          Rod attaches Water Energy to Gyarados.
+  AI      attack:Pound   [10]
+          holding: Charizard, Dragonite
+          Dratini uses Pound.
+          Mewtwo takes 10. (20/60 left)
+
+--- Turn 13 — You -------------------------------
+          You draws a card. (40 left)
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Resistance: -30 -> 0.
+
+--- Turn 14 — Rod -------------------------------
+          Rod draws a card. (40 left)
+  AI      attack:Pound   [10]
+          holding: Charizard, Dragonite, Switch
+          Dratini uses Pound.
+          Mewtwo takes 10. (10/60 left)
+
+--- Turn 15 — You -------------------------------
+          You draws a card. (39 left)
+          You plays Gust of Wind.
+          Rod's Gyarados is dragged into the Active spot.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (2) -> 30 damage.
+          Gyarados takes 30. (70/100 left)
+
+--- Turn 16 — Rod -------------------------------
+          Rod draws a card. (39 left)
+  AI      trainer   [12]
+          holding: Charizard, Dragonite, Switch, Energy Retrieval
+          passed over: trainer -4
+          Rod plays Energy Retrieval.
+          Energy Retrieval: recovered 2 basic Energy.
+  AI      attach   [80]
+          holding: Dragonite, Switch, Water Energy, Water Energy
+          passed over: attach 80, attach 8, attach 8, attach -2, attach -2
+          Rod attaches Water Energy to Gyarados.
+  AI      attack:Dragon Rage   [65]
+          holding: Dragonite, Switch, Water Energy
+          Gyarados uses Dragon Rage.
+          Mewtwo takes 50. (0/60 left)
+          Mewtwo is Knocked Out!
+          Rod takes a Prize. (5 left)
+          You promotes Mewtwo to Active.
+
+--- Turn 17 — You -------------------------------
+          You draws a card. (38 left)
+          You attaches Psychic Energy to Mewtwo.
+          You plays Defender.
+          Defender attached to Mewtwo (-20 damage until the end of the opponent's next turn).
+          You benches Mr. Mime.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (3) -> 40 damage.
+          Gyarados takes 40. (30/100 left)
+
+--- Turn 18 — Rod -------------------------------
+          Rod draws a card. (38 left)
+  AI      trainer   [24]
+          holding: Dragonite, Switch, Water Energy, Pokémon Trader, Water Energy
+          passed over: attach 14.5, attach 14.5, trainer 14, attach 8, attach 8
+          Rod plays Switch.
+          Kangaskhan is now Active.
+  AI      attach   [16]
+          holding: Dragonite, Water Energy, Pokémon Trader, Water Energy
+          passed over: attach 16, trainer 14, attach -2, attach -2, attach -2
+          Rod attaches Water Energy to Kangaskhan.
+  AI      trainer   [14]
+          holding: Dragonite, Pokémon Trader, Water Energy
+          Rod plays Pokémon Trader.
+          Traded Dragonite for Dragonair.
+  AI      evolve   [34]
+          holding: Water Energy, Dragonair
+          Dratini evolves into Dragonair. Special Conditions removed.
+  AI      attack:Fetch   [5]
+          holding: Water Energy
+          Kangaskhan uses Fetch.
+          Rod draws 1.
+          Defender is discarded.
+
+--- Turn 19 — You -------------------------------
+          You draws a card. (37 left)
+          You plays Energy Removal.
+          Water Energy discarded from Kangaskhan.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (0) -> 10 damage.
+          Resistance: -30 -> 0.
+
+--- Turn 20 — Rod -------------------------------
+          Rod draws a card. (36 left)
+  AI      attach   [38]
+          holding: Water Energy, Dragonite, Kangaskhan
+          passed over: evolve 25, attach 16, bench 7, attach -2
+          Rod attaches Water Energy to Dragonair.
+  AI      evolve   [25]
+          holding: Dragonite, Kangaskhan
+          passed over: bench 7
+          Dragonair evolves into Dragonite. Special Conditions removed.
+  AI      bench   [7]
+          holding: Kangaskhan
+          passed over: power:STEP_IN 0
+          Rod benches Kangaskhan.
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: (empty)
+
+--- Turn 21 — You -------------------------------
+          You draws a card. (36 left)
+          You plays Gust of Wind.
+          Rod's Gyarados is dragged into the Active spot.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (3) -> 40 damage.
+          Gyarados takes 40. (0/100 left)
+          Gyarados is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [47.5]
+          holding: (empty)
+          passed over: promote 44, promote 44
+          Rod promotes Dragonite to Active.
+
+--- Turn 22 — Rod -------------------------------
+          Rod draws a card. (35 left)
+  AI      pass — no attack available — Slam: Not enough Energy   [0]
+          holding: Energy Retrieval
+
+--- Turn 23 — You -------------------------------
+          You draws a card. (35 left)
+          You attaches Psychic Energy to Mr. Mime.
+          You plays Professor Oak.
+          You discards 4 card(s) and draws 7.
+          You plays Bill.
+          You draws 2.
+          You benches Abra.
+          You plays Energy Removal.
+          Double Colorless Energy discarded from Dragonite.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Dragonite takes 20. (80/100 left)
+
+--- Turn 24 — Rod -------------------------------
+          Rod draws a card. (34 left)
+  AI      attach   [30.7]
+          holding: Energy Retrieval, Double Colorless Energy
+          passed over: trainer 12, attach 8, attach 8, retreat -14, retreat -14
+          Rod attaches Double Colorless Energy to Dragonite.
+  AI      pass — no attack available — Slam: Not enough Energy   [0]
+          holding: Energy Retrieval
+
+--- Turn 25 — You -------------------------------
+          You draws a card. (25 left)
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): HEADS
+          Poke Ball: found Alakazam.
+          Abra evolves into Kadabra. Special Conditions removed.
+          You attaches Psychic Energy to Kadabra.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (2) -> 30 damage.
+          Dragonite takes 30. (50/100 left)
+
+--- Turn 26 — Rod -------------------------------
+          Rod draws a card. (33 left)
+  AI      trainer   [12]
+          holding: Energy Retrieval, Pokémon Trader
+          passed over: retreat -14, retreat -14
+          Rod plays Energy Retrieval.
+          Energy Retrieval: recovered 2 basic Energy.
+  AI      attach   [59.8]
+          holding: Water Energy, Water Energy
+          passed over: attach 59.8, attach 8, attach 8, attach 8, attach 8
+          Rod attaches Water Energy to Dragonite.
+  AI      attack:Slam   [48.8]
+          holding: Water Energy
+          Dragonite uses Slam.
+          Coin flip (coin 1/2): HEADS
+          Coin flip (coin 2/2): TAILS
+          1 head(s) -> 40 damage.
+          Mewtwo takes 40. (20/60 left)
+
+--- Turn 27 — You -------------------------------
+          You draws a card. (23 left)
+          You plays PlusPower.
+          PlusPower attached to Mewtwo (+10 this turn).
+          Kadabra evolves into Alakazam. Special Conditions removed.
+          You attaches Psychic Energy to Alakazam.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (3) -> 40 damage.
+          +10 from a bonus -> 50.
+          Dragonite takes 50. (0/100 left)
+          Dragonite is Knocked Out!
+          You takes a Prize. (3 left)
+          PlusPower is discarded.
+  AI      promote   [44]
+          holding: Water Energy
+          passed over: promote 44
+          Rod promotes Kangaskhan B to Active.
+
+--- Turn 28 — Rod -------------------------------
+          Rod draws a card. (32 left)
+  AI      attach   [16]
+          holding: Water Energy, Water Energy
+          passed over: attach 16, attach 8, attach 8
+          Rod attaches Water Energy to Kangaskhan B.
+  AI      attack:Fetch   [5]
+          holding: Water Energy
+          Kangaskhan uses Fetch.
+          Rod draws 1.
+
+--- Turn 29 — You -------------------------------
+          You draws a card. (22 left)
+          You attaches Psychic Energy to Alakazam.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Resistance: -30 -> 0.
+
+--- Turn 30 — Rod -------------------------------
+          Rod draws a card. (30 left)
+  AI      attach   [8]
+          holding: Water Energy, Lapras, Water Energy
+          passed over: attach 8, bench 7, attach 4.4, attach 4.4
+          Rod attaches Water Energy to Kangaskhan A.
+  AI      bench   [7]
+          holding: Lapras, Water Energy
+          Rod benches Lapras.
+  AI      attack:Fetch   [5]
+          holding: Water Energy
+          Kangaskhan uses Fetch.
+          Rod draws 1.
+
+--- Turn 31 — You -------------------------------
+          You draws a card. (21 left)
+          You attaches Psychic Energy to Mewtwo.
+          You retreats Mewtwo; Alakazam is now Active.
+          Alakazam uses Confuse Ray.
+          Resistance: -30 -> 0.
+          Coin flip (Confused?): HEADS
+          Kangaskhan B is now Confused.
+
+--- Turn 32 — Rod -------------------------------
+          Rod draws a card. (28 left)
+  AI      attach   [22]
+          holding: Water Energy, Water Energy, Water Energy
+          passed over: attach 22, attach 22, attach 4.4, attach 4.4, attach 4.4
+          Rod attaches Water Energy to Lapras.
+  AI      attack:Fetch   [5]
+          holding: Water Energy, Water Energy
+          Kangaskhan uses Fetch.
+          Coin flip (Confusion): TAILS
+          Kangaskhan is Confused - the attack fails and it hits itself for 30.
+
+--- Turn 33 — You -------------------------------
+          You draws a card. (20 left)
+          You attaches Psychic Energy to Jynx.
+          Alakazam uses Confuse Ray.
+          Resistance: -30 -> 0.
+          Coin flip (Confused?): TAILS
+
+--- Turn 34 — Rod -------------------------------
+          Rod draws a card. (27 left)
+  AI      attach   [4.4]
+          holding: Water Energy, Water Energy, Dragonite
+          passed over: attach 4.4, attach -2, attach -2, attach -2, attach -2
+          Rod attaches Water Energy to Kangaskhan B.
+  AI      attack:Fetch   [5]
+          holding: Water Energy, Dragonite
+          Kangaskhan uses Fetch.
+          Coin flip (Confusion): TAILS
+          Kangaskhan is Confused - the attack fails and it hits itself for 30.
+
+--- Turn 35 — You -------------------------------
+          You draws a card. (19 left)
+          You attaches Psychic Energy to Mr. Mime.
+          Alakazam uses Confuse Ray.
+          Resistance: -30 -> 0.
+          Coin flip (Confused?): TAILS
+
+--- Turn 36 — Rod -------------------------------
+          Rod draws a card. (26 left)
+  AI      attach   [4.4]
+          holding: Water Energy, Dragonite, Water Energy
+          passed over: attach 4.4, attach -2, attach -2, attach -2, attach -2
+          Rod attaches Water Energy to Kangaskhan B.
+  AI      attack:Fetch   [5]
+          holding: Dragonite, Water Energy
+          Kangaskhan uses Fetch.
+          Coin flip (Confusion): HEADS
+          Rod draws 1.
+
+--- Turn 37 — You -------------------------------
+          You draws a card. (18 left)
+          You plays Bill.
+          You draws 2.
+          You retreats Alakazam; Mr. Mime is now Active.
+          You attaches Psychic Energy to Alakazam.
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (6) -> 70 damage.
+          Resistance: -30 -> 40.
+          Kangaskhan takes 40. (0/90 left)
+          Kangaskhan is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [56.5]
+          holding: Dragonite, Water Energy, Professor Oak
+          passed over: promote 55
+          Rod promotes Kangaskhan to Active.
+
+--- Turn 38 — Rod -------------------------------
+          Rod draws a card. (24 left)
+  AI      trainer   [20]
+          holding: Dragonite, Water Energy, Professor Oak, Water Energy
+          passed over: attach 4.4, attach 4.4, attach -2, attach -2
+          Rod plays Professor Oak.
+          Rod discards 3 card(s) and draws 7.
+  AI      bench   [7]
+          holding: Water Energy, Gambler, Gyarados, Water Energy, Charmeleon, Magikarp, Water Energy
+          passed over: attach 4.4, attach 4.4, attach 4.4, attach -2, attach -2
+          Rod benches Magikarp.
+  AI      attach   [22]
+          holding: Water Energy, Gambler, Gyarados, Water Energy, Charmeleon, Water Energy
+          passed over: attach 22, attach 22, attach 4.4, attach 4.4, attach 4.4
+          Rod attaches Water Energy to Magikarp.
+  AI      attack:Fetch   [5]
+          holding: Gambler, Gyarados, Water Energy, Charmeleon, Water Energy
+          Kangaskhan uses Fetch.
+          Rod draws 1.
+
+--- Turn 39 — You -------------------------------
+          You draws a card. (15 left)
+          You attaches Psychic Energy to Alakazam.
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (0) -> 10 damage.
+          Resistance: -30 -> 0.
+
+--- Turn 40 — Rod -------------------------------
+          Rod draws a card. (15 left)
+  AI      evolve   [47.5]
+          holding: Gambler, Gyarados, Water Energy, Charmeleon, Water Energy, Charmander, Pokémon Breeder
+          passed over: bench 7, attach 4.4, attach 4.4, attach -2, attach -2
+          Magikarp evolves into Gyarados. Special Conditions removed.
+  AI      attach   [30]
+          holding: Gambler, Water Energy, Charmeleon, Water Energy, Charmander, Pokémon Breeder
+          passed over: attach 30, bench 7, attach 4.4, attach 4.4, attach -2
+          Rod attaches Water Energy to Gyarados.
+  AI      bench   [7]
+          holding: Gambler, Charmeleon, Water Energy, Charmander, Pokémon Breeder
+          passed over: trainer -1.5
+          Rod benches Charmander.
+  AI      trainer   [1.5]
+          holding: Gambler, Charmeleon, Water Energy, Pokémon Breeder
+          Rod plays Gambler.
+          Coin flip (Gambler pays off?): TAILS
+          Gambler: 3 shuffled away, tails, 1 drawn.
+  AI      attack:Fetch   [5]
+          holding: Switch
+          Kangaskhan uses Fetch.
+          Rod draws 1.
+
+--- Turn 41 — You -------------------------------
+          You draws a card. (14 left)
+          You retreats Mr. Mime; Alakazam is now Active.
+          You attaches Psychic Energy to Alakazam.
+          Alakazam uses Confuse Ray.
+          Resistance: -30 -> 0.
+          Coin flip (Confused?): TAILS
+
+--- Turn 42 — Rod -------------------------------
+          Rod draws a card. (15 left)
+  AI      trainer   [25]
+          holding: Switch, Dratini, Professor Oak
+          passed over: bench 2, trainer -4
+          Rod plays Professor Oak.
+          Rod discards 2 card(s) and draws 7.
+  AI      attach   [62]
+          holding: Water Energy, Magikarp, Charmander, Double Colorless Energy, Pokémon Breeder, Water Energy, Charmeleon
+          passed over: attach 62, evolve 29.5, attach 18, attach 18, attach 18
+          Rod attaches Water Energy to Gyarados.
+  AI      evolve   [29.5]
+          holding: Magikarp, Charmander, Double Colorless Energy, Pokémon Breeder, Water Energy, Charmeleon
+          passed over: bench 2, bench 2
+          Charmander evolves into Charmeleon. Special Conditions removed.
+  AI      bench   [2]
+          holding: Magikarp, Charmander, Double Colorless Energy, Pokémon Breeder, Water Energy
+          passed over: bench 2
+          Rod benches Magikarp.
+  AI      bench   [2]
+          holding: Charmander, Double Colorless Energy, Pokémon Breeder, Water Energy
+          Rod benches Charmander.
+  AI      attack:Fetch   [5]
+          holding: Double Colorless Energy, Pokémon Breeder, Water Energy
+          Kangaskhan uses Fetch.
+          Rod draws 1.
+
+--- Turn 43 — You -------------------------------
+          You draws a card. (13 left)
+          Alakazam uses Confuse Ray.
+          Resistance: -30 -> 0.
+          Coin flip (Confused?): HEADS
+          Kangaskhan is now Confused.
+
+--- Turn 44 — Rod -------------------------------
+          Rod draws a card. (6 left)
+  AI      attach   [34.3]
+          holding: Double Colorless Energy, Pokémon Breeder, Water Energy, Charmeleon, Dratini
+          passed over: evolve 29.5, attach 22, attach 18, attach 18, attach 18
+          Rod attaches Double Colorless Energy to Charmeleon.
+  AI      evolve   [29.5]
+          holding: Pokémon Breeder, Water Energy, Charmeleon, Dratini
+          Charmander evolves into Charmeleon. Special Conditions removed.
+  AI      attack:Fetch   [5]
+          holding: Pokémon Breeder, Water Energy, Dratini
+          Kangaskhan uses Fetch.
+          Coin flip (Confusion): TAILS
+          Kangaskhan is Confused - the attack fails and it hits itself for 30.
+
+--- Turn 45 — You -------------------------------
+          You draws a card. (12 left)
+          Alakazam uses Confuse Ray.
+          Resistance: -30 -> 0.
+          Coin flip (Confused?): TAILS
+
+--- Turn 46 — Rod -------------------------------
+          Rod draws a card. (5 left)
+  AI      attach   [38]
+          holding: Pokémon Breeder, Water Energy, Dratini, Charizard
+          passed over: evolve 34, evolve 34, attach 22, attach 17.7, attach 4.4
+          Rod attaches Water Energy to Charmeleon A.
+  AI      evolve   [34]
+          holding: Pokémon Breeder, Dratini, Charizard
+          passed over: evolve 34
+          Charmeleon A evolves into Charizard. Special Conditions removed.
+  AI      attack:Fetch   [5]
+          holding: Pokémon Breeder, Dratini
+          Kangaskhan uses Fetch.
+          Coin flip (Confusion): HEADS
+          Rod draws 1.
+
+--- Turn 47 — You -------------------------------
+          You draws a card. (11 left)
+          You retreats Alakazam; Mr. Mime is now Active.
+          You attaches Psychic Energy to Mr. Mime.
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (3) -> 40 damage.
+          Resistance: -30 -> 10.
+          Kangaskhan takes 10. (50/90 left)
+
+--- Turn 48 — Rod -------------------------------
+          Rod draws a card. (3 left)
+  AI      attach   [22]
+          holding: Pokémon Breeder, Dratini, Water Energy, Water Energy
+          passed over: attach 22, attach 17.7, attach 17.7, attach 4.4, attach 4.4
+          Rod attaches Water Energy to Magikarp.
+  AI      attack:Fetch   [5]
+          holding: Pokémon Breeder, Dratini, Water Energy
+          Kangaskhan uses Fetch.
+          Coin flip (Confusion): HEADS
+          Rod draws 1.
+
+--- Turn 49 — You -------------------------------
+          You draws a card. (10 left)
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (4) -> 50 damage.
+          Resistance: -30 -> 20.
+          Kangaskhan takes 20. (30/90 left)
+
+--- Turn 50 — Rod -------------------------------
+          Rod draws a card. (1 left)
+  AI      attach   [34.3]
+          holding: Pokémon Breeder, Dratini, Water Energy, Double Colorless Energy, Charmander
+          passed over: attach 17.7, attach 4.4, attach 4.4, attach -2, attach -2
+          Rod attaches Double Colorless Energy to Charmeleon.
+  AI      attack:Fetch   [5]
+          holding: Pokémon Breeder, Dratini, Water Energy, Charmander
+          Kangaskhan uses Fetch.
+          Coin flip (Confusion): TAILS
+          Kangaskhan is Confused - the attack fails and it hits itself for 30.
+          Kangaskhan is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [70]
+          holding: Pokémon Breeder, Dratini, Water Energy, Charmander
+          passed over: promote 55, promote 47, promote 40.5, promote 37.5
+          Rod promotes Gyarados to Active.
+
+--- Turn 51 — You -------------------------------
+          You draws a card. (9 left)
+          You plays Bill.
+          You draws 2.
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (0) -> 10 damage.
+          Gyarados takes 10. (90/100 left)
+
+--- Turn 52 — Rod -------------------------------
+          Rod draws a card. (0 left)
+  AI      attach   [38]
+          holding: Pokémon Breeder, Dratini, Water Energy, Charmander, Dratini
+          passed over: attach 24.5, bench 2, bench 2, bench 2, attach -2
+          Rod attaches Water Energy to Charmeleon.
+  AI      bench   [2]
+          holding: Pokémon Breeder, Dratini, Charmander, Dratini
+          passed over: bench 2, bench 2, retreat -4.5, retreat -4.5, retreat -24
+          Rod benches Dratini.
+  AI      pass — no attack was worth taking   [0]
+          holding: Pokémon Breeder, Charmander, Dratini
+          passed over: attack:Dragon Rage 0
+
+--- Turn 53 — You -------------------------------
+          You draws a card. (6 left)
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (1) -> 20 damage.
+          Gyarados takes 20. (70/100 left)
+
+--- Turn 54 — Rod -------------------------------
+          GAME OVER - You wins: Rod could not draw a card
+
+==========================================================
+RESULT   You wins — Rod could not draw a card
+         54 turns
+
+==========================================================
+PACKS OPENED
+
+  Fossil
+    Kingler  Uncommon  [rh]
+    Mr. Fuji  Uncommon
+    Golem  Uncommon   NEW
+    Krabby  Common
+    Shellder  Common
+    Horsea  Common
+    Grass Energy  
+    Mysterious Fossil  Common
+    Grimer  Common
+    Slowpoke  Common
+    Zapdos  Rare
+
+  Fossil
+    Mr. Fuji  Uncommon
+    Seadra  Uncommon  [rh]
+    Omastar  Uncommon
+    Ekans  Common
+    Tentacool  Common
+    Zubat  Common
+    Grimer  Common
+    Energy Search  Common   NEW
+    Mysterious Fossil  Common
+    Lightning Energy  
+    Kabutops  Rare   NEW
