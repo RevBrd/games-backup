@@ -8,7 +8,7 @@ the examples are from here.
 
 ## When a pass is worth doing
 
-Not on a schedule. The triggers that actually mean something:
+Not always on a schedule. The triggers that actually mean something:
 
 - **A big job just landed.** This is the big one. A job that ships in one session writes its
   documentation *while building*, which means the docs end up in the voice of someone who doesn't

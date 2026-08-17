@@ -7,9 +7,9 @@ owed. Working an item and writing nothing down is a complete job — you will ha
 found in the reply, which is the part that actually matters. Write an entry when *you* think the
 finding was worth the finding.
 
-Kept newest-first, one entry per item, with **what it actually turned out to be** — which has now
-been something other than what the note said three times out of three, and that gap is the reason
-anyone would read this. A *parked* item is the one most worth writing up if you are on the fence,
+Kept newest-first, one entry per item, with **what it actually turned out to be** — which has
+sometimes been something other than what the note said, and that gap is the reason anyone would read
+this. A *parked* item is the one most worth writing up if you are on the fence,
 because the next instance will otherwise re-derive the same diagnosis from scratch.
 
 **Once an entry exists it is append-only**, like [HISTORY.md](HISTORY.md)

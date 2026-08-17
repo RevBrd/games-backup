@@ -47,7 +47,7 @@ from here without costing a row.
 | [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, the hand or anything **sized**. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. **Its sibling `INTERACTION.md` has the specific pieces** — the coin toss, the pickers, the opening screens and the controls on the card. If you have trouble with the layout, re-read that section — and check you can still see the top of the file, because a compacted read of it has cost a session before |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
-| [RULINGS.md](RULINGS.md) | A card's printed text doesn't settle how it behaves. The four-step order that replaced the arbiter, and the principles index you match a new card against by *shape*. **It is a directory: each ruling is its own file in `Rulings/`**, one per judgement call, with its reasoning and source |
+| [RULINGS.md](RULINGS.md) | A card's printed text usually settles how it behaves, but there can be exceptions. The four-step order that replaced the arbiter, and the principles index you match a new card against by *shape*. **It is a directory: each ruling is its own file in `Rulings/`**, one per judgement call, with its reasoning and source |
 | [DATA.md](DATA.md) | Generating a set, trusting a set code, or adopting one of the deck spreadsheets. The corpus, the two set codes that read backwards, and what is reference-only |
 | [PROGRESSION.md](PROGRESSION.md) | Touching the ladder, an opponent, or anything that grants a pack. How brackets are derived from the live sets rather than declared, the tunables, why free play pays nothing, and the four layout defects only a screenshot caught |
 | [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck, adding a set's roster, or working the auto-builder. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, the one entry-condition mechanism behind three different gates, and the pressure tags. **Design, not built** |
@@ -144,8 +144,7 @@ opponent's hand, both Prize piles, every option the AI weighed and what it passe
 that replays the match exactly. **Ask Trevor for one whenever you need it**; he saves them in
 `Game Logs/` and four separate AI bugs have been reconstructed from them.
 *[How to read one →](MEASUREMENT.md)* — and **if he has handed you one, or said something felt off
-while playing, read [PLAYTEST.md](PLAYTEST.md) first.** A report is a symptom, and it has three times
-out of three not meant what it said.
+while playing, read [PLAYTEST.md](PLAYTEST.md) first.** A report is a symptom, and it has sometimes not meant what it said.
 
 ## Standing design decisions
 
@@ -173,9 +172,9 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
   sitting in your binder rejecting every deck *is* a card silently doing nothing, which inverts the
   whole pitch. Edge cases get handled individually rather than by loosening the rule. The practical
   consequence is that `gen_cards.js --sets` is the *last* step of adding a set, not the first.
-- **The board's design is locked** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
+- **The board's design is locked for now** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
   bench tiles without asking. Every variant treatment is confined to collectible surfaces for
-  exactly this reason.
+  exactly this reason. 
 
 ## Working on it
 
@@ -205,7 +204,7 @@ equality check, look again.** The last two are in [AI.md](AI.md), which carries 
 **Adding a card is a `cards.js` entry plus an `effects.js` entry, and [ENGINE.md](ENGINE.md) has the
 rest** — including the eight systems that already exist for the shapes the DSL cannot express.
 **Trevor is happy to work through new card logic in plain English**, which is the part that is only
-written here: he has good instincts for how the logic should hang together and is not trying to read
+written here: he has good instincts for how the logic should hang together but is not able to read
 the code.
 
 **The smoke stub has no layout engine and no real DOM, so a green suite proves nothing visual.**

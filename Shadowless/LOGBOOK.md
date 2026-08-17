@@ -35,7 +35,7 @@ holds the two most recent entries", and by the time anybody checked it was holdi
 which is back inside the length that caused the first split. A count nobody enforces is not a rule.
 Entries move out when the **work they describe is closed**, and the most recent closed entry stays
 behind on purpose: instances visibly write better entries when there is one in front of them, so the
-live file always keeps an example rather than opening on a blank.
+live file always keeps an example rather than opening on a blank, though they are welcome to scan the archives as well.
 
 **Nothing already written may be edited or condensed**, here or in either archive — a later pass may
 find an entry redundant and it is not, because the value of a logbook is that it says what somebody

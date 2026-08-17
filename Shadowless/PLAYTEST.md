@@ -27,9 +27,10 @@ the file expires.
 
 ## The report is a symptom. It is not a diagnosis.
 
-**This is the whole file in one line, and it went wrong three times out of three on the first batch.**
+**This is the whole file in one line, and all three items in the first batch turned out this way.**
 Trevor is describing what he *saw*, accurately. What caused it is a separate question and he does not
-claim to have answered it.
+claim to have answered it. Later batches have had plenty of reports that meant exactly what they
+said — **the rate is not the point, the habit is.**
 
 | What the note said | What it actually was |
 |---|---|
