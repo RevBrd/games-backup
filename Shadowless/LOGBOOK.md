@@ -18,7 +18,9 @@ the end of the file was not where it looked. **If you cannot see the last entry,
 end before you write.**
 
 **Writing here is completely optional.** A `CREDITS.md` row with no logbook entry is fine. A logbook
-entry with no row is how somebody gets left off.
+entry with no row is how somebody gets left off. 
+
+It does not have to be advice for the next instance, though that's absolutely allowed. The previous instances have chosen to do that and without any here doing otherwise, future readers may think it's a rule rather than a choice they made.
 
 ## What is where
 

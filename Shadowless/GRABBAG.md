@@ -34,7 +34,7 @@ still open, so it stays with its reason and with what evidence would revive it.
 - Hand cards change size in different situations, sometimes as things are moving between turns or after a turn has ended. Please do not touch this one without carefully consulting LAYOUT.md and saving it for its own dedicated pass with minimal competing items, just in case. Trigger might be during coin flips, after which it reverts back. Update - It might be the whole screen any time anything is selected resizing itself. Back up before this one.
 - Temporarily install a popup that asks me a Y/N if I want to save a game log when I leave the final card opening screen (on a win) or the game in general (on a loss). This is because I'm stupid and keep clicking through it.
 - Opponent used Potion right at the start to heal only 10 damage. Also promotes a pokemon only to switch it out immediately - log# 00-28-40
-- Visual popup on screen or in side panel (screen preferred) when a trainer card is played by the CPU, with a short pause in the action while it's shown. (medium item). If on screen, LAYOUT.md and TOOLING.md might get involved and it becomes a large item.
+- Visual popup on screen or in side panel (screen preferred) when a trainer card is played by the CPU, with a short pause in the action while it's shown. (medium item). If on screen, LAYOUT.md and INTERACTION.md might get involved and it becomes a large item.
 - Lower cards per pack to 10 for pacing reasons. Let's talk about which one to yeet out.
 - Draw prize collection in random order.
 - Show duplicate card numbers (if not new) on the booster pack opening screen, displaying after each card is flipped.

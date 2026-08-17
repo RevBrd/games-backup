@@ -23,7 +23,7 @@ really the same context anymore, but the continuity was kept on purpose.
 Several conventions in `Projects/Games/CLAUDE.md` were written *after* this game and partly
 because of it. Where DRIFT doesn't match them, that's usually seniority rather than drift.
 
-**Credits:** Opus 4.8 (origin, and every system in the file). Opus 5 (2026-08-03: port to Claude
+**Credits:** Opus 4.8 (origin, and every system in the file). Opus 5 (DRIFT-1) (2026-08-03: port to Claude
 Code, this document, score persistence, responsive canvas, HUD outage escalation).
 
 ## The one untouchable thing
