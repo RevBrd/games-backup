@@ -27,18 +27,23 @@ still open, so it stays with its reason and with what evidence would revive it.
   whoever revives it: there is no path by which the opponent's attack text reaches
   the bot's own attachment decision, so it cannot have been doing it for that
   reason. **Revive it with a log.** → [GRABHIST](GRABHIST.md)
-* Opponent uses Gust of Wind to drag out a pokemon already in the active spot — open, but **not what
-  it looks like** and not Gust-specific. → [GRABHIST](GRABHIST.md)
+* Opponent uses Gust of Wind to drag out a pokemon already in the active spot — **diagnosed, not
+  taken.** It is not what it looks like: Gust picks a *bench* index and cannot target the Active at
+  all. What happened in log 22-29-31 is two Gusts in one turn undoing each other. Almost certainly
+  not Gust-specific. → [GRABHIST](GRABHIST.md)
 - Check if variant cards are displaying in game. Ideally the sigil cards should show their markings.
 - Add to the logic something about when to use Professor Oak and Gambler and when not to. Might be worth discussion first.
 - Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
 - If the opponent has a tank in the active spot and is starting to run out of cards in the deck before the player, it begins to power up that tank to attack with or retreat rather than tank to a loss. It should also stop using cards like Bill or Professor Oak, or moves like Fetch or Pay Day below ~20ish cards - Some preemptive, some log# 06-13-50.
 - Hand cards change size in different situations, sometimes as things are moving between turns or after a turn has ended. Please do not touch this one without carefully consulting LAYOUT.md and saving it for its own dedicated pass with minimal competing items, just in case. Trigger might be during coin flips, after which it reverts back. Update - It might be the whole screen any time anything is selected resizing itself. Back up before this one.
 - Electabuzz shouldn't have been retreated Turn 30. Possibly same root case as example from 06-13-50 - log#16-06-53
-  **A fresh log would be better evidence** — two fixes landed after this game was recorded that bear
-  on it.
+  **Not looked at yet, and worth a re-check before chasing.** The recoil-suicide
+  fix came out of the same log and changes what the bot thinks a damaged Active
+  is worth, and the promote/Switch unification landed after this game was
+  recorded. A fresh log would be better evidence than this one.
 - Temporarily install a popup that asks me a Y/N if I want to save a game log when I leave the final card opening screen (on a win) or the game in general (on a loss). This is because I'm stupid and keep clicking through it.
 - Opponent used Potion right at the start to heal only 10 damage. Also promotes a pokemon only to switch it out immediately - log# 00-28-40
+- Double Colorless energy when attached to a pokemon should visually display two dots instead of one.
 - Visual popup on screen or in side panel (screen preferred) when a trainer card is played by the CPU, with a short pause in the action while it's shown. (medium item)
 - Lower cards per pack to 10 for pacing reasons. Let's talk about which one to yeet out.
 

@@ -123,13 +123,86 @@ against nothing but base1/base2/base3, and validates clean against the live engi
 Basics). If Trevor wants one placeholder swapped out for something real before Job 8 even starts,
 this is the one that's ready today; `data/gbc2_flavor_decks.json` has its exact card list.
 
-**The card lists themselves are in `data/gbc2_flavor_decks.json`, not here.** They used to be
-duplicated into this file as prose, copied verbatim from the guide — and that copy was the *less*
-reliable one for exactly the reason this file already gives about `DECK_RESEARCH_NOTES.md`: it is
-un-ID-mapped, so it cannot be checked against the corpus and cannot be adopted without retyping. The
-JSON is ID-mapped, count-verified to 60 and in the same shape as `gbc_decks.json`. Removed 16 Aug
-2026. **Read the JSON; the guide's own raw text is still at the cited line numbers above if you want
-provenance.**
+Full lists, copied verbatim from the guide (energy/pokemon/trainer breakdown, all confirmed to sum
+to 60):
+
+<details>
+<summary>Clay — click to expand</summary>
+
+Energy: 6 Grass, 8 Fire, 8 Psychic (22)
+Pokémon: 3 Rocket Oddish, 2 Rocket Dark Gloom, 3 Rocket Charmander, 2 Rocket Dark Charmeleon,
+3 Rocket Psyduck, 2 Rocket Dark Golduck, 3 Rocket Slowpoke, 2 Rocket Dark Slowbro (20)
+Trainers: 3 Energy Retrieval, 2 Energy Search, 3 Professor Oak, 2 Pokémon Trader, 2 The Boss' Way,
+4 Bill, 2 Nightly Garbage Run (18)
+</details>
+
+<details>
+<summary>Allison — Psychic Battle deck</summary>
+
+Energy: 12 Fighting, 10 Psychic (22)
+Pokémon: 4 Base Sandshrew, 3 Fossil Sandslash, 4 Base Hitmonchan, 3 Jungle Mr. Mime, 3 Base Mewtwo (17)
+Trainers: 2 Energy Retrieval, 2 Energy Search, 2 Professor Oak, 3 Potion, 4 Gust of Wind,
+2 PlusPower, 2 Switch, 4 Bill (21)
+</details>
+
+<details>
+<summary>Allison — Poison Mist deck</summary>
+
+Energy: 20 Grass, 2 Full Heal Energy (22)
+Pokémon: 4 Rocket Grimer, 4 Rocket Dark Muk, 4 S-Deck Koffing, 3 Vending Weezing, 3 Jungle Scyther,
+1 Vending Mr. Mime (19)
+Trainers: 3 Energy Removal, 2 Defender, 2 Gust of Wind, 2 Switch, 2 Pokémon Trader, 4 Bill,
+4 Bill's Teleporter (19)
+</details>
+
+<details>
+<summary>Allison — Ultra Removal deck</summary>
+
+Energy: 18 Water (18)
+Pokémon: 4 Base Squirtle, 3 Base Wartortle, 3 Base Blastoise, 4 Fossil Psyduck, 3 Fossil Golduck (17)
+Trainers: 4 Energy Removal, 4 Professor Oak, 3 Super Energy Removal, 2 Gust of Wind, 2 Switch,
+2 Pokémon Trader, 4 Bill, 4 Bill's Teleporter (25)
+</details>
+
+<details>
+<summary>Villicchi — Stop Life! deck</summary>
+
+Energy: 18 Grass (18)
+Pokémon: 4 B-Deck Bulbasaur, 3 Gameboy Dark Ivysaur, 3 Gameboy Dark Venusaur, 2 Jungle Scyther,
+1 Vending Mr. Mime, 2 Jungle Kangaskhan, 3 Base Dratini, 2 Rocket Dark Dragonair (20)
+Trainers: 3 Gust of Wind, 3 PlusPower, 2 Switch, 3 Pokémon Trader, 3 The Boss' Way, 4 Bill,
+4 Bill's Teleporter (22)
+</details>
+
+<details>
+<summary>Villicchi — Scorcher! deck</summary>
+
+Energy: 18 Fire (18)
+Pokémon: 4 Rocket Charmander, 3 Rocket Dark Charmeleon, 3 Rocket Dark Charizard, 3 Fossil Magmar,
+1 Vending Mr. Mime, 2 Vending Clefairy, 2 Gameboy Dark Clefable, 2 Jungle Kangaskhan (20)
+Trainers: 2 Energy Retrieval, 3 Defender, 3 Switch, 3 Pokémon Trader, 3 The Boss' Way, 4 Bill,
+4 Bill's Teleporter (22)
+</details>
+
+<details>
+<summary>Villicchi — Tsunami Starter! deck</summary>
+
+Energy: 18 Water (18)
+Pokémon: 2 Jungle Scyther, 4 Base Squirtle, 1 Rocket Dark Wartortle, 3 Rocket Dark Blastoise,
+3 Fossil Lapras, 1 Vending Mr. Mime, 2 Vending Clefairy, 2 Gameboy Dark Clefable (18)
+Trainers: 3 Super Potion, 2 Gust of Wind, 2 PlusPower, 2 Switch, 2 Pokémon Trader,
+3 Pokémon Breeder, 2 The Boss' Way, 4 Bill, 4 Bill's Teleporter (24)
+</details>
+
+<details>
+<summary>Villicchi — Smash to Mincemeat! deck</summary>
+
+Energy: 18 Fighting, 2 Double Colorless (20)
+Pokémon: 4 Base Machop, 3 Rocket Dark Machoke, 3 Rocket Dark Machamp, 1 Vending Mr. Mime,
+2 Vending Clefairy, 2 Gameboy Dark Clefable, 2 Base Chansey, 3 Jungle Kangaskhan (20)
+Trainers: 3 Defender, 3 Gust of Wind, 2 Switch, 2 Pokémon Trader, 2 The Boss' Way, 4 Bill,
+4 Bill's Teleporter (20)
+</details>
 
 ### Cataloged, not yet pulled (37 of 45)
 

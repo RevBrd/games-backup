@@ -6,28 +6,8 @@ exactly as its author left it, including the two `CREDITS.md`-era sections at th
 separator line that marks where the first split happened.
 
 **Read it when you want the account of something built before 12 Aug 2026**, or when a live file
-cites a decision and you want to know what the session that made it was thinking. [LOGBOOK.md](LOGBOOK.md)
-carries the current work and the instructions; [LOGBOOK-ARCHIVE-2.md](LOGBOOK-ARCHIVE-2.md) carries
-#11–#14.
-
-**This file is long enough that a read of it comes back truncated**, so here is what is in it. Grep
-the date to jump to an entry; the file is chronological and the numbers were assigned later, by
-`CREDITS.md`, rather than by the instances themselves. **This index was added on 16 Aug 2026 and no
-entry was touched to make it.**
-
-| Instance | When | Subject |
-|---|---|---|
-| Opus 5 #0 | through 3 Aug 2026 | The whole game through Job 4b, in Claude Chat |
-| Opus 5 #1 | 4 Aug 2026 | Port into the collection, the data audit, the Node build |
-| Opus 5 #2 | 5–6 Aug 2026 | Job 4 — Powers and the Base Set oddities; Job 4g — the mat and the scans |
-| Opus 5 #3 | 7–8 Aug 2026 | `tools/shot.js`, the DEV fit readout, the hand face, the first documentation split |
-| Sonnet 5 #4 | 7–9 Aug 2026 | `PACKS.md` end to end — the pack research and the rarity design, five logged passes |
-| Opus 5 #5 | 9 Aug 2026 | Job 5 — the collection, the save file, packs, the dex, the deck builder |
-| Opus 5 #6 | 10 Aug 2026 | The post-Job-5 documentation and interface pass |
-| Opus 5 #7 | 10 Aug 2026 | Job 6 planning and 6a — and the verb check that found eleven unscored verbs |
-| Sonnet 4.6 #8 | 10 Aug 2026 | Job 7 groundwork — `data/gbc_decks.json`, all 16 GBC decks |
-| Opus 5 #9 | 11 Aug 2026 | The post-Job-6 documentation pass; `base4`/`base5` found swapped |
-| Opus 5 #10 | 12 Aug 2026 | **Four entries, one instance** — the fourth documentation pass, a bug and UI pass, the energy-discard picker, and two bugs found in match logs |
+cites a decision and you want to know what the session that made it was thinking. `LOGBOOK.md`
+itself carries the two most recent entries and the instructions; everything before them is here.
 
 **Why it was split, since the reason is not "it got long."** The file passed the point where a
 working session reliably holds all of it — entries were being summarised out of view mid-turn, and
@@ -37,12 +17,8 @@ end state is still one continuous logbook.
 
 **This file is an archive. It only ever grows, it is never rewritten, and nothing already in it may
 be edited or condensed** — the value of a logbook is that it says what somebody thought at the time.
-The 200-line target does not apply.
-
-**It is closed at #10, and that is deliberate.** The next block out of `LOGBOOK.md` went into
-`LOGBOOK-ARCHIVE-2.md` rather than onto the end of this one, because appending here would have taken
-a file that already reads truncated and made it worse. **Start a new archive rather than growing one
-past ~250 lines.** Entries always move **verbatim, as a block**.
+The 200-line target does not apply. If a future pass moves entries here out of `LOGBOOK.md`, they
+move **verbatim, as a block**, appended to the end.
 
 **There is one older artifact of this kind and it is not in either file:**
 `backups/pre-docs-cleanup/Packs Turn Log.txt`, the Sonnet 5 per-pass credits as that instance

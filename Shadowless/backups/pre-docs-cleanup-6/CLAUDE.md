@@ -32,9 +32,10 @@ This file is the orientation. The siblings below hold the detail, and **you shou
 any of them unless you are working on that thing**. That is the point of the split.
 
 **Six files are deliberately NOT in this table, and it is an arrangement rather than an oversight.**
-Each is reached from the one document you would already have open. `LOGBOOK.md`, its two archives and
-`TREVOR.md` — the last being where Trevor's own save stood as each set went live — hang off
-[CREDITS.md](CREDITS.md), which is the quiet end of the tree and not orientation. `GRABHIST.md` hangs off `GRABBAG.md`, `INTERACTION.md` off `LAYOUT.md`, and
+Each is reached from the one document you would already have open. `LOGBOOK.md`,
+`LOGBOOK-ARCHIVE-1.md` and `TREVOR.md` — the last being where Trevor's own save stood as each set
+went live — hang off [CREDITS.md](CREDITS.md), which is the quiet end of the tree and not
+orientation. `GRABHIST.md` hangs off `GRABBAG.md`, `INTERACTION.md` off `LAYOUT.md`, and
 `MEASUREMENT.md` off `AI.md` — all three named in their parent's row below, so they are findable
 from here without costing a row.
 
@@ -53,19 +54,23 @@ from here without costing a row.
 | [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck, adding a set's roster, or working the auto-builder. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, the one entry-condition mechanism behind three different gates, and the pressure tags. **Design, not built** |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, looking at the board with `tools/shot.js`, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
-| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md` and its two archives, where each instance's own account of its work is kept verbatim |
+| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md` and its archive, where each instance's own account of its work is kept verbatim |
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
 | [PLAYTEST.md](PLAYTEST.md) | Trevor points you at `GRABBAG.md`, hands you a match log, or says something felt off while playing. How to work a report from a human: why it is a symptom and not a diagnosis, what to do when it turns out to be wrong, and the two traps that make a real fix look like it did nothing |
 | [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one |
 
 ## Status
 
-Jobs 1–9 are complete. The engine and AI came out of Claude Chat; Job 5 built everything a
-*collection* game needs on top of them, Job 6 took the card pool to three sets, Job 7 built the
-ladder that makes two of those sets reachable, and Job 9 was the first AI pass driven by real
-playtest. You pick a starter deck, work down a roster of named challengers, beat a rival to open the
-next set, earn packs of whatever set you are on, open them, browse what you own, and build decks from
-it — and all of it persists.
+Jobs 1–7 are complete. The engine and AI came out of Claude Chat; Job 5 built everything a
+*collection* game needs on top of them, Job 6 took the card pool to three sets, and Job 7 built the
+ladder that makes two of those sets reachable. You pick a starter deck, work down a roster of named
+challengers, beat a rival to open the next set, earn packs of whatever set you are on, open them,
+browse what you own, and build decks from it — and all of it persists.
+
+**Until Job 7 every win in the game paid out in Base Set**, because both `addPacks` call sites
+passed `homeSet()`. This file claimed "packs of any live set" for two days and the machinery was all
+there; nothing called it. 119 of the 221 cards were unobtainable. *[What that means for how the
+gating reads →](PROGRESSION.md)*
 
 **Three sets are live and complete: Base, Jungle and Fossil — 221 of 221 scriptable cards.** Run
 `node tools/selftest.js` for the live figures rather than trusting a number in prose; it prints
@@ -73,12 +78,17 @@ coverage per set. (**Card counts come in two units.** A set's *printings* includ
 needs no effect script; `selftest.js` counts *scriptable* cards. Base Set is 102 printings and 95
 scriptable. Mixing the two has already confused this section once.)
 
-**Done and shipped, none of it a stub:** the rules engine and every card in the three live sets; the
-four-tier AI; the collection, packs, dex, save file and deck builder; the ladder and its named
-opponents. Each has a row in the table above naming the file that owns it.
-
-**Not built: audio, at all**, and nothing has been decided about it. **The other eleven sets** are
-unblocked rather than started — all fourteen generate cleanly.
+| Area | State |
+|---|---|
+| Rules engine · cards | Complete for all three live sets, no gaps |
+| Opponent AI | Four tiers, expected-value based. Beats its own baselines — see [AI.md](AI.md) |
+| Card art | The real 1999 scans, where the card is the *subject* — preview rail, title screen, dex, pack reveal. In play, cards keep a rendered face and a deterministic sigil |
+| Collection / packs / dex | **Done.** Starter pick, win 2 packs, open them, browse what you own. CARDS and DEX views, owned/missing filters, per-card counts, variant dots, export/import |
+| Deck building | **Done.** Pool grid with filters, live legality, save-as-layout vs save-and-build, and variant picking — you choose which physical copy goes in. Sandbox ignores ownership on purpose |
+| Persistence | **Live.** Versioned save, migration, validation — see [COLLECTION.md](COLLECTION.md) |
+| Progression / named opponents | **Done.** One bracket per live set, DERIVED from the live-set list so a new set adds a bracket with no code change. Named challengers, a rival per bracket, wins paying in that bracket's set — see [PROGRESSION.md](PROGRESSION.md) |
+| The other 11 sets | Unblocked — all 14 generate cleanly |
+| Audio | None |
 
 ## Layout
 
@@ -117,19 +127,19 @@ those on the way in.
 ## Tooling
 
 **Run the six suites — `selftest` through `packtest` — before calling anything done.** What each one
-actually covers, and why none of them subsumes the others, is in [TOOLING.md](TOOLING.md). **Never
-quote a test count in prose** — they rot, and the tree has had to correct them twice.
+actually covers, and why none of them subsumes the others, is in [TOOLING.md](TOOLING.md). The test
+counts in the comments below rot; run the suite rather than quoting one.
 
 ```bash
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
-node tools/powertest.js                  # Powers, the bespoke cards, setup, and AI verb scoring
-node tools/smoke.js shadowless.html      # integration tests against the BUILT file
-node tools/collectiontest.js             # the save file, decks and variants
-node tools/progresstest.js               # the ladder, unlocks and rewards
-node tools/packtest.js                   # 200k packs (takes a count: `20000` is fast)
+node tools/powertest.js                  # 168 tests for Powers, the bespoke cards and setup
+node tools/smoke.js shadowless.html      # 143 integration tests against the built file
+node tools/collectiontest.js             # 111 tests for the save file, decks and variants
+node tools/progresstest.js               # 71 tests for the ladder, unlocks and rewards
+node tools/packtest.js                   # 57 tests, 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 node tools/aitest.js 6                   # AI behaviour counts — not pass/fail
 node tools/aiduel.js 8                   # AI vs HEAD's AI; --control first, --gbc for ladder decks
@@ -139,13 +149,15 @@ node tools/aiduel.js 8                   # AI vs HEAD's AI; --control first, --g
 and they are easy to fool — run `--control` first; skipping it has already produced one confident
 wrong answer. See [MEASUREMENT.md](MEASUREMENT.md).
 
-**The match log is the third instrument and the only one that shows the hidden half** — the
-opponent's hand, both Prize piles, every option the AI weighed and what it passed over, and a seed
-that replays the match exactly. **Ask Trevor for one whenever you need it**; he saves them in
-`Game Logs/` and four separate AI bugs have been reconstructed from them.
-*[How to read one →](MEASUREMENT.md)* — and **if he has handed you one, or said something felt off
-while playing, read [PLAYTEST.md](PLAYTEST.md) first.** A report is a symptom, and it has three times
-out of three not meant what it said.
+**The match log is the third instrument, and the only one that shows the hidden half.** "Save match
+log" on the game-over screen and after a pack writes what the LOG tab cannot: the opponent's opening
+hand, **both** Prize piles, and every option the AI weighed with its score and what it passed over.
+The seed is in the header, so any match replays exactly. **Ask Trevor for one whenever you need it** —
+when the AI does something baffling, when a number looks wrong, or just to see a real game. He
+reconstructed four separate AI bugs from a pasted screen log that had none of the hidden half.
+*[How to read one, and what it can settle →](MEASUREMENT.md)* — and **if he has handed you one, or
+said something felt off while playing, read [PLAYTEST.md](PLAYTEST.md) first.** A report is a symptom
+and it has three times out of three not meant what it said.
 
 ## Standing design decisions
 
@@ -193,14 +205,12 @@ is not a 1920x1080 page; display scaling can leave it as little as 1280x600 CSS 
 that keep it working are in [LAYOUT.md](LAYOUT.md), and several look wrong until you know what they
 protect — read it before changing anything sized.
 
-Four things that have each cost a session an hour. **`state.winner` can legitimately be `0`** — test
-it against `null`, never for truthiness. **Unimplemented cards can never silently do nothing**: the
-deck validator refuses any deck containing a card with no effect script, which is why the card counts
-above can be trusted — preserve that property. **A verb `ai.js` cannot score is that same failure one
-level up** — free at runtime, misplayed forever, invisible to every suite. And a sniff test that has
-now paid six times across three files: *a quantity that should fall away with distance from an edge,
-written flat with a cliff at the end.* **If a term is about proximity and it is written as an
-equality check, look again.** The last two are in [AI.md](AI.md), which carries the running tally.
+Three facts that have each cost a session an hour. **`state.winner` can legitimately be `0`** — test
+it against `null`, never for truthiness. **Unimplemented cards can never silently do nothing**:
+the deck validator refuses any deck containing a card with no effect script, which is why the card
+counts above can be trusted. Preserve that property. And **a verb `ai.js` cannot score is that same
+failure one level up** — free at runtime, misplayed forever, invisible to every suite. See
+[AI.md](AI.md).
 
 **Adding a card is a `cards.js` entry plus an `effects.js` entry, and [ENGINE.md](ENGINE.md) has the
 rest** — including the eight systems that already exist for the shapes the DSL cannot express.
@@ -230,16 +240,14 @@ else in `data/` is in **[DATA.md](DATA.md)**.
 
 The current ordering, decided collaboratively. Trevor is explicit that it is yours to rearrange and to break into sub-jobs.
 
-- **Jobs 1–9.5 are done** — the engine, the AI, the art system, the board, the Powers, the collection
-  and packs, Jungle and Fossil, the ladder, the opponent spec, the first playtest-driven AI pass and
-  this documentation pass. **What each one left behind is in [HISTORY.md](HISTORY.md)**, and Job 6's
-  entry is worth ten minutes before planning any set: it was split by *machinery* rather than by set,
-  and the reason 126 printings were only **95 distinct behaviours** is the kind of count that decides
-  how big a job actually is.
-  Two of them are still live as *documents* rather than as work. **[OPPONENTS.md](OPPONENTS.md) is
-  Job 8's spec and nothing in it is built** — it is what the set jobs below build against, with
-  detail work still running. And **Job 9 continues wherever [GRABBAG.md](GRABBAG.md) has AI items in
-  it**; the invariants it has left so far are in [AI.md](AI.md).
+- **Jobs 1–7 are done** — the engine, the AI, the art system, the board, the Powers, the collection
+  and packs, Jungle and Fossil, and the ladder. **What each one left behind is in [HISTORY.md](HISTORY.md)**, and
+  Job 6's entry is worth ten minutes before planning the next set: it was split by *machinery* rather
+  than by set, and the reason 126 printings were only **95 distinct behaviours** is the kind of count
+  that decides how big a job actually is.
+- **Job 8** - Deck and progression shape. Not the exact card and opponent names, but an outline of what the placeholders will eventually be replaced with. **The spec is [OPPONENTS.md](OPPONENTS.md)**, written 15 Aug 2026; it is design and nothing in it is built. Main Job is complete and with detail work still running.
+- **Job 9** - Major AI-related work, primarily drawn from Grab Bag items. Might run concurrently with Job 8. **First batch done 16 Aug:** three match-log gaps found while proving a report wrong, inert Energy attachments, the promote/Whirlwind/Switch decision unified, and the pack Energy stipend replaced by pool Energy under a cap. Accounts in [GRABHIST.md](GRABHIST.md); the AI half is in [AI.md](AI.md).
+- **Job 9.5** - Scheduled pre-new set maintenance and grab bag run.
 - **Job 10** - Rulings and additions for the Team Rocket set.
 - **Job 10.5** - Scheduled post-new set maintenance, plugging it in, grab bag.
 - **Job 11** - Deck autobuilder improvement pass.

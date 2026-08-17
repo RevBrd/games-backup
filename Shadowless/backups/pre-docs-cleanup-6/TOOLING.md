@@ -55,11 +55,57 @@ Neither Node tool was trusted on inspection — `build.js` was diffed byte-for-b
 artifact as it arrived from Chat, and `gen_cards.js` was checked against two independent sources
 that agreed exactly. The accounts are in [HISTORY.md](HISTORY.md).
 
-## Adding a set
+## How big is the set you are about to add
 
-**Ask how big it is first, because printings are not jobs** — Jungle and Fossil were 126 printings
-and 96 distinct behaviours, and the same measurement exists for every remaining set. *[The table, the
-signature it was measured with, and the two traps in it →](DATA.md)*
+**Ask this first, because printings are not jobs.** Job 6's most useful number was the one that
+stopped 126 Jungle and Fossil printings being 126 pieces of work: both sets print every Rare twice,
+so the real figure was **96 distinct behaviours**.
+
+Measured across the rest of the era on 15 Aug 2026. **The signature is deliberately mechanical** —
+name, supertype, HP, subtypes, retreat cost, Weakness, Resistance, and every attack's and Power's
+*name, damage and cost* — and it **ignores rules-text wording entirely**, for the reason in the first
+trap below. Anything matching a live card is an alias, not a job.
+
+| Set | Scriptable | New behaviours | Powers | Trainers |
+|---|---|---|---|---|
+| `base4` Base Set 2 | 124 | **0** — 124 aliases | 9 | 23 |
+| `si1` Southern Islands | 18 | 18 | 0 | 0 |
+| `basep` promos | 53 | 49 | 9 | 4 |
+| `base5` Team Rocket | 83 | **67** | 20 | 11 |
+| `base6` Legendary Collection | 110 | 20 — **and only 4 if Team Rocket lands first** | 16 | 9 |
+| `gym1` Gym Heroes | 126 | 122 | 11 | 35 |
+| `gym2` Gym Challenge | 126 | 122 | 13 | 31 |
+| `neo1`–`neo4` | 359 | 344 | 72 | 44 |
+
+Read against Jungle + Fossil at 96: Team Rocket is about two-thirds of Job 6; the two Gym sets
+together are **two and a half times** it and are Trainer-heavy, which is where new verbs come from;
+and Neo is larger than everything else combined.
+
+**Two traps, and the first one moved two numbers by a factor of two.**
+
+- **WotC reworded card text across printings without changing what it does.** Blastoise's Hydro Pump
+  reads "extra Water Energy after the 2nd doesn't count" in Base Set and "you can't add more than 20
+  damage in this way" in Base Set 2 — the same cap, and the same script. Mr. Mime's Invisible Wall
+  went from "can't be used if Asleep" to "stops working while Asleep". A signature that includes
+  rules text calls all of these new cards: it reported Base Set 2 at 16 new and Legendary Collection
+  at 48, against the true 0 and 20. **Compare mechanics, never prose.**
+- **`base1-73` is "Impost*o*r Professor Oak" and `base4-102` is "Impost*e*r Professor Oak."** One
+  letter, and it is the only genuine cross-set spelling variant in all 1,251 cards — checked by edit
+  distance across every name pair, so a name-keyed alias table needs exactly this one exception and
+  no others. It was the last card standing between "Base Set 2 is pure reprints" and "Base Set 2 has
+  one new card," and **Trevor caught it from his own collection**, which is the second time a save
+  file has corrected a doc.
+
+**Base Set 2 is therefore 124 reprints and nothing else, which makes it a design question rather than
+a build one** — every card in it is one the player already owns, so it adds 124 collectibles that
+look identical to ones in the binder. Deprioritised 15 Aug 2026, Trevor's call, as a possible later
+*improvement* to progression rather than structure. **Legendary Collection is the same shape and
+worse**: 110 printings for 20 behaviours, four of them if Team Rocket goes first.
+
+The alias machinery this leans on already exists — Job 6c's table, with a test proving it in both
+directions, and `selftest.js` asserts every alias points at a mechanically identical card.
+
+## Adding a set
 
 Written after Job 6c, where generating two sets broke six things that had quietly
 assumed Base Set was the only one. Most of that is now bracketed — `SET_LIVE`, `LIVE_DB`,
@@ -108,7 +154,7 @@ as a figure to quote. Run the suite for the real number.
   It also carries the **AI verb coverage** check, which scans source rather than playing anything:
   every verb in `effects.js` must be scored by `ai.js` or sit on `UNSCORED_ON_PURPOSE`. That opt-out
   list is the deliverable, and *[why an unscored verb is invisible to everything else →](AI.md)*
-- **`powertest.js`** builds boards by hand — no decks, no setup — fires a Power and
+- **`powertest.js`** (168 tests) builds boards by hand — no decks, no setup — fires a Power and
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
   Power working. See [ENGINE.md](ENGINE.md).
@@ -116,7 +162,7 @@ as a figure to quote. Run the suite for the real number.
   for the same reason it is the only suite that can see a Power. Those cases assert `rawOutcomes()`
   — the raw distribution, before weights — so retuning a weight cannot fail them for the wrong
   reason. *[The blind spot they were built for →](MEASUREMENT.md)*
-- **`smoke.js`** is the original Chat-era harness, driving the **built** HTML through a
+- **`smoke.js`** (143 tests) is the original Chat-era harness, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
   presentation and freeze, the deck-select flow, the collection screens, the ladder and the card
   renderer. Catches build and UI regressions — but it has no layout engine, so a green run proves
@@ -127,17 +173,17 @@ as a figure to quote. Run the suite for the real number.
   `UI.myDeck` and `UI.foeDeck`, which is free play's contract — on the ladder the opponent's deck
   comes off the roster entry and `UI.foeDeck` is ignored. Without that declaration those tests
   quietly stop testing what they say they test.
-- **`collectiontest.js`** drives `src/collection.js`, which is pure data. It **stubs
+- **`collectiontest.js`** (111 tests) drives `src/collection.js`, which is pure data. It **stubs
   `localStorage` rather than skipping persistence**, because "does a save survive a round trip" is
   the whole point and testing everything except that would be testing the easy half. Its sharper
   cases are the failures — see [COLLECTION.md](COLLECTION.md).
-- **`progresstest.js`** drives `src/progress.js`, which is pure data, against the real
+- **`progresstest.js`** (71 tests) drives `src/progress.js`, which is pure data, against the real
   card database. Two kinds of case matter here and neither is obvious. It asserts the ladder is
   **derived** — passing an unlive set code into the live list must produce a working generated
   bracket — and it asserts every authored opponent fields a **legal 60-card deck** through the real
   `validateDeck`, which is what stops a roster entry rotting silently when a set is regenerated.
   See [PROGRESSION.md](PROGRESSION.md).
-- **`packtest.js`** opens 200,000 packs against a fixed seed and checks every row of the
+- **`packtest.js`** (57 tests) opens 200,000 packs against a fixed seed and checks every row of the
   odds table in [PACKS.md](PACKS.md). Deterministic, so it cannot flake; the tolerances are sized to
   catch a wrong denominator, not to absorb noise. **It takes a count** — `node tools/packtest.js
   20000` is a fast pass while iterating. It also prints, without asserting, how many packs it takes

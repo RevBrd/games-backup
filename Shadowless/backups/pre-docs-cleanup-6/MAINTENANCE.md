@@ -134,20 +134,13 @@ because it was already the right shape, and shortening it would have meant delet
 **The target is 200 TOTAL lines — `wc -l`, blanks included.** Trevor settled the unit on 11 Aug 2026
 after the fourth pass found the tree had been measured two ways: the third pass reported `LAYOUT.md`
 "ends at 283" for a file `wc -l` calls 357, because it had counted non-blank lines. Nobody noticed,
-and the file everyone was protecting as slightly over was 78% over.
-
-**Then the sixth pass did it again, with this warning in front of it, and the reason is worth more
-than the warning was.** It measured the whole tree with PowerShell's
-`(Get-Content f | Measure-Object -Line).Lines` — which **silently does not count blank lines**, so
-every figure in its opening report to Trevor was about 25% low and `AI.md` was reported at 300 when
-it was 380. Knowing the unit does not help if the command you reach for quietly uses a different one.
-**Run `wc -l` — the literal command — and nothing that looks equivalent.** Git Bash is available on
-this machine; the Bash tool takes it.
+and the file everyone was protecting as slightly over was 78% over. **Quote the unit whenever you
+quote a number**, and prefer running the command to reading a figure in prose.
 
 Being over beats cutting the paragraph that stops the next session losing a morning. If you go over,
 say why in the commit.
 
-- **Exempt: `LOGBOOK.md` and both its archives, `Rulings/*.md`, `HISTORY.md` and `GRABHIST.md`.**
+- **Exempt: `LOGBOOK.md`, `LOGBOOK-ARCHIVE-1.md`, `Rulings/*.md`, `HISTORY.md` and `GRABHIST.md`.**
   All are append-only registers, and none can be shortened without deleting something — a
   session's account of its own work, a ruling somebody then has to make again, a rejection's *why*,
   or the gap between what a playtest report said and what was actually found. Correct entries in
@@ -162,26 +155,36 @@ say why in the commit.
   it should stay short. The register is the folder. Stating the exemption against `RULINGS.md` after
   that split would have been the "invariant stated in terms that stopped being true" trigger above,
   aimed at the very file that warns about it.
-- **Three lessons about splitting, each paid for by a file in this tree.** The narratives are in
-  [HISTORY.md](HISTORY.md); these are the parts you act on.
-  - **When a split feels right but the topic argument keeps failing, the criterion is probably wrong,
-    not the instinct.** `LAYOUT.md` survived two proposals on *sizing vs. interaction*, both
-    correctly withdrawn, and was split on the third by Trevor using the split test above instead.
-  - **When most inbound links to a file aim at one section, that section is a file.** That is what
-    made `MEASUREMENT.md` obvious once someone looked: three of `AI.md`'s callers wanted the
-    instruments and none of them wanted scoring weights on the way. **Check inbound links after any
-    split** — a stale one lands the reader in the half you just moved away from.
-  - **A section with a register twin does not want a directory; it wants deleting down to its rule.**
-    `AI.md` was proposed as a second `Rulings/` on the sixth pass and refused, because every one of
-    its seven narratives already had a fuller, append-only account in `GRABHIST.md`. A folder would
-    have been a third copy. `RULINGS.md` earned its folder because its entries were the *only* copy.
-    **Ask what else already holds this before you build it a home.**
-- **`CLAUDE.md` has an honest floor and it is not 200.** The fourth pass took it 313 → 259; the sixth
-  found it back at 284, cut the job history and the status table into prose, and landed at **276** —
-  and the gap is not drift, it is four new siblings, two more jobs and a fourth cost-a-session fact
-  since. What is left is the index, the status, the tree, the commands, the standing decisions and
-  those four facts. **Getting under 200 means deleting orientation, which is the one thing this file
-  is for.** Expect it to creep upward by a line or two per job and treat that as correct.
+- **`LAYOUT.md` survived two split proposals and was split on the third — by Trevor, on a different
+  argument.** Worth reading in order, because it is the clearest case in this tree of a right
+  decision reached by the wrong criterion twice. The third pass proposed *sizing vs. interaction* and
+  withdrew it, correctly on its own terms: the coin toss and the opening-setup screen are both mostly
+  geometry, so the seam is not clean by topic. The fourth pass took the file to **302** by moving the
+  instruments out, left the seam explicitly available and *not taken*, and told the next pass not to
+  take it for him. The fifth pass measured it at **380** and reported that, expecting the same answer.
+  **Trevor took it, and the criterion he used is the better one:** not is-this-topic-pure but *would a
+  session working on something else need this?* — the split test that produced `COLLECTION.md`. A
+  session fixing the hand fan never needs the coin's reduced-motion tilt, however geometric it is.
+  What settled it was the compaction trigger above, not tidiness. [INTERACTION.md](INTERACTION.md)
+  took the coin toss, the Energy picker, the opening flip, opening setup and the action bar; the
+  one genuinely-sizing rule among them (the coin's zero-height strip) stayed behind as a one-liner
+  with a link. **The lesson to carry: when a split feels right but the topic argument keeps failing,
+  the criterion is probably wrong, not the instinct.**
+- **`AI.md` reached 365 and was split the next turn**, on the same criterion. The cleave that worked
+  is *how the bot is measured* — the two instruments, the six ways measurement lies, the match log,
+  the standing figures — against *how the bot thinks and what has shipped*.
+  [MEASUREMENT.md](MEASUREMENT.md) took the first. **The tell that the seam was real: the child had
+  more entrances than the parent.** `PLAYTEST.md`, `TOOLING.md` and `CLAUDE.md` all link in for
+  measurement and not one of them wants to read about scoring weights on the way. That is a useful
+  signal generally — **when most inbound links to a file are aimed at one section, that section is a
+  file.** Ten pointers were re-routed with it; check inbound links after any split, because a stale
+  one lands the reader in the half you just moved away from.
+- **`CLAUDE.md` has an honest floor around 250 and this is worth knowing before you try.** The fourth
+  pass took it from 313 to 259 by moving out everything that was not orientation — the AI material,
+  the data material, the job history, three settled arguments. What is left is the index, the status,
+  the tree, the commands, the standing decisions and the six facts that have each cost a session an
+  hour. Getting under 200 from there means deleting orientation, which is the one thing this file is
+  for. Don't spend an hour rediscovering that.
 
 ## The procedure
 

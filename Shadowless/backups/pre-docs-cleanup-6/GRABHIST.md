@@ -12,25 +12,11 @@ been something other than what the note said three times out of three, and that 
 anyone would read this. A *parked* item is the one most worth writing up if you are on the fence,
 because the next instance will otherwise re-derive the same diagnosis from scratch.
 
-**Once an entry exists it is append-only**, like [HISTORY.md](HISTORY.md)
+**Once an entry exists it is append-only**, [HISTORY.md](HISTORY.md)
 and [LOGBOOK.md](LOGBOOK.md) — that is a rule about *editing*, not about writing. Correct an entry if
 it turns out wrong; never shorten one, because a condensed entry keeps the fix and loses the gap. The
 200-line target does not apply. The method for working an item in the first place is
 [PLAYTEST.md](PLAYTEST.md).
-
-**It is long enough that a read of it comes back truncated**, so grep the date or the quoted report —
-every entry opens with Trevor's own words in quotes, which makes them findable. **When this passes
-~450, split it into `GRABHIST-ARCHIVE-1.md`** rather than letting it grow, the same call the logbook
-made. Newest first, so the batch you want is usually near the top:
-
-| When | Instance | Items |
-|---|---|---|
-| 16 Aug 2026 | #16, later batches | The recoil suicide; the opponent deck named for the wrong deck; Gyarados crossed off unworked |
-| 16 Aug 2026 | #16, second batch | Scoop Up's Knock Out banner; Energy Burn made passive; Double Colorless as two pips; prevented damage waiving recoil; Fetch while Confused |
-| 16 Aug 2026 | #16, first batch | The report that was wrong and the three log gaps it exposed; inert Energy; promote/Whirlwind/Switch unified; powering up Zapdos over Voltorb |
-| 14 Aug 2026 | #12, third pass | Arcanine's Take Down — the report that was right about the wrong game |
-| 13 Aug 2026 | #12, second pass | Kangaskhan tanking; Weakness and Resistance in the retreat comparison; the blind duel harness |
-| 13 Aug 2026 | #12, first pass | Confused retreat; the deck that resolved to the wrong deck; paralysis parked; Gust of Wind diagnosed |
 
 ---
 

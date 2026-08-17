@@ -16,25 +16,6 @@ be condensed without deleting the *why*, which is the only part that stops the i
 Entries are corrected, never shortened. Added 11 Aug 2026, when this became the destination for
 material trimmed out of the live files — see [MAINTENANCE.md](MAINTENANCE.md).
 
-**It is long enough that a read of it comes back truncated, so here is what is in it.** Grep a
-heading to jump. Index added 16 Aug 2026; no entry was touched to make it. **When this passes ~450,
-split it by era into `HISTORY-ARCHIVE-1.md` rather than letting it grow** — the same call the logbook
-made, for the same reason.
-
-| Section | What it settles |
-|---|---|
-| The job history | What each of Jobs 1–9.5 left behind, including Job 6's split-by-machinery and the three things Job 7 turned up that were not Job 7's |
-| Pack research: two things that were wrong | There was never an unnumbered Energy era; every `base1` scan we own is 1st Edition Shadowless |
-| The rarity table went through three passes | Why 1/440, 1/2200 and 1/11000 are the shapes they are, and the ~5x ladder to extend from |
-| Shiny was a sheen twice | Two `mix-blend-mode` attempts and why the palette shift beat both |
-| Shadowless: the shadow is too quiet | Why the watermark exists, and why `inverted` is not dead code |
-| `miniCard()` — one face, three screens | Why there is no compact text-carrying face, and the doc sentence that defended a broken one |
-| The coin toss: moving it into the ticker | Proposed, rejected — occlusion beat connotation |
-| Every scripted game ran at 12 Prizes | Why no absolute figure from before 11 Aug 2026 is usable |
-| Tooling provenance | Why `tools/chat-era/` cannot run, and how the Node replacements were verified |
-| How the documentation tree got its shape | The two splits reached by the wrong criterion first, the directory that was refused, and the count-to-boundary change |
-| Ideas raised and shelved | Opponent collections, Mirror Move reading the log, reviving chat-era, deleting `greedy` |
-
 ## The job history
 
 **Jobs 1 through 4b were built in Claude Chat.** The ten snapshots survive in
@@ -129,29 +110,6 @@ Three things it turned up that were not Job 7's:
 **What it deliberately did not do: the decks and names are placeholders.** Real per-set opponents,
 hand-built and better-generated, are a job of their own — Trevor's call. The candidate pool for that
 job is in `data/OPPONENT_DECK_POOL.md`; see [DATA.md](DATA.md).
-
-**Job 8 — what an opponent is made of, 15 Aug 2026. A design job, and nothing in it was built.** The
-spec is live in [OPPONENTS.md](OPPONENTS.md); what belongs here is the shape of the job, because it
-is the model for the ones that follow. It fixed *parameters* rather than card lists — four silent
-difficulty tiers, a rung pattern, one entry-condition mechanism serving three different gates, and a
-pressure tag saying what a deck **does to you** rather than how strong it is — on the reasoning that
-the lists cannot be written until we can see what each set actually offers. Names, dialogue and
-gimmick rules were excluded on purpose, to a detailing pass after every set is in, so that nothing in
-the spec has to be unpicked when the fiction arrives.
-
-**Job 9 — AI work from the grab bag, 16 Aug 2026.** Two instances, several batches, and the
-generalisable half is not about the AI at all: **three of the first five changes were to the match
-log rather than to the game.** Proving one report wrong needed a pass that says *why* it did not
-attack, an opening board that `setupAuto` had never recorded, and a way to tell two identical
-Squirtle apart — all three invisible until somebody needed them, and all three needed by the first
-question anyone asked. *An item about the game is surprisingly often an item about the thing
-measuring the game; that is now three sessions out of three.* The per-item accounts are in
-[GRABHIST.md](GRABHIST.md) and the invariants they left are in [AI.md](AI.md).
-
-**Job 9.5 — the sixth documentation pass, 16 Aug 2026.** The logbook re-archived on a boundary rather
-than a count; `AI.md` cut from 300 to its rules with the accounts left where they already lived;
-`CREDITS.md` returned to three lines a row for the third time; the closed jobs collapsed into this
-file. What it found is in [MAINTENANCE.md](MAINTENANCE.md).
 
 ## Pack research: two things that were wrong
 
@@ -321,48 +279,6 @@ it reproduced all 90 pre-existing cards exactly, field by field, before being wi
 migrated to read the upstream corpus instead, the two independent sources were diffed against each
 other and produced **byte-identical output for all 102 Base Set cards**. That agreement is what
 justifies trusting the corpus, and it is repeatable if anyone ever doubts it.
-
-## How the documentation tree got its shape
-
-The rules that came out of these are in [MAINTENANCE.md](MAINTENANCE.md). This is how they were
-reached, kept because two of them were reached by the wrong argument first.
-
-**`LAYOUT.md` survived two split proposals and was split on the third — by Trevor, on a different
-argument.** It is the clearest case in this tree of a right decision reached by the wrong criterion
-twice. The third pass proposed *sizing vs. interaction* and withdrew it, correctly on its own terms:
-the coin toss and the opening-setup screen are both mostly geometry, so the seam is not clean by
-topic. The fourth pass took the file to **302** by moving the instruments out, left the seam
-explicitly available and *not taken*, and told the next pass not to take it for Trevor. The fifth
-measured it at **380** and reported that, expecting the same answer. **He took it, and his criterion
-was the better one:** not is-this-topic-pure but *would a session working on something else need
-this?* — the split test that produced `COLLECTION.md`. A session fixing the hand fan never needs the
-coin's reduced-motion tilt, however geometric it is. What settled it was compaction, not tidiness.
-[INTERACTION.md](INTERACTION.md) took the coin toss, the Energy picker, the opening flip, opening
-setup and the action bar; the one genuinely-sizing rule among them, the coin's zero-height strip,
-stayed behind as a one-liner with a link.
-
-**`AI.md` reached 365 and was split the next turn**, on the same criterion. The cleave that worked is
-*how the bot is measured* — the two instruments, the six ways measurement lies, the match log, the
-standing figures — against *how the bot thinks and what has shipped*.
-[MEASUREMENT.md](MEASUREMENT.md) took the first, and ten inbound pointers moved with it. **The tell
-that the seam was real: the child had more entrances than the parent.**
-
-**`AI.md` was then proposed as a directory on the sixth pass, and refused.** Trevor's suggestion, and
-a reasonable one on the shape — it had grown back to 300 as seven chronological narratives, which is
-exactly what `RULINGS.md` looked like before its folder. The difference is that **`RULINGS.md`'s
-entries were the only copy of each call**, so the folder created homes; every one of `AI.md`'s
-narratives already had a fuller, append-only twin in `GRABHIST.md`, so a folder would have created a
-*third* copy of the same material and the two would have drifted. It was trimmed to the invariant
-each change left instead, 300 → 181, with the accounts linked rather than repeated.
-
-**The logbook's archive rule changed from a count to a boundary on the sixth pass.** The old rule —
-"this file holds the two most recent entries" — was written in the same turn the file was first
-split, and by the time anybody checked it was holding six at 295 lines, back inside the length that
-had caused the split. Nothing enforced it and nothing could. It is now: entries move out when the
-work they describe is **closed**, into whichever archive is still short enough to read, and the most
-recently closed entry stays behind as an example — Trevor's observation that instances visibly write
-better logbook entries when there is one in front of them. **A maintenance rule stated as a number
-somebody has to remember to check is a rule that will be found violated by the next pass.**
 
 ## Ideas raised and shelved, with the reason
 
