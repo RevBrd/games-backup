@@ -200,15 +200,29 @@ per card, Bill, Fetch, Pay Day, Gambler and Professor Oak at up to 35 points, no
 what was left. **17.7% of ladder games ended in a deck-out** and 45 of those losers had burned cards
 with under five remaining. Two terms, and the split is the recoil work's lesson reused: `deckBurn` is
 a cost on the **squared share of what remains**, and `deckLoss` is terminal for a play that empties
-the deck outright. **It is deliberately a curve and not the floor at 20 cards that the report asked
-for** — a floor is the cliff shape in the table above and would make 21-vs-19 a personality change;
-`powertest.js` asserts the curve is monotonic and not flat, so a later threshold trips it. **Gambler
-is priced on NET change and must not be capped alongside Bill:** it shuffles the hand back in before
-drawing 1-or-8, so on a hand of more than five it makes the deck *bigger*, and it is the only
-recycling card in the game — capping it would suppress the one play that digs out. Oak and Gambler
-also weigh what the hand is worth keeping and get a boost when the board is starved of Energy or
-Basics, which is Trevor's rule. **Plays that empty the deck outright: 14 → 0**, burns under ten cards
-6% → 3%; the duel reads 51.1% ± 1.3 against a 50.0% control, which is a lean and not a result.
+the deck outright.
+
+**It is a curve and not the floor at 20 cards the report asked for** — a floor is the cliff shape in
+the table above and would make 21-vs-19 a personality change. But the *band* the curve occupies is
+Trevor's, settled by showing him the table rather than arguing it: **`deckBurn` is set so the band
+runs 20 down to 10.** Bill costs 2.5 points of its 10 at twenty cards left and exactly 10 — its whole
+value — at ten. The squaring is what makes that a band; the weight is only how wide and how high it
+sits. `powertest.js` asserts the curve is monotonic *and* not flat, so a later threshold trips it.
+
+**Gambler is priced on NET change and must not be capped alongside Bill:** it shuffles the hand back
+in before drawing 1-or-8, so on a hand of more than five it makes the deck *bigger*, and it is the
+only recycling card in the game — capping it would suppress the one play that digs out. Its credit
+has its own weight (`deckRecycle`) rather than sharing `deckBurn`, and that split is load-bearing:
+the two were one number, and widening the burn band to Trevor's range would have quietly made
+recycling pay 55 points, more than a Knock Out. ***A constant doing two jobs gets retuned for one.***
+Oak and Gambler also weigh what the hand is worth keeping and get a boost when the board is starved
+of Energy or Basics, which is Trevor's rule.
+
+**Plays that empty the deck outright 14 → 0**, burns under ten cards 6% → 1%, games lost to deck-out
+9% → 5%. **51.4% ± 1.2, significant, and confirmed on an independent sample** — only the second
+result in Job 9 to clear the bar, and for the same reason as the first: this fault is *not*
+symmetric. Both bots misplay it, but the one that is still holding cards two turns later is playing a
+different game.
 
 ## Open
 

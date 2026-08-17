@@ -3747,9 +3747,16 @@ const AI_WEIGHTS = {
                         // one plus how many Energy it is short — 25 ready, 12.5
                         // one away, 5 at four or more. Was a flat 25-or-nothing
   drawCard: 5,          // per card drawn
-  deckBurn: 60,         // cost of spending deck, over the SQUARE of the share of
-                        // what remains that the play consumes — ~0 at 40 cards
-                        // left, decisive under about 12. See deckRisk()
+  deckBurn: 250,        // cost of spending deck, over the SQUARE of the share of
+                        // what remains that the play consumes. Tuned with Trevor
+                        // so the BAND runs 20 down to 10: Bill costs 2.5 points
+                        // of its 10 at twenty cards left and exactly 10 — its
+                        // whole value — at ten. Squaring is what makes that a
+                        // band rather than a switch; this number is only how
+                        // wide and how high it sits. See deckRisk()
+  deckRecycle: 0.15,    // Gambler's credit for handing cards BACK, as a fraction
+                        // of deckBurn. Not symmetric on purpose: at the full
+                        // weight a recycle would pay more than a Knock Out
   deckLoss: 150,        // running yourself out of cards is not an expensive
                         // draw, it is losing. Same shape as lastPrize
   healPer10: 3.5,
@@ -3901,7 +3908,11 @@ class AI {
     const left = this.E.state.players[pi].deck.length;
     if (burn <= 0) {
       // Deck-positive: worth something, and worth more the shorter you are.
-      return left >= 25 ? 0 : (-burn) * W.deckBurn / Math.max(4, left) * 0.5;
+      // Scaled by `deckRecycle` rather than sharing `deckBurn` outright — the
+      // two were one number until 16 Aug, and widening the burn band to Trevor's
+      // 20-to-10 range would have quietly made recycling pay 55 points, more
+      // than a Knock Out. **A constant doing two jobs gets retuned for one.**
+      return left >= 25 ? 0 : (-burn) * W.deckBurn * W.deckRecycle / Math.max(4, left);
     }
     if (left - burn <= 0) return -W.deckLoss;
     const frac = burn / left;

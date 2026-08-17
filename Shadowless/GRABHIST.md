@@ -216,12 +216,22 @@ that then lost had burned cards with fewer than five remaining.**
 share of what remains; `deckLoss` is terminal for a play that empties the deck. One weight could not
 have done both — losing is not an expensive draw, exactly as losing is not a large Knock Out.
 
-**A curve, not the floor Trevor asked for, and I said so rather than building it.** "Stop below 20"
-is the cliff shape now at six entries in `AI.md`, and it would make 21-vs-19 cards a personality
-change. `powertest.js` asserts the curve is monotonic *and* not flat, so a later threshold trips it.
-The honest cost of that call: at 20 cards the penalty on Bill is 0.6 against a gain of 10, so the
-"under 20" count barely moved. **The harm was never at 20** — it is concentrated below 10, and that
-is where the change bites.
+**A curve, not the floor Trevor asked for — and then his band on my shape, which is the better
+outcome than either of us starting with.** "Stop below 20" is the cliff shape now at six entries in
+`AI.md`. But my first tuning was too timid and I shipped it saying so: at `deckBurn` 60 the penalty
+on Bill at twenty cards was 0.6 against a gain of 10, so the "under 20" count barely moved and I
+reported that as an honest cost of choosing a curve.
+
+**Trevor read that and asked for the band to be widened to 20–10, which was right, and it turned out
+to be one number.** That is worth recording as a method: *the shape and the range are separate
+arguments, and conceding one is not conceding the other.* Squaring is what makes it a band rather
+than a switch; `deckBurn` is only how wide and how high that band sits. Settled by printing the
+penalty table at both settings rather than arguing it — at 250, Bill costs 2.5 of its 10 points at
+twenty cards left and exactly 10 at ten, which is his "starts mattering / stops doing it" in numbers.
+
+**And widening it exposed a constant doing two jobs.** `deckBurn` also scaled Gambler's credit for
+handing cards *back*, so raising it would have quietly made recycling pay 55 points — more than a
+Knock Out. Split into `deckRecycle`. **Check what else reads a weight before you retune it.**
 
 **Gambler is not a burner and capping it would have been the bug.** It shuffles the hand back in
 *before* drawing 1-or-8, so its net deck change is `held − 4.5` — on any hand over about five it makes
@@ -229,10 +239,15 @@ the deck **bigger**, and it is the only recycling card in the game. Following th
 would have suppressed the single play that digs out of a deck-out. Priced on net change instead;
 Trevor agreed on sight.
 
-**Results.** Plays that empty the deck outright **14 → 0**. Burns under ten cards 6% → 3%. Late burns
-by the eventual deck-out loser 45 → 21. Deck-out losses 17.7% → 15.7% — small because both seats got
-the change and many of those games just swapped which side ran out. Duel 51.1% ± 1.3 over 5,832 games
-against a 50.0% control: a lean, not a result, and not what justifies this.
+**Results, at the final band.** Plays that empty the deck outright **14 → 0**. Burns under ten cards
+**6% → 1%**. Games lost to deck-out **9% → 5%**. And **51.4% ± 1.2 in a duel, significant, confirmed
+on an independent larger sample** — only the second result in this whole job to clear the bar.
+
+*Why this one measures when the rest of Job 9 was flat:* the fault is not symmetric. Both bots
+misplay their deck, but unlike a rare positional error this one **compounds** — the bot still holding
+cards two turns later is playing a different game, exactly as the amortised-progress fix was. When a
+flat duel result is the expected reading, it is worth asking whether the fault actually cancels or
+merely looks like it should.
 
 *Two test notes.* My first measurement script reported **zero** draw plays across 64 games and looked
 entirely clean — the action is `playTrainer` with a `hand` field and I was matching `trainer`/`idx`,
