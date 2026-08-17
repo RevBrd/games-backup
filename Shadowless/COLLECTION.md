@@ -170,9 +170,32 @@ DOM and implements neither; **a UI mechanism that cannot run in the suite is one
 
 ## How each variant is drawn
 
-All confined to **collectible surfaces** — the preview rail, the dex, the pack reveal, the detail
-panel. **The board is untouched by every one of them**, which is what keeps the 8 Aug design lock
-intact. Where a variant lost an argument on its way here, the reason is in [HISTORY.md](HISTORY.md).
+The **full** treatment is confined to collectible surfaces — the preview rail, the dex, the pack
+reveal, the detail panel. Where a variant lost an argument on its way here, the reason is in
+[HISTORY.md](HISTORY.md).
+
+**In play a card wears a reduced MARKING, and that is a deliberate narrowing of the 8 Aug lock
+rather than a break in it** — Trevor, 16 Aug 2026, from a grab bag item asking whether variants
+displayed in game. They did not, and *could* not: `buildDeck` destructured `[qty, id]` and silently
+dropped the variant key, so the copy you picked in the deck builder never reached the table. The key
+rides on the card instance as `v` now; the engine does nothing with it and every rules path still
+reads `id`.
+
+What shows in play is confined to the **art window**: Shiny recolours the emblem only (not the card's
+typography, which the lock covers), 1st Edition stamps the ①, Shadowless prints the watermark. No
+card changes size — the marks are absolutely positioned inside a fixed box.
+
+**Adding a variant's in-play marking is a row in `SIGIL_MARKS` plus at most one CSS rule, and that
+seam is the point.** Reverse Holo and Misprint are deliberately absent from that table — they have
+scan treatments and no sigil treatment. **Trevor's spec for both is in [GRABBAG.md](GRABBAG.md)**,
+and note what it costs: Misprint mimicking formatting glitches means this game acquires artifacts
+that *look* like bugs, so `CLAUDE.md`'s "no authored defects" line has to change in the same commit
+or the next instance will dutifully fix them. Two rules keep it working and both were paid for with a wrong version:
+**`.sigil` must stay `position:relative`** (the marks are `position:absolute`, and without a
+positioned host they resolve against the page — a SHADOWLESS watermark painted across the whole
+board), and **`sigilOf` searches descendants, not just direct children** (the in-play sigil hangs off
+`.pc-body`, so a direct-child search found nothing and the marks landed on the card root). *[What
+204 passing tests could not see →](TOOLING.md)*
 
 | | On the real scan | On the Sigil Card |
 |---|---|---|

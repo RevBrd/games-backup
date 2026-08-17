@@ -200,6 +200,13 @@ A green `smoke.js` run proves nothing visual, and the gap is not theoretical —
 - **`line-height` inherits.** `.vfx` had `line-height:0` — correct for an inline-block wrapping a
   bare image, catastrophic once the same host also wrapped a card full of text. Every line
   collapsed, the type chip became a 2px dash, and the card lost 90px of height.
+- **`position:absolute` with no positioned ancestor escapes to the page.** The variant markings were
+  wired into the in-play card faces with **204 tests passing**, and the first screenshot showed a
+  SHADOWLESS watermark painted across the middle of the board and a stray 1st Edition stamp beside
+  the End Turn button. Two causes, both invisible to a stub: `.sigil` had `overflow:hidden` but not
+  `position:relative`, and `sigilOf` searched direct children only, so on the Active card it found
+  nothing and the caller appended the mark to the card root. **A stubbed DOM has no cascade and no
+  containing blocks, so it cannot see where an absolutely-positioned child actually lands.**
 
 When a screenshot looks subtly wrong, **measure it rather than squinting** — inject a snippet that
 writes `offsetHeight`/`getComputedStyle` into the page and screenshot *that*. It turns "something

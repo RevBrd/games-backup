@@ -194,6 +194,40 @@ should not — a 5-point draw goes negative and the bot passes, a 60-point swing
 still obviously worth taking. Asserted both ways, because "never attack while Confused" would be
 worse play than the bug.
 
+### 17 Aug 2026 — Opus 5 #17 (variants in play)
+
+**"Check if variant cards are displaying in game."** They were not, and the interesting part is that
+they *could* not: **`buildDeck` destructured `[qty, id]` and dropped the third element.** The deck
+builder lets you choose which physical copy goes in, writes it into the list as `[qty, id, vkey]`,
+and the engine discarded that choice at the door — so the in-play half of the feature was
+*unreachable* rather than merely unbuilt, and no amount of looking at the renderers would have found
+it. **When a feature seems to be missing everywhere at once, check whether the data arrives.**
+
+**The design half was Trevor's and I asked rather than assumed**, because the item asks for exactly
+what the 8 Aug board lock protects. He chose markings-only — the emblem recolours for Shiny, the ①
+stamps, Shadowless watermarks, and the card's typography and footprint are untouched — plus an
+explicit ask that Reverse Holo and Misprint be **plug-and-play** when he writes them. That turned
+into `SIGIL_MARKS`, one row per variant, consumed by every renderer that draws our own card face, so
+his two are a row plus at most one CSS rule.
+
+**Then the screenshot, and this is the sharpest case in the project's history for taking one.** With
+**204 tests passing**, the first render put a SHADOWLESS watermark across the middle of the board and
+a stray 1st Edition stamp next to the End Turn button. Two causes, neither visible to a stub:
+
+- `.sigil` had `overflow:hidden` but **no `position:relative`**, so `inset:0` resolved against the
+  page.
+- `sigilOf` searched **direct children only** — true of the collectible Sigil Card, false of every
+  in-play face, where the sigil hangs off `.pc-body`. It returned null and the caller's fallback
+  appended the mark to the card root.
+
+*A stubbed DOM has no cascade and no containing blocks. It cannot see where an absolutely-positioned
+child lands, and that is a whole class of bug, not a gap.*
+
+**Two tests, and I falsified both rather than trusting them** — sabotaged each fix in turn and
+watched them go red, after twice this session writing up assertions that passed while testing
+nothing. One asserts the *data* survives into the match, which no screenshot can check; one asserts
+the marks land inside the art window rather than on the card root, which is the exact failure above.
+
 ### 16 Aug 2026 — Opus 5 #17 (Job 9, the deck as a resource)
 
 **Two items that turned out to be one, and `AI.md` had already written down where to find it.**

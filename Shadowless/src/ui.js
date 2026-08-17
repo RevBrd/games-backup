@@ -673,7 +673,7 @@ function cardAccent(card) {
 //
 // Dropping the words also buys the width back, which is the other half of the
 // job: a narrower card is a hand that fits more cards before it has to overlap.
-function handCard(card) {
+function handCard(card, flags) {
   const d = el('div', 'pcard handcard k-' + card.kind);
   d.style.borderLeftColor = cardAccent(card);
   d.appendChild(el('div', 'hc-name', card.name));
@@ -707,6 +707,7 @@ function handCard(card) {
     });
     d.appendChild(atks);
   }
+  applySigilMarks(d, flags);
   return d;
 }
 
@@ -1525,6 +1526,16 @@ function slotTargetable(slot, pi, where, idx) {
   }
 }
 
+// The variant of the PHYSICAL card occupying a slot — the top of the stack,
+// which is the card you actually played. Not `topCard`: that honours Transform,
+// and a Ditto wearing a Blastoise is still physically a Ditto, so it keeps its
+// own printing. Empty for anything without a chosen variant, which is nearly
+// everything.
+function slotVariantFlags(slot) {
+  const phys = slot && slot.stack && slot.stack[slot.stack.length - 1];
+  return (phys && phys.v) ? vflags(phys.v) : [];
+}
+
 function renderSlot(slot, pi, where, idx) {
   const c = topCard(CARD_DB, slot);
   const d = el('div', 'slot pcard play k-pokemon');
@@ -1614,6 +1625,7 @@ function renderSlot(slot, pi, where, idx) {
   }
 
   d.onclick = slotOnClick(slot, pi, where, idx, can, c);
+  applySigilMarks(d, slotVariantFlags(slot));
   return peekOn(d, c.id);
 }
 
@@ -1797,6 +1809,7 @@ function renderBenchTile(slot, pi, idx) {
   if (st.children.length) d.appendChild(st);
 
   d.onclick = slotOnClick(slot, pi, 'bench', idx, can, c);
+  applySigilMarks(d, slotVariantFlags(slot));
   return peekOn(d, c.id);
 }
 
@@ -1812,7 +1825,7 @@ function renderHand() {
   me().hand.forEach((inst, i) => {
     const c = CARD_DB[inst.id];
     const acts = legal.filter(a => a.hand === i);
-    const card = handCard(c);
+    const card = handCard(c, inst.v ? vflags(inst.v) : null);
     if (UI.sel && UI.sel.idx === i) card.classList.add('sel');
     if (!acts.length) card.classList.add('dead');
     if (UI.inspect === c.id) card.classList.add('inspected');
@@ -2262,37 +2275,93 @@ function pullFace(card, flags) {
 // a plain array, which has all of them. `.filter` therefore PASSED every test
 // and threw in Chrome — the detail overlay silently vanished while the pack
 // screen behind it rendered fine. Index with a plain loop and both are happy.
+// The art window inside a rendered card, at any depth.
+//
+// **It searched direct children only until 16 Aug 2026**, which was true of the
+// collectible Sigil Card and false of every in-play face: `renderSlot` hangs the
+// sigil off `.pc-body`, so it is a grandchild and this returned null. Callers
+// then fell back to appending the mark to the card ROOT, where `inset:0`
+// resolved against the page and painted a SHADOWLESS watermark across the whole
+// board. Two hundred and four tests passed; a screenshot found it in one look.
+//
+// Index loop and recursion rather than `querySelector` — the smoke stub
+// implements neither that nor `.filter` on an HTMLCollection. See TOOLING.md.
 function sigilOf(node) {
+  if (!node || !node.children) return null;
   for (let i = 0; i < node.children.length; i++) {
     const c = node.children[i];
     if (c && (c.className || '').indexOf('sigil') === 0) return c;
+  }
+  for (let i = 0; i < node.children.length; i++) {
+    const found = sigilOf(node.children[i]);
+    if (found) return found;
   }
   return null;
 }
 
 // Our own drawing of the card, carrying everything a scan cannot.
+// ---------------------------------------------------------- sigil markings ---
+// ONE ROW PER VARIANT THAT MARKS A SIGIL CARD. Every renderer that draws our own
+// card face consults this table, so **giving a variant an in-play marking is a
+// row here and nothing else** — no renderer changes, and it appears on the
+// collectible surfaces and on the board in the same commit.
+//
+// That seam exists because two variants are deliberately missing from it:
+// Reverse Holo and Misprint have treatments for the real printed *scan* and none
+// for the Sigil Card, and Trevor has a plan for both. When those land they slot
+// in here. See GRABBAG.md.
+//
+//   cls   a class on the card, for anything CSS can express (ink colour, a
+//         typesetting defect)
+//   art   a node appended INTO the art window — not floated onto the card body,
+//         which is where the 1st Edition stamp landed first and read as a stray
+//         badge
+const SIGIL_MARKS = {
+  // Every line of ink turns teal, via --ink/--ink2. A shiny Pokemon in the
+  // mainline games is a recoloured one, so the treatment means what the word does.
+  sh:  { cls: 'is-sh' },
+  // The game's own name across the art window, set the way the title screen sets
+  // it. The missing shadow alone was too quiet to carry a 1-in-200 pull; this is
+  // the announcement and the shadow is the fidelity.
+  sl:  { cls: 'is-sl', art: () => el('div', 'slmark', 'SHADOWLESS') },
+  // Where the real stamp sits.
+  fe:  { art: () => el('div', 'festamp', '1') },
+  // Misprint expresses itself as a TYPESETTING failure here, where the scan gets
+  // an image defect. Mutually exclusive by family, so at most one ever applies.
+  mp1: { cls: 'is-mp1' },
+  mp2: { cls: 'is-mp2' },
+  mp3: { cls: 'is-mp3' },
+  // rh: Reverse Holo — no sigil treatment yet, by design. Add a row.
+};
+
+// Stamp a rendered card with whatever its variant flags call for. Safe on any
+// node carrying an art window, and a no-op for a plain card — which is what lets
+// the in-play renderers call it unconditionally.
+function applySigilMarks(node, flags) {
+  if (!node || !flags || !flags.length) return node;
+  // One hook every marked card carries, whatever surface it is on. CSS for a
+  // variant's IN-PLAY look hangs off `.hasv:not(.sigilcard)`, so it reaches the
+  // board, the bench and the hand with a single selector and cannot double up
+  // with the collectible card's own rule. Adding a variant later is a row in
+  // SIGIL_MARKS plus at most one CSS rule — not a change to any renderer.
+  node.classList.add('hasv');
+  let art;
+  for (const f of flags) {
+    const m = SIGIL_MARKS[f];
+    if (!m) continue;
+    if (m.cls) node.classList.add(m.cls);
+    if (m.art) {
+      if (art === undefined) art = sigilOf(node);
+      (art || node).appendChild(m.art());
+    }
+  }
+  return node;
+}
+
 function sigilCard(card, flags) {
   const d = fullCard(card, { noFace: true });
   d.classList.add('sigilcard', 'sm-' + UI.shadowMode);
-  if (flags.indexOf('sh') >= 0) d.classList.add('is-sh');
-  // Misprint expresses itself as a TYPESETTING failure here, where the scan
-  // gets an image defect. One class per flavour; they are mutually exclusive
-  // by family, so at most one ever applies.
-  ['mp1', 'mp2', 'mp3'].forEach(m => { if (flags.indexOf(m) >= 0) d.classList.add('is-' + m); });
-  if (flags.indexOf('sl') >= 0) {
-    d.classList.add('is-sl');
-    // The game's own name across the art window, set the way the title screen
-    // sets it. The shadow difference alone was too quiet to carry a 1-in-200
-    // pull; this is the announcement and the shadow is the fidelity.
-    const art = sigilOf(d);
-    if (art) art.appendChild(el('div', 'slmark', 'SHADOWLESS'));
-  }
-  if (flags.indexOf('fe') >= 0) {
-    // Into the art window, where the real stamp sits — not floated onto the
-    // card body, which is where it landed first and read as a stray badge.
-    const art = sigilOf(d);
-    (art || d).appendChild(el('div', 'festamp', '1'));
-  }
+  applySigilMarks(d, flags);
   const cls = additiveClasses(flags);
   if (!cls) return d;
   const w = el('div', 'vfx ' + cls);
@@ -3808,7 +3877,7 @@ function renderSetup() {
   p.hand.forEach((inst, i) => {
     const c = CARD_DB[inst.id];
     const isBasic = c.kind === 'pokemon' && c.stage === 'Basic';
-    const card = handCard(c);
+    const card = handCard(c, inst.v ? vflags(inst.v) : null);
     if (!isBasic) card.classList.add('dead');
     else {
       card.classList.add('placeable');

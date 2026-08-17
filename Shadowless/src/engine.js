@@ -115,10 +115,25 @@ class Engine {
   }
 
   // ------------------------------------------------------- deck building ---
+  // A deck entry is [qty, id] or [qty, id, vkey], and THE THIRD ELEMENT USED TO
+  // BE DROPPED HERE — silently, by the destructuring. The deck builder lets you
+  // choose which physical copy goes in, wrote that choice into the list, and the
+  // engine discarded it at the door, so no card in play could ever carry a
+  // variant and the whole in-play half of the feature was unreachable rather
+  // than merely unbuilt. Found 16 Aug 2026 from a grab bag item that asked
+  // whether variants displayed in game; the answer was that they could not.
+  //
+  // The key rides on the instance as `v`. The engine does nothing with it — it
+  // is cosmetic, and every rules path reads `id` — but it must survive, because
+  // the renderers and the match log both want it.
   buildDeck(deckDef) {
     const out = [];
-    for (const [qty, id] of deckDef.list) {
-      for (let i = 0; i < qty; i++) out.push({ uid: this.uid++, id });
+    for (const [qty, id, v] of deckDef.list) {
+      for (let i = 0; i < qty; i++) {
+        const inst = { uid: this.uid++, id };
+        if (v) inst.v = v;
+        out.push(inst);
+      }
     }
     return out;
   }

@@ -705,7 +705,13 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .pc-eyebrow{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;letter-spacing:.14em;color:var(--ink2);border-bottom:1px solid var(--hair);padding-bottom:4px;margin-bottom:6px}
 .pc-from{letter-spacing:.02em;text-transform:none}
 
-.sigil{flex:0 0 auto;border:1px solid var(--hair);border-radius:2px;background:var(--stock2);overflow:hidden}
+/* position:relative is LOAD-BEARING, not tidiness. The variant markings inside
+   an art window are position:absolute; without a positioned host they resolve
+   against the page — a SHADOWLESS watermark painted across the whole board and
+   a stray 1st Edition stamp in the corner of the screen. overflow:hidden then
+   clips them to the window, which is what keeps a marking from ever growing a
+   card. Both properties, together. */
+.sigil{flex:0 0 auto;position:relative;border:1px solid var(--hair);border-radius:2px;background:var(--stock2);overflow:hidden}
 .sigil svg{display:block;width:100%;height:100%}
 .sigil.xs{width:26px;height:26px}
 .sigil.sm{width:38px;height:38px}
@@ -1182,6 +1188,26 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
   border:1.5px solid var(--ink);display:flex;align-items:center;justify-content:center;
   font-size:9px;font-weight:700;line-height:1;color:var(--ink);
   background:rgba(255,255,255,.62);z-index:3}
+
+/* Shiny IN PLAY is confined to the EMBLEM, and that is the whole difference
+   between this and the collectible card. On a Sigil Card every line of ink turns
+   teal, which is the point of it; on the board that would recolour the card's
+   typography, and the mat's look is locked. So the sigil is the marking. The
+   `:not(.sigilcard)` guard is load-bearing — without it the collectible card
+   gets the hue rotation twice and comes out the wrong colour entirely. */
+.hasv:not(.sigilcard).is-sh .sigil svg{filter:hue-rotate(150deg) saturate(1.35)}
+
+/* IN PLAY the same marks ride inside a 38-52px art window instead of the
+   collectible card's 150px one, so they scale or they become the card. Sizes
+   above are .lg's; these are everything else. Nothing here changes a card's
+   footprint — the marks are absolute inside a fixed box, which is what lets a
+   variant show on the board without touching the 8 Aug design lock. */
+.sigil.md .slmark,.sigil.hc-art .slmark{font-size:5px;letter-spacing:.05em;text-indent:.05em}
+.sigil.sm .slmark,.sigil.xs .slmark,.sigil.bcart .slmark{font-size:4px;letter-spacing:.02em;text-indent:.02em}
+.sigil.md .festamp,.sigil.hc-art .festamp{width:12px;height:12px;font-size:6px;
+  left:2px;bottom:2px;border-width:1px}
+.sigil.sm .festamp,.sigil.xs .festamp,.sigil.bcart .festamp{width:10px;height:10px;font-size:5px;
+  left:1px;bottom:1px;border-width:1px}
 
 /* ---- the collection strip on the title screen ---- */
 .collstrip{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;

@@ -141,3 +141,60 @@ CCC and Flamethrower RRC tie on cost. Both failures are in the test comments now
 fail for the reason you wrote it is worse than no test.*
 
 — Shadowless 16
+
+## #17 — Opus 5, 16 Aug 2026 (Job 9.5, then more of Job 9)
+
+Half a documentation pass and half an AI pass, and the two halves taught the same lesson from
+opposite ends.
+
+**The thing I most want the next instance to have is about pushing back.** Trevor's grab bag asked
+for the bot to stop drawing cards below about twenty left. I argued against it — a hard floor is the
+cliff shape this file has been recording for six entries — and I was right, and I built the curve
+instead. Then I tuned that curve too conservatively, measured it, and reported honestly that the
+change had barely moved anything at twenty cards, *filing that under "the honest cost of choosing a
+curve."*
+
+It was not a cost of the curve. It was a cost of me picking 60 instead of 250. **I had bundled two
+separate arguments — the shape and the range — and won the one I cared about while silently
+conceding the one I had not examined.** Trevor asked one question ("could we widen that band to
+20–10?") and it turned out to be a single number, which then measured *significantly better* where
+my version had measured flat.
+
+So: **when you push back on a request and win, check what else you changed while you were at it.**
+The part of a proposal you disagree with and the part you were never asked about are not the same
+part. I would not have found this; he did, from one paragraph of numbers.
+
+**The corollary is about how the disagreement got settled, and it is worth copying.** I did not argue
+the band. I printed the penalty table at both weights and showed him the two columns. He picked in
+one message. Every time this project has resolved a tuning question quickly it has been because
+somebody put the numbers on the screen instead of describing them.
+
+**On the documentation half.** The tree is now indexed against truncation rather than only trimmed:
+`AI.md` 380 → 214, `LOGBOOK.md` 356 → 143 with a second archive, and the three exempt registers that
+cannot be shortened got contents tables instead, plus a stated line at which to split. That last part
+is what I would defend hardest — an append-only file has no defence against growing, so the only
+things you can give it are a map and a threshold.
+
+I also made the exact measurement error `MAINTENANCE.md` warns about, with the warning in front of
+me. It says the unit is `wc -l` including blanks; I used PowerShell's
+`(Get-Content f | Measure-Object -Line).Lines`, which silently skips blank lines, and every number in
+my opening report to Trevor was 25% low. **Knowing the unit does not help if the command you reach
+for quietly uses a different one.** That is written up now naming the command, because the previous
+warning was already there and was not enough.
+
+**Two of my tests were fake before they were real**, both the shape #16 named. A measurement script
+reported zero draw plays across 64 games and looked completely clean — I was matching `trainer`/`idx`
+when the action is `playTrainer`/`hand`, so the detector never fired once. And a Gambler assertion
+passed while testing nothing, because I had used Ponyta's card id and paired it with an
+`if (score === null) return true` escape hatch. Then the *corrected* test failed for a good reason:
+I had filled the "big hand" with Energy the board wanted, and refusing to shuffle that away is
+correct play. **Three failures, three flavours of the same thing, and the third was the code being
+right.** Escape hatches are how the first two hid; they are throws now.
+
+**What I would tell #18.** Trevor plays his save while you work and is genuinely pleased when an item
+lands on the list rather than embarrassed by it — he said so unprompted, and it changes how to read
+the grab bag. And `AI.md` predicted the deck-out bug in its own closing sentence, written by #16
+before anyone worked it. ***Write down where you did not look.*** It is the cheapest thing in this
+tree and it is the only reason that one was an afternoon rather than a discovery.
+
+— Shadowless 17

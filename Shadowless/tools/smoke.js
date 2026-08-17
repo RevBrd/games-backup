@@ -1023,6 +1023,45 @@ T('the Sigil Card carries a print run that the scan cannot', () => {
     && art.children.some(c => c.className === 'festamp');
 });
 
+T('a deck-builder variant choice survives into the match', () => {
+  // It did not until 16 Aug 2026. `buildDeck` destructured [qty, id] and dropped
+  // the third element, so the copy you picked in the builder never reached the
+  // table and the whole in-play half of variants was unreachable rather than
+  // merely undrawn. This asserts the DATA, which is the part a screenshot cannot
+  // check and the part everything else hangs off.
+  const E = new ctx.Engine(CARD_DB, ctx.EFFECTS, { seed: 3 });
+  const deck = { name: 'v', list: [[4, 'base1-61', 'sh+fe'], [56, 'base1-99']] };
+  const built = E.buildDeck(deck);
+  const rat = built.filter(c => c.id === 'base1-61');
+  const plain = built.filter(c => c.id === 'base1-99');
+  return rat.length === 4 && rat.every(c => c.v === 'sh+fe')
+    && plain.length === 56 && plain.every(c => c.v === undefined);
+});
+
+T('an in-play card wears its variant, and a plain one does not', () => {
+  // The hand face is the one renderer a stubbed DOM can check end to end.
+  // `hasv` is the hook every in-play variant rule hangs off, so if this goes
+  // red the markings have stopped reaching the board even if they still render
+  // on the collectible surfaces.
+  const card = CARD_DB['base1-61'];
+  const marked = ctx.handCard(card, ['sh', 'sl', 'fe']);
+  const plain = ctx.handCard(card, null);
+  if (plain.classList.contains('hasv')) return false;
+  if (!marked.classList.contains('hasv') || !marked.classList.contains('is-sh')) return false;
+  // ...and the marks land INSIDE the art window, not on the card root. Appending
+  // them to the root is exactly what painted a SHADOWLESS watermark across the
+  // whole board while every test here passed.
+  let art = null;
+  for (let i = 0; i < marked.children.length; i++) {
+    const c = marked.children[i];
+    if ((c.className || '').indexOf('sigil') === 0) { art = c; break; }
+  }
+  if (!art) return false;
+  const names = [];
+  for (let i = 0; i < art.children.length; i++) names.push(art.children[i].className);
+  return names.indexOf('slmark') >= 0 && names.indexOf('festamp') >= 0;
+});
+
 // Job 7b: the payout moved onto the ladder, so this has to leave free play to
 // see one at all. The invariant it guards is unchanged and still the important
 // one — settleResult() runs from inside render(), and render() runs on every
