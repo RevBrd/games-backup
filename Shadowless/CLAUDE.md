@@ -131,7 +131,7 @@ node tools/collectiontest.js             # the save file, decks and variants
 node tools/progresstest.js               # the ladder, unlocks and rewards
 node tools/packtest.js                   # 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
-node tools/aitest.js 6                   # AI behaviour counts — not pass/fail
+node tools/aitest.js 6 --gbc              # AI behaviour counts — not pass/fail; --gbc for ladder decks
 node tools/aiduel.js 8                   # AI vs HEAD's AI; --control first, --gbc for ladder decks
 ```
 

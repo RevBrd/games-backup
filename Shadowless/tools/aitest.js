@@ -23,14 +23,23 @@
 // Baselines live in the table at the bottom of the output. If you change ai.js,
 // run this before and after and put both numbers in the commit.
 
-const { CARD_DB, DECKS } = require('../src/cards.js');
+const { CARD_DB, DECKS, OPPONENT_DECKS } = require('../src/cards.js');
 const { EFFECTS } = require('../src/effects.js');
 const { Engine } = require('../src/engine.js');
 require('../src/ai.js');
 
 const N = parseInt(process.argv[2], 10) || 6;
-const MODE = process.argv[3] || 'expert';
-const DECK_NAMES = Object.keys(DECKS);
+const MODE = process.argv.slice(2).find(x => /^(expert|novice|greedy|random)$/.test(x)) || 'expert';
+
+// --gbc SWAPS THE POOL FOR THE 18 LADDER DECKS, and it matters more than it
+// looks. The four theme decks were the whole game when this tool was written
+// and are now a sixth of the card pool; MEASUREMENT.md's most dangerous entry
+// is a harness that cannot see the situation reporting a clean null result.
+// The deck-out counters below are the sharpest case yet — the theme decks say
+// 6.3% of games end that way and the ladder decks say 17.7%.
+const GBC = process.argv.includes('--gbc');
+const POOL = GBC ? OPPONENT_DECKS : DECKS;
+const DECK_NAMES = Object.keys(POOL);
 
 const blank = () => ({
   turns: 0, games: 0, wins: 0,
@@ -42,6 +51,7 @@ const blank = () => ({
   heals: 0, healWasted: 0, healWastedHP: 0,
   gusts: 0, gustNoKill: 0, gustFreeSwitch: 0,
   kosSuffered: 0, declinedWin: 0,
+  burns: 0, burnUnder10: 0, burnFatal: 0, deckOutLosses: 0,
 });
 
 const add = (a, b) => { for (const k in b) a[k] += b[k]; return a; };
@@ -86,6 +96,39 @@ function classify(E, pi, a, st) {
         const f = ai.forecast(pi, act.idx, act.opts);
         if (f && f.pLethal >= 0.99) { st.declinedWin++; break; }
       }
+    }
+  }
+
+  // YOUR DECK IS A RESOURCE, 16 Aug 2026. Every draw used to be flat `drawCard`
+  // per card with no reference to what was left — `deck.length` reached the
+  // scorer in exactly one place, Wildfire, where it prices the OPPONENT running
+  // out. Measured over 648 ladder games, 17.7% of them ended in a deck-out and
+  // 45 of those losers had burned cards with under five remaining.
+  //
+  // `burnFatal` is the one to watch: a play that empties the deck outright is
+  // not an expensive draw, it is a loss, and it is counted separately for the
+  // same reason recoil-that-ends-the-game is.
+  {
+    const left = me.deck.length;
+    let burn = 0;
+    if (a.t === 'playTrainer') {
+      const inst = me.hand[a.hand];
+      const sc = (inst && E.effects[inst.id] && E.effects[inst.id].t) || [];
+      for (const v of sc) {
+        if (v.v === 'T_DRAW') burn += v.n || 0;
+        else if (v.v === 'T_PROFESSOR_OAK') burn += 7;
+        else if (v.v === 'T_GAMBLER') burn += 4.5 - (me.hand.length - 1);
+      }
+    } else if (a.t === 'attack' && active) {
+      for (const v of ai.script(active, a.idx)) {
+        if (v.v === 'DRAW') burn += v.n || 1;
+        else if (v.v === 'DRAW_ON_FLIP') burn += 0.5;
+      }
+    }
+    if (burn > 0) {
+      st.burns++;
+      if (left < 10) st.burnUnder10++;
+      if (left - burn <= 0) st.burnFatal++;
     }
   }
 
@@ -230,7 +273,7 @@ function classify(E, pi, a, st) {
 
 function playGame(deckA, deckB, seed, st) {
   const E = new Engine(CARD_DB, EFFECTS, { seed });
-  E.newGame(DECKS[deckA], DECKS[deckB], ['A', 'B']);
+  E.newGame(POOL[deckA], POOL[deckB], ['A', 'B']);
   E.setupAuto(0); E.setupConfirm(0);
   E.setupAuto(1); E.setupConfirm(1);
   let acts = 0;
@@ -251,6 +294,7 @@ function playGame(deckA, deckB, seed, st) {
   st.games++;
   st.turns += E.state.turn;
   if (E.state.winner === 0) st.wins++;
+  if (E.state.winner === 1 && /could not draw/.test(E.state.winReason || '')) st.deckOutLosses++;
   st.kosSuffered += prizesAtStart - E.state.players[1].prizes.length;
   return E.state.winner;
 }
@@ -305,5 +349,11 @@ console.log('\nGust of Wind');
 console.log(`  ${String(total.gusts).padStart(5)}  dragged an opponent up`);
 console.log(`  ${String(total.gustNoKill).padStart(5)}  ...and could not then kill it   ${pct(total.gustNoKill, total.gusts)} of drags`);
 console.log(`  ${String(total.gustFreeSwitch).padStart(5)}  ...nor even silence it (WASTE)  ${pct(total.gustFreeSwitch, total.gusts)} of drags`);
+
+console.log('\nYour own deck');
+console.log(`  ${String(total.burns).padStart(5)}  plays that spend deck`);
+console.log(`  ${String(total.burnUnder10).padStart(5)}  ...with under 10 cards left     ${pct(total.burnUnder10, total.burns)} of them`);
+console.log(`  ${String(total.burnFatal).padStart(5)}  ...that empty it outright       ${pct(total.burnFatal, total.burns)} of them`);
+console.log(`  ${String(total.deckOutLosses).padStart(5)}  games lost to deck-out          ${pct(total.deckOutLosses, total.games)} of games`);
 
 console.log('\nNothing here is a failure. Compare two runs; do not judge one.\n');

@@ -3747,6 +3747,11 @@ const AI_WEIGHTS = {
                         // one plus how many Energy it is short — 25 ready, 12.5
                         // one away, 5 at four or more. Was a flat 25-or-nothing
   drawCard: 5,          // per card drawn
+  deckBurn: 60,         // cost of spending deck, over the SQUARE of the share of
+                        // what remains that the play consumes — ~0 at 40 cards
+                        // left, decisive under about 12. See deckRisk()
+  deckLoss: 150,        // running yourself out of cards is not an expensive
+                        // draw, it is losing. Same shape as lastPrize
   healPer10: 3.5,
   stripEnergy: 11,      // per Energy removed from the opponent
   threshold: 0.5,       // don't bother with actions scoring below this
@@ -3859,6 +3864,94 @@ class AI {
     return (e && e.a && e.a[idx]) || [];
   }
   remainingHP(slot) { return this.top(slot).hp - slot.dmg; }
+
+  // ============================================================================
+  // YOUR DECK IS A RESOURCE AND RUNNING OUT OF IT LOSES — 16 Aug 2026
+  // ============================================================================
+  //
+  // Until now `deck.length` reached the scorer in exactly ONE place: Wildfire,
+  // which prices the OPPONENT decking out as a weapon. So the bot understood
+  // running you out of cards as a way to win and had no concept at all of doing
+  // it to itself. Every draw was flat `drawCard` per card — Bill, Fetch, Pay
+  // Day, Gambler, and Professor Oak at up to 35 points — none of them looking
+  // at what was left.
+  //
+  // Measured over 648 games on the 18 ladder decks: **17.7% of them end in a
+  // deck-out**, 20.5% of all voluntary draws happen with under 20 cards left,
+  // and 45 times the side that then lost had burned cards with fewer than five
+  // remaining. (The four theme decks say 6.3%, which is the unrepresentative-
+  // pool trap in MEASUREMENT.md — do not measure this on them.)
+  //
+  // TWO TERMS, and they are different in kind. That distinction is the recoil
+  // work's lesson reused: `selfKO` could never be made big enough to express
+  // "and then the game ends", so the game-ending branch got its own term.
+  //
+  //   deckBurn  a cost, on the SQUARE of the share of what remains that this
+  //             play consumes. Deliberately a curve and not a floor at 20 —
+  //             a floor is the cliff shape that has now bitten six times, and
+  //             it would make 21-vs-19 cards a personality change.
+  //   deckLoss  terminal. If the play empties the deck, you cannot draw on your
+  //             next turn and you have simply lost.
+  //
+  // `burn` is SIGNED. Gambler shuffles the hand back in before drawing, so it
+  // is deck-POSITIVE on any hand bigger than about five — it is the only
+  // recycling card in the game, and the one you actually want when short.
+  deckRisk(pi, burn) {
+    const W = this.W;   // per-instance, so `opts.weights` overrides still apply
+    const left = this.E.state.players[pi].deck.length;
+    if (burn <= 0) {
+      // Deck-positive: worth something, and worth more the shorter you are.
+      return left >= 25 ? 0 : (-burn) * W.deckBurn / Math.max(4, left) * 0.5;
+    }
+    if (left - burn <= 0) return -W.deckLoss;
+    const frac = burn / left;
+    return -W.deckBurn * frac * frac;
+  }
+
+  // What a card in hand is actually worth keeping, for the two cards that throw
+  // a hand away. Trevor's rule, 16 Aug: don't pitch evolutions you can use,
+  // Energy you are short of, or a Trainer worth playing — but get a desperation
+  // boost when the hand holds none of what you need.
+  handKeepValue(pi, excludeUid) {
+    const E = this.E, me = E.state.players[pi];
+    const inPlay = E.allSlots(pi);
+    let v = 0;
+    for (const inst of me.hand) {
+      if (inst.uid === excludeUid) continue;
+      const c = this.db[inst.id];
+      if (!c) continue;
+      if (c.kind === 'energy') {
+        // Only worth keeping if something actually wants it.
+        v += inPlay.some(sl => this.potential(pi, sl).short > 0) ? 4 : 1;
+      } else if (c.kind === 'pokemon' && c.evolvesFrom) {
+        // An evolution whose target is on the board is a real card.
+        v += inPlay.some(sl => this.top(sl).name === c.evolvesFrom) ? 9 : 1.5;
+      } else if (c.kind === 'pokemon') {
+        v += me.bench.length < 3 ? 4 : 1.5;
+      } else {
+        v += 2.5;   // a Trainer. Playable ones are worth more, but scoring every
+                    // one of them here would recurse into this scorer.
+      }
+    }
+    return v;
+  }
+
+  // Am I starved of the things a turn is actually made of? Drives the
+  // desperation boost on Oak and Gambler.
+  handStarved(pi) {
+    const E = this.E, me = E.state.players[pi];
+    const inPlay = E.allSlots(pi);
+    const hasEnergy = me.hand.some(x => (this.db[x.id] || {}).kind === 'energy');
+    const wantsEnergy = inPlay.some(sl => this.potential(pi, sl).short > 0);
+    const hasBasic = me.hand.some(x => {
+      const c = this.db[x.id] || {};
+      return c.kind === 'pokemon' && !c.evolvesFrom;
+    });
+    let n = 0;
+    if (wantsEnergy && !hasEnergy) n++;
+    if (me.bench.length <= 1 && !hasBasic) n++;
+    return n;
+  }
 
   // ---------------------------------------------------------------- forecast
   // Enumerate coin-flip outcomes for an attack into a probability distribution.
@@ -4266,7 +4359,9 @@ class AI {
     // Leech Life and friends heal from the damage actually dealt, so it is worth
     // nothing on an undamaged attacker and nothing against a Barrier.
     if (f.flags.leech) s += Math.min(f.expDmg * f.flags.leech, atkSlot.dmg) / 10 * W.healPer10;
-    if (f.flags.draw) s += f.flags.draw * W.drawCard;
+    // Fetch and Pay Day draw off the same deck everything else does. Trevor's
+    // note names them alongside Bill for exactly this reason.
+    if (f.flags.draw) s += f.flags.draw * W.drawCard + this.deckRisk(pi, f.flags.draw);
     // Confusing or poisoning yourself is a real cost, priced as the mirror of
     // doing it to them.
     if (f.flags.selfStatus) s -= f.flags.selfStatus * W.confuse * 0.8;
@@ -5175,9 +5270,19 @@ class AI {
           break;
         }
         case 'T_GAMBLER': {
-          // Expected 4.5 cards for the hand we give up. Good when nearly empty,
-          // a bad trade when holding a strong hand.
-          s += (4.5 - me.hand.length) * W.drawCard * 0.6;
+          // Heads 8, tails 1, so 4.5 expected — for the hand we give up. But the
+          // hand is SHUFFLED BACK IN, not discarded, and the Gambler card itself
+          // has already left the hand by the time the script runs. So on a hand
+          // of more than about five this card makes the deck BIGGER, and it is
+          // the only card in the game that does. Capping it alongside Bill would
+          // suppress the one play that digs out of a deck-out.
+          const held = me.hand.filter(x => x.uid !== inst.uid).length;
+          s += (4.5 - held) * W.drawCard * 0.6;
+          s += this.deckRisk(pi, 4.5 - held);
+          // Losing the hand still costs what the hand was worth, and being
+          // starved is what makes throwing it away right.
+          s -= this.handKeepValue(pi, inst.uid) * 0.35;
+          s += this.handStarved(pi) * W.drawCard * 2.2;
           break;
         }
         case 'T_RECYCLE': {
@@ -5186,13 +5291,24 @@ class AI {
           s += 0.5 * W.drawCard * 1.4;
           break;
         }
-        case 'T_DRAW': s += v.n * W.drawCard; break;
+        case 'T_DRAW': s += v.n * W.drawCard + this.deckRisk(pi, v.n); break;
 
         case 'T_PROFESSOR_OAK': {
-          // good when the hand is dead, terrible when it's full of gas
+          // Discards the hand — gone, not shuffled back — and draws seven. So it
+          // burns exactly seven every time, which is the largest single bite any
+          // card takes out of your own deck.
+          //
+          // The card count alone was the whole of this before: `(7 - keep)`
+          // treats a hand of six Energy you cannot attach the same as a hand of
+          // six you are about to play. Trevor's rule, 16 Aug: don't pitch
+          // evolutions you can use, Energy something is short of, or a Trainer
+          // worth playing — and take it anyway when the hand holds none of what
+          // the board actually needs.
           const keep = me.hand.filter(x => x.uid !== inst.uid).length;
           s += (7 - keep) * W.drawCard;
-          if (keep >= 6) s -= 30;
+          s -= this.handKeepValue(pi, inst.uid) * 0.55;
+          s += this.handStarved(pi) * W.drawCard * 2.6;
+          s += this.deckRisk(pi, 7);
           break;
         }
 

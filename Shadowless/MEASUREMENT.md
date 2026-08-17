@@ -29,7 +29,7 @@ that matters for a quality pass. Two tools answer it, and **neither is pass/fail
   a confidence interval. This is the only tool that answers "is it better than it was an hour ago".
 
 ```bash
-node tools/aitest.js 6                  # behaviour counts
+node tools/aitest.js 6 --gbc           # behaviour counts — TAKE THE FLAG, see below
 node tools/aiduel.js 8                  # vs HEAD
 node tools/aiduel.js 8 HEAD --control   # baseline vs ITSELF — run this too
 ```
@@ -79,6 +79,11 @@ nobody argues with. Everything above at least looked like a result.
 actually faces now. Control run first, as ever: 50.0% ± 1.9 over 2,592 games. **The four theme decks
 were the whole game when this tool was written and they are now a sixth of the card pool** — assume
 the default pool is unrepresentative for anything touching a card outside Base Set.
+
+**`aitest.js` was still blind in exactly this way until 16 Aug 2026** — a year of `--gbc` existing on
+one tool and not the other. The sharpest illustration this project has: the theme decks say **6.3%**
+of games end in a deck-out and the ladder decks say **17.7%**, which is the difference between a
+curiosity and the third most common way the game ends. It takes the flag now. **Take it.**
 
 **`selftest.js`'s AI ladder was asserting a statistical claim at a sample that could not carry it,
 and it looked like a verdict rather than noise.** The check is `expert beats novice`, and it ran at

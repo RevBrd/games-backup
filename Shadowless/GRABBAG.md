@@ -26,14 +26,19 @@ still open, so it stays with its reason and with what evidence would revive it.
 * Opponent uses Gust of Wind to drag out a pokemon already in the active spot — open, but **not what
   it looks like** and not Gust-specific. → [GRABHIST](GRABHIST.md)
 - Check if variant cards are displaying in game. Ideally the sigil cards should show their markings.
-- Add to the logic something about when to use Professor Oak and Gambler and when not to. Might be worth discussion first.
+- **Intra-turn sequencing.** Two items are the same fault: the CPU should spend consumables *before*
+  playing Professor Oak or Gambler, and it played two Gusts in one turn that undid each other. The
+  scorer evaluates each Trainer independently within a turn and has no memory that it just acted.
+  → [GRABHIST](GRABHIST.md)
 - Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
-- If the opponent has a tank in the active spot and is starting to run out of cards in the deck before the player, it begins to power up that tank to attack with or retreat rather than tank to a loss. It should also stop using cards like Bill or Professor Oak, or moves like Fetch or Pay Day below ~20ish cards - Some preemptive, some log# 06-13-50.
+- If the opponent has a tank in the active spot and is starting to run out of cards in the deck before the player, it begins to power up that tank to attack with or retreat rather than tank to a loss - Some preemptive, some log# 06-13-50. **The draw half of this is done** (deck spending is priced, as a curve rather than a floor at 20); what is left is the bot noticing it is losing a race it can count and changing plan. → [GRABHIST](GRABHIST.md)
 - Hand cards change size in different situations, sometimes as things are moving between turns or after a turn has ended. Please do not touch this one without carefully consulting LAYOUT.md and saving it for its own dedicated pass with minimal competing items, just in case. Trigger might be during coin flips, after which it reverts back. Update - It might be the whole screen any time anything is selected resizing itself. Back up before this one.
 - Temporarily install a popup that asks me a Y/N if I want to save a game log when I leave the final card opening screen (on a win) or the game in general (on a loss). This is because I'm stupid and keep clicking through it.
 - Opponent used Potion right at the start to heal only 10 damage. Also promotes a pokemon only to switch it out immediately - log# 00-28-40
 - Visual popup on screen or in side panel (screen preferred) when a trainer card is played by the CPU, with a short pause in the action while it's shown. (medium item)
 - Lower cards per pack to 10 for pacing reasons. Let's talk about which one to yeet out.
+- Draw prize collection in random order.
+- Show duplicate card numbers (if not new) on the booster pack opening screen, displaying after each card is flipped.
 
 
 

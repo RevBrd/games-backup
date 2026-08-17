@@ -188,8 +188,27 @@ worth 55 plus 35 damage, so no value of that weight fixes this without breaking 
 decision. **Losing is not a large Knock Out.** The win shortcut in `choose()` needed its own guard,
 because it returns a near-certain lethal *before any scoring runs*. **Where to look for more of
 these: anywhere the scorer averages over outcomes and one of those outcomes is terminal.** Prizes,
-empty boards and deck-out are the three ways this game ends, and only the first two are priced
-anywhere.
+empty boards and deck-out are the three ways this game ends — **that sentence named deck-out as still
+unpriced and the next entry is what closed it**, which is the best argument in this file for writing
+down where you did not look.
+
+**Your own deck is a resource, and running out of it loses.** *16 Aug 2026, from two of Trevor's grab
+bag items that turned out to be one.* `deck.length` reached the scorer in exactly one place —
+Wildfire, where it prices the **opponent** decking out as a weapon. So the bot understood running you
+out of cards as a way to win and had no concept of doing it to itself: every draw was flat `drawCard`
+per card, Bill, Fetch, Pay Day, Gambler and Professor Oak at up to 35 points, none of them looking at
+what was left. **17.7% of ladder games ended in a deck-out** and 45 of those losers had burned cards
+with under five remaining. Two terms, and the split is the recoil work's lesson reused: `deckBurn` is
+a cost on the **squared share of what remains**, and `deckLoss` is terminal for a play that empties
+the deck outright. **It is deliberately a curve and not the floor at 20 cards that the report asked
+for** — a floor is the cliff shape in the table above and would make 21-vs-19 a personality change;
+`powertest.js` asserts the curve is monotonic and not flat, so a later threshold trips it. **Gambler
+is priced on NET change and must not be capped alongside Bill:** it shuffles the hand back in before
+drawing 1-or-8, so on a hand of more than five it makes the deck *bigger*, and it is the only
+recycling card in the game — capping it would suppress the one play that digs out. Oak and Gambler
+also weigh what the hand is worth keeping and get a boost when the board is starved of Energy or
+Basics, which is Trevor's rule. **Plays that empty the deck outright: 14 → 0**, burns under ten cards
+6% → 3%; the duel reads 51.1% ± 1.3 against a 50.0% control, which is a lean and not a result.
 
 ## Open
 

@@ -194,6 +194,59 @@ should not — a 5-point draw goes negative and the bot passes, a 60-point swing
 still obviously worth taking. Asserted both ways, because "never attack while Confused" would be
 worse play than the bug.
 
+### 16 Aug 2026 — Opus 5 #17 (Job 9, the deck as a resource)
+
+**Two items that turned out to be one, and `AI.md` had already written down where to find it.**
+*"When to use Professor Oak and Gambler and when not to"* and *"stop using Bill or Professor Oak, or
+Fetch or Pay Day, below ~20ish cards"* are the same fault: **`deck.length` reached the scorer in
+exactly one place.** That place is Wildfire, where it prices the *opponent* decking out as a weapon —
+so the bot understood running you out of cards as a way to win and had no concept whatsoever of doing
+it to itself.
+
+#16's closing line was *"Prizes, empty boards, and deck-out are the three ways this game ends, and
+only the first two are priced anywhere."* It named the gap and nobody had gone back for it. **Write
+down where you did not look.**
+
+**Measured first, and the pool decided the answer.** 648 games: the four theme decks say 6.3% of
+games end in a deck-out, the 18 ladder decks say **17.7%** — MEASUREMENT.md's most dangerous entry,
+live again. 20.5% of all voluntary draws happened with under 20 cards left, and **45 times the side
+that then lost had burned cards with fewer than five remaining.**
+
+**Two terms, and the split is the recoil-suicide lesson reused.** `deckBurn` is a cost on the squared
+share of what remains; `deckLoss` is terminal for a play that empties the deck. One weight could not
+have done both — losing is not an expensive draw, exactly as losing is not a large Knock Out.
+
+**A curve, not the floor Trevor asked for, and I said so rather than building it.** "Stop below 20"
+is the cliff shape now at six entries in `AI.md`, and it would make 21-vs-19 cards a personality
+change. `powertest.js` asserts the curve is monotonic *and* not flat, so a later threshold trips it.
+The honest cost of that call: at 20 cards the penalty on Bill is 0.6 against a gain of 10, so the
+"under 20" count barely moved. **The harm was never at 20** — it is concentrated below 10, and that
+is where the change bites.
+
+**Gambler is not a burner and capping it would have been the bug.** It shuffles the hand back in
+*before* drawing 1-or-8, so its net deck change is `held − 4.5` — on any hand over about five it makes
+the deck **bigger**, and it is the only recycling card in the game. Following the letter of the item
+would have suppressed the single play that digs out of a deck-out. Priced on net change instead;
+Trevor agreed on sight.
+
+**Results.** Plays that empty the deck outright **14 → 0**. Burns under ten cards 6% → 3%. Late burns
+by the eventual deck-out loser 45 → 21. Deck-out losses 17.7% → 15.7% — small because both seats got
+the change and many of those games just swapped which side ran out. Duel 51.1% ± 1.3 over 5,832 games
+against a 50.0% control: a lean, not a result, and not what justifies this.
+
+*Two test notes.* My first measurement script reported **zero** draw plays across 64 games and looked
+entirely clean — the action is `playTrainer` with a `hand` field and I was matching `trainer`/`idx`,
+so the detector never fired once. And the first Gambler assertion passed while testing nothing,
+because `base1-60` is Ponyta and my `if (score === null) return true` escape hatch swallowed it.
+**Both are the same mistake: a test that cannot fail for the reason you wrote it.** The escape hatches
+are now throws. Then the corrected test failed *for a good reason* — I had filled the "big hand" with
+Energy the board wanted, and refusing to shuffle that away is correct play. The test was wrong, not
+the code.
+
+*Instrument work, again.* `aitest.js` gained the deck counters and a **`--gbc` flag**, which it had
+been missing since `aiduel.js` got one — the tool whose whole job is measuring behaviour was only
+ever seeing a sixth of the card pool.
+
 ### 16 Aug 2026 — Opus 5 #16 (Job 9, later batches)
 
 **"Opponent lost the match due to self-kill from recoil."** The most valuable item of the day, and

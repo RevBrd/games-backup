@@ -2820,5 +2820,101 @@ T('and is discounted when the Pokemon will not live to fire it', () => {
   return true;
 });
 
+// ============================================================================
+// YOUR DECK IS A RESOURCE — 16 Aug 2026, from two of Trevor's grab bag items
+// ============================================================================
+//
+// Asserted here rather than measured in a duel, and deliberately: both seats
+// share the fault, so it is symmetric and aiduel.js cancels it. That is the
+// standing doctrine in MEASUREMENT.md.
+//
+// Score one Trainer out of a hand, with the deck trimmed to `left` cards.
+function trainerScore(id, left, extraHand = []) {
+  const E = board('base1-46');                       // Charmander, nothing special
+  const p = E.state.players[0];
+  p.hand = extraHand.map(x => ({ id: x, uid: E.uid++ }));
+  p.hand.push({ id, uid: E.uid++ });
+  p.deck = p.deck.slice(0, left);
+  E.aiChoose(0, 'expert');
+  const ai = E._ai;
+  const a = E.legalActions(0).find(x => x.t === 'playTrainer'
+    && p.hand[x.hand] && p.hand[x.hand].id === id);
+  // NOT `return null` on a miss. An earlier version of these tests did that and
+  // paired it with `if (s === null) return true` at every call site, so a wrong
+  // card id (base1-60 is Ponyta, not Gambler) made two assertions pass while
+  // testing nothing at all. Fail loudly: a miss here is a broken test, never an
+  // inapplicable one.
+  if (!a) throw new Error(`no legal play for ${id} — wrong card id, or the engine refuses it`);
+  return ai.scoreTrainer(0, a);
+}
+
+T('Bill is worth taking on a full deck', () => {
+  const s = trainerScore('base1-91', 40);
+  if (!(s > 0)) throw new Error(`Bill refused at 40 cards: ${s.toFixed(1)}`);
+  return true;
+});
+
+T('...and refused when it would empty the deck', () => {
+  const s = trainerScore('base1-91', 2);
+  if (!(s < 0)) throw new Error(`Bill still taken with 2 cards left: ${s.toFixed(1)}`);
+  return true;
+});
+
+T('the deck cost is a CURVE, not a floor', () => {
+  // The whole point of not writing this as "stop below 20". If these three are
+  // ever equal, someone has replaced the curve with a threshold — which is the
+  // cliff shape this project has now been bitten by six times.
+  const hi = trainerScore('base1-91', 40);
+  const mid = trainerScore('base1-91', 14);
+  const lo = trainerScore('base1-91', 6);
+  if (!(hi > mid && mid > lo))
+    throw new Error(`not monotonic: 40=${hi.toFixed(1)} 14=${mid.toFixed(1)} 6=${lo.toFixed(1)}`);
+  if (Math.abs(hi - mid) < 0.01)
+    throw new Error('flat between 40 and 14 — this is a threshold, not a curve');
+  return true;
+});
+
+T('Professor Oak keeps a hand worth keeping', () => {
+  // Six cards the board can actually use versus an empty hand, same deck size.
+  const full = trainerScore('base1-88', 40,
+    ['base1-98', 'base1-98', 'base1-98', 'base1-98', 'base1-98', 'base1-98']);
+  const empty = trainerScore('base1-88', 40, []);
+  if (!(empty > full))
+    throw new Error(`Oak not discriminating by hand: full=${full.toFixed(1)} empty=${empty.toFixed(1)}`);
+  return true;
+});
+
+T('Gambler is deck-POSITIVE on a big hand and a burner on a bare one', () => {
+  // The deck term in isolation, because the behavioural score is legitimately
+  // confounded by hand quality — the first version of this test filled the big
+  // hand with Energy the board wanted, and the bot correctly refused to shuffle
+  // it away. That was the TEST being wrong, not the code, and it is the second
+  // time in this file that a wrong premise looked like a failing feature.
+  //
+  // Gambler shuffles the hand back in BEFORE drawing 1-or-8, so the net deck
+  // change is `held - 4.5`. On eight cards it hands 3.5 back; on none it eats
+  // 4.5. It is the only recycling card in the game and must not be capped
+  // alongside Bill.
+  const E = board('base1-46');
+  E.aiChoose(0, 'expert');
+  const ai = E._ai;
+  E.state.players[0].deck = E.state.players[0].deck.slice(0, 8);
+  const bigHand = ai.deckRisk(0, 4.5 - 8);     // holding eight
+  const bareHand = ai.deckRisk(0, 4.5 - 0);    // holding none
+  if (!(bigHand > 0)) throw new Error(`recycling scored as a cost: ${bigHand.toFixed(1)}`);
+  if (!(bareHand < 0)) throw new Error(`burning 4.5 of 8 scored as free: ${bareHand.toFixed(1)}`);
+  return true;
+});
+
+T('...and the bot prefers it on a big hand of cards it cannot use', () => {
+  // The same comparison behaviourally, with a hand the board has no use for:
+  // Blastoise with no Wartortle in play is a dead card.
+  const bigHand = trainerScore('base3-60', 8, Array(8).fill('base1-2'));
+  const bareHand = trainerScore('base3-60', 8, []);
+  if (!(bigHand > bareHand))
+    throw new Error(`Gambler priced as a burner: big=${bigHand.toFixed(1)} bare=${bareHand.toFixed(1)}`);
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
