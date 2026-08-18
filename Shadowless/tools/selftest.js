@@ -77,10 +77,22 @@ for (const name of DECK_NAMES) {
 // the number here, something was deleted or an id was misspelled. That failure
 // is otherwise completely silent, because an unscripted card simply cannot be
 // put in a deck and nothing else complains.
-const REMAINING = { base5: 32 };   // Team Rocket, Job 10b in progress
+const REMAINING = { base5: 36 };   // Team Rocket, Job 10c. 32 + the 4 special Energy printings the old filter hid
 
 console.log('\nCard coverage');
-const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');
+// ENERGY IS COUNTED, and it used to be filtered out of this line entirely.
+// That was a hole exactly the shape of the rule above, and Team Rocket is the
+// first set that would have fallen through it: base5 prints three SPECIAL
+// Energy, and a special Energy needs a script like anything else. With energy
+// excluded, both the hard gate and the ratchet below were blind to them — so
+// deleting REMAINING.base5 at the end of the job would have gone green with
+// Rainbow Energy unplayable, and the player would collect a card no deck can
+// legally contain. Basic Energy passes on its own merits: it carries a script
+// that does nothing rather than no script at all, which is not the same thing.
+//
+// It never bit before because the three live sets hold exactly one special
+// Energy between them (Double Colorless) and it was scripted on day one.
+const all = Object.keys(CARD_DB);
 const unscripted = all.filter(id => !EFFECTS[id]);
 const bySet = {};
 for (const id of unscripted) bySet[CARD_DB[id].set] = (bySet[CARD_DB[id].set] || 0) + 1;
@@ -281,7 +293,7 @@ if (finished.length) console.log(`  ${finished.join(', ')} now complete `
 // Whatever else is missing, the playable decks must be fully implemented.
 const inDecks = new Set();
 for (const d of Object.values(DECKS)) for (const [, id] of d.list) inDecks.add(id);
-const brokenDeckCards = [...inDecks].filter(id => CARD_DB[id].kind !== 'energy' && !EFFECTS[id]);
+const brokenDeckCards = [...inDecks].filter(id => !EFFECTS[id]);   // energy included — see above
 check(brokenDeckCards.length === 0, 'every card in a playable deck is implemented',
   brokenDeckCards.join(', '));
 

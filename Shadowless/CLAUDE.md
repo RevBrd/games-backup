@@ -67,11 +67,14 @@ playtest. You pick a starter deck, work down a roster of named challengers, beat
 next set, earn packs of whatever set you are on, open them, browse what you own, and build decks from
 it — and all of it persists.
 
-**Three sets are live and complete: Base, Jungle and Fossil — 221 of 221 scriptable cards.** Run
+**Three sets are live and complete: Base, Jungle and Fossil — 228 of 228 cards.** Run
 `node tools/selftest.js` for the live figures rather than trusting a number in prose; it prints
-coverage per set. (**Card counts come in two units.** A set's *printings* include basic Energy, which
-needs no effect script; `selftest.js` counts *scriptable* cards. Base Set is 102 printings and 95
-scriptable. Mixing the two has already confused this section once.)
+coverage per set. (**There is one unit now, and there used to be two.** This section counted
+*scriptable* cards, excluding Energy, because basic Energy was thought to need no effect script — it
+does have one, `{t: []}`, and *special* Energy needs a real one. The exclusion was a hole in the
+gating rule and Team Rocket's three special Energy were the first cards that would have fallen
+through it; `selftest.js` now counts printings. If you meet an older figure — Base Set as 95, the
+three sets as 221 — it is measuring the smaller unit, not disagreeing with this one.)
 
 **Done and shipped, none of it a stub:** the rules engine and every card in the three live sets; the
 four-tier AI; the collection, packs, dex, save file and deck builder; the ladder and its named
@@ -277,6 +280,7 @@ The per-area open lists live in the files that own them; this is the index to th
 intended length, because `setupConfirm()` was not idempotent and every harness in the repo confirmed
 each player twice. Fixed. Do not compare against an older number; the full account is in
 [HISTORY.md](HISTORY.md).
+
 
 ## Marquee billing
 
