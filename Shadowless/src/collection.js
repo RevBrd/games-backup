@@ -101,7 +101,7 @@ function newSave(opts = {}) {
     decks: [],                 // [{ name, list: [[qty, id, vkey?], ...] }]
     packs: {},                 // setCode -> unopened packs held
     starter: opts.starter || '',
-    stats: { wins: 0, losses: 0, packsOpened: 0, cardsPulled: 0 },
+    stats: { wins: 0, losses: 0, draws: 0, packsOpened: 0, cardsPulled: 0 },
     // Job 7. Which named opponents you have beaten, and how often. There is no
     // `unlocked` list beside it on purpose — progress.js derives what is open
     // from this map every time it is asked, so the two can never disagree.
@@ -128,7 +128,10 @@ function ensureShape(s) {
   // Counters are bookkeeping rather than collection data, so they are the one
   // place a wrong type is cheaper to reset than to reject.
   if (s.stats == null || typeof s.stats !== 'object') s.stats = {};
-  ['wins', 'losses', 'packsOpened', 'cardsPulled'].forEach(k => {
+  // `draws` joined on 18 Aug 2026 and needs no migration for exactly the reason
+  // this block exists: a save written before draws could happen has drawn zero
+  // games, which is what the backfill gives it.
+  ['wins', 'losses', 'draws', 'packsOpened', 'cardsPulled'].forEach(k => {
     if (typeof s.stats[k] !== 'number') s.stats[k] = 0;
   });
   if (typeof s.starter !== 'string') s.starter = '';

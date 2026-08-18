@@ -2494,7 +2494,8 @@ function settleResult() {
   if (s.phase !== 'over' || s.winner === null) return;   // winner can be 0
   UI.awarded = true;
   drainEngineLog();
-  logResult(UI.elog, s.winner === 0 ? 'You' : 'Opponent', s.winReason || '', s.turn);
+  logResult(UI.elog, s.winner === 'draw' ? 'Draw' : (s.winner === 0 ? 'You' : 'Opponent'),
+    s.winReason || '', s.turn);
 
   // Job 7. Packs come from BEATING SOMEBODY, and which set they are packs of is
   // the bracket's, not homeSet()'s — that constant was the only reason Jungle
@@ -2512,6 +2513,14 @@ function settleResult() {
       const r = recordWin(UI.save, LADDER_VIEW, foe.id);
       if (r) { addPacks(UI.save, r.set, r.packs); UI.reward = r; }
     }
+  } else if (s.winner === 'draw') {
+    // A DRAW PAYS NOTHING AND UNLOCKS NOTHING — Trevor's call, 18 Aug: identical
+    // to a loss, marked differently. It counts its own stat rather than being
+    // folded into losses, because a run that draws is telling you something a
+    // run that loses is not, and the two should be distinguishable later even
+    // though nothing reads them yet.
+    UI.save.stats.draws++;
+    if (foe) recordLoss(UI.save, foe.id);
   } else {
     UI.save.stats.losses++;
     if (foe) recordLoss(UI.save, foe.id);
@@ -3975,9 +3984,10 @@ function renderOver() {
   const ov = el('div', 'overlay');
   const box = el('div', 'sheet');
   const foe = currentFoe();
-  box.appendChild(el('h2', null, s.winner === 0
-    ? (foe ? `You beat ${foe.name}` : 'You win')
-    : (foe ? `${foe.name} wins` : 'Opponent wins')));
+  box.appendChild(el('h2', null, s.winner === 'draw' ? 'A draw'
+    : s.winner === 0
+      ? (foe ? `You beat ${foe.name}` : 'You win')
+      : (foe ? `${foe.name} wins` : 'Opponent wins')));
   box.appendChild(el('p', null, s.winReason));
   box.appendChild(el('p', 'dimtxt', `Game lasted ${s.turn} turns. Seed ${UI.E.seed}.`));
 

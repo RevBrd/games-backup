@@ -3808,5 +3808,87 @@ T('...and two shells do not answer each other forever', () => {
   return true;                                            // and it terminated
 });
 
+// -------------------------------------------------------------- Draws
+// Before 18 Aug 2026 a simultaneous finish was resolved by array order: the
+// Knock Out loop checked win conditions inside itself and returned on the first
+// one, and it always looked at seat 0 first, so SEAT 1 WON EVERY TIE — with its
+// own Pokemon still standing, because its Knock Out was never processed.
+//
+// Every Knock Out now resolves before anybody wins. These assert the draw AND
+// the ordinary outcomes, because a draw-only test would pass on a build that
+// declared everything a draw.
+console.log('\nDraws');
+
+// Two lone Actives, one Prize each, both about to die.
+// NAMED FOR ITS SECTION, and that is not fussiness: this file is one flat scope
+// of ~3,000 lines and it already had an `drawBoard()` five hundred lines up. My
+// first version reused the name, function hoisting silently replaced theirs, and
+// four unrelated AI tests started reporting NaN. A helper in here needs a name
+// nothing else would reach for.
+function drawBoard(dmg0, dmg1, prizes0, prizes1) {
+  const E = board('base1-58', [], 'base1-58');
+  const p = E.state.players[0], o = E.state.players[1];
+  p.bench = []; o.bench = [];
+  const prize = () => ({ id: 'base1-99', uid: E.uid++ });
+  p.prizes = Array.from({ length: prizes0 }, prize);
+  o.prizes = Array.from({ length: prizes1 }, prize);
+  p.active.dmg = dmg0; o.active.dmg = dmg1;
+  E.checkKOs();
+  return E;
+}
+
+T('both sides finishing at once is a DRAW, not seat 1 winning', () => {
+  const E = drawBoard(999, 999, 1, 1);
+  eq(E.state.winner, 'draw', 'the result is a draw');
+  eq(E.state.players[0].active, null, 'and BOTH Knock Outs were processed');
+  eq(E.state.players[1].active, null, '...including the one the old loop skipped');
+  return true;
+});
+
+T('...and an ordinary win is still an ordinary win, from either seat', () => {
+  // The half a draw-only test cannot see. Seat 0 takes its last Prize alone.
+  const a = drawBoard(0, 999, 1, 6);
+  eq(a.state.winner, 0, 'seat 0 wins when only seat 0 finishes');
+  const b = drawBoard(999, 0, 6, 1);
+  eq(b.state.winner, 1, 'and seat 1 wins when only seat 1 does');
+  return true;
+});
+
+T('a game with both sides alive is still in progress', () => {
+  const E = drawBoard(0, 0, 3, 3);
+  eq(E.state.winner, null, 'null still means keep playing');
+  return true;
+});
+
+T('running out of Pokemon on both sides at once is also a draw', () => {
+  // The other win condition, and it must reach the same place. Six Prizes each,
+  // so nobody is winning on Prizes — this is purely an empty-board double loss.
+  const E = drawBoard(999, 999, 6, 6);
+  eq(E.state.winner, 'draw', 'both boards emptied together');
+  return true;
+});
+
+T('a draw is not null, because null means the game is still running', () => {
+  // The trap this whole change turns on. Every loop in the project — the AI
+  // harnesses, the UI, selftest — tests `winner === null` to mean in-progress.
+  // A draw stored as null would loop forever.
+  const E = drawBoard(999, 999, 1, 1);
+  if (E.state.winner === null) throw new Error('a draw must never be null');
+  eq(E.state.phase, 'over', 'and the game really is over');
+  return true;
+});
+
+T('every Knock Out resolves before anybody counts Prizes', () => {
+  // A Selfdestruct-shaped board: three Benched Pokemon die at once. The old
+  // loop took ONE per pass and checked the win condition between each, so a
+  // Prize could run out with corpses still on the board.
+  const E = board('base1-58', ['base1-58', 'base1-58', 'base1-58'], 'base1-58');
+  const p = E.state.players[0];
+  p.bench.forEach(b => { b.dmg = 999; });
+  E.checkKOs();
+  eq(p.bench.length, 0, 'all three left together');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

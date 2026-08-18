@@ -1468,38 +1468,11 @@ class Engine {
 
     const r = this.dispatchAction(pi, a);
     this.settleTransforms();
-    this.settleEmptyBoard();
+    this.settleWinConditions();
     return r;
   }
 
-  // A SIDE WITH NO POKEMON HAS LOST, wherever that happened.
-  //
-  // Three separate checks for this already existed and every one was local to
-  // the path that could cause it — Buzzap knocking out its own Electrode, a
-  // Clefairy Doll discarded from play, and checkKOs. That covered every route
-  // that existed when they were written, and covered nothing that arrived
-  // afterwards, which is the failure mode a local guard always has.
-  //
-  // Found on 18 Aug 2026 by a test for Abra's Vanish — shuffle your last Pokemon
-  // into your deck and the game simply carried on with an empty board. It is NOT
-  // a Team Rocket bug: PIDGEOT'S HURRICANE has the same hole and has been live
-  // since Base Set. Bounce a lone Active back to its owner's hand and nothing
-  // ends the game either.
-  //
-  // Idempotent and called after every action, which is the same shape as
-  // settleTransforms and for the same reason: a route added later cannot forget
-  // about it.
-  settleEmptyBoard() {
-    const s = this.state;
-    if (s.phase !== 'main' || s.winner !== null) return;
-    for (let i = 0; i < 2; i++) {
-      const p = s.players[i];
-      if (!p.active && p.bench.length === 0) {
-        this.endGame(1 - i, `${p.name} has no Pokemon left`);
-        return;
-      }
-    }
-  }
+
 
   dispatchAction(pi, a) {
     switch (a.t) {
@@ -3562,25 +3535,67 @@ class Engine {
         };
         const dead = (sl) => sl.forcedKO || sl.dmg >= topCard(this.db, sl).hp;
         if (p.active && dead(p.active)) { kill(p.active, false, -1); any = true; }
-        if (!any) for (let k = 0; k < p.bench.length; k++) {
-          if (dead(p.bench[k])) { kill(p.bench[k], true, k); any = true; break; }
+        // BACKWARDS, and all of them. It used to take one Benched Pokemon per
+        // pass and `break`; a Selfdestruct that kills three leaves three corpses
+        // and they should all go before anybody counts Prizes.
+        for (let k = p.bench.length - 1; k >= 0; k--) {
+          if (dead(p.bench[k])) { kill(p.bench[k], true, k); any = true; }
         }
-        if (any) {
-          if (o.prizes.length === 0) return this.endGame(1 - i, `${o.name} took all Prizes`);
-          if (!p.active && p.bench.length === 0) return this.endGame(1 - i, `${p.name} has no Pokemon left`);
-          if (!p.active && p.bench.length > 0) this.addPromote(i);
-        }
+        if (!p.active && p.bench.length > 0) this.addPromote(i);
       }
     }
+    // ...and only NOW does anybody win. See settleWinConditions.
+    this.settleWinConditions();
   }
 
+  // WHO HAS WON, ASKED FOR BOTH PLAYERS AT ONCE.
+  //
+  // This used to be three `return this.endGame(...)` lines inside the Knock Out
+  // loop, which meant the FIRST player the loop happened to look at won any
+  // simultaneous finish — and `for (let i = 0; i < 2; i++)` always looks at seat
+  // 0 first, so seat 1 won every tie. Measured before the change: both Actives
+  // dead at once with both players on their last Prize ended `winner: 1`, with
+  // seat 1's Pokemon still standing because its Knock Out was never processed.
+  // Seat 1 is the CPU. Destiny Bond, Strikes Back and any mutual Selfdestruct
+  // could all reach it, so this was live long before Team Rocket.
+  //
+  // Now every Knock Out resolves first and the question is asked once. A player
+  // wins by taking their last Prize or by their opponent running out of Pokemon;
+  // if BOTH are true it is a DRAW, which is a real outcome in this era rather
+  // than an error state.
+  //
+  // `winner: 'draw'` rather than null or -1, and that is not cosmetic: `winner
+  // === null` is the in-progress sentinel every loop in the project tests, so a
+  // draw stored as null would read as "keep playing" forever. Trevor picked the
+  // word — the Game Boy game and Pocket both use it.
+  settleWinConditions() {
+    const s = this.state;
+    if (s.phase === 'over') return;
+    const wins = i => {
+      const me = s.players[i], them = s.players[1 - i];
+      if (me.prizes.length === 0) return `${me.name} took all Prizes`;
+      if (!them.active && them.bench.length === 0) return `${them.name} has no Pokemon left`;
+      return null;
+    };
+    const w0 = wins(0), w1 = wins(1);
+    if (w0 && w1) return this.endGame('draw', `${w0}; ${w1}`);
+    if (w0) return this.endGame(0, w0);
+    if (w1) return this.endGame(1, w1);
+  }
+
+  // `winner` is 0, 1, or the string 'draw'. NEVER null — that is the
+  // in-progress sentinel, and CLAUDE.md's list of things that have cost an hour
+  // already warns that it can legitimately be 0, so every comparison here is
+  // against null explicitly rather than for truthiness.
   endGame(winner, reason) {
     this.state.phase = 'over';
     this.state.winner = winner;
     this.state.winReason = reason;
     this.state.pendingPromote = null;
     this.state.promoteQueue = [];
-    this.log(`GAME OVER - ${this.state.players[winner].name} wins: ${reason}`, 'win');
+    this.log(winner === 'draw'
+      ? `GAME OVER - a draw: ${reason}`
+      : `GAME OVER - ${this.state.players[winner].name} wins: ${reason}`, 'win');
     return { ok: true, over: true };
   }
 

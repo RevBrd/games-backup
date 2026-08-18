@@ -36,6 +36,7 @@ enough to settle a call in plain English, so ask him — he expects to be asked.
 | "Energy" counts by type; "Energy card" counts by class | [ENERGY-VS-ENERGY-CARD.md](Rulings/ENERGY-VS-ENERGY-CARD.md) |
 | An attack that names a group hits every member of it, the attacker included | [MASS-EXPLOSION.md](Rulings/MASS-EXPLOSION.md) |
 | "Even to itself" reaches the Confusion penalty | [FRENZY-SELF-DAMAGE.md](Rulings/FRENZY-SELF-DAMAGE.md) |
+| A game can be drawn, and a draw pays nothing | [DRAWS.md](Rulings/DRAWS.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -107,6 +108,7 @@ that matches.
 | **The card's own wording picks the test**: *Energy* counts by live type, *Energy card* counts by physical class — so Rainbow scales a damage bonus but Rain Dance still cannot move it | [Rainbow Energy, Hydrocannon](Rulings/ENERGY-VS-ENERGY-CARD.md) |
 | **A group-naming attack enumerates once and applies to all of it**, both sides and the attacker included, even where that damages one Pokemon twice | [Mass Explosion](Rulings/MASS-EXPLOSION.md) |
 | **A damage modifier reaches damage this Pokemon DOES, not damage it TAKES** — including damage the rules make it inflict on itself | [Frenzy, Confusion](Rulings/FRENZY-SELF-DAMAGE.md) |
+| **Resolve every consequence before asking who won** — a win condition evaluated mid-resolution answers for whoever the loop reached first | [draws, `checkKOs`](Rulings/DRAWS.md) |
 
 ## What *settled with Trevor* means
 

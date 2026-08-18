@@ -110,7 +110,9 @@ function renderEventLog(el) {
   if (el.result) {
     L.push('');
     L.push('='.repeat(58));
-    L.push(`RESULT   ${el.result.winner} wins — ${el.result.reason}`);
+    L.push(el.result.winner === 'Draw'
+      ? `RESULT   Draw — ${el.result.reason}`
+      : `RESULT   ${el.result.winner} wins — ${el.result.reason}`);
     L.push(`         ${el.result.turns} turns`);
   }
 
