@@ -102,9 +102,14 @@
 //     BENCH_SPLASH_PER_FLIP {dmg}  a coin per opposing Benched Pokemon; heads hits
 //                                  it, and every tail comes back at you (Thunderstorm)
 //     BENCH_SPLASH_FLIP_SIDE {n}   ONE coin decides whose Bench takes it (Blizzard)
-//     BENCH_SNIPE {n}              n damage to Benched Pokemon of the ATTACKER's
-//                                  choosing, never W/R. The "choose 1 of your
-//                                  opponent's Pokemon" family (Dark Mind, Gigashock)
+//     BENCH_SNIPE {n, dmg, target} dmg to n of the opponent's Pokemon, chosen by
+//                                  the ATTACKER, never W/R. DEFAULT IS BENCH ONLY,
+//                                  which is what Base Set's wording asks for
+//                                  (Dark Mind, Gigashock). `target: 'any'` widens
+//                                  it to include the Active, which is what Team
+//                                  Rocket's "1 of your opponent's Pokemon" wording
+//                                  asks for and is a materially stronger card
+//     SHUFFLE_OPP_DECK             shuffle the opponent's deck (Mischief)
 //     STATUS_SELF {s}              apply status to SELF. `blocked` is deliberately
 //                                  not consulted — the defender's Barrier has no
 //                                  bearing on what you do to yourself (Petal Dance)
@@ -1111,6 +1116,36 @@ const EFFECTS = {
   'base5-70': { a: [                                 // Zubat
     [],                                              //   Ram
     [],                                              //   Bite
+  ]},
+
+  // ---- Team Rocket, hand-authored ----
+  'base5-64': { a: [                                 // Ponyta
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'R' }],    //   Ember — pay a Fire to fire
+  ]},
+  'base5-65': { a: [                                 // Psyduck
+    [{ v: 'DRAW', n: 1 }],                           //   Dizziness
+    // Same shape as Squirtle's Water Gun, different numbers — which is exactly
+    // why the derived block above could not take it: identical MECHANICS, and
+    // the printed text differs by the figures in it.
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 20, per: 10, t: 'W', maxSpare: 2 }],
+  ]},
+  'base5-52': { a: [                                 // Diglett
+    // "Choose 1 of your opponent's Pokemon" — the Active included, so this is
+    // the widened snipe rather than the Bench-only one. No printed damage at
+    // all: the 10 IS the attack.
+    [{ v: 'BENCH_SNIPE', n: 1, dmg: 10, target: 'any' }],   //   Dig Under
+    [],                                              //   Scratch
+  ]},
+  'base5-62': { a: [                                 // Meowth
+    // Coin Hurl picks the target and THEN flips, so a tails wastes the turn on a
+    // choice already made. FLIP_OR_NOTHING runs first and short-circuits the
+    // whole script, which is the order the card describes.
+    [{ v: 'FLIP_OR_NOTHING' },
+     { v: 'BENCH_SNIPE', n: 1, dmg: 20, target: 'any' }],   //   Coin Hurl
+  ]},
+  'base5-61': { a: [                                 // Mankey
+    [{ v: 'SHUFFLE_OPP_DECK' }],                     //   Mischief
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 20, bonus: 20, recoil: 0, label: 'Anger' }],
   ]},
 };
 

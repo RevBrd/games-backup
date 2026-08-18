@@ -77,7 +77,7 @@ for (const name of DECK_NAMES) {
 // the number here, something was deleted or an id was misspelled. That failure
 // is otherwise completely silent, because an unscripted card simply cannot be
 // put in a deck and nothing else complains.
-const REMAINING = { base5: 67 };   // Team Rocket, Job 10b in progress
+const REMAINING = { base5: 62 };   // Team Rocket, Job 10b in progress
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');
@@ -303,6 +303,20 @@ const UNSCORED_ON_PURPOSE = new Set([
   // Legality gates. The engine refuses the attack outright, so an illegal one is
   // never in the action list for the AI to score in the first place.
   'REQUIRE_DEF_STATUS',
+
+  // Mankey's Mischief — shuffle the opponent's deck. Unscored SCORES AS ZERO,
+  // which is the honest number: this bot has no memory of deck order, so it
+  // cannot be hurt by a shuffle and cannot value inflicting one. Mischief does
+  // no damage, so zero also means the bot will pick literally any real attack
+  // over it, which is correct play.
+  //
+  // WHAT WOULD MAKE THIS WRONG, written down so it can be revisited rather than
+  // rediscovered: the card is genuinely strong against an opponent who has just
+  // stacked their own deck with Prophecy or looked at it with Peek. The day
+  // anything in ai.js tracks known deck order, this stops being worthless and
+  // comes off this list. See the Peek ruling — deliberately worthless is not the
+  // same claim as deliberately unscored, and this is the declaration.
+  'SHUFFLE_OPP_DECK',
 ]);
 
 console.log('\nAI verb coverage');

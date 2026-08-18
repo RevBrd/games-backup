@@ -433,7 +433,12 @@ class AI {
         case 'STATUS_SELF_ON_TAILS': flags.selfStatus = 0.5; break;
         case 'DRAW': flags.draw = v.n; break;
         case 'DRAW_ON_FLIP': flags.draw = 0.5; break;
-        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg }; break;
+        // `target: 'any'` lets the snipe hit the Active too, so it is strictly
+        // more valuable than the Bench-only form — it can finish something the
+        // main damage could not, and it ignores Weakness, Resistance and any
+        // reduction. Passed through rather than folded in, because the scorer
+        // that reads `snipe` needs to know which targets were available.
+        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg, any: v.target === 'any' }; break;
 
         // ---- Job 6d, second batch ----
         case 'DMG_PER_HEAD_UNTIL_TAILS': {

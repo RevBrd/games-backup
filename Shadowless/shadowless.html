@@ -2560,9 +2560,14 @@ const SET_INFO = {
 //     BENCH_SPLASH_PER_FLIP {dmg}  a coin per opposing Benched Pokemon; heads hits
 //                                  it, and every tail comes back at you (Thunderstorm)
 //     BENCH_SPLASH_FLIP_SIDE {n}   ONE coin decides whose Bench takes it (Blizzard)
-//     BENCH_SNIPE {n}              n damage to Benched Pokemon of the ATTACKER's
-//                                  choosing, never W/R. The "choose 1 of your
-//                                  opponent's Pokemon" family (Dark Mind, Gigashock)
+//     BENCH_SNIPE {n, dmg, target} dmg to n of the opponent's Pokemon, chosen by
+//                                  the ATTACKER, never W/R. DEFAULT IS BENCH ONLY,
+//                                  which is what Base Set's wording asks for
+//                                  (Dark Mind, Gigashock). `target: 'any'` widens
+//                                  it to include the Active, which is what Team
+//                                  Rocket's "1 of your opponent's Pokemon" wording
+//                                  asks for and is a materially stronger card
+//     SHUFFLE_OPP_DECK             shuffle the opponent's deck (Mischief)
 //     STATUS_SELF {s}              apply status to SELF. `blocked` is deliberately
 //                                  not consulted — the defender's Barrier has no
 //                                  bearing on what you do to yourself (Petal Dance)
@@ -3570,6 +3575,36 @@ const EFFECTS = {
     [],                                              //   Ram
     [],                                              //   Bite
   ]},
+
+  // ---- Team Rocket, hand-authored ----
+  'base5-64': { a: [                                 // Ponyta
+    [{ v: 'COST_DISCARD_ENERGY', n: 1, t: 'R' }],    //   Ember — pay a Fire to fire
+  ]},
+  'base5-65': { a: [                                 // Psyduck
+    [{ v: 'DRAW', n: 1 }],                           //   Dizziness
+    // Same shape as Squirtle's Water Gun, different numbers — which is exactly
+    // why the derived block above could not take it: identical MECHANICS, and
+    // the printed text differs by the figures in it.
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 20, per: 10, t: 'W', maxSpare: 2 }],
+  ]},
+  'base5-52': { a: [                                 // Diglett
+    // "Choose 1 of your opponent's Pokemon" — the Active included, so this is
+    // the widened snipe rather than the Bench-only one. No printed damage at
+    // all: the 10 IS the attack.
+    [{ v: 'BENCH_SNIPE', n: 1, dmg: 10, target: 'any' }],   //   Dig Under
+    [],                                              //   Scratch
+  ]},
+  'base5-62': { a: [                                 // Meowth
+    // Coin Hurl picks the target and THEN flips, so a tails wastes the turn on a
+    // choice already made. FLIP_OR_NOTHING runs first and short-circuits the
+    // whole script, which is the order the card describes.
+    [{ v: 'FLIP_OR_NOTHING' },
+     { v: 'BENCH_SNIPE', n: 1, dmg: 20, target: 'any' }],   //   Coin Hurl
+  ]},
+  'base5-61': { a: [                                 // Mankey
+    [{ v: 'SHUFFLE_OPP_DECK' }],                     //   Mischief
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 20, bonus: 20, recoil: 0, label: 'Anger' }],
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -4415,7 +4450,12 @@ class AI {
         case 'STATUS_SELF_ON_TAILS': flags.selfStatus = 0.5; break;
         case 'DRAW': flags.draw = v.n; break;
         case 'DRAW_ON_FLIP': flags.draw = 0.5; break;
-        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg }; break;
+        // `target: 'any'` lets the snipe hit the Active too, so it is strictly
+        // more valuable than the Bench-only form — it can finish something the
+        // main damage could not, and it ignores Weakness, Resistance and any
+        // reduction. Passed through rather than folded in, because the scorer
+        // that reads `snipe` needs to know which targets were available.
+        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg, any: v.target === 'any' }; break;
 
         // ---- Job 6d, second batch ----
         case 'DMG_PER_HEAD_UNTIL_TAILS': {
@@ -9010,19 +9050,39 @@ class Engine {
         // Dark Mind, Spark, Stretch Kick, Gigashock. The ATTACKER chooses, and
         // Weakness and Resistance never apply to Bench damage.
         case 'BENCH_SNIPE': {
-          const bench = you.bench;
-          if (!bench.length) { this.log('No Benched Pokemon to hit.', 'eff'); break; }
-          const want = Math.min(v.n || 1, bench.length);
+          // TWO SCOPES, and Team Rocket is why. Base Set's snipes say "1 of your
+          // opponent's BENCHED Pokemon"; Dark Arbok, Dark Golbat, Diglett and
+          // Meowth say "1 of your opponent's Pokemon" — the Active included,
+          // which is a different set and is the whole point of those cards. They
+          // can hit what is in front of them for a fixed amount past Weakness,
+          // Resistance and any damage reduction the defender is carrying.
+          //
+          // `target: 'any'` opts in. The default stays Bench-only so no existing
+          // card changes behaviour, and the verb keeps ONE implementation rather
+          // than growing a near-identical twin.
+          const pool = v.target === 'any'
+            ? (you.active ? [you.active].concat(you.bench) : you.bench.slice())
+            : you.bench;
+          if (!pool.length) { this.log('No Pokemon to hit.', 'eff'); break; }
+          const want = Math.min(v.n || 1, pool.length);
           let picks = (a && a.opts && a.opts.bench) || [];
           if (!Array.isArray(picks)) picks = [picks];
-          picks = picks.filter(i => i >= 0 && i < bench.length).slice(0, want);
+          picks = picks.filter(i => i >= 0 && i < pool.length).slice(0, want);
           for (let i = 0; picks.length < want; i++) if (picks.indexOf(i) < 0) picks.push(i);
           for (const i of picks) {
-            this.dealDamage(atk, bench[i], v.dmg, { noWR: true });
-            this.log(`${v.dmg} to ${this.nameOf(bench[i])} on the Bench.`, 'eff');
+            this.dealDamage(atk, pool[i], v.dmg, { noWR: true });
+            const where = pool[i] === you.active ? '' : ' on the Bench';
+            this.log(`${v.dmg} to ${this.nameOf(pool[i])}${where}.`, 'eff');
           }
           break;
         }
+        case 'SHUFFLE_OPP_DECK':
+          // Mankey's Mischief. Worth almost nothing against a bot that has no
+          // memory of its own deck order, and genuinely disruptive against a
+          // human who has just used Peek or Prophecy. Implemented straight.
+          this.shuffle(you.deck);
+          this.log(`${you.name}'s deck is shuffled.`, 'eff');
+          break;
         case 'HEAL_SELF_IF_DAMAGED':
           if (!res.prevented && atk.dmg > 0) {
             const h = Math.min(v.n * 10, atk.dmg); atk.dmg -= h;

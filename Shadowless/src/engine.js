@@ -2832,19 +2832,39 @@ class Engine {
         // Dark Mind, Spark, Stretch Kick, Gigashock. The ATTACKER chooses, and
         // Weakness and Resistance never apply to Bench damage.
         case 'BENCH_SNIPE': {
-          const bench = you.bench;
-          if (!bench.length) { this.log('No Benched Pokemon to hit.', 'eff'); break; }
-          const want = Math.min(v.n || 1, bench.length);
+          // TWO SCOPES, and Team Rocket is why. Base Set's snipes say "1 of your
+          // opponent's BENCHED Pokemon"; Dark Arbok, Dark Golbat, Diglett and
+          // Meowth say "1 of your opponent's Pokemon" — the Active included,
+          // which is a different set and is the whole point of those cards. They
+          // can hit what is in front of them for a fixed amount past Weakness,
+          // Resistance and any damage reduction the defender is carrying.
+          //
+          // `target: 'any'` opts in. The default stays Bench-only so no existing
+          // card changes behaviour, and the verb keeps ONE implementation rather
+          // than growing a near-identical twin.
+          const pool = v.target === 'any'
+            ? (you.active ? [you.active].concat(you.bench) : you.bench.slice())
+            : you.bench;
+          if (!pool.length) { this.log('No Pokemon to hit.', 'eff'); break; }
+          const want = Math.min(v.n || 1, pool.length);
           let picks = (a && a.opts && a.opts.bench) || [];
           if (!Array.isArray(picks)) picks = [picks];
-          picks = picks.filter(i => i >= 0 && i < bench.length).slice(0, want);
+          picks = picks.filter(i => i >= 0 && i < pool.length).slice(0, want);
           for (let i = 0; picks.length < want; i++) if (picks.indexOf(i) < 0) picks.push(i);
           for (const i of picks) {
-            this.dealDamage(atk, bench[i], v.dmg, { noWR: true });
-            this.log(`${v.dmg} to ${this.nameOf(bench[i])} on the Bench.`, 'eff');
+            this.dealDamage(atk, pool[i], v.dmg, { noWR: true });
+            const where = pool[i] === you.active ? '' : ' on the Bench';
+            this.log(`${v.dmg} to ${this.nameOf(pool[i])}${where}.`, 'eff');
           }
           break;
         }
+        case 'SHUFFLE_OPP_DECK':
+          // Mankey's Mischief. Worth almost nothing against a bot that has no
+          // memory of its own deck order, and genuinely disruptive against a
+          // human who has just used Peek or Prophecy. Implemented straight.
+          this.shuffle(you.deck);
+          this.log(`${you.name}'s deck is shuffled.`, 'eff');
+          break;
         case 'HEAL_SELF_IF_DAMAGED':
           if (!res.prevented && atk.dmg > 0) {
             const h = Math.min(v.n * 10, atk.dmg); atk.dmg -= h;
