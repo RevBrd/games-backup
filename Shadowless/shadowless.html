@@ -2523,11 +2523,19 @@ const SET_INFO = {
 //                                  (Super Fang)
 //     DMG_PER_OWN_BENCH {base, per}    base + per * YOUR Benched Pokemon. A Clefairy
 //                                  Doll counts — see RULINGS.md (Do the Wave)
-//     DMG_PER_NAMED_IN_PLAY {name, base, per}
-//                                  base + per * slots of yours whose card NAME
-//                                  matches. Name, not species (Boyfriends)
-//     DMG_PER_ENERGY_HEADS {per}   one coin per Energy ATTACHED — not per Energy
-//                                  paid — and per * heads (Big Eggsplosion)
+//     DMG_PER_NAMED_IN_PLAY {name|names, base, per, where}
+//                                  base + per * slots whose card NAME matches.
+//                                  Name, not species (Boyfriends). `names` takes
+//                                  a list. `where` picks the search: 'mine'
+//                                  (default, every slot you have), 'bench'
+//                                  (yours only — Magnetism), 'all' (BOTH sides,
+//                                  which is what "in play" means — Mass Explosion)
+//     DMG_PER_ENERGY_HEADS {per, t, discardPerHead}
+//                                  one coin per Energy ATTACHED — not per Energy
+//                                  paid — and per * heads (Big Eggsplosion). `t`
+//                                  narrows the count to one type and
+//                                  `discardPerHead` then burns one per head,
+//                                  which together are Continuous Fireball
 //     DMG_PER_HEAD_UNTIL_TAILS {per}   flip until the first tails; per * heads.
 //                                  Capped at 20 flips so a seed cannot hang a
 //                                  turn, far beyond anything reachable (Stone Barrage)
@@ -2581,6 +2589,12 @@ const SET_INFO = {
 //                                  Rocket's "1 of your opponent's Pokemon" wording
 //                                  asks for and is a materially stronger card
 //     SHUFFLE_OPP_DECK             shuffle the opponent's deck (Mischief)
+//     SPLASH_NAMED {names, n}      n to EVERY Pokemon in play whose card name is
+//                                  in the list, both sides, THE ATTACKER
+//                                  INCLUDED, never W/R. Shares its enumeration
+//                                  with DMG_PER_NAMED_IN_PLAY `where: 'all'`,
+//                                  which is what the Mass Explosion ruling
+//                                  requires rather than a convenience
 //     EVOLVE_SELF_FROM_DECK {names}
 //                                  search the deck for one of the named Evolution
 //                                  cards and put it on the ATTACKER, which counts
@@ -3733,6 +3747,31 @@ const EFFECTS = {
     // the turn ends with no attack damage.
     [{ v: 'EVOLVE_SELF_FROM_DECK', names: ['Gyarados', 'Dark Gyarados'] }],
   ]},
+  'base5-14': { a: [                                 // Dark Weezing
+    // Both halves name the same group and share one enumeration. The attacker is
+    // in it, and a Defending Koffing/Weezing takes the splash ON TOP of the main
+    // damage — see Rulings/MASS-EXPLOSION.md before 'fixing' either.
+    [{ v: 'DMG_PER_NAMED_IN_PLAY', names: ['Koffing', 'Weezing', 'Dark Weezing'],
+       base: 0, per: 20, where: 'all' },
+     { v: 'SPLASH_NAMED', names: ['Koffing', 'Weezing', 'Dark Weezing'], n: 20 }],
+    // Stun Gas is STATUS_COIN_EITHER, which has existed since Base Set. Trevor
+    // remembered it when I was about to build a third one-coin verb.
+    [{ v: 'STATUS_COIN_EITHER', heads: 'Poisoned', tails: 'Paralyzed' }],
+  ]},
+  'base5-4': { a: [                                  // Dark Charizard
+    [],                                              //   Nail Flick
+    // A coin per FIRE attached, 50 a head, and it burns one Fire per head. The
+    // discard rides the same count as the damage, so it cannot pay for heads it
+    // did not get.
+    [{ v: 'DMG_PER_ENERGY_HEADS', per: 50, t: 'R', discardPerHead: true }],
+  ]},
+  'base5-60': { a: [                                 // Magnemite
+    [],                                              //   Tackle
+    // "on your Bench" — not in play, not yours-everywhere. Magnemite itself is
+    // Active when it attacks and must not count itself.
+    [{ v: 'DMG_PER_NAMED_IN_PLAY', names: ['Magnemite', 'Magneton', 'Dark Magneton'],
+       base: 10, per: 10, where: 'bench' }],
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -4620,6 +4659,12 @@ class AI {
         case 'BUFF_OWN_ATTACK': flags.buff = v; break;
 
         // ---- Job 6d, third batch ----
+        // Mass Explosion's second wave hits OUR side too, including the attacker.
+        // Scored as a cost rather than a benefit, because the damage half is
+        // already counted as damage and this part is what it costs us.
+        // UNTUNED: the 0.6 is a guess at how much of a full hit our own board
+        // taking 20 is worth against theirs taking it.
+        case 'SPLASH_NAMED': flags.splashNamed = { names: v.names, n: v.n }; break;
         case 'SEARCH_BASIC_TO_BENCH': flags.callFamily = true; break;
         // Rapid Evolution. Priced on the HP SWING it buys rather than as a flat
         // bonus, because that is what the attack actually is: a 30 HP Magikarp
@@ -4905,6 +4950,16 @@ class AI {
     // A free Basic onto the Bench is worth roughly what benching one from hand
     // is, and much more when the Bench is nearly empty.
     if (f.flags.callFamily) s += me.bench.length === 0 ? W.benchFirst : W.benchMore;
+
+    // What the blast costs US. Counting only our own side is the point: the
+    // damage it does to theirs is already priced by the damage half of the
+    // attack, and counting it twice would make a self-destructive card look
+    // better the more it hurts us.
+    if (f.flags.splashNamed) {
+      const mine = E.allSlots(pi).filter(sl =>
+        f.flags.splashNamed.names.indexOf(this.top(sl).name) >= 0);
+      s -= mine.length * f.flags.splashNamed.n * 0.6;
+    }
 
     // EVOLVING OFF THE DECK, priced as the HP it gains plus the damage it will
     // then be able to deal. Worth nothing if the deck holds neither target — and
@@ -7097,6 +7152,19 @@ class Engine {
   // `slot.energy.length` counts CARDS and is what "discard N Energy cards" wants
   // instead; the two are the same number until a multi-symbol Energy is attached,
   // which is the whole surface Rulings/RETREAT-COST.md is about.
+  // EVERY slot on EITHER side whose card name is in the list. One function, used
+  // by both halves of Mass Explosion — the damage that counts the group and the
+  // splash that damages it — because the ruling turns on those being the same
+  // enumeration rather than two that happen to agree.
+  namedInPlay(names) {
+    const want = [].concat(names);
+    const out = [];
+    for (let side = 0; side < 2; side++)
+      for (const sl of this.allSlots(side))
+        if (want.indexOf(topCard(this.db, sl).name) >= 0) out.push(sl);
+    return out;
+  }
+
   energyTotal(slot) {
     return slot ? symbolCount(this.db, slot.energy) : 0;
   }
@@ -8777,10 +8845,20 @@ class Engine {
         this.log(`${h2} head(s) before tails -> ${base} damage.`);
       } else if (v.v === 'DMG_PER_ENERGY_HEADS') {
         // Big Eggsplosion: one coin per Energy ATTACHED, not per Energy paid.
-        const n6 = atk.energy.length;
+        //
+        // `t` narrows the count to one type — Continuous Fireball flips per FIRE
+        // Energy rather than per Energy — and `discardPerHead` then burns that
+        // many of them. Both default off, so Big Eggsplosion is untouched.
+        const pool6 = v.t ? atk.energy.filter(e => energyProvides(this.db, e) === v.t) : atk.energy;
+        const n6 = pool6.length;
         let h3 = 0;
         for (let i = 0; i < n6; i++) if (this.flip(`coin ${i + 1}/${n6}`)) h3++;
         base = v.per * h3;
+        if (v.discardPerHead && h3 > 0) {
+          const gone = this.takeEnergy(atk, h3, v.t || null, (a && a.opts && a.opts.costUids) || null);
+          gone.forEach(e => me.discard.push(e));
+          this.log(`${card.name} discards ${gone.length} Energy — one per head.`, 'eff');
+        }
         this.log(`${h3} of ${n6} heads -> ${base} damage.`);
       } else if (v.v === 'BUFF_OWN_ATTACK') {
         // Swords Dance does no damage itself; it arms the NEXT turn's Slash.
@@ -8793,10 +8871,18 @@ class Engine {
         this.log(`${v.base} plus ${v.per} per Benched Pokemon (${n3}) -> ${base} damage.`);
       } else if (v.v === 'DMG_PER_NAMED_IN_PLAY') {
         // Nidoqueen's Boyfriends. Matched on card NAME rather than species, so a
-        // differently-named Nidoking would not count. Counts every slot you have,
-        // which in practice is the Bench — the attacker is Nidoqueen herself.
-        let n4 = 0;
-        for (const sl of this.allSlots(pi)) if (topCard(this.db, sl).name === v.name) n4++;
+        // differently-named Nidoking would not count.
+        //
+        // THREE SCOPES, and the default is the Base Set one. `names` takes a
+        // list (Magnemite's Magnetism counts three different cards); `where`
+        // picks the search: 'mine' (default, every slot you have), 'bench' (yours
+        // only, which is what Magnetism says), or 'all' (both sides, which is
+        // what Mass Explosion's "in play" means).
+        const want4 = v.names || [v.name];
+        const pool4 = v.where === 'all' ? this.namedInPlay(want4)
+          : v.where === 'bench' ? this.state.players[pi].bench.filter(sl => want4.indexOf(topCard(this.db, sl).name) >= 0)
+          : this.allSlots(pi).filter(sl => want4.indexOf(topCard(this.db, sl).name) >= 0);
+        const n4 = pool4.length;
         base = v.base + v.per * n4;
         this.log(`${v.base} plus ${v.per} per ${v.name} in play (${n4}) -> ${base} damage.`);
       }
@@ -9318,6 +9404,21 @@ class Engine {
           clearStatus(atk);
           this.shuffle(me.deck);
           this.log(`${was} evolves into ${this.db[inst.id].name}. Special Conditions removed.`, 'eff');
+          break;
+        }
+        case 'SPLASH_NAMED': {
+          // Mass Explosion's second wave. Shares `namedInPlay` with the damage
+          // half above it, which is the ruling's requirement rather than a tidy:
+          // count the group once, then damage that same group. See
+          // Rulings/MASS-EXPLOSION.md.
+          //
+          // EVERY member, both sides, THE ATTACKER INCLUDED — it is one of the
+          // things it names and is standing in its own blast. A Defending
+          // Pokemon that is also one takes this ON TOP of the main damage, which
+          // is two hits from one attack and is what the card says.
+          const hit = this.namedInPlay(v.names);
+          for (const sl of hit) this.dealDamage(atk, sl, v.n, { noWR: true });
+          this.log(`${v.n} to each ${v.names.join('/')} in play (${hit.length}).`, 'eff');
           break;
         }
         case 'SHUFFLE_OPP_DECK':
@@ -13017,7 +13118,7 @@ function renderActionBar() {
   // `forced` targeting falls through to the promote/send-up branch below, which
   // re-arms it and prints the prompt WITHOUT a Cancel. Cancelling a forced
   // promote would strand the game with no Active and no way to choose one.
-  if (UI.targeting && !UI.targeting.forced) {
+  if (UI.targeting && !UI.targeting.forced && !UI.targeting.noCancel) {
     bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
     // A DECLINE IS NOT A CANCEL. Cancel abandons the whole action; decline means
     // "do the action, just not the optional part of it" — Dark Alakazam attacking
@@ -13033,6 +13134,18 @@ function renderActionBar() {
     const cancel = el('button', 'btn ghost', 'Cancel');
     cancel.onclick = () => { UI.targeting = null; UI.sel = null; render(); };
     bar.appendChild(cancel);
+    return bar;
+  }
+
+  // A targeting that offers a DECLINE but no Cancel — an optional switch. It
+  // needs its own branch because the one above is the only place a non-forced
+  // targeting renders, and `noCancel` deliberately skips it.
+  if (UI.targeting && UI.targeting.noCancel && UI.targeting.decline) {
+    bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
+    const skip = el('button', 'btn small', UI.targeting.declineLabel || 'No thanks');
+    const go = UI.targeting.decline;
+    skip.onclick = () => { UI.targeting = null; UI.sel = null; go(); };
+    bar.appendChild(skip);
     return bar;
   }
 
@@ -13139,6 +13252,14 @@ function doAttack(i) {
       scope: 'ownBench',
       prompt: `${c.name} may switch itself out — choose a Benched Pokemon, or attack without switching`,
       declineLabel: 'Attack without switching',
+      // NO CANCEL BESIDE IT. Trevor's call, 17 Aug, and the reasoning is better
+      // than the version I shipped first: two adjacent buttons that both read as
+      // "no" are worse than one. The decline already IS the way out of the
+      // optional part, and clicking an attack commits everywhere else in the
+      // game — so a Cancel here would make this one attack uniquely reversible
+      // AND put two similar-looking outs side by side. The choice is binary:
+      // pick a Pokemon, or attack without switching.
+      noCancel: true,
       decline: () => attackWithEnergy(i, c, script, { bench: -1 }),
       dispatch: (opts) => attackWithEnergy(i, c, script, opts),
     };

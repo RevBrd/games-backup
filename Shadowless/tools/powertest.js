@@ -3279,5 +3279,153 @@ T('it refuses a Gyarados that does not evolve from what is Active', () => {
   return true;
 });
 
+// ------------------------------------------ Mass Explosion, and its ruling
+// Rulings/MASS-EXPLOSION.md is the reasoning; this is the ruling as assertions,
+// because two of its three consequences look exactly like bugs and somebody
+// will eventually try to 'fix' one. A test is the cheapest way to make that
+// attempt fail loudly instead of quietly shipping a softer card.
+console.log('\nMass Explosion');
+
+// A DAMAGE LEDGER, because three of these assertions kept reading a null Active:
+// the subject was Knocked Out by the very damage under test and left the board
+// before it could be measured. Raising HP is not available — the cards are the
+// cards — so record what dealDamage was ASKED to do instead of inspecting the
+// wreckage afterwards. It also measures each wave separately, which reading a
+// final `dmg` never could.
+function ledger(E) {
+  const seen = new Map();
+  const real = E.dealDamage.bind(E);
+  E.dealDamage = (src, tgt, amt, opts) => {
+    const k = tgt && tgt.uid;
+    if (!seen.has(k)) seen.set(k, []);
+    const r = real(src, tgt, amt, opts);
+    seen.get(k).push(r && r.dealt !== undefined ? r.dealt : amt);
+    return r;
+  };
+  E.hits = uid => seen.get(uid) || [];
+  E.total = uid => (seen.get(uid) || []).reduce((a, b) => a + b, 0);
+  return E;
+}
+
+function weezingBoard(oppActive, myBench, oppBench) {
+  const E = board('base5-14', myBench || [], oppActive);
+  const you = E.state.players[1];
+  you.bench = (oppBench || []).map(id => {
+    const sl = E.mkSlot({ id, uid: E.uid++ }); sl.playedTurn = 0; return sl;
+  });
+  attach(E, E.state.players[0].active, 'base1-99', 1);
+  attach(E, E.state.players[0].active, 'base1-97', 1);   // GC paid
+  return ledger(E);
+}
+
+T('the attacker is in its own blast', () => {
+  // base5-58 Koffing opposite, nothing else. Two named cards in play: the
+  // attacking Dark Weezing and that Koffing.
+  const E = weezingBoard('base5-58');
+  const me = E.state.players[0], you = E.state.players[1];
+  eq(E.act(0, { t: 'attack', idx: 0 }).ok, true, 'attack resolved');
+  eq(me.active.dmg, 20, 'Dark Weezing took its own 20');
+  return true;
+});
+
+T('a Defending Pokemon that is one of the named takes BOTH waves', () => {
+  const E = weezingBoard('base5-58');                   // Koffing, 50 HP
+  const uid = E.state.players[1].active.uid;
+  E.act(0, { t: 'attack', idx: 0 });
+  // TWO separate hits is the assertion, not the total. Two named in play (the
+  // attacker and this Koffing) so the main wave is 40 and the splash adds 20.
+  // The Koffing dies to the first, which is exactly why this reads the ledger.
+  const hits = E.hits(uid);
+  eq(hits.length, 2, 'hit twice by one attack');
+  eq(E.total(uid), 60, '40 from the count, then 20 from the splash');
+  return true;
+});
+
+T('...and OUR OWN Bench takes it, which is what "even your own" says', () => {
+  const E = weezingBoard('base5-58', ['base5-58']);      // a Koffing on our bench
+  const me = E.state.players[0];
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(me.bench[0].dmg, 20, 'our own Koffing took 20');
+  return true;
+});
+
+T('the count is BOTH sides, not just ours', () => {
+  // One extra Koffing on THEIR bench must raise the damage. If the enumeration
+  // were our-side-only this reads the same as the test above and proves nothing.
+  const one = weezingBoard('base1-58');                  // Pikachu opposite: 1 named
+  const u1 = one.state.players[1].active.uid;
+  one.act(0, { t: 'attack', idx: 0 });
+  const dmgOne = one.total(u1);
+
+  const two = weezingBoard('base1-58', [], ['base5-58']); // + a Koffing on their bench
+  const u2 = two.state.players[1].active.uid;
+  two.act(0, { t: 'attack', idx: 0 });
+  const dmgTwo = two.total(u2);
+
+  if (!(dmgTwo > dmgOne))
+    throw new Error(`their bench did not count: ${dmgOne} then ${dmgTwo}`);
+  return true;
+});
+
+console.log('\nContinuous Fireball and Magnetism');
+
+T('Continuous Fireball flips per FIRE attached and burns one per head', () => {
+  const E = ledger(board('base5-4', ['base1-58'], 'base1-3'));  // vs Chansey
+  const me = E.state.players[0];
+  const uid = E.state.players[1].active.uid;
+  attach(E, me.active, 'base1-98', 3);                  // Fire x3
+  attach(E, me.active, 'base1-99', 2);                  // Grass x2 — must NOT be counted
+  let flips = 0;
+  E.flip = () => { flips++; return true; };
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(flips, 3, 'three coins — one per FIRE, not per Energy');
+  // 150 asked for; Chansey only has 120, so the ledger records what LANDED. The
+  // number under test is the count of coins and the discard, not the overkill.
+  if (E.hits(uid)[0] < 120) throw new Error(`expected a lethal 50-a-head, got ${E.hits(uid)[0]}`);
+  eq(me.active.energy.filter(e => E.db[e.id].provides === 'R').length, 0, 'all three Fire burned');
+  eq(me.active.energy.length, 2, 'and the Grass is untouched');
+  return true;
+});
+
+T('...and burns nothing on all tails', () => {
+  const E = board('base5-4', ['base1-58'], 'base1-3');
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-98', 3);
+  E.flip = () => false;
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(E.state.players[1].active.dmg, 0, 'no heads, no damage');
+  eq(me.active.energy.length, 3, 'and no discard');
+  return true;
+});
+
+T('Magnetism counts your BENCH only, never the attacker itself', () => {
+  // Magnemite is Active when it attacks. `where: 'mine'` would count it and
+  // silently add 10 to every use.
+  const bare = board('base5-60', [], 'base1-3');
+  attach(bare, bare.state.players[0].active, 'base1-100', 1);
+  attach(bare, bare.state.players[0].active, 'base1-99', 1);
+  bare.act(0, { t: 'attack', idx: 1 });
+  eq(bare.state.players[1].active.dmg, 10, 'alone it is the printed 10');
+
+  // BOTH of these are named Magnemite — base1-53 is Base Set's and base5-60 is
+  // Team Rocket's, two collectibles with one name. The first version of this
+  // test expected 20 from them, which was my arithmetic being wrong rather than
+  // the code: the verb matches on NAME, so it correctly counted two.
+  const withFriends = board('base5-60', ['base5-60', 'base1-53'], 'base1-3');
+  attach(withFriends, withFriends.state.players[0].active, 'base1-100', 1);
+  attach(withFriends, withFriends.state.players[0].active, 'base1-99', 1);
+  withFriends.act(0, { t: 'attack', idx: 1 });
+  eq(withFriends.state.players[1].active.dmg, 30, 'two benched Magnemite add 10 each');
+
+  // And a benched Pokemon that is NOT named must not count, which is the half
+  // that would still pass if `names` were being ignored entirely.
+  const stranger = board('base5-60', ['base1-58'], 'base1-3');
+  attach(stranger, stranger.state.players[0].active, 'base1-100', 1);
+  attach(stranger, stranger.state.players[0].active, 'base1-99', 1);
+  stranger.act(0, { t: 'attack', idx: 1 });
+  eq(stranger.state.players[1].active.dmg, 10, 'a benched Pikachu adds nothing');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

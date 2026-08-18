@@ -2048,7 +2048,7 @@ function renderActionBar() {
   // `forced` targeting falls through to the promote/send-up branch below, which
   // re-arms it and prints the prompt WITHOUT a Cancel. Cancelling a forced
   // promote would strand the game with no Active and no way to choose one.
-  if (UI.targeting && !UI.targeting.forced) {
+  if (UI.targeting && !UI.targeting.forced && !UI.targeting.noCancel) {
     bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
     // A DECLINE IS NOT A CANCEL. Cancel abandons the whole action; decline means
     // "do the action, just not the optional part of it" — Dark Alakazam attacking
@@ -2064,6 +2064,18 @@ function renderActionBar() {
     const cancel = el('button', 'btn ghost', 'Cancel');
     cancel.onclick = () => { UI.targeting = null; UI.sel = null; render(); };
     bar.appendChild(cancel);
+    return bar;
+  }
+
+  // A targeting that offers a DECLINE but no Cancel — an optional switch. It
+  // needs its own branch because the one above is the only place a non-forced
+  // targeting renders, and `noCancel` deliberately skips it.
+  if (UI.targeting && UI.targeting.noCancel && UI.targeting.decline) {
+    bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
+    const skip = el('button', 'btn small', UI.targeting.declineLabel || 'No thanks');
+    const go = UI.targeting.decline;
+    skip.onclick = () => { UI.targeting = null; UI.sel = null; go(); };
+    bar.appendChild(skip);
     return bar;
   }
 
@@ -2170,6 +2182,14 @@ function doAttack(i) {
       scope: 'ownBench',
       prompt: `${c.name} may switch itself out — choose a Benched Pokemon, or attack without switching`,
       declineLabel: 'Attack without switching',
+      // NO CANCEL BESIDE IT. Trevor's call, 17 Aug, and the reasoning is better
+      // than the version I shipped first: two adjacent buttons that both read as
+      // "no" are worse than one. The decline already IS the way out of the
+      // optional part, and clicking an attack commits everywhere else in the
+      // game — so a Cancel here would make this one attack uniquely reversible
+      // AND put two similar-looking outs side by side. The choice is binary:
+      // pick a Pokemon, or attack without switching.
+      noCancel: true,
       decline: () => attackWithEnergy(i, c, script, { bench: -1 }),
       dispatch: (opts) => attackWithEnergy(i, c, script, opts),
     };

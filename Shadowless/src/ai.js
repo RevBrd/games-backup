@@ -475,6 +475,12 @@ class AI {
         case 'BUFF_OWN_ATTACK': flags.buff = v; break;
 
         // ---- Job 6d, third batch ----
+        // Mass Explosion's second wave hits OUR side too, including the attacker.
+        // Scored as a cost rather than a benefit, because the damage half is
+        // already counted as damage and this part is what it costs us.
+        // UNTUNED: the 0.6 is a guess at how much of a full hit our own board
+        // taking 20 is worth against theirs taking it.
+        case 'SPLASH_NAMED': flags.splashNamed = { names: v.names, n: v.n }; break;
         case 'SEARCH_BASIC_TO_BENCH': flags.callFamily = true; break;
         // Rapid Evolution. Priced on the HP SWING it buys rather than as a flat
         // bonus, because that is what the attack actually is: a 30 HP Magikarp
@@ -760,6 +766,16 @@ class AI {
     // A free Basic onto the Bench is worth roughly what benching one from hand
     // is, and much more when the Bench is nearly empty.
     if (f.flags.callFamily) s += me.bench.length === 0 ? W.benchFirst : W.benchMore;
+
+    // What the blast costs US. Counting only our own side is the point: the
+    // damage it does to theirs is already priced by the damage half of the
+    // attack, and counting it twice would make a self-destructive card look
+    // better the more it hurts us.
+    if (f.flags.splashNamed) {
+      const mine = E.allSlots(pi).filter(sl =>
+        f.flags.splashNamed.names.indexOf(this.top(sl).name) >= 0);
+      s -= mine.length * f.flags.splashNamed.n * 0.6;
+    }
 
     // EVOLVING OFF THE DECK, priced as the HP it gains plus the damage it will
     // then be able to deal. Worth nothing if the deck holds neither target — and

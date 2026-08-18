@@ -77,7 +77,7 @@ for (const name of DECK_NAMES) {
 // the number here, something was deleted or an id was misspelled. That failure
 // is otherwise completely silent, because an unscripted card simply cannot be
 // put in a deck and nothing else complains.
-const REMAINING = { base5: 51 };   // Team Rocket, Job 10b in progress
+const REMAINING = { base5: 46 };   // Team Rocket, Job 10b in progress
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');

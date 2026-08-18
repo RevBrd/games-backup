@@ -721,6 +721,19 @@ class Engine {
   // `slot.energy.length` counts CARDS and is what "discard N Energy cards" wants
   // instead; the two are the same number until a multi-symbol Energy is attached,
   // which is the whole surface Rulings/RETREAT-COST.md is about.
+  // EVERY slot on EITHER side whose card name is in the list. One function, used
+  // by both halves of Mass Explosion — the damage that counts the group and the
+  // splash that damages it — because the ruling turns on those being the same
+  // enumeration rather than two that happen to agree.
+  namedInPlay(names) {
+    const want = [].concat(names);
+    const out = [];
+    for (let side = 0; side < 2; side++)
+      for (const sl of this.allSlots(side))
+        if (want.indexOf(topCard(this.db, sl).name) >= 0) out.push(sl);
+    return out;
+  }
+
   energyTotal(slot) {
     return slot ? symbolCount(this.db, slot.energy) : 0;
   }
@@ -2401,10 +2414,20 @@ class Engine {
         this.log(`${h2} head(s) before tails -> ${base} damage.`);
       } else if (v.v === 'DMG_PER_ENERGY_HEADS') {
         // Big Eggsplosion: one coin per Energy ATTACHED, not per Energy paid.
-        const n6 = atk.energy.length;
+        //
+        // `t` narrows the count to one type — Continuous Fireball flips per FIRE
+        // Energy rather than per Energy — and `discardPerHead` then burns that
+        // many of them. Both default off, so Big Eggsplosion is untouched.
+        const pool6 = v.t ? atk.energy.filter(e => energyProvides(this.db, e) === v.t) : atk.energy;
+        const n6 = pool6.length;
         let h3 = 0;
         for (let i = 0; i < n6; i++) if (this.flip(`coin ${i + 1}/${n6}`)) h3++;
         base = v.per * h3;
+        if (v.discardPerHead && h3 > 0) {
+          const gone = this.takeEnergy(atk, h3, v.t || null, (a && a.opts && a.opts.costUids) || null);
+          gone.forEach(e => me.discard.push(e));
+          this.log(`${card.name} discards ${gone.length} Energy — one per head.`, 'eff');
+        }
         this.log(`${h3} of ${n6} heads -> ${base} damage.`);
       } else if (v.v === 'BUFF_OWN_ATTACK') {
         // Swords Dance does no damage itself; it arms the NEXT turn's Slash.
@@ -2417,10 +2440,18 @@ class Engine {
         this.log(`${v.base} plus ${v.per} per Benched Pokemon (${n3}) -> ${base} damage.`);
       } else if (v.v === 'DMG_PER_NAMED_IN_PLAY') {
         // Nidoqueen's Boyfriends. Matched on card NAME rather than species, so a
-        // differently-named Nidoking would not count. Counts every slot you have,
-        // which in practice is the Bench — the attacker is Nidoqueen herself.
-        let n4 = 0;
-        for (const sl of this.allSlots(pi)) if (topCard(this.db, sl).name === v.name) n4++;
+        // differently-named Nidoking would not count.
+        //
+        // THREE SCOPES, and the default is the Base Set one. `names` takes a
+        // list (Magnemite's Magnetism counts three different cards); `where`
+        // picks the search: 'mine' (default, every slot you have), 'bench' (yours
+        // only, which is what Magnetism says), or 'all' (both sides, which is
+        // what Mass Explosion's "in play" means).
+        const want4 = v.names || [v.name];
+        const pool4 = v.where === 'all' ? this.namedInPlay(want4)
+          : v.where === 'bench' ? this.state.players[pi].bench.filter(sl => want4.indexOf(topCard(this.db, sl).name) >= 0)
+          : this.allSlots(pi).filter(sl => want4.indexOf(topCard(this.db, sl).name) >= 0);
+        const n4 = pool4.length;
         base = v.base + v.per * n4;
         this.log(`${v.base} plus ${v.per} per ${v.name} in play (${n4}) -> ${base} damage.`);
       }
@@ -2942,6 +2973,21 @@ class Engine {
           clearStatus(atk);
           this.shuffle(me.deck);
           this.log(`${was} evolves into ${this.db[inst.id].name}. Special Conditions removed.`, 'eff');
+          break;
+        }
+        case 'SPLASH_NAMED': {
+          // Mass Explosion's second wave. Shares `namedInPlay` with the damage
+          // half above it, which is the ruling's requirement rather than a tidy:
+          // count the group once, then damage that same group. See
+          // Rulings/MASS-EXPLOSION.md.
+          //
+          // EVERY member, both sides, THE ATTACKER INCLUDED — it is one of the
+          // things it names and is standing in its own blast. A Defending
+          // Pokemon that is also one takes this ON TOP of the main damage, which
+          // is two hits from one attack and is what the card says.
+          const hit = this.namedInPlay(v.names);
+          for (const sl of hit) this.dealDamage(atk, sl, v.n, { noWR: true });
+          this.log(`${v.n} to each ${v.names.join('/')} in play (${hit.length}).`, 'eff');
           break;
         }
         case 'SHUFFLE_OPP_DECK':

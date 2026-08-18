@@ -65,11 +65,19 @@
 //                                  (Super Fang)
 //     DMG_PER_OWN_BENCH {base, per}    base + per * YOUR Benched Pokemon. A Clefairy
 //                                  Doll counts — see RULINGS.md (Do the Wave)
-//     DMG_PER_NAMED_IN_PLAY {name, base, per}
-//                                  base + per * slots of yours whose card NAME
-//                                  matches. Name, not species (Boyfriends)
-//     DMG_PER_ENERGY_HEADS {per}   one coin per Energy ATTACHED — not per Energy
-//                                  paid — and per * heads (Big Eggsplosion)
+//     DMG_PER_NAMED_IN_PLAY {name|names, base, per, where}
+//                                  base + per * slots whose card NAME matches.
+//                                  Name, not species (Boyfriends). `names` takes
+//                                  a list. `where` picks the search: 'mine'
+//                                  (default, every slot you have), 'bench'
+//                                  (yours only — Magnetism), 'all' (BOTH sides,
+//                                  which is what "in play" means — Mass Explosion)
+//     DMG_PER_ENERGY_HEADS {per, t, discardPerHead}
+//                                  one coin per Energy ATTACHED — not per Energy
+//                                  paid — and per * heads (Big Eggsplosion). `t`
+//                                  narrows the count to one type and
+//                                  `discardPerHead` then burns one per head,
+//                                  which together are Continuous Fireball
 //     DMG_PER_HEAD_UNTIL_TAILS {per}   flip until the first tails; per * heads.
 //                                  Capped at 20 flips so a seed cannot hang a
 //                                  turn, far beyond anything reachable (Stone Barrage)
@@ -123,6 +131,12 @@
 //                                  Rocket's "1 of your opponent's Pokemon" wording
 //                                  asks for and is a materially stronger card
 //     SHUFFLE_OPP_DECK             shuffle the opponent's deck (Mischief)
+//     SPLASH_NAMED {names, n}      n to EVERY Pokemon in play whose card name is
+//                                  in the list, both sides, THE ATTACKER
+//                                  INCLUDED, never W/R. Shares its enumeration
+//                                  with DMG_PER_NAMED_IN_PLAY `where: 'all'`,
+//                                  which is what the Mass Explosion ruling
+//                                  requires rather than a convenience
 //     EVOLVE_SELF_FROM_DECK {names}
 //                                  search the deck for one of the named Evolution
 //                                  cards and put it on the ATTACKER, which counts
@@ -1274,6 +1288,31 @@ const EFFECTS = {
     // chooses from what is actually there — evolves Magikarp on the spot, and
     // the turn ends with no attack damage.
     [{ v: 'EVOLVE_SELF_FROM_DECK', names: ['Gyarados', 'Dark Gyarados'] }],
+  ]},
+  'base5-14': { a: [                                 // Dark Weezing
+    // Both halves name the same group and share one enumeration. The attacker is
+    // in it, and a Defending Koffing/Weezing takes the splash ON TOP of the main
+    // damage — see Rulings/MASS-EXPLOSION.md before 'fixing' either.
+    [{ v: 'DMG_PER_NAMED_IN_PLAY', names: ['Koffing', 'Weezing', 'Dark Weezing'],
+       base: 0, per: 20, where: 'all' },
+     { v: 'SPLASH_NAMED', names: ['Koffing', 'Weezing', 'Dark Weezing'], n: 20 }],
+    // Stun Gas is STATUS_COIN_EITHER, which has existed since Base Set. Trevor
+    // remembered it when I was about to build a third one-coin verb.
+    [{ v: 'STATUS_COIN_EITHER', heads: 'Poisoned', tails: 'Paralyzed' }],
+  ]},
+  'base5-4': { a: [                                  // Dark Charizard
+    [],                                              //   Nail Flick
+    // A coin per FIRE attached, 50 a head, and it burns one Fire per head. The
+    // discard rides the same count as the damage, so it cannot pay for heads it
+    // did not get.
+    [{ v: 'DMG_PER_ENERGY_HEADS', per: 50, t: 'R', discardPerHead: true }],
+  ]},
+  'base5-60': { a: [                                 // Magnemite
+    [],                                              //   Tackle
+    // "on your Bench" — not in play, not yours-everywhere. Magnemite itself is
+    // Active when it attacks and must not count itself.
+    [{ v: 'DMG_PER_NAMED_IN_PLAY', names: ['Magnemite', 'Magneton', 'Dark Magneton'],
+       base: 10, per: 10, where: 'bench' }],
   ]},
 };
 
