@@ -146,6 +146,25 @@
 //                                  Rocket's "1 of your opponent's Pokemon" wording
 //                                  asks for and is a materially stronger card
 //     SHUFFLE_OPP_DECK             shuffle the opponent's deck (Mischief)
+//     SWITCH_DEFENDER_FIRST        drag one of their Benched up BEFORE the damage
+//                                  and hit what came up. COST-PHASE, unlike
+//                                  SWITCH_DEFENDER_CHOOSE which replaces the
+//                                  defender AFTER hitting it — Drag Off against
+//                                  Lure, and the two are not interchangeable
+//     OPTIONAL_DISCARD_THEN_SNIPE {t, n, dmg}
+//                                  you MAY burn n Energy of type t; if you do,
+//                                  and only if they have a Bench, snipe one of
+//                                  their Benched for dmg. Declining is
+//                                  `costUids: []`; ABSENT means take it, so the
+//                                  AI and older callers stay aggressive
+//     SCATTER_OWN_ENERGY           move EVERY Energy off the attacker onto your
+//                                  own Bench, distributed as you like; DISCARD it
+//                                  all if you have no Bench (Energy Bomb)
+//     MOVE_DEF_ENERGY_TO_BENCH     take one BASIC Energy off the defender and put
+//                                  it on one of THEIR Benched. Basic by CLASS, so
+//                                  Rainbow does not qualify — the card says
+//                                  "Energy card". Nothing happens with no basic
+//                                  Energy or no Bench (Magnetic Lines)
 //     SHUFFLE_INTO_DECK {target, attached}
 //                                  put a Pokemon and its pile into its OWNER's
 //                                  deck and shuffle. target 'self' or 'defender';
@@ -1361,6 +1380,27 @@ const EFFECTS = {
     // The 30 to the Active lands whatever the coins do; only the Bench splash
     // rides them, which is why this is post-damage and not damage-shaping.
     [{ v: 'BENCH_SPLASH_DOUBLE_FLIP', hi: 20, lo: 10, label: 'Surprise Thunder' }],
+  ]},
+  'base5-40': { a: [                                 // Dark Machoke
+    // Drag Off drags FIRST and hits what it dragged. Knock Back is the ordinary
+    // Whirlwind shape — damage, then THEY choose who comes up.
+    [{ v: 'REQUIRE_OPP_BENCH' }, { v: 'SWITCH_DEFENDER_FIRST' }],
+    [{ v: 'WHIRLWIND' }],                            //   Knock Back
+  ]},
+  'base5-34': { a: [                                 // Dark Electrode
+    [],                                              //   Rolling Tackle
+    [{ v: 'SCATTER_OWN_ENERGY' }],                   //   Energy Bomb
+  ]},
+  'base5-11': { a: [                                 // Dark Magneton
+    [{ v: 'NO_WR' }],                                //   Sonicboom
+    [{ v: 'MOVE_DEF_ENERGY_TO_BENCH' }],             //   Magnetic Lines
+  ]},
+  'base5-44': { a: [                                 // Dark Rapidash
+    [],                                              //   Rear Kick
+    // "You MAY discard" — the same optionality Dark Alakazam needed, pointed at
+    // a cost instead of a switch. Declining is `costUids: []`, and the snipe
+    // simply does not happen without the discard.
+    [{ v: 'OPTIONAL_DISCARD_THEN_SNIPE', t: 'R', n: 1, dmg: 10 }],
   ]},
 };
 

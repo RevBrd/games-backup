@@ -2351,6 +2351,30 @@ class Engine {
           .forEach(e => me.discard.push(e));
         this.log(`${card.name} discards ${v.n} ${v.t || ''} Energy as a cost.`.replace('  ', ' '));
       }
+      // DRAG OFF SWITCHES FIRST AND THEN HITS WHAT IT DRAGGED UP. The existing
+      // SWITCH_DEFENDER_CHOOSE runs after the damage, which is the Lure shape —
+      // hurt what is there, then replace it. Dark Machoke does the opposite and
+      // says so: "Before doing damage... Do the damage to the NEW Defending
+      // Pokemon."
+      //
+      // `def` is a parameter rather than a closure, so reassigning it here
+      // really does redirect everything downstream — damage, Weakness, status,
+      // the lot. That is the whole reason this sits in the cost phase instead of
+      // being a post-damage verb with a note attached.
+      if (v.v === 'SWITCH_DEFENDER_FIRST') {
+        const bench = you.bench;
+        if (bench.length) {
+          const bi = (a.opts && a.opts.bench !== undefined && a.opts.bench >= 0)
+            ? Math.min(a.opts.bench, bench.length - 1) : this.pick(bench.length);
+          const up = bench[bi];
+          const old = you.active;
+          bench.splice(bi, 1);
+          clearStatus(old);
+          you.active = up; bench.push(old);
+          def = up;
+          this.log(`${card.name} drags ${this.nameOf(up)} into the Active spot first.`, 'eff');
+        }
+      }
     }
 
     // base damage / damage-shaping verbs
@@ -3018,6 +3042,75 @@ class Engine {
           clearStatus(atk);
           this.shuffle(me.deck);
           this.log(`${was} evolves into ${this.db[inst.id].name}. Special Conditions removed.`, 'eff');
+          break;
+        }
+        case 'OPTIONAL_DISCARD_THEN_SNIPE': {
+          // Dark Rapidash's Flame Pillar. "You MAY discard 1 Fire Energy... IF
+          // YOU DO and if your opponent has any Benched Pokemon, choose 1 of
+          // them and this attack does 10 damage to it."
+          //
+          // Two conditions chained, and the order matters: no discard means no
+          // snipe, and no Bench means the discard is pointless — so it is not
+          // taken at all. A player who declines sends `costUids: []`; ABSENT
+          // means take it, which keeps the AI and older callers doing the
+          // aggressive thing rather than silently opting out of the card.
+          const declined = a && a.opts && Array.isArray(a.opts.costUids) && a.opts.costUids.length === 0;
+          if (declined) { this.log(`${card.name} keeps its Energy.`, 'eff'); break; }
+          if (!you.bench.length) { this.log('No Benched Pokemon to hit — the Energy is kept.', 'eff'); break; }
+          const fuel = this.takeEnergy(atk, v.n || 1, v.t || null, (a && a.opts && a.opts.costUids) || null);
+          if (!fuel.length) break;
+          fuel.forEach(e => me.discard.push(e));
+          const bi3 = (a && a.opts && a.opts.bench !== undefined && you.bench[a.opts.bench])
+            ? a.opts.bench : this.pick(you.bench.length);
+          this.dealDamage(atk, you.bench[bi3], v.dmg, { noWR: true });
+          this.log(`${card.name} burns an Energy and hits ${this.nameOf(you.bench[bi3])} for ${v.dmg}.`, 'eff');
+          break;
+        }
+        case 'SCATTER_OWN_ENERGY': {
+          // Dark Electrode's Energy Bomb. Everything on the attacker moves to
+          // our OWN Bench, distributed however we like — and is DISCARDED
+          // outright if there is no Bench to move it to, which is the card's own
+          // clause and the reason this is not just a move.
+          const bench = me.bench;
+          const pile = atk.energy.splice(0, atk.energy.length);
+          if (!bench.length) {
+            pile.forEach(e => me.discard.push(e));
+            this.log(`No Bench — ${card.name} discards all ${pile.length} Energy.`, 'eff');
+            break;
+          }
+          // `opts.spread` is a list of bench indices parallel to the pile. The
+          // fallback deals them round-robin, which is the least-bad default: it
+          // never dumps everything on one Pokemon the player did not choose.
+          const spread = (a && a.opts && a.opts.spread) || null;
+          pile.forEach((e, i) => {
+            const bi = spread && spread[i] !== undefined && bench[spread[i]] ? spread[i] : i % bench.length;
+            bench[bi].energy.push(e);
+          });
+          this.log(`${card.name} scatters ${pile.length} Energy onto the Bench.`, 'eff');
+          break;
+        }
+        case 'MOVE_DEF_ENERGY_TO_BENCH': {
+          // Dark Magneton's Magnetic Lines. BASIC Energy only — the card says
+          // "basic Energy cards", which under the Energy/Energy-card ruling means
+          // the physical class and excludes Rainbow. See
+          // Rulings/ENERGY-VS-ENERGY-CARD.md.
+          //
+          // Both halves are conditional and independent: no basic Energy on the
+          // defender, or no Bench to move it to, and nothing happens.
+          if (!def || blocked) break;
+          const basics = def.energy.filter(e => {
+            const c2 = this.db[e.id];
+            return c2 && c2.kind === 'energy' && c2.cls === 'Basic';
+          });
+          if (!basics.length || !you.bench.length) break;
+          const wantUid = a && a.opts && a.opts.energyUids && a.opts.energyUids[0];
+          const pick = basics.find(e => e.uid === wantUid) || basics[0];
+          const bi = (a && a.opts && a.opts.bench !== undefined && you.bench[a.opts.bench])
+            ? a.opts.bench : this.pick(you.bench.length);
+          def.energy.splice(def.energy.indexOf(pick), 1);
+          you.bench[bi].energy.push(pick);
+          this.log(`${this.db[pick.id].name} moves from ${this.nameOf(def)} to `
+            + `${this.nameOf(you.bench[bi])}.`, 'eff');
           break;
         }
         case 'SHUFFLE_INTO_DECK': {

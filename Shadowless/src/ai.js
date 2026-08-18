@@ -489,6 +489,10 @@ class AI {
         case 'SHUFFLE_INTO_DECK': flags.shuffleAway = v.target || 'defender'; break;
         case 'DMG_PER_OPP_BENCH_TAILS': flags.benchTails = v.per; break;
         case 'BENCH_SPLASH_DOUBLE_FLIP': flags.snipe = { n: 99, dmg: (v.hi + v.lo) / 4 }; break;
+        case 'SWITCH_DEFENDER_FIRST': flags.dragFirst = true; break;
+        case 'SCATTER_OWN_ENERGY': flags.scatter = true; break;
+        case 'MOVE_DEF_ENERGY_TO_BENCH': flags.stripToBench = true; break;
+        case 'OPTIONAL_DISCARD_THEN_SNIPE': flags.snipe = { n: 1, dmg: v.dmg }; break;
         case 'SEARCH_BASIC_TO_BENCH': flags.callFamily = true; break;
         // Rapid Evolution. Priced on the HP SWING it buys rather than as a flat
         // bonus, because that is what the attack actually is: a 30 HP Magikarp
@@ -774,6 +778,18 @@ class AI {
     // A free Basic onto the Bench is worth roughly what benching one from hand
     // is, and much more when the Bench is nearly empty.
     if (f.flags.callFamily) s += me.bench.length === 0 ? W.benchFirst : W.benchMore;
+
+    // Dragging first is the Gust half of a Gust-plus-attack, so it is worth what
+    // reaching past the wall is worth. UNTUNED: reuses the drag weight directly.
+    if (f.flags.dragFirst && you.bench.length) s += W.drag;
+    // Magnetic Lines moves ONE basic Energy off their Active. Strictly weaker
+    // than discarding it — they keep the card — so priced under energyDiscard.
+    if (f.flags.stripToBench && you.active && you.bench.length) s += W.energyDiscard * 0.5;
+    // Energy Bomb empties the attacker to seed the Bench. Good when the Bench
+    // wants it, an outright loss when there is no Bench and it all burns.
+    if (f.flags.scatter && me.active) {
+      s += me.bench.length ? me.active.energy.length * 2 : -me.active.energy.length * W.retreatSaveEnergy;
+    }
 
     if (f.flags.shuffleAway === 'defender' && you.active) {
       s += W.drag + you.active.energy.length * W.energyDiscard * 0.7;

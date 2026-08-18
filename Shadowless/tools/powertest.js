@@ -18,7 +18,7 @@ const T = (name, fn) => {
     const r = fn();
     if (r === false) { console.log(`  FAIL  ${name}`); fail++; }
     else { console.log(`  ok    ${name}`); pass++; }
-  } catch (e) { console.log(`  FAIL  ${name}  [${e.message}]`); fail++; }
+  } catch (e) { console.log(`  FAIL  ${name}  [${e.message}]`); if (process.env.PT_STACK) console.log(e.stack); fail++; }
 };
 const eq = (a, b, what) => { if (a !== b) throw new Error(`${what}: expected ${b}, got ${a}`); return true; };
 
@@ -3573,6 +3573,129 @@ T('...and a board that still has a Bench carries on normally', () => {
   E.act(0, { t: 'attack', idx: 1 });
   eq(E.state.winner, null, 'the game continues');
   eq(E.state.pendingPromote, 1, 'and they owe a promotion');
+  return true;
+});
+
+// -------------------------------------- Before the damage, and after it
+// Drag Off and Lure look like the same card and are opposites. The assertion
+// that separates them is WHO TOOK THE DAMAGE, and it is the only one that can:
+// both end the turn with a different Pokemon Active.
+console.log('\nDrag Off, Energy Bomb, Magnetic Lines, Flame Pillar');
+
+// FIXTURE DEATH IS THE RECURRING FAILURE IN THIS FILE, three times now, and it
+// is a Team Rocket problem specifically: the Dark cards hit harder than anything
+// the Base Set fixtures were chosen against, and half of them are Fighting types
+// against Colorless and Lightning subjects that are WEAK to Fighting. A 20 that
+// doubles to 40 kills a Pikachu exactly.
+//
+// The subject then leaves the board and the next assertion reads null, which
+// reports as a crash rather than as the mundane thing it is. Pick a subject that
+// survives, or use the damage ledger above. Do not read a slot after an attack
+// without knowing it lived.
+T('Drag Off hits the Pokemon it dragged UP, not the one that was there', () => {
+  // Pikachu Active (takes nothing), Chansey benched and dragged into the 20 —
+  // doubled to 40 by its Fighting weakness, which 120 HP absorbs.
+  const E = board('base5-40', [], 'base1-58');          // Dark Machoke vs Pikachu
+  const me = E.state.players[0], you = E.state.players[1];
+  you.bench = [E.mkSlot({ id: 'base1-3', uid: E.uid++ })];    // Chansey behind it
+  you.bench[0].playedTurn = 0;
+  attach(E, me.active, 'base1-97', 3);                  // FFC
+  const pikachu = you.active;
+  eq(E.act(0, { t: 'attack', idx: 0, opts: { bench: 0 } }).ok, true, 'attack resolved');
+  eq(E.nameOf(you.active), 'Chansey', 'Chansey was dragged up');
+  if (!(you.active.dmg > 0)) throw new Error('the dragged Pokemon took nothing');
+  eq(pikachu.dmg, 0, 'and Pikachu, who was there first, took NOTHING');
+  return true;
+});
+
+T('...and Knock Back is the opposite order, as Lure always was', () => {
+  // Same card, other attack. Damage lands on who was there, THEN they choose.
+  const E = board('base5-40', [], 'base1-3');
+  const you = E.state.players[1];
+  you.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  you.bench[0].playedTurn = 0;
+  const chansey = you.active;
+  attach(E, E.state.players[0].active, 'base1-97', 3);
+  E.act(0, { t: 'attack', idx: 1 });
+  // 60, not 30: Chansey is Colorless and WEAK TO FIGHTING, so Dark Machoke
+  // doubles it. Expecting the printed number here was my error, not the card's.
+  eq(chansey.dmg, 60, 'Chansey took the hit before anyone moved');
+  return true;
+});
+
+T('Energy Bomb spreads onto the Bench and empties the attacker', () => {
+  const E = board('base5-34', ['base1-58', 'base1-58'], 'base1-3');   // Dark Electrode
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-100', 4);                 // four Lightning
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(me.active.energy.length, 0, 'the attacker kept none');
+  eq(me.bench[0].energy.length + me.bench[1].energy.length, 4, 'all four landed on the Bench');
+  return true;
+});
+
+T('...and BURNS it all when there is no Bench, as the card says', () => {
+  const E = board('base5-34', [], 'base1-3');
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-100', 4);
+  const was = me.discard.length;
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(me.active.energy.length, 0, 'gone from the attacker');
+  eq(me.discard.length, was + 4, 'and into the discard, not nowhere');
+  return true;
+});
+
+T('Magnetic Lines moves a BASIC Energy and refuses a special one', () => {
+  const E = board('base5-11', [], 'base1-3');           // Dark Magneton
+  const me = E.state.players[0], you = E.state.players[1];
+  you.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  you.bench[0].playedTurn = 0;
+  attach(E, me.active, 'base1-100', 2);
+  attach(E, you.active, 'base1-96', 1);                 // Double Colorless — SPECIAL
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(you.active.energy.length, 1, 'the Double Colorless stayed put');
+  eq(you.bench[0].energy.length, 0, 'and nothing reached the Bench');
+
+  const E2 = board('base5-11', [], 'base1-3');
+  const me2 = E2.state.players[0], you2 = E2.state.players[1];
+  you2.bench = [E2.mkSlot({ id: 'base1-58', uid: E2.uid++ })];
+  you2.bench[0].playedTurn = 0;
+  attach(E2, me2.active, 'base1-100', 2);
+  attach(E2, you2.active, 'base1-100', 1);              // a basic one
+  E2.act(0, { t: 'attack', idx: 1 });
+  eq(you2.active.energy.length, 0, 'the basic Energy left the Active');
+  eq(you2.bench[0].energy.length, 1, 'and landed on their Bench');
+  return true;
+});
+
+T('Flame Pillar snipes when it burns, and declining keeps the Energy', () => {
+  const mk = opts => {
+    const E = board('base5-44', [], 'base1-3');         // Dark Rapidash
+    const me = E.state.players[0], you = E.state.players[1];
+    you.bench = [E.mkSlot({ id: 'base1-3', uid: E.uid++ })];
+    you.bench[0].playedTurn = 0;
+    attach(E, me.active, 'base1-98', 3);                // three Fire
+    E.act(0, { t: 'attack', idx: 1, opts });
+    return { me, you };
+  };
+  const took = mk({});
+  eq(took.me.active.energy.length, 2, 'one Fire burned');
+  eq(took.you.bench[0].dmg, 10, 'and the Bench took 10');
+
+  const kept = mk({ costUids: [] });
+  eq(kept.me.active.energy.length, 3, 'declining keeps all three');
+  eq(kept.you.bench[0].dmg, 0, 'and the Bench is untouched');
+  return true;
+});
+
+T('...and it does not burn an Energy for a snipe it cannot make', () => {
+  // "If you do AND if your opponent has any Benched Pokemon" — with no Bench
+  // the discard buys nothing, so it must not be taken.
+  const E = board('base5-44', [], 'base1-3');
+  const me = E.state.players[0];
+  E.state.players[1].bench = [];
+  attach(E, me.active, 'base1-98', 3);
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(me.active.energy.length, 3, 'nothing was burned for nothing');
   return true;
 });
 
