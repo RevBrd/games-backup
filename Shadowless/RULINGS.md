@@ -33,6 +33,9 @@ enough to settle a call in plain English, so ask him — he expects to be asked.
 | A Confused Pokémon flips to retreat, and pays before it flips | [CONFUSED-RETREAT.md](Rulings/CONFUSED-RETREAT.md) |
 | Which Energy gets discarded is the player's choice | [ENERGY-DISCARD-CHOICE.md](Rulings/ENERGY-DISCARD-CHOICE.md) |
 | Prevented damage waives the recoil, and nothing else | [PREVENTED-DAMAGE-RECOIL.md](Rulings/PREVENTED-DAMAGE-RECOIL.md) |
+| "Energy" counts by type; "Energy card" counts by class | [ENERGY-VS-ENERGY-CARD.md](Rulings/ENERGY-VS-ENERGY-CARD.md) |
+| An attack that names a group hits every member of it, the attacker included | [MASS-EXPLOSION.md](Rulings/MASS-EXPLOSION.md) |
+| "Even to itself" reaches the Confusion penalty | [FRENZY-SELF-DAMAGE.md](Rulings/FRENZY-SELF-DAMAGE.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -101,6 +104,9 @@ that matches.
 | **Deliberately worthless is not the same as deliberately unscored** — declare it where the work happens | [Peek, Clairvoyance](Rulings/PEEK-CLAIRVOYANCE.md) |
 | **Count what the card says, not what the situation implies**, and match on card *name* | [Do the Wave, Boyfriends](Rulings/DO-THE-WAVE-BOYFRIENDS.md) |
 | **No unbounded recursion**: an option that could copy itself is simply not offered | [Metronome](Rulings/METRONOME.md) |
+| **The card's own wording picks the test**: *Energy* counts by live type, *Energy card* counts by physical class — so Rainbow scales a damage bonus but Rain Dance still cannot move it | [Rainbow Energy, Hydrocannon](Rulings/ENERGY-VS-ENERGY-CARD.md) |
+| **A group-naming attack enumerates once and applies to all of it**, both sides and the attacker included, even where that damages one Pokemon twice | [Mass Explosion](Rulings/MASS-EXPLOSION.md) |
+| **A damage modifier reaches damage this Pokemon DOES, not damage it TAKES** — including damage the rules make it inflict on itself | [Frenzy, Confusion](Rulings/FRENZY-SELF-DAMAGE.md) |
 
 ## What *settled with Trevor* means
 
@@ -127,3 +133,6 @@ Calls we already know are coming, so nobody is surprised by them.
   unknown.
 - **Baby Pokémon (Neo era, 10 cards)** — the Baby Rule is a coin flip that can negate an attack
   entirely. Not a Base Set problem, but it is a whole rule, not a card effect.
+- **Rainbow Energy's 10 damage on attachment** — it hurts the Pokémon it lands on. Whether that can
+  Knock Out a 10-HP Pokémon as it is attached, and who takes the Prize if so, is unasked. Noted while
+  settling [what Rainbow counts as](Rulings/ENERGY-VS-ENERGY-CARD.md), which did not settle this.
