@@ -14,6 +14,24 @@ data-blocked.**
 **`data/raw/*.json`** — the `pokemon-tcg-data` corpus, downloaded 4 Aug 2026, 14 sets and 1,251
 cards. All 189 Trainers carry rules text, none missing.
 
+**One defect is known, in 1,251 cards, and it is corrected at generation.** The corpus renders Dark
+Vileplume's Petal Whirlwind as *"Flip a coins"* — the count dropped — on both `base5-13` and
+`base5-30`, which makes the attack unimplementable and shows the player broken English on the card
+face. The real card reads **"Flip 3 coins."** `data/raw` is never hand-edited (it is downloaded, and
+an edit there dies at the next fetch without a trace); the fix lives in `CORRECTIONS` at the top of
+`gen_cards.js`, which asserts the broken text is still present before replacing it, so an upstream
+fix fails loudly instead of silently re-applying.
+
+**And the CSV had the same typo, which is the part worth learning from.** The two sources are less
+independent than the paragraph below hopes, so their *agreement was not evidence* — it was one error
+seen twice. What settled it was a photograph of Trevor's own physical `base5-30`. **When both sources
+agree and the text is still nonsense, they are not two sources.**
+
+That same card is also the one genuine same-name-different-mechanics split in the era: **`base5-13`
+is Weakness Fire, `base5-30` is Weakness Fighting**, on printings otherwise identical. Both sources
+said so, nobody believed it, and the physical card confirms Fighting. They are preserved as separate
+behaviours and must never be aliased together. `setsurvey.js` flags this class automatically.
+
 The CSVs are an **independent cross-check, not a second source of truth**, and the agreement between
 them is what justifies trusting the corpus — `gen_cards.js` reproduced all 102 Base Set cards
 byte-identically from each source independently, which is repeatable if anyone ever doubts it. Don't

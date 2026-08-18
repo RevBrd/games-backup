@@ -174,6 +174,60 @@ const energyEntry = c => ({
   text: rulesText(c),
 });
 
+// --- corpus corrections -----------------------------------------------------
+// PLACES WHERE data/raw IS WRONG AND WE KNOW BETTER. It is the source of truth
+// and stays unedited — it is downloaded, and a hand-edit there is destroyed by
+// the next fetch without leaving a trace. Corrections belong here instead,
+// applied on the way through, each carrying the evidence that justifies it.
+//
+// THE BAR IS DELIBERATELY HIGH. The corpus reproduced all 102 Base Set cards
+// byte-identically against an independent source, and one defect in 1,251 cards
+// is the tally so far. Do not add an entry because a card reads oddly — add one
+// when you have a source that outranks the data. See DATA.md.
+//
+// `from` is not decoration. It is asserted before the change is applied, so a
+// corpus refresh that fixes something upstream fails loudly here instead of
+// silently re-applying a correction to text that has moved on.
+const CORRECTIONS = [
+  {
+    ids: ['base5-13', 'base5-30'],
+    where: 'attack:Petal Whirlwind',
+    from: 'Flip a coins.',
+    to: 'Flip 3 coins.',
+    why: 'The corpus drops the coin count, and data/wotc_pokemon.csv drops it too — '
+       + 'the two are less independent here than DATA.md hopes, so agreement between '
+       + 'them was not evidence. Resolved 17 Aug 2026 from a photograph of Trevor s '
+       + 'own physical base5-30, which reads "Flip 3 coins." Without this the attack '
+       + 'is unimplementable (30x damage times heads, of how many?) and the player is '
+       + 'shown broken English on the card face.',
+  },
+];
+
+let correctionsApplied = 0;
+function applyCorrections(c) {
+  for (const fix of CORRECTIONS) {
+    if (!fix.ids.includes(c.id)) continue;
+    const [kind, name] = fix.where.split(':');
+    const targets = kind === 'attack' ? (c.attacks || []).filter(a => a.name === name)
+      : kind === 'power' ? (c.abilities || []).filter(a => a.name === name)
+      : [];
+    if (!targets.length) {
+      console.error('ERROR: correction for ' + c.id + ' found no ' + fix.where + ' — the corpus has moved.');
+      process.exit(1);
+    }
+    for (const t of targets) {
+      if (!String(t.text || '').includes(fix.from)) {
+        console.error('ERROR: correction for ' + c.id + ' expected "' + fix.from + '" and the corpus no longer says it.');
+        console.error('       Upstream may have fixed this. Check, then delete the entry or update it.');
+        process.exit(1);
+      }
+      t.text = t.text.replace(fix.from, fix.to);
+      correctionsApplied++;
+    }
+  }
+  return c;
+}
+
 // --- assemble -------------------------------------------------------------
 const cards = [];
 for (const set of SETS) {
@@ -184,6 +238,7 @@ for (const set of SETS) {
   }
   for (const c of JSON.parse(fs.readFileSync(file, 'utf8'))) {
     c.set = set;                                   // upstream omits it; the id carries it
+    applyCorrections(c);
     if (c.supertype === 'Pokémon') cards.push(pokemonEntry(c));
     else if (c.supertype === 'Trainer') cards.push(trainerEntry(c));
     else if (c.supertype === 'Energy') cards.push(energyEntry(c));

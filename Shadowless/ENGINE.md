@@ -10,11 +10,37 @@ larger than most sessions expect**, so read it before deciding something is not 
 card needs behaviour the DSL cannot express, add a verb rather than special-casing it**, and document
 it there.
 
-**That reference has gone stale twice and `selftest.js` now guards it.** Base Set's drift cost the
-Job 6 planning pass an hour; by the Job 10 survey 42 of the 117 were missing, five of them ones Team
-Rocket needed immediately. The failure mode is invisible by construction — an undocumented verb
-*works*, nothing goes red, and the only symptom is a later session building a second verb under a
-different name. A prose warning did not survive two sets. If the check goes red, write the entry.
+## Before you add cards: account for the verbs
+
+**Trevor's section, 17 Aug 2026**, and the instinct behind it is the useful part — the drift below is
+not only something to prevent, it is something to **check at the start of a job**, before any of it
+gets planned.
+
+Two commands, in this order. Neither takes a minute.
+
+```bash
+node tools/selftest.js                   # among much else: "117 verbs, all documented"
+node tools/setsurvey.js <setcode>        # how much of the set you are adding is already built
+```
+
+**The first is what makes the second worth trusting.** `selftest.js` asserts that every verb the
+engine dispatches, and every verb a card uses, appears in the reference block at the top of
+`effects.js`. While that is green the block is not merely *a* list of verbs — it is **the whole
+surface**, so you can plan against it and legitimately conclude that a card needs new machinery.
+Before the check existed you could only ever conclude that you had not found it.
+
+**It has gone stale twice, which is why the check exists.** Base Set's drift cost the Job 6 planning
+pass an hour of rediscovering verbs that were already built; by the Job 10 survey, 42 of the 117 were
+missing, five of them ones Team Rocket needed on its first day. The failure is invisible by
+construction — an undocumented verb *works*, no suite goes red, and the only symptom arrives months
+later as a second verb doing the same thing under a different name. A warning in prose did not
+survive two sets. **If the check goes red, write the entry** — deleting it restores exactly the
+condition it was written for.
+
+`setsurvey.js` then reports how much of the set is already built: how many attacks are plain damage,
+and how many print rules text implemented verbatim somewhere live. It is a **lower bound** by
+construction, and its control is the live sets, which must each report zero novel — see
+[TOOLING.md](TOOLING.md).
 
 ## The eight systems
 
@@ -210,7 +236,3 @@ was set once and re-checked by nothing. It does **not** reach a cost demanding a
 cannot score is free at runtime, misplayed forever, and invisible to every suite. If you add a verb,
 you are not done when `powertest.js` goes green — read the silent-failure surface there.
 
-
-## Check doc_verbs.js at the start
-
-18 please rephrase however you'd like
