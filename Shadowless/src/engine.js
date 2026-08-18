@@ -596,14 +596,34 @@ class Engine {
     for (let i = 0; i < 2; i++) {
       for (const sl of this.allSlots(i)) {
         const p = this.powerOf(sl);
-        if (p && p.kind === 'TOXIC_GAS' && this.powerActive(sl)) return true;
+        // A SUPPRESSED MUK IS NOT SPREADING TOXIC GAS. This check has to be
+        // here as well as in powerUsable, and a test caught that it was not:
+        // powerUsable asks whether THIS slot's Power works, while this asks
+        // whether Muk's is filling the board. Marking Muk without consulting the
+        // mark here left everyone else suppressed by a Power that was off.
+        if (p && p.kind === 'TOXIC_GAS' && this.powerActive(sl) && !this.powerSuppressed(sl)) return true;
       }
     }
     return false;
   }
 
+  // A Power switched off by an ATTACK rather than by another Power. Dark Arbok's
+  // Stare puts this on one chosen Pokemon for a turn, and it sits beside Toxic
+  // Gas rather than inside it: Muk suppresses continuously and from anywhere,
+  // this is a timed mark on one slot. Both are consulted, never materialised —
+  // see ENGINE.md on why that is the only shape that survives Muk.
+  powerSuppressed(slot) {
+    return !!(slot && slot.effects.some(e => e.kind === 'POWER_OFF'));
+  }
+
   powerUsable(slot) {
     if (!this.powerActive(slot)) return false;
+    // STARE SWITCHES OFF A TOXIC GAS TOO, and the order of these two lines is
+    // what decides that. Muk exempts itself from its own suppression; it does
+    // NOT get to exempt itself from an attack that named it. So the targeted
+    // mark is asked first, and Staring a Muk turns everybody else's Powers back
+    // on for a turn — which falls out rather than being special-cased.
+    if (this.powerSuppressed(slot)) return false;
     if (this.powerOf(slot).kind === 'TOXIC_GAS') return true;   // never itself
     return !this.toxicGasActive();
   }
@@ -2708,7 +2728,14 @@ class Engine {
                              expireAtStartOfTurn: s.turn + 2 });
           this.log(`${this.nameOf(def)} is dazed - it must flip to attack next turn.`, 'eff');
           break;
-        case 'BENCH_SPLASH': {
+        case 'BENCH_SPLASH':
+          // `side: 'theirs'` is Dark Arbok's Poison Vapor. The default hits BOTH
+          // benches, which is what Base Set's Selfdestruct family asks for.
+          if (v.side === 'theirs') {
+            for (const b of you.bench) this.dealDamage(atk, b, v.n, { noWR: true });
+            this.log(`${v.n} to each of ${you.name}'s Benched Pokemon.`, 'eff');
+            break;
+          } {
           for (let pi2 = 0; pi2 < 2; pi2++) {
             for (const b of s.players[pi2].bench) this.dealDamage(atk, b, v.n, { noWR: true });
           }
@@ -3000,9 +3027,38 @@ class Engine {
           picks = picks.filter(i => i >= 0 && i < pool.length).slice(0, want);
           for (let i = 0; picks.length < want; i++) if (picks.indexOf(i) < 0) picks.push(i);
           for (const i of picks) {
-            this.dealDamage(atk, pool[i], v.dmg, { noWR: true });
-            const where = pool[i] === you.active ? '' : ' on the Bench';
-            this.log(`${v.dmg} to ${this.nameOf(pool[i])}${where}.`, 'eff');
+            const tgt = pool[i];
+            // PROTECTION IS ASKED PER TARGET, not inherited from the defender.
+            // A snipe can hit a BENCHED Pokemon, and `blocked` upstream answers
+            // only for whoever is Active — so a protected Pokemon standing on
+            // the Bench would otherwise be hit anyway. Trevor, 18 Aug: it should
+            // be protected wherever it is standing.
+            if (this.effectsBlocked(tgt)) {
+              this.log(`${this.nameOf(tgt)} is protected.`, 'eff');
+              continue;
+            }
+            this.dealDamage(atk, tgt, v.dmg, { noWR: true });
+            const where = tgt === you.active ? '' : ' on the Bench';
+            this.log(`${v.dmg} to ${this.nameOf(tgt)}${where}.`, 'eff');
+            // Dark Arbok's Stare. The suppression rides the SAME chosen target
+            // as the damage, which is why it is a flag here rather than a second
+            // verb — two verbs would each pick their own and could disagree.
+            //
+            // IT IS NOT CONDITIONAL ON THE DAMAGE LANDING. The card gates it on
+            // "if that Pokemon has a Pokemon Power", not on being hurt, and the
+            // settled scope table in Rulings/PREVENTED-DAMAGE-RECOIL.md puts
+            // effects landed on the target in the `unchanged` row — governed by
+            // effectsBlocked, which is the check immediately above. A Defender
+            // reducing the damage to zero does not stop a Poisonpowder today and
+            // must not stop this either.
+            if (v.suppressPower) {
+              tgt.effects.push({
+                kind: 'POWER_OFF', label: v.label || 'Stare',
+                expireAtStartOfTurn: s.turn + 2,
+              });
+              this.log(`${this.nameOf(tgt)}'s Pokemon Power stops working until the end of `
+                + `${you.name}'s next turn.`, 'eff');
+            }
           }
           break;
         }
@@ -3066,6 +3122,11 @@ class Engine {
           this.log(`${card.name} burns an Energy and hits ${this.nameOf(you.bench[bi3])} for ${v.dmg}.`, 'eff');
           break;
         }
+        case 'MIRROR_SHELL':
+          atk.effects.push({ kind: 'MIRROR_SHELL', label: v.label || 'Mirror Shell',
+            expireAtStartOfTurn: s.turn + 2 });
+          this.log(`${card.name} raises its shell.`, 'eff');
+          break;
         case 'SCATTER_OWN_ENERGY': {
           // Dark Electrode's Energy Bomb. Everything on the attacker moves to
           // our OWN Bench, distributed however we like — and is DISCARDED
@@ -3410,6 +3471,10 @@ class Engine {
       // player is already looking at.
       this.log(`${D.name} takes ${r.dmg}. (${Math.max(0, D.hp - defSlot.dmg)}/${D.hp} left)`, 'dmg');
       this.retaliate(atkSlot, defSlot, opts);
+      // Beside retaliate on purpose: both fire on damage that LANDED, and both
+      // must fire before anything is Knocked Out. `noMirror` stops two Mirror
+      // Shells answering each other forever.
+      if (!opts.noMirror) this.mirrorShell(defSlot, r.dmg);
     }
     return { dealt: r.dmg, prevented: r.prevented };
   }
@@ -3420,6 +3485,31 @@ class Engine {
   // another — recoil adds to `dmg` directly and never comes through here — so
   // the only guards needed are self-damage and one level of recursion, the
   // latter for the Machamp-versus-Machamp case.
+  // MIRROR SHELL. Dark Wartortle answers any attack that damages it during the
+  // opponent's next turn, for the amount that landed — "even if Dark Wartortle is
+  // Knocked Out". That clause is why this hangs off the same hook as retaliate()
+  // rather than off checkKOs: the damage has landed but nothing has died yet.
+  //
+  // The reflected amount is FIXED, not recomputed — the card says "an equal
+  // amount", and applying Weakness on top would make it unequal. Same reasoning
+  // and same `noWR` as Machamp's Strikes Back.
+  //
+  // It reflects at THE DEFENDING POKEMON, which from Dark Wartortle's side of the
+  // board is whoever is Active opposite it — not necessarily the slot that dealt
+  // the damage, since a Bench splash can hurt it from a Pokemon that is not
+  // Active. The card names the Defending Pokemon and that is what it gets.
+  mirrorShell(defSlot, dealt) {
+    if (!defSlot || dealt <= 0) return;
+    const shell = defSlot.effects.find(e => e.kind === 'MIRROR_SHELL');
+    if (!shell) return;
+    const side = this.sideOf(defSlot);
+    if (side === null) return;
+    const target = this.state.players[1 - side].active;
+    if (!target) return;
+    this.log(`Mirror Shell: ${this.nameOf(defSlot)} answers for ${dealt}.`, 'eff');
+    this.dealDamage(defSlot, target, dealt, { noWR: true, noRetaliate: true, noMirror: true });
+  }
+
   retaliate(atkSlot, defSlot, opts) {
     if (opts.noRetaliate || !atkSlot || atkSlot === defSlot) return;
     const p = this.powerOf(defSlot);

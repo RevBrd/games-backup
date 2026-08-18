@@ -128,8 +128,10 @@
 //     HEAL_SELF_ALL                remove all damage counters from self
 //     HEAL_SELF_IF_DAMAGED {n}     remove n counters from self unless ALL damage
 //                                  was prevented
-//     BENCH_SPLASH {n}             n damage to every Benched Pokemon on BOTH sides,
-//                                  ignoring Weakness/Resistance
+//     BENCH_SPLASH {n, side}       n damage to Benched Pokemon, ignoring
+//                                  Weakness/Resistance. Default is BOTH sides,
+//                                  which is the Selfdestruct family;
+//                                  `side: 'theirs'` is Poison Vapor
 //     BENCH_SPLASH_OWN {n}         n damage to your OWN Benched Pokemon only (Earthquake)
 //     BENCH_SPLASH_TYPED {n}       n to every Benched Pokemon on BOTH sides sharing
 //                                  the DEFENDER's type. A Colorless defender stops
@@ -138,13 +140,27 @@
 //     BENCH_SPLASH_PER_FLIP {dmg}  a coin per opposing Benched Pokemon; heads hits
 //                                  it, and every tail comes back at you (Thunderstorm)
 //     BENCH_SPLASH_FLIP_SIDE {n}   ONE coin decides whose Bench takes it (Blizzard)
-//     BENCH_SNIPE {n, dmg, target} dmg to n of the opponent's Pokemon, chosen by
+//     MIRROR_SHELL                 anything that damages SELF during the
+//                                  opponent's next turn is answered for the same
+//                                  amount, aimed at whoever is Active opposite —
+//                                  and it fires even if self was Knocked Out by
+//                                  it, which is why it hangs off dealDamage
+//                                  beside RETALIATE rather than off checkKOs
+//     BENCH_SNIPE {n, dmg, target, suppressPower, label}
+//                                  dmg to n of the opponent's Pokemon, chosen by
 //                                  the ATTACKER, never W/R. DEFAULT IS BENCH ONLY,
 //                                  which is what Base Set's wording asks for
 //                                  (Dark Mind, Gigashock). `target: 'any'` widens
 //                                  it to include the Active, which is what Team
 //                                  Rocket's "1 of your opponent's Pokemon" wording
-//                                  asks for and is a materially stronger card
+//                                  asks for and is a materially stronger card.
+//                                  PROTECTION IS CHECKED PER TARGET here, not
+//                                  inherited from the defender, because a snipe
+//                                  can hit a Benched Pokemon. `suppressPower`
+//                                  switches the chosen target's Power off until
+//                                  the end of the opponent's next turn (Stare) —
+//                                  it rides the SAME chosen target, which is why
+//                                  it is a flag and not a second verb
 //     SHUFFLE_OPP_DECK             shuffle the opponent's deck (Mischief)
 //     SWITCH_DEFENDER_FIRST        drag one of their Benched up BEFORE the damage
 //                                  and hit what came up. COST-PHASE, unlike
@@ -1401,6 +1417,17 @@ const EFFECTS = {
     // a cost instead of a switch. Declining is `costUids: []`, and the snipe
     // simply does not happen without the discard.
     [{ v: 'OPTIONAL_DISCARD_THEN_SNIPE', t: 'R', n: 1, dmg: 10 }],
+  ]},
+  'base5-2': { a: [                                  // Dark Arbok
+    // No printed damage: the 10 IS the attack, aimed anywhere on their side,
+    // and the Power goes off on the same target. Stare a Muk and everyone
+    // else's Powers come back on for a turn.
+    [{ v: 'BENCH_SNIPE', n: 1, dmg: 10, target: 'any', suppressPower: true, label: 'Stare' }],
+    [{ v: 'STATUS', s: 'Poisoned' }, { v: 'BENCH_SPLASH', n: 10, side: 'theirs' }],
+  ]},
+  'base5-46': { a: [                                 // Dark Wartortle
+    [{ v: 'DMG_PER_HEAD', coins: 2, per: 10 }],      //   Doubleslap
+    [{ v: 'MIRROR_SHELL' }],                         //   Mirror Shell
   ]},
 };
 

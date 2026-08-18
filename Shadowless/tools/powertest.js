@@ -3699,5 +3699,114 @@ T('...and it does not burn an Energy for a snipe it cannot make', () => {
   return true;
 });
 
+// ------------------------------------------------- Stare, and Mirror Shell
+console.log('\nStare and Mirror Shell');
+
+// Muk opposite, so the suppression has something visible to switch off.
+function arbokBoard(oppActive, oppBench) {
+  const E = board('base5-2', [], oppActive);
+  const you = E.state.players[1];
+  you.bench = (oppBench || []).map(id => {
+    const sl = E.mkSlot({ id, uid: E.uid++ }); sl.playedTurn = 0; return sl;
+  });
+  attach(E, E.state.players[0].active, 'base1-99', 2);   // GG
+  return E;
+}
+
+T('Stare hits a chosen target and switches its Power off', () => {
+  const E = arbokBoard('base1-58', ['base3-13']);        // Muk on their Bench
+  const you = E.state.players[1];
+  const muk = you.bench[0];
+  eq(E.powerUsable(muk), true, 'Toxic Gas is on to start with');
+  E.act(0, { t: 'attack', idx: 0, opts: { bench: 1 } });  // index 1 = first bench
+  eq(muk.dmg, 10, 'the Bench target took the 10');
+  eq(E.powerUsable(muk), false, 'and its Power is off');
+  return true;
+});
+
+T('...and Staring a Muk turns everyone ELSE\'s Powers back on', () => {
+  // The interaction that falls out of asking the targeted mark BEFORE the Toxic
+  // Gas exemption. Muk exempts itself from its own suppression; it does not get
+  // to exempt itself from an attack that named it.
+  const E = arbokBoard('base1-58', ['base3-13']);
+  const me = E.state.players[0], you = E.state.players[1];
+  const muk = you.bench[0];
+  // Give our own side a Power to watch: Alakazam's Damage Swap.
+  me.bench = [E.mkSlot({ id: 'base1-1', uid: E.uid++ })];
+  me.bench[0].playedTurn = 0;
+  eq(E.powerUsable(me.bench[0]), false, 'Toxic Gas has ours switched off');
+  E.act(0, { t: 'attack', idx: 0, opts: { bench: 1 } });
+  eq(E.powerUsable(muk), false, 'Muk itself is suppressed');
+  eq(E.powerUsable(me.bench[0]), true, 'so OUR Power came back on');
+  return true;
+});
+
+T('a protected target takes nothing AND keeps its Power', () => {
+  // Protection is asked per target because a snipe reaches the Bench, where the
+  // defender's own `blocked` says nothing at all.
+  const E = arbokBoard('base1-58', ['base3-13']);
+  const muk = E.state.players[1].bench[0];
+  muk.effects.push({ kind: 'PREVENT_ALL_EFFECTS', expireAtStartOfTurn: E.state.turn + 2 });
+  E.act(0, { t: 'attack', idx: 0, opts: { bench: 1 } });
+  eq(muk.dmg, 0, 'no damage got through');
+  // NOT powerUsable — a Barrier switches the slot's OWN Power off by itself, so
+  // that would read false whether Stare marked it or not. The assertion has to
+  // be that no mark was ADDED, which is the thing under test.
+  eq(muk.effects.some(e => e.kind === 'POWER_OFF'), false, 'and Stare left no mark');
+  return true;
+});
+
+T('Poison Vapor splashes THEIR bench only', () => {
+  const E = arbokBoard('base1-3', ['base1-3']);
+  const me = E.state.players[0], you = E.state.players[1];
+  me.bench = [E.mkSlot({ id: 'base1-3', uid: E.uid++ })];
+  me.bench[0].playedTurn = 0;
+  attach(E, me.active, 'base1-99', 1);                   // GGG total
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(you.active.status.poisoned, true, 'the defender is Poisoned');
+  eq(you.bench[0].dmg, 10, 'their Bench took 10');
+  eq(me.bench[0].dmg, 0, 'and OURS took nothing');
+  return true;
+});
+
+T('Mirror Shell answers a hit for the same amount', () => {
+  const E = board('base5-46', [], 'base1-3');            // Dark Wartortle vs Chansey
+  const me = E.state.players[0], you = E.state.players[1];
+  attach(E, me.active, 'base1-102', 2);                  // WC
+  E.act(0, { t: 'attack', idx: 1 });                     // raise the shell
+  eq(me.active.effects.some(e => e.kind === 'MIRROR_SHELL'), true, 'shell is up');
+  // Now they hit it for 40.
+  E.dealDamage(you.active, me.active, 40, {});
+  eq(me.active.dmg, 40, 'Wartortle took the 40');
+  eq(you.active.dmg, 40, 'and answered for exactly 40');
+  return true;
+});
+
+T('...and answers even when the hit Knocks it Out', () => {
+  // "even if Dark Wartortle is Knocked Out" — the reason this hangs off
+  // dealDamage beside retaliate rather than off checkKOs.
+  const E = board('base5-46', ['base1-58'], 'base1-3');
+  const me = E.state.players[0], you = E.state.players[1];
+  attach(E, me.active, 'base1-102', 2);
+  E.act(0, { t: 'attack', idx: 1 });
+  const wartortle = me.active;
+  E.dealDamage(you.active, wartortle, 60, {});           // lethal: 60 HP
+  eq(you.active.dmg, 60, 'the answer went out anyway');
+  E.checkKOs();
+  eq(me.active, null, 'and Wartortle really did die');
+  return true;
+});
+
+T('...and two shells do not answer each other forever', () => {
+  const E = board('base5-46', [], 'base5-46');
+  const me = E.state.players[0], you = E.state.players[1];
+  me.active.effects.push({ kind: 'MIRROR_SHELL', expireAtStartOfTurn: E.state.turn + 2 });
+  you.active.effects.push({ kind: 'MIRROR_SHELL', expireAtStartOfTurn: E.state.turn + 2 });
+  E.dealDamage(you.active, me.active, 20, {});
+  eq(me.active.dmg, 20, 'the first hit landed');
+  eq(you.active.dmg, 20, 'the answer landed');
+  return true;                                            // and it terminated
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

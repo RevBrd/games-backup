@@ -489,6 +489,11 @@ class AI {
         case 'SHUFFLE_INTO_DECK': flags.shuffleAway = v.target || 'defender'; break;
         case 'DMG_PER_OPP_BENCH_TAILS': flags.benchTails = v.per; break;
         case 'BENCH_SPLASH_DOUBLE_FLIP': flags.snipe = { n: 99, dmg: (v.hi + v.lo) / 4 }; break;
+        // Mirror Shell is a deterrent rather than damage — it is worth the most
+        // when the bot expects to be hit hard and least when nothing threatens.
+        // UNTUNED: priced off incoming threat, which is the closest existing
+        // measure, at a guessed fraction.
+        case 'MIRROR_SHELL': flags.mirror = true; break;
         case 'SWITCH_DEFENDER_FIRST': flags.dragFirst = true; break;
         case 'SCATTER_OWN_ENERGY': flags.scatter = true; break;
         case 'MOVE_DEF_ENERGY_TO_BENCH': flags.stripToBench = true; break;
@@ -782,6 +787,7 @@ class AI {
     // Dragging first is the Gust half of a Gust-plus-attack, so it is worth what
     // reaching past the wall is worth. UNTUNED: reuses the drag weight directly.
     if (f.flags.dragFirst && you.bench.length) s += W.drag;
+    if (f.flags.mirror) s += this.incomingThreat(pi) * 0.4;
     // Magnetic Lines moves ONE basic Energy off their Active. Strictly weaker
     // than discarding it — they keep the card — so priced under energyDiscard.
     if (f.flags.stripToBench && you.active && you.bench.length) s += W.energyDiscard * 0.5;
