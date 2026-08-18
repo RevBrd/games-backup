@@ -1054,6 +1054,64 @@ const EFFECTS = {
     p: { kind: 'TRANSFORM', name: 'Transform' },
     a: [],
   },
+
+  // ---- Team Rocket ----
+  // Job 10b. THE ENTRIES IN THIS FIRST BLOCK WERE DERIVED, NOT TYPED: each
+  // attack below prints rules text BYTE-IDENTICAL to a card already live, so
+  // its script is that card's script, copied rather than re-read. The comment
+  // on each line names where it came from, and selftest.js re-checks the claim
+  // — if a source card's script ever changes and one of these does not follow,
+  // the text they share has stopped meaning the same thing and somebody needs
+  // to look.
+  //
+  // Everything Team Rocket actually ADDS is hand-authored below this block.
+  // The split is setsurvey.js's: derived where the printed text is identical,
+  // hand-written everywhere else, and never the other way round.
+  'base5-45': { a: [                                 // Dark Vaporeon
+    [],                                              //   Bite
+    [{ v: 'DISCARD_DEF_ENERGY' }],                   //   Whirlpool  — as Poliwrath
+  ]},
+  'base5-48': { a: [                                 // Porygon
+    [{ v: 'CONVERT_DEF_WEAKNESS' }],                 //   Conversion 1  — as Porygon
+    [{ v: 'STATUS_ON_FLIP', s: 'Confused' }],        //   Psybeam  — as Alakazam
+  ]},
+  'base5-51': { a: [                                 // Dark Raticate
+    [],                                              //   Gnaw
+    [{ v: 'FLIP_OR_NOTHING' }],                      //   Hyper Fang  — as Nidoran ♂
+  ]},
+  'base5-53': { a: [                                 // Dratini
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],       //   Wrap  — as Gyarados
+  ]},
+  'base5-55': { a: [                                 // Eevee
+    [],                                              //   Tackle
+    [{ v: 'JAM_DEFENDER', label: 'Sand-attack' }],   //   Sand-attack  — as Sandshrew
+  ]},
+  'base5-56': { a: [                                 // Ekans
+    [],                                              //   Bite
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],        //   Poison Sting  — as Beedrill
+  ]},
+  'base5-58': { a: [                                 // Koffing
+    [],                                              //   Tackle
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],        //   Poison Gas  — as Beedrill
+  ]},
+  'base5-59': { a: [                                 // Machop
+    [],                                              //   Punch
+    [],                                              //   Kick
+  ]},
+  'base5-63': { a: [                                 // Oddish
+    [{ v: 'STATUS', s: 'Asleep' }],                  //   Sleep Powder  — as Haunter
+    [{ v: 'STATUS', s: 'Poisoned' }],                //   Poisonpowder  — as Ivysaur
+  ]},
+  'base5-68': { a: [                                 // Squirtle
+    [],                                              //   Shell Attack
+  ]},
+  'base5-69': { a: [                                 // Voltorb
+    [],                                              //   Speed Ball
+  ]},
+  'base5-70': { a: [                                 // Zubat
+    [],                                              //   Ram
+    [],                                              //   Bite
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -1104,6 +1162,28 @@ const EFFECT_ALIASES = {
                            //   fraction differently on the two printings
                            //   ("do the damage" / "do that damage"). Same rule.
   'base3-30': 'base3-15',  // Zapdos
+
+  // ---- Team Rocket ----
+  // Every Rare in the set is printed twice, holo and not. NOTE WHICH CARD IS
+  // ABSENT: Dark Vileplume. Its two printings differ in WEAKNESS (base5-13
+  // Fire, base5-30 Fighting), confirmed against the physical card, so they are
+  // two behaviours and must never be aliased together. See DATA.md.
+  'base5-18': 'base5-1',      // Dark Alakazam
+  'base5-19': 'base5-2',      // Dark Arbok
+  'base5-20': 'base5-3',      // Dark Blastoise
+  'base5-21': 'base5-4',      // Dark Charizard
+  'base5-22': 'base5-5',      // Dark Dragonite
+  'base5-23': 'base5-6',      // Dark Dugtrio
+  'base5-24': 'base5-7',      // Dark Golbat
+  'base5-25': 'base5-8',      // Dark Gyarados
+  'base5-26': 'base5-9',      // Dark Hypno
+  'base5-27': 'base5-10',     // Dark Machamp
+  'base5-28': 'base5-11',     // Dark Magneton
+  'base5-29': 'base5-12',     // Dark Slowbro
+  'base5-31': 'base5-14',     // Dark Weezing
+  'base5-71': 'base5-15',     // Here Comes Team Rocket!
+  'base5-72': 'base5-16',     // Rocket's Sneak Attack
+  'base5-80': 'base5-17',     // Rainbow Energy
 };
 
 // Applied by reference on purpose: the two ids resolve to the SAME object, so

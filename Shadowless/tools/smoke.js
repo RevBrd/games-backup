@@ -714,7 +714,14 @@ T('the hand face renders every card and carries no attack names or rules text', 
       if (a.name && a.name.length > 3 && !typeNames.has(a.name) && text.includes(a.name)) {
         leaked = c.name + ' / ' + a.name;
       }
-      if (a.text && a.text.length > 12 && text.includes(a.text.slice(0, 12))) leaked = c.name + ' / rules text';
+      // SEARCH ON TEXT THAT IS NOT THE CARD'S OWN NAME. Team Rocket is the
+      // first set where an attack's rules text OPENS with the name of the card
+      // printing it — "Dark Primeape is now Confused (after doing damage)" —
+      // and the hand face legitimately prints that name. A raw prefix search
+      // therefore reported a leak that was the card's own title tag, on a face
+      // rendering exactly what it should. Strip the name first, then search.
+      const bare = (a.text || '').split(c.name).join(' ').replace(/\s+/g, ' ').trim();
+      if (bare.length > 12 && text.includes(bare.slice(0, 12))) leaked = c.name + ' / rules text';
     }
     if (c.kind === 'trainer' && c.text && c.text.length > 12 && text.includes(c.text.slice(0, 12))) {
       leaked = c.name + ' / Trainer text';

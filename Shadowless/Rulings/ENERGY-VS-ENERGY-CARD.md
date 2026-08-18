@@ -32,6 +32,25 @@ So the rule is a reading rule, not a Rainbow rule:
 | *"Energy"* — attached, provided, powering something | **type**, live, as the card currently counts. Rainbow qualifies for every type |
 | *"Energy card"* — search, move, discard, retrieve, attach | **class**, the physical card. Rainbow is not a basic Energy card and never qualifies |
 
+**The WotC reasoning is sharper than "it counts", and the difference matters.** Trevor, relaying it:
+Rainbow provides every type of Energy **at the same time**. It is not a wildcard you resolve to one
+type when asked — it is genuinely providing Water *and* Fighting *and* Psychic simultaneously, and
+what the card's "only provides 1 Energy at a time" clause limits is the **quantity**, not the number
+of types. One symbol, every type, always.
+
+That is a mechanism rather than a verdict, and it settles cases nobody has asked yet. A Rainbow on a
+Dark Blastoise is a spare Water for Hydrocannon; the same card on the same Pokémon in the same turn
+would be a spare Fire for a Fire-scaling attack. Nothing chooses, so nothing has to remember what was
+chosen.
+
+**Implementation consequence, flagged because the current shape cannot express it.** `energyProvides`
+returns a single type string — `'W'`, or `'CC'` for a Double Colorless — and Rainbow is not any one
+of those. It needs a representation that is all types at once rather than a type that gets picked,
+and `gen_cards.js` already reports both Rainbow printings as Special Energy needing a hand-authored
+effect. Whatever that representation is, **it must not be "choose a type on attachment"** — that is a
+different card from the one printed, and it would quietly answer the simultaneity question the wrong
+way forever.
+
 **Both of us reasoned our way to the right answer here and it was still worth checking.** The Buzzap
 entry is the standing warning about that exact complacency — two instances reasoned confidently to
 the wrong answer while the source said otherwise in plain language. This time the reasoning and the

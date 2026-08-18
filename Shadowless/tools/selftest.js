@@ -66,10 +66,18 @@ for (const name of DECK_NAMES) {
 // The SOFT one is a high-water mark per set still being written. One number,
 // which only ever moves down. It catches a script being deleted or an id being
 // misspelled, without anybody hand-editing a list of 126 ids as they go.
-// Empty: every set this build generates is complete, so the live-set assertion
-// above now covers all of them and nothing is exempt. Add a set here the moment
-// you generate one, and take it out again when its last script lands.
-const REMAINING = {};
+// Add a set here the moment you generate one, and take it out again when its
+// last script lands. A set listed here is EXEMPT from the hard assertion above,
+// which is the whole point — it is how a set sits in CARD_DB half-written
+// without the suite going red, and it is why `gen_cards.js --sets` can be run
+// at the START of a set job rather than the end.
+//
+// THE NUMBER MUST ONLY EVER GO DOWN. It is not documentation, it is a ratchet:
+// lower it as scripts land, and if a run reports MORE unimplemented cards than
+// the number here, something was deleted or an id was misspelled. That failure
+// is otherwise completely silent, because an unscripted card simply cannot be
+// put in a deck and nothing else complains.
+const REMAINING = { base5: 67 };   // Team Rocket, Job 10b in progress
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');
@@ -90,6 +98,18 @@ const liveGaps = sets.filter(s => REMAINING[s] === undefined && bySet[s]);
 check(liveGaps.length === 0, 'no live set contains an unimplemented card',
   liveGaps.map(s => `${s}: ${unscripted.filter(id => CARD_DB[id].set === s)
     .map(id => CARD_DB[id].name).join(', ')}`).join(' | '));
+
+// The ratchet. A set under construction may have at most as many gaps as the
+// last time somebody looked — never more.
+{
+  const slipped = Object.keys(REMAINING).filter(s => (bySet[s] || 0) > REMAINING[s]);
+  check(slipped.length === 0, 'no set under construction has gone backwards',
+    slipped.map(s => `${s}: ${bySet[s]} unimplemented, REMAINING says ${REMAINING[s]}`).join(' | '));
+  for (const s of Object.keys(REMAINING)) {
+    if ((bySet[s] || 0) < REMAINING[s])
+      console.log(`  ${s}: ${bySet[s] || 0} left — REMAINING says ${REMAINING[s]}, lower it`);
+  }
+}
 
 // Card art is a DERIVED, gitignored asset fetched per set. Nothing else in the
 // project can see it: the suites never touch the filesystem and smoke.js has no
@@ -123,6 +143,50 @@ if (ahead.length) console.log('  progress since REMAINING was last set: '
 const finished = Object.keys(REMAINING).filter(s => !bySet[s]);
 if (finished.length) console.log(`  ${finished.join(', ')} now complete `
   + '— remove from REMAINING to make the live-set assertion cover it');
+
+// --- 2c. identical printed text means an identical script ----------------
+// If two cards print the SAME rules text, they do the same thing, and their
+// verb lists must match. Across 136 distinct attack texts this holds without a
+// single exception, which makes it a cheap and very broad correctness net: it
+// catches a card scripted by hand that drifted from the one it was copied off,
+// and it catches a fix applied to one printing and not its twin.
+//
+// IT IS ALSO THE CHECK THAT LICENCES DERIVING ENTRIES. Team Rocket's first
+// block in effects.js was not typed — twelve cards whose attacks print text
+// already live had their scripts COPIED from the cards that print it. That is
+// only safe while identical text really does imply an identical script, and
+// this is what keeps saying so.
+//
+// `label` IS EXCLUDED, and it is the one field that has to be. It is the string
+// the log prints, not behaviour: Sandshrew's Sand-attack and Horsea's
+// Smokescreen are the same effect under two names, and four cards across three
+// sets share that text with two different labels. Comparing labels would fail
+// on a difference that is purely cosmetic and correct.
+{
+  const strip = list => JSON.stringify((list || []).map(o => {
+    const { label, ...rest } = o; return rest;
+  }));
+  const scriptFor = id => EFFECTS[id] || EFFECTS[require('../src/effects.js').EFFECT_ALIASES[id]];
+  const byText = new Map();
+  for (const id in CARD_DB) {
+    const c = CARD_DB[id], e = scriptFor(id);
+    if (!e || !e.a) continue;
+    (c.attacks || []).forEach((a, i) => {
+      const t = (a.text || '').trim();
+      if (!t) return;
+      if (!byText.has(t)) byText.set(t, []);
+      byText.get(t).push({ id, what: `${c.name} — ${a.name}`, v: strip(e.a[i]) });
+    });
+  }
+  const clashes = [];
+  for (const [t, list] of byText) {
+    if (new Set(list.map(x => x.v)).size > 1)
+      clashes.push(`"${t.slice(0, 50)}..." — ${list.map(x => x.what).join(' vs ')}`);
+  }
+  check(clashes.length === 0, 'cards printing identical text run identical scripts',
+    clashes.join('; '));
+  console.log(`  ${byText.size} distinct attack texts, no two scripted differently`);
+}
 
 // --- 2b. the DSL verb reference is complete ------------------------------
 // effects.js opens with a verb reference that calls itself THE CONTRACT, and it

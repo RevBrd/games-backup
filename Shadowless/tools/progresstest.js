@@ -30,7 +30,13 @@ const ok = (cond, name) => {
 const eq = (a, b, name) => ok(a === b, `${name}${a === b ? '' : `  (got ${JSON.stringify(a)}, want ${JSON.stringify(b)})`}`);
 const group = t => console.log(`\n${t}`);
 
-const LIVE = Object.keys(SET_INFO);
+// GENERATED IS NOT LIVE. This read `Object.keys(SET_INFO)` until 17 Aug 2026,
+// which is every set the build generated — true only while no set was ever
+// generated before it was finished. Job 10b generates Team Rocket at the START
+// of the work, so SET_INFO gained a set that has no ladder bracket and whose
+// cards cannot legally be put in a deck, and three assertions here failed for a
+// reason that had nothing to do with progression.
+const LIVE = P.liveSets(CARD_DB, EFFECTS, SET_INFO);
 const hasDeck = ref => ref.startsWith('theme:') ? !!DECKS[ref.slice(6)] : !!OPPONENT_DECKS[ref];
 const build = (sets = LIVE, data = LADDER) => P.buildLadder(sets, data, { hasDeck });
 const fresh = () => ensureShape(newSave());

@@ -72,7 +72,32 @@ function generatedOpponent(setCode, n, cfg) {
   }, setCode, cfg, n);
 }
 
-// liveSets  ordered set codes that actually have cards (ui.js derives this)
+// WHICH SETS ARE LIVE. One definition, here, because there were briefly two and
+// they disagreed the moment a set was generated before it was finished — which
+// is the supported workflow, not an edge case.
+//
+// A set is live once EVERY non-Energy card in it has an effect script. That is
+// CLAUDE.md's gating rule (no half-open sets, no collecting a card you cannot
+// play) expressed as a derivation rather than a list, so a set goes live the
+// moment its last script lands with nothing to flip by hand.
+//
+// GENERATED IS NOT LIVE, and conflating them is the specific mistake this exists
+// to prevent. `SET_INFO` holds what this build generated; a set can sit in there
+// half-written for a whole job. ui.js used to own this derivation and everything
+// else re-derived it or assumed SET_INFO — progresstest assumed, and went red the
+// first time the assumption was false.
+//
+// Pure, so the suites can call it. Order follows SET_INFO, which is generation
+// order, which is release order.
+function liveSets(cardDb, effects, setInfo) {
+  const gaps = {};
+  for (const id in cardDb) {
+    const c = cardDb[id];
+    if (c.kind !== 'energy' && !effects[id]) gaps[c.set] = 1;
+  }
+  return Object.keys(setInfo).filter(code => !gaps[code]);
+}
+// liveSets  ordered set codes that are LIVE, from liveSets() above
 // data      the parsed data/ladder.json
 // opts.hasDeck(ref) -> bool. Optional. A roster entry whose deck cannot be
 //           resolved is DROPPED and backfilled with a generated one rather than
@@ -249,4 +274,4 @@ function progressStats(save, ladder) {
   return { beaten, total, bosses, bossTotal, sets: unlockedSets(save, ladder) };
 }
 
-if (typeof module !== 'undefined') module.exports = { PROGRESS_DEFAULTS, opponentSeed, buildLadder, allOpponents, findOpponent, bracketOf, timesBeaten, hasBeaten, rosterCleared, bossAvailable, bracketCleared, bracketOpen, unlockedSets, availableOpponents, canFight, winReward, recordWin, recordLoss, resolveOpponentDeck, poolSetsFor, progressStats };
+if (typeof module !== 'undefined') module.exports = { PROGRESS_DEFAULTS, liveSets, opponentSeed, buildLadder, allOpponents, findOpponent, bracketOf, timesBeaten, hasBeaten, rosterCleared, bossAvailable, bracketCleared, bracketOpen, unlockedSets, availableOpponents, canFight, winReward, recordWin, recordLoss, resolveOpponentDeck, poolSetsFor, progressStats };

@@ -95,22 +95,20 @@ const PACKS_PER_WIN = 2;      // PACKS.md's yardstick, and now the real rule
 // Base Set: that constant was threaded through nine call sites and every one of
 // them had to be found again to widen the game.
 // A set is LIVE once every card in it is playable. CLAUDE.md's rule — no
-// collecting a card you cannot play, and no half-open sets — now enforces
-// ITSELF from this rather than from anyone remembering it. That is what lets
-// Jungle and Fossil sit in CARD_DB half-scripted through 6c-6e: they generate,
-// they are testable, and they stay invisible to the collection until the last
-// script lands.
+// collecting a card you cannot play, and no half-open sets — enforces ITSELF
+// from this rather than from anyone remembering it. That is what lets a set sit
+// in CARD_DB half-scripted for a whole job: it generates, it is testable, and it
+// stays invisible to the collection until the last script lands.
 //
-// Derived, never declared. A set goes live the moment its final effect script
-// exists, with nothing to flip by hand and nothing to forget.
+// THE DERIVATION MOVED TO progress.js ON 17 AUG 2026 and this is now a call
+// rather than a copy. It lived here, which meant every pure consumer had to
+// re-derive it or guess — and `progresstest.js` guessed `Object.keys(SET_INFO)`,
+// which is GENERATED rather than live. That was correct only for as long as the
+// two were the same, and it went red the first time a set was generated before
+// it was finished. One definition, in a pure module, callable by the suites.
 const SET_LIVE = (() => {
-  const incomplete = {};
-  for (const id in CARD_DB) {
-    const c = CARD_DB[id];
-    if (c.kind !== 'energy' && !EFFECTS[id]) incomplete[c.set] = 1;
-  }
   const out = {};
-  for (const code in SET_INFO) if (!incomplete[code]) out[code] = 1;
+  for (const code of liveSets(CARD_DB, EFFECTS, SET_INFO)) out[code] = 1;
   return out;
 })();
 const setIsLive = code => !!SET_LIVE[code];
