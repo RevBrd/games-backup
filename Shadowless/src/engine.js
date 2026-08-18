@@ -1322,6 +1322,11 @@ class Engine {
       if (v.v === 'COST_DISCARD_ALL_ENERGY') {
         if (p.active.energy.length === 0) return { ok: false, why: 'No Energy to discard' };
       }
+      if (v.v === 'REQUIRE_OPP_BENCH') {
+        // `opp()` reads state.active and takes no argument, so it is the wrong
+        // call here — a legality check must answer for the pi it was ASKED about.
+        if (!this.state.players[1 - pi].bench.length) return { ok: false, why: 'They have no Benched Pokemon' };
+      }
       if (v.v === 'REQUIRE_SELF_ENERGY') {
         const n = p.active.energy.filter(e => energyProvides(this.db, e) === v.t).length;
         if (!n) return { ok: false, why: `No ${v.t} Energy attached` };
@@ -1443,7 +1448,37 @@ class Engine {
 
     const r = this.dispatchAction(pi, a);
     this.settleTransforms();
+    this.settleEmptyBoard();
     return r;
+  }
+
+  // A SIDE WITH NO POKEMON HAS LOST, wherever that happened.
+  //
+  // Three separate checks for this already existed and every one was local to
+  // the path that could cause it — Buzzap knocking out its own Electrode, a
+  // Clefairy Doll discarded from play, and checkKOs. That covered every route
+  // that existed when they were written, and covered nothing that arrived
+  // afterwards, which is the failure mode a local guard always has.
+  //
+  // Found on 18 Aug 2026 by a test for Abra's Vanish — shuffle your last Pokemon
+  // into your deck and the game simply carried on with an empty board. It is NOT
+  // a Team Rocket bug: PIDGEOT'S HURRICANE has the same hole and has been live
+  // since Base Set. Bounce a lone Active back to its owner's hand and nothing
+  // ends the game either.
+  //
+  // Idempotent and called after every action, which is the same shape as
+  // settleTransforms and for the same reason: a route added later cannot forget
+  // about it.
+  settleEmptyBoard() {
+    const s = this.state;
+    if (s.phase !== 'main' || s.winner !== null) return;
+    for (let i = 0; i < 2; i++) {
+      const p = s.players[i];
+      if (!p.active && p.bench.length === 0) {
+        this.endGame(1 - i, `${p.name} has no Pokemon left`);
+        return;
+      }
+    }
   }
 
   dispatchAction(pi, a) {
@@ -2412,6 +2447,16 @@ class Engine {
         while (h2 < 20 && this.flip(`Stone Barrage ${h2 + 1}`)) h2++;
         base = v.per * h2;
         this.log(`${h2} head(s) before tails -> ${base} damage.`);
+      } else if (v.v === 'DMG_PER_OPP_BENCH_TAILS') {
+        // Dark Hypno's Bench Manipulation. THE OPPONENT flips, one coin per
+        // Pokemon on their OWN Bench, and the damage counts TAILS — so a wide
+        // bench is a liability to them rather than a shield. An empty bench
+        // means no coins and no damage at all, which is the card working.
+        const n7 = you.bench.length;
+        let tails7 = 0;
+        for (let i = 0; i < n7; i++) if (!this.flip(`their coin ${i + 1}/${n7}`)) tails7++;
+        base = v.per * tails7;
+        this.log(`${tails7} of ${n7} tails -> ${base} damage.`);
       } else if (v.v === 'DMG_PER_ENERGY_HEADS') {
         // Big Eggsplosion: one coin per Energy ATTACHED, not per Energy paid.
         //
@@ -2973,6 +3018,63 @@ class Engine {
           clearStatus(atk);
           this.shuffle(me.deck);
           this.log(`${was} evolves into ${this.db[inst.id].name}. Special Conditions removed.`, 'eff');
+          break;
+        }
+        case 'SHUFFLE_INTO_DECK': {
+          // Abra's Vanish and Dark Machamp's Fling are ONE verb, and the two
+          // things that differ are both parameters rather than special cases:
+          // WHO goes, and where the Energy on them ends up.
+          //
+          //   Vanish  target 'self',     attached 'discard'
+          //           "Shuffle Abra into your deck. (Discard all cards attached.)"
+          //   Fling   target 'defender', attached 'deck'
+          //           "...his or her Active Pokemon AND ALL CARDS ATTACHED TO IT
+          //            into his or her deck."
+          //
+          // Fling therefore RECYCLES their Energy and Vanish BURNS yours, which
+          // is a real difference in card power and not a detail to smooth over.
+          const self = v.target === 'self';
+          const sl = self ? atk : def;
+          if (!sl) break;
+          if (!self && blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          const owner = self ? pi : 1 - pi;
+          const side = this.state.players[owner];
+          const nm = this.nameOf(sl);
+          const where = this.removeSlot(owner, sl);
+          // gatherSlot returns the whole pile — the evolution stack and the
+          // Energy — which is exactly what both cards move.
+          const pile = this.gatherSlot(sl);
+          const toDeck = v.attached === 'deck'
+            ? pile
+            : pile.filter(x => this.db[x.id] && this.db[x.id].kind === 'pokemon');
+          const toDiscard = pile.filter(x => toDeck.indexOf(x) < 0);
+          toDeck.forEach(x => side.deck.push(x));
+          toDiscard.forEach(x => side.discard.push(x));
+          this.shuffle(side.deck);
+          this.log(`${nm} is shuffled into ${side.name}'s deck`
+            + (toDiscard.length ? `; ${toDiscard.length} attached card(s) discarded.` : '.'), 'eff');
+          // NO INVENTED GATE ON VANISH. Fling prints "can't be used if your
+          // opponent has no Benched Pokemon" and gets that as a legality check;
+          // Abra prints nothing of the kind, so shuffling away your last Pokemon
+          // is legal and loses you the game. Inventing a guard for comfort is
+          // exactly what Rulings/MASS-EXPLOSION.md argues against, and the engine
+          // already ends the game correctly when a side has nothing left.
+          if (where === 'active' && side.bench.length) this.addPromote(owner);
+          break;
+        }
+        case 'BENCH_SPLASH_DOUBLE_FLIP': {
+          // Dark Raichu's Surprise Thunder. The first coin decides WHETHER the
+          // bench is hit; the second decides HOW HARD. Tails on the first is
+          // nothing — but the attack's own 30 to the Active still lands, which is
+          // why this is a post-damage verb rather than a damage-shaping one.
+          if (!this.flip(v.label || 'hit their bench?')) {
+            this.log('Tails - the Bench is untouched.', 'eff');
+            break;
+          }
+          const big = this.flip('...and how hard?');
+          const n8 = big ? v.hi : v.lo;
+          for (const b of you.bench) this.dealDamage(atk, b, n8, { noWR: true });
+          this.log(`${n8} to each of ${you.name}'s Benched Pokemon.`, 'eff');
           break;
         }
         case 'SPLASH_NAMED': {

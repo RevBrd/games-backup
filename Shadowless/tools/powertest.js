@@ -3427,5 +3427,154 @@ T('Magnetism counts your BENCH only, never the attacker itself', () => {
   return true;
 });
 
+// ------------------------------------------- Shuffled off the board entirely
+// Vanish and Fling are one verb pointed two ways, and the two things that
+// differ — WHO goes and where their Energy lands — are exactly what these
+// assert. Get either backwards and both cards still 'work'.
+console.log('\nShuffled into the deck');
+
+T('Fling puts their Active AND its Energy into their DECK', () => {
+  const E = board('base5-10', [], 'base1-58');          // Dark Machamp vs Pikachu
+  const me = E.state.players[0], you = E.state.players[1];
+  you.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  you.bench[0].playedTurn = 0;
+  attach(E, me.active, 'base1-97', 4);                  // FFFC
+  attach(E, you.active, 'base1-100', 2);                // two Energy to follow it
+  const deckWas = you.deck.length, discardWas = you.discard.length;
+  eq(E.act(0, { t: 'attack', idx: 1 }).ok, true, 'attack resolved');
+  eq(you.deck.length, deckWas + 3, 'Pikachu and both Energy went into the deck');
+  eq(you.discard.length, discardWas, 'and NOTHING was discarded');
+  return true;
+});
+
+T('...and is illegal with their Bench empty, as printed', () => {
+  const E = board('base5-10', [], 'base1-58');
+  attach(E, E.state.players[0].active, 'base1-97', 4);
+  E.state.players[1].bench = [];
+  const why = E.canUseAttack(0, 1);
+  eq(why.ok, false, 'refused');
+  if (!/Bench/i.test(why.why || '')) throw new Error(`refused for the wrong reason: ${why.why}`);
+  return true;
+});
+
+T('Vanish takes Abra to the deck but BURNS what was attached', () => {
+  const E = board('base5-49', ['base1-58']);            // Abra, Pikachu benched
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-101', 3);                 // one pays, two spare
+  const deckWas = me.deck.length, discardWas = me.discard.length;
+  eq(E.act(0, { t: 'attack', idx: 0 }).ok, true, 'attack resolved');
+  eq(me.deck.length, deckWas + 1, 'only Abra itself went into the deck');
+  eq(me.discard.length, discardWas + 3, 'and all three Energy burned');
+  return true;
+});
+
+T('...and Vanishing your LAST Pokemon loses the game, with no guard invented', () => {
+  // The card prints no gate and neither do we. See Rulings/MASS-EXPLOSION.md on
+  // clauses invented for comfort; the engine already ends the game correctly.
+  const E = board('base5-49');                          // Abra alone
+  attach(E, E.state.players[0].active, 'base1-101', 1);
+  eq(E.canUseAttack(0, 0).ok, true, 'the attack is legal');
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(E.state.winner, 1, 'and the opponent wins');
+  return true;
+});
+
+console.log('\nBench Manipulation and Surprise Thunder');
+
+T('Bench Manipulation counts THEIR tails, one coin per THEIR bench', () => {
+  const E = board('base5-9', [], 'base1-3');            // Dark Hypno vs Chansey
+  const you = E.state.players[1];
+  you.bench = ['base1-58', 'base1-58', 'base1-58'].map(id => {
+    const sl = E.mkSlot({ id, uid: E.uid++ }); sl.playedTurn = 0; return sl;
+  });
+  attach(E, E.state.players[0].active, 'base1-101', 3);
+  let flips = 0;
+  E.flip = () => { flips++; return false; };            // all TAILS
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(flips, 3, 'three coins for three benched');
+  eq(you.active.dmg, 60, 'all tails is 20 x 3');
+  return true;
+});
+
+T('...and an empty bench means no coins and no damage', () => {
+  const E = board('base5-9', [], 'base1-3');
+  E.state.players[1].bench = [];
+  attach(E, E.state.players[0].active, 'base1-101', 3);
+  let flips = 0;
+  E.flip = () => { flips++; return false; };
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(flips, 0, 'nothing to flip for');
+  eq(E.state.players[1].active.dmg, 0, 'and no damage');
+  return true;
+});
+
+T('Surprise Thunder still does its 30 when the first coin is tails', () => {
+  // The half most likely to be got wrong: a tails must spare the BENCH, not the
+  // attack. Scripting it as FLIP_OR_NOTHING would silently drop the 30.
+  const E = board('base5-83', [], 'base1-3');           // Dark Raichu vs Chansey
+  const you = E.state.players[1];
+  you.bench = [E.mkSlot({ id: 'base1-3', uid: E.uid++ })];
+  you.bench[0].playedTurn = 0;
+  attach(E, E.state.players[0].active, 'base1-100', 3);
+  E.flip = () => false;
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(you.active.dmg, 30, 'the Active still took the printed 30');
+  eq(you.bench[0].dmg, 0, 'and the Bench was spared');
+  return true;
+});
+
+T('...and the SECOND coin picks 20 or 10', () => {
+  const mk = heads => {
+    const E = board('base5-83', [], 'base1-3');
+    E.state.players[1].bench = [E.mkSlot({ id: 'base1-3', uid: E.uid++ })];
+    E.state.players[1].bench[0].playedTurn = 0;
+    attach(E, E.state.players[0].active, 'base1-100', 3);
+    let n = 0;
+    E.flip = () => { n++; return n === 1 ? true : heads; };   // first always heads
+    E.act(0, { t: 'attack', idx: 0 });
+    return E.state.players[1].bench[0].dmg;
+  };
+  eq(mk(true), 20, 'second heads is the big one');
+  eq(mk(false), 10, 'second tails is the small one');
+  return true;
+});
+
+// ------------------------------- An empty board loses, however it got empty
+// The Vanish test above found this and it is NOT a Team Rocket bug. Three
+// separate no-Pokemon checks existed and every one was local to the path that
+// could cause it, so a route added later was never covered. Pidgeot's Hurricane
+// has had the same hole since Base Set.
+//
+// settleEmptyBoard() runs after every action instead. These two assert it from
+// the OLD card as well as the new one, because a fix that only covers the case
+// that found it is the same mistake one layer up.
+console.log('\nAn empty board loses');
+
+T('Hurricane bouncing their LAST Pokemon ends the game — a Base Set bug', () => {
+  const E = board('base2-8', [], 'base1-58');           // Pidgeot vs a lone Pikachu
+  const me = E.state.players[0], you = E.state.players[1];
+  you.bench = [];
+  attach(E, me.active, 'base1-99', 3);                  // GCC for Hurricane
+  eq(E.state.winner, null, 'nobody has won yet');
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(you.active, null, 'Pikachu went back to hand rather than being Knocked Out');
+  eq(E.state.winner, 0, 'and the game is over');
+  return true;
+});
+
+T('...and a board that still has a Bench carries on normally', () => {
+  // The half that stops the fix being a blunt instrument: emptying the ACTIVE
+  // spot is not the same as emptying the board, and a promote is owed instead.
+  const E = board('base2-8', [], 'base1-58');
+  const you = E.state.players[1];
+  you.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  you.bench[0].playedTurn = 0;
+  attach(E, E.state.players[0].active, 'base1-99', 3);
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(E.state.winner, null, 'the game continues');
+  eq(E.state.pendingPromote, 1, 'and they owe a promotion');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

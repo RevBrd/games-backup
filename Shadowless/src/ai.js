@@ -481,6 +481,14 @@ class AI {
         // UNTUNED: the 0.6 is a guess at how much of a full hit our own board
         // taking 20 is worth against theirs taking it.
         case 'SPLASH_NAMED': flags.splashNamed = { names: v.names, n: v.n }; break;
+        // Fling and Vanish. Removing their Active outright is close to a Knock
+        // Out in effect without the Prize — it undoes every Energy on it — so it
+        // is scored as a drag plus what they had invested. Vanish points the
+        // same verb at ourselves and is scored as a COST for the same reason.
+        // UNTUNED: the 0.7 and the self-side sign are judgement, not measurement.
+        case 'SHUFFLE_INTO_DECK': flags.shuffleAway = v.target || 'defender'; break;
+        case 'DMG_PER_OPP_BENCH_TAILS': flags.benchTails = v.per; break;
+        case 'BENCH_SPLASH_DOUBLE_FLIP': flags.snipe = { n: 99, dmg: (v.hi + v.lo) / 4 }; break;
         case 'SEARCH_BASIC_TO_BENCH': flags.callFamily = true; break;
         // Rapid Evolution. Priced on the HP SWING it buys rather than as a flat
         // bonus, because that is what the attack actually is: a 30 HP Magikarp
@@ -766,6 +774,19 @@ class AI {
     // A free Basic onto the Bench is worth roughly what benching one from hand
     // is, and much more when the Bench is nearly empty.
     if (f.flags.callFamily) s += me.bench.length === 0 ? W.benchFirst : W.benchMore;
+
+    if (f.flags.shuffleAway === 'defender' && you.active) {
+      s += W.drag + you.active.energy.length * W.energyDiscard * 0.7;
+    } else if (f.flags.shuffleAway === 'self' && me.active) {
+      // Vanish throws away our own board position and every Energy on it. It is
+      // an escape, so it is worth something when the Active is doomed and a real
+      // cost otherwise — priced off what we would lose, same as the retreat rule.
+      s -= me.active.energy.length * W.retreatSaveEnergy * 0.7;
+    }
+    // The opponent flips, and TAILS is what hurts them, so a wide bench is worth
+    // attacking into rather than away from. Already inside the damage forecast
+    // via base damage; nothing extra to add beyond noting it is scored.
+    if (f.flags.benchTails) s += 0;
 
     // What the blast costs US. Counting only our own side is the point: the
     // damage it does to theirs is already priced by the damage half of the

@@ -39,6 +39,9 @@
 //     ONCE_WHILE_IN_PLAY           this attack may be used only once per stay in play
 //     REQUIRE_DEF_STATUS {s, label}  illegal unless the defender has status s
 //     REQUIRE_SELF_DAMAGED         illegal unless self has damage to remove
+//     REQUIRE_OPP_BENCH            illegal unless the opponent has a Benched
+//                                  Pokemon. Printed on Fling and Drag Off, which
+//                                  would otherwise empty their board entirely
 //     REQUIRE_SELF_ENERGY {t}      illegal unless at least one Energy providing t
 //                                  is attached to self. "Use this attack only if
 //                                  there are any Fire Energy cards attached"
@@ -65,6 +68,15 @@
 //                                  (Super Fang)
 //     DMG_PER_OWN_BENCH {base, per}    base + per * YOUR Benched Pokemon. A Clefairy
 //                                  Doll counts — see RULINGS.md (Do the Wave)
+//   NAME MATCHING IS DELIBERATELY CROSS-SET, and it will look like a bug the
+//   first time it is seen. 31 Pokemon names are printed in more than one set —
+//   Team Rocket reprints a pile of Base Set basics under identical names — so a
+//   Base Set Magnemite counts toward a Team Rocket Magnemite's Magnetism, and a
+//   Base Set Koffing is in Dark Weezing's blast. That is correct: the cards say
+//   "Magnemite", not "this printing of Magnemite". Do not add a set check.
+//   Trevor flagged the general case on 17 Aug 2026; the routes that reach it
+//   today all run through Team Rocket, and Gym and Neo add many more.
+//
 //     DMG_PER_NAMED_IN_PLAY {name|names, base, per, where}
 //                                  base + per * slots whose card NAME matches.
 //                                  Name, not species (Boyfriends). `names` takes
@@ -72,6 +84,9 @@
 //                                  (default, every slot you have), 'bench'
 //                                  (yours only — Magnetism), 'all' (BOTH sides,
 //                                  which is what "in play" means — Mass Explosion)
+//     DMG_PER_OPP_BENCH_TAILS {per}    THE OPPONENT flips one coin per Pokemon on
+//                                  their own Bench; damage is per * TAILS, so a
+//                                  wide bench is their liability (Bench Manipulation)
 //     DMG_PER_ENERGY_HEADS {per, t, discardPerHead}
 //                                  one coin per Energy ATTACHED — not per Energy
 //                                  paid — and per * heads (Big Eggsplosion). `t`
@@ -131,6 +146,16 @@
 //                                  Rocket's "1 of your opponent's Pokemon" wording
 //                                  asks for and is a materially stronger card
 //     SHUFFLE_OPP_DECK             shuffle the opponent's deck (Mischief)
+//     SHUFFLE_INTO_DECK {target, attached}
+//                                  put a Pokemon and its pile into its OWNER's
+//                                  deck and shuffle. target 'self' or 'defender';
+//                                  attached 'deck' (everything goes, Fling) or
+//                                  'discard' (the Energy burns, Vanish). The
+//                                  owner promotes if it was their Active
+//     BENCH_SPLASH_DOUBLE_FLIP {hi, lo, label}
+//                                  first coin decides WHETHER their Bench is hit,
+//                                  second decides HOW HARD. The attack's own
+//                                  damage lands either way (Surprise Thunder)
 //     SPLASH_NAMED {names, n}      n to EVERY Pokemon in play whose card name is
 //                                  in the list, both sides, THE ATTACKER
 //                                  INCLUDED, never W/R. Shares its enumeration
@@ -1313,6 +1338,29 @@ const EFFECTS = {
     // Active when it attacks and must not count itself.
     [{ v: 'DMG_PER_NAMED_IN_PLAY', names: ['Magnemite', 'Magneton', 'Dark Magneton'],
        base: 10, per: 10, where: 'bench' }],
+  ]},
+  'base5-49': { a: [                                 // Abra
+    // Vanish burns everything attached and can legally shuffle away your LAST
+    // Pokemon, which loses you the game. The card prints no guard against that
+    // and neither do we.
+    [{ v: 'SHUFFLE_INTO_DECK', target: 'self', attached: 'discard' }],
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],       //   Psyshock
+  ]},
+  'base5-10': { a: [                                 // Dark Machamp
+    [],                                              //   Mega Punch
+    // Fling RECYCLES their Energy rather than burning it — everything attached
+    // rides into the deck with the Pokemon. The bench gate is printed.
+    [{ v: 'REQUIRE_OPP_BENCH' },
+     { v: 'SHUFFLE_INTO_DECK', target: 'defender', attached: 'deck' }],
+  ]},
+  'base5-9': { a: [                                  // Dark Hypno
+    [],                                              //   Psypunch
+    [{ v: 'DMG_PER_OPP_BENCH_TAILS', per: 20 }, { v: 'NO_WR' }],
+  ]},
+  'base5-83': { a: [                                 // Dark Raichu
+    // The 30 to the Active lands whatever the coins do; only the Bench splash
+    // rides them, which is why this is post-damage and not damage-shaping.
+    [{ v: 'BENCH_SPLASH_DOUBLE_FLIP', hi: 20, lo: 10, label: 'Surprise Thunder' }],
   ]},
 };
 
