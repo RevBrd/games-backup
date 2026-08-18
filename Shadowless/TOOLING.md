@@ -264,3 +264,20 @@ script deleted by a bad merge is caught the same way a missing one is.
 `build.py` and `gen_cards.py` are the originals, superseded by the Node equivalents. **Keep them, and
 don't try to revive them** — it looks like a one-line fix and is not, for reasons in
 [HISTORY.md](HISTORY.md).
+
+## `openercheck.js` — the opening Active, measured
+
+**Not pass/fail.** `setupAuto` in `engine.js` picks the opening Active by one line — highest HP among
+the Basics in hand — and `ai.js` is never consulted. This deals hands against real deck lists and
+reports how often that strands an evolution-line starter in the Active spot while a standalone Basic
+sat in the same hand, which is the case the HP rule structurally cannot see.
+
+```bash
+node tools/openercheck.js                          # data/base1_decks.json, 6000 hands per deck
+node tools/openercheck.js data/jungle_decks.json   # any file in the *_decks.json shape
+```
+
+Deterministic seed, so the figure is reproducible run to run and a change to the rule can be measured
+against it. It reads the deck JSON rather than the engine, so it works on quarantined deck files that
+nothing else has wired up yet. The standing figure and what to do about it are in [AI.md](AI.md).
+

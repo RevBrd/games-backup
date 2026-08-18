@@ -241,7 +241,20 @@ different game.
    time, each with a reason and a measurement. A sweep over `AI_WEIGHTS` as a whole has never been
    done and there is no measured reason to think it would pay — recorded so nobody proposes it as a
    known-good job. It is a speculative one.
-3. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
+3. **THE BOT DOES NOT CHOOSE ITS OPENING POKEMON AT ALL, and this is the largest unscored decision
+   left in the game.** `setupAuto` in `engine.js` sorts the Basics in hand by HP and promotes the
+   biggest — `ai.js` is never consulted, at any tier, in any deck. The opening Active takes the first
+   hits, cannot retreat without Energy nobody has yet, and is locked in for turns.
+   **Measured against Trevor's eight Base Set decks, 6,000 dealt hands each: in 6.0% of hands where a
+   real choice existed, the rule promotes an evolution-starter whose evolution is not in hand while a
+   standalone Basic sits beside it.** It is not evenly spread — four decks are at 0–2.6% and three are
+   at 11.6%, 12.4% and 19.5%, so it is a property of the deck, and a roster built later could be worse.
+   The fix does not need new data: `evolvesFrom` is already in `CARD_DB`, so "is this a line-starter,
+   and is its evolution in my hand" is answerable today. **The right shape is to move the choice into
+   `ai.js` and score it like everything else** rather than to add a second heuristic in the engine.
+   Found 18 Aug 2026 while evaluating a card-tagging proposal — see [OPPONENTS.md](OPPONENTS.md) for
+   why the tags themselves were not adopted and the defect was.
+4. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
    Every opponent plays at the tier deck select hands them. Whether a named rival should play better
    than a Club Master is an unasked design question — see [PROGRESSION.md](PROGRESSION.md) and
    [OPPONENTS.md](OPPONENTS.md), which argues the AI probably should *not* be the dial.

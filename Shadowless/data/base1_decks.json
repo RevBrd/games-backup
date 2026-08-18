@@ -1,0 +1,921 @@
+{
+  "_meta": {
+    "source": "data/Base1 Opponent Decks v1.xlsx — Trevor's workbook, built 16-18 Aug 2026. Sheets 'B1 T2-1' through 'B1 T4'. The Index tab is the per-card classification the decks were built from.",
+    "retrieved": "2026-08-18, extracted from the xlsx directly (no openpyxl available; the workbook is a zip, parsed from xl/worksheets/*.xml).",
+    "scope": "The Base Set opponent roster v1, built to OPPONENTS.md's tier spec. Reference data — NOTHING READS THIS YET. Wiring it into data/ladder.json is the Job 10.5 'plugging it in' step, not a maintenance action.",
+    "status": "All eight validate clean against Engine.prototype.validateDeck: 60 cards, no errors, no warnings, 4-copy limit respected, every card implemented.",
+    "coverage": "Between them the eight decks use all 69 distinct Base Set Pokemon at least once. Verified mechanically, not by eye.",
+    "tiers": "tier 2 = five decks, tier 3 = two, tier 4 = one. The four theme decks stay as they are and remain the T1 intro rungs.",
+    "ids": "Ids come from the sheet's own ID column and were checked against CARD_DB. No corrections were needed — unlike jungle_decks.json, where three ids were wrong.",
+    "weights": "featureWeight is Trevor's own scoring from the sheet, summed per deck. It is the authored difficulty signal; the derived metrics beside it in OPPONENTS.md are independent confirmations of the same ordering."
+  },
+  "b1_t2_fighting_water": {
+    "name": "B1 T2-1",
+    "sheet": "B1 T2-1",
+    "set": "base1",
+    "tier": 2,
+    "list": [
+      [
+        1,
+        "base1-62",
+        "Sandshrew"
+      ],
+      [
+        2,
+        "base1-61",
+        "Rattata"
+      ],
+      [
+        3,
+        "base1-52",
+        "Machop"
+      ],
+      [
+        2,
+        "base1-34",
+        "Machoke"
+      ],
+      [
+        2,
+        "base1-7",
+        "Hitmonchan"
+      ],
+      [
+        2,
+        "base1-47",
+        "Diglett"
+      ],
+      [
+        1,
+        "base1-19",
+        "Dugtrio"
+      ],
+      [
+        3,
+        "base1-65",
+        "Staryu"
+      ],
+      [
+        2,
+        "base1-64",
+        "Starmie"
+      ],
+      [
+        1,
+        "base1-40",
+        "Raticate"
+      ],
+      [
+        2,
+        "base1-63",
+        "Squirtle"
+      ],
+      [
+        1,
+        "base1-42",
+        "Wartortle"
+      ],
+      [
+        16,
+        "base1-97",
+        "Fighting Energy"
+      ],
+      [
+        12,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        1,
+        "base1-71",
+        "Computer Search"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        1,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        1,
+        "base1-83",
+        "Maintenance"
+      ]
+    ]
+  },
+  "b1_t2_psychic_fire": {
+    "name": "B1 T2-2",
+    "sheet": "B1 T2-2",
+    "set": "base1",
+    "tier": 2,
+    "list": [
+      [
+        3,
+        "base1-43",
+        "Abra"
+      ],
+      [
+        2,
+        "base1-32",
+        "Kadabra"
+      ],
+      [
+        1,
+        "base1-1",
+        "Alakazam"
+      ],
+      [
+        2,
+        "base1-50",
+        "Gastly"
+      ],
+      [
+        1,
+        "base1-29",
+        "Haunter"
+      ],
+      [
+        1,
+        "base1-10",
+        "Mewtwo"
+      ],
+      [
+        2,
+        "base1-31",
+        "Jynx"
+      ],
+      [
+        2,
+        "base1-36",
+        "Magmar"
+      ],
+      [
+        2,
+        "base1-28",
+        "Growlithe"
+      ],
+      [
+        1,
+        "base1-23",
+        "Arcanine"
+      ],
+      [
+        3,
+        "base1-27",
+        "Farfetch'd"
+      ],
+      [
+        1,
+        "base1-60",
+        "Ponyta"
+      ],
+      [
+        18,
+        "base1-101",
+        "Psychic Energy"
+      ],
+      [
+        10,
+        "base1-98",
+        "Fire Energy"
+      ],
+      [
+        1,
+        "base1-75",
+        "Lass"
+      ],
+      [
+        1,
+        "base1-82",
+        "Full Heal"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "base1-84",
+        "PlusPower"
+      ]
+    ]
+  },
+  "b1_t2_grass_lightning": {
+    "name": "B1 T2-3",
+    "sheet": "B1 T2-3",
+    "set": "base1",
+    "tier": 2,
+    "list": [
+      [
+        4,
+        "base1-69",
+        "Weedle"
+      ],
+      [
+        3,
+        "base1-33",
+        "Kakuna"
+      ],
+      [
+        1,
+        "base1-17",
+        "Beedrill"
+      ],
+      [
+        1,
+        "base1-66",
+        "Tangela"
+      ],
+      [
+        2,
+        "base1-45",
+        "Caterpie"
+      ],
+      [
+        1,
+        "base1-54",
+        "Metapod"
+      ],
+      [
+        3,
+        "base1-58",
+        "Pikachu"
+      ],
+      [
+        1,
+        "base1-14",
+        "Raichu"
+      ],
+      [
+        2,
+        "base1-67",
+        "Voltorb"
+      ],
+      [
+        1,
+        "base1-20",
+        "Electabuzz"
+      ],
+      [
+        1,
+        "base1-48",
+        "Doduo"
+      ],
+      [
+        16,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        12,
+        "base1-100",
+        "Lightning Energy"
+      ],
+      [
+        1,
+        "base1-78",
+        "Scoop Up"
+      ],
+      [
+        1,
+        "base1-80",
+        "Defender"
+      ],
+      [
+        1,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "base1-16",
+        "Zapdos"
+      ],
+      [
+        1,
+        "base1-51",
+        "Koffing"
+      ]
+    ]
+  },
+  "b1_t2_lightning_fighting": {
+    "name": "B1 T2-4",
+    "sheet": "B1 T2-4",
+    "set": "base1",
+    "tier": 2,
+    "list": [
+      [
+        3,
+        "base1-53",
+        "Magnemite"
+      ],
+      [
+        1,
+        "base1-9",
+        "Magneton"
+      ],
+      [
+        3,
+        "base1-67",
+        "Voltorb"
+      ],
+      [
+        1,
+        "base1-21",
+        "Electrode"
+      ],
+      [
+        3,
+        "base1-52",
+        "Machop"
+      ],
+      [
+        2,
+        "base1-34",
+        "Machoke"
+      ],
+      [
+        1,
+        "base1-8",
+        "Machamp"
+      ],
+      [
+        2,
+        "base1-57",
+        "Pidgey"
+      ],
+      [
+        1,
+        "base1-22",
+        "Pidgeotto"
+      ],
+      [
+        3,
+        "base1-61",
+        "Rattata"
+      ],
+      [
+        2,
+        "base1-40",
+        "Raticate"
+      ],
+      [
+        15,
+        "base1-100",
+        "Lightning Energy"
+      ],
+      [
+        13,
+        "base1-97",
+        "Fighting Energy"
+      ],
+      [
+        1,
+        "base1-79",
+        "Super Energy Removal"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        1,
+        "base1-56",
+        "Onix"
+      ]
+    ]
+  },
+  "b1_t2_water_psychic": {
+    "name": "B1 T2-5",
+    "sheet": "B1 T2-5",
+    "set": "base1",
+    "tier": 2,
+    "list": [
+      [
+        4,
+        "base1-59",
+        "Poliwag"
+      ],
+      [
+        2,
+        "base1-38",
+        "Poliwhirl"
+      ],
+      [
+        1,
+        "base1-13",
+        "Poliwrath"
+      ],
+      [
+        3,
+        "base1-41",
+        "Seel"
+      ],
+      [
+        1,
+        "base1-25",
+        "Dewgong"
+      ],
+      [
+        1,
+        "base1-39",
+        "Porygon"
+      ],
+      [
+        2,
+        "base1-43",
+        "Abra"
+      ],
+      [
+        1,
+        "base1-32",
+        "Kadabra"
+      ],
+      [
+        2,
+        "base1-49",
+        "Drowzee"
+      ],
+      [
+        1,
+        "base1-31",
+        "Jynx"
+      ],
+      [
+        1,
+        "base1-10",
+        "Mewtwo"
+      ],
+      [
+        2,
+        "base1-27",
+        "Farfetch'd"
+      ],
+      [
+        17,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        11,
+        "base1-101",
+        "Psychic Energy"
+      ],
+      [
+        1,
+        "base1-74",
+        "Item Finder"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-87",
+        "Pokédex"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "base1-82",
+        "Full Heal"
+      ]
+    ]
+  },
+  "b1_t3_grass": {
+    "name": "B1 T3-1",
+    "sheet": "B1 T3-1",
+    "set": "base1",
+    "tier": 3,
+    "list": [
+      [
+        4,
+        "base1-44",
+        "Bulbasaur"
+      ],
+      [
+        3,
+        "base1-30",
+        "Ivysaur"
+      ],
+      [
+        2,
+        "base1-15",
+        "Venusaur"
+      ],
+      [
+        3,
+        "base1-55",
+        "Nidoran ♂"
+      ],
+      [
+        2,
+        "base1-37",
+        "Nidorino"
+      ],
+      [
+        1,
+        "base1-11",
+        "Nidoking"
+      ],
+      [
+        2,
+        "base1-26",
+        "Dratini"
+      ],
+      [
+        1,
+        "base1-18",
+        "Dragonair"
+      ],
+      [
+        1,
+        "base1-5",
+        "Clefairy"
+      ],
+      [
+        2,
+        "base1-51",
+        "Koffing"
+      ],
+      [
+        1,
+        "base1-66",
+        "Tangela"
+      ],
+      [
+        25,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        1,
+        "base1-76",
+        "Pokémon Breeder"
+      ],
+      [
+        1,
+        "base1-74",
+        "Item Finder"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        3,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        1,
+        "base1-80",
+        "Defender"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ]
+    ]
+  },
+  "b1_t3_water": {
+    "name": "B1 T3-2",
+    "sheet": "B1 T3-2",
+    "set": "base1",
+    "tier": 3,
+    "list": [
+      [
+        4,
+        "base1-63",
+        "Squirtle"
+      ],
+      [
+        3,
+        "base1-42",
+        "Wartortle"
+      ],
+      [
+        1,
+        "base1-2",
+        "Blastoise"
+      ],
+      [
+        3,
+        "base1-35",
+        "Magikarp"
+      ],
+      [
+        2,
+        "base1-6",
+        "Gyarados"
+      ],
+      [
+        3,
+        "base1-41",
+        "Seel"
+      ],
+      [
+        1,
+        "base1-25",
+        "Dewgong"
+      ],
+      [
+        2,
+        "base1-27",
+        "Farfetch'd"
+      ],
+      [
+        26,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        1,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        1,
+        "base1-79",
+        "Super Energy Removal"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        3,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        1,
+        "base1-73",
+        "Impostor Professor Oak"
+      ],
+      [
+        1,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "base1-84",
+        "PlusPower"
+      ]
+    ]
+  },
+  "b1_t4_fire": {
+    "name": "B1 T4",
+    "sheet": "B1 T4",
+    "set": "base1",
+    "tier": 4,
+    "list": [
+      [
+        3,
+        "base1-3",
+        "Chansey"
+      ],
+      [
+        4,
+        "base1-46",
+        "Charmander"
+      ],
+      [
+        3,
+        "base1-24",
+        "Charmeleon"
+      ],
+      [
+        1,
+        "base1-4",
+        "Charizard"
+      ],
+      [
+        3,
+        "base1-68",
+        "Vulpix"
+      ],
+      [
+        2,
+        "base1-12",
+        "Ninetales"
+      ],
+      [
+        3,
+        "base1-57",
+        "Pidgey"
+      ],
+      [
+        2,
+        "base1-22",
+        "Pidgeotto"
+      ],
+      [
+        1,
+        "base1-71",
+        "Computer Search"
+      ],
+      [
+        21,
+        "base1-98",
+        "Fire Energy"
+      ],
+      [
+        4,
+        "base1-96",
+        "Double Colorless Energy"
+      ],
+      [
+        2,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        1,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        3,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        2,
+        "base1-81",
+        "Energy Retrieval"
+      ]
+    ]
+  }
+}

@@ -140,6 +140,7 @@ node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 node tools/aitest.js 6 --gbc              # AI behaviour counts — not pass/fail; --gbc for ladder decks
 node tools/aiduel.js 8                   # AI vs HEAD's AI; --control first, --gbc for ladder decks
 node tools/abtest.js 8 HEAD~1            # RULES vs a commit: how many games came out different
+node tools/openercheck.js                # what the opening-Active rule promotes — a measurement, not pass/fail
 ```
 
 **The last two measure whether the bot plays *well*, which no suite can see.** They are not pass/fail

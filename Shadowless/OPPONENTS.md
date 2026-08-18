@@ -63,6 +63,34 @@ is a wincon that demands an engine to pay for it. So:
 That is testable, it is what actually separated a good WotC-era deck from a theme deck, and it gives
 the auto-builder a rule rather than a vibe.
 
+**Refined 18 Aug 2026 against Trevor's built Base Set roster, and the refinement matters: an engine
+CARD is not an engine DECK.** Base Set prints four engines — Rain Dance, Energy Trans, Energy Burn,
+Damage Swap — and the roster spreads them across T2, T3, T3 and T4 rather than reserving them for the
+top. Alakazam sits in a T2 deck with three draw cards and will almost never assemble; Charizard sits
+in the T4 with eight draw-and-search, four Double Colorless and two Energy Retrieval, and will. **The
+same card is a different tier depending on whether the deck can find and power it.** So the operative
+question is not *does the centrepiece need an engine* but *can this deck reliably get there*.
+
+### The measured tier signature
+
+Eight decks, verified against `Engine.prototype.validateDeck` — all 60 cards, 4-copy clean, every
+card implemented, and between them they use all 69 distinct Base Set Pokemon. **Five axes separate
+the tiers monotonically, and only the first was authored deliberately:**
+
+| | T2 (five decks) | T3 (two) | T4 (one) |
+|---|---|---|---|
+| Feature weight (Trevor's own scoring) | 7 – 7.5 | 10 – 10.5 | 12.5 |
+| Draw + search cards | 3 – 5 | 6 – 7 | 8 |
+| Rare Trainers | 1 | 2 – 3 | 3 |
+| Basic Energy | 28 | 25 – 26 | 25 |
+| Basic Pokemon | 15 – 16 | 12 – 13 | 13 |
+
+**The four derived axes were not being tracked and they agree with the authored one anyway**, which
+is the strongest evidence available that the tier spec describes something real rather than a label.
+Higher tiers run *less* Energy and *more* Trainers — consistency, not power, is what climbs. Treat
+this table as the calibration reference when building any later set's roster, and re-derive it rather
+than trusting these numbers: the script is trivial and the figures will move.
+
 ### The AI is two tiers, not four — and that is probably fine
 
 `expert` and `novice` are the only ladder-appropriate settings. `greedy` (damage-only) and `random`
@@ -167,8 +195,9 @@ Tier says how *strong* a deck is. It does not say what the deck *does to you*, a
 that makes a player rebuild. Two T3 decks "built around a Stage 2 line with support" can play
 identically. What forces a new deck is meeting one that punishes something yours has no answer to.
 
-So every opponent deck carries a **pressure tag**, independent of tier: *Energy denial · bench sniping
-· status lock · single-target beatdown · Trainer denial · deck-out*. The rule that makes it work:
+So an opponent deck **may** carry a **pressure tag**, independent of tier: *Energy denial · bench
+sniping · status lock · single-target beatdown · Trainer denial · deck-out*. The rule that makes it
+work:
 
 > **The gate and the boss must not share a pressure with each other or with anything in the body,
 > and no two body rungs in a row may share one.**
@@ -188,6 +217,15 @@ all**; they are theme decks, and having no identity is the identity.
 there is no real deck-out enabler in Base Set and no Trainer lock before the Gym sets — so the number
 of distinct pressures a set can field is a fact about the set, and it is an input to how long that
 bracket should be. The vocabulary may also grow; it is not a closed list.
+
+**Base Set supports about three pressures, not six, and that is measured rather than guessed.** Its
+whole disruption pool is Energy Removal, Super Energy Removal, Gust of Wind, Lass and Impostor
+Professor Oak — Energy denial, a bench pull, and hand disruption. There is no deck-out enabler and no
+Trainer lock. **So "no pressure — straight beatdown" is a legitimate and common state for a deck, and
+the no-repeat rule constrains only the decks that actually have a tag.** In Trevor's built roster
+exactly one deck has a strong pressure identity (the T3 Water deck, at five disruption cards against
+one or two everywhere else); the rest are honest beatdown. That is the correct outcome for a first
+set, and the vocabulary earns its keep later where the card pool is richer.
 
 **Assignment waits for the set, and this is deliberate.** Which pressures a bracket can field depends
 on what the set prints — Base Set has no deck-out enabler worth the name, and there is no real
