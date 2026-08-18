@@ -43,7 +43,7 @@ from here without costing a row.
 | File | Read it when |
 |---|---|
 | [ENGINE.md](ENGINE.md) | Adding or changing cards. The eight systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer, the `baseCard`/`topCard` split and `takeEnergy`. Also: why full games never test any of it |
-| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, and an `Open` list at the bottom that is the current one. **It hands off to `MEASUREMENT.md` for anything about whether a change worked** — the two instruments, the seven ways they have lied, and how to read a match log |
+| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, and an `Open` list at the bottom that is the current one. **It hands off to `MEASUREMENT.md` for anything about whether a change worked** — the three instruments, the seven ways they have lied, and how to read a match log |
 | [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, **the CSS**, the hand or anything **sized**. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. **Its sibling `INTERACTION.md` has the specific pieces** — the coin toss, the pickers, the opening screens and the controls on the card. If you have trouble with the layout, re-read that section — and check you can still see the top of the file, because a compacted read of it has cost a session before |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
@@ -133,6 +133,7 @@ node tools/packtest.js                   # 200k packs (takes a count: `20000` is
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 node tools/aitest.js 6 --gbc              # AI behaviour counts — not pass/fail; --gbc for ladder decks
 node tools/aiduel.js 8                   # AI vs HEAD's AI; --control first, --gbc for ladder decks
+node tools/abtest.js 8 HEAD~1            # RULES vs a commit: how many games came out different
 ```
 
 **The last two measure whether the bot plays *well*, which no suite can see.** They are not pass/fail

@@ -14,11 +14,13 @@ The one-line summary: **`selftest.js` proves the AI is *correct*; nothing but th
 below can tell you whether it plays *well*, and all six of the ways that measurement lies have
 already been paid for by somebody.**
 
-## The two instruments — measuring "well", not "correct"
+## The three instruments — measuring "well", and measuring "did anything happen"
 
 `selftest.js` proves the AI is correct and that the difficulty ladder is ordered. Neither it nor any
 other suite can tell you whether the bot plays **well**, which is a different question and the one
-that matters for a quality pass. Two tools answer it, and **neither is pass/fail**.
+that matters for a quality pass. Two tools answer it, and **neither is pass/fail**. A third answers a
+different question again — *did my change alter anything, and where* — which is the one a RULES change
+needs, because a rules change is symmetric and a win rate will sit at 50% however large it is.
 
 - **`tools/aitest.js`** counts specific decisions across a few hundred games: retreats that cost the
   turn's attack, retreats with nothing threatening the Active, Energy attached to an Active that
@@ -27,12 +29,24 @@ that matters for a quality pass. Two tools answer it, and **neither is pass/fail
   two runs, and never judge a single one.**
 - **`tools/aiduel.js`** seats the working-tree AI against a committed one and returns a win rate with
   a confidence interval. This is the only tool that answers "is it better than it was an hour ago".
+- **`tools/abtest.js`** swaps the whole of `src/` for a committed version and plays identical seeds
+  through both, reporting **how many games came out different** rather than who won. Use it for
+  engine and rules work, where both seats play under the same new rule and a win rate is the wrong
+  instrument entirely. Its `--card` flag is the point of it rather than a convenience: it restricts
+  the pool to decks that actually contain the card your change is about, and refuses — with an
+  explanation — when none do. Added 17 Aug 2026, out of the seventh lie below.
 
 ```bash
 node tools/aitest.js 6 --gbc           # behaviour counts — TAKE THE FLAG, see below
 node tools/aiduel.js 8                  # vs HEAD
 node tools/aiduel.js 8 HEAD --control   # baseline vs ITSELF — run this too
+node tools/abtest.js 8 HEAD~1          # did my rules change alter any game at all
+node tools/abtest.js 8 HEAD~1 --card base1-96   # ...measured only where it can bite
 ```
+
+**`abtest.js` has its own control and it is free: run it against `HEAD` with a clean tree and it must
+report 0% divergence.** It says so itself when `src/` matches the baseline. Every instrument in this
+file has lied at least once and the two that had a control got caught fastest.
 
 ### Seven ways this measurement lies, all of them paid for
 

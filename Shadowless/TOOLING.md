@@ -5,8 +5,12 @@ regenerate cards, widen a set, look at the board, or wonder what a suite actuall
 
 The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, six test suites, a
 screenshotter and an art fetcher; the command list is in `CLAUDE.md`. Two neighbours own the parts that are not build
-steps — **what the inputs are** is in [DATA.md](DATA.md), and **the two instruments that measure
-whether the bot plays well** are in [MEASUREMENT.md](MEASUREMENT.md).
+steps — **what the inputs are** is in [DATA.md](DATA.md), and **the three instruments that measure
+whether a change worked** are in [MEASUREMENT.md](MEASUREMENT.md). The suites here are pass/fail;
+those three are not, and neither kind substitutes for the other. In particular **no suite in this
+file can tell you that a rules change did anything at all** — that is `abtest.js`, and the reason it
+exists is that `selftest.js` reported byte-identical win rates for a ruling reversal that altered a
+quarter of ladder games.
 
 Both generators accept `--check`: regenerate to memory, diff against what's committed, exit non-zero
 if they differ. Cheap to run and the fastest way to catch someone having hand-edited a generated file.
