@@ -1680,43 +1680,21 @@ function retreatRow(slot, c) {
 }
 
 // Bench chosen; now WHICH Energy pays for it. Retreat is the one discard measured
-// in SYMBOLS rather than cards, so it satisfies on the symbol total — a Double
+// in symbols rather than cards, so it satisfies on the symbol total — a Double
 // Colorless can cover a cost of 2 on its own, and the picker has to know that or
 // it would sit there waiting for a second card that is not needed.
-//
-// Both the realness test and the satisfied test are bespoke here, and that is the
-// cost of the 17 Aug reversal being paid in full: the generic card-count versions
-// in askEnergy are wrong in both directions once a card can be worth two. The
-// engine owns the actual rule — see retreatPayOptions — so this only translates.
 function retreatTo(bench, slot, c, rc) {
   const go = pay => dispatch(0, pay ? { t: 'retreat', bench, pay } : { t: 'retreat', bench });
   if (!rc) return go(null);
-  const E = UI.E;
-  const valOf = uid => {
-    const e = slot.energy.find(x => x.uid === uid);
-    return e ? E.energyValue(e) : 0;
-  };
-  // PRUNE IN REVERSE CLICK ORDER, because the last click is the deliberate one.
-  // Pick a basic and then a Double Colorless for a cost of 2 and the total is 3
-  // with the basic redundant — which the engine refuses, correctly. Rather than
-  // making the player work that out, honour the DCE they just clicked and hand
-  // the basic back. Walking newest-first is the whole of it.
-  const prune = chosen => {
-    const out = [];
-    let left = rc;
-    for (const uid of chosen.slice().reverse()) {
-      if (left <= 0) break;
-      out.push(uid); left -= valOf(uid);
-    }
-    return out;
-  };
+  // Cards, not symbols — a Double Colorless pays one, same as a basic. That is
+  // the 12 Aug ruling, and it is what lets this use the generic card-count test
+  // rather than a bespoke one; an earlier version reasoned in symbols and had to
+  // special-case the DCE to avoid asking a question that was not there.
   const armed = askEnergy({
     slot, n: rc, filter: null,
-    real: E.retreatChoiceIsReal(slot),
-    satisfied: chosen => chosen.reduce((a, uid) => a + valOf(uid), 0) >= rc,
     title: 'DISCARD TO RETREAT',
-    hint: `${c.name} — discard Energy worth ${rc} to retreat`,
-    onDone: chosen => go(prune(chosen)),
+    hint: `${c.name} — choose ${rc} Energy card${rc > 1 ? 's' : ''} to discard`,
+    onDone: go,
   });
   if (!armed) go(null);
 }

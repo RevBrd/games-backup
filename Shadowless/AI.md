@@ -5,7 +5,7 @@ Depth behind the AI row in `CLAUDE.md`'s status table. **Read this before changi
 each shipped change left behind.
 
 **Before you believe a number that says the bot got better, read [MEASUREMENT.md](MEASUREMENT.md)
-instead.** That is the other half of this file: the two instruments, the six ways they have lied, how
+instead.** That is the other half of this file: the two instruments, the seven ways they have lied, how
 to read a saved match log, and the standing figures. **Nothing here tells you whether a change
 worked.** If you are holding a duel result, a playtest report or a match log, you want that file.
 

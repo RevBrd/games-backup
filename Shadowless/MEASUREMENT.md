@@ -1,4 +1,4 @@
-# Shadowless — measuring the AI, and the six ways it has lied
+# Shadowless — measuring the AI, and the seven ways it has lied
 
 **Read this before you believe any number that claims the bot got better**, before you read a saved
 match log, and before you conclude from a flat result that your change did nothing. Split out of
@@ -34,7 +34,7 @@ node tools/aiduel.js 8                  # vs HEAD
 node tools/aiduel.js 8 HEAD --control   # baseline vs ITSELF — run this too
 ```
 
-### Six ways this measurement lies, all of them paid for
+### Seven ways this measurement lies, all of them paid for
 
 **Never read selftest's win rates as AI quality.** Both seats run the same AI there, so seat 0's
 figure measures first-player advantage and drifts several points from any change that alters game
@@ -110,6 +110,20 @@ the sample under it, and a green suite that flickers teaches sessions to distrus
 other, so the deck rows show deck strength, not AI quality. Zap sits at 25% in the control because
 Zap is a 25% deck. Reading its 39% in a duel as a *regression* sent one session chasing a phantom
 and "fixing" it — compare each row against the control's row, never against 50.
+
+**The instrument may simply not contain the thing you changed, and it will not say so.** All six
+above are ways a measurement *misreports*. This one is worse, because it reports cleanly. The 17 Aug
+2026 retreat reversal ran `selftest.js` before and after and got **byte-identical win rates** — not
+close, identical — which reads as "no effect" and is in fact "no exposure": the rule only bites where
+a multi-symbol Energy meets a retreat cost, and **none of the four theme decks contains a Double
+Colorless**. The same blindness had already produced a *false positive* five days earlier, when the
+original ruling cited a movement in that table as evidence it was harmless. Measured where the cards
+actually are — the ladder decks, 7 of 18 running DCE — the change diverged **22.5% of games**.
+
+The check is one question asked before the run, not after: **does the fixture contain the card, the
+verb or the board state the change is about?** Ask it of `selftest.js` in particular, whose deck list
+is fixed, authentic and therefore permanently unrepresentative of anything outside Base Set. A count
+of how often the changed code path was *entered* belongs in any A/B harness for the same reason.
 
 ## The match log — the only view of what the bot actually thought
 

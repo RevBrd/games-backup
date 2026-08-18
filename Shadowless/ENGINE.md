@@ -161,8 +161,14 @@ list would have to be split by a rule the caller cannot see: `opts.costUids` is 
 **your** attacker to pay, `opts.energyUids` is Energy the effect **targets**, on either side. Retreat
 predates both and takes `a.pay`.
 
-**Retreat is measured in cards, not symbols** — a Double Colorless pays one. That is a ruling, not an
-implementation detail, and it is in [RULINGS.md](RULINGS.md).
+**Retreat is measured in symbols, not cards** — a Double Colorless covers two of one, and pays for a
+cost of one by being thrown away whole. That is a ruling, not an implementation detail; it was the
+other way round between 12 and 17 Aug 2026 and the reversal is reasoned in
+[RULINGS.md](RULINGS.md). Three engine methods exist only to serve it — `retreatPayOptions`
+enumerates the legal payments, `retreatPayOrder` picks the fallback out of that list, and
+`retreatChoiceIsReal` decides whether the player is asked at all. **The fallback must be chosen from
+the enumeration rather than constructed**, and that is not style: a greedy version could build a
+payment `doRetreat` then refused as redundant, which hung 26% of ladder games in a retreat loop.
 
 ## Testing them
 

@@ -5096,7 +5096,13 @@ class AI {
         // it is one slot wide.
         const noProgress = after.short >= before.short && after.best <= before.best;
         const isActive = slot === me.active;
-        const needsEscape = isActive && slot.energy.length < this.top(slot).retreat;
+        // Symbols, not cards, and the LIVE cost rather than the printed one —
+        // `retreatCostOf` is what actually gets charged, and it already knows
+        // about Dodrio. Both halves of that were wrong here before 17 Aug and
+        // both were invisible: a Double Colorless read as one, and a benched
+        // Dodrio was not consulted at all.
+        const needsEscape = isActive
+          && this.E.energyTotal(slot) < this.E.retreatCostOf(slot);
         if (noProgress && !needsEscape) return W.attachSurplus;
 
         // The surplus rule above is deliberately NOT in attachValue: it is about
@@ -5139,7 +5145,7 @@ class AI {
         if (!me.active) return -Infinity;
         const b = me.bench[a.bench];
         if (!b) return -Infinity;
-        const cost = this.top(me.active).retreat;
+        const cost = this.E.retreatCostOf(me.active);   // live cost, not printed
         const danger = this.incomingThreat(pi);
         const dying = danger >= this.remainingHP(me.active);
         const mineNow = this.bestAttackScore(pi).score;
@@ -6609,6 +6615,122 @@ class Engine {
     return Math.max(0, base - off);
   }
 
+  // The SYMBOL total attached to a slot — a Double Colorless counts two. This is
+  // the currency retreat costs and attack costs are denominated in.
+  // `slot.energy.length` counts CARDS and is what "discard N Energy cards" wants
+  // instead; the two are the same number until a multi-symbol Energy is attached,
+  // which is the whole surface Rulings/RETREAT-COST.md is about.
+  energyTotal(slot) {
+    return slot ? symbolCount(this.db, slot.energy) : 0;
+  }
+
+  // What one Energy card is worth in symbols. Two for a Double Colorless, one
+  // for everything else in the live pool.
+  energyValue(inst) {
+    return energySymbols(this.db, inst).length;
+  }
+
+  // Every legal way to pay this retreat: the subsets that cover the cost and
+  // contain no redundant card. Two callers, and they want different halves of it
+  // — doRetreat validates one list against this rule, and the UI counts the
+  // DISTINCT options to decide whether the question is worth asking at all.
+  //
+  // That second use is `energyChoiceIsReal`'s doctrine carried over to a cost
+  // measured in symbols, and it needs the enumeration because the card-count
+  // version gets it wrong in both directions now. A Double Colorless beside a
+  // basic, retreat 2, LOOKS like a choice — two cards, one needed — and is not:
+  // the basic cannot cover 2 and adding it to the DCE is redundant, so the only
+  // legal payment is the DCE alone. The same pair at retreat 1 IS a choice, and
+  // a sharp one, because paying with the DCE throws a symbol away.
+  //
+  // Brute force over subsets, which is fine at the sizes involved — a slot with
+  // more than a handful of Energy on it is already a strange board — and falls
+  // back to the greedy order rather than hanging if one ever gets absurd.
+  retreatPayOptions(slot) {
+    const cost = this.retreatCostOf(slot);
+    if (!cost || !slot) return [];
+    const pool = this.energyChoices(slot, null);
+    if (pool.length > 12) return [this.retreatPayGreedy(slot)];
+    const out = [];
+    for (let mask = 1; mask < (1 << pool.length); mask++) {
+      const set = pool.filter((_, i) => mask & (1 << i));
+      const total = symbolCount(this.db, set);
+      if (total < cost) continue;
+      if (set.some(e => total - energySymbols(this.db, e).length >= cost)) continue;
+      out.push(set);
+    }
+    return out;
+  }
+
+  // Is the retreat payment a real decision? Distinct options only: two identical
+  // basic Fire are one option wearing two hats, exactly as energyChoiceIsReal
+  // has always held. A Buzzap'd Electrode is NOT identical to anything, which is
+  // the case that rule was written for.
+  retreatChoiceIsReal(slot) {
+    const sigs = new Set(this.retreatPayOptions(slot).map(set =>
+      set.map(e => e.id + '/' + (e.asEnergy || '')).sort().join(',')));
+    return sigs.size > 1;
+  }
+
+  // The fallback pay list for a retreat: what gets spent when nobody chose.
+  //
+  // BUILT ON retreatPayOptions ON PURPOSE, and the reason is a bug this had in
+  // its first version. It was a greedy scan — take the smallest card that still
+  // fits the remaining cost — and greedy is not sound here. Retreat 2 against a
+  // Fire and a Double Colorless: it took the Fire (1, fits), leaving 1 to find,
+  // which only the DCE could cover, for a total of 3 against a cost of 2. That
+  // is a REDUNDANT payment, doRetreat refused it, the AI re-picked the same
+  // retreat next action, and the game span until the harness cut it off. 26% of
+  // ladder games hit it.
+  //
+  // So the fallback now chooses from the enumerated legal payments rather than
+  // constructing one. It cannot propose something the validator rejects, because
+  // both read the same list. Ranked:
+  //
+  //   1. fewest symbols spent          — waste nothing that can be kept
+  //   2. fewest multi-symbol cards     — a Double Colorless is worth hoarding,
+  //                                      which is where the old card-counting
+  //                                      ruling's tax on it now lives
+  //   3. energyPayOrder rank           — and among equals, spend what this
+  //                                      Pokemon's own attacks do not ask for
+  //
+  // Rule 2 is the one with a card behind it. Retreat 3 with a DCE and three
+  // basics can be paid exactly two ways, neither wasteful; spending the three
+  // basics keeps the flexible card, and that is the play.
+  retreatPayOrder(slot) {
+    const opts = this.retreatPayOptions(slot);
+    if (!opts.length) return [];
+    const rank = new Map(this.energyPayOrder(slot).map((e, i) => [e.uid, i]));
+    const score = set => [
+      symbolCount(this.db, set),
+      set.filter(e => this.energyValue(e) > 1).length,
+      set.reduce((a2, e) => a2 + (rank.has(e.uid) ? rank.get(e.uid) : 99), 0),
+    ];
+    return opts.reduce((best, set) => {
+      if (!best) return set;
+      const x = score(set), y = score(best);
+      for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i] ? set : best;
+      return best;
+    }, null);
+  }
+
+  // The escape hatch for a slot carrying so much Energy that enumerating every
+  // subset stops being free. Largest-first to cover, then strip anything the
+  // rest made redundant — the prune is what keeps it agreeing with doRetreat,
+  // and it is the step the greedy version above was missing.
+  retreatPayGreedy(slot) {
+    const cost = this.retreatCostOf(slot);
+    const pool = this.energyChoices(slot, null)
+      .slice().sort((x, y) => this.energyValue(y) - this.energyValue(x));
+    const out = [];
+    let got = 0;
+    for (const e of pool) { if (got >= cost) break; out.push(e); got += this.energyValue(e); }
+    for (let i = out.length - 1; i >= 0; i--) {
+      if (got - this.energyValue(out[i]) >= cost) { got -= this.energyValue(out[i]); out.splice(i, 1); }
+    }
+    return out;
+  }
+
   sideOf(slot) {
     for (let i = 0; i < 2; i++) if (this.allSlots(i).indexOf(slot) >= 0) return i;
     return null;
@@ -7016,13 +7138,13 @@ class Engine {
     if (this.playsAsPokemon(slot)) return false;          // "can't retreat", flatly
     if (slot.status.asleep || slot.status.paralyzed) return false;
     if (slot.effects.some(e => e.kind === 'CANT_RETREAT')) return false;   // Victreebel's Acid
-    // A RETREAT COST IS PAID IN CARDS, NOT SYMBOLS. Trevor's design call, 12 Aug
-    // 2026: a Double Colorless is one physical Energy card and discards as one,
-    // so a Pokemon with a retreat cost of 2 and only a DCE attached CANNOT
-    // retreat. Deliberately not the official rule, which counts the printed
-    // value — it silently balances the format's strongest Energy card. Attack
-    // costs are unaffected and still read symbols. See RULINGS.md.
-    return slot.energy.length >= this.retreatCostOf(slot);
+    // A RETREAT COST IS A COST, AND COSTS COUNT SYMBOLS — so a Double Colorless
+    // covers a retreat of 2 on its own. Reversed 17 Aug 2026; between 12 and 17
+    // Aug this counted physical cards. What is paid in whole CARDS is the
+    // discard: you cannot spend half a Double Colorless, so a Colorless retreat
+    // paid with one loses the spare symbol. See Rulings/RETREAT-COST.md, which
+    // carries both the original ruling and the correction.
+    return this.energyTotal(slot) >= this.retreatCostOf(slot);
   }
 
   canAttackAtAll(pi) {
@@ -7271,17 +7393,34 @@ class Engine {
     if (!this.canRetreat(p.active)) return this.fail('Cannot retreat (status or insufficient Energy)');
     const b = p.bench[a.bench]; if (!b) return this.fail('No such benched Pokemon');
     const cost = this.retreatCostOf(p.active);
-    // Cards, not symbols — see canRetreat. One card pays one, whatever it prints.
+    // Symbols, not cards — see canRetreat. The supplied list is checked three
+    // ways: every uid is really attached and named once, the symbols cover the
+    // cost, and NO CARD IN IT IS REDUNDANT.
+    //
+    // That last check is the one worth understanding. It stops a client paying a
+    // cost of 1 with three basic Energy, which the symbol rule would otherwise
+    // permit and no player would ever mean. It still allows the forced waste of
+    // a Double Colorless on a Colorless retreat, because there the single card
+    // is not redundant — take it out of the list and nothing is paid at all.
+    // Overpayment you cannot avoid is legal; overpayment you chose is not.
     let pay = a.pay;
-    if (!pay) pay = this.energyPayOrder(p.active).slice(0, cost).map(e => e.uid);
+    if (!pay) pay = this.retreatPayOrder(p.active).map(e => e.uid);
+    const cards = [], seen = new Set();
     for (const uid of pay) {
-      if (!p.active.energy.some(x => x.uid === uid)) return this.fail('Energy not attached');
+      if (seen.has(uid)) return this.fail('Energy listed twice');
+      seen.add(uid);
+      const e = p.active.energy.find(x => x.uid === uid);
+      if (!e) return this.fail('Energy not attached');
+      cards.push(e);
     }
-    if (pay.length < cost) return this.fail(`Must discard ${cost} Energy card(s)`);
-    for (const uid of pay) {
-      const k = p.active.energy.findIndex(e => e.uid === uid);
-      if (k === -1) return this.fail('Energy not attached');
-      p.discard.push(p.active.energy.splice(k, 1)[0]);
+    const total = symbolCount(this.db, cards);
+    if (total < cost) return this.fail(`Must discard Energy worth ${cost} to retreat`);
+    for (const e of cards) {
+      if (total - energySymbols(this.db, e).length >= cost)
+        return this.fail('That discards more Energy than the retreat costs');
+    }
+    for (const e of cards) {
+      p.discard.push(p.active.energy.splice(p.active.energy.indexOf(e), 1)[0]);
     }
     // CONFUSION IS PAID FOR BEFORE IT IS ROLLED. Settled with Trevor 13 Aug
     // 2026 from the GBC game: a Confused Pokemon may attempt to retreat, the
@@ -7329,7 +7468,8 @@ class Engine {
   //   opts.energyUids  Energy the effect TARGETS, on either side
   //                    (Energy Removal, Super Potion, DISCARD_DEF_ENERGY)
   // Retreat is the exception and predates both: it takes `a.pay`, because it
-  // validates against a symbol total rather than a card count.
+  // validates against a symbol total rather than a card count, and because it
+  // may legitimately have to overshoot. See doRetreat and retreatPayOrder.
 
   // The entries a given discard is allowed to take. `filter` is by provided type
   // ('R' for a Fire cost), or null for "anything attached".
@@ -11901,21 +12041,43 @@ function retreatRow(slot, c) {
 }
 
 // Bench chosen; now WHICH Energy pays for it. Retreat is the one discard measured
-// in symbols rather than cards, so it satisfies on the symbol total — a Double
+// in SYMBOLS rather than cards, so it satisfies on the symbol total — a Double
 // Colorless can cover a cost of 2 on its own, and the picker has to know that or
 // it would sit there waiting for a second card that is not needed.
+//
+// Both the realness test and the satisfied test are bespoke here, and that is the
+// cost of the 17 Aug reversal being paid in full: the generic card-count versions
+// in askEnergy are wrong in both directions once a card can be worth two. The
+// engine owns the actual rule — see retreatPayOptions — so this only translates.
 function retreatTo(bench, slot, c, rc) {
   const go = pay => dispatch(0, pay ? { t: 'retreat', bench, pay } : { t: 'retreat', bench });
   if (!rc) return go(null);
-  // Cards, not symbols — a Double Colorless pays one, same as a basic. That is
-  // the 12 Aug ruling, and it is what lets this use the generic card-count test
-  // rather than a bespoke one; an earlier version reasoned in symbols and had to
-  // special-case the DCE to avoid asking a question that was not there.
+  const E = UI.E;
+  const valOf = uid => {
+    const e = slot.energy.find(x => x.uid === uid);
+    return e ? E.energyValue(e) : 0;
+  };
+  // PRUNE IN REVERSE CLICK ORDER, because the last click is the deliberate one.
+  // Pick a basic and then a Double Colorless for a cost of 2 and the total is 3
+  // with the basic redundant — which the engine refuses, correctly. Rather than
+  // making the player work that out, honour the DCE they just clicked and hand
+  // the basic back. Walking newest-first is the whole of it.
+  const prune = chosen => {
+    const out = [];
+    let left = rc;
+    for (const uid of chosen.slice().reverse()) {
+      if (left <= 0) break;
+      out.push(uid); left -= valOf(uid);
+    }
+    return out;
+  };
   const armed = askEnergy({
     slot, n: rc, filter: null,
+    real: E.retreatChoiceIsReal(slot),
+    satisfied: chosen => chosen.reduce((a, uid) => a + valOf(uid), 0) >= rc,
     title: 'DISCARD TO RETREAT',
-    hint: `${c.name} — choose ${rc} Energy card${rc > 1 ? 's' : ''} to discard`,
-    onDone: go,
+    hint: `${c.name} — discard Energy worth ${rc} to retreat`,
+    onDone: chosen => go(prune(chosen)),
   });
   if (!armed) go(null);
 }

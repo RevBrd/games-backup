@@ -413,26 +413,21 @@ T('the resulting Energy actually pays for an attack', () => {
   return true;
 });
 
-// UPDATED TWICE, and the history is the interesting part — this one assertion
-// has stated the project's position on retreat costs three separate times.
-//
-//   originally  a Buzzap'd Electrode counts TWO toward a retreat, providing 'CC'
-//   12 Aug 26   retreat is paid in CARDS, so it counts ONE and Onix needs three
-//   17 Aug 26   reversed — a retreat is a COST and costs count symbols, so it is
-//               back to two, and Onix retreats on two cards
-//
-// The reversal is reasoned in Rulings/RETREAT-COST.md, which keeps the original
-// ruling above its correction rather than replacing it. What never moved through
-// any of the three: the DISCARD is still whole cards. That is the distinction the
-// test above this one states, and it is why this pair sits together.
-T('it pays TWO toward a retreat cost, because that is what it provides', () => {
+// UPDATED 12 Aug 2026, and the update is the interesting part. This asserted
+// that a Buzzap'd Electrode counts TWO toward a retreat cost, because it
+// provides 'CC'. Retreat is now paid in CARDS — Trevor's ruling from the GBC
+// game, see RULINGS.md — so the same Electrode pays exactly one, and Onix needs
+// three separate cards. It still counts as two symbols for an ATTACK cost; that
+// is the whole distinction and the test above this one still proves it.
+T('it pays only ONE toward a retreat cost, however many symbols it provides', () => {
   const E = board('base1-21', ['base1-56']);                // Onix, retreat 3
   const [trode, onix] = E.allSlots(0);
   eq(E.canRetreat(onix), false, 'cannot retreat with nothing attached');
   buzzap(E, trode, onix, 'F');
-  eq(E.canRetreat(onix), false, 'CC alone is two, and two is not three');
   attach(E, onix, 'base1-97', 1);
-  eq(E.canRetreat(onix), true, 'CC plus one basic is three — two cards, three symbols');
+  eq(E.canRetreat(onix), false, 'two cards is not enough for retreat 3, whatever they print');
+  attach(E, onix, 'base1-97', 1);
+  eq(E.canRetreat(onix), true, 'three cards is');
   return true;
 });
 
@@ -2918,160 +2913,6 @@ T('...and the bot prefers it on a big hand of cards it cannot use', () => {
   const bareHand = trainerScore('base3-60', 8, []);
   if (!(bigHand > bareHand))
     throw new Error(`Gambler priced as a burner: big=${bigHand.toFixed(1)} bare=${bareHand.toFixed(1)}`);
-  return true;
-});
-
-// ------------------------------------------- Retreat is measured in symbols
-// The 17 Aug 2026 reversal, asserted from both ends. Rulings/RETREAT-COST.md
-// carries the reasoning; what these pin down is the pair of behaviours that make
-// it a real ruling rather than a renamed constant — a Double Colorless COVERS
-// two, and a Double Colorless SPENT on a cost of one is gone entirely.
-console.log('\nRetreat — symbols, not cards');
-
-// A fixture that states its own assumptions. Every test below depends on the
-// printed retreat cost of its subject, and a card errata'd underneath one of
-// them would otherwise turn a real failure into a confusing one.
-const retreatFixture = (id, want) => {
-  const E = board(id, ['base1-58']);
-  const act = E.state.players[0].active;
-  const got = E.retreatCostOf(act);
-  if (got !== want) throw new Error(`fixture wants ${id} at retreat ${want}, got ${got}`);
-  return { E, act, p: E.state.players[0] };
-};
-
-T('a Double Colorless covers two of a retreat cost on its own', () => {
-  const { E, act } = retreatFixture('base1-13', 3);         // Machoke
-  attach(E, act, 'base1-96', 1);                            // DCE = CC
-  eq(E.energyTotal(act), 2, 'symbol total');
-  eq(act.energy.length, 1, 'card count — one card, two symbols');
-  eq(E.canRetreat(act), false, 'still one short of retreat 3');
-  attach(E, act, 'base1-97', 1);
-  eq(E.canRetreat(act), true, 'DCE plus a basic makes three');
-  return true;
-});
-
-T('the fallback prefers an exact fit over wasting a Double Colorless', () => {
-  const { E, act } = retreatFixture('base1-13', 3);
-  attach(E, act, 'base1-96', 1);                            // DCE  = 2
-  attach(E, act, 'base1-97', 3);                            // three basics = 3
-  const pay = E.retreatPayOrder(act);
-  eq(pay.length, 3, 'three basics pay it exactly');
-  eq(pay.some(e => e.id === 'base1-96'), false, 'and the DCE is left alone');
-  return true;
-});
-
-T('...but spends it when nothing else will cover the cost', () => {
-  const { E, act, p } = retreatFixture('base1-13', 3);
-  attach(E, act, 'base1-96', 1);                            // DCE   = 2
-  attach(E, act, 'base1-97', 1);                            // basic = 1
-  const before = p.discard.length;
-  eq(E.act(0, { t: 'retreat', bench: 0 }).ok, true, 'retreat allowed');
-  eq(p.discard.length - before, 2, 'both cards spent — exactly 3 symbols');
-  return true;
-});
-
-T('with ONLY a Double Colorless it pays a cost of one, and the change is lost', () => {
-  // The tax Trevor moved when he reversed the ruling: under the card rule this
-  // Pokemon could not have retreated at all on one card, and under this one it
-  // can, at the price of throwing a symbol away. Both halves are the point.
-  const { E, act, p } = retreatFixture('base1-58', 1);
-  attach(E, act, 'base1-96', 1);
-  eq(E.canRetreat(act), true, 'two symbols cover one');
-  eq(E.retreatChoiceIsReal(act), false, 'nothing to choose between — do not ask');
-  const before = p.discard.length;
-  E.act(0, { t: 'retreat', bench: 0 });
-  eq(p.discard.length - before, 1, 'the whole card left');
-  eq(act.energy.length, 0, 'and nothing came back as change');
-  return true;
-});
-
-T('a redundant payment is refused, but a forced overshoot is not', () => {
-  const { E, act } = retreatFixture('base1-58', 1);
-  attach(E, act, 'base1-96', 1);                            // DCE
-  attach(E, act, 'base1-97', 1);                            // basic
-  const dce = act.energy.find(e => e.id === 'base1-96');
-  const bas = act.energy.find(e => e.id === 'base1-97');
-  eq(E.act(0, { t: 'retreat', bench: 0, pay: [dce.uid, bas.uid] }).ok, false,
-     'paying 3 symbols for a cost of 1 is refused');
-  eq(E.act(0, { t: 'retreat', bench: 0, pay: [dce.uid] }).ok, true,
-     'the unavoidable overshoot is allowed');
-  return true;
-});
-
-T('the same card is not accepted twice for one retreat', () => {
-  const { E, act } = retreatFixture('base1-13', 3);
-  attach(E, act, 'base1-96', 1);
-  attach(E, act, 'base1-97', 1);
-  const dce = act.energy.find(e => e.id === 'base1-96');
-  eq(E.act(0, { t: 'retreat', bench: 0, pay: [dce.uid, dce.uid] }).ok, false,
-     'a uid listed twice does not pay twice');
-  return true;
-});
-
-T('the picker is offered exactly when the choice is real', () => {
-  // The case a card-count test gets wrong in BOTH directions, which is why
-  // retreatChoiceIsReal enumerates the legal payments instead of counting cards.
-  const one = retreatFixture('base1-58', 1);
-  attach(one.E, one.act, 'base1-96', 1);
-  attach(one.E, one.act, 'base1-97', 1);
-  eq(one.E.retreatChoiceIsReal(one.act), true,
-     'DCE or basic for a cost of 1 is a real choice, and a sharp one');
-
-  const three = retreatFixture('base1-13', 3);
-  attach(three.E, three.act, 'base1-96', 1);
-  attach(three.E, three.act, 'base1-97', 1);
-  eq(three.E.energyTotal(three.act), 3, 'exactly enough');
-  eq(three.E.retreatChoiceIsReal(three.act), false,
-     'both cards are needed, so there is nothing to ask about');
-  return true;
-});
-
-// THE REGRESSION TEST FOR THIS WHOLE SECTION, and the one that earned its place.
-//
-// The first version of retreatPayOrder was a greedy scan and it could construct
-// a payment that doRetreat then refused as redundant — retreat 2 holding a Fire
-// and a Double Colorless, where taking the Fire first strands you on a total of
-// 3. The engine rejected its own fallback, the AI re-picked the same retreat
-// every action, and 26% of ladder games span until the harness cut them off.
-//
-// None of the hand-written cases above caught it, because every one of them was
-// a board somebody had thought about. This one thinks about none of them: it
-// enumerates small Energy pools against every retreat cost and asserts the one
-// property that actually matters — THE FALLBACK MUST NEVER PROPOSE A PAYMENT
-// THE VALIDATOR REJECTS. Write the property, not the example.
-T('the fallback never proposes a payment doRetreat would refuse', () => {
-  const KINDS = ['base1-96', 'base1-97', 'base1-98'];   // DCE(2), Fighting, Fire
-  let checked = 0;
-  // Every multiset of up to 4 Energy cards, against Machoke's retreat of 3 and
-  // against a discounted 1 and 2 via a benched Dodrio stand-in.
-  const pools = [];
-  const walk = (acc, start) => {
-    if (acc.length) pools.push(acc.slice());
-    if (acc.length === 4) return;
-    for (let i = start; i < KINDS.length; i++) { acc.push(KINDS[i]); walk(acc, i); acc.pop(); }
-  };
-  walk([], 0);
-
-  for (const pool of pools) {
-    const E = board('base1-13', ['base1-58']);           // Machoke, retreat 3
-    const act = E.state.players[0].active;
-    pool.forEach(id => attach(E, act, id, 1));
-    if (!E.canRetreat(act)) continue;                    // nothing to check
-    const pay = E.retreatPayOrder(act).map(e => e.uid);
-    const r = E.act(0, { t: 'retreat', bench: 0, pay });
-    if (!r.ok) throw new Error(
-      `pool [${pool.join(', ')}] cost ${E.retreatCostOf(act)}: fallback refused — ${r.error}`);
-    checked++;
-  }
-  if (checked < 8) throw new Error(`only ${checked} pools were legal — fixture is not exercising this`);
-  return true;
-});
-
-T('two identical basics are one option wearing two hats', () => {
-  const { E, act } = retreatFixture('base1-58', 1);
-  attach(E, act, 'base1-97', 2);
-  eq(E.retreatChoiceIsReal(act), false,
-     'picking which of two Fighting Energy dies is not a decision');
   return true;
 });
 

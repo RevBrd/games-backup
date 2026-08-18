@@ -29,7 +29,7 @@ enough to settle a call in plain English, so ask him — he expects to be asked.
 | Aerodactyl beats Muk, and order of arrival decides it | [AERODACTYL-MUK.md](Rulings/AERODACTYL-MUK.md) |
 | Peek follows the card; Clairvoyance follows the Game Boy | [PEEK-CLAIRVOYANCE.md](Rulings/PEEK-CLAIRVOYANCE.md) |
 | Do the Wave counts a Clefairy Doll; Boyfriends matches on card name | [DO-THE-WAVE-BOYFRIENDS.md](Rulings/DO-THE-WAVE-BOYFRIENDS.md) |
-| A retreat cost is paid in SYMBOLS; the discard is whole cards | [RETREAT-COST.md](Rulings/RETREAT-COST.md) |
+| A retreat cost is paid in CARDS, not Energy symbols | [RETREAT-COST.md](Rulings/RETREAT-COST.md) |
 | A Confused Pokémon flips to retreat, and pays before it flips | [CONFUSED-RETREAT.md](Rulings/CONFUSED-RETREAT.md) |
 | Which Energy gets discarded is the player's choice | [ENERGY-DISCARD-CHOICE.md](Rulings/ENERGY-DISCARD-CHOICE.md) |
 | Prevented damage waives the recoil, and nothing else | [PREVENTED-DAMAGE-RECOIL.md](Rulings/PREVENTED-DAMAGE-RECOIL.md) |
@@ -94,7 +94,7 @@ that matches.
 | When two continuous effects would each disable the other, **whichever is already in play wins** — the question is asked at the moment of the attempt | [Aerodactyl vs. Muk](Rulings/AERODACTYL-MUK.md) |
 | **A snapshot beats a live mirror**, and anything that switches the power off blocks a fresh copy but never reverses one already made | [Ditto](Rulings/DITTO.md) |
 | **A flag read at the point of *play*, not baked into the card kind** — so setup and discard-retrieval never consult it, for free | [Clefairy Doll, `playsAs`](Rulings/CLEFAIRY-DOLL.md) |
-| **Discards count cards; costs count symbols** — and a retreat is a cost, so a Double Colorless covers two of one. What it cannot do is pay half: an overshoot you cannot avoid is legal, one you chose is not | [retreat cost, Fire Spin](Rulings/RETREAT-COST.md) |
+| **Discards count cards; costs count symbols.** A Double Colorless pays two toward `LC` and discards as one | [retreat cost, Fire Spin](Rulings/RETREAT-COST.md) |
 | **Replay a recorded result rather than recomputing it**, and record it as data — never parse the log, which holds prose | [Mirror Move, `lastAttackResult`](Rulings/MIRROR-MOVE.md) |
 | **Qualify an Energy by class, not only by type** — "1 Water Energy card" means a basic one | [Rain Dance, Energy Trans](Rulings/ENERGY-CARD-MEANS-BASIC.md) |
 | **Ask the player only when the choice is real**; supply a sensible fallback so the AI never has to be asked | [which Energy is discarded](Rulings/ENERGY-DISCARD-CHOICE.md) |

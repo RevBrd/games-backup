@@ -1393,13 +1393,7 @@ class AI {
         // it is one slot wide.
         const noProgress = after.short >= before.short && after.best <= before.best;
         const isActive = slot === me.active;
-        // Symbols, not cards, and the LIVE cost rather than the printed one —
-        // `retreatCostOf` is what actually gets charged, and it already knows
-        // about Dodrio. Both halves of that were wrong here before 17 Aug and
-        // both were invisible: a Double Colorless read as one, and a benched
-        // Dodrio was not consulted at all.
-        const needsEscape = isActive
-          && this.E.energyTotal(slot) < this.E.retreatCostOf(slot);
+        const needsEscape = isActive && slot.energy.length < this.top(slot).retreat;
         if (noProgress && !needsEscape) return W.attachSurplus;
 
         // The surplus rule above is deliberately NOT in attachValue: it is about
@@ -1442,7 +1436,7 @@ class AI {
         if (!me.active) return -Infinity;
         const b = me.bench[a.bench];
         if (!b) return -Infinity;
-        const cost = this.E.retreatCostOf(me.active);   // live cost, not printed
+        const cost = this.top(me.active).retreat;
         const danger = this.incomingThreat(pi);
         const dying = danger >= this.remainingHP(me.active);
         const mineNow = this.bestAttackScore(pi).score;
