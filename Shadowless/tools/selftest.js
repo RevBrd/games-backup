@@ -77,7 +77,7 @@ for (const name of DECK_NAMES) {
 // the number here, something was deleted or an id was misspelled. That failure
 // is otherwise completely silent, because an unscripted card simply cannot be
 // put in a deck and nothing else complains.
-const REMAINING = { base5: 62 };   // Team Rocket, Job 10b in progress
+const REMAINING = { base5: 54 };   // Team Rocket, Job 10b in progress
 
 console.log('\nCard coverage');
 const all = Object.keys(CARD_DB).filter(id => CARD_DB[id].kind !== 'energy');
@@ -303,6 +303,7 @@ const UNSCORED_ON_PURPOSE = new Set([
   // Legality gates. The engine refuses the attack outright, so an illegal one is
   // never in the action list for the AI to score in the first place.
   'REQUIRE_DEF_STATUS',
+  'REQUIRE_SELF_ENERGY',
 
   // Mankey's Mischief — shuffle the opponent's deck. Unscored SCORES AS ZERO,
   // which is the honest number: this bot has no memory of deck order, so it

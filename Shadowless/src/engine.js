@@ -1309,6 +1309,10 @@ class Engine {
       if (v.v === 'COST_DISCARD_ALL_ENERGY') {
         if (p.active.energy.length === 0) return { ok: false, why: 'No Energy to discard' };
       }
+      if (v.v === 'REQUIRE_SELF_ENERGY') {
+        const n = p.active.energy.filter(e => energyProvides(this.db, e) === v.t).length;
+        if (!n) return { ok: false, why: `No ${v.t} Energy attached` };
+      }
       if (v.v === 'REQUIRE_SELF_DAMAGED') {
         if (p.active.dmg <= 0) return { ok: false, why: 'No damage counters to remove' };
       }
@@ -2312,6 +2316,9 @@ class Engine {
     }
     let nothing = false;
     let pendingRecoil = 0;
+    // Statuses owed by a damage-shaping coin, applied with the post-damage ones
+    // so a Barrier stops them exactly as it stops a printed STATUS.
+    const pendingStatus = [];
     for (const v of script) {
       if (v.v === 'FLIP_OR_NOTHING') { if (!this.flip('attack succeeds?')) nothing = true; }
       else if (v.v === 'DMG_PER_HEAD') {
@@ -2341,14 +2348,36 @@ class Engine {
         base = Math.ceil(hpLeft / 2 / 10) * 10;
         this.log(`Half of ${hpLeft} remaining HP, rounded up -> ${base} damage.`);
       } else if (v.v === 'FLIP_BONUS_OR_RECOIL') {
-        // one flip governs both the bonus and the recoil
+        // ONE FLIP GOVERNS EVERYTHING THIS VERB DOES, and Team Rocket is what
+        // widened it past damage. Three of its cards hang a status or an Energy
+        // discard off the SAME coin as the damage bonus — Sticky Hands paralyses
+        // on the heads that pays 30, Thunder Attack paralyses on heads and hurts
+        // itself on tails, Playing with Fire burns an Energy on heads for 50.
+        //
+        // Scripting those as two verbs would flip TWICE, which is a different
+        // card: it can pay the bonus and miss the status, or paralyse without
+        // the bonus, neither of which any of them can do. If a card ties several
+        // consequences to one coin, they belong in one verb.
+        //
+        // `statusOnHeads` is DEFERRED rather than applied here, because this
+        // phase runs before the damage does — the same reason pendingRecoil is
+        // deferred — and a status must land after the hit and must respect a
+        // Barrier. It goes through the ordinary post-damage `blocked` gate.
         if (this.flip(v.label || 'bonus damage?')) {
           base = v.base + v.bonus;
+          if (v.statusOnHeads) pendingStatus.push(v.statusOnHeads);
+          if (v.discardOnHeads) {
+            const got = this.takeEnergy(atk, v.discardOnHeads.n || 1, v.discardOnHeads.t || null,
+              (a && a.opts && a.opts.costUids) || null);
+            got.forEach(e => me.discard.push(e));
+            if (got.length) this.log(`${card.name} discards ${got.length} Energy.`, 'eff');
+          }
           this.log(`Heads -> ${base} damage.`);
         } else {
           base = v.base;
           pendingRecoil += v.recoil;
-          this.log(`Tails -> ${base} damage, and ${card.name} will take ${v.recoil}.`);
+          if (v.recoil) this.log(`Tails -> ${base} damage, and ${card.name} will take ${v.recoil}.`);
+          else this.log(`Tails -> ${base} damage.`);
         }
       } else if (v.v === 'DMG_PER_DEF_ENERGY') {
         const n2 = def ? def.energy.length : 0;
@@ -2460,6 +2489,10 @@ class Engine {
 
     // post-damage verbs
     const blocked = negated || this.effectsBlocked(def);
+    for (const st of pendingStatus) {
+      if (blocked) this.log(`${this.nameOf(def)} is protected - no ${st}.`, 'eff');
+      else if (def) this.applyStatus(def, st);
+    }
     for (const v of script) {
       switch (v.v) {
         // `s` may be a list. Venom Powder applies Confused AND Poisoned on one

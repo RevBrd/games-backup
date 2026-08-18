@@ -39,6 +39,9 @@
 //     ONCE_WHILE_IN_PLAY           this attack may be used only once per stay in play
 //     REQUIRE_DEF_STATUS {s, label}  illegal unless the defender has status s
 //     REQUIRE_SELF_DAMAGED         illegal unless self has damage to remove
+//     REQUIRE_SELF_ENERGY {t}      illegal unless at least one Energy providing t
+//                                  is attached to self. "Use this attack only if
+//                                  there are any Fire Energy cards attached"
 //     SEARCH_BASIC_TO_BENCH {name|names|type}
 //                                  put a Basic from the deck onto your Bench. Named,
 //                                  a list of names, or by type; unqualified means
@@ -74,10 +77,20 @@
 //                                  Not damage-shaping strictly — it is read when
 //                                  the damage is DEALT — but it belongs beside
 //                                  them because it changes the number that lands
-//     FLIP_BONUS_OR_RECOIL {base, bonus, recoil, label}
-//                                  ONE flip governs both: heads => base + bonus,
-//                                  tails => base and self takes `recoil`. Pass
-//                                  recoil: 0 for a plain heads-bonus attack
+//     FLIP_BONUS_OR_RECOIL {base, bonus, recoil, label,
+//                           statusOnHeads, discardOnHeads: {n, t}}
+//                                  ONE flip governs EVERYTHING listed: heads =>
+//                                  base + bonus, plus a status on the defender
+//                                  and/or an Energy discard off self; tails =>
+//                                  base, and self takes `recoil`. Pass recoil: 0
+//                                  for a plain heads-bonus attack.
+//                                  REACH FOR THIS RATHER THAN STACKING VERBS when
+//                                  a card ties several consequences to one coin.
+//                                  Two verbs would flip twice, which is a
+//                                  different card — it could pay the bonus and
+//                                  miss the status. statusOnHeads is deferred to
+//                                  the post-damage phase, so a Barrier stops it
+//                                  exactly as it stops a printed STATUS
 //
 //   ATTACKS — post-damage. All of these are skipped on a target whose effects are
 //   blocked (Barrier); the ones acting on SELF are not:
@@ -1146,6 +1159,56 @@ const EFFECTS = {
   'base5-61': { a: [                                 // Mankey
     [{ v: 'SHUFFLE_OPP_DECK' }],                     //   Mischief
     [{ v: 'FLIP_BONUS_OR_RECOIL', base: 20, bonus: 20, recoil: 0, label: 'Anger' }],
+  ]},
+  'base5-3': { a: [                                  // Dark Blastoise
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 30, per: 20, t: 'W', maxSpare: 2 }],
+    // Rocket Tackle hurts ITSELF and then flips for a shield. RECOIL is
+    // unconditional here — the card does not tie it to the coin — so the two
+    // verbs are genuinely independent and stacking them is correct.
+    [{ v: 'RECOIL', n: 10 }, { v: 'PREVENT_ALL_DMG_SELF_ON_FLIP' }],
+  ]},
+  'base5-37': { a: [                                 // Dark Golduck
+    // Third Eye pays an Energy in the COST phase and draws in the effect phase,
+    // so an empty deck still costs you the card — which is what the card says.
+    [{ v: 'COST_DISCARD_ENERGY', n: 1 }, { v: 'DRAW', n: 3 }],
+    [],                                              //   Super Psy
+  ]},
+  'base5-42': { a: [                                 // Dark Persian
+    // Fascinate flips FIRST and does nothing on tails, so FLIP_OR_NOTHING
+    // short-circuits the drag rather than the drag being attempted and failing.
+    [{ v: 'FLIP_OR_NOTHING' }, { v: 'SWITCH_DEFENDER_CHOOSE' }],
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],        //   Poison Claws
+  ]},
+  'base5-57': { a: [                                 // Grimer
+    [{ v: 'STATUS', s: 'Asleep' }],                  //   Poison Gas
+    // ONE coin pays the bonus AND paralyses. Two verbs would flip twice and let
+    // it do one without the other, which this card cannot.
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0,
+       statusOnHeads: 'Paralyzed', label: 'Sticky Hands' }],
+  ]},
+  'base5-38': { a: [                                 // Dark Jolteon
+    [{ v: 'JAM_DEFENDER', label: 'Lightning Flash' }],
+    // The same one-coin shape pointing both ways: heads paralyses, tails hurts
+    // Dark Jolteon. Damage is flat at 30 either way, so bonus is 0.
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 30, bonus: 0, recoil: 10,
+       statusOnHeads: 'Paralyzed', label: 'Thunder Attack' }],
+  ]},
+  'base5-35': { a: [                                 // Dark Flareon
+    [{ v: 'DMG_PER_COUNTER_SELF', base: 10, per: 10 }],   //   Rage
+    // Heads burns a Fire AND pays 50; tails is a bare 30 and keeps the Energy.
+    // The legality gate is separate because it is checked before the coin.
+    [{ v: 'REQUIRE_SELF_ENERGY', t: 'R' },
+     { v: 'FLIP_BONUS_OR_RECOIL', base: 30, bonus: 20, recoil: 0,
+       discardOnHeads: { n: 1, t: 'R' }, label: 'Playing with Fire' }],
+  ]},
+  'base5-32': { a: [                                 // Dark Charmeleon
+    [],                                              //   Tail Slap
+    // "If tails, this attack does nothing (not even damage)" is base 0 with the
+    // whole 70 in the bonus — which is the same coin that pays the Energy, and
+    // the reason this is not FLIP_OR_NOTHING plus a discard.
+    [{ v: 'REQUIRE_SELF_ENERGY', t: 'R' },
+     { v: 'FLIP_BONUS_OR_RECOIL', base: 0, bonus: 70, recoil: 0,
+       discardOnHeads: { n: 1, t: 'R' }, label: 'Fireball' }],
   ]},
 };
 

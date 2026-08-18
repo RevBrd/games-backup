@@ -3075,5 +3075,131 @@ T('two identical basics are one option wearing two hats', () => {
   return true;
 });
 
+// -------------------------------- One coin, several consequences (Job 10b)
+// FLIP_BONUS_OR_RECOIL grew statusOnHeads and discardOnHeads for Team Rocket,
+// and the property worth asserting is not what each option does — it is that
+// THEY ALL RIDE THE SAME COIN. Scripting Sticky Hands as a bonus verb plus a
+// status verb would flip twice and produce a card that can pay 30 and fail to
+// paralyse, which the printed card cannot do. A test that only checked 'heads
+// paralyses' would pass on that broken version, so these count the flips.
+console.log('\nOne coin, several consequences');
+
+// Counts how many times the engine actually asked for a coin, which is the
+// assertion the obvious test misses.
+function countingBoard(activeId, oppId, heads) {
+  const E = board(activeId, ['base1-58'], oppId);
+  E.flips = 0;
+  const real = E.flip.bind(E);
+  E.flip = (...args) => { E.flips++; return heads; };
+  E.restore = () => { E.flip = real; };
+  return E;
+}
+
+T('Sticky Hands pays the bonus and paralyses on ONE coin', () => {
+  const E = countingBoard('base5-57', 'base1-58', true);   // Grimer
+  const me = E.state.players[0], you = E.state.players[1];
+  attach(E, me.active, 'base1-99', 2);                     // Grass x2
+  const r = E.act(0, { t: 'attack', idx: 1 });
+  eq(r.ok, true, 'attack resolved');
+  eq(E.flips, 1, 'exactly one coin was flipped');
+  eq(you.active.dmg, 30, 'heads pays 10 + 20');
+  eq(you.active.status.paralyzed, true, 'and paralyses on the same coin');
+  return true;
+});
+
+T('...and on tails does neither', () => {
+  const E = countingBoard('base5-57', 'base1-58', false);
+  const me = E.state.players[0], you = E.state.players[1];
+  attach(E, me.active, 'base1-99', 2);
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(E.flips, 1, 'still exactly one coin');
+  eq(you.active.dmg, 10, 'tails is the bare 10');
+  eq(you.active.status.paralyzed, false, 'and no status');
+  return true;
+});
+
+T('Thunder Attack points the same coin both ways', () => {
+  // Heads paralyses; tails hurts Dark Jolteon. Damage is flat either way, which
+  // is what makes this a different use of the same verb rather than a copy.
+  const H = countingBoard('base5-38', 'base1-58', true);    // Dark Jolteon
+  attach(H, H.state.players[0].active, 'base1-100', 3);
+  H.act(0, { t: 'attack', idx: 1 });
+  eq(H.flips, 1, 'one coin on heads');
+  eq(H.state.players[1].active.status.paralyzed, true, 'heads paralyses');
+  eq(H.state.players[0].active.dmg, 0, 'and costs nothing');
+
+  const Tl = countingBoard('base5-38', 'base1-58', false);
+  attach(Tl, Tl.state.players[0].active, 'base1-100', 3);
+  Tl.act(0, { t: 'attack', idx: 1 });
+  eq(Tl.state.players[1].active.status.paralyzed, false, 'tails does not');
+  eq(Tl.state.players[0].active.dmg, 10, 'tails costs 10');
+  return true;
+});
+
+T('Playing with Fire burns the Energy only on the coin that pays', () => {
+  // Chansey, 120 HP — Pikachu dies to the 50 and the assertion then reads a
+  // null Active. A fixture that gets Knocked Out is a fixture that stops
+  // measuring what you asked it to.
+  const H = countingBoard('base5-35', 'base1-3', true);     // Dark Flareon
+  const me = H.state.players[0];
+  attach(H, me.active, 'base1-98', 2);                      // Fire x2
+  H.act(0, { t: 'attack', idx: 1 });
+  eq(H.flips, 1, 'one coin');
+  eq(H.state.players[1].active.dmg, 50, 'heads pays 30 + 20');
+  eq(me.active.energy.length, 1, 'and burns one Fire');
+
+  const Tl = countingBoard('base5-35', 'base1-3', false);
+  const me2 = Tl.state.players[0];
+  attach(Tl, me2.active, 'base1-98', 2);
+  Tl.act(0, { t: 'attack', idx: 1 });
+  eq(Tl.state.players[1].active.dmg, 30, 'tails is the bare 30');
+  eq(me2.active.energy.length, 2, 'and keeps the Energy');
+  return true;
+});
+
+T('Fireball does NOTHING on tails, not even damage', () => {
+  const Tl = countingBoard('base5-32', 'base1-58', false);  // Dark Charmeleon
+  attach(Tl, Tl.state.players[0].active, 'base1-98', 3);
+  Tl.act(0, { t: 'attack', idx: 1 });
+  eq(Tl.state.players[1].active.dmg, 0, 'no damage at all on tails');
+  eq(Tl.state.players[0].active.energy.length, 3, 'and nothing discarded');
+  return true;
+});
+
+T('REQUIRE_SELF_ENERGY is currently UNREACHABLE on both cards that print it', () => {
+  // Written as a gate test and it failed, for the exact reason Job 6 recorded:
+  // canUseAttack was refusing on COST, not on the rule under test. Chasing that
+  // produced a real finding rather than a broken test.
+  //
+  // Fireball costs RRR and Playing with Fire costs RR, so a board that cannot
+  // satisfy "any Fire Energy attached" cannot pay the cost either — the clause
+  // is redundant on both cards WotC printed it on. The verb is kept because it
+  // is what the card says and it costs nothing, but nothing exercises it, so
+  // this asserts the redundancy instead of pretending to test the gate.
+  //
+  // IT STOPS BEING REDUNDANT the moment a card pays a Colorless cost and demands
+  // a specific type, or an effect pays a Fire cost with something that is not a
+  // Fire card. Write a real gate test then.
+  const E = board('base5-32', ['base1-58']);
+  attach(E, E.state.players[0].active, 'base1-96', 2);       // two DCE = CCCC
+  const why = E.canUseAttack(0, 1);
+  eq(why.ok, false, 'refused with no Fire attached');
+  if (/Fire|R Energy/i.test(why.why || ''))
+    throw new Error('the gate is reachable after all — write the real test');
+  return true;
+});
+
+T('a Barrier stops the coin-borne status exactly as it stops a printed one', () => {
+  // statusOnHeads is deferred into the post-damage phase for this reason. If it
+  // were applied where the coin is read, it would land through a Barrier.
+  const E = countingBoard('base5-57', 'base1-58', true);    // Grimer, heads
+  const me = E.state.players[0], you = E.state.players[1];
+  attach(E, me.active, 'base1-99', 2);
+  you.active.effects.push({ kind: 'PREVENT_ALL_EFFECTS', expireAtStartOfTurn: E.state.turn + 2 });
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(you.active.status.paralyzed, false, 'the status was blocked');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
