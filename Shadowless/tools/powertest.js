@@ -3201,5 +3201,83 @@ T('a Barrier stops the coin-borne status exactly as it stops a printed one', () 
   return true;
 });
 
+// ---------------------------------- "You may", and evolving off the deck
+console.log('\nOptional switch, and Rapid Evolution');
+
+T('Teleport Blast switches when asked', () => {
+  const E = board('base5-1', ['base1-58']);            // Dark Alakazam, Pikachu benched
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-101', 3);                // Psychic x3
+  const was = E.nameOf(me.active);
+  eq(E.act(0, { t: 'attack', idx: 0, opts: { bench: 0 } }).ok, true, 'attack resolved');
+  eq(E.nameOf(me.active), 'Pikachu', 'the benched Pokemon came up');
+  eq(E.nameOf(me.bench[me.bench.length - 1]), was, 'and Alakazam went down');
+  return true;
+});
+
+T('...and DECLINES on bench: -1, which is the whole point of `optional`', () => {
+  const E = board('base5-1', ['base1-58']);
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-101', 3);
+  eq(E.act(0, { t: 'attack', idx: 0, opts: { bench: -1 } }).ok, true, 'attack resolved');
+  eq(E.nameOf(me.active), 'Dark Alakazam', 'it stayed put');
+  eq(E.state.players[1].active.dmg, 30, 'and the damage still landed');
+  return true;
+});
+
+T('an ABSENT choice still switches, so no older caller changed behaviour', () => {
+  // The compatibility half. Every pre-existing caller — the AI, every test
+  // written before `optional` — supplies nothing, and Exeggutor's Teleport is
+  // NOT optional. Absent must therefore keep meaning "switch", not "decline".
+  const E = board('base5-1', ['base1-58']);
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-101', 3);
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(E.nameOf(me.active), 'Pikachu', 'absent is not declining');
+  return true;
+});
+
+T('Rapid Evolution pulls a named Gyarados out of the deck and evolves', () => {
+  const E = board('base5-47');                          // Magikarp
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-102', 3);                 // Water x3
+  me.deck.unshift({ id: 'base5-8', uid: E.uid++ });      // Dark Gyarados
+  const before = me.deck.length;
+  eq(E.act(0, { t: 'attack', idx: 1 }).ok, true, 'attack resolved');
+  eq(E.nameOf(me.active), 'Dark Gyarados', 'Magikarp evolved on the spot');
+  eq(me.deck.length, before - 1, 'and the card left the deck');
+  eq(me.active.stack.length, 2, 'stacked, not replaced — Magikarp is underneath');
+  return true;
+});
+
+T('...and does nothing at all when neither Gyarados is in the deck', () => {
+  const E = board('base5-47');
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-102', 3);
+  me.deck = me.deck.filter(x => !/Gyarados/.test(E.db[x.id].name));
+  eq(E.act(0, { t: 'attack', idx: 1 }).ok, true, 'the attack is still legal');
+  eq(E.nameOf(me.active), 'Magikarp', 'and simply achieves nothing');
+  return true;
+});
+
+T('it refuses a Gyarados that does not evolve from what is Active', () => {
+  // The name list is not the whole check — `evolvesFrom` is. Dark Gyarados
+  // evolves from Magikarp, so a board with something else Active must not be
+  // able to pull it, even though the NAME matches.
+  const E = board('base5-47');
+  const me = E.state.players[0];
+  attach(E, me.active, 'base1-102', 3);
+  me.deck.unshift({ id: 'base5-8', uid: E.uid++ });
+  // Swap the Active for something Dark Gyarados cannot evolve from.
+  me.active = E.mkSlot({ id: 'base1-58', uid: E.uid++ });   // Pikachu
+  me.active.playedTurn = 0;
+  attach(E, me.active, 'base1-102', 3);
+  const n = me.deck.length;
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(me.deck.length, n, 'nothing was taken from the deck');
+  eq(E.nameOf(me.active), 'Pikachu', 'and nothing evolved');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

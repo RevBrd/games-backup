@@ -2049,9 +2049,20 @@ function renderActionBar() {
   // re-arms it and prints the prompt WITHOUT a Cancel. Cancelling a forced
   // promote would strand the game with no Active and no way to choose one.
   if (UI.targeting && !UI.targeting.forced) {
+    bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
+    // A DECLINE IS NOT A CANCEL. Cancel abandons the whole action; decline means
+    // "do the action, just not the optional part of it" — Dark Alakazam attacking
+    // without switching itself out. Both are offered when the targeting supplies
+    // one, because a player who opened the attack by mistake still needs the way
+    // back out that every other targeting has.
+    if (UI.targeting.decline) {
+      const skip = el('button', 'btn small', UI.targeting.declineLabel || 'No thanks');
+      const go = UI.targeting.decline;
+      skip.onclick = () => { UI.targeting = null; UI.sel = null; go(); };
+      bar.appendChild(skip);
+    }
     const cancel = el('button', 'btn ghost', 'Cancel');
     cancel.onclick = () => { UI.targeting = null; UI.sel = null; render(); };
-    bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
     bar.appendChild(cancel);
     return bar;
   }
@@ -2145,6 +2156,23 @@ function doAttack(i) {
   if (needsBench) {
     UI.targeting = { scope: 'oppBench', prompt: 'Choose which Benched Pokemon to drag into the Active spot',
       dispatch: (opts) => attackWithEnergy(i, c, script, opts) };
+    render(); return;
+  }
+
+  // AN OPTIONAL SWITCH NEEDS A THIRD BUTTON, and that is the whole reason this
+  // branch exists rather than reusing the one above. Cancel abandons the ATTACK;
+  // declining an optional switch still attacks. Two different answers that a
+  // single Cancel cannot express, and conflating them would either lose the
+  // attack or force the switch.
+  const optSwitch = script.find(v => v.v === 'SWITCH_SELF_CHOOSE' && v.optional);
+  if (optSwitch && me().bench.length > 0) {
+    UI.targeting = {
+      scope: 'ownBench',
+      prompt: `${c.name} may switch itself out — choose a Benched Pokemon, or attack without switching`,
+      declineLabel: 'Attack without switching',
+      decline: () => attackWithEnergy(i, c, script, { bench: -1 }),
+      dispatch: (opts) => attackWithEnergy(i, c, script, opts),
+    };
     render(); return;
   }
   attackWithEnergy(i, c, script, null);

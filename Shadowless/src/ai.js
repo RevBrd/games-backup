@@ -476,6 +476,12 @@ class AI {
 
         // ---- Job 6d, third batch ----
         case 'SEARCH_BASIC_TO_BENCH': flags.callFamily = true; break;
+        // Rapid Evolution. Priced on the HP SWING it buys rather than as a flat
+        // bonus, because that is what the attack actually is: a 30 HP Magikarp
+        // becomes a 100 HP Gyarados for no Energy and no card from hand, and the
+        // gap is the whole value. Computed at scoring time from what is really
+        // in the deck, so it is worth nothing when neither target is there.
+        case 'EVOLVE_SELF_FROM_DECK': flags.evolveFromDeck = v.names || [v.name]; break;
         case 'HEAL_SELF_ON_FLIP': flags.heal = (flags.heal || 0) + (v.n || 1) * 0.5; break;
         case 'ENERGY_FROM_DISCARD': flags.recover = v.n; break;
         case 'TRAINER_FROM_DISCARD': flags.recover = (flags.recover || 0) + 1; break;
@@ -754,6 +760,30 @@ class AI {
     // A free Basic onto the Bench is worth roughly what benching one from hand
     // is, and much more when the Bench is nearly empty.
     if (f.flags.callFamily) s += me.bench.length === 0 ? W.benchFirst : W.benchMore;
+
+    // EVOLVING OFF THE DECK, priced as the HP it gains plus the damage it will
+    // then be able to deal. Worth nothing if the deck holds neither target — and
+    // that check is the load-bearing half, because Magikarp's other attack is a
+    // 10-damage Flop and the bot would otherwise pick a no-op over it forever.
+    //
+    // UNTUNED, AND SAID SO HERE ON PURPOSE. The HP term is a guess: I know the
+    // sign and the rough scale, not the weight. It is the first thing to look at
+    // if Trevor reports Magikarp doing something odd, and the honest place to
+    // write that down is beside the number rather than in a list somebody has to
+    // find. See the grab-bag policy in AI.md.
+    if (f.flags.evolveFromDeck && me.active) {
+      const here = this.top(me.active).name;
+      const found = E.state.players[pi].deck.filter(x => {
+        const c2 = this.db[x.id];
+        return c2 && c2.kind === 'pokemon' && f.flags.evolveFromDeck.indexOf(c2.name) >= 0
+            && c2.evolvesFrom === here;
+      });
+      if (found.length) {
+        const best = found.reduce((m, x) => Math.max(m, this.db[x.id].hp || 0), 0);
+        const gain = Math.max(0, best - (this.top(me.active).hp || 0));
+        s += gain * 0.35;
+      }
+    }
     if (f.flags.recover) s += f.flags.recover * W.drawCard * 0.8;
     // Hurricane undoes an entire investment — every Energy on it goes back to
     // hand with it — so it scales with what they have committed, and is worth

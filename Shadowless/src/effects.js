@@ -123,6 +123,12 @@
 //                                  Rocket's "1 of your opponent's Pokemon" wording
 //                                  asks for and is a materially stronger card
 //     SHUFFLE_OPP_DECK             shuffle the opponent's deck (Mischief)
+//     EVOLVE_SELF_FROM_DECK {names}
+//                                  search the deck for one of the named Evolution
+//                                  cards and put it on the ATTACKER, which counts
+//                                  as evolving — stack, evolvedTurn and status
+//                                  clear, exactly as doEvolve does them. Then
+//                                  shuffle. The player picks which (Rapid Evolution)
 //     STATUS_SELF {s}              apply status to SELF. `blocked` is deliberately
 //                                  not consulted — the defender's Barrier has no
 //                                  bearing on what you do to yourself (Petal Dance)
@@ -153,9 +159,13 @@
 //                                  restriction and not a slot's
 //     WHIRLWIND_ON_FLIP {label}    flip; heads => WHIRLWIND. The damage lands
 //                                  either way; only the switch rides the coin
-//     SWITCH_SELF_CHOOSE           the ATTACKER switches self with one of its own
+//     SWITCH_SELF_CHOOSE {optional}
 //                                  Bench. No retreat cost, no Energy, and it does
-//                                  not use up the turn's retreat (Teleport)
+//                                  not use up the turn's retreat (Teleport).
+//                                  `optional: true` makes it "you MAY switch" —
+//                                  the player can decline with `bench: -1`, which
+//                                  is the difference between Teleport and Teleport
+//                                  Blast and is not cosmetic
 //     RETURN_DEFENDER_TO_HAND      the defender and everything on it go back to
 //                                  its owner's hand — UNLESS the attack Knocked it
 //                                  Out, in which case the Knock Out simply
@@ -201,6 +211,48 @@
 //     T_ENERGY_SEARCH              T_GAMBLER                 T_MR_FUJI
 //     T_RECYCLE
 //
+// THE COIN-FLIP FAMILY — an index by SHAPE rather than by function.
+//
+// TREVOR ASKED FOR THIS, 17 Aug 2026, and the reason is a repeat: #7 asked
+// during Job 6 whether a dual-outcome verb existed, concluded it did not, and
+// found one afterwards. The sections below sort verbs by WHAT THEY DO, which is
+// the wrong axis when the question you actually have is "my card flips a coin —
+// what is already built?" That question is now one list.
+//
+// SEVENTEEN verbs read a coin. Find your card's shape here before writing one:
+//
+//   heads does something, tails does nothing
+//     FLIP_OR_NOTHING            the whole attack is cancelled on tails
+//     STATUS_ON_FLIP             a status on the defender
+//     DRAW_ON_FLIP  HEAL_SELF_ON_FLIP  BARRIER_ON_FLIP
+//     PREVENT_ALL_DMG_SELF_ON_FLIP    WHIRLWIND_ON_FLIP
+//     CANT_ATTACK_ON_FLIP  CANT_RETREAT_ON_FLIP
+//
+//   tails does something instead
+//     RECOIL_ON_FLIP             self takes damage on TAILS
+//     STATUS_SELF_ON_TAILS       self takes a status on TAILS
+//
+//   ONE coin, two different outcomes — check here first, this is the one
+//   that gets missed
+//     STATUS_COIN_EITHER {heads, tails}
+//                                a status either way, never nothing
+//     FLIP_BONUS_OR_RECOIL {base, bonus, recoil, statusOnHeads, discardOnHeads}
+//                                the general one. Damage both ways, plus any
+//                                combination of a status on the defender, an
+//                                Energy discard off self, and recoil on tails —
+//                                ALL on the same coin
+//
+//   many coins
+//     DMG_PER_HEAD {coins, per}          a fixed number of coins
+//     DMG_PER_ENERGY_HEADS {per}         one per Energy ATTACHED
+//     DMG_PER_HEAD_UNTIL_TAILS {per}     until the first tails
+//     BENCH_SPLASH_PER_FLIP {dmg}        one per opposing Benched Pokemon
+//     BENCH_SPLASH_FLIP_SIDE {n}         one coin picks WHOSE bench
+//
+// THE RULE THIS INDEX EXISTS TO ENFORCE: if a card ties several consequences to
+// ONE coin, that is one verb. Two verbs flip twice, which is a different card —
+// it can pay a bonus and miss the status the same coin was supposed to carry.
+// Sticky Hands, Thunder Attack and Playing with Fire are all this shape.
 // POKEMON POWERS
 //   `p` is a single object, not a verb list — Powers are not attacks and don't
 //   share the attack pipeline. They fire outside the attack step, and the ones
@@ -1209,6 +1261,19 @@ const EFFECTS = {
     [{ v: 'REQUIRE_SELF_ENERGY', t: 'R' },
      { v: 'FLIP_BONUS_OR_RECOIL', base: 0, bonus: 70, recoil: 0,
        discardOnHeads: { n: 1, t: 'R' }, label: 'Fireball' }],
+  ]},
+  'base5-1': { a: [                                  // Dark Alakazam
+    // "You MAY switch" — optional, which the verb now supports. Forcing it
+    // would drag a charged Alakazam off the front every time you attack.
+    [{ v: 'SWITCH_SELF_CHOOSE', optional: true }],   //   Teleport Blast
+    [{ v: 'NO_WR' }],                                //   Mind Shock
+  ]},
+  'base5-47': { a: [                                 // Magikarp
+    [],                                              //   Flop
+    // Trevor, 17 Aug: it pulls either Gyarados out of the deck — the player
+    // chooses from what is actually there — evolves Magikarp on the spot, and
+    // the turn ends with no attack damage.
+    [{ v: 'EVOLVE_SELF_FROM_DECK', names: ['Gyarados', 'Dark Gyarados'] }],
   ]},
 };
 

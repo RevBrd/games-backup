@@ -2581,6 +2581,12 @@ const SET_INFO = {
 //                                  Rocket's "1 of your opponent's Pokemon" wording
 //                                  asks for and is a materially stronger card
 //     SHUFFLE_OPP_DECK             shuffle the opponent's deck (Mischief)
+//     EVOLVE_SELF_FROM_DECK {names}
+//                                  search the deck for one of the named Evolution
+//                                  cards and put it on the ATTACKER, which counts
+//                                  as evolving — stack, evolvedTurn and status
+//                                  clear, exactly as doEvolve does them. Then
+//                                  shuffle. The player picks which (Rapid Evolution)
 //     STATUS_SELF {s}              apply status to SELF. `blocked` is deliberately
 //                                  not consulted — the defender's Barrier has no
 //                                  bearing on what you do to yourself (Petal Dance)
@@ -2611,9 +2617,13 @@ const SET_INFO = {
 //                                  restriction and not a slot's
 //     WHIRLWIND_ON_FLIP {label}    flip; heads => WHIRLWIND. The damage lands
 //                                  either way; only the switch rides the coin
-//     SWITCH_SELF_CHOOSE           the ATTACKER switches self with one of its own
+//     SWITCH_SELF_CHOOSE {optional}
 //                                  Bench. No retreat cost, no Energy, and it does
-//                                  not use up the turn's retreat (Teleport)
+//                                  not use up the turn's retreat (Teleport).
+//                                  `optional: true` makes it "you MAY switch" —
+//                                  the player can decline with `bench: -1`, which
+//                                  is the difference between Teleport and Teleport
+//                                  Blast and is not cosmetic
 //     RETURN_DEFENDER_TO_HAND      the defender and everything on it go back to
 //                                  its owner's hand — UNLESS the attack Knocked it
 //                                  Out, in which case the Knock Out simply
@@ -2659,6 +2669,48 @@ const SET_INFO = {
 //     T_ENERGY_SEARCH              T_GAMBLER                 T_MR_FUJI
 //     T_RECYCLE
 //
+// THE COIN-FLIP FAMILY — an index by SHAPE rather than by function.
+//
+// TREVOR ASKED FOR THIS, 17 Aug 2026, and the reason is a repeat: #7 asked
+// during Job 6 whether a dual-outcome verb existed, concluded it did not, and
+// found one afterwards. The sections below sort verbs by WHAT THEY DO, which is
+// the wrong axis when the question you actually have is "my card flips a coin —
+// what is already built?" That question is now one list.
+//
+// SEVENTEEN verbs read a coin. Find your card's shape here before writing one:
+//
+//   heads does something, tails does nothing
+//     FLIP_OR_NOTHING            the whole attack is cancelled on tails
+//     STATUS_ON_FLIP             a status on the defender
+//     DRAW_ON_FLIP  HEAL_SELF_ON_FLIP  BARRIER_ON_FLIP
+//     PREVENT_ALL_DMG_SELF_ON_FLIP    WHIRLWIND_ON_FLIP
+//     CANT_ATTACK_ON_FLIP  CANT_RETREAT_ON_FLIP
+//
+//   tails does something instead
+//     RECOIL_ON_FLIP             self takes damage on TAILS
+//     STATUS_SELF_ON_TAILS       self takes a status on TAILS
+//
+//   ONE coin, two different outcomes — check here first, this is the one
+//   that gets missed
+//     STATUS_COIN_EITHER {heads, tails}
+//                                a status either way, never nothing
+//     FLIP_BONUS_OR_RECOIL {base, bonus, recoil, statusOnHeads, discardOnHeads}
+//                                the general one. Damage both ways, plus any
+//                                combination of a status on the defender, an
+//                                Energy discard off self, and recoil on tails —
+//                                ALL on the same coin
+//
+//   many coins
+//     DMG_PER_HEAD {coins, per}          a fixed number of coins
+//     DMG_PER_ENERGY_HEADS {per}         one per Energy ATTACHED
+//     DMG_PER_HEAD_UNTIL_TAILS {per}     until the first tails
+//     BENCH_SPLASH_PER_FLIP {dmg}        one per opposing Benched Pokemon
+//     BENCH_SPLASH_FLIP_SIDE {n}         one coin picks WHOSE bench
+//
+// THE RULE THIS INDEX EXISTS TO ENFORCE: if a card ties several consequences to
+// ONE coin, that is one verb. Two verbs flip twice, which is a different card —
+// it can pay a bonus and miss the status the same coin was supposed to carry.
+// Sticky Hands, Thunder Attack and Playing with Fire are all this shape.
 // POKEMON POWERS
 //   `p` is a single object, not a verb list — Powers are not attacks and don't
 //   share the attack pipeline. They fire outside the attack step, and the ones
@@ -3668,6 +3720,19 @@ const EFFECTS = {
      { v: 'FLIP_BONUS_OR_RECOIL', base: 0, bonus: 70, recoil: 0,
        discardOnHeads: { n: 1, t: 'R' }, label: 'Fireball' }],
   ]},
+  'base5-1': { a: [                                  // Dark Alakazam
+    // "You MAY switch" — optional, which the verb now supports. Forcing it
+    // would drag a charged Alakazam off the front every time you attack.
+    [{ v: 'SWITCH_SELF_CHOOSE', optional: true }],   //   Teleport Blast
+    [{ v: 'NO_WR' }],                                //   Mind Shock
+  ]},
+  'base5-47': { a: [                                 // Magikarp
+    [],                                              //   Flop
+    // Trevor, 17 Aug: it pulls either Gyarados out of the deck — the player
+    // chooses from what is actually there — evolves Magikarp on the spot, and
+    // the turn ends with no attack damage.
+    [{ v: 'EVOLVE_SELF_FROM_DECK', names: ['Gyarados', 'Dark Gyarados'] }],
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -4556,6 +4621,12 @@ class AI {
 
         // ---- Job 6d, third batch ----
         case 'SEARCH_BASIC_TO_BENCH': flags.callFamily = true; break;
+        // Rapid Evolution. Priced on the HP SWING it buys rather than as a flat
+        // bonus, because that is what the attack actually is: a 30 HP Magikarp
+        // becomes a 100 HP Gyarados for no Energy and no card from hand, and the
+        // gap is the whole value. Computed at scoring time from what is really
+        // in the deck, so it is worth nothing when neither target is there.
+        case 'EVOLVE_SELF_FROM_DECK': flags.evolveFromDeck = v.names || [v.name]; break;
         case 'HEAL_SELF_ON_FLIP': flags.heal = (flags.heal || 0) + (v.n || 1) * 0.5; break;
         case 'ENERGY_FROM_DISCARD': flags.recover = v.n; break;
         case 'TRAINER_FROM_DISCARD': flags.recover = (flags.recover || 0) + 1; break;
@@ -4834,6 +4905,30 @@ class AI {
     // A free Basic onto the Bench is worth roughly what benching one from hand
     // is, and much more when the Bench is nearly empty.
     if (f.flags.callFamily) s += me.bench.length === 0 ? W.benchFirst : W.benchMore;
+
+    // EVOLVING OFF THE DECK, priced as the HP it gains plus the damage it will
+    // then be able to deal. Worth nothing if the deck holds neither target — and
+    // that check is the load-bearing half, because Magikarp's other attack is a
+    // 10-damage Flop and the bot would otherwise pick a no-op over it forever.
+    //
+    // UNTUNED, AND SAID SO HERE ON PURPOSE. The HP term is a guess: I know the
+    // sign and the rough scale, not the weight. It is the first thing to look at
+    // if Trevor reports Magikarp doing something odd, and the honest place to
+    // write that down is beside the number rather than in a list somebody has to
+    // find. See the grab-bag policy in AI.md.
+    if (f.flags.evolveFromDeck && me.active) {
+      const here = this.top(me.active).name;
+      const found = E.state.players[pi].deck.filter(x => {
+        const c2 = this.db[x.id];
+        return c2 && c2.kind === 'pokemon' && f.flags.evolveFromDeck.indexOf(c2.name) >= 0
+            && c2.evolvesFrom === here;
+      });
+      if (found.length) {
+        const best = found.reduce((m, x) => Math.max(m, this.db[x.id].hp || 0), 0);
+        const gain = Math.max(0, best - (this.top(me.active).hp || 0));
+        s += gain * 0.35;
+      }
+    }
     if (f.flags.recover) s += f.flags.recover * W.drawCard * 0.8;
     // Hurricane undoes an entire investment — every Energy on it goes back to
     // hand with it — so it scales with what they have committed, and is worth
@@ -9096,8 +9191,23 @@ class Engine {
         case 'SWITCH_SELF_CHOOSE': {
           // Exeggutor's Teleport. A free switch the ATTACKER chooses, with no
           // retreat cost and no Energy paid.
+          //
+          // `optional: true` IS THE DIFFERENCE BETWEEN "switch" AND "YOU MAY
+          // switch", and it is not cosmetic. Teleport switches; Dark Alakazam's
+          // Teleport Blast offers. Forcing the offer would drag a charged
+          // attacker off the front every time the attack is used, which makes a
+          // strictly better card strictly worse — so a `may` verb that cannot
+          // decline is a misprint, not a simplification.
+          //
+          // A declining player sends `bench: -1`. Absent is NOT declining: every
+          // caller that predates this — the AI, every older test — supplies
+          // nothing and must keep switching, so the fallback stays as it was.
           if (!me.bench.length) { this.log('No Benched Pokemon to switch with.', 'eff'); break; }
-          const bi2 = (a && a.opts && a.opts.bench !== undefined) ? a.opts.bench : this.pick(me.bench.length);
+          if (v.optional && a && a.opts && a.opts.bench === -1) {
+            this.log(`${card.name} stays in the Active spot.`, 'eff');
+            break;
+          }
+          const bi2 = (a && a.opts && a.opts.bench !== undefined && a.opts.bench >= 0) ? a.opts.bench : this.pick(me.bench.length);
           const b2 = me.bench[bi2];
           if (b2) {
             const old2 = me.active;
@@ -9170,6 +9280,44 @@ class Engine {
             const where = pool[i] === you.active ? '' : ' on the Bench';
             this.log(`${v.dmg} to ${this.nameOf(pool[i])}${where}.`, 'eff');
           }
+          break;
+        }
+        case 'EVOLVE_SELF_FROM_DECK': {
+          // Magikarp's Rapid Evolution. Searches out a named Evolution and puts
+          // it straight onto the attacker — "(This counts as evolving Magikarp.)"
+          //
+          // It reuses doEvolve's mechanics rather than reimplementing them: push
+          // onto the stack, stamp evolvedTurn, clear Special Conditions. Those
+          // three together ARE evolving, and a card that says it counts as
+          // evolving must not be a fourth thing that looks similar.
+          //
+          // NO TIMING GATE, and that is deliberate. `canEvolve` refuses a Pokemon
+          // played this turn and one already evolved this turn; neither can apply
+          // here, because the attacker has to have been in play since last turn
+          // to attack at all. Trevor, 17 Aug: the three-Energy cost puts it out
+          // of reach of a first turn on its own.
+          const names = v.names || [v.name];
+          const legal = i => {
+            const c2 = this.db[me.deck[i].id];
+            return c2 && c2.kind === 'pokemon' && names.indexOf(c2.name) >= 0
+                && c2.evolvesFrom === topCard(this.db, atk).name;
+          };
+          const idxs = me.deck.map((_, i) => i).filter(legal);
+          if (!idxs.length) { this.log('No such Evolution card in the deck.', 'eff'); break; }
+          // The player picks WHICH — the two are a different card each. Absent a
+          // choice, take the first legal one so the AI and older callers work.
+          let k = idxs[0];
+          if (a && a.opts && a.opts.pickUid !== undefined) {
+            const want = me.deck.findIndex(x => x.uid === a.opts.pickUid);
+            if (idxs.indexOf(want) >= 0) k = want;
+          }
+          const inst = me.deck.splice(k, 1)[0];
+          const was = this.nameOf(atk);
+          atk.stack.push(inst);
+          atk.evolvedTurn = this.state.turn;
+          clearStatus(atk);
+          this.shuffle(me.deck);
+          this.log(`${was} evolves into ${this.db[inst.id].name}. Special Conditions removed.`, 'eff');
           break;
         }
         case 'SHUFFLE_OPP_DECK':
@@ -12870,9 +13018,20 @@ function renderActionBar() {
   // re-arms it and prints the prompt WITHOUT a Cancel. Cancelling a forced
   // promote would strand the game with no Active and no way to choose one.
   if (UI.targeting && !UI.targeting.forced) {
+    bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
+    // A DECLINE IS NOT A CANCEL. Cancel abandons the whole action; decline means
+    // "do the action, just not the optional part of it" — Dark Alakazam attacking
+    // without switching itself out. Both are offered when the targeting supplies
+    // one, because a player who opened the attack by mistake still needs the way
+    // back out that every other targeting has.
+    if (UI.targeting.decline) {
+      const skip = el('button', 'btn small', UI.targeting.declineLabel || 'No thanks');
+      const go = UI.targeting.decline;
+      skip.onclick = () => { UI.targeting = null; UI.sel = null; go(); };
+      bar.appendChild(skip);
+    }
     const cancel = el('button', 'btn ghost', 'Cancel');
     cancel.onclick = () => { UI.targeting = null; UI.sel = null; render(); };
-    bar.appendChild(el('div', 'barmsg', UI.targeting.prompt));
     bar.appendChild(cancel);
     return bar;
   }
@@ -12966,6 +13125,23 @@ function doAttack(i) {
   if (needsBench) {
     UI.targeting = { scope: 'oppBench', prompt: 'Choose which Benched Pokemon to drag into the Active spot',
       dispatch: (opts) => attackWithEnergy(i, c, script, opts) };
+    render(); return;
+  }
+
+  // AN OPTIONAL SWITCH NEEDS A THIRD BUTTON, and that is the whole reason this
+  // branch exists rather than reusing the one above. Cancel abandons the ATTACK;
+  // declining an optional switch still attacks. Two different answers that a
+  // single Cancel cannot express, and conflating them would either lose the
+  // attack or force the switch.
+  const optSwitch = script.find(v => v.v === 'SWITCH_SELF_CHOOSE' && v.optional);
+  if (optSwitch && me().bench.length > 0) {
+    UI.targeting = {
+      scope: 'ownBench',
+      prompt: `${c.name} may switch itself out — choose a Benched Pokemon, or attack without switching`,
+      declineLabel: 'Attack without switching',
+      decline: () => attackWithEnergy(i, c, script, { bench: -1 }),
+      dispatch: (opts) => attackWithEnergy(i, c, script, opts),
+    };
     render(); return;
   }
   attackWithEnergy(i, c, script, null);

@@ -2815,8 +2815,23 @@ class Engine {
         case 'SWITCH_SELF_CHOOSE': {
           // Exeggutor's Teleport. A free switch the ATTACKER chooses, with no
           // retreat cost and no Energy paid.
+          //
+          // `optional: true` IS THE DIFFERENCE BETWEEN "switch" AND "YOU MAY
+          // switch", and it is not cosmetic. Teleport switches; Dark Alakazam's
+          // Teleport Blast offers. Forcing the offer would drag a charged
+          // attacker off the front every time the attack is used, which makes a
+          // strictly better card strictly worse — so a `may` verb that cannot
+          // decline is a misprint, not a simplification.
+          //
+          // A declining player sends `bench: -1`. Absent is NOT declining: every
+          // caller that predates this — the AI, every older test — supplies
+          // nothing and must keep switching, so the fallback stays as it was.
           if (!me.bench.length) { this.log('No Benched Pokemon to switch with.', 'eff'); break; }
-          const bi2 = (a && a.opts && a.opts.bench !== undefined) ? a.opts.bench : this.pick(me.bench.length);
+          if (v.optional && a && a.opts && a.opts.bench === -1) {
+            this.log(`${card.name} stays in the Active spot.`, 'eff');
+            break;
+          }
+          const bi2 = (a && a.opts && a.opts.bench !== undefined && a.opts.bench >= 0) ? a.opts.bench : this.pick(me.bench.length);
           const b2 = me.bench[bi2];
           if (b2) {
             const old2 = me.active;
@@ -2889,6 +2904,44 @@ class Engine {
             const where = pool[i] === you.active ? '' : ' on the Bench';
             this.log(`${v.dmg} to ${this.nameOf(pool[i])}${where}.`, 'eff');
           }
+          break;
+        }
+        case 'EVOLVE_SELF_FROM_DECK': {
+          // Magikarp's Rapid Evolution. Searches out a named Evolution and puts
+          // it straight onto the attacker — "(This counts as evolving Magikarp.)"
+          //
+          // It reuses doEvolve's mechanics rather than reimplementing them: push
+          // onto the stack, stamp evolvedTurn, clear Special Conditions. Those
+          // three together ARE evolving, and a card that says it counts as
+          // evolving must not be a fourth thing that looks similar.
+          //
+          // NO TIMING GATE, and that is deliberate. `canEvolve` refuses a Pokemon
+          // played this turn and one already evolved this turn; neither can apply
+          // here, because the attacker has to have been in play since last turn
+          // to attack at all. Trevor, 17 Aug: the three-Energy cost puts it out
+          // of reach of a first turn on its own.
+          const names = v.names || [v.name];
+          const legal = i => {
+            const c2 = this.db[me.deck[i].id];
+            return c2 && c2.kind === 'pokemon' && names.indexOf(c2.name) >= 0
+                && c2.evolvesFrom === topCard(this.db, atk).name;
+          };
+          const idxs = me.deck.map((_, i) => i).filter(legal);
+          if (!idxs.length) { this.log('No such Evolution card in the deck.', 'eff'); break; }
+          // The player picks WHICH — the two are a different card each. Absent a
+          // choice, take the first legal one so the AI and older callers work.
+          let k = idxs[0];
+          if (a && a.opts && a.opts.pickUid !== undefined) {
+            const want = me.deck.findIndex(x => x.uid === a.opts.pickUid);
+            if (idxs.indexOf(want) >= 0) k = want;
+          }
+          const inst = me.deck.splice(k, 1)[0];
+          const was = this.nameOf(atk);
+          atk.stack.push(inst);
+          atk.evolvedTurn = this.state.turn;
+          clearStatus(atk);
+          this.shuffle(me.deck);
+          this.log(`${was} evolves into ${this.db[inst.id].name}. Special Conditions removed.`, 'eff');
           break;
         }
         case 'SHUFFLE_OPP_DECK':
