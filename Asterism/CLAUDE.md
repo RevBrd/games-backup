@@ -8,6 +8,11 @@ your finished frontier.
 
 Single self-contained HTML file. Double-click to play. No build step, no dependencies.
 
+<!-- marquee: play=index.html -->
+**`index.html` is the front door** — a chooser linking to both builds. `asterism_expanded.html` is
+the nine-map version; `asterism_job3.html` is the preserved, hook-locked three-map original. The
+comment above tells Marquee to open the chooser rather than pick between the two builds itself.
+
 ---
 
 ## Preservation register — read before editing

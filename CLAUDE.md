@@ -58,6 +58,39 @@ If known, please credit the Claude model that assisted in its creation within th
   for once a game outgrows one file, and not before. Note that ES modules do **not** load from
   `file://`, so the builder concatenates rather than emitting `<script src>` tags.
 
+## Telling Marquee which file is the game
+
+**Marquee** (`Projects/Claude Town/Marquee/`) is a launcher for this collection. It deliberately
+keeps **no list of games** — it derives one every run from this folder plus the catalog table
+above, so it cannot drift and instead reports drift in the catalog. Nothing here needs to be
+maintained for it, with one exception.
+
+**If a game folder has more than one top-level `.html`, Marquee will not guess.** It reports the
+folder as ambiguous and offers nothing, because launching a discarded predecessor as though it
+were the game is a failure that *looks like it worked*. Snek is the reason this rule exists: its
+folder holds `snek.html` and a leftover `snake.html` that is a completely different game.
+
+Resolve it with an HTML comment anywhere in the game's own `CLAUDE.md`:
+
+```
+<!-- marquee: play=snek.html -->     which file is the game
+<!-- marquee: play=none -->          prototypes only; offer nothing
+<!-- marquee: defects=authored -->   visible defects are on purpose
+<!-- marquee: defects=none -->       sincere; every bug is a real bug
+```
+
+Keys are independent and may share one comment. **An absent key means unknown, never false** — in
+particular, no `defects` key does *not* mean "sincere". Say it in prose as well as the comment;
+the comment is for the tool, the prose is for the next instance.
+
+Three folders needed one as of 17 Aug 2026 and all three now have it. A new game with a single
+HTML file needs nothing at all.
+
+`node "../Claude Town/Marquee/tools/derive.js"` prints what Marquee currently sees, including
+which folders are ambiguous, which have no catalog row, and which have no `CLAUDE.md`. **A folder
+missing a row is not automatically an error** — some are simply queued for their first pass, and
+one is an empty artifact of a folder rearrangement. Read the report, don't act on it blindly.
+
 ## Possible new convention
 
 - **Event logs.** For games that have specific, readable events in which log review of Trevor's playtest runs would be genuinely helpful. Not every game will need one; that is your judgement call to make. 

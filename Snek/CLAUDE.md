@@ -7,6 +7,12 @@ authored defects and there should never be one. The *drawing* is deliberately ba
 is not. Wobbly lines and a lopsided apple are the art direction. A snake that clips through
 itself is a bug.
 
+<!-- marquee: play=snek.html defects=none -->
+**`snek.html` is the game.** `snake.html` is a different, discarded build titled "SERPENT // 8K",
+from before the ballpoint-pen reskin — neon-on-black, nothing to do with this. It is kept, not
+used. The comment above is how Marquee knows which is which; without it this folder is ambiguous,
+and a launcher offering "Snek" would be a coin flip between two unrelated games.
+
 ## The one rule
 
 **The joke never touches the mechanics.** Snake is a good game and this is a straight

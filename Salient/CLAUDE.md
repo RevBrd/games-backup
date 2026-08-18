@@ -13,6 +13,13 @@ in the design carries across waves the way it does.
 substantial work. This file records what the skill doesn't: build history, what's been tried, and
 the open problem.
 
+<!-- marquee: play=none -->
+**Neither file on disk is the game.** `salient.html` (v2) and `salient_job1.html` (v1) are both
+abandoned prototypes, kept for reference — see the build history below. Marquee is told to offer
+nothing here on purpose, and it should stay that way until v3 exists. Trevor's call, 17 Aug 2026:
+the concept is worth returning to, so this is a deliberate hold, not an abandonment. When v3
+lands, change the comment above to name it.
+
 This game is **sincere**. It has no authored defects. Its bugs are real bugs — fix them freely.
 
 ---
