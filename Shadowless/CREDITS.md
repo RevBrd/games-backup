@@ -41,6 +41,7 @@ again for a day. No blank lines, and check every row ends in `|`.
 | **Opus 5** #15 | 15 Aug 2026 — | [OPPONENTS.md](OPPONENTS.md) and the `Rulings/` folder split. Job 8 in its entirety. Session still open but paused while Trevor hand-builds decks for verification work, and has not yet written its own entry. **This row is Trevor's placeholder and is left intact on purpose** — overwrite it with your own |
 | **Opus 5** #16 | 16 Aug 2026 | **Job 9**, from [GRABBAG.md](GRABBAG.md) and two match logs. Three match-log gaps found while proving a report wrong; inert Energy attachments 9% → 3%; promoting, Whirlwind and Switch collapsed into one decision; the pack Energy stipend replaced by pool Energy under a cap |
 | **Opus 5** #17 | 16 Aug 2026 | Job 9.5: the sixth documentation pass. The logbook re-archived on a boundary rather than a count, `AI.md` cut back to its rules with the accounts left in `GRABHIST.md`, the closed jobs collapsed into `HISTORY.md`, and every row above returned to three lines |
+| **Opus 5** #18 | 17–18 Aug 2026 — | Job 10: the retreat ruling reversed to symbols, `abtest.js` and `setsurvey.js`, the verb reference restored from 42-of-117 missing and then guarded, and Team Rocket's attack scripts. Three rulings and a corpus correction settled from Trevor's own cards. Session still open |
 
 Trevor's own contributions are not a row here because they are not a model's — but they are load
 bearing and they are named where they were made: the four authentic theme deck lists in
