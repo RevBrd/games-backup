@@ -1,0 +1,432 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-17 00:28:40
+decks    you: New deck 2   opponent: Odell — Power Reserve
+opponent novice
+seed     634367   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Psychic Energy, Potion, Psychic Energy, Abra, Grass Energy, Bellsprout, Weepinbell
+  HIDDEN  your opening hand: Double Colorless Energy, PlusPower, Dratini, Professor Oak, Fire Energy, Charmander, Switch
+  HIDDEN  opponent's Prizes: Abra, Grass Energy, Kadabra, Bellsprout, Grass Energy, Psychic Energy
+  HIDDEN  your Prizes: Charmander, Full Heal, Fire Energy, Fire Energy, Fire Energy, Magmar
+  HIDDEN  opponent's opening board: Bellsprout active, bench Abra
+  HIDDEN  your opening board: Dratini active, bench Charmander
+          New game. Seed 634367.
+          Coin flip (who goes first): TAILS
+          Odell will go first.
+
+--- Turn 1 — Odell -----------------------------
+          Odell draws a card. (46 left)
+  AI      attach   [31]
+          holding: Psychic Energy, Potion, Psychic Energy, Grass Energy, Weepinbell, Grass Energy
+          Odell attaches Grass Energy to Bellsprout.
+  AI      attack:Call for Family   [5.1]
+          holding: Psychic Energy, Potion, Psychic Energy, Grass Energy, Weepinbell
+          Bellsprout uses Call for Family.
+          Bellsprout calls Bellsprout to the Bench.
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (46 left)
+          You attaches Fire Energy to Dratini.
+          Dratini uses Pound.
+          Bellsprout takes 10. (30/40 left)
+
+--- Turn 3 — Odell -----------------------------
+          Odell draws a card. (44 left)
+  AI      evolve   [39.3]
+          holding: Psychic Energy, Potion, Psychic Energy, Grass Energy, Weepinbell, Bill
+          passed over: evolve 28.8, attach 24.4, attach 17.2, attach 16.5, trainer 7.8
+          Bellsprout A evolves into Weepinbell. Special Conditions removed.
+  AI      trainer   [10.6]
+          holding: Psychic Energy, Potion, Psychic Energy, Grass Energy, Bill
+          Odell plays Bill.
+          Odell draws 2.
+  AI      attach   [26.7]
+          holding: Psychic Energy, Potion, Psychic Energy, Grass Energy, Bill, Kangaskhan
+          passed over: attach 25.4, attach 22.2, attach 21.8, trainer 9.1, trainer 5.2
+          Odell attaches Grass Energy to Bellsprout.
+  AI      bench   [9.4]
+          holding: Psychic Energy, Potion, Psychic Energy, Bill, Kangaskhan
+          passed over: trainer 9.2, trainer 5.3, retreat -19.5, retreat -29
+          Odell benches Kangaskhan.
+  AI      trainer   [9.6]
+          holding: Psychic Energy, Potion, Psychic Energy, Bill
+          passed over: trainer -5.8, retreat -21.4, retreat -33.5, retreat -34.9
+          Odell plays Bill.
+          Odell draws 2.
+  AI      bench   [4.9]
+          holding: Psychic Energy, Potion, Psychic Energy, Nidoran ♀, Bellsprout
+          passed over: bench 3.4, trainer -1.5, retreat -13.8, retreat -23.6, retreat -26.3
+          Odell benches Bellsprout.
+  AI      bench   [4.5]
+          holding: Psychic Energy, Potion, Psychic Energy, Nidoran ♀
+          passed over: trainer -4.2, retreat -18.9, retreat -28.7, retreat -29.4, retreat -29.4
+          Odell benches Nidoran ♀.
+  AI      trainer   [3.9]
+          holding: Psychic Energy, Potion, Psychic Energy
+          passed over: retreat -15.4, retreat -28.6, retreat -32.7, retreat -33, retreat -34.2
+          Odell plays Potion.
+          Weepinbell heals 10. (0 damage left)
+  AI      attack:Poisonpowder   [13.1]
+          holding: Psychic Energy, Psychic Energy
+          Weepinbell uses Poisonpowder.
+          Dratini takes 10. (30/40 left)
+          Coin flip (Poisoned?): TAILS
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (45 left)
+          You attaches Double Colorless Energy to Charmander.
+          Dratini uses Pound.
+          Weepinbell takes 10. (60/70 left)
+
+--- Turn 5 — Odell -----------------------------
+          Odell draws a card. (39 left)
+  AI      evolve   [21.3]
+          holding: Psychic Energy, Psychic Energy, Nidorina
+          passed over: attach 17.9, attach 17.5, attach 9.2, attach 4.1, attach 2.1
+          Nidoran ♀ evolves into Nidorina. Special Conditions removed.
+  AI      attach   [17.9]
+          holding: Psychic Energy, Psychic Energy
+          passed over: attach 16.1, attach 12.3, attach 11.5, attach 3, attach 0.9
+          Odell attaches Psychic Energy to Abra.
+  AI      attack:Poisonpowder   [18.7]
+          holding: Psychic Energy
+          Weepinbell uses Poisonpowder.
+          Dratini takes 10. (20/40 left)
+          Coin flip (Poisoned?): TAILS
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (44 left)
+          You benches Magmar.
+          You attaches Fire Energy to Dratini.
+          Dratini uses Pound.
+          Weepinbell takes 10. (50/70 left)
+
+--- Turn 7 — Odell -----------------------------
+          Odell draws a card. (38 left)
+  AI      attach   [65]
+          holding: Psychic Energy, Grass Energy
+          passed over: attach 20.1, attach 12.2, attach 7.1, attach 5.4, attach 1.6
+          Odell attaches Grass Energy to Weepinbell.
+  AI      attack:Razor Leaf   [79.4]
+          holding: Psychic Energy
+          passed over: attack:Poisonpowder 10.9
+          Weepinbell uses Razor Leaf.
+          Dratini takes 30. (0/40 left)
+          Dratini is Knocked Out!
+          Odell takes a Prize. (5 left)
+          You promotes Charmander to Active.
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (43 left)
+          You attaches Fire Energy to Charmander.
+          You plays PlusPower.
+          PlusPower attached to Charmander (+10 this turn).
+          You plays Professor Oak.
+          You discards 2 card(s) and draws 7.
+          Charmander evolves into Charmeleon. Special Conditions removed.
+          Charmeleon uses Slash.
+          Weakness: Weepinbell takes double -> 60.
+          +10 from a bonus -> 70.
+          Weepinbell takes 70. (0/70 left)
+          Weepinbell is Knocked Out!
+          You takes a Prize. (5 left)
+          PlusPower is discarded.
+  AI      promote   [45.2]
+          holding: Psychic Energy, Abra
+          passed over: promote 36.8, promote 34, promote 28.3, promote 24.8
+          Odell promotes Kangaskhan to Active.
+
+--- Turn 9 — Odell -----------------------------
+          Odell draws a card. (37 left)
+  AI      trainer   [30.6]
+          holding: Psychic Energy, Abra, Gust of Wind
+          passed over: attach 18.6, bench 2.8, attach 1.5, attach -2.1, attach -3.2
+          Odell plays Gust of Wind.
+          You's Magmar is dragged into the Active spot.
+  AI      attach   [19]
+          holding: Psychic Energy, Abra
+          passed over: attach 1.8, attach 1.6, bench 1.2, attach -4.4, attach -4.7
+          Odell attaches Psychic Energy to Kangaskhan.
+  AI      bench   [5.1]
+          holding: Abra
+          Odell benches Abra.
+  AI      attack:Fetch   [1.2]
+          holding: (empty)
+          Kangaskhan uses Fetch.
+          Odell draws 1.
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (35 left)
+          You attaches Double Colorless Energy to Charmeleon.
+          You benches Charmander.
+
+--- Turn 11 — Odell -----------------------------
+          Odell draws a card. (35 left)
+  AI      evolve   [34.6]
+          holding: Psychic Energy, Kadabra
+          passed over: evolve 28.7, attach 20.1, attach 9.5, attach 2.4, attach -3.4
+          Abra B evolves into Kadabra. Special Conditions removed.
+  AI      attach   [4.9]
+          holding: Psychic Energy
+          passed over: attach 1.9, attach 1.3, attach -1.4, attach -2.4, attach -5.5
+          Odell attaches Psychic Energy to Kadabra.
+  AI      attack:Fetch   [4.1]
+          holding: (empty)
+          Kangaskhan uses Fetch.
+          Odell draws 1.
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (34 left)
+          You attaches Fire Energy to Magmar.
+
+--- Turn 13 — Odell -----------------------------
+          Odell draws a card. (33 left)
+  AI      attach   [12.2]
+          holding: Psychic Energy, Nidoran ♀
+          passed over: attach 2.8, attach 0.3, attach 0, attach -2.6, attach -3.7
+          Odell attaches Psychic Energy to Kadabra.
+  AI      attack:Fetch   [5.9]
+          holding: Nidoran ♀
+          Kangaskhan uses Fetch.
+          Odell draws 1.
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (33 left)
+          You attaches Fire Energy to Magmar.
+          You plays Professor Oak.
+          You discards 5 card(s) and draws 7.
+          Charmeleon evolves into Charizard. Special Conditions removed.
+          You plays Energy Removal.
+          Psychic Energy discarded from Kangaskhan.
+          Magmar uses Fire Punch.
+          Kangaskhan takes 30. (60/90 left)
+
+--- Turn 15 — Odell -----------------------------
+          Odell draws a card. (31 left)
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Nidoran ♀, Abra, Jynx
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (25 left)
+          You attaches Fire Energy to Magmar.
+          Magmar uses Fire Punch.
+          Kangaskhan takes 30. (30/90 left)
+
+--- Turn 17 — Odell -----------------------------
+          Odell draws a card. (30 left)
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Nidoran ♀, Abra, Jynx, Abra
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (24 left)
+          You attaches Fire Energy to Charizard.
+          Magmar uses Fire Punch.
+          Kangaskhan takes 30. (0/90 left)
+          Kangaskhan is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [25.1]
+          holding: Nidoran ♀, Abra, Jynx, Abra
+          Odell promotes Abra to Active.
+
+--- Turn 19 — Odell -----------------------------
+          Odell draws a card. (29 left)
+  AI      retreat   [10.6]
+          holding: Nidoran ♀, Abra, Jynx, Abra, Oddish
+          passed over: bench 5, bench 0.8, bench -0.6, bench -0.7, bench -2.2
+          Odell retreats Abra; Kadabra is now Active.
+  AI      bench   [6.8]
+          holding: Nidoran ♀, Abra, Jynx, Abra, Oddish
+          passed over: bench 5.6, bench -0.9, bench -1.4, bench -1.4
+          Odell benches Nidoran ♀.
+  AI      pass — no attack was worth taking   [0]
+          holding: Abra, Jynx, Abra, Oddish
+          passed over: attack:Recover -7
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (23 left)
+          You benches Growlithe.
+          You attaches Fire Energy to Charizard.
+          Magmar uses Fire Punch.
+          Kadabra takes 30. (30/60 left)
+
+--- Turn 21 — Odell -----------------------------
+          Odell draws a card. (28 left)
+  AI      attach   [106.2]
+          holding: Abra, Jynx, Abra, Oddish, Grass Energy
+          passed over: attach 26.5, attach 22.8, attach 7.3, attach -1.8, attach -2
+          Odell attaches Grass Energy to Kadabra.
+  AI      attack:Super Psy   [109.4]
+          holding: Abra, Jynx, Abra, Oddish
+          passed over: attack:Recover 8.4
+          Kadabra uses Super Psy.
+          Magmar takes 50. (0/50 left)
+          Magmar is Knocked Out!
+          Odell takes a Prize. (4 left)
+          You promotes Charizard to Active.
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (22 left)
+          You attaches Fire Energy to Charizard.
+          Charizard uses Fire Spin.
+          Charizard discards 2 Energy as a cost.
+          Kadabra takes 100. (0/60 left)
+          Kadabra is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [27.1]
+          holding: Abra, Jynx, Abra, Oddish, Grass Energy
+          passed over: promote 26, promote 25.5, promote 24.4, promote 21.2
+          Odell promotes Nidorina to Active.
+
+--- Turn 23 — Odell -----------------------------
+          Odell draws a card. (27 left)
+  AI      attach   [24.6]
+          holding: Abra, Jynx, Abra, Oddish, Grass Energy, Psychic Energy
+          passed over: attach 23.9, attach 19.8, bench 7.6, bench 6.4, bench 3.6
+          Odell attaches Grass Energy to Nidoran ♀.
+  AI      bench   [7.1]
+          holding: Abra, Jynx, Abra, Oddish, Psychic Energy
+          passed over: bench 4.7, bench 1.9, bench -0.4
+          Odell benches Oddish.
+  AI      pass — no attack available — Supersonic: Not enough Energy; Double Kick: Not enough Energy   [0]
+          holding: Abra, Jynx, Abra, Psychic Energy
+
+--- Turn 24 — You -------------------------------
+          You draws a card. (21 left)
+          You attaches Fire Energy to Charizard.
+          You plays Defender.
+          Defender attached to Charizard (-20 damage until the end of the opponent's next turn).
+          Growlithe evolves into Arcanine. Special Conditions removed.
+          Charizard uses Fire Spin.
+          Charizard discards 2 Energy as a cost.
+          Nidorina takes 100. (0/70 left)
+          Nidorina is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [28]
+          holding: Abra, Jynx, Abra, Psychic Energy
+          passed over: promote 21.3, promote 18.3, promote 11.7, promote 6.3
+          Odell promotes Nidoran ♀ to Active.
+
+--- Turn 25 — Odell -----------------------------
+          Odell draws a card. (26 left)
+  AI      bench   [5.8]
+          holding: Abra, Jynx, Abra, Psychic Energy, Grass Energy
+          Odell benches Abra.
+  AI      attach   [25.8]
+          holding: Abra, Jynx, Psychic Energy, Grass Energy
+          passed over: attach 23.5, attach 20.9, attach 3, attach 2.5, attach 2.4
+          Odell attaches Psychic Energy to Abra B.
+  AI      retreat   [0.7]
+          holding: Abra, Jynx, Grass Energy
+          Odell retreats Nidoran ♀; Abra B is now Active.
+  AI      attack:Psyshock   [17.8]
+          holding: Abra, Jynx, Grass Energy
+          Abra uses Psyshock.
+          -20 from Defender -> 0.
+          Coin flip (Paralyzed?): HEADS
+          Charizard is now Paralyzed.
+          Defender is discarded.
+
+--- Turn 26 — You -------------------------------
+          You draws a card. (20 left)
+          You benches Lickitung.
+          You attaches Fire Energy to Charizard.
+          Charizard is no longer Paralyzed.
+
+--- Turn 27 — Odell -----------------------------
+          Odell draws a card. (25 left)
+  AI      retreat   [1.9]
+          holding: Abra, Jynx, Grass Energy, Psychic Energy
+          Odell retreats Abra B; Bellsprout A is now Active.
+  AI      attach   [21.1]
+          holding: Abra, Jynx, Grass Energy, Psychic Energy
+          passed over: attach 20.6, attach 17.2, attach 4, attach 3.6, attach 3.5
+          Odell attaches Grass Energy to Bellsprout B.
+  AI      attack:Vine Whip   [13.3]
+          holding: Abra, Jynx, Psychic Energy
+          Bellsprout uses Vine Whip.
+          Charizard takes 10. (110/120 left)
+
+--- Turn 28 — You -------------------------------
+          You draws a card. (19 left)
+          You attaches Fire Energy to Charizard.
+          Charizard uses Fire Spin.
+          Charizard discards 2 Energy as a cost.
+          Weakness: Bellsprout takes double -> 200.
+          Bellsprout takes 200. (0/40 left)
+          Bellsprout is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [-23.8]
+          holding: Abra, Jynx, Psychic Energy
+          passed over: promote -28.2, promote -30.7, promote -32.4, promote -35.3
+          Odell promotes Bellsprout to Active.
+
+--- Turn 29 — Odell -----------------------------
+          Odell draws a card. (24 left)
+  AI      retreat   [51.9]
+          holding: Abra, Jynx, Psychic Energy, Weepinbell
+          passed over: retreat 41.9, retreat 37.5, evolve 37.3, retreat 28.7, bench 5.1
+          Odell retreats Bellsprout; Abra A is now Active.
+  AI      evolve   [35.4]
+          holding: Abra, Jynx, Psychic Energy, Weepinbell
+          passed over: attach 1.5, attach 1.3, attach -0.4, attach -0.7, bench -0.8
+          Bellsprout evolves into Weepinbell. Special Conditions removed.
+  AI      attach   [0.5]
+          holding: Abra, Jynx, Psychic Energy
+          Odell attaches Psychic Energy to Weepinbell.
+  AI      bench   [4]
+          holding: Abra, Jynx
+          passed over: bench 3
+          Odell benches Abra.
+  AI      attack:Psyshock   [20.8]
+          holding: Jynx
+          Abra uses Psyshock.
+          Charizard takes 10. (100/120 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 30 — You -------------------------------
+          You draws a card. (18 left)
+          You attaches Fire Energy to Charizard.
+          Charizard uses Fire Spin.
+          Charizard discards 2 Energy as a cost.
+          Abra takes 100. (0/30 left)
+          Abra is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         30 turns
+
+==========================================================
+PACKS OPENED
+
+  Jungle
+    Primeape  Uncommon
+    Dodrio  Uncommon
+    Parasect  Uncommon
+    Paras  Common
+    Poké Ball  Common
+    Cubone  Common
+    Rhyhorn  Common
+    Bellsprout  Common
+    Jigglypuff  Common
+    Goldeen  Common
+    Kangaskhan  Rare Holo   NEW
+
+  Jungle
+    Exeggutor  Uncommon
+    Persian  Uncommon
+    Gloom  Uncommon
+    Pikachu  Common
+    Goldeen  Common
+    Nidoran ♀  Common
+    Fire Energy  
+    Eevee  Common
+    Meowth  Common
+    Cubone  Common
+    Flareon  Rare   NEW

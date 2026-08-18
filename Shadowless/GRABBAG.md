@@ -38,7 +38,8 @@ still open, so it stays with its reason and with what evidence would revive it.
 - Lower cards per pack to 10 for pacing reasons. Let's talk about which one to yeet out.
 - Draw prize collection in random order.
 - Show duplicate card numbers (if not new) on the booster pack opening screen, displaying after each card is flipped.
-- Missing visual rarity variants for sigil cards - Reverse Holo reuses the same filter as the scan card if possible. Misprint mimics visual formatting glitches. Text runs off the screen, the sigil is out of frame, etc. The "no intentional bugs" line in the CLAUDE.md will need to be changed. Decided with #4 (the Sonnet 5 PACKS.md creator) but I think the documentation was lost. Perfectly open to relitagation
+- Missing visual rarity variants for sigil cards - Reverse Holo reuses the same filter as the scan card if possible. Misprint mimics visual formatting glitches. Text runs off the screen, the sigil is out of frame, etc. The "no intentional bugs" line in the CLAUDE.md will need to be changed. Decided with #4 (the Sonnet 5 PACKS.md creator) but I think the documentation was lost. Perfectly open to relitagation.
+- I think the enemy Ivysaur decided not to kill on turn 12. Bad retreat by Gloom on turn 14. Exeggutor teleports to switch with Exeggutor of equal condition. Alternative was a 50/50 attack, turn 18. Exeggutor promoted and switched out immediately through Teleport, turn 20 - log# 04-37-10
  
 
 

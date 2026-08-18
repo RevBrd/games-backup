@@ -71,3 +71,5 @@ reads `energyProvides` instead, which is the same split one level down.
 **One thing this ruling does NOT settle**, flagged so nobody assumes it did: Rainbow does 10 damage
 to the Pokémon it is attached to when played from hand, and whether that can Knock Out a 10-HP
 Pokémon on attachment is a separate question nobody has asked yet.
+
+(Credit original document #18 Opus 5 17 Aug 2026)

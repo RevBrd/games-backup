@@ -1,0 +1,388 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-18 04:37:10
+decks    you: New deck 2   opponent: Nikki — Grass Club
+opponent expert
+seed     197937137   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Bulbasaur, Bill, Grass Energy, Grass Energy, Bulbasaur, Oddish, Energy Retrieval
+  HIDDEN  your opening hand: Fire Energy, Fire Energy, Lickitung, Fire Energy, Dratini, Fire Energy, PlusPower
+  HIDDEN  opponent's Prizes: Exeggcute, Gloom, Ivysaur, Grass Energy, Grass Energy, Energy Retrieval
+  HIDDEN  your Prizes: Super Potion, Fire Energy, Potion, Bill, Arcanine, Fire Energy
+  HIDDEN  opponent's opening board: Oddish active, bench Bulbasaur A, Bulbasaur B
+  HIDDEN  your opening board: Lickitung active, bench Dratini
+          New game. Seed 197937137.
+          Coin flip (who goes first): HEADS
+          You will go first.
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (46 left)
+          You attaches Fire Energy to Lickitung.
+          Lickitung uses Tongue Wrap.
+          Oddish takes 10. (40/50 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 2 — Nikki -----------------------------
+          Nikki draws a card. (46 left)
+  AI      attach   [38]
+          holding: Bill, Grass Energy, Grass Energy, Energy Retrieval, Potion
+          Nikki attaches Grass Energy to Oddish.
+  AI      trainer   [9.5]
+          holding: Bill, Grass Energy, Energy Retrieval, Potion
+          passed over: trainer -0.5, retreat -29.5, retreat -29.5
+          Nikki plays Bill.
+          Nikki draws 2.
+  AI      attack:Stun Spore   [23]
+          holding: Grass Energy, Energy Retrieval, Potion, Venusaur, Grass Energy
+          Oddish uses Stun Spore.
+          Lickitung takes 10. (80/90 left)
+          Coin flip (Paralyzed?): HEADS
+          Lickitung is now Paralyzed.
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (45 left)
+          You benches Magmar.
+          You attaches Fire Energy to Magmar.
+          Lickitung is no longer Paralyzed.
+
+--- Turn 4 — Nikki -----------------------------
+          Nikki draws a card. (43 left)
+  AI      attach   [15]
+          holding: Grass Energy, Energy Retrieval, Potion, Venusaur, Grass Energy, Grass Energy
+          passed over: attach 15, attach 15, attach 15, attach 15, attach 15
+          Nikki attaches Grass Energy to Bulbasaur A.
+  AI      attack:Stun Spore   [23]
+          holding: Energy Retrieval, Potion, Venusaur, Grass Energy, Grass Energy
+          Oddish uses Stun Spore.
+          Lickitung takes 10. (70/90 left)
+          Coin flip (Paralyzed?): HEADS
+          Lickitung is now Paralyzed.
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (44 left)
+          You attaches Fire Energy to Dratini.
+          Lickitung is no longer Paralyzed.
+
+--- Turn 6 — Nikki -----------------------------
+          Nikki draws a card. (42 left)
+  AI      attach   [32]
+          holding: Energy Retrieval, Potion, Venusaur, Grass Energy, Grass Energy, Exeggutor
+          passed over: attach 32, attach 15, attach 15, trainer -0.5, attach -2
+          Nikki attaches Grass Energy to Bulbasaur A.
+  AI      retreat   [3.5]
+          holding: Energy Retrieval, Potion, Venusaur, Grass Energy, Exeggutor
+          passed over: trainer -0.5, retreat -29.5
+          Nikki retreats Oddish; Bulbasaur A is now Active.
+  AI      trainer   [6]
+          holding: Energy Retrieval, Potion, Venusaur, Grass Energy, Exeggutor
+          passed over: trainer -0.5
+          Nikki plays Energy Retrieval.
+          Energy Retrieval: recovered 1 basic Energy.
+  AI      attack:Leech Seed   [20]
+          holding: Potion, Grass Energy, Exeggutor, Grass Energy
+          Bulbasaur uses Leech Seed.
+          Lickitung takes 20. (50/90 left)
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (43 left)
+          You benches Charmander.
+          You attaches Fire Energy to Magmar.
+          Lickitung uses Tongue Wrap.
+          Bulbasaur takes 10. (30/40 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 8 — Nikki -----------------------------
+          Nikki draws a card. (41 left)
+  AI      attach   [22]
+          holding: Potion, Grass Energy, Exeggutor, Grass Energy, Vileplume
+          passed over: attach 22, attach 15, attach 15, trainer -0.5, attach -2
+          Nikki attaches Grass Energy to Oddish.
+  AI      attack:Leech Seed   [23.5]
+          holding: Potion, Exeggutor, Grass Energy, Vileplume
+          Bulbasaur uses Leech Seed.
+          Lickitung takes 20. (30/90 left)
+          Bulbasaur removes 10 damage from itself.
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (42 left)
+          You attaches Fire Energy to Charmander.
+          Lickitung uses Tongue Wrap.
+          Bulbasaur takes 10. (30/40 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 10 — Nikki -----------------------------
+          Nikki draws a card. (40 left)
+  AI      attach   [15]
+          holding: Potion, Exeggutor, Grass Energy, Vileplume, Exeggcute
+          passed over: bench 7, trainer -0.5, attach -2, attach -2, retreat -21.5
+          Nikki attaches Grass Energy to Bulbasaur B.
+  AI      bench   [7]
+          holding: Potion, Exeggutor, Vileplume, Exeggcute
+          passed over: trainer -0.5, retreat -21.5, retreat -35
+          Nikki benches Exeggcute.
+  AI      attack:Leech Seed   [23.5]
+          holding: Potion, Exeggutor, Vileplume
+          Bulbasaur uses Leech Seed.
+          Lickitung takes 20. (10/90 left)
+          Bulbasaur removes 10 damage from itself.
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (41 left)
+          You plays Potion.
+          Lickitung heals 20. (60 damage left)
+          You attaches Fire Energy to Charmander.
+          Lickitung uses Tongue Wrap.
+          Bulbasaur takes 10. (30/40 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 12 — Nikki -----------------------------
+          Nikki draws a card. (39 left)
+  AI      evolve   [31]
+          holding: Potion, Exeggutor, Vileplume, Ivysaur
+          passed over: evolve 29.5, evolve 25, trainer -0.5, retreat -21.5, retreat -35
+          Bulbasaur A evolves into Ivysaur. Special Conditions removed.
+  AI      evolve   [29.5]
+          holding: Potion, Exeggutor, Vileplume
+          passed over: retreat 13.5, trainer -0.5, retreat -14, retreat -14
+          Exeggcute evolves into Exeggutor. Special Conditions removed.
+  AI      retreat   [13.5]
+          holding: Potion, Vileplume
+          passed over: trainer -0.5, retreat -14, retreat -14
+          Nikki retreats Ivysaur; Oddish is now Active.
+  AI      attack:Stun Spore   [23]
+          holding: Potion, Vileplume
+          Oddish uses Stun Spore.
+          Lickitung takes 10. (20/90 left)
+          Coin flip (Paralyzed?): HEADS
+          Lickitung is now Paralyzed.
+
+--- Turn 13 — You -------------------------------
+          You draws a card. (40 left)
+          You attaches Fire Energy to Charmander.
+          Charmander evolves into Charmeleon. Special Conditions removed.
+          Lickitung is no longer Paralyzed.
+
+--- Turn 14 — Nikki -----------------------------
+          Nikki draws a card. (38 left)
+  AI      trainer   [27.3]
+          holding: Potion, Vileplume, Professor Oak
+          passed over: trainer -0.5, retreat -29.5, retreat -29.5, retreat -29.5
+          Nikki plays Professor Oak.
+          Nikki discards 2 card(s) and draws 7.
+  AI      attach   [32]
+          holding: Grass Energy, Grass Energy, Bill, Exeggutor, Gloom, Psychic Energy, Potion
+          passed over: attach 32, attach 32, attach 28, attach 28, evolve 26.5
+          Nikki attaches Grass Energy to Bulbasaur.
+  AI      evolve   [26.5]
+          holding: Grass Energy, Bill, Exeggutor, Gloom, Psychic Energy, Potion
+          passed over: trainer 9, retreat 3.5, trainer -0.5, retreat -29.5, retreat -29.5
+          Oddish evolves into Gloom. Special Conditions removed.
+  AI      retreat   [9]
+          holding: Grass Energy, Bill, Exeggutor, Psychic Energy, Potion
+          passed over: trainer 9, trainer -0.5, retreat -24, retreat -24
+          Nikki retreats Gloom; Bulbasaur is now Active.
+  AI      trainer   [9]
+          holding: Grass Energy, Bill, Exeggutor, Psychic Energy, Potion
+          passed over: trainer -0.5
+          Nikki plays Bill.
+          Nikki draws 2.
+  AI      attack:Leech Seed   [75]
+          holding: Grass Energy, Exeggutor, Psychic Energy, Potion, Grass Energy, Psychic Energy
+          Bulbasaur uses Leech Seed.
+          Lickitung takes 20. (0/90 left)
+          Lickitung is Knocked Out!
+          Nikki takes a Prize. (5 left)
+          You promotes Magmar to Active.
+
+--- Turn 15 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Fire Energy to Magmar.
+          Magmar uses Fire Punch.
+          Weakness: Bulbasaur takes double -> 60.
+          Bulbasaur takes 60. (0/40 left)
+          Bulbasaur is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [29.1]
+          holding: Grass Energy, Exeggutor, Psychic Energy, Potion, Grass Energy, Psychic Energy, Exeggcute
+          passed over: promote 18.6, promote 7.4
+          Nikki promotes Exeggutor to Active.
+
+--- Turn 16 — Nikki -----------------------------
+          Nikki draws a card. (28 left)
+  AI      attach   [37]
+          holding: Grass Energy, Exeggutor, Psychic Energy, Potion, Grass Energy, Psychic Energy, Exeggcute, Exeggutor
+          passed over: attach 37, attach 21, attach 21, attach 20, attach 20
+          Nikki attaches Psychic Energy to Exeggutor.
+  AI      bench   [7]
+          holding: Grass Energy, Exeggutor, Potion, Grass Energy, Psychic Energy, Exeggcute, Exeggutor
+          passed over: trainer -0.5
+          Nikki benches Exeggcute.
+  AI      attack:Teleport   [22]
+          holding: Grass Energy, Exeggutor, Potion, Grass Energy, Psychic Energy, Exeggutor
+          passed over: attack:Big Eggsplosion 10
+          Exeggutor uses Teleport.
+          Exeggutor switches out for Gloom.
+
+--- Turn 17 — You -------------------------------
+          You draws a card. (38 left)
+          Magmar uses Fire Punch.
+          Weakness: Gloom takes double -> 60.
+          Gloom takes 60. (0/60 left)
+          Gloom is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [37.3]
+          holding: Grass Energy, Exeggutor, Potion, Grass Energy, Psychic Energy, Exeggutor
+          passed over: promote 26.3, promote 6.1
+          Nikki promotes Exeggutor to Active.
+
+--- Turn 18 — Nikki -----------------------------
+          Nikki draws a card. (27 left)
+  AI      evolve   [29.5]
+          holding: Grass Energy, Exeggutor, Potion, Grass Energy, Psychic Energy, Exeggutor, Grass Energy
+          passed over: evolve 29.5, attach 20, attach 20, attach 20, attach 16
+          Exeggcute evolves into Exeggutor. Special Conditions removed.
+  AI      attach   [32]
+          holding: Grass Energy, Potion, Grass Energy, Psychic Energy, Exeggutor, Grass Energy
+          passed over: attach 28, attach 28, attach 28, attach 20, attach 20
+          Nikki attaches Psychic Energy to Exeggutor B.
+  AI      attack:Teleport   [22]
+          holding: Grass Energy, Potion, Grass Energy, Exeggutor, Grass Energy
+          passed over: attack:Big Eggsplosion 10
+          Exeggutor uses Teleport.
+          Exeggutor switches out for Exeggutor B.
+
+--- Turn 19 — You -------------------------------
+          You draws a card. (37 left)
+          You plays PlusPower.
+          PlusPower attached to Magmar (+10 this turn).
+          You attaches Fire Energy to Magmar.
+          Magmar uses Flamethrower.
+          Magmar discards 1 R Energy as a cost.
+          Weakness: Exeggutor takes double -> 100.
+          +10 from a bonus -> 110.
+          Exeggutor takes 110. (0/80 left)
+          Exeggutor is Knocked Out!
+          You takes a Prize. (3 left)
+          PlusPower is discarded.
+  AI      promote   [34.3]
+          holding: Grass Energy, Potion, Grass Energy, Exeggutor, Grass Energy
+          passed over: promote 3.2
+          Nikki promotes Exeggutor to Active.
+
+--- Turn 20 — Nikki -----------------------------
+          Nikki draws a card. (26 left)
+  AI      attach   [20]
+          holding: Grass Energy, Potion, Grass Energy, Exeggutor, Grass Energy, Psychic Energy
+          passed over: attach 20, attach 20, attach 16, attach 8.4, attach 4.4
+          Nikki attaches Grass Energy to Ivysaur.
+  AI      attack:Teleport   [22]
+          holding: Potion, Grass Energy, Exeggutor, Grass Energy, Psychic Energy
+          passed over: attack:Big Eggsplosion 10
+          Exeggutor uses Teleport.
+          Exeggutor switches out for Ivysaur.
+
+--- Turn 21 — You -------------------------------
+          You draws a card. (36 left)
+          Dratini evolves into Dragonair. Special Conditions removed.
+          Magmar uses Fire Punch.
+          Weakness: Ivysaur takes double -> 60.
+          Ivysaur takes 60. (0/60 left)
+          Ivysaur is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [26]
+          holding: Potion, Grass Energy, Exeggutor, Grass Energy, Psychic Energy
+          Nikki promotes Exeggutor to Active.
+
+--- Turn 22 — Nikki -----------------------------
+          Nikki draws a card. (25 left)
+  AI      bench   [26]
+          holding: Potion, Grass Energy, Exeggutor, Grass Energy, Psychic Energy, Bulbasaur
+          passed over: attach 21.5, attach 17.5, attach 17.5
+          Nikki benches Bulbasaur.
+  AI      attach   [15]
+          holding: Potion, Grass Energy, Exeggutor, Grass Energy, Psychic Energy
+          passed over: attach 15, attach 8.4, attach 4.4, attach 4.4, attach -2
+          Nikki attaches Grass Energy to Bulbasaur.
+  AI      attack:Teleport   [22]
+          holding: Potion, Exeggutor, Grass Energy, Psychic Energy
+          passed over: attack:Big Eggsplosion 10
+          Exeggutor uses Teleport.
+          Exeggutor switches out for Bulbasaur.
+
+--- Turn 23 — You -------------------------------
+          You draws a card. (35 left)
+          You plays Bill.
+          You draws 2.
+          You attaches Fire Energy to Dragonair.
+          Magmar uses Fire Punch.
+          Weakness: Bulbasaur takes double -> 60.
+          Bulbasaur takes 60. (0/40 left)
+          Bulbasaur is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [-19]
+          holding: Potion, Exeggutor, Grass Energy, Psychic Energy
+          Nikki promotes Exeggutor to Active.
+
+--- Turn 24 — Nikki -----------------------------
+          Nikki draws a card. (24 left)
+  AI      bench   [26]
+          holding: Potion, Exeggutor, Grass Energy, Psychic Energy, Exeggcute
+          passed over: attach 21.5, attach 17.5
+          Nikki benches Exeggcute.
+  AI      attach   [12]
+          holding: Potion, Exeggutor, Grass Energy, Psychic Energy
+          passed over: attach 8.4, attach 4.4, attach -2
+          Nikki attaches Psychic Energy to Exeggcute.
+  AI      attack:Teleport   [22]
+          holding: Potion, Exeggutor, Grass Energy
+          passed over: attack:Big Eggsplosion 10
+          Exeggutor uses Teleport.
+          Exeggutor switches out for Exeggcute.
+
+--- Turn 25 — You -------------------------------
+          You draws a card. (32 left)
+          You benches Growlithe.
+          You attaches Fire Energy to Dragonair.
+          Magmar uses Fire Punch.
+          Weakness: Exeggcute takes double -> 60.
+          Exeggcute takes 60. (0/50 left)
+          Exeggcute is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         25 turns
+
+==========================================================
+PACKS OPENED
+
+  Jungle
+    Rapidash  Uncommon   NEW
+    Fearow  Uncommon
+    Tauros  Uncommon
+    Exeggcute  Common
+    Cubone  Common
+    Fire Energy  
+    Goldeen  Common
+    Spearow  Common
+    Oddish  Common
+    Pikachu  Common
+    Pidgeot  Rare
+
+  Jungle  (1st Edition pack)
+    Dodrio  Uncommon  [fe]
+    Gloom  Uncommon  [fe]
+    Primeape  Uncommon  [fe]
+    Cubone  Common  [fe]
+    Oddish  Common  [fe]
+    Exeggcute  Common  [fe]
+    Pikachu  Common  [fe]
+    Nidoran ♀  Common  [fe]
+    Bellsprout  Common  [fe]
+    Meowth  Common  [fe]
+    Wigglytuff  Rare  [fe]   NEW

@@ -42,3 +42,5 @@ damage.
 **One consequence to expect in the log rather than treat as a bug.** A Confused Dark Primeape taking
 60 from a failed attack, then being Knocked Out by it, hands the opponent a Prize for an attack that
 never resolved. That is correct and it will look wrong the first time somebody reads it back.
+
+(Credit original document #18 Opus 5 17 Aug 2026)
