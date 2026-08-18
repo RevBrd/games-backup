@@ -5,8 +5,16 @@ before writing a special case for one — eight systems already exist for the sh
 the DSL, and every set after Base Set leans on them.
 
 Ordinary cards need none of this. A `cards.js` entry plus an `effects.js` entry is the whole job,
-and the DSL verb reference is the comment block at the top of `effects.js`. **If a card needs
-behaviour the DSL cannot express, add a verb rather than special-casing it**, and document it there.
+and the DSL verb reference is the comment block at the top of `effects.js` — **117 verbs, and it is
+larger than most sessions expect**, so read it before deciding something is not expressible. **If a
+card needs behaviour the DSL cannot express, add a verb rather than special-casing it**, and document
+it there.
+
+**That reference has gone stale twice and `selftest.js` now guards it.** Base Set's drift cost the
+Job 6 planning pass an hour; by the Job 10 survey 42 of the 117 were missing, five of them ones Team
+Rocket needed immediately. The failure mode is invisible by construction — an undocumented verb
+*works*, nothing goes red, and the only symptom is a later session building a second verb under a
+different name. A prose warning did not survive two sets. If the check goes red, write the entry.
 
 ## The eight systems
 
@@ -201,3 +209,8 @@ was set once and re-checked by nothing. It does **not** reach a cost demanding a
 **How `ai.js` scores any of it is in [AI.md](AI.md)**, and it is not a footnote: a verb the AI
 cannot score is free at runtime, misplayed forever, and invisible to every suite. If you add a verb,
 you are not done when `powertest.js` goes green — read the silent-failure surface there.
+
+
+## Check doc_verbs.js at the start
+
+18 please rephrase however you'd like

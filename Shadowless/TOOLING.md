@@ -15,6 +15,27 @@ quarter of ladder games.
 Both generators accept `--check`: regenerate to memory, diff against what's committed, exit non-zero
 if they differ. Cheap to run and the fastest way to catch someone having hand-edited a generated file.
 
+## setsurvey.js — ask this before planning a set
+
+`node tools/setsurvey.js <setcode>`, and `--novel` to dump every unmatched attack in full. It reads
+the **raw corpus**, so it works on a set that has not been generated, which is the point: the number
+is available before the job is committed to rather than discovered inside it.
+
+It reports distinct behaviours against printings, then splits the attacks three ways — plain damage,
+**rules text already implemented verbatim**, and novel — and buckets the novel ones by machinery. The
+reuse figure is a **lower bound by construction**: matching is exact, so a card differing by a comma
+reads as novel and turns out free. That is the safe direction for a number a job is planned against.
+
+**Its control is the live sets.** `base1`, `base2` and `base3` must each report **0 novel**, because
+every card in them is implemented — if they do not, the reuse detection is broken and every figure it
+prints for an unbuilt set is too high. Run one of them alongside whatever you are surveying.
+
+It also flags **same name, different mechanics** inside a set, which is either a real printing
+variation or a corpus error and needs a human either way. It found one on its first run: Team
+Rocket's two Dark Vileplume differ in **Weakness** — `base5-13` Fire, `base5-30` Fighting — and
+`data/wotc_pokemon.csv`, the independent cross-check, agrees. So it is preserved, not aliased. Do not
+"tidy" those two together.
+
 ## gen_cards.js
 
 Reads `data/raw/*.json` and `data/decks.json`, writes `src/cards.js`. Defaults to Base Set; widen with

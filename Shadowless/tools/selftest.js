@@ -124,6 +124,50 @@ const finished = Object.keys(REMAINING).filter(s => !bySet[s]);
 if (finished.length) console.log(`  ${finished.join(', ')} now complete `
   + '— remove from REMAINING to make the live-set assertion cover it');
 
+// --- 2b. the DSL verb reference is complete ------------------------------
+// effects.js opens with a verb reference that calls itself THE CONTRACT, and it
+// has gone stale TWICE — during Base Set, where it cost the Job 6 planning pass
+// an hour of rediscovering verbs that already existed, and again by Job 10, when
+// 42 of 117 were missing. Five of those forty-two are ones Team Rocket needs on
+// its first day, so the second drift was about to cost the same hour again.
+//
+// The failure is invisible by construction: an undocumented verb WORKS. Nothing
+// breaks, no suite goes red, and the only symptom is a later session building a
+// second verb that does the same thing under a different name. A warning in prose
+// did not survive two sets, so it is a test now.
+//
+// If this goes red, WRITE THE ENTRY. Deleting the check restores exactly the
+// condition it was written for.
+{
+  const fs = require('fs'), path = require('path');
+  const effSrc = fs.readFileSync(path.join(__dirname, '../src/effects.js'), 'utf8');
+  const engSrc = fs.readFileSync(path.join(__dirname, '../src/engine.js'), 'utf8');
+  const effLines = effSrc.split(/\r?\n/);
+  const cut = effLines.findIndex(l => l.startsWith('const EFFECTS'));
+  const header = effLines.slice(0, cut).join('\n');
+  const body = effLines.slice(cut).join('\n');
+
+  // Two sources, deliberately. What the ENGINE dispatches catches a verb built
+  // ahead of the cards that need it — which is the Job 6b pattern and exactly
+  // the kind most likely to go unwritten. What a CARD uses catches one added
+  // straight into effects.js without ever touching the reference.
+  const verbs = new Set();
+  for (const m of engSrc.matchAll(/case '([A-Z][A-Z_0-9]{2,})'/g)) verbs.add(m[1]);
+  for (const m of engSrc.matchAll(/v\.v === '([A-Z][A-Z_0-9]{2,})'/g)) verbs.add(m[1]);
+  for (const m of body.matchAll(/\bv: '([A-Z][A-Z_0-9]{2,})'/g)) verbs.add(m[1]);
+  for (const m of body.matchAll(/\bkind: '([A-Z][A-Z_0-9]{2,})'/g)) verbs.add(m[1]);
+
+  // Word-ish boundary on both sides, because a plain substring test passes DRAW
+  // on the strength of T_DRAW and passed it for a week. Underscores count as
+  // word characters here on purpose — that is the whole point.
+  const documented = v => new RegExp('(^|[^A-Z_])' + v + '([^A-Z_]|$)', 'm').test(header);
+  const missing = [...verbs].filter(v => !documented(v)).sort();
+
+  check(missing.length === 0, 'every verb appears in the effects.js reference block',
+    missing.length ? `${missing.length} undocumented: ${missing.join(', ')}` : '');
+  console.log(`  ${verbs.size} verbs, all documented`);
+}
+
 // --- 2a. the alias table is justified, and complete -----------------------
 // 31 of Jungle and Fossil's cards are exact mechanical duplicates of another
 // card in their own set, and share one effect script rather than a copy of it.

@@ -88,7 +88,9 @@ src/  engine.js   the whole ruleset. Pure logic, no DOM
       ai.js       expected-value scoring over enumerated coin-flip outcomes
       cards.js    CARD_DB + the theme deck lists. GENERATED
       effects.js  one effect script per card. Its DSL verb reference is the
-                  comment block at the top — read that before adding cards
+                  comment block at the top — 117 verbs, guarded by selftest.js.
+                  Read it before adding cards, and before concluding the DSL
+                  cannot express something
       collection.js  what the player owns + the save file. Pure data
       packs.js    booster generation. PACK_ODDS is the whole rarity table
       progress.js the opponent ladder. Brackets DERIVED from the live sets, and
@@ -121,6 +123,7 @@ actually covers, and why none of them subsumes the others, is in [TOOLING.md](TO
 quote a test count in prose** — they rot, and the tree has had to correct them twice.
 
 ```bash
+node tools/setsurvey.js base5            # how big is this set REALLY — run before planning one
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
