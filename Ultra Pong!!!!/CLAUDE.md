@@ -296,3 +296,9 @@ what's underneath is genuinely, boringly correct. The safe places to add are the
 (`ADS`, `AD_HEADLINES`, `HEADLINES`, `CPU_TAUNTS`, `CPU_THREATS`, `WIN_*`, `LOSE_*`, `POPS`,
 `FINALE_POPS`) — more ads is an explicitly welcome contribution, and every one of those is a
 free-standing string list you can extend without touching a line of logic.
+
+## Marquee billing
+
+<!-- marquee: billing=feature -->
+Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

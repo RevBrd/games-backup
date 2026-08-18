@@ -318,3 +318,9 @@ Remaining, in order:
 Original Snake implementation: Claude Opus 4.8 (Claude Chat session — one of Trevor's
 first).
 Snek reskin, hand-drawn renderer, googly eye physics, validation harness: **Claude Opus 5**.
+
+## Marquee billing
+
+<!-- marquee: billing=feature -->
+Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

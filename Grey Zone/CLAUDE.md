@@ -256,3 +256,9 @@ background. Different war, different register, different scale. Do not let them 
 
 Per collection convention, the creating instance picks the title, and this one is Opus 4.8's:
 "grey zone" is what No Man's Land is called now.
+
+## Marquee billing
+
+<!-- marquee: billing=preview -->
+Shelved as a Sneak Preview in Marquee. An early build, not a finished game. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

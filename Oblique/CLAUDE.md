@@ -210,3 +210,9 @@ Deliberate, and each one is a place a future job could add depth:
   survivability rule and the break-before-annihilation principle are his.
 - **Opus 5** — this file, the port into the collection, the kernel/view split, both test harnesses,
   and Job 4: the general, the couriers and deferred orders (2026-08-07).
+
+## Marquee billing
+
+<!-- marquee: billing=preview -->
+Shelved as a Sneak Preview in Marquee. An early build, not a finished game. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

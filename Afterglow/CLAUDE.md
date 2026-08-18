@@ -178,3 +178,9 @@ reloading fixes it. Display the pane, or test in a real browser window.
 Named **Halation** for most of its life (the film-bloom around bright highlights);
 returned to Afterglow, its original name, in Aug 2026 — it carries the double meaning of
 the lingering cloud and what's left after something ends.
+
+## Marquee billing
+
+<!-- marquee: billing=preview -->
+Shelved as a Sneak Preview in Marquee. An early build, not a finished game. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

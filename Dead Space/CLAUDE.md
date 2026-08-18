@@ -196,3 +196,9 @@ lucide to run; uploading *it* still produces a blank page. It is reference only.
 
 - Original build (React, in Claude Chat) — Trevor's concept; assisting model not recorded.
 - Port to standalone HTML, dev mode, window fit — Opus 5, 4 Aug 2026.
+
+## Marquee billing
+
+<!-- marquee: billing=feature -->
+Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

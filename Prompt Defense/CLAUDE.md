@@ -198,3 +198,9 @@ In rough priority order:
 Click a defense in the sidebar, then click an open tile to place it. Click a placed defense to
 upgrade or sell. <kbd>1</kbd>–<kbd>6</kbd> pick a defense · <kbd>Space</kbd> start wave / pause ·
 <kbd>Esc</kbd> deselect · <kbd>S</kbd> cycle speed 1× → 2× → 4×.
+
+## Marquee billing
+
+<!-- marquee: billing=feature -->
+Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

@@ -274,4 +274,8 @@ intended length, because `setupConfirm()` was not idempotent and every harness i
 each player twice. Fixed. Do not compare against an older number; the full account is in
 [HISTORY.md](HISTORY.md).
 
+## Marquee billing
 
+<!-- marquee: billing=feature -->
+Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

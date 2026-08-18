@@ -219,3 +219,9 @@ is the most important design problem left after the tutorial engine exists.
   the persistent load ribbon, the attention observer, and dev mode. Also the arguments for
   attention-determined endings, for interconnection decaying as an arc rather than mixing, and for
   the `Continue` tooltip carrying the Phase 2 payoff.
+
+## Marquee billing
+
+<!-- marquee: billing=preview -->
+Shelved as a Sneak Preview in Marquee. An early build, not a finished game. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

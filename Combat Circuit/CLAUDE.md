@@ -110,3 +110,9 @@ batch harness already shows, for whoever picks this up:
 `V` intent vectors · `Z` hazards · `N` new seed · `B` batch 200 matches.
 Live telemetry per bot on the Dev tab: velocity, angular velocity, throttle/steer, drive count,
 spin state, weapon cooldowns, damage dealt and taken.
+
+## Marquee billing
+
+<!-- marquee: billing=preview -->
+Shelved as a Sneak Preview in Marquee. An early build, not a finished game. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

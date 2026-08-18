@@ -243,3 +243,9 @@ Effectively all of v3. In the order I'd take it:
 
 **Instruments and dev** — `G` telemetry · `P` pause · `H` summon asteroid · `K` gravity well
 (off by default) · `J` swap well model · `T` prediction line · `` ` `` tuning bench.
+
+## Marquee billing
+
+<!-- marquee: billing=preview -->
+Shelved as a Sneak Preview in Marquee. An early build, not a finished game. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

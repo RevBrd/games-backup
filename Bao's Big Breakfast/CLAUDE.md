@@ -165,3 +165,9 @@ or the bot is at fault; it has genuinely been each of them.
 - The game, 1-1, the physics and the art — built with Claude (model not recorded at the time).
 - Counter 1-2, the cupboard theme, the lift platforms, level progression and
   [tools/autopilot.js](tools/autopilot.js) — Claude Opus 5, 2026-08-06.
+
+## Marquee billing
+
+<!-- marquee: billing=feature -->
+Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

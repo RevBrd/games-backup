@@ -231,3 +231,9 @@ unclaimed space, a scripted rectangular claim resolving on every map. All nine c
 - **Claude Opus 5** (later session) — this document; validation harness; the preservation lock;
   the landing page.
 - **Trevor** — playtesting, and the call to preserve the original as its own file.
+
+## Marquee billing
+
+<!-- marquee: billing=feature -->
+Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

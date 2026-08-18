@@ -155,3 +155,9 @@ segment and its level, move cooldown, puck step, and the three wear intensities.
 - **Trevor** — direction throughout, the reference photographs, the correct reading of the original
   unit's vertical rink and zone screens, and the call to ship the dumb opponent as a real mode
   rather than throwing it away.
+
+## Marquee billing
+
+<!-- marquee: billing=preview -->
+Shelved as a Sneak Preview in Marquee. An early build, not a finished game. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

@@ -124,3 +124,9 @@ management · 4b special effects · 5a armor & weakness · 5b air levels · 6a p
   armor debuff corrected from on-hit to a ground-only aura; Star Ruby and Uranium no longer
   wrongly receive weakness multipliers on their pure DoT; Blood Stone's missing 57px splash
   restored; malformed `<title>`).
+
+## Marquee billing
+
+<!-- marquee: billing=feature -->
+Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.

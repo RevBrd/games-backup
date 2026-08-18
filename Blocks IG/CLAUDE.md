@@ -293,3 +293,9 @@ total and the physics underneath is quietly excellent.
 If you want to add something, the safe surface is **copy**: the menu strings, the options labels,
 the credits lines, the two input rebuffs, the end-card text. Those are free-standing and the
 register above tells you the register to write in — flat, unbothered, aimed at nobody.
+
+## Marquee billing
+
+<!-- marquee: billing=feature -->
+Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+on and nothing else. Change the comment above when the game's state changes.
