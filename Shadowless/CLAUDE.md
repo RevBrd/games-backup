@@ -127,6 +127,7 @@ quote a test count in prose** — they rot, and the tree has had to correct them
 
 ```bash
 node tools/setsurvey.js base5            # how big is this set REALLY — run before planning one
+node tools/shapecount.js "When you play"   # how often does this SHAPE recur across all 14 sets
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/

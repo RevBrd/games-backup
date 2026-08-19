@@ -4472,8 +4472,10 @@ T('Frenzy adds 30 to an attack made while Confused', () => {
   // alongside PlusPower and Defender, which runs AFTER Weakness. So the sum is
   // (40 x 2) + 30 rather than (40 + 30) x 2. That convention predates this card
   // by two sets and every PlusPower interaction in the game rests on it —
-  // changing it here would silently change those. Written down rather than
-  // adjusted, and raised as an open question in ENGINE.md.
+  // changing it here would silently change those.
+  //
+  // CONFIRMED AGAINST THE GAME BOY GAME by Trevor, 19 Aug 2026: bonuses stack on
+  // the doubled number. This assertion is the pin. See ENGINE.md.
   eq(def.dmg, 110, '40 printed, doubled to 80, then +30 from Frenzy');
   return true;
 });

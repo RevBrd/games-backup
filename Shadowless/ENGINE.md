@@ -1,12 +1,13 @@
 # Shadowless — the engine's awkward-card machinery
 
 Depth behind the card rows in `CLAUDE.md`'s status table. Read this before adding cards, and
-before writing a special case for one — eight systems already exist for the shapes that do not fit
+before writing a special case for one — **nine systems** already exist for the shapes that do not fit
 the DSL, and every set after Base Set leans on them.
 
 Ordinary cards need none of this. A `cards.js` entry plus an `effects.js` entry is the whole job,
-and the DSL verb reference is the comment block at the top of `effects.js` — **117 verbs, and it is
-larger than most sessions expect**, so read it before deciding something is not expressible. **If a
+and the DSL verb reference is the comment block at the top of `effects.js` — **larger than most
+sessions expect, and `selftest.js` prints the live count**, so read it before deciding something is
+not expressible. (A number in prose here rots; TOOLING.md has had to correct one twice.) **If a
 card needs behaviour the DSL cannot express, add a verb rather than special-casing it**, and document
 it there.
 
@@ -16,12 +17,32 @@ it there.
 not only something to prevent, it is something to **check at the start of a job**, before any of it
 gets planned.
 
-Two commands, in this order. Neither takes a minute.
+**Three commands, in this order. None takes a minute**, and they answer three
+different questions that get confused with one another because all three print counts.
 
 ```bash
-node tools/selftest.js                   # among much else: "117 verbs, all documented"
+node tools/selftest.js                   # among much else: "N verbs, all documented"
 node tools/setsurvey.js <setcode>        # how much of the set you are adding is already built
+node tools/shapecount.js "<wording>"     # how often this SHAPE recurs across all 14 sets
 ```
+
+| | Looks | Answers |
+|---|---|---|
+| `selftest` | inward | what machinery already exists, and is the list of it trustworthy |
+| `setsurvey` | down, at one set | how much of this set is already built |
+| `shapecount` | across, at all fourteen | how often the thing in front of me recurs |
+
+**The third one is new as of Job 10c and it is there because it changed a job.** That job had three
+triggered Powers to build and several plausible designs, and two minutes of `shapecount` settled it:
+`"When you play .* from your hand"` is **20 printings across seven sets and fifteen distinct texts**,
+so the trigger has to take a verb list or you write fifteen bespoke Power kinds by Neo 4. `"When .* is
+Knocked Out"` is **three printings and two behaviours in the entire era**, so generalising it would
+have been pure waste. Same job, opposite answers, and nothing but the count could tell them apart.
+
+**Read the distinct-text count, never the printing count** — the same lesson `setsurvey.js` and
+`DATA.md` keep making. And read the hits themselves: a bare `"is Knocked Out"` also catches Strikes
+Back's parenthetical, which is a card that answers damage rather than one that triggers on dying. The
+tool starts the thinking; it does not finish it.
 
 **The first is what makes the second worth trusting.** `selftest.js` asserts that every verb the
 engine dispatches, and every verb a card uses, appears in the reference block at the top of
@@ -79,7 +100,7 @@ chooses it. A **passive** Power is never fired — it is consulted at the moment
 
 | | In the era | So it is built as |
 |---|---|---|
-| `ON_PLAY` | 20 printings across six sets, **no two doing the same thing** — search a deck, mill either deck on a coin, heal every Grass in play, hand the opponent a redraw | a trigger plus a **verb list**. What generalises is the moment, not the effect, so a card author writes a script rather than engine code |
+| `ON_PLAY` | 20 printings across seven sets, **no two doing the same thing** — search a deck, mill either deck on a coin, heal every Grass in play, hand the opponent a redraw | a trigger plus a **verb list**. What generalises is the moment, not the effect, so a card author writes a script rather than engine code |
 | `ON_KO` | three printings, two behaviours, in the whole era | narrow and exact. There is nothing to generalise |
 | `ON_OPP_RETREAT` | two behaviours, and **they disagree** — Sinkhole fires when the opponent *retreats*, Neo 4's Unown [C] when it *tries to* | one hook with the distinction reserved as a flag. *[The ruling →](Rulings/RETREATS-MEANS-SUCCEEDED.md)* |
 
@@ -246,20 +267,28 @@ enumerates the legal payments, `retreatPayOrder` picks the fallback out of that 
 the enumeration rather than constructed**, and that is not style: a greedy version could build a
 payment `doRetreat` then refused as redundant, which hung 26% of ladder games in a retreat loop.
 
-## One open question this raised, unanswered on purpose
+## A question this raised, and the answer
 
-**A flat damage bonus lands AFTER Weakness in this engine, and nobody has checked that against the
-Game Boy.** `computeDamage` applies Weakness and Resistance first, then walks the flat-bonus loop —
-PlusPower, Defender, and now Dark Primeape's Frenzy. So a Frenzied Attack into a Fighting Weakness is
-80 + 30 = **110** rather than (40 + 30) doubled = **140**, and a PlusPower behaves the same way.
+**A flat damage bonus lands AFTER Weakness, and that is correct.** `computeDamage` applies Weakness
+and Resistance first, then walks the flat-bonus loop — PlusPower, Defender, and Dark Primeape's
+Frenzy. So a Frenzied Attack into a Fighting Weakness is 80 + 30 = **110**, not (40 + 30) doubled =
+**140**, and PlusPower behaves the same way.
 
-The convention predates Team Rocket by two sets and **every PlusPower interaction in the game rests
-on it**, which is exactly why Job 10c did not touch it — a card being added is the worst possible
-moment to change a rule that old, and the change would be invisible in the diff and enormous in play.
+**Confirmed against the Game Boy game by Trevor, 19 Aug 2026**, which is the arbiter for the three
+live sets and settles it for everything built on top of them. Bonuses stack on the doubled number.
 
-It is flagged rather than fixed because the printed order is a real question with a real arbiter for
-the sets that have one. If it turns out to be wrong, it is a deliberate job with a measurement pass,
-not a line edit. The assertion in `powertest.js` pins the current behaviour either way.
+Worth knowing three things about how this got asked, because the shape recurs:
+
+- **It surfaced from a failing test with the wrong expectation.** The Frenzy case asserted 140 and got
+  110; the card was fine and the convention was two sets old.
+- **It was flagged rather than changed.** The convention predates Team Rocket, every PlusPower
+  interaction rests on it, and a card being added is the worst moment to alter a rule that old — the
+  change would have been invisible in the diff and enormous in play.
+- **It went to the arbiter rather than to reasoning**, which is step 1 of `RULINGS.md` and is what the
+  Buzzap entry is a warning about. Two of us once reasoned our way to the opposite of a source that
+  was explicit all along.
+
+`powertest.js` pins the number.
 
 ## Testing them
 

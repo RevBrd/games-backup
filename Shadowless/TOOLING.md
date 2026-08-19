@@ -15,6 +15,25 @@ quarter of ladder games.
 Both generators accept `--check`: regenerate to memory, diff against what's committed, exit non-zero
 if they differ. Cheap to run and the fastest way to catch someone having hand-edited a generated file.
 
+## shapecount.js — ask this before choosing a SHAPE
+
+`node tools/shapecount.js "<regex>"`, with `--attacks` / `--trainers` to search elsewhere than
+ability text and `--texts` to dump the distinct wordings.
+
+**It is not `setsurvey` with a different flag, and the two get confused because both print counts.**
+`setsurvey` looks *down* at one set and asks how much of it is already built. This looks *across* all
+fourteen and asks how often a shape recurs — which is the question that decides whether the thing in
+front of you gets machinery or a special case.
+
+**Read the DISTINCT-TEXT count, not the printing count.** Written during Job 10c, where it decided the
+whole design in two minutes: 20 printings and fifteen distinct texts for "when you play this from your
+hand" means the trigger takes a verb list; three printings and two behaviours for "when this is
+Knocked Out" means generalising it would be waste. Opposite answers in the same job.
+
+**And read the hits, not only the number.** A bare "is Knocked Out" also catches Strikes Back's
+parenthetical, which is a card that answers damage rather than one that triggers on dying. The tool
+starts the thinking.
+
 ## setsurvey.js — ask this before planning a set
 
 `node tools/setsurvey.js <setcode>`, and `--novel` to dump every unmatched attack in full. It reads
