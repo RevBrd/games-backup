@@ -284,6 +284,30 @@
 //                                  PERMANENTLY while it stays in play (Conversion 1)
 //     CONVERT_SELF_RESISTANCE      the same for self's Resistance (Conversion 2)
 //
+//   SPECIAL ENERGY — also `t`, because a card is either a Trainer or an Energy and
+//   never both, and `isImplemented` already reads `t` for everything that is not
+//   a Pokemon. The verbs are prefixed E_ so the two namespaces stay readable.
+//
+//   These run ON ATTACHMENT FROM HAND and nowhere else — all three of the era's
+//   on-attach Energy print "if you play this card from your hand", which is the
+//   played-from-hand rule one card kind along. Energy Trans moving one, or a
+//   Buzzapped Electrode becoming one, must not re-fire it. See doAttach.
+//
+//   Kept deliberately small: the era has eight distinct special Energy and only
+//   three do anything on arrival. The other five are CONTINUOUS — Metal reduces
+//   incoming damage, Darkness adds to outgoing — and that is a different system
+//   that nobody needs before Neo. Do not build it early.
+//
+//     E_CLEAR_STATUS               remove every Special Condition from the
+//                                  Pokemon it lands on. ONE-SHOT, not a
+//                                  continuous immunity: it can be Paralyzed
+//                                  again next turn and the card stays attached
+//                                  as plain Colorless (Full Heal Energy)
+//     E_HEAL {n}                   remove n damage, capped at what is there.
+//                                  "If it has any" — an undamaged Pokemon is a
+//                                  legal target and simply gets nothing
+//                                  (Potion Energy)
+//
 //   TRAINERS — `t` rather than `a`. Each is one whole card; the legality check and
 //   the effect live in two switches in engine.js and BOTH must gain a case:
 //     T_DRAW {n}                   T_HEAL {n}                T_POKEDEX {n}
@@ -1473,6 +1497,18 @@ const EFFECTS = {
     // remembered it when I was about to build a third one-coin verb.
     [{ v: 'STATUS_COIN_EITHER', heads: 'Poisoned', tails: 'Paralyzed' }],
   ]},
+  // ---- Job 10d: two of the three special Energy -----------------------------
+  // Both print their effect as "IF YOU PLAY THIS CARD FROM YOUR HAND", which is
+  // the played-from-hand rule one card kind along — see doAttach. Neither is an
+  // Energy of any particular type: both provide plain Colorless and both stay
+  // attached afterwards as ordinary Energy.
+  //
+  // Rainbow Energy is NOT here yet. Its representation is a real question and so
+  // is whether Energy Trans can move it — see Rulings/ENERGY-VS-ENERGY-CARD.md.
+
+  'base5-81': { t: [{ v: 'E_CLEAR_STATUS' }] },      // Full Heal Energy
+  'base5-82': { t: [{ v: 'E_HEAL', n: 10 }] },       // Potion Energy
+
   // ---- Job 10c widened: the ordinary Powers behind the triggers -------------
   // Ten cards that are not trigger points and were in no sub-job at all. They
   // live here because they are the same file and the same machinery, not because

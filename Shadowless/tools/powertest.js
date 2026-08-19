@@ -4720,5 +4720,102 @@ T('the two Dark Vileplume printings are NOT aliased, and differ in Weakness', ()
   return true;
 });
 
+
+// ============================================================================
+// Job 10d — the special Energy that fire on arrival
+// ============================================================================
+console.log('\nJob 10d — Full Heal Energy and Potion Energy');
+
+function energyBoard(activeId) {
+  const E = board(activeId, [], 'base1-58');
+  E.state.players[0].hand = [];
+  return E;
+}
+const attachFromHand = (E, energyId, target) => {
+  const p = E.state.players[0];
+  p.hand.push({ id: energyId, uid: E.uid++ });
+  return E.act(0, { t: 'attachEnergy', hand: p.hand.length - 1, target: target.uid });
+};
+
+T('Full Heal Energy clears every condition as it lands', () => {
+  const E = energyBoard('base1-4');
+  const sl = E.state.players[0].active;
+  sl.status.asleep = true; sl.status.confused = true; sl.status.poisoned = true;
+  attachFromHand(E, 'base5-81', sl);
+  eq(sl.status.asleep || sl.status.confused || sl.status.poisoned || sl.status.paralyzed,
+     false, 'all four gone');
+  eq(sl.energy.length, 1, 'and it stayed attached');
+  return true;
+});
+
+T('...and it is a ONE-SHOT, not a continuous immunity', () => {
+  // "The Pokemon you attach it to IS NO LONGER Asleep" — once, on arrival.
+  // Nothing stops it being Paralyzed again a moment later.
+  const E = energyBoard('base1-4');
+  const sl = E.state.players[0].active;
+  sl.status.asleep = true;
+  attachFromHand(E, 'base5-81', sl);
+  E.applyStatus(sl, 'Paralyzed');
+  eq(sl.status.paralyzed, true, 'the card does not keep protecting it');
+  return true;
+});
+
+T('...and it provides ONE Colorless symbol afterwards, not two', () => {
+  const E = energyBoard('base1-4');
+  const sl = E.state.players[0].active;
+  attachFromHand(E, 'base5-81', sl);
+  eq(E.slotSymbols(sl).length, 1, 'one symbol — it is not a Double Colorless');
+  return true;
+});
+
+T('Potion Energy removes one damage counter as it lands', () => {
+  const E = energyBoard('base1-4');
+  const sl = E.state.players[0].active;
+  sl.dmg = 50;
+  attachFromHand(E, 'base5-82', sl);
+  eq(sl.dmg, 40, '10 removed');
+  return true;
+});
+
+T('..."if it has any" means an undamaged target is legal and gets nothing', () => {
+  const E = energyBoard('base1-4');
+  const sl = E.state.players[0].active;
+  eq(attachFromHand(E, 'base5-82', sl).ok, true, 'the attachment is still legal');
+  eq(sl.dmg, 0, 'and nothing happened');
+  return true;
+});
+
+T('...and it cannot heal past zero', () => {
+  const E = energyBoard('base1-4');
+  const sl = E.state.players[0].active;
+  sl.dmg = 10;
+  attachFromHand(E, 'base5-82', sl);
+  eq(sl.dmg, 0, 'floored, not negative');
+  return true;
+});
+
+T('an on-attach Energy does NOT fire when it arrives any other way', () => {
+  // The played-from-hand rule, one card kind along. An Energy that reaches a
+  // Pokemon without being played from hand — moved by Energy Trans, or already
+  // attached — has not been played, and must not re-fire.
+  const E = energyBoard('base1-4');
+  const sl = E.state.players[0].active;
+  sl.dmg = 50;
+  sl.energy.push({ id: 'base5-82', uid: E.uid++ });    // attached, never played
+  eq(sl.dmg, 50, 'it healed nothing, because it was never played from a hand');
+  return true;
+});
+
+T('Potion Energy can be attached to a BENCHED Pokemon, and heals that one', () => {
+  const E = energyBoard('base1-4');
+  const p = E.state.players[0];
+  p.bench = [E.mkSlot({ id: 'base1-46', uid: E.uid++ })];
+  p.bench[0].dmg = 30;
+  attachFromHand(E, 'base5-82', p.bench[0]);
+  eq(p.bench[0].dmg, 20, 'the Bench was healed');
+  eq(p.active.dmg, 0, 'and not the Active');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

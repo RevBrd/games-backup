@@ -1134,11 +1134,44 @@ class AI {
   // 4-point bonus on the ordinary path silently made spending your one
   // attachment look better than the free unlimited Power. `powertest.js` caught
   // it immediately. **Any new attachment term goes here, not in a caller.**
+  // What a SPECIAL Energy's on-attach effect is worth, on top of the symbols it
+  // provides. Job 10d.
+  //
+  // Small but not zero, and the sign of it is the whole point: Full Heal Energy
+  // on a Paralyzed Active is a Full Heal that also pays for an attack, and on a
+  // healthy one it is a Double Colorless that provides one symbol instead of two.
+  // Without this the bot cannot tell those apart and will burn it on whichever
+  // Pokemon it happened to be charging.
+  //
+  // UNMEASURED — both weights are borrowed from the Trainers that do the same
+  // job, which keeps them on one scale but is not the same as having checked.
+  energyOnAttachValue(pi, slot, energyId) {
+    const W = this.W;
+    const script = (this.eff[energyId] || {}).t || [];
+    let s = 0;
+    for (const v of script) {
+      if (v.v === 'E_CLEAR_STATUS') {
+        // Worth exactly the conditions it actually removes, so it is worth
+        // nothing on a clean Pokemon — which is what stops it being spent early.
+        const st = slot.status;
+        if (st.paralyzed) s += W.paralyze;
+        if (st.asleep) s += W.sleep;
+        if (st.confused) s += W.confuse;
+        if (st.poisoned) s += W.poison;
+      } else if (v.v === 'E_HEAL') {
+        const h = Math.min(v.n || 10, slot.dmg);
+        s += (h / 10) * W.healPer10;
+      }
+    }
+    return s;
+  }
+
   attachValue(pi, slot, energyId) {
     const W = this.W, E = this.E;
     const before = this.potential(pi, slot, null);
     const after = this.potential(pi, slot, energyId);
     let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
+    s += this.energyOnAttachValue(pi, slot, energyId);
 
     // PROGRESS IS WORTH A SHARE OF WHAT IT IS PROGRESS TOWARD — 16 Aug 2026,
     // from Trevor watching the bot feed a Voltorb while its Zapdos starved.

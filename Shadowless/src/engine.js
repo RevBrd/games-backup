@@ -2021,7 +2021,51 @@ class Engine {
     p.hand.splice(a.hand, 1);
     sl.energy.push(inst); p.energyAttached = true;
     this.log(`${p.name} attaches ${c.name} to ${this.nameOf(sl)}.`);
+    // Team Rocket's special Energy. Three of the era's eight print an effect
+    // that happens ON ARRIVAL, and all three qualify it the same way — "IF YOU
+    // PLAY THIS CARD FROM YOUR HAND". That is the played-from-hand rule again,
+    // one card kind along, and it is why the hook is here rather than anywhere
+    // an Energy can end up attached: Energy Trans moving one, or a Buzzapped
+    // Electrode becoming one, must not re-fire it.
+    //
+    // doAttach is the ONLY from-hand attachment path today. Rain Dance and its
+    // relatives attach from hand too but are all qualified to "basic <type>
+    // Energy card", which no special Energy is. If a later set prints an
+    // unqualified one, it needs this call and nothing will say so.
+    this.runEnergyScript(pi, sl, (this.effects[inst.id] || {}).t || []);
+    this.checkKOs();
     return { ok: true };
+  }
+
+  // The on-attach half of a special Energy card. A FOURTH small namespace, after
+  // attack verbs, Trainer cases and Power verbs — and kept small on purpose: the
+  // whole era has eight distinct special Energy and only three of them do
+  // anything on arrival. The other five are continuous (Metal reduces damage,
+  // Darkness adds it) and that is a different system nobody needs until Neo.
+  runEnergyScript(pi, slot, script) {
+    for (const v of script) {
+      switch (v.v) {
+        case 'E_CLEAR_STATUS':
+          // Full Heal Energy. A ONE-SHOT on arrival, not a continuous immunity —
+          // "the Pokemon you attach it to is no longer Asleep, Confused,
+          // Paralyzed, or Poisoned". Nothing stops it being Paralyzed again next
+          // turn, and the card stays attached as a plain Colorless afterwards.
+          clearStatus(slot);
+          this.log(`Full Heal Energy: ${this.nameOf(slot)} is no longer affected by Special Conditions.`, 'eff');
+          break;
+        case 'E_HEAL': {
+          // Potion Energy. "Remove 1 damage counter... IF IT HAS ANY", so an
+          // undamaged Pokemon is a legal target and simply gets nothing.
+          const h = Math.min(v.n || 10, slot.dmg);
+          if (!h) { this.log('Potion Energy: nothing to heal.', 'eff'); break; }
+          slot.dmg -= h;
+          this.log(`Potion Energy: ${h} damage removed from ${this.nameOf(slot)}.`, 'eff');
+          break;
+        }
+        default:
+          throw new Error(`Unimplemented Energy verb ${v.v}`);
+      }
+    }
   }
 
   doRetreat(pi, a) {

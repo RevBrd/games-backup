@@ -382,6 +382,10 @@ const PROVISIONAL = new Set([
   // Hay Fever's self-cost — the bot pays for the Trainers it is locking out of
   // its own hand, at a rate nobody has tested.
   'NO_TRAINERS',
+  // Job 10d. The special Energy on-attach weights, borrowed from the Trainers
+  // that do the same job — a Full Heal and a Potion — which keeps them on one
+  // scale and is not the same as having measured them.
+  'E_CLEAR_STATUS', 'E_HEAL',
 ]);
 
 // ---- every doorway into play goes through enterPlay --------------------------
