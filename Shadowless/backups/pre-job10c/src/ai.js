@@ -605,36 +605,6 @@ class AI {
       const takesLastPrize = me.prizes.length <= 1;
       const emptiesTheirBoard = you.bench.length === 0;
       s += f.pLethal * ((takesLastPrize || emptiesTheirBoard) ? W.lastPrize : W.knockout);
-
-      // Job 10c. KILLING A DARK GYARADOS COSTS SOMETHING, and until this was
-      // written nothing in the forecast could say so — every term here prices
-      // what an attack DOES and none of them priced what the corpse does back.
-      //
-      // Final Beam is a coin for 20 per Water attached, aimed at whatever
-      // finished it. So a fully charged one is 80 on a coin, which is enough to
-      // change which Pokemon should throw the punch — and the bot was walking
-      // its own Charizard into it for free.
-      //
-      // Priced as expected damage, and separately as the risk of losing the
-      // attacker outright, because those are not the same decision: 40 on
-      // something healthy is a scratch, and 40 on something at 40 is a Prize.
-      const dyingPower = you.active && this.E.powerOf(you.active);
-      if (dyingPower && dyingPower.kind === 'ON_KO' && f.pLethal > 0
-          && this.E.powerUsable(you.active)) {
-        for (const v of (dyingPower.do || [])) {
-          if (!(v.v === 'P_REVENGE')) continue;
-          const fuel = you.active.energy.filter(e => !v.t
-            || (this.db[e.id] && this.db[e.id].provides) === v.t).length;
-          let back = v.per * fuel;
-          if (v.wr) {
-            const mine = this.top(atkSlot);
-            if (mine.wkType && this.top(you.active).type === mine.wkType) back *= 2;
-          }
-          const exp = 0.5 * f.pLethal * back;                 // the coin, and the kill
-          s -= Math.min(exp, this.remainingHP(atkSlot)) * W.selfDamage;
-          if (back >= this.remainingHP(atkSlot)) s -= 0.5 * f.pLethal * W.selfKO;
-        }
-      }
     }
 
     // status conditions - suppressed entirely if they're behind a Barrier
@@ -1563,18 +1533,14 @@ class AI {
         const st = slot.status;
         if (st.asleep || st.paralyzed || st.confused) s += 14;
         if (st.poisoned) s += 8;
-        // Job 10c. Dark Golbat is worth playing for Sneak Attack alone, and Dark
-        // Dragonite arrives with two Basics. Without this the bot evolves into
-        // them at the plain rate and lets the engine pick their targets.
-        s += this.scoreOnPlay(pi, a, newC.id);
         return s;
       }
 
       case 'playBasic': {
         const n = me.bench.length;
-        let s = n === 0 ? W.benchFirst : n < 3 ? W.benchMore : W.benchTooMany;
-        s += this.scoreOnPlay(pi, a, me.hand[a.hand].id);
-        return s;
+        if (n === 0) return W.benchFirst;
+        if (n < 3) return W.benchMore;
+        return W.benchTooMany;
       }
 
       // Retreating is an ESCAPE, and it is only worth what the escapee is worth.
@@ -1610,27 +1576,6 @@ class AI {
         const delta = this.bestAffordableDamage(pi, b)
                     - this.bestAffordableDamage(pi, me.active);
         s += delta * W.retreatTempo;
-
-        // Job 10c. RETREATING INTO A SINKHOLE COSTS MORE THAN THE ENERGY. Dark
-        // Dugtrio takes a coin at whoever just retreated, and several of them
-        // each take their own — so the bot has to see a board that has made
-        // retreating expensive, and see it get worse as they add copies.
-        //
-        // Priced as expected damage on the Pokemon that is leaving, which is the
-        // one it lands on. It is NOT priced as a Knock Out even when it would be
-        // lethal, and that is the honest gap: `dying` below already covers the
-        // case where the Active is being abandoned, and stacking a second
-        // penalty on top would double-count the same Pokemon. UNMEASURED.
-        for (const sl of this.E.allSlots(1 - pi)) {
-          const pw = this.E.powerOf(sl);
-          if (!pw || pw.kind !== 'ON_OPP_RETREAT') continue;
-          if (!this.E.powerUsable(sl)) continue;
-          for (const v of (pw.do || [])) {
-            if (!(v.v === 'P_RETREAT_TOLL')) continue;
-            const exp = 0.5 * Math.min(v.dmg, this.remainingHP(me.active));
-            s -= exp * W.benchDamageMine;
-          }
-        }
 
         if (dying) {
           // How much is actually being rescued. Energy already spent is the
@@ -1746,118 +1691,6 @@ class AI {
   }
 
   // ----------------------------------------------------------- trainer score
-  // WHAT A TRIGGERED POWER IS WORTH, AND WHICH ANSWER TO GIVE IT.
-  //
-  // Job 10c. This is the silent-failure surface AI.md warns about, arriving in a
-  // new shape: an ON_PLAY Power fires whether or not anybody scored it, so a bot
-  // that does not read this gets Summon Minions' two free Basics for nothing —
-  // and, worse, hands the ENGINE the choice of which two, which falls back to a
-  // seeded random. The card works perfectly and is played badly forever.
-  //
-  // So this does both jobs at once, exactly as scoreTrainer does: it returns what
-  // the arrival is worth, and it fills in a.opts so the fallback is never reached.
-  //
-  // Called from BOTH `evolve` and `playBasic` — 17 of the era's 20 ON_PLAY
-  // printings are Evolutions and 3 are Basics, and the trigger does not care.
-  //
-  // EVERY WEIGHT BELOW IS A FIRST GUESS and all five verbs are on PROVISIONAL in
-  // selftest.js. They are priced off existing weights rather than new numbers,
-  // which keeps them on the same scale as everything else but is not the same as
-  // having measured them.
-  scoreOnPlay(pi, a, cardId) {
-    const E = this.E, W = this.W;
-    const me = E.state.players[pi], you = E.state.players[1 - pi];
-    const eff = this.eff[cardId];
-    const p = eff && eff.p;
-    if (!p || p.kind !== 'ON_PLAY') return 0;
-    // A Muk anywhere switches this off, and the bot must not pay for a Power it
-    // is not going to get. It cannot ask powerUsable — the card is still in hand
-    // and has no slot — so it asks the one question that matters.
-    if (E.toxicGasActive()) return 0;
-    a.opts = a.opts || {};
-    let s = 0;
-
-    for (const v of (p.do || [])) {
-      switch (v.v) {
-        case 'P_SEARCH_BENCH': {
-          // Priced as benching that many Basics, which is what it is — the same
-          // weights `callFamily` uses, and for the same reason.
-          const room = Math.max(0, E.cfg.benchMax - me.bench.length);
-          const want = Math.min(v.n || 1, room);
-          const wants = c => c && c.kind === 'pokemon' && c.stage === (v.stage || 'Basic');
-          const pool = me.deck.filter(x => wants(this.db[x.id]));
-          const take = Math.min(want, pool.length);
-          for (let k = 0; k < take; k++) s += (me.bench.length + k === 0) ? W.benchFirst : W.benchMore;
-          // WHICH ones. Highest printed damage first, HP as the tie-break — a
-          // deliberately crude ordering, and the honest reason is that "how good
-          // is this Basic on an empty bench" has no measured answer anywhere in
-          // this file. A benched Basic's job is to be evolved into or to hold
-          // Energy, and both scale with the body.
-          const rank = x => {
-            const c = this.db[x.id];
-            let best = 0;
-            for (const at of (c.attacks || [])) best = Math.max(best, aiParseDamage(at.dmg));
-            return best * 2 + (c.hp || 0);
-          };
-          a.opts.trigUids = pool.slice().sort((x, y) => rank(y) - rank(x)).slice(0, take).map(x => x.uid);
-          break;
-        }
-        case 'P_FROM_DISCARD': {
-          // Cards back into hand, priced as draws. An Evolution that fits
-          // something already on the board is worth more than a loose Basic,
-          // because it is a play next turn rather than a card.
-          const pool = me.discard.filter(x => this.db[x.id].kind === 'pokemon');
-          const inPlay = new Set(E.allSlots(pi).map(sl => this.top(sl).name));
-          const rank = x => {
-            const c = this.db[x.id];
-            return (c.evolvesFrom && inPlay.has(c.evolvesFrom) ? 100 : 0) + (c.hp || 0);
-          };
-          const take = pool.slice().sort((x, y) => rank(y) - rank(x)).slice(0, v.n || 1);
-          a.opts.trigUids = take.map(x => x.uid);
-          s += take.length * W.drawCard;
-          for (const x of take) if (rank(x) >= 100) s += 4;
-          break;
-        }
-        case 'P_SNIPE': {
-          // Free damage on arrival, and it may pick ANY of their Pokemon. Priced
-          // the way every other snipe in this file is: what it actually lands,
-          // plus a fraction of a Knock Out when it finishes something.
-          const cands = E.allSlots(1 - pi);
-          if (!cands.length) break;
-          const newC = this.db[cardId];
-          const landed = (t) => {
-            const tc = this.top(t);
-            // Weakness only — Sneak Attack says to apply W and R, and Resistance
-            // in this era is a flat -30 that would take this to zero anyway.
-            let d = v.dmg;
-            if (v.wr && tc.wkType && newC && tc.wkType === newC.type) d *= 2;
-            if (v.wr && tc.rsType && newC && tc.rsType === newC.type) d = Math.max(0, d - 30);
-            return d;
-          };
-          let best = null, bestScore = -Infinity;
-          for (const t of cands) {
-            const d = landed(t);
-            const hpLeft = this.remainingHP(t);
-            let sc = Math.min(d, hpLeft) * W.benchDamageFoe;
-            if (d >= hpLeft) sc += W.knockout * 0.6;
-            if (sc > bestScore) { bestScore = sc; best = t; }
-          }
-          // "You MAY" — but every reading of it that does nothing is worse than
-          // one that does 10, so it is only declined when it would do nothing at
-          // all, which cannot happen while they have a Pokemon in play.
-          if (best && bestScore > 0) { a.opts.trigTargetUid = best.uid; s += bestScore; }
-          else a.opts.trigTargetUid = null;
-          break;
-        }
-        // P_REVENGE and P_RETREAT_TOLL are never reached from here: they hang off
-        // ON_KO and ON_OPP_RETREAT, which nobody plays. They are scored where the
-        // decision they affect is actually made — see the retreat case in
-        // scoreAction for the toll, and AI.md's open list for Final Beam.
-      }
-    }
-    return s;
-  }
-
   // Also fills in a.opts, so the engine never has to pick targets at random.
   scoreTrainer(pi, a) {
     const E = this.E, W = this.W;

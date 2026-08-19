@@ -415,68 +415,6 @@
 //     RETREAT_DISCOUNT {n}   while BENCHED, this side's retreat costs n less.
 //                            Stacks. (Retreat Aid)
 //
-//   TRIGGERED POWERS (Job 10c). A THIRD kind, and the distinction from the two
-//   above is what each one costs to get wrong. An interactive Power is offered
-//   as an action and can be declined. A passive Power is consulted and never
-//   fires. A TRIGGERED Power fires ITSELF, at a definite moment, whether or not
-//   anybody scored it — which is the silent-failure surface AI.md describes,
-//   arriving from a new direction.
-//
-//   The trigger is declared as the `kind`; WHAT IT DOES is a verb list under
-//   `do`, run by engine.runPowerScript. That split is the whole design, and the
-//   era is the reason for it: 20 printings across six sets say "when you play
-//   this from your hand" and no two of them do the same thing. What generalises
-//   is the moment, not the effect.
-//
-//     ON_PLAY {do}           fires when the card is played FROM HAND — benched,
-//                            evolved, or dropped by Pokemon Breeder. NOT from
-//                            the deck, the discard pile, or the opening setup;
-//                            engine.enterPlay is the single doorway that knows
-//                            which is which. A Muk switches it off like any
-//                            other Power
-//     ON_KO {do}             fires when this Pokemon is Knocked Out BY AN
-//                            ATTACK, before a single card leaves the slot —
-//                            Final Beam counts Energy that is one line away from
-//                            the discard pile. Damage from a Power, from Poison,
-//                            from Confusion or from a Retaliate does NOT count.
-//                            See RULINGS.md
-//     ON_OPP_RETREAT {do}    fires when the OPPONENT's Active retreats — the
-//                            successful retreat, not the attempt. Every copy on
-//                            the board fires its own. `onAttempt` is reserved
-//                            for Neo 4's Unown [C] and is not built
-//
-//   POWER VERBS — the `do` list. A THIRD namespace after attack verbs and
-//   Trainer cases, and deliberately NOT the attack pipeline: that loop is built
-//   around an attacker, a defender and a damage number, and a Power has none of
-//   them. Verbs here take a `slot` (the Power's own Pokemon) and, for the two
-//   triggers that need it, engine-supplied context.
-//
-//     P_SEARCH_BENCH {n, stage}    search your deck for up to n Pokemon of that
-//                                  stage and put them onto your Bench, then
-//                                  shuffle. "Up to", so a full Bench and an
-//                                  empty deck are both fine (Summon Minions)
-//     P_FROM_DISCARD {n}           take up to n Pokemon cards out of your own
-//                                  discard pile into your hand (Reel In)
-//     P_SNIPE {dmg, wr, optional}  dmg to one of the OPPONENT's Pokemon, Active
-//                                  included, chosen by this Power's owner. `wr`
-//                                  applies Weakness and Resistance, which is
-//                                  unusual enough to be a flag rather than an
-//                                  assumption. `optional` allows declining with
-//                                  trigTargetUid: null (Sneak Attack)
-//     P_REVENGE {per, t, wr}       ON_KO only. Flip; heads does per * (Energy of
-//                                  type t still attached to this Pokemon) to
-//                                  whatever Knocked it Out (Final Beam)
-//     P_RETREAT_TOLL {dmg, onHeads}
-//                                  ON_OPP_RETREAT only. A coin; dmg to the
-//                                  Pokemon that just retreated if it lands the
-//                                  named way. `onHeads: false` is Sinkhole,
-//                                  where the opponent flips and tails hurts
-//
-//   NONE OF THESE PROVOKE A COUNTER. A Pokemon Power is not an attack, so every
-//   damaging verb here passes noRetaliate and noMirror — Strikes Back reads
-//   "whenever an opponent's ATTACK damages" and Mirror Shell reads "if an ATTACK
-//   does damage". It is the same sentence that keeps Final Beam narrow.
-//
 //   `always: true` on a Power means the card prints no "can't be used if Asleep,
 //   Confused or Paralyzed" clause and the blanket gate must not apply — Dodrio
 //   and Dragonite. Every Base Set Power carries the clause; do not add `always`
@@ -1422,63 +1360,6 @@ const EFFECTS = {
     // remembered it when I was about to build a third one-coin verb.
     [{ v: 'STATUS_COIN_EITHER', heads: 'Poisoned', tails: 'Paralyzed' }],
   ]},
-  // ---- Job 10c: the five triggered Powers -----------------------------------
-  // `always: true` on the three ON_PLAY cards is not a shortcut. None of them
-  // prints "can't be used if Asleep, Confused or Paralyzed" — the two ON_KO and
-  // ON_OPP_RETREAT cards below DO, and are gated for it. The flag is inert in
-  // practice, because a card arriving from your hand has no Special Conditions
-  // and evolving clears them, but ENGINE.md's rule is to set it from the printed
-  // text rather than from whether it currently matters.
-
-  'base5-5': { a: [                                  // Dark Dragonite
-    [{ v: 'FLIP_OR_NOTHING' }],                      //   Giant Tail
-  ],
-    // "search your deck for up to 2 Basic Pokemon and put them onto your Bench"
-    // — a Stage 2 that pays for itself twice over on arrival. Up to 2, so one
-    // Basic, none, or a full Bench are all fine rather than failures.
-    p: { kind: 'ON_PLAY', name: 'Summon Minions', always: true,
-         do: [{ v: 'P_SEARCH_BENCH', n: 2, stage: 'Basic' }] } },
-
-  'base5-6': { a: [                                  // Dark Dugtrio
-    // "YOUR OPPONENT flips a coin. If TAILS, this attack does 20 plus 20 more."
-    // Both halves are backwards from the house shape, which is why onTails
-    // exists — see FLIP_BONUS_OR_RECOIL.
-    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 20, bonus: 20, recoil: 0, onTails: true,
-       label: 'their coin — TAILS pays the bonus' }],
-  ],
-    p: { kind: 'ON_OPP_RETREAT', name: 'Sinkhole',
-         do: [{ v: 'P_RETREAT_TOLL', dmg: 20, onHeads: false, label: 'Sinkhole' }] } },
-
-  'base5-7': { a: [                                  // Dark Golbat
-    // Flitter prints NO damage of its own — the whole attack is the snipe, and
-    // "1 of your opponent's Pokemon" is the Team Rocket wording that widens
-    // BENCH_SNIPE past the Bench.
-    [{ v: 'BENCH_SNIPE', n: 1, dmg: 20, target: 'any', label: 'Flitter' }],
-  ],
-    // "you MAY choose 1 of your opponent's Pokemon" — declining is real, and
-    // "Apply Weakness and Resistance" is the unusual half. Ten damage into a
-    // Weakness is twenty, off a card that has not attacked yet.
-    p: { kind: 'ON_PLAY', name: 'Sneak Attack', always: true,
-         do: [{ v: 'P_SNIPE', dmg: 10, wr: true, optional: true }] } },
-
-  'base5-8': { a: [                                  // Dark Gyarados
-    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],       //   Ice Beam
-  ],
-    // The one card in the era that answers its own Knock Out with damage. Four
-    // Water on it is 80 back into whatever killed it, on a coin — and Weakness
-    // applies, which the card says and almost nothing else of this shape does.
-    p: { kind: 'ON_KO', name: 'Final Beam',
-         do: [{ v: 'P_REVENGE', per: 20, t: 'W', wr: true }] } },
-
-  'base5-12': { a: [                                 // Dark Slowbro
-    [{ v: 'FLIP_OR_NOTHING' }],                      //   Fickle Attack
-  ],
-    // "up to 3 Basic Pokemon and/or Evolution cards from your discard pile" —
-    // every Pokemon card, in other words, and no Energy or Trainers. An empty
-    // discard pile is not a failure.
-    p: { kind: 'ON_PLAY', name: 'Reel In', always: true,
-         do: [{ v: 'P_FROM_DISCARD', n: 3 }] } },
-
   'base5-4': { a: [                                  // Dark Charizard
     [],                                              //   Nail Flick
     // A coin per FIRE attached, 50 a head, and it burns one Fire per head. The

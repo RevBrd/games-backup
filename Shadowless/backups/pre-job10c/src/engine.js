@@ -76,30 +76,6 @@ function symbolCount(db, list) {
   return list.reduce((a, e) => a + energySymbols(db, e).length, 0);
 }
 
-// DOES THIS ATTACHED CARD COUNT AS `type`? Every "for each Water Energy attached
-// to it" in the game asks this, and until 18 Aug 2026 all seven sites asked it
-// as `energyProvides(...) === t` and got the right answer for the wrong reason.
-//
-// The right reason is the ruling in Rulings/ENERGY-VS-ENERGY-CARD.md: the word
-// *Energy* counts by LIVE TYPE, not by which card it physically is. Every card
-// in the three live sets happens to provide exactly one type, so the two
-// readings agree everywhere and the distinction is invisible.
-//
-// RAINBOW ENERGY IS WHERE THEY COME APART, and it lands in Job 10d. It provides
-// every type AT ONCE — not a wildcard resolved to one type when asked — so it is
-// a spare Water for Hydrocannon and a spare Fire for a Fire-scaling attack in the
-// same turn, with nothing choosing and nothing to remember. `energyProvides`
-// returns one string and cannot say that, which the ruling flags as unsolved.
-//
-// So this exists BEFORE the card does, and its whole job is to be the one place
-// that has to learn. Seven call sites now route through it; if they had not, 10d
-// would have had to find all seven and would have missed one in silence — which
-// is a card quietly scaling wrong, with every suite green.
-function energyIsType(db, inst, type) {
-  if (!type) return true;
-  return energyProvides(db, inst) === type;
-}
-
 // ============================================================================
 // ENGINE
 // ============================================================================
@@ -267,12 +243,10 @@ class Engine {
     if (where === 'active') {
       if (p.active) return this.fail('Active already set');
       p.hand.splice(handIdx, 1); p.active = this.mkSlot(inst);
-      this.enterPlay(pi, p.active, { source: 'setup' });
     } else {
       if (!p.active) return this.fail('Set your Active first');
       if (p.bench.length >= this.cfg.benchMax) return this.fail('Bench is full');
       p.hand.splice(handIdx, 1); p.bench.push(this.mkSlot(inst));
-      this.enterPlay(pi, p.bench[p.bench.length - 1], { source: 'setup' });
     }
     return { ok: true };
   }
@@ -399,266 +373,6 @@ class Engine {
       // baked into the card, exactly like slotSymbols and wkOverride.
       powerTurn: -1, typeAs: null, transformedId: null,
     };
-  }
-
-  // ----------------------------------------------------------- triggers ----
-  // Job 10c. A THIRD kind of Power, after interactive and passive.
-  //
-  // An interactive Power is offered as an action and the player chooses to use
-  // it. A passive Power is never fired at all — it is CONSULTED at the moment it
-  // matters. A triggered Power is neither: nobody chooses it and there is a
-  // definite moment it happens.
-  //
-  // THREE TRIGGERS, AND THEY ARE NOT ONE MECHANISM. That is deliberate, and the
-  // survey behind it is the reason:
-  //
-  //   ON_PLAY        20 printings across six sets, and THE EFFECTS ARE ALL
-  //                  DIFFERENT — search the deck, mill either deck on a coin,
-  //                  heal every Grass in play, hand the opponent a redraw. What
-  //                  generalises is the trigger, not the effect, so this one
-  //                  takes a VERB LIST and a card author writes a script rather
-  //                  than engine code.
-  //   ON_KO          three printings, two behaviours, in the whole era. Nothing
-  //                  to generalise, so it is narrow and exact instead.
-  //   ON_OPP_RETREAT two behaviours, and they DISAGREE — Sinkhole fires when the
-  //                  opponent "retreats", Unown [C] when it "tries to retreat".
-  //                  The flag between them is the whole design.
-  //
-  // A POKEMON POWER IS NOT AN ATTACK. Every damaging thing here passes
-  // noRetaliate and noMirror, because Strikes Back reads "whenever an opponent's
-  // ATTACK damages" and Mirror Shell reads "if an ATTACK does damage". It is the
-  // same principle that keeps Final Beam answering attacks only. See RULINGS.md.
-  // "When <this> is Knocked Out BY AN ATTACK." Three printings in the era and
-  // two behaviours, so this is narrow on purpose rather than general.
-  //
-  // ONLY AN ATTACK COUNTS — Trevor's call, 18 Aug 2026, from Pocket, and the
-  // argument for it is that the opposite reading has no natural edge. Damage
-  // from a Power, from Poison, from Confusion, from Retaliate or from a Mirror
-  // Shell all leave the same corpse, and a rule that answered "anything that
-  // originated during an attack step" would need re-deciding for every future
-  // card that deals damage without attacking. `lastHitBy.byAttack` is the whole
-  // test. See RULINGS.md.
-  fireOnKO(pi, slot) {
-    const p = this.powerOf(slot);
-    if (!p || p.kind !== 'ON_KO') return;
-    if (!this.powerUsable(slot)) return;
-    const hit = slot.lastHitBy;
-    if (!hit || !hit.byAttack) return;
-    const killer = this.allSlots(1 - pi).find(x => x.uid === hit.uid);
-    if (!killer) return;
-    this.log(`${p.name}: ${this.nameOf(slot)} answers.`, 'eff');
-    this.runPowerScript(pi, slot, p.do || [], null, { killer });
-  }
-
-  // "Whenever your opponent's Active Pokemon retreats." Fires from anywhere on
-  // the owner's board — Powers work wherever their Pokemon is unless the card
-  // says otherwise, and Sinkhole does not say otherwise — so several Dark
-  // Dugtrios each take their own flip, exactly as several Muks each carry their
-  // own Toxic Gas.
-  //
-  // A FAILED CONFUSED RETREAT DOES NOT COUNT, and the era settles this itself:
-  // Neo 4's Unown [C] is printed "whenever your opponent's Active Pokemon TRIES
-  // to retreat", which is a distinction nobody draws unless the plain wording
-  // means the successful one. `onAttempt` is where that card will hang; it is
-  // not built, because building a flag for a card two sets away is how a shape
-  // gets guessed wrong. See RULINGS.md.
-  fireOnOppRetreat(pi, retreated) {
-    // pi is the player who just retreated; the Powers that care belong to the
-    // other one.
-    for (const slot of this.allSlots(1 - pi)) {
-      const p = this.powerOf(slot);
-      if (!p || p.kind !== 'ON_OPP_RETREAT' || p.onAttempt) continue;
-      if (!this.powerUsable(slot)) continue;
-      this.log(`${p.name}: ${this.nameOf(slot)} opens up underneath ${this.nameOf(retreated)}.`, 'eff');
-      this.runPowerScript(1 - pi, slot, p.do || [], null, { retreated });
-    }
-    this.checkKOs();
-  }
-
-  fireOnPlay(pi, slot, opts) {
-    const p = this.powerOf(slot);
-    if (!p || p.kind !== 'ON_PLAY') return;
-    // powerUsable, not powerActive: a Muk on either side switches this off, and
-    // that is the one gate that can really bite here. The status gate cannot —
-    // a card arriving from hand has no conditions, and evolving clears them.
-    if (!this.powerUsable(slot)) {
-      this.log(`${p.name} does not work right now.`, 'eff');
-      return;
-    }
-    this.log(`${p.name}: ${this.nameOf(slot)} arrives.`, 'eff');
-    this.runPowerScript(pi, slot, p.do || [], opts, null);
-    this.checkKOs();
-  }
-
-  // The Power verb pipeline. A THIRD namespace after attack verbs and Trainer
-  // cases, and consistent with them rather than a new idea — Trainers have had
-  // their own switch since Base Set for exactly this reason.
-  //
-  // It deliberately does NOT re-enter the attack pipeline. That loop is built
-  // around an attacker, a defender, a damage number and a Barrier check, and
-  // most of its cases assume a defender exists. Re-entering it with a null
-  // defender would mean auditing every one of them on behalf of a card that has
-  // no defender at all — a bigger and far more dangerous job than writing the
-  // handful of verbs a Power actually needs.
-  //
-  // Choices arrive the way every other choice in this engine arrives — on the
-  // action's `opts`, with a deterministic fallback so the AI and older callers
-  // work untouched. Named by ROLE:
-  //   opts.trigUids       cards chosen out of a hidden zone (deck, discard)
-  //   opts.trigTargetUid  a slot chosen on the board
-  //   ctx                 engine-supplied context for a trigger — who Knocked
-  //                       this out, who just retreated. Kept SEPARATE from opts
-  //                       rather than merged into it for the same reason
-  //                       costUids and energyUids are two keys: one is the
-  //                       player's answer and one is the engine's fact, and a
-  //                       single bag would be split by a rule the reader cannot
-  //                       see.
-  runPowerScript(pi, slot, script, opts, ctx) {
-    const me = this.state.players[pi], you = this.state.players[1 - pi];
-    const o = opts || {}, c = ctx || {};
-    for (const v of script) {
-      switch (v.v) {
-        case 'P_SEARCH_BENCH': {
-          // Summon Minions. "Up to n", so an empty result and a full Bench are
-          // both fine rather than failures.
-          const room = this.cfg.benchMax - me.bench.length;
-          const want = Math.min(v.n || 1, room);
-          if (want <= 0) { this.log('The Bench is full.', 'eff'); break; }
-          const wants = c => c && c.kind === 'pokemon' && c.stage === (v.stage || 'Basic');
-          const taken = [];
-          const picks = Array.isArray(o.trigUids) ? o.trigUids.slice(0, want) : null;
-          if (picks) {
-            for (const u of picks) {
-              const k = me.deck.findIndex(x => x.uid === u && wants(this.db[x.id]));
-              if (k >= 0) taken.push(me.deck.splice(k, 1)[0]);
-            }
-          } else {
-            // Unattended fallback: random among the eligible, seeded, which is
-            // what the neighbouring SEARCH_BASIC_TO_BENCH does. The shuffle
-            // below means deck order carries no information either way.
-            while (taken.length < want) {
-              const elig = me.deck.map((x, i) => [x, i]).filter(([x]) => wants(this.db[x.id]));
-              if (!elig.length) break;
-              taken.push(me.deck.splice(elig[this.pick(elig.length)][1], 1)[0]);
-            }
-          }
-          for (const inst of taken) {
-            const sl = this.mkSlot(inst);
-            me.bench.push(sl);
-            this.enterPlay(pi, sl, { source: 'power' });
-            this.log(`${this.db[inst.id].name} is summoned to the Bench.`, 'eff');
-          }
-          if (!taken.length) this.log('Nothing in the deck to summon.', 'eff');
-          this.shuffle(me.deck);
-          break;
-        }
-        case 'P_FROM_DISCARD': {
-          // Reel In. "Up to 3", and an empty discard pile is not a failure.
-          const wants = c => c && c.kind === 'pokemon';
-          const taken = [];
-          const picks = Array.isArray(o.trigUids) ? o.trigUids.slice(0, v.n || 1) : null;
-          if (picks) {
-            for (const u of picks) {
-              const k = me.discard.findIndex(x => x.uid === u && wants(this.db[x.id]));
-              if (k >= 0) taken.push(me.discard.splice(k, 1)[0]);
-            }
-          } else {
-            // Most recently discarded first — deterministic, so a seeded game
-            // replays exactly. The same choice ENERGY_FROM_DISCARD made.
-            for (let i = me.discard.length - 1; i >= 0 && taken.length < (v.n || 1); i--) {
-              if (wants(this.db[me.discard[i].id])) taken.push(me.discard.splice(i, 1)[0]);
-            }
-          }
-          taken.forEach(x => me.hand.push(x));
-          this.log(taken.length
-            ? `${taken.map(x => this.db[x.id].name).join(', ')} returned to hand.`
-            : 'Nothing in the discard pile to take back.', 'eff');
-          break;
-        }
-        case 'P_SNIPE': {
-          // Sneak Attack. "You MAY choose 1 of your opponent's Pokemon" — any of
-          // them, Active included, which is the Team Rocket wording BENCH_SNIPE
-          // already distinguishes with target: 'any'.
-          //
-          // Declining is trigTargetUid === null. ABSENT means take it, aimed at
-          // their Active, which keeps the AI and every older caller aggressive —
-          // the same convention OPTIONAL_DISCARD_THEN_SNIPE settled on.
-          if (v.optional && o.trigTargetUid === null) { this.log('No target chosen.', 'eff'); break; }
-          const cands = this.allSlots(1 - pi);
-          if (!cands.length) break;
-          let tgt = o.trigTargetUid !== undefined && o.trigTargetUid !== null
-            ? cands.find(x => x.uid === o.trigTargetUid) : null;
-          if (!tgt) tgt = you.active || cands[0];
-          this.dealDamage(slot, tgt, v.dmg, { noWR: !v.wr, noRetaliate: true, noMirror: true, notAttack: true });
-          break;
-        }
-        case 'P_REVENGE': {
-          // Final Beam. "20 damage for each Water Energy attached to Dark
-          // Gyarados to the Pokemon that Knocked Out Dark Gyarados."
-          //
-          // THE ENERGY IS STILL ATTACHED WHEN THIS RUNS, and that is the whole
-          // reason the ON_KO hook sits where it does — inside kill(), one line
-          // BEFORE the stack and the Energy are swept into the discard. Fire it
-          // from checkKOs instead and the count is always zero, which is a bug
-          // that looks exactly like a card that does nothing.
-          if (!c.killer) break;
-          const n = slot.energy.filter(e => energyIsType(this.db, e, v.t)).length;
-          if (!this.flip(`${this.nameOf(slot)}: one last shot?`)) break;
-          if (!n) { this.log('No Energy left to fire it with.', 'eff'); break; }
-          // "Apply Weakness and Resistance" — the unusual half of this card, and
-          // the reason `wr` is a flag rather than an assumption.
-          this.dealDamage(slot, c.killer, v.per * n, { noWR: !v.wr, noRetaliate: true, noMirror: true, notAttack: true });
-          break;
-        }
-        case 'P_RETREAT_TOLL': {
-          // Sinkhole. The card has the OPPONENT flip, which changes nothing
-          // mechanically and everything in the log — a player reading back a
-          // turn should see whose coin cost them 20.
-          if (!c.retreated) break;
-          const heads = this.flip(`${you.name} flips for ${v.label || 'the toll'}`);
-          if (heads === !!v.onHeads) {
-            this.dealDamage(slot, c.retreated, v.dmg, { noWR: true, noRetaliate: true, noMirror: true, notAttack: true });
-          }
-          break;
-        }
-        default:
-          throw new Error(`Unimplemented Power verb ${v.v}`);
-      }
-    }
-  }
-
-  // ------------------------------------------------------- entering play ----
-  // THE ONE DOORWAY. Every path that puts a Pokemon card into play calls this,
-  // and it exists because Job 10c needed to know something no single site could
-  // answer on its own: was this card PLAYED FROM HAND?
-  //
-  // Three Team Rocket Powers read "When you play <this> from your hand", and 20
-  // printings across six sets do by Neo 4. The distinction is not decorative —
-  // Dark Golbat's Sneak Attack does 10 damage on arrival, and a Golbat that got
-  // there by Pokemon Flute must not.
-  //
-  // THERE ARE EIGHT PATHS INTO PLAY AND ONLY THREE ARE FROM HAND:
-  //
-  //   from hand   doPlayBasic, doEvolve, T_POKEMON_BREEDER
-  //   otherwise   opening setup (face down, nothing has begun), T_REVIVE,
-  //               T_POKEMON_FLUTE, SEARCH_BASIC_TO_BENCH, EVOLVE_SELF_FROM_DECK
-  //
-  // "From hand" is the SMALL, CLOSED set and "some other way" is the open one
-  // that Gym and Neo keep growing, so the default is silence and the hand paths
-  // declare themselves. That is the opposite of how it first looked.
-  //
-  // WHY A HELPER RATHER THAN A FLAG AT EACH SITE. The stamps below — playedTurn
-  // and evolvedTurn — are not optional anywhere: canEvolve and COWARDICE read
-  // them, and a path that omits one is visibly broken within a turn. Hanging the
-  // trigger off the thing a path CANNOT forget is the guard. `selftest.js` then
-  // asserts statically that every mkSlot and stack.push site in this file is
-  // followed by an enterPlay call, so a ninth path added in Gym cannot quietly
-  // skip it. See ENGINE.md.
-  enterPlay(pi, slot, opts = {}) {
-    if (opts.evolved) { slot.evolvedTurn = this.state.turn; clearStatus(slot); }
-    else if (opts.source !== 'setup') slot.playedTurn = this.state.turn;
-    if (opts.source === 'hand') this.fireOnPlay(pi, slot, opts.opts || null);
-    return slot;
   }
 
   beginPlay() {
@@ -1672,7 +1386,7 @@ class Engine {
       if (v.v === 'COST_DISCARD_ENERGY') {
         // No `t` means any Energy card will do (Charizard's Fire Spin discards 2
         // Energy of any type; Ninetales' Fire Blast demands Fire specifically).
-        const have = p.active.energy.filter(e => energyIsType(this.db, e, v.t)).length;
+        const have = p.active.energy.filter(e => !v.t || energyProvides(this.db, e) === v.t).length;
         if (have < v.n) return { ok: false, why: `Needs ${v.n} ${v.t || ''} Energy to discard`.replace('  ', ' ') };
       }
       if (v.v === 'COST_DISCARD_ALL_ENERGY') {
@@ -1684,7 +1398,7 @@ class Engine {
         if (!this.state.players[1 - pi].bench.length) return { ok: false, why: 'They have no Benched Pokemon' };
       }
       if (v.v === 'REQUIRE_SELF_ENERGY') {
-        const n = p.active.energy.filter(e => energyIsType(this.db, e, v.t)).length;
+        const n = p.active.energy.filter(e => energyProvides(this.db, e) === v.t).length;
         if (!n) return { ok: false, why: `No ${v.t} Energy attached` };
       }
       if (v.v === 'REQUIRE_SELF_DAMAGED') {
@@ -1836,10 +1550,9 @@ class Engine {
     if (!this.playableAsBasic(c)) return this.fail('Not a Basic Pokemon');
     if (p.bench.length >= this.cfg.benchMax) return this.fail('Bench is full');
     p.hand.splice(a.hand, 1);
-    const sl = this.mkSlot(inst);
+    const sl = this.mkSlot(inst); sl.playedTurn = this.state.turn;
     p.bench.push(sl);
     this.log(`${p.name} benches ${c.name}.`);
-    this.enterPlay(pi, sl, { source: 'hand', opts: a.opts });
     return { ok: true };
   }
 
@@ -1852,8 +1565,9 @@ class Engine {
     p.hand.splice(a.hand, 1);
     const was = this.nameOf(sl);
     sl.stack.push(inst);
+    sl.evolvedTurn = this.state.turn;
+    clearStatus(sl);
     this.log(`${was} evolves into ${c.name}. Special Conditions removed.`, 'eff');
-    this.enterPlay(pi, sl, { source: 'hand', evolved: true, opts: a.opts });
     return { ok: true };
   }
 
@@ -1928,10 +1642,6 @@ class Engine {
     p.active = b; p.bench.splice(a.bench, 1); p.bench.push(old);
     p.retreated = true;
     this.log(`${p.name} retreats ${this.nameOf(old)}; ${this.nameOf(b)} is now Active.`);
-    // AFTER the switch, not before. Sinkhole's 20 lands on the Pokemon that
-    // retreated, which by then is on the Bench — so a Weakness it had as the
-    // Active is irrelevant, and the card says not to apply it anyway.
-    this.fireOnOppRetreat(pi, old);
     return { ok: true };
   }
 
@@ -1963,7 +1673,7 @@ class Engine {
   // ('R' for a Fire cost), or null for "anything attached".
   energyChoices(slot, filter) {
     if (!slot) return [];
-    return slot.energy.filter(e => energyIsType(this.db, e, filter));
+    return slot.energy.filter(e => !filter || energyProvides(this.db, e) === filter);
   }
 
   // Worth stopping to ask? Only when there is slack AND the eligible cards are
@@ -2316,10 +2026,10 @@ class Engine {
           const k = p.discard.findIndex(x => x.uid === want.uid);
           const inst2 = p.discard.splice(k, 1)[0];
           const sl = this.mkSlot(inst2);
+          sl.playedTurn = this.state.turn;
           const hp = this.db[inst2.id].hp;
           sl.dmg = Math.floor(hp / 2 / 10) * 10;
           p.bench.push(sl);
-          this.enterPlay(pi, sl, { source: 'discard' });
           this.log(`${this.db[inst2.id].name} is revived onto the Bench with ${sl.dmg} damage.`);
           break;
         }
@@ -2330,8 +2040,8 @@ class Engine {
           const k = o.discard.findIndex(x => x.uid === want.uid);
           const inst2 = o.discard.splice(k, 1)[0];
           const sl = this.mkSlot(inst2);
+          sl.playedTurn = this.state.turn;
           o.bench.push(sl);
-          this.enterPlay(1 - pi, sl, { source: 'discard' });
           this.log(`${this.db[inst2.id].name} is forced back onto ${o.name}'s Bench.`);
           break;
         }
@@ -2436,8 +2146,9 @@ class Engine {
           const was = this.nameOf(tgt);
           const k = p.hand.findIndex(x => x.uid === chosen.uid);
           tgt.stack.push(p.hand.splice(k, 1)[0]);
+          tgt.evolvedTurn = this.state.turn;
+          clearStatus(tgt);
           this.log(`Pokemon Breeder: ${was} evolves straight into ${this.nameOf(tgt)}.`, 'eff');
-          this.enterPlay(pi, tgt, { source: 'hand', evolved: true, opts: a.opts });
           break;
         }
         case 'T_PROFESSOR_OAK': {
@@ -2764,7 +2475,7 @@ class Engine {
         // "plus 10 more for each Water Energy attached but not used to pay
         // for this attack's cost"
         const need = attack.cost.split('').filter(x => x === v.t).length;
-        const have = atk.energy.filter(e => energyIsType(this.db, e, v.t)).length;
+        const have = atk.energy.filter(e => energyProvides(this.db, e) === v.t).length;
         let spare = Math.max(0, have - need);
         // Lapras, Omastar, Seadra and Omanyte all cap the bonus; Vaporeon caps
         // the COUNT ("extra Water Energy after the 2nd doesn't count"), which is
@@ -2792,15 +2503,7 @@ class Engine {
         // phase runs before the damage does — the same reason pendingRecoil is
         // deferred — and a status must land after the hit and must respect a
         // Barrier. It goes through the ordinary post-damage `blocked` gate.
-        // `onTails` INVERTS WHICH FACE PAYS, and it exists for the log rather
-        // than for the odds. Dark Dugtrio's Knock Down has the OPPONENT flip and
-        // pays the bonus on TAILS; a coin is a coin, so scripting it as an
-        // ordinary heads-bonus would play identically and read back as
-        // "Heads -> 40 damage" on a card that says tails does that. The log is
-        // what a player reads to work out what just happened to their board, and
-        // it does not get to be approximately true.
-        const paid = this.flip(v.label || 'bonus damage?');
-        if (v.onTails ? !paid : paid) {
+        if (this.flip(v.label || 'bonus damage?')) {
           base = v.base + v.bonus;
           if (v.statusOnHeads) pendingStatus.push(v.statusOnHeads);
           if (v.discardOnHeads) {
@@ -2809,13 +2512,12 @@ class Engine {
             got.forEach(e => me.discard.push(e));
             if (got.length) this.log(`${card.name} discards ${got.length} Energy.`, 'eff');
           }
-          this.log(`${paid ? 'Heads' : 'Tails'} -> ${base} damage.`);
+          this.log(`Heads -> ${base} damage.`);
         } else {
           base = v.base;
           pendingRecoil += v.recoil;
-          const face = paid ? 'Heads' : 'Tails';
-          if (v.recoil) this.log(`${face} -> ${base} damage, and ${card.name} will take ${v.recoil}.`);
-          else this.log(`${face} -> ${base} damage.`);
+          if (v.recoil) this.log(`Tails -> ${base} damage, and ${card.name} will take ${v.recoil}.`);
+          else this.log(`Tails -> ${base} damage.`);
         }
       } else if (v.v === 'DMG_PER_DEF_ENERGY') {
         const n2 = def ? def.energy.length : 0;
@@ -2853,7 +2555,7 @@ class Engine {
         // `t` narrows the count to one type — Continuous Fireball flips per FIRE
         // Energy rather than per Energy — and `discardPerHead` then burns that
         // many of them. Both default off, so Big Eggsplosion is untouched.
-        const pool6 = atk.energy.filter(e => energyIsType(this.db, e, v.t));
+        const pool6 = v.t ? atk.energy.filter(e => energyProvides(this.db, e) === v.t) : atk.energy;
         const n6 = pool6.length;
         let h3 = 0;
         for (let i = 0; i < n6; i++) if (this.flip(`coin ${i + 1}/${n6}`)) h3++;
@@ -3124,7 +2826,7 @@ class Engine {
           if (at === -1) at = eligible[this.pick(eligible.length)][1];
           const got = me.deck.splice(at, 1)[0];
           me.bench.push(this.mkSlot(got));
-          this.enterPlay(pi, me.bench[me.bench.length - 1], { source: 'deck' });
+          me.bench[me.bench.length - 1].playedTurn = s.turn;
           this.log(`${card.name} calls ${this.db[got.id].name} to the Bench.`, 'eff');
           this.shuffle(me.deck);
           break;
@@ -3178,7 +2880,7 @@ class Engine {
         case 'WILDFIRE': {
           // Moltres. The player chooses how many Fire to burn, capped at what is
           // attached — Trevor, 10 Aug. Each one mills a card from their deck.
-          const fire = atk.energy.filter(e => energyIsType(this.db, e, 'R'));
+          const fire = atk.energy.filter(e => energyProvides(this.db, e) === 'R');
           const max = fire.length;
           let n7 = (a && a.opts && a.opts.count !== undefined) ? a.opts.count : max;
           n7 = Math.max(0, Math.min(n7, max));
@@ -3456,7 +3158,8 @@ class Engine {
           const inst = me.deck.splice(k, 1)[0];
           const was = this.nameOf(atk);
           atk.stack.push(inst);
-          this.enterPlay(pi, atk, { source: 'deck', evolved: true });
+          atk.evolvedTurn = this.state.turn;
+          clearStatus(atk);
           this.shuffle(me.deck);
           this.log(`${was} evolves into ${this.db[inst.id].name}. Special Conditions removed.`, 'eff');
           break;
@@ -3824,20 +3527,7 @@ class Engine {
     r.steps.forEach(t => this.log(t, t.indexOf('prevented') >= 0 || t.indexOf('Hardened') >= 0 ? 'eff' : 'dmg'));
     if (r.dmg > 0) {
       defSlot.dmg += r.dmg;
-      // `byAttack` is what lets Final Beam answer an attack and nothing else.
-      //
-      // DEFAULT TRUE, AND THE DEFAULT IS THE DESIGN. Thirteen of the sixteen
-      // callers here are an attack's own damage — the hit itself, every bench
-      // splash, every snipe — and they are the list that grows with every set.
-      // The three that are not (Retaliate, Mirror Shell, a Power that deals
-      // damage) are a small closed set, so THEY declare themselves and a new
-      // attack verb added in Gym is correct without anybody remembering.
-      //
-      // A SEPARATE FLAG FROM noRetaliate ON PURPOSE, even though the same three
-      // callers pass both today. They mean different things — one is "do not
-      // provoke a counter", the other is "this was not an attack" — and reusing
-      // one for the other is the mistake STATUS_IMMUNE was carefully kept out of.
-      defSlot.lastHitBy = { uid: atkSlot.uid, turn: this.state.turn, byAttack: !opts.notAttack };
+      defSlot.lastHitBy = { uid: atkSlot.uid, turn: this.state.turn };
       // HP REMAINING, not damage dealt — the same way round as the board reads.
       // It printed `dmg/hp`, so a Staryu on exactly lethal damage logged
       // "(40/40)" on the line directly above "is Knocked Out!", which reads as
@@ -3881,7 +3571,7 @@ class Engine {
     const target = this.state.players[1 - side].active;
     if (!target) return;
     this.log(`Mirror Shell: ${this.nameOf(defSlot)} answers for ${dealt}.`, 'eff');
-    this.dealDamage(defSlot, target, dealt, { noWR: true, noRetaliate: true, noMirror: true, notAttack: true });
+    this.dealDamage(defSlot, target, dealt, { noWR: true, noRetaliate: true, noMirror: true });
   }
 
   retaliate(atkSlot, defSlot, opts) {
@@ -3890,7 +3580,7 @@ class Engine {
     if (!p || p.kind !== 'RETALIATE' || !this.powerUsable(defSlot)) return;
     this.log(`${p.name}: ${this.nameOf(defSlot)} strikes back at `
       + `${this.nameOf(atkSlot)} for ${p.dmg}.`, 'eff');
-    this.dealDamage(defSlot, atkSlot, p.dmg, { noWR: true, noRetaliate: true, notAttack: true });
+    this.dealDamage(defSlot, atkSlot, p.dmg, { noWR: true, noRetaliate: true });
   }
 
   // True when an attack's non-damage effects should be suppressed on this target.
@@ -3911,11 +3601,6 @@ class Engine {
           const c = topCard(this.db, slot);
           this.log(`${c.name} is Knocked Out!`, 'ko');
           if (s.koThisAction) s.koThisAction.push({ uid: slot.uid, pi: i });
-          // ON_KO FIRES HERE, before a single card leaves the slot. Final Beam
-          // counts the Energy attached to the Pokemon that just died, and four
-          // lines below this one that Energy is in the discard pile. There is no
-          // later place this card can work from.
-          this.fireOnKO(i, slot);
           // Destiny Bond: whatever Knocked this out is Knocked Out in turn.
           const bond = slot.effects.find(e => e.kind === 'DESTINY_BOND');
           if (bond && slot.lastHitBy) {

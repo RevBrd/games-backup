@@ -353,20 +353,6 @@ const UNSCORED_ON_PURPOSE = new Set([
 // Trevor's ask, 18 Aug 2026, and #18 had already been doing this informally on
 // the Team Rocket run without a place to write it down.
 const PROVISIONAL = new Set([
-  // Job 10c, the five triggered-Power verbs. Every weight behind these is a
-  // first guess priced off an existing weight — benching, drawing, sniping —
-  // rather than off a measurement. The two that most want measuring are
-  // P_SEARCH_BENCH, where "which two Basics" is decided by a crude rank nobody
-  // has checked, and P_RETREAT_TOLL, where the bot is being told to fear a coin
-  // it has never actually been beaten by.
-  'P_SEARCH_BENCH', 'P_FROM_DISCARD', 'P_SNIPE',
-  // These two are on the list for the opposite reason: their weight is ZERO and
-  // that is also a guess. Nothing prices what it costs to attack into a Final
-  // Beam, and P_RETREAT_TOLL is priced only in the retreat decision.
-  'P_REVENGE', 'P_RETREAT_TOLL',
-  // The Power kinds themselves, so the worklist reads as the job it is rather
-  // than as five loose verbs.
-  'ON_PLAY', 'ON_KO', 'ON_OPP_RETREAT',
 ]);
 
 console.log('\nAI verb coverage');
@@ -400,47 +386,13 @@ console.log('\nAI verb coverage');
     // scorePower to weigh. This check going red is what said so.
     'ENERGY_AS',
   ]);
-
-  // TRIGGERED POWERS (Job 10c). Also never seen by scorePower, and it would be
-  // easy to file them under PASSIVE_POWERS above and move on. They are a
-  // separate list because the REASON is different, and the reason is the whole
-  // content of both lists.
-  //
-  // A passive Power is invisible to the AI because there is nothing to decide:
-  // it is consulted, it changes a number, and no player ever reaches for it.
-  // A TRIGGERED Power is invisible to scorePower because it is not an action —
-  // but there IS a decision, and it is somewhere else entirely. ON_PLAY is
-  // decided when the bot chooses to play the card; ON_OPP_RETREAT is decided
-  // when it chooses to retreat into one.
-  //
-  // So filing these as passive would assert something false: that no decision
-  // depends on them. What each one is actually scored by is named here, and
-  // the P_ verbs underneath are on PROVISIONAL because none of it is measured.
-  const TRIGGERED_POWERS = new Set([
-    'ON_PLAY',          // scoreOnPlay, reached from the evolve and playBasic cases
-    'ON_OPP_RETREAT',   // the retreat case in scoreAction prices the toll
-    // ON_KO is the honest gap. Final Beam should make the bot think twice about
-    // which Pokemon it finishes and with what, and nothing reads it — the
-    // forecast has no term for what dying does back to you. AI.md's open list.
-    'ON_KO',
-  ]);
   const kinds = new Set([...effSrc.matchAll(/\bkind:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
-  const blindKinds = [...kinds].filter(k => !handled.has(k)
-    && !PASSIVE_POWERS.has(k) && !TRIGGERED_POWERS.has(k)).sort();
+  const blindKinds = [...kinds].filter(k => !handled.has(k) && !PASSIVE_POWERS.has(k)).sort();
   check(blindKinds.length === 0, 'every interactive Power kind is scored by ai.js',
     blindKinds.join(', '));
   const notPassive = [...PASSIVE_POWERS].filter(k => handled.has(k)).sort();
   check(notPassive.length === 0, 'nothing on PASSIVE_POWERS is secretly being scored',
     notPassive.join(', '));
-  // The same claim for triggers, and it can go red the same way: a `case
-  // 'ON_PLAY'` appearing in scorePower would mean somebody had started offering
-  // a triggered Power as an action, which is a different card.
-  const notTrig = [...TRIGGERED_POWERS].filter(k => handled.has(k)).sort();
-  check(notTrig.length === 0, 'nothing on TRIGGERED_POWERS is offered as an action',
-    notTrig.join(', '));
-  const goneTrig = [...TRIGGERED_POWERS].filter(k => !kinds.has(k)).sort();
-  check(goneTrig.length === 0, 'nothing on TRIGGERED_POWERS has left effects.js',
-    goneTrig.join(', '));
 
   const blind = [...used].filter(v => !handled.has(v) && !UNSCORED_ON_PURPOSE.has(v)).sort();
   const stale = [...UNSCORED_ON_PURPOSE].filter(v => !used.has(v)).sort();
