@@ -160,6 +160,25 @@ function trainerEntry(c) {
 const unresolvedEnergy = [];
 function energyProvides(c) {
   if (c.name === 'Double Colorless Energy') return 'CC';
+  // RAINBOW IS THE ONE CARD THAT BREAKS THE STRING. Job 10d.
+  //
+  // `provides` is a string of symbols — 'W' is one Water, 'CC' is two Colorless.
+  // Rainbow provides ONE symbol that is EVERY TYPE AT ONCE, which no string of
+  // letters can say. So it gets a sentinel: '*' is one symbol matching any type.
+  //
+  // The alternative was "choose a type on attachment", and the ruling forbids it
+  // in as many words: Rainbow is genuinely Water AND Fighting AND Psychic
+  // simultaneously, so it can be the spare Water for one attack and the spare
+  // Fire for another in the same turn. Nothing chooses, so nothing has to
+  // remember what was chosen. See Rulings/ENERGY-VS-ENERGY-CARD.md.
+  //
+  // The name check is deliberate rather than reading subtypes: Metal, Darkness
+  // and Recycle Energy are all Special too and none of them is a wildcard.
+  if (c.name === 'Rainbow Energy') return '*';
+  // Full Heal and Potion Energy print "provides Colorless energy" outright. They
+  // are Special by class, which is what keeps them out of the basic-only checks,
+  // but their symbol is an ordinary one.
+  if (c.name === 'Full Heal Energy' || c.name === 'Potion Energy') return 'C';
   const m = c.name.match(/^(\w+) Energy$/);
   if (m && T[m[1]]) return T[m[1]];
   unresolvedEnergy.push(`${c.id} ${c.name}`);

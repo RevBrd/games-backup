@@ -95,6 +95,22 @@ function aiParseDamage(d) {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+// Local copy of engine.js's energyIsType, for the same reason aiParseDamage is
+// local: ai.js is concatenated BEFORE engine.js in the bundle.
+//
+// RAINBOW ENERGY IS WHY THIS EXISTS. Its `provides` is the sentinel '*' — one
+// symbol, every type at once — and six places in this file used to compare
+// `provides` to a type letter directly. Every one of them would have answered
+// "no, that is not a Water Energy" about a card that is, and the worst of them
+// filed Rainbows as the junkiest card in hand and threw them away.
+const AI_WILD = '*';
+function aiEnergyIsType(db, inst, t) {
+  if (!t) return true;
+  const c = db[inst && inst.id !== undefined ? inst.id : inst];
+  if (!c || c.kind !== 'energy') return false;
+  return c.provides === AI_WILD || c.provides === t;
+}
+
 const STATUS_VALUE = { Paralyzed: 'paralyze', Asleep: 'sleep', Confused: 'confuse', Poisoned: 'poison' };
 
 // ============================================================================
@@ -390,7 +406,7 @@ class AI {
           // Energy of type t attached, minus what this attack's own cost eats.
           const need = (atk.cost || '').split('').filter(x => x === v.t).length;
           const have = atkSlot.energy.filter(e =>
-            this.db[e.id] && this.db[e.id].provides === v.t).length;
+            aiEnergyIsType(this.db, e, v.t)).length;
           split(() => [[1, v.base + v.per * Math.max(0, have - need)]]);
           break;
         }
@@ -628,8 +644,7 @@ class AI {
           && this.E.powerUsable(you.active)) {
         for (const v of (dyingPower.do || [])) {
           if (!(v.v === 'P_REVENGE')) continue;
-          const fuel = you.active.energy.filter(e => !v.t
-            || (this.db[e.id] && this.db[e.id].provides) === v.t).length;
+          const fuel = you.active.energy.filter(e => aiEnergyIsType(this.db, e, v.t)).length;
           let back = v.per * fuel;
           if (v.wr) {
             const mine = this.top(atkSlot);
@@ -779,13 +794,13 @@ class AI {
     // rather than being a flat number.
     if (f.flags.selfCharge !== undefined && f.flags.selfCharge !== null) {
       const t = f.flags.selfCharge;
-      const has = atkSlot.energy.filter(e => {
-        const c = this.db[e.id];
-        return c && c.kind === 'energy' && c.cls === 'Basic' && c.provides === t;
-      }).length;
+      const has = atkSlot.energy.filter(e => aiEnergyIsType(this.db, e, t)).length;
       const wants = Math.max(0, ...(this.top(atkSlot).attacks || [])
         .map(at => String(at.cost || '').split('').filter(ch => ch === t).length));
       const short = Math.max(0, wants - has);
+      // The DECK, not the board — and Afternoon Nap searches for an Energy
+      // CARD, so a Rainbow does not qualify there. isBasicEnergyOf's `inPlay`
+      // half, expressed the only way this file can express it.
       const inDeck = me.deck.some(x => {
         const c = this.db[x.id];
         return c && c.kind === 'energy' && c.cls === 'Basic' && c.provides === t;
@@ -922,7 +937,7 @@ class AI {
     // they are close to decking out, and a cost the rest of the time.
     if (f.flags.wildfire) {
       const fire = atkSlot.energy.filter(e => {
-        const c2 = this.db[e.id]; return c2 && c2.provides === 'R';
+        const c2 = this.db[e.id]; return aiEnergyIsType(this.db, e, 'R');
       }).length;
       s += you.deck.length <= 12 ? fire * 9 : -fire * W.energyDiscard * 0.4;
     }
@@ -1161,6 +1176,14 @@ class AI {
       } else if (v.v === 'E_HEAL') {
         const h = Math.min(v.n || 10, slot.dmg);
         s += (h / 10) * W.healPer10;
+      } else if (v.v === 'E_SELF_DAMAGE') {
+        // Rainbow Energy costs 10 damage to attach, AND IT CAN KILL. The second
+        // half is not a rounding error on the first: a Rainbow onto something on
+        // its last 10 is a free Prize for the opponent, and nothing else in this
+        // function can express "never do this".
+        const n = v.n || 10;
+        if (this.remainingHP(slot) <= n) return -Infinity;
+        s -= (n / 10) * W.selfDamage;
       }
     }
     return s;
@@ -1214,7 +1237,13 @@ class AI {
     for (const atk of (this.top(slot).attacks || [])) {
       for (const ch of (atk.cost || '').split('')) if (ch !== 'C') typedNeed.add(ch);
     }
-    if (gives.some(x => x !== 'C' && typedNeed.has(x))) s += W.attachOnType;
+    // A Rainbow pays ANY typed symbol, so it earns this bonus whenever the
+    // Pokemon needs a typed symbol at all — which is the correct answer and is
+    // also what makes it the best card in the deck for a two-colour attacker.
+    const onType = gives.includes(AI_WILD)
+      ? typedNeed.size > 0
+      : gives.some(x => x !== 'C' && typedNeed.has(x));
+    if (onType) s += W.attachOnType;
     return s;
   }
 
@@ -1525,7 +1554,8 @@ class AI {
         const to = E.allSlots(pi).find(x => x.uid === a.to);
         if (!from || !to) return -Infinity;
         const def = E.powerOf(E.allSlots(pi).find(x => x.uid === a.uid)) || {};
-        const k = from.energy.findIndex(e => E.isBasicEnergyOf(e, def.energy));
+        // In play — the Energy is already attached. See isBasicEnergyOf.
+        const k = from.energy.findIndex(e => E.isBasicEnergyOf(e, def.energy, true));
         if (k === -1) return -Infinity;
 
         const before = this.teamReadiness(pi);
@@ -2025,7 +2055,12 @@ class AI {
       const c = this.db[inst.id];
       let junk;
       if (!c) junk = 1;
-      else if (c.kind === 'energy') junk = need.has(c.provides) ? 0.15 : 0.9;
+      // A Rainbow is wanted by anything that wants a typed symbol at all, and
+      // the first draft of this line filed it at 0.9 — the junkiest thing in
+      // hand — because '*' is in no needs set.
+      else if (c.kind === 'energy') {
+        junk = (c.provides === AI_WILD ? need.size > 0 : need.has(c.provides)) ? 0.15 : 0.9;
+      }
       else if (c.kind === 'trainer') junk = 0.4;
       else if (c.stage === 'Basic') junk = me.bench.length >= 4 ? 0.7 : 0.2;
       else {
@@ -2456,7 +2491,8 @@ class AI {
       (c.attacks || []).forEach(a => a.cost.split('').forEach(t => { if (t !== 'C') need.add(t); }));
       for (const inst of me.deck) {
         const e = this.db[inst.id];
-        if (e.kind === 'energy' && need.has(e.provides)) return inst.uid;
+        if (e.kind === 'energy' && (e.provides === AI_WILD ? need.size > 0 : need.has(e.provides)))
+          return inst.uid;
       }
     }
     // 3) any Basic Pokemon

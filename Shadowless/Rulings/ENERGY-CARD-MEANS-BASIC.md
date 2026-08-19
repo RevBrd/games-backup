@@ -6,6 +6,12 @@ wrong, never condense it.** See [MAINTENANCE.md](../MAINTENANCE.md).
 
 ---
 
+> **CORRECTED 19 Aug 2026 — read [RAINBOW-IN-PLAY.md](RAINBOW-IN-PLAY.md) alongside this.** The
+> paragraph below says Rainbow Energy would "otherwise become movable by Energy Trans and attachable
+> by Rain Dance", and treats both as things to prevent. Only the second is. Rainbow's printed text
+> says it does not count as a basic Energy card **when not in play** — so while attached it does, and
+> Energy Trans can move it. Everything else here stands.
+
 **Settled 5 Aug 2026.** Rain Dance says "1 Water Energy card", Energy Trans says "1 Grass Energy
 card". Both are read as **basic** Energy of that type, matching the WotC rulings.
 

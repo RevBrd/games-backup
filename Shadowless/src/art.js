@@ -13,8 +13,13 @@
 
 // Type colours. Two sets: BRIGHT for dark surfaces, INK for pale card stock.
 const ENERGY_COLOR = { G: '#6FAE5A', R: '#D4603C', W: '#4E9BC4', L: '#D9BB47', P: '#9269A8', F: '#B07248', C: '#AAB2BB', D: '#5A6672', M: '#8A94A0' };
-const ENERGY_INK   = { G: '#4A7C3A', R: '#B44A2A', W: '#2F7CA6', L: '#9A7C12', P: '#6F4C86', F: '#8C5430', C: '#6E7780', D: '#414B56', M: '#69737E' };
-const ENERGY_NAME  = { G: 'Grass', R: 'Fire', W: 'Water', L: 'Lightning', P: 'Psychic', F: 'Fighting', C: 'Colorless', D: 'Darkness', M: 'Metal' };
+// '*' is Rainbow Energy — one symbol that is every type at once. It gets an ink
+// of its own rather than falling through to Colorless, because a Rainbow pip
+// that looks exactly like a Double Colorless pip is a board telling the player
+// something false about what their Pokemon can pay for. Blue-violet, which is
+// in none of the nine type inks.
+const ENERGY_INK   = { G: '#4A7C3A', R: '#B44A2A', W: '#2F7CA6', L: '#9A7C12', P: '#6F4C86', F: '#8C5430', C: '#6E7780', D: '#414B56', M: '#69737E', '*': '#7C5CC4' };
+const ENERGY_NAME  = { G: 'Grass', R: 'Fire', W: 'Water', L: 'Lightning', P: 'Psychic', F: 'Fighting', C: 'Colorless', D: 'Darkness', M: 'Metal', '*': 'Any' };
 
 // FNV-1a, then a murmur3 finalizer. The finalizer is not optional: raw FNV-1a
 // mixes its LOW bits poorly, and every parameter below is derived with `% n`,

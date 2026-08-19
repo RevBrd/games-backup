@@ -307,6 +307,11 @@
 //                                  "If it has any" — an undamaged Pokemon is a
 //                                  legal target and simply gets nothing
 //                                  (Potion Energy)
+//     E_SELF_DAMAGE {n}            n damage to the Pokemon it lands on, never
+//                                  W/R. IT CAN KNOCK THAT POKEMON OUT and hand
+//                                  the opponent a Prize — the Buzzap principle,
+//                                  and doAttach calls checkKOs for it
+//                                  (Rainbow Energy)
 //
 //   TRAINERS — `t` rather than `a`. Each is one whole card; the legality check and
 //   the effect live in two switches in engine.js and BOTH must gain a case:
@@ -1503,9 +1508,12 @@ const EFFECTS = {
   // Energy of any particular type: both provide plain Colorless and both stay
   // attached afterwards as ordinary Energy.
   //
-  // Rainbow Energy is NOT here yet. Its representation is a real question and so
-  // is whether Energy Trans can move it — see Rulings/ENERGY-VS-ENERGY-CARD.md.
+  // RAINBOW ENERGY IS THE ONE CARD THAT BREAKS `provides`. It is one symbol that
+  // is every type at once, written as the sentinel '*' — see engine.js, where
+  // three separate questions read it and they do NOT all answer the same way.
+  // Its 10 damage can Knock Out the Pokemon it lands on.
 
+  'base5-17': { t: [{ v: 'E_SELF_DAMAGE', n: 10 }] },// Rainbow Energy
   'base5-81': { t: [{ v: 'E_CLEAR_STATUS' }] },      // Full Heal Energy
   'base5-82': { t: [{ v: 'E_HEAL', n: 10 }] },       // Potion Energy
 

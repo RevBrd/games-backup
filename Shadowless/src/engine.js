@@ -58,6 +58,19 @@ function parseDamage(d) {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+// ONE SYMBOL, EVERY TYPE. The sentinel Rainbow Energy provides, and the reason
+// it is a sentinel rather than a longer string: `provides` says both HOW MANY
+// symbols and WHICH types, and Rainbow is one symbol whose type is "all of
+// them". 'WFPLGR' would be six symbols, which is a different and absurd card.
+//
+// Three questions read it and THEY DO NOT ALL ANSWER THE SAME WAY, which is the
+// whole subtlety of this card:
+//   costSatisfied()    pays for any one symbol of any type          — yes
+//   energyIsType()     counts toward "for each <type> Energy"       — yes
+//   isBasicEnergyOf()  is it a basic <type> Energy CARD             — ONLY IN PLAY
+// See Rulings/ENERGY-VS-ENERGY-CARD.md.
+const WILD = '*';
+
 function energyProvides(db, inst) {
   // A card can BE an Energy card without being one in the card data: Electrode's
   // Buzzap turns the Electrode itself into one. `asEnergy` is that override, set
@@ -97,7 +110,13 @@ function symbolCount(db, list) {
 // is a card quietly scaling wrong, with every suite green.
 function energyIsType(db, inst, type) {
   if (!type) return true;
-  return energyProvides(db, inst) === type;
+  const p = energyProvides(db, inst);
+  // Rainbow. It IS every type, simultaneously, rather than a wildcard that
+  // resolves to one when asked — so the same card is a spare Water for
+  // Hydrocannon and a spare Fire for a Fire-scaling attack in the same turn,
+  // and nothing has to remember a choice because none was made.
+  if (p === WILD) return true;
+  return p === type;
 }
 
 // ============================================================================
@@ -1272,13 +1291,31 @@ class Engine {
     return out;
   }
 
-  // "1 Water Energy card" and the like mean a BASIC one. In Base Set the type
-  // check alone would do, since Double Colorless is Colorless — but Rainbow
-  // Energy counts as every type, so the class check is what keeps this honest
-  // once Base Set 2 lands.
-  isBasicEnergyOf(inst, type) {
+  // "1 Water Energy card" and the like mean a BASIC one, matching the WotC
+  // rulings — see Rulings/ENERGY-CARD-MEANS-BASIC.md.
+  //
+  // `inPlay` IS THE HALF THAT ARRIVED WITH RAINBOW, and it is printed on the
+  // card in as many words: "(Doesn't count as a basic Energy card WHEN NOT IN
+  // PLAY.)" That parenthetical exists to distinguish two zones, so it must:
+  //
+  //   Energy Trans moves an ATTACHED Energy      -> in play  -> a Rainbow qualifies
+  //   Rain Dance attaches one FROM YOUR HAND     -> not in play -> it does not
+  //   Afternoon Nap searches the DECK            -> not in play -> it does not
+  //
+  // Trevor settled the first line, 19 Aug 2026, against WotC's own rules — and
+  // his phrasing carries the second for free: "when it's on a Pokemon, it's
+  // whatever that Pokemon needs it to be". A card in your hand is not on a
+  // Pokemon. Two rulings written before this card existed said Rainbow was never
+  // a basic Energy card; both are corrected.
+  //
+  // DEFAULT FALSE, because "not in play" is three zones (hand, deck, discard)
+  // and "in play" is one. A new call site that forgets the flag gets the
+  // conservative answer rather than silently widening a card.
+  isBasicEnergyOf(inst, type, inPlay) {
     const c = this.db[inst.id];
-    return !!c && c.kind === 'energy' && c.cls === 'Basic' && c.provides === type;
+    if (!c || c.kind !== 'energy') return false;
+    if (inPlay && c.provides === WILD) return true;
+    return c.cls === 'Basic' && c.provides === type;
   }
 
   // One action per legal (source, target) pair, so the AI scores Powers with the
@@ -1431,7 +1468,7 @@ class Engine {
           const froms = this.allSlots(pi).filter(x => p.toSelf ? x !== slot : true);
           const tos = p.toSelf ? [slot] : this.allSlots(pi);
           for (const from of froms) {
-            if (!from.energy.some(e => this.isBasicEnergyOf(e, p.energy))) continue;
+            if (!from.energy.some(e => this.isBasicEnergyOf(e, p.energy, true))) continue;
             for (const to of tos) {
               if (to === from) continue;
               acts.push({
@@ -1658,7 +1695,7 @@ class Engine {
         const from = this.findSlot(pi, a.from), to = p.toSelf ? slot : this.findSlot(pi, a.to);
         if (!from || !to) return this.fail('No such Pokemon');
         if (from === to) return this.fail('Pick two different Pokemon');
-        const k = from.energy.findIndex(e => this.isBasicEnergyOf(e, p.energy));
+        const k = from.energy.findIndex(e => this.isBasicEnergyOf(e, p.energy, true));
         if (k === -1) return this.fail(`${this.nameOf(from)} has no ${p.energy} Energy to move`);
         const moved = from.energy.splice(k, 1)[0];
         to.energy.push(moved);
@@ -1794,7 +1831,14 @@ class Engine {
     const generic = cost.length - need.length;
     const used = new Array(pool.length).fill(false);
     for (const t of need) {
-      const k = pool.findIndex((p, i) => !used[i] && p === t);
+      // EXACT MATCHES FIRST, WILDCARDS ONLY WHEN NOTHING ELSE FITS, and the order
+      // of these two lines is load-bearing. A Rainbow plus a Water paying "WR"
+      // fails if the W need greedily eats the Rainbow: the R then has only a
+      // real Water left. Spending a universal substitute while a specific one is
+      // available is never right, which makes exact-first optimal here rather
+      // than merely better.
+      let k = pool.findIndex((p, i) => !used[i] && p === t);
+      if (k === -1) k = pool.findIndex((p, i) => !used[i] && p === WILD);
       if (k === -1) return false;
       used[k] = true;
     }
@@ -2062,6 +2106,23 @@ class Engine {
           this.log(`Potion Energy: ${h} damage removed from ${this.nameOf(slot)}.`, 'eff');
           break;
         }
+        case 'E_SELF_DAMAGE':
+          // Rainbow Energy. "When you attach this card from your hand to 1 of
+          // your Pokemon, it does 10 damage to that Pokemon. (Don't apply
+          // Weakness and Resistance.)"
+          //
+          // AND IT CAN KILL. Settled with Trevor 19 Aug 2026: attaching a
+          // Rainbow to something on its last 10 Knocks it Out and the opponent
+          // takes a Prize, which is the Buzzap principle — a Knock Out is a
+          // Knock Out even when you did it to yourself. doAttach calls checkKOs
+          // straight after this for exactly that reason.
+          //
+          // Not an attack, so no Retaliate and no Mirror Shell, and there is no
+          // attacker to aim them at anyway. Applied directly rather than through
+          // dealDamage because dealDamage needs an attacking slot.
+          slot.dmg += v.n || 10;
+          this.log(`Rainbow Energy does ${v.n || 10} damage to ${this.nameOf(slot)}.`, 'eff');
+          break;
         default:
           throw new Error(`Unimplemented Energy verb ${v.v}`);
       }

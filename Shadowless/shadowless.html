@@ -1763,7 +1763,7 @@ const CARD_DB = {
   "base5-14": {"id":"base5-14","name":"Dark Weezing","set":"base5","num":"14","rarity":"Rare Holo","artist":"Shin-ichi Yoshida","kind":"pokemon","stage":"Stage 1","hp":60,"type":"G","evolvesFrom":"Koffing","wkType":"P","wkVal":"x2","rsType":"","rsVal":"","retreat":1,"attacks":[{"name":"Mass Explosion","cost":"GC","dmg":"20×","text":"Does 20 damage times the total number of Koffings, Weezings, and Dark Weezings in play (Apply Weakness and Resistance.). Then, this attack does 20 damage to each Koffing, Weezing, and Dark Weezing (even your own). Don't apply Weakness and Resistance."},{"name":"Stun Gas","cost":"GGG","dmg":"20","text":"Flip a coin. If heads, the Defending Pokémon is now Poisoned; if tails, the Defending Pokémon is now Paralyzed."}],"power":null,"dex":110,"flavor":"Researchers have observed these Pokémon reproducing in industrial waste sites."},
   "base5-15": {"id":"base5-15","name":"Here Comes Team Rocket!","set":"base5","num":"15","rarity":"Rare Holo","artist":"Ken Sugimori","kind":"trainer","sub":"Trainer","text":"Each player plays with his or her Prize cards face up for the rest of the game."},
   "base5-16": {"id":"base5-16","name":"Rocket's Sneak Attack","set":"base5","num":"16","rarity":"Rare Holo","artist":"Ken Sugimori","kind":"trainer","sub":"Trainer","text":"Look at your opponent's hand. If he or she has any Trainer cards, choose 1 of them. Your opponent shuffles that card into his or her deck."},
-  "base5-17": {"id":"base5-17","name":"Rainbow Energy","set":"base5","num":"17","rarity":"Rare Holo","artist":"Takumi Akabane","kind":"energy","cls":"Special","provides":"","text":"Attach Rainbow Energy to 1 of your Pokémon. While in play, Rainbow Energy counts as every type of basic Energy but only provides 1 Energy at a time. (Doesn't count as a basic Energy card when not in play.) When you attach this card from your hand to 1 of your Pokémon, it does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.)"},
+  "base5-17": {"id":"base5-17","name":"Rainbow Energy","set":"base5","num":"17","rarity":"Rare Holo","artist":"Takumi Akabane","kind":"energy","cls":"Special","provides":"*","text":"Attach Rainbow Energy to 1 of your Pokémon. While in play, Rainbow Energy counts as every type of basic Energy but only provides 1 Energy at a time. (Doesn't count as a basic Energy card when not in play.) When you attach this card from your hand to 1 of your Pokémon, it does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.)"},
   "base5-18": {"id":"base5-18","name":"Dark Alakazam","set":"base5","num":"18","rarity":"Rare","artist":"Ken Sugimori","kind":"pokemon","stage":"Stage 2","hp":60,"type":"P","evolvesFrom":"Dark Kadabra","wkType":"P","wkVal":"x2","rsType":"","rsVal":"","retreat":3,"attacks":[{"name":"Teleport Blast","cost":"PPC","dmg":"30","text":"You may switch Dark Alakazam with 1 of your Benched Pokémon. (Do the damage before switching the Pokémon.)"},{"name":"Mind Shock","cost":"PPP","dmg":"40","text":"Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"}],"power":null,"dex":65,"flavor":"Almost as if it were being controlled by something else, it never changes expressions, even in the middle of battle."},
   "base5-19": {"id":"base5-19","name":"Dark Arbok","set":"base5","num":"19","rarity":"Rare","artist":"Mitsuhiro Arita","kind":"pokemon","stage":"Stage 1","hp":60,"type":"G","evolvesFrom":"Ekans","wkType":"P","wkVal":"x2","rsType":"","rsVal":"","retreat":2,"attacks":[{"name":"Stare","cost":"GG","dmg":"","text":"Choose 1 of your opponent's Pokémon. This attack does 10 damage to that Pokémon. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.) If that Pokémon has a Pokémon Power, that power stops working until the end of your opponent's next turn."},{"name":"Poison Vapor","cost":"GGG","dmg":"10","text":"The Defending Pokémon is now Poisoned. This attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"}],"power":null,"dex":24,"flavor":"Freezes its prey with its stare. If you should encounter one, remember not to look into its eyes."},
   "base5-20": {"id":"base5-20","name":"Dark Blastoise","set":"base5","num":"20","rarity":"Rare","artist":"Mitsuhiro Arita","kind":"pokemon","stage":"Stage 2","hp":70,"type":"W","evolvesFrom":"Dark Wartortle","wkType":"L","wkVal":"x2","rsType":"","rsVal":"","retreat":2,"attacks":[{"name":"Hydrocannon","cost":"WW","dmg":"30+","text":"Does 30 damage plus 20 more damage for each Water Energy attached to Dark Blastoise but not used to pay for this attack. You can't add more than 40 damage in this way."},{"name":"Rocket Tackle","cost":"WCC","dmg":"40","text":"Dark Blastoise does 10 damage to itself. Flip a coin. If heads, prevent all damage done to Dark Blastoise during your opponent's next turn. (Any other effects of attacks still happen.)"}],"power":null,"dex":9,"flavor":"An aggressive Pokémon that tackles anything it sees."},
@@ -1826,9 +1826,9 @@ const CARD_DB = {
   "base5-77": {"id":"base5-77","name":"Nightly Garbage Run","set":"base5","num":"77","rarity":"Uncommon","artist":"Sumiyoshi Kizuki","kind":"trainer","sub":"Rocket's Secret Machine","text":"Choose up to 3 Basic Pokémon cards, Evolution cards, and/or basic Energy cards from your discard pile. Show them to your opponent and shuffle them into your deck."},
   "base5-78": {"id":"base5-78","name":"Goop Gas Attack","set":"base5","num":"78","rarity":"Common","artist":"Sumiyoshi Kizuki","kind":"trainer","sub":"Trainer","text":"All Pokémon Powers stop working until the end of your opponent's next turn."},
   "base5-79": {"id":"base5-79","name":"Sleep!","set":"base5","num":"79","rarity":"Common","artist":"Sumiyoshi Kizuki","kind":"trainer","sub":"Rocket's Secret Machine","text":"Flip a coin. If heads, the Defending Pokémon is now Asleep."},
-  "base5-80": {"id":"base5-80","name":"Rainbow Energy","set":"base5","num":"80","rarity":"Rare","artist":"Takumi Akabane","kind":"energy","cls":"Special","provides":"","text":"Attach Rainbow Energy to 1 of your Pokémon. While in play, Rainbow Energy counts as every type of basic Energy but only provides 1 Energy at a time. (Doesn't count as a basic Energy card when not in play.) When you attach this card from your hand to 1 of your Pokémon, it does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.)"},
-  "base5-81": {"id":"base5-81","name":"Full Heal Energy","set":"base5","num":"81","rarity":"Uncommon","artist":"Keiji Kinebuchi","kind":"energy","cls":"Special","provides":"","text":"If you play this card from your hand, the Pokémon you attach it to is no longer Asleep, Confused, Paralyzed, or Poisoned.\nFull Heal Energy provides Colorless energy. (Doesn't count as a basic Energy card.)"},
-  "base5-82": {"id":"base5-82","name":"Potion Energy","set":"base5","num":"82","rarity":"Uncommon","artist":"Keiji Kinebuchi","kind":"energy","cls":"Special","provides":"","text":"If you play this card from your hand, remove 1 damage counter from the Pokémon you attach it to, if it has any.\nPotion Energy provides Colorless energy. (Doesn't count as a basic Energy card.)"},
+  "base5-80": {"id":"base5-80","name":"Rainbow Energy","set":"base5","num":"80","rarity":"Rare","artist":"Takumi Akabane","kind":"energy","cls":"Special","provides":"*","text":"Attach Rainbow Energy to 1 of your Pokémon. While in play, Rainbow Energy counts as every type of basic Energy but only provides 1 Energy at a time. (Doesn't count as a basic Energy card when not in play.) When you attach this card from your hand to 1 of your Pokémon, it does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.)"},
+  "base5-81": {"id":"base5-81","name":"Full Heal Energy","set":"base5","num":"81","rarity":"Uncommon","artist":"Keiji Kinebuchi","kind":"energy","cls":"Special","provides":"C","text":"If you play this card from your hand, the Pokémon you attach it to is no longer Asleep, Confused, Paralyzed, or Poisoned.\nFull Heal Energy provides Colorless energy. (Doesn't count as a basic Energy card.)"},
+  "base5-82": {"id":"base5-82","name":"Potion Energy","set":"base5","num":"82","rarity":"Uncommon","artist":"Keiji Kinebuchi","kind":"energy","cls":"Special","provides":"C","text":"If you play this card from your hand, remove 1 damage counter from the Pokémon you attach it to, if it has any.\nPotion Energy provides Colorless energy. (Doesn't count as a basic Energy card.)"},
   "base5-83": {"id":"base5-83","name":"Dark Raichu","set":"base5","num":"83","rarity":"Rare Secret","artist":"Mitsuhiro Arita","kind":"pokemon","stage":"Stage 1","hp":70,"type":"L","evolvesFrom":"Pikachu","wkType":"F","wkVal":"x2","rsType":"","rsVal":"","retreat":1,"attacks":[{"name":"Surprise Thunder","cost":"LLL","dmg":"30","text":"Flip a coin. If heads, flip another coin. If the second coin is heads, this attack does 20 damage to each of your opponent's Benched Pokémon. If the second coin is tails, this attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"}],"power":null,"dex":26,"flavor":"Stores up electricity in its body, then suddenly releases it to surprise and shock everyone."},
 };
 
@@ -2765,6 +2765,11 @@ const SET_INFO = {
 //                                  "If it has any" — an undamaged Pokemon is a
 //                                  legal target and simply gets nothing
 //                                  (Potion Energy)
+//     E_SELF_DAMAGE {n}            n damage to the Pokemon it lands on, never
+//                                  W/R. IT CAN KNOCK THAT POKEMON OUT and hand
+//                                  the opponent a Prize — the Buzzap principle,
+//                                  and doAttach calls checkKOs for it
+//                                  (Rainbow Energy)
 //
 //   TRAINERS — `t` rather than `a`. Each is one whole card; the legality check and
 //   the effect live in two switches in engine.js and BOTH must gain a case:
@@ -3961,9 +3966,12 @@ const EFFECTS = {
   // Energy of any particular type: both provide plain Colorless and both stay
   // attached afterwards as ordinary Energy.
   //
-  // Rainbow Energy is NOT here yet. Its representation is a real question and so
-  // is whether Energy Trans can move it — see Rulings/ENERGY-VS-ENERGY-CARD.md.
+  // RAINBOW ENERGY IS THE ONE CARD THAT BREAKS `provides`. It is one symbol that
+  // is every type at once, written as the sentinel '*' — see engine.js, where
+  // three separate questions read it and they do NOT all answer the same way.
+  // Its 10 damage can Knock Out the Pokemon it lands on.
 
+  'base5-17': { t: [{ v: 'E_SELF_DAMAGE', n: 10 }] },// Rainbow Energy
   'base5-81': { t: [{ v: 'E_CLEAR_STATUS' }] },      // Full Heal Energy
   'base5-82': { t: [{ v: 'E_HEAL', n: 10 }] },       // Potion Energy
 
@@ -4282,8 +4290,13 @@ for (const dup in EFFECT_ALIASES) {
 
 // Type colours. Two sets: BRIGHT for dark surfaces, INK for pale card stock.
 const ENERGY_COLOR = { G: '#6FAE5A', R: '#D4603C', W: '#4E9BC4', L: '#D9BB47', P: '#9269A8', F: '#B07248', C: '#AAB2BB', D: '#5A6672', M: '#8A94A0' };
-const ENERGY_INK   = { G: '#4A7C3A', R: '#B44A2A', W: '#2F7CA6', L: '#9A7C12', P: '#6F4C86', F: '#8C5430', C: '#6E7780', D: '#414B56', M: '#69737E' };
-const ENERGY_NAME  = { G: 'Grass', R: 'Fire', W: 'Water', L: 'Lightning', P: 'Psychic', F: 'Fighting', C: 'Colorless', D: 'Darkness', M: 'Metal' };
+// '*' is Rainbow Energy — one symbol that is every type at once. It gets an ink
+// of its own rather than falling through to Colorless, because a Rainbow pip
+// that looks exactly like a Double Colorless pip is a board telling the player
+// something false about what their Pokemon can pay for. Blue-violet, which is
+// in none of the nine type inks.
+const ENERGY_INK   = { G: '#4A7C3A', R: '#B44A2A', W: '#2F7CA6', L: '#9A7C12', P: '#6F4C86', F: '#8C5430', C: '#6E7780', D: '#414B56', M: '#69737E', '*': '#7C5CC4' };
+const ENERGY_NAME  = { G: 'Grass', R: 'Fire', W: 'Water', L: 'Lightning', P: 'Psychic', F: 'Fighting', C: 'Colorless', D: 'Darkness', M: 'Metal', '*': 'Any' };
 
 // FNV-1a, then a murmur3 finalizer. The finalizer is not optional: raw FNV-1a
 // mixes its LOW bits poorly, and every parameter below is derived with `% n`,
@@ -4692,6 +4705,22 @@ function aiParseDamage(d) {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+// Local copy of engine.js's energyIsType, for the same reason aiParseDamage is
+// local: ai.js is concatenated BEFORE engine.js in the bundle.
+//
+// RAINBOW ENERGY IS WHY THIS EXISTS. Its `provides` is the sentinel '*' — one
+// symbol, every type at once — and six places in this file used to compare
+// `provides` to a type letter directly. Every one of them would have answered
+// "no, that is not a Water Energy" about a card that is, and the worst of them
+// filed Rainbows as the junkiest card in hand and threw them away.
+const AI_WILD = '*';
+function aiEnergyIsType(db, inst, t) {
+  if (!t) return true;
+  const c = db[inst && inst.id !== undefined ? inst.id : inst];
+  if (!c || c.kind !== 'energy') return false;
+  return c.provides === AI_WILD || c.provides === t;
+}
+
 const STATUS_VALUE = { Paralyzed: 'paralyze', Asleep: 'sleep', Confused: 'confuse', Poisoned: 'poison' };
 
 // ============================================================================
@@ -4987,7 +5016,7 @@ class AI {
           // Energy of type t attached, minus what this attack's own cost eats.
           const need = (atk.cost || '').split('').filter(x => x === v.t).length;
           const have = atkSlot.energy.filter(e =>
-            this.db[e.id] && this.db[e.id].provides === v.t).length;
+            aiEnergyIsType(this.db, e, v.t)).length;
           split(() => [[1, v.base + v.per * Math.max(0, have - need)]]);
           break;
         }
@@ -5225,8 +5254,7 @@ class AI {
           && this.E.powerUsable(you.active)) {
         for (const v of (dyingPower.do || [])) {
           if (!(v.v === 'P_REVENGE')) continue;
-          const fuel = you.active.energy.filter(e => !v.t
-            || (this.db[e.id] && this.db[e.id].provides) === v.t).length;
+          const fuel = you.active.energy.filter(e => aiEnergyIsType(this.db, e, v.t)).length;
           let back = v.per * fuel;
           if (v.wr) {
             const mine = this.top(atkSlot);
@@ -5376,13 +5404,13 @@ class AI {
     // rather than being a flat number.
     if (f.flags.selfCharge !== undefined && f.flags.selfCharge !== null) {
       const t = f.flags.selfCharge;
-      const has = atkSlot.energy.filter(e => {
-        const c = this.db[e.id];
-        return c && c.kind === 'energy' && c.cls === 'Basic' && c.provides === t;
-      }).length;
+      const has = atkSlot.energy.filter(e => aiEnergyIsType(this.db, e, t)).length;
       const wants = Math.max(0, ...(this.top(atkSlot).attacks || [])
         .map(at => String(at.cost || '').split('').filter(ch => ch === t).length));
       const short = Math.max(0, wants - has);
+      // The DECK, not the board — and Afternoon Nap searches for an Energy
+      // CARD, so a Rainbow does not qualify there. isBasicEnergyOf's `inPlay`
+      // half, expressed the only way this file can express it.
       const inDeck = me.deck.some(x => {
         const c = this.db[x.id];
         return c && c.kind === 'energy' && c.cls === 'Basic' && c.provides === t;
@@ -5519,7 +5547,7 @@ class AI {
     // they are close to decking out, and a cost the rest of the time.
     if (f.flags.wildfire) {
       const fire = atkSlot.energy.filter(e => {
-        const c2 = this.db[e.id]; return c2 && c2.provides === 'R';
+        const c2 = this.db[e.id]; return aiEnergyIsType(this.db, e, 'R');
       }).length;
       s += you.deck.length <= 12 ? fire * 9 : -fire * W.energyDiscard * 0.4;
     }
@@ -5758,6 +5786,14 @@ class AI {
       } else if (v.v === 'E_HEAL') {
         const h = Math.min(v.n || 10, slot.dmg);
         s += (h / 10) * W.healPer10;
+      } else if (v.v === 'E_SELF_DAMAGE') {
+        // Rainbow Energy costs 10 damage to attach, AND IT CAN KILL. The second
+        // half is not a rounding error on the first: a Rainbow onto something on
+        // its last 10 is a free Prize for the opponent, and nothing else in this
+        // function can express "never do this".
+        const n = v.n || 10;
+        if (this.remainingHP(slot) <= n) return -Infinity;
+        s -= (n / 10) * W.selfDamage;
       }
     }
     return s;
@@ -5811,7 +5847,13 @@ class AI {
     for (const atk of (this.top(slot).attacks || [])) {
       for (const ch of (atk.cost || '').split('')) if (ch !== 'C') typedNeed.add(ch);
     }
-    if (gives.some(x => x !== 'C' && typedNeed.has(x))) s += W.attachOnType;
+    // A Rainbow pays ANY typed symbol, so it earns this bonus whenever the
+    // Pokemon needs a typed symbol at all — which is the correct answer and is
+    // also what makes it the best card in the deck for a two-colour attacker.
+    const onType = gives.includes(AI_WILD)
+      ? typedNeed.size > 0
+      : gives.some(x => x !== 'C' && typedNeed.has(x));
+    if (onType) s += W.attachOnType;
     return s;
   }
 
@@ -6122,7 +6164,8 @@ class AI {
         const to = E.allSlots(pi).find(x => x.uid === a.to);
         if (!from || !to) return -Infinity;
         const def = E.powerOf(E.allSlots(pi).find(x => x.uid === a.uid)) || {};
-        const k = from.energy.findIndex(e => E.isBasicEnergyOf(e, def.energy));
+        // In play — the Energy is already attached. See isBasicEnergyOf.
+        const k = from.energy.findIndex(e => E.isBasicEnergyOf(e, def.energy, true));
         if (k === -1) return -Infinity;
 
         const before = this.teamReadiness(pi);
@@ -6622,7 +6665,12 @@ class AI {
       const c = this.db[inst.id];
       let junk;
       if (!c) junk = 1;
-      else if (c.kind === 'energy') junk = need.has(c.provides) ? 0.15 : 0.9;
+      // A Rainbow is wanted by anything that wants a typed symbol at all, and
+      // the first draft of this line filed it at 0.9 — the junkiest thing in
+      // hand — because '*' is in no needs set.
+      else if (c.kind === 'energy') {
+        junk = (c.provides === AI_WILD ? need.size > 0 : need.has(c.provides)) ? 0.15 : 0.9;
+      }
       else if (c.kind === 'trainer') junk = 0.4;
       else if (c.stage === 'Basic') junk = me.bench.length >= 4 ? 0.7 : 0.2;
       else {
@@ -7053,7 +7101,8 @@ class AI {
       (c.attacks || []).forEach(a => a.cost.split('').forEach(t => { if (t !== 'C') need.add(t); }));
       for (const inst of me.deck) {
         const e = this.db[inst.id];
-        if (e.kind === 'energy' && need.has(e.provides)) return inst.uid;
+        if (e.kind === 'energy' && (e.provides === AI_WILD ? need.size > 0 : need.has(e.provides)))
+          return inst.uid;
       }
     }
     // 3) any Basic Pokemon
@@ -7314,6 +7363,19 @@ function parseDamage(d) {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+// ONE SYMBOL, EVERY TYPE. The sentinel Rainbow Energy provides, and the reason
+// it is a sentinel rather than a longer string: `provides` says both HOW MANY
+// symbols and WHICH types, and Rainbow is one symbol whose type is "all of
+// them". 'WFPLGR' would be six symbols, which is a different and absurd card.
+//
+// Three questions read it and THEY DO NOT ALL ANSWER THE SAME WAY, which is the
+// whole subtlety of this card:
+//   costSatisfied()    pays for any one symbol of any type          — yes
+//   energyIsType()     counts toward "for each <type> Energy"       — yes
+//   isBasicEnergyOf()  is it a basic <type> Energy CARD             — ONLY IN PLAY
+// See Rulings/ENERGY-VS-ENERGY-CARD.md.
+const WILD = '*';
+
 function energyProvides(db, inst) {
   // A card can BE an Energy card without being one in the card data: Electrode's
   // Buzzap turns the Electrode itself into one. `asEnergy` is that override, set
@@ -7353,7 +7415,13 @@ function symbolCount(db, list) {
 // is a card quietly scaling wrong, with every suite green.
 function energyIsType(db, inst, type) {
   if (!type) return true;
-  return energyProvides(db, inst) === type;
+  const p = energyProvides(db, inst);
+  // Rainbow. It IS every type, simultaneously, rather than a wildcard that
+  // resolves to one when asked — so the same card is a spare Water for
+  // Hydrocannon and a spare Fire for a Fire-scaling attack in the same turn,
+  // and nothing has to remember a choice because none was made.
+  if (p === WILD) return true;
+  return p === type;
 }
 
 // ============================================================================
@@ -8528,13 +8596,31 @@ class Engine {
     return out;
   }
 
-  // "1 Water Energy card" and the like mean a BASIC one. In Base Set the type
-  // check alone would do, since Double Colorless is Colorless — but Rainbow
-  // Energy counts as every type, so the class check is what keeps this honest
-  // once Base Set 2 lands.
-  isBasicEnergyOf(inst, type) {
+  // "1 Water Energy card" and the like mean a BASIC one, matching the WotC
+  // rulings — see Rulings/ENERGY-CARD-MEANS-BASIC.md.
+  //
+  // `inPlay` IS THE HALF THAT ARRIVED WITH RAINBOW, and it is printed on the
+  // card in as many words: "(Doesn't count as a basic Energy card WHEN NOT IN
+  // PLAY.)" That parenthetical exists to distinguish two zones, so it must:
+  //
+  //   Energy Trans moves an ATTACHED Energy      -> in play  -> a Rainbow qualifies
+  //   Rain Dance attaches one FROM YOUR HAND     -> not in play -> it does not
+  //   Afternoon Nap searches the DECK            -> not in play -> it does not
+  //
+  // Trevor settled the first line, 19 Aug 2026, against WotC's own rules — and
+  // his phrasing carries the second for free: "when it's on a Pokemon, it's
+  // whatever that Pokemon needs it to be". A card in your hand is not on a
+  // Pokemon. Two rulings written before this card existed said Rainbow was never
+  // a basic Energy card; both are corrected.
+  //
+  // DEFAULT FALSE, because "not in play" is three zones (hand, deck, discard)
+  // and "in play" is one. A new call site that forgets the flag gets the
+  // conservative answer rather than silently widening a card.
+  isBasicEnergyOf(inst, type, inPlay) {
     const c = this.db[inst.id];
-    return !!c && c.kind === 'energy' && c.cls === 'Basic' && c.provides === type;
+    if (!c || c.kind !== 'energy') return false;
+    if (inPlay && c.provides === WILD) return true;
+    return c.cls === 'Basic' && c.provides === type;
   }
 
   // One action per legal (source, target) pair, so the AI scores Powers with the
@@ -8687,7 +8773,7 @@ class Engine {
           const froms = this.allSlots(pi).filter(x => p.toSelf ? x !== slot : true);
           const tos = p.toSelf ? [slot] : this.allSlots(pi);
           for (const from of froms) {
-            if (!from.energy.some(e => this.isBasicEnergyOf(e, p.energy))) continue;
+            if (!from.energy.some(e => this.isBasicEnergyOf(e, p.energy, true))) continue;
             for (const to of tos) {
               if (to === from) continue;
               acts.push({
@@ -8914,7 +9000,7 @@ class Engine {
         const from = this.findSlot(pi, a.from), to = p.toSelf ? slot : this.findSlot(pi, a.to);
         if (!from || !to) return this.fail('No such Pokemon');
         if (from === to) return this.fail('Pick two different Pokemon');
-        const k = from.energy.findIndex(e => this.isBasicEnergyOf(e, p.energy));
+        const k = from.energy.findIndex(e => this.isBasicEnergyOf(e, p.energy, true));
         if (k === -1) return this.fail(`${this.nameOf(from)} has no ${p.energy} Energy to move`);
         const moved = from.energy.splice(k, 1)[0];
         to.energy.push(moved);
@@ -9050,7 +9136,14 @@ class Engine {
     const generic = cost.length - need.length;
     const used = new Array(pool.length).fill(false);
     for (const t of need) {
-      const k = pool.findIndex((p, i) => !used[i] && p === t);
+      // EXACT MATCHES FIRST, WILDCARDS ONLY WHEN NOTHING ELSE FITS, and the order
+      // of these two lines is load-bearing. A Rainbow plus a Water paying "WR"
+      // fails if the W need greedily eats the Rainbow: the R then has only a
+      // real Water left. Spending a universal substitute while a specific one is
+      // available is never right, which makes exact-first optimal here rather
+      // than merely better.
+      let k = pool.findIndex((p, i) => !used[i] && p === t);
+      if (k === -1) k = pool.findIndex((p, i) => !used[i] && p === WILD);
       if (k === -1) return false;
       used[k] = true;
     }
@@ -9318,6 +9411,23 @@ class Engine {
           this.log(`Potion Energy: ${h} damage removed from ${this.nameOf(slot)}.`, 'eff');
           break;
         }
+        case 'E_SELF_DAMAGE':
+          // Rainbow Energy. "When you attach this card from your hand to 1 of
+          // your Pokemon, it does 10 damage to that Pokemon. (Don't apply
+          // Weakness and Resistance.)"
+          //
+          // AND IT CAN KILL. Settled with Trevor 19 Aug 2026: attaching a
+          // Rainbow to something on its last 10 Knocks it Out and the opponent
+          // takes a Prize, which is the Buzzap principle — a Knock Out is a
+          // Knock Out even when you did it to yourself. doAttach calls checkKOs
+          // straight after this for exactly that reason.
+          //
+          // Not an attack, so no Retaliate and no Mirror Shell, and there is no
+          // attacker to aim them at anyway. Applied directly rather than through
+          // dealDamage because dealDamage needs an attacking slot.
+          slot.dmg += v.n || 10;
+          this.log(`Rainbow Energy does ${v.n || 10} damage to ${this.nameOf(slot)}.`, 'eff');
+          break;
         default:
           throw new Error(`Unimplemented Energy verb ${v.v}`);
       }

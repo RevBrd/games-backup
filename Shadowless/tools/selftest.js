@@ -386,6 +386,9 @@ const PROVISIONAL = new Set([
   // that do the same job — a Full Heal and a Potion — which keeps them on one
   // scale and is not the same as having measured them.
   'E_CLEAR_STATUS', 'E_HEAL',
+  // Rainbow's 10 damage. The refusal to kill its own Pokemon is not a weight and
+  // is not in doubt; the price of the 10 on a healthy target is a guess.
+  'E_SELF_DAMAGE',
 ]);
 
 // ---- every doorway into play goes through enterPlay --------------------------

@@ -6,6 +6,12 @@ wrong, never condense it.** See [MAINTENANCE.md](../MAINTENANCE.md).
 
 ---
 
+> **CORRECTED 19 Aug 2026 — read [RAINBOW-IN-PLAY.md](RAINBOW-IN-PLAY.md) alongside this.** The
+> table below says Rainbow "is not a basic Energy card and never qualifies". The word to strike is
+> *never*: while it is ATTACHED it is a basic Energy card of whatever type is being asked for, which
+> is printed on the card. In hand, in the deck and in the discard pile it is not, so every row about
+> searching and attaching still holds. Nothing about COUNTING changes.
+
 **Settled 17 Aug 2026, and it is the first ruling made under the post-Fossil order.** Step 3 of that
 order — the WotC rules, *read* rather than inferred — is what actually decided it, and Trevor is the
 one who went and read them.

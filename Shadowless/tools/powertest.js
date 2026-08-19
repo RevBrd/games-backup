@@ -4817,5 +4817,173 @@ T('Potion Energy can be attached to a BENCHED Pokemon, and heals that one', () =
   return true;
 });
 
+
+// ============================================================================
+// Job 10d — Rainbow Energy, the card that breaks `provides`
+//
+// One symbol that is every type at once. THREE questions read it and they do
+// NOT all answer the same way, which is the whole of this section.
+// ============================================================================
+console.log('\nJob 10d — Rainbow Energy');
+
+T('a Rainbow pays a typed cost of any colour', () => {
+  const E = board('base1-4', [], 'base1-58');         // Charizard, Fire Spin RRRR
+  const sl = E.state.players[0].active;
+  attach(E, sl, 'base5-17', 4);
+  eq(E.costSatisfied(sl, 'RRRR'), true, 'four Rainbows pay four Fire');
+  return true;
+});
+
+T('...and one Rainbow is ONE symbol, not two', () => {
+  const E = board('base1-4', [], 'base1-58');
+  const sl = E.state.players[0].active;
+  attach(E, sl, 'base5-17', 1);
+  eq(E.slotSymbols(sl).length, 1, 'one symbol — "only provides 1 Energy at a time"');
+  eq(E.costSatisfied(sl, 'RR'), false, 'so it cannot pay for two');
+  return true;
+});
+
+T('THE GREEDY TRAP: a Rainbow plus a Water pays "WR", in either order', () => {
+  // The case that decides whether the matcher is written correctly. If the W
+  // need eats the Rainbow first, the R has only a real Water left and the whole
+  // cost fails — on a board that plainly can pay it. Exact matches must be taken
+  // before wildcards.
+  const E = board('base1-2', [], 'base1-58');
+  const sl = E.state.players[0].active;
+  sl.energy = [];
+  attach(E, sl, 'base5-17', 1);                       // Rainbow first in the array
+  attach(E, sl, 'base1-102', 1);                      // then a real Water
+  eq(E.costSatisfied(sl, 'WR'), true, 'Rainbow first');
+
+  const E2 = board('base1-2', [], 'base1-58');
+  const sl2 = E2.state.players[0].active;
+  sl2.energy = [];
+  attach(E2, sl2, 'base1-102', 1);                    // real Water first
+  attach(E2, sl2, 'base5-17', 1);
+  eq(E2.costSatisfied(sl2, 'WR'), true, 'and real Water first');
+  return true;
+});
+
+T('...and it still refuses a cost it genuinely cannot pay', () => {
+  const E = board('base1-2', [], 'base1-58');
+  const sl = E.state.players[0].active;
+  sl.energy = [];
+  attach(E, sl, 'base5-17', 1);
+  attach(E, sl, 'base1-102', 1);
+  eq(E.costSatisfied(sl, 'WRG'), false, 'two cards cannot pay three symbols');
+  eq(E.costSatisfied(sl, 'RRR'), false, 'one Rainbow is not three Fire');
+  return true;
+});
+
+T('a Rainbow counts toward "for each <type> Energy attached", for every type', () => {
+  // Hydrocannon's shape. The same card is a spare Water AND a spare Fire, in the
+  // same turn, with nothing choosing.
+  const E = board('base5-45', [], 'base1-58');        // Dark Blastoise
+  const sl = E.state.players[0].active;
+  sl.energy = [];
+  attach(E, sl, 'base5-17', 1);
+  eq(E.energyChoices(sl, 'W').length, 1, 'it is a Water');
+  eq(E.energyChoices(sl, 'R').length, 1, '...and a Fire');
+  eq(E.energyChoices(sl, 'P').length, 1, '...and a Psychic, all at once');
+  return true;
+});
+
+T('Energy Trans CAN move a Rainbow, because it is in play', () => {
+  // "(Doesn't count as a basic Energy card WHEN NOT IN PLAY.)" — so while
+  // attached, it does. Settled with Trevor 19 Aug 2026 against the WotC rules,
+  // reversing two earlier entries written before this card existed.
+  const E = board('base1-15', ['base1-2'], 'base1-58');   // Venusaur, Energy Trans
+  const p = E.state.players[0];
+  p.active.energy = [];
+  attach(E, p.active, 'base5-17', 1);
+  const acts = E.powerActions(0).filter(x => x.kind === 'MOVE_ENERGY');
+  eq(acts.length > 0, true, 'the move is offered');
+  E.act(0, { t: 'power', uid: p.active.uid, kind: 'MOVE_ENERGY',
+             from: p.active.uid, to: p.bench[0].uid });
+  eq(p.bench[0].energy.length, 1, 'and it moved');
+  return true;
+});
+
+T('...but Rain Dance CANNOT attach one from hand, because a hand is not in play', () => {
+  // The other half of the same parenthetical, and the half that is easy to miss.
+  // Trevor's own phrasing carries it: "when it's ON A POKEMON it's whatever that
+  // Pokemon needs it to be". A card in your hand is not on a Pokemon.
+  const E = board('base1-2', ['base1-2'], 'base1-58');    // Blastoise, Rain Dance
+  const p = E.state.players[0];
+  p.hand = [{ id: 'base5-17', uid: E.uid++ }];
+  const acts = E.powerActions(0).filter(x => x.kind === 'EXTRA_ATTACH');
+  eq(acts.length, 0, 'Rain Dance does not see a Rainbow in hand');
+  return true;
+});
+
+T('...and Rain Dance still sees a real basic Water in hand', () => {
+  // The control. Without it the case above passes for any reason at all.
+  const E = board('base1-2', ['base1-2'], 'base1-58');
+  const p = E.state.players[0];
+  p.hand = [{ id: 'base1-102', uid: E.uid++ }];
+  eq(E.powerActions(0).filter(x => x.kind === 'EXTRA_ATTACH').length > 0, true,
+     'a Water Energy card is found');
+  return true;
+});
+
+T('Rainbow does 10 to the Pokemon it lands on, and never W/R', () => {
+  const E = board('base1-4', [], 'base1-58');
+  const p = E.state.players[0];
+  p.hand = [{ id: 'base5-17', uid: E.uid++ }];
+  E.act(0, { t: 'attachEnergy', hand: 0, target: p.active.uid });
+  eq(p.active.dmg, 10, 'ten, flat');
+  return true;
+});
+
+T('...and it CAN Knock Out the Pokemon it is attached to, for a Prize', () => {
+  // Settled with Trevor 19 Aug 2026, and it is the Buzzap principle: a Knock Out
+  // is a Knock Out even when you did it to yourself.
+  const E = board('base1-4', ['base1-46'], 'base1-58');
+  const p = E.state.players[0], o = E.state.players[1];
+  p.active.dmg = CARD_DB['base1-4'].hp - 10;          // one counter from death
+  const prizesBefore = o.prizes.length;
+  p.hand = [{ id: 'base5-17', uid: E.uid++ }];
+  E.act(0, { t: 'attachEnergy', hand: 0, target: p.active.uid });
+  eq(p.active === null || p.active === undefined, true, 'Charizard is gone');
+  eq(o.prizes.length, prizesBefore - 1, 'and they took a Prize for it');
+  return true;
+});
+
+T('...and it does not fire when it arrives any other way', () => {
+  // "WHEN YOU ATTACH THIS CARD FROM YOUR HAND." An Energy Trans move is not that.
+  const E = board('base1-15', ['base1-2'], 'base1-58');
+  const p = E.state.players[0];
+  p.active.energy = [];
+  attach(E, p.active, 'base5-17', 1);                 // placed, not played
+  eq(p.active.dmg, 0, 'no damage on arrival');
+  E.act(0, { t: 'power', uid: p.active.uid, kind: 'MOVE_ENERGY',
+             from: p.active.uid, to: p.bench[0].uid });
+  eq(p.bench[0].dmg, 0, 'and none on the way to the Bench either');
+  return true;
+});
+
+T('Afternoon Nap will not fetch a Rainbow out of the deck', () => {
+  // "Search your deck for a Psychic ENERGY CARD" — the deck is not in play, so
+  // the parenthetical excludes it. Third zone, third answer.
+  const E = board('base5-67', [], 'base1-58');
+  const p = E.state.players[0];
+  attach(E, p.active, 'base1-101', 1);
+  p.deck = [{ id: 'base5-17', uid: E.uid++ }];
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(p.active.energy.length, 1, 'nothing was fetched');
+  eq(p.deck.length, 1, 'and the Rainbow is still in the deck');
+  return true;
+});
+
+T('the AI never attaches a Rainbow to something it would kill', () => {
+  const E = board('base1-4', [], 'base1-58');
+  const p = E.state.players[0];
+  p.active.dmg = CARD_DB['base1-4'].hp - 10;
+  const ai = new AI(E, 'expert');
+  const v = ai.attachValue(0, p.active, 'base5-17');
+  eq(v === -Infinity, true, 'refused outright, not merely discounted');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

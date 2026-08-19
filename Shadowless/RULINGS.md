@@ -14,7 +14,7 @@ moves its row automatically.
 
 The standing policy this operates under is in `CLAUDE.md`: **when the text is ambiguous, follow the
 Game Boy Color game.** It is a single consistent arbiter and it is the version Trevor knows well
-enough to settle a call in plain English, so ask him — he expects to be asked.
+enough to settle a call in plain English, so ask him — he can be a resource on conflicting rulings.
 
 ## The directory
 
@@ -41,6 +41,7 @@ enough to settle a call in plain English, so ask him — he expects to be asked.
 | A Pokémon Power is not an attack | [POWER-IS-NOT-AN-ATTACK.md](Rulings/POWER-IS-NOT-AN-ATTACK.md) |
 | "When you play this from your hand" means from your hand, and nowhere else | [PLAYED-FROM-HAND.md](Rulings/PLAYED-FROM-HAND.md) |
 | "Retreats" is the retreat that worked; "tries to retreat" is the attempt | [RETREATS-MEANS-SUCCEEDED.md](Rulings/RETREATS-MEANS-SUCCEEDED.md) |
+| Rainbow Energy is a basic Energy card while it is IN PLAY, and not before | [RAINBOW-IN-PLAY.md](Rulings/RAINBOW-IN-PLAY.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -117,6 +118,8 @@ that matches.
 | **Point a default at the set that GROWS, and make the small closed set declare itself** — which is why attack-damage defaults to true and played-from-hand defaults to silence | [both](Rulings/POWER-IS-NOT-AN-ATTACK.md) |
 | **Hang an invisible rule off a visible one**: a trigger nobody can see rides on the stamp every caller already cannot omit | [`enterPlay`](Rulings/PLAYED-FROM-HAND.md) |
 | **When a wording is ambiguous, look for a later card that says the OTHER thing explicitly** — the pair is better evidence than deciding what they probably meant | [Sinkhole vs. Unown [C]](Rulings/RETREATS-MEANS-SUCCEEDED.md) |
+| **A card's own text outranks its category**, and a category is exactly what a confident wrong answer is reasoned from — Rainbow is a Special Energy card that is a basic one in one zone, and says so in a parenthesis | [Rainbow, in play](Rulings/RAINBOW-IN-PLAY.md) |
+| **The same property can answer differently by ZONE** — in play, in hand, in the deck. A check that takes only a card is asking half a question | [Rainbow, `isBasicEnergyOf`](Rulings/RAINBOW-IN-PLAY.md) |
 
 ## What *settled with Trevor* means
 
