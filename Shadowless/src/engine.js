@@ -276,16 +276,66 @@ class Engine {
     return { ok: true };
   }
 
+  // Is this a Basic that something in the card pool evolves from? Cached on
+  // first use — it is a property of the DATABASE, not of the game.
+  isLineStarter(name) {
+    if (!this._lineStarters) {
+      this._lineStarters = {};
+      for (const id in this.db) {
+        const f = this.db[id].evolvesFrom;
+        if (f) this._lineStarters[f] = 1;
+      }
+    }
+    return !!this._lineStarters[name];
+  }
+
+  // OPENING PLACEMENT, and it is BOTH sides' — the opponent uses it and so does
+  // the player's "auto" button, so it is a sensible default rather than an AI
+  // decision. That is why it lives here and not in ai.js.
+  //
+  // IT USED TO BE `sort by HP, take the biggest`, one line. The opening Active
+  // takes the first hits and cannot retreat without Energy nobody has yet, so
+  // that one number was deciding the most locked-in choice in the game.
+  //
+  // What HP alone cannot see is that a Charmander is not a 50 HP Pokemon, it is
+  // the bottom of a line — putting it Active with no Charmeleon behind it feeds
+  // the deck's own engine to the opponent. Measured over Trevor's eight Base Set
+  // decks at 6,000 hands each: 6.0% of hands WITH A REAL CHOICE opened a stranded
+  // line-starter while a standalone Basic sat in the same hand, and three of the
+  // eight were between 11% and 20%. `tools/openercheck.js` is that measurement.
+  //
+  // So Basics are ranked before HP is consulted, and a starter is only demoted
+  // when it is genuinely stranded. Three things rescue it:
+  //
+  //   - its evolution is in hand, so it evolves next turn and is the right lead
+  //   - a SPARE COPY is in hand. Trevor's refinement, 18 Aug: only one can be
+  //     Active, so the duplicate covers the evolution path and the one out front
+  //     is free to be spent. Redundancy converts a liability into an attacker
+  //   - nothing evolves from it at all, so there is nothing to strand
+  //
+  // Within a rank it is still HP, which was never the wrong tiebreak — only the
+  // wrong first question.
   setupAuto(pi) {
     const p = this.state.players[pi];
     const basics = () => p.hand.map((x, i) => [i, this.db[x.id]])
       .filter(([, c]) => c.kind === 'pokemon' && c.stage === 'Basic');
     let b = basics();
     if (!b.length) return this.fail('No Basic to place');
-    b.sort((x, y) => y[1].hp - x[1].hp);
+
+    const counts = {};
+    b.forEach(([, c]) => { counts[c.name] = (counts[c.name] || 0) + 1; });
+    const stranded = (c) => {
+      if (!this.isLineStarter(c.name)) return 0;
+      if (counts[c.name] > 1) return 0;
+      const evoInHand = p.hand.some(x => this.db[x.id] && this.db[x.id].evolvesFrom === c.name);
+      return evoInHand ? 0 : 1;
+    };
+    b.sort((x, y) => (stranded(x[1]) - stranded(y[1])) || (y[1].hp - x[1].hp));
+
     this.setupPlace(pi, b[0][0], 'active');
     while (p.bench.length < this.cfg.benchMax) {
       b = basics(); if (!b.length) break;
+      b.sort((x, y) => y[1].hp - x[1].hp);   // the Bench does not care; biggest first
       this.setupPlace(pi, b[0][0], 'bench');
     }
     return this.setupConfirm(pi);

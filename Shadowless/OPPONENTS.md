@@ -85,11 +85,17 @@ the tiers monotonically, and only the first was authored deliberately:**
 | Basic Energy | 28 | 25 – 26 | 25 |
 | Basic Pokemon | 15 – 16 | 12 – 13 | 13 |
 
-**The four derived axes were not being tracked and they agree with the authored one anyway**, which
-is the strongest evidence available that the tier spec describes something real rather than a label.
-Higher tiers run *less* Energy and *more* Trainers — consistency, not power, is what climbs. Treat
-this table as the calibration reference when building any later set's roster, and re-derive it rather
-than trusting these numbers: the script is trivial and the figures will move.
+**Read this as a RECIPE, not as evidence.** The first version of this paragraph called the four lower
+rows independent confirmation of the top one; that was wrong and Trevor corrected it — he was tracking
+all five while building, so they agree by construction. The table is still the most useful thing in
+this file, but for a different reason: it is **what to aim at when building a roster**, not proof that
+the tiers mean anything on their own. Higher tiers run *less* Energy and *more* Trainers — consistency,
+not power, is what climbs.
+
+**What would be evidence is a consistency measurement**, and it does not exist yet: how often each deck
+actually assembles its centrepiece, and by which turn. That is the open instrument, and it is the only
+way to know whether a tier boundary is real or just a number we both agreed to write down. Re-derive
+the table above rather than trusting these figures — the script is trivial and they will move.
 
 ### The AI is two tiers, not four — and that is probably fine
 

@@ -224,6 +224,26 @@ result in Job 9 to clear the bar, and for the same reason as the first: this fau
 symmetric. Both bots misplay it, but the one that is still holding cards two turns later is playing a
 different game.
 
+**Opening placement ranks before it measures.** *18 Aug.* `setupAuto` chose the opening Active by
+one line — highest HP among the Basics in hand — and it is **both sides'**, since the player's "auto"
+button calls it too. That makes it a shared sensible default rather than an AI decision, which is why
+the fix stayed in `engine.js`; an earlier draft of this file said to move it into `ai.js` and that was
+wrong for the player-facing half. Basics are now ranked *stranded last*, then sorted by HP inside the
+rank. **A line-starter is only stranded when nothing rescues it** — its evolution in hand, a spare copy
+in hand (Trevor's refinement: only one can be Active, so the duplicate covers the evolution path and
+the one out front is free to be spent), or nothing evolving from it at all. **Measured 16.6% → 0.0%**
+across Trevor's eight Base Set decks, worst deck 27.4%; `abtest` puts 13.3% of games on a different
+line with the win rate unmoved at 49.1% → 48.4%. **Keep HP as the tiebreak** — it was never the wrong
+question, only the wrong *first* question.
+
+**The instrument lied first, and the lesson is the transferable part.** `tools/openercheck.js`
+originally reimplemented `setupAuto`'s rule in order to measure it, so it reported *identical figures
+before and after the fix* — it was measuring a copy of the code rather than the code, and it also put
+the defect at 6.0% when driving the real engine says 16.6%. **A measurement tool must call the thing
+it measures.** Same shape as the green-for-the-wrong-reason case in [HISTORY.md](HISTORY.md), and it
+was caught only by running the control against the pre-fix engine — which is [MEASUREMENT.md](MEASUREMENT.md)'s
+standing rule doing exactly its job.
+
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
@@ -241,20 +261,7 @@ different game.
    time, each with a reason and a measurement. A sweep over `AI_WEIGHTS` as a whole has never been
    done and there is no measured reason to think it would pay — recorded so nobody proposes it as a
    known-good job. It is a speculative one.
-3. **THE BOT DOES NOT CHOOSE ITS OPENING POKEMON AT ALL, and this is the largest unscored decision
-   left in the game.** `setupAuto` in `engine.js` sorts the Basics in hand by HP and promotes the
-   biggest — `ai.js` is never consulted, at any tier, in any deck. The opening Active takes the first
-   hits, cannot retreat without Energy nobody has yet, and is locked in for turns.
-   **Measured against Trevor's eight Base Set decks, 6,000 dealt hands each: in 6.0% of hands where a
-   real choice existed, the rule promotes an evolution-starter whose evolution is not in hand while a
-   standalone Basic sits beside it.** It is not evenly spread — four decks are at 0–2.6% and three are
-   at 11.6%, 12.4% and 19.5%, so it is a property of the deck, and a roster built later could be worse.
-   The fix does not need new data: `evolvesFrom` is already in `CARD_DB`, so "is this a line-starter,
-   and is its evolution in my hand" is answerable today. **The right shape is to move the choice into
-   `ai.js` and score it like everything else** rather than to add a second heuristic in the engine.
-   Found 18 Aug 2026 while evaluating a card-tagging proposal — see [OPPONENTS.md](OPPONENTS.md) for
-   why the tags themselves were not adopted and the defect was.
-4. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
+3. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
    Every opponent plays at the tier deck select hands them. Whether a named rival should play better
    than a Club Master is an unasked design question — see [PROGRESSION.md](PROGRESSION.md) and
    [OPPONENTS.md](OPPONENTS.md), which argues the AI probably should *not* be the dial.

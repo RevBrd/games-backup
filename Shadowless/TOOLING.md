@@ -267,10 +267,15 @@ don't try to revive them** — it looks like a one-line fix and is not, for reas
 
 ## `openercheck.js` — the opening Active, measured
 
-**Not pass/fail.** `setupAuto` in `engine.js` picks the opening Active by one line — highest HP among
-the Basics in hand — and `ai.js` is never consulted. This deals hands against real deck lists and
-reports how often that strands an evolution-line starter in the Active spot while a standalone Basic
-sat in the same hand, which is the case the HP rule structurally cannot see.
+**Not pass/fail.** It drives the **live engine** — `newGame`, then `setupAuto` — and reports how often
+the opening Active is an evolution-line starter that is *stranded*: no evolution in hand, no spare
+copy, while a Basic that was not stranded sat in the same hand.
+
+**It lied the first time it was written, and that is why the header says to call the engine.** The
+original reimplemented `setupAuto`'s rule in order to measure it, so it reported the same figure before
+and after the rule changed, and it under-read the defect at 6.0% against a true 16.6%. **If you extend
+this, call the engine; never mirror it.** The failure was caught by running it against the pre-fix
+engine — always have a control that is known to fail.
 
 ```bash
 node tools/openercheck.js                          # data/base1_decks.json, 6000 hands per deck
