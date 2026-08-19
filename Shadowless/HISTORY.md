@@ -153,6 +153,33 @@ than a count; `AI.md` cut from 300 to its rules with the accounts left where the
 `CREDITS.md` returned to three lines a row for the third time; the closed jobs collapsed into this
 file. What it found is in [MAINTENANCE.md](MAINTENANCE.md).
 
+**Job 10 — Team Rocket, 17–19 Aug 2026, live at 83 of 83 printings.** Split by *machinery* rather
+than by card, the way Job 6 was: the attacks first, then the trigger points, then the Energy, then
+the Trainers. What it added is in [ENGINE.md](ENGINE.md) — three of the nine systems there are its —
+and the six rulings it settled are in [RULINGS.md](RULINGS.md).
+
+Three things from it are worth carrying forward rather than looking up.
+
+**The size of a job is a measurement, and it was one command away.** `shapecount.js` was written
+mid-job because Trevor asked whether the survey that shaped the trigger work deserved writing down.
+It then answered four separate "how much machinery" questions in one session — build a verb list for
+`ON_PLAY` (20 printings, 15 distinct texts), do *not* generalise `ON_KO` (3 printings, 2 behaviours),
+special-case the two unique Trainers, and build `pendingAsk` general (17 printings, 16 texts). Every
+one of those would otherwise have been taste. *[The tool, and what it is not →](TOOLING.md)*
+
+**Four guards were found not to be guarding, and only one by reading.** The coverage gate had been
+blind to Energy since Base Set. `doTrainer` held 63 dead lines that duplicated the legality switch
+and would have made the next Trainer author's legality test silently never run. A static check
+written in this same job, and cited as a guarantee in two documents, stayed green when the thing it
+checked was deleted. `setsurvey`'s own control cried wolf on a corpus typo the generator already
+corrects. **Three of the four were found by deliberately breaking the thing and watching** — the step
+this tree keeps prescribing, skipped twice in this job because the check "obviously" worked.
+
+**A default should point at the set that GROWS.** Two rulings a day apart point opposite ways and are
+consistent for one reason: attack damage defaults to *true* because its callers multiply with every
+set, and played-from-hand defaults to *silence* because "from hand" is a closed idea. Whichever side
+is open gets the default; the small closed side declares itself.
+
 ## Pack research: two things that were wrong
 
 Both were found on 9 Aug 2026 at the start of Job 5, by re-checking `data/raw/` rather than

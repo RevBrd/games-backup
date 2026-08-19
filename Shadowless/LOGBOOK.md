@@ -264,3 +264,57 @@ hook has to go inside it, before the Energy is swept — without reading the cod
 the only place the card can work from.
 
 — Shadowless 19
+
+## #19 — Opus 5, 19 Aug 2026 (Job 10 finished, Team Rocket live)
+
+The session ran long enough to have two halves, and the second one had a theme I did not choose:
+**four separate guards turned out not to be guarding.**
+
+The coverage gate had been blind to Energy since Base Set. A duplicate-case block sat inside
+`doTrainer` — 63 lines, 21 case labels, every one already handled above it, none of it ever run. A
+static check I wrote *myself*, cited as a guarantee in two documents, stayed green when I deleted the
+thing it was checking. And `setsurvey`'s own control — *a live set reports zero novel* — was crying
+wolf on a corpus typo the generator already corrects.
+
+Only one of those was found by reading. The other three were found by **deliberately breaking the
+thing and watching**, which this tree keeps telling everybody to do and which I nearly skipped twice
+because the check "obviously" worked. It never obviously works. The line-scoped one is the case to
+remember: it looked completely reasonable, it had a sensible comment, and it was watching a site it
+could not see through a window that would have forgiven it anyway.
+
+**The tool paid for itself the day it was written.** `shapecount.js` exists because Trevor asked
+whether the survey that shaped 10c deserved writing down. It then decided three more things in one
+session: ON_PLAY takes a verb list (20 printings, 15 texts), ON_KO does not (3 printings, 2
+behaviours), Goop Gas Attack and Here Comes Team Rocket! are unique so they get special cases, and
+`pendingAsk` should be general (17 printings, 16 texts, six sets). **Four "how much machinery"
+questions that would otherwise have been taste.** Its own header was wrong on the first run, which is
+a good sign about the tool and a bad one about writing numbers from memory.
+
+**On Rainbow.** Trevor guessed the representation — a sentinel that every symbol accepts — and it was
+right. What neither of us saw at first is that there is no *single* question: paying a cost, counting
+"for each Water Energy", and being a basic Energy **card** are three questions, and the third answers
+differently depending on the zone the card is in. Then his own sentence — *"when it's on a Pokémon,
+it's whatever that Pokémon needs it to be"* — carried a consequence he had not intended and I was
+about to get wrong: Energy Trans can move a Rainbow, and **Rain Dance cannot attach one**, because a
+hand is not a Pokémon. That reversed two settled rulings, and both had reasoned from the card's
+*category* while the card's *text* said otherwise in a parenthesis.
+
+**The bug I am most glad about is not mine.** Trevor reported Gigashock not letting him choose. It
+was true, and it was worse: the engine had always accepted a chosen target and nothing in the UI had
+ever supplied one, so *Dark Mind* had been silently picking for the player since Fossil went live —
+one of two is far harder to notice than three of five. Then the fourth test I wrote for it, the one I
+expected to pass, found that the engine never deduplicated the picks, so `[2,2,2]` put 30 on one
+Pokémon. **A bug is easiest to see where it matters least, and the fix for the visible half is what
+exposed the invisible one.**
+
+**On being told to restrict the AI.** Trevor asked that the bot judge a Challenge from what it can
+*see* rather than from the opponent's deck. That is a self-restriction — `ai.js` reads full engine
+state everywhere else, which is exactly why Peek is scored at −Infinity — and it makes the card a
+gamble on both sides instead of a solved problem for one. It is also easier to implement than the
+version that cheats. I put a do-not-fix-this note on it, because it will read like an oversight.
+
+**For #20.** The thing I would do differently is start the doc pass earlier. Everything is written
+down, but it was written down at the end, and twice I nearly shipped a document describing a guard
+that did not work. Write the claim after you have watched it fail, not before.
+
+— Shadowless 19

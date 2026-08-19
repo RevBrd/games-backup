@@ -67,7 +67,7 @@ playtest. You pick a starter deck, work down a roster of named challengers, beat
 next set, earn packs of whatever set you are on, open them, browse what you own, and build decks from
 it — and all of it persists.
 
-**Three sets are live and complete: Base, Jungle and Fossil — 228 of 228 cards.** Run
+**Four sets are live and complete: Base, Jungle, Fossil and Team Rocket — 311 of 311 cards.** Run
 `node tools/selftest.js` for the live figures rather than trusting a number in prose; it prints
 coverage per set. (**There is one unit now, and there used to be two.** This section counted
 *scriptable* cards, excluding Energy, because basic Energy was thought to need no effect script — it
@@ -250,22 +250,11 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   Job 8's spec and nothing in it is built** — it is what the set jobs below build against, with
   detail work still running. And **Job 9 continues wherever [GRABBAG.md](GRABBAG.md) has AI items in
   it**; the invariants it has left so far are in [AI.md](AI.md).
-- **Job 10** - Rulings and additions for the Team Rocket set. **Run `node tools/selftest.js` for what
-  is left rather than trusting a figure here.** The sub-jobs were #18's own plan and are #19's to
-  rearrange, which is Trevor's standing position on all of this:
-  - **10a/10b done** — the survey, and every attack that needed no new machinery or a new verb.
-  - **10c done** — the trigger points: `ON_PLAY`, `ON_KO`, `ON_OPP_RETREAT`, built as architecture
-    before the cards needed it. Five cards, ten printings. *[The system →](ENGINE.md)*
-  - **10c widened, and it had to be.** As written, 10c covered ten of the thirty-six remaining cards
-    and the OTHER ten Power cards were in no sub-job at all — Hay Fever, Sticky Goo, Frenzy and six
-    ordinary once-per-turn Powers, plus Slowpoke's Afternoon Nap, a plain 10b-shaped attack 10b did
-    not reach. They belong here rather than in 10d or 10e: same file, same machinery.
-  - **10d** — the three special Energy. Touches `energyProvides` and the basic-Energy ruling.
-    **`energyIsType()` was built in 10c as the seam for it**, so Rainbow has one function to teach
-    rather than seven call sites to find.
-  - **10e** — the Trainers, including the hidden-information three, Challenge!, and the two legality
-    rewrites.
-  - **10f** — generate, alias, validate, run everything.
+- **Job 10 is DONE — Team Rocket is live at 83 of 83 printings**, 19 Aug 2026. What it left behind
+  is in [HISTORY.md](HISTORY.md); the three systems it added are in [ENGINE.md](ENGINE.md).
+  One consequence worth knowing before touching the ladder: **base5 has no authored roster**, so it
+  derives a *generated* bracket. That is the derivation working, not a gap — see
+  [OPPONENTS.md](OPPONENTS.md), which is where the roster would go.
 - **Job 10.5** - Scheduled post-new set maintenance, plugging it in, grab bag.
 - **Job 11** - Deck autobuilder improvement pass.
 - **Job 12** - Rulings and additions for the Promo cards through the Team Rocket set.
