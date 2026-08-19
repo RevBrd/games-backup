@@ -45,6 +45,24 @@ with a comment saying why. That is a live declaration in the file that does the 
 entry on an opt-out list in a file that does not. *[The ruling behind it →](Rulings/PEEK-CLAIRVOYANCE.md)*;
 don't "fix" it by moving it.
 
+### A third state: PROVISIONAL
+
+A verb used to be either scored or opted out with a reason, and that is a gap. **A set job adding
+eighty cards has to give every one of them a weight, and an unmeasured weight is indistinguishable
+from a considered one the moment the session ends.** The next AI pass then has to re-derive which of
+a hundred-odd verbs were reasoned about and which were guessed, which nobody will do.
+
+**`PROVISIONAL` in `selftest.js` is where you declare a weight you shipped on a first guess.** It is
+not a failure and it costs nothing at runtime — it is a **worklist**, and the declaration is the whole
+value. Three things are asserted about it, all contradictions rather than opinions: everything on it
+is actually scored, nothing is simultaneously on `UNSCORED_ON_PURPOSE`, and nothing on it has left
+`effects.js`. All three were watched going red before being trusted.
+
+**Take a verb off the list when you have measured it** — `aiduel.js`, `abtest.js` or `decksim.js`, and
+read [MEASUREMENT.md](MEASUREMENT.md) first, because all three have lied. Removing it is the only
+thing that marks the work done. Trevor's ask, 18 Aug 2026; #18 had already been doing this informally
+on the Team Rocket run with nowhere to write it down.
+
 ## The Active and the Bench are scored in different units
 
 `potential()` values an Active's attacks with `scoreAttackHypothetical` — full expected value — and

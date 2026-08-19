@@ -333,6 +333,28 @@ const UNSCORED_ON_PURPOSE = new Set([
   'SHUFFLE_OPP_DECK',
 ]);
 
+// PROVISIONAL — scored, but on a first guess rather than on a measurement.
+//
+// There used to be exactly two states a verb could be in: scored, or opted out
+// with a written reason. That is a real gap, because a set job adding eighty
+// cards must give every one of them a weight, and a weight nobody has measured
+// is INDISTINGUISHABLE from a considered one the moment the session ends. The
+// next AI pass then has to re-derive which of the hundred-odd verbs were
+// reasoned about and which were guessed, which nobody will do.
+//
+// So: put a verb here when you ship a plausible weight you have not verified.
+// It costs nothing at runtime and it is not a failure — it is a WORKLIST. The
+// declaration is the whole value, exactly as it is for the list above.
+//
+// Take a verb OFF this list when you have measured it — `aiduel.js`, `abtest.js`
+// or `decksim.js`, and read MEASUREMENT.md first, because all three have lied.
+// Removing it is the only thing that marks the work as done.
+//
+// Trevor's ask, 18 Aug 2026, and #18 had already been doing this informally on
+// the Team Rocket run without a place to write it down.
+const PROVISIONAL = new Set([
+]);
+
 console.log('\nAI verb coverage');
 {
   const fs = require('fs');
@@ -376,11 +398,25 @@ console.log('\nAI verb coverage');
   const stale = [...UNSCORED_ON_PURPOSE].filter(v => !used.has(v)).sort();
 
   console.log(`  ${[...used].filter(v => handled.has(v)).length} of ${used.size} verbs scored`
-    + `, ${UNSCORED_ON_PURPOSE.size} unscored on purpose`);
+    + `, ${UNSCORED_ON_PURPOSE.size} unscored on purpose`
+    + `, ${PROVISIONAL.size} provisional`);
   check(blind.length === 0, 'every verb in effects.js is scored by ai.js or opted out',
     blind.join(', '));
   check(stale.length === 0, 'nothing on UNSCORED_ON_PURPOSE has left effects.js',
     stale.join(', '));
+
+  // PROVISIONAL means "scored, but on a guess". All three claims below would be
+  // contradictions rather than opinions, which is what makes them assertable.
+  const notScored = [...PROVISIONAL].filter(v => !handled.has(v) && !kinds.has(v)).sort();
+  check(notScored.length === 0, 'everything on PROVISIONAL is actually scored by ai.js',
+    notScored.join(', '));
+  const bothWays = [...PROVISIONAL].filter(v => UNSCORED_ON_PURPOSE.has(v)).sort();
+  check(bothWays.length === 0, 'nothing is both PROVISIONAL and UNSCORED_ON_PURPOSE',
+    bothWays.join(', '));
+  const goneProv = [...PROVISIONAL].filter(v => !used.has(v) && !kinds.has(v)).sort();
+  check(goneProv.length === 0, 'nothing on PROVISIONAL has left effects.js',
+    goneProv.join(', '));
+  if (PROVISIONAL.size) console.log(`  PROVISIONAL (unmeasured weights, a worklist): ${[...PROVISIONAL].sort().join(', ')}`);
 }
 
 // --- 3. games finish, without throwing and without stalling --------------
