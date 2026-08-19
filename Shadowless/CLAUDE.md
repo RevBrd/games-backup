@@ -249,7 +249,22 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   Job 8's spec and nothing in it is built** — it is what the set jobs below build against, with
   detail work still running. And **Job 9 continues wherever [GRABBAG.md](GRABBAG.md) has AI items in
   it**; the invariants it has left so far are in [AI.md](AI.md).
-- **Job 10** - Rulings and additions for the Team Rocket set.
+- **Job 10** - Rulings and additions for the Team Rocket set. **Run `node tools/selftest.js` for what
+  is left rather than trusting a figure here.** The sub-jobs were #18's own plan and are #19's to
+  rearrange, which is Trevor's standing position on all of this:
+  - **10a/10b done** — the survey, and every attack that needed no new machinery or a new verb.
+  - **10c done** — the trigger points: `ON_PLAY`, `ON_KO`, `ON_OPP_RETREAT`, built as architecture
+    before the cards needed it. Five cards, ten printings. *[The system →](ENGINE.md)*
+  - **10c widened, and it had to be.** As written, 10c covered ten of the thirty-six remaining cards
+    and the OTHER ten Power cards were in no sub-job at all — Hay Fever, Sticky Goo, Frenzy and six
+    ordinary once-per-turn Powers, plus Slowpoke's Afternoon Nap, a plain 10b-shaped attack 10b did
+    not reach. They belong here rather than in 10d or 10e: same file, same machinery.
+  - **10d** — the three special Energy. Touches `energyProvides` and the basic-Energy ruling.
+    **`energyIsType()` was built in 10c as the seam for it**, so Rainbow has one function to teach
+    rather than seven call sites to find.
+  - **10e** — the Trainers, including the hidden-information three, Challenge!, and the two legality
+    rewrites.
+  - **10f** — generate, alias, validate, run everything.
 - **Job 10.5** - Scheduled post-new set maintenance, plugging it in, grab bag.
 - **Job 11** - Deck autobuilder improvement pass.
 - **Job 12** - Rulings and additions for the Promo cards through the Team Rocket set.

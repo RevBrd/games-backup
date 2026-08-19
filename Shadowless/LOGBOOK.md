@@ -200,3 +200,67 @@ before anyone worked it. ***Write down where you did not look.*** It is the chea
 tree and it is the only reason that one was an afternoon rather than a discovery.
 
 — Shadowless 17
+
+## #19 — Opus 5, 18 Aug 2026 (Job 10c, the trigger points)
+
+Two guards failed in this session, and both failures are more useful than anything I built.
+
+**The first one had been failing since Base Set and nobody could see it.** `selftest.js` filtered
+Energy cards out of its coverage set, so the hard gate — *no live set may contain an unimplemented
+card* — and the per-set ratchet had never once looked at an Energy card. Base, Jungle and Fossil hold
+exactly one special Energy between them and it was scripted on day one, so nothing ever fell through
+and the hole stayed invisible for three sets. Team Rocket prints three. Deleting `REMAINING.base5` at
+the end of Job 10 would have gone fully green with Rainbow Energy unplayable, while the engine's own
+deck validator refused every deck containing one — a card you can pull from a pack and cannot play,
+which is precisely the failure the set-gating rule exists to prevent.
+
+I found it in the first hour, while doing the read-in Trevor asked for rather than while building
+anything. **The verification pass was worth more than I expected it to be**, and I nearly skipped
+straight to 10c because the suites were green. Green suites were the symptom.
+
+**The second one I wrote myself, described in two documents, and it did not work.** I built a static
+check asserting that every path into play calls `enterPlay` — the whole enforceability of the
+played-from-hand ruling rests on it — scoped to a window of lines around each site. Then I deleted
+the call from `doPlayBasic` to watch it go red, and it stayed green. Two separate reasons: the window
+ran on into the next method and found *that* one's call, and the detector had never matched
+`doPlayBasic` in the first place, because it pushes a variable rather than an inline `this.mkSlot()`.
+It was also printing a hardcoded `8` where a count belonged.
+
+So it was a decoration that had already been cited as a guarantee in a ruling file and in `ENGINE.md`.
+The only thing that caught it was the one step this tree keeps telling everybody to take. **I would
+not have found it by reading it.** It looks completely reasonable.
+
+**On the design, the part I would tell #20.** I came into 10c planning a deferred-decision system —
+`pendingTrigger`, like `pendingSwitch` — because the three ON_PLAY Powers all ask a question and I
+assumed a question needed somewhere to wait. It did not. The answer rides on the play action's
+`opts`, exactly as every searching Trainer's does, and the whole thing collapsed to one synchronous
+call. **I had reached for new machinery before checking whether the existing convention covered it**,
+which is the failure `ENGINE.md`'s opening paragraph is about, arriving from the architecture end
+rather than the verb end.
+
+What made the difference was a survey I nearly did not run: grep every set's ability text for the
+three trigger wordings. It took two minutes and it decided the shape of the job. **ON_PLAY is 20
+printings across six sets and no two of them do the same thing** — search a deck, mill either deck on
+a coin, heal every Grass in play, hand the opponent a redraw. That is what says the trigger takes a
+verb list rather than a bespoke Power kind: build it the other way and you have written fourteen
+kinds by Neo 4. **ON_KO is three printings and two behaviours in the entire era**, so generalising it
+would have been pure waste. Same job, opposite answers, and only the survey could tell them apart.
+
+**And on the two rulings that disagree.** Attack damage defaults to *true* and makes the exceptions
+declare themselves; played-from-hand defaults to *silence* and makes the three hand paths declare
+themselves. Written a week apart they would look like an inconsistency. The test is which set grows:
+attack-damage callers multiply with every set, and "from hand" is a closed concept that sets do not
+extend. I have put that in the principles index as its own line, because I think it is the reusable
+half.
+
+**Trevor overruled me on Final Beam and was right.** I wanted anything originating during an attack
+step to count, so a Strikes Back finishing a Gyarados would be answered; he said only attacks
+themselves, from Pocket. The argument that settled it is not about this card — the generous reading
+has no natural edge, so every future card that damages without attacking needs re-deciding, and Gym
+and Neo are full of them. He hedged it as a shot in the dark. It was the load-bearing call of the day.
+
+He also guessed the ON_KO ordering constraint from a plain-English description of `kill()` — that the
+hook has to go inside it, before the Energy is swept — without reading the code. It does, and it is
+the only place the card can work from.
+
+— Shadowless 19
