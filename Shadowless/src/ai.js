@@ -439,6 +439,11 @@ class AI {
         // reduction. Passed through rather than folded in, because the scorer
         // that reads `snipe` needs to know which targets were available.
         case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg, any: v.target === 'any' }; break;
+        // Slowpoke's Afternoon Nap. An attack that does no damage at all and
+        // fetches an Energy onto the attacker instead — so if this is not scored
+        // it is an attack worth literally nothing and the bot will never use it,
+        // which is the silent failure this whole surface is about.
+        case 'SEARCH_ENERGY_TO_SELF': flags.selfCharge = v.t || null; break;
 
         // ---- Job 6d, second batch ----
         case 'DMG_PER_HEAD_UNTIL_TAILS': {
@@ -763,6 +768,38 @@ class AI {
     // Confusing or poisoning yourself is a real cost, priced as the mirror of
     // doing it to them.
     if (f.flags.selfStatus) s -= f.flags.selfStatus * W.confuse * 0.8;
+    // Worth an attachment, and an attachment out of the DECK rather than out of
+    // hand — it does not spend the turn's one attachment, so it is strictly
+    // extra. Priced off attachValue's own currency, discounted because it takes
+    // the whole turn's attack to do it.
+    //
+    // UNMEASURED, and it has the shape the tally in this file keeps catching:
+    // it is worth the most when the attacker is short of exactly this type and
+    // nothing when it is already paid up, so it is scaled by the shortfall
+    // rather than being a flat number.
+    if (f.flags.selfCharge !== undefined && f.flags.selfCharge !== null) {
+      const t = f.flags.selfCharge;
+      const has = atkSlot.energy.filter(e => {
+        const c = this.db[e.id];
+        return c && c.kind === 'energy' && c.cls === 'Basic' && c.provides === t;
+      }).length;
+      const wants = Math.max(0, ...(this.top(atkSlot).attacks || [])
+        .map(at => String(at.cost || '').split('').filter(ch => ch === t).length));
+      const short = Math.max(0, wants - has);
+      const inDeck = me.deck.some(x => {
+        const c = this.db[x.id];
+        return c && c.kind === 'energy' && c.cls === 'Basic' && c.provides === t;
+      });
+      // attachBuild is the per-step weight for finishing an attack you cannot
+      // yet afford, which is exactly what this fetch is doing — and it is a real
+      // weight rather than the W.attachBase I first wrote, which does not exist.
+      // undefined arithmetic would have made the whole attack score NaN in
+      // silence, which is the same class of failure as an unscored verb and is
+      // why every new term should be checked against the W block rather than
+      // against memory.
+      if (inDeck) s += (short > 0 ? W.attachBuild * short : W.attachBuild * 0.25);
+    }
+
     if (f.flags.snipe) {
       const { n, dmg } = f.flags.snipe;
       for (const b of you.bench.slice(0, n)) {
@@ -1349,6 +1386,71 @@ class AI {
       // Peek is a no-op for a bot that already reads full state — it would be
       // spending its Power to learn something it knows. Deliberately worthless
       // rather than accidentally unscored. See RULINGS.md.
+      // ---- Job 10c, the ordinary Powers ----------------------------------
+      // All four weights are first guesses priced off existing weights and all
+      // four are on PROVISIONAL.
+      case 'SEARCH_EVOLUTION_TO_HAND': {
+        // A tutor for ANY Evolution card, which is worth far more when it
+        // fetches something that fits the board than when it fetches a card to
+        // look at. Priced as a draw, plus a real bonus for a live one — and the
+        // pick is filled in here so the engine's random fallback is never used.
+        const inPlay = new Set(E.allSlots(pi).map(sl => this.top(sl).name));
+        const pool = me.deck.filter(x => {
+          const c = this.db[x.id];
+          return c && c.kind === 'pokemon' && c.stage !== 'Basic';
+        });
+        if (!pool.length) return -Infinity;
+        let best = pool[0], bestFits = false;
+        for (const x of pool) {
+          const fits = inPlay.has(this.db[x.id].evolvesFrom);
+          if (fits && !bestFits) { best = x; bestFits = true; }
+        }
+        a.pickUid = best.uid;
+        return W.drawCard + (bestFits ? 10 : 0);
+      }
+      case 'STATUS_COIN_EITHER_POWER': {
+        // HALF THE TIME IT LANDS ON YOU, and the bot has to see that or it will
+        // fire it every turn for free. Worth the condition against them, minus
+        // the same condition against us, both halved — which correctly makes it
+        // close to worthless in the abstract and genuinely good when their
+        // Active is a threat and ours is expendable.
+        const key = STATUS_VALUE[p.status];
+        if (!key) return -Infinity;
+        const them = E.state.players[1 - pi];
+        if (!me.active || !them.active) return -Infinity;
+        let sc = 0.5 * W[key];
+        // Confusing or sleeping our OWN Active costs what it costs us: the
+        // attack we were going to make with it.
+        sc -= 0.5 * W[key];
+        // ...so the whole value is in the asymmetry. A spent or worthless Active
+        // has nothing to lose, and one about to attack has everything.
+        const mineWorth = this.bestAttackScore(pi).score;
+        if (mineWorth <= 0) sc += 0.5 * W[key];
+        return sc;
+      }
+      case 'DISCARD_THEN_DRAW': {
+        // A card for a card, so it is only worth the DIFFERENCE between the
+        // worst card in hand and an unknown one — near zero on a good hand and
+        // real on a hand of dead Energy. Reuses the junk-picking the Trainers
+        // already do rather than inventing a second opinion about what is junk.
+        if (!me.hand.length || !me.deck.length) return -Infinity;
+        const junk = this.junkiestInHand(pi);
+        if (junk === null) return -Infinity;
+        a.discardUid = junk.uid;
+        return junk.score * W.drawCard;
+      }
+      case 'PRIZE_SWAP':
+        // Deliberately scored at -Infinity, and this is a DECLARATION rather than
+        // an oversight — the same call the Peek ruling makes, for the same
+        // reason one level along. Swapping a face-down Prize for a face-down
+        // card changes nothing this bot can perceive: it reads full engine state,
+        // so it already knows both cards, and it has no notion of hiding
+        // information from an opponent who also cannot be surprised.
+        //
+        // It becomes worth scoring the day the AI models what the opponent knows,
+        // or the day Here Comes Team Rocket! turns the Prizes face up — which is
+        // a card in this same set and lands in 10e. See Rulings/PEEK-CLAIRVOYANCE.md.
+        return -Infinity;
       case 'PEEK': return -Infinity;
       case 'COWARDICE': {
         // A rescue that costs everything attached. Only when it is about to die
@@ -1567,6 +1669,19 @@ class AI {
         // Dragonite arrives with two Basics. Without this the bot evolves into
         // them at the plain rate and lets the engine pick their targets.
         s += this.scoreOnPlay(pi, a, newC.id);
+        // HAY FEVER LOCKS YOUR OWN TRAINERS. "No Trainer cards can be played"
+        // names no owner, so evolving into a Dark Vileplume switches off the
+        // Trainers in your own hand as well as theirs. Without this the bot
+        // plays it happily and then finds half its hand illegal.
+        //
+        // Priced off what it is actually giving up — the Trainers it is holding —
+        // rather than a flat penalty, so it is free with none in hand and
+        // expensive with five. UNMEASURED.
+        const newP = (this.eff[newC.id] || {}).p;
+        if (newP && newP.kind === 'NO_TRAINERS') {
+          const mine = me.hand.filter(x => (this.db[x.id] || {}).kind === 'trainer').length;
+          s -= mine * W.drawCard;
+        }
         return s;
       }
 
@@ -1856,6 +1971,39 @@ class AI {
       }
     }
     return s;
+  }
+
+  // The least useful card in hand, and how bad it is. Extracted for Matter
+  // Exchange, which needs the same judgement the discard-cost Trainers already
+  // make: what is safe to throw away.
+  //
+  // Returns {uid, score} where score is roughly "how much better an unknown card
+  // would be" — 0 for something the board wants, up to 1 for a dead card.
+  junkiestInHand(pi) {
+    const me = this.E.state.players[pi];
+    if (!me.hand.length) return null;
+    const need = new Set();
+    for (const sl of this.E.allSlots(pi)) {
+      const c = this.top(sl);
+      for (const at of (c.attacks || [])) for (const ch of String(at.cost || '')) need.add(ch);
+    }
+    let best = null;
+    for (const inst of me.hand) {
+      const c = this.db[inst.id];
+      let junk;
+      if (!c) junk = 1;
+      else if (c.kind === 'energy') junk = need.has(c.provides) ? 0.15 : 0.9;
+      else if (c.kind === 'trainer') junk = 0.4;
+      else if (c.stage === 'Basic') junk = me.bench.length >= 4 ? 0.7 : 0.2;
+      else {
+        // An Evolution whose pre-evolution is nowhere is a dead card in hand.
+        const have = this.E.allSlots(pi).some(sl => this.top(sl).name === c.evolvesFrom)
+                  || me.hand.some(x => this.db[x.id] && this.db[x.id].name === c.evolvesFrom);
+        junk = have ? 0.1 : 0.8;
+      }
+      if (!best || junk > best.score) best = { uid: inst.uid, score: junk };
+    }
+    return best;
   }
 
   // Also fills in a.opts, so the engine never has to pick targets at random.

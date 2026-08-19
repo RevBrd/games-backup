@@ -246,6 +246,21 @@ enumerates the legal payments, `retreatPayOrder` picks the fallback out of that 
 the enumeration rather than constructed**, and that is not style: a greedy version could build a
 payment `doRetreat` then refused as redundant, which hung 26% of ladder games in a retreat loop.
 
+## One open question this raised, unanswered on purpose
+
+**A flat damage bonus lands AFTER Weakness in this engine, and nobody has checked that against the
+Game Boy.** `computeDamage` applies Weakness and Resistance first, then walks the flat-bonus loop —
+PlusPower, Defender, and now Dark Primeape's Frenzy. So a Frenzied Attack into a Fighting Weakness is
+80 + 30 = **110** rather than (40 + 30) doubled = **140**, and a PlusPower behaves the same way.
+
+The convention predates Team Rocket by two sets and **every PlusPower interaction in the game rests
+on it**, which is exactly why Job 10c did not touch it — a card being added is the worst possible
+moment to change a rule that old, and the change would be invisible in the diff and enormous in play.
+
+It is flagged rather than fixed because the printed order is a real question with a real arbiter for
+the sets that have one. If it turns out to be wrong, it is a deliberate job with a measurement pass,
+not a line edit. The assertion in `powertest.js` pins the current behaviour either way.
+
 ## Testing them
 
 **The four playable theme decks contain none of the bespoke cards, so full games never exercise

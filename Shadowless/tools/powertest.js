@@ -4376,5 +4376,347 @@ T('Switch does not trigger Sinkhole, because switching is not retreating', () =>
   return true;
 });
 
+
+// ============================================================================
+// Job 10c widened — the ordinary Powers
+// ============================================================================
+console.log('\nJob 10c widened — the ordinary Powers');
+
+// -------------------------------------------------------------- Hay Fever ----
+console.log('Dark Vileplume — Hay Fever (NO_TRAINERS)');
+
+T('Hay Fever stops the OPPONENT playing a Trainer', () => {
+  const E = board('base1-58', [], 'base5-13');
+  const p = E.state.players[0];
+  p.hand.push({ id: 'base1-91', uid: E.uid++ });     // Bill — unconditionally legal
+  const r = E.act(0, { t: 'playTrainer', hand: p.hand.length - 1 });
+  eq(r.ok, false, 'refused');
+  return true;
+});
+
+T('...and stops ITS OWN CONTROLLER too, which is the half that surprises', () => {
+  // "No Trainer cards can be played" names no owner. Same as Aerodactyl.
+  const E = board('base5-13', [], 'base1-58');
+  const p = E.state.players[0];
+  p.hand.push({ id: 'base1-91', uid: E.uid++ });
+  eq(E.act(0, { t: 'playTrainer', hand: p.hand.length - 1 }).ok, false, 'own Trainer refused too');
+  return true;
+});
+
+T('...and it works from the BENCH, like every Power that does not say otherwise', () => {
+  const E = board('base1-58', ['base5-13'], 'base1-58');
+  const p = E.state.players[0];
+  p.hand.push({ id: 'base1-91', uid: E.uid++ });
+  eq(E.act(0, { t: 'playTrainer', hand: p.hand.length - 1 }).ok, false, 'refused from the Bench');
+  return true;
+});
+
+T('...and a SLEEPING Vileplume lets the Trainers through again', () => {
+  const E = board('base1-58', [], 'base5-13');
+  E.state.players[1].active.status.asleep = true;
+  const p = E.state.players[0];
+  p.hand.push({ id: 'base1-91', uid: E.uid++ });
+  eq(E.act(0, { t: 'playTrainer', hand: p.hand.length - 1 }).ok, true, 'the card prints the clause');
+  return true;
+});
+
+T('...and a Muk switches Hay Fever off, so Trainers work', () => {
+  const E = board('base3-13', [], 'base5-13');       // my Muk vs their Vileplume
+  const p = E.state.players[0];
+  p.hand.push({ id: 'base1-91', uid: E.uid++ });
+  eq(E.act(0, { t: 'playTrainer', hand: p.hand.length - 1 }).ok, true, 'Toxic Gas beats Hay Fever');
+  return true;
+});
+
+// ------------------------------------------------------------- Sticky Goo ----
+console.log('Dark Muk — Sticky Goo (RETREAT_TAX)');
+
+T('Sticky Goo adds CC to the opponent\'s retreat', () => {
+  const E = board('base1-58', ['base1-58'], 'base5-41');
+  const base = CARD_DB['base1-58'].retreat;
+  eq(E.retreatCostOf(E.state.players[0].active), base + 2, 'two more to retreat');
+  return true;
+});
+
+T('...and does NOTHING from the Bench, unlike every other Power in the set', () => {
+  const E = board('base1-58', ['base1-58'], 'base1-58');
+  E.state.players[1].bench = [E.mkSlot({ id: 'base5-41', uid: E.uid++ })];
+  eq(E.retreatCostOf(E.state.players[0].active), CARD_DB['base1-58'].retreat,
+     '"as long as Dark Muk is your ACTIVE Pokemon"');
+  return true;
+});
+
+T('...and Retreat Aid still cancels against it', () => {
+  // The two are computed in one place on purpose, so they net out rather than
+  // one winning. Dodrio (base2-34) discounts by 1 from the bench.
+  const E = board('base1-58', ['base2-34'], 'base5-41');
+  eq(E.retreatCostOf(E.state.players[0].active), CARD_DB['base1-58'].retreat + 2 - 1,
+     '+2 from the Goo, -1 from the Aid');
+  return true;
+});
+
+// ----------------------------------------------------------------- Frenzy ----
+console.log('Dark Primeape — Frenzy (CONFUSED_BONUS)');
+
+T('Frenzy adds 30 to an attack made while Confused', () => {
+  const E = board('base5-43', [], 'base1-58');
+  const atk = E.state.players[0].active, def = E.state.players[1].active;
+  attach(E, atk, 'base1-97', 2);
+  atk.status.confused = true;
+  E.dev.forceFlip = 'H';                              // pass the Confusion check
+  E.act(0, { t: 'attack', idx: 0 });
+  // Frenzied Attack is 40 printed and Pikachu is Weak to Fighting.
+  //
+  // 110, NOT 140, AND THE DIFFERENCE IS AN ENGINE CONVENTION worth knowing
+  // before anybody "fixes" it: Frenzy sits in computeDamage's flat-bonus loop
+  // alongside PlusPower and Defender, which runs AFTER Weakness. So the sum is
+  // (40 x 2) + 30 rather than (40 + 30) x 2. That convention predates this card
+  // by two sets and every PlusPower interaction in the game rests on it —
+  // changing it here would silently change those. Written down rather than
+  // adjusted, and raised as an open question in ENGINE.md.
+  eq(def.dmg, 110, '40 printed, doubled to 80, then +30 from Frenzy');
+  return true;
+});
+
+T('...and does NOTHING while it is not Confused', () => {
+  const E = board('base5-43', [], 'base1-58');
+  const atk = E.state.players[0].active, def = E.state.players[1].active;
+  attach(E, atk, 'base1-97', 2);
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(def.dmg, 80, 'just the printed 40, doubled');
+  return true;
+});
+
+T('"even to itself" — a FAILED Confused attack costs 60, not 30', () => {
+  // The whole of Rulings/FRENZY-SELF-DAMAGE.md, as one number. The Confusion
+  // penalty never goes through computeDamage, so this is a second consultation
+  // and it is the one that would be silently missed.
+  const E = board('base5-43', [], 'base1-58');
+  const atk = E.state.players[0].active;
+  attach(E, atk, 'base1-97', 2);
+  atk.status.confused = true;
+  E.dev.forceFlip = 'T';                              // fail the Confusion check
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(atk.dmg, 60, '30 from Confusion plus 30 from Frenzy');
+  return true;
+});
+
+T('...and an ordinary Confused Pokemon still takes only 30', () => {
+  // The control. Without it the case above proves nothing about Frenzy.
+  const E = board('base1-58', [], 'base1-58');
+  const atk = E.state.players[0].active;
+  attach(E, atk, 'base1-100', 2);
+  atk.status.confused = true;
+  E.dev.forceFlip = 'T';
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(atk.dmg, 30, 'no Frenzy, no bonus');
+  return true;
+});
+
+// ------------------------------------------------- the four interactive ones --
+console.log('Evolutionary Light, Pollen Stench, Matter Exchange, Trickery');
+
+T('Evolutionary Light pulls a named Evolution card into hand', () => {
+  const E = board('base5-33', [], 'base1-58');
+  const p = E.state.players[0];
+  p.deck = [{ id: 'base1-98', uid: E.uid++ }, { id: 'base1-4', uid: E.uid++ }];
+  const want = p.deck[1].uid;
+  E.act(0, { t: 'power', uid: p.active.uid, kind: 'SEARCH_EVOLUTION_TO_HAND', pickUid: want });
+  eq(p.hand.some(x => x.uid === want), true, 'Charizard is in hand');
+  eq(p.deck.length, 1, 'and out of the deck');
+  return true;
+});
+
+T('...and is once a turn', () => {
+  const E = board('base5-33', [], 'base1-58');
+  const p = E.state.players[0];
+  p.deck = [{ id: 'base1-4', uid: E.uid++ }, { id: 'base1-18', uid: E.uid++ }];
+  E.act(0, { t: 'power', uid: p.active.uid, kind: 'SEARCH_EVOLUTION_TO_HAND' });
+  eq(E.act(0, { t: 'power', uid: p.active.uid, kind: 'SEARCH_EVOLUTION_TO_HAND' }).ok, false,
+     'the second is refused');
+  return true;
+});
+
+T('Pollen Stench confuses THEM on heads', () => {
+  const E = board('base5-36', [], 'base1-58');
+  E.dev.forceFlip = 'H';
+  E.act(0, { t: 'power', uid: E.state.players[0].active.uid, kind: 'STATUS_COIN_EITHER_POWER' });
+  eq(E.state.players[1].active.status.confused, true, 'the Defending Pokemon');
+  eq(E.state.players[0].active.status.confused, false, 'and not us');
+  return true;
+});
+
+T('...and confuses YOU on tails, which is the point of the card', () => {
+  const E = board('base5-36', [], 'base1-58');
+  E.dev.forceFlip = 'T';
+  E.act(0, { t: 'power', uid: E.state.players[0].active.uid, kind: 'STATUS_COIN_EITHER_POWER' });
+  eq(E.state.players[0].active.status.confused, true, 'our own Active');
+  eq(E.state.players[1].active.status.confused, false, 'and not theirs');
+  return true;
+});
+
+T('Long-Distance Hypnosis is the same mechanism with Asleep instead', () => {
+  // Two cards, one shape. If this needs its own code path something went wrong.
+  const E = board('base5-54', [], 'base1-58');
+  E.dev.forceFlip = 'H';
+  E.act(0, { t: 'power', uid: E.state.players[0].active.uid, kind: 'STATUS_COIN_EITHER_POWER' });
+  eq(E.state.players[1].active.status.asleep, true, 'Asleep, not Confused');
+  return true;
+});
+
+T('Matter Exchange trades a named card for a draw', () => {
+  const E = board('base5-39', [], 'base1-58');
+  const p = E.state.players[0];
+  p.hand = [{ id: 'base1-98', uid: E.uid++ }];
+  p.deck = [{ id: 'base1-4', uid: E.uid++ }];
+  const junk = p.hand[0].uid, top = p.deck[0].uid;
+  E.act(0, { t: 'power', uid: p.active.uid, kind: 'DISCARD_THEN_DRAW', discardUid: junk });
+  eq(p.discard.some(x => x.uid === junk), true, 'the chosen card was discarded');
+  eq(p.hand.length === 1 && p.hand[0].uid === top, true, 'and the top of the deck replaced it');
+  return true;
+});
+
+T('...and is illegal with an empty hand, because the discard is the COST', () => {
+  const E = board('base5-39', [], 'base1-58');
+  const p = E.state.players[0];
+  p.hand = [];
+  p.deck = [{ id: 'base1-4', uid: E.uid++ }];
+  eq(E.act(0, { t: 'power', uid: p.active.uid, kind: 'DISCARD_THEN_DRAW' }).ok, false, 'refused');
+  return true;
+});
+
+T('Trickery exchanges a Prize with the top of the deck, both ways', () => {
+  const E = board('base5-66', [], 'base1-58');
+  const p = E.state.players[0];
+  p.prizes = [{ id: 'base1-4', uid: 8001 }, { id: 'base1-58', uid: 8002 }];
+  p.deck = [{ id: 'base1-98', uid: 8003 }, { id: 'base1-99', uid: 8004 }];
+  E.act(0, { t: 'power', uid: p.active.uid, kind: 'PRIZE_SWAP', idx: 0 });
+  eq(p.prizes[0].uid, 8003, 'the top of the deck became the Prize');
+  eq(p.deck[0].uid, 8001, 'and the Prize went to the top of the deck');
+  eq(p.prizes.length, 2, 'the pile is still the same size');
+  eq(p.deck.length, 2, 'and so is the deck');
+  return true;
+});
+
+T('...and it reveals nothing — no card name reaches the log', () => {
+  // A Prize is face down to BOTH players. The log is a shared screen.
+  const E = board('base5-66', [], 'base1-58');
+  const p = E.state.players[0];
+  p.prizes = [{ id: 'base1-4', uid: 8001 }];
+  p.deck = [{ id: 'base1-98', uid: 8003 }];
+  const before = E.state.log.length;
+  E.act(0, { t: 'power', uid: p.active.uid, kind: 'PRIZE_SWAP', idx: 0 });
+  const said = E.state.log.slice(before).map(l => l.text || l).join(' ');
+  eq(/Charizard|Fire Energy/.test(said), false, 'neither card was named');
+  return true;
+});
+
+// ------------------------------------------------------------ Gather Fire ----
+console.log('Charmander — Gather Fire (MOVE_ENERGY, once + toSelf)');
+
+T('Gather Fire pulls Fire off another of your Pokemon onto itself', () => {
+  const E = board('base5-50', ['base1-46'], 'base1-58');
+  const p = E.state.players[0];
+  attach(E, p.bench[0], 'base1-98', 2);
+  E.act(0, { t: 'power', uid: p.active.uid, kind: 'MOVE_ENERGY',
+             from: p.bench[0].uid, to: p.active.uid });
+  eq(p.active.energy.length, 1, 'Charmander gained one');
+  eq(p.bench[0].energy.length, 1, 'and the Bench lost one');
+  return true;
+});
+
+T('...and is ONCE a turn, unlike Energy Trans', () => {
+  const E = board('base5-50', ['base1-46'], 'base1-58');
+  const p = E.state.players[0];
+  attach(E, p.bench[0], 'base1-98', 3);
+  E.act(0, { t: 'power', uid: p.active.uid, kind: 'MOVE_ENERGY', from: p.bench[0].uid, to: p.active.uid });
+  eq(E.act(0, { t: 'power', uid: p.active.uid, kind: 'MOVE_ENERGY',
+                from: p.bench[0].uid, to: p.active.uid }).ok, false, 'the second is refused');
+  return true;
+});
+
+T('...and never offers a destination other than itself', () => {
+  // "attach it to Charmander" — toSelf. Energy Trans can move anywhere.
+  const E = board('base5-50', ['base1-46', 'base1-46'], 'base1-58');
+  const p = E.state.players[0];
+  attach(E, p.bench[0], 'base1-98', 2);
+  const acts = E.powerActions(0).filter(x => x.kind === 'MOVE_ENERGY');
+  eq(acts.length > 0, true, 'it is offered');
+  eq(acts.every(x => x.to === p.active.uid), true, 'and every destination is Charmander');
+  return true;
+});
+
+// ------------------------------------------------------ Afternoon Nap --------
+console.log('Slowpoke — Afternoon Nap (SEARCH_ENERGY_TO_SELF)');
+
+T('Afternoon Nap fetches a Psychic Energy onto Slowpoke', () => {
+  const E = board('base5-67', [], 'base1-58');
+  const p = E.state.players[0];
+  attach(E, p.active, 'base1-101', 1);                // pay the C cost
+  p.deck = [{ id: 'base1-98', uid: E.uid++ }, { id: 'base1-101', uid: E.uid++ }];
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(p.active.energy.filter(e => CARD_DB[e.id].provides === 'P').length, 2, 'a Psychic arrived');
+  eq(p.deck.length, 1, 'and left the deck');
+  return true;
+});
+
+T('...and does not spend the turn\'s one Energy attachment', () => {
+  const E = board('base5-67', [], 'base1-58');
+  const p = E.state.players[0];
+  attach(E, p.active, 'base1-101', 1);
+  p.deck = [{ id: 'base1-101', uid: E.uid++ }];
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(!!p.energyAttached, false, 'the attachment rule governs cards played from HAND');
+  return true;
+});
+
+T('...and an empty deck is not a crash', () => {
+  const E = board('base5-67', [], 'base1-58');
+  const p = E.state.players[0];
+  attach(E, p.active, 'base1-101', 1);
+  p.deck = [{ id: 'base1-98', uid: E.uid++ }];        // no Psychic
+  eq(E.act(0, { t: 'attack', idx: 0 }).ok, true, 'the attack still resolved');
+  return true;
+});
+
+// ------------------------------------------------------- Petal Whirlwind -----
+console.log('Dark Vileplume — Petal Whirlwind (one roll, two consequences)');
+
+T('three heads is 90 damage AND self-Confusion, off ONE roll', () => {
+  // Chansey (base1-3, 120 HP) rather than a Pikachu: 90 damage Knocks a Pikachu
+  // Out, and a Knocked Out slot is null by the time the assertion reads it. The
+  // first draft crashed on that, and the second picked a Snorlax — 90 HP, which
+  // 90 damage kills exactly. A target has to SURVIVE the thing being measured.
+  const E = board('base5-13', [], 'base1-3');
+  const p = E.state.players[0];
+  attach(E, p.active, 'base1-99', 3);
+  E.dev.forceFlip = 'H';
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(E.state.players[1].active.dmg, 90, '3 heads x 30');
+  eq(p.active.status.confused, true, '2 or more heads');
+  return true;
+});
+
+T('...and no heads is no damage and no Confusion', () => {
+  const E = board('base5-13', [], 'base1-58');
+  const p = E.state.players[0];
+  attach(E, p.active, 'base1-99', 3);
+  E.dev.forceFlip = 'T';
+  E.act(0, { t: 'attack', idx: 0 });
+  eq(E.state.players[1].active.dmg, 0, 'nothing landed');
+  eq(p.active.status.confused, false, 'and it stayed clear-headed');
+  return true;
+});
+
+T('the two Dark Vileplume printings are NOT aliased, and differ in Weakness', () => {
+  // DATA.md: base5-13 is Weakness Fire, base5-30 is Weakness Fighting, confirmed
+  // from Trevor's physical card after both sources were disbelieved. Aliasing
+  // them would be silent and permanent.
+  eq(CARD_DB['base5-13'].wkType, 'R', '13 is Weak to Fire');
+  eq(CARD_DB['base5-30'].wkType, 'F', '30 is Weak to Fighting');
+  eq(EFFECTS['base5-13'] === EFFECTS['base5-30'], false, 'and they are separate entries');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

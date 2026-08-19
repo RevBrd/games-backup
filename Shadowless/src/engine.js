@@ -1045,7 +1045,21 @@ class Engine {
   // everything else so far attaches to a Pokemon.
   trainersLocked(pi) {
     const p = this.state.players[pi];
-    return !!p.noTrainersUntil && this.state.turn < p.noTrainersUntil;
+    if (!!p.noTrainersUntil && this.state.turn < p.noTrainersUntil) return true;
+    // Dark Vileplume's Hay Fever. "No Trainer cards can be played" — no owner
+    // named, so it is BOTH players, exactly as Aerodactyl's is below. From
+    // either side of the board and from the Bench.
+    //
+    // TREVOR'S RULING, 18 Aug 2026, and it settles the loop this creates:
+    // Goop Gas Attack is a TRAINER that switches all Pokemon Powers off, so it
+    // is the obvious answer to a Hay Fever — and it cannot be played, because
+    // Hay Fever is already in place when you try. Order of events decides it.
+    // That is the Aerodactyl/Muk rule again: whichever continuous effect is
+    // already there wins the moment the other is attempted.
+    for (let i = 0; i < 2; i++) {
+      for (const sl of this.allSlots(i)) if (this.activePower(sl, 'NO_TRAINERS')) return true;
+    }
+    return false;
   }
 
   // Aerodactyl. Applies to BOTH players — the card says "no more Evolution cards
@@ -1068,6 +1082,14 @@ class Engine {
         const p = this.activePower(b, 'RETREAT_DISCOUNT');
         if (p) off += (p.n || 1);
       }
+      // Dark Muk's Sticky Goo, the mirror image of Retreat Aid and deliberately
+      // computed in the same place: "as long as Dark Muk is your ACTIVE Pokemon,
+      // your opponent pays CC more to retreat". Active only — the one Power in
+      // Team Rocket that stops working from the Bench, which is why it reads the
+      // opposing active rather than looping their whole board.
+      const foe = this.state.players[1 - owner].active;
+      const tax = foe ? this.activePower(foe, 'RETREAT_TAX') : null;
+      if (tax) off -= (tax.n || 1);
     }
     return Math.max(0, base - off);
   }
@@ -1322,6 +1344,56 @@ class Engine {
           acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
                       label: `${p.name}: switch in for ${this.nameOf(me.active)}` });
           break;
+        // ---- Job 10c, the ordinary Powers behind the triggers ----
+        // Four cards, and three of them need nothing chosen at all — the whole
+        // action is "use it". They enumerate ONE action each rather than one per
+        // outcome, because the coin and the card are part of the resolution and
+        // not of the choice. Same reasoning as HEAL_ON_FLIP above.
+        case 'STATUS_COIN_EITHER_POWER':
+          // Pollen Stench and Long-Distance Hypnosis are ONE mechanism with the
+          // condition as a setting — Confused and Asleep. Both flip, both hit
+          // the Defending Pokemon on heads and YOUR OWN Active on tails, and
+          // both are once a turn. Two cards, no second shape.
+          if (this.powerSpent(slot)) break;
+          if (!me.active || !this.state.players[1 - pi].active) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
+                      label: `${p.name}: flip for ${p.status}` });
+          break;
+        case 'DISCARD_THEN_DRAW':
+          // Matter Exchange. "Discard a card from your hand IN ORDER TO draw a
+          // card" — the discard is the cost, so a hand of one (this card's own
+          // Pokemon is in play, not in hand) still qualifies, and an EMPTY hand
+          // does not.
+          if (this.powerSpent(slot)) break;
+          if (!me.hand.length || !me.deck.length) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
+                      label: `${p.name}: discard 1 to draw 1` });
+          break;
+        case 'PRIZE_SWAP':
+          // Rattata's Trickery. Enumerated PER PRIZE, because which one you
+          // swap is a real choice to anybody who has seen a Prize — and Here
+          // Comes Team Rocket! turns every Prize face up, which is a Team Rocket
+          // card in the same set.
+          if (this.powerSpent(slot)) break;
+          if (!me.deck.length) break;
+          for (let k = 0; k < me.prizes.length; k++)
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, idx: k,
+                        label: `${p.name}: swap Prize ${k + 1} with the top of your deck` });
+          break;
+        case 'SEARCH_EVOLUTION_TO_HAND': {
+          // Dark Dragonair's Evolutionary Light. Any Evolution card — the card
+          // does not ask for one that fits anything you have, which makes it a
+          // tutor rather than a combo piece.
+          if (this.powerSpent(slot)) break;
+          const evos = me.deck.filter(x => {
+            const c = this.db[x.id];
+            return c && c.kind === 'pokemon' && c.stage !== 'Basic';
+          });
+          if (!evos.length) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
+                      label: `${p.name}: search your deck for an Evolution card` });
+          break;
+        }
         case 'PEEK':
           if (this.powerSpent(slot)) break;
           acts.push({ t: 'power', uid: slot.uid, kind: p.kind, look: 'deck', side: 'me',
@@ -1346,18 +1418,30 @@ class Engine {
           acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
                       label: `${p.name}: return ${this.nameOf(slot)} to hand` });
           break;
-        case 'MOVE_ENERGY':
-          for (const from of this.allSlots(pi)) {
+        case 'MOVE_ENERGY': {
+          // Energy Trans, and now Charmander's Gather Fire, which is the same
+          // mechanism with two settings turned on:
+          //   once     Gather Fire is once a turn; Energy Trans repeats
+          //   toSelf   Gather Fire only ever moves energy ONTO Charmander,
+          //            "attached to 1 of your OTHER Pokemon"
+          // The same pair of settings MOVE_DAMAGE already carries for Strange
+          // Behavior. A third shape was not needed and would have been a second
+          // way to say the same thing.
+          if (p.once && this.powerSpent(slot)) break;
+          const froms = this.allSlots(pi).filter(x => p.toSelf ? x !== slot : true);
+          const tos = p.toSelf ? [slot] : this.allSlots(pi);
+          for (const from of froms) {
             if (!from.energy.some(e => this.isBasicEnergyOf(e, p.energy))) continue;
-            for (const to of this.allSlots(pi)) {
+            for (const to of tos) {
               if (to === from) continue;
               acts.push({
                 t: 'power', uid: slot.uid, kind: p.kind, from: from.uid, to: to.uid,
-                label: `${p.name}: ${this.nameOf(from)} → ${this.nameOf(to)}`,
+                label: `${p.name}: ${this.nameOf(from)} -> ${this.nameOf(to)}`,
               });
             }
           }
           break;
+        }
         case 'EXTRA_ATTACH': {
           // Every basic Energy of a given type is interchangeable, so the source
           // card is not a choice — only the destination is. That keeps this a
@@ -1469,6 +1553,74 @@ class Engine {
         this.log(`${p.name}: ${this.nameOf(slot)} steps in for ${this.nameOf(old)}.`, 'eff');
         return { ok: true };
       }
+      case 'STATUS_COIN_EITHER_POWER': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const mine = this.state.players[pi], them = this.state.players[1 - pi];
+        if (!mine.active || !them.active) return this.fail('Both sides need an Active Pokemon');
+        this.markPower(slot);
+        // ONE coin, two outcomes, never nothing — the STATUS_COIN_EITHER shape,
+        // one level up. It is a gamble you take, not a target you pick, so the
+        // flip happens here rather than being enumerated as two actions.
+        const heads = this.flip(`${p.name}?`);
+        const victim = heads ? them.active : mine.active;
+        this.log(`${p.name}: ${heads ? 'heads' : 'tails'} — ${this.nameOf(victim)} is affected.`, 'eff');
+        this.applyStatus(victim, p.status);
+        return { ok: true };
+      }
+      case 'DISCARD_THEN_DRAW': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const mine2 = this.state.players[pi];
+        if (!mine2.hand.length) return this.fail('No card in hand to discard');
+        if (!mine2.deck.length) return this.fail('No cards left in your deck');
+        let k = a.discardUid !== undefined ? mine2.hand.findIndex(x => x.uid === a.discardUid) : -1;
+        // Unattended fallback: the last card in hand. Deterministic, so a seeded
+        // game replays exactly — the AI supplies a real choice.
+        if (k < 0) k = mine2.hand.length - 1;
+        const gone = mine2.hand.splice(k, 1)[0];
+        mine2.discard.push(gone);
+        mine2.hand.push(mine2.deck.shift());
+        this.markPower(slot);
+        this.log(`${p.name}: ${this.db[gone.id].name} discarded, one card drawn.`, 'eff');
+        return { ok: true };
+      }
+      case 'PRIZE_SWAP': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const mine3 = this.state.players[pi];
+        if (!mine3.deck.length) return this.fail('No cards left in your deck');
+        const k3 = a.idx !== undefined ? a.idx : 0;
+        if (k3 < 0 || k3 >= mine3.prizes.length) return this.fail('No such Prize');
+        // A straight exchange: the Prize goes to the top of the deck and the top
+        // of the deck becomes the Prize. NOTHING IS REVEALED and nothing is
+        // logged about either card, because the Prize is face down to both
+        // players — unless Here Comes Team Rocket! has been played, and that is
+        // the UI's business rather than this one's.
+        const wasPrize = mine3.prizes[k3];
+        mine3.prizes[k3] = mine3.deck.shift();
+        mine3.deck.unshift(wasPrize);
+        this.markPower(slot);
+        this.log(`${p.name}: ${mine3.name} swaps a Prize with the top of their deck.`, 'eff');
+        return { ok: true };
+      }
+      case 'SEARCH_EVOLUTION_TO_HAND': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const mine4 = this.state.players[pi];
+        const legal = x => {
+          const c = this.db[x.id];
+          return c && c.kind === 'pokemon' && c.stage !== 'Basic';
+        };
+        const pool = mine4.deck.filter(legal);
+        if (!pool.length) return this.fail('No Evolution card in your deck');
+        let want = a.pickUid !== undefined ? pool.find(x => x.uid === a.pickUid) : null;
+        if (!want) want = pool[this.pick(pool.length)];
+        mine4.deck.splice(mine4.deck.indexOf(want), 1);
+        mine4.hand.push(want);
+        this.markPower(slot);
+        // "Show it to your opponent" — so this one IS logged by name, unlike the
+        // Prize swap above. The card says to reveal it.
+        this.log(`${p.name}: ${this.db[want.id].name} shown and taken into hand.`, 'eff');
+        this.shuffle(mine4.deck);
+        return { ok: true };
+      }
       case 'PEEK': {
         if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
         const them = this.state.players[1 - pi], mine = this.state.players[pi];
@@ -1502,13 +1654,15 @@ class Engine {
         return { ok: true };
       }
       case 'MOVE_ENERGY': {
-        const from = this.findSlot(pi, a.from), to = this.findSlot(pi, a.to);
+        if (p.once && this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const from = this.findSlot(pi, a.from), to = p.toSelf ? slot : this.findSlot(pi, a.to);
         if (!from || !to) return this.fail('No such Pokemon');
         if (from === to) return this.fail('Pick two different Pokemon');
         const k = from.energy.findIndex(e => this.isBasicEnergyOf(e, p.energy));
         if (k === -1) return this.fail(`${this.nameOf(from)} has no ${p.energy} Energy to move`);
         const moved = from.energy.splice(k, 1)[0];
         to.energy.push(moved);
+        if (p.once) this.markPower(slot);
         this.log(`${p.name}: ${this.db[moved.id].name} moved from ${this.nameOf(from)} `
           + `to ${this.nameOf(to)}.`, 'eff');
         return { ok: true };
@@ -2621,8 +2775,19 @@ class Engine {
     // Confusion gate
     if (atk.status.confused) {
       if (!this.flip('Confusion')) {
-        this.log(`${card.name} is Confused - the attack fails and it hits itself for 30.`, 'status');
-        atk.dmg += 30;
+        // "EVEN TO ITSELF" REACHES HERE, and this line is the whole reason the
+        // ruling exists. The Confusion penalty never goes through computeDamage —
+        // it is a flat add — so Frenzy has to be consulted a second time, or a
+        // Confused Dark Primeape would take 30 where the card says 60.
+        //
+        // Never Weakness or Resistance: Confusion damage is not an attack's.
+        // See Rulings/FRENZY-SELF-DAMAGE.md, and expect the log to look wrong —
+        // it hands over a Prize for an attack that never resolved.
+        const fr = this.activePower(atk, 'CONFUSED_BONUS');
+        const self = 30 + (fr ? (fr.n || 0) : 0);
+        this.log(`${card.name} is Confused - the attack fails and it hits itself for ${self}.`, 'status');
+        if (fr) this.log(`${fr.name}: +${fr.n}, even to itself.`, 'eff');
+        atk.dmg += self;
         return this.finishAttack();
       }
     }
@@ -2748,6 +2913,13 @@ class Engine {
     // Statuses owed by a damage-shaping coin, applied with the post-damage ones
     // so a Barrier stops them exactly as it stops a printed STATUS.
     const pendingStatus = [];
+    // Self-statuses decided during the DAMAGE-SHAPING phase, held until after
+    // the damage lands. Only Petal Whirlwind uses it today: its three coins
+    // decide the damage and the Confusion together, but the card says the
+    // Confusion happens "after doing damage". Kept separate from pendingStatus
+    // because that list goes to the DEFENDER and is gated on their Barrier,
+    // which has no bearing on what a Pokemon does to itself.
+    const selfStatus = [];
     for (const v of script) {
       if (v.v === 'FLIP_OR_NOTHING') { if (!this.flip('attack succeeds?')) nothing = true; }
       else if (v.v === 'DMG_PER_HEAD') {
@@ -2755,6 +2927,18 @@ class Engine {
         for (let i = 0; i < v.coins; i++) if (this.flip(`coin ${i + 1}/${v.coins}`)) h++;
         base = v.per * h;
         this.log(`${h} head(s) -> ${base} damage.`);
+        // Petal Whirlwind. THE SAME THREE COINS decide the damage and whether
+        // Dark Vileplume Confuses itself — "if you get 2 or more heads" — so it
+        // is one verb reading one roll. Two verbs would flip six times and could
+        // pay 90 without the Confusion, which is a different card.
+        //
+        // Deferred to the post-damage phase like every other self-status: the
+        // card says "after doing damage", and STATUS_SELF deliberately ignores
+        // the defender's Barrier for the same reason.
+        if (v.selfStatusAtHeads && h >= v.selfStatusAtHeads.n) {
+          selfStatus.push(v.selfStatusAtHeads.s);
+          this.log(`${h} heads -> ${card.name} will be ${v.selfStatusAtHeads.s}.`, 'status');
+        }
       } else if (v.v === 'DMG_PER_COUNTER_SELF') {
         // `base` is optional and defaults to 0. Flail is pure multiplication;
         // Rage is "10 damage plus 10 more for each counter".
@@ -2959,6 +3143,7 @@ class Engine {
       if (blocked) this.log(`${this.nameOf(def)} is protected - no ${st}.`, 'eff');
       else if (def) this.applyStatus(def, st);
     }
+    for (const st of selfStatus) this.applyStatus(atk, st);
     for (const v of script) {
       switch (v.v) {
         // `s` may be a list. Venom Powder applies Confused AND Poisoned on one
@@ -3099,6 +3284,30 @@ class Engine {
         // both cards printing it say; the plain version removes the damage dealt.
         // Capped at what is actually on the Pokemon, which is the "if it has
         // fewer damage counters than that, remove all of them" clause.
+        case 'SEARCH_ENERGY_TO_SELF': {
+          // Slowpoke's Afternoon Nap. "Search your deck for a Psychic Energy
+          // card and attach it to Slowpoke."
+          //
+          // ENERGY *CARD*, so it is basic by class — the Rain Dance reading, not
+          // the Hydrocannon one. A Rainbow Energy will not be found by this even
+          // once Rainbow exists, and that is the split the two rulings turn on.
+          // See Rulings/ENERGY-VS-ENERGY-CARD.md.
+          //
+          // It does NOT consume the turn's one Energy attachment: the attachment
+          // rule governs playing an Energy card from your HAND, and this one
+          // never reaches a hand.
+          const wantE = x => this.isBasicEnergyOf(x, v.t);
+          const poolE = me.deck.map((x, i2) => [x, i2]).filter(([x]) => wantE(x));
+          if (!poolE.length) { this.log('No such Energy in the deck.', 'eff'); this.shuffle(me.deck); break; }
+          let atE = -1;
+          if (a && a.opts && a.opts.pickUid !== undefined) atE = me.deck.findIndex(x => x.uid === a.opts.pickUid && wantE(x));
+          if (atE === -1) atE = poolE[0][1];
+          const gotE = me.deck.splice(atE, 1)[0];
+          atk.energy.push(gotE);
+          this.log(`${card.name} finds ${this.db[gotE.id].name} and attaches it.`, 'eff');
+          this.shuffle(me.deck);
+          break;
+        }
         case 'SEARCH_BASIC_TO_BENCH': {
           // Call for Family / Call for Friend / Sprout. Named, or by type for
           // Marowak. Legality already refused a full Bench.
@@ -3771,6 +3980,17 @@ class Engine {
       for (const e of atkSlot.effects) {
         if (e.kind === 'DAMAGE_BONUS') { dmg += e.amount; steps.push(`+${e.amount} from ${e.label || 'a bonus'} -> ${dmg}.`); }
       }
+      // Dark Primeape's Frenzy. Deterministic, so it lives in computeDamage and
+      // the AI forecasts it for free — see ENGINE.md on why the coin-flip
+      // passives deliberately do not.
+      //
+      // It is ALWAYS-ON in the `always: true` sense and that is not a shortcut:
+      // this Power only does anything WHILE ITS POKEMON IS CONFUSED, so the
+      // blanket "can't be used if Asleep, Confused or Paralyzed" gate would
+      // switch it off in precisely the state it keys on. The card prints no such
+      // clause. Read the card, every time.
+      const fren = atkSlot.status.confused ? this.activePower(atkSlot, 'CONFUSED_BONUS') : null;
+      if (fren) { dmg += (fren.n || 0); steps.push(`${fren.name}: +${fren.n} while Confused -> ${dmg}.`); }
     }
     if (dmg > 0) {
       for (const e of defSlot.effects) {

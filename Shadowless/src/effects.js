@@ -45,6 +45,12 @@
 //     REQUIRE_SELF_ENERGY {t}      illegal unless at least one Energy providing t
 //                                  is attached to self. "Use this attack only if
 //                                  there are any Fire Energy cards attached"
+//     SEARCH_ENERGY_TO_SELF {t}    search the deck for a basic Energy card of type t
+//                                  and attach it to the ATTACKER. Basic by CLASS —
+//                                  the card says "Energy card" — so a Rainbow is
+//                                  never found by it. Does NOT spend the turn's
+//                                  one attachment, which governs playing an
+//                                  Energy from HAND (Afternoon Nap)
 //     SEARCH_BASIC_TO_BENCH {name|names|type}
 //                                  put a Basic from the deck onto your Bench. Named,
 //                                  a list of names, or by type; unqualified means
@@ -54,7 +60,14 @@
 //   ATTACKS — damage-shaping. These REPLACE the printed damage and run in script
 //   order, so a later one overwrites an earlier one:
 //     FLIP_OR_NOTHING              flip; tails => whole attack does nothing
-//     DMG_PER_HEAD {coins, per}    flip N coins; damage = per * heads
+//     DMG_PER_HEAD {coins, per, selfStatusAtHeads: {n, s}}
+//                                  flip N coins; damage = per * heads.
+//                                  `selfStatusAtHeads` reads THE SAME ROLL for a
+//                                  condition on SELF at n or more heads, applied
+//                                  after the damage — Petal Whirlwind. Two verbs
+//                                  would flip six times and could pay full
+//                                  damage without the Confusion, which is a
+//                                  different card
 //     DMG_PER_COUNTER_SELF {per}   damage = per * (own damage / 10)
 //     DMG_MINUS_PER_COUNTER_SELF {base, per}
 //                                  base - per * (own damage / 10), floored at 0
@@ -391,6 +404,28 @@
 //                            `targetType`. Does NOT consume the turn's one
 //                            Energy attachment.
 //
+//     SEARCH_EVOLUTION_TO_HAND
+//                            interactive, ONCE. Search your deck for ANY
+//                            Evolution card and put it into your hand. "Show it
+//                            to your opponent", so it IS logged by name
+//                            (Evolutionary Light)
+//     STATUS_COIN_EITHER_POWER {status}
+//                            interactive, ONCE. Flip: heads gives the DEFENDING
+//                            Pokemon that condition, tails gives it to YOUR OWN
+//                            Active. Never nothing, which is what makes it a
+//                            gamble rather than a free effect. One shape serves
+//                            both cards printing it — Pollen Stench (Confused)
+//                            and Long-Distance Hypnosis (Asleep)
+//     DISCARD_THEN_DRAW      interactive, ONCE. Discard a card from hand in
+//                            order to draw one. The discard is a COST, so an
+//                            empty hand makes it illegal (Matter Exchange)
+//     PRIZE_SWAP             interactive, ONCE. Exchange one of your Prizes with
+//                            the top card of your deck. Nothing is revealed and
+//                            nothing is logged by name — a Prize is face down to
+//                            both players. Deliberately scored at -Infinity by
+//                            the AI, which is a declaration and not an oversight;
+//                            see RULINGS.md on Peek (Trickery)
+//
 //   PASSIVE POWERS (Job 6b). Nothing fires these — they are CONSULTED at the
 //   moment they matter, via engine.activePower(slot, kind). Never push one into
 //   slot.effects: Toxic Gas switches every one of them on and off from either
@@ -414,6 +449,22 @@
 //                            off, both sides, from anywhere. (Muk)
 //     RETREAT_DISCOUNT {n}   while BENCHED, this side's retreat costs n less.
 //                            Stacks. (Retreat Aid)
+//     RETREAT_TAX {n}        while ACTIVE, the OPPONENT's retreat costs n more.
+//                            The mirror of the above and computed in the same
+//                            place. Active-only, unlike almost everything here,
+//                            because the card says so (Sticky Goo)
+//     NO_TRAINERS            NEITHER player may play a Trainer card. Both sides,
+//                            from anywhere, exactly as NO_EVOLUTION is — so it
+//                            locks your OWN hand too, and it cannot be removed
+//                            by Goop Gas Attack, which is itself a Trainer.
+//                            (Hay Fever)
+//     CONFUSED_BONUS {n}     while this Pokemon is CONFUSED, the damage it does
+//                            is n more — including the damage the Confusion
+//                            rules make it do to ITSELF, which is the whole of
+//                            Rulings/FRENZY-SELF-DAMAGE.md. MUST carry
+//                            `always: true`: it only applies while Confused, so
+//                            the blanket status gate would switch it off in
+//                            precisely the state it keys on (Frenzy)
 //
 //   TRIGGERED POWERS (Job 10c). A THIRD kind, and the distinction from the two
 //   above is what each one costs to get wrong. An interactive Power is offered
@@ -1422,6 +1473,98 @@ const EFFECTS = {
     // remembered it when I was about to build a third one-coin verb.
     [{ v: 'STATUS_COIN_EITHER', heads: 'Poisoned', tails: 'Paralyzed' }],
   ]},
+  // ---- Job 10c widened: the ordinary Powers behind the triggers -------------
+  // Ten cards that are not trigger points and were in no sub-job at all. They
+  // live here because they are the same file and the same machinery, not because
+  // they belong to the trigger work.
+
+  'base5-13': { a: [                                 // Dark Vileplume (Weakness Fire)
+    // Three coins govern the damage AND the self-Confusion, so they are one
+    // verb. Two would flip six times, and could do 90 without the Confusion or
+    // Confuse itself for nothing.
+    [{ v: 'DMG_PER_HEAD', coins: 3, per: 30, selfStatusAtHeads: { n: 2, s: 'Confused' } }],
+  ],
+    // "No Trainer cards can be played" — no owner named, so BOTH players, which
+    // includes you. Playing this is a decision about your own deck as much as
+    // theirs. Goop Gas Attack is the obvious answer and cannot be played while
+    // this is up; see Rulings and trainersLocked().
+    p: { kind: 'NO_TRAINERS', name: 'Hay Fever' } },
+
+  'base5-30': { a: [                                 // Dark Vileplume (Weakness FIGHTING)
+    // NOT AN ALIAS OF base5-13, and it must never become one. The two printings
+    // differ in Weakness — Fire on 13, Fighting on 30 — which both sources
+    // reported, nobody believed, and Trevor's physical card confirmed. Identical
+    // scripts, separate entries, and setsurvey.js flags the class. See DATA.md.
+    [{ v: 'DMG_PER_HEAD', coins: 3, per: 30, selfStatusAtHeads: { n: 2, s: 'Confused' } }],
+  ],
+    p: { kind: 'NO_TRAINERS', name: 'Hay Fever' } },
+
+  'base5-33': { a: [                                 // Dark Dragonair
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 20, bonus: 20, recoil: 0 }],   // Tail Strike
+  ],
+    p: { kind: 'SEARCH_EVOLUTION_TO_HAND', name: 'Evolutionary Light' } },
+
+  'base5-36': { a: [                                 // Dark Gloom
+    [{ v: 'STATUS', s: 'Poisoned' }],                //   Poisonpowder
+  ],
+    // Pollen Stench and Long-Distance Hypnosis are the same mechanism with the
+    // condition as a setting. Heads hits them, tails hits YOU — never nothing,
+    // which is what makes it a gamble rather than a free effect.
+    p: { kind: 'STATUS_COIN_EITHER_POWER', name: 'Pollen Stench', status: 'Confused' } },
+
+  'base5-39': { a: [                                 // Dark Kadabra
+    [{ v: 'NO_WR' }],                                //   Mind Shock
+  ],
+    p: { kind: 'DISCARD_THEN_DRAW', name: 'Matter Exchange' } },
+
+  'base5-41': { a: [                                 // Dark Muk
+    [{ v: 'STATUS', s: 'Poisoned' }],                //   Sludge Punch
+  ],
+    // "As long as Dark Muk is your ACTIVE Pokemon" — the one Power in the set
+    // that stops working from the Bench, which is why RETREAT_TAX reads the
+    // opposing Active rather than looping a whole board the way Retreat Aid does.
+    p: { kind: 'RETREAT_TAX', name: 'Sticky Goo', n: 2 } },
+
+  'base5-43': { a: [                                 // Dark Primeape
+    [{ v: 'STATUS_SELF', s: 'Confused' }],           //   Frenzied Attack
+  ],
+    // `always` is mandatory here rather than convenient. Frenzy ONLY does
+    // anything while its Pokemon is Confused, so the blanket "can't be used if
+    // Asleep, Confused or Paralyzed" gate would switch it off in exactly the
+    // state it keys on. The card prints no such clause.
+    //
+    // "Even to itself" reaches the Confusion penalty, so a failed attack costs
+    // 60 rather than 30 — settled, and it will look wrong in the log.
+    // See Rulings/FRENZY-SELF-DAMAGE.md.
+    p: { kind: 'CONFUSED_BONUS', name: 'Frenzy', n: 30, always: true } },
+
+  'base5-50': { a: [                                 // Charmander
+    [],                                              //   Fire Tail
+  ],
+    // Energy Trans with two settings on. "1 of your OTHER Pokemon" is `toSelf`;
+    // "once during your turn" is `once`.
+    p: { kind: 'MOVE_ENERGY', name: 'Gather Fire', energy: 'R', once: true, toSelf: true } },
+
+  'base5-54': { a: [                                 // Drowzee
+    [{ v: 'STATUS', s: 'Asleep' }],                  //   Nightmare
+  ],
+    p: { kind: 'STATUS_COIN_EITHER_POWER', name: 'Long-Distance Hypnosis', status: 'Asleep' } },
+
+  'base5-66': { a: [                                 // Rattata
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 10, recoil: 0 }],   // Quick Attack
+  ],
+    // Worthless against a bot that reads full engine state, and worth real money
+    // to a human — the opposite way round from Peek. Nothing is revealed and
+    // nothing is logged by name, because a Prize is face down to both players.
+    p: { kind: 'PRIZE_SWAP', name: 'Trickery' } },
+
+  'base5-67': { a: [                                 // Slowpoke
+    // "Energy CARD", so basic by class. A Rainbow will not be found by this once
+    // Rainbow exists — the other half of Rulings/ENERGY-VS-ENERGY-CARD.md.
+    [{ v: 'SEARCH_ENERGY_TO_SELF', t: 'P' }],        //   Afternoon Nap
+    [],                                              //   Headbutt
+  ]},
+
   // ---- Job 10c: the five triggered Powers -----------------------------------
   // `always: true` on the three ON_PLAY cards is not a shortcut. None of them
   // prints "can't be used if Asleep, Confused or Paralyzed" — the two ON_KO and

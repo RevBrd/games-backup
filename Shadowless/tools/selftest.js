@@ -367,6 +367,21 @@ const PROVISIONAL = new Set([
   // The Power kinds themselves, so the worklist reads as the job it is rather
   // than as five loose verbs.
   'ON_PLAY', 'ON_KO', 'ON_OPP_RETREAT',
+  // Job 10c widened — the ordinary Powers. Four interactive kinds and one attack
+  // verb, none of them measured. SEARCH_EVOLUTION_TO_HAND's "does it fit the
+  // board" bonus and STATUS_COIN_EITHER_POWER's whole asymmetry argument are the
+  // two most likely to be wrong: the first is a round number, and the second
+  // claims a Power is worthless unless your own Active is spent, which is a
+  // strong claim nobody has checked against a game.
+  //
+  // NOT here: PRIZE_SWAP, which is scored at -Infinity ON PURPOSE and is a
+  // declaration rather than a guess. Deliberately worthless is not an unmeasured
+  // weight — see Rulings/PEEK-CLAIRVOYANCE.md, and do not "promote" it here.
+  'SEARCH_EVOLUTION_TO_HAND', 'STATUS_COIN_EITHER_POWER', 'DISCARD_THEN_DRAW',
+  'SEARCH_ENERGY_TO_SELF',
+  // Hay Fever's self-cost — the bot pays for the Trainers it is locking out of
+  // its own hand, at a rate nobody has tested.
+  'NO_TRAINERS',
 ]);
 
 // ---- every doorway into play goes through enterPlay --------------------------
@@ -453,6 +468,11 @@ console.log('\nAI verb coverage');
     // consults it, `powerActions` never offers it, and there is nothing for
     // scorePower to weigh. This check going red is what said so.
     'ENERGY_AS',
+    // Job 10c widened. Three more consulted-never-fired passives: Hay Fever is
+    // read by trainersLocked, Sticky Goo by retreatCostOf, and Frenzy by
+    // computeDamage — which is where every DETERMINISTIC passive goes, so the
+    // AI forecasts it for free rather than needing a term of its own.
+    'NO_TRAINERS', 'RETREAT_TAX', 'CONFUSED_BONUS',
   ]);
 
   // TRIGGERED POWERS (Job 10c). Also never seen by scorePower, and it would be
