@@ -389,6 +389,13 @@ const PROVISIONAL = new Set([
   // Rainbow's 10 damage. The refusal to kill its own Pokemon is not a weight and
   // is not in doubt; the price of the 10 on a healthy target is a guess.
   'E_SELF_DAMAGE',
+  // Job 10e, the six Trainers. T_POWERS_OFF is the one most likely to be wrong:
+  // it counts Powers rather than valuing them, on the grounds that pricing an
+  // arbitrary Power is a problem nobody here has solved and a count at least has
+  // the right sign. T_COIN_PINGPONG is the one least likely to be — its odds are
+  // exact and simulated, and only the weighting of self-damage is a guess.
+  'T_STATUS_ON_FLIP', 'T_SEARCH_TO_HAND', 'T_SHUFFLE_FROM_DISCARD',
+  'T_DISCARD_THEN_OPP_REDRAW', 'T_POWERS_OFF', 'T_COIN_PINGPONG',
 ]);
 
 // ---- no switch dispatches the same case twice -------------------------------

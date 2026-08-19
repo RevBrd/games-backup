@@ -247,6 +247,10 @@ class Engine {
       pendingPromote: null, promoteQueue: [], pendingEndTurn: false, setupDone: [false, false],
       // Whirlwind: the DEFENDING player owes a choice of who comes up.
       pendingSwitch: null,
+      // Goop Gas Attack. A board-wide, BOTH-PLAYERS Power blackout with an
+      // expiry turn — stored here rather than on any slot because it is not
+      // about a Pokemon, exactly as noTrainersUntil is a player-level fact.
+      powersOffUntil: 0,
     };
     this.log(`New game. Seed ${this.seed}.`, 'sys');
 
@@ -956,7 +960,8 @@ class Engine {
         // powerUsable asks whether THIS slot's Power works, while this asks
         // whether Muk's is filling the board. Marking Muk without consulting the
         // mark here left everyone else suppressed by a Power that was off.
-        if (p && p.kind === 'TOXIC_GAS' && this.powerActive(sl) && !this.powerSuppressed(sl)) return true;
+        if (p && p.kind === 'TOXIC_GAS' && this.powerActive(sl) && !this.powerSuppressed(sl)
+            && !this.powersBlacked()) return true;
       }
     }
     return false;
@@ -971,6 +976,12 @@ class Engine {
     return !!(slot && slot.effects.some(e => e.kind === 'POWER_OFF'));
   }
 
+  // Goop Gas Attack: "All Pokemon Powers stop working until the end of your
+  // opponent's next turn." Both players, every Power, from anywhere.
+  powersBlacked() {
+    return this.state.turn < (this.state.powersOffUntil || 0);
+  }
+
   powerUsable(slot) {
     if (!this.powerActive(slot)) return false;
     // STARE SWITCHES OFF A TOXIC GAS TOO, and the order of these two lines is
@@ -979,6 +990,17 @@ class Engine {
     // mark is asked first, and Staring a Muk turns everybody else's Powers back
     // on for a turn — which falls out rather than being special-cased.
     if (this.powerSuppressed(slot)) return false;
+    // GOOP GAS SITS ABOVE THE TOXIC GAS EXEMPTION, and the order of these two
+    // lines is the whole ruling. Muk exempts itself from its own suppression
+    // because the card says "other than Toxic Gases"; Goop Gas Attack says ALL
+    // Pokemon Powers, with no exemption written anywhere — so it switches Muk
+    // off too, and for those two turns nobody's Power is suppressed by Muk
+    // because nobody's Power is working at all.
+    //
+    // Put this line below the next one instead and a Muk would keep spreading
+    // Toxic Gas through a blackout that had already switched it off, which is
+    // the same mistake toxicGasActive had to be taught about a suppressed Muk.
+    if (this.powersBlacked()) return false;
     if (this.powerOf(slot).kind === 'TOXIC_GAS') return true;   // never itself
     return !this.toxicGasActive();
   }
@@ -1899,6 +1921,26 @@ class Engine {
     return { ok: true };
   }
 
+  // Does this card match a tutor's filter? Spelled out in the verb rather than
+  // hardcoded per card, because Gym and Neo print several search Trainers of the
+  // same shape with different filters.
+  searchMatches(c, v) {
+    if (!c) return false;
+    if (v.kind && c.kind !== v.kind) return false;
+    if (v.evolution && !(c.kind === 'pokemon' && c.stage && c.stage !== 'Basic')) return false;
+    if (v.nameHas && String(c.name).indexOf(v.nameHas) < 0) return false;
+    return true;
+  }
+
+  // Nightly Garbage Run: "Basic Pokemon cards, Evolution cards, and/or BASIC
+  // Energy cards". Every Pokemon, and Energy only if it is basic — so a Double
+  // Colorless or a Rainbow in the discard stays there.
+  nightlyEligible(c) {
+    if (!c) return false;
+    if (c.kind === 'pokemon') return true;
+    return c.kind === 'energy' && c.cls === 'Basic';
+  }
+
   trainerPlayable(pi, inst) {
     const p = this.state.players[pi], o = this.state.players[1 - pi];
     const script = (this.effects[inst.id] && this.effects[inst.id].t) || [];
@@ -1922,6 +1964,31 @@ class Engine {
           break;
         }
         case 'T_IMPOSTOR_OAK': if (!o.hand.length && !o.deck.length) return false; break;
+        // ---- Job 10e ----
+        case 'T_STATUS_ON_FLIP': if (!o.active) return false; break;
+        case 'T_SEARCH_TO_HAND': {
+          // The Boss's Way. Illegal with nothing matching in the deck, like
+          // every other tutor here — "would do nothing" is the house rule.
+          if (!p.deck.some(x => this.searchMatches(this.db[x.id], v))) return false;
+          break;
+        }
+        case 'T_SHUFFLE_FROM_DISCARD':
+          if (!p.discard.some(x => this.nightlyEligible(this.db[x.id]))) return false;
+          break;
+        case 'T_DISCARD_THEN_OPP_REDRAW':
+          // Imposter Oak's Revenge. "Discard a card from your hand IN ORDER TO
+          // play this card" — so it needs one card besides itself.
+          if (!p.hand.some(x => x.uid !== inst.uid)) return false;
+          if (!o.hand.length && !o.deck.length) return false;
+          break;
+        case 'T_POWERS_OFF':
+          // Goop Gas Attack. Worth nothing with no Power anywhere on the board,
+          // and "would do nothing" refuses it — which also means it can never be
+          // played to pre-empt a Power that has not arrived yet. Deliberate: the
+          // same rule refuses a Potion on an undamaged board.
+          if (![0, 1].some(i => this.allSlots(i).some(sl => this.powerOf(sl)))) return false;
+          break;
+        case 'T_COIN_PINGPONG': if (!p.active || !o.active) return false; break;
         case 'T_MAINTENANCE': if (p.hand.length < 3 || !p.deck.length) return false; break;
         case 'T_POKEMON_CENTER': if (!this.allSlots(pi).some(x => x.dmg > 0)) return false; break;
         case 'T_REVIVE':
@@ -2723,6 +2790,112 @@ class Engine {
           taken.forEach(e => o.discard.push(e));
           const removed = taken.length;
           this.log(`${this.nameOf(src)} discards 1 Energy; ${removed} Energy discarded from ${this.nameOf(tgt)}.`);
+          break;
+        }
+        // ---- Job 10e -------------------------------------------------------
+        case 'T_STATUS_ON_FLIP': {
+          // Sleep! One coin, one condition, nothing on tails. The attack-side
+          // STATUS_ON_FLIP one namespace along.
+          if (this.flip(`${c.name}?`)) {
+            this.applyStatus(o.active, v.s);
+          } else {
+            this.log(`${c.name}: tails, nothing happens.`, 'eff');
+          }
+          break;
+        }
+        case 'T_SEARCH_TO_HAND': {
+          // The Boss's Way — "an Evolution card with Dark in its name". The
+          // filter is spelled out in the verb rather than hardcoded, because Gym
+          // and Neo print several tutors of this shape with different filters.
+          const pool = p.deck.filter(x => this.searchMatches(this.db[x.id], v));
+          if (!pool.length) { this.log('Nothing matching in the deck.', 'eff'); this.shuffle(p.deck); break; }
+          let want = (a.opts && a.opts.pickUid !== undefined)
+            ? pool.find(x => x.uid === a.opts.pickUid) : null;
+          if (!want) want = pool[this.pick(pool.length)];
+          p.deck.splice(p.deck.indexOf(want), 1);
+          p.hand.push(want);
+          // "Show it to your opponent" — named in the log on purpose.
+          this.log(`${c.name}: ${this.db[want.id].name} shown and taken into hand.`);
+          this.shuffle(p.deck);
+          break;
+        }
+        case 'T_SHUFFLE_FROM_DISCARD': {
+          // Nightly Garbage Run. Up to 3 Pokemon and/or BASIC Energy back into
+          // the deck — not Trainers, and not a special Energy.
+          const pool = p.discard.filter(x => this.nightlyEligible(this.db[x.id]));
+          let picks = (a.opts && a.opts.uids) || null;
+          const taken = [];
+          if (picks) {
+            for (const u of picks.slice(0, v.n || 3)) {
+              const k = p.discard.findIndex(x => x.uid === u && this.nightlyEligible(this.db[x.id]));
+              if (k >= 0) taken.push(p.discard.splice(k, 1)[0]);
+            }
+          } else {
+            // Deterministic: the most recently discarded first, matching
+            // ENERGY_FROM_DISCARD, so a seeded game replays exactly.
+            for (let i = p.discard.length - 1; i >= 0 && taken.length < (v.n || 3); i--) {
+              if (this.nightlyEligible(this.db[p.discard[i].id])) taken.push(p.discard.splice(i, 1)[0]);
+            }
+          }
+          taken.forEach(x => p.deck.push(x));
+          this.shuffle(p.deck);
+          this.log(`${c.name}: ${taken.length} card(s) shuffled back into the deck.`);
+          break;
+        }
+        case 'T_DISCARD_THEN_OPP_REDRAW': {
+          // Imposter Oak's Revenge. The discard is a COST and is paid first, so
+          // a hand of exactly this card cannot play it — the legality check
+          // above refuses that.
+          const others = p.hand.filter(x => x.uid !== inst.uid);
+          if (!others.length) return this.fail('No other card to discard');
+          let di = (a.opts && a.opts.discardUid !== undefined)
+            ? p.hand.findIndex(x => x.uid === a.opts.discardUid && x.uid !== inst.uid) : -1;
+          if (di === -1) di = p.hand.findIndex(x => x.uid === others[others.length - 1].uid);
+          p.discard.push(p.hand.splice(di, 1)[0]);
+          const had = o.hand.length;
+          while (o.hand.length) o.deck.push(o.hand.pop());
+          this.shuffle(o.deck);
+          let drew = 0;
+          for (let i = 0; i < (v.n || 4) && o.deck.length; i++) { o.hand.push(o.deck.shift()); drew++; }
+          this.log(`${c.name}: ${o.name} shuffles ${had} card(s) away and draws ${drew}.`);
+          break;
+        }
+        case 'T_POWERS_OFF':
+          // Goop Gas Attack. A PLAYER-LEVEL, BOARD-WIDE switch, stored the way
+          // noTrainersUntil is rather than as an effect on a slot — because it
+          // is not about any Pokemon and because Toxic Gas already proved that
+          // materialising a suppression onto slots has to be resynchronised on
+          // every evolution, Knock Out and retreat. Consulted, never materialised.
+          //
+          // "Until the end of your opponent's next turn" — the same two-turn
+          // window NO_TRAINERS_NEXT_TURN uses, and the same off-by-one to get
+          // right: set to turn + 2 so it covers their whole next turn.
+          this.state.powersOffUntil = this.state.turn + 2;
+          this.log(`${c.name}: all Pokemon Powers stop working until the end of `
+            + `${o.name}'s next turn.`, 'eff');
+          break;
+        case 'T_COIN_PINGPONG': {
+          // Digger. Flip; tails hurts you and stops. Heads passes the coin to
+          // your opponent, whose tails hurts THEM and stops, and so on until
+          // somebody gets tails.
+          //
+          // CAPPED, the way DMG_PER_HEAD_UNTIL_TAILS is: the expected length is
+          // two flips and a 40-flip run has a probability around 1e-12, so the
+          // cap can never be reached in play and exists only so that no seed can
+          // hang a turn.
+          let who = pi;
+          for (let k = 0; k < 40; k++) {
+            const holder = this.state.players[who];
+            if (!this.flip(`${holder.name}: Digger`)) {
+              const tgt = holder.active;
+              if (tgt) {
+                tgt.dmg += v.n || 10;
+                this.log(`${c.name}: tails — ${this.nameOf(tgt)} takes ${v.n || 10}.`, 'eff');
+              }
+              break;
+            }
+            who = 1 - who;
+          }
           break;
         }
         case 'T_LASS': {

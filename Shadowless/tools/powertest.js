@@ -5045,5 +5045,206 @@ T('...and it never hits the same Pokemon twice for one snipe', () => {
   return true;
 });
 
+
+// ============================================================================
+// Job 10e — the six Trainers that needed no new decisions
+// ============================================================================
+console.log('\nJob 10e — Trainers');
+
+function trainerBoard(cardId, activeId = 'base1-4', oppActiveId = 'base1-58') {
+  const E = board(activeId, [], oppActiveId);
+  const p = E.state.players[0];
+  p.hand = [{ id: cardId, uid: E.uid++ }];
+  p.turnsTaken = 5; E.state.players[1].turnsTaken = 5;
+  return E;
+}
+const playT10e = (E, opts) => E.act(0, { t: 'playTrainer', hand: 0, opts });
+
+// ------------------------------------------------------------------ Sleep! --
+T('Sleep! puts the Defending Pokemon to sleep on heads', () => {
+  const E = trainerBoard('base5-79');
+  E.dev.forceFlip = 'H';
+  playT10e(E);
+  eq(E.state.players[1].active.status.asleep, true, 'asleep');
+  return true;
+});
+T('...and does nothing at all on tails', () => {
+  const E = trainerBoard('base5-79');
+  E.dev.forceFlip = 'T';
+  eq(playT10e(E).ok, true, 'the card is still spent');
+  eq(E.state.players[1].active.status.asleep, false, 'and nothing happened');
+  return true;
+});
+
+// --------------------------------------------------------- The Boss's Way --
+T("The Boss's Way fetches an Evolution with Dark in its name", () => {
+  const E = trainerBoard('base5-73');
+  const p = E.state.players[0];
+  p.deck = [{ id: 'base1-4', uid: E.uid++ },      // Charizard — Evolution, no Dark
+            { id: 'base5-70', uid: E.uid++ },     // Zubat — Dark-less Basic
+            { id: 'base5-7', uid: E.uid++ }];     // Dark Golbat — the only match
+  playT10e(E);
+  eq(p.hand.some(x => x.id === 'base5-7'), true, 'Dark Golbat came to hand');
+  eq(p.deck.length, 2, 'and left the deck');
+  return true;
+});
+T('...and it will not take a BASIC with Dark in its name', () => {
+  // "an EVOLUTION card with Dark in its name". Team Rocket prints no Dark Basic,
+  // but the filter is two conditions and only one of them is about the name.
+  const E = trainerBoard('base5-73');
+  const p = E.state.players[0];
+  p.deck = [{ id: 'base5-33', uid: E.uid++ }];    // Dark Dragonair, Stage 1
+  playT10e(E);
+  eq(p.hand.length, 1, 'the Stage 1 qualifies');
+  return true;
+});
+T('...and is refused outright with nothing matching', () => {
+  const E = trainerBoard('base5-73');
+  E.state.players[0].deck = [{ id: 'base1-4', uid: E.uid++ }];
+  eq(playT10e(E).ok, false, 'would do nothing, so it is not a legal play');
+  return true;
+});
+
+// -------------------------------------------------- Nightly Garbage Run ----
+T('Nightly Garbage Run shuffles up to 3 back, and only the right kinds', () => {
+  const E = trainerBoard('base5-77');
+  const p = E.state.players[0];
+  p.deck = [];
+  p.discard = [{ id: 'base1-4', uid: E.uid++ },     // Pokemon
+               { id: 'base1-98', uid: E.uid++ },    // basic Fire Energy
+               { id: 'base1-91', uid: E.uid++ },    // Bill — a TRAINER
+               { id: 'base1-96', uid: E.uid++ },    // Double Colorless — SPECIAL
+               { id: 'base5-70', uid: E.uid++ }];
+  playT10e(E);
+  eq(p.deck.length, 3, 'three went back');
+  eq(p.deck.every(x => CARD_DB[x.id].kind === 'pokemon'
+      || (CARD_DB[x.id].kind === 'energy' && CARD_DB[x.id].cls === 'Basic')), true,
+     'no Trainer and no special Energy among them');
+  eq(p.discard.some(x => x.id === 'base1-91'), true, 'Bill stayed in the discard');
+  eq(p.discard.some(x => x.id === 'base1-96'), true, '...and so did the Double Colorless');
+  return true;
+});
+
+// ------------------------------------------- Imposter Oak's Revenge --------
+T("Imposter Oak's Revenge costs a card and redraws their hand to 4", () => {
+  const E = trainerBoard('base5-76');
+  const p = E.state.players[0], o = E.state.players[1];
+  const fodder = { id: 'base1-98', uid: E.uid++ };
+  p.hand.push(fodder);
+  o.hand = [{ id: 'base1-4', uid: E.uid++ }, { id: 'base1-4', uid: E.uid++ },
+            { id: 'base1-4', uid: E.uid++ }, { id: 'base1-4', uid: E.uid++ },
+            { id: 'base1-4', uid: E.uid++ }, { id: 'base1-4', uid: E.uid++ }];
+  o.deck = Array.from({ length: 10 }, () => ({ id: 'base1-98', uid: E.uid++ }));
+  playT10e(E, { discardUid: fodder.uid });
+  eq(o.hand.length, 4, 'six became four');
+  eq(p.discard.some(x => x.uid === fodder.uid), true, 'and the cost was paid');
+  return true;
+});
+T('...and is illegal holding nothing but itself', () => {
+  const E = trainerBoard('base5-76');
+  E.state.players[1].hand = [{ id: 'base1-4', uid: E.uid++ }];
+  eq(playT10e(E).ok, false, 'the discard is a cost, not an option');
+  return true;
+});
+
+// ---------------------------------------------------- Goop Gas Attack ------
+T('Goop Gas Attack switches off a Power on the OPPONENT board', () => {
+  const E = trainerBoard('base5-78', 'base1-4', 'base1-1');   // their Alakazam
+  const foe = E.state.players[1].active;
+  eq(E.powerUsable(foe), true, 'Damage Swap works beforehand');
+  playT10e(E);
+  eq(E.powerUsable(foe), false, 'and not afterwards');
+  return true;
+});
+T('...and switches off YOUR OWN Powers too, which is the cost of playing it', () => {
+  const E = trainerBoard('base5-78', 'base1-1', 'base1-1');
+  const mine = E.state.players[0].active;
+  playT10e(E);
+  eq(E.powerUsable(mine), false, 'both boards go dark');
+  return true;
+});
+T('...and it switches off a MUK, which Toxic Gas itself never does', () => {
+  // The ordering rule. Muk exempts itself from its own suppression because the
+  // card says "other than Toxic Gases"; Goop Gas Attack says ALL Pokemon Powers
+  // with no exemption written anywhere.
+  const E = trainerBoard('base5-78', 'base1-4', 'base3-13');   // their Muk
+  const muk = E.state.players[1].active;
+  eq(E.powerUsable(muk), true, 'a Muk normally exempts itself');
+  playT10e(E);
+  eq(E.powerUsable(muk), false, 'and does not exempt itself from this');
+  eq(E.toxicGasActive(), false, '...so nothing is spreading Toxic Gas either');
+  return true;
+});
+T('...and it expires at the end of their next turn', () => {
+  const E = trainerBoard('base5-78', 'base1-4', 'base1-1');
+  const foe = E.state.players[1].active;
+  playT10e(E);
+  eq(E.powersBlacked(), true, 'dark now');
+  E.state.turn += 2;
+  eq(E.powersBlacked(), false, 'and light again two turns later');
+  eq(E.powerUsable(foe), true, 'the Power is back');
+  return true;
+});
+T('...and it is refused when there is no Power anywhere to switch off', () => {
+  // Two Pikachu. The first draft used a Charizard, which carries Energy Burn —
+  // so there WAS a Power on the board and the card was correctly legal. A test
+  // for "no Powers anywhere" has to actually contain no Powers anywhere.
+  const E = trainerBoard('base5-78', 'base1-58', 'base1-58');
+  eq(playT10e(E).ok, false, 'would do nothing');
+  return true;
+});
+
+T('...but it IS legal when only YOUR side has a Power, and that is deliberate', () => {
+  // Legality is "does this do something"; whether it is a good idea is the AI'''s
+  // problem, and scoreTrainer returns -Infinity when the opponent has none. The
+  // same split every other Trainer here uses.
+  const E = trainerBoard('base5-78', 'base1-4', 'base1-58');   // my Charizard
+  eq(playT10e(E).ok, true, 'switching off your own Energy Burn is legal');
+  // A SECOND board for the AI half. Playing the card takes it out of hand, so
+  // scoring hand[0] afterwards reads whatever moved into its place — which is
+  // how the first draft of this case failed.
+  const E2 = trainerBoard('base5-78', 'base1-4', 'base1-58');
+  const ai = new AI(E2, 'expert');
+  eq(ai.scoreTrainer(0, { t: 'playTrainer', hand: 0, opts: {} }) === -Infinity, true,
+     '...and the bot refuses it');
+  return true;
+});
+T('a Hay Fever cannot be answered with Goop Gas Attack, because it is a Trainer', () => {
+  // The loop Trevor called: order of events. The Power is already in place when
+  // you try to play the card, so it blocks the card that would have removed it.
+  const E = trainerBoard('base5-78', 'base1-4', 'base5-13');   // their Dark Vileplume
+  eq(playT10e(E).ok, false, 'no Trainer can be played, including this one');
+  return true;
+});
+
+// ----------------------------------------------------------------- Digger --
+T('Digger hurts YOU on the first tails', () => {
+  const E = trainerBoard('base5-75');
+  E.dev.forceFlip = 'T';
+  playT10e(E);
+  eq(E.state.players[0].active.dmg, 10, 'the coin starts with you');
+  eq(E.state.players[1].active.dmg, 0, 'and they took nothing');
+  return true;
+});
+T('...and hurts THEM when the first coin is heads and the second is tails', () => {
+  const E = trainerBoard('base5-75');
+  // forceFlip is a single setting, so drive the sequence through the seeded RNG
+  // instead: heads then tails.
+  let n = 0;
+  E.rand = () => (n++ === 0 ? 0.1 : 0.9);            // <0.5 is heads
+  playT10e(E);
+  eq(E.state.players[1].active.dmg, 10, 'they took it');
+  eq(E.state.players[0].active.dmg, 0, 'and you did not');
+  return true;
+});
+T('...and an all-heads seed terminates rather than hanging the turn', () => {
+  const E = trainerBoard('base5-75');
+  E.dev.forceFlip = 'H';
+  const t0 = Date.now();
+  eq(playT10e(E).ok, true, 'it returned');
+  eq(Date.now() - t0 < 2000, true, 'and quickly — the loop is capped');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

@@ -327,6 +327,38 @@
 //     T_ENERGY_SEARCH              T_GAMBLER                 T_MR_FUJI
 //     T_RECYCLE
 //
+//   TRAINERS, Job 10e. Parameterised rather than named for their card, because
+//   Gym and Neo reprint every one of these shapes with a different setting:
+//     T_STATUS_ON_FLIP {s}         flip; heads gives the Defending Pokemon that
+//                                  condition (Sleep!)
+//     T_SEARCH_TO_HAND {kind, evolution, nameHas}
+//                                  search your deck for one card matching the
+//                                  filter and take it into hand. Shown to the
+//                                  opponent, so it IS named in the log
+//                                  (The Boss'''s Way: evolution + nameHas Dark)
+//     T_SHUFFLE_FROM_DISCARD {n}   up to n Pokemon and/or BASIC Energy out of
+//                                  your discard pile and back into your deck.
+//                                  Not Trainers, and not a special Energy — so a
+//                                  Rainbow in the discard stays there
+//                                  (Nightly Garbage Run)
+//     T_DISCARD_THEN_OPP_REDRAW {n}
+//                                  discard a card as a COST, then the opponent
+//                                  shuffles their hand away and draws n. Illegal
+//                                  on a hand holding nothing but this card
+//                                  (Imposter Oak'''s Revenge)
+//     T_POWERS_OFF                 EVERY Pokemon Power on BOTH boards stops
+//                                  working until the end of the opponent'''s next
+//                                  turn — including Toxic Gas, which has no
+//                                  exemption from this the way it has from
+//                                  itself. Player-level and consulted, never
+//                                  materialised onto slots (Goop Gas Attack)
+//     T_COIN_PINGPONG {n}          flip; tails does n to YOUR Active and stops,
+//                                  heads passes the coin to your opponent, and
+//                                  so on. THE COIN STARTS WITH YOU, so you take
+//                                  it two times in three — it is a finisher that
+//                                  misses more often than not, and the AI is
+//                                  told so explicitly (Digger)
+//
 // THE COIN-FLIP FAMILY — an index by SHAPE rather than by function.
 //
 // TREVOR ASKED FOR THIS, 17 Aug 2026, and the reason is a repeat: #7 asked
@@ -1502,6 +1534,15 @@ const EFFECTS = {
     // remembered it when I was about to build a third one-coin verb.
     [{ v: 'STATUS_COIN_EITHER', heads: 'Poisoned', tails: 'Paralyzed' }],
   ]},
+  // ---- Job 10e: the six Trainers that needed no new decisions ---------------
+
+  'base5-73': { t: [{ v: 'T_SEARCH_TO_HAND', evolution: true, nameHas: 'Dark' }] },
+  'base5-75': { t: [{ v: 'T_COIN_PINGPONG', n: 10 }] },
+  'base5-76': { t: [{ v: 'T_DISCARD_THEN_OPP_REDRAW', n: 4 }] },
+  'base5-77': { t: [{ v: 'T_SHUFFLE_FROM_DISCARD', n: 3 }] },
+  'base5-78': { t: [{ v: 'T_POWERS_OFF' }] },
+  'base5-79': { t: [{ v: 'T_STATUS_ON_FLIP', s: 'Asleep' }] },
+
   // ---- Job 10d: two of the three special Energy -----------------------------
   // Both print their effect as "IF YOU PLAY THIS CARD FROM YOUR HAND", which is
   // the played-from-hand rule one card kind along — see doAttach. Neither is an

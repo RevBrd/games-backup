@@ -2095,6 +2095,92 @@ class AI {
     for (const v of script) {
       switch (v.v) {
         case 'T_POKE_BALL': s += 0.5 * W.drawCard * 2; break;
+
+        // ---- Job 10e ------------------------------------------------------
+        case 'T_STATUS_ON_FLIP': {
+          const key = STATUS_VALUE[v.s];
+          if (!key || !you.active) return -Infinity;
+          s += 0.5 * W[key];
+          break;
+        }
+        case 'T_SEARCH_TO_HAND': {
+          // A tutor. Worth a draw, plus real money when what it fetches fits
+          // something already on the board — and the pick is filled in here so
+          // the engine's random fallback is never reached.
+          const inPlay = new Set(E.allSlots(pi).map(sl => this.top(sl).name));
+          const pool = me.deck.filter(x => E.searchMatches(this.db[x.id], v));
+          if (!pool.length) return -Infinity;
+          let best = pool[0], fits = false;
+          for (const x of pool) {
+            if (!fits && inPlay.has(this.db[x.id].evolvesFrom)) { best = x; fits = true; }
+          }
+          a.opts.pickUid = best.uid;
+          s += W.drawCard + (fits ? 10 : 0);
+          break;
+        }
+        case 'T_SHUFFLE_FROM_DISCARD': {
+          // Recycling. Worth the most on a thin deck and on Pokemon whose line
+          // is still in play, worth least as a deck-thickener nobody asked for —
+          // and note it puts cards BACK, so it is never a tempo play.
+          const inPlay = new Set(E.allSlots(pi).map(sl => this.top(sl).name));
+          const pool = me.discard.filter(x => E.nightlyEligible(this.db[x.id]));
+          if (!pool.length) return -Infinity;
+          const rank = x => {
+            const cc = this.db[x.id];
+            if (cc.kind !== 'pokemon') return 1;
+            return (inPlay.has(cc.evolvesFrom) || inPlay.has(cc.name)) ? 6 : 3;
+          };
+          const take = pool.slice().sort((x, y) => rank(y) - rank(x)).slice(0, v.n || 3);
+          a.opts.uids = take.map(x => x.uid);
+          s += take.reduce((acc, x) => acc + rank(x), 0) * 0.5;
+          // Running out of deck is a loss. The thinner it is, the more this is
+          // worth, and that outweighs everything above once it is genuinely low.
+          if (me.deck.length < 10) s += (10 - me.deck.length) * 2;
+          break;
+        }
+        case 'T_DISCARD_THEN_OPP_REDRAW': {
+          // Disruption that costs a card. Worth it when their hand is big and
+          // they have been holding it — which is the case this bot can actually
+          // see — and a straight loss when their hand is small, because they
+          // draw back up to four.
+          const junk = this.junkiestInHand(pi);
+          if (junk === null) return -Infinity;
+          a.opts.discardUid = junk.uid;
+          s += (you.hand.length - (v.n || 4)) * W.drawCard;
+          s -= (1 - junk.score) * W.drawCard;
+          break;
+        }
+        case 'T_POWERS_OFF': {
+          // WORTH WHAT THEIR POWERS ARE WORTH, MINUS WHAT YOURS ARE, and the
+          // second half is the one that would be forgotten: Goop Gas Attack
+          // switches off BOTH boards, so a deck built on Rain Dance blacking out
+          // its own engine to stop a Muk is usually a bad trade.
+          //
+          // Counted rather than valued, because pricing an arbitrary Power is a
+          // problem nobody here has solved. A count at least has the right sign.
+          const theirs = E.allSlots(1 - pi).filter(sl => E.powerOf(sl) && E.powerUsable(sl)).length;
+          const mine = E.allSlots(pi).filter(sl => E.powerOf(sl) && E.powerUsable(sl)).length;
+          if (theirs === 0) return -Infinity;
+          s += (theirs - mine) * 8;
+          break;
+        }
+        case 'T_COIN_PINGPONG': {
+          // DIGGER IS A BAD CARD AND THE BOT HAS TO KNOW IT. The coin starts
+          // with YOU, so you take the 10 two times in three: p(you) = 0.5 +
+          // 0.5*0.5*0.5 + ... = 2/3, p(them) = 1/3. Confirmed by simulation.
+          //
+          // So its expected value is 3.33 damage to them against 6.67 to you,
+          // and it is only ever right when their Active is on its last 10 and
+          // yours is not — a finisher that misses two times in three, rather
+          // than a damage card.
+          const dmg = v.n || 10;
+          const kills = you.active && this.remainingHP(you.active) <= dmg;
+          const dies = me.active && this.remainingHP(me.active) <= dmg;
+          s += (1 / 3) * dmg * W.damage - (2 / 3) * dmg * W.selfDamage;
+          if (kills) s += (1 / 3) * W.knockout;
+          if (dies) s -= (2 / 3) * W.selfKO;
+          break;
+        }
         case 'T_ENERGY_SEARCH': s += W.drawCard; break;
         case 'T_MR_FUJI': {
           // A rescue, so it is only worth anything on something badly hurt —
