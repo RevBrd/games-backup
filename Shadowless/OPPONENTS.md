@@ -201,9 +201,26 @@ Tier says how *strong* a deck is. It does not say what the deck *does to you*, a
 that makes a player rebuild. Two T3 decks "built around a Stage 2 line with support" can play
 identically. What forces a new deck is meeting one that punishes something yours has no answer to.
 
-So an opponent deck **may** carry a **pressure tag**, independent of tier: *Energy denial · bench
-sniping · status lock · single-target beatdown · Trainer denial · deck-out*. The rule that makes it
-work:
+So an opponent deck **may** carry a **pressure tag**, independent of tier. **The vocabulary below is
+derived from the DSL rather than invented** — each one is a real family of verbs in `effects.js`, which
+is what makes `tools/pressure.js` able to count them:
+
+| Pressure | What it does to you | Verb family |
+|---|---|---|
+| Energy denial | strips the investment you already made | `DISCARD_DEF_ENERGY`, `T_DISCARD_OPP_ENERGY` |
+| Bench damage | your safe cards are not safe | the `BENCH_SNIPE` / `BENCH_SPLASH` family |
+| Position control | you fight with the wrong Pokemon | `WHIRLWIND`, `SWITCH_DEFENDER_*` |
+| Status lock | it takes your turns away | `STATUS*`, `TOXIC`, `ATTACK_LOCK`, `JAM_DEFENDER` |
+| Hand / Trainer denial | your outs stop arriving | `NO_TRAINERS_NEXT_TURN`, `T_LASS` |
+| Wall / prevention | your damage stops landing | `PREVENT_*`, `DAMAGE_REDUCTION*`, `BARRIER`, `HARDEN` |
+| Attrition / recovery | it refuses to run out | `ENERGY_FROM_DISCARD`, `HEAL_SELF_*` |
+
+**Deck-out is not on that list and deliberately so.** Nothing in this era mills a deck — there is no
+verb for it, because no card does it. Deck-out is what a *wall* deck does to you by refusing to supply
+a clock, so it is a property of a **deck** and never of a card. Tag it on the roster entry if a deck
+earns it; do not go looking for cards that produce it.
+
+The rule that makes it work:
 
 > **The gate and the boss must not share a pressure with each other or with anything in the body,
 > and no two body rungs in a row may share one.**
@@ -224,14 +241,21 @@ there is no real deck-out enabler in Base Set and no Trainer lock before the Gym
 of distinct pressures a set can field is a fact about the set, and it is an input to how long that
 bracket should be. The vocabulary may also grow; it is not a closed list.
 
-**Base Set supports about three pressures, not six, and that is measured rather than guessed.** Its
-whole disruption pool is Energy Removal, Super Energy Removal, Gust of Wind, Lass and Impostor
-Professor Oak — Energy denial, a bench pull, and hand disruption. There is no deck-out enabler and no
-Trainer lock. **So "no pressure — straight beatdown" is a legitimate and common state for a deck, and
-the no-repeat rule constrains only the decks that actually have a tag.** In Trevor's built roster
-exactly one deck has a strong pressure identity (the T3 Water deck, at five disruption cards against
-one or two everywhere else); the rest are honest beatdown. That is the correct outcome for a first
-set, and the vocabulary earns its keep later where the card pool is richer.
+**Which pressures a set can field is a fact about the set — run `node tools/pressure.js` rather than
+reading the cards.** It is the same figure every roster job needs and it is fully derived, so nobody
+should be hand-tagging it. **Do not quote a number here from memory: an earlier version of this
+paragraph claimed Base Set supported "about three pressures", which came from scanning the Trainer
+pool by eye and missed that attacks create pressure too.** The tool says seven, unevenly.
+
+The profiles differ sharply and that is the useful part — **each set has a fingerprint, and a bracket
+should play to its own**. Base Set is status and walls with almost no bench damage; Fossil is the bench
+damage set; Jungle prints no Energy denial at all. A roster that ignores this ends up asking a set for
+a pressure it cannot supply.
+
+**"No pressure — straight beatdown" is a legitimate and common state**, and the no-repeat rule
+constrains only the decks that actually carry a tag. In Trevor's built Base Set roster exactly one deck
+has a strong pressure identity — the T3 Water deck, at five disruption cards against one or two
+everywhere else — and the rest are honest beatdown. That is the right outcome for a first set.
 
 **Assignment waits for the set, and this is deliberate.** Which pressures a bracket can field depends
 on what the set prints — Base Set has no deck-out enabler worth the name, and there is no real

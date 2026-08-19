@@ -286,3 +286,23 @@ Deterministic seed, so the figure is reproducible run to run and a change to the
 against it. It reads the deck JSON rather than the engine, so it works on quarantined deck files that
 nothing else has wired up yet. The standing figure and what to do about it are in [AI.md](AI.md).
 
+## `pressure.js` — what a set can threaten you with
+
+**Derived, never hand-tagged.** [OPPONENTS.md](OPPONENTS.md) asks a bracket for *variety* of pressure
+rather than a ramp of strength, and which pressures a set can field is a fact about the set. This reads
+the effect scripts and counts them, so nobody has to read 102 cards — and so the answer cannot drift
+away from the cards the way a hand-maintained list would.
+
+```bash
+node tools/pressure.js          # every generated set
+node tools/pressure.js base3    # one set, with the card names
+```
+
+**Run it before building a set's roster.** The profiles are sharply different — Base Set is status and
+walls with almost no bench damage, Fossil is made of bench damage, Jungle prints no Energy denial at
+all — and a roster that ignores that asks a set for something it cannot supply. It also names the
+categories that are too thin to lean on.
+
+Deck-out is absent on purpose: no card in this era mills a deck, so it is a property of a *deck* (a
+wall that supplies no clock) and cannot be derived from a card pool.
+
