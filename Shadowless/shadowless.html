@@ -8087,7 +8087,8 @@ class Engine {
         }
         case 'T_POKE_BALL': if (p.deck.length === 0) return false; break;
         case 'T_ENERGY_SEARCH':
-          if (!p.deck.some(x => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; })) return false;
+          // ANY Energy card, not only a basic one. See Rulings/ENERGY-SEARCH.md.
+          if (!p.deck.some(x => this.db[x.id].kind === 'energy')) return false;
           break;
         case 'T_MR_FUJI': if (!p.bench.length) return false; break;
         case 'T_GAMBLER': break;   // always legal; an empty hand still shuffles and draws
@@ -8480,9 +8481,13 @@ class Engine {
           break;
         }
         case 'T_ENERGY_SEARCH': {
+          // "Search your deck for a basic Energy card" — and the Game Boy game
+          // let you take a Double Colorless anyway. Trevor's call, 18 Aug 2026,
+          // and it is the whole reason Charizard is a workable deck there.
+          // Deliberately NOT the printed text. See Rulings/ENERGY-SEARCH.md.
           const eligible = p.deck.map((x, i) => [x, i])
-            .filter(([x]) => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; });
-          if (!eligible.length) { this.log('Energy Search: no basic Energy left.'); this.shuffle(p.deck); break; }
+            .filter(([x]) => this.db[x.id].kind === 'energy');
+          if (!eligible.length) { this.log('Energy Search: no Energy left.'); this.shuffle(p.deck); break; }
           let at = -1;
           if (a.opts && a.opts.pickUid !== undefined) at = p.deck.findIndex(x => x.uid === a.opts.pickUid);
           if (at === -1) at = eligible[this.pick(eligible.length)][1];
@@ -8824,7 +8829,8 @@ class Engine {
         }
         case 'T_POKE_BALL': if (p.deck.length === 0) return false; break;
         case 'T_ENERGY_SEARCH':
-          if (!p.deck.some(x => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; })) return false;
+          // ANY Energy card, not only a basic one. See Rulings/ENERGY-SEARCH.md.
+          if (!p.deck.some(x => this.db[x.id].kind === 'energy')) return false;
           break;
         case 'T_MR_FUJI': if (!p.bench.length) return false; break;
         case 'T_GAMBLER': break;   // always legal; an empty hand still shuffles and draws
