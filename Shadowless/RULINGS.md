@@ -22,7 +22,7 @@ enough to settle a call in plain English, so ask him — he expects to be asked.
 |---|---|
 | Buzzap — Electrode (base1-21) | [BUZZAP.md](Rulings/BUZZAP.md) |
 | "1 &lt;Type&gt; Energy card" means a basic one | [ENERGY-CARD-MEANS-BASIC.md](Rulings/ENERGY-CARD-MEANS-BASIC.md) |
-| Energy Search finds any Energy card, including Double Colorless | [ENERGY-SEARCH.md](Rulings/ENERGY-SEARCH.md) |
+| Energy Search means basic Energy — the Game Boy game is wrong here | [ENERGY-SEARCH.md](Rulings/ENERGY-SEARCH.md) |
 | Mirror Move replays a recorded result, it does not recompute | [MIRROR-MOVE.md](Rulings/MIRROR-MOVE.md) |
 | Metronome copies a CHOSEN attack, and cannot copy another Metronome | [METRONOME.md](Rulings/METRONOME.md) |
 | Clefairy Doll — in hand it is a Trainer, in play it is a Pokémon | [CLEFAIRY-DOLL.md](Rulings/CLEFAIRY-DOLL.md) |

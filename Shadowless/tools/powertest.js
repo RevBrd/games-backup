@@ -3890,5 +3890,40 @@ T('every Knock Out resolves before anybody counts Prizes', () => {
   return true;
 });
 
+// --------------------------------------------------- pickUid is validated ---
+// A restricted deck search computes an `eligible` list and then looked the
+// requested card up in the WHOLE zone, so any uid in the deck was reachable:
+// Energy Search fetched a Charizard. The UI only ever offers legal cards, so it
+// was never reachable by clicking — which is exactly why nothing caught it. The
+// engine does not get to trust its caller. See Rulings/ENERGY-SEARCH.md.
+function askEnergySearch(targetId) {
+  const E = new Engine(CARD_DB, EFFECTS, { seed: 3 });
+  const deck = { name: 'a', list: [[4, 'base3-59'], [4, 'base1-96'], [4, 'base1-4'],
+                                   [4, 'base1-46'], [4, 'base1-24'], [40, 'base1-98']] };
+  E.newGame(deck, deck, ['A', 'B']);   // BOTH seats — `active` may be either
+  E.setupAuto(0); E.setupConfirm(0); E.setupAuto(1); E.setupConfirm(1);
+  const pi = E.state.active, p = E.state.players[pi];
+  p.hand.push({ uid: 9990, id: 'base3-59' });
+  const want = p.deck.find(x => x.id === targetId);
+  if (!want) throw new Error('target not in deck: ' + targetId);
+  E.act(pi, { t: 'playTrainer', hand: p.hand.length - 1, opts: { pickUid: want.uid } });
+  const got = p.hand.find(x => x.uid === want.uid);
+  return got ? CARD_DB[got.id].name : null;
+}
+T('Energy Search refuses a Pokemon asked for by uid', () => {
+  eq(askEnergySearch('base1-4'), null, 'Charizard was not fetched');
+  return true;
+});
+T('Energy Search refuses a Special Energy asked for by uid', () => {
+  // Double Colorless is Energy but NOT basic. The GBC game allowed it; we
+  // deliberately do not, because clear printed text beats the arbiter.
+  eq(askEnergySearch('base1-96'), null, 'Double Colorless was not fetched');
+  return true;
+});
+T('Energy Search still finds a basic Energy asked for by uid', () => {
+  eq(askEnergySearch('base1-98'), 'Fire Energy', 'a legal request still works');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

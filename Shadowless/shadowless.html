@@ -8087,8 +8087,9 @@ class Engine {
         }
         case 'T_POKE_BALL': if (p.deck.length === 0) return false; break;
         case 'T_ENERGY_SEARCH':
-          // ANY Energy card, not only a basic one. See Rulings/ENERGY-SEARCH.md.
-          if (!p.deck.some(x => this.db[x.id].kind === 'energy')) return false;
+          // BASIC Energy only — the printed text, kept deliberately against a
+          // real GBC contradiction. See Rulings/ENERGY-SEARCH.md.
+          if (!p.deck.some(x => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; })) return false;
           break;
         case 'T_MR_FUJI': if (!p.bench.length) return false; break;
         case 'T_GAMBLER': break;   // always legal; an empty hand still shuffles and draws
@@ -8472,7 +8473,15 @@ class Engine {
           const eligible = p.deck.map((x, i) => [x, i]).filter(([x]) => this.db[x.id].kind === 'pokemon');
           if (!eligible.length) { this.log('Poke Ball: no Pokemon left in the deck.'); this.shuffle(p.deck); break; }
           let at = -1;
-          if (a.opts && a.opts.pickUid !== undefined) at = p.deck.findIndex(x => x.uid === a.opts.pickUid);
+          // AN INELIGIBLE pickUid IS REFUSED, not obeyed. This looked the card
+          // up in the whole zone and never checked it against `eligible`, so a
+          // caller could hand any uid in the deck to a restricted search —
+          // Energy Search fetched a Charizard. EVOLVE_SELF_FROM_DECK had the
+          // check from the start; these did not. See Rulings/ENERGY-SEARCH.md.
+          if (a.opts && a.opts.pickUid !== undefined) {
+            const k = p.deck.findIndex(x => x.uid === a.opts.pickUid);
+            at = eligible.some(([, i]) => i === k) ? k : -1;
+          }
           if (at === -1) at = eligible[this.pick(eligible.length)][1];
           const got = p.deck.splice(at, 1)[0];
           p.hand.push(got);
@@ -8481,15 +8490,24 @@ class Engine {
           break;
         }
         case 'T_ENERGY_SEARCH': {
-          // "Search your deck for a basic Energy card" — and the Game Boy game
-          // let you take a Double Colorless anyway. Trevor's call, 18 Aug 2026,
-          // and it is the whole reason Charizard is a workable deck there.
-          // Deliberately NOT the printed text. See Rulings/ENERGY-SEARCH.md.
+          // BASIC Energy only. The GBC game let you take a Double Colorless and
+          // we proposed matching it; it was reversed the same day, because clear
+          // printed text beats the arbiter and Peek already settled that. The
+          // argument on both sides is in Rulings/ENERGY-SEARCH.md — read it
+          // before "fixing" this to match the Game Boy.
           const eligible = p.deck.map((x, i) => [x, i])
-            .filter(([x]) => this.db[x.id].kind === 'energy');
-          if (!eligible.length) { this.log('Energy Search: no Energy left.'); this.shuffle(p.deck); break; }
+            .filter(([x]) => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; });
+          if (!eligible.length) { this.log('Energy Search: no basic Energy left.'); this.shuffle(p.deck); break; }
           let at = -1;
-          if (a.opts && a.opts.pickUid !== undefined) at = p.deck.findIndex(x => x.uid === a.opts.pickUid);
+          // AN INELIGIBLE pickUid IS REFUSED, not obeyed. This looked the card
+          // up in the whole zone and never checked it against `eligible`, so a
+          // caller could hand any uid in the deck to a restricted search —
+          // Energy Search fetched a Charizard. EVOLVE_SELF_FROM_DECK had the
+          // check from the start; these did not. See Rulings/ENERGY-SEARCH.md.
+          if (a.opts && a.opts.pickUid !== undefined) {
+            const k = p.deck.findIndex(x => x.uid === a.opts.pickUid);
+            at = eligible.some(([, i]) => i === k) ? k : -1;
+          }
           if (at === -1) at = eligible[this.pick(eligible.length)][1];
           const got = p.deck.splice(at, 1)[0];
           p.hand.push(got);
@@ -8829,8 +8847,9 @@ class Engine {
         }
         case 'T_POKE_BALL': if (p.deck.length === 0) return false; break;
         case 'T_ENERGY_SEARCH':
-          // ANY Energy card, not only a basic one. See Rulings/ENERGY-SEARCH.md.
-          if (!p.deck.some(x => this.db[x.id].kind === 'energy')) return false;
+          // BASIC Energy only — the printed text, kept deliberately against a
+          // real GBC contradiction. See Rulings/ENERGY-SEARCH.md.
+          if (!p.deck.some(x => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; })) return false;
           break;
         case 'T_MR_FUJI': if (!p.bench.length) return false; break;
         case 'T_GAMBLER': break;   // always legal; an empty hand still shuffles and draws
@@ -9405,7 +9424,15 @@ class Engine {
           const eligible = me.deck.map((x, i) => [x, i]).filter(([x]) => wants(this.db[x.id]));
           if (!eligible.length) { this.log('Nothing in the deck to call.', 'eff'); this.shuffle(me.deck); break; }
           let at = -1;
-          if (a && a.opts && a.opts.pickUid !== undefined) at = me.deck.findIndex(x => x.uid === a.opts.pickUid);
+          // AN INELIGIBLE pickUid IS REFUSED, not obeyed. This looked the card
+          // up in the whole zone and never checked it against `eligible`, so a
+          // caller could hand any uid in the deck to a restricted search —
+          // Energy Search fetched a Charizard. EVOLVE_SELF_FROM_DECK had the
+          // check from the start; these did not. See Rulings/ENERGY-SEARCH.md.
+          if (a && a.opts && a.opts.pickUid !== undefined) {
+            const k = me.deck.findIndex(x => x.uid === a.opts.pickUid);
+            at = eligible.some(([, i]) => i === k) ? k : -1;
+          }
           if (at === -1) at = eligible[this.pick(eligible.length)][1];
           const got = me.deck.splice(at, 1)[0];
           me.bench.push(this.mkSlot(got));
@@ -9443,7 +9470,15 @@ class Engine {
         }
         case 'TRAINER_FROM_DISCARD': {
           let k2 = -1;
-          if (a && a.opts && a.opts.pickUid !== undefined) k2 = me.discard.findIndex(x => x.uid === a.opts.pickUid);
+          // AN INELIGIBLE pickUid IS REFUSED, not obeyed. This looked the card
+          // up in the whole zone and never checked it against `eligible`, so a
+          // caller could hand any uid in the deck to a restricted search —
+          // Energy Search fetched a Charizard. EVOLVE_SELF_FROM_DECK had the
+          // check from the start; these did not. See Rulings/ENERGY-SEARCH.md.
+          if (a && a.opts && a.opts.pickUid !== undefined) {
+            const k = me.discard.findIndex(x => x.uid === a.opts.pickUid);
+            if (k >= 0 && this.db[me.discard[k].id].kind === 'trainer') k2 = k;
+          }
           if (k2 === -1) k2 = me.discard.map((x, i) => [x, i])
             .filter(([x]) => this.db[x.id].kind === 'trainer').map(([, i]) => i).pop() ?? -1;
           if (k2 === -1) { this.log('No Trainer card in the discard pile.', 'eff'); break; }
