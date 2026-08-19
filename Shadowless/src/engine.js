@@ -3700,7 +3700,15 @@ class Engine {
           const want = Math.min(v.n || 1, pool.length);
           let picks = (a && a.opts && a.opts.bench) || [];
           if (!Array.isArray(picks)) picks = [picks];
-          picks = picks.filter(i => i >= 0 && i < pool.length).slice(0, want);
+          // DEDUPED, and it was not until 19 Aug 2026. "Choose 3 of your
+          // opponent's Benched Pokemon" means three DIFFERENT ones; a supplied
+          // list of [2,2,2] used to put 30 on one Pokemon. The UI never sends
+          // that, which is exactly why nothing caught it — the guard lived in
+          // the caller, where a rule about what an attack does does not belong.
+          // Found by a test written to prove the opposite.
+          const seenPick = new Set();
+          picks = picks.filter(i => i >= 0 && i < pool.length && !seenPick.has(i) && seenPick.add(i))
+                       .slice(0, want);
           for (let i = 0; picks.length < want; i++) if (picks.indexOf(i) < 0) picks.push(i);
           for (const i of picks) {
             const tgt = pool[i];

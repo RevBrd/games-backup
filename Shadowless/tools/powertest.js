@@ -4985,5 +4985,65 @@ T('the AI never attaches a Rainbow to something it would kill', () => {
   return true;
 });
 
+
+// ============================================================================
+// The snipe the player could not aim
+//
+// Trevor's report, 19 Aug 2026. The engine has always accepted opts.bench; the
+// UI never supplied one, so every Gigashock and every Dark Mind hit the first
+// Pokemon on the Bench. These pin the engine half, because the UI half now
+// depends on it and nothing else asserts it.
+// ============================================================================
+console.log('\nBENCH_SNIPE honours a chosen target');
+
+T('Gigashock hits the three Benched Pokemon it was told to', () => {
+  const E = board('base3-14', [], 'base1-58');        // Raichu
+  const o = E.state.players[1];
+  o.bench = ['base1-46', 'base1-52', 'base1-63', 'base1-59', 'base3-55']
+    .map(id => E.mkSlot({ id, uid: E.uid++ }));
+  attach(E, E.state.players[0].active, 'base1-100', 4);
+  E.act(0, { t: 'attack', idx: 0, opts: { bench: [1, 3, 4] } });
+  eq(o.bench.map(b => b.dmg).join(','), '0,10,0,10,10', 'exactly the three chosen');
+  return true;
+});
+
+T('...and a single-target Dark Mind aims where it is told', () => {
+  // The one that was never reported, because picking one of two silently is
+  // much harder to notice than picking three of five.
+  const E = board('base3-5', [], 'base1-58');         // Gengar
+  const o = E.state.players[1];
+  o.bench = ['base1-46', 'base1-52'].map(id => E.mkSlot({ id, uid: E.uid++ }));
+  attach(E, E.state.players[0].active, 'base1-101', 3);
+  E.act(0, { t: 'attack', idx: 0, opts: { bench: [1] } });
+  eq(o.bench[0].dmg, 0, 'the first Benched Pokemon was NOT hit');
+  eq(o.bench[1].dmg, 10, 'the second one was');
+  return true;
+});
+
+T('...and supplying nothing still falls back rather than throwing', () => {
+  // Every older caller and the AI rely on this. It is the fallback that made the
+  // bug invisible: a UI that asks nothing looks exactly like one that cannot.
+  const E = board('base3-5', [], 'base1-58');
+  const o = E.state.players[1];
+  o.bench = ['base1-46', 'base1-52'].map(id => E.mkSlot({ id, uid: E.uid++ }));
+  attach(E, E.state.players[0].active, 'base1-101', 3);
+  eq(E.act(0, { t: 'attack', idx: 0 }).ok, true, 'the attack resolved');
+  eq(o.bench[0].dmg + o.bench[1].dmg, 10, 'and something took the 10');
+  return true;
+});
+
+T('...and it never hits the same Pokemon twice for one snipe', () => {
+  const E = board('base3-14', [], 'base1-58');
+  const o = E.state.players[1];
+  o.bench = ['base1-46', 'base1-52', 'base1-63', 'base1-59', 'base3-55']
+    .map(id => E.mkSlot({ id, uid: E.uid++ }));
+  attach(E, E.state.players[0].active, 'base1-100', 4);
+  E.act(0, { t: 'attack', idx: 0, opts: { bench: [2, 2, 2] } });
+  const hit = o.bench.filter(b => b.dmg > 0);
+  eq(hit.length, 3, 'three different Pokemon were hit');
+  eq(hit.every(b => b.dmg === 10), true, 'each for 10, none doubled up');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

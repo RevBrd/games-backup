@@ -40,6 +40,9 @@ still open, so it stays with its reason and with what evidence would revive it.
 - Show duplicate card numbers (if not new) on the booster pack opening screen, displaying after each card is flipped.
 - Missing visual rarity variants for sigil cards - Reverse Holo reuses the same filter as the scan card if possible. Misprint mimics visual formatting glitches. Text runs off the screen, the sigil is out of frame, etc. The "no intentional bugs" line in the CLAUDE.md will need to be changed. Decided with #4 (the Sonnet 5 PACKS.md creator) but I think the documentation was lost. Perfectly open to relitagation.
 - I think the enemy Ivysaur decided not to kill on turn 12. Bad retreat by Gloom on turn 14. Exeggutor teleports to switch with Exeggutor of equal condition. Alternative was a 50/50 attack, turn 18. Exeggutor promoted and switched out immediately through Teleport, turn 20 - log# 04-37-10
+- Moltres shouldn't have retreated. That is a very good sacrifice pokemon to buy time, and might have even been able to attack if powered up. It might not have been factoring in its resistance to Hitmonlee in its damage calculation. The pokemon that replaced it was killed immediately by the same attack Moltres would have survived - log# 04-06-28
+- The AI might be avoiding adding non-DCE energy to colorless pokemon, and Chansey retreated, twice - log# 04-26-10
+- Raichu's Gigashock should allow the player to choose which bench pokemon to damage. Worth testing if the AI targets smartly when using this.
  
 
 

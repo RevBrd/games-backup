@@ -1,0 +1,279 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-19 04:06:28
+decks    you: New deck 3   opponent: Courtney — Grand Master
+opponent expert
+seed     17609863   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Energy Removal, Fire Energy, Moltres, Fire Energy, Fire Energy, Bill, Lass
+  HIDDEN  your opening hand: Gust of Wind, Fighting Energy, Kabuto, Mysterious Fossil, Fighting Energy, Hitmonlee, Fighting Energy
+  HIDDEN  opponent's Prizes: Bill, Fire Energy, Fire Energy, Ninetales, Bill, Fire Energy
+  HIDDEN  your Prizes: Hitmonlee, Poké Ball, Mysterious Fossil, Fighting Energy, Fighting Energy, Onix
+  HIDDEN  opponent's opening board: Moltres active, empty bench
+  HIDDEN  your opening board: Hitmonlee active, empty bench
+          New game. Seed 17609863.
+          Coin flip (who goes first): HEADS
+          You will go first.
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (46 left)
+          You benches Mysterious Fossil.
+          You benches Diglett.
+          You attaches Fighting Energy to Hitmonlee.
+
+--- Turn 2 — Courtney --------------------------
+          Courtney draws a card. (46 left)
+  AI      trainer   [17]
+          holding: Energy Removal, Fire Energy, Fire Energy, Fire Energy, Bill, Lass, Ninetales
+          Courtney plays Energy Removal.
+          Fighting Energy discarded from Hitmonlee.
+  AI      attach   [15]
+          holding: Fire Energy, Fire Energy, Fire Energy, Bill, Lass, Ninetales
+          passed over: attach 15, attach 15, trainer 9.5, trainer 3
+          Courtney attaches Fire Energy to Moltres.
+  AI      trainer   [9.5]
+          holding: Fire Energy, Fire Energy, Bill, Lass, Ninetales
+          passed over: trainer 3
+          Courtney plays Bill.
+          Courtney draws 2.
+  AI      trainer   [3]
+          holding: Fire Energy, Fire Energy, Lass, Ninetales, Energy Removal, Fire Energy
+          Courtney plays Lass.
+          Lass: 2 Trainer card(s) shuffled back into decks.
+  AI      pass — no attack was worth taking   [0]
+          holding: Fire Energy, Fire Energy, Ninetales, Fire Energy
+          passed over: attack:Wildfire -2.8
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (46 left)
+          You attaches Fighting Energy to Hitmonlee.
+          Mysterious Fossil evolves into Kabuto. Special Conditions removed.
+
+--- Turn 4 — Courtney --------------------------
+          Courtney draws a card. (44 left)
+  AI      bench   [26]
+          holding: Fire Energy, Fire Energy, Ninetales, Fire Energy, Magmar
+          passed over: attach 8.4, attach 8.4, attach 8.4
+          Courtney benches Magmar.
+  AI      attach   [20]
+          holding: Fire Energy, Fire Energy, Ninetales, Fire Energy
+          passed over: attach 20, attach 20, attach 8.4, attach 8.4, attach 8.4
+          Courtney attaches Fire Energy to Magmar.
+  AI      pass — no attack was worth taking   [0]
+          holding: Fire Energy, Ninetales, Fire Energy
+          passed over: attack:Wildfire -2.8
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (45 left)
+          You attaches Fighting Energy to Hitmonlee.
+          Hitmonlee uses Stretch Kick.
+          Magmar takes 20. (30/50 left)
+          20 to Magmar on the Bench.
+
+--- Turn 6 — Courtney --------------------------
+          Courtney draws a card. (43 left)
+  AI      attach   [42]
+          holding: Fire Energy, Ninetales, Fire Energy, Super Potion
+          passed over: attach 42, attach 8.4, attach 8.4, trainer -14.6
+          Courtney attaches Fire Energy to Magmar.
+  AI      pass — no attack was worth taking   [0]
+          holding: Ninetales, Fire Energy, Super Potion
+          passed over: attack:Wildfire -2.8
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (44 left)
+          You benches Hitmonchan.
+          You attaches Fighting Energy to Hitmonlee.
+          Hitmonlee uses High Jump Kick.
+          Resistance: -30 -> 20.
+          Moltres takes 20. (50/70 left)
+
+--- Turn 8 — Courtney --------------------------
+          Courtney draws a card. (42 left)
+  AI      attach   [28.5]
+          holding: Ninetales, Fire Energy, Super Potion, Fire Energy
+          passed over: attach 28.5, attach 8.4, attach 8.4, trainer -30
+          Courtney attaches Fire Energy to Magmar.
+  AI      pass — no attack was worth taking   [0]
+          holding: Ninetales, Super Potion, Fire Energy
+          passed over: attack:Wildfire -2.8
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (43 left)
+          You attaches Fighting Energy to Diglett.
+          Diglett evolves into Dugtrio. Special Conditions removed.
+          Hitmonlee uses High Jump Kick.
+          Resistance: -30 -> 20.
+          Moltres takes 20. (30/70 left)
+
+--- Turn 10 — Courtney --------------------------
+          Courtney draws a card. (41 left)
+  AI      attach   [8.4]
+          holding: Ninetales, Super Potion, Fire Energy, Vulpix
+          passed over: bench 7, attach -2, trainer -15
+          Courtney attaches Fire Energy to Moltres.
+  AI      retreat   [31.5]
+          holding: Ninetales, Super Potion, Vulpix
+          passed over: trainer 7, bench 7
+          Courtney retreats Moltres; Magmar is now Active.
+  AI      bench   [7]
+          holding: Ninetales, Super Potion, Vulpix
+          passed over: trainer 4
+          Courtney benches Vulpix.
+  AI      trainer   [4]
+          holding: Ninetales, Super Potion
+          Courtney plays Super Potion.
+          Magmar discards Energy and heals 20.
+  AI      attack:Fire Punch   [30]
+          holding: Ninetales
+          Magmar uses Fire Punch.
+          Hitmonlee takes 30. (30/60 left)
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (42 left)
+          You benches Sandshrew.
+          Hitmonlee uses High Jump Kick.
+          Magmar takes 50. (0/50 left)
+          Magmar is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [23.4]
+          holding: Ninetales
+          passed over: promote 23
+          Courtney promotes Vulpix to Active.
+
+--- Turn 12 — Courtney --------------------------
+          Courtney draws a card. (40 left)
+  AI      evolve   [35.5]
+          holding: Ninetales, Vulpix
+          passed over: bench 7
+          Vulpix evolves into Ninetales. Special Conditions removed.
+  AI      bench   [7]
+          holding: Vulpix
+          Courtney benches Vulpix.
+  AI      pass — no attack available — Lure: Not enough Energy; Fire Blast: Not enough Energy   [0]
+          holding: (empty)
+
+--- Turn 13 — You -------------------------------
+          You draws a card. (41 left)
+          Sandshrew evolves into Sandslash. Special Conditions removed.
+          Hitmonlee uses High Jump Kick.
+          Ninetales takes 50. (30/80 left)
+
+--- Turn 14 — Courtney --------------------------
+          Courtney draws a card. (39 left)
+  AI      trainer   [24]
+          holding: Switch
+          Courtney plays Switch.
+          Vulpix is now Active.
+  AI      pass — no attack available — Confuse Ray: Not enough Energy   [0]
+          holding: (empty)
+
+--- Turn 15 — You -------------------------------
+          You draws a card. (40 left)
+          You attaches Fighting Energy to Dugtrio.
+          Hitmonlee uses High Jump Kick.
+          Vulpix takes 50. (0/50 left)
+          Vulpix is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [23]
+          holding: (empty)
+          passed over: promote 6.1
+          Courtney promotes Moltres to Active.
+
+--- Turn 16 — Courtney --------------------------
+          Courtney draws a card. (38 left)
+  AI      trainer   [3]
+          holding: Lass
+          Courtney plays Lass.
+          Lass: 1 Trainer card(s) shuffled back into decks.
+  AI      pass — no attack available — Wildfire: Not enough Energy; Dive Bomb: Not enough Energy   [0]
+          holding: (empty)
+
+--- Turn 17 — You -------------------------------
+          You draws a card. (40 left)
+          You plays Bill.
+          You draws 2.
+          You plays Potion.
+          Hitmonlee heals 20. (10 damage left)
+          You attaches Fighting Energy to Dugtrio.
+          Hitmonlee uses High Jump Kick.
+          Resistance: -30 -> 20.
+          Moltres takes 20. (10/70 left)
+
+--- Turn 18 — Courtney --------------------------
+          Courtney draws a card. (37 left)
+  AI      attach   [15]
+          holding: Fire Energy
+          passed over: attach 10
+          Courtney attaches Fire Energy to Moltres.
+  AI      pass — no attack was worth taking   [0]
+          holding: (empty)
+          passed over: attack:Wildfire -2.8
+
+--- Turn 19 — You -------------------------------
+          You draws a card. (37 left)
+          You plays Professor Oak.
+          You discards 1 card(s) and draws 7.
+          Kabuto evolves into Kabutops. Special Conditions removed.
+          You attaches Fighting Energy to Kabutops.
+          Hitmonlee uses High Jump Kick.
+          Resistance: -30 -> 20.
+          Moltres takes 20. (0/70 left)
+          Moltres is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [3.2]
+          holding: (empty)
+          Courtney promotes Ninetales to Active.
+
+--- Turn 20 — Courtney --------------------------
+          Courtney draws a card. (36 left)
+  AI      attach   [13]
+          holding: Fire Energy
+          Courtney attaches Fire Energy to Ninetales.
+  AI      pass — no attack available — Lure: Not enough Energy; Fire Blast: Not enough Energy   [0]
+          holding: (empty)
+
+--- Turn 21 — You -------------------------------
+          You draws a card. (29 left)
+          Hitmonlee uses High Jump Kick.
+          Ninetales takes 50. (0/80 left)
+          Ninetales is Knocked Out!
+          You takes a Prize. (2 left)
+          GAME OVER - You wins: Courtney has no Pokemon left
+
+==========================================================
+RESULT   You wins — Courtney has no Pokemon left
+         21 turns
+
+==========================================================
+PACKS OPENED
+
+  Fossil
+    Arbok  Uncommon
+    Weezing  Uncommon
+    Omastar  Uncommon
+    Gambler  Common
+    Omanyte  Common
+    Tentacool  Common
+    Psyduck  Common
+    Mysterious Fossil  Common
+    Shellder  Common
+    Fighting Energy  
+    Zapdos  Rare
+
+  Fossil
+    Graveler  Uncommon
+    Magmar  Uncommon
+    Golduck  Uncommon
+    Zubat  Common
+    Slowpoke  Common
+    Ekans  Common
+    Geodude  Common
+    Energy Search  Common
+    Tentacool  Common
+    Psyduck  Common
+    Zapdos  Rare

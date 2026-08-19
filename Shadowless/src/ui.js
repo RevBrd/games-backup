@@ -2224,6 +2224,60 @@ function attackWithEnergy(i, c, script, opts) {
 
   const cost = script.find(v => v.v === 'COST_DISCARD_ENERGY');
   const strip = script.find(v => v.v === 'DISCARD_DEF_ENERGY');
+  const snipe = script.find(v => v.v === 'BENCH_SNIPE');
+
+  // A CARD THAT SAYS "CHOOSE" AND DOES NOT LET YOU. Trevor's report, 19 Aug
+  // 2026, about Raichu's Gigashock — and it turned out to be worse than
+  // reported. The engine has always accepted `opts.bench` as a list of indices;
+  // nothing in the UI ever supplied one, so it fell through to its own fallback
+  // and took the first Pokemon on the Bench, every single time.
+  //
+  // GIGASHOCK IS THE ONE THAT GOT NOTICED AND DARK MIND IS THE ONE THAT DID NOT.
+  // Gigashock hits three of them, so it only hides a choice against a Bench of
+  // four or five; Gengar's and Hypno's Dark Mind picks ONE, so it has been
+  // silently choosing for the player since Fossil went live against any Bench at
+  // all. A bug is easiest to see where it matters least.
+  //
+  // Asked BEFORE the attack is dispatched, like every other attack question
+  // here: the engine resolves an attack synchronously and there is no point
+  // mid-resolution at which the UI could stop and ask.
+  const askSnipe = (then) => {
+    const you = foe();
+    const pool = snipe && snipe.target === 'any'
+      ? (you.active ? [you.active].concat(you.bench) : you.bench.slice())
+      : (you ? you.bench.slice() : []);
+    const want = snipe ? Math.min(snipe.n || 1, pool.length) : 0;
+    // Only ask when the choice is REAL — the whole pool being taken is not a
+    // choice, and neither is an empty one. Same rule energyChoiceIsReal applies
+    // one system along, and it is what keeps Gigashock a single click against
+    // the three-Pokemon Bench it usually meets.
+    if (!snipe || !want || want >= pool.length) return then();
+    const chosen = [];
+    const arm = () => {
+      UI.targeting = {
+        scope: snipe.target === 'any' ? 'oppAny' : 'oppBench',
+        uids: pool.map(x => x.uid),
+        // "3 more" before you have chosen any reads as though you already
+        // picked some. "more" earns its place only after the first one.
+        prompt: `${c.name} — choose ${want - chosen.length}${chosen.length ? ' more' : ''} of their`
+          + ` Pokemon to take ${snipe.dmg} damage`,
+        dispatch: (sel) => {
+          // oppBench dispatches {bench: idx} against the BENCH, oppAny gives a
+          // uid against the whole board. Both resolve to an index into `pool`,
+          // which is the order the engine rebuilds.
+          const k = sel && sel.targetUid !== undefined
+            ? pool.findIndex(x => x.uid === sel.targetUid)
+            : (snipe.target === 'any' ? -1 : sel.bench);
+          if (k < 0 || chosen.indexOf(k) >= 0) { arm(); return; }
+          chosen.push(k);
+          if (chosen.length >= want) { UI.targeting = null; o.bench = chosen; return then(); }
+          arm(); render();
+        },
+      };
+      render();
+    };
+    arm();
+  };
 
   const askDefender = () => {
     if (!strip || !foe().active) return go();
@@ -2246,9 +2300,9 @@ function attackWithEnergy(i, c, script, opts) {
     slot: me().active, n, filter: t,
     title: 'DISCARD TO ATTACK',
     hint: `${c.name} — choose ${n} ${t ? (ENERGY_NAME[t] || t) + ' ' : ''}Energy to discard`,
-    onDone: (uids) => { o.costUids = uids; askDefender(); },
+    onDone: (uids) => { o.costUids = uids; askSnipe(askDefender); },
   })) return;
-  askDefender();
+  askSnipe(askDefender);
   void wild;   // Wildfire's own count prompt already runs upstream of this
 }
 
