@@ -42,7 +42,7 @@ and how many print rules text implemented verbatim somewhere live. It is a **low
 construction, and its control is the live sets, which must each report zero novel — see
 [TOOLING.md](TOOLING.md).
 
-## The eight systems
+## The nine systems
 
 ### Pokémon Powers
 
@@ -68,6 +68,48 @@ line, because the log is what a player reads back to work out what just happened
 
 This lived in `CLAUDE.md`'s standing decisions until 14 Aug 2026 and moved here because the only
 person who needs it is adding a Power, which is what this file is for.
+
+### Triggered Powers, and the one doorway into play
+
+Job 10c, and the third kind of Power. An **interactive** Power is offered as an action and the player
+chooses it. A **passive** Power is never fired — it is consulted at the moment it matters. A
+**triggered** Power is neither: nobody chooses it, and there is a definite moment it happens.
+
+**Three triggers, and they are deliberately not one mechanism.** The survey is the argument:
+
+| | In the era | So it is built as |
+|---|---|---|
+| `ON_PLAY` | 20 printings across six sets, **no two doing the same thing** — search a deck, mill either deck on a coin, heal every Grass in play, hand the opponent a redraw | a trigger plus a **verb list**. What generalises is the moment, not the effect, so a card author writes a script rather than engine code |
+| `ON_KO` | three printings, two behaviours, in the whole era | narrow and exact. There is nothing to generalise |
+| `ON_OPP_RETREAT` | two behaviours, and **they disagree** — Sinkhole fires when the opponent *retreats*, Neo 4's Unown [C] when it *tries to* | one hook with the distinction reserved as a flag. *[The ruling →](Rulings/RETREATS-MEANS-SUCCEEDED.md)* |
+
+**`enterPlay(pi, slot, {source})` is the one doorway**, and it is the part to understand before adding
+anything here. Eight paths put a Pokémon into play and only three are from hand; the ruling and the
+full table are in [PLAYED-FROM-HAND.md](Rulings/PLAYED-FROM-HAND.md). Two properties keep it honest,
+and both are the same technique used twice:
+
+- **It is hung off a stamp no path can omit.** `enterPlay` does the `playedTurn` / `evolvedTurn` set
+  and the Special Condition clear that every path already needs and that `canEvolve` and Cowardice
+  already read. A path that forgets it is visibly broken within a turn rather than quietly silent.
+- **`selftest.js` asserts it statically** — every method holding a `mkSlot` or a `stack.push` also
+  calls `enterPlay`. Scoped by method, because a line-window version stayed green when the call was
+  deleted. The ninth doorway, added in Gym, cannot skip it in silence.
+
+**`runPowerScript` is a third verb namespace** after attack verbs and Trainer cases, and it is
+consistent with them rather than a new idea — Trainers have had their own switch since Base Set. It
+deliberately does **not** re-enter the attack pipeline: that loop is built around an attacker, a
+defender, a damage number and a Barrier check, and most of its cases assume a defender exists.
+Re-entering it with a null defender means auditing every one of them on behalf of a card that has no
+defender at all.
+
+Choices arrive the way every other choice in this engine arrives — on the action's `opts`, with a
+deterministic fallback — and the context the engine supplies is a **separate argument** from the
+player's answer, for the same reason `costUids` and `energyUids` are two keys.
+
+**A Pokémon Power is not an attack**, so every damaging verb here passes `noRetaliate` and `noMirror`,
+and `dealDamage` records `byAttack` so Final Beam can answer an attack and nothing else. That default
+points *true*, which is the opposite direction from the doorway above, and the two are one week apart
+on purpose. *[Both, and the test for which way a default should point →](Rulings/POWER-IS-NOT-AN-ATTACK.md)*
 
 ### `runAttack`
 

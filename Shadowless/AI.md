@@ -45,6 +45,37 @@ with a comment saying why. That is a live declaration in the file that does the 
 entry on an opt-out list in a file that does not. *[The ruling behind it →](Rulings/PEEK-CLAIRVOYANCE.md)*;
 don't "fix" it by moving it.
 
+### Triggered Powers: the surface where a Power is free
+
+Job 10c added Powers that **fire whether or not anything scored them**, which is the silent-failure
+surface arriving from a new direction. An ON_PLAY Power does its work the moment the card is played;
+a bot that does not read it gets Summon Minions' two free Basics for nothing and — worse — hands the
+*engine* the choice of which two, where the fallback is a seeded random.
+
+So `scoreOnPlay` does both jobs at once, exactly as `scoreTrainer` does: it returns what the arrival
+is worth, and it fills in `a.opts` so the fallback is never reached. It is called from **both**
+`evolve` and `playBasic`, because 17 of the era's 20 ON_PLAY printings are Evolutions, 3 are Basics,
+and the trigger does not care which.
+
+**The decision is never where the Power is.** That is the thing to hold on to when adding the next
+one — a triggered Power is invisible to `scorePower`, but it is not invisible to the bot:
+
+| Trigger | Scored where |
+|---|---|
+| `ON_PLAY` | `scoreOnPlay`, from the evolve and playBasic cases |
+| `ON_OPP_RETREAT` | the retreat case in `scoreAction`, which prices the toll and gets more afraid as they add copies |
+| `ON_KO` | the lethal branch of `scoreAttack` — the first term in the forecast that prices what the **corpse** does back |
+
+That last one is worth a sentence of its own. Every term in `scoreAttack` prices what an attack
+*does*, and none of them priced what happens to the Pokémon that lands the killing blow. The bot was
+walking a Charizard into a fully charged Final Beam — 80 on a coin — for free.
+
+`TRIGGERED_POWERS` in `selftest.js` is its own list beside `PASSIVE_POWERS` rather than folded into
+it. Both are invisible to `scorePower`; the reasons are opposite. A passive has no decision at all,
+a trigger has one somewhere else, and filing these as passive would assert something false.
+
+**All eight are on `PROVISIONAL`.** Every weight is a first guess priced off an existing weight.
+
 ### A third state: PROVISIONAL
 
 A verb used to be either scored or opted out with a reason, and that is a gap. **A set job adding

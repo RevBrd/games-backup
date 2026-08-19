@@ -1520,6 +1520,10 @@ function slotTargetable(slot, pi, where, idx) {
     case 'promote': return pi === 0 && where === 'bench';
     case 'attachTo': case 'evolveOn': case 'breederTarget':
       return pi === 0 && t.uids.includes(slot.uid);
+    // Sneak Attack picks "1 of your opponent's Pokemon" — Active INCLUDED, which
+    // no earlier scope covers: oppBench stops at the Bench and oppEnergy wants
+    // Energy on it.
+    case 'oppAny': return pi === 1;
     default: return false;
   }
 }
@@ -1888,12 +1892,22 @@ function handVerbs(i) {
   const out = [];
 
   const bench = acts.find(a => a.t === 'playBasic');
-  if (bench) out.push({ label: 'Put on Bench', run: () => dispatch(0, bench) });
+  if (bench) out.push({ label: 'Put on Bench', run: () => {
+    if (onPlayFlow(c.id, (opts) => dispatch(0, Object.assign({}, bench, { opts })))) return;
+    dispatch(0, bench);
+  } });
 
   const evos = acts.filter(a => a.t === 'evolve');
   if (evos.length) out.push({ label: 'Evolve…', run: () => {
     UI.targeting = { scope: 'evolveOn', uids: evos.map(a => a.target), prompt: `Choose the Pokemon to evolve into ${c.name}`,
-      dispatch: (uid) => dispatch(0, evos.find(a => a.target === uid)) };
+      // Two questions in a row when the card has a Power: which Pokemon to
+      // evolve, THEN what the Power does. The order is the card's — it is not
+      // in play until the first is answered.
+      dispatch: (uid) => {
+        const act = evos.find(a => a.target === uid);
+        if (onPlayFlow(c.id, (opts) => dispatch(0, Object.assign({}, act, { opts })))) return;
+        dispatch(0, act);
+      } };
     render();
   } });
 
@@ -3774,6 +3788,72 @@ function renderPicker() {
   box.appendChild(bar);
   ov.appendChild(box);
   return ov;
+}
+
+// A CARD WHOSE POWER ASKS A QUESTION THE MOMENT IT LANDS.
+//
+// Job 10c. Three Team Rocket cards fire an ON_PLAY Power on arrival and all
+// three want an answer: which two Basics, which three cards out of the discard,
+// which of their Pokemon to hit. The answer rides on the play action's `opts`,
+// exactly as every Trainer's does — so it has to be collected BEFORE the card is
+// dispatched, not after.
+//
+// Returns true if it took over. `go(opts)` is the caller's own dispatch, handed
+// back whatever the player chose.
+//
+// Declining is a real answer and is passed as such: trigTargetUid: null. The
+// engine reads an ABSENT key as "take it", which is what keeps the AI aggressive,
+// so a Cancel that sent nothing would silently do the opposite of what it says.
+function onPlayFlow(cardId, go) {
+  const eff = EFFECTS[cardId];
+  const p = eff && eff.p;
+  if (!p || p.kind !== 'ON_PLAY') return false;
+  const me0 = me();
+  // The evolve targeting that got us here is finished, and leaving it armed
+  // leaves its prompt and its Cancel sitting under the picker — a live control
+  // for a question already answered. The snipe branch below arms its OWN
+  // targeting after this, which is the one the player is actually being asked.
+  UI.targeting = null; UI.sel = null;
+
+  for (const v of (p.do || [])) {
+    if (v.v === 'P_SEARCH_BENCH') {
+      const room = Math.max(0, UI.E.cfg.benchMax - me0.bench.length);
+      const want = Math.min(v.n || 1, room);
+      const pool = me0.deck.filter(x => {
+        const c = CARD_DB[x.id];
+        return c.kind === 'pokemon' && c.stage === (v.stage || 'Basic');
+      });
+      if (!want || !pool.length) return false;        // nothing to ask about
+      openPicker({ title: p.name, prompt: `Choose up to ${want} Basic Pokemon to put onto your Bench`,
+        items: pool, min: 0, max: want, confirm: 'Summon',
+        onDone: (uids) => go({ trigUids: uids }) });
+      return true;
+    }
+    if (v.v === 'P_FROM_DISCARD') {
+      const pool = me0.discard.filter(x => CARD_DB[x.id].kind === 'pokemon');
+      if (!pool.length) return false;
+      openPicker({ title: p.name, prompt: `Choose up to ${v.n} Pokemon from your discard pile`,
+        items: pool, min: 0, max: v.n || 1, confirm: 'Take them back',
+        onDone: (uids) => go({ trigUids: uids }) });
+      return true;
+    }
+    if (v.v === 'P_SNIPE') {
+      const cands = UI.E.allSlots(1);
+      if (!cands.length) return false;
+      UI.targeting = { scope: 'oppAny', uids: cands.map(x => x.uid),
+        prompt: `${p.name} — choose one of their Pokemon to take ${v.dmg} damage`,
+        // "You may" is a DECLINE, not a Cancel, and the bar already knows the
+        // difference: Cancel abandons the whole play, No thanks plays the card
+        // and skips the optional part. Declining sends the explicit null,
+        // because an ABSENT key means "take it" to the engine.
+        decline: () => go({ trigTargetUid: null }),
+        declineLabel: 'Skip it',
+        dispatch: (o) => go({ trigTargetUid: o.targetUid }) };
+      render();
+      return true;
+    }
+  }
+  return false;
 }
 
 // Trainers that choose cards out of hidden zones. Returns true if it handled

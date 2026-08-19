@@ -38,6 +38,9 @@ enough to settle a call in plain English, so ask him — he expects to be asked.
 | An attack that names a group hits every member of it, the attacker included | [MASS-EXPLOSION.md](Rulings/MASS-EXPLOSION.md) |
 | "Even to itself" reaches the Confusion penalty | [FRENZY-SELF-DAMAGE.md](Rulings/FRENZY-SELF-DAMAGE.md) |
 | A game can be drawn, and a draw pays nothing | [DRAWS.md](Rulings/DRAWS.md) |
+| A Pokémon Power is not an attack | [POWER-IS-NOT-AN-ATTACK.md](Rulings/POWER-IS-NOT-AN-ATTACK.md) |
+| "When you play this from your hand" means from your hand, and nowhere else | [PLAYED-FROM-HAND.md](Rulings/PLAYED-FROM-HAND.md) |
+| "Retreats" is the retreat that worked; "tries to retreat" is the attempt | [RETREATS-MEANS-SUCCEEDED.md](Rulings/RETREATS-MEANS-SUCCEEDED.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -110,6 +113,10 @@ that matches.
 | **A group-naming attack enumerates once and applies to all of it**, both sides and the attacker included, even where that damages one Pokemon twice | [Mass Explosion](Rulings/MASS-EXPLOSION.md) |
 | **A damage modifier reaches damage this Pokemon DOES, not damage it TAKES** — including damage the rules make it inflict on itself | [Frenzy, Confusion](Rulings/FRENZY-SELF-DAMAGE.md) |
 | **Resolve every consequence before asking who won** — a win condition evaluated mid-resolution answers for whoever the loop reached first | [draws, `checkKOs`](Rulings/DRAWS.md) |
+| **A card that says *attack* means an attack** — a Power, Poison, Confusion, a Retaliate and a Mirror Shell all leave the same corpse and none of them counts | [Final Beam, Strikes Back, Mirror Shell](Rulings/POWER-IS-NOT-AN-ATTACK.md) |
+| **Point a default at the set that GROWS, and make the small closed set declare itself** — which is why attack-damage defaults to true and played-from-hand defaults to silence | [both](Rulings/POWER-IS-NOT-AN-ATTACK.md) |
+| **Hang an invisible rule off a visible one**: a trigger nobody can see rides on the stamp every caller already cannot omit | [`enterPlay`](Rulings/PLAYED-FROM-HAND.md) |
+| **When a wording is ambiguous, look for a later card that says the OTHER thing explicitly** — the pair is better evidence than deciding what they probably meant | [Sinkhole vs. Unown [C]](Rulings/RETREATS-MEANS-SUCCEEDED.md) |
 
 ## What *settled with Trevor* means
 

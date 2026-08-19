@@ -369,6 +369,60 @@ const PROVISIONAL = new Set([
   'ON_PLAY', 'ON_KO', 'ON_OPP_RETREAT',
 ]);
 
+// ---- every doorway into play goes through enterPlay --------------------------
+//
+// THE GUARD BEHIND Rulings/PLAYED-FROM-HAND.md, and the reason that ruling is
+// enforceable rather than merely written down.
+//
+// A Power that reads "when you play this from your hand" has to know how the
+// card got into play, and no single site can answer that — the answer lives in
+// which of eight doorways was used. engine.enterPlay is the one doorway, and a
+// ninth added in Gym that forgets to call it does not crash, does not fail a
+// game, and does not show up anywhere: the Power simply never fires.
+//
+// SCOPED BY ENCLOSING METHOD, and the first draft was not. It looked at a window
+// of a few lines around each site, which sounds tighter and is in fact useless:
+// deleting the enterPlay call from doPlayBasic left the check GREEN, because the
+// window ran on into the next method. It had also never matched doPlayBasic at
+// all, since that site pushes a variable rather than a `this.mkSlot(...)` call
+// inline — so the guard was watching a site it could not see, through a window
+// that would have forgiven it anyway, and printing a hardcoded 8 as if it were
+// a count.
+//
+// Written up rather than quietly fixed, because "watch it go red" is the step
+// that caught it and the failure is exactly what a decoration looks like.
+//
+// KNOWN LIMIT, stated rather than hidden: a method containing TWO sites passes
+// if either one is declared. Splitting further would mean parsing the file, and
+// the ratchet this backs up — a whole set going live — is not the failure mode
+// that misses.
+{
+  const fs = require('fs');
+  const src = fs.readFileSync(require('path').join(__dirname, '..', 'src', 'engine.js'), 'utf8');
+  const lines = src.split(/\r?\n/);
+  const isSite = l => !l.trim().startsWith('//')
+    && (/this\.mkSlot\(/.test(l) || /\.stack\.push\(/.test(l));
+  // Methods start at exactly two spaces of indent and end at a lone two-space `}`.
+  const methods = [];
+  let cur = null;
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^  ([A-Za-z_$][\w$]*)\s*\(/);
+    if (m) { cur = { name: m[1], line: i + 1, body: [] }; methods.push(cur); continue; }
+    if (cur) cur.body.push(lines[i]);
+    if (/^  \}\s*$/.test(lines[i])) cur = null;
+  }
+  const withSites = methods.filter(f => f.body.some(isSite));
+  const misses = withSites
+    .filter(f => !f.body.some(l => /this\.enterPlay\(/.test(l)))
+    // enterPlay and mkSlot are both named inside enterPlay's own doc comment and
+    // inside mkSlot itself, which creates a slot belonging to nobody yet.
+    .filter(f => f.name !== 'mkSlot' && f.name !== 'enterPlay');
+  check(misses.length === 0, 'every path into play goes through enterPlay',
+    misses.map(f => `${f.name}() at engine.js:${f.line}`).join(', '));
+  const sites = lines.filter(isSite).length;
+  console.log(`  ${sites} sites put a card into play, across ${withSites.length} methods`);
+}
+
 console.log('\nAI verb coverage');
 {
   const fs = require('fs');
