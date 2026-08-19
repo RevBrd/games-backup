@@ -35,12 +35,17 @@ rather than declared, and it is what keeps the detailing pass a *labelling* job.
 | T3 | Built around **one** Stage 2 line plus support. Openers that can hold the Active spot | 6 | expert |
 | T4 | A centrepiece that **is** an engine or **needs** one, plus a second axis under it | 6 | expert |
 
-**The prize count is not a difficulty dial — it is an archetype selector, and this is the sentence
-that stops someone breaking it.** Match length decides which decks can function at all. A 2-Prize
-game ends before a Stage 2 line assembles; a 6-Prize game is long enough that setting up pays. So T3
-being "built around a Stage 2 line" and T3 playing to 6 Prizes are not two decisions — **the prize
-count is what makes that deck able to work.** Anyone who later "rebalances" a tier by nudging its
-Prizes will silently delete the archetype it exists to enable.
+**The prize count is not a difficulty dial — it is an archetype selector.** Match length decides which
+decks can function at all: a 2-Prize game ends before a Stage 2 line assembles. Anyone who
+"rebalances" a tier by nudging its Prizes is changing which decks can exist there, not how hard they
+are.
+
+**MEASURED 18 Aug 2026, and it is right at one end and wrong at the other.** Going 2 → 4 Prizes is
+worth **+10.7 points** to the Grass T3 deck, so the short end of the claim holds exactly as written.
+Going 4 → 6 is worth **nothing** to any deck measured — the effect saturates by four. And it runs
+**backwards for the T4**, which loses **11.9 points** between 4 and 6 Prizes. So the table's 6 for T3
+and T4 is one length too long, and assigning T4 the *longest* games is the part with evidence against
+it. Kept in the table until a roster is rebuilt against it, because changing it moves every deck.
 
 Two consequences that follow from it and are not obvious:
 
@@ -92,10 +97,37 @@ this file, but for a different reason: it is **what to aim at when building a ro
 the tiers mean anything on their own. Higher tiers run *less* Energy and *more* Trainers — consistency,
 not power, is what climbs.
 
-**What would be evidence is a consistency measurement**, and it does not exist yet: how often each deck
-actually assembles its centrepiece, and by which turn. That is the open instrument, and it is the only
-way to know whether a tier boundary is real or just a number we both agreed to write down. Re-derive
-the table above rather than trusting these figures — the script is trivial and they will move.
+**The evidence is a separate instrument and it now exists: `tools/decksim.js`** plays every deck
+against every other from both seats and reports how often each one assembles its centrepiece. Re-derive
+the recipe table rather than trusting its figures; run the sim to find out whether a tier *means*
+anything.
+
+### What the sim says about this roster
+
+630 games per deck, 6 Prizes, expert on both sides:
+
+| Tier | Field win rate | Range |
+|---|---|---|
+| T3 (two decks) | **65.1%** | 61.0 – 69.2 |
+| T2 (five decks) | **45.2%** | 38.1 – 53.5 |
+| T4 (one deck) | **42.4%** | — |
+
+**The T2/T3 boundary is real — the bands do not overlap.** That is the first externally-verified
+claim in this file, and it says the tier spec describes something a player will actually feel.
+
+**The T4 boundary is not.** The boss sits *inside* the T2 band and finishes sixth of eight, below
+four of the five decks it is supposed to cap. The sim says why: its Charizard lands in 45% of games at
+a median of turn 17, and the deck underneath is Chansey and Ninetales doing ordinary work — so it is a
+fast deck wearing a slow deck's clothes, and the 6-Prize length it was assigned is the one that hurts
+it most (54.3% at 4 Prizes, 42.4% at 6). **Weakness matters too: it is a Fire deck in a field whose
+two strongest decks are Water.**
+
+Two readings, and they are not exclusive: the boss needs rebuilding toward what it actually does, or
+T4 should not be the longest game on the ladder. **Do not "fix" this by weakening the T3 decks** —
+they are the part that works.
+
+**Within-tier spread is the other finding: T2 runs 38.1 to 53.5**, a 15-point spread on rungs meant to
+be interchangeable. The bottom two are the Psychic/Fire and Water/Psychic decks.
 
 ### The AI is two tiers, not four — and that is probably fine
 

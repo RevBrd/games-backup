@@ -142,6 +142,7 @@ node tools/aiduel.js 8                   # AI vs HEAD's AI; --control first, --g
 node tools/abtest.js 8 HEAD~1            # RULES vs a commit: how many games came out different
 node tools/openercheck.js                # what the opening-Active rule promotes — a measurement, not pass/fail
 node tools/pressure.js                   # what each set can THREATEN with — derived, run it before a roster
+node tools/decksim.js 45 6               # do the tiers actually ORDER? round-robin, both seats
 ```
 
 **The last two measure whether the bot plays *well*, which no suite can see.** They are not pass/fail

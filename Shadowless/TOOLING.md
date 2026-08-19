@@ -306,3 +306,25 @@ categories that are too thin to lean on.
 Deck-out is absent on purpose: no card in this era mills a deck, so it is a property of a *deck* (a
 wall that supplies no clock) and cannot be derived from a card pool.
 
+## `decksim.js` — do the tiers actually order?
+
+**The only instrument that can disagree with [OPPONENTS.md](OPPONENTS.md)'s tier table.** That table
+is a *recipe* — its five metrics agree because the decks were built to hit all five. This one plays
+them.
+
+```bash
+node tools/decksim.js              # base1, 6 Prizes, 45 seeds — about 45 seconds
+node tools/decksim.js 45 4         # the same at 4 Prizes
+node tools/decksim.js 45 6 data/base1_decks.json
+```
+
+Every deck meets every other **from both seats on the same seeds**. That is not optional: seat
+correlates with a deterministic opening flip, and `aiduel.js` shipped unmirrored for an hour and
+reported a 6-point edge for a change that did not exist.
+
+**Read the centrepiece columns beside the standings — they usually explain them.** A Stage 2 that
+lands in 45% of games at a median of turn 17, in a game decided by turn 20, is not a centrepiece.
+
+**Not pass/fail.** A tier boundary is real when the tier bands do not overlap. On the Base Set roster
+T2 and T3 separate cleanly and T4 does not; the numbers and what to do about it are in `OPPONENTS.md`.
+
