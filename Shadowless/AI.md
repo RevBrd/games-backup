@@ -244,6 +244,25 @@ it measures.** Same shape as the green-for-the-wrong-reason case in [HISTORY.md]
 was caught only by running the control against the pre-fix engine — which is [MEASUREMENT.md](MEASUREMENT.md)'s
 standing rule doing exactly its job.
 
+**The Energy pool is asked of the engine, not read off the printed cards.** *18 Aug.* `potentialOf`
+built its symbol pool from `db[e.id].provides`, which is what a card prints — not what it *provides
+where it is attached*. **That made the whole Charizard archetype invisible to the bot.** Fire Spin
+costs `RRRR`; a Double Colorless on a Charizard is `RR` under Energy Burn and is the best attachment
+in the deck, but read off the card it is `CC`, which pays nothing toward `RRRR`. Attaching one moved
+`short` from 4 to 4 and scored **4.4 against a Fire Energy's 33.0**, so the bot never did it — four
+dead cards in a sixty-card deck built around them. It now reads `E.slotSymbols(slot)`, which resolves
+Energy Burn *and* the per-instance `asEnergy` override, so a Buzzap'd Electrode was mispriced by the
+same line and is fixed by the same change. **Never re-derive what a slot provides; ask the engine.**
+
+**Why no gate caught it, which is the transferable part.** Energy Burn is *passive* — there is no verb
+to leave unscored and no action to leave unoffered, so both coverage checks were correct and silent.
+`powertest.js` asserted the **engine** saw `RRRR` and it did. The AI was keeping a private copy of a
+question the engine already answers, and a private copy is exactly what neither gate can see. **When
+the AI recomputes something the engine exposes, that is the bug shape to suspect.** Worth 2.4 points
+to the Charizard deck in `decksim` and 8.9% of games in `abtest`, with the field win rate unmoved —
+and it moved no other deck in the roster, because no other deck runs Double Colorless. Found by
+Trevor asking whether the bot knew a DCE turns into Fire.
+
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed

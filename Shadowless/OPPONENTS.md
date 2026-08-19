@@ -122,9 +122,20 @@ fast deck wearing a slow deck's clothes, and the 6-Prize length it was assigned 
 it most (54.3% at 4 Prizes, 42.4% at 6). **Weakness matters too: it is a Fire deck in a field whose
 two strongest decks are Water.**
 
+**Part of it was an AI bug and it is fixed: the bot could not see that a Double Colorless becomes Fire
+on a Charizard**, so the deck's four DCE were dead cards. That was worth **+2.4 points** (42.4 → 44.8)
+and moved no other deck, since no other deck runs DCE. See [AI.md](AI.md). **It is not the whole gap** —
+the boss is still fifth of eight and below both T3s, so the deck itself is the remaining question.
+
 Two readings, and they are not exclusive: the boss needs rebuilding toward what it actually does, or
 T4 should not be the longest game on the ladder. **Do not "fix" this by weakening the T3 decks** —
 they are the part that works.
+
+**And the Prize spread has a design reason that measurement cannot see.** Trevor, 18 Aug: 6 Prizes is
+the *full* count, and giving it to the top tiers is partly about how the rung reads — the powered-up
+Blastoise gets to ride a little longer, a comeback has room to happen, and 4 is deliberately a
+slightly gated experience rather than a shorter one. **The measured flatness of 4 → 6 is an argument
+that it costs nothing, not that it does nothing.** Weigh both before changing the table.
 
 **Within-tier spread is the other finding: T2 runs 38.1 to 53.5**, a 15-point spread on rungs meant to
 be interchangeable. The bottom two are the Psychic/Fire and Water/Psychic decks.

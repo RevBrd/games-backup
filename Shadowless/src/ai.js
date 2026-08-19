@@ -1003,9 +1003,30 @@ class AI {
 
   potentialOf(pi, slot, c) {
     const E = this.E;
-    // an Energy card may provide several symbols (Double Colorless)
+    // WHAT THE SLOT ACTUALLY PROVIDES, asked of the engine — not what the cards
+    // are printed as. An Energy card may provide several symbols (Double
+    // Colorless), and it may provide DIFFERENT ONES depending on what it is
+    // attached to.
+    //
+    // THIS READ `this.db[e.id].provides` UNTIL 18 AUG 2026, and it made the
+    // entire Charizard deck unplayable for the bot. Fire Spin costs RRRR; a
+    // Double Colorless on a Charizard is RR under Energy Burn, which is the best
+    // attachment in the deck and the whole reason the archetype exists. Read off
+    // the printed card it is CC, which pays NOTHING toward RRRR — so attaching it
+    // moved `short` from 4 to 4, scored 4.4 against a Fire Energy's 33.0, and the
+    // bot simply never did it. Four dead cards in a sixty-card deck.
+    //
+    // Energy Burn being passive is what hid it: there was no unscored verb and no
+    // unoffered action for a coverage check to catch, because the Power is not an
+    // action at all. `powertest.js` asserted the ENGINE saw RRRR and it did. Only
+    // the AI's private copy of the question was wrong.
+    //
+    // `slotSymbols` also resolves the per-instance `asEnergy` override, so a
+    // Buzzap'd Electrode is priced correctly here for free — it was mispriced the
+    // same way and by the same line. Found by Trevor asking whether the bot knew
+    // a DCE turns into Fire. It did not.
     const pool = [];
-    slot.energy.forEach(e => (this.db[e.id].provides || 'C').split('').forEach(x => pool.push(x)));
+    E.slotSymbols(slot).forEach(x => pool.push(x));
     // `goal` is the printed damage of the attack we are actually working
     // TOWARD — the cheapest one to reach, ties broken by size. It is what an
     // Energy part-way there is a fraction OF, so it has to be the same attack
