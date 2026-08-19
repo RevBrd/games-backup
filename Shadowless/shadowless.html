@@ -174,6 +174,25 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .cardback.sm{width:32px;height:44px}
 .cardback.pz{width:34px;height:47px}
 .cardback.pz .cb-mark{width:10px;height:10px;border-width:1px;box-shadow:inset 0 0 0 1px #262E36}
+/* Here Comes Team Rocket! — a Prize turned face up. It keeps the tile's exact
+   size and place, because the Prize row is a COUNTER first and a card row
+   second: a player reads "how many are left" off it far more often than "which
+   ones". So the face is a name in a filed colour rather than a card, and the row
+   never changes shape when the card is played. */
+.cardback.faceup{
+  background:var(--panel);
+  border-color:var(--matline);
+}
+.cardback.faceup{cursor:help}
+.cardback.faceup .cb-mark{border-color:currentColor;opacity:.75}
+/* Tinted rather than edged. A 2px border on a 34px tile is a detail you have to
+   go looking for, and the whole value of a face-up Prize row is what it tells
+   you at a GLANCE — three Energy and a Trainer left is a different game from
+   four Pokemon left. The name is one hover away for when the glance is not
+   enough. */
+.cardback.faceup.k-pokemon{background:#3A4A57;color:#9FC4DE}
+.cardback.faceup.k-trainer{background:#463A56;color:#C3A6DE}
+.cardback.faceup.k-energy{background:#3A4E3A;color:#A6D2A0}
 .cardback.taken{background:transparent;border:0;box-shadow:inset 0 0 0 1px var(--matline)}
 .cardback.taken .cb-mark{display:none}
 /* Prizes are the clock on the game — six cards is the entire win condition — so
@@ -2810,6 +2829,30 @@ const SET_INFO = {
 //                                  exemption from this the way it has from
 //                                  itself. Player-level and consulted, never
 //                                  materialised onto slots (Goop Gas Attack)
+//     T_PRIZES_FACE_UP             every Prize card on BOTH sides is turned face
+//                                  up for the rest of the game. One boolean,
+//                                  because the card changes only what can be
+//                                  SEEN — nothing about taking a Prize moves.
+//                                  Refused once it is already on
+//                                  (Here Comes Team Rocket!)
+//     T_LOOK_AND_SHUFFLE_BACK      look at the opponent's hand; if it holds a
+//                                  Trainer, one of them is shuffled into their
+//                                  deck. THE LOOK IS UNCONDITIONAL and is the
+//                                  card's floor, so a hand with no Trainer is
+//                                  still a legal target — an EMPTY hand is not
+//                                  (Rocket's Sneak Attack)
+//     T_CHALLENGE                  ask the opponent to accept. Declining, or
+//                                  both Benches already being full, draws 2
+//                                  instead. Accepting fills BOTH Benches from
+//                                  BOTH decks. Always legal, because the floor
+//                                  is a draw (Challenge!)
+//
+//   QUESTION KINDS — not verbs. engine.ask() defers a decision to the OTHER
+//   player mid-turn and engine.resolveAsk() continues the card once it is
+//   answered; `kind` names which continuation to run. The mechanism is general
+//   and the continuations are per-card, which is the ON_PLAY split again.
+//     CHALLENGE                    accept or decline (Challenge!)
+//
 //     T_COIN_PINGPONG {n}          flip; tails does n to YOUR Active and stops,
 //                                  heads passes the coin to your opponent, and
 //                                  so on. THE COIN STARTS WITH YOU, so you take
@@ -4000,6 +4043,10 @@ const EFFECTS = {
   'base5-77': { t: [{ v: 'T_SHUFFLE_FROM_DISCARD', n: 3 }] },
   'base5-78': { t: [{ v: 'T_POWERS_OFF' }] },
   'base5-79': { t: [{ v: 'T_STATUS_ON_FLIP', s: 'Asleep' }] },
+
+  'base5-15': { t: [{ v: 'T_PRIZES_FACE_UP' }] },      // Here Comes Team Rocket!
+  'base5-16': { t: [{ v: 'T_LOOK_AND_SHUFFLE_BACK' }] },// Rocket'''s Sneak Attack
+  'base5-74': { t: [{ v: 'T_CHALLENGE' }] },            // Challenge!
 
   // ---- Job 10d: two of the three special Energy -----------------------------
   // Both print their effect as "IF YOU PLAY THIS CARD FROM YOUR HAND", which is
@@ -6293,6 +6340,21 @@ class AI {
       }
 
       case 'power': return this.scorePower(pi, a);
+      case 'answer': {
+        // Answering a question the OPPONENT asked, during their turn. The first
+        // of these; the mechanism is general and this switch grows per card.
+        const q = this.E.state.pendingAsk;
+        if (!q) return -Infinity;
+        if (q.kind === 'CHALLENGE') {
+          const mine = this.challengeGain(pi, true);
+          const theirs = this.challengeGain(1 - pi, false);
+          // Accepting when it gains you more than them; declining otherwise —
+          // and declining hands them two cards, which is priced in.
+          const worth = (mine - theirs) * this.W.benchMore - 2 * this.W.drawCard;
+          return a.value ? worth : -worth;
+        }
+        return 0;
+      }
 
       case 'attachEnergy': {
         const slot = E.allSlots(pi).find(x => x.uid === a.target);
@@ -6687,6 +6749,27 @@ class AI {
     return s;
   }
 
+  // HOW MUCH A CHALLENGE IS WORTH TO ONE SIDE, in Pokemon it would actually
+  // bench. `known` is the honest half of this and it is Trevor's constraint,
+  // 19 Aug 2026: the bot judges its OWN side from its deck, and the opponent's
+  // side only from what it can SEE.
+  //
+  // That is a deliberate self-restriction rather than a limitation. ai.js reads
+  // full engine state everywhere else — it is why Peek is scored at -Infinity —
+  // so it COULD count the Basics left in the opponent's deck and answer exactly.
+  // It does not, because a Challenge is a gamble on both sides and a bot that
+  // knew the answer would not be playing the same card the human is.
+  //
+  // DO NOT "FIX" THIS BY LETTING IT LOOK. The restriction is the design.
+  challengeGain(pi, known) {
+    const E = this.E, pl = E.state.players[pi];
+    const room = E.cfg.benchMax - pl.bench.length;
+    if (room <= 0) return 0;
+    if (!known) return room;      // visible only: assume they can fill the room
+    const wants = x => { const c = this.db[x.id]; return c && c.kind === 'pokemon' && c.stage === 'Basic'; };
+    return Math.min(room, pl.deck.filter(wants).length);
+  }
+
   // The least useful card in hand, and how bad it is. Extracted for Matter
   // Exchange, which needs the same judgement the discard-cost Trainers already
   // make: what is safe to throw away.
@@ -6813,6 +6896,56 @@ class AI {
           const mine = E.allSlots(pi).filter(sl => E.powerOf(sl) && E.powerUsable(sl)).length;
           if (theirs === 0) return -Infinity;
           s += (theirs - mine) * 8;
+          break;
+        }
+        case 'T_PRIZES_FACE_UP':
+          // DELIBERATELY REFUSED, and this is a declaration rather than a gap —
+          // the Peek shape, with a stronger reason than Peek has.
+          //
+          // Turning every Prize face up gives this bot NOTHING, because it reads
+          // full engine state and already knows them. It gives a human opponent
+          // a real advantage, and it exposes the bot's own Prizes to them. So it
+          // is not merely worthless here, it is one-sidedly bad, and the honest
+          // score is a refusal.
+          //
+          // The day ai.js models what the opponent knows, this becomes a real
+          // question and so does Rattata's Trickery. Both are on AI.md's open
+          // list. See Rulings/PEEK-CLAIRVOYANCE.md.
+          return -Infinity;
+        case 'T_LOOK_AND_SHUFFLE_BACK': {
+          // The LOOK is worth nothing to a full-state bot. Taking a Trainer out
+          // of their hand is worth something to anybody, so that half is scored
+          // and the pick is made properly rather than at random.
+          const trainers = you.hand.filter(x => this.db[x.id].kind === 'trainer');
+          if (!trainers.length) return -Infinity;      // a look, and nothing else
+          // Crude threat ranking: the cards that swing a board hardest. Untuned,
+          // and it is a list rather than a model on purpose — anything cleverer
+          // would be pretending to a judgement nobody has measured.
+          const BIG = new Set(['base1-88', 'base1-71', 'base1-77', 'base1-76',
+                               'base1-93', 'base1-92', 'base1-79', 'base1-80']);
+          let best = trainers[0], bestScore = -1;
+          for (const x of trainers) {
+            const sc = BIG.has(x.id) ? 2 : 1;
+            if (sc > bestScore) { bestScore = sc; best = x; }
+          }
+          a.opts.pickUid = best.uid;
+          // Worth more against a small hand, where one card is a bigger share of
+          // what they can do.
+          s += W.drawCard * (bestScore + 1) * (you.hand.length <= 3 ? 1.4 : 1);
+          break;
+        }
+        case 'T_CHALLENGE': {
+          // Filling BOTH benches, so it is worth the difference rather than the
+          // gain. Scored with the same visible-only rule doAnswer uses below —
+          // see there for why the bot deliberately does not look at their deck.
+          const mine = this.challengeGain(pi, true);
+          const theirs = this.challengeGain(1 - pi, false);
+          // Declining is not a failure: it draws two, which is the floor and is
+          // why the card is always legal.
+          s += Math.max(2 * W.drawCard, (mine - theirs) * W.benchMore);
+          const room = E.cfg.benchMax - me.bench.length;
+          const wants = x => { const cc = this.db[x.id]; return cc && cc.kind === 'pokemon' && cc.stage === 'Basic'; };
+          a.opts.myPicks = me.deck.filter(wants).slice(0, room).map(x => x.uid);
           break;
         }
         case 'T_COIN_PINGPONG': {
@@ -7247,6 +7380,19 @@ class AI {
     const E = this.E, s = E.state;
     if (s.phase === 'over') return null;
 
+    // A QUESTION FROM THE OTHER PLAYER COMES FIRST, and it has to be handled up
+    // here beside the other two rather than below — `s.active !== pi` returns
+    // null a few lines down, and being asked something on somebody else's turn
+    // is exactly the case that trips over. Leaving it out hangs the game with
+    // both sides waiting, which is precisely what pendingSwitch did when Jungle
+    // brought Whirlwind and is written on the smoke test to this day.
+    if (s.pendingAsk !== null && s.pendingAsk !== undefined) {
+      if (s.pendingAsk.player !== pi) return null;
+      const acts = E.legalActions(pi).filter(a => a.t === 'answer');
+      if (!acts.length) return null;
+      return this.pickBest(pi, acts, true);
+    }
+
     // Whirlwind dragged one of ours up. Send the one we least mind exposing:
     // biggest HP pool, same instinct as choosing a replacement after a KO.
     if (s.pendingSwitch !== null) {
@@ -7679,6 +7825,20 @@ class Engine {
       pendingPromote: null, promoteQueue: [], pendingEndTurn: false, setupDone: [false, false],
       // Whirlwind: the DEFENDING player owes a choice of who comes up.
       pendingSwitch: null,
+      // A QUESTION OWED BY THE OTHER PLAYER, and the second thing in the game
+      // that stops a turn to ask somebody else something. `pendingSwitch` was
+      // the first and stays as it is — it predates this, it is load-bearing, and
+      // rewriting a working mechanism to sit on a newer one buys nothing.
+      //
+      // Shape: { player, kind, prompt, options: [{value, label}], ctx }.
+      // `kind` names the card so resolveAsk knows what to resume.
+      pendingAsk: null,
+      // Here Comes Team Rocket!, and it is one boolean because the card changes
+      // only what can be SEEN. Nothing about taking a Prize moves.
+      prizesFaceUp: false,
+      // What Rocket's Sneak Attack just showed. Cleared per action like
+      // `peeked`, which it is modelled on.
+      revealedHand: null,
       // Goop Gas Attack. A board-wide, BOTH-PLAYERS Power blackout with an
       // expiry turn — stored here rather than on any slot because it is not
       // about a Pokemon, exactly as noTrainersUntil is a player-level fact.
@@ -8196,7 +8356,7 @@ class Engine {
 
     this.betweenTurns(ended);
     if (s.phase === 'over') return { ok: true };
-    if (s.pendingPromote !== null || s.pendingSwitch !== null) { s.pendingEndTurn = true; return { ok: true }; }
+    if (s.pendingAsk || s.pendingPromote !== null || s.pendingSwitch !== null) { s.pendingEndTurn = true; return { ok: true }; }
 
     s.active = 1 - s.active;
     return this.startTurn();
@@ -8271,6 +8431,16 @@ class Engine {
     const s = this.state;
     const acts = [];
     if (s.phase === 'over') return acts;
+    // A QUESTION COMES FIRST. It is asked mid-action on somebody else's turn,
+    // so until it is answered the asked player has exactly these actions and the
+    // asking player has none.
+    if (s.pendingAsk && s.pendingAsk.player === pi) {
+      for (const o of s.pendingAsk.options) {
+        acts.push({ t: 'answer', value: o.value, label: o.label });
+      }
+      return acts;
+    }
+    if (s.pendingAsk) return acts;                    // owed by the other player
     if (s.pendingSwitch === pi) {
       s.players[pi].bench.forEach((b, i) =>
         acts.push({ t: 'switchIn', bench: i, label: `Send up ${this.nameOf(b)}` }));
@@ -9421,6 +9591,16 @@ class Engine {
           if (![0, 1].some(i => this.allSlots(i).some(sl => this.powerOf(sl)))) return false;
           break;
         case 'T_COIN_PINGPONG': if (!p.active || !o.active) return false; break;
+        case 'T_CHALLENGE': break;      // always legal: declining still draws 2
+        case 'T_PRIZES_FACE_UP': if (this.state.prizesFaceUp) return false; break;
+        case 'T_LOOK_AND_SHUFFLE_BACK':
+          // "Look at your opponent's hand. IF he or she has any Trainer cards..."
+          // The look is unconditional and is the card's floor, so an opponent
+          // holding no Trainer at all is still a legal target — you paid a card
+          // to see their hand. An EMPTY hand is not, because then there is
+          // nothing to look at.
+          if (!o.hand.length) return false;
+          break;
         case 'T_MAINTENANCE': if (p.hand.length < 3 || !p.deck.length) return false; break;
         case 'T_POKEMON_CENTER': if (!this.allSlots(pi).some(x => x.dmg > 0)) return false; break;
         case 'T_REVIVE':
@@ -9493,7 +9673,11 @@ class Engine {
     // the Knock Out banner. Recorded rather than inferred, and cleared per
     // action like `peeked`.
     s.koThisAction = [];
-    if (s.pendingSwitch !== null || s.pendingPromote !== null) {
+    s.revealedHand = null;
+    if (s.pendingAsk) {
+      if (s.pendingAsk.player !== pi) return this.fail('Waiting on the other player');
+      if (a.t !== 'answer') return this.fail('Answer the question first');
+    } else if (s.pendingSwitch !== null || s.pendingPromote !== null) {
       if (s.pendingSwitch === pi) {
         if (a.t !== 'switchIn') return this.fail('A Pokemon must be sent up first');
       } else if (s.pendingPromote === pi) {
@@ -9516,6 +9700,7 @@ class Engine {
       case 'attachEnergy': return this.doAttach(pi, a);
       case 'playTrainer':  return this.doTrainer(pi, a);
       case 'retreat':      return this.doRetreat(pi, a);
+      case 'answer':       return this.doAnswer(pi, a);
       case 'attack':       return this.doAttack(pi, a);
       case 'power':        return this.doPower(pi, a);
       case 'promote':      return this.doPromote(pi, a);
@@ -9809,6 +9994,102 @@ class Engine {
   // Whirlwind's switch, chosen by the DEFENDING player. Same deferred-turn-end
   // shape as doPromote: whoever owes the choice makes it, and only once nothing
   // is outstanding does the turn actually change hands.
+  // ---- asking the other player something, mid-turn ------------------------
+  //
+  // Job 10e. The SECOND deferred cross-player decision in the game, and the
+  // first general one — Whirlwind's pendingSwitch is a hard-coded instance of
+  // the same idea and is deliberately left alone.
+  //
+  // WHY GENERAL FOR ONE CARD. `shapecount.js "your opponent (may|chooses|
+  // decides)"` reports 17 printings across six sets and 16 distinct texts —
+  // Gym's Erika and Lt. Surge's Treaty, eight in Neo 4 alone. The QUESTION
+  // recurs and the effects never do, which is the same split ON_PLAY has: the
+  // mechanism is shared, the continuation is per-card. Trevor's call, 19 Aug
+  // 2026, on exactly that evidence.
+  //
+  // The asking player's action returns while the question is outstanding — the
+  // engine is synchronous and cannot block — so the CONTINUATION runs later, in
+  // resolveAsk, and everything the card still needs must be carried in `ctx`.
+  ask(pi, kind, prompt, options, ctx) {
+    this.state.pendingAsk = { player: 1 - pi, asker: pi, kind, prompt, options, ctx: ctx || {} };
+    this.log(prompt, 'eff');
+  }
+
+  doAnswer(pi, a) {
+    const s = this.state;
+    const q = s.pendingAsk;
+    if (!q || q.player !== pi) return this.fail('Nothing is being asked of you');
+    if (!q.options.some(o => o.value === a.value)) return this.fail('Not one of the answers');
+    s.pendingAsk = null;
+    this.log(`${s.players[pi].name}: ${(q.options.find(o => o.value === a.value) || {}).label}`, 'eff');
+    this.resolveAsk(q, a.value);
+    this.checkKOs();
+    // The asking player's turn resumes exactly where the other deferred
+    // decisions resume it, and for the same reason: they may have pressed End
+    // Turn while the question was outstanding.
+    if (s.pendingAsk || s.pendingPromote !== null || s.pendingSwitch !== null) return { ok: true };
+    if (s.pendingEndTurn) {
+      s.pendingEndTurn = false;
+      s.active = 1 - s.active;
+      return this.startTurn();
+    }
+    return { ok: true };
+  }
+
+  // The continuation, per card. One case each — the mechanism is shared and the
+  // effects are not, so this switch grows one entry per card rather than the
+  // machinery above growing at all.
+  resolveAsk(q, value) {
+    const asker = this.state.players[q.asker], asked = this.state.players[q.player];
+    switch (q.kind) {
+      case 'CHALLENGE': {
+        if (!value) {
+          // "If your opponent declines... draw 2 cards."
+          let drew = 0;
+          for (let i = 0; i < (q.ctx.draw || 2) && asker.deck.length; i++) { asker.hand.push(asker.deck.shift()); drew++; }
+          this.log(`Challenge declined — ${asker.name} draws ${drew}.`, 'eff');
+          return;
+        }
+        // "each of you searches your decks for any number of Basic Pokemon and
+        // puts them face down onto your Benches... then shuffle."
+        //
+        // BOTH players fill up, which is what makes accepting a real decision
+        // rather than a formality — it is frequently good for both at once.
+        for (const [pl, picks] of [[asker, q.ctx.askerPicks], [asked, q.ctx.askedPicks]]) {
+          const i = this.state.players.indexOf(pl);
+          const room = this.cfg.benchMax - pl.bench.length;
+          const wants = x => { const c = this.db[x.id]; return c && c.kind === 'pokemon' && c.stage === 'Basic'; };
+          const chosen = [];
+          if (Array.isArray(picks)) {
+            for (const u of picks.slice(0, room)) {
+              const k = pl.deck.findIndex(x => x.uid === u && wants(x));
+              if (k >= 0) chosen.push(pl.deck.splice(k, 1)[0]);
+            }
+          } else {
+            // Unattended fallback: fill the Bench, seeded. "Any number" with no
+            // instruction is taken as all of it, which is what the card is for.
+            while (chosen.length < room) {
+              const elig = pl.deck.map((x, k) => [x, k]).filter(([x]) => wants(x));
+              if (!elig.length) break;
+              chosen.push(pl.deck.splice(elig[this.pick(elig.length)][1], 1)[0]);
+            }
+          }
+          for (const inst of chosen) {
+            const sl = this.mkSlot(inst);
+            pl.bench.push(sl);
+            // From the DECK, so no ON_PLAY fires — the played-from-hand rule.
+            this.enterPlay(i, sl, { source: 'deck' });
+          }
+          this.shuffle(pl.deck);
+          this.log(`${pl.name} benches ${chosen.length} Basic Pokemon.`, 'eff');
+        }
+        return;
+      }
+      default:
+        throw new Error(`Unresolved question ${q.kind}`);
+    }
+  }
+
   doSwitchIn(pi, a) {
     const s = this.state;
     if (s.pendingSwitch !== pi) return this.fail('Not waiting on you');
@@ -10328,6 +10609,65 @@ class Engine {
             }
             who = 1 - who;
           }
+          break;
+        }
+        case 'T_CHALLENGE': {
+          // "Ask your opponent if he or she accepts your challenge. If your
+          // opponent declines (OR IF BOTH BENCHES ARE FULL), draw 2 cards."
+          //
+          // The parenthetical is resolved BEFORE anybody is asked, because there
+          // is nothing to accept — asking a question whose only answer changes
+          // nothing is worse than not asking it.
+          const bothFull = p.bench.length >= this.cfg.benchMax
+                        && o.bench.length >= this.cfg.benchMax;
+          if (bothFull) {
+            let drew = 0;
+            for (let i = 0; i < 2 && p.deck.length; i++) { p.hand.push(p.deck.shift()); drew++; }
+            this.log(`${c.name}: both Benches are full — ${p.name} draws ${drew}.`);
+            break;
+          }
+          // NAME THE CHALLENGER, NOT THE CHALLENGED. The asked player is always
+          // the one reading this prompt, so a second name in it produces
+          // "does You accept?" — which is what the first draft said.
+          this.ask(pi, 'CHALLENGE', `${p.name} issues a challenge — do you accept?`,
+            [{ value: true, label: 'Accept the challenge' },
+             { value: false, label: 'Decline' }],
+            { draw: 2,
+              askerPicks: (a.opts && a.opts.myPicks) || null,
+              askedPicks: null });
+          break;
+        }
+        case 'T_PRIZES_FACE_UP':
+          // Here Comes Team Rocket! "EACH player plays with his or her Prize
+          // cards face up FOR THE REST OF THE GAME." Both piles, permanent, and
+          // there is no second copy to play — the legality check refuses it once
+          // it is already on.
+          //
+          // A pure visibility change: nothing about how Prizes are taken moves,
+          // which is why this is one boolean and not a system.
+          this.state.prizesFaceUp = true;
+          this.log(`${c.name}: every Prize card is turned face up for the rest of the game.`, 'eff');
+          break;
+        case 'T_LOOK_AND_SHUFFLE_BACK': {
+          // Rocket's Sneak Attack. The LOOK is the unconditional half and the
+          // taking is conditional, which is why this is legal against a hand
+          // with no Trainer in it.
+          //
+          // `revealedHand` is set the way `peeked` is: the UI shows it, the log
+          // records only that a look happened, so a shared screen stays fair.
+          this.state.revealedHand = { side: 1 - pi, ids: o.hand.map(x => x.id) };
+          this.log(`${c.name}: ${p.name} looks at ${o.name}'s hand.`);
+          const trainers = o.hand.filter(x => this.db[x.id].kind === 'trainer');
+          if (!trainers.length) { this.log('No Trainer cards there to take.', 'eff'); break; }
+          let want = (a.opts && a.opts.pickUid !== undefined)
+            ? trainers.find(x => x.uid === a.opts.pickUid) : null;
+          if (!want) want = trainers[this.pick(trainers.length)];
+          o.hand.splice(o.hand.indexOf(want), 1);
+          o.deck.push(want);
+          this.shuffle(o.deck);
+          // NAMED, unlike the look itself: the card is taken out of their hand
+          // in front of them, so both players know which one it was.
+          this.log(`${this.db[want.id].name} is shuffled back into ${o.name}'s deck.`);
           break;
         }
         case 'T_LASS': {
@@ -11914,6 +12254,17 @@ class Engine {
     const s = this.state;
     if (s.phase === 'over') return null;
 
+    // The simple bots have to be able to answer a question too, for the same
+    // reason they have to answer a Whirlwind: otherwise nobody replies and the
+    // turn never ends. They take the first option rather than weighing it —
+    // `random` and `greedy` exist to drive games to an ending, not to play well.
+    if (s.pendingAsk) {
+      if (s.pendingAsk.player !== pi) return null;
+      const ans = this.legalActions(pi).filter(a => a.t === 'answer');
+      if (!ans.length) return null;
+      return mode === 'random' ? ans[this.pick(ans.length)] : ans[0];
+    }
+
     // Whirlwind asks the DEFENDER, so this has to be answered even by the simple
     // bots — otherwise nobody replies and the turn never ends.
     if (s.pendingSwitch !== null) {
@@ -13248,7 +13599,10 @@ function progressStats(save, ladder) {
 // How each Trainer asks the player for its choices. `flow` runs when the card
 // is played; it either opens a picker or dispatches directly.
 // Trainers whose play opens a card picker (handled in pickerFlow()).
-const PICKER_TRAINERS = ['base1-71','base1-74','base1-83','base1-89','base1-86','base1-77','base1-87','base1-76'];
+const PICKER_TRAINERS = ['base1-71','base1-74','base1-83','base1-89','base1-86','base1-77','base1-87','base1-76',
+  // Job 10e. Rocket's Sneak Attack opens a picker whenever they hold a
+  // Trainer, so the hand card reads "Play…" rather than "Play".
+  'base5-16', 'base5-72'];
 
 const TRAINER_FLOW = {
   'base1-95': { scope: 'ownBench', prompt: 'Choose a Benched Pokemon to bring up' },
@@ -13845,7 +14199,8 @@ const foe = () => S().players[1];
 function myLegal() {
   if (presenting()) return [];
   const s = UI.E.state;
-  return (s.phase === 'main' || s.pendingPromote !== null || s.pendingSwitch !== null) ? UI.E.legalActions(0) : [];
+  return (s.phase === 'main' || s.pendingPromote !== null || s.pendingSwitch !== null
+          || s.pendingAsk) ? UI.E.legalActions(0) : [];
 }
 
 function costPips(cost) {
@@ -14193,6 +14548,9 @@ function renderScreen() {
 
   if (UI.picker) root.appendChild(renderPicker());
   if (UI.reveal) root.appendChild(renderReveal());
+  // Rocket'''s Sneak Attack. Mounted after the picker so that choosing WHICH
+  // Trainer to take happens first and the reveal is what you are left looking at.
+  if (S().revealedHand) root.appendChild(renderRevealedHand());
   // The setup sheet would cover the centre line, which is where the coin lands —
   // so the opening flip gets the board to itself and the sheet arrives after it.
   if (S().phase === 'setup' && !presenting()) root.appendChild(renderSetup());
@@ -14630,8 +14988,29 @@ function prizeZone(p, mine) {
   z.appendChild(el('div', 'zonelabel', 'PRIZES'));
   const grid = el('div', 'prizegrid');
   const total = UI.E.cfg.prizeCount;
+  // HERE COMES TEAM ROCKET! turns every Prize face up for the rest of the game,
+  // on BOTH sides. The tile keeps its size and place — only the face changes —
+  // because the Prize row is a counter first and a card row second, and a player
+  // reads "how many are left" off it far more often than "which ones".
+  const faceUp = !!S().prizesFaceUp;
   for (let i = 0; i < total; i++) {
-    if (i < p.prizes.length) grid.appendChild(cardBack('pz'));
+    if (i < p.prizes.length && faceUp) {
+      // HOVER, NOT TEXT. The first version printed the card's name into the
+      // tile at 6px and it was unreadable at any size a Prize tile can be —
+      // 34px of width will not hold "Double Colorless Energy", and shrinking
+      // the type until it fits is the same as not showing it.
+      //
+      // So the tile carries only what a GLANCE can use — the card's kind, as
+      // the colour it is filed under everywhere else in this game — and the
+      // name arrives through the peek rail, which is the mechanism already
+      // built for exactly this question about every other card on the board.
+      const c = CARD_DB[p.prizes[i].id];
+      const t = el('div', 'cardback pz faceup k-' + c.kind);
+      t.appendChild(el('span', 'cb-mark'));
+      t.title = c.name;
+      grid.appendChild(peekOn(t, c.id));
+    }
+    else if (i < p.prizes.length) grid.appendChild(cardBack('pz'));
     else {
       const t = el('div', 'cardback pz taken');
       if (UI.fxActive('prize' + (mine ? '0' : '1'))) t.classList.add('fx-prize');
@@ -15341,6 +15720,26 @@ function renderActionBar() {
   // Neither is cancellable — the game cannot continue until you choose — so the
   // targeting is armed here on every render rather than by a click, and the bar
   // carries the prompt with no Cancel beside it.
+  // A QUESTION FROM THE OTHER PLAYER, mid-turn. The bar is the right home for it
+  // rather than an overlay: it is a decision about the board, the board is what
+  // you need to look at to make it, and an overlay would cover the thing being
+  // asked about.
+  if (s.pendingAsk && s.pendingAsk.player === 0) {
+    bar.appendChild(el('div', 'barmsg', s.pendingAsk.prompt));
+    for (const o of s.pendingAsk.options) {
+      const b = el('button', 'btn' + (o.value ? ' end' : ' ghost'), o.label);
+      b.onclick = () => answerAsk(o.value);
+      bar.appendChild(b);
+    }
+    return bar;
+  }
+  // ...and the other side of it. A question owed by the OPPONENT stops your
+  // turn just as firmly, and the bar was still offering End turn — which defers
+  // correctly but tells the player nothing about why the game has gone quiet.
+  if (s.pendingAsk && s.pendingAsk.player === 1) {
+    bar.appendChild(el('div', 'barmsg dimtxt', 'Waiting for your opponent to answer…'));
+    return bar;
+  }
   if (s.pendingSwitch === 0 || s.pendingPromote === 0) {
     bar.appendChild(el('div', 'barmsg', UI.targeting ? UI.targeting.prompt : ''));
     return bar;
@@ -17204,6 +17603,20 @@ function pickerFlow(handIdx, inst, card) {
           onDone: (takeP) => send({ giveUid: giveP[0], takeUid: takeP[0] }) }) });
       return true;
 
+    case 'base5-16':   // Rocket's Sneak Attack
+    case 'base5-72': {
+      // You may look at their hand whatever it holds, so the picker only opens
+      // when there is actually a Trainer to take — otherwise the play goes
+      // straight through and the reveal is the whole card.
+      const theirTrainers = foe0.hand.filter(x => CARD_DB[x.id].kind === 'trainer');
+      if (!theirTrainers.length) return false;
+      openPicker({ title: "Rocket's Sneak Attack", items: theirTrainers, min: 1, max: 1,
+        prompt: 'Choose a Trainer to shuffle into their deck',
+        confirm: 'Take it',
+        onDone: (pk) => send({ pickUid: pk[0] }) });
+      return true;
+    }
+
     case 'base1-87':   // Pokedex
       openPicker({ title: 'Pokedex', prompt: 'Rearrange the top cards of your deck',
         items: me0.deck.slice(0, 5), mode: 'order', confirm: 'Set order',
@@ -17228,6 +17641,73 @@ function pickerFlow(handIdx, inst, card) {
     }
   }
   return false;
+}
+
+// Answering the other player's question. Accepting a Challenge is two steps for
+// the player and one for the bot: the answer, and then WHICH Basics to bench.
+//
+// The picks have to ride on the answer action, because resolveAsk runs
+// synchronously inside it — the same constraint every other choice in this game
+// works under, and the reason none of them are asked mid-resolution.
+function answerAsk(value) {
+  const s = S(), q = s.pendingAsk;
+  if (!q) return;
+  if (q.kind === 'CHALLENGE' && value) {
+    const room = UI.E.cfg.benchMax - me().bench.length;
+    const pool = me().deck.filter(x => {
+      const c = CARD_DB[x.id];
+      return c.kind === 'pokemon' && c.stage === 'Basic';
+    });
+    if (room > 0 && pool.length) {
+      openPicker({ title: 'Challenge accepted', items: pool, min: 0, max: room,
+        prompt: `Choose up to ${room} Basic Pokemon to put onto your Bench`,
+        confirm: 'Bench them',
+        onDone: (uids) => {
+          // The ASKED player's picks, which is us. The asker's already rode in
+          // on the Trainer they played.
+          q.ctx.askedPicks = uids;
+          dispatch(0, { t: 'answer', value: true });
+        } });
+      return;
+    }
+  }
+  dispatch(0, { t: 'answer', value });
+}
+
+// ROCKET'S SNEAK ATTACK shows you their whole hand. Modelled on `peeked`: the
+// engine records what was revealed, the UI shows it, and the LOG says only that
+// a look happened — so a shared screen stays fair.
+//
+// Shown after the fact rather than as a picker, because the taking already
+// happened inside the same action. Choosing WHICH Trainer to take is the
+// picker below, and it runs before the card is dispatched like every other
+// hidden-zone choice in this file.
+function renderRevealedHand() {
+  const r = S().revealedHand;
+  if (!r) return null;
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet');
+  box.appendChild(el('h2', null, "Your opponent's hand"));
+  box.appendChild(el('p', 'dimtxt', r.ids.length
+    ? 'Everything they are holding right now.'
+    : 'They are holding nothing.'));
+  const row = el('div', 'pickgrid' + (r.ids.length > 8 ? ' many' : ''));
+  r.ids.forEach(id => {
+    const c = CARD_DB[id];
+    const t = el('div', 'picktile');
+    t.appendChild(pullFace(c, []));
+    t.appendChild(el('div', 'pickname', c.name));
+    row.appendChild(t);
+  });
+  if (!r.ids.length) row.appendChild(el('div', 'empty', 'empty hand'));
+  box.appendChild(row);
+  const bar = el('div', 'actionbar');
+  const ok = el('button', 'btn end', 'Done');
+  ok.onclick = () => { S().revealedHand = null; render(); };
+  bar.appendChild(ok);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
 }
 
 function togglePick(uid) {
@@ -17704,8 +18184,14 @@ function maybeRunAI() {
   const s = S();
   if (s.phase !== 'main') return;
   if (s.pendingSwitch === 0 || s.pendingPromote === 0) return;   // waiting on the player
-  const aiTurn = (s.pendingSwitch === 1) || (s.pendingPromote === 1)
-    || (s.pendingSwitch === null && s.pendingPromote === null && s.active === 1);
+  // A question owed by the PLAYER stops everything, exactly like the two above.
+  // One owed by the AI is a turn for it, even on the player's own turn — which
+  // is the whole point of the mechanism and the case that hangs the game if it
+  // is left out.
+  if (s.pendingAsk && s.pendingAsk.player === 0) return;
+  const aiTurn = (s.pendingAsk && s.pendingAsk.player === 1)
+    || (s.pendingSwitch === 1) || (s.pendingPromote === 1)
+    || (!s.pendingAsk && s.pendingSwitch === null && s.pendingPromote === null && s.active === 1);
   if (!aiTurn) return;
   UI.aiTimer = setTimeout(() => {
     if (UI.E._ai) UI.E._ai.explain = true;   // survives the AI being rebuilt on a tier change

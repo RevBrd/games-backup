@@ -8,7 +8,10 @@
 // How each Trainer asks the player for its choices. `flow` runs when the card
 // is played; it either opens a picker or dispatches directly.
 // Trainers whose play opens a card picker (handled in pickerFlow()).
-const PICKER_TRAINERS = ['base1-71','base1-74','base1-83','base1-89','base1-86','base1-77','base1-87','base1-76'];
+const PICKER_TRAINERS = ['base1-71','base1-74','base1-83','base1-89','base1-86','base1-77','base1-87','base1-76',
+  // Job 10e. Rocket's Sneak Attack opens a picker whenever they hold a
+  // Trainer, so the hand card reads "Play…" rather than "Play".
+  'base5-16', 'base5-72'];
 
 const TRAINER_FLOW = {
   'base1-95': { scope: 'ownBench', prompt: 'Choose a Benched Pokemon to bring up' },
@@ -605,7 +608,8 @@ const foe = () => S().players[1];
 function myLegal() {
   if (presenting()) return [];
   const s = UI.E.state;
-  return (s.phase === 'main' || s.pendingPromote !== null || s.pendingSwitch !== null) ? UI.E.legalActions(0) : [];
+  return (s.phase === 'main' || s.pendingPromote !== null || s.pendingSwitch !== null
+          || s.pendingAsk) ? UI.E.legalActions(0) : [];
 }
 
 function costPips(cost) {
@@ -953,6 +957,9 @@ function renderScreen() {
 
   if (UI.picker) root.appendChild(renderPicker());
   if (UI.reveal) root.appendChild(renderReveal());
+  // Rocket'''s Sneak Attack. Mounted after the picker so that choosing WHICH
+  // Trainer to take happens first and the reveal is what you are left looking at.
+  if (S().revealedHand) root.appendChild(renderRevealedHand());
   // The setup sheet would cover the centre line, which is where the coin lands —
   // so the opening flip gets the board to itself and the sheet arrives after it.
   if (S().phase === 'setup' && !presenting()) root.appendChild(renderSetup());
@@ -1390,8 +1397,29 @@ function prizeZone(p, mine) {
   z.appendChild(el('div', 'zonelabel', 'PRIZES'));
   const grid = el('div', 'prizegrid');
   const total = UI.E.cfg.prizeCount;
+  // HERE COMES TEAM ROCKET! turns every Prize face up for the rest of the game,
+  // on BOTH sides. The tile keeps its size and place — only the face changes —
+  // because the Prize row is a counter first and a card row second, and a player
+  // reads "how many are left" off it far more often than "which ones".
+  const faceUp = !!S().prizesFaceUp;
   for (let i = 0; i < total; i++) {
-    if (i < p.prizes.length) grid.appendChild(cardBack('pz'));
+    if (i < p.prizes.length && faceUp) {
+      // HOVER, NOT TEXT. The first version printed the card's name into the
+      // tile at 6px and it was unreadable at any size a Prize tile can be —
+      // 34px of width will not hold "Double Colorless Energy", and shrinking
+      // the type until it fits is the same as not showing it.
+      //
+      // So the tile carries only what a GLANCE can use — the card's kind, as
+      // the colour it is filed under everywhere else in this game — and the
+      // name arrives through the peek rail, which is the mechanism already
+      // built for exactly this question about every other card on the board.
+      const c = CARD_DB[p.prizes[i].id];
+      const t = el('div', 'cardback pz faceup k-' + c.kind);
+      t.appendChild(el('span', 'cb-mark'));
+      t.title = c.name;
+      grid.appendChild(peekOn(t, c.id));
+    }
+    else if (i < p.prizes.length) grid.appendChild(cardBack('pz'));
     else {
       const t = el('div', 'cardback pz taken');
       if (UI.fxActive('prize' + (mine ? '0' : '1'))) t.classList.add('fx-prize');
@@ -2101,6 +2129,26 @@ function renderActionBar() {
   // Neither is cancellable — the game cannot continue until you choose — so the
   // targeting is armed here on every render rather than by a click, and the bar
   // carries the prompt with no Cancel beside it.
+  // A QUESTION FROM THE OTHER PLAYER, mid-turn. The bar is the right home for it
+  // rather than an overlay: it is a decision about the board, the board is what
+  // you need to look at to make it, and an overlay would cover the thing being
+  // asked about.
+  if (s.pendingAsk && s.pendingAsk.player === 0) {
+    bar.appendChild(el('div', 'barmsg', s.pendingAsk.prompt));
+    for (const o of s.pendingAsk.options) {
+      const b = el('button', 'btn' + (o.value ? ' end' : ' ghost'), o.label);
+      b.onclick = () => answerAsk(o.value);
+      bar.appendChild(b);
+    }
+    return bar;
+  }
+  // ...and the other side of it. A question owed by the OPPONENT stops your
+  // turn just as firmly, and the bar was still offering End turn — which defers
+  // correctly but tells the player nothing about why the game has gone quiet.
+  if (s.pendingAsk && s.pendingAsk.player === 1) {
+    bar.appendChild(el('div', 'barmsg dimtxt', 'Waiting for your opponent to answer…'));
+    return bar;
+  }
   if (s.pendingSwitch === 0 || s.pendingPromote === 0) {
     bar.appendChild(el('div', 'barmsg', UI.targeting ? UI.targeting.prompt : ''));
     return bar;
@@ -3964,6 +4012,20 @@ function pickerFlow(handIdx, inst, card) {
           onDone: (takeP) => send({ giveUid: giveP[0], takeUid: takeP[0] }) }) });
       return true;
 
+    case 'base5-16':   // Rocket's Sneak Attack
+    case 'base5-72': {
+      // You may look at their hand whatever it holds, so the picker only opens
+      // when there is actually a Trainer to take — otherwise the play goes
+      // straight through and the reveal is the whole card.
+      const theirTrainers = foe0.hand.filter(x => CARD_DB[x.id].kind === 'trainer');
+      if (!theirTrainers.length) return false;
+      openPicker({ title: "Rocket's Sneak Attack", items: theirTrainers, min: 1, max: 1,
+        prompt: 'Choose a Trainer to shuffle into their deck',
+        confirm: 'Take it',
+        onDone: (pk) => send({ pickUid: pk[0] }) });
+      return true;
+    }
+
     case 'base1-87':   // Pokedex
       openPicker({ title: 'Pokedex', prompt: 'Rearrange the top cards of your deck',
         items: me0.deck.slice(0, 5), mode: 'order', confirm: 'Set order',
@@ -3988,6 +4050,73 @@ function pickerFlow(handIdx, inst, card) {
     }
   }
   return false;
+}
+
+// Answering the other player's question. Accepting a Challenge is two steps for
+// the player and one for the bot: the answer, and then WHICH Basics to bench.
+//
+// The picks have to ride on the answer action, because resolveAsk runs
+// synchronously inside it — the same constraint every other choice in this game
+// works under, and the reason none of them are asked mid-resolution.
+function answerAsk(value) {
+  const s = S(), q = s.pendingAsk;
+  if (!q) return;
+  if (q.kind === 'CHALLENGE' && value) {
+    const room = UI.E.cfg.benchMax - me().bench.length;
+    const pool = me().deck.filter(x => {
+      const c = CARD_DB[x.id];
+      return c.kind === 'pokemon' && c.stage === 'Basic';
+    });
+    if (room > 0 && pool.length) {
+      openPicker({ title: 'Challenge accepted', items: pool, min: 0, max: room,
+        prompt: `Choose up to ${room} Basic Pokemon to put onto your Bench`,
+        confirm: 'Bench them',
+        onDone: (uids) => {
+          // The ASKED player's picks, which is us. The asker's already rode in
+          // on the Trainer they played.
+          q.ctx.askedPicks = uids;
+          dispatch(0, { t: 'answer', value: true });
+        } });
+      return;
+    }
+  }
+  dispatch(0, { t: 'answer', value });
+}
+
+// ROCKET'S SNEAK ATTACK shows you their whole hand. Modelled on `peeked`: the
+// engine records what was revealed, the UI shows it, and the LOG says only that
+// a look happened — so a shared screen stays fair.
+//
+// Shown after the fact rather than as a picker, because the taking already
+// happened inside the same action. Choosing WHICH Trainer to take is the
+// picker below, and it runs before the card is dispatched like every other
+// hidden-zone choice in this file.
+function renderRevealedHand() {
+  const r = S().revealedHand;
+  if (!r) return null;
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet');
+  box.appendChild(el('h2', null, "Your opponent's hand"));
+  box.appendChild(el('p', 'dimtxt', r.ids.length
+    ? 'Everything they are holding right now.'
+    : 'They are holding nothing.'));
+  const row = el('div', 'pickgrid' + (r.ids.length > 8 ? ' many' : ''));
+  r.ids.forEach(id => {
+    const c = CARD_DB[id];
+    const t = el('div', 'picktile');
+    t.appendChild(pullFace(c, []));
+    t.appendChild(el('div', 'pickname', c.name));
+    row.appendChild(t);
+  });
+  if (!r.ids.length) row.appendChild(el('div', 'empty', 'empty hand'));
+  box.appendChild(row);
+  const bar = el('div', 'actionbar');
+  const ok = el('button', 'btn end', 'Done');
+  ok.onclick = () => { S().revealedHand = null; render(); };
+  bar.appendChild(ok);
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
 }
 
 function togglePick(uid) {
@@ -4464,8 +4593,14 @@ function maybeRunAI() {
   const s = S();
   if (s.phase !== 'main') return;
   if (s.pendingSwitch === 0 || s.pendingPromote === 0) return;   // waiting on the player
-  const aiTurn = (s.pendingSwitch === 1) || (s.pendingPromote === 1)
-    || (s.pendingSwitch === null && s.pendingPromote === null && s.active === 1);
+  // A question owed by the PLAYER stops everything, exactly like the two above.
+  // One owed by the AI is a turn for it, even on the player's own turn — which
+  // is the whole point of the mechanism and the case that hangs the game if it
+  // is left out.
+  if (s.pendingAsk && s.pendingAsk.player === 0) return;
+  const aiTurn = (s.pendingAsk && s.pendingAsk.player === 1)
+    || (s.pendingSwitch === 1) || (s.pendingPromote === 1)
+    || (!s.pendingAsk && s.pendingSwitch === null && s.pendingPromote === null && s.active === 1);
   if (!aiTurn) return;
   UI.aiTimer = setTimeout(() => {
     if (UI.E._ai) UI.E._ai.explain = true;   // survives the AI being rebuilt on a tier change

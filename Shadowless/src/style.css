@@ -167,6 +167,25 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .cardback.sm{width:32px;height:44px}
 .cardback.pz{width:34px;height:47px}
 .cardback.pz .cb-mark{width:10px;height:10px;border-width:1px;box-shadow:inset 0 0 0 1px #262E36}
+/* Here Comes Team Rocket! — a Prize turned face up. It keeps the tile's exact
+   size and place, because the Prize row is a COUNTER first and a card row
+   second: a player reads "how many are left" off it far more often than "which
+   ones". So the face is a name in a filed colour rather than a card, and the row
+   never changes shape when the card is played. */
+.cardback.faceup{
+  background:var(--panel);
+  border-color:var(--matline);
+}
+.cardback.faceup{cursor:help}
+.cardback.faceup .cb-mark{border-color:currentColor;opacity:.75}
+/* Tinted rather than edged. A 2px border on a 34px tile is a detail you have to
+   go looking for, and the whole value of a face-up Prize row is what it tells
+   you at a GLANCE — three Energy and a Trainer left is a different game from
+   four Pokemon left. The name is one hover away for when the glance is not
+   enough. */
+.cardback.faceup.k-pokemon{background:#3A4A57;color:#9FC4DE}
+.cardback.faceup.k-trainer{background:#463A56;color:#C3A6DE}
+.cardback.faceup.k-energy{background:#3A4E3A;color:#A6D2A0}
 .cardback.taken{background:transparent;border:0;box-shadow:inset 0 0 0 1px var(--matline)}
 .cardback.taken .cb-mark{display:none}
 /* Prizes are the clock on the game — six cards is the entire win condition — so

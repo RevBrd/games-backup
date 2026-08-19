@@ -5246,5 +5246,170 @@ T('...and an all-heads seed terminates rather than hanging the turn', () => {
   return true;
 });
 
+
+// ============================================================================
+// Job 10e — the three that reach into hidden information
+// ============================================================================
+console.log('\nJob 10e — hidden information, and a question owed by the opponent');
+
+// ------------------------------------------------- Here Comes Team Rocket! --
+T('Here Comes Team Rocket! turns BOTH Prize piles face up, permanently', () => {
+  const E = trainerBoard('base5-15');
+  eq(E.state.prizesFaceUp, false, 'face down beforehand');
+  playT10e(E);
+  eq(E.state.prizesFaceUp, true, 'and face up after');
+  return true;
+});
+T('...and a second copy is refused, because it would do nothing', () => {
+  const E = trainerBoard('base5-15');
+  playT10e(E);
+  const p = E.state.players[0];
+  p.hand = [{ id: 'base5-71', uid: E.uid++ }];
+  eq(E.act(0, { t: 'playTrainer', hand: 0 }).ok, false, 'already on');
+  return true;
+});
+T('...and the AI refuses it outright, which is a declaration and not a gap', () => {
+  // It gains a full-state bot nothing and exposes its own Prizes to a human.
+  const E = trainerBoard('base5-15');
+  const ai = new AI(E, 'expert');
+  eq(ai.scoreTrainer(0, { t: 'playTrainer', hand: 0, opts: {} }) === -Infinity, true,
+     'scored at -Infinity on purpose');
+  return true;
+});
+
+// --------------------------------------------- Rocket's Sneak Attack -------
+T("Rocket's Sneak Attack shuffles the chosen Trainer into their deck", () => {
+  const E = trainerBoard('base5-16');
+  const o = E.state.players[1];
+  const bill = { id: 'base1-91', uid: E.uid++ };
+  o.hand = [{ id: 'base1-4', uid: E.uid++ }, bill];
+  o.deck = [{ id: 'base1-98', uid: E.uid++ }];
+  playT10e(E, { pickUid: bill.uid });
+  eq(o.hand.some(x => x.uid === bill.uid), false, 'gone from their hand');
+  eq(o.deck.some(x => x.uid === bill.uid), true, 'and into their deck');
+  return true;
+});
+T('...and it reveals their whole hand as data the UI can show', () => {
+  const E = trainerBoard('base5-16');
+  const o = E.state.players[1];
+  o.hand = [{ id: 'base1-4', uid: E.uid++ }, { id: 'base1-91', uid: E.uid++ }];
+  playT10e(E);
+  eq(!!E.state.revealedHand, true, 'something was revealed');
+  eq(E.state.revealedHand.ids.length, 2, 'both cards');
+  return true;
+});
+T('...and the LOOK is legal even with no Trainer to take', () => {
+  // "Look at your opponent's hand. IF he or she has any Trainer cards..." The
+  // look is unconditional and is the card's floor.
+  const E = trainerBoard('base5-16');
+  E.state.players[1].hand = [{ id: 'base1-4', uid: E.uid++ }];
+  eq(playT10e(E).ok, true, 'still a legal play');
+  eq(!!E.state.revealedHand, true, 'and you still saw the hand');
+  return true;
+});
+T('...but an EMPTY hand is not, because there is nothing to look at', () => {
+  const E = trainerBoard('base5-16');
+  E.state.players[1].hand = [];
+  eq(playT10e(E).ok, false, 'refused');
+  return true;
+});
+
+// ------------------------------------------------------------- Challenge! --
+T('Challenge! stops the turn and owes the OPPONENT an answer', () => {
+  const E = trainerBoard('base5-74');
+  playT10e(E);
+  eq(!!E.state.pendingAsk, true, 'a question is outstanding');
+  eq(E.state.pendingAsk.player, 1, 'and it is theirs to answer');
+  eq(E.legalActions(0).length, 0, 'the asker can do nothing meanwhile');
+  eq(E.legalActions(1).filter(x => x.t === 'answer').length, 2, 'they have two answers');
+  return true;
+});
+T('...declining draws the asker two cards', () => {
+  const E = trainerBoard('base5-74');
+  const p = E.state.players[0];
+  p.deck = Array.from({ length: 5 }, () => ({ id: 'base1-98', uid: E.uid++ }));
+  const before = p.hand.length;
+  playT10e(E);
+  E.act(1, { t: 'answer', value: false });
+  eq(p.hand.length, before - 1 + 2, 'the Challenge left hand, and two came in');
+  eq(E.state.pendingAsk, null, 'and the question is resolved');
+  return true;
+});
+T('...accepting fills BOTH Benches from BOTH decks', () => {
+  const E = trainerBoard('base5-74');
+  const p = E.state.players[0], o = E.state.players[1];
+  p.bench = []; o.bench = [];
+  p.deck = Array.from({ length: 4 }, () => ({ id: 'base1-58', uid: E.uid++ }));
+  o.deck = Array.from({ length: 4 }, () => ({ id: 'base1-58', uid: E.uid++ }));
+  playT10e(E);
+  E.act(1, { t: 'answer', value: true });
+  eq(p.bench.length, 4, 'the asker benched theirs');
+  eq(o.bench.length, 4, 'and so did the asked');
+  return true;
+});
+T('...and it never overfills a Bench', () => {
+  const E = trainerBoard('base5-74');
+  const p = E.state.players[0], o = E.state.players[1];
+  p.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+  o.bench = [];
+  p.deck = Array.from({ length: 9 }, () => ({ id: 'base1-58', uid: E.uid++ }));
+  o.deck = Array.from({ length: 9 }, () => ({ id: 'base1-58', uid: E.uid++ }));
+  playT10e(E);
+  E.act(1, { t: 'answer', value: true });
+  eq(p.bench.length, E.cfg.benchMax, 'filled to the cap and no further');
+  eq(o.bench.length, E.cfg.benchMax, 'both sides');
+  return true;
+});
+T('...and a Basic benched by a Challenge fires no ON_PLAY, because it came from a DECK', () => {
+  const E = trainerBoard('base5-74');
+  const p = E.state.players[0], o = E.state.players[1];
+  p.bench = []; o.bench = [];
+  // Dark Golbat is a Stage 1 so it cannot be benched by this; the assertion is
+  // that the doorway is 'deck' at all, which the played-from-hand rule turns on.
+  p.deck = [{ id: 'base1-58', uid: E.uid++ }];
+  o.deck = [{ id: 'base1-58', uid: E.uid++ }];
+  playT10e(E);
+  E.act(1, { t: 'answer', value: true });
+  eq(p.bench[0].playedTurn, E.state.turn, 'stamped as arriving this turn');
+  return true;
+});
+T('...and BOTH Benches already full skips the question entirely', () => {
+  // "(or if both Benches are full)" — there is nothing to accept, and asking a
+  // question whose answer changes nothing is worse than not asking it.
+  const E = trainerBoard('base5-74');
+  const p = E.state.players[0], o = E.state.players[1];
+  p.bench = Array.from({ length: 5 }, () => E.mkSlot({ id: 'base1-58', uid: E.uid++ }));
+  o.bench = Array.from({ length: 5 }, () => E.mkSlot({ id: 'base1-58', uid: E.uid++ }));
+  p.deck = Array.from({ length: 5 }, () => ({ id: 'base1-98', uid: E.uid++ }));
+  const before = p.hand.length;
+  playT10e(E);
+  eq(E.state.pendingAsk, null, 'nobody was asked');
+  eq(p.hand.length, before - 1 + 2, 'and the asker drew two');
+  return true;
+});
+T('...and the asker cannot act while the question is outstanding', () => {
+  const E = trainerBoard('base5-74');
+  const p = E.state.players[0];
+  p.hand.push({ id: 'base1-98', uid: E.uid++ });
+  playT10e(E);
+  eq(E.act(0, { t: 'pass' }).ok, false, 'not even to pass');
+  eq(E.act(1, { t: 'pass' }).ok, false, 'and the asked must answer, not act');
+  return true;
+});
+T('...and the AI weighs it on VISIBLE information only', () => {
+  // Trevor's constraint, 19 Aug 2026. ai.js reads full engine state everywhere
+  // else — it could count the Basics left in the opponent's deck and answer
+  // exactly. It deliberately does not, so a Challenge is a gamble on both sides.
+  const E = trainerBoard('base5-74');
+  const ai = new AI(E, 'expert');
+  const o = E.state.players[1];
+  o.bench = [];
+  o.deck = [];                                   // they can bench NOTHING
+  const blind = ai.challengeGain(1, false);
+  eq(blind, E.cfg.benchMax, 'the bot still assumes they can fill the room');
+  eq(ai.challengeGain(1, true), 0, '...though the truth, which it does not look at, is zero');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

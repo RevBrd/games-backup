@@ -50,7 +50,23 @@ group('the ladder is derived from the live sets');
 const L = build();
 eq(L.length, LIVE.length, 'one bracket per live set');
 eq(L.map(b => b.set).join(','), LIVE.join(','), 'brackets follow the live-set order');
-ok(L.every(b => !b.generated), 'all three live sets have an authored bracket');
+// AUTHORED vs GENERATED, counted rather than assumed. This said "all three live
+// sets have an authored bracket" and went red the moment Team Rocket went live —
+// correctly, and for a reason that is not a bug: base5 has no roster in
+// OPPONENTS.md yet, so it gets a generated bracket, which is exactly what the
+// derivation is FOR and what the three cases below already assert.
+//
+// So the claim worth holding is not "every set is authored" — that one expires
+// with every set job — but that the sets which ARE authored come first and the
+// generated ones trail. A generated bracket wedged between two authored ones
+// would mean the derivation had lost the live-set order.
+{
+  const gen = L.map(b => !!b.generated);
+  const firstGen = gen.indexOf(true);
+  ok(firstGen === -1 || gen.slice(firstGen).every(Boolean),
+     'authored brackets come first, generated ones trail');
+  console.log(`    ${gen.filter(x => !x).length} authored, ${gen.filter(Boolean).length} generated`);
+}
 eq(L[0].name, 'The Clubs', 'the first bracket is named from the data');
 
 // The whole point of deriving: a set nobody authored still gets a bracket.
@@ -216,7 +232,10 @@ eq(packsHeld(s4, 'base1'), 2, 'the caller grants them, through the one function 
 group('reporting');
 
 const st = P.progressStats(s, L);
-eq(st.bossTotal, 3, 'three bosses across three brackets');
+// DERIVED, not counted by hand — this said 3 and went red on the fourth set.
+// "One boss per bracket" is the invariant; the number of brackets is not.
+eq(st.bossTotal, L.filter(b => b.boss).length, 'one boss per bracket that has one');
+eq(st.bossTotal, L.length, '...which is every bracket, generated ones included');
 eq(st.bosses, 1, 'one of them beaten');
 eq(st.total, L.reduce((a, b) => a + b.roster.length, 0), 'the roster total counts every bracket');
 ok(P.findOpponent(L, 'gbc-ronald-1') !== null, 'an opponent can be looked up by id');

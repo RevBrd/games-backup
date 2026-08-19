@@ -352,6 +352,30 @@
 //                                  exemption from this the way it has from
 //                                  itself. Player-level and consulted, never
 //                                  materialised onto slots (Goop Gas Attack)
+//     T_PRIZES_FACE_UP             every Prize card on BOTH sides is turned face
+//                                  up for the rest of the game. One boolean,
+//                                  because the card changes only what can be
+//                                  SEEN — nothing about taking a Prize moves.
+//                                  Refused once it is already on
+//                                  (Here Comes Team Rocket!)
+//     T_LOOK_AND_SHUFFLE_BACK      look at the opponent's hand; if it holds a
+//                                  Trainer, one of them is shuffled into their
+//                                  deck. THE LOOK IS UNCONDITIONAL and is the
+//                                  card's floor, so a hand with no Trainer is
+//                                  still a legal target — an EMPTY hand is not
+//                                  (Rocket's Sneak Attack)
+//     T_CHALLENGE                  ask the opponent to accept. Declining, or
+//                                  both Benches already being full, draws 2
+//                                  instead. Accepting fills BOTH Benches from
+//                                  BOTH decks. Always legal, because the floor
+//                                  is a draw (Challenge!)
+//
+//   QUESTION KINDS — not verbs. engine.ask() defers a decision to the OTHER
+//   player mid-turn and engine.resolveAsk() continues the card once it is
+//   answered; `kind` names which continuation to run. The mechanism is general
+//   and the continuations are per-card, which is the ON_PLAY split again.
+//     CHALLENGE                    accept or decline (Challenge!)
+//
 //     T_COIN_PINGPONG {n}          flip; tails does n to YOUR Active and stops,
 //                                  heads passes the coin to your opponent, and
 //                                  so on. THE COIN STARTS WITH YOU, so you take
@@ -1542,6 +1566,10 @@ const EFFECTS = {
   'base5-77': { t: [{ v: 'T_SHUFFLE_FROM_DISCARD', n: 3 }] },
   'base5-78': { t: [{ v: 'T_POWERS_OFF' }] },
   'base5-79': { t: [{ v: 'T_STATUS_ON_FLIP', s: 'Asleep' }] },
+
+  'base5-15': { t: [{ v: 'T_PRIZES_FACE_UP' }] },      // Here Comes Team Rocket!
+  'base5-16': { t: [{ v: 'T_LOOK_AND_SHUFFLE_BACK' }] },// Rocket'''s Sneak Attack
+  'base5-74': { t: [{ v: 'T_CHALLENGE' }] },            // Challenge!
 
   // ---- Job 10d: two of the three special Energy -----------------------------
   // Both print their effect as "IF YOU PLAY THIS CARD FROM YOUR HAND", which is

@@ -127,6 +127,31 @@ for (const id in CARD_DB) {
     if (a.text) liveText.set(a.text.trim(), `${CARD_DB[id].name} — ${a.name}`);
   });
 }
+
+// THIS TOOL READS data/raw AND COMPARES AGAINST CARD_DB, and those are not the
+// same text. `gen_cards.js` applies CORRECTIONS on the way through — places
+// where the corpus is wrong and we have a better source — so a corrected card
+// can never match itself, and reports as novel work on a set that is fully
+// built.
+//
+// Team Rocket found it, 19 Aug 2026. base5 went live at 83 of 83 and this tool
+// still called two attacks novel: both printings of Dark Vileplume's Petal
+// Whirlwind, whose corpus text reads "Flip a coins." and whose corrected text
+// reads "Flip 3 coins." The tool was right about the raw data and wrong about
+// the job, which is the worse of the two ways to be wrong — TOOLING.md offers
+// "a live set reports zero novel" as this tool's own control, and a control
+// that cries wolf on a documented defect stops being read.
+//
+// So a set that is ALREADY GENERATED is compared against its generated text.
+// The raw file is the right source for a set that does not exist yet, and
+// CARD_DB is the right source for one that does; this picks whichever applies
+// per card rather than per run, so a half-generated set behaves too.
+const correctedText = (rawCard, atk) => {
+  const gen = CARD_DB[rawCard.id];
+  if (!gen) return String(atk.text || '').trim();
+  const match = (gen.attacks || []).find(x => x.name === atk.name);
+  return String((match && match.text) || atk.text || '').trim();
+};
 const pk = distinct.filter(c => c.supertype === 'Pokémon');
 let vanilla = 0;
 const reused = [], novel = [];
@@ -135,6 +160,9 @@ for (const c of pk) {
     const t = (a.text || '').trim();
     if (!t) { vanilla++; continue; }
     if (liveText.has(t)) { reused.push(`${c.name} — ${a.name}  =  ${liveText.get(t)}`); continue; }
+    // ...and again against the corrected text, for a set already generated.
+    const ct = correctedText(c, a);
+    if (ct !== t && liveText.has(ct)) { reused.push(`${c.name} — ${a.name}  =  ${liveText.get(ct)}`); continue; }
     novel.push({ card: c.name, atk: a.name, cost: costStr(a), dmg: a.damage || '', text: t });
   }
 }

@@ -871,7 +871,18 @@ T('the Sandbox deck is selectable and plays to completion', () => {
     // just as pendingPromote does. This loop ignored it, which was harmless
     // only while no card in the Sandbox pool had Whirlwind — Jungle and Fossil
     // brought four, and the game sat waiting for an answer nobody gave.
-    const pi = s.pendingSwitch !== null && s.pendingSwitch !== undefined ? s.pendingSwitch
+    // ...AND IT HAPPENED AGAIN, 19 Aug 2026, with Challenge! — which asks the
+    // opponent a question mid-turn and owes an action the same way. The note
+    // above was written about Whirlwind and generalises exactly:
+    //
+    //   ANY state that owes an action by somebody other than s.active has to be
+    //   listed here, or the loop asks the wrong player, gets nothing, and breaks
+    //   out of a game that was merely waiting.
+    //
+    // Three now. A fourth will arrive with Gym, where shapecount finds sixteen
+    // more cards that stop to ask the opponent something.
+    const pi = s.pendingAsk ? s.pendingAsk.player
+      : s.pendingSwitch !== null && s.pendingSwitch !== undefined ? s.pendingSwitch
       : s.pendingPromote !== null ? s.pendingPromote : s.active;
     const a = UI.E.aiChoose(pi, 'expert');
     if (!a) break;

@@ -1642,6 +1642,21 @@ class AI {
       }
 
       case 'power': return this.scorePower(pi, a);
+      case 'answer': {
+        // Answering a question the OPPONENT asked, during their turn. The first
+        // of these; the mechanism is general and this switch grows per card.
+        const q = this.E.state.pendingAsk;
+        if (!q) return -Infinity;
+        if (q.kind === 'CHALLENGE') {
+          const mine = this.challengeGain(pi, true);
+          const theirs = this.challengeGain(1 - pi, false);
+          // Accepting when it gains you more than them; declining otherwise —
+          // and declining hands them two cards, which is priced in.
+          const worth = (mine - theirs) * this.W.benchMore - 2 * this.W.drawCard;
+          return a.value ? worth : -worth;
+        }
+        return 0;
+      }
 
       case 'attachEnergy': {
         const slot = E.allSlots(pi).find(x => x.uid === a.target);
@@ -2036,6 +2051,27 @@ class AI {
     return s;
   }
 
+  // HOW MUCH A CHALLENGE IS WORTH TO ONE SIDE, in Pokemon it would actually
+  // bench. `known` is the honest half of this and it is Trevor's constraint,
+  // 19 Aug 2026: the bot judges its OWN side from its deck, and the opponent's
+  // side only from what it can SEE.
+  //
+  // That is a deliberate self-restriction rather than a limitation. ai.js reads
+  // full engine state everywhere else — it is why Peek is scored at -Infinity —
+  // so it COULD count the Basics left in the opponent's deck and answer exactly.
+  // It does not, because a Challenge is a gamble on both sides and a bot that
+  // knew the answer would not be playing the same card the human is.
+  //
+  // DO NOT "FIX" THIS BY LETTING IT LOOK. The restriction is the design.
+  challengeGain(pi, known) {
+    const E = this.E, pl = E.state.players[pi];
+    const room = E.cfg.benchMax - pl.bench.length;
+    if (room <= 0) return 0;
+    if (!known) return room;      // visible only: assume they can fill the room
+    const wants = x => { const c = this.db[x.id]; return c && c.kind === 'pokemon' && c.stage === 'Basic'; };
+    return Math.min(room, pl.deck.filter(wants).length);
+  }
+
   // The least useful card in hand, and how bad it is. Extracted for Matter
   // Exchange, which needs the same judgement the discard-cost Trainers already
   // make: what is safe to throw away.
@@ -2162,6 +2198,56 @@ class AI {
           const mine = E.allSlots(pi).filter(sl => E.powerOf(sl) && E.powerUsable(sl)).length;
           if (theirs === 0) return -Infinity;
           s += (theirs - mine) * 8;
+          break;
+        }
+        case 'T_PRIZES_FACE_UP':
+          // DELIBERATELY REFUSED, and this is a declaration rather than a gap —
+          // the Peek shape, with a stronger reason than Peek has.
+          //
+          // Turning every Prize face up gives this bot NOTHING, because it reads
+          // full engine state and already knows them. It gives a human opponent
+          // a real advantage, and it exposes the bot's own Prizes to them. So it
+          // is not merely worthless here, it is one-sidedly bad, and the honest
+          // score is a refusal.
+          //
+          // The day ai.js models what the opponent knows, this becomes a real
+          // question and so does Rattata's Trickery. Both are on AI.md's open
+          // list. See Rulings/PEEK-CLAIRVOYANCE.md.
+          return -Infinity;
+        case 'T_LOOK_AND_SHUFFLE_BACK': {
+          // The LOOK is worth nothing to a full-state bot. Taking a Trainer out
+          // of their hand is worth something to anybody, so that half is scored
+          // and the pick is made properly rather than at random.
+          const trainers = you.hand.filter(x => this.db[x.id].kind === 'trainer');
+          if (!trainers.length) return -Infinity;      // a look, and nothing else
+          // Crude threat ranking: the cards that swing a board hardest. Untuned,
+          // and it is a list rather than a model on purpose — anything cleverer
+          // would be pretending to a judgement nobody has measured.
+          const BIG = new Set(['base1-88', 'base1-71', 'base1-77', 'base1-76',
+                               'base1-93', 'base1-92', 'base1-79', 'base1-80']);
+          let best = trainers[0], bestScore = -1;
+          for (const x of trainers) {
+            const sc = BIG.has(x.id) ? 2 : 1;
+            if (sc > bestScore) { bestScore = sc; best = x; }
+          }
+          a.opts.pickUid = best.uid;
+          // Worth more against a small hand, where one card is a bigger share of
+          // what they can do.
+          s += W.drawCard * (bestScore + 1) * (you.hand.length <= 3 ? 1.4 : 1);
+          break;
+        }
+        case 'T_CHALLENGE': {
+          // Filling BOTH benches, so it is worth the difference rather than the
+          // gain. Scored with the same visible-only rule doAnswer uses below —
+          // see there for why the bot deliberately does not look at their deck.
+          const mine = this.challengeGain(pi, true);
+          const theirs = this.challengeGain(1 - pi, false);
+          // Declining is not a failure: it draws two, which is the floor and is
+          // why the card is always legal.
+          s += Math.max(2 * W.drawCard, (mine - theirs) * W.benchMore);
+          const room = E.cfg.benchMax - me.bench.length;
+          const wants = x => { const cc = this.db[x.id]; return cc && cc.kind === 'pokemon' && cc.stage === 'Basic'; };
+          a.opts.myPicks = me.deck.filter(wants).slice(0, room).map(x => x.uid);
           break;
         }
         case 'T_COIN_PINGPONG': {
@@ -2595,6 +2681,19 @@ class AI {
   choose(pi) {
     const E = this.E, s = E.state;
     if (s.phase === 'over') return null;
+
+    // A QUESTION FROM THE OTHER PLAYER COMES FIRST, and it has to be handled up
+    // here beside the other two rather than below — `s.active !== pi` returns
+    // null a few lines down, and being asked something on somebody else's turn
+    // is exactly the case that trips over. Leaving it out hangs the game with
+    // both sides waiting, which is precisely what pendingSwitch did when Jungle
+    // brought Whirlwind and is written on the smoke test to this day.
+    if (s.pendingAsk !== null && s.pendingAsk !== undefined) {
+      if (s.pendingAsk.player !== pi) return null;
+      const acts = E.legalActions(pi).filter(a => a.t === 'answer');
+      if (!acts.length) return null;
+      return this.pickBest(pi, acts, true);
+    }
 
     // Whirlwind dragged one of ours up. Send the one we least mind exposing:
     // biggest HP pool, same instinct as choosing a replacement after a KO.

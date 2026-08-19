@@ -77,7 +77,16 @@ for (const name of DECK_NAMES) {
 // the number here, something was deleted or an id was misspelled. That failure
 // is otherwise completely silent, because an unscripted card simply cannot be
 // put in a deck and nothing else complains.
-const REMAINING = { base5: 36 };   // Team Rocket, Job 10c. 32 + the 4 special Energy printings the old filter hid
+// EMPTY, and Team Rocket is why it is empty rather than why it is here.
+//
+// base5 went live 19 Aug 2026 at 83 of 83 printings, which is what removing its
+// entry MEANS: the hard gate above — no live set contains an unimplemented card
+// — now covers it, and any future card added to base5 without a script fails a
+// suite instead of sitting quietly in a pack.
+//
+// Put a set back in here the moment work starts on it, with the count it starts
+// at. The ratchet only ever goes down.
+const REMAINING = {};
 
 console.log('\nCard coverage');
 // ENERGY IS COUNTED, and it used to be filtered out of this line entirely.
@@ -396,6 +405,14 @@ const PROVISIONAL = new Set([
   // exact and simulated, and only the weighting of self-damage is a guess.
   'T_STATUS_ON_FLIP', 'T_SEARCH_TO_HAND', 'T_SHUFFLE_FROM_DISCARD',
   'T_DISCARD_THEN_OPP_REDRAW', 'T_POWERS_OFF', 'T_COIN_PINGPONG',
+  // The last three. T_CHALLENGE carries the only weight here that is a JUDGEMENT
+  // rather than a guess — the bot estimates the opponent's gain from visible
+  // bench room alone, on purpose, and whether that reads as smart or as naive
+  // can only be answered by playing it. T_LOOK_AND_SHUFFLE_BACK's threat list is
+  // eight card ids picked by eye.
+  //
+  // NOT here: T_PRIZES_FACE_UP, refused at -Infinity on a written reason.
+  'T_CHALLENGE', 'T_LOOK_AND_SHUFFLE_BACK',
 ]);
 
 // ---- no switch dispatches the same case twice -------------------------------
