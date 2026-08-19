@@ -391,6 +391,46 @@ const PROVISIONAL = new Set([
   'E_SELF_DAMAGE',
 ]);
 
+// ---- no switch dispatches the same case twice -------------------------------
+//
+// Found 19 Aug 2026: doTrainer contained a COMPLETE SECOND COPY of
+// trainerPlayable's legality switch — 21 case labels, every one of them already
+// handled earlier in the same switch. JavaScript takes the first match, so none
+// of the 63 lines had ever run.
+//
+// Dead code is normally harmless. This kind is not, because it FAILS OPEN AND IT
+// FAILS SILENTLY, and it has a specific victim: the next person adding a Trainer
+// finds a block that reads exactly like the legality switch, adds their card's
+// legality test to it, and ships a Trainer that is playable when it should not
+// be. Nothing throws, no suite goes red, and the card simply does nothing on an
+// empty board instead of being refused.
+//
+// So the property is asserted rather than trusted: within one method, a case
+// label appears once. Cheap, general, and it would have caught the original.
+{
+  const fs = require('fs');
+  for (const file of ['engine.js', 'ai.js', 'effects.js']) {
+    const lines = fs.readFileSync(require('path').join(__dirname, '..', 'src', file), 'utf8')
+      .split(/\r?\n/);
+    // Methods start at exactly two spaces of indent; same scoping the enterPlay
+    // check uses, and it is good enough for the same reason — a switch does not
+    // span two methods.
+    const dups = [];
+    let name = null, seen = {}, depth = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const h = lines[i].match(/^  ([A-Za-z_$][\w$]*)\s*\(/);
+      if (h) { name = h[1]; seen = {}; }
+      const m = lines[i].match(/^\s*case '([A-Z_0-9]+)':/);
+      if (m && name) {
+        if (seen[m[1]]) dups.push(`${file} ${name}(): '${m[1]}' at :${seen[m[1]]} and :${i + 1}`);
+        else seen[m[1]] = i + 1;
+      }
+    }
+    check(dups.length === 0, `no method in ${file} handles the same case twice`,
+      dups.slice(0, 6).join(' | '));
+  }
+}
+
 // ---- every doorway into play goes through enterPlay --------------------------
 //
 // THE GUARD BEHIND Rulings/PLAYED-FROM-HAND.md, and the reason that ruling is

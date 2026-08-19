@@ -25,6 +25,16 @@ while in play — a clause that exists for no other reason.
 Trevor's own phrasing is the rule in one line: **"when it's on a Pokémon, it's whatever that Pokémon
 needs it to be, as long as it's just one."** A card in your hand is not on a Pokémon.
 
+**And the rule turns out to describe the card's DESIGN, not just its edge cases** — Trevor, on being
+shown where his own sentence led: *"it's not searchable from the deck but becomes what it needs to be
+once it's in play."*
+
+That is worth having written down in one place, because it is the thing that makes Rainbow make sense
+as a card rather than as a pile of exceptions. It cannot be tutored for, so you cannot build a deck
+that assumes one; once it lands it solves whatever problem that Pokémon has. The awkward half of the
+ruling — a Rain Dance that will not pick it up — stops reading as a restriction and starts reading as
+the point. **Every future card of this shape should be checked against that sentence first.**
+
 ## What this corrects
 
 Two entries said Rainbow was **never** a basic Energy card, and both are wrong on the in-play half:

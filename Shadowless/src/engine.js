@@ -2737,69 +2737,21 @@ class Engine {
           }
           this.log(`Lass: ${moved} Trainer card(s) shuffled back into decks.`); break;
         }
-        case 'T_PROFESSOR_OAK': if (p.deck.length === 0) return false; break;
-        case 'T_DEFENDER': if (!this.allSlots(pi).length) return false; break;
-        case 'T_FULL_HEAL': {
-          if (!p.active) return false;
-          const st = p.active.status;
-          if (!(st.asleep || st.confused || st.paralyzed || st.poisoned)) return false;
-          break;
-        }
-        case 'T_IMPOSTOR_OAK': if (!o.hand.length && !o.deck.length) return false; break;
-        case 'T_MAINTENANCE': if (p.hand.length < 3 || !p.deck.length) return false; break;
-        case 'T_POKEMON_CENTER': if (!this.allSlots(pi).some(x => x.dmg > 0)) return false; break;
-        case 'T_REVIVE':
-          if (p.bench.length >= this.cfg.benchMax) return false;
-          if (!this.basicsIn(p.discard).length) return false;
-          break;
-        case 'T_POKEMON_FLUTE':
-          if (o.bench.length >= this.cfg.benchMax) return false;
-          if (!this.basicsIn(o.discard).length) return false;
-          break;
-        case 'T_SCOOP_UP':
-          if (!this.allSlots(pi).length) return false;
-          break;
-        case 'T_DEVOLUTION_SPRAY':
-          if (!this.allSlots(pi).some(x => x.stack.length > 1)) return false;
-          break;
-        case 'T_ITEM_FINDER':
-          if (p.hand.length < 3) return false;
-          if (!p.discard.some(x => this.db[x.id].kind === 'trainer')) return false;
-          break;
-        case 'T_POKEMON_TRADER':
-          if (!p.deck.some(x => this.db[x.id].kind === 'pokemon')) return false;
-          if (!p.hand.some(x => x.uid !== inst.uid && this.db[x.id].kind === 'pokemon')) return false;
-          break;
-        case 'T_POKEDEX': if (!p.deck.length) return false; break;
-        case 'T_POKEMON_BREEDER': {
-          const s2 = p.hand.filter(x => x.uid !== inst.uid && this.db[x.id].kind === 'pokemon' && this.db[x.id].stage === 'Stage 2');
-          if (!s2.length) return false;
-          const ok = s2.some(x => {
-            const want = this.basicBehind(this.db[x.id].name);
-            return this.allSlots(pi).some(sl => topCard(this.db, sl).name === want
-              && sl.playedTurn < this.state.turn && sl.evolvedTurn !== this.state.turn
-              && !(this.cfg.noEvolveFirstTurn && p.turnsTaken <= 1));
-          });
-          if (!ok) return false;
-          break;
-        }
-        case 'T_POKE_BALL': if (p.deck.length === 0) return false; break;
-        case 'T_ENERGY_SEARCH':
-          // BASIC Energy only — the printed text, kept deliberately against a
-          // real GBC contradiction. See Rulings/ENERGY-SEARCH.md.
-          if (!p.deck.some(x => { const c2 = this.db[x.id]; return c2.kind === 'energy' && c2.cls === 'Basic'; })) return false;
-          break;
-        case 'T_MR_FUJI': if (!p.bench.length) return false; break;
-        case 'T_GAMBLER': break;   // always legal; an empty hand still shuffles and draws
-        case 'T_RECYCLE': if (!p.discard.length) return false; break;
-        case 'T_COMPUTER_SEARCH':
-          if (p.deck.length === 0) return false;
-          if (p.hand.length < 3) return false;   // the card itself + 2 to discard
-          break;
-        case 'T_SUPER_ENERGY_REMOVAL':
-          if (!this.allSlots(pi).some(x => x.energy.length)) return false;
-          if (!this.allSlots(1 - pi).some(x => x.energy.length)) return false;
-          break;
+        // ---- a copy of trainerPlayable's legality switch used to live here ----
+        //
+        // Twenty-one `case` labels, every one of them a DUPLICATE of a case
+        // already handled above in this same switch — so JavaScript took the
+        // first and none of this ever ran. Deleted 19 Aug 2026, found while
+        // reading the file to add Team Rocket's Trainers.
+        //
+        // WORTH A COMMENT RATHER THAN A SILENT DELETION, because dead code that
+        // reads exactly like live code is a trap with a specific victim: the
+        // next person adding a Trainer, who finds a block that looks like the
+        // legality switch, adds their card's legality test to it, and ships a
+        // Trainer that is playable when it should not be. It fails open, it
+        // fails silently, and no suite would see it.
+        //
+        // The real legality switch is trainerPlayable(). There is one of it.
         case 'T_ENERGY_RETRIEVAL': {
           if (p.hand.length < 1) return this.fail('No card to trade');
           let di;
