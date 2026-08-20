@@ -31,7 +31,6 @@ still open, so it stays with its reason and with what evidence would revive it.
   → [GRABHIST](GRABHIST.md)
 - Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
 - If the opponent has a tank in the active spot and is starting to run out of cards in the deck before the player, it begins to power up that tank to attack with or retreat rather than tank to a loss - Some preemptive, some log# 06-13-50. **The draw half of this is done** (deck spending is priced, as a curve rather than a floor at 20); what is left is the bot noticing it is losing a race it can count and changing plan. → [GRABHIST](GRABHIST.md)
-- Hand cards change size in different situations, sometimes as things are moving between turns or after a turn has ended. Please do not touch this one without carefully consulting LAYOUT.md and saving it for its own dedicated pass with minimal competing items, just in case. Trigger might be during coin flips, after which it reverts back. Update - It might be the whole screen any time anything is selected resizing itself. Back up before this one.
 - Temporarily install a popup that asks me a Y/N if I want to save a game log when I leave the final card opening screen (on a win) or the game in general (on a loss). This is because I'm stupid and keep clicking through it.
 - Opponent used Potion right at the start to heal only 10 damage. Also promotes a pokemon only to switch it out immediately - log# 00-28-40
 - Visual popup on screen or in side panel (screen preferred) when a trainer card is played by the CPU, with a short pause in the action while it's shown. (medium item). If on screen, LAYOUT.md and INTERACTION.md might get involved and it becomes a large item.
@@ -42,7 +41,8 @@ still open, so it stays with its reason and with what evidence would revive it.
 - I think the enemy Ivysaur decided not to kill on turn 12. Bad retreat by Gloom on turn 14. Exeggutor teleports to switch with Exeggutor of equal condition. Alternative was a 50/50 attack, turn 18. Exeggutor promoted and switched out immediately through Teleport, turn 20 - log# 04-37-10
 - Moltres shouldn't have retreated. That is a very good sacrifice pokemon to buy time, and might have even been able to attack if powered up. It might not have been factoring in its resistance to Hitmonlee in its damage calculation. The pokemon that replaced it was killed immediately by the same attack Moltres would have survived - log# 04-06-28
 - The AI might be avoiding adding non-DCE energy to colorless pokemon, and Chansey retreated, twice - log# 04-26-10
-- Raichu's Gigashock should allow the player to choose which bench pokemon to damage. Worth testing if the AI targets smartly when using this.
+- Introductions for rare cards when pulled, light for RH, heavy for Shadowless, all cheap. I have ideas about this one, whoever takes it, let's chat before we build.
+
  
 
 
