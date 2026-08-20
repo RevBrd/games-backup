@@ -204,3 +204,11 @@ upgrade or sell. <kbd>1</kbd>–<kbd>6</kbd> pick a defense · <kbd>Space</kbd> 
 <!-- marquee: billing=feature -->
 Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
 on and nothing else. Change the comment above when the game's state changes.
+
+## Marquee poster
+
+<!-- marquee: paper=#f0eee6 ink=#26241f accent=#d97757 face=mono -->
+Marquee prints most sheets in its own house palette. This one is printed in
+the game’s colours instead, taken from its own stylesheet (--paper, --ink, --coral) rather
+than invented — so if the game is ever recoloured, this is the line to update,
+and it sits next to the code that would change.

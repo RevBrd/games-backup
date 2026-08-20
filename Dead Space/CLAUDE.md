@@ -202,3 +202,11 @@ lucide to run; uploading *it* still produces a blank page. It is reference only.
 <!-- marquee: billing=feature -->
 Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
 on and nothing else. Change the comment above when the game's state changes.
+
+## Marquee poster
+
+<!-- marquee: paper=#0a0020 ink=#ffe9f4 accent=#e74c8b face=condensed -->
+Marquee prints most sheets in its own house palette. This one is printed in
+the game’s colours instead, taken from its own stylesheet (body background and the party pink) rather
+than invented — so if the game is ever recoloured, this is the line to update,
+and it sits next to the code that would change.

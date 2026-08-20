@@ -77,14 +77,25 @@ Resolve it with an HTML comment anywhere in the game's own `CLAUDE.md`:
 <!-- marquee: play=none -->          prototypes only; offer nothing
 <!-- marquee: defects=authored -->   visible defects are on purpose
 <!-- marquee: defects=none -->       sincere; every bug is a real bug
+<!-- marquee: billing=feature -->     headline it in the lobby
+<!-- marquee: billing=preview -->     early build; shelve it as a preview
+<!-- marquee: paper=#10001f ink=#ffd000 accent=#ff1f8f face=neon -->
+                                      print this game in its own colours
 ```
 
 Keys are independent and may share one comment. **An absent key means unknown, never false** — in
 particular, no `defects` key does *not* mean "sincere". Say it in prose as well as the comment;
 the comment is for the tool, the prose is for the next instance.
 
-Three folders needed one as of 17 Aug 2026 and all three now have it. A new game with a single
-HTML file needs nothing at all.
+Three folders needed a `play` declaration as of 17 Aug 2026 and all three now have it. A new game
+with a single HTML file needs nothing at all.
+
+**The poster keys are optional and worth having.** Marquee prints most sheets in its own house
+palette; a game declaring `paper`/`ink`/`accent` and a `face` (`house`, `condensed`, `slab`,
+`hand`, `mono`, `neon`) gets its own colours in the lobby instead. Take the values from the
+game's own stylesheet rather than inventing them, and say where you got them — the eight that do
+this already name their source. Bad values are dropped and reported rather than injected, and
+paper/ink contrast under 3.2:1 is flagged as hard to read.
 
 `node "../Claude Town/Marquee/tools/derive.js"` prints what Marquee currently sees, including
 which folders are ambiguous, which have no catalog row, and which have no `CLAUDE.md`. **A folder

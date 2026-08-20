@@ -302,3 +302,11 @@ free-standing string list you can extend without touching a line of logic.
 <!-- marquee: billing=feature -->
 Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
 on and nothing else. Change the comment above when the game's state changes.
+
+## Marquee poster
+
+<!-- marquee: paper=#10001f ink=#ffd000 accent=#ff1f8f face=neon -->
+Marquee prints most sheets in its own house palette. This one is printed in
+the game’s colours instead, taken from its own stylesheet (--void, --gold, --magenta) rather
+than invented — so if the game is ever recoloured, this is the line to update,
+and it sits next to the code that would change.

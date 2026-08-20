@@ -216,3 +216,11 @@ Deliberate, and each one is a place a future job could add depth:
 <!-- marquee: billing=preview -->
 Shelved as a Sneak Preview in Marquee. An early build, not a finished game. Editorial only — it changes which shelf the launcher puts this
 on and nothing else. Change the comment above when the game's state changes.
+
+## Marquee poster
+
+<!-- marquee: paper=#16242a ink=#cbd6cf accent=#c39140 face=slab -->
+Marquee prints most sheets in its own house palette. This one is printed in
+the game’s colours instead, taken from its own stylesheet (--ground, --bone, --brass) rather
+than invented — so if the game is ever recoloured, this is the line to update,
+and it sits next to the code that would change.

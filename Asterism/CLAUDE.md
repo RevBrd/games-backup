@@ -237,3 +237,11 @@ unclaimed space, a scripted rectangular claim resolving on every map. All nine c
 <!-- marquee: billing=feature -->
 Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
 on and nothing else. Change the comment above when the game's state changes.
+
+## Marquee poster
+
+<!-- marquee: paper=#060917 ink=#e6e2d4 accent=#d4af37 face=slab -->
+Marquee prints most sheets in its own house palette. This one is printed in
+the game’s colours instead, taken from its own stylesheet (body background and --gold, per its CLAUDE.md) rather
+than invented — so if the game is ever recoloured, this is the line to update,
+and it sits next to the code that would change.
