@@ -353,6 +353,7 @@ function newGame() {
   UI.E.setupAuto(1);                     // opponent sets itself up
   UI.sel = null; UI.targeting = null; UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.retreatArmed = false;
   UI.awarded = false;                    // this game has not paid out yet
+  UI.logSaved = false; UI.logAsk = null;  // ...and its log has not been saved
   presentOpeningFlip();
 }
 
@@ -2648,8 +2649,37 @@ function settleResult() {
 // The match log, as a file. Offered on the game-over screen and again after a
 // pack is opened — Trevor's idea, and it is the right moment: the pulls are the
 // payoff, and a log that arrives with them gets read.
+// TREVOR'S ASK, and it is a prompt rather than an autosave on purpose: a browser
+// cannot write a file without a click, so saving silently is not on the table.
+// The match log is the only instrument that shows the opponent's hand, both
+// Prize piles and every score the AI weighed — four separate AI bugs have been
+// reconstructed from one — and it is destroyed by the click that leaves the
+// match. So the exits ask once, and only when there is something to lose.
+//
+// TEMPORARY BY REQUEST. To remove it, delete this function and inline the three
+// leaveMatch() callers below; nothing else refers to UI.logAsk.
+function leaveMatch(go) {
+  if (!UI.elog || !UI.elog.result || UI.logSaved) { go(); return; }
+  UI.logAsk = go;
+  render();
+}
+
+// The question, rendered into whichever bar is asking. Returns true if it took
+// the bar over, so a caller can skip its own buttons.
+function renderLogAsk(bar) {
+  if (!UI.logAsk) return false;
+  bar.appendChild(el('span', 'logask', 'Save the match log before you go?'));
+  const yes = el('button', 'btn', 'Save it');
+  yes.onclick = () => { downloadMatchLog(); const go = UI.logAsk; UI.logAsk = null; go(); };
+  const no = el('button', 'btn ghost', 'No, carry on');
+  no.onclick = () => { const go = UI.logAsk; UI.logAsk = null; UI.logSaved = true; go(); };
+  bar.appendChild(yes); bar.appendChild(no);
+  return true;
+}
+
 function downloadMatchLog() {
   if (!UI.elog) return;
+  UI.logSaved = true;
   drainEngineLog();
   const text = renderEventLog(UI.elog);
   const stamp = (UI.elog.meta.started || '').replace(/[: ]/g, '-') || 'match';
@@ -2760,7 +2790,13 @@ function renderPackScreen() {
     } else {
       slot.appendChild(pullFace(card, c.flags));
       const tag = el('div', 'vribbon');
+      // NEW or a count, never both — they answer the same question and the
+      // interesting half of "not new" is HOW not-new. Trevor's ask, and the
+      // count is read live from the save rather than captured at open time, so
+      // a second copy in the same pack reads 2 then 3 rather than 2 then 2.
+      // ownedTotal already includes this pull: the pack is granted on open.
       if (p.isNew[i]) tag.appendChild(el('span', 'pullnew', 'NEW'));
+      else tag.appendChild(el('span', 'pulldup', '×' + ownedTotal(UI.save, c.id)));
       c.flags.forEach(f => {
         const v = VARIANT_BY_KEY[f];
         if (v) tag.appendChild(el('span', 'vchip c-' + v.family, v.label));
@@ -2783,6 +2819,7 @@ function renderPackScreen() {
   }
 
   const bar = el('div', 'packbar');
+  if (renderLogAsk(bar)) { box.appendChild(bar); ov.appendChild(box); return ov; }
   if (!allRevealed) {
     const all = el('button', 'btn', 'Reveal all');
     all.onclick = () => { p.revealed = p.revealed.map(() => true); render(); };
@@ -2811,7 +2848,9 @@ function renderPackScreen() {
     bar.appendChild(dl);
   }
   const done = el('button', 'btn ghost', 'Done');
-  done.onclick = () => { UI.pack = null; UI.detail = null; UI.screen = 'decks'; render(); };
+  done.onclick = () => leaveMatch(() => {
+    UI.pack = null; UI.detail = null; UI.screen = 'decks'; render();
+  });
   bar.appendChild(done);
   box.appendChild(bar);
 
@@ -4277,6 +4316,7 @@ function renderOver() {
   }
 
   const bar = el('div', 'actionbar');
+  if (renderLogAsk(bar)) { box.appendChild(bar); ov.appendChild(box); return ov; }
   if (held > 0) {
     const open = el('button', 'btn end', (rw && held === rw.packs && s.winner === 0)
       ? `Open ${held} packs` : `Open packs (${held})`);
@@ -4284,9 +4324,9 @@ function renderOver() {
     bar.appendChild(open);
   }
   const again = el('button', held > 0 ? 'btn' : 'btn end', 'New game');
-  again.onclick = () => { UI.seedDraft = ''; backToDeckSelect(); };
+  again.onclick = () => leaveMatch(() => { UI.seedDraft = ''; backToDeckSelect(); });
   const rerun = el('button', 'btn ghost', 'Replay this seed');
-  rerun.onclick = () => { UI.seedDraft = String(UI.E.seed); newGame(); };
+  rerun.onclick = () => leaveMatch(() => { UI.seedDraft = String(UI.E.seed); newGame(); });
   // The match log holds what the screen log could not: the opponent's hand, both
   // Prize piles, and every score the AI weighed. Offered here because this is
   // the moment you know whether the game was worth reading back.

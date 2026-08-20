@@ -62,13 +62,14 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, deckFor, resolveDeck, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, deckFor, resolveDeck, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, leaveMatch, downloadMatchLog, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
   bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace,
   addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, deckSummary,
   LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin,
+  leaveMatch, downloadMatchLog,
   availableOpponents, bracketOpen, bossAvailable, hasBeaten } = ctx;
 
 console.log('\n=== BUILT ARTIFACT SMOKE ===');
@@ -1100,6 +1101,42 @@ T('winning pays packs exactly once, however many times the board redraws', () =>
   UI.freePlay = true;      // hand the suite back the mode it declared
   return r;
 });
+// ---- leaving a match asks about the log first -------------------------------
+// The log is the only view of the opponent's hand, both Prize piles and every
+// score the AI weighed, and it dies with the click that leaves the match. These
+// pin the state machine; the screen half is a screenshot's job.
+T('leaving with an unsaved log asks instead of leaving', () => {
+  newGame();
+  UI.E.setupAuto(0); UI.E.setupConfirm(0);
+  UI.E.state.phase = 'over'; UI.E.state.winner = 0; UI.E.state.winReason = 'test';
+  render();
+  UI.logSaved = false; UI.logAsk = null;
+  let left = false;
+  leaveMatch(() => { left = true; });
+  return !left && typeof UI.logAsk === 'function';
+});
+T('...and carrying on runs the thing it was blocking, exactly once', () => {
+  let n = 0;
+  UI.logSaved = false; UI.logAsk = null;
+  leaveMatch(() => { n++; });
+  const go = UI.logAsk; UI.logAsk = null; UI.logSaved = true; go();   // "No, carry on"
+  return n === 1 && UI.logAsk === null;
+});
+T('...and it does not ask a second time once answered', () => {
+  let left = false;
+  leaveMatch(() => { left = true; });      // logSaved is still true from above
+  return left && UI.logAsk === null;
+});
+T('...and a match with no result never asks at all', () => {
+  // Free play mid-game, and every exit that is not a finished match.
+  const keep = UI.elog;
+  UI.elog = null; UI.logSaved = false; UI.logAsk = null;
+  let left = false;
+  leaveMatch(() => { left = true; });
+  UI.elog = keep;
+  return left && UI.logAsk === null;
+});
+
 T('a loss pays nothing and is still recorded', () => {
   newGame();
   UI.E.setupAuto(0); UI.E.setupConfirm(0);
