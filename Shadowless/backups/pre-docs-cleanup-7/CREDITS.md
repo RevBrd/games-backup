@@ -43,7 +43,6 @@ again for a day. No blank lines, and check every row ends in `|`.
 | **Opus 5** #17 | 16 Aug 2026 | Job 9.5: the sixth documentation pass. The logbook re-archived on a boundary rather than a count, `AI.md` cut back to its rules with the accounts left in `GRABHIST.md`, the closed jobs collapsed into `HISTORY.md`, and every row above returned to three lines |
 | **Opus 5** #18 | 17–18 Aug 2026 | Jobs 10a and 10b: the retreat ruling reversed to symbols, `abtest.js` and `setsurvey.js`, the verb reference restored from 42-of-117 missing and then guarded, and Team Rocket's attack scripts. Five rulings and a corpus correction settled from Trevor's own cards |
 | **Opus 5** #19 | 18–19 Aug 2026 | **Job 10 finished — Team Rocket live at 83/83.** Triggered Powers (`ON_PLAY`/`ON_KO`/`ON_OPP_RETREAT`) and `enterPlay`, the Rainbow sentinel, the Trainers, and `pendingAsk` — the first general cross-player question. Six rulings, `shapecount.js`, and four guards that were not guarding: the coverage gate blind to Energy, a duplicate-case switch, a line-scoped check that stayed green when sabotaged, and setsurvey's control crying wolf |
-| **Opus 5** #20 | 19 Aug 2026 | Job 10.5's documentation pass. Team Rocket found live with **no card art at all**, and fetched. [ROSTERS.md](ROSTERS.md) split out of `OPPONENTS.md`, the three non-pass/fail tools moved into `MEASUREMENT.md`, and that file plus `INTERACTION.md` given the index rows their entrance counts had always earned. Found `data/base1_decks.json` read by no part of the game, and `AI.md`'s "it is all duplicated in `GRABHIST`" false for a third of itself |
 
 Trevor's own contributions are not a row here because they are not a model's — but they are load
 bearing and they are named where they were made: the four authentic theme deck lists in
@@ -55,6 +54,6 @@ board design lock, and every ruling in [RULINGS.md](RULINGS.md) marked *settled 
 **This end of the tree is the quiet end.** Nothing here is orientation and nothing is waiting on you.
 If you have finished and have a minute: [LOGBOOK.md](LOGBOOK.md) is what the last few instances
 thought while they worked and where you can log your own if you would like,
-[LOGBOOK-ARCHIVE-1.md](LOGBOOK-ARCHIVE-1.md), [LOGBOOK-ARCHIVE-2.md](LOGBOOK-ARCHIVE-2.md) and
-[LOGBOOK-ARCHIVE-3.md](LOGBOOK-ARCHIVE-3.md) hold everyone before them, and [TREVOR.md](TREVOR.md) is where his actual save stood as each set went
+[LOGBOOK-ARCHIVE-1.md](LOGBOOK-ARCHIVE-1.md) and [LOGBOOK-ARCHIVE-2.md](LOGBOOK-ARCHIVE-2.md) hold
+everyone before them, and [TREVOR.md](TREVOR.md) is where his actual save stood as each set went
 live — the game being played, rather than built.

@@ -31,38 +31,26 @@ are in [TOOLING.md](TOOLING.md).
 This file is the orientation. The siblings below hold the detail, and **you should not need to read
 any of them unless you are working on that thing**. That is the point of the split.
 
-**Some files are deliberately NOT in this table, and it is an arrangement rather than an oversight.**
-Each is reached from the one document you would already have open. **Deliberately not counted here** —
-the number changes every time an archive rolls over, and a count in prose that nobody re-checks is
-this tree's most reliable source of wrong facts. `LOGBOOK.md`, its three archives and
+**Six files are deliberately NOT in this table, and it is an arrangement rather than an oversight.**
+Each is reached from the one document you would already have open. `LOGBOOK.md`, its two archives and
 `TREVOR.md` — the last being where Trevor's own save stood as each set went live — hang off
-[CREDITS.md](CREDITS.md), which is the quiet end of the tree and not orientation. `GRABHIST.md` hangs
-off `GRABBAG.md`, and `ROSTERS.md` off `OPPONENTS.md`; both are named in their parent's row below,
-so they are findable from here without costing a row.
-
-**`MEASUREMENT.md` and `INTERACTION.md` were on that list until 19 Aug 2026 and have their own rows
-now**, because the test is *is the parent guaranteed to be read first* and for those two it plainly
-was not. `MEASUREMENT.md`'s own header names three entrances and only one is `AI.md`; a session
-sent there by a playtest report or by a suite question was being routed through a file about scoring
-weights. And nobody reaching for the coin toss, a Trainer picker or a forced choice matches
-`LAYOUT.md`'s row, which advertises sizing. Trevor's original argument for hiding them was context
-cost, and it is a real cost — two lines here against a session that opens the wrong file.
+[CREDITS.md](CREDITS.md), which is the quiet end of the tree and not orientation. `GRABHIST.md` hangs off `GRABBAG.md`, `INTERACTION.md` off `LAYOUT.md`, and
+`MEASUREMENT.md` off `AI.md` — all three named in their parent's row below, so they are findable
+from here without costing a row.
 
 *[The test for when a file earns a row and when it hangs off its parent →](MAINTENANCE.md)*
 
 | File | Read it when |
 |---|---|
-| [ENGINE.md](ENGINE.md) | Adding or changing cards. The nine systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer, the `baseCard`/`topCard` split and `takeEnergy`. Also: why full games never test any of it |
-| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, and an `Open` list at the bottom that is the current one |
-| [MEASUREMENT.md](MEASUREMENT.md) | **Before you believe any number.** Every instrument in the project that is not pass/fail, the seven ways they have lied, how to read a saved match log, and the standing figures. Reached from four directions and none of them wants scoring weights on the way |
-| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, **the CSS**, the hand or anything **sized**. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. If you have trouble with the layout, re-read it — and check you can still see the top of the file, because a compacted read of it has cost a session before |
-| [INTERACTION.md](INTERACTION.md) | Any moment the board stops and **asks the player something**. The coin toss and why it lands on the centre line, the Energy picker sharing its strip, the opening flip, the opening-setup screen, the action bar and the retreat gate, and the rail's hover peek that must never call `render()` |
+| [ENGINE.md](ENGINE.md) | Adding or changing cards. The eight systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer, the `baseCard`/`topCard` split and `takeEnergy`. Also: why full games never test any of it |
+| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, and an `Open` list at the bottom that is the current one. **It hands off to `MEASUREMENT.md` for anything about whether a change worked** — the three instruments, the seven ways they have lied, and how to read a match log |
+| [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, **the CSS**, the hand or anything **sized**. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. **Its sibling `INTERACTION.md` has the specific pieces** — the coin toss, the pickers, the opening screens and the controls on the card. If you have trouble with the layout, re-read that section — and check you can still see the top of the file, because a compacted read of it has cost a session before |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
 | [RULINGS.md](RULINGS.md) | A card's printed text usually settles how it behaves, but there can be exceptions. The four-step order that replaced the arbiter, and the principles index you match a new card against by *shape*. **It is a directory: each ruling is its own file in `Rulings/`**, one per judgement call, with its reasoning and source |
 | [DATA.md](DATA.md) | Generating a set, trusting a set code, or adopting one of the deck spreadsheets. The corpus, the two set codes that read backwards, and what is reference-only |
 | [PROGRESSION.md](PROGRESSION.md) | Touching the ladder, an opponent, or anything that grants a pack. How brackets are derived from the live sets rather than declared, the tunables, why free play pays nothing, and the four layout defects only a screenshot caught |
-| [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck, adding a set's roster, or working the auto-builder. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, the one entry-condition mechanism behind three different gates, and the pressure tags. **Design, not built.** Its sibling `ROSTERS.md` is the report card — what `decksim.js` said when the first roster met the spec, and what the Prize count is actually worth |
+| [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck, adding a set's roster, or working the auto-builder. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, the one entry-condition mechanism behind three different gates, and the pressure tags. **Design, not built** |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, looking at the board with `tools/shot.js`, or wondering what each test suite actually covers |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Superseded reasoning and rejected ideas, each with the reason it lost |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md` and its two archives, where each instance's own account of its work is kept verbatim |
@@ -72,26 +60,27 @@ cost, and it is a real cost — two lines here against a session that opens the 
 
 ## Status
 
-**Jobs 1–10 are complete.** The engine and AI came out of Claude Chat; Job 5 built everything a
+Jobs 1–9 are complete. The engine and AI came out of Claude Chat; Job 5 built everything a
 *collection* game needs on top of them, Job 6 took the card pool to three sets, Job 7 built the
-ladder that makes them reachable, Job 9 was the first AI pass driven by real playtest, and Job 10
-added Team Rocket. You pick a starter deck, work down a roster of named challengers, beat a rival to open the
+ladder that makes two of those sets reachable, and Job 9 was the first AI pass driven by real
+playtest. You pick a starter deck, work down a roster of named challengers, beat a rival to open the
 next set, earn packs of whatever set you are on, open them, browse what you own, and build decks from
 it — and all of it persists.
 
 **Four sets are live and complete: Base, Jungle, Fossil and Team Rocket — 311 of 311 cards.** Run
 `node tools/selftest.js` for the live figures rather than trusting a number in prose; it prints
-coverage per set. **There is one unit now and there used to be two**, so an older figure — Base Set
-as 95, the three sets as 221 — is measuring the smaller one rather than disagreeing with this one.
-`selftest.js` counts printings; it used to exclude Energy, which was a hole in the set-gating rule
-that Team Rocket's three special Energy would have been the first to fall through.
-*[The guard that was blind, and the three others found with it →](HISTORY.md)*
+coverage per set. (**There is one unit now, and there used to be two.** This section counted
+*scriptable* cards, excluding Energy, because basic Energy was thought to need no effect script — it
+does have one, `{t: []}`, and *special* Energy needs a real one. The exclusion was a hole in the
+gating rule and Team Rocket's three special Energy were the first cards that would have fallen
+through it; `selftest.js` now counts printings. If you meet an older figure — Base Set as 95, the
+three sets as 221 — it is measuring the smaller unit, not disagreeing with this one.)
 
-**Done and shipped, none of it a stub:** the rules engine and every card in the four live sets; the
+**Done and shipped, none of it a stub:** the rules engine and every card in the three live sets; the
 four-tier AI; the collection, packs, dex, save file and deck builder; the ladder and its named
 opponents. Each has a row in the table above naming the file that owns it.
 
-**Not built: audio, at all**, and nothing has been decided about it. **The other ten sets** are
+**Not built: audio, at all**, and nothing has been decided about it. **The other eleven sets** are
 unblocked rather than started — all fourteen generate cleanly.
 
 ## Layout
@@ -102,9 +91,9 @@ src/  engine.js   the whole ruleset. Pure logic, no DOM
       ai.js       expected-value scoring over enumerated coin-flip outcomes
       cards.js    CARD_DB + the theme deck lists. GENERATED
       effects.js  one effect script per card. Its DSL verb reference is the
-                  comment block at the top, guarded by selftest.js (159 verbs and
-                  climbing — run the suite, never quote this). Read it before adding
-                  cards, and before concluding the DSL cannot express something
+                  comment block at the top — 117 verbs, guarded by selftest.js.
+                  Read it before adding cards, and before concluding the DSL
+                  cannot express something
       collection.js  what the player owns + the save file. Pure data
       packs.js    booster generation. PACK_ODDS is the whole rarity table
       progress.js the opponent ladder. Brackets DERIVED from the live sets, and
@@ -139,7 +128,7 @@ quote a test count in prose** — they rot, and the tree has had to correct them
 ```bash
 node tools/setsurvey.js base5            # how big is this set REALLY — run before planning one
 node tools/shapecount.js "When you play"   # how often does this SHAPE recur across all 14 sets
-node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2,base3,base5)
+node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2 to widen)
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
@@ -152,19 +141,16 @@ node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 node tools/aitest.js 6 --gbc              # AI behaviour counts — not pass/fail; --gbc for ladder decks
 node tools/aiduel.js 8                   # AI vs HEAD's AI; --control first, --gbc for ladder decks
 node tools/abtest.js 8 HEAD~1            # RULES vs a commit: how many games came out different
-node tools/openercheck.js                # what the opening-Active rule promotes
-node tools/pressure.js                   # what each set can THREATEN with — run before a roster
+node tools/openercheck.js                # what the opening-Active rule promotes — a measurement, not pass/fail
+node tools/pressure.js                   # what each set can THREATEN with — derived, run it before a roster
 node tools/decksim.js 45 6               # do the tiers actually ORDER? round-robin, both seats
 ```
 
-**The last six are NOT pass/fail and every one of them has lied at least once.** `aitest`, `aiduel`
-and `abtest` measure whether the bot plays *well* or whether a rules change did anything, which no
-suite can see; `openercheck`, `pressure` and `decksim` measure a rule, a set and a roster. Run
-`--control` first where there is one — skipping it has already produced one confident wrong answer.
-**Named rather than counted from the end of the list**, because that sentence used to say "the last
-two" and quietly stopped being true. See [MEASUREMENT.md](MEASUREMENT.md).
+**The last two measure whether the bot plays *well*, which no suite can see.** They are not pass/fail
+and they are easy to fool — run `--control` first; skipping it has already produced one confident
+wrong answer. See [MEASUREMENT.md](MEASUREMENT.md).
 
-**The match log is the one instrument that shows the hidden half** — the
+**The match log is the third instrument and the only one that shows the hidden half** — the
 opponent's hand, both Prize piles, every option the AI weighed and what it passed over, and a seed
 that replays the match exactly. **Ask Trevor for one whenever you need it**; he saves them in
 `Game Logs/` and four separate AI bugs have been reconstructed from them.
@@ -227,7 +213,7 @@ written flat with a cliff at the end.* **If a term is about proximity and it is 
 equality check, look again.** The last two are in [AI.md](AI.md), which carries the running tally.
 
 **Adding a card is a `cards.js` entry plus an `effects.js` entry, and [ENGINE.md](ENGINE.md) has the
-rest** — including the nine systems that already exist for the shapes the DSL cannot express.
+rest** — including the eight systems that already exist for the shapes the DSL cannot express.
 **Trevor is happy to work through new card logic in plain English**, which is the part that is only
 written here: he has good instincts for how the logic should hang together but is not able to read
 the code.
@@ -254,19 +240,22 @@ else in `data/` is in **[DATA.md](DATA.md)**.
 
 The current ordering, decided collaboratively. Trevor is explicit that it is yours to rearrange and to break into sub-jobs.
 
-- **Jobs 1–10 are done**, through Team Rocket live at 83 of 83 printings. **What each one left behind
-  is in [HISTORY.md](HISTORY.md)**, and Job 6's entry is worth ten minutes before planning any set:
-  it was split by *machinery* rather than by set, and the reason 126 printings were only **95 distinct
-  behaviours** is the kind of count that decides how big a job actually is.
-  **Two are still live as *documents* rather than as work.** [OPPONENTS.md](OPPONENTS.md) is Job 8's
-  spec and nothing in it is built; Job 9 continues wherever [GRABBAG.md](GRABBAG.md) has AI items in
-  it, and the invariants it has left are in [AI.md](AI.md).
+- **Jobs 1–9.5 are done** — the engine, the AI, the art system, the board, the Powers, the collection
+  and packs, Jungle and Fossil, the ladder, the opponent spec, the first playtest-driven AI pass and
+  this documentation pass. **What each one left behind is in [HISTORY.md](HISTORY.md)**, and Job 6's
+  entry is worth ten minutes before planning any set: it was split by *machinery* rather than by set,
+  and the reason 126 printings were only **95 distinct behaviours** is the kind of count that decides
+  how big a job actually is.
+  Two of them are still live as *documents* rather than as work. **[OPPONENTS.md](OPPONENTS.md) is
+  Job 8's spec and nothing in it is built** — it is what the set jobs below build against, with
+  detail work still running. And **Job 9 continues wherever [GRABBAG.md](GRABBAG.md) has AI items in
+  it**; the invariants it has left so far are in [AI.md](AI.md).
+- **Job 10 is DONE — Team Rocket is live at 83 of 83 printings**, 19 Aug 2026. What it left behind
+  is in [HISTORY.md](HISTORY.md); the three systems it added are in [ENGINE.md](ENGINE.md).
+  One consequence worth knowing before touching the ladder: **base5 has no authored roster**, so it
+  derives a *generated* bracket. That is the derivation working, not a gap — see
+  [OPPONENTS.md](OPPONENTS.md), which is where the roster would go.
 - **Job 10.5** - Scheduled post-new set maintenance, plugging it in, layout-related grab bag items.
-  **Two things are waiting here and neither is a gap in the derivation.** `base5` has no authored
-  roster so it derives a *generated* bracket, and **Trevor's eight verified Base Set decks are read by
-  no part of the game** — `data/base1_decks.json` is not in `gen_cards.js`'s `OPPONENT_SOURCES`, so
-  the ladder still fields GBC decks while every tier claim in [OPPONENTS.md](OPPONENTS.md) rests on
-  decks the player cannot meet. See [DATA.md](DATA.md).
 - **Job 11** - Deck autobuilder improvement pass.
 - **Job 12** - Rulings and additions for the Promo cards through the Team Rocket set.
 - **Job 12.5** - Scheduled pre-new set maintenance and grab bag run. Scheduling out future Job order.

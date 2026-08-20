@@ -40,12 +40,12 @@ decks can function at all: a 2-Prize game ends before a Stage 2 line assembles. 
 "rebalances" a tier by nudging its Prizes is changing which decks can exist there, not how hard they
 are.
 
-**MEASURED 18 Aug 2026, and it is right at one end and wrong at the other.** 2 → 4 Prizes is
-worth **+10.7 points** to a T3 deck, so the short end of the claim holds exactly as written; 4 → 6 is
-worth **nothing** to any deck measured, and runs **backwards** for the T4. So the table's 6 for T3 and
-T4 is one length too long, and assigning T4 the *longest* games is the part with evidence against it.
-**Kept in the table until a roster is rebuilt against it**, because changing it moves every deck — and
-because the spread has a design reason measurement cannot see. *[Both, with the numbers →](ROSTERS.md)*
+**MEASURED 18 Aug 2026, and it is right at one end and wrong at the other.** Going 2 → 4 Prizes is
+worth **+10.7 points** to the Grass T3 deck, so the short end of the claim holds exactly as written.
+Going 4 → 6 is worth **nothing** to any deck measured — the effect saturates by four. And it runs
+**backwards for the T4**, which loses **11.9 points** between 4 and 6 Prizes. So the table's 6 for T3
+and T4 is one length too long, and assigning T4 the *longest* games is the part with evidence against
+it. Kept in the table until a roster is rebuilt against it, because changing it moves every deck.
 
 Two consequences that follow from it and are not obvious:
 
@@ -76,25 +76,69 @@ in the T4 with eight draw-and-search, four Double Colorless and two Energy Retri
 same card is a different tier depending on whether the deck can find and power it.** So the operative
 question is not *does the centrepiece need an engine* but *can this deck reliably get there*.
 
-### What the first roster measured
+### The measured tier signature
 
-Trevor's eight Base Set decks are the only roster that has ever met this spec, and `tools/decksim.js`
-played them against each other from both seats. Three findings; the evidence for each is in
-[ROSTERS.md](ROSTERS.md) rather than here.
+Eight decks, verified against `Engine.prototype.validateDeck` — all 60 cards, 4-copy clean, every
+card implemented, and between them they use all 69 distinct Base Set Pokemon. **Five axes separate
+the tiers monotonically, and only the first was authored deliberately:**
 
-- **The T2/T3 boundary is real** — the win-rate bands do not overlap. That is the first
-  externally-verified claim this file ever had, and it says the tier vocabulary describes something a
-  player will actually feel.
-- **The T4 boundary is not.** The boss finishes sixth of eight, inside the T2 band. Its Charizard
-  lands in only 45% of games, so it is a fast deck wearing a slow deck's clothes. **Do not "fix" this
-  by weakening the T3 decks** — they are the part that works.
-- **Consistency, not power, is what climbs.** Higher tiers run *less* Energy and *more* Trainers.
-  That is the recipe to aim at when building the next roster, and it is five axes wide.
+| | T2 (five decks) | T3 (two) | T4 (one) |
+|---|---|---|---|
+| Feature weight (Trevor's own scoring) | 7 – 7.5 | 10 – 10.5 | 12.5 |
+| Draw + search cards | 3 – 5 | 6 – 7 | 8 |
+| Rare Trainers | 1 | 2 – 3 | 3 |
+| Basic Energy | 28 | 25 – 26 | 25 |
+| Basic Pokemon | 15 – 16 | 12 – 13 | 13 |
 
-**The recipe is a recipe and not evidence**, which is the trap in it: Trevor was tracking all five
-axes while building, so they agree by construction. `decksim.js` is the separate instrument that can
-disagree with them, and it is the only one. *[The table, the standings, the assembly rates and what
-the Prize count is worth →](ROSTERS.md)*
+**Read this as a RECIPE, not as evidence.** The first version of this paragraph called the four lower
+rows independent confirmation of the top one; that was wrong and Trevor corrected it — he was tracking
+all five while building, so they agree by construction. The table is still the most useful thing in
+this file, but for a different reason: it is **what to aim at when building a roster**, not proof that
+the tiers mean anything on their own. Higher tiers run *less* Energy and *more* Trainers — consistency,
+not power, is what climbs.
+
+**The evidence is a separate instrument and it now exists: `tools/decksim.js`** plays every deck
+against every other from both seats and reports how often each one assembles its centrepiece. Re-derive
+the recipe table rather than trusting its figures; run the sim to find out whether a tier *means*
+anything.
+
+### What the sim says about this roster
+
+630 games per deck, 6 Prizes, expert on both sides:
+
+| Tier | Field win rate | Range |
+|---|---|---|
+| T3 (two decks) | **65.1%** | 61.0 – 69.2 |
+| T2 (five decks) | **45.2%** | 38.1 – 53.5 |
+| T4 (one deck) | **42.4%** | — |
+
+**The T2/T3 boundary is real — the bands do not overlap.** That is the first externally-verified
+claim in this file, and it says the tier spec describes something a player will actually feel.
+
+**The T4 boundary is not.** The boss sits *inside* the T2 band and finishes sixth of eight, below
+four of the five decks it is supposed to cap. The sim says why: its Charizard lands in 45% of games at
+a median of turn 17, and the deck underneath is Chansey and Ninetales doing ordinary work — so it is a
+fast deck wearing a slow deck's clothes, and the 6-Prize length it was assigned is the one that hurts
+it most (54.3% at 4 Prizes, 42.4% at 6). **Weakness matters too: it is a Fire deck in a field whose
+two strongest decks are Water.**
+
+**Part of it was an AI bug and it is fixed: the bot could not see that a Double Colorless becomes Fire
+on a Charizard**, so the deck's four DCE were dead cards. That was worth **+2.4 points** (42.4 → 44.8)
+and moved no other deck, since no other deck runs DCE. See [AI.md](AI.md). **It is not the whole gap** —
+the boss is still fifth of eight and below both T3s, so the deck itself is the remaining question.
+
+Two readings, and they are not exclusive: the boss needs rebuilding toward what it actually does, or
+T4 should not be the longest game on the ladder. **Do not "fix" this by weakening the T3 decks** —
+they are the part that works.
+
+**And the Prize spread has a design reason that measurement cannot see.** Trevor, 18 Aug: 6 Prizes is
+the *full* count, and giving it to the top tiers is partly about how the rung reads — the powered-up
+Blastoise gets to ride a little longer, a comeback has room to happen, and 4 is deliberately a
+slightly gated experience rather than a shorter one. **The measured flatness of 4 → 6 is an argument
+that it costs nothing, not that it does nothing.** Weigh both before changing the table.
+
+**Within-tier spread is the other finding: T2 runs 38.1 to 53.5**, a 15-point spread on rungs meant to
+be interchangeable. The bottom two are the Psychic/Fire and Water/Psychic decks.
 
 ### The AI is two tiers, not four — and that is probably fine
 
@@ -229,29 +273,38 @@ it is a specifiable request for Job 11 in a way "make it harder" is not: *build 
 pressure is Energy denial.*
 
 **The first draft of this rule said simply "a bracket may not repeat a pressure tag", and it was
-unsatisfiable.** A bracket runs 7–10 rungs against a vocabulary of seven, so the rule failed
-arithmetic before it ever met a card. The version above binds where it actually matters — the rungs a player
+unsatisfiable.** A bracket runs 7–10 rungs against a vocabulary of six, so the rule failed arithmetic
+before it ever met a card. The version above binds where it actually matters — the rungs a player
 remembers are the gate and the boss, and consecutive sameness is what makes a body feel like one
 opponent — and it is satisfiable at every bracket length. **T1 intro decks carry no pressure tag at
 all**; they are theme decks, and having no identity is the identity.
 
-**Count a set's pressures before authoring its roster, and count them with `pressure.js` rather than
-by reading the cards.** Each set has a fingerprint — Base Set is status and walls with almost no bench
-damage, Fossil is the bench damage set, Jungle prints no Energy denial at all — so a roster that
-ignores it asks a set for something it cannot supply, and the length of a bracket is partly a fact
-about how many distinct pressures its set can field. **Do not quote a figure here from memory**: an
-earlier version of this paragraph said Base Set supported "about three", which came from eyeballing
-the Trainer pool and missed that attacks create pressure too. *[The tool, and what it will not tell
-you →](MEASUREMENT.md)*
+**Count a set's available pressures before authoring its roster.** Some are thin or absent early —
+there is no real deck-out enabler in Base Set and no Trainer lock before the Gym sets — so the number
+of distinct pressures a set can field is a fact about the set, and it is an input to how long that
+bracket should be. The vocabulary may also grow; it is not a closed list.
 
-**So this file owns the vocabulary and the no-repeat rule; each set job picks its own tags from what
-it actually has.** Trevor's correction and the right one — we use what the set gives us rather than
-forcing a schedule onto it. The vocabulary is not a closed list either; it may grow with the era.
+**Which pressures a set can field is a fact about the set — run `node tools/pressure.js` rather than
+reading the cards.** It is the same figure every roster job needs and it is fully derived, so nobody
+should be hand-tagging it. **Do not quote a number here from memory: an earlier version of this
+paragraph claimed Base Set supported "about three pressures", which came from scanning the Trainer
+pool by eye and missed that attacks create pressure too.** The tool says seven, unevenly.
+
+The profiles differ sharply and that is the useful part — **each set has a fingerprint, and a bracket
+should play to its own**. Base Set is status and walls with almost no bench damage; Fossil is the bench
+damage set; Jungle prints no Energy denial at all. A roster that ignores this ends up asking a set for
+a pressure it cannot supply.
 
 **"No pressure — straight beatdown" is a legitimate and common state**, and the no-repeat rule
-constrains only the decks that carry a tag. In Trevor's built Base Set roster exactly one deck has a
-strong pressure identity — the T3 Water deck, at five disruption cards against one or two everywhere
-else — and the rest are honest beatdown. That is the right outcome for a first set.
+constrains only the decks that actually carry a tag. In Trevor's built Base Set roster exactly one deck
+has a strong pressure identity — the T3 Water deck, at five disruption cards against one or two
+everywhere else — and the rest are honest beatdown. That is the right outcome for a first set.
+
+**Assignment waits for the set, and this is deliberate.** Which pressures a bracket can field depends
+on what the set prints — Base Set has no deck-out enabler worth the name, and there is no real
+Trainer lock before the Gym sets. So this file owns the **vocabulary and the no-repeat rule**; each
+set job picks the tags from what it actually has. Trevor's correction and the right one: we use what
+the set gives us rather than forcing a schedule onto it.
 
 The tags are also the natural seed for the detailing pass — an opponent whose deck strips your Energy
 writes their own personality — which is a bonus, not a reason.
@@ -275,11 +328,16 @@ inventing one. What the better reward *is* — richer pack odds, or a differentl
 [PACKS.md](PACKS.md) question and is not settled here. Note it is not a tuning change: a pack with
 different odds is a new pack **type**.
 
-**Two things were proposed here on 15 Aug and dropped the same day, for the same shape of reason:**
-paying out free play by chosen Prize count, and gating the main line on dex completion %. Both would
-fund the collection from something that is not a decision. **Free play still pays nothing** and **dex
-% is a good unlock for the optional challenge tier and a bad one for the main line.**
-*[Both arguments in full, so neither comes back as a fresh idea →](HISTORY.md)*
+**Free play still pays nothing, and that is now re-confirmed rather than merely inherited.** Paying
+it out by chosen Prize count was proposed on 15 Aug and dropped the same day: the Job 7 reasoning
+holds — a mode that both ignores the ladder and funds the collection makes the ladder optional — and
+the challenge re-battles above deliver the identical loop (vary the difficulty, vary the reward)
+*on* the ladder, where it cannot undermine anything. See [PROGRESSION.md](PROGRESSION.md).
+
+**Dex completion % is not a gate on the main line**, for the same shape of reason. A requirement
+satisfied by *owning* is pack luck with no decision in it, and grind belongs in opt-in content. It is
+a good unlock for the optional challenge tier, where returning to an older bracket to fill a gap is a
+choice rather than a toll. Also proposed and dropped on 15 Aug.
 
 ## Open
 
@@ -295,10 +353,7 @@ fund the collection from something that is not a decision. **Free play still pay
    not about card choice: make the rival the only opponent whose pool is **every set you have
    unlocked at once** while everyone else is set-flavoured. Identity and power without leaning on
    Colorless, and it scales for free. Parked, not proposed.
-4. **The spec has met real decks; the LADDER has not.** Trevor's eight Base Set decks were built to
-   this spec, verified, and measured — that half is done and the findings are in
-   [ROSTERS.md](ROSTERS.md). What has not happened is walking a bracket end to end, **because those
-   eight decks are not wired into the game**: `data/base1_decks.json` is absent from
-   `gen_cards.js`'s `OPPONENT_SOURCES`, so the live Base bracket still fields GBC theme and Club
-   Master decks, which are not what any of these tiers describes. Wiring them in is the cheapest
-   remaining test of this whole document. See [DATA.md](DATA.md).
+4. **Nothing here has met a real deck.** The obvious next step is to walk one bracket end to end
+   against hand-built Base Set opponents and find out where the spec does not survive contact. The
+   current `base1` roster cannot test it: those decks are theme decks and GBC decks carrying Jungle
+   and Fossil cards, so they are not what any of these tiers describes.

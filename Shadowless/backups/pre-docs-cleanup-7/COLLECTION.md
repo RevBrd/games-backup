@@ -2,7 +2,7 @@
 
 Depth behind the collection rows in `CLAUDE.md`'s status table. Read this before touching
 `src/collection.js`, the collection browser, the dex, or the deck builder. Everything here was
-settled with Trevor on 9 Aug 2026 and is tested by `tools/collectiontest.js`.
+settled with Trevor on 9 Aug 2026 and is tested by `tools/collectiontest.js` (111 tests).
 
 If you are working on the board, the engine or a card, you need none of it.
 
@@ -153,9 +153,8 @@ is special.*
 
 `render()` throws the whole DOM away and rebuilds it, so every scroll position in the game is
 destroyed on every click. On the board that is invisible — nothing there scrolls. In these screens it
-was the worst friction in the game: adding one card to a deck threw you back to the top of a grid
-that is 311 cards now and grows with every set, so putting 18 Fire Energy into a deck meant
-re-scrolling eighteen times.
+was the worst friction in the game: adding one card to a deck threw you back to the top of a
+221-card grid, so putting 18 Fire Energy into a deck meant re-scrolling eighteen times.
 
 `keepScroll(node, key)` opts an element in; positions are read from the old elements before the wipe
 and written to the new ones **after everything is in the document**, because a `scrollTop` set on a

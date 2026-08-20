@@ -1,23 +1,18 @@
-# Shadowless — measuring, and the seven ways it has lied
+# Shadowless — measuring the AI, and the seven ways it has lied
 
-**Read this before you believe any number that claims something got better**, before you read a saved
+**Read this before you believe any number that claims the bot got better**, before you read a saved
 match log, and before you conclude from a flat result that your change did nothing. Split out of
 [AI.md](AI.md) on 15 Aug 2026 — that file is *how the bot thinks and what has shipped*; this one is
 *how you find out whether any of it worked.*
-
-**It holds every instrument in the project that is not pass/fail**, which as of 19 Aug 2026 is six of
-them rather than three: the three AI instruments below, and the three that measure a rule, a set or a
-roster instead. The suites that *do* return pass or fail are [TOOLING.md](TOOLING.md)'s, and mixing
-the two families is how a measurement ends up quoted as a verdict.
 
 The split is here because this half has more entrances than the file it came from.
 [PLAYTEST.md](PLAYTEST.md) sends you here when a report lands, [TOOLING.md](TOOLING.md) when you ask
 what a suite covers, and `CLAUDE.md` when you want a match log — **and not one of those wants to read
 about scoring weights on the way.**
 
-The one-line summary: **`selftest.js` proves the AI is *correct*; nothing but the instruments below
-can tell you whether it plays *well*, and all seven of the ways that measurement lies have already
-been paid for by somebody.**
+The one-line summary: **`selftest.js` proves the AI is *correct*; nothing but the two instruments
+below can tell you whether it plays *well*, and all six of the ways that measurement lies have
+already been paid for by somebody.**
 
 ## The three instruments — measuring "well", and measuring "did anything happen"
 
@@ -194,83 +189,11 @@ real decks were never balanced against each other either, so a wide spread may s
 anything from before 11 Aug 2026 — those were measured at 12 Prizes and the ordering *reverses* at
 the correct length, because Zap is a fast deck that wins a short game and loses a grind.
 
-## Three more that are not about the AI at all
-
-Same rule — **none of these returns pass or fail** — but they answer questions about a *rule*, a
-*set* and a *roster* rather than about how well the bot plays. They moved here from
-[TOOLING.md](TOOLING.md) on 19 Aug 2026 for that one reason: everything in that file has a verdict
-and none of these does.
-
-### `openercheck.js` — the opening Active, measured
-
-**Not pass/fail.** It drives the **live engine** — `newGame`, then `setupAuto` — and reports how often
-the opening Active is an evolution-line starter that is *stranded*: no evolution in hand, no spare
-copy, while a Basic that was not stranded sat in the same hand.
-
-**It lied the first time it was written, and that is why the header says to call the engine.** The
-original reimplemented `setupAuto`'s rule in order to measure it, so it reported the same figure before
-and after the rule changed, and it under-read the defect at 6.0% against a true 16.6%. **If you extend
-this, call the engine; never mirror it.** The failure was caught by running it against the pre-fix
-engine — always have a control that is known to fail.
-
-```bash
-node tools/openercheck.js                          # data/base1_decks.json, 6000 hands per deck
-node tools/openercheck.js data/jungle_decks.json   # any file in the *_decks.json shape
-```
-
-Deterministic seed, so the figure is reproducible run to run and a change to the rule can be measured
-against it. It reads the deck JSON rather than the engine, so it works on quarantined deck files that
-nothing else has wired up yet. The standing figure and what to do about it are in [AI.md](AI.md).
-
-### `pressure.js` — what a set can threaten you with
-
-**Derived, never hand-tagged.** [OPPONENTS.md](OPPONENTS.md) asks a bracket for *variety* of pressure
-rather than a ramp of strength, and which pressures a set can field is a fact about the set. This reads
-the effect scripts and counts them, so nobody has to read 102 cards — and so the answer cannot drift
-away from the cards the way a hand-maintained list would.
-
-```bash
-node tools/pressure.js          # every generated set
-node tools/pressure.js base3    # one set, with the card names
-```
-
-**Run it before building a set's roster.** The profiles are sharply different — Base Set is status and
-walls with almost no bench damage, Fossil is made of bench damage, Jungle prints no Energy denial at
-all — and a roster that ignores that asks a set for something it cannot supply. It also names the
-categories that are too thin to lean on.
-
-Deck-out is absent on purpose: no card in this era mills a deck, so it is a property of a *deck* (a
-wall that supplies no clock) and cannot be derived from a card pool.
-
-### `decksim.js` — do the tiers actually order?
-
-**The only instrument that can disagree with [OPPONENTS.md](OPPONENTS.md)'s tier table.** That table
-is a *recipe* — its five metrics agree because the decks were built to hit all five. This one plays
-them.
-
-```bash
-node tools/decksim.js              # base1, 6 Prizes, 45 seeds — about 45 seconds
-node tools/decksim.js 45 4         # the same at 4 Prizes
-node tools/decksim.js 45 6 data/base1_decks.json
-```
-
-Every deck meets every other **from both seats on the same seeds**. That is not optional: seat
-correlates with a deterministic opening flip, and `aiduel.js` shipped unmirrored for an hour and
-reported a 6-point edge for a change that did not exist.
-
-**Read the centrepiece columns beside the standings — they usually explain them.** A Stage 2 that
-lands in 45% of games at a median of turn 17, in a game decided by turn 20, is not a centrepiece.
-
-**Not pass/fail.** A tier boundary is real when the tier bands do not overlap. On the Base Set roster
-T2 and T3 separate cleanly and T4 does not — **the standings, the assembly rates and what to do about
-it are in [ROSTERS.md](ROSTERS.md)**, and the spec they are judged against is
-[OPPONENTS.md](OPPONENTS.md).
-
 ## Where the rest of it is
 
 **How the bot actually scores anything is [AI.md](AI.md)** — the silent-failure surface where an
-unscored verb is misplayed forever and no suite can see it, the Active/Bench unit split, the
-invariant every shipped change left behind, and the current `Open` list.
+unscored verb is misplayed forever and no suite can see it, the Active/Bench unit split, the three
+stretches of work that have shipped, and the current `Open` list.
 
 **What each suite covers is [TOOLING.md](TOOLING.md)**, including why none of them subsumes the
 others. Nothing in that file can answer the question this one is about.

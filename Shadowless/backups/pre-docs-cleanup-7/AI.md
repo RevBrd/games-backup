@@ -13,18 +13,10 @@ The one-line summary: **the AI is an expected-value scorer over enumerated coin-
 its one structural weakness is that a verb it cannot score costs nothing at runtime and is misplayed
 forever.**
 
-**This file is the rules. Most of the accounts are in [GRABHIST.md](GRABHIST.md)** — how each fault
-was found, what the log said, what the diagnosis turned out to be, and the numbers. **But not all of
-them, and the difference matters before you trim anything here.** Entries that came from Trevor's
-grab bag have a fuller, append-only twin there; entries that came from *set or job work* have no twin
-anywhere, because nothing else was recording them. Ten of the twelve below are twinned. **The opening
-placement fix, the Energy-pool fix and the whole triggered-Powers section are the only copy that
-exists** — condense one of those and the reasoning is gone.
-
-Corrected 19 Aug 2026. The blanket version of this sentence was true when it was written and stopped
-being true the moment a set job touched `ai.js`; it had already been cited once as grounds for
-trimming. *[Why that reasoning also refused this file a directory, and what changed →](HISTORY.md)*
-**What is still open is at the bottom.**
+**This file is the rules. The accounts are in [GRABHIST.md](GRABHIST.md)** — how each fault was
+found, what the log said, what the diagnosis turned out to be, and the numbers. That register is
+append-only and it is the fuller copy; this file deliberately does not repeat it. **What is still
+open is at the bottom.**
 
 ## The silent-failure surface
 
@@ -41,15 +33,10 @@ in `effects.js`, and assert `ai.js` either scores it or it sits on `UNSCORED_ON_
 damage to its own bench invisible. None of the eleven appears in a theme deck, so 480 full games ran
 byte-identical before and after the fix; nothing but this check could see them.
 
-**The opt-out list is the point, and it is deliberately almost empty.** Four verbs are on it, and
-they are two kinds rather than four decisions: three are legality gates the engine refuses outright
-(`REQUIRE_DEF_STATUS`, `REQUIRE_SELF_ENERGY`, `REQUIRE_OPP_BENCH`), so an illegal attack never reaches
-the AI to be scored at all. The fourth is `SHUFFLE_OPP_DECK` — this bot has no memory of deck order,
-so it cannot be hurt by a shuffle or value inflicting one, and zero is the honest number. **Its entry
-names the condition that would make it wrong** (the day anything in `ai.js` tracks known deck order)
-rather than leaving that to be rediscovered, which is the shape any future entry should copy. Putting
-a verb there is a decision somebody made; leaving one off is an oversight, and before the check the
-two were indistinguishable from outside.
+**The opt-out list is the point, and it is deliberately almost empty.** One verb is on it
+(`REQUIRE_DEF_STATUS`, a legality gate the engine refuses outright, so an illegal attack never
+reaches the AI to be scored). Putting a verb there is a decision somebody made; leaving one off is
+an oversight, and before the check the two were indistinguishable from outside.
 
 **A verb that must not be *worth* anything is not the same as one that must not be scored**, and the
 distinction matters because the list is the smaller of the two. Peek and Clairvoyance are worthless
@@ -87,7 +74,7 @@ walking a Charizard into a fully charged Final Beam — 80 on a coin — for fre
 it. Both are invisible to `scorePower`; the reasons are opposite. A passive has no decision at all,
 a trigger has one somewhere else, and filing these as passive would assert something false.
 
-**All of them are on `PROVISIONAL`.** Every weight is a first guess priced off an existing weight.
+**All eight are on `PROVISIONAL`.** Every weight is a first guess priced off an existing weight.
 
 ### A third state: PROVISIONAL
 
@@ -98,9 +85,7 @@ a hundred-odd verbs were reasoned about and which were guessed, which nobody wil
 
 **`PROVISIONAL` in `selftest.js` is where you declare a weight you shipped on a first guess.** It is
 not a failure and it costs nothing at runtime — it is a **worklist**, and the declaration is the whole
-value. Team Rocket put two dozen entries on it in one job, which is the list doing exactly what it was
-built for: **run `selftest.js` for the current names** rather than trusting a count in prose, and
-expect a set job to lengthen it and an AI pass to shorten it. Three things are asserted about it, all contradictions rather than opinions: everything on it
+value. Three things are asserted about it, all contradictions rather than opinions: everything on it
 is actually scored, nothing is simultaneously on `UNSCORED_ON_PURPOSE`, and nothing on it has left
 `effects.js`. All three were watched going red before being trusted.
 
@@ -161,86 +146,132 @@ the log said and what it measured is in [GRABHIST.md](GRABHIST.md) under the sam
 **The retreat re-tune — a curve, not a number.** *13 Aug.* `retreatPrize` divides by the Prizes the
 opponent still needs, and the divisor is **squared**: 1.7 at six Prizes, 6.7 at three, 60 at one.
 **Do not replace it with a scalar.** A flat sweep improves monotonically all the way to *deleting the
-term*, because the scalar moves both ends of the curve at once and a duel cannot see the endgame case
-at all — every one of those rows buys the early game by selling the last Prize. **When a sweep
-plateaus at zero, suspect the shape before you believe the conclusion.**
+term* — 30 → 20 → 10 → 0 reads as a plateau at nothing — because the scalar moves both ends of the
+curve at once and a duel cannot see the endgame case at all. Every one of those rows buys the early
+game by selling the last Prize. **When a sweep plateaus at zero, suspect the shape before you believe
+the conclusion.**
 
 **Stickiness — what a Pokémon is *for*.** *13 Aug.* Some cards exist to stand there and soak, and no
 weight can express that because it is a claim about the card rather than the position. Three things
-about how it is built are load-bearing. It is **derived, not tagged** — a tag would be re-typing a
-fact already in the card data on 1,251 cards. It is **terminal Basics only**, because "cannot evolve
-further" would call Charizard a wall and a Stage 2 is three cards you badly want to rescue. And
-utility is matched by **effect verb, not card text** (`STALL_VERBS`), because Tauros confuses *itself*
-and a regex on "Confused" promotes it. **Stickiness suppresses the rescue, never the Prize** — which
-is how Trevor's caveat, leave them in *unless the opponent has one Prize*, falls out of the arithmetic
-instead of being a special case. Kept on correctness rather than on a duel result; eight assertions in
-`powertest.js` hold it.
+about how it is built are load-bearing. It is **derived, not tagged** — everything that makes a wall
+a wall is already in the card data, so a tag would be re-typing a fact on 221 cards going on 1,251.
+It is **terminal Basics only**: "cannot evolve further" would call Charizard a wall, and a Stage 2 is
+three cards of investment you badly want to rescue. And utility is matched by **effect verb, not card
+text** (`STALL_VERBS`), because Tauros carries `STATUS_SELF_ON_TAILS` — it confuses *itself*, and a
+regex on "Confused" promotes it. **Stickiness suppresses the rescue, never the Prize**, which is how
+Trevor's caveat — leave them in *unless the opponent has one Prize* — falls out of the arithmetic
+instead of being a special case: at one Prize the squared divisor puts that term at 60 and no amount
+of stickiness reaches it. Measured at +0.2 in a duel and kept on correctness; it has eight assertions
+in `powertest.js` instead.
 
-**Weakness and Resistance reach the retreat comparison.** *13 Aug.* `bestAffordableDamage` was the one
-forecast path not going through `computeDamage`, so the "one currency" comparator answered in printed
-numbers. **The engine's own comment promises the AI can never predict something the engine would not
-do** — that is the property being preserved.
+**Weakness and Resistance reach the retreat comparison.** *13 Aug.* Three of the four forecast paths
+already went through `computeDamage`; `bestAffordableDamage` did not, so the "one currency"
+comparator the retreat delta runs on answered in printed numbers. **The engine's own comment promises
+the AI can never predict something the engine would not do** — that is the property being preserved,
+and it is why this shipped flat.
 
 **Recoil is priced on what it leaves you, and overkill is not paid for.** *14 Aug.* Recoil costs a
-share of the HP remaining, **squared, meeting the old flat cliff exactly at `frac` of 1**, so every
-decision the cliff got right is unchanged and only the slope below it is new. Separately `forecast`
-returns `expUseful` beside `expDmg`, capped **per outcome** rather than on the mean. **`expUseful` is a
-second field and not a cap in place, and that is not caution:** PlusPower asks *"is this 10 short of
-lethal"*, a question about real damage that capping makes unanswerable for anything already lethal.
+share of the HP remaining, **squared, meeting the old flat cliff exactly at `frac` of 1** — so every
+decision the cliff got right is unchanged and only the slope below it is new. Separately, `forecast`
+returns `expUseful` beside `expDmg`, capped **per outcome** rather than on the mean (an attack doing
+0-or-80 into 40 HP averages 40 raw and 20 useful, and the mean of the capped values is the true one).
+**`expUseful` is a second field and not a cap in place, and that is not caution:** PlusPower asks *"is
+this 10 short of lethal"*, a question about real damage that capping makes unanswerable for anything
+already lethal. Leech healing and the Transparency test read `expDmg` too.
 
-**Inert Energy, and an attachment that could never make anything bigger.** *16 Aug.* Attaching a Grass
-onto a cost of F strands the card. The rule was the easy half; **the exception was the whole job** —
-every inert attachment was waved through on *"but it could pay for a retreat"*, and only the Active
-can be made to retreat, so the exception is one slot wide now. **When a rule already has a carve-out,
-measure the carve-out before you widen the rule.** A real bug fell out of a test written for something
-else: `potential()` counted hypothetical Energy against attack *costs* only and never put it on the
-slot, so **no attack in the game could be known to get bigger from an attachment.**
+**Inert Energy, and an attachment that could never make anything bigger.** *16 Aug.* Attaching a
+Grass onto a cost of F leaves the slot exactly as short as it was and strands the card. The rule was
+the easy half; **the exception was the whole job.** Every inert attachment was being waved through on
+*"but it could pay for a retreat"* — and only the Active can be made to retreat, so the exception is
+one slot wide now. 9% of all attachments to 3%, where widening the rule alone had moved it by
+nothing. **When a rule already has a carve-out, measure the carve-out before you widen the rule.**
+A real bug fell out of a test written for something else: `potential()` counted the hypothetical
+Energy against attack *costs* only and never put it on the slot, so **no attack in the game could be
+known to get bigger from an attachment** — every `DMG_PER_SPARE_ENERGY` card, Hydro Pump included.
+Seven assertions in `powertest.js`, one of which pins the Active/Bench split as it stands so whoever
+closes Open #1 trips over a named case.
 
 **Progress is worth a share of what it is progress toward.** *16 Aug, and the design came out of
-Trevor's plain-English reasoning rather than out of the code.* Advancing an attack used to pay a flat
-`attachBuild` with no idea what was at the end of the road, so one Energy completing a 10-damage
-Tackle beat one of four toward a 60 — permanently and by construction. Advancing is **amortised** now.
-Two details are load-bearing: **`potential()` returns `goal` beside `short`**, because amortising
-toward an attack the Pokémon will never afford prices a road it is not on; and **`survivesCharge`
-discounts only the Active**, graded rather than a cliff.
+Trevor's plain-English reasoning rather than out of the code.* Finishing an attack pays
+`attachEnable` for the whole attack; advancing one used to pay a flat `attachBuild` per step with no
+idea what was at the end of the road, so one Lightning completing a Voltorb's 10-damage Tackle beat
+one of four toward a 60 — permanently and by construction. Advancing is **amortised** now. Two
+details are load-bearing: **`potential()` returns `goal` beside `short`**, the printed damage of the
+attack `short` is actually counting down to, ties broken by size — amortising toward a Thunderbolt
+the Pokémon will never afford prices a road it is not on. And **`survivesCharge` discounts only the
+Active**, by turns-it-has over turns-it-needs, graded rather than a cliff. **This is the only
+significantly better duel result in the batch** (52.2% ± 1.4, confirmed at 51.9% ± 1.1) — the fault
+is not symmetric, because the bot that charges its real threat is playing a different game two turns
+later.
 
-**Who gets sent up.** *16 Aug.* Promoting, being Whirlwinded up and choosing a Switch target were three
-nearly-identical formulas with no obligation to agree. **They are one `promoteValue` now — keep it
-that way.** Survival inside it is priced with **the retreat rule's own arithmetic**, because it is the
-same bill read from the other side and one formula cannot disagree with itself. **The sacrificial
-promote survives for free**: a bare Basic has nothing invested, so feeding it stays cheap without a
-rule saying so.
+**Who gets sent up.** *16 Aug.* Promoting, being Whirlwinded up and choosing a Switch target were
+three nearly-identical formulas with no obligation to agree, so a promotion the next turn could
+reverse cost a card, a turn, and the player's belief that the opponent knows what it is doing. **They
+are one `promoteValue` now — keep it that way.** Survival inside it is priced with **the retreat
+rule's own arithmetic**, because it is the same bill read from the other side, and reusing it is the
+point: one formula cannot disagree with itself. `threatAgainst(pi, slot)` is the new half;
+`incomingThreat` is a call to it. **The sacrificial promote survives for free** — a bare Basic has
+nothing invested, so feeding it stays cheap without a rule saying so. Doomed promotions 32% → 21%.
 
 **Two things the scorer could not see at all.** *16 Aug, both omissions rather than misjudgements.*
-**Attacking while Confused had no price**, and **both directions are asserted** — "never attack while
+**Attacking while Confused had no price** — half the time the attack does not happen *and* the
+attacker takes 30, so it is worth half its value against half that cost, which bites on a 5-point
+draw and not on a 60-point swing. **Both directions are asserted**, because "never attack while
 Confused" would be worse play than the bug. *The generalisable half: the retreat rule learned about
-Confusion on 13 Aug and the attack path never did. **Check any decision that reads `status` for one
-branch and not its siblings.*** And **recoil is waived when the defender prevents the damage** — see
-[Rulings/PREVENTED-DAMAGE-RECOIL.md](Rulings/PREVENTED-DAMAGE-RECOIL.md) — priced at `f.pStopped`
-rather than as an on/off switch, so it does not become entry seven in the cliff table above.
+Confusion on 13 Aug and the attack path never did — the same gap twice in one engine, one branch
+apart. **Check any decision that reads `status` for one branch and not its siblings.*** And **recoil
+is waived when the defender prevents the damage** — see
+[Rulings/PREVENTED-DAMAGE-RECOIL.md](Rulings/PREVENTED-DAMAGE-RECOIL.md) — priced at `f.pStopped`,
+the odds the recoil actually lands, rather than as an on/off switch, because Transparency is a coin
+and this must not become entry seven in the cliff table above.
 
-**Don't lose the game either.** *16 Aug, the exact mirror of "win the game if you can win the game".*
-A 10 HP Electabuzz Knocked out its target, killed itself, handed over the last Prize and lost on the
-turn it scored — rated 73.5 against a safe alternative at 33. **An average hid it, and that is the
-part that generalises:** expected recoil was 5, and this scorer is built on expected value, so *any*
-catastrophic minority branch is invisible to it by construction. **It had to be a different kind of
-term, not a bigger one** — a self-Knock-Out that *ends the match* is charged `lastPrize`, not
-`selfKO`, because no value of `selfKO` fixes this without breaking every ordinary recoil decision.
-**Losing is not a large Knock Out.** The win shortcut in `choose()` needed its own guard, because it
-returns a near-certain lethal *before any scoring runs*. **Where to look for more of these: anywhere
-the scorer averages over outcomes and one of those outcomes is terminal.**
+**Don't lose the game either.** *16 Aug, the exact mirror of the "win the game if you can win the
+game" rule.* A 10 HP Electabuzz took a coin-flip recoil attack, Knocked out its target, killed
+itself, handed over the last Prize and lost on the turn it scored — rated 73.5 against a safe
+alternative at 33. **An average hid it, and that is the part that generalises.** Expected recoil was
+5, and 5 never killed anybody; this scorer is built on expected value, so *any* catastrophic minority
+branch is invisible to it by construction. `rawOutcomes` carries `selfWorst` and `pSelfWorst` beside
+`selfDmg`, and a self-Knock-Out that **ends the match** is charged `lastPrize` rather than `selfKO`.
+**It had to be a different kind of term, not a bigger one** — `selfKO` is 70 against a Knock Out
+worth 55 plus 35 damage, so no value of that weight fixes this without breaking every ordinary recoil
+decision. **Losing is not a large Knock Out.** The win shortcut in `choose()` needed its own guard,
+because it returns a near-certain lethal *before any scoring runs*. **Where to look for more of
+these: anywhere the scorer averages over outcomes and one of those outcomes is terminal.** Prizes,
+empty boards and deck-out are the three ways this game ends — **that sentence named deck-out as still
+unpriced and the next entry is what closed it**, which is the best argument in this file for writing
+down where you did not look.
 
-**Your own deck is a resource, and running out of it loses.** *16 Aug, from two of Trevor's grab bag
-items that turned out to be one.* The bot understood decking *you* out as a weapon and had no concept
-of doing it to itself. Two terms, and the split is the recoil work's lesson reused: `deckBurn` is a
-cost on the **squared share of what remains**, and `deckLoss` is terminal for a play that empties the
-deck outright. **It is a curve and not the floor at 20 cards the report asked for** — a floor is the
-cliff shape in the table above and would make 21-vs-19 a personality change — but the *band* is
-Trevor's, settled by showing him the table: `deckBurn` is set so the band runs 20 down to 10.
-**Gambler is priced on NET change and must not be capped alongside Bill:** it is the only recycling
-card in the game, and its credit has its own weight (`deckRecycle`) rather than sharing `deckBurn`.
-That split is load-bearing — the two were one number, and widening the burn band would have quietly
-made recycling pay more than a Knock Out. ***A constant doing two jobs gets retuned for one.***
+**Your own deck is a resource, and running out of it loses.** *16 Aug 2026, from two of Trevor's grab
+bag items that turned out to be one.* `deck.length` reached the scorer in exactly one place —
+Wildfire, where it prices the **opponent** decking out as a weapon. So the bot understood running you
+out of cards as a way to win and had no concept of doing it to itself: every draw was flat `drawCard`
+per card, Bill, Fetch, Pay Day, Gambler and Professor Oak at up to 35 points, none of them looking at
+what was left. **17.7% of ladder games ended in a deck-out** and 45 of those losers had burned cards
+with under five remaining. Two terms, and the split is the recoil work's lesson reused: `deckBurn` is
+a cost on the **squared share of what remains**, and `deckLoss` is terminal for a play that empties
+the deck outright.
+
+**It is a curve and not the floor at 20 cards the report asked for** — a floor is the cliff shape in
+the table above and would make 21-vs-19 a personality change. But the *band* the curve occupies is
+Trevor's, settled by showing him the table rather than arguing it: **`deckBurn` is set so the band
+runs 20 down to 10.** Bill costs 2.5 points of its 10 at twenty cards left and exactly 10 — its whole
+value — at ten. The squaring is what makes that a band; the weight is only how wide and how high it
+sits. `powertest.js` asserts the curve is monotonic *and* not flat, so a later threshold trips it.
+
+**Gambler is priced on NET change and must not be capped alongside Bill:** it shuffles the hand back
+in before drawing 1-or-8, so on a hand of more than five it makes the deck *bigger*, and it is the
+only recycling card in the game — capping it would suppress the one play that digs out. Its credit
+has its own weight (`deckRecycle`) rather than sharing `deckBurn`, and that split is load-bearing:
+the two were one number, and widening the burn band to Trevor's range would have quietly made
+recycling pay 55 points, more than a Knock Out. ***A constant doing two jobs gets retuned for one.***
+Oak and Gambler also weigh what the hand is worth keeping and get a boost when the board is starved
+of Energy or Basics, which is Trevor's rule.
+
+**Plays that empty the deck outright 14 → 0**, burns under ten cards 6% → 1%, games lost to deck-out
+9% → 5%. **51.4% ± 1.2, significant, and confirmed on an independent sample** — only the second
+result in Job 9 to clear the bar, and for the same reason as the first: this fault is *not*
+symmetric. Both bots misplay it, but the one that is still holding cards two turns later is playing a
+different game.
 
 **Opening placement ranks before it measures.** *18 Aug.* `setupAuto` chose the opening Active by
 one line — highest HP among the Basics in hand — and it is **both sides'**, since the player's "auto"

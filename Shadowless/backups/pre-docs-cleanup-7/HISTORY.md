@@ -382,16 +382,6 @@ narratives already had a fuller, append-only twin in `GRABHIST.md`, so a folder 
 *third* copy of the same material and the two would have drifted. It was trimmed to the invariant
 each change left instead, 300 → 181, with the accounts linked rather than repeated.
 
-**Corrected 19 Aug 2026: that reasoning has a shelf life, and it expired.** `GRABHIST.md` only ever
-records items that came out of Trevor's **grab bag**. The moment a *set job* touched `ai.js` — the
-opening-placement fix in Job 8, the Energy-pool fix and the triggered-Powers layer in Job 10 — the
-file started accumulating entries with no twin anywhere, while still opening with a sentence
-promising every account was duplicated. Ten of twelve are twinned; three things are not. **The
-refusal still stands** and a folder would still create a third copy of the twinned ten, but a pass
-acting on the blanket version would have condensed the untwinned three and deleted the only record of
-them. *A "this is duplicated elsewhere" claim is a claim about two files, and it has to be re-checked
-whenever either one moves.*
-
 **The logbook's archive rule changed from a count to a boundary on the sixth pass.** The old rule —
 "this file holds the two most recent entries" — was written in the same turn the file was first
 split, and by the time anybody checked it was holding six at 295 lines, back inside the length that
@@ -411,17 +401,6 @@ somebody has to remember to check is a rule that will be found violated by the n
   genuinely is already there. Rejected because the log holds *sentences*, so the numbers would have
   to be regex'd back out of prose and a reworded log line would silently break a card.
   `lastAttackResult` is the same idea done as data. See `RULINGS.md`.
-- **Paying out free play by chosen Prize count** — proposed and dropped 15 Aug 2026, same day. The
-  Job 7 reasoning holds: a mode that both ignores the ladder and funds the collection makes the ladder
-  optional. And the optional **challenge conditions on re-battles** deliver the identical loop — vary
-  the difficulty, vary the reward — *on* the ladder, where it cannot undermine anything. So the idea
-  was not rejected for being bad; it was rejected for already existing somewhere safer. See
-  [OPPONENTS.md](OPPONENTS.md).
-- **Gating the main ladder line on dex completion %** — proposed and dropped 15 Aug 2026. A
-  requirement satisfied by *owning* is pack luck with no decision in it, and grind belongs in opt-in
-  content. It survives as a good unlock for the **optional challenge tier**, where going back to an
-  older bracket to fill a gap is a choice rather than a toll. Same shape as the entry above: the
-  right home for it is the opt-in half.
 - **Reviving `tools/chat-era/`** — see `TOOLING.md`. It looks like a one-line fix and is not.
 - **Deleting the `greedy` AI mode** — Trevor's proposal, and reasonable on its face: it is a
   damage-only bot that nothing in the game offers a player. It stayed because **`selftest.js` and

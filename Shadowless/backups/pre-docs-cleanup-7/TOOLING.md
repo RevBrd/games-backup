@@ -45,7 +45,7 @@ It reports distinct behaviours against printings, then splits the attacks three 
 reuse figure is a **lower bound by construction**: matching is exact, so a card differing by a comma
 reads as novel and turns out free. That is the safe direction for a number a job is planned against.
 
-**Its control is the live sets.** `base1`, `base2`, `base3` and `base5` must each report **0 novel**, because
+**Its control is the live sets.** `base1`, `base2` and `base3` must each report **0 novel**, because
 every card in them is implemented — if they do not, the reuse detection is broken and every figure it
 prints for an unbuilt set is too high. Run one of them alongside whatever you are surveying.
 
@@ -60,10 +60,10 @@ Rocket's two Dark Vileplume differ in **Weakness** — `base5-13` Fire, `base5-3
 Reads `data/raw/*.json` and `data/decks.json`, writes `src/cards.js`. Defaults to Base Set; widen with
 
 ```bash
-node tools/gen_cards.js --sets base1,base2,base3,base5
+node tools/gen_cards.js --sets base1,base2,base3
 ```
 
-which is what the four live sets are generated with today. All 14 sets generate cleanly — 1,251
+which is what the three live sets are generated with today. All 14 sets generate cleanly — 1,251
 cards, 189 Trainers, none missing text — so nothing downstream is data-blocked. Cards come out
 sorted by set then card number; the Chat-era file was in deck-discovery order, which was an artifact
 of how it was built.
@@ -128,7 +128,7 @@ memoised pools, a set-scoped `packsToComplete`, and a `--check` that reads the c
 Then the order is fixed, and it is the reverse of what feels natural:
 
 ```bash
-node tools/gen_cards.js --sets base1,base2,base3,base5   # 1. generate — cards exist, not yet live
+node tools/gen_cards.js --sets base1,base2,base3   # 1. generate — the cards exist but are not live
 #    2. write effects.js entries until selftest's per-set count reaches 0
 node tools/fetch_art.js base2                      # 3. BEFORE the set goes live, not after
 #    4. drop the set from REMAINING; it goes live by itself
@@ -269,10 +269,8 @@ declaring the file binary. Editors hide them. The fix is to retype the literal, 
 
 ## Coverage
 
-The check in `selftest.js` reports the implemented count per set with each set's live/in-progress
-state beside it — **311 of 311 across four live sets** as of 19 Aug 2026. **Run it rather than
-quoting that**; the figure moves every set job and it counts *printings*, which is not the unit older
-text in this tree used. A card missing a script fails the run if its set is live,
+The check in `selftest.js` reports **221 of 221 scriptable cards implemented**, per set, with each
+set's live/in-progress state beside it. A card missing a script fails the run if its set is live,
 which is what keeps the counts in `CLAUDE.md` honest.
 
 **A set being written carries a `REMAINING` entry and the run stays green while it shrinks** — that
@@ -286,10 +284,66 @@ script deleted by a bad merge is caught the same way a missing one is.
 don't try to revive them** — it looks like a one-line fix and is not, for reasons in
 [HISTORY.md](HISTORY.md).
 
-## Three more tools live next door, because they are not pass/fail
+## `openercheck.js` — the opening Active, measured
 
-**`openercheck.js`, `pressure.js` and `decksim.js` moved to [MEASUREMENT.md](MEASUREMENT.md) on
-19 Aug 2026.** Every suite in this file returns pass or fail; not one of those three does, and
-reading one as though it did is how a measurement gets quoted as a verdict. That is the same seam
-that created `MEASUREMENT.md` in the first place — go there for what the opening Active promotes,
-what a set can threaten you with, and whether a roster's tiers actually order.
+**Not pass/fail.** It drives the **live engine** — `newGame`, then `setupAuto` — and reports how often
+the opening Active is an evolution-line starter that is *stranded*: no evolution in hand, no spare
+copy, while a Basic that was not stranded sat in the same hand.
+
+**It lied the first time it was written, and that is why the header says to call the engine.** The
+original reimplemented `setupAuto`'s rule in order to measure it, so it reported the same figure before
+and after the rule changed, and it under-read the defect at 6.0% against a true 16.6%. **If you extend
+this, call the engine; never mirror it.** The failure was caught by running it against the pre-fix
+engine — always have a control that is known to fail.
+
+```bash
+node tools/openercheck.js                          # data/base1_decks.json, 6000 hands per deck
+node tools/openercheck.js data/jungle_decks.json   # any file in the *_decks.json shape
+```
+
+Deterministic seed, so the figure is reproducible run to run and a change to the rule can be measured
+against it. It reads the deck JSON rather than the engine, so it works on quarantined deck files that
+nothing else has wired up yet. The standing figure and what to do about it are in [AI.md](AI.md).
+
+## `pressure.js` — what a set can threaten you with
+
+**Derived, never hand-tagged.** [OPPONENTS.md](OPPONENTS.md) asks a bracket for *variety* of pressure
+rather than a ramp of strength, and which pressures a set can field is a fact about the set. This reads
+the effect scripts and counts them, so nobody has to read 102 cards — and so the answer cannot drift
+away from the cards the way a hand-maintained list would.
+
+```bash
+node tools/pressure.js          # every generated set
+node tools/pressure.js base3    # one set, with the card names
+```
+
+**Run it before building a set's roster.** The profiles are sharply different — Base Set is status and
+walls with almost no bench damage, Fossil is made of bench damage, Jungle prints no Energy denial at
+all — and a roster that ignores that asks a set for something it cannot supply. It also names the
+categories that are too thin to lean on.
+
+Deck-out is absent on purpose: no card in this era mills a deck, so it is a property of a *deck* (a
+wall that supplies no clock) and cannot be derived from a card pool.
+
+## `decksim.js` — do the tiers actually order?
+
+**The only instrument that can disagree with [OPPONENTS.md](OPPONENTS.md)'s tier table.** That table
+is a *recipe* — its five metrics agree because the decks were built to hit all five. This one plays
+them.
+
+```bash
+node tools/decksim.js              # base1, 6 Prizes, 45 seeds — about 45 seconds
+node tools/decksim.js 45 4         # the same at 4 Prizes
+node tools/decksim.js 45 6 data/base1_decks.json
+```
+
+Every deck meets every other **from both seats on the same seeds**. That is not optional: seat
+correlates with a deterministic opening flip, and `aiduel.js` shipped unmirrored for an hour and
+reported a 6-point edge for a change that did not exist.
+
+**Read the centrepiece columns beside the standings — they usually explain them.** A Stage 2 that
+lands in 45% of games at a median of turn 17, in a game decided by turn 20, is not a centrepiece.
+
+**Not pass/fail.** A tier boundary is real when the tier bands do not overlap. On the Base Set roster
+T2 and T3 separate cleanly and T4 does not; the numbers and what to do about it are in `OPPONENTS.md`.
+

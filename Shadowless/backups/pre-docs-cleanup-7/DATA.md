@@ -75,14 +75,13 @@ alias, not a job.
 | `base4` Base Set 2 | 124 | **0** — 124 aliases | 9 | 23 |
 | `si1` Southern Islands | 18 | 18 | 0 | 0 |
 | `basep` promos | 53 | 49 | 9 | 4 |
-| `base5` Team Rocket | 83 | ~~67~~ **BUILT**, Job 10 | 20 | 11 |
-| `base6` Legendary Collection | 110 | **4** — was 20; Team Rocket landing absorbed the rest | 16 | 9 |
+| `base5` Team Rocket | 83 | **67** | 20 | 11 |
+| `base6` Legendary Collection | 110 | 20 — **and only 4 if Team Rocket lands first** | 16 | 9 |
 | `gym1` Gym Heroes | 126 | 122 | 11 | 35 |
 | `gym2` Gym Challenge | 126 | 122 | 13 | 31 |
 | `neo1`–`neo4` | 359 | 344 | 72 | 44 |
 
-Read against Jungle + Fossil at 96: Team Rocket was about two-thirds of Job 6 and came in at that;
-the two Gym sets
+Read against Jungle + Fossil at 96: Team Rocket is about two-thirds of Job 6; the two Gym sets
 together are **two and a half times** it and are Trainer-heavy, which is where new verbs come from;
 and Neo is larger than everything else combined. **Base Set 2 and Legendary Collection are
 deprioritised because they are cheap rather than despite it** — see `CLAUDE.md`'s job plan.
@@ -153,18 +152,6 @@ be. Do not re-open the three "count re-check" flags that older text mentions —
 
 **`jungle_decks.json`** is Water Blast and Power Reserve, converted from `Jungle Decks.xlsx` with
 three id corrections without which Water Blast is an illegal deck. Use the JSON, never the sheet.
-
-**`base1_decks.json` is Trevor's eight Base Set decks and THE GAME DOES NOT READ IT.** It is not in
-`OPPONENT_SOURCES`, so nothing in `cards.js` carries it and the ladder still fields GBC decks. Only
-`decksim.js` and `openercheck.js` open it, both by filename. **That is worth knowing before you trust
-a tier claim:** every measured statement in [OPPONENTS.md](OPPONENTS.md) and [ROSTERS.md](ROSTERS.md)
-is about decks a player currently cannot meet. Wiring it in is two lines plus roster entries in
-`ladder.json` — Job 10.5, not a maintenance action, because it changes what every Base Set rung
-fields.
-
-**`fullpool.json` is a flat list of card ids across the unbuilt sets and is read by nothing.** It
-predates the corpus being the source of truth. Left in place rather than deleted, but do not generate
-from it and do not treat it as an inventory — `data/raw/*.json` is the only source.
 
 ## The workbooks and the research pool — reference only
 

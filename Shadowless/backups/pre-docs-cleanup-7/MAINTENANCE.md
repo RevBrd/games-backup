@@ -147,23 +147,6 @@ this machine; the Bash tool takes it.
 Being over beats cutting the paragraph that stops the next session losing a morning. If you go over,
 say why in the commit.
 
-**Two more from the seventh pass, both about claims rather than about length.**
-
-**A "this is duplicated elsewhere" claim is a claim about TWO files, and it has to be re-checked
-whenever either one moves.** `AI.md` opened with "the accounts are in `GRABHIST.md`" — true when
-written, and the sixth pass used it as the grounds for refusing that file a directory. But
-`GRABHIST.md` only ever records **grab bag** items, so the moment a *set job* touched `ai.js` the
-parent started accumulating entries with no twin, while still promising every account was duplicated.
-A pass acting on the blanket version would have condensed the only copy of three things. **Before you
-trim on the grounds that something is preserved elsewhere, go and look at the elsewhere.**
-
-**Put a file's own limit where it will be read BEFORE the decision, not after.**
-`LOGBOOK-ARCHIVE-2.md` ends its header with *"Start archive 3 rather than growing this one past
-~250."* It was at exactly 253. The seventh pass appended 150 lines to it anyway and had to undo them
-— not for missing the sentence, but for reaching it after having already decided where the entries
-were going. The live `LOGBOOK.md` now carries the rule at the point of decision as well, which is the
-general fix: **a constraint stated only in the thing being constrained is read too late.**
-
 - **Exempt: `LOGBOOK.md` and both its archives, `Rulings/*.md`, `HISTORY.md` and `GRABHIST.md`.**
   All are append-only registers, and none can be shortened without deleting something — a
   session's account of its own work, a ruling somebody then has to make again, a rejection's *why*,

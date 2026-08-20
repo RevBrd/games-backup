@@ -2,9 +2,8 @@
 
 Depth behind the progression row in `CLAUDE.md`'s status table. Read this before touching
 `src/progress.js`, `data/ladder.json`, the opponent section of deck select, or anything that grants
-a pack. Built in Job 7, 12 Aug 2026, and tested by `tools/progresstest.js` plus a ladder
-section in `tools/smoke.js`. **Run them for the counts** — a test count quoted in prose is a thing
-this tree has had to correct twice.
+a pack. Built in Job 7, 12 Aug 2026, and tested by `tools/progresstest.js` (71) plus a ladder
+section in `tools/smoke.js` (14).
 
 If you are working on the engine, a card, or the collection, you need none of it.
 
@@ -124,14 +123,6 @@ right. Everything marked `placeholder: true` in the data is ours rather than the
 | Base — The Clubs | 4 theme-deck challengers + 4 Club Masters | Ronald, *I'm Ronald!* |
 | Jungle — The Jungle | 2 Jungle theme decks + 4 Club Masters | Ronald, *Invincible Ronald* |
 | Fossil — The Dome | the 4 Grand Masters + 2 generated | Ronald, *Powerful Ronald* |
-| Team Rocket — no bracket authored | **entirely generated** | generated |
-
-**Team Rocket's bracket is generated, and that is the derivation working rather than a gap.**
-`base5` went live in Job 10 with nothing authored for it in `ladder.json`, `buildLadder()`
-synthesised a bracket, and no code or data changed for it to appear. It is what the claim above looks
-like when it actually happens. Authoring a roster over the top is an override — see
-[OPPONENTS.md](OPPONENTS.md), and note that **the eight Base Set decks every tier claim rests on are
-not wired in either**; `data/base1_decks.json` is read by no part of the game. See [DATA.md](DATA.md).
 
 All 16 GBC decks are assigned and none is stranded; `progresstest.js` asserts that. The eight Club
 Masters are split across two brackets by how Base-heavy each deck is — the arbitrary call in there,
