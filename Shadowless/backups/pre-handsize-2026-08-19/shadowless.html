@@ -805,25 +805,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    And the aspect changed on the way — these were nearly 2:1 tall because the
    sigil was taking its own intrinsic height; at 98x~140 they are close to the
    3:4 of a real card, which is what they are drawings of. */
-/* HEIGHT IS FIXED, AND THAT IS THE WHOLE POINT — 118px, measured, exactly the
-   way the Active card's 249px is.
-   A hand card's height used to be its content's: 95px for an Energy or Trainer,
-   118px with one attack row, 139px with two. .hand is align-items:stretch,
-   so EVERY card took the height of the tallest one you happened to be holding —
-   which meant drawing a two-attack Pokemon grew your whole hand by 21px and
-   playing it shrank it back. Worse, the hand panel is a child of the board
-   column that fitBoard() measures, so past a certain hand size the extra
-   height tipped the mat into overflow and the fitter rescaled THE ENTIRE BOARD.
-   Measured at 1366x768 the board sat at zoom 1.000 up to 11 cards and 0.973 at
-   12; at 1280x600 the hand alone drove three different zoom levels. That is the
-   "hand cards change size in different situations" report, and it was never
-   about the hand: it was the board following it.
-   118 is the smallest height that fits the era's worst card — Gym Challenge's
-   Rocket's Mewtwo and Neo Revelation's Ho-oh are the only 3-attack printings in
-   all 14 sets, and both fit here with the art at its floor, verified by
-   rendering one. Re-derive by rendering the pool if the face or the fonts
-   change, exactly as for the Active card. */
-.hand .handcard{width:98px;height:118px}
+.hand .handcard{width:98px}
 .hand .pcard:hover{border-color:var(--amber)}
 .hand .pcard.sel{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber), 0 10px 18px -8px rgba(0,0,0,.8)}
 .hand .pcard.dead{opacity:.45;cursor:default}
@@ -869,16 +851,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    and every card in the hand inflates to fit a ~90px emblem. With a basis of 0
    the row is sized by the text, min-height guarantees the art a floor, and the
    grow factor hands it whatever the tallest card left over. */
-/* CROPPED, not shrunk — the same treatment as the bench sigil and for the same
-   reason, plus one this face has that the bench does not. The card's height is
-   FIXED above, so the art is the element that absorbs the difference between a
-   Trainer with no attack rows and a Pokemon with three. Letting it keep its
-   square aspect made it the element that SET the height instead, which is the
-   bug this pair of rules fixes. Drawn at the card's full width, clipped to
-   whatever height is left, centred. */
-.sigil.hc-art{width:100%;flex:1 1 0;min-height:14px;margin:4px 0 0;
-  display:flex;align-items:center;overflow:hidden}
-.sigil.hc-art svg{flex:0 0 auto;width:100%;height:auto}
+.sigil.hc-art{width:100%;flex:1 1 0;min-height:38px;margin:4px 0 0}
 .hc-atks{padding-top:4px;display:flex;flex-direction:column;gap:2px}
 .hc-atk{display:flex;align-items:center;gap:5px;
   border-top:1px solid var(--hair);padding-top:3px}

@@ -116,6 +116,29 @@ of empty mat around 800px of content — sprawl rather than a mat.
 cards fan instead: they overlap only as far as they have to, measured after layout rather than
 assumed, so it holds at any window width.
 
+**A hand card's height is FIXED at 118px and that is the whole point.** It used to be its content's:
+95px for an Energy or a Trainer, 118px with one attack row, 139px with two. `.hand` is
+`align-items:stretch`, so **every card took the height of the tallest one you happened to be
+holding** — drawing a two-attack Pokémon grew the whole hand by 21px and playing it shrank it back.
+And the hand panel is a child of the column `fitBoard()` measures, so past a certain hand size the
+extra height tipped the mat into overflow and **the fitter rescaled the entire board.** Measured: at
+1366x768 the board sat at zoom 1.000 up to eleven cards and 0.973 at twelve; at 1280x600 the hand
+alone drove **three** different zoom levels. Trevor reported this as "hand cards change size in
+different situations" and it was never really about the hand — it was the board following it.
+
+**118 is measured, exactly the way the Active card's 249px is, and it is the era's worst case rather
+than today's.** Only two printings in all fourteen sets carry three attacks — Gym Challenge's
+Rocket's Mewtwo and Neo Revelation's Ho-oh — and both fit at 118 with the art at its floor, verified
+by rendering one rather than by arithmetic. So Gym landing will not move it. Re-derive by rendering
+the pool if the face or the fonts change.
+
+**The sigil is what absorbs the difference, cropped rather than shrunk** — the bench tile's own
+treatment, and for the same reason plus one more: with a fixed card height something has to give
+between a Trainer with no attack rows and a Pokémon with three, and letting the art keep its square
+aspect is what made it *set* the height instead. It is drawn at the card's full width and clipped to
+whatever is left, centred, so a Pokémon shows a wide strip and an Energy shows most of the emblem.
+**Do not give it back its aspect ratio.**
+
 **The hand face is `handCard()`, and it deliberately carries no attack names or rules text.** A card
 in hand is a thing you are deciding whether to play, and what you decide on is its name, its kind,
 and what its attacks cost against what they do. The words were the whole of the problem:

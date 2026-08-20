@@ -25,6 +25,7 @@ made. Newest first, so the batch you want is usually near the top:
 
 | When | Instance | Items |
 |---|---|---|
+| 19 Aug 2026 | #20, the UI pass | The hand that resized itself — a correct report whose stated cause was wrong twice over |
 | 16 Aug 2026 | #16, later batches | The recoil suicide; the opponent deck named for the wrong deck; Gyarados crossed off unworked |
 | 16 Aug 2026 | #16, second batch | Scoop Up's Knock Out banner; Energy Burn made passive; Double Colorless as two pips; prevented damage waiving recoil; Fetch while Confused |
 | 16 Aug 2026 | #16, first batch | The report that was wrong and the three log gaps it exposed; inert Energy; promote/Whirlwind/Switch unified; powering up Zapdos over Voltorb |
@@ -33,6 +34,50 @@ made. Newest first, so the batch you want is usually near the top:
 | 13 Aug 2026 | #12, first pass | Confused retreat; the deck that resolved to the wrong deck; paralysis parked; Gust of Wind diagnosed |
 
 ---
+
+### 19 Aug 2026 — Opus 5 #20 (the hand that resized itself)
+
+**"Hand cards change size in different situations, sometimes as things are moving between turns or
+after a turn has ended... It might be the whole screen any time anything is selected resizing
+itself."** Trevor flagged it for a dedicated pass and asked for a backup first, which was the right
+call — it turned out to reach the whole board.
+
+**The report was accurate and both of its guesses at a cause were wrong, including mine.** Trevor
+suspected coin flips and then selection. I suspected the action bar: `boardFitsAt()` refuses a zoom
+step when the bar comes within 6px of the viewport bottom, so a bar that grew a line would rescale
+everything. **Measured across five UI states at four viewports and `barH` was 34 in every single
+one.** Nothing about selecting, targeting or flipping moves it. That hypothesis was dead in one run,
+which is the entire argument for reproducing before redesigning.
+
+**What it actually was: the hand's height is a function of what is IN the hand.** `handCard()`
+renders one row per attack, so a card is 95px as an Energy or Trainer, 118px with one attack and
+139px with two — and `.hand` is `align-items:stretch`, so every card takes the height of the tallest
+one you are holding. Draw a two-attack Pokémon and the whole hand grows 21px. Play it and it shrinks
+back. **That is exactly what Trevor saw, and "between turns" is right because that is when you draw.**
+
+**The board followed because the hand panel is a child of the column `fitBoard()` measures.** Past a
+certain hand size the extra height tipped the mat into overflow and the fitter rescaled the entire
+board: at 1366x768, zoom 1.000 up to eleven cards and 0.973 at twelve. **At 1280x600 the hand alone
+drove three different zoom levels.** So the "whole screen resizing" half of the report was also
+literally true — it just was not caused by selecting anything.
+
+**The fix is the bench tile's, reused.** Fix the card height and let the sigil absorb the difference,
+cropped at full width rather than shrunk to keep a square aspect — which is what had made the art
+*set* the height instead of consuming what was left. Height is **118px**, measured against the era's
+worst case rather than today's: **only two printings in fourteen sets carry three attacks**
+(Rocket's Mewtwo, Ho-oh) and both fit at 118 with the art at its floor, checked by rendering one.
+Gym landing will not move it.
+
+**It made the board bigger, which nobody asked for and is worth knowing.** Because 118 is *below*
+the old two-attack height of 139, the fitter now holds zoom 1.000 at 1366x768 at every hand size —
+where before a twelve-card hand cost 2.7%. One card height, one zoom, every viewport, hand sizes 2
+through 20.
+
+**Two things about the method.** Every number here came from a throwaway Chrome probe that renders
+the built file and dumps geometry into the DOM, because `smoke.js` has no layout engine and
+`shot.js` shoots one state at a time — **neither can compare two states, which is what this bug
+was.** And the first useful measurement was the one that *refuted* me; I had a plausible mechanism,
+a matching symptom, and it was not the cause.
 
 ### 16 Aug 2026 — Opus 5 #16 (Job 9, first batch)
 
