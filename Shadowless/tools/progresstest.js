@@ -38,7 +38,8 @@ const group = t => console.log(`\n${t}`);
 // reason that had nothing to do with progression.
 const LIVE = P.liveSets(CARD_DB, EFFECTS, SET_INFO);
 const hasDeck = ref => ref.startsWith('theme:') ? !!DECKS[ref.slice(6)] : !!OPPONENT_DECKS[ref];
-const build = (sets = LIVE, data = LADDER) => P.buildLadder(sets, data, { hasDeck });
+const setName = code => (SET_INFO[code] || {}).name || code;
+const build = (sets = LIVE, data = LADDER) => P.buildLadder(sets, data, { hasDeck, setName });
 const fresh = () => ensureShape(newSave());
 
 // beat everyone in a bracket's roster up to `n`, so the boss gate can be reached
@@ -78,6 +79,12 @@ eq(rocket.roster.length, P.PROGRESS_DEFAULTS.bossAfter, 'it is backfilled to exa
 ok(rocket.roster.every(o => o.deck === 'generate'), 'all of its opponents are generated');
 ok(rocket.boss && rocket.boss.isBoss, 'it gets a boss too');
 ok(rocket.roster.every(o => o.placeholder), 'and every one is marked placeholder');
+// It is NAMED, not labelled with its own set code. It was: Team Rocket going live
+// put a bracket titled "base5" on screen beside "The Clubs" and "The Jungle". The
+// name is the caller's to supply because progress.js is pure and cannot see
+// SET_INFO — so a caller that forgets falls back to the code and this catches it.
+eq(rocket.name, 'Team Rocket', 'a generated bracket is named from SET_INFO, not the raw set code');
+ok(!/^based/.test(rocket.name), 'and never reads as a set code');
 
 // ...and a bracket for a set that is NOT live must never appear.
 const onlyBase = build(['base1']);
@@ -97,10 +104,16 @@ eq(new Set(narrow[0].roster.map(o => o.id)).size, narrow[0].roster.length, 'back
 group('every authored deck reference resolves, and to a legal deck');
 
 const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
-const sources = { theme: DECKS, gbc: {}, jungle: {} };
+// DERIVED, not listed. This was `{ theme: DECKS, gbc: {}, jungle: {} }` and adding a
+// fourth source to gen_cards.js made the suite THROW on an undefined bucket instead of
+// failing a named assertion — a test that has to be edited whenever the thing it tests
+// grows is a test that will be edited wrongly. Every prefix in OPPONENT_DECKS gets a
+// bucket; 'theme' is the only one that comes from somewhere else.
+const sources = { theme: DECKS };
 for (const k of Object.keys(OPPONENT_DECKS)) {
   const cut = k.indexOf(':');
-  sources[k.slice(0, cut)][k.slice(cut + 1)] = OPPONENT_DECKS[k];
+  const prefix = k.slice(0, cut);
+  (sources[prefix] || (sources[prefix] = {}))[k.slice(cut + 1)] = OPPONENT_DECKS[k];
 }
 let authored = 0, illegal = [];
 for (const b of L) {
@@ -113,13 +126,22 @@ for (const b of L) {
     if (!r.ok) illegal.push(`${o.id}: ${r.errors.join('; ')}`);
   }
 }
-eq(authored, 22, 'the three brackets name 22 authored opponents — 16 GBC, 4 theme, 2 Jungle');
+eq(authored, 30, 'the four brackets name 30 authored opponents — 16 GBC, 4 theme, 2 Jungle, 8 Base Set');
 ok(illegal.length === 0, `every authored opponent fields a legal 60-card deck${illegal.length ? '\n        ' + illegal.join('\n        ') : ''}`);
 
-// All sixteen GBC decks are used, none stranded — DATA.md's roster is fully spent.
-const usedGbc = new Set();
-L.forEach(b => P.allOpponents(b).forEach(o => { if (o.deck.startsWith('gbc:')) usedGbc.add(o.deck.slice(4)); }));
-eq(usedGbc.size, 16, 'all sixteen GBC decks are assigned to an opponent');
+// Nothing in a deck FILE is stranded. A deck that resolves but that no rung fields is
+// invisible: it passes every other check in here and no player ever meets it, which is
+// how data sits unwired for a week. Asserted per source file rather than once.
+const usedFrom = prefix => {
+  const used = new Set();
+  L.forEach(b => P.allOpponents(b).forEach(o => {
+    if (o.deck.startsWith(prefix + ':')) used.add(o.deck.slice(prefix.length + 1));
+  }));
+  return used;
+};
+eq(usedFrom('gbc').size, 16, 'all sixteen GBC decks are assigned to an opponent');
+eq(usedFrom('b1').size, 8, "all eight of Trevor's Base Set decks are assigned to an opponent");
+eq(usedFrom('jungle').size, 2, 'both Jungle decks are assigned to an opponent');
 
 group('a generated opponent brings a legal deck, and the same one every time');
 

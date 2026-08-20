@@ -28,6 +28,10 @@ node tools/decksim.js 45 6 data/base1_decks.json     # the run that produced eve
 
 ## Base Set — Trevor's eight decks, 18 Aug 2026
 
+**Live on the ladder since 19 Aug 2026.** Everything below was measured a day before the decks were
+wired in, against `data/base1_decks.json` directly — which is what `decksim.js` still reads, so the
+figures remain reproducible exactly as printed.
+
 Eight decks, verified against `Engine.prototype.validateDeck` — all 60 cards, 4-copy clean, every
 card implemented, and between them they use all 69 distinct Base Set Pokemon. Five T2, two T3, one
 T4.

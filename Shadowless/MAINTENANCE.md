@@ -234,7 +234,7 @@ grep -oh "](\([A-Za-z0-9_./-]*\.md\)[^)]*)" *.md | sed 's/](\([^):]*\).*/\1/' | 
 
 ## House style
 
-Worth matching, because the tree reads as one voice and that is load-bearing for trust:
+The house style is your own natural voice. Worth matching, because the tree reads as one voice and that is load-bearing for trust:
 
 - **Second person, present tense, direct.** "Read this before you change anything sized."
 - **Lead with the claim, then the reason.** Bold the claim. A skimmer should be able to read only

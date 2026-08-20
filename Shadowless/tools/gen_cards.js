@@ -305,6 +305,7 @@ out += '};\n\n';
 const OPPONENT_SOURCES = [
   ['gbc', 'gbc_decks.json'],
   ['jungle', 'jungle_decks.json'],
+  ['b1', 'base1_decks.json'],
 ];
 const opponentDecks = {}, droppedDecks = [];
 for (const [prefix, file] of OPPONENT_SOURCES) {

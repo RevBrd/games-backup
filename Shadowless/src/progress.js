@@ -103,10 +103,16 @@ function liveSets(cardDb, effects, setInfo) {
 //           resolved is DROPPED and backfilled with a generated one rather than
 //           throwing, so a narrow `gen_cards.js --sets base1` still produces a
 //           working ladder instead of a broken one.
+// opts.setName(code) -> string. Optional. What to call a bracket NOBODY AUTHORED.
+//           This fell back to the raw set code, so Team Rocket going live in Job 10
+//           put a bracket titled "base5" on the screen beside three called "The
+//           Clubs", "The Jungle" and "The Dome". Kept as a callback rather than an
+//           import because this module is pure and SET_INFO lives in cards.js.
 function buildLadder(liveSets, data, opts = {}) {
   const cfg = Object.assign({}, PROGRESS_DEFAULTS, (data && data.defaults) || {});
   const brackets = (data && data.brackets) || {};
   const hasDeck = opts.hasDeck || (() => true);
+  const setName = opts.setName || (code => code);
   const usable = o => o.deck === 'generate' || hasDeck(o.deck);
 
   return liveSets.map((setCode, i) => {
@@ -137,7 +143,7 @@ function buildLadder(liveSets, data, opts = {}) {
     return {
       set: setCode,
       index: i,
-      name: (src && src.name) || setCode,
+      name: (src && src.name) || setName(setCode),
       blurb: (src && src.blurb) || '',
       generated: !src,
       cfg: bcfg,

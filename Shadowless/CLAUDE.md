@@ -262,11 +262,10 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   spec and nothing in it is built; Job 9 continues wherever [GRABBAG.md](GRABBAG.md) has AI items in
   it, and the invariants it has left are in [AI.md](AI.md).
 - **Job 10.5** - Scheduled post-new set maintenance, plugging it in, layout-related grab bag items.
-  **Two things are waiting here and neither is a gap in the derivation.** `base5` has no authored
-  roster so it derives a *generated* bracket, and **Trevor's eight verified Base Set decks are read by
-  no part of the game** — `data/base1_decks.json` is not in `gen_cards.js`'s `OPPONENT_SOURCES`, so
-  the ladder still fields GBC decks while every tier claim in [OPPONENTS.md](OPPONENTS.md) rests on
-  decks the player cannot meet. See [DATA.md](DATA.md).
+  **The docs pass and the Base Set wiring are done.** Trevor's eight decks are live as the whole
+  base1 bracket — intro → body → gate → boss, the first bracket built to [OPPONENTS.md](OPPONENTS.md)
+  — and `base5` derives a *generated* bracket, which is the derivation working rather than a gap.
+  **What is left in 10.5 is the layout-related grab bag items.**
 - **Job 11** - Deck autobuilder improvement pass.
 - **Job 12** - Rulings and additions for the Promo cards through the Team Rocket set.
 - **Job 12.5** - Scheduled pre-new set maintenance and grab bag run. Scheduling out future Job order.

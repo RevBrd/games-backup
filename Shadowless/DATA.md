@@ -138,6 +138,7 @@ source — **grep `readFileSync` in the generator rather than trusting the table
 | `decks.json` | `DECKS` | the four playable theme decks. Player-facing; a missing card id is **fatal** |
 | `gbc_decks.json` | `OPPONENT_DECKS`, `gbc:` prefix | the ladder roster, `progresstest.js`, `aiduel.js --gbc` |
 | `jungle_decks.json` | `OPPONENT_DECKS`, `jungle:` prefix | the Jungle bracket's two authentic challengers |
+| `base1_decks.json` | `OPPONENT_DECKS`, `b1:` prefix | the whole Base Set bracket — Trevor's eight, built to the tier spec |
 | `ladder.json` | `LADDER` | `buildLadder()`. See [PROGRESSION.md](PROGRESSION.md) |
 
 **The opponent files fail soft where `decks.json` fails hard.** An opponent deck naming a card outside
@@ -154,13 +155,13 @@ be. Do not re-open the three "count re-check" flags that older text mentions —
 **`jungle_decks.json`** is Water Blast and Power Reserve, converted from `Jungle Decks.xlsx` with
 three id corrections without which Water Blast is an illegal deck. Use the JSON, never the sheet.
 
-**`base1_decks.json` is Trevor's eight Base Set decks and THE GAME DOES NOT READ IT.** It is not in
-`OPPONENT_SOURCES`, so nothing in `cards.js` carries it and the ladder still fields GBC decks. Only
-`decksim.js` and `openercheck.js` open it, both by filename. **That is worth knowing before you trust
-a tier claim:** every measured statement in [OPPONENTS.md](OPPONENTS.md) and [ROSTERS.md](ROSTERS.md)
-is about decks a player currently cannot meet. Wiring it in is two lines plus roster entries in
-`ladder.json` — Job 10.5, not a maintenance action, because it changes what every Base Set rung
-fields.
+**`base1_decks.json` is Trevor's eight Base Set decks, and it is LIVE as of 19 Aug 2026** under the
+`b1:` prefix — five T2, two T3 and the T4 that is now Base Set's boss. It was written on 18 Aug and
+read by nothing for a day: `decksim.js` and `openercheck.js` opened it by filename, and it was absent
+from `OPPONENT_SOURCES`, so every measured claim in [OPPONENTS.md](OPPONENTS.md) and
+[ROSTERS.md](ROSTERS.md) was about decks no player could meet. **That is the failure shape to watch
+for after any job that ends in a measurement: a thing built, verified, and never plugged in.** Its
+`_meta` said so plainly and nothing was reading that either.
 
 **`fullpool.json` is a flat list of card ids across the unbuilt sets and is read by nothing.** It
 predates the corpus being the source of truth. Left in place rather than deleted, but do not generate

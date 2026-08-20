@@ -119,12 +119,24 @@ automatically harder than an early one with nobody tuning a number.
 Contents are **placeholders and Trevor expects to replace them** — the structure is what had to be
 right. Everything marked `placeholder: true` in the data is ours rather than the GBC's.
 
-| Bracket | Roster | Boss |
-|---|---|---|
-| Base — The Clubs | 4 theme-deck challengers + 4 Club Masters | Ronald, *I'm Ronald!* |
-| Jungle — The Jungle | 2 Jungle theme decks + 4 Club Masters | Ronald, *Invincible Ronald* |
-| Fossil — The Dome | the 4 Grand Masters + 2 generated | Ronald, *Powerful Ronald* |
-| Team Rocket — no bracket authored | **entirely generated** | generated |
+| Bracket | Roster | Boss | Extra |
+|---|---|---|---|
+| Base — The Clubs | 4 theme decks (T1) + 5 T2 + 2 T3, **all Trevor's** | the T4, *Ashfall* | Ronald, *I'm Ronald!* |
+| Jungle — The Jungle | 2 Jungle theme decks + **all 8** Club Masters | Ronald, *Invincible Ronald* | — |
+| Fossil — The Dome | the 4 Grand Masters + 2 generated | Ronald, *Powerful Ronald* | Ronald, *Legendary Ronald* |
+| Team Rocket | **entirely generated** | generated | — |
+
+**Base Set stopped being a placeholder on 19 Aug 2026.** Its eleven rungs are Trevor's own decks
+built to [OPPONENTS.md](OPPONENTS.md)'s tier spec, and the bracket now reads intro → body → gate →
+boss exactly as that file describes. **The names and titles are still ours and still marked
+`placeholder: true`** — that flag has always meant *the identity is ours*, not *the deck is*, which
+is why the theme-deck rungs carry it too. The detailing pass is what clears them.
+
+Two consequences. **Ronald moved from boss to `extra`**, because the boss slot is the T4 by
+definition and Ronald is a rival rather than a tier; he is the post-boss challenger now, the same
+shape *Legendary Ronald* has in Fossil. And **the four Club Masters he shared the bracket with joined
+the other four in Jungle**, which is more faithful than the old split-by-Base-heaviness — PROGRESSION
+called that "the arbitrary call in there" and it no longer has to be made.
 
 **Team Rocket's bracket is generated, and that is the derivation working rather than a gap.**
 `base5` went live in Job 10 with nothing authored for it in `ladder.json`, `buildLadder()`

@@ -8,7 +8,9 @@ wiring the ladder you want that file; if you are deciding what goes *in* a rung,
 Read it when adding a set's roster, hand-building an opponent deck, or working the auto-builder
 (Job 11), which is the consumer this was written for.
 
-**Status: design. None of it is built.** Job 8, 15 Aug 2026, worked out with Trevor. It is the target
+**Status: design, and the first bracket built to it is now LIVE.** Job 8, 15 Aug 2026, worked out
+with Trevor; Base Set's eleven rungs were wired in on 19 Aug and are the only ones. Everything about
+*naming, entry conditions, pressure assignment and the rival* is still unbuilt. It is the target
 the set jobs build against, and it is deliberately about *parameters* rather than card lists — the
 lists come per-set, when we can see what the set actually offers. **When a section here ships, rewrite
 it in the past tense and say where it lives.** A planning document that outlives its plan is the
@@ -295,10 +297,10 @@ fund the collection from something that is not a decision. **Free play still pay
    not about card choice: make the rival the only opponent whose pool is **every set you have
    unlocked at once** while everyone else is set-flavoured. Identity and power without leaning on
    Colorless, and it scales for free. Parked, not proposed.
-4. **The spec has met real decks; the LADDER has not.** Trevor's eight Base Set decks were built to
-   this spec, verified, and measured — that half is done and the findings are in
-   [ROSTERS.md](ROSTERS.md). What has not happened is walking a bracket end to end, **because those
-   eight decks are not wired into the game**: `data/base1_decks.json` is absent from
-   `gen_cards.js`'s `OPPONENT_SOURCES`, so the live Base bracket still fields GBC theme and Club
-   Master decks, which are not what any of these tiers describes. Wiring them in is the cheapest
-   remaining test of this whole document. See [DATA.md](DATA.md).
+4. **The spec is now playable and nobody has played it.** Trevor's eight decks went into the Base
+   Set bracket on 19 Aug 2026 — intro → body → gate → boss, as written. So the cheapest remaining
+   test of this whole document is somebody walking that bracket end to end and reporting where it
+   does not survive contact. **Two things the spec says that the built bracket does not do:** the
+   intro is **four** rungs rather than the two this file mandates (all four theme decks, per
+   `base1_decks.json`'s own `_meta`), and **no rung carries an entry condition or a pressure tag**,
+   because neither is built. The first is a one-line data change if the spec wins the argument.

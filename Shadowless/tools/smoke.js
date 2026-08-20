@@ -1801,6 +1801,15 @@ T('a locked challenger has no click handler', () => {
   return locked.length > 0 && locked.every(n => !n.onclick);
 });
 
+// The one assertion that has to live HERE rather than in progresstest.js. That
+// suite builds its own ladder and passes its own setName, so it proves the
+// MECHANISM and cannot see whether ui.js actually supplies one — deleting the
+// call from ui.js left every test in both suites green while a bracket titled
+// "base5" went back on screen. This reads the real LADDER_VIEW the built file made.
+T('no bracket is titled with its own set code', () => {
+  return LADDER_VIEW.length > 0 && LADDER_VIEW.every(b => !/^(base|gym|neo|si)[0-9]/.test(b.name));
+});
+
 T('the boss tile is locked until five distinct challengers have lost', () => {
   const b = LADDER_VIEW[0];
   const before = bossAvailable(UI.save, b);
@@ -1816,7 +1825,14 @@ T('the boss becomes clickable once it is available', () => {
 });
 
 T('picking a challenger is who actually turns up', () => {
-  const foe = LADDER_VIEW[0].roster.find(o => o.deck.indexOf('gbc:') === 0);
+  // NOT pinned to 'gbc:'. It was, and wiring Trevor's own decks into base1 left the
+  // bracket with no GBC deck in its roster at all, so this threw on an undefined foe
+  // instead of failing. The property under test is "the rung you click is the deck
+  // that arrives" and it is true of every source — so ask for a rung with a real deck,
+  // preferring one that has to be RESOLVED rather than a theme deck read straight out
+  // of DECKS.
+  const real = LADDER_VIEW[0].roster.filter(o => o.deck !== 'generate');
+  const foe = real.find(o => o.deck.indexOf('theme:') !== 0) || real[0];
   UI.foe = foe.id;
   const want = opponentDeckFor(foe);
   UI.myDeck = 'Brushfire'; UI.seedDraft = '77'; UI.flipDelay = 0;

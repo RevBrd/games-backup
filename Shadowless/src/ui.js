@@ -156,6 +156,7 @@ const DECK_SOURCES = (() => {
 
 const LADDER_VIEW = buildLadder(LIVE_SETS, LADDER, {
   hasDeck: ref => ref.startsWith('theme:') ? !!DECKS[ref.slice(6)] : !!OPPONENT_DECKS[ref],
+  setName,
 });
 
 // A generated challenger's deck. Seeded off the OPPONENT rather than off the

@@ -739,6 +739,191 @@ const OPPONENT_DECKS = {
     [11, "base1-101"],  // Psychic Energy
     [17, "base1-99"],  // Grass Energy
   ]},
+  "b1:b1_t2_fighting_water": { name: "B1 T2-1", list: [
+    [1, "base1-62"],  // Sandshrew
+    [2, "base1-61"],  // Rattata
+    [3, "base1-52"],  // Machop
+    [2, "base1-34"],  // Machoke
+    [2, "base1-7"],  // Hitmonchan
+    [2, "base1-47"],  // Diglett
+    [1, "base1-19"],  // Dugtrio
+    [3, "base1-65"],  // Staryu
+    [2, "base1-64"],  // Starmie
+    [1, "base1-40"],  // Raticate
+    [2, "base1-63"],  // Squirtle
+    [1, "base1-42"],  // Wartortle
+    [16, "base1-97"],  // Fighting Energy
+    [12, "base1-102"],  // Water Energy
+    [1, "base1-71"],  // Computer Search
+    [1, "base1-88"],  // Professor Oak
+    [1, "base1-81"],  // Energy Retrieval
+    [2, "base1-91"],  // Bill
+    [2, "base1-94"],  // Potion
+    [1, "base1-95"],  // Switch
+    [1, "base1-93"],  // Gust of Wind
+    [1, "base1-83"],  // Maintenance
+  ]},
+  "b1:b1_t2_psychic_fire": { name: "B1 T2-2", list: [
+    [3, "base1-43"],  // Abra
+    [2, "base1-32"],  // Kadabra
+    [1, "base1-1"],  // Alakazam
+    [2, "base1-50"],  // Gastly
+    [1, "base1-29"],  // Haunter
+    [1, "base1-10"],  // Mewtwo
+    [2, "base1-31"],  // Jynx
+    [2, "base1-36"],  // Magmar
+    [2, "base1-28"],  // Growlithe
+    [1, "base1-23"],  // Arcanine
+    [3, "base1-27"],  // Farfetch'd
+    [1, "base1-60"],  // Ponyta
+    [18, "base1-101"],  // Psychic Energy
+    [10, "base1-98"],  // Fire Energy
+    [1, "base1-75"],  // Lass
+    [1, "base1-82"],  // Full Heal
+    [1, "base1-88"],  // Professor Oak
+    [2, "base1-91"],  // Bill
+    [1, "base1-95"],  // Switch
+    [1, "base1-93"],  // Gust of Wind
+    [2, "base1-94"],  // Potion
+    [1, "base1-92"],  // Energy Removal
+    [1, "base1-84"],  // PlusPower
+  ]},
+  "b1:b1_t2_grass_lightning": { name: "B1 T2-3", list: [
+    [4, "base1-69"],  // Weedle
+    [3, "base1-33"],  // Kakuna
+    [1, "base1-17"],  // Beedrill
+    [1, "base1-66"],  // Tangela
+    [2, "base1-45"],  // Caterpie
+    [1, "base1-54"],  // Metapod
+    [3, "base1-58"],  // Pikachu
+    [1, "base1-14"],  // Raichu
+    [2, "base1-67"],  // Voltorb
+    [1, "base1-20"],  // Electabuzz
+    [1, "base1-48"],  // Doduo
+    [16, "base1-99"],  // Grass Energy
+    [12, "base1-100"],  // Lightning Energy
+    [1, "base1-78"],  // Scoop Up
+    [1, "base1-80"],  // Defender
+    [1, "base1-90"],  // Super Potion
+    [1, "base1-88"],  // Professor Oak
+    [2, "base1-91"],  // Bill
+    [2, "base1-95"],  // Switch
+    [1, "base1-94"],  // Potion
+    [1, "base1-92"],  // Energy Removal
+    [1, "base1-16"],  // Zapdos
+    [1, "base1-51"],  // Koffing
+  ]},
+  "b1:b1_t2_lightning_fighting": { name: "B1 T2-4", list: [
+    [3, "base1-53"],  // Magnemite
+    [1, "base1-9"],  // Magneton
+    [3, "base1-67"],  // Voltorb
+    [1, "base1-21"],  // Electrode
+    [3, "base1-52"],  // Machop
+    [2, "base1-34"],  // Machoke
+    [1, "base1-8"],  // Machamp
+    [2, "base1-57"],  // Pidgey
+    [1, "base1-22"],  // Pidgeotto
+    [3, "base1-61"],  // Rattata
+    [2, "base1-40"],  // Raticate
+    [15, "base1-100"],  // Lightning Energy
+    [13, "base1-97"],  // Fighting Energy
+    [1, "base1-79"],  // Super Energy Removal
+    [2, "base1-88"],  // Professor Oak
+    [2, "base1-91"],  // Bill
+    [1, "base1-93"],  // Gust of Wind
+    [2, "base1-94"],  // Potion
+    [1, "base1-81"],  // Energy Retrieval
+    [1, "base1-56"],  // Onix
+  ]},
+  "b1:b1_t2_water_psychic": { name: "B1 T2-5", list: [
+    [4, "base1-59"],  // Poliwag
+    [2, "base1-38"],  // Poliwhirl
+    [1, "base1-13"],  // Poliwrath
+    [3, "base1-41"],  // Seel
+    [1, "base1-25"],  // Dewgong
+    [1, "base1-39"],  // Porygon
+    [2, "base1-43"],  // Abra
+    [1, "base1-32"],  // Kadabra
+    [2, "base1-49"],  // Drowzee
+    [1, "base1-31"],  // Jynx
+    [1, "base1-10"],  // Mewtwo
+    [2, "base1-27"],  // Farfetch'd
+    [17, "base1-102"],  // Water Energy
+    [11, "base1-101"],  // Psychic Energy
+    [1, "base1-74"],  // Item Finder
+    [1, "base1-88"],  // Professor Oak
+    [2, "base1-91"],  // Bill
+    [2, "base1-94"],  // Potion
+    [2, "base1-95"],  // Switch
+    [1, "base1-87"],  // Pokédex
+    [1, "base1-92"],  // Energy Removal
+    [1, "base1-82"],  // Full Heal
+  ]},
+  "b1:b1_t3_grass": { name: "B1 T3-1", list: [
+    [4, "base1-44"],  // Bulbasaur
+    [3, "base1-30"],  // Ivysaur
+    [2, "base1-15"],  // Venusaur
+    [3, "base1-55"],  // Nidoran ♂
+    [2, "base1-37"],  // Nidorino
+    [1, "base1-11"],  // Nidoking
+    [2, "base1-26"],  // Dratini
+    [1, "base1-18"],  // Dragonair
+    [1, "base1-5"],  // Clefairy
+    [2, "base1-51"],  // Koffing
+    [1, "base1-66"],  // Tangela
+    [25, "base1-99"],  // Grass Energy
+    [1, "base1-76"],  // Pokémon Breeder
+    [1, "base1-74"],  // Item Finder
+    [2, "base1-88"],  // Professor Oak
+    [3, "base1-91"],  // Bill
+    [1, "base1-95"],  // Switch
+    [1, "base1-90"],  // Super Potion
+    [1, "base1-80"],  // Defender
+    [1, "base1-92"],  // Energy Removal
+    [2, "base1-94"],  // Potion
+  ]},
+  "b1:b1_t3_water": { name: "B1 T3-2", list: [
+    [4, "base1-63"],  // Squirtle
+    [3, "base1-42"],  // Wartortle
+    [1, "base1-2"],  // Blastoise
+    [3, "base1-35"],  // Magikarp
+    [2, "base1-6"],  // Gyarados
+    [3, "base1-41"],  // Seel
+    [1, "base1-25"],  // Dewgong
+    [2, "base1-27"],  // Farfetch'd
+    [26, "base1-102"],  // Water Energy
+    [1, "base1-77"],  // Pokémon Trader
+    [1, "base1-79"],  // Super Energy Removal
+    [2, "base1-88"],  // Professor Oak
+    [3, "base1-91"],  // Bill
+    [2, "base1-94"],  // Potion
+    [1, "base1-90"],  // Super Potion
+    [1, "base1-73"],  // Impostor Professor Oak
+    [1, "base1-93"],  // Gust of Wind
+    [2, "base1-92"],  // Energy Removal
+    [1, "base1-84"],  // PlusPower
+  ]},
+  "b1:b1_t4_fire": { name: "B1 T4", list: [
+    [3, "base1-3"],  // Chansey
+    [4, "base1-46"],  // Charmander
+    [3, "base1-24"],  // Charmeleon
+    [1, "base1-4"],  // Charizard
+    [3, "base1-68"],  // Vulpix
+    [2, "base1-12"],  // Ninetales
+    [3, "base1-57"],  // Pidgey
+    [2, "base1-22"],  // Pidgeotto
+    [1, "base1-71"],  // Computer Search
+    [21, "base1-98"],  // Fire Energy
+    [4, "base1-96"],  // Double Colorless Energy
+    [2, "base1-77"],  // Pokémon Trader
+    [1, "base1-94"],  // Potion
+    [2, "base1-88"],  // Professor Oak
+    [3, "base1-91"],  // Bill
+    [1, "base1-95"],  // Switch
+    [1, "base1-93"],  // Gust of Wind
+    [1, "base1-92"],  // Energy Removal
+    [2, "base1-81"],  // Energy Retrieval
+  ]},
 };
 
 const LADDER = {
@@ -751,7 +936,7 @@ const LADDER = {
   "brackets": {
     "base1": {
       "name": "The Clubs",
-      "blurb": "Eight challengers and a rival. Beat five of them and Ronald turns up.",
+      "blurb": "Four theme decks, seven built from Base Set, and a rival waiting past the end.",
       "roster": [
         {
           "id": "base1-brushfire",
@@ -786,40 +971,74 @@ const LADDER = {
           "placeholder": true
         },
         {
-          "id": "gbc-isaac",
-          "name": "Isaac",
-          "title": "Lightning Club",
-          "deck": "gbc:isaac_zapping_selfdestruct"
+          "id": "base1-t2-1",
+          "name": "Bex",
+          "title": "Iron Fist",
+          "deck": "b1:b1_t2_fighting_water",
+          "placeholder": true
         },
         {
-          "id": "gbc-mitch",
-          "name": "Mitch",
-          "title": "Fighting Club",
-          "deck": "gbc:mitch_first_strike"
+          "id": "base1-t2-2",
+          "name": "Idris",
+          "title": "Mind & Ember",
+          "deck": "b1:b1_t2_psychic_fire",
+          "placeholder": true
         },
         {
-          "id": "gbc-murray",
-          "name": "Murray",
-          "title": "Psychic Club",
-          "deck": "gbc:murray_strange_psyshock"
+          "id": "base1-t2-3",
+          "name": "Nadia",
+          "title": "Static Bloom",
+          "deck": "b1:b1_t2_grass_lightning",
+          "placeholder": true
         },
         {
-          "id": "gbc-rick",
-          "name": "Rick",
-          "title": "Science Club",
-          "deck": "gbc:rick_wonders_of_science"
+          "id": "base1-t2-4",
+          "name": "Emory",
+          "title": "Ground Fault",
+          "deck": "b1:b1_t2_lightning_fighting",
+          "placeholder": true
+        },
+        {
+          "id": "base1-t2-5",
+          "name": "Sable",
+          "title": "Cold Current",
+          "deck": "b1:b1_t2_water_psychic",
+          "placeholder": true
+        },
+        {
+          "id": "base1-t3-1",
+          "name": "Priya",
+          "title": "Verdant Coil",
+          "deck": "b1:b1_t3_grass",
+          "placeholder": true
+        },
+        {
+          "id": "base1-t3-2",
+          "name": "Vaughn",
+          "title": "Undertow",
+          "deck": "b1:b1_t3_water",
+          "placeholder": true
         }
       ],
       "boss": {
-        "id": "gbc-ronald-1",
-        "name": "Ronald",
-        "title": "I'm Ronald!",
-        "deck": "gbc:ronald_im_ronald"
-      }
+        "id": "base1-t4",
+        "name": "Cassia",
+        "title": "Ashfall",
+        "deck": "b1:b1_t4_fire",
+        "placeholder": true
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-1",
+          "name": "Ronald",
+          "title": "I'm Ronald!",
+          "deck": "gbc:ronald_im_ronald"
+        }
+      ]
     },
     "base2": {
       "name": "The Jungle",
-      "blurb": "The clubs' harder half, and two decks built out of Jungle itself.",
+      "blurb": "All eight club masters in one place, and two decks built out of Jungle itself.",
       "roster": [
         {
           "id": "base2-waterblast",
@@ -860,6 +1079,30 @@ const LADDER = {
           "name": "Gene",
           "title": "Rock Club",
           "deck": "gbc:gene_rock_crusher"
+        },
+        {
+          "id": "gbc-isaac",
+          "name": "Isaac",
+          "title": "Lightning Club",
+          "deck": "gbc:isaac_zapping_selfdestruct"
+        },
+        {
+          "id": "gbc-mitch",
+          "name": "Mitch",
+          "title": "Fighting Club",
+          "deck": "gbc:mitch_first_strike"
+        },
+        {
+          "id": "gbc-murray",
+          "name": "Murray",
+          "title": "Psychic Club",
+          "deck": "gbc:murray_strange_psyshock"
+        },
+        {
+          "id": "gbc-rick",
+          "name": "Rick",
+          "title": "Science Club",
+          "deck": "gbc:rick_wonders_of_science"
         }
       ],
       "boss": {
