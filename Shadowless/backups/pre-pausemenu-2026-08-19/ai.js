@@ -258,25 +258,6 @@ class AI {
     return -W.deckBurn * frac * frac;
   }
 
-  // WHAT ONE CARD IS WORTH HAVING, extracted from handKeepValue on 19 Aug 2026
-  // so the Prize picker could reuse it instead of growing a second opinion.
-  // Trevor's rule, 16 Aug: evolutions you can use, Energy you are short of, and
-  // Trainers are all real cards; the same card with nothing to attach to is not.
-  cardKeepValue(pi, inst, inPlay) {
-    const E = this.E, me = E.state.players[pi];
-    const c = this.db[inst.id];
-    if (!c) return 0;
-    if (c.kind === 'energy') {
-      return inPlay.some(sl => this.potential(pi, sl).short > 0) ? 4 : 1;
-    }
-    if (c.kind === 'pokemon' && c.evolvesFrom) {
-      return inPlay.some(sl => this.top(sl).name === c.evolvesFrom) ? 9 : 1.5;
-    }
-    if (c.kind === 'pokemon') return me.bench.length < 3 ? 4 : 1.5;
-    return 2.5;   // a Trainer. Playable ones are worth more, but scoring every
-                  // one of them here would recurse into this scorer.
-  }
-
   // What a card in hand is actually worth keeping, for the two cards that throw
   // a hand away. Trevor's rule, 16 Aug: don't pitch evolutions you can use,
   // Energy you are short of, or a Trainer worth playing — but get a desperation
@@ -287,7 +268,20 @@ class AI {
     let v = 0;
     for (const inst of me.hand) {
       if (inst.uid === excludeUid) continue;
-      v += this.cardKeepValue(pi, inst, inPlay);
+      const c = this.db[inst.id];
+      if (!c) continue;
+      if (c.kind === 'energy') {
+        // Only worth keeping if something actually wants it.
+        v += inPlay.some(sl => this.potential(pi, sl).short > 0) ? 4 : 1;
+      } else if (c.kind === 'pokemon' && c.evolvesFrom) {
+        // An evolution whose target is on the board is a real card.
+        v += inPlay.some(sl => this.top(sl).name === c.evolvesFrom) ? 9 : 1.5;
+      } else if (c.kind === 'pokemon') {
+        v += me.bench.length < 3 ? 4 : 1.5;
+      } else {
+        v += 2.5;   // a Trainer. Playable ones are worth more, but scoring every
+                    // one of them here would recurse into this scorer.
+      }
     }
     return v;
   }
@@ -1030,30 +1024,6 @@ class AI {
   // formula cannot disagree with itself. It also keeps the sacrificial promote,
   // which is real play: a bare Basic with nothing on it is CHEAP to feed, and
   // falls out of `invested` being zero instead of needing a rule.
-  // WHICH FACE-UP PRIZE TO TAKE, and it exists for one narrow case: Here Comes
-  // Team Rocket! has made every Prize visible to BOTH players, so choosing well
-  // is no longer private knowledge and a bot picking at random would be playing
-  // badly on purpose. Everywhere else the bot takes one at RANDOM on purpose —
-  // it reads full engine state, so letting it choose from a face-DOWN pile would
-  // hand it Peek's entire value for free, every game, which is the same
-  // self-restriction as scoring PEEK at -Infinity. Trevor's call, 19 Aug 2026.
-  //
-  // It reuses cardKeepValue rather than having an opinion of its own, so the
-  // Prize picker cannot drift from what the bot thinks a card is worth
-  // everywhere else. Ties fall to the first: the pile is already in an order
-  // nobody chose.
-  prizeIndex(pi) {
-    const me = this.E.state.players[pi];
-    if (!me.prizes.length) return 0;
-    const inPlay = this.E.allSlots(pi);
-    let best = 0, bestV = -Infinity;
-    me.prizes.forEach((inst, i) => {
-      const v = this.cardKeepValue(pi, inst, inPlay);
-      if (v > bestV) { bestV = v; best = i; }
-    });
-    return best;
-  }
-
   promoteValue(pi, b) {
     const W = this.W, E = this.E;
     const you = E.state.players[1 - pi];
@@ -1943,17 +1913,6 @@ class AI {
         return s;
       }
 
-      // MUST return a real number, for the reason spelled out on switchIn below:
-      // an all -Infinity option set makes pickBest yield null, and a null here
-      // means nobody takes the Prize and the game stalls with the turn frozen.
-      // Face down, every option is genuinely identical and a flat score is the
-      // honest answer — the ENGINE picks at random in that case, not this.
-      case 'takePrize': {
-        if (!this.E.state.prizesFaceUp) return 1;
-        const inst = me.prizes[a.idx];
-        return inst ? this.cardKeepValue(pi, inst, this.E.allSlots(pi)) : 0;
-      }
-
       case 'promote': {
         const b = me.bench[a.bench];
         if (!b) return -Infinity;
@@ -2723,33 +2682,32 @@ class AI {
     const E = this.E, s = E.state;
     if (s.phase === 'over') return null;
 
-    // WHAT DOES *THIS PLAYER* OWE — asked in priority order, once, rather than
-    // as four independent "is anything pending" blocks. It was the second shape
-    // and that is a bug: each block returned null when its own thing was owed by
-    // somebody ELSE, so a Prize owed to player 1 was swallowed by the promotion
-    // owed to player 0 and nobody ever answered. The game hung.
-    //
-    // That is now the fourth time this exact mistake has been made in this
-    // engine — Whirlwind's pendingSwitch, pendingAsk, the Prize gate in act(),
-    // and here. THE RULE: every owed choice is PER PLAYER, and a new one needs a
-    // branch in all three places (act(), legalActions() and this) that asks what
-    // *pi* owes rather than what is outstanding anywhere.
-    //
-    // Priority within a player: answer a question, get a body onto the empty
-    // Active spot, then take the Prize. A board with no Active is not a board.
-    const owedBy = (v) => v !== null && v !== undefined;
-    const anyOwed = owedBy(s.pendingAsk) || owedBy(s.pendingSwitch)
-                 || owedBy(s.pendingPromote) || owedBy(s.pendingPrize);
-    if (anyOwed) {
-      const pick = (kind) => {
-        const acts = E.legalActions(pi).filter(x => x.t === kind);
-        return acts.length ? this.pickBest(pi, acts, true) : null;
-      };
-      if (owedBy(s.pendingAsk) && s.pendingAsk.player === pi) return pick('answer');
-      if (s.pendingSwitch === pi) return pick('switchIn');
-      if (s.pendingPromote === pi) return pick('promote');
-      if (s.pendingPrize === pi) return pick('takePrize');
-      return null;                      // owed by the other player
+    // A QUESTION FROM THE OTHER PLAYER COMES FIRST, and it has to be handled up
+    // here beside the other two rather than below — `s.active !== pi` returns
+    // null a few lines down, and being asked something on somebody else's turn
+    // is exactly the case that trips over. Leaving it out hangs the game with
+    // both sides waiting, which is precisely what pendingSwitch did when Jungle
+    // brought Whirlwind and is written on the smoke test to this day.
+    if (s.pendingAsk !== null && s.pendingAsk !== undefined) {
+      if (s.pendingAsk.player !== pi) return null;
+      const acts = E.legalActions(pi).filter(a => a.t === 'answer');
+      if (!acts.length) return null;
+      return this.pickBest(pi, acts, true);
+    }
+
+    // Whirlwind dragged one of ours up. Send the one we least mind exposing:
+    // biggest HP pool, same instinct as choosing a replacement after a KO.
+    if (s.pendingSwitch !== null) {
+      if (s.pendingSwitch !== pi) return null;
+      const acts = E.legalActions(pi).filter(a => a.t === 'switchIn');
+      if (!acts.length) return null;
+      return this.pickBest(pi, acts, true);
+    }
+    if (s.pendingPromote !== null) {
+      if (s.pendingPromote !== pi) return null;
+      const acts = E.legalActions(pi).filter(a => a.t === 'promote');
+      if (!acts.length) return null;
+      return this.pickBest(pi, acts, true);
     }
     if (s.active !== pi) return null;
 

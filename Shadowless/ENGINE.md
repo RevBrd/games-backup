@@ -149,12 +149,40 @@ Trevor asked whether Mirror Move could read the log instead — the right instin
 genuinely is already there — but the numbers would have to be regex'd back out of sentences. The
 record is the same idea done as data.
 
-### `pendingSwitch`
+### `pendingSwitch`, `pendingPrize`, and the rule they share
 
-The only place a player decides something during their *opponent's* turn (Whirlwind). It follows the
-same deferred-turn-end shape as `pendingPromote`, and the two can be outstanding at once **for
-different players** — the gates in `act()` and `legalActions()` are per-player for that reason, and
-were briefly not, which hung games.
+**Every owed choice in this engine is PER PLAYER, and there are now four of them** — `pendingAsk`,
+`pendingSwitch`, `pendingPromote` and `pendingPrize`. Two can be outstanding at once *for different
+people*, which is the normal case rather than the edge one: the player who just lost a Pokémon owes a
+promotion and the player who Knocked it out owes a Prize.
+
+**A new one needs a branch in THREE places, and all three must ask what *this player* owes rather
+than what is outstanding anywhere:** the gate at the top of `act()`, the offer in `legalActions()`,
+and the dispatch at the top of `ai.js`'s `choose()`. Miss any one and the game hangs with both sides
+waiting.
+
+**This has now been got wrong four times** — Whirlwind's `pendingSwitch` when Jungle landed,
+`pendingAsk` in Job 10, and twice while adding `pendingPrize` on 19 Aug 2026, once in `act()` and once
+in `choose()`. The second of those is the instructive one: `choose()` had four independent
+*is-anything-pending* blocks, each returning `null` when its own thing was owed by somebody else — so a
+Prize owed to player 1 was swallowed by the promotion owed to player 0 and nobody ever answered. It is
+one ordered question now (*what does `pi` owe?*) rather than four unordered ones, and that shape is
+what to copy. `powertest.js` pins the exact deadlock.
+
+**`pendingSwitch`** is Whirlwind: a choice made during your opponent's turn. **`pendingPrize`** is a
+queue rather than a slot, for the same reason promotion is one — a Selfdestruct that Knocks Out three
+Pokémon owes three Prizes, taken one at a time. Entries repeat: `[0,0,0]` is three owed to player 0.
+
+**Both Knock-Out sites go through `awardPrize`, which is the one doorway.** Auto resolves it
+immediately at a **random** index; manual queues it. That randomness is not cosmetic — Prizes used to
+come off with `shift()`, so Rattata's Trickery on slot 0 meant *"into my hand next Knock Out"* and on
+slot 5 meant *"buried"*, which was real strategy nobody designed and nobody could see.
+
+**Do not read "took all Prizes" off the pile at a Knock-Out site any more.** On a manual pick the
+Prize is still sitting there until the player chooses, so the win is declared in `afterOwedChoice`
+and by `settleWinConditions` — one answer, both modes.
+
+*[Why the player gets a toggle and the bot does not →](AI.md)*
 
 ### `playsAs: 'pokemon'`
 

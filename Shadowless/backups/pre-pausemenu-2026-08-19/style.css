@@ -1559,28 +1559,3 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    that bar's own buttons, so there is no way to click past it by accident —
    which is the entire point, Trevor having done exactly that repeatedly. */
 .logask{font-size:12px;color:var(--dim);margin-right:10px;align-self:center}
-
-/* ---------------------------------------------------------- pause menu -- */
-/* Quiet on purpose. It is the only control on the status bar and it competes
-   with the turn flag, which is the thing a player actually reads there. */
-/* NO margin-left:auto — .seedno already has one, and a second auto margin
-   splits the free space between them instead of pushing both right, which put
-   the seed in the middle of the bar. */
-.pausebtn{font-family:var(--mono);font-size:9px;letter-spacing:.16em;
-  color:var(--dim);background:transparent;border:1px solid var(--line);border-radius:3px;
-  padding:2px 7px;cursor:pointer}
-.pausebtn:hover{color:var(--amber);border-color:var(--amber)}
-.setrow{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0 6px}
-.setname{font-family:var(--serif);font-size:14px}
-.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
-.segbtn{font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:4px 12px;
-  background:transparent;color:var(--dim);border:0;cursor:pointer}
-.segbtn.on{background:var(--amber);color:#14181C}
-.sethint{font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:6px}
-.setwarn{font-size:12px;color:var(--amber);margin-right:10px;align-self:center}
-.sheetbar{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:18px}
-/* A Prize you may take. Same amber the game uses for "this is your move" on
-   every other targetable thing, so the language is learned once. */
-.zone.prizes.picking .cardback.pz.pickable{cursor:pointer;border-color:var(--amber);
-  box-shadow:0 0 0 1px var(--amber)}
-.zone.prizes.picking .cardback.pz.pickable:hover{transform:translateY(-3px)}

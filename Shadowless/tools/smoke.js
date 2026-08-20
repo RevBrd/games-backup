@@ -62,14 +62,14 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, deckFor, resolveDeck, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, leaveMatch, downloadMatchLog, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, deckFor, resolveDeck, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, leaveMatch, downloadMatchLog, setPrizePick, forfeitMatch, prizePickSetting, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
   bootSave, startNewSave, openNextPack, settleResult, myDeckNames, sigilCard, pullFace,
   addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, deckSummary,
   LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin,
-  leaveMatch, downloadMatchLog,
+  leaveMatch, downloadMatchLog, setPrizePick, forfeitMatch, prizePickSetting,
   availableOpponents, bracketOpen, bossAvailable, hasBeaten } = ctx;
 
 console.log('\n=== BUILT ARTIFACT SMOKE ===');
@@ -1101,6 +1101,55 @@ T('winning pays packs exactly once, however many times the board redraws', () =>
   UI.freePlay = true;      // hand the suite back the mode it declared
   return r;
 });
+// ---- the pause menu, the forfeit, and the Prize setting ---------------------
+T('the Prize setting defaults to random and persists', () => {
+  const was = UI.save.settings.prizePick;
+  setPrizePick('manual');
+  const stored = JSON.parse(localStorage.getItem(SAVE_KEY));
+  const r = UI.save.settings.prizePick === 'manual' && stored.settings.prizePick === 'manual';
+  setPrizePick(was || 'auto');
+  return r;
+});
+T('...and it reaches the engine, per player, with the bot always on auto', () => {
+  setPrizePick('manual');
+  UI.myDeck = 'Brushfire'; UI.seedDraft = '5150'; startMatch();
+  const r = UI.E.cfg.prizePick[0] === 'manual' && UI.E.cfg.prizePick[1] === 'auto';
+  setPrizePick('auto');
+  return r;
+});
+T('...and flipping it mid-match applies without restarting', () => {
+  startMatch();
+  setPrizePick('manual');
+  const on = UI.E.cfg.prizePick[0] === 'manual';
+  setPrizePick('auto');
+  return on && UI.E.cfg.prizePick[0] === 'auto';
+});
+T('a forfeit ends the game as a loss and records it', () => {
+  UI.myDeck = 'Brushfire'; UI.seedDraft = '5151'; startMatch();
+  UI.E.setupAuto(0); UI.E.setupConfirm(0);
+  const losses = UI.save.stats.losses;
+  forfeitMatch();
+  // winner can legitimately be 0, so this checks the real value rather than truth.
+  const ended = UI.E.state.phase === 'over' && UI.E.state.winner === 1;
+  render(); render();
+  return ended && UI.save.stats.losses === losses + 1;
+});
+T('the pause menu is suppressed once the game is over', () => {
+  // There is nothing left to forfeit and renderOver owns that moment. Sets up
+  // its OWN finished game rather than inheriting one: the forfeit test above
+  // renders twice, which settles the result and can move the screen.
+  UI.myDeck = 'Brushfire'; UI.seedDraft = '5152'; startMatch();
+  UI.E.setupAuto(0); UI.E.setupConfirm(0);
+  UI.paused = true;
+  render();
+  const upDuringPlay = allByClass(document.getElementById('app'), 'setrow').length > 0;
+  UI.E.state.phase = 'over'; UI.E.state.winner = 1; UI.E.state.winReason = 'test';
+  render();
+  const goneAfter = allByClass(document.getElementById('app'), 'setrow').length === 0;
+  UI.paused = false; render();
+  return upDuringPlay && goneAfter;
+});
+
 // ---- leaving a match asks about the log first -------------------------------
 // The log is the only view of the opponent's hand, both Prize piles and every
 // score the AI weighed, and it dies with the click that leaves the match. These

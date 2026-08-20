@@ -185,6 +185,11 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
   and Fossil, so from Team Rocket onward there is no arbiter and there does not need to be one — a
   four-step order, ending in Trevor on playability, plus an index of the principles the existing
   rulings already generalise to. *[The order, and the tiebreaker with evidence behind it →](RULINGS.md)*
+- **Every choice a player is owed is PER PLAYER, and there are four of them.** `pendingAsk`,
+  `pendingSwitch`, `pendingPromote`, `pendingPrize` — and two are outstanding at once for *different*
+  people as the normal case. A new one needs a branch in `act()`, `legalActions()` **and** `ai.js`'s
+  `choose()`, each asking what *this* player owes. Getting it wrong hangs the game, which has now
+  happened four times. *[The rule and the four →](ENGINE.md)*
 - **"As often as you like during your turn" powers are a mode you enter and leave**, and one pattern
   serves Damage Swap, Energy Trans and Rain Dance. Build the fourth the same way.
   *[The pattern in full →](ENGINE.md)*

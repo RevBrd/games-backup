@@ -281,6 +281,29 @@ to the Charizard deck in `decksim` and 8.9% of games in `abtest`, with the field
 and it moved no other deck in the roster, because no other deck runs Double Colorless. Found by
 Trevor asking whether the bot knew a DCE turns into Fire.
 
+**The bot may not choose its own Prize, and that is a self-restriction rather than a gap.** *19 Aug
+2026.* Prizes are face down, and `ai.js` reads full engine state — so letting it pick would hand it
+Peek's entire value for free, in every game, forever. It takes one at **random**. Exactly the same
+reasoning as scoring `PEEK` at −Infinity, and the same shape as the Challenge restriction Trevor asked
+for in Job 10: **the bot may only act on what it could legitimately know.**
+
+**The one exception is the one that makes it fair.** Once somebody has played *Here Comes Team
+Rocket!* every Prize is face up **to both players**, the information is public, and a bot picking at
+random would be playing badly on purpose. So `prizeIndex` runs only when `state.prizesFaceUp`, and
+`powertest.js` asserts both halves — random while face down, the useful card while face up.
+
+**It reuses `cardKeepValue` rather than having an opinion of its own**, which is the part worth
+copying. That per-card scoring was inlined in `handKeepValue` (Trevor's rule, 16 Aug: evolutions you
+can use, Energy you are short of, Trainers are real cards) and was extracted so the Prize picker could
+share it. **A second opinion about what a card is worth would have drifted from the first**, and the
+bot would have valued the same card differently depending on where it was looking at it from.
+
+**The player's own picker is a setting rather than a realness gate, and the first design here was
+wrong.** I proposed gating it on whether the engine could see that the choice was real — the
+`energyChoiceIsReal` pattern — and Trevor pushed back. The analogy does not hold: with Energy the
+*engine* can judge realness objectively, while with a Prize only the player can, so the gate would
+have taken the decision away in both directions. *[The setting, and where it lives →](INTERACTION.md)*
+
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
@@ -298,7 +321,11 @@ Trevor asking whether the bot knew a DCE turns into Fire.
    time, each with a reason and a measurement. A sweep over `AI_WEIGHTS` as a whole has never been
    done and there is no measured reason to think it would pay — recorded so nobody proposes it as a
    known-good job. It is a speculative one.
-3. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
+3. **`prizeIndex` is unmeasured.** It fires only while Prizes are face up, which is rare, and it
+   inherits `cardKeepValue`'s weights rather than adding its own — so there is nothing new to tune,
+   but nothing has duelled it either. It cannot go on `selftest.js`'s `PROVISIONAL` list, which holds
+   effect verbs, so it is recorded here instead.
+4. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
    Every opponent plays at the tier deck select hands them. Whether a named rival should play better
    than a Club Master is an unasked design question — see [PROGRESSION.md](PROGRESSION.md) and
    [OPPONENTS.md](OPPONENTS.md), which argues the AI probably should *not* be the dial.

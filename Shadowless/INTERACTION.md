@@ -193,3 +193,40 @@ retreat and then misclicking an attack ends your turn.
 The armed row says only "Retreating" and "Cancel". The instruction is already on the centre line and
 in the bar, and a third copy would make the card's version read as decoration — the same mistake the
 coin toss made when its result was announced in two places.
+
+## The pause menu, and the Prize you pick yourself
+
+**The first settings surface this game has, and it exists because a forfeit had nowhere to live.**
+Trevor's shape, 19 Aug 2026. `MENU` sits at the far end of the status bar — **not on the action bar**,
+because that bar is a status line plus commitments about *this turn* and a settings menu is neither.
+It is a sheet for the same reason.
+
+**Two rules on the button and one on the sheet.** The button carries no `margin-left:auto`, because
+`.seedno` already has one and a second auto margin splits the free space between them instead of
+pushing both right — it put the seed in the middle of the bar. And the sheet is **suppressed when
+either the live state or the frozen view says the game is over**: `S()` is the presentation snapshot,
+so during a coin flip that ends the match it still reads `main`, and offering to forfeit an already
+decided game is exactly the wrong thing to do with that gap.
+
+**A forfeit is a loss, not an escape hatch.** It goes through the engine's own `endGame`, so the
+ladder, the stats and `progress.lost` all see it exactly as they would a real one. It is
+confirmation-gated, which makes it the second action in the game to earn that after retreat — same
+test: it cannot be undone and it spends something real.
+
+## Choosing a Prize
+
+**Your own Prize row IS the picker.** No sheet, no overlay — the tiles you have been looking at all
+game light up amber and you click one. That is the Energy picker's argument reused: a card you are
+choosing between is a card you want to *look at* while you choose, and a sheet would cover the board.
+
+**Only your own row arms, and only when you are the one who owes a pick.** The opponent's row is
+never clickable, and `armPrizeTile` is one function so the face-up and face-down tiles cannot drift
+apart — Here Comes Team Rocket! means both kinds can be on screen in the same row.
+
+**The default is Random and the toggle lives in the pause menu, which is deliberate.** Trevor's
+framing: mostly not be bothered, but able to choose when it matters. It applies to the **next Knock
+Out rather than the next match**, because Here Comes Team Rocket! can turn every Prize face up on turn
+6 — possibly played by the opponent — and a setting you could only change at deck select would strand
+you through the one situation where choosing is unambiguously worth it.
+
+*[Why the bot does not get the same toggle →](AI.md)* · *[the queue behind it →](ENGINE.md)*

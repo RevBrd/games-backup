@@ -30,8 +30,6 @@ const TRAINER_FLOW = {
 const UI = {
   E: null,
   sel: null,          // {kind:'hand', idx} | null
-  paused: false,      // the pause menu is up
-  forfeitArmed: false,// ...and the forfeit is one click from happening
   inspect: null,      // card id shown in the preview panel
   lastTab: 'log',
   fx: {},             // key -> expiry timestamp; drives one-shot animations
@@ -338,13 +336,7 @@ function newGame() {
   clearTimeout(UI.aiTimer); clearTimeout(UI.presTimer);
   UI.pres = null; UI.view = null;
   const seed = UI.seedDraft === '' ? (Math.random() * 2147483647 | 0) : (parseInt(UI.seedDraft, 10) | 0);
-  // prizePick is PER PLAYER and only ever manual on the human's side. The bot
-  // stays on auto because it reads full engine state — see engine.autoPrizeIndex
-  // for the one exception, which is Here Comes Team Rocket! making the Prizes
-  // public to everybody.
-  const cfg = Object.assign({}, UI.cfgDraft,
-    { prizePick: [prizePickSetting(), 'auto'] });
-  UI.E = new Engine(CARD_DB, EFFECTS, { seed, cfg });
+  UI.E = new Engine(CARD_DB, EFFECTS, { seed, cfg: Object.assign({}, UI.cfgDraft) });
   // Mirror matches are allowed. Both sides build from the same list, but the two
   // seeds differ, so they shuffle and draw independently.
   //
@@ -974,17 +966,6 @@ function renderScreen() {
   // so the opening flip gets the board to itself and the sheet arrives after it.
   if (S().phase === 'setup' && !presenting()) root.appendChild(renderSetup());
   if (S().phase === 'over') root.appendChild(renderOver());
-  // Mounted last so it sits over everything, but suppressed once the game is
-  // over: there is nothing left to forfeit and renderOver already owns that
-  // moment. The setting is still reachable from the next match's menu.
-  //
-  // BOTH states are checked, and that is not belt-and-braces. S() is the frozen
-  // presentation snapshot while a coin is in the air, so during a flip that ends
-  // the game it still says 'main' — and offering to forfeit a match that is
-  // already decided is exactly the wrong thing to do with that gap.
-  if (UI.paused && S().phase !== 'over' && UI.E.state.phase !== 'over') {
-    root.appendChild(renderPause());
-  }
 
   chooseLayout();
   layoutHand();
@@ -1151,8 +1132,6 @@ function renderStatusBar() {
   const s = S();
   const bar = el('div', 'statusbar');
   const who = s.phase === 'over' ? 'Game over'
-    : s.pendingPrize === 0 ? 'Take a Prize — click one'
-    : s.pendingPrize === 1 ? 'Opponent is taking a Prize'
     : s.pendingSwitch !== null ? (s.pendingSwitch === 0 ? 'Whirlwind — choose a Pokemon to send up' : 'Opponent is choosing')
     : s.pendingPromote !== null ? (s.pendingPromote === 0 ? 'Choose a Pokemon to promote' : 'Opponent is promoting')
     : (s.active === 0 ? 'Your turn' : "Opponent's turn");
@@ -1160,11 +1139,6 @@ function renderStatusBar() {
   bar.appendChild(t);
   bar.appendChild(el('div', 'turnno', `turn ${s.turn}`));
   bar.appendChild(el('div', 'seedno', `seed ${UI.E.seed}`));
-  // Up here rather than on the action bar: the action bar is a status line plus
-  // commitments about THIS turn, and a settings menu is neither.
-  const pause = el('button', 'pausebtn', 'MENU');
-  pause.onclick = () => { UI.paused = true; UI.forfeitArmed = false; render(); };
-  bar.appendChild(pause);
   return bar;
 }
 
@@ -1420,20 +1394,8 @@ function stackZone(label, n, cls) {
   return z;
 }
 
-// One place, so the face-up and face-down tiles cannot drift apart.
-function armPrizeTile(t, i) {
-  t.classList.add('pickable');
-  t.onclick = () => { dispatch(0, { t: 'takePrize', idx: i }); };
-}
-
 function prizeZone(p, mine) {
   const z = el('div', 'zone prizes');
-  // YOUR OWN PILE IS THE PICKER when you owe a choice — no sheet, no overlay.
-  // The Prizes are already on the board in the place you have been looking at
-  // all game, and a card you are choosing between is a card you want to look at
-  // while you choose, which is the same argument the Energy picker won on.
-  const picking = mine && S().pendingPrize === 0;
-  if (picking) z.classList.add('picking');
   z.appendChild(el('div', 'zonelabel', 'PRIZES'));
   const grid = el('div', 'prizegrid');
   const total = UI.E.cfg.prizeCount;
@@ -1457,14 +1419,9 @@ function prizeZone(p, mine) {
       const t = el('div', 'cardback pz faceup k-' + c.kind);
       t.appendChild(el('span', 'cb-mark'));
       t.title = c.name;
-      if (picking) armPrizeTile(t, i);
       grid.appendChild(peekOn(t, c.id));
     }
-    else if (i < p.prizes.length) {
-      const t = cardBack('pz');
-      if (picking) armPrizeTile(t, i);
-      grid.appendChild(t);
-    }
+    else if (i < p.prizes.length) grid.appendChild(cardBack('pz'));
     else {
       const t = el('div', 'cardback pz taken');
       if (UI.fxActive('prize' + (mine ? '0' : '1'))) t.classList.add('fx-prize');
@@ -2718,21 +2675,6 @@ function renderLogAsk(bar) {
   no.onclick = () => { const go = UI.logAsk; UI.logAsk = null; UI.logSaved = true; go(); };
   bar.appendChild(yes); bar.appendChild(no);
   return true;
-}
-
-const prizePickSetting = () =>
-  (UI.save && UI.save.settings && UI.save.settings.prizePick === 'manual') ? 'manual' : 'auto';
-
-// Applies to the NEXT Knock Out, not the next match — the engine reads cfg live,
-// so flipping mid-game works and is the point: Here Comes Team Rocket! can turn
-// every Prize face up on turn 6, possibly played by the opponent, and a setting
-// you could only change at the deck screen would strand you for the one
-// situation where choosing is unambiguously worth it.
-function setPrizePick(mode) {
-  if (!UI.save) return;
-  UI.save.settings.prizePick = (mode === 'manual') ? 'manual' : 'auto';
-  persist();
-  if (UI.E) UI.E.cfg.prizePick = [prizePickSetting(), 'auto'];
 }
 
 function downloadMatchLog() {
@@ -4394,70 +4336,6 @@ function renderOver() {
   box.appendChild(bar);
   ov.appendChild(box);
   return ov;
-}
-
-// ------------------------------------------------------------- pause menu --
-// The first settings surface this game has, and it exists because a forfeit had
-// nowhere to live. Trevor's shape, 19 Aug 2026: a way out of a match that is
-// going nowhere, plus the Prize toggle, and room for whatever comes next.
-//
-// It is a SHEET rather than a bar control, for the reason INTERACTION.md gives
-// about the action bar: that bar is a status line plus commitments, not a menu.
-// Anything that is neither about the board nor about this turn belongs off it.
-function renderPause() {
-  const ov = el('div', 'overlay');
-  const box = el('div', 'sheet');
-  box.appendChild(el('h2', null, 'Paused'));
-
-  // --- Prizes ---------------------------------------------------------------
-  const manual = prizePickSetting() === 'manual';
-  const row = el('div', 'setrow');
-  row.appendChild(el('div', 'setname', 'Prize cards'));
-  const seg = el('div', 'seg');
-  [['auto', 'Random'], ['manual', 'I choose']].forEach(([v, label]) => {
-    const b = el('button', 'segbtn' + ((v === 'manual') === manual ? ' on' : ''), label);
-    b.onclick = () => { setPrizePick(v); render(); };
-    seg.appendChild(b);
-  });
-  row.appendChild(seg);
-  box.appendChild(row);
-  box.appendChild(el('div', 'sethint', manual
-    ? 'You pick which Prize to take. The Game Boy game always worked this way.'
-    : 'A Prize is taken at random. Switch any time — it applies to the next Knock Out, not the next match.'));
-
-  // --- Forfeit --------------------------------------------------------------
-  // Confirmation-gated, and it is the second action in the game that earns one
-  // after retreat. Same test: it cannot be undone and it spends something real.
-  const bar = el('div', 'sheetbar');
-  if (UI.forfeitArmed) {
-    bar.appendChild(el('span', 'setwarn', 'Forfeit and take the loss?'));
-    const yes = el('button', 'btn end', 'Forfeit');
-    yes.onclick = () => { UI.forfeitArmed = false; forfeitMatch(); };
-    const no = el('button', 'btn ghost', 'Cancel');
-    no.onclick = () => { UI.forfeitArmed = false; render(); };
-    bar.appendChild(yes); bar.appendChild(no);
-  } else {
-    const ff = el('button', 'btn ghost', 'Forfeit match');
-    ff.onclick = () => { UI.forfeitArmed = true; render(); };
-    const back = el('button', 'btn', 'Resume');
-    back.onclick = () => { UI.paused = false; UI.forfeitArmed = false; render(); };
-    bar.appendChild(back); bar.appendChild(ff);
-  }
-  box.appendChild(bar);
-  ov.appendChild(box);
-  return ov;
-}
-
-// A forfeit is a LOSS, not an escape hatch — it records like any other, so the
-// ladder and `progress.lost` see it. Routed through the engine's own endGame so
-// there is one definition of "the game is over" and settleResult pays out (or
-// does not) exactly as it would have.
-function forfeitMatch() {
-  UI.paused = false;
-  if (UI.E && S().phase !== 'over') {
-    UI.E.endGame(1, `${S().players[0].name} forfeited`);
-  }
-  render();
 }
 
 // ------------------------------------------------------------------- rail --

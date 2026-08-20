@@ -1567,6 +1567,31 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    which is the entire point, Trevor having done exactly that repeatedly. */
 .logask{font-size:12px;color:var(--dim);margin-right:10px;align-self:center}
 
+/* ---------------------------------------------------------- pause menu -- */
+/* Quiet on purpose. It is the only control on the status bar and it competes
+   with the turn flag, which is the thing a player actually reads there. */
+/* NO margin-left:auto — .seedno already has one, and a second auto margin
+   splits the free space between them instead of pushing both right, which put
+   the seed in the middle of the bar. */
+.pausebtn{font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  color:var(--dim);background:transparent;border:1px solid var(--line);border-radius:3px;
+  padding:2px 7px;cursor:pointer}
+.pausebtn:hover{color:var(--amber);border-color:var(--amber)}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0 6px}
+.setname{font-family:var(--serif);font-size:14px}
+.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.segbtn{font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:4px 12px;
+  background:transparent;color:var(--dim);border:0;cursor:pointer}
+.segbtn.on{background:var(--amber);color:#14181C}
+.sethint{font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:6px}
+.setwarn{font-size:12px;color:var(--amber);margin-right:10px;align-self:center}
+.sheetbar{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:18px}
+/* A Prize you may take. Same amber the game uses for "this is your move" on
+   every other targetable thing, so the language is learned once. */
+.zone.prizes.picking .cardback.pz.pickable{cursor:pointer;border-color:var(--amber);
+  box-shadow:0 0 0 1px var(--amber)}
+.zone.prizes.picking .cardback.pz.pickable:hover{transform:translateY(-3px)}
+
 </style>
 </head>
 <body>
@@ -5236,6 +5261,25 @@ class AI {
     return -W.deckBurn * frac * frac;
   }
 
+  // WHAT ONE CARD IS WORTH HAVING, extracted from handKeepValue on 19 Aug 2026
+  // so the Prize picker could reuse it instead of growing a second opinion.
+  // Trevor's rule, 16 Aug: evolutions you can use, Energy you are short of, and
+  // Trainers are all real cards; the same card with nothing to attach to is not.
+  cardKeepValue(pi, inst, inPlay) {
+    const E = this.E, me = E.state.players[pi];
+    const c = this.db[inst.id];
+    if (!c) return 0;
+    if (c.kind === 'energy') {
+      return inPlay.some(sl => this.potential(pi, sl).short > 0) ? 4 : 1;
+    }
+    if (c.kind === 'pokemon' && c.evolvesFrom) {
+      return inPlay.some(sl => this.top(sl).name === c.evolvesFrom) ? 9 : 1.5;
+    }
+    if (c.kind === 'pokemon') return me.bench.length < 3 ? 4 : 1.5;
+    return 2.5;   // a Trainer. Playable ones are worth more, but scoring every
+                  // one of them here would recurse into this scorer.
+  }
+
   // What a card in hand is actually worth keeping, for the two cards that throw
   // a hand away. Trevor's rule, 16 Aug: don't pitch evolutions you can use,
   // Energy you are short of, or a Trainer worth playing — but get a desperation
@@ -5246,20 +5290,7 @@ class AI {
     let v = 0;
     for (const inst of me.hand) {
       if (inst.uid === excludeUid) continue;
-      const c = this.db[inst.id];
-      if (!c) continue;
-      if (c.kind === 'energy') {
-        // Only worth keeping if something actually wants it.
-        v += inPlay.some(sl => this.potential(pi, sl).short > 0) ? 4 : 1;
-      } else if (c.kind === 'pokemon' && c.evolvesFrom) {
-        // An evolution whose target is on the board is a real card.
-        v += inPlay.some(sl => this.top(sl).name === c.evolvesFrom) ? 9 : 1.5;
-      } else if (c.kind === 'pokemon') {
-        v += me.bench.length < 3 ? 4 : 1.5;
-      } else {
-        v += 2.5;   // a Trainer. Playable ones are worth more, but scoring every
-                    // one of them here would recurse into this scorer.
-      }
+      v += this.cardKeepValue(pi, inst, inPlay);
     }
     return v;
   }
@@ -6002,6 +6033,30 @@ class AI {
   // formula cannot disagree with itself. It also keeps the sacrificial promote,
   // which is real play: a bare Basic with nothing on it is CHEAP to feed, and
   // falls out of `invested` being zero instead of needing a rule.
+  // WHICH FACE-UP PRIZE TO TAKE, and it exists for one narrow case: Here Comes
+  // Team Rocket! has made every Prize visible to BOTH players, so choosing well
+  // is no longer private knowledge and a bot picking at random would be playing
+  // badly on purpose. Everywhere else the bot takes one at RANDOM on purpose —
+  // it reads full engine state, so letting it choose from a face-DOWN pile would
+  // hand it Peek's entire value for free, every game, which is the same
+  // self-restriction as scoring PEEK at -Infinity. Trevor's call, 19 Aug 2026.
+  //
+  // It reuses cardKeepValue rather than having an opinion of its own, so the
+  // Prize picker cannot drift from what the bot thinks a card is worth
+  // everywhere else. Ties fall to the first: the pile is already in an order
+  // nobody chose.
+  prizeIndex(pi) {
+    const me = this.E.state.players[pi];
+    if (!me.prizes.length) return 0;
+    const inPlay = this.E.allSlots(pi);
+    let best = 0, bestV = -Infinity;
+    me.prizes.forEach((inst, i) => {
+      const v = this.cardKeepValue(pi, inst, inPlay);
+      if (v > bestV) { bestV = v; best = i; }
+    });
+    return best;
+  }
+
   promoteValue(pi, b) {
     const W = this.W, E = this.E;
     const you = E.state.players[1 - pi];
@@ -6891,6 +6946,17 @@ class AI {
         return s;
       }
 
+      // MUST return a real number, for the reason spelled out on switchIn below:
+      // an all -Infinity option set makes pickBest yield null, and a null here
+      // means nobody takes the Prize and the game stalls with the turn frozen.
+      // Face down, every option is genuinely identical and a flat score is the
+      // honest answer — the ENGINE picks at random in that case, not this.
+      case 'takePrize': {
+        if (!this.E.state.prizesFaceUp) return 1;
+        const inst = me.prizes[a.idx];
+        return inst ? this.cardKeepValue(pi, inst, this.E.allSlots(pi)) : 0;
+      }
+
       case 'promote': {
         const b = me.bench[a.bench];
         if (!b) return -Infinity;
@@ -7660,32 +7726,33 @@ class AI {
     const E = this.E, s = E.state;
     if (s.phase === 'over') return null;
 
-    // A QUESTION FROM THE OTHER PLAYER COMES FIRST, and it has to be handled up
-    // here beside the other two rather than below — `s.active !== pi` returns
-    // null a few lines down, and being asked something on somebody else's turn
-    // is exactly the case that trips over. Leaving it out hangs the game with
-    // both sides waiting, which is precisely what pendingSwitch did when Jungle
-    // brought Whirlwind and is written on the smoke test to this day.
-    if (s.pendingAsk !== null && s.pendingAsk !== undefined) {
-      if (s.pendingAsk.player !== pi) return null;
-      const acts = E.legalActions(pi).filter(a => a.t === 'answer');
-      if (!acts.length) return null;
-      return this.pickBest(pi, acts, true);
-    }
-
-    // Whirlwind dragged one of ours up. Send the one we least mind exposing:
-    // biggest HP pool, same instinct as choosing a replacement after a KO.
-    if (s.pendingSwitch !== null) {
-      if (s.pendingSwitch !== pi) return null;
-      const acts = E.legalActions(pi).filter(a => a.t === 'switchIn');
-      if (!acts.length) return null;
-      return this.pickBest(pi, acts, true);
-    }
-    if (s.pendingPromote !== null) {
-      if (s.pendingPromote !== pi) return null;
-      const acts = E.legalActions(pi).filter(a => a.t === 'promote');
-      if (!acts.length) return null;
-      return this.pickBest(pi, acts, true);
+    // WHAT DOES *THIS PLAYER* OWE — asked in priority order, once, rather than
+    // as four independent "is anything pending" blocks. It was the second shape
+    // and that is a bug: each block returned null when its own thing was owed by
+    // somebody ELSE, so a Prize owed to player 1 was swallowed by the promotion
+    // owed to player 0 and nobody ever answered. The game hung.
+    //
+    // That is now the fourth time this exact mistake has been made in this
+    // engine — Whirlwind's pendingSwitch, pendingAsk, the Prize gate in act(),
+    // and here. THE RULE: every owed choice is PER PLAYER, and a new one needs a
+    // branch in all three places (act(), legalActions() and this) that asks what
+    // *pi* owes rather than what is outstanding anywhere.
+    //
+    // Priority within a player: answer a question, get a body onto the empty
+    // Active spot, then take the Prize. A board with no Active is not a board.
+    const owedBy = (v) => v !== null && v !== undefined;
+    const anyOwed = owedBy(s.pendingAsk) || owedBy(s.pendingSwitch)
+                 || owedBy(s.pendingPromote) || owedBy(s.pendingPrize);
+    if (anyOwed) {
+      const pick = (kind) => {
+        const acts = E.legalActions(pi).filter(x => x.t === kind);
+        return acts.length ? this.pickBest(pi, acts, true) : null;
+      };
+      if (owedBy(s.pendingAsk) && s.pendingAsk.player === pi) return pick('answer');
+      if (s.pendingSwitch === pi) return pick('switchIn');
+      if (s.pendingPromote === pi) return pick('promote');
+      if (s.pendingPrize === pi) return pick('takePrize');
+      return null;                      // owed by the other player
     }
     if (s.active !== pi) return null;
 
@@ -7872,6 +7939,14 @@ const CONFIG_DEFAULTS = {
   firstPlayerMayAttack: true,   // ASSUMPTION - see notes
   noEvolveFirstTurn: true,      // ASSUMPTION - see notes
   trainersPerTurn: Infinity,    // Base Set has no Supporter restriction
+  // WHO CHOOSES THEIR OWN PRIZE, per player. The Game Boy game always made the
+  // player pick, so 'manual' is the faithful setting and 'auto' is the
+  // convenience — Trevor's call, 19 Aug 2026: mostly not be bothered, but able
+  // to choose when it matters. 'auto' takes one at RANDOM rather than the first,
+  // which is not only cosmetic: Prizes came off with shift(), so Trickery on
+  // slot 0 meant "into my hand next Knock Out" and on slot 5 meant "buried" —
+  // real strategy that arrived by accident and that nobody could see.
+  prizePick: ['auto', 'auto'],
   maxMulligans: 20,
 };
 
@@ -8103,6 +8178,11 @@ class Engine {
       winner: null, winReason: '', log: [],
       players: [mkPlayer(deckA, names[0]), mkPlayer(deckB, names[1])],
       pendingPromote: null, promoteQueue: [], pendingEndTurn: false, setupDone: [false, false],
+      // A QUEUE, not a slot, for the same reason promotion is one: a Selfdestruct
+      // that Knocks Out three Pokemon owes three Prizes and they are taken one at
+      // a time. Entries are player indices and REPEAT — [0,0,0] is three owed to
+      // player 0.
+      prizeQueue: [], pendingPrize: null,
       // Whirlwind: the DEFENDING player owes a choice of who comes up.
       pendingSwitch: null,
       // A QUESTION OWED BY THE OTHER PLAYER, and the second thing in the game
@@ -8576,7 +8656,54 @@ class Engine {
     s.promoteQueue.sort((a, b) => (a === s.active ? -1 : b === s.active ? 1 : 0));
     s.pendingPromote = s.promoteQueue.length ? s.promoteQueue[0] : null;
   }
+  // ONE DOORWAY for taking a Prize, and both Knock-Out sites go through it.
+  // Auto resolves immediately; manual parks it on the queue and the game waits,
+  // exactly the way promotion does.
+  awardPrize(pi) {
+    const s = this.state, p = s.players[pi];
+    if (!p.prizes.length) return;
+    if ((this.cfg.prizePick || [])[pi] === 'manual') {
+      s.prizeQueue.push(pi);
+      this.syncPrize();
+      return;
+    }
+    this.takePrizeAt(pi, this.autoPrizeIndex(pi));
+  }
+
+  // WHICH one auto takes. Random unless the Prizes are face up to everybody, in
+  // which case a bot picking at random is playing badly on purpose. A human on
+  // 'auto' still gets random even when they are face up, because they asked not
+  // to be bothered; switching to manual is one click away in the pause menu.
+  autoPrizeIndex(pi) {
+    const s = this.state, n = s.players[pi].prizes.length;
+    if (s.prizesFaceUp && typeof this.aiPrizeIndex === 'function') {
+      const k = this.aiPrizeIndex(pi);
+      if (typeof k === 'number' && k >= 0 && k < n) return k;
+    }
+    return Math.floor(this.rand() * n);
+  }
+
+  takePrizeAt(pi, idx) {
+    const s = this.state, p = s.players[pi];
+    if (!p.prizes.length) return null;
+    const k = Math.max(0, Math.min(p.prizes.length - 1, idx | 0));
+    const card = p.prizes.splice(k, 1)[0];
+    p.hand.push(card);
+    // NAMED only when everybody could already see it. Otherwise the Prize was
+    // face down and printing what it was leaks it into a log both players read.
+    const c = this.db[card.id];
+    const what = s.prizesFaceUp ? ' (' + (c ? c.name : card.id) + ')' : '';
+    this.log(p.name + ' takes a Prize' + what + '. (' + p.prizes.length + ' left)', 'prize');
+    return card;
+  }
+
+  syncPrize() {
+    const s = this.state;
+    s.pendingPrize = s.prizeQueue.length ? s.prizeQueue[0] : null;
+  }
+
   addPromote(i) {
+
     const s = this.state;
     if (!s.promoteQueue.includes(i)) s.promoteQueue.push(i);
     this.syncPromote();
@@ -8636,7 +8763,7 @@ class Engine {
 
     this.betweenTurns(ended);
     if (s.phase === 'over') return { ok: true };
-    if (s.pendingAsk || s.pendingPromote !== null || s.pendingSwitch !== null) { s.pendingEndTurn = true; return { ok: true }; }
+    if (s.pendingAsk || s.pendingPromote !== null || s.pendingSwitch !== null || s.pendingPrize !== null) { s.pendingEndTurn = true; return { ok: true }; }
 
     s.active = 1 - s.active;
     return this.startTurn();
@@ -8730,7 +8857,19 @@ class Engine {
       s.players[pi].bench.forEach((b, i) => acts.push({ t: 'promote', bench: i, label: `Promote ${this.nameOf(b)}` }));
       return acts;
     }
-    if (s.pendingSwitch !== null || s.pendingPromote !== null) return acts;   // owed by the other player
+    // A PRIZE OWED OUTRANKS EVERYTHING BUT PROMOTION, and promotion goes first
+    // because a board with no Active is not a board. Both are per-player gates
+    // for the reason pendingSwitch's is: two players can owe at once, and a
+    // shared gate hung games when that happened.
+    if (s.pendingPrize === pi) {
+      s.players[pi].prizes.forEach((c, i) => {
+        const card = s.prizesFaceUp ? this.db[c.id] : null;
+        acts.push({ t: 'takePrize', idx: i,
+                    label: card ? `Take ${card.name}` : `Take Prize ${i + 1}` });
+      });
+      return acts;
+    }
+    if (s.pendingSwitch !== null || s.pendingPromote !== null || s.pendingPrize !== null) return acts;
     if (s.phase !== 'main' || s.active !== pi) return acts;
     const p = s.players[pi];
 
@@ -9655,11 +9794,13 @@ class Engine {
         this.log(`${p.name}: ${name} is Knocked Out and becomes an Energy card `
           + `providing 2 ${tn[a.type] || a.type} Energy, attached to ${this.nameOf(to)}.`, 'eff');
 
-        if (opp.prizes.length) {
-          opp.hand.push(opp.prizes.shift());
-          this.log(`${opp.name} takes a Prize. (${opp.prizes.length} left)`, 'prize');
+        this.awardPrize(1 - pi);
+        // NOT read off the pile here any more: on a manual pick the Prize is
+        // still sitting there and is taken when the player chooses. afterOwedChoice
+        // is where the win is declared in both modes, so there is one answer.
+        if (this.state.pendingPrize === null && opp.prizes.length === 0) {
+          this.endGame(1 - pi, `${opp.name} took all Prizes`); return { ok: true };
         }
-        if (opp.prizes.length === 0) { this.endGame(1 - pi, `${opp.name} took all Prizes`); return { ok: true }; }
         if (!me3.active && me3.bench.length === 0) {
           this.endGame(1 - pi, `${me3.name} has no Pokemon left`); return { ok: true };
         }
@@ -9957,11 +10098,24 @@ class Engine {
     if (s.pendingAsk) {
       if (s.pendingAsk.player !== pi) return this.fail('Waiting on the other player');
       if (a.t !== 'answer') return this.fail('Answer the question first');
-    } else if (s.pendingSwitch !== null || s.pendingPromote !== null) {
+    } else if (s.pendingSwitch !== null || s.pendingPromote !== null || s.pendingPrize !== null) {
+      // EVERY ONE OF THESE IS PER-PLAYER, and that is the whole rule rather than
+      // a detail. A Prize is almost always owed by the player who did NOT just
+      // lose a Pokemon, so at the moment it is offered the other player usually
+      // owes a promotion — two different people owing two different things at
+      // once. Written first as "promotion outranks the Prize" globally, which
+      // deadlocked immediately: player 0 owed the promote, player 1 owed the
+      // Prize, and player 1 was told to wait for player 0 forever. That is the
+      // same shape as the pendingSwitch gates, which were briefly shared and
+      // hung games for it — see ENGINE.md. Order below is per-player priority:
+      // if YOU owe a promotion you do that first, because a board with no Active
+      // is not a board.
       if (s.pendingSwitch === pi) {
         if (a.t !== 'switchIn') return this.fail('A Pokemon must be sent up first');
       } else if (s.pendingPromote === pi) {
         if (a.t !== 'promote') return this.fail('Must promote a Pokemon first');
+      } else if (s.pendingPrize === pi) {
+        if (a.t !== 'takePrize') return this.fail('Take your Prize first');
       } else return this.fail('Waiting on the other player');
     } else if (s.active !== pi) return this.fail('Not your turn');
 
@@ -9984,6 +10138,7 @@ class Engine {
       case 'attack':       return this.doAttack(pi, a);
       case 'power':        return this.doPower(pi, a);
       case 'promote':      return this.doPromote(pi, a);
+      case 'takePrize':    return this.doTakePrize(pi, a);
       case 'switchIn':     return this.doSwitchIn(pi, a);
       case 'discardInPlay': return this.doDiscardInPlay(pi, a);
       case 'pass':         return this.endTurn();
@@ -10235,6 +10390,42 @@ class Engine {
     });
   }
 
+  doTakePrize(pi, a) {
+    const s = this.state;
+    if (s.pendingPrize !== pi) return this.fail('Not waiting on you');
+    const p = s.players[pi];
+    if (!p.prizes.length) return this.fail('No Prizes left');
+    const idx = (a && typeof a.idx === 'number') ? a.idx : this.autoPrizeIndex(pi);
+    if (idx < 0 || idx >= p.prizes.length) return this.fail('No such Prize');
+    this.takePrizeAt(pi, idx);
+    // Shift ONE entry, not every entry for this player: three Knock Outs owe
+    // three picks and each resolves separately.
+    const at = s.prizeQueue.indexOf(pi);
+    if (at >= 0) s.prizeQueue.splice(at, 1);
+    this.syncPrize();
+    return this.afterOwedChoice();
+  }
+
+  // Shared tail for anything that resolves an owed choice: if the game is over
+  // or somebody still owes something, stop; otherwise let a deferred end-turn
+  // through. doPromote had this inline and doTakePrize needs the same thing.
+  afterOwedChoice() {
+    const s = this.state;
+    if (s.winner !== null) return { ok: true };
+    if (s.players.some(pl => pl.prizes.length === 0)) {
+      const w = s.players[0].prizes.length === 0 ? 0 : 1;
+      this.endGame(w, s.players[w].name + ' took all Prizes');
+      return { ok: true };
+    }
+    if (s.pendingPromote !== null || s.pendingSwitch !== null || s.pendingPrize !== null) return { ok: true };
+    if (s.pendingEndTurn) {
+      s.pendingEndTurn = false;
+      s.active = 1 - s.active;
+      return this.startTurn();
+    }
+    return { ok: true };
+  }
+
   doPromote(pi, a) {
     const s = this.state;
     if (s.pendingPromote !== pi) return this.fail('Not waiting on you');
@@ -10243,13 +10434,7 @@ class Engine {
     p.bench.splice(a.bench, 1); p.active = b;
     this.log(`${p.name} promotes ${this.nameOf(b)} to Active.`);
     this.clearPromote(pi);
-    if (s.pendingPromote !== null || s.pendingSwitch !== null) return { ok: true };  // still owed
-    if (s.pendingEndTurn) {
-      s.pendingEndTurn = false;
-      s.active = 1 - s.active;
-      return this.startTurn();
-    }
-    return { ok: true };
+    return this.afterOwedChoice();
   }
 
   // Discarding a Clefairy Doll / Mysterious Fossil straight off the board. Not a
@@ -10307,7 +10492,7 @@ class Engine {
     // The asking player's turn resumes exactly where the other deferred
     // decisions resume it, and for the same reason: they may have pressed End
     // Turn while the question was outstanding.
-    if (s.pendingAsk || s.pendingPromote !== null || s.pendingSwitch !== null) return { ok: true };
+    if (s.pendingAsk || s.pendingPromote !== null || s.pendingSwitch !== null || s.pendingPrize !== null) return { ok: true };
     if (s.pendingEndTurn) {
       s.pendingEndTurn = false;
       s.active = 1 - s.active;
@@ -12444,9 +12629,8 @@ class Engine {
           // because that keys on the board, not on the Knock Out.
           if (c.playsAs === 'pokemon') {
             this.log(`${c.name} doesn't count as a Knocked Out Pokemon - no Prize.`, 'eff');
-          } else if (o.prizes.length) {
-            o.hand.push(o.prizes.shift());
-            this.log(`${o.name} takes a Prize. (${o.prizes.length} left)`, 'prize');
+          } else {
+            this.awardPrize(1 - i);
           }
         };
         const dead = (sl) => sl.forcedKO || sl.dmg >= topCard(this.db, sl).hp;
@@ -12509,6 +12693,8 @@ class Engine {
     this.state.winReason = reason;
     this.state.pendingPromote = null;
     this.state.promoteQueue = [];
+    this.state.pendingPrize = null;
+    this.state.prizeQueue = [];
     this.log(winner === 'draw'
       ? `GAME OVER - a draw: ${reason}`
       : `GAME OVER - ${this.state.players[winner].name} wins: ${reason}`, 'win');
@@ -12521,6 +12707,17 @@ class Engine {
   //
   // 'expert' / 'novice' delegate to the expected-value AI in ai.js.
   // 'greedy' and 'random' are kept as rules fuzzers - see the note in choose().
+  // Asked by autoPrizeIndex, and ONLY when the Prizes are face up to both
+  // players. Built the same lazy way as aiChoose so engine.js keeps no standing
+  // dependency on ai.js, and falls back to random if the AI is unavailable.
+  aiPrizeIndex(pi) {
+    try {
+      const Klass = (typeof AI !== 'undefined') ? AI : require('./ai.js').AI;
+      if (!this._prizeAI) this._prizeAI = new Klass(this, { mode: 'expert' });
+      return this._prizeAI.prizeIndex(pi);
+    } catch (err) { return -1; }
+  }
+
   aiChoose(pi, mode = 'expert') {
     if (mode === 'expert' || mode === 'novice') {
       if (!this._ai || this._ai.mode !== mode) {
@@ -12735,6 +12932,11 @@ function newSave(opts = {}) {
     // `unlocked` list beside it on purpose — progress.js derives what is open
     // from this map every time it is asked, so the two can never disagree.
     progress: { beaten: {}, lost: {} },
+    // PLAYER PREFERENCES, and the first of what will be a small settings menu.
+    // Additive like progress, so a save written before it simply gets the
+    // defaults — see ensureShape. Nothing in here may ever affect what the
+    // player OWNS; this is how the game behaves, not what is in the binder.
+    settings: { prizePick: 'auto' },
   };
 }
 
@@ -12764,6 +12966,12 @@ function ensureShape(s) {
     if (typeof s.stats[k] !== 'number') s.stats[k] = 0;
   });
   if (typeof s.starter !== 'string') s.starter = '';
+  // Additive (19 Aug 2026), same reasoning as progress below: absent and default
+  // are the same thing, so no version bump and no migration. An unknown value is
+  // reset rather than rejected — it is a preference, not collection data, and a
+  // save that will not load over a bad toggle would be the worse failure.
+  if (s.settings == null || typeof s.settings !== 'object') s.settings = {};
+  if (s.settings.prizePick !== 'manual') s.settings.prizePick = 'auto';
   // Additive field (Job 7), so it belongs here rather than in a migration: a
   // save written before progression existed has beaten nobody, which is exactly
   // what an empty map means. Absent and empty are the same thing.
@@ -13907,6 +14115,8 @@ const TRAINER_FLOW = {
 const UI = {
   E: null,
   sel: null,          // {kind:'hand', idx} | null
+  paused: false,      // the pause menu is up
+  forfeitArmed: false,// ...and the forfeit is one click from happening
   inspect: null,      // card id shown in the preview panel
   lastTab: 'log',
   fx: {},             // key -> expiry timestamp; drives one-shot animations
@@ -14213,7 +14423,13 @@ function newGame() {
   clearTimeout(UI.aiTimer); clearTimeout(UI.presTimer);
   UI.pres = null; UI.view = null;
   const seed = UI.seedDraft === '' ? (Math.random() * 2147483647 | 0) : (parseInt(UI.seedDraft, 10) | 0);
-  UI.E = new Engine(CARD_DB, EFFECTS, { seed, cfg: Object.assign({}, UI.cfgDraft) });
+  // prizePick is PER PLAYER and only ever manual on the human's side. The bot
+  // stays on auto because it reads full engine state — see engine.autoPrizeIndex
+  // for the one exception, which is Here Comes Team Rocket! making the Prizes
+  // public to everybody.
+  const cfg = Object.assign({}, UI.cfgDraft,
+    { prizePick: [prizePickSetting(), 'auto'] });
+  UI.E = new Engine(CARD_DB, EFFECTS, { seed, cfg });
   // Mirror matches are allowed. Both sides build from the same list, but the two
   // seeds differ, so they shuffle and draw independently.
   //
@@ -14843,6 +15059,17 @@ function renderScreen() {
   // so the opening flip gets the board to itself and the sheet arrives after it.
   if (S().phase === 'setup' && !presenting()) root.appendChild(renderSetup());
   if (S().phase === 'over') root.appendChild(renderOver());
+  // Mounted last so it sits over everything, but suppressed once the game is
+  // over: there is nothing left to forfeit and renderOver already owns that
+  // moment. The setting is still reachable from the next match's menu.
+  //
+  // BOTH states are checked, and that is not belt-and-braces. S() is the frozen
+  // presentation snapshot while a coin is in the air, so during a flip that ends
+  // the game it still says 'main' — and offering to forfeit a match that is
+  // already decided is exactly the wrong thing to do with that gap.
+  if (UI.paused && S().phase !== 'over' && UI.E.state.phase !== 'over') {
+    root.appendChild(renderPause());
+  }
 
   chooseLayout();
   layoutHand();
@@ -15009,6 +15236,8 @@ function renderStatusBar() {
   const s = S();
   const bar = el('div', 'statusbar');
   const who = s.phase === 'over' ? 'Game over'
+    : s.pendingPrize === 0 ? 'Take a Prize — click one'
+    : s.pendingPrize === 1 ? 'Opponent is taking a Prize'
     : s.pendingSwitch !== null ? (s.pendingSwitch === 0 ? 'Whirlwind — choose a Pokemon to send up' : 'Opponent is choosing')
     : s.pendingPromote !== null ? (s.pendingPromote === 0 ? 'Choose a Pokemon to promote' : 'Opponent is promoting')
     : (s.active === 0 ? 'Your turn' : "Opponent's turn");
@@ -15016,6 +15245,11 @@ function renderStatusBar() {
   bar.appendChild(t);
   bar.appendChild(el('div', 'turnno', `turn ${s.turn}`));
   bar.appendChild(el('div', 'seedno', `seed ${UI.E.seed}`));
+  // Up here rather than on the action bar: the action bar is a status line plus
+  // commitments about THIS turn, and a settings menu is neither.
+  const pause = el('button', 'pausebtn', 'MENU');
+  pause.onclick = () => { UI.paused = true; UI.forfeitArmed = false; render(); };
+  bar.appendChild(pause);
   return bar;
 }
 
@@ -15271,8 +15505,20 @@ function stackZone(label, n, cls) {
   return z;
 }
 
+// One place, so the face-up and face-down tiles cannot drift apart.
+function armPrizeTile(t, i) {
+  t.classList.add('pickable');
+  t.onclick = () => { dispatch(0, { t: 'takePrize', idx: i }); };
+}
+
 function prizeZone(p, mine) {
   const z = el('div', 'zone prizes');
+  // YOUR OWN PILE IS THE PICKER when you owe a choice — no sheet, no overlay.
+  // The Prizes are already on the board in the place you have been looking at
+  // all game, and a card you are choosing between is a card you want to look at
+  // while you choose, which is the same argument the Energy picker won on.
+  const picking = mine && S().pendingPrize === 0;
+  if (picking) z.classList.add('picking');
   z.appendChild(el('div', 'zonelabel', 'PRIZES'));
   const grid = el('div', 'prizegrid');
   const total = UI.E.cfg.prizeCount;
@@ -15296,9 +15542,14 @@ function prizeZone(p, mine) {
       const t = el('div', 'cardback pz faceup k-' + c.kind);
       t.appendChild(el('span', 'cb-mark'));
       t.title = c.name;
+      if (picking) armPrizeTile(t, i);
       grid.appendChild(peekOn(t, c.id));
     }
-    else if (i < p.prizes.length) grid.appendChild(cardBack('pz'));
+    else if (i < p.prizes.length) {
+      const t = cardBack('pz');
+      if (picking) armPrizeTile(t, i);
+      grid.appendChild(t);
+    }
     else {
       const t = el('div', 'cardback pz taken');
       if (UI.fxActive('prize' + (mine ? '0' : '1'))) t.classList.add('fx-prize');
@@ -16552,6 +16803,21 @@ function renderLogAsk(bar) {
   no.onclick = () => { const go = UI.logAsk; UI.logAsk = null; UI.logSaved = true; go(); };
   bar.appendChild(yes); bar.appendChild(no);
   return true;
+}
+
+const prizePickSetting = () =>
+  (UI.save && UI.save.settings && UI.save.settings.prizePick === 'manual') ? 'manual' : 'auto';
+
+// Applies to the NEXT Knock Out, not the next match — the engine reads cfg live,
+// so flipping mid-game works and is the point: Here Comes Team Rocket! can turn
+// every Prize face up on turn 6, possibly played by the opponent, and a setting
+// you could only change at the deck screen would strand you for the one
+// situation where choosing is unambiguously worth it.
+function setPrizePick(mode) {
+  if (!UI.save) return;
+  UI.save.settings.prizePick = (mode === 'manual') ? 'manual' : 'auto';
+  persist();
+  if (UI.E) UI.E.cfg.prizePick = [prizePickSetting(), 'auto'];
 }
 
 function downloadMatchLog() {
@@ -18213,6 +18479,70 @@ function renderOver() {
   box.appendChild(bar);
   ov.appendChild(box);
   return ov;
+}
+
+// ------------------------------------------------------------- pause menu --
+// The first settings surface this game has, and it exists because a forfeit had
+// nowhere to live. Trevor's shape, 19 Aug 2026: a way out of a match that is
+// going nowhere, plus the Prize toggle, and room for whatever comes next.
+//
+// It is a SHEET rather than a bar control, for the reason INTERACTION.md gives
+// about the action bar: that bar is a status line plus commitments, not a menu.
+// Anything that is neither about the board nor about this turn belongs off it.
+function renderPause() {
+  const ov = el('div', 'overlay');
+  const box = el('div', 'sheet');
+  box.appendChild(el('h2', null, 'Paused'));
+
+  // --- Prizes ---------------------------------------------------------------
+  const manual = prizePickSetting() === 'manual';
+  const row = el('div', 'setrow');
+  row.appendChild(el('div', 'setname', 'Prize cards'));
+  const seg = el('div', 'seg');
+  [['auto', 'Random'], ['manual', 'I choose']].forEach(([v, label]) => {
+    const b = el('button', 'segbtn' + ((v === 'manual') === manual ? ' on' : ''), label);
+    b.onclick = () => { setPrizePick(v); render(); };
+    seg.appendChild(b);
+  });
+  row.appendChild(seg);
+  box.appendChild(row);
+  box.appendChild(el('div', 'sethint', manual
+    ? 'You pick which Prize to take. The Game Boy game always worked this way.'
+    : 'A Prize is taken at random. Switch any time — it applies to the next Knock Out, not the next match.'));
+
+  // --- Forfeit --------------------------------------------------------------
+  // Confirmation-gated, and it is the second action in the game that earns one
+  // after retreat. Same test: it cannot be undone and it spends something real.
+  const bar = el('div', 'sheetbar');
+  if (UI.forfeitArmed) {
+    bar.appendChild(el('span', 'setwarn', 'Forfeit and take the loss?'));
+    const yes = el('button', 'btn end', 'Forfeit');
+    yes.onclick = () => { UI.forfeitArmed = false; forfeitMatch(); };
+    const no = el('button', 'btn ghost', 'Cancel');
+    no.onclick = () => { UI.forfeitArmed = false; render(); };
+    bar.appendChild(yes); bar.appendChild(no);
+  } else {
+    const ff = el('button', 'btn ghost', 'Forfeit match');
+    ff.onclick = () => { UI.forfeitArmed = true; render(); };
+    const back = el('button', 'btn', 'Resume');
+    back.onclick = () => { UI.paused = false; UI.forfeitArmed = false; render(); };
+    bar.appendChild(back); bar.appendChild(ff);
+  }
+  box.appendChild(bar);
+  ov.appendChild(box);
+  return ov;
+}
+
+// A forfeit is a LOSS, not an escape hatch — it records like any other, so the
+// ladder and `progress.lost` see it. Routed through the engine's own endGame so
+// there is one definition of "the game is over" and settleResult pays out (or
+// does not) exactly as it would have.
+function forfeitMatch() {
+  UI.paused = false;
+  if (UI.E && S().phase !== 'over') {
+    UI.E.endGame(1, `${S().players[0].name} forfeited`);
+  }
+  render();
 }
 
 // ------------------------------------------------------------------- rail --

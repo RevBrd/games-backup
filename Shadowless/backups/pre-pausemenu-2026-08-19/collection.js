@@ -106,11 +106,6 @@ function newSave(opts = {}) {
     // `unlocked` list beside it on purpose — progress.js derives what is open
     // from this map every time it is asked, so the two can never disagree.
     progress: { beaten: {}, lost: {} },
-    // PLAYER PREFERENCES, and the first of what will be a small settings menu.
-    // Additive like progress, so a save written before it simply gets the
-    // defaults — see ensureShape. Nothing in here may ever affect what the
-    // player OWNS; this is how the game behaves, not what is in the binder.
-    settings: { prizePick: 'auto' },
   };
 }
 
@@ -140,12 +135,6 @@ function ensureShape(s) {
     if (typeof s.stats[k] !== 'number') s.stats[k] = 0;
   });
   if (typeof s.starter !== 'string') s.starter = '';
-  // Additive (19 Aug 2026), same reasoning as progress below: absent and default
-  // are the same thing, so no version bump and no migration. An unknown value is
-  // reset rather than rejected — it is a preference, not collection data, and a
-  // save that will not load over a bad toggle would be the worse failure.
-  if (s.settings == null || typeof s.settings !== 'object') s.settings = {};
-  if (s.settings.prizePick !== 'manual') s.settings.prizePick = 'auto';
   // Additive field (Job 7), so it belongs here rather than in a migration: a
   // save written before progression existed has beaten nobody, which is exactly
   // what an empty map means. Absent and empty are the same thing.

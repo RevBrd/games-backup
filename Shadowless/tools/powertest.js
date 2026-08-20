@@ -4987,6 +4987,128 @@ T('the AI never attaches a Rainbow to something it would kill', () => {
 
 
 // ============================================================================
+// Prize picking — auto is random, manual is a queue
+//
+// Trevor's design, 19 Aug 2026: mostly not be bothered, able to choose when it
+// matters. The queue half is the risky part, because a Prize is almost always
+// owed by the player whose turn it is NOT — which is the shape that has hung
+// this game four times now (Whirlwind, pendingAsk, and twice in this feature).
+// ============================================================================
+console.log('\nPrize picking');
+
+const prizeBoard = (mode) => {
+  const E = board('base1-58', [], 'base1-58');
+  E.cfg.prizePick = mode;
+  return E;
+};
+
+T('auto takes a Prize immediately and queues nothing', () => {
+  const E = prizeBoard(['auto', 'auto']);
+  const before = E.state.players[0].prizes.length;
+  E.awardPrize(0);
+  eq(E.state.players[0].prizes.length, before - 1, 'one gone');
+  eq(E.state.prizeQueue.length, 0, 'nothing queued');
+  eq(E.state.pendingPrize, null, 'and nobody is waiting');
+  return true;
+});
+
+T('...and it does NOT always take the first one', () => {
+  // The whole point of random: shift() made Trickery on slot 0 a tutor and on
+  // slot 5 a burial, which was strategy nobody designed and nobody could see.
+  const seen = new Set();
+  for (let seed = 1; seed <= 40; seed++) {
+    const E = new Engine(CARD_DB, EFFECTS, { seed });
+    E.newGame(DECKS.Brushfire, DECKS.Zap, ['A', 'B']);
+    E.state.players[0].prizes = Array.from({ length: 6 }, (_, i) => ({ id: 'base1-9' + (i % 10), uid: 500 + i }));
+    seen.add(E.autoPrizeIndex(0));
+  }
+  eq(seen.size > 1, true, 'more than one slot is ever chosen  (saw ' + seen.size + ')');
+  return true;
+});
+
+T('manual queues instead, and the game waits', () => {
+  const E = prizeBoard(['manual', 'auto']);
+  const before = E.state.players[0].prizes.length;
+  E.awardPrize(0);
+  eq(E.state.players[0].prizes.length, before, 'nothing taken yet');
+  eq(E.state.pendingPrize, 0, 'player 0 is owed one');
+  return true;
+});
+
+T('...and the chosen index is the Prize that is actually taken', () => {
+  const E = prizeBoard(['manual', 'auto']);
+  const p = E.state.players[0];
+  p.prizes = [{ id: 'base1-1', uid: 801 }, { id: 'base1-2', uid: 802 }, { id: 'base1-3', uid: 803 }];
+  E.awardPrize(0);
+  E.act(0, { t: 'takePrize', idx: 2 });
+  eq(p.hand.some(c => c.uid === 803), true, 'the third one is in hand');
+  eq(p.prizes.length, 2, 'and two are left');
+  eq(p.prizes.some(c => c.uid === 803), false, 'and it is not still in the pile');
+  return true;
+});
+
+T('three Knock Outs at once owe three picks, resolved one at a time', () => {
+  const E = prizeBoard(['manual', 'auto']);
+  E.awardPrize(0); E.awardPrize(0); E.awardPrize(0);
+  eq(E.state.prizeQueue.length, 3, 'three queued');
+  E.act(0, { t: 'takePrize', idx: 0 });
+  eq(E.state.prizeQueue.length, 2, 'one resolved');
+  eq(E.state.pendingPrize, 0, 'still owed');
+  E.act(0, { t: 'takePrize', idx: 0 });
+  E.act(0, { t: 'takePrize', idx: 0 });
+  eq(E.state.pendingPrize, null, 'and now settled');
+  return true;
+});
+
+T('THE DEADLOCK: one player may take a Prize while the OTHER owes a promotion', () => {
+  // Written first as "promotion outranks the Prize" globally. Player 0 owed the
+  // promote, player 1 owed the Prize, and player 1 was told to wait for player 0
+  // forever. Every owed choice in this engine is PER PLAYER; this is the case.
+  const E = prizeBoard(['manual', 'manual']);
+  E.addPromote(0);
+  E.awardPrize(1);
+  eq(E.state.pendingPromote, 0, 'player 0 owes a promotion');
+  eq(E.state.pendingPrize, 1, 'player 1 owes a Prize');
+  const r = E.act(1, { t: 'takePrize', idx: 0 });
+  eq(!!(r && r.ok), true, 'and player 1 can take it right now  (' + (r && r.error) + ')');
+  return true;
+});
+
+T('a finished game owes nobody a Prize', () => {
+  const E = prizeBoard(['manual', 'manual']);
+  E.awardPrize(0);
+  E.endGame(1, 'test');
+  eq(E.state.pendingPrize, null, 'cleared');
+  eq(E.state.prizeQueue.length, 0, 'and so is the queue');
+  return true;
+});
+
+T('the bot picks at random face DOWN and chooses face UP', () => {
+  // The self-restriction: ai.js reads full engine state, so choosing from a
+  // face-down pile would hand it Peek's value for free every game. Here Comes
+  // Team Rocket! makes the pile public to BOTH players, and only then.
+  const mk = () => {
+    const E = board('base1-58', [], 'base1-58');
+    const p = E.state.players[0];
+    // A Charmeleon whose Charmander is out is the best card in the pile by a
+    // distance; everything else is Energy with nothing to attach to.
+    p.active = E.mkSlot({ id: 'base1-46', uid: 900 });      // Charmander
+    p.prizes = [{ id: 'base1-98', uid: 901 }, { id: 'base1-98', uid: 902 },
+                { id: 'base1-24', uid: 903 }];              // idx 2 = Charmeleon
+    return E;
+  };
+  const down = mk();
+  const chosen = new Set();
+  for (let i = 0; i < 30; i++) chosen.add(down.autoPrizeIndex(0));
+  eq(chosen.size > 1, true, 'face down: it is not choosing  (saw ' + chosen.size + ' slots)');
+
+  const up = mk();
+  up.state.prizesFaceUp = true;
+  eq(up.autoPrizeIndex(0), 2, 'face up: it takes the evolution it can actually use');
+  return true;
+});
+
+// ============================================================================
 // The snipe the player could not aim
 //
 // Trevor's report, 19 Aug 2026. The engine has always accepted opts.bench; the

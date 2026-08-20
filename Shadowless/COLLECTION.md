@@ -53,6 +53,14 @@ registered fake step, so the machinery is tested rather than merely present.
 Export downloads a JSON file, with a copy-it-out fallback when the download is blocked. Import is a
 paste box on the collection screen.
 
+**`save.settings` is the third additive field and the first that is not collection data.** It arrived
+19 Aug 2026 holding one key — `prizePick`, `'auto'` or `'manual'` — and it is handled in
+`ensureShape` rather than by a migration, for the same reason `progress` and `draws` were: absent and
+default are the same thing. **An unrecognised value is reset rather than rejected**, which is the one
+place this module is deliberately lenient: a preference is not collection data, and a save that
+refuses to load over a bad toggle is a far worse failure than a toggle that quietly goes back to its
+default. **Nothing in `settings` may ever affect what the player owns.**
+
 ## Built decks vs. layouts
 
 **A deck is BUILT or it is a layout, and only built decks reserve cards.** A built deck holds its
