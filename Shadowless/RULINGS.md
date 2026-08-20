@@ -42,6 +42,7 @@ enough to settle a call in plain English, so ask him — he can be a resource on
 | "When you play this from your hand" means from your hand, and nowhere else | [PLAYED-FROM-HAND.md](Rulings/PLAYED-FROM-HAND.md) |
 | "Retreats" is the retreat that worked; "tries to retreat" is the attempt | [RETREATS-MEANS-SUCCEEDED.md](Rulings/RETREATS-MEANS-SUCCEEDED.md) |
 | Rainbow Energy is a basic Energy card while it is IN PLAY, and not before | [RAINBOW-IN-PLAY.md](Rulings/RAINBOW-IN-PLAY.md) |
+| Rainbow's 10 damage can Knock Out the Pokémon it lands on, and the attachment still happens | [RAINBOW-ATTACH-DAMAGE.md](Rulings/RAINBOW-ATTACH-DAMAGE.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -114,6 +115,7 @@ that matches.
 | **A group-naming attack enumerates once and applies to all of it**, both sides and the attacker included, even where that damages one Pokemon twice | [Mass Explosion](Rulings/MASS-EXPLOSION.md) |
 | **A damage modifier reaches damage this Pokemon DOES, not damage it TAKES** — including damage the rules make it inflict on itself | [Frenzy, Confusion](Rulings/FRENZY-SELF-DAMAGE.md) |
 | **Resolve every consequence before asking who won** — a win condition evaluated mid-resolution answers for whoever the loop reached first | [draws, `checkKOs`](Rulings/DRAWS.md) |
+| **A Knock Out is a Knock Out whoever caused it** — your opponent takes the Prize even when you did it to your own Pokémon, with a period WotC Q&A behind it | [Buzzap](Rulings/BUZZAP.md), [Rainbow's attach damage](Rulings/RAINBOW-ATTACH-DAMAGE.md) |
 | **A card that says *attack* means an attack** — a Power, Poison, Confusion, a Retaliate and a Mirror Shell all leave the same corpse and none of them counts | [Final Beam, Strikes Back, Mirror Shell](Rulings/POWER-IS-NOT-AN-ATTACK.md) |
 | **Point a default at the set that GROWS, and make the small closed set declare itself** — which is why attack-damage defaults to true and played-from-hand defaults to silence | [both](Rulings/POWER-IS-NOT-AN-ATTACK.md) |
 | **Hang an invisible rule off a visible one**: a trigger nobody can see rides on the stamp every caller already cannot omit | [`enterPlay`](Rulings/PLAYED-FROM-HAND.md) |
@@ -146,6 +148,8 @@ Calls we already know are coming, so nobody is surprised by them.
   unknown.
 - **Baby Pokémon (Neo era, 10 cards)** — the Baby Rule is a coin flip that can negate an attack
   entirely. Not a Base Set problem, but it is a whole rule, not a card effect.
-- **Rainbow Energy's 10 damage on attachment** — it hurts the Pokémon it lands on. Whether that can
-  Knock Out a 10-HP Pokémon as it is attached, and who takes the Prize if so, is unasked. Noted while
-  settling [what Rainbow counts as](Rulings/ENERGY-VS-ENERGY-CARD.md), which did not settle this.
+- **~~Rainbow Energy's 10 damage on attachment~~ — settled**, and it was never as open as this list
+  said: the damage half was decided with Trevor on 19 Aug 2026 and written into `engine.js`, and the
+  Prize half had been answered by [Buzzap](Rulings/BUZZAP.md) two weeks earlier. It sat here because
+  Buzzap's principle was in that entry's prose and **not in the index above**, so the identical
+  question read as new. *[The entry, and the lesson about the register →](Rulings/RAINBOW-ATTACH-DAMAGE.md)*

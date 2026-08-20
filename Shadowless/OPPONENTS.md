@@ -126,17 +126,35 @@ that a player learns to read it once:
 
 | Segment | Tier | Count | Purpose |
 |---|---|---|---|
-| Intro | T1 | 2 | The set's first cards. Beatable with the deck you walked in with |
-| Body | T2 | 3–5 | Ease in and accumulate. Still winnable on last set's deck |
-| Gate | T3 | 1–2 | The first rung that requires a deck built from this set |
-| Boss | T4 | 1 | Unlocks the next bracket |
+| Intro | T1 | **flexes** | The set's **official theme decks**. Beatable with the deck you walked in with |
+| Body | T2 | **flexes** | Ease in and accumulate. Still winnable on last set's deck |
+| Gate | T3 | **flexes** | The first rung that requires a deck built from this set |
+| Boss | T4 | **always 1** | Unlocks the next bracket |
 
-**The counts scale with the set's size.** Base Set at 102 printings earns the long version; a small
-set earns the short one. We already have every set's card count and `buildLadder()` already
-synthesises brackets, so this is the existing derivation doing more work rather than new machinery.
-It is also the honest answer to fill-rate: a small set produces fewer rungs, so fewer packs, so it
-cannot outrun its own card pool. Only the body and gate counts flex — intro is always 2 and boss is
-always 1, so every bracket stays recognisable.
+**Every tier except the boss flexes, and the boss is always exactly one.** Trevor, 19 Aug 2026,
+revising this table's own earlier claim that intro was fixed at 2 — the built Base Set bracket has
+**four** intro rungs and is the model, so the fixed count was wrong before it ever met a set.
+
+**Two inputs decide a tier's size: the card pool, and pacing.** Base Set at 102 printings earns the
+long version; a small set earns the short one. That is the honest answer to fill-rate — a small set
+produces fewer rungs, so fewer packs, so a bracket cannot outrun its own card pool — but **pacing
+overrides it where the two disagree.** How the ladder feels at that point in the game is the senior
+argument.
+
+**T1 is the set's official theme decks, and that is what makes it T1** rather than a difficulty
+band. It is a source rule, not a count: the rungs are however many that set printed. **The exception
+to expect is a set with an unreasonable number of them**, which gets trimmed rather than granted a
+twelve-rung intro. Exceptions where exceptions need to happen.
+
+**None of the above is settled and Trevor says so explicitly: the four-tier shape is the current
+DRAFT.** What makes it usable now is that there is a worked model rather than a specification —
+Base Set's live bracket, built from decks Trevor hand-made for the purpose. **Build the next one
+against that, not against this table**, and expect the table to move as more brackets exist.
+
+**The auto-builder is the release valve.** If Job 11 gets deck generation good enough, a bracket
+short of authored decks can be padded with generated opponents rather than left thin — which is what
+makes a flexible tier size affordable at fourteen sets. See [PROGRESSION.md](PROGRESSION.md) for how
+a generated challenger already works today.
 
 **Some live sets get no bracket at all.** Southern Islands and the promos are *sprinkled into packs*
 rather than laddered — Trevor, 15 Aug. That is a real change to Job 7's derivation, which currently
@@ -292,15 +310,18 @@ fund the collection from something that is not a decision. **Free play still pay
    `buildLadder()` currently derives exactly one bracket per live set, and Southern Islands and the
    promos are to be *sprinkled into packs* rather than laddered — See [PACKS.md](PACKS.md) Cheap now,
    irritating once eleven sets are in.
-3. **The rival is loose on purpose** — not every bracket, tougher than T4, and hard to make so,
-   because "mostly Colorless" is a deck constraint fighting a difficulty requirement. One exit that is
-   not about card choice: make the rival the only opponent whose pool is **every set you have
-   unlocked at once** while everyone else is set-flavoured. Identity and power without leaning on
-   Colorless, and it scales for free. Parked, not proposed.
+3. **The rival is about four fights across the WHOLE ladder, not one per bracket.** Trevor, 19 Aug
+   2026 — Ronald for now, though the identity is open and a different overall boss would serve. That
+   is a real constraint on the rung pattern above: a bracket may have no rival at all, so the rival
+   is not a segment and must not become one. Still open is what makes them *tougher than T4* without
+   leaning on "mostly Colorless", which is a deck constraint fighting a difficulty requirement. One
+   exit that is not about card choice: make the rival the only opponent whose pool is **every set you
+   have unlocked at once** while everyone else is set-flavoured. Identity and power without the
+   Colorless problem, and it scales for free. Parked, not proposed.
 4. **The spec is now playable and nobody has played it.** Trevor's eight decks went into the Base
    Set bracket on 19 Aug 2026 — intro → body → gate → boss, as written. So the cheapest remaining
    test of this whole document is somebody walking that bracket end to end and reporting where it
-   does not survive contact. **Two things the spec says that the built bracket does not do:** the
-   intro is **four** rungs rather than the two this file mandates (all four theme decks, per
-   `base1_decks.json`'s own `_meta`), and **no rung carries an entry condition or a pressure tag**,
-   because neither is built. The first is a one-line data change if the spec wins the argument.
+   does not survive contact. **One thing the spec describes that the built bracket does not do: no
+   rung carries an entry condition or a pressure tag**, because neither is built. (The intro being
+   four rungs rather than two was the other half of this note for about an hour; Trevor resolved it
+   the other way the same day — the table above flexes now, and the built bracket is the model.)
