@@ -306,6 +306,7 @@ const OPPONENT_SOURCES = [
   ['gbc', 'gbc_decks.json'],
   ['jungle', 'jungle_decks.json'],
   ['b1', 'base1_decks.json'],
+  ['b2', 'base2_decks.json'],
 ];
 const opponentDecks = {}, droppedDecks = [];
 for (const [prefix, file] of OPPONENT_SOURCES) {
@@ -316,7 +317,20 @@ for (const [prefix, file] of OPPONENT_SOURCES) {
     if (!deck || !Array.isArray(deck.list)) continue;
     const absent = deck.list.filter(([, id]) => !byId[id]).map(([, id]) => id);
     if (absent.length) { droppedDecks.push(`${prefix}:${key} (${[...new Set(absent)].join(', ')})`); continue; }
-    opponentDecks[`${prefix}:${key}`] = { name: deck.name || key, list: deck.list };
+    // A hand-built deck may name its own COVER CARD — the card the deck is
+    // about, which is not always the biggest Pokemon in it. ui.js falls back to
+    // heroOfList() when there is none, so this is additive: Juno's Eevee deck
+    // was fronted by its Electrode, which is taller and is not what the deck is.
+    // Resolved to an id here, against the deck's OWN list, so a cover naming a
+    // card the deck does not contain is caught at generation rather than
+    // rendering as a blank tile.
+    const entry = { name: deck.name || key, list: deck.list };
+    if (deck.coverCard) {
+      const hit = deck.list.find(([, id]) => byId[id] && byId[id].name === deck.coverCard);
+      if (hit) entry.cover = hit[1];
+      else console.error(`WARNING: ${prefix}:${key} names cover card "${deck.coverCard}", which is not in its list`);
+    }
+    opponentDecks[`${prefix}:${key}`] = entry;
   }
 }
 if (droppedDecks.length)
@@ -324,7 +338,8 @@ if (droppedDecks.length)
 
 out += 'const OPPONENT_DECKS = {\n';
 for (const k of Object.keys(opponentDecks)) {
-  out += `  ${JSON.stringify(k)}: { name: ${JSON.stringify(opponentDecks[k].name)}, list: [\n`;
+  const cov = opponentDecks[k].cover ? `, cover: ${JSON.stringify(opponentDecks[k].cover)}` : '';
+  out += `  ${JSON.stringify(k)}: { name: ${JSON.stringify(opponentDecks[k].name)}${cov}, list: [\n`;
   for (const [q, id] of opponentDecks[k].list) out += `    [${q}, ${JSON.stringify(id)}],  // ${byId[id].name}\n`;
   out += '  ]},\n';
 }

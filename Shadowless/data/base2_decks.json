@@ -1,0 +1,637 @@
+{
+  "_meta": {
+    "source": "data/v1 Opp Decks/Jungle Opponent Decks v1.xlsx — Trevor's workbook, the second hand-built roster. Sheets 'J T2-1' through 'J T4'. The Index tab is the per-card classification the decks were built from, and it now carries opener archetype, trainer function, pressure and a plain-English 'wants' column.",
+    "retrieved": "2026-08-21, extracted from the xlsx directly (the workbook is a zip; parsed from xl/worksheets/*.xml).",
+    "scope": "The Jungle opponent roster v1, built to OPPONENTS.md's tier spec. Three T2, one T3, one T4. The two Jungle theme decks in data/jungle_decks.json stay as they are and remain the T1 intro rungs.",
+    "status": "All five validate clean against Engine.prototype.validateDeck: 60 cards, no errors, no warnings, 4-copy limit respected, every card implemented.",
+    "ids": "ZERO corrections were needed. Every id in the sheet's ID column resolves in CARD_DB and names the card the sheet names — checked mechanically, with accents and the NH/B2 disambiguating suffixes normalised away. Unlike data/jungle_decks.json, where three ids were wrong.",
+    "nonHoloIds": "The sheet tags non-holo duplicate printings with NH (Jolteon NH = base2-20, the non-holo of base2-4). validateDeck counts copies BY NAME, so a deck holding base2-9 Pinsir and base2-25 Pinsir NH holds two Pinsir against the 4-copy limit. That is correct and it is what the sheet intends.",
+    "weights": "featureWeight is Trevor's own scoring from the sheet, totalled across the deck. IT IS ONLY COMPARABLE WITHIN A ROSTER. Jungle runs 9/12/16 against Base Set's 7-7.5/10-10.5/12.5 because this set had more weight to distribute — Base Set opened evolution lines that Jungle finishes — so the five decks are scaled relative to each other, not to the previous eight. Trevor, 21 Aug 2026. See ROSTERS.md.",
+    "pressure": "The pressure tags are DERIVED from the Index tab's own per-card Pressure column, tallied by copy count, rather than assigned by eye. Only three of the five earn one. Trevor's key extends OPPONENTS.md's seven with two more: HD (High Damage) and BG (Bench Growth).",
+    "coverCard": "The sheet's own Cover Card field. Nothing reads it yet; PROGRESSION.md's open item 1 wants a challenger's face to be their deck's hero card, and this is that field. The Base Set workbook predates the column, so base1_decks.json has none.",
+    "notInThisRoster": "Pikachu did not fit and is deferred to the next round of decks, where it will join Fossil's Raichu. Trevor, 21 Aug 2026 — the set did not separate cleanly into five decks."
+  },
+  "b2_t2_eevee_multi": {
+    "name": "J T2-1",
+    "sheet": "J T2-1",
+    "set": "base2",
+    "tier": 2,
+    "featureWeight": 9,
+    "coverCard": "Eevee",
+    "pressure": [
+      "AP",
+      "SL"
+    ],
+    "list": [
+      [
+        4,
+        "base2-51",
+        "Eevee"
+      ],
+      [
+        1,
+        "base2-20",
+        "Jolteon"
+      ],
+      [
+        1,
+        "base2-3",
+        "Flareon"
+      ],
+      [
+        1,
+        "base2-28",
+        "Vaporeon"
+      ],
+      [
+        3,
+        "base1-67",
+        "Voltorb"
+      ],
+      [
+        1,
+        "base2-2",
+        "Electrode"
+      ],
+      [
+        3,
+        "base2-53",
+        "Goldeen"
+      ],
+      [
+        1,
+        "base2-46",
+        "Seaking"
+      ],
+      [
+        3,
+        "base1-60",
+        "Ponyta"
+      ],
+      [
+        1,
+        "base2-44",
+        "Rapidash"
+      ],
+      [
+        4,
+        "base1-96",
+        "Double Colorless Energy"
+      ],
+      [
+        8,
+        "base1-100",
+        "Lightning Energy"
+      ],
+      [
+        8,
+        "base1-98",
+        "Fire Energy"
+      ],
+      [
+        8,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        2,
+        "base2-64",
+        "Poké Ball"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        1,
+        "base1-80",
+        "Defender"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        2,
+        "base2-47",
+        "Tauros"
+      ]
+    ]
+  },
+  "b2_t2_grass_psychic": {
+    "name": "J T2-2",
+    "sheet": "J T2-2",
+    "set": "base2",
+    "tier": 2,
+    "featureWeight": 9,
+    "coverCard": "Nidoqueen",
+    "list": [
+      [
+        1,
+        "base2-7",
+        "Nidoqueen"
+      ],
+      [
+        3,
+        "base2-40",
+        "Nidorina"
+      ],
+      [
+        4,
+        "base2-57",
+        "Nidoran ♀"
+      ],
+      [
+        2,
+        "base2-52",
+        "Exeggcute"
+      ],
+      [
+        1,
+        "base2-35",
+        "Exeggutor"
+      ],
+      [
+        1,
+        "base2-22",
+        "Mr. Mime"
+      ],
+      [
+        2,
+        "base1-10",
+        "Mewtwo"
+      ],
+      [
+        2,
+        "base1-43",
+        "Abra"
+      ],
+      [
+        1,
+        "base1-32",
+        "Kadabra"
+      ],
+      [
+        2,
+        "base2-62",
+        "Spearow"
+      ],
+      [
+        1,
+        "base2-36",
+        "Fearow"
+      ],
+      [
+        1,
+        "base2-25",
+        "Pinsir"
+      ],
+      [
+        1,
+        "base2-9",
+        "Pinsir"
+      ],
+      [
+        18,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        9,
+        "base1-101",
+        "Psychic Energy"
+      ],
+      [
+        1,
+        "base2-64",
+        "Poké Ball"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        1,
+        "base1-73",
+        "Impostor Professor Oak"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-84",
+        "PlusPower"
+      ],
+      [
+        1,
+        "base1-82",
+        "Full Heal"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ]
+    ]
+  },
+  "b2_t2_fighting_grass": {
+    "name": "J T2-3",
+    "sheet": "J T2-3",
+    "set": "base2",
+    "tier": 2,
+    "featureWeight": 9,
+    "coverCard": "Rhydon",
+    "pressure": [
+      "WP"
+    ],
+    "list": [
+      [
+        3,
+        "base2-61",
+        "Rhyhorn"
+      ],
+      [
+        2,
+        "base2-45",
+        "Rhydon"
+      ],
+      [
+        3,
+        "base2-50",
+        "Cubone"
+      ],
+      [
+        1,
+        "base2-39",
+        "Marowak"
+      ],
+      [
+        2,
+        "base2-55",
+        "Mankey"
+      ],
+      [
+        1,
+        "base2-43",
+        "Primeape"
+      ],
+      [
+        3,
+        "base2-59",
+        "Paras"
+      ],
+      [
+        2,
+        "base2-41",
+        "Parasect"
+      ],
+      [
+        1,
+        "base1-66",
+        "Tangela"
+      ],
+      [
+        2,
+        "base2-56",
+        "Meowth"
+      ],
+      [
+        1,
+        "base2-42",
+        "Persian"
+      ],
+      [
+        1,
+        "base2-10",
+        "Scyther"
+      ],
+      [
+        17,
+        "base1-97",
+        "Fighting Energy"
+      ],
+      [
+        11,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        1,
+        "base1-71",
+        "Computer Search"
+      ],
+      [
+        1,
+        "base1-84",
+        "PlusPower"
+      ],
+      [
+        2,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        1,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        1,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ]
+    ]
+  },
+  "b2_t3_colorless": {
+    "name": "J T3-1",
+    "sheet": "J T3-1",
+    "set": "base2",
+    "tier": 3,
+    "featureWeight": 12,
+    "coverCard": "Pidgeot",
+    "pressure": [
+      "PC"
+    ],
+    "list": [
+      [
+        1,
+        "base2-8",
+        "Pidgeot"
+      ],
+      [
+        3,
+        "base1-22",
+        "Pidgeotto"
+      ],
+      [
+        4,
+        "base1-57",
+        "Pidgey"
+      ],
+      [
+        2,
+        "base1-5",
+        "Clefairy"
+      ],
+      [
+        1,
+        "base2-1",
+        "Clefable"
+      ],
+      [
+        1,
+        "base2-5",
+        "Kangaskhan"
+      ],
+      [
+        2,
+        "base1-48",
+        "Doduo"
+      ],
+      [
+        1,
+        "base2-34",
+        "Dodrio"
+      ],
+      [
+        1,
+        "base2-11",
+        "Snorlax"
+      ],
+      [
+        3,
+        "base1-45",
+        "Caterpie"
+      ],
+      [
+        2,
+        "base1-54",
+        "Metapod"
+      ],
+      [
+        1,
+        "base2-33",
+        "Butterfree"
+      ],
+      [
+        4,
+        "base1-96",
+        "Double Colorless Energy"
+      ],
+      [
+        20,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        3,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        2,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-82",
+        "Full Heal"
+      ],
+      [
+        1,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        2,
+        "base1-78",
+        "Scoop Up"
+      ]
+    ]
+  },
+  "b2_t4_grass": {
+    "name": "J T4",
+    "sheet": "J T4",
+    "set": "base2",
+    "tier": 4,
+    "featureWeight": 16,
+    "coverCard": "Vileplume",
+    "pressure": [
+      "SL"
+    ],
+    "list": [
+      [
+        2,
+        "base2-15",
+        "Vileplume"
+      ],
+      [
+        3,
+        "base2-37",
+        "Gloom"
+      ],
+      [
+        4,
+        "base2-58",
+        "Oddish"
+      ],
+      [
+        1,
+        "base2-14",
+        "Victreebel"
+      ],
+      [
+        2,
+        "base2-48",
+        "Weepinbell"
+      ],
+      [
+        3,
+        "base2-49",
+        "Bellsprout"
+      ],
+      [
+        1,
+        "base2-5",
+        "Kangaskhan"
+      ],
+      [
+        3,
+        "base2-54",
+        "Jigglypuff"
+      ],
+      [
+        2,
+        "base2-16",
+        "Wigglytuff"
+      ],
+      [
+        23,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        1,
+        "base1-96",
+        "Double Colorless Energy"
+      ],
+      [
+        1,
+        "base2-38",
+        "Lickitung"
+      ],
+      [
+        3,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base1-76",
+        "Pokémon Breeder"
+      ],
+      [
+        1,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        2,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        1,
+        "base1-79",
+        "Super Energy Removal"
+      ],
+      [
+        1,
+        "base1-77",
+        "Pokémon Trader"
+      ]
+    ]
+  }
+}

@@ -122,9 +122,24 @@ right. Everything marked `placeholder: true` in the data is ours rather than the
 | Bracket | Roster | Boss | Extra |
 |---|---|---|---|
 | Base — The Clubs | 4 theme decks (T1) + 5 T2 + 2 T3, **all Trevor's** | the T4, *Ashfall* | Ronald, *I'm Ronald!* |
-| Jungle — The Jungle | 2 Jungle theme decks + **all 8** Club Masters | Ronald, *Invincible Ronald* | — |
-| Fossil — The Dome | the 4 Grand Masters + 2 generated | Ronald, *Powerful Ronald* | Ronald, *Legendary Ronald* |
+| Jungle — The Jungle | 2 Jungle theme decks (T1) + 3 T2 + 1 T3, **all Trevor's** | the T4, *Deep Bloom* | Ronald, *Invincible Ronald* |
+| Fossil — The Dome | the 4 Grand Masters + **all 8** Club Masters | Ronald, *Powerful Ronald* | Ronald, *Legendary Ronald* |
 | Team Rocket | **entirely generated** | generated | — |
+
+**Jungle followed on 21 Aug 2026, and the move settled what a placeholder IS.** Trevor's five Jungle
+decks made the bracket intro → body → gate → boss on their own, which displaced the eight Club Masters
+that had been filling it. His rule: **anybody not holding a hand-built deck or an authentic theme deck
+is a placeholder filling the gap between a set going live and its own decks being authored.** So they
+were not deleted — `data/gbc_decks.json` keeps every one on file — they moved **down** to Fossil, which
+is the last bracket where they are set-appropriate. Every GBC deck plays only Base, Jungle and Fossil
+cards, so putting them in a Team Rocket bracket would be worse than the generated decks already there.
+Fossil's two `generate` placeholders were dropped in the same move, since it now has twelve real ones.
+
+**And every bracket ends in its T4.** Ronald's second deck joined his first in an `extra`; he is the
+boss of nothing except Fossil, and only until Fossil has an authored T4. **The rival is not a segment
+and is not per bracket** — Trevor, 21 Aug: roughly four encounters across the whole ladder, a small
+group with a leader, decks drawn from every previous set and paying combined packs. That is a design
+sketch and not a spec; see [OPPONENTS.md](OPPONENTS.md), whose open item 3 it replaces.
 
 **Base Set stopped being a placeholder on 19 Aug 2026.** Its eleven rungs are Trevor's own decks
 built to [OPPONENTS.md](OPPONENTS.md)'s tier spec, and the bracket now reads intro → body → gate →
@@ -142,12 +157,14 @@ called that "the arbitrary call in there" and it no longer has to be made.
 `base5` went live in Job 10 with nothing authored for it in `ladder.json`, `buildLadder()`
 synthesised a bracket, and no code or data changed for it to appear. It is what the claim above looks
 like when it actually happens. Authoring a roster over the top is an override — see
-[OPPONENTS.md](OPPONENTS.md), and note that **the eight Base Set decks every tier claim rests on are
-not wired in either**; `data/base1_decks.json` is read by no part of the game. See [DATA.md](DATA.md).
+[OPPONENTS.md](OPPONENTS.md). (This paragraph used to end by noting that `data/base1_decks.json` was
+read by no part of the game. Both hand-built roster files are wired in now, through `gen_cards.js`'s
+`b1:` and `b2:` sources.)
 
-All 16 GBC decks are assigned and none is stranded; `progresstest.js` asserts that. The eight Club
-Masters are split across two brackets by how Base-heavy each deck is — the arbitrary call in there,
-and a data edit either way. Ronald's fourth deck, *Legendary Ronald*, is the **post-boss challenger**
+All 16 GBC decks are assigned and none is stranded; `progresstest.js` asserts that, and its count moved
+from 30 authored opponents to 35 when the Jungle roster went in. The eight Club Masters used to be
+split across two brackets by how Base-heavy each deck was — "the arbitrary call in there" — and that
+call no longer has to be made: they are all in Fossil. Ronald's fourth deck, *Legendary Ronald*, is the **post-boss challenger**
 in Fossil: a bracket's `extra` list unlocks once its own boss falls. When a fourth set goes live it
 should probably become that bracket's boss instead.
 

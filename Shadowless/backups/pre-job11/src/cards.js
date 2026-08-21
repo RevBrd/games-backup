@@ -924,128 +924,6 @@ const OPPONENT_DECKS = {
     [1, "base1-92"],  // Energy Removal
     [2, "base1-81"],  // Energy Retrieval
   ]},
-  "b2:b2_t2_eevee_multi": { name: "J T2-1", cover: "base2-51", list: [
-    [4, "base2-51"],  // Eevee
-    [1, "base2-20"],  // Jolteon
-    [1, "base2-3"],  // Flareon
-    [1, "base2-28"],  // Vaporeon
-    [3, "base1-67"],  // Voltorb
-    [1, "base2-2"],  // Electrode
-    [3, "base2-53"],  // Goldeen
-    [1, "base2-46"],  // Seaking
-    [3, "base1-60"],  // Ponyta
-    [1, "base2-44"],  // Rapidash
-    [4, "base1-96"],  // Double Colorless Energy
-    [8, "base1-100"],  // Lightning Energy
-    [8, "base1-98"],  // Fire Energy
-    [8, "base1-102"],  // Water Energy
-    [2, "base2-64"],  // Poké Ball
-    [2, "base1-91"],  // Bill
-    [1, "base1-88"],  // Professor Oak
-    [1, "base1-95"],  // Switch
-    [1, "base1-77"],  // Pokémon Trader
-    [1, "base1-80"],  // Defender
-    [2, "base1-94"],  // Potion
-    [1, "base1-81"],  // Energy Retrieval
-    [2, "base2-47"],  // Tauros
-  ]},
-  "b2:b2_t2_grass_psychic": { name: "J T2-2", cover: "base2-7", list: [
-    [1, "base2-7"],  // Nidoqueen
-    [3, "base2-40"],  // Nidorina
-    [4, "base2-57"],  // Nidoran ♀
-    [2, "base2-52"],  // Exeggcute
-    [1, "base2-35"],  // Exeggutor
-    [1, "base2-22"],  // Mr. Mime
-    [2, "base1-10"],  // Mewtwo
-    [2, "base1-43"],  // Abra
-    [1, "base1-32"],  // Kadabra
-    [2, "base2-62"],  // Spearow
-    [1, "base2-36"],  // Fearow
-    [1, "base2-25"],  // Pinsir
-    [1, "base2-9"],  // Pinsir
-    [18, "base1-99"],  // Grass Energy
-    [9, "base1-101"],  // Psychic Energy
-    [1, "base2-64"],  // Poké Ball
-    [2, "base1-91"],  // Bill
-    [1, "base1-88"],  // Professor Oak
-    [1, "base1-73"],  // Impostor Professor Oak
-    [2, "base1-94"],  // Potion
-    [1, "base1-84"],  // PlusPower
-    [1, "base1-82"],  // Full Heal
-    [1, "base1-95"],  // Switch
-    [1, "base1-92"],  // Energy Removal
-  ]},
-  "b2:b2_t2_fighting_grass": { name: "J T2-3", cover: "base2-45", list: [
-    [3, "base2-61"],  // Rhyhorn
-    [2, "base2-45"],  // Rhydon
-    [3, "base2-50"],  // Cubone
-    [1, "base2-39"],  // Marowak
-    [2, "base2-55"],  // Mankey
-    [1, "base2-43"],  // Primeape
-    [3, "base2-59"],  // Paras
-    [2, "base2-41"],  // Parasect
-    [1, "base1-66"],  // Tangela
-    [2, "base2-56"],  // Meowth
-    [1, "base2-42"],  // Persian
-    [1, "base2-10"],  // Scyther
-    [17, "base1-97"],  // Fighting Energy
-    [11, "base1-99"],  // Grass Energy
-    [2, "base1-91"],  // Bill
-    [1, "base1-88"],  // Professor Oak
-    [1, "base1-71"],  // Computer Search
-    [1, "base1-84"],  // PlusPower
-    [2, "base1-93"],  // Gust of Wind
-    [1, "base1-90"],  // Super Potion
-    [1, "base1-94"],  // Potion
-    [1, "base1-92"],  // Energy Removal
-  ]},
-  "b2:b2_t3_colorless": { name: "J T3-1", cover: "base2-8", list: [
-    [1, "base2-8"],  // Pidgeot
-    [3, "base1-22"],  // Pidgeotto
-    [4, "base1-57"],  // Pidgey
-    [2, "base1-5"],  // Clefairy
-    [1, "base2-1"],  // Clefable
-    [1, "base2-5"],  // Kangaskhan
-    [2, "base1-48"],  // Doduo
-    [1, "base2-34"],  // Dodrio
-    [1, "base2-11"],  // Snorlax
-    [3, "base1-45"],  // Caterpie
-    [2, "base1-54"],  // Metapod
-    [1, "base2-33"],  // Butterfree
-    [4, "base1-96"],  // Double Colorless Energy
-    [20, "base1-99"],  // Grass Energy
-    [3, "base1-91"],  // Bill
-    [2, "base1-88"],  // Professor Oak
-    [2, "base1-90"],  // Super Potion
-    [2, "base1-94"],  // Potion
-    [1, "base1-95"],  // Switch
-    [1, "base1-82"],  // Full Heal
-    [1, "base1-81"],  // Energy Retrieval
-    [2, "base1-78"],  // Scoop Up
-  ]},
-  "b2:b2_t4_grass": { name: "J T4", cover: "base2-15", list: [
-    [2, "base2-15"],  // Vileplume
-    [3, "base2-37"],  // Gloom
-    [4, "base2-58"],  // Oddish
-    [1, "base2-14"],  // Victreebel
-    [2, "base2-48"],  // Weepinbell
-    [3, "base2-49"],  // Bellsprout
-    [1, "base2-5"],  // Kangaskhan
-    [3, "base2-54"],  // Jigglypuff
-    [2, "base2-16"],  // Wigglytuff
-    [23, "base1-99"],  // Grass Energy
-    [1, "base1-96"],  // Double Colorless Energy
-    [1, "base2-38"],  // Lickitung
-    [3, "base1-91"],  // Bill
-    [2, "base1-88"],  // Professor Oak
-    [2, "base1-76"],  // Pokémon Breeder
-    [1, "base1-94"],  // Potion
-    [1, "base1-95"],  // Switch
-    [1, "base1-93"],  // Gust of Wind
-    [2, "base1-81"],  // Energy Retrieval
-    [1, "base1-79"],  // Super Energy Removal
-    [1, "base1-77"],  // Pokémon Trader
-  ]},
 };
 
 const LADDER = {
@@ -1160,7 +1038,7 @@ const LADDER = {
     },
     "base2": {
       "name": "The Jungle",
-      "blurb": "Two theme decks, four built out of Jungle itself, and a bloom that will not let you act.",
+      "blurb": "All eight club masters in one place, and two decks built out of Jungle itself.",
       "roster": [
         {
           "id": "base2-waterblast",
@@ -1177,79 +1055,6 @@ const LADDER = {
           "deck": "jungle:power_reserve",
           "ai": "novice",
           "placeholder": true
-        },
-        {
-          "id": "base2-t2-1",
-          "name": "Juno",
-          "title": "Three Stones",
-          "deck": "b2:b2_t2_eevee_multi",
-          "placeholder": true
-        },
-        {
-          "id": "base2-t2-2",
-          "name": "Amara",
-          "title": "Thorn & Thought",
-          "deck": "b2:b2_t2_grass_psychic",
-          "placeholder": true
-        },
-        {
-          "id": "base2-t2-3",
-          "name": "Bram",
-          "title": "Stonecap",
-          "deck": "b2:b2_t2_fighting_grass",
-          "placeholder": true
-        },
-        {
-          "id": "base2-t3-1",
-          "name": "Lior",
-          "title": "Updraft",
-          "deck": "b2:b2_t3_colorless",
-          "placeholder": true
-        }
-      ],
-      "boss": {
-        "id": "base2-t4",
-        "name": "Marlow",
-        "title": "Deep Bloom",
-        "deck": "b2:b2_t4_grass",
-        "placeholder": true
-      },
-      "extra": [
-        {
-          "id": "gbc-ronald-2",
-          "name": "Ronald",
-          "title": "Invincible Ronald",
-          "deck": "gbc:ronald_invincible"
-        }
-      ]
-    },
-    "base3": {
-      "name": "The Dome",
-      "blurb": "The Grand Masters brought the Legendary birds, and every Club Master came with them.",
-      "roster": [
-        {
-          "id": "gbc-courtney",
-          "name": "Courtney",
-          "title": "Grand Master",
-          "deck": "gbc:courtney_legendary_moltres"
-        },
-        {
-          "id": "gbc-steve",
-          "name": "Steve",
-          "title": "Grand Master",
-          "deck": "gbc:steve_legendary_zapdos"
-        },
-        {
-          "id": "gbc-jack",
-          "name": "Jack",
-          "title": "Grand Master",
-          "deck": "gbc:jack_legendary_articuno"
-        },
-        {
-          "id": "gbc-rod",
-          "name": "Rod",
-          "title": "Grand Master",
-          "deck": "gbc:rod_legendary_dragonite"
         },
         {
           "id": "gbc-nikki",
@@ -1298,6 +1103,56 @@ const LADDER = {
           "name": "Rick",
           "title": "Science Club",
           "deck": "gbc:rick_wonders_of_science"
+        }
+      ],
+      "boss": {
+        "id": "gbc-ronald-2",
+        "name": "Ronald",
+        "title": "Invincible Ronald",
+        "deck": "gbc:ronald_invincible"
+      }
+    },
+    "base3": {
+      "name": "The Dome",
+      "blurb": "The Grand Masters. They brought the Legendary birds.",
+      "roster": [
+        {
+          "id": "gbc-courtney",
+          "name": "Courtney",
+          "title": "Grand Master",
+          "deck": "gbc:courtney_legendary_moltres"
+        },
+        {
+          "id": "gbc-steve",
+          "name": "Steve",
+          "title": "Grand Master",
+          "deck": "gbc:steve_legendary_zapdos"
+        },
+        {
+          "id": "gbc-jack",
+          "name": "Jack",
+          "title": "Grand Master",
+          "deck": "gbc:jack_legendary_articuno"
+        },
+        {
+          "id": "gbc-rod",
+          "name": "Rod",
+          "title": "Grand Master",
+          "deck": "gbc:rod_legendary_dragonite"
+        },
+        {
+          "id": "base3-gen1",
+          "name": "Wren",
+          "title": "Challenger",
+          "deck": "generate",
+          "placeholder": true
+        },
+        {
+          "id": "base3-gen2",
+          "name": "Tobin",
+          "title": "Challenger",
+          "deck": "generate",
+          "placeholder": true
         }
       ],
       "boss": {

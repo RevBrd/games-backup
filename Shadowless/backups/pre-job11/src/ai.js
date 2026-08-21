@@ -55,14 +55,12 @@ const AI_WEIGHTS = {
   benchMore: 7,         // each additional one
   benchTooMany: 2,
   retreatBase: -6,      // retreating costs tempo and Energy
-  selfSwitchGain: 0.6,  // Teleport: what the destination is worth over staying put
   dangerSwap: 22,       // ...but escaping a lethal threat is worth it — CAPS the
                         // rescue value below, so a bare Basic is never worth 22
   retreatTempo: 0.55,   // per point of printed damage the swap gives up this turn
   retreatSaveEnergy: 7, // rescue value per Energy already invested in the Active
   retreatSaveEvolved: 9,// ...plus this if it is not a Basic
   retreatNoCause: -14,  // retreating when nothing actually threatens the Active
-  retreatIntoDeath: 24, // ...and swapping a survivor for one that dies on arrival
   wallStick: 1.0,       // how much a Pokemon's "stickiness" cancels the value of
                         // rescuing it. 1.0 = a perfect wall is never worth
                         // saving for its own sake; the Prize term still applies
@@ -499,7 +497,7 @@ class AI {
         case 'BENCH_SPLASH_FLIP_SIDE': flags.splashEither = v.n; break;
         case 'BENCH_SPLASH_PER_FLIP': flags.splashPerFlip = v; break;
         case 'BENCH_SPLASH_TYPED': flags.splashTyped = v.n; break;
-        case 'SWITCH_SELF_CHOOSE': flags.selfSwitch = v.optional ? 'may' : true; break;
+        case 'SWITCH_SELF_CHOOSE': flags.selfSwitch = true; break;
         case 'NO_TRAINERS_NEXT_TURN': flags.lockTrainers = true; break;
         case 'BUFF_OWN_ATTACK': flags.buff = v; break;
 
@@ -865,29 +863,7 @@ class AI {
     if (f.flags.lockAttack) s += f.flags.lockAttack * W.paralyze * 0.9;
     if (f.flags.lockRetreat) s += f.flags.lockRetreat * W.drag * 0.4;
     if (f.flags.lockTrainers) s += W.drawCard;
-    // TELEPORT IS ONLY WORTH WHERE IT GOES. This was `frail ? dangerSwap : 2`
-    // — a flat number that never looked at the Bench — and Trevor's log
-    // 04-37-10 is what it does: Exeggutor Teleported on four consecutive turns,
-    // each time scoring an identical 22, once swapping itself for a second
-    // Exeggutor in the same condition. Nothing changed and a turn was spent.
-    //
-    // Worse, the bot was not choosing the destination AT ALL. `SWITCH_SELF_CHOOSE`
-    // falls back to `this.pick(me.bench.length)` — a seeded random — when the
-    // action carries no `opts.bench`, and nothing in this file had ever written
-    // one. That is the same shape as the triggered-Power gap in AI.md: a choice
-    // the bot is owed, quietly handed to the engine.
-    //
-    // `promoteValue` is the answer to "what is sending this one up worth" and is
-    // already the shared home for three other callers including "who does a
-    // Switch bring in". This is the fourth. Measured as a DIFFERENCE against
-    // staying put, so an even swap is worth nothing without needing a rule that
-    // says so — and it already prices dying, which is why `frail` is gone from
-    // here rather than added to it.
-    if (f.flags.selfSwitch && me.bench.length) {
-      const sw = this.bestSelfSwitch(pi);
-      // A `may` switch can be declined, so its downside is never paid.
-      s += sw ? (f.flags.selfSwitch === 'may' ? Math.max(0, sw.gain) : sw.gain) * W.selfSwitchGain : 0;
-    }
+    if (f.flags.selfSwitch && me.bench.length) s += frail ? W.dangerSwap : 2;
     // Swords Dance only pays off if we are still here next turn to use it.
     if (f.flags.buff) s += frail ? 4 : (f.flags.buff.base || 0) * 0.35;
 
@@ -1093,39 +1069,6 @@ class AI {
       s -= Math.min(W.dangerSwap, invested) + W.retreatPrize / (left * left);
     }
     return s;
-  }
-
-  // WHERE A SELF-SWITCH SHOULD GO, and what the move is worth over staying.
-  // One function so the score and the chosen destination cannot disagree: both
-  // `scoreAttack` and the attack case in `scoreAction` call it on the same
-  // state, so the bench index that gets written into `opts` is the one the
-  // score was computed from.
-  bestSelfSwitch(pi) {
-    const me = this.E.state.players[pi];
-    if (!me.active || !me.bench.length) return null;
-
-    // RE-ENTRY GUARD, and it is not defensive programming — without it this
-    // recurses until the stack dies, on any board where a self-switch attack is
-    // legal. `promoteValue` calls `potential`, which calls
-    // `scoreAttackHypothetical`, which for the ACTIVE slot is `scoreAttack`
-    // itself — and `scoreAttack` is what called us. It only closes for the
-    // Active, which is why the bench half is safe and why nothing caught it: no
-    // theme deck holds a self-switch attack, so 396 assertions and 144 full
-    // games passed with the loop sitting there.
-    //
-    // Returning null one level down is the right answer as well as the safe one.
-    // The inner question is "what would this attack be worth", and a self-switch
-    // nested inside the valuation of a self-switch is not a play anybody makes.
-    if (this._inSelfSwitch) return null;
-    this._inSelfSwitch = true;
-    try {
-      let bench = -1, best = -Infinity;
-      for (let i = 0; i < me.bench.length; i++) {
-        const v = this.promoteValue(pi, me.bench[i]);
-        if (v > best) { best = v; bench = i; }
-      }
-      return { bench, gain: best - this.promoteValue(pi, me.active) };
-    } finally { this._inSelfSwitch = false; }
   }
 
   bestAttackScore(pi) {
@@ -1714,20 +1657,6 @@ class AI {
         // Porygon deals no damage with either Conversion, so the whole value is
         // in picking a USEFUL type. Without this the bot would choose at random
         // among options that all score the same nothing.
-        // Fill in the destination for a self-switch, for the same reason and by
-        // the same pattern as `scoreOnPlay`: the engine's fallback is a seeded
-        // random pick, so a choice nobody makes is a choice made badly.
-        if (me.active) {
-          const scr = this.script(me.active, a.idx);
-          const sv = scr.find(v => v.v === 'SWITCH_SELF_CHOOSE');
-          if (sv && me.bench.length) {
-            const sw = this.bestSelfSwitch(pi);
-            if (sw) {
-              a.opts = a.opts || {};
-              a.opts.bench = (sv.optional && sw.gain <= 0) ? -1 : sw.bench;
-            }
-          }
-        }
         if (a.opts && a.opts.type && me.active) {
           const scr = this.script(me.active, a.idx);
           if (scr.some(v => v.v === 'CONVERT_DEF_WEAKNESS')) {
@@ -1994,35 +1923,8 @@ class AI {
 
         if (mineNow < 0 || mineNow === -Infinity) s += 10;
         if (theirs.short === 0) s += 8;
-
-        // NEVER RETREAT INTO SOMETHING THAT DIES INSTANTLY — and until 21 Aug
-        // 2026 this line asked the wrong Pokemon. It compared `danger`, which is
-        // the threat against the Active that is LEAVING, with the remaining HP
-        // of the one ARRIVING. Those are only the same number when both have the
-        // same matchup against the attacker, which is exactly the case where the
-        // guard was never needed.
-        //
-        // Trevor's log 04-06-28, turn 10, is the shape of it. Moltres resists
-        // Fighting, so Hitmonlee's High Jump Kick was 20 into its 30 remaining —
-        // two more turns of holding the spot. Magmar does not resist anything, so
-        // the same attack was 50 into its 50. The bot read `danger` as 20, found
-        // 20 >= 50 false, waived the penalty, retreated, and handed over a Prize
-        // to an attack the Pokemon it abandoned would have walked away from.
-        //
-        // `threatAgainst` is the function that asks it properly and it has been
-        // here since Job 9 — it was written for `promote`, which had the identical
-        // fault ("no idea it was feeding a 40 HP Voltorb to an Arcanine"). The fix
-        // was made there and never carried across to the retreat rule.
-        //
-        // TWO PENALTIES, because they are two different mistakes. Walking into a
-        // Knock Out is bad. Walking into a Knock Out having just declined a
-        // Pokemon that was going to SURVIVE is worse — it is a conceded Prize
-        // that did not have to exist, and it is the one Trevor keeps seeing.
-        const dangerIn = this.threatAgainst(pi, b);
-        if (dangerIn >= this.remainingHP(b)) {
-          s -= 18;
-          if (!dying) s -= W.retreatIntoDeath;
-        }
+        // never retreat into something that dies instantly
+        if (danger >= this.remainingHP(b)) s -= 18;
 
         // A CONFUSED RETREAT IS A COIN FLIP THAT CHARGES BEFORE IT ROLLS. The
         // Energy is discarded either way, so the cost is certain and only the

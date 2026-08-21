@@ -126,7 +126,7 @@ for (const b of L) {
     if (!r.ok) illegal.push(`${o.id}: ${r.errors.join('; ')}`);
   }
 }
-eq(authored, 30, 'the four brackets name 30 authored opponents — 16 GBC, 4 theme, 2 Jungle, 8 Base Set');
+eq(authored, 35, 'the four brackets name 35 authored opponents — 16 GBC, 4 theme, 2 Jungle, 8 Base Set, 5 Jungle-built');
 ok(illegal.length === 0, `every authored opponent fields a legal 60-card deck${illegal.length ? '\n        ' + illegal.join('\n        ') : ''}`);
 
 // Nothing in a deck FILE is stranded. A deck that resolves but that no rung fields is

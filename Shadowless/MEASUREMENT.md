@@ -1,4 +1,4 @@
-# Shadowless — measuring, and the seven ways it has lied
+# Shadowless — measuring, and the ways it has lied
 
 **Read this before you believe any number that claims something got better**, before you read a saved
 match log, and before you conclude from a flat result that your change did nothing. Split out of
@@ -53,7 +53,25 @@ node tools/abtest.js 8 HEAD~1 --card base1-96   # ...measured only where it can 
 report 0% divergence.** It says so itself when `src/` matches the baseline. Every instrument in this
 file has lied at least once and the two that had a control got caught fastest.
 
-### Seven ways this measurement lies, all of them paid for
+### Every way this measurement has lied, all of them paid for
+
+**Deliberately not counted.** This heading said "seven" for a week and was wrong the moment somebody
+found an eighth — which is the same failure the list itself is about. Add to it; do not tally it.
+
+**A counter that says "must be 0" and is not 0 may be counting the wrong thing.** `aitest.js`'s
+*Declining to win* sat at 13 for weeks: turns where the bot held a guaranteed game-ending attack and
+"did something else". It fired on **any** non-attack action taken in such a turn — so attaching an
+Energy and then winning read as declining to win. Attacking last is ordinary correct play; the fault
+being hunted is *ending* the turn with the lethal still on the table, and only `pass` does that.
+Corrected 21 Aug 2026, and **the honest figure is 0 across 9,610 games**. The old number is not
+comparable with the new one. The general shape is the nastiest kind of instrument failure here,
+because it fails *loudly*: it points at a bug that does not exist, and the label tells you to go
+looking.
+
+**`aiduel.js` took its git ref positionally and ate any flag in front of it.** `aiduel 10 --gbc` ran
+`git show --gbc:Shadowless/src/ai.js` and died in a stack trace that reads like a git problem. Fixed
+the same day — flags are filtered out of the ref now — but it is worth knowing what the failure looked
+like, because the obvious response is to go and look at git.
 
 **Never read selftest's win rates as AI quality.** Both seats run the same AI there, so seat 0's
 figure measures first-player advantage and drifts several points from any change that alters game
@@ -252,7 +270,15 @@ them.
 node tools/decksim.js              # base1, 6 Prizes, 45 seeds — about 45 seconds
 node tools/decksim.js 45 4         # the same at 4 Prizes
 node tools/decksim.js 45 6 data/base1_decks.json
+node tools/decksim.js 30 6 data/base1_decks.json data/base2_decks.json    # two rosters, merged
 ```
+
+**One file and two files are different questions and the answers are not interchangeable.** One
+roster alone asks whether *its own* tiers order — and a five-deck field is small enough that a single
+deck's type coverage can carry it, which is exactly what Jungle's roster looked like until it was run
+in the bigger field. Merging asks whether a later bracket actually sits above an earlier one, which is
+the question a second roster creates and the one worth quoting. Merged runs add a `from` column and a
+per-roster average; duplicate deck keys are refused rather than silently overwritten.
 
 Every deck meets every other **from both seats on the same seeds**. That is not optional: seat
 correlates with a deterministic opening flip, and `aiduel.js` shipped unmirrored for an hour and

@@ -109,6 +109,101 @@ Blastoise gets to ride a little longer, a comeback has room to happen, and 4 is 
 slightly gated experience rather than a shorter one. **The measured flatness of 4 → 6 is an argument
 that it costs nothing, not that it does nothing.** Weigh both before changing the table.
 
+## Jungle — Trevor's five decks, 21 Aug 2026
+
+**Live on the ladder the same day.** Three T2, one T3, one T4, joining the two authentic Jungle theme
+decks as the T1 intro. All five validate clean and — unlike `jungle_decks.json` — **every id in the
+workbook was already correct**, checked mechanically with accents and the NH/B2 suffixes normalised
+away. Zero corrections.
+
+```bash
+node tools/decksim.js 45 6 data/base2_decks.json                          # the roster alone
+node tools/decksim.js 30 6 data/base1_decks.json data/base2_decks.json    # against Base Set's eight
+```
+
+**`decksim.js` takes more than one file as of this roster, and the two runs answer different
+questions.** A five-deck field is small enough that one deck's type coverage can carry it, so the
+roster alone cannot tell "this deck is strong" from "this deck is Fire in a field of Grass". Merging
+the two rosters is the question a second bracket creates and it is the one worth quoting.
+
+### The recipe
+
+| | T2 (three decks) | T3 (one) | T4 (one) |
+|---|---|---|---|
+| Feature weight | 9 | 12 | 16 |
+| Draw + search cards | 4 – 6 | 5 | 8 |
+| Rare Trainers | 1 | 2 | 4 |
+| Basic Energy | 24 – 28 | 20 | 23 |
+| Basic Pokemon | 15 | 13 | 12 |
+| Trainers | 10 – 11 | 14 | 14 |
+
+**The Energy-down, Trainers-up shape holds exactly as Base Set's did**, which is the one part of the
+recipe that has now repeated across two independently built rosters.
+
+**One row does not, and it is the row the T3 loses on.** `b2_t3_colorless` runs **five** draw-and-search
+cards against the Eevee T2's **six** — the only place in either roster where a lower tier is better
+supplied than the tier above it. Base Set's two T3s ran 6 and 7 against a T2 band of 3 to 4. Given the
+standings below, that is the most likely single cause and it is one card wide.
+
+*(Counted with one definition across both files — Bill, Professor Oak, Computer Search, Pokémon
+Trader, Poké Ball, Pokédex, Gambler, Item Finder, Imposter Professor Oak, Pokémon Breeder — and
+"Basic Energy" excludes Double Colorless. Base Set's table above predates that definition and counts
+its T4 slightly differently; the two tables agree on shape, not on every cell.)*
+
+**The feature weights are on a different scale and that is not drift.** Base Set ran 7–7.5 / 10–10.5 /
+12.5; Jungle runs 9 / 12 / 16. Trevor, 21 Aug: Jungle simply had more weight to distribute, because
+Base Set opened evolution lines that Jungle finishes, and the five decks are scaled **relative to each
+other** rather than to the previous eight. **So never compare a featureWeight across rosters** — it is
+an ordering within one workbook, not a unit. (The figure is now stored per deck in both files;
+`base1_decks.json` was backfilled from its workbook the same day, because its own `_meta` had been
+describing a field that was not there.)
+
+### What the sim said, in the merged field
+
+13 decks, 30 seeds × both seats per ordered pair, 6 Prizes, expert both sides:
+
+| | Field win rate | Range |
+|---|---|---|
+| base1 — Trevor's eight | **51.7%** | 38.3 – 68.9 |
+| base2 — Trevor's five | **47.2%** | 31.7 – 64.0 |
+
+| Tier | Merged | Range |
+|---|---|---|
+| T3 (three decks) | 56.4% | 39.0 – 68.9 |
+| T2 (eight decks) | 48.4% | 31.7 – 64.0 |
+| T4 (two decks) | 46.5% | 46.1 – 46.9 |
+
+**Three findings, and the first is the one that matters.**
+
+**The Jungle roster does not order by tier, and it is not close.** Its T2 Eevee deck finishes
+**second of thirteen at 64.0%**, above every deck on the ladder except one Base Set T3 — while its T3
+finishes eleventh at 39.0% and its T4 ninth at 46.1%. The Base Set roster's T2/T3 boundary is the one
+externally-verified claim `OPPONENTS.md` has; **this roster does not reproduce it.**
+
+**The gate is the problem child, and the centrepiece column says why.** `b2_t3_colorless` lands its
+Pidgeot in 45% of games at a **median of turn 29**, in a field whose games are decided around turn 20.
+It runs a 4/3/1 Pidgey line and a 3/2/1 Caterpie line — two three-card Stage 2 chains, one copy each
+at the top. That is a construction fact rather than an AI fact, and it is the same diagnosis Base
+Set's T4 Charizard got: *a slow deck's clothes on a deck that never gets there.*
+
+**The T4 does exactly what it was built to do and still finishes ninth.** Vileplume lands in **78% of
+games at a median of turn 16** — the best assembly rate in the whole thirteen-deck field, better than
+any Base Set deck. So Status Lock arrives, reliably and on time, and converts to 46.1%. That is the
+more interesting half of this run: it is not a consistency failure, so either the pressure is worth
+less than it looks or the bot does not know how to press it once it has it. **Nobody has measured
+which**, and it is a better question than "rebalance the deck".
+
+**Two cautions before anyone acts on the above.** Every deck was run at 6 Prizes, which is the T3/T4
+length and not the T2 one — the spec's own measured finding is that 2 → 4 Prizes is worth +10.7 to a
+T3 and 4 → 6 is worth nothing, so the T2 decks are being played at a length that suits them. And
+`decksim` is a **round robin**, which the ladder is not: these decks never meet each other in play,
+only the player's deck. The instrument measures relative strength, which is exactly what a tier claim
+is — but it is not a claim about how the bracket feels.
+
+**Nothing here was acted on.** These are Trevor's authored decks, built by feel and by his own
+scoring, and `OPPONENTS.md`'s standing warning applies in both directions: do not "fix" a roster
+because a round robin ranked it.
+
 ### How to read a run of this
 
 **Read the centrepiece columns beside the standings — they usually explain them.** A Stage 2 that

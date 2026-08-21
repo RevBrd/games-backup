@@ -139,6 +139,7 @@ source — **grep `readFileSync` in the generator rather than trusting the table
 | `gbc_decks.json` | `OPPONENT_DECKS`, `gbc:` prefix | the ladder roster, `progresstest.js`, `aiduel.js --gbc` |
 | `jungle_decks.json` | `OPPONENT_DECKS`, `jungle:` prefix | the Jungle bracket's two authentic challengers |
 | `base1_decks.json` | `OPPONENT_DECKS`, `b1:` prefix | the whole Base Set bracket — Trevor's eight, built to the tier spec |
+| `base2_decks.json` | `OPPONENT_DECKS`, `b2:` prefix | the Jungle bracket's body, gate and boss — Trevor's five |
 | `ladder.json` | `LADDER` | `buildLadder()`. See [PROGRESSION.md](PROGRESSION.md) |
 
 **The opponent files fail soft where `decks.json` fails hard.** An opponent deck naming a card outside
@@ -163,6 +164,26 @@ from `OPPONENT_SOURCES`, so every measured claim in [OPPONENTS.md](OPPONENTS.md)
 for after any job that ends in a measurement: a thing built, verified, and never plugged in.** Its
 `_meta` said so plainly and nothing was reading that either.
 
+**`base2_decks.json` is Trevor's five Jungle decks, live the day it was written**, 21 Aug 2026 — three
+T2, one T3 and the T4 that is Jungle's boss. **Every id in the workbook was already correct**, checked
+mechanically against `CARD_DB` with accents and the sheet's NH/B2 disambiguating suffixes normalised
+away; no corrections, unlike `jungle_decks.json`. It carries three fields `base1_decks.json` does not:
+`featureWeight` (backfilled into that file the same day, since its own `_meta` had been describing a
+field that was not there), `coverCard`, and `pressure`.
+
+**`coverCard` is read, and `pressure` is not.** The cover is the deck's own declaration of what it is
+about, resolved to an id at generation and used for the challenger's tile — `heroOfList()` is the
+fallback and it disagrees more often than it looks like it would, since the biggest Pokemon in a deck
+is frequently not its point. The pressure tags are derived from the workbook's Index tab by copy count
+and are documentation until [OPPONENTS.md](OPPONENTS.md)'s no-repeat rule is built.
+
+**The workbook's Index tab is the interesting part of this file's source and nothing reads it.** It
+carries a per-card **Feature Tier**, **Opener Archetype**, **Trainer Function**, **Pressure**, and a
+free-text **Wants** column in plain English — "To stall, not attack or retreat", "Vulnerable opponent
+bench pokemon". Trevor's note in the sheet says the last three were added at #15's advice and are not
+retroactively complete. It is the closest thing this project has to a stated specification of how the
+AI ought to play individual cards.
+
 **`fullpool.json` is a flat list of card ids across the unbuilt sets and is read by nothing.** It
 predates the corpus being the source of truth. Left in place rather than deleted, but do not generate
 from it and do not treat it as an inventory — `data/raw/*.json` is the only source.
@@ -173,8 +194,13 @@ Everything in this section is **quarantined**: real material, ID-mapped in some 
 nothing. Adopting any of it is a job rather than a maintenance action — deck select, the roster and
 the balance figures all move.
 
-**`data/Deck Lists/`** holds the spreadsheets. `Base1 Decks.xlsx` is the source of `decks.json`
-(above). `Jungle Decks.xlsx` is the source of `jungle_decks.json`. **`Base4 Decks.xlsx`** is Base
+**Two folders hold the spreadsheets and they were renamed on 21 Aug 2026** — this section said
+`data/Deck Lists/` until then. `data/Old Deck Lists/` holds the theme-deck workbooks: `Base1
+Decks.xlsx` is the source of `decks.json` (above) and `Jungle Decks.xlsx` is the source of
+`jungle_decks.json`. **`data/v1 Opp Decks/` holds Trevor's own opponent workbooks** — `Base1 Opponent
+Decks v1.xlsx` and `Jungle Opponent Decks v1.xlsx`, the sources of `base1_decks.json` and
+`base2_decks.json`. Those two are **not** quarantined; they are live upstream, and the JSON is the
+thing to read. **`Base4 Decks.xlsx`** is Base
 Set 2 theme decks, incomplete, kept and not converted — and note it is named for the set code, so it
 is Base Set 2 and not Team Rocket. **`GB2 Opponent Deck Guide (Alamedyang, English-patch names).txt`**
 is the find of 14 Aug: a hex-extracted guide to ~90 opponents from *Pokémon Card GB2*, the Japan-only

@@ -54,7 +54,7 @@ cost, and it is a real cost — two lines here against a session that opens the 
 |---|---|
 | [ENGINE.md](ENGINE.md) | Adding or changing cards. The nine systems built for the awkward ones — `asEnergy`, `runAttack`, `lastAttackResult`, `pendingSwitch`, `playsAs`, the passive-Power layer, the `baseCard`/`topCard` split and `takeEnergy`. Also: why full games never test any of it |
 | [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, and an `Open` list at the bottom that is the current one |
-| [MEASUREMENT.md](MEASUREMENT.md) | **Before you believe any number.** Every instrument in the project that is not pass/fail, the seven ways they have lied, how to read a saved match log, and the standing figures. Reached from four directions and none of them wants scoring weights on the way |
+| [MEASUREMENT.md](MEASUREMENT.md) | **Before you believe any number.** Every instrument in the project that is not pass/fail, every way they have lied, how to read a saved match log, and the standing figures. Reached from four directions and none of them wants scoring weights on the way |
 | [LAYOUT.md](LAYOUT.md) | Touching the board, the mat, **the CSS**, the hand or anything **sized**. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. If you have trouble with the layout, re-read it — and check you can still see the top of the file, because a compacted read of it has cost a session before |
 | [INTERACTION.md](INTERACTION.md) | Any moment the board stops and **asks the player something**. The coin toss and why it lands on the centre line, the Energy picker sharing its strip, the opening flip, the opening-setup screen, the action bar and the retreat gate, and the rail's hover peek that must never call `render()` |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
@@ -72,12 +72,13 @@ cost, and it is a real cost — two lines here against a session that opens the 
 
 ## Status
 
-**Jobs 1–10 are complete.** The engine and AI came out of Claude Chat; Job 5 built everything a
+**Jobs 1–10 are complete, and Job 11 is in progress.** The engine and AI came out of Claude Chat; Job 5 built everything a
 *collection* game needs on top of them, Job 6 took the card pool to three sets, Job 7 built the
 ladder that makes them reachable, Job 9 was the first AI pass driven by real playtest, and Job 10
-added Team Rocket. You pick a starter deck, work down a roster of named challengers, beat a rival to open the
+added Team Rocket. You pick a starter deck, work down a roster of named challengers, beat a bracket's boss to open the
 next set, earn packs of whatever set you are on, open them, browse what you own, and build decks from
-it — and all of it persists.
+it — and all of it persists. **Two brackets are built from Trevor's own hand-made decks** rather than
+from placeholders: Base Set's eleven rungs and Jungle's seven.
 
 **Four sets are live and complete: Base, Jungle, Fossil and Team Rocket — 311 of 311 cards.** Run
 `node tools/selftest.js` for the live figures rather than trusting a number in prose; it prints
@@ -155,6 +156,7 @@ node tools/abtest.js 8 HEAD~1            # RULES vs a commit: how many games cam
 node tools/openercheck.js                # what the opening-Active rule promotes
 node tools/pressure.js                   # what each set can THREATEN with — run before a roster
 node tools/decksim.js 45 6               # do the tiers actually ORDER? round-robin, both seats
+node tools/decksim.js 30 6 data/base1_decks.json data/base2_decks.json   # ...and do the BRACKETS order?
 ```
 
 **The last six are NOT pass/fail and every one of them has lied at least once.** `aitest`, `aiduel`
@@ -271,10 +273,17 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   base1 bracket — intro → body → gate → boss, the first bracket built to [OPPONENTS.md](OPPONENTS.md)
   — and `base5` derives a *generated* bracket, which is the derivation working rather than a gap.
   **What is left in 10.5 is the layout-related grab bag items.**
-- **Job 11** - Deck autobuilder improvement pass.
+- **Job 11** - Major grab bag pass, AI and UI focused, add Trevor's new Jungle decks. **The Jungle
+  decks are in and live** — five hand-built decks as the bracket's body, gate and boss, the eight GBC
+  Club Masters moved down to Fossil as gap-filler, and every bracket now ends in its own T4 rather
+  than in Ronald. Measured; the roster does **not** order by tier and the report is in
+  [ROSTERS.md](ROSTERS.md). **The AI half is started rather than finished**: three retreat/switch
+  faults from Trevor's logs are closed. **The UI half is untouched.**
+- **Job 11.5** - Document pass, major grab bag work.
 - **Job 12** - Rulings and additions for the Promo cards through the Team Rocket set.
-- **Job 12.5** - Scheduled pre-new set maintenance and grab bag run. Scheduling out future Job order.
-- **Job 13+** - Gym Leader sets and onwards.
+- **Job 13** - Deck autobuilder major work.
+- **Job 13.5** - Scheduled pre-new set maintenance and grab bag run. Scheduling out future Job order.
+- **Job 14+** - Gym Leader sets and onwards.
 
 - **Base Set 2 and Legendary Collection are deprioritised, and the reason is that they are cheap
   rather than despite it.** 124 printings for **zero** new behaviours and 110 for twenty. They add

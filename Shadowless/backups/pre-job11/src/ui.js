@@ -3724,12 +3724,8 @@ function opponentTile(opp, state) {
   // A challenger's face is the deck's own hero card where there is one, which
   // reuses the deck-select idiom rather than inventing a portrait system. There
   // is no character art in this project and Trevor has said he does not want any.
-  // `cover` is the deck's own declaration of what it is about, where the deck
-  // file made one; heroOfList is the fallback and the only rule the rest of the
-  // screen has. The two disagree more often than they look like they would —
-  // the biggest Pokemon in a deck is frequently not its point.
   const deck = state === 'open' ? opponentDeckFor(opp) : null;
-  const hero = deck ? (deck.cover || heroOfList(deck.list)) : null;
+  const hero = deck ? heroOfList(deck.list) : null;
   if (hero && CARD_DB[hero]) {
     const img = cardFaceImage(CARD_DB[hero], null);
     if (img) art.appendChild(img);
@@ -3742,12 +3738,7 @@ function opponentTile(opp, state) {
 
   const tag = el('div', 'dstat dim');
   if (state === 'locked') tag.textContent = 'locked';
-  // "boss", not "rival" — 21 Aug 2026. Every bracket ends in its own T4 now and a
-  // boss is a tier rather than a person; the rival is a separate, rarer thing
-  // that lives in `extra` and, per Trevor, is eventually a combined encounter a
-  // few brackets apart rather than one per set. Labelling the T4 a rival made
-  // Jungle's read "Marlow — Deep Bloom — rival" the day he stopped being one.
-  else if (opp.isBoss) tag.textContent = beaten ? `boss · beaten ${beaten}×` : 'boss';
+  else if (opp.isBoss) tag.textContent = beaten ? `rival · beaten ${beaten}×` : 'rival';
   else tag.textContent = beaten ? `beaten ${beaten}×` : 'not yet beaten';
   c.appendChild(tag);
 
@@ -4368,7 +4359,7 @@ function renderOver() {
   if (UI.save && s.winner === 0) {
     if (rw) {
       box.appendChild(el('p', null, `You won ${rw.packs} ${setName(rw.set)} booster pack${rw.packs === 1 ? '' : 's'}`
-        + (rw.bonus ? ` — ${rw.packs - rw.bonus}, and ${rw.bonus} more for a first win over a bracket boss.` : '.')));
+        + (rw.bonus ? ` — ${rw.packs - rw.bonus}, and ${rw.bonus} more for a first win over a rival.` : '.')));
       // The unlock is the whole point of a boss, so it gets its own line rather
       // than a clause on the end of the pack sentence.
       if (rw.unlocks) {

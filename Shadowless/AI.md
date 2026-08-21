@@ -5,7 +5,7 @@ Depth behind the AI row in `CLAUDE.md`'s status table. **Read this before changi
 each shipped change left behind.
 
 **Before you believe a number that says the bot got better, read [MEASUREMENT.md](MEASUREMENT.md)
-instead.** That is the other half of this file: the three instruments, the seven ways they have lied, how
+instead.** That is the other half of this file: the three instruments, every way they have lied, how
 to read a saved match log, and the standing figures. **Nothing here tells you whether a change
 worked.** If you are holding a duel result, a playtest report or a match log, you want that file.
 
@@ -303,6 +303,43 @@ wrong.** I proposed gating it on whether the engine could see that the choice wa
 `energyChoiceIsReal` pattern — and Trevor pushed back. The analogy does not hold: with Energy the
 *engine* can judge realness objectively, while with a Prize only the player can, so the gate would
 have taken the decision away in both directions. *[The setting, and where it lives →](INTERACTION.md)*
+
+**A retreat is priced on the Pokemon ARRIVING, not the one leaving.** *21 Aug.* The guard that was
+supposed to stop the bot walking into a Knock Out compared `incomingThreat` — the threat against the
+Active that is *leaving* — with the remaining HP of the one *arriving*. Those agree only when both
+have the same matchup against the attacker, which is precisely when the guard is not needed. The
+question is asked with `threatAgainst(pi, b)` now. **`incomingThreat` answers for the Active and only
+for the Active**; anywhere a decision is about a different slot, it is the wrong function, and this is
+the second time that has cost something — `promote` had the identical fault in Job 9 and the fix was
+never carried across. **Two penalties, not one**: dying on arrival is bad, and dying on arrival having
+just abandoned a Pokemon that would have *survived* is a conceded Prize that did not have to exist.
+Asserted in `powertest.js` from Trevor's own logged position rather than duelled, because the change
+is symmetric, it is about perception, and it fires only on a matchup difference — three separate
+reasons a duel reports nothing. **It was duelled anyway and it reported nothing**, which is the
+prediction holding rather than the change failing: 50.4% ±0.8 against HEAD over 8 seeds on the ladder
+pool, with the control at 49.9% ±0.8. Do not re-run it expecting a different answer. `aitest.js` moved
+*retreats with nothing threatening the Active* from 50% to 47% and the retreat rate barely at all,
+which is the right size for a fault that fires only when the two Pokemon differ in weakness or
+resistance.
+
+**Teleport is worth where it goes, and the bot has to choose where that is.** *21 Aug.* `selfSwitch`
+scored `frail ? dangerSwap : 2` — flat, and blind to the Bench — so an even swap and a rescue were the
+same number. It is a **difference in `promoteValue`** between the best benched Pokemon and the Active
+now, which makes a mirror swap worth exactly zero without a rule saying so, and prices dying on both
+sides for free because `promoteValue` already does. **The larger half was invisible to any score**:
+nothing in `ai.js` had ever written `opts.bench`, so `SWITCH_SELF_CHOOSE` fell through to the engine's
+`this.pick()` — a seeded random. That is the triggered-Power gap in this file arriving through an
+attack instead of a Power, and the same remedy applies: **the scorer fills in `a.opts` while it
+scores**, so the fallback is never reached. A `may` version can decline, and does, by writing
+`bench: -1`.
+
+**`promoteValue` on the ACTIVE slot re-enters `scoreAttack`.** *21 Aug, and this is a trap rather than
+a feature.* `promoteValue` → `potential` → `scoreAttackHypothetical` → and for the Active that last
+one *is* `scoreAttack`. Any new caller of `promoteValue` from inside `scoreAttack` needs the same
+re-entry guard `bestSelfSwitch` carries, or the stack dies on the first board where the attack is
+legal. Nothing caught it for the length of a full suite run: **no theme deck holds a self-switch
+attack**, so 402 assertions and 144 complete games passed with the loop sitting there. It has its own
+regression test now.
 
 ## Open
 

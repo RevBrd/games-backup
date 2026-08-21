@@ -2172,6 +2172,170 @@ T('the AI values a Confused retreat at the Energy plus half of the rest', () => 
   return true;
 });
 
+// ------------------------------- retreating into the wrong matchup (Job 11)
+// Trevor's log 04-06-28, turn 10, reconstructed. Moltres resists Fighting, so
+// Hitmonlee's High Jump Kick was 20 into its 30 remaining and it could hold the
+// Active spot for two more turns. Magmar resists nothing, so the same attack was
+// 50 into its 50 and it died on arrival. The bot retreated anyway and gave up a
+// Prize it did not have to.
+//
+// The cause was that the retreat rule's "never retreat into something that dies
+// instantly" guard read `incomingThreat`, which is the threat against the
+// Pokemon LEAVING. The two numbers agree only when both Pokemon have the same
+// matchup, which is exactly when the guard is not needed.
+//
+// ASSERTED HERE RATHER THAN DUELED, per the doctrine in AI.md and MEASUREMENT.md:
+// this is a change to what the bot can PERCEIVE, it is symmetric between the two
+// seats, and it fires only when the two Pokemon differ in weakness or resistance.
+// A duel reports ~50% for all three of those reasons.
+console.log('\nretreating into the wrong matchup');
+
+function moltresBoard() {
+  const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  E.newGame(DECKS.Brushfire, DECKS.Zap, ['You', 'Courtney']);
+  const mk = id => E.mkSlot({ id, uid: E.uid++ });
+  const you = E.state.players[0], cpu = E.state.players[1];
+  you.active = mk('base3-22');                    // Hitmonlee — High Jump Kick, 50 for FFF
+  attach(E, you.active, 'base1-97', 3);
+  you.bench = [];
+  cpu.active = mk('base3-27');                    // Moltres — 70 HP, resists Fighting -30
+  cpu.active.dmg = 40;                            // 30 left, as the log says
+  attach(E, cpu.active, 'base1-98', 3);
+  cpu.bench = [mk('base1-36')];                   // Magmar — 50 HP, resists nothing
+  attach(E, cpu.bench[0], 'base1-98', 3);
+  const prize = () => ({ id: 'base1-99', uid: E.uid++ });
+  you.prizes = Array.from({ length: 5 }, prize);
+  cpu.prizes = Array.from({ length: 6 }, prize);
+  E.state.phase = 'main'; E.state.active = 1; E.state.turn = 10;
+  [...E.allSlots(0), ...E.allSlots(1)].forEach(sl => { sl.playedTurn = 0; });
+  return E;
+}
+
+T('the two Pokemon really are in different danger — the position is the point', () => {
+  const E = moltresBoard();
+  const A = scorer(E), cpu = E.state.players[1];
+  eq(A.threatAgainst(1, cpu.active), 20, 'threat against Moltres, after its resistance');
+  eq(A.threatAgainst(1, cpu.bench[0]), 50, 'threat against Magmar, which resists nothing');
+  eq(A.incomingThreat(1), 20, 'incomingThreat only ever answers for the Active');
+  return true;
+});
+
+T('it refuses to retreat a survivor into a Pokemon that dies on arrival', () => {
+  const E = moltresBoard();
+  const s = scorer(E).scoreAction(1, { t: 'retreat', bench: 0 });
+  if (s > 0) throw new Error(`retreat still scores ${s.toFixed(1)}; it was 31.5 when this was a bug`);
+  return true;
+});
+
+T('and does not pick it', () => {
+  const E = moltresBoard();
+  const a = scorer(E).choose(1);
+  if (a && a.t === 'retreat') throw new Error('the bot retreated into the Knock Out anyway');
+  return true;
+});
+
+// The guard has to stay one-sided. Retreating INTO death is still correct when
+// staying put is also death and there is something worth rescuing — otherwise
+// the fix above would forbid every sacrifice play the bot is supposed to make.
+T('but still retreats when staying put is death too', () => {
+  const E = moltresBoard();
+  const cpu = E.state.players[1];
+  cpu.active.dmg = 60;                            // 10 left: Moltres now dies to the same 20
+  const s = scorer(E).scoreAction(1, { t: 'retreat', bench: 0 });
+  const E2 = moltresBoard();
+  const s2 = scorer(E2).scoreAction(1, { t: 'retreat', bench: 0 });
+  if (!(s > s2)) throw new Error(`abandoning a doomed Moltres (${s.toFixed(1)}) should beat abandoning a healthy one (${s2.toFixed(1)})`);
+  return true;
+});
+
+// ------------------------------------ Teleport, and who it teleports TO (Job 11)
+// Trevor's log 04-37-10: Exeggutor used Teleport on four consecutive turns, each
+// one scoring an identical 22, once swapping itself for a second Exeggutor in
+// exactly the same condition. Two faults in one behaviour, and the second is the
+// one nothing could have found by reading the score:
+//
+//   - `selfSwitch` was `frail ? dangerSwap : 2` — a flat number that never
+//     looked at the Bench, so an even swap and a rescue were worth the same.
+//   - the AI never wrote `opts.bench` at all, so the ENGINE chose the
+//     destination with a seeded random pick. That is the triggered-Power gap in
+//     AI.md arriving through an attack instead of a Power.
+console.log('\nTeleport, and who it teleports to');
+
+function eggBoard(benchIds, benchEnergy, activeDmg) {
+  const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  E.newGame(DECKS.Brushfire, DECKS.Zap, ['You', 'Nikki']);
+  const mk = id => E.mkSlot({ id, uid: E.uid++ });
+  const you = E.state.players[0], cpu = E.state.players[1];
+  you.active = mk('base1-36'); you.bench = [];        // Magmar — Fire Punch 30, x2 on Grass
+  attach(E, you.active, 'base1-98', 2);
+  cpu.active = mk('base2-35');                        // Exeggutor — Teleport, Big Eggsplosion
+  cpu.active.dmg = activeDmg || 0;
+  attach(E, cpu.active, 'base1-101', 2);
+  cpu.bench = benchIds.map(mk);
+  cpu.bench.forEach((b, i) => attach(E, b, 'base1-101', benchEnergy[i] || 0));
+  const prize = () => ({ id: 'base1-99', uid: E.uid++ });
+  you.prizes = Array.from({ length: 6 }, prize);
+  cpu.prizes = Array.from({ length: 6 }, prize);
+  E.state.phase = 'main'; E.state.active = 1; E.state.turn = 16;
+  [...E.allSlots(0), ...E.allSlots(1)].forEach(sl => { sl.playedTurn = 0; });
+  return E;
+}
+
+T('an even swap is worth nothing — the mirror Teleport that started this', () => {
+  const E = eggBoard(['base2-35'], [2], 0);          // bench is the same card, same Energy
+  const s = scorer(E).scoreAction(1, { t: 'attack', idx: 0 });
+  if (Math.abs(s) > 1e-9) throw new Error(`swapping a Pokemon for its twin scored ${s}; it was 22 when this was a bug`);
+  return true;
+});
+
+T('and loses to actually attacking', () => {
+  const E = eggBoard(['base2-35'], [2], 0);
+  const A = scorer(E);
+  const tele = A.scoreAction(1, { t: 'attack', idx: 0 });
+  const egg = A.scoreAction(1, { t: 'attack', idx: 1 });
+  if (!(egg > tele)) throw new Error(`Big Eggsplosion ${egg} did not beat Teleport ${tele}`);
+  return true;
+});
+
+T('swapping DOWN to a bare Basic is a cost, not a free action', () => {
+  const E = eggBoard(['base2-52'], [0], 0);          // bench is an Exeggcute with nothing on it
+  const s = scorer(E).scoreAction(1, { t: 'attack', idx: 0 });
+  if (!(s < 0)) throw new Error(`walking away from a charged Stage 1 scored ${s}`);
+  return true;
+});
+
+T('but escaping a lethal hit still pays, and beats attacking', () => {
+  const E = eggBoard(['base2-35'], [2], 60);         // 20 HP left against a 60-damage hit
+  const A = scorer(E);
+  const tele = A.scoreAction(1, { t: 'attack', idx: 0 });
+  const egg = A.scoreAction(1, { t: 'attack', idx: 1 });
+  if (!(tele > 0)) throw new Error(`escaping a Knock Out scored ${tele}`);
+  if (!(tele > egg)) throw new Error(`Teleport ${tele} did not beat Big Eggsplosion ${egg} with the Active dying`);
+  return true;
+});
+
+// The half a score cannot show. Before this, `opts.bench` was never written and
+// the engine picked at random from the Bench.
+T('the AI names the destination rather than leaving it to the engine', () => {
+  const E = eggBoard(['base2-52', 'base2-35'], [0, 2], 60);   // bare Exeggcute, then a charged Exeggutor
+  const a = { t: 'attack', idx: 0 };
+  scorer(E).scoreAction(1, a);
+  if (!a.opts || a.opts.bench === undefined) throw new Error('no destination was chosen; the engine would pick at random');
+  eq(a.opts.bench, 1, 'chose the Exeggutor over the bare Exeggcute');
+  return true;
+});
+
+// Regression for the crash the fix introduced and the guard removed: promoteValue
+// -> potential -> scoreAttackHypothetical -> scoreAttack -> bestSelfSwitch, which
+// closes only for the ACTIVE slot. No theme deck holds a self-switch attack, so
+// nothing else in this file would ever run the loop.
+T('scoring a self-switch does not recurse forever', () => {
+  const E = eggBoard(['base2-35'], [2], 0);
+  const A = scorer(E);
+  A.choose(1);                                  // the full enumeration, not one action
+  return true;
+});
+
 // ------------------------------------------- what a Pokemon is FOR (walls)
 // Asserted here rather than dueled, and that is the doctrine in AI.md rather
 // than a shortcut. Stickiness measured at +0.2 points over 2,592 games even on

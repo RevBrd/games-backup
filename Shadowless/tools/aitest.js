@@ -88,7 +88,16 @@ function classify(E, pi, a, st) {
   // else. A duel cannot see this — the position is uncommon and both sides of an
   // AI-vs-AI game share the fault, so it cancels — but a human watching sees it
   // once and never trusts the opponent again. Trevor caught it in one game.
-  if (a.t !== 'attack' && me.active && you.active) {
+  //
+  // IT ONLY COUNTS WHEN THE TURN IS BEING GIVEN UP. Until 21 Aug 2026 this fired
+  // on ANY non-attack action taken in such a turn, which made attaching an
+  // Energy and then winning read as declining to win. That is not a small
+  // over-count, it is the wrong question: playing a card before attacking is
+  // ordinary correct play, and the fault being hunted is ENDING the turn with
+  // the lethal still on the table. `pass` is the only action that does that.
+  // The old figures — 13 and 20 over 9,610 games — are not comparable with what
+  // this prints now, and the counter was labelled "must be 0" the whole time.
+  if (a.t === 'pass' && me.active && you.active) {
     const wins = me.prizes.length <= 1 || you.bench.length === 0;
     if (wins) {
       for (const act of E.legalActions(pi)) {
@@ -316,7 +325,7 @@ const pct = (v, d) => d ? (v / d * 100).toFixed(0) + '%' : '—';
 console.log(`  ${total.games} games, ${total.turns} turns, seat-0 win rate ${pct(total.wins, total.games)}\n`);
 
 console.log('Declining to win');
-console.log(`  ${String(total.declinedWin).padStart(5)}  turns holding a lethal that ends the game, spent on something else`);
+console.log(`  ${String(total.declinedWin).padStart(5)}  turns ENDED holding a lethal that ends the game`);
 console.log('         (must be 0 — a duel cannot see this, both sides share the fault)\n');
 
 console.log('Retreat');

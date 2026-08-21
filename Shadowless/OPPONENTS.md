@@ -8,8 +8,8 @@ wiring the ladder you want that file; if you are deciding what goes *in* a rung,
 Read it when adding a set's roster, hand-building an opponent deck, or working the auto-builder
 (Job 11), which is the consumer this was written for.
 
-**Status: design, and the first bracket built to it is now LIVE.** Job 8, 15 Aug 2026, worked out
-with Trevor; Base Set's eleven rungs were wired in on 19 Aug and are the only ones. Everything about
+**Status: design, and TWO brackets are now built to it.** Job 8, 15 Aug 2026, worked out with Trevor;
+Base Set's eleven rungs went in on 19 Aug and Jungle's seven on 21 Aug. Everything about
 *naming, entry conditions, pressure assignment and the rival* is still unbuilt. It is the target
 the set jobs build against, and it is deliberately about *parameters* rather than card lists — the
 lists come per-set, when we can see what the set actually offers. **When a section here ships, rewrite
@@ -77,6 +77,31 @@ top. Alakazam sits in a T2 deck with three draw cards and will almost never asse
 in the T4 with eight draw-and-search, four Double Colorless and two Energy Retrieval, and will. **The
 same card is a different tier depending on whether the deck can find and power it.** So the operative
 question is not *does the centrepiece need an engine* but *can this deck reliably get there*.
+
+### What the second roster measured, and where it disagrees
+
+**Jungle's five decks do not order by tier.** Its T2 Eevee deck finishes second of thirteen in a merged
+field with Base Set's eight; its T3 finishes eleventh and its T4 ninth. So the T2/T3 boundary that Base
+Set verified **did not reproduce**, which is the first time this spec has been contradicted by the same
+instrument that confirmed it.
+
+Three things worth carrying forward, all with the evidence in [ROSTERS.md](ROSTERS.md):
+
+- **The recipe's Energy-down / Trainers-up shape repeated across two independently built rosters.** That
+  is the part of the recipe now supported by something other than construction.
+- **The one row that did NOT repeat is the one the gate loses on.** Jungle's T3 runs five draw-and-search
+  cards against a T2 in the same roster running six — the only inversion in either file. Base Set's T3s
+  ran 6 and 7 against a T2 band of 3 to 4. If a single number explains the standings, it is that one.
+- **A pressure that arrives on time can still fail to convert.** Jungle's T4 lands Vileplume in 78% of
+  games at a median of turn 16 — the best assembly rate in either roster — and finishes ninth of
+  thirteen. That is not the Base Set T4's problem (Charizard at 45%, turn 17) wearing different colours;
+  it is the opposite, and **nobody has measured whether Status Lock is worth less than it looks or
+  whether the bot cannot press it.** Better question than rebalancing the deck.
+
+**featureWeight is not comparable across rosters.** Jungle runs 9 / 12 / 16 against Base Set's 7–7.5 /
+10–10.5 / 12.5, because Jungle had more weight to distribute — Base Set opened evolution lines that
+Jungle finishes — and Trevor scaled its five decks relative to each other. It is an ordering within one
+workbook, not a unit.
 
 ### What the first roster measured
 
@@ -310,18 +335,25 @@ fund the collection from something that is not a decision. **Free play still pay
    `buildLadder()` currently derives exactly one bracket per live set, and Southern Islands and the
    promos are to be *sprinkled into packs* rather than laddered — See [PACKS.md](PACKS.md) Cheap now,
    irritating once eleven sets are in.
-3. **The rival is about four fights across the WHOLE ladder, not one per bracket.** Trevor, 19 Aug
-   2026 — Ronald for now, though the identity is open and a different overall boss would serve. That
-   is a real constraint on the rung pattern above: a bracket may have no rival at all, so the rival
-   is not a segment and must not become one. Still open is what makes them *tougher than T4* without
-   leaning on "mostly Colorless", which is a deck constraint fighting a difficulty requirement. One
-   exit that is not about card choice: make the rival the only opponent whose pool is **every set you
-   have unlocked at once** while everyone else is set-flavoured. Identity and power without the
-   Colorless problem, and it scales for free. Parked, not proposed.
-4. **The spec is now playable and nobody has played it.** Trevor's eight decks went into the Base
-   Set bracket on 19 Aug 2026 — intro → body → gate → boss, as written. So the cheapest remaining
-   test of this whole document is somebody walking that bracket end to end and reporting where it
-   does not survive contact. **One thing the spec describes that the built bracket does not do: no
-   rung carries an entry condition or a pressure tag**, because neither is built. (The intro being
-   four rungs rather than two was the other half of this note for about an hour; Trevor resolved it
-   the other way the same day — the table above flexes now, and the built bracket is the model.)
+3. **The rival is about four fights across the WHOLE ladder, not one per bracket — and as of 21 Aug
+   2026 it is a *round*, not a person.** Trevor's current sketch: **every bracket ends in its T4**, and
+   every few brackets there is a combined encounter — a small group with a leader, all of them playing
+   decks built from every set up to that point, and paying **combined booster packs** as the reward.
+   That last part is new and it is a `PACKS.md` question as much as a ladder one. Ronald is a
+   placeholder standing in until it exists; the identity, the names and the story are all open, and all
+   deliberately deferred to the detailing pass.
+   Still open is what makes such an encounter *tougher than T4* without leaning on "mostly Colorless",
+   which is a deck constraint fighting a difficulty requirement. The exit already recorded here fits the
+   new shape better than the old one: make the rival the only opponent whose pool is **every set you
+   have unlocked at once** while everyone else is set-flavoured — which is now most of the sketch
+   rather than a counter-proposal to it.
+4. **The spec is now playable across two brackets and nobody has walked either.** Base Set's eleven
+   rungs went in on 19 Aug 2026 and Jungle's seven on 21 Aug — intro → body → gate → boss both times.
+   The cheapest remaining test of this whole document is somebody playing them end to end and
+   reporting where it does not survive contact. **Entry conditions are still not built**, so no rung
+   carries one. **Pressure tags now exist as data and are still not read by anything**: Trevor's Jungle
+   workbook carries a per-card Pressure column, `data/base2_decks.json` derives a deck-level tag from
+   it by copy count, and three of the five decks earn one — the T4 is Status Lock overwhelmingly, one
+   T2 is Wall/Prevention, and the rest are honest beatdown. **Trevor's key extends the vocabulary above
+   with two more: HD (High Damage) and BD's neighbour BG (Bench Growth).** The no-repeat rule has never
+   been checked against a real bracket because until now there was nothing to check it with.

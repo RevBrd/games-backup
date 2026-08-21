@@ -29,7 +29,10 @@ const { EFFECTS } = require('../src/effects.js');
 const { Engine } = require('../src/engine.js');
 
 const N = parseInt(process.argv[2], 10) || 8;
-const REF = process.argv[3] || 'HEAD';
+// Positional, but flags may sit anywhere: `aiduel 10 --gbc` used to send `--gbc`
+// to `git show` and die with an unrecognized-argument trace that looks like a
+// git problem rather than an argument-order one.
+const REF = process.argv.slice(3).find(a => !a.startsWith('--')) || 'HEAD';
 // --control seats the BASELINE on both sides. Run it to read the per-deck table
 // honestly: those rows count games where one side happened to hold that deck, and
 // the decks are not balanced against each other (74/60/42/25 by CLAUDE.md). A

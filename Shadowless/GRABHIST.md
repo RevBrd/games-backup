@@ -25,6 +25,7 @@ made. Newest first, so the batch you want is usually near the top:
 
 | When | Instance | Items |
 |---|---|---|
+| 21 Aug 2026 | #21, Job 11 | Retreating into the wrong matchup; Teleport's flat 22 and the destination nobody chose; the Colorless Energy dead end; a counter that said "must be 0" and was counting the wrong thing |
 | 19 Aug 2026 | #20, the UI pass | The hand that resized itself — a correct report whose stated cause was wrong twice over |
 | 16 Aug 2026 | #16, later batches | The recoil suicide; the opponent deck named for the wrong deck; Gyarados crossed off unworked |
 | 16 Aug 2026 | #16, second batch | Scoop Up's Knock Out banner; Energy Burn made passive; Double Colorless as two pips; prevented damage waiving recoil; Fetch while Confused |
@@ -34,6 +35,81 @@ made. Newest first, so the batch you want is usually near the top:
 | 13 Aug 2026 | #12, first pass | Confused retreat; the deck that resolved to the wrong deck; paralysis parked; Gust of Wind diagnosed |
 
 ---
+
+### 21 Aug 2026 — Opus 5 #21 (four retreat notes that were three faults and an instrument)
+
+Four notes across four logs all pointed at retreating and promoting. **They were not one fault, and
+they were not four either.** Two were real and share a root, one was a design question wearing a bug's
+clothes, and one thing nobody reported turned out to be the measuring tool.
+
+**"Moltres shouldn't have retreated... The pokemon that replaced it was killed immediately by the same
+attack Moltres would have survived"** — log 04-06-28. Right, reproducible, and Trevor's own guess at
+the cause was one step off in an instructive way. He suspected resistance was missing from the damage
+calculation. It is not: the engine applies it, the log even prints `Resistance: -30 -> 20`, and
+`threatAgainst` runs damage through `computeDamage`. What was missing was resistance's **absence** on
+the other Pokemon. The guard that stops the bot walking into a Knock Out read `incomingThreat` — the
+threat against the Pokemon *leaving* — and compared it with the remaining HP of the one *arriving*.
+Moltres resists Fighting, so High Jump Kick was 20 into its 30; Magmar resists nothing, so the same
+attack was 50 into its 50. The bot compared 20 with 50, found no danger, and paid a Prize for it.
+
+Rebuilt the position from the log and the retreat scored **31.5**, matching the logged figure exactly,
+which is the point at which it stopped being a theory. It scores **−10.5** now and the bot plays Bill
+instead. `threatAgainst` — the function that asks the question properly — has existed since Job 9 and
+was written for `promote`, **which had the identical fault and was fixed without the fix being carried
+across.** Second time. Worth expecting a third somewhere.
+
+**"Exeggutor teleports to switch with Exeggutor of equal condition... Exeggutor promoted and switched
+out immediately through Teleport"** — log 04-37-10. Also right, also reproducible, and the log makes it
+vivid: Teleport scored **exactly 22 on four consecutive turns**, a flat number that never once looked
+at the Bench. `selfSwitch` was `frail ? dangerSwap : 2`.
+
+**The half no score could have shown is that the AI was not choosing where to go.** `SWITCH_SELF_CHOOSE`
+falls back to `this.pick(me.bench.length)` — a seeded random — when the action carries no `opts.bench`,
+and nothing in `ai.js` had ever written one. So "switched into an identical Exeggutor" was not a
+misjudgement, it was a dice roll. It is a difference in `promoteValue` now, which makes a mirror swap
+worth exactly 0 without a rule saying so, and the scorer fills in the destination while it scores —
+the same pattern `scoreOnPlay` uses for triggered Powers, for the same reason.
+
+**That fix introduced a crash and the crash is worth more than the fix.** `promoteValue` → `potential`
+→ `scoreAttackHypothetical` → and for the ACTIVE slot that last one *is* `scoreAttack`, which is what
+called in. Infinite recursion on any board where a self-switch attack is legal. **402 assertions and
+144 complete games passed with the loop sitting there**, because no theme deck holds a self-switch
+attack; it took building the Exeggutor position by hand to see it. There is a re-entry guard and a
+regression test, and the trap is written up in [AI.md](AI.md) for the next caller.
+
+**"The AI might be avoiding adding non-DCE energy to colorless pokemon"** — log 04-26-10. **The
+observation is real and the mechanism is somewhere else**, which is the third time that shape has come
+up in this file. Nothing avoids Energy by type: Fire, Grass and Psychic all score **identically** on a
+Chansey, measured at every Energy count.
+
+What is actually happening is a **cliff** — the sniff test this project has now been paid by seven
+times. `potential()`'s `short` is the distance to the *cheapest attack the card can reach*, so it pins
+at 0 the moment any attack becomes payable, and the attach rule's `noProgress` test then reads a card
+with a paid-up Scrunch as finished. Chansey with two Energy scores a basic Energy at **−2** and a
+Double Colorless at **185**. It can never walk up to Double-edge one card at a time; it stalls at two
+Energy forever, and so does anything else with a cheap first attack and an expensive second one that
+does not scale with spare Energy.
+
+**Left unfixed on purpose.** It is a genuine design question — what is an Energy toward an attack two
+turns away worth — in the most carefully tuned rule in the file, whose surplus and inert cases were
+each measured at 18% and 9% of all attachments. That deserves its own pass and Trevor's answer, not a
+third weight change in one session.
+
+**The two Chansey retreats in that log are fine.** Both set up an attack and the first won a Prize. The
+Energy attached to Chansey immediately before retreating it is not waste either — it was what made the
+retreat payable, and `ai.js` prices that deliberately.
+
+**"Bad retreat by Gloom on turn 14"** — same log as the Exeggutors, and this one does not survive
+contact. The retreat set up the Bulbasaur Leech Seed that took the Prize, and Gloom held one Grass
+against Poisonpowder's cost of two, so it could not have made the kill itself.
+
+**And one nobody reported.** `aitest.js` prints *Declining to win* with the note **"must be 0"**, and
+it had been sitting at 13. It counted **any** non-attack action taken in a turn where a game-ending
+lethal was available — so attaching an Energy and then winning read as declining to win. Attacking
+last is ordinary correct play; the fault is *ending* the turn with the lethal on the table, which only
+`pass` does. Corrected, and the honest figure across 9,610 games is **0**. That is the nastiest kind of
+instrument failure in this project's collection, because it fails loudly: it points at a bug that does
+not exist and its own label sends you looking.
 
 ### 19 Aug 2026 — Opus 5 #20 (the hand that resized itself)
 

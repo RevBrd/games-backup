@@ -7,7 +7,7 @@
     "coverage": "Between them the eight decks use all 69 distinct Base Set Pokemon at least once. Verified mechanically, not by eye.",
     "tiers": "tier 2 = five decks, tier 3 = two, tier 4 = one. The four theme decks stay as they are and remain the T1 intro rungs.",
     "ids": "Ids come from the sheet's own ID column and were checked against CARD_DB. No corrections were needed — unlike jungle_decks.json, where three ids were wrong.",
-    "weights": "featureWeight is Trevor's own scoring from the sheet, totalled across the deck, and it is now stored per deck rather than only described here — backfilled 21 Aug 2026 from the workbook's own Total row. IT IS ONLY COMPARABLE WITHIN A ROSTER; Jungle's five decks run on a different scale for a reason recorded in data/base2_decks.json. The derived metrics in ROSTERS.md (draw+search, rare Trainers, Energy count, Basic count) rank the decks the same way, but they are NOT independent confirmation — Trevor tracked all five while building. Treat the set as a recipe for hitting a tier, not as evidence a tier exists.",
+    "weights": "featureWeight is Trevor's own scoring from the sheet. The derived metrics in OPPONENTS.md (draw+search, rare Trainers, Energy count, Basic count) rank the decks the same way, but they are NOT independent confirmation — Trevor tracked all five while building. Treat the set as a recipe for hitting a tier, not as evidence a tier exists.",
     "provenance": "The tier shape is lifted from the GBC game's own opponent progression, which Trevor built to deliberately. Not invented here."
   },
   "b1_t2_fighting_water": {
@@ -15,7 +15,6 @@
     "sheet": "B1 T2-1",
     "set": "base1",
     "tier": 2,
-    "featureWeight": 7,
     "list": [
       [
         1,
@@ -134,7 +133,6 @@
     "sheet": "B1 T2-2",
     "set": "base1",
     "tier": 2,
-    "featureWeight": 7.5,
     "list": [
       [
         3,
@@ -258,7 +256,6 @@
     "sheet": "B1 T2-3",
     "set": "base1",
     "tier": 2,
-    "featureWeight": 7.5,
     "list": [
       [
         4,
@@ -382,7 +379,6 @@
     "sheet": "B1 T2-4",
     "set": "base1",
     "tier": 2,
-    "featureWeight": 7,
     "list": [
       [
         3,
@@ -491,7 +487,6 @@
     "sheet": "B1 T2-5",
     "set": "base1",
     "tier": 2,
-    "featureWeight": 7,
     "list": [
       [
         4,
@@ -610,7 +605,6 @@
     "sheet": "B1 T3-1",
     "set": "base1",
     "tier": 3,
-    "featureWeight": 10.5,
     "list": [
       [
         4,
@@ -724,7 +718,6 @@
     "sheet": "B1 T3-2",
     "set": "base1",
     "tier": 3,
-    "featureWeight": 10,
     "list": [
       [
         4,
@@ -828,7 +821,6 @@
     "sheet": "B1 T4",
     "set": "base1",
     "tier": 4,
-    "featureWeight": 12.5,
     "list": [
       [
         3,
