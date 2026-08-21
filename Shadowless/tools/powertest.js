@@ -2336,6 +2336,77 @@ T('scoring a self-switch does not recurse forever', () => {
   return true;
 });
 
+// ------------------------------ a wall is not an upgrade opportunity (Job 11)
+// Trevor, 21 Aug 2026, on why the bot's Chansey keeps leaving: "Chansey is meant
+// to go in there, use Scrunch, and stall while everything else is powered up on
+// the bench, ending in a sacrifice. There are very few circumstances where it
+// would ever retreat rather than let itself get killed."
+//
+// The mechanism was the tempo half of the retreat rule. `delta` compares the
+// best AFFORDABLE printed damage of the Bench candidate against the Active's —
+// and Chansey's is Scrunch at ZERO. So every Bench Pokemon read as an upgrade,
+// every turn, and the swap spent the very Energy that was charging the thing it
+// was swapping to.
+//
+// Written against `wallStick` rather than against a fixed number, the same way
+// the stickiness tests below are, so it asserts the RULE and cannot rot into an
+// assertion about a weight.
+console.log('\nA wall is not an upgrade opportunity');
+
+function wallRetreatBoard(activeId, dmg) {
+  const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  E.newGame(DECKS.Brushfire, DECKS.Zap, ['A', 'B']);
+  const mk = id => E.mkSlot({ id, uid: E.uid++ });
+  const me = E.state.players[0], you = E.state.players[1];
+  me.active = mk(activeId); me.active.dmg = dmg;
+  attach(E, me.active, 'base1-99', 2);
+  me.bench = [mk('base1-7')];                       // Hitmonchan, fully charged
+  attach(E, me.bench[0], 'base1-97', 3);
+  you.active = mk('base1-24');                      // Arcanine — Flamethrower 50
+  attach(E, you.active, 'base1-98', 3);
+  you.bench = [];
+  const prize = () => ({ id: 'base1-99', uid: E.uid++ });
+  me.prizes = Array.from({ length: 5 }, prize);
+  you.prizes = Array.from({ length: 5 }, prize);
+  E.state.phase = 'main'; E.state.active = 0; E.state.turn = 9;
+  [...E.allSlots(0), ...E.allSlots(1)].forEach(sl => { sl.playedTurn = 0; });
+  return E;
+}
+const wallRetreat = (id, dmg, stick) =>
+  new AI(wallRetreatBoard(id, dmg), { mode: 'expert', weights: { wallStick: stick } })
+    .scoreAction(0, { t: 'retreat', bench: 0 });
+
+T('an unthreatened Chansey does not leave for a bigger attacker', () => {
+  const s = wallRetreat('base1-3', 0, 1.0);
+  if (s > 0) throw new Error(`Chansey scored the retreat at ${s.toFixed(1)}`);
+  return true;
+});
+
+T('and it is stickiness doing it, not the Energy price', () => {
+  const off = wallRetreat('base1-3', 0, 0);
+  const on = wallRetreat('base1-3', 0, 1.0);
+  if (!(off > on)) throw new Error(`wallStick changed nothing: ${off} off, ${on} on`);
+  if (!(off > 0)) throw new Error(`the board does not even tempt a non-wall: ${off} with stickiness off`);
+  return true;
+});
+
+// The suppression has to be ONE-SIDED or it forbids every honest swap.
+T('a Pokemon that is NOT a wall still retreats for the upgrade', () => {
+  const s = wallRetreat('base1-12', 0, 1.0);        // Ninetales — a real attacker
+  if (!(s > 0)) throw new Error(`Ninetales refused an upgrade retreat at ${s.toFixed(1)}`);
+  return true;
+});
+
+// Trevor's own line: a wall that is about to die is the card doing its job, so
+// the rescue stays suppressed too. This is the rule the two halves share.
+T('a dying wall is still left to die', () => {
+  const healthy = wallRetreat('base1-3', 0, 1.0);
+  const dying = wallRetreat('base1-3', 90, 1.0);    // 30 left against Flamethrower's 50
+  if (dying > healthy + 20)
+    throw new Error(`the rescue reasserted itself: ${healthy.toFixed(1)} healthy, ${dying.toFixed(1)} dying`);
+  return true;
+});
+
 // ------------------------------------------- what a Pokemon is FOR (walls)
 // Asserted here rather than dueled, and that is the doctrine in AI.md rather
 // than a shortcut. Stickiness measured at +0.2 points over 2,592 games even on

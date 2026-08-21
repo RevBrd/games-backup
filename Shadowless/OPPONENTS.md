@@ -335,19 +335,49 @@ fund the collection from something that is not a decision. **Free play still pay
    `buildLadder()` currently derives exactly one bracket per live set, and Southern Islands and the
    promos are to be *sprinkled into packs* rather than laddered — See [PACKS.md](PACKS.md) Cheap now,
    irritating once eleven sets are in.
-3. **The rival is about four fights across the WHOLE ladder, not one per bracket — and as of 21 Aug
-   2026 it is a *round*, not a person.** Trevor's current sketch: **every bracket ends in its T4**, and
-   every few brackets there is a combined encounter — a small group with a leader, all of them playing
-   decks built from every set up to that point, and paying **combined booster packs** as the reward.
-   That last part is new and it is a `PACKS.md` question as much as a ladder one. Ronald is a
-   placeholder standing in until it exists; the identity, the names and the story are all open, and all
-   deliberately deferred to the detailing pass.
-   Still open is what makes such an encounter *tougher than T4* without leaning on "mostly Colorless",
-   which is a deck constraint fighting a difficulty requirement. The exit already recorded here fits the
-   new shape better than the old one: make the rival the only opponent whose pool is **every set you
-   have unlocked at once** while everyone else is set-flavoured — which is now most of the sketch
-   rather than a counter-proposal to it.
-4. **The spec is now playable across two brackets and nobody has walked either.** Base Set's eleven
+3. **The rival problem is solved, and the answer is CHALLENGES 1–3.** Trevor's proposal, 21 Aug 2026,
+   arrived while he was building the Fossil decks. Three special brackets — **after Fossil, after Gym
+   Challenge, and after Neo** — each one **an opponent per Energy type, with the strongest of them as
+   its overall boss.** Names, personalities and any story are deferred to the detailing pass as usual.
+
+   **Take it.** It does four things at once and none of them is a compromise:
+
+   - **It makes the rival a ROUND rather than a person**, which is what the entry below had been
+     circling for two revisions without landing. A boss you beat is a wall; seven you must beat is a
+     campaign, and it is the natural home for the combined-pack reward.
+   - **It is the only mono-type situation on the whole ladder**, and in this era Weakness is ×2. So a
+     Challenge is the one place where "build a counter-type deck" is dramatically right — and the
+     player has to decide whether to build ONE deck that survives all seven or rebuild between them.
+     No other rung asks that, and it is a decision rather than a difficulty.
+   - **It scales itself.** Challenge 3 sits after Neo, which prints Darkness and Metal, so it is bigger
+     than Challenge 1 without anyone tuning a number. Same property that makes the brackets derived.
+   - **It is where entry conditions finally have a reason to exist.** The mechanism above is specified
+     and unbuilt because nothing needed it yet. "Beat the Fire challenger with no Water in your deck"
+     is exactly the optional-challenge shape, and it fits a Challenge better than it fits a T4.
+
+   **Two things to watch, neither fatal.**
+
+   **A Challenge bracket belongs to NO SET, and the ladder is set-indexed.** `buildLadder()` derives
+   exactly one bracket per live set and `winReward()` pays in the bracket's own set — so as the code
+   stands today a Challenge bracket cannot exist and could not pay if it did. That is the second and
+   harder case of open item 2 below. **The consequence is worth stating because it validates the
+   design**: combined packs are not flavour on top of the idea, they are *forced* by the structure —
+   there is no single set for a Challenge to pay in. See [PACKS.md](PACKS.md); a differently-composed
+   pack is a new pack **type**, not a tuning change.
+
+   **"One per type" may need to mean "one LED by each type."** A mono-Lightning deck before Neo is
+   thin, and a strict reading would produce one weak rung per Challenge for reasons that have nothing
+   to do with design. Trevor will feel this while building; the fix is to loosen the rule rather than
+   to force the deck.
+
+4. **What still has to be answered about a Challenge's leader**, carried over from the rival entry
+   this replaced: what makes them *tougher than a T4* without leaning on "mostly Colorless", which is a
+   deck constraint fighting a difficulty requirement. The exit recorded before fits the new shape better
+   than the old one — **a leader's pool is every set you have unlocked at once** while everyone else is
+   set-flavoured. Under Challenges that is nearly free, because a Challenge already sits outside the
+   set-per-bracket structure. Ronald is the placeholder until this exists.
+
+5. **The spec is now playable across two brackets and nobody has walked either.** Base Set's eleven
    rungs went in on 19 Aug 2026 and Jungle's seven on 21 Aug — intro → body → gate → boss both times.
    The cheapest remaining test of this whole document is somebody playing them end to end and
    reporting where it does not survive contact. **Entry conditions are still not built**, so no rung

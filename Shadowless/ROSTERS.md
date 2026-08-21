@@ -200,9 +200,25 @@ T3 and 4 → 6 is worth nothing, so the T2 decks are being played at a length th
 only the player's deck. The instrument measures relative strength, which is exactly what a tier claim
 is — but it is not a claim about how the bracket feels.
 
-**Nothing here was acted on.** These are Trevor's authored decks, built by feel and by his own
-scoring, and `OPPONENTS.md`'s standing warning applies in both directions: do not "fix" a roster
-because a round robin ranked it.
+**Nothing here was acted on**, and on 21 Aug 2026 Trevor made that a decision rather than a default:
+*"Let's leave the decks where they are until our test games can be refined a bit more, not because
+they're wrong but because we can't know if they're right."* Which is the correct read of this whole
+file. `OPPONENTS.md`'s standing warning applies in both directions: do not "fix" a roster because a
+round robin ranked it.
+
+### The reason to distrust every standing above, and it is not sample size
+
+**The instrument runs the same AI on both sides.** So it can rank decks against each other and it can
+never say the whole field is being played badly — which, as of 21 Aug 2026, we know it is. Trevor:
+`b1_t4_fire` is essentially the deck he won the Base Set bracket with himself, it is still winning for
+him against the newer opponents, and in here it finished **eighth of thirteen**.
+
+That single fact reframes most of this page. **The Jungle T4's 78%-assembly-and-46%-conversion is
+probably not a deck finding**, and neither is Base Set's T4 sitting in the T2 band. Both are what a
+badly-piloted good deck looks like. The two retreat repricings the same day moved the benchmark to
+seventh; there is a long way to go.
+
+*[The benchmark, what it is for, and why its rank is an AI metric →](MEASUREMENT.md)*
 
 ### How to read a run of this
 

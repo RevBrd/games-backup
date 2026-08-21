@@ -157,6 +157,8 @@ node tools/openercheck.js                # what the opening-Active rule promotes
 node tools/pressure.js                   # what each set can THREATEN with — run before a roster
 node tools/decksim.js 45 6               # do the tiers actually ORDER? round-robin, both seats
 node tools/decksim.js 30 6 data/base1_decks.json data/base2_decks.json   # ...and do the BRACKETS order?
+                                         # it also prints the BENCHMARK deck's rank — the
+                                         # one number that measures the AI. See MEASUREMENT.md
 ```
 
 **The last six are NOT pass/fail and every one of them has lied at least once.** `aitest`, `aiduel`

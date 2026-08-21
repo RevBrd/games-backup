@@ -5202,7 +5202,9 @@ const AI_WEIGHTS = {
   benchFirst: 26,       // first spare Basic on the bench is important
   benchMore: 7,         // each additional one
   benchTooMany: 2,
-  retreatBase: -6,      // retreating costs tempo and Energy
+  retreatBase: -6,      // the TURN a retreat spends. The Energy is charged
+                        // separately, at retreatSaveEnergy — same rate the rescue
+                        // credits it, because paying it and losing it are one loss
   selfSwitchGain: 0.6,  // Teleport: what the destination is worth over staying put
   dangerSwap: 22,       // ...but escaping a lethal threat is worth it — CAPS the
                         // rescue value below, so a bare Basic is never worth 22
@@ -6248,6 +6250,34 @@ class AI {
   // `scoreAttack` and the attack case in `scoreAction` call it on the same
   // state, so the bench index that gets written into `opts` is the one the
   // score was computed from.
+  // HOW MANY MORE ENERGY BEFORE THIS CARD COULD ATTACK, if it were sitting on
+  // this slot. Split out of `potential`'s inner loop, which computes the same
+  // thing for the card already on top — this one takes the card as an argument,
+  // which is what lets `evolve` ask about a form that is not in play yet.
+  //
+  // Symbols, not cards: `slotSymbols` resolves Double Colorless to two pips and
+  // honours per-instance `asEnergy`, so a Buzzap'd Electrode and an Energy Burn
+  // Charizard are both priced correctly here for free.
+  shortfallFor(slot, card) {
+    const pool = [];
+    this.E.slotSymbols(slot).forEach(x => pool.push(x));
+    let least = 99;
+    for (const a of (card.attacks || [])) {
+      const need = a.cost.split('').filter(x => x !== 'C');
+      const generic = a.cost.length - need.length;
+      const used = new Array(pool.length).fill(false);
+      let short = 0;
+      for (const t of need) {
+        const k = pool.findIndex((x, j) => !used[j] && x === t);
+        if (k === -1) short++; else used[k] = true;
+      }
+      const spare = pool.filter((x, j) => !used[j]).length;
+      if (spare < generic) short += generic - spare;
+      if (short < least) least = short;
+    }
+    return least;
+  }
+
   bestSelfSwitch(pi) {
     const me = this.E.state.players[pi];
     if (!me.active || !me.bench.length) return null;
@@ -7038,7 +7068,22 @@ class AI {
         const dying = danger >= this.remainingHP(me.active);
         const mineNow = this.bestAttackScore(pi).score;
         const theirs = this.potential(pi, b, null);
-        let s = W.retreatBase - cost * 4;
+        // THE ENERGY A RETREAT BURNS IS PRICED AT THE SAME RATE THE RESCUE VALUES
+        // IT, and until 21 Aug 2026 it was not: this line charged 4 per Energy
+        // while `retreatSaveEnergy` below credits 7 for the same commodity. One
+        // function, one Energy, two prices — so a retreat that spent two to save
+        // three came out ahead by more than the one Energy it actually netted.
+        //
+        // Trevor's argument, and it is an economic one rather than a preference:
+        // you may attach ONE Energy per turn, so an Energy is a turn. Discarding
+        // two to retreat is two turns of attachment gone, and it is gone in
+        // exactly the sense `retreatSaveEnergy` already measures — that weight is
+        // "what dies with this Pokemon and cannot be re-attached". Paying it and
+        // losing it are the same loss.
+        //
+        // `retreatBase` stays at -6 and is now purely tempo: the turn spent, not
+        // the cards. Do not read it as covering Energy any more.
+        let s = W.retreatBase - cost * W.retreatSaveEnergy;
 
         // What the swap does to our offence THIS turn. The replacement can still
         // attack after retreating, so what matters is the difference between the
@@ -7049,8 +7094,34 @@ class AI {
         // has to, or bringing a charged attacker off the Bench to replace a
         // spent one becomes impossible. An early version penalised every
         // unthreatened retreat flat and killed that play outright.
-        const delta = this.bestAffordableDamage(pi, b)
-                    - this.bestAffordableDamage(pi, me.active);
+        let delta = this.bestAffordableDamage(pi, b)
+                  - this.bestAffordableDamage(pi, me.active);
+
+        // A WALL'S LOW DAMAGE IS NOT A DEFICIENCY, so the upgrade half of this
+        // comparison is an illusion when a wall is the one leaving. Chansey's
+        // best affordable attack is Scrunch at ZERO printed damage, which makes
+        // literally any Bench Pokemon look like an upgrade, every single turn —
+        // and swapping it out is the one thing it must not do. Its job is to
+        // hold the Active spot while the Bench powers up and then die there.
+        // Trevor, 21 Aug 2026, and it is the same argument as the Energy above:
+        // you attach one Energy a turn, so retreating a wall to bring up a
+        // half-charged attacker spends the very Energy that was going to charge
+        // it.
+        //
+        // ASYMMETRIC, and that is the whole of it. Only the POSITIVE half is
+        // suppressed. Swapping a wall out for something WEAKER is still a real
+        // loss and still costs full price; it is only "I could be hitting
+        // harder" that stops being a reason.
+        //
+        // Stickiness already suppresses the rescue term below by the same
+        // factor, and the two are the same claim read from opposite ends: what
+        // a wall has invested was always going to be spent, and what a wall
+        // gives up by staying was never damage. Reusing `wallScore` rather than
+        // adding a second notion of what a wall is — see AI.md.
+        if (delta > 0) {
+          const wall = wallScore(E.db, this.eff, this.top(me.active));
+          delta *= (1 - wall * W.wallStick);
+        }
         s += delta * W.retreatTempo;
 
         // Job 10c. RETREATING INTO A SINKHOLE COSTS MORE THAN THE ENERGY. Dark

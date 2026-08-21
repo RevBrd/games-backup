@@ -341,6 +341,30 @@ legal. Nothing caught it for the length of a full suite run: **no theme deck hol
 attack**, so 402 assertions and 144 complete games passed with the loop sitting there. It has its own
 regression test now.
 
+**An Energy paid for a retreat costs what an Energy lost costs.** *21 Aug.* The retreat rule charged
+`cost * 4` for the Energy it discards while `retreatSaveEnergy` credits **7** for the same commodity
+two lines below — one function, one Energy, two prices, so a retreat that spent two to save three came
+out ahead by more than the one Energy it actually netted. Trevor's argument is economic rather than a
+preference: **you may attach one Energy per turn, so an Energy is a turn**, and it is gone in exactly
+the sense `retreatSaveEnergy` already measures. Both are `retreatSaveEnergy` now. `retreatBase` is
+**purely tempo** from here — the turn spent, not the cards; do not read it as covering Energy again.
+
+**A wall's low damage is not a deficiency, so it is not an upgrade opportunity either.** *21 Aug.* The
+tempo half of the retreat rule compares the best affordable printed damage of the Bench candidate
+against the Active's — and **Chansey's is Scrunch at zero**, which made every benched Pokemon read as
+an upgrade every single turn. Trevor: *"Chansey is meant to go in there, use Scrunch, and stall while
+everything else is powered up on the bench, ending in a sacrifice."* The positive half of that delta is
+suppressed by `wallScore` now, reusing the same derivation the rescue term uses rather than inventing
+a second notion of what a wall is. **Asymmetric on purpose**: swapping a wall out for something
+*weaker* is still a real loss at full price. It is only *"I could be hitting harder"* that stops being
+a reason.
+
+**Both are asserted, and both are near-invisible to a duel.** Measured together on the ladder decks:
+retreats **7.1 → 6.0 per 100 turns**, Energy burned on retreat costs **8.2 → 6.1** — a 26% drop — and
+games got measurably *longer*, which is what less Energy churn looks like. The benchmark deck moved
+from 8th to 7th of thirteen. That last figure is the point of the benchmark and not a small result: see
+[MEASUREMENT.md](MEASUREMENT.md).
+
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
@@ -362,7 +386,26 @@ regression test now.
    inherits `cardKeepValue`'s weights rather than adding its own — so there is nothing new to tune,
    but nothing has duelled it either. It cannot go on `selftest.js`'s `PROVISIONAL` list, which holds
    effect verbs, so it is recorded here instead.
-4. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
+4. **`evolve` cannot see readiness, and fixing that ALONE would make the bot worse.** Measured 21 Aug
+   2026: evolving scores a flat **31.0** whether the target holds one Energy or three — there is no term
+   anywhere for whether the evolved form can attack. Trevor named it from play ("the AI evolves pokemon
+   as soon as it can rather than as soon as it's ready"), and Vileplume is the clean case: Gloom attacks
+   for one Energy, Vileplume's only attack costs three, so evolving early buys a silent Active.
+
+   **The trap is that it is coupled to the attach rule and the coupling runs the wrong way.** Attaching a
+   third Grass to a Gloom scores **−2**, because `potential`'s `short` is the distance to the *cheapest*
+   attack the card can reach and both of Gloom's are already paid. So the bot cannot walk a Gloom to
+   three Energy — **and evolving is what unblocks it**, since Vileplume's shortfall of 1 then reads as
+   real progress. Penalise early evolution on its own and Vileplume is stranded at two Energy forever.
+   Verified in a constructed position, not reasoned about.
+
+   So the order is fixed: the attach rule first, or neither. And the attach half is **not** the general
+   cliff fix — Trevor's own doctrine is that Chansey should *not* walk up to Double-edge one card at a
+   time, so the cliff is right there and irrelevant here. What Gloom needs is narrower: **when the
+   evolution is in your hand, the target's shortfall should be measured against the evolved form.** One
+   specific, cheap case rather than lookahead in general.
+
+5. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
    Every opponent plays at the tier deck select hands them. Whether a named rival should play better
    than a Club Master is an unasked design question — see [PROGRESSION.md](PROGRESSION.md) and
    [OPPONENTS.md](OPPONENTS.md), which argues the AI probably should *not* be the dial.

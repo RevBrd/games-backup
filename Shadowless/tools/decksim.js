@@ -51,6 +51,23 @@ for (const f of FILES) {
 const MULTI = FILES.length > 1;
 const keys = Object.keys(D);
 
+// THE BENCHMARK DECK — the closest thing this project has to a ground truth for
+// AI quality, and it exists because Trevor said on 21 Aug 2026 that `b1_t4_fire`
+// is very close to the deck HE used to win the whole Base Set bracket, and that
+// it is still winning for him against the newer opponents.
+//
+// That converts an unfalsifiable question into a measurable one. A round robin
+// runs the same AI on both sides, so it can say a deck is strong RELATIVE to the
+// field and can never say the whole field is being played badly — a bot that
+// retreats too much beats a bot that retreats too much about half the time. But
+// a deck known to win in a human's hands finishing eighth of thirteen is not a
+// fact about the deck.
+//
+// So this row is called out separately, and **its rank is an AI metric rather
+// than a deck metric.** Move it by improving the bot, never by editing the deck.
+const BENCH = process.argv.includes('--no-benchmark') ? null
+  : ((process.argv.find(a => a.startsWith('--benchmark=')) || '').slice(12) || 'b1_t4_fire');
+
 // The engine card is the highest-stage Pokemon the deck runs — good enough, and
 // it means no deck file has to declare one.
 function centrepiece(d) {
@@ -114,6 +131,15 @@ Object.keys(byTier).sort().forEach(t => {
   console.log(`  T${t}  ${m.toFixed(1)}%   (${v.length} deck${v.length > 1 ? 's' : ''}, `
     + `${Math.min(...v).toFixed(1)}–${Math.max(...v).toFixed(1)})`);
 });
+if (BENCH && D[BENCH]) {
+  const i = rows.findIndex(r => r.k === BENCH), r = rows[i];
+  console.log(`
+benchmark — ${BENCH} is the deck Trevor won the Base Set bracket with`);
+  console.log(`  rank ${i + 1} of ${rows.length}   ${r.wr.toFixed(1)}%   `
+    + `${r.eng || '-'} lands ${r.reach.toFixed(0)}% at median turn ${r.med ?? '-'}`);
+  console.log('  Its RANK is a measure of the AI, not of the deck. See MEASUREMENT.md.');
+}
+
 if (MULTI) {
   const byFile = {};
   rows.forEach(r => { (byFile[r.from] = byFile[r.from] || []).push(r.wr); });

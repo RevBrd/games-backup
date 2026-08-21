@@ -287,6 +287,29 @@ reported a 6-point edge for a change that did not exist.
 **Read the centrepiece columns beside the standings — they usually explain them.** A Stage 2 that
 lands in 45% of games at a median of turn 17, in a game decided by turn 20, is not a centrepiece.
 
+### The benchmark deck — the only ground truth this project has for AI quality
+
+**`b1_t4_fire` is very close to the deck Trevor personally won the whole Base Set bracket with**, and
+it is still winning for him against the newer opponents. He said so on 21 Aug 2026, and it is the most
+useful sentence anyone has contributed to measuring this AI.
+
+**A round robin runs the same bot on both sides, so it can never say the field is being played badly.**
+A bot that retreats too much beats a bot that retreats too much about half the time; every deck's rate
+is relative to a standard the instrument itself sets. That is the ceiling on everything else in this
+file.
+
+The benchmark punches through it. A deck known to win in a human's hands finishing **eighth of
+thirteen** is not a fact about the deck. `decksim.js` prints its rank separately now, and:
+
+> **Its RANK is a measure of the AI. Move it by improving the bot, never by editing the deck.**
+
+It stood at **8th, 46.9%** before the retreat repricing of 21 Aug and **7th, 47.5%** after. `--benchmark=KEY`
+picks a different one; `--no-benchmark` turns it off. **If Trevor ever says a different deck is his
+daily driver, change the default** — the value of this number is entirely in the claim behind it.
+
+**It is not a pass/fail gate and should not become one.** Rank 1 would be wrong too: the deck is a T4
+in a field containing two T3s that beat it in his hands as well.
+
 **Not pass/fail.** A tier boundary is real when the tier bands do not overlap. On the Base Set roster
 T2 and T3 separate cleanly and T4 does not — **the standings, the assembly rates and what to do about
 it are in [ROSTERS.md](ROSTERS.md)**, and the spec they are judged against is

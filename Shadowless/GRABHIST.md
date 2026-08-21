@@ -25,6 +25,7 @@ made. Newest first, so the batch you want is usually near the top:
 
 | When | Instance | Items |
 |---|---|---|
+| 21 Aug 2026 | #21, second pass | The Charizard benchmark; an Energy priced twice in one function; a wall is not an upgrade opportunity; why the evolve fix has to wait for the attach fix |
 | 21 Aug 2026 | #21, Job 11 | Retreating into the wrong matchup; Teleport's flat 22 and the destination nobody chose; the Colorless Energy dead end; a counter that said "must be 0" and was counting the wrong thing |
 | 19 Aug 2026 | #20, the UI pass | The hand that resized itself — a correct report whose stated cause was wrong twice over |
 | 16 Aug 2026 | #16, later batches | The recoil suicide; the opponent deck named for the wrong deck; Gyarados crossed off unworked |
@@ -110,6 +111,55 @@ last is ordinary correct play; the fault is *ending* the turn with the lethal on
 `pass` does. Corrected, and the honest figure across 9,610 games is **0**. That is the nastiest kind of
 instrument failure in this project's collection, because it fails loudly: it points at a bug that does
 not exist and its own label sends you looking.
+
+### 21 Aug 2026 — Opus 5 #21, second pass (the retreat economy, and a benchmark)
+
+Appended the same day. Trevor read the first pass and gave three things back that changed what was
+worth doing, and the first of them is the most useful sentence anyone has contributed to measuring
+this AI.
+
+**"The Charizard deck is the benchmark."** It is very close to the deck he won the whole Base Set
+bracket with himself, and it is still winning for him against the newer opponents. In `decksim` it
+finished **eighth of thirteen**.
+
+That punches through the ceiling on every number this project produces. A round robin runs the same
+bot on both sides, so it can rank decks against each other and it can **never say the whole field is
+being played badly** — a bot that retreats too much beats a bot that retreats too much about half the
+time. A deck known to win in a human's hands finishing eighth is not a fact about the deck.
+`decksim.js` prints its rank separately now with a line saying so, because that claim lives in
+Trevor's head and nowhere else.
+
+**"Every energy spent in a retreat is an entire turn you're losing."** This is an economic argument
+rather than a preference, and it pointed at something concrete: the retreat rule charged **4** per
+Energy discarded while `retreatSaveEnergy` credits **7** for the same commodity two lines below. One
+function, one Energy, two prices — so a retreat that spent two to save three came out ahead by more
+than the one Energy it actually netted. Both are 7 now, and `retreatBase` is purely tempo from here.
+
+**The second half of the same argument was Chansey, and it needed a different fix.** *"Chansey is
+meant to go in there, use Scrunch, and stall while everything else is powered up on the bench, ending
+in a sacrifice."* The tempo term compares best affordable printed damage — and **Chansey's is Scrunch
+at zero**, so every benched Pokemon read as an upgrade, every turn, and the swap spent the very Energy
+that was charging the thing it was swapping to. `wallScore` suppresses the positive half of that delta
+now, one-sided, so swapping a wall *down* still costs full price.
+
+Together on the ladder decks: retreats **7.1 → 6.0 per 100 turns**, Energy burned **8.2 → 6.1**, and
+games got measurably longer, which is what less Energy churn looks like. Benchmark 8th → 7th.
+
+**"The AI evolves as soon as it can rather than as soon as it's ready."** True, and worse than it
+sounds: `evolve` scores a flat **31.0** whether the target holds one Energy or three. Gloom attacks for
+one Energy; Vileplume's only attack costs three.
+
+**And this is the entry to read before touching it, because the obvious fix makes the bot worse.**
+Attaching a third Grass to a Gloom scores **−2** — both Gloom's attacks are already paid, so
+`potential`'s `short` sits at 0 and the attach rule reads no progress. **The bot cannot walk a Gloom to
+three Energy, and evolving is what unblocks it**, because Vileplume's shortfall of 1 then reads as real
+progress. Penalise premature evolution alone and Vileplume is stranded at two Energy permanently.
+Verified in a constructed position, not reasoned about. Left unbuilt with the ordering written down.
+
+**One thing I had wrong in the first pass and Trevor corrected.** I called the Chansey Energy cliff a
+fault. It is correct play *for Chansey* — Double-edge is a kamikaze you only set up when a Double
+Colorless finishes it in one turn. The rule is right there and wrong elsewhere, which is exactly why
+the answer is per-card judgement rather than a weight, and why it stayed unbuilt.
 
 ### 19 Aug 2026 — Opus 5 #20 (the hand that resized itself)
 
