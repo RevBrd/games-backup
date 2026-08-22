@@ -410,9 +410,41 @@ unchanged and only the two ends move. **The frail multiplier is untouched**, so 
 changed at all. Both halves came from Trevor naming Agility, Rapidash and Seadra as one shape with
 Ice Beam: *spend a turn on the weaker attack to buy a turn.*
 
-**Both were asserted in `powertest.js` and all three failing tests were watched going red against the
-pre-fix engine first.** Two of the five deliberately stay green in the control — they assert what must
-*not* have moved, and a guard that cannot fail is not a guard.
+**A turn taken away is worth the attack it denies.** *22 Aug, and it is the other half of the same
+idea.* `paralyze` was a flat **26** whether the opponent was a charged Zapdos or a Chansey with no
+Energy — a constant standing in for a quantity that is entirely about the board. **The old constant
+was the average board, and not loosely**: this file measures the format's mean attack at 25.4 printed
+and 27.0 expected, so 26 *is* that mean. Dividing by it makes the term read the real opponent while
+reproducing every old value against an average one. **Paralysis, Sleep and Confusion scale;
+`incomingThreat` capped at the attacker's own remaining HP is the quantity, and it is the same
+`denied` the barrier reads two blocks down** — declared once at the top of `scoreAttack`, because
+Trevor's point is that these are one idea and the code should say so.
+
+**Poison is pointedly excluded and that exclusion is the whole reason `DENIES_A_TURN` is a table.**
+Poison is damage over time, not a turn taken away — it ticks whether or not they could ever attack,
+so reading it off their threat would price a real unconditional clock at zero against an empty board.
+
+**There is no share-of-a-turn table, because the weights already are one.** 26 / 22 / 15 is
+1 : 0.85 : 0.58, which is how much of a turn each takes away, priced when they were written. A second
+table would have applied that ratio twice. **When you add a dimension to a weight, check the existing
+weights are not already carrying it.**
+
+Measured: Dewgong takes Aurora Beam against a Chansey with no Energy, Ice Beam against a charged
+Electabuzz or Zapdos, and Aurora Beam whenever it is lethal — which is Trevor's rule, including the
+clause he supplied on being asked. **The break-even is an incoming 40**, where the extra 20 damage
+and the half-chance of denying 40 are genuinely equal and the tie goes to damage. `abtest`: **40.8%
+of games diverged**, win rate 49.6% → 49.9%.
+
+**Both were asserted in `powertest.js` and every failing test was watched going red against the
+pre-fix engine first.** Several deliberately stay green in the control — they assert what must *not*
+have moved, and a guard that cannot fail is not a guard.
+
+**Two of those assertions then went red on the turn-value change, and that is worth more than the
+tests themselves.** They used a bare Chansey to mean *"a target that survives"* — a complete board
+while a rider was worth a flat 26, and an ambiguous one the moment a bought turn started reading
+threat, because an unarmed Chansey now satisfies *survives* and *buys nothing* at the same time. The
+fix was four Fighting Energy, not a weaker assertion. ***A fixture encodes the model that was true
+when it was written**, and it only warns you when it fails.*
 
 **Where the next ones come from.** Every AI fault found on 21 Aug 2026 came from Trevor describing how
 a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn pricing, the

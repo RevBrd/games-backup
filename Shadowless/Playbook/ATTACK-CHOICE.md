@@ -103,20 +103,37 @@ Agility scored the same whether it was stopping nothing or stopping 60. Cliff in
 first one in the table that is **linear rather than squared** — a benefit really is proportional to
 the damage prevented, where a cost is not. *[Why, and the coefficient →](../AI.md)*
 
-## Open — and this is the real one
+### Fixed: a bought turn is worth what the opponent would have done with it
 
-**A bought turn is currently a constant, and it should be a board quantity.** `paralyze` is 26 and
-`shieldSelf` is 20 no matter what the opponent could have done with the turn you took away. Against a
-Chansey doing nothing it is worth nothing; against a charged Charizard it is worth 100. The barrier
-half now reads `incomingThreat` — **the paralysis half still does not**, and that asymmetry is exactly
-the shape [AI.md](../AI.md) warns about: *check any decision that reads status for one branch and not
-its siblings.*
+**The central one, and it needed Trevor's answer before it could be built.** His note said *Ice Beam
+whenever Aurora Beam is not lethal*; pricing a bought turn off the incoming threat says buying a turn
+from a Chansey is worthless. Asked rather than guessed, 22 Aug 2026 — **the rule has an unstated
+clause and it is *"when there's something to be afraid of"***.
 
-**The question that has to be answered before this is built, and it is Trevor's:** does Dewgong want
-Ice Beam against a target that cannot hurt it? His note says use Ice Beam whenever Aurora Beam is not
-lethal. Pricing a bought turn off the incoming threat says buying a turn from a Chansey is worthless
-and Aurora Beam's 50 is right. **Both readings are defensible and they disagree on a real board.**
-Do not guess it.
+So `paralyze`'s flat 26 now reads the board. **The old constant was the format's measured mean
+attack**, which is what a flat weight for a board-dependent thing always is, so dividing by it adds
+board sensitivity without retuning anything. Paralysis, Sleep and Confusion scale; **Poison does not**,
+because it is damage over time rather than a turn taken away. *[The full invariant →](../AI.md)*
+
+Measured, on one card with one Energy load and no lethal outcome anywhere:
+
+| Dewgong faces | Threat | Picks |
+|---|---|---|
+| Chansey, no Energy | 0 | Aurora Beam — nothing to buy |
+| Hitmonchan, charged | 40 | tie, goes to damage — the true break-even |
+| Electabuzz, charged | 80 | **Ice Beam** |
+| Zapdos, charged | 200 | **Ice Beam** |
+| anything Aurora Beam kills | any | Aurora Beam |
+
+## Open
+
+**The eight cards that are not Dewgong have not been re-checked against the new term.** Fearow,
+Seadra and Rapidash should all now behave, since a barrier and a paralysis read the same quantity —
+but *should* is not *measured*, and this file's own history is that the family behaved
+inconsistently for reasons nobody predicted. **Build the boards.**
+
+**Grimer's prohibition is still untouched** — *almost never use Minimize* — and it is the cheapest
+item left here, because a prohibition is provable in one position.
 
 ## Lapras is a different and harder claim
 

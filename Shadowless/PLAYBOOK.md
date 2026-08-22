@@ -50,7 +50,7 @@ and it changed every retreat in the game. It goes here, loose, and gets filed li
 |---|---|---|
 | [Walls](Playbook/WALLS.md) | Some cards go in to be spent. Standing there *is* the job, and low damage is not a deficiency | **Built** |
 | [Ammo](Playbook/AMMO.md) | An attack that discards its own Energy turns spare Energy into rounds, so surplus is not surplus | **Built**, one half open |
-| [Attack choice](Playbook/ATTACK-CHOICE.md) | The small utility attack is usually right; the big one is conditional on lethal | **Unmeasured** — and it should already be derivable |
+| [Attack choice](Playbook/ATTACK-CHOICE.md) | The small utility attack is usually right; the big one is conditional on lethal — and on there being something to fear | **Built** for the shared term; eight cards unverified |
 | [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Open**, blocked in a known order |
 | [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns. Parked for the autobuilder | **Parked** — Job 13 |
 
@@ -102,6 +102,12 @@ or about what the bot can *perceive*, and `aiduel.js` is blind to both by constr
 **Mark it, do not delete it.** Unlike a grab bag item, a satisfied claim stays — it is the reason its
 assertion exists, and somebody rewriting that part of the scorer needs to know what it was protecting.
 Add **DONE** and the date.
+
+**When two readings of a note disagree on a real board, ask him — it is one sentence and it has never
+not been worth it.** *"Ice Beam whenever Aurora Beam is not lethal"* and *"...when there's something
+to be afraid of"* are the same note with and without a clause Trevor had not thought to write down,
+and only the second one is buildable. He supplied it in a line. **A note is his shorthand, not his
+whole model**, which is what [GRABBAG.md](GRABBAG.md)'s own header says about the other list too.
 
 ### What is not worth writing down
 

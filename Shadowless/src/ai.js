@@ -119,6 +119,21 @@ function aiEnergyIsType(db, inst, t) {
 
 const STATUS_VALUE = { Paralyzed: 'paralyze', Asleep: 'sleep', Confused: 'confuse', Poisoned: 'poison' };
 
+// WHICH STATUSES BUY A TURN, which is not all of them. Paralysis, Sleep and
+// Confusion take the opponent's next turn away in whole or in part, so what they
+// are worth depends entirely on what that turn was going to do to you. POISON IS
+// NOT ONE OF THESE: it is 10 a turn whether or not they could ever attack, so it
+// keeps a flat weight. Scaling it by their threat would price a real and
+// unconditional clock at nothing against an opponent with no Energy.
+const DENIES_A_TURN = { Paralyzed: 1, Asleep: 1, Confused: 1 };
+
+// The format's mean attack, measured across ~64 games at 25.4 printed and 27.0
+// expected — see MEASUREMENT.md. It is the divisor that lets a board-sensitive
+// term reproduce the old flat weights against an average opponent, and it is not
+// a coincidence that `paralyze` was already 26: a flat weight for a thing that
+// depends on the board IS the average board, written down once.
+const AVG_ATTACK = 26;
+
 // ============================================================================
 // WHAT A POKEMON IS FOR — "stickiness", 13 Aug 2026
 // ============================================================================
@@ -687,12 +702,47 @@ class AI {
     // affected by it, so they all take the same discount. Poison, Confusion and
     // an Energy strip are all worthless on something already leaving the board.
     const survives = 1 - f.pLethal;
+
+    // WHAT THEIR NEXT TURN WOULD DO TO US, and it has two consumers: the status
+    // block immediately below and the barrier further down. Declared once, here,
+    // because Trevor's whole point is that those are one idea.
+    const danger = this.incomingThreat(pi);
+    const hpLeft = this.remainingHP(atkSlot);
+    const denied = Math.min(danger, hpLeft);
+
+    // A TURN TAKEN AWAY IS WORTH THE ATTACK IT DENIES — 22 Aug 2026, Trevor's
+    // call, and this is the other caller of `denied` above.
+    //
+    // `paralyze: 26` was a flat number for a thing that is entirely about the
+    // board: paralysing a Chansey that cannot reach an attack buys nothing, and
+    // paralysing a charged Charizard buys 100. THE OLD CONSTANT WAS THE AVERAGE
+    // BOARD STANDING IN FOR THE REAL ONE — and not loosely. This file measures
+    // the format's mean attack at 25.4 raw and 27.0 expected, so 26 is that mean
+    // almost exactly. Dividing by it makes the term read the board while
+    // reproducing every old value at an average opponent, which is the same
+    // discipline the barrier fix used one block up.
+    //
+    // POISON IS POINTEDLY EXCLUDED and that is the whole reason this is a table
+    // and not a blanket multiply. Poison is damage over time, not a turn taken
+    // away — it ticks whether or not they were ever going to attack, so scaling
+    // it by their threat would price a real, unconditional 10 a turn at zero
+    // against an opponent with no Energy. `poison` keeps its flat weight.
+    //
+    // NO SHARE-OF-A-TURN TABLE, because the weights are already one. Paralyze 26,
+    // sleep 22, confuse 15 is 1 : 0.85 : 0.58 — which is exactly how much of a
+    // turn each takes away, priced when they were written. A second table would
+    // have applied that ratio twice. So this scales all three by the same board
+    // factor and the relative pricing between them is untouched.
+    const turnScale = denied / AVG_ATTACK;
+
     if (!f.blocked) {
       if (!f.statusProof) for (const st in f.statuses) {
         const key = STATUS_VALUE[st];
-        if (key) s += f.statuses[st] * W[key] * survives;
+        if (!key) continue;
+        s += f.statuses[st] * W[key] * survives * (DENIES_A_TURN[st] ? turnScale : 1);
       }
-      if (f.flags.jam) s += W.confuse * survives;   // same shape as Confusion
+      // Jam is Confusion by another name, so it reads the same board.
+      if (f.flags.jam) s += W.confuse * survives * 0.5 * turnScale;
       if (f.flags.drag && you.bench.length) s += W.drag;
       // Whirlwind drags too, but THEY choose, so they send up their best answer.
       if (f.flags.dragWeak && you.bench.length) s += W.drag * 0.5 * (f.flags.dragWeak === true ? 1 : f.flags.dragWeak);
@@ -799,9 +849,11 @@ class AI {
       }
     }
 
-    // defensive plays are worth more the more danger we're in
-    const danger = this.incomingThreat(pi);
-    const frail = danger >= this.remainingHP(atkSlot);
+    // defensive plays are worth more the more danger we're in.
+    // `danger`, `hpLeft` and `denied` are declared at the top of this function
+    // rather than here, because the STATUS block above is the other half of the
+    // same idea and needs them first. Moving them back down breaks it loudly.
+    const frail = danger >= hpLeft;
     // A BARRIER IS WORTH WHAT IT PREVENTS — 22 Aug 2026, cliff instance seven.
     // This was flat at 0.7 below the frail line, so Agility scored an identical
     // 27.00 on Fearow against an incoming 0, an incoming 30 and an incoming 60.
@@ -818,8 +870,14 @@ class AI {
     // 1.4 * 0.5 = 0.7. Every board where the flat value was about right is
     // unchanged, and only the two ends move. The frail multiplier is untouched,
     // so nothing above the line changes at all.
-    const hpLeft = this.remainingHP(atkSlot);
-    const shieldFrac = hpLeft > 0 ? Math.min(danger, hpLeft) / hpLeft : 0;
+    // ONE QUANTITY FOR BOTH HALVES OF A BOUGHT TURN — 22 Aug 2026, and the fact
+    // that it is shared is the point rather than an economy. Trevor: Agility is
+    // the same shape as Ice Beam, because instead of inflicting paralysis it has
+    // a coin flip that prevents all damage. One buys the turn by taking theirs
+    // away, the other by making it not matter. They were priced through
+    // unrelated paths with no relationship between them, which is why the family
+    // behaved inconsistently — see the status block below for the other caller.
+    const shieldFrac = hpLeft > 0 ? denied / hpLeft : 0;
     if (f.flags.shield) s += f.flags.shield * W.shieldSelf * (frail ? 1.6 : 1.4 * shieldFrac);
     // HARDEN'S THRESHOLD IS NOT A CLIFF AND MUST NOT BE GRADED. Harden absorbs
     // an attack of N or less and does nothing at all against N+1, so the step is

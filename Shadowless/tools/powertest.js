@@ -5899,12 +5899,24 @@ T('paralysing a Pokemon the attack Knocks Out is worth nothing', () => {
   return true;
 });
 
-T('...but it is still worth full price when they survive', () => {
-  // The same card against 120 HP. Neither kills, so the paralysis is real and
+// THE TARGET HAS TO SURVIVE *AND* THREATEN, and the first version of these two
+// tests got that wrong. They used a bare Chansey to mean "cannot be killed",
+// which was a complete board while a rider was worth a flat 26 — and stopped
+// being one the moment a bought turn started reading the opponent's threat. A
+// Chansey with no Energy now satisfies "survives" and "buys nothing" at once, so
+// the board could no longer isolate what the tests claim. Both went red on the
+// change that made them ambiguous, which is the good outcome; the fix is four
+// Fighting Energy, not a weaker assertion. *A fixture that encodes an assumption
+// the code later drops fails in the safe direction only if it fails at all.*
+const CHANSEY_ARMED = ['base1-3', 0, 'base1-97', 4];      // 120 HP, Double-edge live
+
+T('...but it is still worth full price when they survive and can hurt you', () => {
+  // Neither Gyarados attack kills a 120 HP Chansey, so the paralysis is real and
   // Bubblebeam SHOULD win despite doing 10 less. Both directions asserted, as
   // the Confusion work established — the one-sided version is worse play.
-  const E = duel2('base1-6', 'base1-102', 4, 'base1-3', 0);
+  const E = duel2('base1-6', 'base1-102', 4, ...CHANSEY_ARMED);
   const ai = scorer(E);
+  if (!(ai.incomingThreat(0) > 0)) throw new Error('the fixture no longer threatens anything');
   if (!(ai.scoreAttack(0, 1) > ai.scoreAttack(0, 0)))
     throw new Error('Bubblebeam no longer preferred against a target it cannot kill');
   return true;
@@ -5913,8 +5925,8 @@ T('...but it is still worth full price when they survive', () => {
 T('a rider is discounted in proportion, not switched off', () => {
   // pLethal is a distribution, not a flag. Half-lethal has to land between the
   // two ends or this is a cliff of its own — which is the whole table in AI.md.
-  const dead = duel2('base1-6', 'base1-102', 4, 'base1-7', 30);
-  const alive = duel2('base1-6', 'base1-102', 4, 'base1-3', 0);
+  const dead = duel2('base1-6', 'base1-102', 4, 'base1-7', 30, 'base1-97', 4);
+  const alive = duel2('base1-6', 'base1-102', 4, ...CHANSEY_ARMED);
   const gapDead = scorer(dead).scoreAttack(0, 1) - scorer(dead).scoreAttack(0, 0);
   const gapAlive = scorer(alive).scoreAttack(0, 1) - scorer(alive).scoreAttack(0, 0);
   if (!(gapAlive > gapDead)) throw new Error('the rider is not discounted by lethality at all');
@@ -5943,6 +5955,47 @@ T('...and the frail case is untouched, so nothing above the line moved', () => {
   const ai = scorer(E);
   if (!(ai.incomingThreat(0) >= 70)) throw new Error('board is not frail; the test proves nothing');
   eq(+(ai.scoreAttack(0, 0) - 20).toFixed(2), 16, 'frail barrier value');
+  return true;
+});
+
+T('a bought turn is worth what the opponent would have done with it', () => {
+  // Trevor, 22 Aug 2026: Ice Beam over Aurora Beam when Aurora cannot kill AND
+  // there is something to be afraid of. Against a Chansey with no Energy there
+  // is nothing to buy, so the 20 extra damage is simply right.
+  const harmless = duel2('base1-25', 'base1-102', 4, 'base1-3', 0);          // 120 HP, no Energy
+  const ai1 = scorer(harmless);
+  eq(ai1.incomingThreat(0), 0, 'the harmless board really is harmless');
+  if (!(ai1.scoreAttack(0, 0) > ai1.scoreAttack(0, 1)))
+    throw new Error('Ice Beam preferred against something that cannot attack');
+
+  // Against a charged Electabuzz it is the other way round, on the same card
+  // with the same Energy and the same non-lethal outcome.
+  const scary = duel2('base1-25', 'base1-102', 4, 'base1-20', 0, 'base1-100', 3);
+  const ai2 = scorer(scary);
+  if (!(ai2.incomingThreat(0) > 60)) throw new Error('the scary board is not scary');
+  if (!(ai2.scoreAttack(0, 1) > ai2.scoreAttack(0, 0)))
+    throw new Error('Aurora Beam still preferred against a real threat');
+  return true;
+});
+
+T('...and lethal still beats afraid', () => {
+  // The gate is "Aurora Beam cannot kill". When it can, no amount of incoming
+  // threat should talk the bot out of taking the Prize.
+  const E = duel2('base1-25', 'base1-102', 4, 'base1-7', 30, 'base1-97', 4);   // 40 left, threat 40
+  const ai = scorer(E);
+  if (!(ai.scoreAttack(0, 0) > ai.scoreAttack(0, 1)))
+    throw new Error('the bot passed on a lethal attack to paralyse instead');
+  return true;
+});
+
+T('POISON does not scale with their threat, because it is not a bought turn', () => {
+  // The one status deliberately left flat. Poison ticks whether or not they were
+  // ever going to attack, so reading it off `incomingThreat` would price a real
+  // unconditional clock at zero against an opponent with no Energy.
+  const quiet = duel2('base1-11', 'base1-99', 4, 'base1-3', 0);
+  const loud  = duel2('base1-11', 'base1-99', 4, 'base1-3', 0, 'base1-97', 4);
+  const a = scorer(quiet).scoreAttack(0, 1), b = scorer(loud).scoreAttack(0, 1);
+  eq(+a.toFixed(2), +b.toFixed(2), 'Toxic scored differently against a harmless target');
   return true;
 });
 
