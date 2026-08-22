@@ -381,6 +381,14 @@ had been below. Both halves of it came out of Trevor describing how he plays the
 half is an engine fix and lives in [ENGINE.md](ENGINE.md)'s `takeEnergy` section, because the pay
 order was discarding the Double Colorless first on the one Pokemon where it is worth two Fire.
 
+**Where the next ones come from.** Every AI fault found on 21 Aug 2026 came from Trevor describing how
+a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn pricing, the
+Charizard cap, the discard order. **None came from a tag, a weight sweep, or a duel.** That list now
+has a home and a format: [PLAYBOOK.md](PLAYBOOK.md). It is an oracle rather than a data feed — the
+notes say what the right play is, and **the fix goes in the general scorer, never in a per-card
+branch.** If an entry can only be satisfied by special-casing the card, that is a finding about the DSL
+or the scorer, not a licence.
+
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed

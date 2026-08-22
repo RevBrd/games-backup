@@ -1,0 +1,727 @@
+{
+  "_meta": {
+    "source": "data/v1 Opp Decks/Fossil Opponent Decks v1.xlsx — Trevor's workbook, the third hand-built roster. Sheets 'F T2-1' through 'F T4'.",
+    "retrieved": "2026-08-21, extracted from the xlsx directly (the workbook is a zip; parsed from xl/worksheets/*.xml).",
+    "scope": "The Fossil opponent roster v1, built to OPPONENTS.md's tier spec. Three T2, two T3, one T4.",
+    "status": "All six validate clean against Engine.prototype.validateDeck: 60 cards, no errors, no warnings, 4-copy limit respected, every card implemented.",
+    "ids": "ZERO corrections needed, for the third workbook running. Every id resolves and names the card the sheet names, checked mechanically with accents and the NH/B2/B3 disambiguating suffixes normalised away.",
+    "weights": "featureWeight is Trevor's own scoring, totalled. ONLY COMPARABLE WITHIN A ROSTER — Fossil runs 11.5/16/19 against Jungle's 9/12/16 and Base Set's 7-7.5/10-10.5/12.5. Each workbook scales its own decks relative to each other. See ROSTERS.md.",
+    "pressure": "Derived from the workbook's Index tab by copy count, not assigned by eye. NOTE A RULE COLLISION: b3_t2_grass_water and b3_t4_psychic both derive Status Lock (17 and 9 by copy count), and OPPONENTS.md's no-repeat rule says the boss must not share a pressure with anything in the body. Reported rather than fudged — the rule is not built, these decks predate any enforcement of it, and the derivation is the honest answer.",
+    "no theme decks": "Fossil's own theme decks are NOT in data/. So this bracket has no T1 intro rungs of the kind OPPONENTS.md describes, and the four GBC Grand Masters stand in — which is the least wrong placeholder available, since their legendary birds are Fossil cards. Getting the real Fossil theme decks in is the fix.",
+    "coverCard": "The sheet's own Cover Card field, with the disambiguating suffix stripped. Two decks share Omastar and that is fine."
+  },
+  "b3_t2_water_psychic": {
+    "name": "F T2-1",
+    "sheet": "F T2-1",
+    "set": "base3",
+    "tier": 2,
+    "featureWeight": 11.5,
+    "list": [
+      [
+        4,
+        "base3-49",
+        "Horsea"
+      ],
+      [
+        2,
+        "base3-42",
+        "Seadra"
+      ],
+      [
+        3,
+        "base3-53",
+        "Psyduck"
+      ],
+      [
+        2,
+        "base3-35",
+        "Golduck"
+      ],
+      [
+        1,
+        "base3-25",
+        "Lapras"
+      ],
+      [
+        3,
+        "base3-55",
+        "Slowpoke"
+      ],
+      [
+        2,
+        "base3-43",
+        "Slowbro"
+      ],
+      [
+        3,
+        "base1-49",
+        "Drowzee"
+      ],
+      [
+        1,
+        "base3-23",
+        "Hypno"
+      ],
+      [
+        1,
+        "base2-38",
+        "Lickitung"
+      ],
+      [
+        16,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        12,
+        "base1-101",
+        "Psychic Energy"
+      ],
+      [
+        1,
+        "base3-59",
+        "Energy Search"
+      ],
+      [
+        1,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        1,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base2-64",
+        "Poké Ball"
+      ],
+      [
+        1,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        1,
+        "base1-81",
+        "Energy Retrieval"
+      ]
+    ]
+  },
+  "b3_t2_fighting_lightning": {
+    "name": "F T2-2",
+    "sheet": "F T2-2",
+    "set": "base3",
+    "tier": 2,
+    "featureWeight": 11.5,
+    "coverCard": "Hitmonlee",
+    "pressure": [
+      "BD"
+    ],
+    "list": [
+      [
+        4,
+        "base3-47",
+        "Geodude"
+      ],
+      [
+        3,
+        "base3-37",
+        "Graveler"
+      ],
+      [
+        1,
+        "base3-36",
+        "Golem"
+      ],
+      [
+        1,
+        "base3-22",
+        "Hitmonlee"
+      ],
+      [
+        2,
+        "base1-7",
+        "Hitmonchan"
+      ],
+      [
+        3,
+        "base2-60",
+        "Pikachu"
+      ],
+      [
+        1,
+        "base3-29",
+        "Raichu"
+      ],
+      [
+        1,
+        "base3-14",
+        "Raichu"
+      ],
+      [
+        1,
+        "base1-20",
+        "Electabuzz"
+      ],
+      [
+        2,
+        "base1-61",
+        "Rattata"
+      ],
+      [
+        1,
+        "base1-40",
+        "Raticate"
+      ],
+      [
+        1,
+        "base3-18",
+        "Ditto"
+      ],
+      [
+        18,
+        "base1-97",
+        "Fighting Energy"
+      ],
+      [
+        10,
+        "base1-100",
+        "Lightning Energy"
+      ],
+      [
+        1,
+        "base1-75",
+        "Lass"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        1,
+        "base3-59",
+        "Energy Search"
+      ],
+      [
+        1,
+        "base2-64",
+        "Poké Ball"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        2,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        1,
+        "base3-22",
+        "Hitmonlee"
+      ]
+    ]
+  },
+  "b3_t2_grass_water": {
+    "name": "F T2-3",
+    "sheet": "F T2-3",
+    "set": "base3",
+    "tier": 2,
+    "featureWeight": 11.5,
+    "coverCard": "Muk",
+    "pressure": [
+      "SL"
+    ],
+    "list": [
+      [
+        3,
+        "base3-48",
+        "Grimer"
+      ],
+      [
+        1,
+        "base3-13",
+        "Muk"
+      ],
+      [
+        1,
+        "base3-28",
+        "Muk"
+      ],
+      [
+        3,
+        "base3-57",
+        "Zubat"
+      ],
+      [
+        1,
+        "base3-34",
+        "Golbat"
+      ],
+      [
+        2,
+        "base3-46",
+        "Ekans"
+      ],
+      [
+        1,
+        "base3-31",
+        "Arbok"
+      ],
+      [
+        3,
+        "base3-54",
+        "Shellder"
+      ],
+      [
+        1,
+        "base3-32",
+        "Cloyster"
+      ],
+      [
+        2,
+        "base3-51",
+        "Krabby"
+      ],
+      [
+        1,
+        "base3-38",
+        "Kingler"
+      ],
+      [
+        1,
+        "base3-10",
+        "Lapras"
+      ],
+      [
+        1,
+        "base3-17",
+        "Articuno"
+      ],
+      [
+        1,
+        "base1-27",
+        "Farfetch'd"
+      ],
+      [
+        16,
+        "base1-99",
+        "Grass Energy"
+      ],
+      [
+        12,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        2,
+        "base3-59",
+        "Energy Search"
+      ],
+      [
+        1,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        1,
+        "base1-84",
+        "PlusPower"
+      ],
+      [
+        1,
+        "base1-78",
+        "Scoop Up"
+      ],
+      [
+        1,
+        "base1-81",
+        "Energy Retrieval"
+      ],
+      [
+        1,
+        "base2-64",
+        "Poké Ball"
+      ],
+      [
+        1,
+        "base1-93",
+        "Gust of Wind"
+      ]
+    ]
+  },
+  "b3_t3_water": {
+    "name": "F T3-1",
+    "sheet": "F T3-1",
+    "set": "base3",
+    "tier": 3,
+    "featureWeight": 16,
+    "coverCard": "Omastar",
+    "list": [
+      [
+        4,
+        "base3-62",
+        "Mysterious Fossil"
+      ],
+      [
+        3,
+        "base3-52",
+        "Omanyte"
+      ],
+      [
+        2,
+        "base3-40",
+        "Omastar"
+      ],
+      [
+        2,
+        "base3-10",
+        "Lapras"
+      ],
+      [
+        2,
+        "base3-2",
+        "Articuno"
+      ],
+      [
+        3,
+        "base3-56",
+        "Tentacool"
+      ],
+      [
+        2,
+        "base3-44",
+        "Tentacruel"
+      ],
+      [
+        2,
+        "base2-5",
+        "Kangaskhan"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        24,
+        "base1-102",
+        "Water Energy"
+      ],
+      [
+        1,
+        "base1-79",
+        "Super Energy Removal"
+      ],
+      [
+        3,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        1,
+        "base3-60",
+        "Gambler"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-84",
+        "PlusPower"
+      ],
+      [
+        1,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        1,
+        "base1-94",
+        "Potion"
+      ],
+      [
+        1,
+        "base1-73",
+        "Impostor Professor Oak"
+      ],
+      [
+        1,
+        "base1-74",
+        "Item Finder"
+      ],
+      [
+        1,
+        "base1-80",
+        "Defender"
+      ]
+    ]
+  },
+  "b3_t3_fighting_colorless": {
+    "name": "F T3-2",
+    "sheet": "F T3-2",
+    "set": "base3",
+    "tier": 3,
+    "featureWeight": 16,
+    "coverCard": "Dragonite",
+    "list": [
+      [
+        4,
+        "base3-62",
+        "Mysterious Fossil"
+      ],
+      [
+        1,
+        "base3-16",
+        "Aerodactyl"
+      ],
+      [
+        2,
+        "base3-50",
+        "Kabuto"
+      ],
+      [
+        1,
+        "base3-9",
+        "Kabutops"
+      ],
+      [
+        3,
+        "base1-62",
+        "Sandshrew"
+      ],
+      [
+        2,
+        "base3-41",
+        "Sandslash"
+      ],
+      [
+        4,
+        "base1-26",
+        "Dratini"
+      ],
+      [
+        3,
+        "base1-18",
+        "Dragonair"
+      ],
+      [
+        2,
+        "base3-4",
+        "Dragonite"
+      ],
+      [
+        3,
+        "base1-96",
+        "Double Colorless Energy"
+      ],
+      [
+        21,
+        "base1-97",
+        "Fighting Energy"
+      ],
+      [
+        1,
+        "base1-76",
+        "Pokémon Breeder"
+      ],
+      [
+        3,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        2,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base3-61",
+        "Recycle"
+      ],
+      [
+        1,
+        "base1-90",
+        "Super Potion"
+      ],
+      [
+        2,
+        "base1-79",
+        "Super Energy Removal"
+      ],
+      [
+        1,
+        "base1-92",
+        "Energy Removal"
+      ],
+      [
+        1,
+        "base1-77",
+        "Pokémon Trader"
+      ]
+    ]
+  },
+  "b3_t4_psychic": {
+    "name": "F T4",
+    "sheet": "F T4",
+    "set": "base3",
+    "tier": 4,
+    "featureWeight": 19,
+    "coverCard": "Haunter",
+    "pressure": [
+      "SL",
+      "BG"
+    ],
+    "list": [
+      [
+        4,
+        "base3-33",
+        "Gastly"
+      ],
+      [
+        1,
+        "base3-6",
+        "Haunter"
+      ],
+      [
+        2,
+        "base3-5",
+        "Gengar"
+      ],
+      [
+        3,
+        "base1-49",
+        "Drowzee"
+      ],
+      [
+        2,
+        "base3-8",
+        "Hypno"
+      ],
+      [
+        2,
+        "base2-6",
+        "Mr. Mime"
+      ],
+      [
+        1,
+        "base2-5",
+        "Kangaskhan"
+      ],
+      [
+        2,
+        "base2-38",
+        "Lickitung"
+      ],
+      [
+        24,
+        "base1-101",
+        "Psychic Energy"
+      ],
+      [
+        2,
+        "base1-77",
+        "Pokémon Trader"
+      ],
+      [
+        3,
+        "base1-91",
+        "Bill"
+      ],
+      [
+        2,
+        "base1-88",
+        "Professor Oak"
+      ],
+      [
+        1,
+        "base3-60",
+        "Gambler"
+      ],
+      [
+        1,
+        "base3-61",
+        "Recycle"
+      ],
+      [
+        2,
+        "base2-64",
+        "Poké Ball"
+      ],
+      [
+        1,
+        "base1-71",
+        "Computer Search"
+      ],
+      [
+        2,
+        "base1-84",
+        "PlusPower"
+      ],
+      [
+        1,
+        "base1-95",
+        "Switch"
+      ],
+      [
+        1,
+        "base1-93",
+        "Gust of Wind"
+      ],
+      [
+        1,
+        "base1-82",
+        "Full Heal"
+      ],
+      [
+        2,
+        "base3-21",
+        "Haunter"
+      ]
+    ]
+  }
+}

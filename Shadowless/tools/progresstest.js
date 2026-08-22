@@ -71,9 +71,19 @@ eq(L.map(b => b.set).join(','), LIVE.join(','), 'brackets follow the live-set or
 eq(L[0].name, 'The Clubs', 'the first bracket is named from the data');
 
 // The whole point of deriving: a set nobody authored still gets a bracket.
-const withRocket = build(LIVE.concat(['base5']));
-eq(withRocket.length, LIVE.length + 1, 'a newly live set adds a bracket with no data change');
+//
+// THE UNAUTHORED SET IS FABRICATED, not borrowed. This block used to reach for
+// base5, which was unauthored only by accident — and on 21 Aug 2026 Team Rocket
+// got a roster and five assertions about the derivation went red without a
+// single thing being wrong. A test whose subject is "whichever set nobody has
+// got to yet" expires every time somebody gets to one. So: take the real ladder
+// data, delete one bracket from a copy, and assert against that.
+const noRocket = JSON.parse(JSON.stringify(LADDER));
+delete noRocket.brackets.base5;
+const withRocket = build(LIVE, noRocket);
+eq(withRocket.length, LIVE.length, 'a set with no bracket in the data still gets one');
 const rocket = withRocket[withRocket.length - 1];
+eq(rocket.set, 'base5', 'and it is the one whose bracket was removed');
 ok(rocket.generated, 'the unauthored bracket is flagged as generated');
 eq(rocket.roster.length, P.PROGRESS_DEFAULTS.bossAfter, 'it is backfilled to exactly bossAfter opponents');
 ok(rocket.roster.every(o => o.deck === 'generate'), 'all of its opponents are generated');
@@ -126,7 +136,7 @@ for (const b of L) {
     if (!r.ok) illegal.push(`${o.id}: ${r.errors.join('; ')}`);
   }
 }
-eq(authored, 35, 'the four brackets name 35 authored opponents — 16 GBC, 4 theme, 2 Jungle, 8 Base Set, 5 Jungle-built');
+eq(authored, 41, 'the four brackets name 41 authored opponents — 16 GBC, 4 theme, 2 Jungle, and Trevor 8 + 5 + 6');
 ok(illegal.length === 0, `every authored opponent fields a legal 60-card deck${illegal.length ? '\n        ' + illegal.join('\n        ') : ''}`);
 
 // Nothing in a deck FILE is stranded. A deck that resolves but that no rung fields is

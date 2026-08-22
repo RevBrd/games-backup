@@ -140,6 +140,7 @@ source — **grep `readFileSync` in the generator rather than trusting the table
 | `jungle_decks.json` | `OPPONENT_DECKS`, `jungle:` prefix | the Jungle bracket's two authentic challengers |
 | `base1_decks.json` | `OPPONENT_DECKS`, `b1:` prefix | the whole Base Set bracket — Trevor's eight, built to the tier spec |
 | `base2_decks.json` | `OPPONENT_DECKS`, `b2:` prefix | the Jungle bracket's body, gate and boss — Trevor's five |
+| `base3_decks.json` | `OPPONENT_DECKS`, `b3:` prefix | the Fossil bracket's body, gate and boss — Trevor's six |
 | `ladder.json` | `LADDER` | `buildLadder()`. See [PROGRESSION.md](PROGRESSION.md) |
 
 **The opponent files fail soft where `decks.json` fails hard.** An opponent deck naming a card outside
@@ -183,6 +184,15 @@ free-text **Wants** column in plain English — "To stall, not attack or retreat
 bench pokemon". Trevor's note in the sheet says the last three were added at #15's advice and are not
 retroactively complete. It is the closest thing this project has to a stated specification of how the
 AI ought to play individual cards.
+
+**`base3_decks.json` is Trevor's six Fossil decks, live the day it was written**, 21 Aug 2026 — three
+T2, two T3 and the T4 that is Fossil's boss. **Zero id corrections for the third workbook running.**
+
+**One stale cell, and the guard caught it rather than the eye.** `F T2-1` names Omastar as its cover
+card and contains no Omastar — the sheet's Cover Card cell was carried over from another tab.
+`gen_cards.js` refuses a cover that is not in its own deck's list and warns, so the field is simply
+omitted and `heroOfList` picks Hypno instead. **Ask Trevor what that deck's cover should be** rather
+than guessing; everything else about the deck validates clean.
 
 **`fullpool.json` is a flat list of card ids across the unbuilt sets and is read by nothing.** It
 predates the corpus being the source of truth. Left in place rather than deleted, but do not generate

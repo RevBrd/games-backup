@@ -208,6 +208,18 @@ tier, so two players can have wildly different experiences of the same economy.
    than a narrower pool. Note that richer odds make it a new pack type anyway, so the two changes are
    one change.
 
+   **Trevor answered the dilution question the same day and the answer dissolves it.** A player chasing
+   one specific card **re-battles the bracket that card's set belongs to** — the ladder already provides
+   targeted chasing, because `winReward` pays in the bracket's own set and repeat wins pay full. So a
+   Challenge pack is not competing with that and does not need to. Its job is *better cards, any set*,
+   which is complementary rather than diluted: **slightly richer rarity odds, less chance of a specific
+   card, higher chance of a good one.** His words, offered as a thought rather than a commitment.
+
+   **One thing to decide rather than let happen.** Richer rarity odds compound with the cosmetic variant
+   rolls, so a Challenge pack would also become the best place in the game to pull a Shadowless or a 1st
+   Edition. That is probably wanted — it is the biggest reward on the ladder — but it should be a
+   decision, because nobody would have chosen it and it would arrive anyway.
+
 ## Sources
 
 - [Booster pack (TCG) — Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Booster_pack_(TCG))

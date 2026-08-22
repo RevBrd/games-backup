@@ -2,13 +2,15 @@
   "_meta": {
     "what": "Job 7's opponent ladder. One BRACKET per set. Nothing in here names the set it unlocks or its own position — buildLadder() in src/progress.js derives both from the live-set order, so a bracket for a set that is not live simply does not appear, and a live set with no bracket here gets a generated one automatically. Adding Team Rocket is adding a key, or adding nothing at all.",
     "authored": "2026-08-12, Job 7a.",
-    "deck refs": "'theme:NAME' is DECKS in cards.js (data/decks.json). 'gbc:KEY', 'jungle:NAME', 'b1:KEY' and 'b2:KEY' are OPPONENT_DECKS (data/gbc_decks.json, data/jungle_decks.json, data/base1_decks.json, data/base2_decks.json). 'generate' is a pool spec handed to deckgen at match time, seeded off the opponent id so the same challenger always brings the same deck.",
+    "deck refs": "'theme:NAME' is DECKS in cards.js (data/decks.json). 'gbc:KEY', 'jungle:NAME', 'b1:KEY', 'b2:KEY' and 'b3:KEY' are OPPONENT_DECKS. 'generate' is a pool spec handed to deckgen at match time, seeded off the opponent id so the same challenger always brings the same deck.",
     "names": "Anything marked placeholder:true is an identity of ours rather than a deck of ours — Trevor's note, 12 Aug 2026: the names are easily reshapable, the structure is what has to be right. The GBC characters keep their real names because they ARE the placeholder; see 'placeholders' below.",
     "ronald": "Ronald is a placeholder too, and as of 21 Aug 2026 he is no longer a boss anywhere. EVERY BRACKET ENDS IN ITS T4. He is the post-boss `extra` in base1 and base2, and still the placeholder boss of base3 only because Fossil has no authored T4 yet. The long-term shape Trevor wants is different and is NOT one rival per bracket: roughly four encounters across the whole ladder, a small group with a leader, decks drawn from every previous set and paying combined packs. Design open — see OPPONENTS.md.",
-    "unassigned": "No GBC deck is unused. All 16 appear exactly once: 8 club masters and 4 grand masters in base3, Ronald 1 and 2 as the base1 and base2 `extra`, Ronald 3 as base3's boss, Ronald 4 as its `extra`.",
+    "unassigned": "No GBC deck is unused. All 16 appear exactly once: the 4 grand masters in base3, the 8 club masters in base5, Ronald 1 and 2 as the base1 and base2 `extra`, Ronald 3 as base3's `extra`, and Ronald 4 as base5's placeholder boss.",
     "base1 roster": "2026-08-19, Job 10.5. Trevor's eight Base Set decks (data/base1_decks.json) replaced the GBC placeholders: four theme decks as the T1 intro, five T2, two T3 gate, and the T4 as the boss. Built to OPPONENTS.md's tier spec — see ROSTERS.md for what decksim measured. NAMES AND TITLES ARE STILL OURS and marked placeholder:true; the decks are not. Ronald's first deck moved to base1's `extra`, so he is now the post-boss challenger rather than the boss, and the four club masters he shared a bracket with joined the other four in base2.",
     "placeholders": "RULE, Trevor 21 Aug 2026: anybody not holding a hand-built deck or an authentic theme deck is a placeholder filling the gap between a set going live and its own decks being authored. That is what the 16 GBC decks are for. They are never deleted — data/gbc_decks.json keeps every one on file — they just move to whichever bracket has not been authored yet.",
-    "base2 roster": "2026-08-21, Job 11. Trevor's five Jungle decks (data/base2_decks.json) joined the two Jungle theme decks: intro (2 theme, T1) -> body (3x T2) -> gate (1x T3) -> boss (T4 'Deep Bloom'). Ronald's second deck moved to `extra`, matching base1. The eight club masters he shared the bracket with moved DOWN to base3, which is the last bracket where they are set-appropriate — every GBC deck plays only Base, Jungle and Fossil cards, so putting them in a Team Rocket bracket would be worse than the generated decks already there. base3's two `generate` placeholders were dropped in the same move; base5 stays entirely generated."
+    "base2 roster": "2026-08-21, Job 11. Trevor's five Jungle decks (data/base2_decks.json) joined the two Jungle theme decks: intro (2 theme, T1) -> body (3x T2) -> gate (1x T3) -> boss (T4 'Deep Bloom'). Ronald's second deck moved to `extra`, matching base1. The eight club masters he shared the bracket with moved DOWN to base3, which is the last bracket where they are set-appropriate — every GBC deck plays only Base, Jungle and Fossil cards, so putting them in a Team Rocket bracket would be worse than the generated decks already there. base3's two `generate` placeholders were dropped in the same move; base5 stays entirely generated.",
+    "base3 roster": "2026-08-21, Job 11. Trevor's six Fossil decks (data/base3_decks.json) took the body, gate and boss. THE FOUR GRAND MASTERS STAYED, which is the one place the placeholder rule bends and it bends for a reason: Fossil's own theme decks are not in data/, so the T1 intro slot is genuinely empty, and the grand masters' legendary birds are Fossil cards — the least wrong stand-in available. Getting the real Fossil theme decks in is the fix. The eight club masters moved on to base5.",
+    "base5 roster": "2026-08-21, Job 11. Team Rocket had NO authored bracket and was running entirely on buildLadder()'s generated fallback; the eight displaced club masters are better opponents than today's generator, which Job 13 exists to improve. They are placeholders and they are wrong-era on purpose — every GBC deck plays only Base, Jungle and Fossil cards. When Team Rocket gets its own hand-built decks they move on again, or retire."
   },
   "defaults": {
     "bossAfter": 5,
@@ -186,7 +188,7 @@
     },
     "base3": {
       "name": "The Dome",
-      "blurb": "The Grand Masters brought the Legendary birds, and every Club Master came with them.",
+      "blurb": "The Grand Masters brought the Legendary birds. Six more were built out of Fossil itself.",
       "roster": [
         {
           "id": "gbc-courtney",
@@ -212,6 +214,62 @@
           "title": "Grand Master",
           "deck": "gbc:rod_legendary_dragonite"
         },
+        {
+          "id": "base3-t2-1",
+          "name": "Nerys",
+          "title": "Fathom",
+          "deck": "b3:b3_t2_water_psychic",
+          "placeholder": true
+        },
+        {
+          "id": "base3-t2-2",
+          "name": "Kade",
+          "title": "Bedrock",
+          "deck": "b3:b3_t2_fighting_lightning",
+          "placeholder": true
+        },
+        {
+          "id": "base3-t2-3",
+          "name": "Thora",
+          "title": "Sump",
+          "deck": "b3:b3_t2_grass_water",
+          "placeholder": true
+        },
+        {
+          "id": "base3-t3-1",
+          "name": "Calla",
+          "title": "Ammonite",
+          "deck": "b3:b3_t3_water",
+          "placeholder": true
+        },
+        {
+          "id": "base3-t3-2",
+          "name": "Rune",
+          "title": "Wingspan",
+          "deck": "b3:b3_t3_fighting_colorless",
+          "placeholder": true
+        }
+      ],
+      "boss": {
+        "id": "base3-t4",
+        "name": "Verity",
+        "title": "Nightshade",
+        "deck": "b3:b3_t4_psychic",
+        "placeholder": true
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-3",
+          "name": "Ronald",
+          "title": "Powerful Ronald",
+          "deck": "gbc:ronald_powerful"
+        }
+      ]
+    },
+    "base5": {
+      "name": "The Syndicate",
+      "blurb": "Every club master in one place, and a rival who has been waiting since the Clubs.",
+      "roster": [
         {
           "id": "gbc-nikki",
           "name": "Nikki",
@@ -262,19 +320,11 @@
         }
       ],
       "boss": {
-        "id": "gbc-ronald-3",
+        "id": "gbc-ronald-4",
         "name": "Ronald",
-        "title": "Powerful Ronald",
-        "deck": "gbc:ronald_powerful"
-      },
-      "extra": [
-        {
-          "id": "gbc-ronald-4",
-          "name": "Ronald",
-          "title": "Legendary Ronald",
-          "deck": "gbc:ronald_legendary"
-        }
-      ]
+        "title": "Legendary Ronald",
+        "deck": "gbc:ronald_legendary"
+      }
     }
   }
 }

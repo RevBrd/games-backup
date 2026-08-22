@@ -1046,6 +1046,147 @@ const OPPONENT_DECKS = {
     [1, "base1-79"],  // Super Energy Removal
     [1, "base1-77"],  // Pokémon Trader
   ]},
+  "b3:b3_t2_water_psychic": { name: "F T2-1", list: [
+    [4, "base3-49"],  // Horsea
+    [2, "base3-42"],  // Seadra
+    [3, "base3-53"],  // Psyduck
+    [2, "base3-35"],  // Golduck
+    [1, "base3-25"],  // Lapras
+    [3, "base3-55"],  // Slowpoke
+    [2, "base3-43"],  // Slowbro
+    [3, "base1-49"],  // Drowzee
+    [1, "base3-23"],  // Hypno
+    [1, "base2-38"],  // Lickitung
+    [16, "base1-102"],  // Water Energy
+    [12, "base1-101"],  // Psychic Energy
+    [1, "base3-59"],  // Energy Search
+    [1, "base1-77"],  // Pokémon Trader
+    [1, "base1-90"],  // Super Potion
+    [2, "base1-91"],  // Bill
+    [1, "base1-88"],  // Professor Oak
+    [2, "base2-64"],  // Poké Ball
+    [1, "base1-93"],  // Gust of Wind
+    [1, "base1-81"],  // Energy Retrieval
+  ]},
+  "b3:b3_t2_fighting_lightning": { name: "F T2-2", cover: "base3-22", list: [
+    [4, "base3-47"],  // Geodude
+    [3, "base3-37"],  // Graveler
+    [1, "base3-36"],  // Golem
+    [1, "base3-22"],  // Hitmonlee
+    [2, "base1-7"],  // Hitmonchan
+    [3, "base2-60"],  // Pikachu
+    [1, "base3-29"],  // Raichu
+    [1, "base3-14"],  // Raichu
+    [1, "base1-20"],  // Electabuzz
+    [2, "base1-61"],  // Rattata
+    [1, "base1-40"],  // Raticate
+    [1, "base3-18"],  // Ditto
+    [18, "base1-97"],  // Fighting Energy
+    [10, "base1-100"],  // Lightning Energy
+    [1, "base1-75"],  // Lass
+    [2, "base1-91"],  // Bill
+    [1, "base1-88"],  // Professor Oak
+    [1, "base3-59"],  // Energy Search
+    [1, "base2-64"],  // Poké Ball
+    [1, "base1-92"],  // Energy Removal
+    [1, "base1-94"],  // Potion
+    [2, "base1-81"],  // Energy Retrieval
+    [1, "base3-22"],  // Hitmonlee
+  ]},
+  "b3:b3_t2_grass_water": { name: "F T2-3", cover: "base3-13", list: [
+    [3, "base3-48"],  // Grimer
+    [1, "base3-13"],  // Muk
+    [1, "base3-28"],  // Muk
+    [3, "base3-57"],  // Zubat
+    [1, "base3-34"],  // Golbat
+    [2, "base3-46"],  // Ekans
+    [1, "base3-31"],  // Arbok
+    [3, "base3-54"],  // Shellder
+    [1, "base3-32"],  // Cloyster
+    [2, "base3-51"],  // Krabby
+    [1, "base3-38"],  // Kingler
+    [1, "base3-10"],  // Lapras
+    [1, "base3-17"],  // Articuno
+    [1, "base1-27"],  // Farfetch'd
+    [16, "base1-99"],  // Grass Energy
+    [12, "base1-102"],  // Water Energy
+    [2, "base3-59"],  // Energy Search
+    [1, "base1-88"],  // Professor Oak
+    [2, "base1-91"],  // Bill
+    [1, "base1-84"],  // PlusPower
+    [1, "base1-78"],  // Scoop Up
+    [1, "base1-81"],  // Energy Retrieval
+    [1, "base2-64"],  // Poké Ball
+    [1, "base1-93"],  // Gust of Wind
+  ]},
+  "b3:b3_t3_water": { name: "F T3-1", cover: "base3-40", list: [
+    [4, "base3-62"],  // Mysterious Fossil
+    [3, "base3-52"],  // Omanyte
+    [2, "base3-40"],  // Omastar
+    [2, "base3-10"],  // Lapras
+    [2, "base3-2"],  // Articuno
+    [3, "base3-56"],  // Tentacool
+    [2, "base3-44"],  // Tentacruel
+    [2, "base2-5"],  // Kangaskhan
+    [1, "base1-92"],  // Energy Removal
+    [24, "base1-102"],  // Water Energy
+    [1, "base1-79"],  // Super Energy Removal
+    [3, "base1-91"],  // Bill
+    [2, "base1-88"],  // Professor Oak
+    [1, "base3-60"],  // Gambler
+    [2, "base1-95"],  // Switch
+    [1, "base1-84"],  // PlusPower
+    [1, "base1-90"],  // Super Potion
+    [1, "base1-94"],  // Potion
+    [1, "base1-73"],  // Impostor Professor Oak
+    [1, "base1-74"],  // Item Finder
+    [1, "base1-80"],  // Defender
+  ]},
+  "b3:b3_t3_fighting_colorless": { name: "F T3-2", cover: "base3-4", list: [
+    [4, "base3-62"],  // Mysterious Fossil
+    [1, "base3-16"],  // Aerodactyl
+    [2, "base3-50"],  // Kabuto
+    [1, "base3-9"],  // Kabutops
+    [3, "base1-62"],  // Sandshrew
+    [2, "base3-41"],  // Sandslash
+    [4, "base1-26"],  // Dratini
+    [3, "base1-18"],  // Dragonair
+    [2, "base3-4"],  // Dragonite
+    [3, "base1-96"],  // Double Colorless Energy
+    [21, "base1-97"],  // Fighting Energy
+    [1, "base1-76"],  // Pokémon Breeder
+    [3, "base1-91"],  // Bill
+    [2, "base1-88"],  // Professor Oak
+    [2, "base1-95"],  // Switch
+    [1, "base3-61"],  // Recycle
+    [1, "base1-90"],  // Super Potion
+    [2, "base1-79"],  // Super Energy Removal
+    [1, "base1-92"],  // Energy Removal
+    [1, "base1-77"],  // Pokémon Trader
+  ]},
+  "b3:b3_t4_psychic": { name: "F T4", cover: "base3-6", list: [
+    [4, "base3-33"],  // Gastly
+    [1, "base3-6"],  // Haunter
+    [2, "base3-5"],  // Gengar
+    [3, "base1-49"],  // Drowzee
+    [2, "base3-8"],  // Hypno
+    [2, "base2-6"],  // Mr. Mime
+    [1, "base2-5"],  // Kangaskhan
+    [2, "base2-38"],  // Lickitung
+    [24, "base1-101"],  // Psychic Energy
+    [2, "base1-77"],  // Pokémon Trader
+    [3, "base1-91"],  // Bill
+    [2, "base1-88"],  // Professor Oak
+    [1, "base3-60"],  // Gambler
+    [1, "base3-61"],  // Recycle
+    [2, "base2-64"],  // Poké Ball
+    [1, "base1-71"],  // Computer Search
+    [2, "base1-84"],  // PlusPower
+    [1, "base1-95"],  // Switch
+    [1, "base1-93"],  // Gust of Wind
+    [1, "base1-82"],  // Full Heal
+    [2, "base3-21"],  // Haunter
+  ]},
 };
 
 const LADDER = {
@@ -1225,7 +1366,7 @@ const LADDER = {
     },
     "base3": {
       "name": "The Dome",
-      "blurb": "The Grand Masters brought the Legendary birds, and every Club Master came with them.",
+      "blurb": "The Grand Masters brought the Legendary birds. Six more were built out of Fossil itself.",
       "roster": [
         {
           "id": "gbc-courtney",
@@ -1251,6 +1392,62 @@ const LADDER = {
           "title": "Grand Master",
           "deck": "gbc:rod_legendary_dragonite"
         },
+        {
+          "id": "base3-t2-1",
+          "name": "Nerys",
+          "title": "Fathom",
+          "deck": "b3:b3_t2_water_psychic",
+          "placeholder": true
+        },
+        {
+          "id": "base3-t2-2",
+          "name": "Kade",
+          "title": "Bedrock",
+          "deck": "b3:b3_t2_fighting_lightning",
+          "placeholder": true
+        },
+        {
+          "id": "base3-t2-3",
+          "name": "Thora",
+          "title": "Sump",
+          "deck": "b3:b3_t2_grass_water",
+          "placeholder": true
+        },
+        {
+          "id": "base3-t3-1",
+          "name": "Calla",
+          "title": "Ammonite",
+          "deck": "b3:b3_t3_water",
+          "placeholder": true
+        },
+        {
+          "id": "base3-t3-2",
+          "name": "Rune",
+          "title": "Wingspan",
+          "deck": "b3:b3_t3_fighting_colorless",
+          "placeholder": true
+        }
+      ],
+      "boss": {
+        "id": "base3-t4",
+        "name": "Verity",
+        "title": "Nightshade",
+        "deck": "b3:b3_t4_psychic",
+        "placeholder": true
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-3",
+          "name": "Ronald",
+          "title": "Powerful Ronald",
+          "deck": "gbc:ronald_powerful"
+        }
+      ]
+    },
+    "base5": {
+      "name": "The Syndicate",
+      "blurb": "Every club master in one place, and a rival who has been waiting since the Clubs.",
+      "roster": [
         {
           "id": "gbc-nikki",
           "name": "Nikki",
@@ -1301,19 +1498,11 @@ const LADDER = {
         }
       ],
       "boss": {
-        "id": "gbc-ronald-3",
+        "id": "gbc-ronald-4",
         "name": "Ronald",
-        "title": "Powerful Ronald",
-        "deck": "gbc:ronald_powerful"
-      },
-      "extra": [
-        {
-          "id": "gbc-ronald-4",
-          "name": "Ronald",
-          "title": "Legendary Ronald",
-          "deck": "gbc:ronald_legendary"
-        }
-      ]
+        "title": "Legendary Ronald",
+        "deck": "gbc:ronald_legendary"
+      }
     }
   }
 };

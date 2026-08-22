@@ -69,6 +69,7 @@ cost, and it is a real cost — two lines here against a session that opens the 
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
 | [PLAYTEST.md](PLAYTEST.md) | Trevor points you at `GRABBAG.md`, hands you a match log, or says something felt off while playing. How to work a report from a human: why it is a symptom and not a diagnosis, what to do when it turns out to be wrong, and the two traps that make a real fix look like it did nothing |
 | [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one |
+| [PLAYBOOK.md](PLAYBOOK.md) | **Trevor's, and the highest-value list in the tree.** How the cards are *supposed* to be played, in plain English, as testable claims — plus the guide to writing and working one. Every AI fault found on 21 Aug 2026 came from a sentence of his and none came from a tag, a weight sweep or a duel |
 
 ## Status
 
@@ -276,8 +277,8 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   base1 bracket — intro → body → gate → boss, the first bracket built to [OPPONENTS.md](OPPONENTS.md)
   — and `base5` derives a *generated* bracket, which is the derivation working rather than a gap.
   **What is left in 10.5 is the layout-related grab bag items.**
-- **Job 11** - Major grab bag pass, AI and UI focused, add Trevor's new Jungle decks. **The Jungle
-  decks are in and live** — five hand-built decks as the bracket's body, gate and boss, the eight GBC
+- **Job 11** - Major grab bag pass, AI and UI focused, add Trevor's new Jungle decks. **The Jungle and
+  Fossil decks are in and live** — and the Jungle ones — five hand-built decks as the bracket's body, gate and boss, the eight GBC
   Club Masters moved down to Fossil as gap-filler, and every bracket now ends in its own T4 rather
   than in Ronald. Measured; the roster does **not** order by tier and the report is in
   [ROSTERS.md](ROSTERS.md). **The AI half is started rather than finished**: three retreat/switch

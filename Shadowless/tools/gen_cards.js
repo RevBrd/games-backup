@@ -307,6 +307,7 @@ const OPPONENT_SOURCES = [
   ['jungle', 'jungle_decks.json'],
   ['b1', 'base1_decks.json'],
   ['b2', 'base2_decks.json'],
+  ['b3', 'base3_decks.json'],
 ];
 const opponentDecks = {}, droppedDecks = [];
 for (const [prefix, file] of OPPONENT_SOURCES) {

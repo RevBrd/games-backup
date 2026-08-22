@@ -123,8 +123,8 @@ right. Everything marked `placeholder: true` in the data is ours rather than the
 |---|---|---|---|
 | Base — The Clubs | 4 theme decks (T1) + 5 T2 + 2 T3, **all Trevor's** | the T4, *Ashfall* | Ronald, *I'm Ronald!* |
 | Jungle — The Jungle | 2 Jungle theme decks (T1) + 3 T2 + 1 T3, **all Trevor's** | the T4, *Deep Bloom* | Ronald, *Invincible Ronald* |
-| Fossil — The Dome | the 4 Grand Masters + **all 8** Club Masters | Ronald, *Powerful Ronald* | Ronald, *Legendary Ronald* |
-| Team Rocket | **entirely generated** | generated | — |
+| Fossil — The Dome | the 4 Grand Masters + 3 T2 + 2 T3, **the six Trevor's** | the T4, *Nightshade* | Ronald, *Powerful Ronald* |
+| Team Rocket — The Syndicate | **all 8** Club Masters | Ronald, *Legendary Ronald* | — |
 
 **Jungle followed on 21 Aug 2026, and the move settled what a placeholder IS.** Trevor's five Jungle
 decks made the bracket intro → body → gate → boss on their own, which displaced the eight Club Masters
@@ -140,6 +140,15 @@ boss of nothing except Fossil, and only until Fossil has an authored T4. **The r
 and is not per bracket** — Trevor, 21 Aug: roughly four encounters across the whole ladder, a small
 group with a leader, decks drawn from every previous set and paying combined packs. That is a design
 sketch and not a spec; see [OPPONENTS.md](OPPONENTS.md), whose open item 3 it replaces.
+
+**Fossil followed within hours of Jungle, and it is the one place the placeholder rule bends.** Trevor's
+six Fossil decks took the body, gate and boss on 21 Aug — but **the four Grand Masters stayed**, because
+Fossil's own theme decks are not in `data/` and so the T1 intro slot is genuinely empty. Their legendary
+birds are Fossil cards, which makes them the least wrong stand-in available; getting the real Fossil
+theme decks in is the fix rather than shuffling placeholders. The eight Club Masters moved on to **Team
+Rocket, which until then had no authored bracket at all** and was running on the generated fallback.
+They are wrong-era on purpose — every GBC deck plays only Base, Jungle and Fossil cards — and they are
+still better opponents than today's generator, which is what Job 13 exists to fix.
 
 **Base Set stopped being a placeholder on 19 Aug 2026.** Its eleven rungs are Trevor's own decks
 built to [OPPONENTS.md](OPPONENTS.md)'s tier spec, and the bracket now reads intro → body → gate →
