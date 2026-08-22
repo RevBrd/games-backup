@@ -47,6 +47,8 @@ const AI_WEIGHTS = {
   attachOnType: 4,      // the card pays a TYPED symbol this Pokemon actually
                         // needs, not just its Colorless. Breaks the tie toward
                         // Fire-on-Arcanine over Grass-on-Arcanine
+  ammoTurns: 2,         // extra shots to stock on an attack that eats its own
+                        // Energy to fire. Charizard: RRRR + 2 discarded x 2 = 8
   attachSurplus: -2,    // attaching to a Pokemon that needs nothing. Negative so
                         // it falls under `threshold` and the card is HELD
   evolveHP: 0.45,       // per point of max-HP gained
@@ -1130,6 +1132,35 @@ class AI {
     return least;
   }
 
+  // HOW MANY SYMBOLS THIS POKEMON CAN STILL USEFULLY HOLD, when its own attack
+  // EATS Energy to fire. Charizard's Fire Spin costs RRRR and discards two cards
+  // every time it is used, so a fifth Fire is not surplus — it is the second
+  // shot. You may attach one Energy a turn and Fire Spin spends two, so a
+  // Charizard that is not pre-loaded fires once and then stands there.
+  //
+  // Trevor's account of the deck, 21 Aug 2026, and it is the whole strategy:
+  // "evolve on the bench and pre-load it with as much energy as you can beyond
+  // the 4 energy limit... try your best to pre-load it enough to last."
+  //
+  // DERIVED FROM THE EFFECT SCRIPT, not from a list of cards — `COST_DISCARD_ENERGY`
+  // is a DSL verb and every card that carries it gets this for free. Returns 0
+  // for everything else, so the surplus rule is untouched for the other 1,200.
+  //
+  // `COST_DISCARD_ALL_ENERGY` is deliberately NOT counted. Wildfire discards any
+  // number and mills that many, so "how much is useful" is unbounded and a
+  // headroom figure would be a guess dressed as a derivation.
+  ammoSymbols(slot) {
+    const c = this.top(slot);
+    let target = 0;
+    (c.attacks || []).forEach((a, i) => {
+      for (const v of this.script(slot, i)) {
+        if (v.v !== 'COST_DISCARD_ENERGY' || !v.n) continue;
+        target = Math.max(target, a.cost.length + v.n * this.W.ammoTurns);
+      }
+    });
+    return target;
+  }
+
   bestSelfSwitch(pi) {
     const me = this.E.state.players[pi];
     if (!me.active || !me.bench.length) return null;
@@ -1849,6 +1880,15 @@ class AI {
         // it is one slot wide.
         const noProgress = after.short >= before.short && after.best <= before.best;
         const isActive = slot === me.active;
+
+        // AMMUNITION IS NOT SURPLUS — the third exception to this rule, and the
+        // first that applies on the Bench as well as in the Active spot. An
+        // attack that discards its own Energy to fire turns spare Energy into
+        // rounds, and the bot hard-capped Charizard at four: measured 21 Aug
+        // 2026, a fifth Fire scored -2 whether the Charizard was Active or
+        // benched. It could never fire Fire Spin twice in a row, which is the
+        // deck.
+        const stocking = this.E.energyTotal(slot) < this.ammoSymbols(slot);
         // Symbols, not cards, and the LIVE cost rather than the printed one —
         // `retreatCostOf` is what actually gets charged, and it already knows
         // about Dodrio. Both halves of that were wrong here before 17 Aug and
@@ -1856,7 +1896,7 @@ class AI {
         // Dodrio was not consulted at all.
         const needsEscape = isActive
           && this.E.energyTotal(slot) < this.E.retreatCostOf(slot);
-        if (noProgress && !needsEscape) return W.attachSurplus;
+        if (noProgress && !needsEscape && !stocking) return W.attachSurplus;
 
         // The surplus rule above is deliberately NOT in attachValue: it is about
         // whether to spend the once-per-turn attachment, and Rain Dance does not

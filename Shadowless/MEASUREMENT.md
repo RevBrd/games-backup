@@ -303,12 +303,48 @@ thirteen** is not a fact about the deck. `decksim.js` prints its rank separately
 
 > **Its RANK is a measure of the AI. Move it by improving the bot, never by editing the deck.**
 
-It stood at **8th, 46.9%** before the retreat repricing of 21 Aug and **7th, 47.5%** after. `--benchmark=KEY`
-picks a different one; `--no-benchmark` turns it off. **If Trevor ever says a different deck is his
-daily driver, change the default** — the value of this number is entirely in the claim behind it.
+Its run on 21 Aug 2026, all three figures from the same 30-seed merged field:
+
+| | rank | win% | Charizard lands |
+|---|---|---|---|
+| start of day | 8 of 13 | 46.9% | 54% |
+| after the retreat repricing | 7 of 13 | 47.5% | 54% |
+| after the Charizard fixes | **6 of 13** | **52.8%** | 56% |
+
+`--benchmark=KEY` picks a different deck; `--no-benchmark` turns it off. **If Trevor ever says a
+different deck is his daily driver, change the default** — the value of this number is entirely in the
+claim behind it.
 
 **It is not a pass/fail gate and should not become one.** Rank 1 would be wrong too: the deck is a T4
 in a field containing two T3s that beat it in his hands as well.
+
+#### The confound, which Trevor found the same day, and what actually survives it
+
+**Every time the AI gets better, so does the AI piloting the field it is measured against.** A general
+improvement raises all thirteen decks and the rank does not move. So the rank is **not** a measure of
+AI quality in general — it measures whether the bot can pilot *this archetype* relative to simpler
+ones, which is a narrower claim than the paragraph above originally made and still the right question,
+because Charizard is the hardest deck in the field to fly and the simplest decks are the ones the bot
+flatters.
+
+**Two things survive the confound and both are already on that row.**
+
+**The assembly column is close to absolute.** "Charizard lands 56% at median turn 17" barely depends on
+how well the opponent is played. When the rank sticks and assembly climbs, the bot is getting better at
+the deck and the field is keeping pace.
+
+**And `aiduel.js --baseline` pins the comparison.** Against `HEAD` the duel answers "did the last commit
+help", resets every commit, and therefore reads ~50% forever no matter how far the AI has come — which
+is the same confound in the other instrument, and it is why this file's duel figures have all been
+nulls. `BASELINE` in `tools/aiduel.js` is a fixed commit (`e23c747`, the state of `ai.js` before Job
+11's AI work), so a run against it **accumulates**. Move the pin only deliberately and record it here
+when you do; resetting it silently throws away every comparison anyone wrote down.
+
+**It worked the first time it was run.** Against `HEAD`, every AI change of 21 Aug 2026 read as a null —
+50.4% ±0.8, 49.9% control, exactly as this file predicts for symmetric perception fixes. Against the
+pin, the same day's work together reads **51.5% ±0.9**, outside the interval. Nothing about the AI
+changed between those two numbers; only the yardstick did. **A tool that resets its own baseline every
+commit cannot show progress, and this one had been doing that since it was written.**
 
 **Not pass/fail.** A tier boundary is real when the tier bands do not overlap. On the Base Set roster
 T2 and T3 separate cleanly and T4 does not — **the standings, the assembly rates and what to do about

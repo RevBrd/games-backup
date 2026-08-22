@@ -185,6 +185,28 @@ tier, so two players can have wildly different experiences of the same economy.
    fact it needed exists: a bracket is open if the previous boss has been beaten, derived from
    `save.progress.beaten` rather than stored. So the eligible pool is computable from the save
    without adding anything to it. Nobody has built it. See [PROGRESSION.md](PROGRESSION.md).
+3. **The Challenge pack — a pool of every card up to that point.** Trevor's proposal, 21 Aug 2026, as
+   the reward for the Challenge brackets in [OPPONENTS.md](OPPONENTS.md). **It works, and most of the
+   machinery is already here**, which is worth knowing before anyone plans it as a large job:
+   `buildPools(db, null)` already returns a union of every booster set — 65 rare-holo, 64 rare, 88
+   uncommon, 88 common — and `openPack` already accepts a pre-built pool through `opts.pools`. Two
+   things are missing and neither is big. The pool has to be built from the sets **the player has
+   unlocked** rather than every set that exists, or a Challenge 1 pack could hand out Neo cards. And
+   the save keys packs by set code, so a Challenge pack needs its own key.
+
+   **It is a pack TYPE, not a set, and the distinction is load-bearing.** A set code entering
+   `liveSets` would give itself a ladder bracket, a dex section and a completion percentage. Nothing
+   about a Challenge pack wants any of those — its cards already belong to their own sets and already
+   count toward those dexes, which is exactly the behaviour that makes it a good reward.
+
+   **The design risk is dilution and it is worth deciding before building.** After Neo, "every card
+   up to this point" is around a thousand cards, so any specific chase card is vanishingly rare — and
+   a pack that is *conceptually* the biggest reward on the ladder could feel worse to open than an
+   ordinary one. That cuts both ways: for a player filling a dex it is the only way back to the rares
+   they missed four brackets ago, which is the whole point. The suggestion is to keep the union pool
+   and make the pack read as a prize some other way — **more cards, or richer rarity odds**, rather
+   than a narrower pool. Note that richer odds make it a new pack type anyway, so the two changes are
+   one change.
 
 ## Sources
 

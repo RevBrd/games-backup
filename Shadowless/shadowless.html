@@ -5195,6 +5195,8 @@ const AI_WEIGHTS = {
   attachOnType: 4,      // the card pays a TYPED symbol this Pokemon actually
                         // needs, not just its Colorless. Breaks the tie toward
                         // Fire-on-Arcanine over Grass-on-Arcanine
+  ammoTurns: 2,         // extra shots to stock on an attack that eats its own
+                        // Energy to fire. Charizard: RRRR + 2 discarded x 2 = 8
   attachSurplus: -2,    // attaching to a Pokemon that needs nothing. Negative so
                         // it falls under `threshold` and the card is HELD
   evolveHP: 0.45,       // per point of max-HP gained
@@ -6278,6 +6280,35 @@ class AI {
     return least;
   }
 
+  // HOW MANY SYMBOLS THIS POKEMON CAN STILL USEFULLY HOLD, when its own attack
+  // EATS Energy to fire. Charizard's Fire Spin costs RRRR and discards two cards
+  // every time it is used, so a fifth Fire is not surplus — it is the second
+  // shot. You may attach one Energy a turn and Fire Spin spends two, so a
+  // Charizard that is not pre-loaded fires once and then stands there.
+  //
+  // Trevor's account of the deck, 21 Aug 2026, and it is the whole strategy:
+  // "evolve on the bench and pre-load it with as much energy as you can beyond
+  // the 4 energy limit... try your best to pre-load it enough to last."
+  //
+  // DERIVED FROM THE EFFECT SCRIPT, not from a list of cards — `COST_DISCARD_ENERGY`
+  // is a DSL verb and every card that carries it gets this for free. Returns 0
+  // for everything else, so the surplus rule is untouched for the other 1,200.
+  //
+  // `COST_DISCARD_ALL_ENERGY` is deliberately NOT counted. Wildfire discards any
+  // number and mills that many, so "how much is useful" is unbounded and a
+  // headroom figure would be a guess dressed as a derivation.
+  ammoSymbols(slot) {
+    const c = this.top(slot);
+    let target = 0;
+    (c.attacks || []).forEach((a, i) => {
+      for (const v of this.script(slot, i)) {
+        if (v.v !== 'COST_DISCARD_ENERGY' || !v.n) continue;
+        target = Math.max(target, a.cost.length + v.n * this.W.ammoTurns);
+      }
+    });
+    return target;
+  }
+
   bestSelfSwitch(pi) {
     const me = this.E.state.players[pi];
     if (!me.active || !me.bench.length) return null;
@@ -6997,6 +7028,15 @@ class AI {
         // it is one slot wide.
         const noProgress = after.short >= before.short && after.best <= before.best;
         const isActive = slot === me.active;
+
+        // AMMUNITION IS NOT SURPLUS — the third exception to this rule, and the
+        // first that applies on the Bench as well as in the Active spot. An
+        // attack that discards its own Energy to fire turns spare Energy into
+        // rounds, and the bot hard-capped Charizard at four: measured 21 Aug
+        // 2026, a fifth Fire scored -2 whether the Charizard was Active or
+        // benched. It could never fire Fire Spin twice in a row, which is the
+        // deck.
+        const stocking = this.E.energyTotal(slot) < this.ammoSymbols(slot);
         // Symbols, not cards, and the LIVE cost rather than the printed one —
         // `retreatCostOf` is what actually gets charged, and it already knows
         // about Dodrio. Both halves of that were wrong here before 17 Aug and
@@ -7004,7 +7044,7 @@ class AI {
         // Dodrio was not consulted at all.
         const needsEscape = isActive
           && this.E.energyTotal(slot) < this.E.retreatCostOf(slot);
-        if (noProgress && !needsEscape) return W.attachSurplus;
+        if (noProgress && !needsEscape && !stocking) return W.attachSurplus;
 
         // The surplus rule above is deliberately NOT in attachValue: it is about
         // whether to spend the once-per-turn attachment, and Rain Dance does not
@@ -10693,14 +10733,39 @@ class Engine {
   // When the caller doesn't specify which Energy to discard, spend the ones this
   // Pokemon's own attacks don't ask for, so we never eat the last Fire off a
   // Charmeleon to pay a Colorless cost. Also the AI's choice, for free.
+  //
+  // TWO THINGS IT GOT WRONG, both fixed 21 Aug 2026 and both about Charizard,
+  // whose Fire Spin discards two Energy CARDS every time it fires.
+  //
+  // IT READ THE CARD, NOT THE SLOT. `energyProvides` answers what a card is,
+  // and under Energy Burn every Energy on a Charizard is Fire — so a Double
+  // Colorless read as "Colorless, not needed" and went first, when on that
+  // Pokemon it is the single most valuable card attached. Measured: Fire + Fire
+  // + Double Colorless is RRRR, exactly enough for Fire Spin; discarding in the
+  // old order left ONE symbol behind where the right order leaves TWO. Every
+  // Fire Spin was costing three symbols instead of two.
+  //
+  // AND WHERE TWO CARDS ARE EQUALLY USEFUL, SPEND THE SMALLER ONE. A Double
+  // Colorless is two symbols in one card; discarding it to pay a one-card cost
+  // throws away a symbol for nothing. That tiebreaker is what actually fixes
+  // Charizard, since under Energy Burn *everything* attached is "needed" and the
+  // primary key can no longer separate them.
+  //
+  // Trevor named the behaviour from play, 21 Aug: "when you're forced to discard
+  // a DCE because you ran low on R it takes two away just by itself."
   energyPayOrder(slot, filter) {
     const c = topCard(this.db, slot);
     const needed = new Set();
     (c.attacks || []).forEach(a => a.cost.split('').forEach(x => { if (x !== 'C') needed.add(x); }));
+    const burn = this.activePower(slot, 'ENERGY_AS');
+    const as = burn ? burn.type : null;
+    const symsOf = e => energySymbols(this.db, e).map(x => as || x);
     return this.energyChoices(slot, filter).sort((x, y) => {
-      const nx = needed.has(energyProvides(this.db, x)) ? 1 : 0;
-      const ny = needed.has(energyProvides(this.db, y)) ? 1 : 0;
-      return nx - ny;
+      const sx = symsOf(x), sy = symsOf(y);
+      const nx = sx.some(t => needed.has(t) || t === WILD) ? 1 : 0;
+      const ny = sy.some(t => needed.has(t) || t === WILD) ? 1 : 0;
+      if (nx !== ny) return nx - ny;
+      return sx.length - sy.length;
     });
   }
 

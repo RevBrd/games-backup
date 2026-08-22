@@ -215,8 +215,9 @@ him against the newer opponents, and in here it finished **eighth of thirteen**.
 
 That single fact reframes most of this page. **The Jungle T4's 78%-assembly-and-46%-conversion is
 probably not a deck finding**, and neither is Base Set's T4 sitting in the T2 band. Both are what a
-badly-piloted good deck looks like. The two retreat repricings the same day moved the benchmark to
-seventh; there is a long way to go.
+badly-piloted good deck looks like. Three AI changes the same day moved it to **sixth at 52.8%** — two
+retreat repricings worth a rank between them, and then the pair of Charizard fixes worth **+5.3 points
+on their own**. Every figure on this page predates all three.
 
 *[The benchmark, what it is for, and why its rank is an AI metric →](MEASUREMENT.md)*
 

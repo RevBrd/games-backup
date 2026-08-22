@@ -365,6 +365,22 @@ games got measurably *longer*, which is what less Energy churn looks like. The b
 from 8th to 7th of thirteen. That last figure is the point of the benchmark and not a small result: see
 [MEASUREMENT.md](MEASUREMENT.md).
 
+**Ammunition is not surplus.** *21 Aug.* An attack that discards its own Energy to fire turns spare
+Energy into rounds, and the surplus rule — which refuses an attachment that unlocks no new attack —
+hard-capped Charizard at four. Measured: a fifth Fire scored **−2**, Active or benched. Fire Spin
+discards two cards per use against one attachment per turn, so **the bot could never fire it twice in
+a row**, which is the entire deck. `ammoSymbols()` derives the headroom from the `COST_DISCARD_ENERGY`
+verb rather than from a list of cards, so every card carrying it gets this for free and the other
+1,200 are untouched — there is a test asserting Hitmonchan still caps. `COST_DISCARD_ALL_ENERGY` is
+deliberately excluded: Wildfire discards any number, so "how much is useful" is unbounded and a
+headroom figure would be a guess dressed as a derivation.
+
+**This is the change that moved the benchmark**, and it is the largest single move the AI has had:
+`b1_t4_fire` went from **8th of 13 at 46.9%** in the morning to **6th at 52.8%**, above five decks it
+had been below. Both halves of it came out of Trevor describing how he plays the deck — the other
+half is an engine fix and lives in [ENGINE.md](ENGINE.md)'s `takeEnergy` section, because the pay
+order was discarding the Double Colorless first on the one Pokemon where it is worth two Fire.
+
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed

@@ -32,7 +32,21 @@ const N = parseInt(process.argv[2], 10) || 8;
 // Positional, but flags may sit anywhere: `aiduel 10 --gbc` used to send `--gbc`
 // to `git show` and die with an unrecognized-argument trace that looks like a
 // git problem rather than an argument-order one.
-const REF = process.argv.slice(3).find(a => !a.startsWith('--')) || 'HEAD';
+//
+// --baseline PINS THE COMPARISON, and it exists because HEAD is the wrong
+// yardstick for the question people actually ask. Against HEAD this tool answers
+// "did the last commit help", resets every commit, and therefore reads ~50%
+// forever no matter how far the AI has come. Trevor spotted the same shape in
+// the decksim benchmark on 21 Aug 2026 — every time the AI gets better so does
+// the opponent it is measured against.
+//
+// A FIXED commit accumulates instead. BASELINE is the state of ai.js before Job
+// 11's AI work began; a run against it is a running score rather than a diff.
+// Move the pin only deliberately, and say so in MEASUREMENT.md when you do —
+// resetting it silently throws away every comparison anyone has recorded.
+const BASELINE = 'e23c747';
+const REF = process.argv.includes('--baseline') ? BASELINE
+  : (process.argv.slice(3).find(a => !a.startsWith('--')) || 'HEAD');
 // --control seats the BASELINE on both sides. Run it to read the per-deck table
 // honestly: those rows count games where one side happened to hold that deck, and
 // the decks are not balanced against each other (74/60/42/25 by CLAUDE.md). A

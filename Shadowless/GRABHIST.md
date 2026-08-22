@@ -25,6 +25,7 @@ made. Newest first, so the batch you want is usually near the top:
 
 | When | Instance | Items |
 |---|---|---|
+| 21 Aug 2026 | #21, third pass | Charizard capped at four Energy; the pay order discarding the Double Colorless first; a duel that reset its own baseline every commit |
 | 21 Aug 2026 | #21, second pass | The Charizard benchmark; an Energy priced twice in one function; a wall is not an upgrade opportunity; why the evolve fix has to wait for the attach fix |
 | 21 Aug 2026 | #21, Job 11 | Retreating into the wrong matchup; Teleport's flat 22 and the destination nobody chose; the Colorless Energy dead end; a counter that said "must be 0" and was counting the wrong thing |
 | 19 Aug 2026 | #20, the UI pass | The hand that resized itself — a correct report whose stated cause was wrong twice over |
@@ -111,6 +112,52 @@ last is ordinary correct play; the fault is *ending* the turn with the lethal on
 `pass` does. Corrected, and the honest figure across 9,610 games is **0**. That is the nastiest kind of
 instrument failure in this project's collection, because it fails loudly: it points at a bug that does
 not exist and its own label sends you looking.
+
+### 21 Aug 2026 — Opus 5 #21, third pass (Charizard, and a yardstick that reset itself)
+
+**Trevor found the confound in his own benchmark before I did.** Every time the AI improves, so does
+the AI piloting the field it is measured against — so a general improvement raises all thirteen decks
+and the rank does not move. Correct, and it narrows the claim: the rank measures whether the bot can
+fly *this archetype* relative to simpler ones, not AI quality in general.
+
+**Two things survive it, and one of them fixed a tool that had been lying by construction since it was
+written.** The assembly column is close to absolute — how often Charizard lands barely depends on how
+well the opponent is played. And `aiduel.js` compares against `HEAD`, which **resets every commit**, so
+it answers "did the last commit help" and reads ~50% forever no matter how far the AI has come. That
+is why every duel figure in this project is a null. It takes `--baseline` now against a pinned commit.
+The same day's work read 50.4% ±0.8 against HEAD and **51.5% ±0.9 against the pin**. Nothing about the
+AI changed between those two numbers; only the yardstick did.
+
+**Then Trevor described how he actually plays the Charizard deck, and it contained two faults.**
+"Evolve on the bench and pre-load it with as much energy as you can beyond the 4 energy limit... when
+you're forced to discard a DCE because you ran low on R it takes two away just by itself."
+
+**The bot hard-capped Charizard at four Energy.** A fifth Fire scored **−2**, Active or benched.
+Fire Spin discards two cards every use against one attachment per turn, so it could never fire twice
+in a row — which is the deck. The surplus rule already carried two exceptions; this is the third, and
+it is derived from the `COST_DISCARD_ENERGY` verb rather than from a list of cards, so every card that
+eats its own Energy gets it and the other 1,200 do not. There is a test asserting Hitmonchan still
+caps, because that rule is the most carefully tuned thing in `ai.js` and an exception that leaks is
+worse than no exception.
+
+**And the engine was discarding the wrong card, every single turn, invisibly.** `energyPayOrder`
+spends what the Pokemon's own attacks do not ask for — but it asked `energyProvides`, which answers
+what a card *is*, and under Energy Burn every Energy on a Charizard *is* Fire. So the Double Colorless
+read as "Colorless, not needed" and went first. Fire + Fire + Double Colorless is exactly RRRR;
+the old order left **one** symbol behind and the right order leaves **two**. Every Fire Spin cost
+three symbols instead of two. **Nothing in any log would ever have shown this** — no line prints which
+Energy card left.
+
+**Together: the benchmark went from 8th of 13 at 46.9% in the morning to 6th at 52.8%.** The two
+retreat repricings earlier in the day were worth one rank between them; this pair was worth **+5.3
+points on its own**, and it is the largest single move the AI has had. Both halves came from one
+paragraph of Trevor describing his own play, neither was in any grab bag item, and neither would have
+been found by reading the code — the Charizard cap looks like the surplus rule working correctly, and
+the discard order looks like the fallback working correctly.
+
+*The pattern across all three passes today: every fault came from someone who knows how the cards are
+supposed to be played saying so in plain English. None of them came from a tag, a weight sweep, or a
+duel.*
 
 ### 21 Aug 2026 — Opus 5 #21, second pass (the retreat economy, and a benchmark)
 

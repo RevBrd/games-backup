@@ -2407,6 +2407,100 @@ T('a dying wall is still left to die', () => {
   return true;
 });
 
+// ------------------------- an attack that eats its own Energy (Job 11, Charizard)
+// Trevor's account of how the deck is actually played, 21 Aug 2026: "evolve on
+// the bench and pre-load it with as much energy as you can beyond the 4 energy
+// limit. When you play it, it discards 2 energies per turn but you can only
+// attach one... when you're forced to discard a DCE because you ran low on R it
+// takes two away just by itself."
+//
+// Two faults, one in each half of the game, both of them fatal to the deck:
+//   - ai.js hard-capped attachments at the attack cost, so Fire Spin could never
+//     fire twice in a row.
+//   - engine.js chose which Energy to discard by reading the CARD, so under
+//     Energy Burn the Double Colorless looked "not needed" and went first — the
+//     one card on the Pokemon worth two symbols.
+console.log('\nAn attack that eats its own Energy');
+
+function zardBoard(fires, dce) {
+  const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  E.newGame(DECKS.Brushfire, DECKS.Zap, ['A', 'B']);
+  const mk = id => E.mkSlot({ id, uid: E.uid++ });
+  const me = E.state.players[0], you = E.state.players[1];
+  me.active = mk('base1-4');                        // Charizard — Energy Burn, Fire Spin RRRR
+  attach(E, me.active, 'base1-98', fires);
+  attach(E, me.active, 'base1-96', dce);
+  me.bench = [mk('base1-58')];
+  you.active = mk('base1-58'); you.bench = [];
+  me.hand = [{ id: 'base1-98', uid: E.uid++ }];
+  const prize = () => ({ id: 'base1-99', uid: E.uid++ });
+  me.prizes = Array.from({ length: 5 }, prize);
+  you.prizes = Array.from({ length: 5 }, prize);
+  E.state.phase = 'main'; E.state.active = 0; E.state.turn = 9;
+  [...E.allSlots(0), ...E.allSlots(1)].forEach(sl => { sl.playedTurn = 0; });
+  return E;
+}
+
+T('Fire Spin spends the basic Fire and keeps the Double Colorless', () => {
+  const E = zardBoard(2, 1);                        // R + R + DCE = RRRR, exactly enough
+  eq(E.slotSymbols(E.state.players[0].active).join(''), 'RRRR', 'Energy Burn makes it RRRR');
+  const r = E.act(0, { t: 'attack', idx: 0 });
+  if (!r.ok) throw new Error(r.error);
+  const left = E.slotSymbols(E.state.players[0].active).length;
+  eq(left, 2, 'symbols left after Fire Spin (it was 1 when the order read the card)');
+  return true;
+});
+
+T('...and it is one turn of difference, every single turn', () => {
+  const E = zardBoard(2, 1);
+  E.act(0, { t: 'attack', idx: 0 });
+  const me = E.state.players[0];
+  eq(me.active.energy.length, 1, 'one card left');
+  eq(CARD_DB[me.active.energy[0].id].name, 'Double Colorless Energy', 'and it is the two-symbol one');
+  return true;
+});
+
+const zardAttachScore = (E) => {
+  const me = E.state.players[0];
+  return scorer(E).scoreAction(0, { t: 'attachEnergy', hand: 0, target: me.active.uid });
+};
+
+T('a paid-up Charizard still wants more Energy — it is ammunition', () => {
+  const s = zardAttachScore(zardBoard(4, 0));
+  if (!(s > 0)) throw new Error(`a fifth Fire scored ${s.toFixed(1)}; it was -2 when the deck could not work`);
+  return true;
+});
+
+T('and it stops once it has stocked enough shots', () => {
+  const near = zardAttachScore(zardBoard(7, 0));
+  const past = zardAttachScore(zardBoard(8, 0));        // RRRR + 2 discarded x ammoTurns
+  if (!(near > 0)) throw new Error(`stopped stocking early, at 7: ${near.toFixed(1)}`);
+  if (past > 0) throw new Error(`never stops stocking: 8 Energy still scored ${past.toFixed(1)}`);
+  return true;
+});
+
+// The surplus rule is the most carefully tuned thing in ai.js and this exception
+// must not widen it. A Pokemon whose attack does NOT eat Energy still caps.
+T('a Pokemon whose attack does not eat Energy is still capped', () => {
+  const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  E.newGame(DECKS.Brushfire, DECKS.Zap, ['A', 'B']);
+  const mk = id => E.mkSlot({ id, uid: E.uid++ });
+  const me = E.state.players[0], you = E.state.players[1];
+  me.active = mk('base1-7');                        // Hitmonchan — Jab F, Special Punch FFC
+  attach(E, me.active, 'base1-97', 4);
+  me.bench = [mk('base1-58')];
+  you.active = mk('base1-58'); you.bench = [];
+  me.hand = [{ id: 'base1-97', uid: E.uid++ }];
+  const prize = () => ({ id: 'base1-99', uid: E.uid++ });
+  me.prizes = Array.from({ length: 5 }, prize);
+  you.prizes = Array.from({ length: 5 }, prize);
+  E.state.phase = 'main'; E.state.active = 0; E.state.turn = 9;
+  [...E.allSlots(0), ...E.allSlots(1)].forEach(sl => { sl.playedTurn = 0; });
+  const s = zardAttachScore(E);
+  if (s > 0) throw new Error(`the ammunition exception leaked onto Hitmonchan: ${s.toFixed(1)}`);
+  return true;
+});
+
 // ------------------------------------------- what a Pokemon is FOR (walls)
 // Asserted here rather than dueled, and that is the doctrine in AI.md rather
 // than a shortcut. Stickiness measured at +0.2 points over 2,592 games even on

@@ -2454,14 +2454,39 @@ class Engine {
   // When the caller doesn't specify which Energy to discard, spend the ones this
   // Pokemon's own attacks don't ask for, so we never eat the last Fire off a
   // Charmeleon to pay a Colorless cost. Also the AI's choice, for free.
+  //
+  // TWO THINGS IT GOT WRONG, both fixed 21 Aug 2026 and both about Charizard,
+  // whose Fire Spin discards two Energy CARDS every time it fires.
+  //
+  // IT READ THE CARD, NOT THE SLOT. `energyProvides` answers what a card is,
+  // and under Energy Burn every Energy on a Charizard is Fire — so a Double
+  // Colorless read as "Colorless, not needed" and went first, when on that
+  // Pokemon it is the single most valuable card attached. Measured: Fire + Fire
+  // + Double Colorless is RRRR, exactly enough for Fire Spin; discarding in the
+  // old order left ONE symbol behind where the right order leaves TWO. Every
+  // Fire Spin was costing three symbols instead of two.
+  //
+  // AND WHERE TWO CARDS ARE EQUALLY USEFUL, SPEND THE SMALLER ONE. A Double
+  // Colorless is two symbols in one card; discarding it to pay a one-card cost
+  // throws away a symbol for nothing. That tiebreaker is what actually fixes
+  // Charizard, since under Energy Burn *everything* attached is "needed" and the
+  // primary key can no longer separate them.
+  //
+  // Trevor named the behaviour from play, 21 Aug: "when you're forced to discard
+  // a DCE because you ran low on R it takes two away just by itself."
   energyPayOrder(slot, filter) {
     const c = topCard(this.db, slot);
     const needed = new Set();
     (c.attacks || []).forEach(a => a.cost.split('').forEach(x => { if (x !== 'C') needed.add(x); }));
+    const burn = this.activePower(slot, 'ENERGY_AS');
+    const as = burn ? burn.type : null;
+    const symsOf = e => energySymbols(this.db, e).map(x => as || x);
     return this.energyChoices(slot, filter).sort((x, y) => {
-      const nx = needed.has(energyProvides(this.db, x)) ? 1 : 0;
-      const ny = needed.has(energyProvides(this.db, y)) ? 1 : 0;
-      return nx - ny;
+      const sx = symsOf(x), sy = symsOf(y);
+      const nx = sx.some(t => needed.has(t) || t === WILD) ? 1 : 0;
+      const ny = sy.some(t => needed.has(t) || t === WILD) ? 1 : 0;
+      if (nx !== ny) return nx - ny;
+      return sx.length - sy.length;
     });
   }
 

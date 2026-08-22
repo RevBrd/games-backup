@@ -281,6 +281,20 @@ agree and gives the whole thing one place to test:
 call site, every test written before this existed — gets `energyPayOrder`, which is strictly better
 than the index 0 that six of the seven sites used. So the AI needed no change at all.
 
+**And the fallback read the CARD rather than the SLOT until 21 Aug 2026, which inverted it on the one
+Pokemon the paragraph above names.** `energyProvides` answers what a card *is*; under Energy Burn
+every Energy on a Charizard *is* Fire. So a Double Colorless read as "Colorless, this Pokemon's
+attacks do not ask for it" and was spent first — when on that Pokemon it is the single most valuable
+card attached, worth two symbols where a basic Fire is worth one. Fire + Fire + Double Colorless is
+exactly RRRR; the old order left **one** symbol after Fire Spin and the right order leaves **two**.
+Every Fire Spin was costing three symbols instead of two, forever.
+
+Two changes, and the second is what actually fixes it: the "is it needed" test now reads symbols
+**through the slot**, and where two cards are equally useful it **spends the smaller one**. Under
+Energy Burn everything attached is needed, so the primary key can no longer separate them and the
+tiebreaker is the whole answer. Asserted in `powertest.js`. Trevor named the behaviour from play, and
+it is the kind of fault that is invisible in every log because nothing prints which card left.
+
 **Two option keys, named by role rather than by site**, because one attack can do both and a single
 list would have to be split by a rule the caller cannot see: `opts.costUids` is Energy discarded off
 **your** attacker to pay, `opts.energyUids` is Energy the effect **targets**, on either side. Retreat
