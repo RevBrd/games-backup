@@ -54,12 +54,14 @@ and it changed every retreat in the game. It goes here, loose, and gets filed li
 | [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Open**, blocked in a known order |
 | [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns. Parked for the autobuilder | **Parked** — Job 13 |
 
-**Twelve more patterns are identified and not yet written**, from the same clustering: bench engines
-that must never go Active, the Bench as a target set, the setup turn, kamikaze timing, escape and
-self-bounce, copy effects, over-attaching past the cheapest attack, damage-scaling attackers that
-want to stay in *because* they are hurt, heal and attrition, Power suppression, defensive type
-manipulation, and entry timing. Each already has between two and nine cards behind it. **Write one
-when you work it, not before** — an empty pattern file is a planning document, and
+**The rest of the sixteen are named and defined at the bottom of this file, under *Possible
+patterns*, and that list is the authority** — it is Trevor's, it carries a one-line definition each,
+and **it is the controlled vocabulary he writes into the `Wants` column**, so a pattern's name there
+has to match a name here. Do not restate it up here; a second copy would drift, and the copy a reader
+hits first wins.
+
+Each of the unwritten ones already has between two and nine cards behind it. **Write the file when
+you work the pattern, not before** — an empty pattern file is a planning document, and
 [MAINTENANCE.md](MAINTENANCE.md) calls those the highest-value target in the tree for exactly the
 reason you would be creating one.
 
@@ -142,3 +144,29 @@ you are about to touch:**
 **What the scorer already does about each of these is in [AI.md](AI.md), and it is not repeated here.**
 That file is the shipped invariants, read by decision; this one is what the cards want, read by
 pattern. They link, they do not overlap.
+
+
+## Possible patterns
+
+#21 Tentatively identified 15-16 behavior patterns so far that could eventually be built into this, and some already have been. There are expected to be more added as we go. The ones not listed as documents here still need to be verified and built into the game. These patterns are used as references in the Wants and behaviors column in the v1 Opponent Deck file index page.
+
+
+- Attack Choice - choosing between two legal attacks
+- Bench Engines - prefer to stay on the bench and offer support, usually through Pokémon Powers
+- Bench Target - attacks vulnerable pokemon on the opponent's bench
+- Walls - exists to stall, not attack or retreat
+- Evolution Timing - wants to evolve quickly to get a jump on the opponent or gate the opponent's evolutions (Aerodactyl)
+- Setup Turn - using one attack to set up the next one, usually the turn before the second attack became affordable
+- Over-Attach - wants extra energy past the listed amount on the card
+- Kamikaze Timing - pokemon that want to self-destruct at high damage and take the opponent with it
+- Copy Effects - pokemon like Ditto or Clefable who want to copy a pokemon or its moves
+- Damage Scaling - staying in and taking damage because high damage taken translates into high damage dealt
+- Entry Timing - wanting to come in at a specific point in the game. An example could be coming in mid-game when there are already energies in the discard pile, because a move relies on that
+- Heal & Attrition - heals itself or heals allies
+- Escape - Jumps to the bench or the player's hand when under pressure
+- Power Suppression - Prevents pokemon powers from working
+- Defensive Type Manipulation - changing its own type to avoid a weak type matchup
+- Coin Luck - relies on coin flips to be effective at all, beyond the baseline
+
+
+

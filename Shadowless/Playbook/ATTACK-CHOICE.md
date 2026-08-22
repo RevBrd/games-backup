@@ -149,23 +149,48 @@ Peck's 40 over an Agility worth 36 on a board where the incoming attack kills it
 **Three of the five that passed were on this file's own suspect list.** That is the argument for
 building boards rather than reasoning about them, stated against my own reasoning.
 
-## Open — two questions for Trevor, both needing the *because*
+### Paras and Cloyster — answered 22 Aug 2026, and neither became a change
 
-**Paras: is the bot wrong, or is the note?** Scratch does 20; Spore does nothing and applies a
-**guaranteed** Sleep. Against a harmless target the bot takes Scratch, as you say. Against something
-threatening 80 it takes Spore at 33.8 against Scratch's 20 — and under the bought-turn rule that is
-*arithmetically right*: Paras is a 40 HP Basic about to die, and Sleep is the only thing that stops
-the attack landing. **Your note says Scratch in most cases and does not say why.** If the reason is
-that Sleep is unreliable in a way the weight does not capture, that is a weight; if it is that Paras
-is chip damage in a deck that has better answers, that is not a Paras rule at all.
+**Both are closed without code, which is a result rather than a shortfall.** The point of asking for
+the *because* is that it sometimes says the bot is already right, and here it said so twice.
 
-**Cloyster: does "mainly Clamp" hold against something that cannot hurt you?** Clamp is a coin flip
-for 30 plus a status; Spike Cannon averages 30 flat. With nothing incoming the bot takes Spike Cannon,
-which is honest expected value. Under threat it takes Clamp. **Same clause as Dewgong, and if the
-answer is the same the bot is already right.**
+**Cloyster: Trevor corrected his own note to "mainly use Spike Cannon"** — *"it's the best way to
+assure damage"* — and added *don't touch this one if you're not confident.* Taking him at his word.
+Clamp is a coin flip for 30 **plus** Paralysis where tails does nothing at all, so Spike Cannon's flat
+30 average genuinely beats Clamp's 15 whenever there is nothing to buy a turn from, and that is
+exactly what the bot does. Under a heavy incoming threat it switches to Clamp, which is defensible
+arithmetic on the same rule that settled Dewgong. **Left alone deliberately, and recorded so nobody
+reads the switch as an unnoticed bug.**
 
-Both are the *"standing preference with no stated trigger"* group. Neither is worth a line of code
-until the trigger is known.
+**Paras: the reasoning is right, generalises past Paras, and measures too small to build.** Trevor's
+clause — *"a sleeping basic pokemon can just evolve to wake up anyway"* — **is mechanically true in
+this engine.** `engine.js` calls `clearStatus(slot)` on evolution, so evolving is a free cure, and
+nothing in `ai.js` has ever known that. It is not a Paras rule; it is a claim about **every status
+attack against every evolvable target**, which is what makes it worth measuring rather than assuming.
+
+**Measured over 130 games: the escape hatch is available 6.2% of the time.** Half of all Active
+observations are cards that *can* evolve, but the controller holds the evolution in hand for only
+6.2% of them, and the figure is identical when restricted to Actives that are actually afflicted.
+**A 6% discount is inside the noise of every weight in the table**, so this is recorded and not built.
+*It could legitimately be built if it were bigger* — whether a card has an evolution is public
+knowledge and needs no peek at their hand, and `namesWithAnEvolution` already exists for `wallScore`.
+
+## Open
+
+**Is Sleep worth more or less than Paralysis? Two methods disagree and neither is trustworthy yet.**
+Trevor's other Paras point was that *"even a sleeping opponent has a 50/50 chance of waking up before
+missing a turn"*, which would make Sleep worth **less** than its current 22 against Paralysis' 26.
+
+- **Reading the engine says 0.67 turns.** `endTurn` flips both Actives awake, so the wake check runs
+  once before their turn and again after — the series 0.5 + 0.125 + … converges on two thirds.
+- **Measuring 130 games says 1.20 turns**, against Paralysis' exact 1.00.
+
+**They disagree in opposite directions and the measurement rests on twenty applications**, which is
+not a sample. **The weight was not changed.** What would settle it is a run large enough to put a real
+interval on it, and an instrument that counts turns lost per *application* rather than sampling the
+board — the crude version here cannot tell a re-application from a persistence.
+
+**Grimer, Marowak, Venonat and Rapidash need nothing** and are recorded above as verified.
 
 ## Lapras is a different and harder claim
 

@@ -527,7 +527,23 @@ on it.**
    evolution is in your hand, the target's shortfall should be measured against the evolved form.** One
    specific, cheap case rather than lookahead in general.
 
-5. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
+5. **Sleep against Paralysis: two methods disagree and the weight was left alone.** Reading `endTurn`
+   says a Sleep costs **0.67** of a turn — the wake flip runs on both Actives every turn end, so the
+   series is 0.5 + 0.125 + …. Measuring 130 games says **1.20**, against Paralysis' exact 1.00. The
+   current weights say 0.85. **Three answers, no two alike**, and the measurement rests on twenty
+   applications, which is not a sample. Trevor raised it from play (*"even a sleeping opponent has a
+   50/50 chance of waking up before missing a turn"*). **Do not retune `sleep` off either number.**
+   What settles it is an instrument that counts turns lost per *application* rather than sampling the
+   board — the crude one cannot separate a re-application from a persistence — run wide enough to
+   carry an interval. *[The rest of that thread →](Playbook/ATTACK-CHOICE.md)*
+6. **A status is a free cure away, and the bot does not know — measured at 6.2%, so it was not
+   built.** `engine.js` clears status on evolution, so any afflicted Pokemon whose evolution is in
+   hand escapes for nothing. Half of all Active observations can evolve, but the evolution is
+   actually in hand for only 6.2% of them, which is inside the noise of every weight here. Recorded
+   because **the reasoning generalises even though the number does not**: it is public knowledge
+   whether a card has an evolution, so this could be priced without ever reading their hand, and
+   `namesWithAnEvolution` already exists. Revisit if a set arrives with far denser evolution lines.
+7. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
    Every opponent plays at the tier deck select hands them. Whether a named rival should play better
    than a Club Master is an unasked design question — see [PROGRESSION.md](PROGRESSION.md) and
    [OPPONENTS.md](OPPONENTS.md), which argues the AI probably should *not* be the dial.
