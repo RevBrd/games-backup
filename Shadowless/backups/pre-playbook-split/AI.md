@@ -389,12 +389,6 @@ notes say what the right play is, and **the fix goes in the general scorer, neve
 branch.** If an entry can only be satisfied by special-casing the card, that is a finding about the DSL
 or the scorer, not a licence.
 
-**Its unit is the PATTERN and not the card**, reshaped 21 Aug 2026 once all four original entries
-turned out to generalise to a family — which the sentence above makes inevitable rather than lucky.
-Sixteen patterns were clustered out of 65 cards Trevor had already annotated in the workbook's `Wants`
-column. **If you are about to change a scoring term, that file's last table says which patterns bear
-on it.**
-
 ## Open
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed

@@ -69,7 +69,7 @@ cost, and it is a real cost — two lines here against a session that opens the 
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
 | [PLAYTEST.md](PLAYTEST.md) | Trevor points you at `GRABBAG.md`, hands you a match log, or says something felt off while playing. How to work a report from a human: why it is a symptom and not a diagnosis, what to do when it turns out to be wrong, and the two traps that make a real fix look like it did nothing |
 | [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one |
-| [PLAYBOOK.md](PLAYBOOK.md) | **The highest-value list in the tree.** How the cards are *supposed* to be played, from Trevor's plain English, as testable claims. Every AI fault found on 21 Aug 2026 came from a sentence of his and none came from a tag, a weight sweep or a duel. **It is a directory: the unit is the PATTERN and each one is its own file in `Playbook/`**, because all four of the original per-card entries generalised to a family. His inbox is the `Wants` column of the workbooks in `data/v1 Opp Decks/`, not a file here |
+| [PLAYBOOK.md](PLAYBOOK.md) | **Trevor's, and the highest-value list in the tree.** How the cards are *supposed* to be played, in plain English, as testable claims — plus the guide to writing and working one. Every AI fault found on 21 Aug 2026 came from a sentence of his and none came from a tag, a weight sweep or a duel |
 
 ## Status
 

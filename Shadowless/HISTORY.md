@@ -32,7 +32,7 @@ made, for the same reason.
 | The coin toss: moving it into the ticker | Proposed, rejected — occlusion beat connotation |
 | Every scripted game ran at 12 Prizes | Why no absolute figure from before 11 Aug 2026 is usable |
 | Tooling provenance | Why `tools/chat-era/` cannot run, and how the Node replacements were verified |
-| How the documentation tree got its shape | The two splits reached by the wrong criterion first, the directory that was refused, and the count-to-boundary change |
+| How the documentation tree got its shape | The two splits reached by the wrong criterion first, the directory that was refused, the count-to-boundary change, and why the playbook's unit is the pattern rather than the card |
 | Ideas raised and shelved | Opponent collections, Mirror Move reading the log, reviving chat-era, deleting `greedy` |
 
 ## The job history
@@ -400,6 +400,36 @@ work they describe is **closed**, into whichever archive is still short enough t
 recently closed entry stays behind as an example — Trevor's observation that instances visibly write
 better logbook entries when there is one in front of them. **A maintenance rule stated as a number
 somebody has to remember to check is a rule that will be found violated by the next pass.**
+
+**`PLAYBOOK.md` was a per-card list for one day, and the card was the wrong unit.** Written 21 Aug
+2026 with a guide on top and a list underneath, deliberately unlike `GRABBAG.md`, on the reasoning
+that a playbook entry is *permanent* where a grab bag item is *consumed* — so a guide sitting above it
+is reference beside reference rather than method in the way of a work surface. **That argument was
+correct and is still correct about the seam it was about.** What broke was the unit: within a day
+Trevor pointed out that a per-card list cannot survive 1,251 cards, and that a per-card *directory*
+cannot either — 300–500 rows is unreadable whether it is a list or a table, so the obvious
+`Rulings/`-shaped fix moves the problem rather than solving it.
+
+**The evidence was already in the file.** All four of its entries had generalised to a family —
+Chansey to every wall, Charizard to every attack that eats its own Energy, Gloom to evolution timing,
+Dewgong to choosing between two attacks. Zero of four stayed about the card, and the standing
+doctrine one file over makes that inevitable rather than lucky: *the fix goes in the general scorer,
+never in a per-card branch.* A card-shaped document cannot hold a card-shaped answer when per-card
+answers are prohibited. **The unit is the pattern; cards are the evidence.**
+
+**Two things fell out that were not obvious before the reshape.** Trevor was already writing this
+list somewhere else — the `Wants` column of his opponent-deck workbooks, 65 cards deep, proposed by
+#15 — so the reshaped file has **no typing surface of its own** for card notes; asking him to retype
+a note he made with the card in front of him is the same job twice in the worse place. And clustering
+those 65 produced **sixteen** patterns, which sized the thing empirically instead of by estimate.
+The competing axis, one file per AI *decision* to match `ai.js`'s own structure, was rejected on two
+grounds: it shreds each of Trevor's notes across three files, and that view already exists as
+`AI.md`'s shipped-invariants section.
+
+Two entries in Trevor's own hand were deleted from the header before the reshape — a note on the
+filename and the whole *Writing an entry (Trevor)* section. Both were about writing, both had been
+internalised by the person they addressed, and neither was reinstated. **A guide addressed to one
+person stops earning its lines once that person has written the thing it describes.**
 
 ## Ideas raised and shelved, with the reason
 
