@@ -878,7 +878,29 @@ class AI {
     // unrelated paths with no relationship between them, which is why the family
     // behaved inconsistently — see the status block below for the other caller.
     const shieldFrac = hpLeft > 0 ? denied / hpLeft : 0;
-    if (f.flags.shield) s += f.flags.shield * W.shieldSelf * (frail ? 1.6 : 1.4 * shieldFrac);
+    // A BARRIER THAT PREVENTS YOUR DEATH IS PRICED AS A DEATH — 22 Aug 2026, and
+    // it is the same fault as the Energy that was priced twice in one function.
+    // `selfKO` charges **70** for a Pokemon the bot kills with its own recoil,
+    // while preventing exactly that outcome credited `0.5 * 20 * 1.6` = 16. One
+    // event, two prices, and the cheap one was the defensive side — so Fearow
+    // took Drill Peck's 40 over an Agility that was its only out at 36, on a
+    // board where the incoming attack kills it. Trevor named it: *Agility unless
+    // Drill Peck can kill.*
+    //
+    // TWO TERMS BECAUSE THERE ARE TWO THINGS BEING PREVENTED, and they have
+    // different shapes. Damage prevented is **linear** — stopping 30 is half as
+    // good as stopping 60. The Knock Out is **squared**, because it is a risk
+    // rather than a quantity: at half your HP their attack is not close to
+    // killing you and the term should be nearly gone, which is the same argument
+    // recoil settled. Cliff table in AI.md, and note the two entries disagree on
+    // the curve on purpose.
+    //
+    // THE `frail` STEP IS GONE. It was a boolean standing in for the top of this
+    // curve, and now that the curve reaches the top on its own it would only
+    // reintroduce a discontinuity. `frail` is still computed for destinyBond.
+    if (f.flags.shield) {
+      s += f.flags.shield * (1.4 * shieldFrac * W.shieldSelf + shieldFrac * shieldFrac * W.selfKO);
+    }
     // HARDEN'S THRESHOLD IS NOT A CLIFF AND MUST NOT BE GRADED. Harden absorbs
     // an attack of N or less and does nothing at all against N+1, so the step is
     // in the card rather than in the model. Checked while fixing the line above.

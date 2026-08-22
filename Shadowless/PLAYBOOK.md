@@ -50,7 +50,7 @@ and it changed every retreat in the game. It goes here, loose, and gets filed li
 |---|---|---|
 | [Walls](Playbook/WALLS.md) | Some cards go in to be spent. Standing there *is* the job, and low damage is not a deficiency | **Built** |
 | [Ammo](Playbook/AMMO.md) | An attack that discards its own Energy turns spare Energy into rounds, so surplus is not surplus | **Built**, one half open |
-| [Attack choice](Playbook/ATTACK-CHOICE.md) | The small utility attack is usually right; the big one is conditional on lethal — and on there being something to fear | **Built** for the shared term; eight cards unverified |
+| [Attack choice](Playbook/ATTACK-CHOICE.md) | The small utility attack is usually right; the big one is conditional on lethal — and on there being something to fear | **Built.** 11 of 11 cards measured; 2 questions open |
 | [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Open**, blocked in a known order |
 | [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns. Parked for the autobuilder | **Parked** — Job 13 |
 

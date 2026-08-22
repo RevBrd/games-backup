@@ -148,14 +148,19 @@ fall away with distance from an edge, written flat with a cliff at the end:
 | `attachBuild` | flat per step | amortised over the attack at the end |
 | promotion readiness | `short === 0 ? 25 : 0` | `promoteReady / (1 + min(short, 4))` |
 | `survivesCharge` | — | written graded from the start, *because* of the other five |
-| the Agility barrier | flat 0.7 below the frail line — a shield stopping nothing priced like one stopping 60 | **linear in the damage prevented**, through the old constant at half HP |
+| the Agility barrier, damage half | flat 0.7 below the frail line — a shield stopping nothing priced like one stopping 60 | **linear in the damage prevented**, through the old constant at half HP |
+| the Agility barrier, death half | a `frail` boolean, and priced off a tempo weight at that | **squared** in the same fraction, and priced off `selfKO` |
 
-**The seventh is the one that says linear rather than squared, and the table is why that needs
-saying.** A *cost* should fall away faster than its size, so recoil squares. A barrier's *benefit* is
-genuinely proportional — preventing 30 is exactly half as good as preventing 60 — and squaring it
-would invent a shape the game does not have. **Reach for this table to spot the cliff, never to pick
-the curve.** Harden was checked in the same pass and deliberately left alone: it absorbs an attack of
-N or less and nothing at all above it, so that step is in the card rather than in the model.
+**The last two rows are the same line of code and they disagree on the curve, which is the most
+useful thing in this table.** A barrier does two things at once. *Damage prevented* is a quantity and
+is **linear** — stopping 30 is exactly half as good as stopping 60. *Being killed* is a risk and is
+**squared** — at half your HP their attack is not close to killing you and the term should be nearly
+gone, which is the argument recoil already settled. Writing one term for both would have been wrong
+whichever curve it picked. **Reach for this table to spot the cliff, never to pick the curve** —
+ask what the quantity *is* first.
+
+Harden was checked in the same pass and deliberately left alone: it absorbs an attack of N or less
+and nothing at all above it, so that step is in the card rather than in the model.
 
 **Suspect it on sight**, and check your own diff against it — #16 added one of these while writing up
 four others and caught it only by accident. The one-line version is in `CLAUDE.md`, because the list
@@ -445,6 +450,26 @@ while a rider was worth a flat 26, and an ambiguous one the moment a bought turn
 threat, because an unarmed Chansey now satisfies *survives* and *buys nothing* at the same time. The
 fix was four Fighting Energy, not a weaker assertion. ***A fixture encodes the model that was true
 when it was written**, and it only warns you when it fails.*
+
+**A barrier that saves your life is priced as a life.** *22 Aug, and it is the Energy-priced-twice
+fault in a new place.* `selfKO` charges **70** for a Pokemon the bot kills with its own recoil, while
+preventing exactly that outcome credited `0.5 × shieldSelf × 1.6` = **16**. One event, two prices, and
+the cheap one was the defensive side — so Fearow took Drill Peck's 40 over the Agility that was its
+only out at 36, on a board where the incoming attack kills it. **Two terms now, because two different
+things are being prevented and they have different shapes** — see the last two rows of the cliff
+table. **The `frail` boolean is gone from this decision**: it was a step standing in for the top of a
+curve, and once the curve reaches the top on its own, keeping it would only reintroduce the
+discontinuity. `frail` is still computed, for `destinyBond`.
+
+**The guard that matters here is that lethal still wins**, because raising the defensive side is
+exactly the change that could break Trevor's *"unless Drill Peck can kill"*. It is pinned in
+`powertest.js`, and `aitest` reports **0 turns ended holding a game-ending lethal**.
+
+**Measured against the playbook rather than against a duel: five of the eight unverified cards in
+that pattern already behaved, and the two that did not were one cause.** Rapidash, Marowak, Venonat,
+Grimer and Cloyster-under-threat needed nothing; Fearow and Seadra needed this. *That ratio is the
+argument for building the boards rather than reasoning about them* — the two that failed were not the
+two anybody would have guessed, and three of the five that passed had been on a list of suspects.
 
 **Where the next ones come from.** Every AI fault found on 21 Aug 2026 came from Trevor describing how
 a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn pricing, the

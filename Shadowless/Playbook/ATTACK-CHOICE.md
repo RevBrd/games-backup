@@ -125,15 +125,47 @@ Measured, on one card with one Energy load and no lethal outcome anywhere:
 | Zapdos, charged | 200 | **Ice Beam** |
 | anything Aurora Beam kills | any | Aurora Beam |
 
-## Open
+### The other eight, measured 22 Aug 2026
 
-**The eight cards that are not Dewgong have not been re-checked against the new term.** Fearow,
-Seadra and Rapidash should all now behave, since a barrier and a paralysis read the same quantity —
-but *should* is not *measured*, and this file's own history is that the family behaved
-inconsistently for reasons nobody predicted. **Build the boards.**
+**Five of eight already behaved, and the two that failed were not the two you would guess.**
 
-**Grimer's prohibition is still untouched** — *almost never use Minimize* — and it is the cheapest
-item left here, because a prohibition is provable in one position.
+| Card | Trevor wants | Result |
+|---|---|---|
+| Rapidash | Agility whenever possible | **passes** — Agility is also its bigger attack |
+| Marowak | Bonemerang primarily | **passes** comfortably |
+| Venonat | Stun Spore primarily | **passes** |
+| Grimer | almost never use Minimize | **passes** at every threat |
+| Cloyster | mainly use Clamp | **passes under threat**, prefers Spike Cannon at zero |
+| Fearow | Agility unless Drill Peck can kill | **failed** → fixed |
+| Seadra | hide behind Agility until Water Gun kills | **failed** → fixed |
+| Paras | Scratch instead of Spore in most cases | **disputed** — see below |
+
+**Fearow and Seadra were one cause, and it was not the one this file predicted.** The barrier read the
+right quantity after the morning's work; what it did not do was price *dying*. `selfKO` charges 70 for
+a Pokémon the bot kills with its own recoil, and preventing that same event paid 16. Fearow took Drill
+Peck's 40 over an Agility worth 36 on a board where the incoming attack kills it.
+*[The invariant, and why the two halves of a barrier take different curves →](../AI.md)*
+
+**Three of the five that passed were on this file's own suspect list.** That is the argument for
+building boards rather than reasoning about them, stated against my own reasoning.
+
+## Open — two questions for Trevor, both needing the *because*
+
+**Paras: is the bot wrong, or is the note?** Scratch does 20; Spore does nothing and applies a
+**guaranteed** Sleep. Against a harmless target the bot takes Scratch, as you say. Against something
+threatening 80 it takes Spore at 33.8 against Scratch's 20 — and under the bought-turn rule that is
+*arithmetically right*: Paras is a 40 HP Basic about to die, and Sleep is the only thing that stops
+the attack landing. **Your note says Scratch in most cases and does not say why.** If the reason is
+that Sleep is unreliable in a way the weight does not capture, that is a weight; if it is that Paras
+is chip damage in a deck that has better answers, that is not a Paras rule at all.
+
+**Cloyster: does "mainly Clamp" hold against something that cannot hurt you?** Clamp is a coin flip
+for 30 plus a status; Spike Cannon averages 30 flat. With nothing incoming the bot takes Spike Cannon,
+which is honest expected value. Under threat it takes Clamp. **Same clause as Dewgong, and if the
+answer is the same the bot is already right.**
+
+Both are the *"standing preference with no stated trigger"* group. Neither is worth a line of code
+until the trigger is known.
 
 ## Lapras is a different and harder claim
 

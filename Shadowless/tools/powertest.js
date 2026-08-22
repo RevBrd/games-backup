@@ -5948,13 +5948,48 @@ T('a barrier is worth what it prevents, and rises with the incoming threat', () 
   return true;
 });
 
-T('...and the frail case is untouched, so nothing above the line moved', () => {
-  // The 1.6 multiplier was deliberately left alone. Every board the old flat
-  // value got right sits at half HP, where the new curve passes through 0.7.
+// This test pinned the frail barrier at exactly 16 and was right for one day. It
+// is rewritten rather than renumbered: 16 came from `shieldSelf`, and the whole
+// point of the change below it is that a barrier saving your life is not priced
+// off a tempo weight. ASSERT THE PROPERTY, NOT THE NUMBER — a test that only
+// knows the constant has to be edited by whoever changes the constant, which is
+// the one person least able to notice they broke the idea.
+T('a barrier that saves your life is priced as a life, not as tempo', () => {
+  // Fearow, 70 HP, against a Water Gun that would knock it out. `selfKO` charges
+  // 70 for a Pokemon the bot kills itself; preventing the same event used to pay
+  // 16. No value of `shieldSelf` alone can reach here.
   const E = duel2('base2-36', 'base1-99', 4, 'base3-10', 0, 'base1-102', 7);
   const ai = scorer(E);
-  if (!(ai.incomingThreat(0) >= 70)) throw new Error('board is not frail; the test proves nothing');
-  eq(+(ai.scoreAttack(0, 0) - 20).toFixed(2), 16, 'frail barrier value');
+  if (!(ai.incomingThreat(0) >= 70)) throw new Error('board is not lethal; the test proves nothing');
+  const barrier = ai.scoreAttack(0, 0) - 20;              // minus Agility's own damage
+  if (!(barrier > ai.W.shieldSelf))
+    throw new Error(`barrier ${barrier} is still inside tempo pricing (shieldSelf ${ai.W.shieldSelf})`);
+  return true;
+});
+
+T('...and there is no step where the frail boundary used to be', () => {
+  // The old code switched multiplier at `danger >= hpLeft`. The curve reaches the
+  // top on its own now, so the boundary must be invisible — if a later change
+  // reintroduces a threshold here it becomes cliff instance eight.
+  const worth = n => {
+    const E = duel2('base2-36', 'base1-99', 4, 'base3-10', 0, 'base1-102', n);
+    return scorer(E).scoreAttack(0, 0) - 20;
+  };
+  const below = worth(5), edge = worth(6), over = worth(7);   // threats 50 / 60 / 70
+  const stepIn = edge - below, stepOut = over - edge;
+  if (!(stepIn > 0 && stepOut > 0)) throw new Error('barrier is not monotone across the boundary');
+  if (stepOut > stepIn * 2)
+    throw new Error(`discontinuity at the old frail line: steps ${stepIn.toFixed(1)} then ${stepOut.toFixed(1)}`);
+  return true;
+});
+
+T('...but a lethal attack still beats hiding behind a barrier', () => {
+  // The gate in Trevor's rule is "unless Drill Peck can kill". Raising the
+  // defensive side is exactly the change that could break that, so it is pinned.
+  const E = duel2('base2-36', 'base1-99', 4, 'base1-3', 90, 'base1-97', 4);   // 30 left, threat 80
+  const ai = scorer(E);
+  if (!(ai.scoreAttack(0, 1) > ai.scoreAttack(0, 0)))
+    throw new Error('the bot hid behind Agility instead of taking the Prize');
   return true;
 });
 
