@@ -326,6 +326,17 @@ Its run on 21 Aug 2026, all three figures from the same 30-seed merged field:
 | start of day | 8 of 13 | 46.9% | 54% |
 | after the retreat repricing | 7 of 13 | 47.5% | 54% |
 | after the Charizard fixes | **6 of 13** | **52.8%** | 56% |
+| 22 Aug, after the bought-turn work | 6 of 13 | 52.9% | 55% |
+
+**That last row is a null and it is recorded as one.** The three status and barrier changes of 22 Aug
+moved 40.8% of games and did not move the benchmark. **Exposure was checked before that was believed,
+and the instrument is not blind here** — all thirteen decks carry a paralysis, sleep, confusion or
+barrier. What the benchmark deck has is the *thinnest* holding of them in the field: Chansey's Scrunch
+and a Vulpix, against seven such cards in `b2_t4_grass` and eight in `b1_t2_grass_lightning`. So it
+gained least from a change every one of its opponents also received, and holding station is the
+expected shape rather than a disappointment. **Do not read it as evidence the work did nothing, and
+do not read it as evidence it worked** — it is the wrong instrument for a symmetric change, which is
+the standing lesson of this whole file.
 
 `--benchmark=KEY` picks a different deck; `--no-benchmark` turns it off. **If Trevor ever says a
 different deck is his daily driver, change the default** — the value of this number is entirely in the
