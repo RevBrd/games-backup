@@ -463,7 +463,9 @@ discontinuity. `frail` is still computed, for `destinyBond`.
 
 **The guard that matters here is that lethal still wins**, because raising the defensive side is
 exactly the change that could break Trevor's *"unless Drill Peck can kill"*. It is pinned in
-`powertest.js`, and `aitest` reports **0 turns ended holding a game-ending lethal**.
+`powertest.js`, and `aitest` reports **0 turns ended holding a game-ending lethal**. `abtest`: **13.3%
+of games diverged**, win rate 49.9% → 49.7%, retreats and Energy burned unmoved at 6.1 and 6.0 per
+100 turns.
 
 **Measured against the playbook rather than against a duel: five of the eight unverified cards in
 that pattern already behaved, and the two that did not were one cause.** Rapidash, Marowak, Venonat,
