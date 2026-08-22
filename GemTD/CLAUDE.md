@@ -18,6 +18,7 @@ register below — those are design decisions that look like errors and aren't.
 | `gemtd.html` | The game. Single self-contained file, no build step. Edit it directly. |
 | `GemTD Stats.xlsx` | Source: gem roster, upgrade ladder, special gems, and the 43-wave enemy table. |
 | `GemTD Weaknesses2.0.xlsx` | Source: the damage-type matrix, gem visual spec, slow/poison params. |
+| `tools/simulate.js` | Headless harness. Plays the real game in Node — **read the section below before balancing anything.** |
 | `gem-td.skill` | The **pre-production** brief, written before the build started. |
 | `Old Versions/` | 19 archived builds, `job1` → `job8d`. |
 
@@ -93,6 +94,44 @@ every 4th level that fly straight over the maze.
 decent maze; every 4th wave is the real killer. That asymmetry is the original game's identity
 and every prior version preserved it deliberately. Do not "balance it out."
 
+## The harness — use it before you touch a number
+
+```bash
+node tools/simulate.js --runs 16          # aggregate report
+node tools/simulate.js --seed 7           # one run, wave by wave
+```
+
+It loads `gemtd.html` into a V8 context with stubbed DOM/canvas and calls the
+game's own update functions in the real frame order. **Nothing is reimplemented**,
+so its numbers come out of the shipping combat code. `Math.random` is seeded, and
+so is the bot's own placement RNG on a separate stream — a given `--seed` replays
+exactly. That is what makes a balance change measurable: baseline, change one
+number, re-run the same seeds.
+
+**The bot is a yardstick, not a good player.** It mazes greedily, always takes a
+free advanced tower, maxes the Upgrade Chances ladder, and spends surplus gold on
+lives. It does not plan toward recipes, and it typically finishes a run with only
+one advanced tower — which is its single biggest weakness. It dies at a **median
+wave 16**. Treat "the bot died at N" as a statement about the bot until you have
+checked it isn't.
+
+Three things it has already taught us, all of which cost real time to learn:
+
+- **Waves 1–17 have no minimum-speed floor** (the wave table only starts one at
+  18). A well-slowed last enemy can take many minutes of game time to walk out.
+  This is source-accurate, not a bug, but it means an early wave can appear to
+  hang. Don't "fix" it, and don't set `--timeout` low enough to false-alarm on it.
+- **"Died on wave N" is a misleading metric.** Runs routinely bleed out on an air
+  wave and then record their death two waves later, when one leak on an easy
+  ground wave takes the last life. The harness reports **lives lost per wave
+  played**, split by air/ground, for exactly this reason.
+- **The air-wave thesis is currently unconfirmed, not disproved.** By that better
+  metric, air waves come out only **1.1× deadlier** than ground. But the bot dies
+  around wave 16 and the asymmetry is supposed to bite in the deep game, so this
+  is a sample that never reaches the phenomenon. **Do not rebalance off this
+  number.** Making the bot good enough to reach wave 30+ is the prerequisite for
+  the question being answerable at all, and that is the harness's next job.
+
 ### Next jobs, in rough order
 
 1. **Background visual pass.** The mechanics are done; the board is bare. Agreed direction: lean
@@ -119,11 +158,11 @@ management · 4b special effects · 5a armor & weakness · 5b air levels · 6a p
 
 ## Credits
 
-- **Opus 4.8** — the entire build, Job 1 through Job 8d.
-- **Opus 5** — port into Claude Code, this file, and four source-fidelity fixes (Tourmaline's
-  armor debuff corrected from on-hit to a ground-only aura; Star Ruby and Uranium no longer
-  wrongly receive weakness multipliers on their pure DoT; Blood Stone's missing 57px splash
-  restored; malformed `<title>`).
+- **GemTD 0** (Opus 4.8, Claude Chat) — the entire build, Job 1 through Job 8d.
+- **GemTD 1** (Opus 5) — port into Claude Code, this file, `tools/simulate.js`, and four
+  source-fidelity fixes (Tourmaline's armor debuff corrected from on-hit to a ground-only
+  aura; Star Ruby and Uranium no longer wrongly receive weakness multipliers on their pure
+  DoT; Blood Stone's missing 57px splash restored; malformed `<title>`).
 
 ## Marquee billing
 
