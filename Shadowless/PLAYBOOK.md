@@ -55,15 +55,32 @@ and it changed every retreat in the game. It goes here, loose, and gets filed li
 | [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns. Parked for the autobuilder | **Parked** — Job 13 |
 
 **The rest of the sixteen are named and defined at the bottom of this file, under *Possible
-patterns*, and that list is the authority** — it is Trevor's, it carries a one-line definition each,
-and **it is the controlled vocabulary he writes into the `Wants` column**, so a pattern's name there
-has to match a name here. Do not restate it up here; a second copy would drift, and the copy a reader
-hits first wins.
+patterns*, and that list is the authority.** The clustering is #22's, out of the 65 `Wants`; the
+one-line definitions are Trevor's. **It is the controlled vocabulary he writes into the `Wants`
+column**, so a pattern's name there has to match a name here. Do not restate it up here; a second
+copy would drift, and the copy a reader hits first wins.
 
 Each of the unwritten ones already has between two and nine cards behind it. **Write the file when
 you work the pattern, not before** — an empty pattern file is a planning document, and
 [MAINTENANCE.md](MAINTENANCE.md) calls those the highest-value target in the tree for exactly the
 reason you would be creating one.
+
+### The paragraph is the payload; the pattern name is only routing
+
+**Trevor asked whether the long per-card paragraphs are still worth writing now that the vocabulary
+exists. They are, and the answer is not politeness.** Every fault found on 21 and 22 Aug 2026 came out
+of a *clause* — *"unless Drill Peck can kill"*, *"when there's something to be afraid of"*, *"a
+sleeping basic can just evolve to wake up anyway"*. A label carries none of those, and a cell reading
+only `Attack Choice` would have produced a category and nothing testable.
+
+**The load-bearing version: these sixteen patterns exist only because sixty-five notes were written
+as prose.** Nothing clustered them into being except the paragraphs. A label can only route to a
+pattern that already exists; **prose is the only thing that can produce a new one.** So
+under-categorising is cheap and self-corrects on the next pass, while over-categorising silently caps
+the system at whatever the list happens to say today.
+
+**Treat a note that fits nothing as a finding.** It is the candidate pile for the seventeenth pattern,
+and it is worth more than a note filed neatly under the wrong one.
 
 **Two taxonomies that already exist elsewhere are deliberately not patterns here.** Opener archetypes
 are the workbook's column G and are half-built in `setupAuto`; pressure tags are deck-level and belong
@@ -148,7 +165,7 @@ pattern. They link, they do not overlap.
 
 ## Possible patterns
 
-#21 Tentatively identified 15-16 behavior patterns so far that could eventually be built into this, and some already have been. There are expected to be more added as we go. The ones not listed as documents here still need to be verified and built into the game. These patterns are used as references in the Wants and behaviors column in the v1 Opponent Deck file index page.
+#22 Tentatively identified 15-16 behavior patterns so far that could eventually be built into this, and some already have been. There are expected to be more added as we go. The ones not listed as documents here still need to be verified and built into the game. These patterns are used as references in the Wants and behaviors column in the v1 Opponent Deck file index page.
 
 
 - Attack Choice - choosing between two legal attacks
