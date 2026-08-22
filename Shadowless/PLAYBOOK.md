@@ -20,8 +20,15 @@ the worse place. #15 proposed the column, Trevor filled it, #21 spotted it was w
 scoring tags it sits beside. **65 cards carried a `Wants` when this file was reshaped, and they
 clustered into sixteen patterns** — that clustering is what produced the directory below.
 
-**`Challenge 1 Opponent Decks v1.xlsx` is the live index**, verified a strict superset of the Fossil
-workbook: the same 229 rows plus 28 promos and a `Gated Until` column. Read that one.
+**The newest workbook is always the live one, and it is the whole history.** Trevor's method: copy the
+previous workbook, add the next set's cards, fill in the judgement-call cells, build the decks. So
+each one is a strict superset of the last — `Challenge 1` was verified as exactly the Fossil
+workbook's 229 rows plus 28 promos and a `Gated Until` column. **Read the newest and never diff two
+of them for content.**
+
+**Its promos are not in the game yet**, which is why `Gated Until` exists. A `Wants` on a card that no
+set has made live is a note filed early, not a gap — do not treat one as unfiled work, and if you
+build a coverage tool, filter to the live sets.
 
 **Two kinds of note live in that column and they have different consumers.** *"To use Agility unless
 Drill Peck can kill"* is an in-play decision and belongs to `ai.js`. *"Replace 4x R energy with DCE in

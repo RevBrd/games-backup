@@ -5862,5 +5862,89 @@ T('...and the AI weighs it on VISIBLE information only', () => {
   return true;
 });
 
+// ---------------------------------------------------------------------------
+// RIDERS ON A POKEMON THE ATTACK REMOVES, AND WHAT A BARRIER IS WORTH
+//
+// Both came out of Trevor's playbook on 22 Aug 2026, from one observation:
+// Agility, Ice Beam and Confuse Ray are all the same shape — spend a turn on a
+// weaker attack to BUY a turn. Asserted here rather than duelled: both are
+// symmetric between the seats and both are about what the bot can perceive.
+console.log('\nBought turns — riders and barriers\n');
+
+function duel2(myId, myEnergy, nMine, oppId, oppDmg, oppEnergy, nOpp) {
+  const E = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  E.newGame(DECKS.Brushfire, DECKS.Zap, ['A', 'B']);
+  const mk = id => E.mkSlot({ id, uid: E.uid++ });
+  const p = E.state.players[0], o = E.state.players[1];
+  p.active = mk(myId); p.bench = [];
+  o.active = mk(oppId); o.bench = []; o.active.dmg = oppDmg;
+  attach(E, p.active, myEnergy, nMine);
+  if (nOpp) attach(E, o.active, oppEnergy, nOpp);
+  const pr = () => ({ id: 'base1-99', uid: E.uid++ });
+  p.prizes = Array.from({ length: 6 }, pr); o.prizes = Array.from({ length: 6 }, pr);
+  E.state.phase = 'main'; E.state.active = 0; E.state.pendingPromote = null; E.state.turn = 3;
+  [...E.allSlots(0), ...E.allSlots(1)].forEach(s => { s.playedTurn = 0; });
+  return E;
+}
+
+T('paralysing a Pokemon the attack Knocks Out is worth nothing', () => {
+  // Gyarados: Dragon Rage WWW 50, Bubblebeam WWWW 40 + paralyse on a flip.
+  // Against 40 HP left BOTH are certainly lethal, so the coin can only land on
+  // a Pokemon that has already left the board. Bubblebeam used to score 293
+  // against Dragon Rage's 280 and take an extra Water for the privilege.
+  const E = duel2('base1-6', 'base1-102', 4, 'base1-7', 30);
+  const ai = scorer(E);
+  const rage = ai.scoreAttack(0, 0), bubble = ai.scoreAttack(0, 1);
+  if (bubble > rage) throw new Error(`Bubblebeam ${bubble} still beats a lethal Dragon Rage ${rage}`);
+  return true;
+});
+
+T('...but it is still worth full price when they survive', () => {
+  // The same card against 120 HP. Neither kills, so the paralysis is real and
+  // Bubblebeam SHOULD win despite doing 10 less. Both directions asserted, as
+  // the Confusion work established — the one-sided version is worse play.
+  const E = duel2('base1-6', 'base1-102', 4, 'base1-3', 0);
+  const ai = scorer(E);
+  if (!(ai.scoreAttack(0, 1) > ai.scoreAttack(0, 0)))
+    throw new Error('Bubblebeam no longer preferred against a target it cannot kill');
+  return true;
+});
+
+T('a rider is discounted in proportion, not switched off', () => {
+  // pLethal is a distribution, not a flag. Half-lethal has to land between the
+  // two ends or this is a cliff of its own — which is the whole table in AI.md.
+  const dead = duel2('base1-6', 'base1-102', 4, 'base1-7', 30);
+  const alive = duel2('base1-6', 'base1-102', 4, 'base1-3', 0);
+  const gapDead = scorer(dead).scoreAttack(0, 1) - scorer(dead).scoreAttack(0, 0);
+  const gapAlive = scorer(alive).scoreAttack(0, 1) - scorer(alive).scoreAttack(0, 0);
+  if (!(gapAlive > gapDead)) throw new Error('the rider is not discounted by lethality at all');
+  return true;
+});
+
+T('a barrier is worth what it prevents, and rises with the incoming threat', () => {
+  // Fearow's Agility, against a Lapras whose Water Gun grows with its Energy.
+  // This was FLAT at 7 across every threat below the frail line: a shield that
+  // stopped nothing scored the same as one stopping 60. Cliff instance seven.
+  const worth = n => {
+    const E = duel2('base2-36', 'base1-99', 4, 'base3-10', 0, 'base1-102', n);
+    return scorer(E).scoreAttack(0, 0) - 20;       // minus Agility's own damage
+  };
+  const low = worth(1), mid = worth(4), high = worth(6);
+  if (!(low < mid && mid < high))
+    throw new Error(`barrier not graded: ${low} / ${mid} / ${high}`);
+  if (!(low < 4)) throw new Error(`a barrier against a 10-damage threat is worth ${low}`);
+  return true;
+});
+
+T('...and the frail case is untouched, so nothing above the line moved', () => {
+  // The 1.6 multiplier was deliberately left alone. Every board the old flat
+  // value got right sits at half HP, where the new curve passes through 0.7.
+  const E = duel2('base2-36', 'base1-99', 4, 'base3-10', 0, 'base1-102', 7);
+  const ai = scorer(E);
+  if (!(ai.incomingThreat(0) >= 70)) throw new Error('board is not frail; the test proves nothing');
+  eq(+(ai.scoreAttack(0, 0) - 20).toFixed(2), 16, 'frail barrier value');
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

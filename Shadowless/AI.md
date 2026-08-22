@@ -137,8 +137,8 @@ the mean, or you will conclude there was never a problem.**
 
 ## The cliff: a quantity about proximity, written as an equality check
 
-**Six instances, and it is the most productive sniff test this project has.** A term that should fall
-away with distance from an edge, written flat with a cliff at the end:
+**Seven instances, and it is the most productive sniff test this project has.** A term that should
+fall away with distance from an edge, written flat with a cliff at the end:
 
 | Where | Was | Is |
 |---|---|---|
@@ -148,6 +148,14 @@ away with distance from an edge, written flat with a cliff at the end:
 | `attachBuild` | flat per step | amortised over the attack at the end |
 | promotion readiness | `short === 0 ? 25 : 0` | `promoteReady / (1 + min(short, 4))` |
 | `survivesCharge` | — | written graded from the start, *because* of the other five |
+| the Agility barrier | flat 0.7 below the frail line — a shield stopping nothing priced like one stopping 60 | **linear in the damage prevented**, through the old constant at half HP |
+
+**The seventh is the one that says linear rather than squared, and the table is why that needs
+saying.** A *cost* should fall away faster than its size, so recoil squares. A barrier's *benefit* is
+genuinely proportional — preventing 30 is exactly half as good as preventing 60 — and squaring it
+would invent a shape the game does not have. **Reach for this table to spot the cliff, never to pick
+the curve.** Harden was checked in the same pass and deliberately left alone: it absorbs an attack of
+N or less and nothing at all above it, so that step is in the card rather than in the model.
 
 **Suspect it on sight**, and check your own diff against it — #16 added one of these while writing up
 four others and caught it only by accident. The one-line version is in `CLAUDE.md`, because the list
@@ -380,6 +388,31 @@ headroom figure would be a guess dressed as a derivation.
 had been below. Both halves of it came out of Trevor describing how he plays the deck — the other
 half is an engine fix and lives in [ENGINE.md](ENGINE.md)'s `takeEnergy` section, because the pay
 order was discarding the Double Colorless first on the one Pokemon where it is worth two Fire.
+
+**A rider is worth nothing on a Pokemon the attack removes.** *22 Aug.* Paralysing a corpse buys no
+turn — the Knocked Out Pokemon leaves and a fresh one arrives unafflicted — but the status block had
+no lethality term, so Gyarados scored Bubblebeam at **293 against an equally lethal Dragon Rage's
+280** and spent an extra Water on a coin that could not land on anything. Every rider in that block
+takes `1 - pLethal` now: statuses, jam, Amnesia's attack lock and an Energy strip. **It is a
+proportion and not a switch**, the same per-outcome discipline `expUseful` uses — at half lethal the
+status matters in exactly the half of the distribution where they are still standing. **`drag` is the
+one exception and it is deliberate**: it acts on the Bench, and if the attack kills, the promote
+happens regardless — only *who picks* differs, which is worth the same either way. **The guard already
+existed one flag over and had never been generalised** — `f.flags.bounce` has carried `pLethal < 0.9`
+since it was written. *That is the transferable part: when you find a guard on one rider, check its
+siblings in the same block* — the same lesson the Confusion work left, arriving from a new direction.
+
+**A barrier is worth what it prevents.** *22 Aug, and it is cliff instance seven.* `shieldSelf` was
+flat at 0.7 below the frail line, so Fearow's Agility scored an identical **27.00 against an incoming
+0, 30 and 60**. It is linear in `min(danger, hpLeft) / hpLeft` now, with the coefficient chosen so the
+curve passes through the old constant at **half HP** — every board the flat value got about right is
+unchanged and only the two ends move. **The frail multiplier is untouched**, so nothing above the line
+changed at all. Both halves came from Trevor naming Agility, Rapidash and Seadra as one shape with
+Ice Beam: *spend a turn on the weaker attack to buy a turn.*
+
+**Both were asserted in `powertest.js` and all three failing tests were watched going red against the
+pre-fix engine first.** Two of the five deliberately stay green in the control — they assert what must
+*not* have moved, and a guard that cannot fail is not a guard.
 
 **Where the next ones come from.** Every AI fault found on 21 Aug 2026 came from Trevor describing how
 a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn pricing, the

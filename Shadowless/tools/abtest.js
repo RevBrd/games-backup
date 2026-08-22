@@ -81,8 +81,19 @@ const OLD = {
   cards: require(path.join(tmp, 'cards.js')),
 };
 
+// LINE ENDINGS, AND THIS COMPARISON LIED FOR AS LONG AS IT EXISTED — 22 Aug
+// 2026. `git show` hands back the blob as stored; the working copy has whatever
+// the checkout filter put there. On this machine `src/ai.js` is LF in the blob
+// and CRLF on disk, so a raw byte compare called it changed even when it was
+// byte-for-byte HEAD. Consequences, both backwards: the "src/ is identical"
+// NOTE could never print, and the "0% divergence with a REAL diff" warning fired
+// on a deliberate null control — telling whoever ran the control, exactly as
+// MEASUREMENT.md instructs, that their control was suspicious. Found by running
+// one. Normalise before comparing; nothing else here cares, because Node parses
+// the two the same.
+const norm = s => s.replace(/\r\n/g, '\n');
 const identical = modules.every(f =>
-  fs.readFileSync(path.join(SRC, f), 'utf8') === fs.readFileSync(path.join(tmp, f), 'utf8'));
+  norm(fs.readFileSync(path.join(SRC, f), 'utf8')) === norm(fs.readFileSync(path.join(tmp, f), 'utf8')));
 
 // ---- the pool ---------------------------------------------------------------
 const poolOf = m => (THEME ? m.cards.DECKS : m.cards.OPPONENT_DECKS);

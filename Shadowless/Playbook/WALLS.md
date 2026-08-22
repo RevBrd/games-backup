@@ -30,6 +30,13 @@ From the workbook's `Wants` column:
 > **Flying Pikachu** — To stall as long as possible
 > **Lickitung** — An opening role
 
+**Kangaskhan's second sentence is a wall note, not an attack-choice one** — Trevor, 22 Aug 2026,
+correcting where it had been filed. *"Comet Punch is because it's a tank that should only really use
+Fetch until it dies."* **The attack preference is a consequence of the card being a wall**, so if the
+wall rule is right this needs no rule of its own. That makes Kangaskhan a live check on the wall
+work rather than a separate item: if the bot is still reaching for Comet Punch, `wallScore` is not
+reaching the attack path the way it reaches the retreat path.
+
 ## How the family is detected
 
 **`wallScore` in `ai.js`, and it is derived rather than tagged** — everything that makes a card a wall

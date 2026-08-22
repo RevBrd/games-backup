@@ -162,6 +162,22 @@ verb or the board state the change is about?** Ask it of `selftest.js` in partic
 is fixed, authentic and therefore permanently unrepresentative of anything outside Base Set. A count
 of how often the changed code path was *entered* belongs in any A/B harness for the same reason.
 
+**`abtest.js` accused a clean control of being a dirty one, and it had done so since it was written.**
+*22 Aug 2026.* Its "is the working tree identical to the baseline" check compared `git show`'s blob
+against the file on disk **byte for byte**, and on this machine `src/ai.js` is LF in the blob and CRLF
+in the working copy. So the flag was permanently false for the one file an AI pass changes. Both
+consequences point the wrong way: the reassuring *"src/ is identical, expect 0% divergence"* line
+could never print, and the alarming *"0% divergence with a REAL diff in src/ — the change is inert, or
+the pool never dealt it"* fired on a **deliberate null control**. Somebody following this file's own
+standing rule — run the control first — was told by the tool that their control looked broken.
+
+Found by running one, which is the only way it could have been found. Fixed by normalising line
+endings before the comparison, and **verified in both directions**: the NOTE now prints on a null
+control and stays silent against a real diff. *The transferable part is not about line endings.*
+**A harness that reports on its own inputs can be wrong about them**, and that class of error is
+invisible precisely when the harness is otherwise behaving — every game in those runs was simulated
+correctly, and only the commentary was false.
+
 ## The match log — the only view of what the bot actually thought
 
 **"Save match log" on the game-over screen and after a pack**, and `CLAUDE.md` says to ask Trevor for

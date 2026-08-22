@@ -670,20 +670,41 @@ class AI {
     }
 
     // status conditions - suppressed entirely if they're behind a Barrier
+    //
+    // A RIDER IS WORTH NOTHING ON A POKEMON THE ATTACK REMOVES — 22 Aug 2026.
+    // Paralysing a corpse buys no turn: the Knocked Out Pokemon leaves and a
+    // fresh one comes up unafflicted. This was worth a flat 13 on Gyarados, so
+    // it took Bubblebeam (293) over an equally lethal Dragon Rage (280) and paid
+    // an extra Water for a coin flip that could not land on anything.
+    //
+    // `survives` is the same per-outcome discipline `expUseful` uses, not an
+    // on/off switch: at pLethal 0.5 the status only matters in the half of the
+    // distribution where they are still standing, so it is worth half.
+    //
+    // THE GUARD ALREADY EXISTED ONE FLAG OVER and was never generalised —
+    // `f.flags.bounce` has carried `pLethal < 0.9` since it was written. Every
+    // rider in this block is a claim about a Pokemon that has to survive to be
+    // affected by it, so they all take the same discount. Poison, Confusion and
+    // an Energy strip are all worthless on something already leaving the board.
+    const survives = 1 - f.pLethal;
     if (!f.blocked) {
       if (!f.statusProof) for (const st in f.statuses) {
         const key = STATUS_VALUE[st];
-        if (key) s += f.statuses[st] * W[key];
+        if (key) s += f.statuses[st] * W[key] * survives;
       }
-      if (f.flags.jam) s += W.confuse;          // same shape as Confusion
+      if (f.flags.jam) s += W.confuse * survives;   // same shape as Confusion
       if (f.flags.drag && you.bench.length) s += W.drag;
       // Whirlwind drags too, but THEY choose, so they send up their best answer.
       if (f.flags.dragWeak && you.bench.length) s += W.drag * 0.5 * (f.flags.dragWeak === true ? 1 : f.flags.dragWeak);
       // Amnesia. Shuts off one attack rather than making them flip for all of
       // them, so it is worth somewhat less than a jam.
-      if (f.flags.attackLock) s += W.confuse * 0.6;
-      if (f.flags.stripEnergy && you.active && you.active.energy.length) s += W.stripEnergy;
+      if (f.flags.attackLock) s += W.confuse * 0.6 * survives;
+      if (f.flags.stripEnergy && you.active && you.active.energy.length) s += W.stripEnergy * survives;
     }
+    // DRAG IS DELIBERATELY NOT DISCOUNTED and it is the one exception in the
+    // block above. Every other rider needs the defender alive to land on. A drag
+    // acts on the BENCH, and if the attack is lethal the promote happens anyway
+    // — the difference is who picks, which is worth exactly as much either way.
 
     // self-harm
     //
@@ -781,7 +802,28 @@ class AI {
     // defensive plays are worth more the more danger we're in
     const danger = this.incomingThreat(pi);
     const frail = danger >= this.remainingHP(atkSlot);
-    if (f.flags.shield) s += f.flags.shield * W.shieldSelf * (frail ? 1.6 : 0.7);
+    // A BARRIER IS WORTH WHAT IT PREVENTS — 22 Aug 2026, cliff instance seven.
+    // This was flat at 0.7 below the frail line, so Agility scored an identical
+    // 27.00 on Fearow against an incoming 0, an incoming 30 and an incoming 60.
+    // A shield that stops nothing was priced the same as one stopping most of
+    // the card. Trevor named it from play, on Agility, Rapidash and Seadra.
+    //
+    // LINEAR, NOT SQUARED, and that is a departure from the recoil fix the cliff
+    // table will point you at. Recoil squares because a cost should fall away
+    // faster than its size; here the benefit really is proportional — preventing
+    // 30 is exactly half as good as preventing 60. Squaring it would invent a
+    // shape the game does not have.
+    //
+    // 1.4 is chosen so the curve passes through the OLD constant at half HP:
+    // 1.4 * 0.5 = 0.7. Every board where the flat value was about right is
+    // unchanged, and only the two ends move. The frail multiplier is untouched,
+    // so nothing above the line changes at all.
+    const hpLeft = this.remainingHP(atkSlot);
+    const shieldFrac = hpLeft > 0 ? Math.min(danger, hpLeft) / hpLeft : 0;
+    if (f.flags.shield) s += f.flags.shield * W.shieldSelf * (frail ? 1.6 : 1.4 * shieldFrac);
+    // HARDEN'S THRESHOLD IS NOT A CLIFF AND MUST NOT BE GRADED. Harden absorbs
+    // an attack of N or less and does nothing at all against N+1, so the step is
+    // in the card rather than in the model. Checked while fixing the line above.
     if (f.flags.harden) s += W.shieldSelf * (danger <= f.flags.harden ? 1.2 : 0.3);
     if (f.flags.destinyBond) s += frail ? W.destinyBond * 1.8 : W.destinyBond * 0.3;
     if (f.flags.healAll) s += Math.min(atkSlot.dmg, this.top(atkSlot).hp) / 10 * W.healPer10;
