@@ -12,6 +12,7 @@
   },
   "b1_t2_fighting_water": {
     "name": "B1 T2-1",
+    "coverCard": "Starmie",
     "sheet": "B1 T2-1",
     "set": "base1",
     "tier": 2,
@@ -131,6 +132,7 @@
   },
   "b1_t2_psychic_fire": {
     "name": "B1 T2-2",
+    "coverCard": "Alakazam",
     "sheet": "B1 T2-2",
     "set": "base1",
     "tier": 2,
@@ -255,6 +257,7 @@
   },
   "b1_t2_grass_lightning": {
     "name": "B1 T2-3",
+    "coverCard": "Beedrill",
     "sheet": "B1 T2-3",
     "set": "base1",
     "tier": 2,
@@ -379,6 +382,7 @@
   },
   "b1_t2_lightning_fighting": {
     "name": "B1 T2-4",
+    "coverCard": "Machamp",
     "sheet": "B1 T2-4",
     "set": "base1",
     "tier": 2,
@@ -488,6 +492,7 @@
   },
   "b1_t2_water_psychic": {
     "name": "B1 T2-5",
+    "coverCard": "Poliwrath",
     "sheet": "B1 T2-5",
     "set": "base1",
     "tier": 2,
@@ -607,6 +612,7 @@
   },
   "b1_t3_grass": {
     "name": "B1 T3-1",
+    "coverCard": "Venusaur",
     "sheet": "B1 T3-1",
     "set": "base1",
     "tier": 3,
@@ -721,6 +727,7 @@
   },
   "b1_t3_water": {
     "name": "B1 T3-2",
+    "coverCard": "Blastoise",
     "sheet": "B1 T3-2",
     "set": "base1",
     "tier": 3,
@@ -825,6 +832,7 @@
   },
   "b1_t4_fire": {
     "name": "B1 T4",
+    "coverCard": "Charizard",
     "sheet": "B1 T4",
     "set": "base1",
     "tier": 4,

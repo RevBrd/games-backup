@@ -12,6 +12,7 @@
   },
   "b3_t2_water_psychic": {
     "name": "F T2-1",
+    "coverCard": "Hypno",
     "sheet": "F T2-1",
     "set": "base3",
     "tier": 2,
