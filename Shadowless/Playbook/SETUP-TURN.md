@@ -66,13 +66,13 @@ term that already existed.
 
 ## Open
 
-**Beedrill's second clause is unresolved and it is a question for Trevor, not a fault.** The
-redundancy half of his note was right and shipped. But Twineedle still loses to Poison Sting after
-it, and not to a scoring error: **Poison Sting does 40 flat and Twineedle averages 30** across two
-coins, with a real chance of doing nothing at all. With the rider worth exactly zero, 40 still beats
-30. Either the note is shorthand and Poison Sting is simply correct, or he is valuing Twineedle's
-60-on-double-heads to reach a kill Poison Sting cannot — which is a lethality claim rather than a
-preference. The row is in `tools/claims/base1.js` with `open:` set.
+**Beedrill's second clause is CLOSED, 23 Aug 2026, and the note lost.** The redundancy half was right
+and shipped. But Twineedle still loses to Poison Sting after it, and not to a scoring error:
+**Poison Sting does 40 flat and Twineedle averages 30** across two coins, with a real chance of doing
+nothing at all. With the rider worth exactly zero, 40 still beats 30. Trevor, asked: *"you're right,
+rather than my original note."* The row now asserts the **correct** behaviour rather than being
+deleted, so nobody re-opens it from the workbook cell — the Cloyster and Paras outcome again, which is
+the third and fourth time asking for the *because* has said the bot was already right.
 
 **The setting-up half is not built and should not be built here.** Knowing that Toxic is worth more
 than its 20 damage *because of what it makes possible next turn* needs multi-turn lookahead, which is
@@ -82,3 +82,22 @@ If it lands, it lands once and all four read it.
 
 Haunter's note is filed here and untouched — it is a Setup Turn combo by name, and Trevor's own
 arithmetic in the note argues the combo is bad, which makes it a claim about *not* setting up.
+
+## Tangela, which nobody touched
+
+**The general fix was tested rather than asserted, and it held.** Trevor's Tangela note points at
+Nidoking's reasoning by name — *"Poisonpowder first, Bind once poisoned. See Nidoking for
+reasoning"* — and Nidoking's fault had been closed hours earlier by `statusNovelty`, a term in the
+general scorer with no card in it.
+
+Tangela was written as a claim and run cold. **It passed on the first attempt**, on a card nobody had
+looked at, because the rule it needed was already there. That is the argument for
+[PLAYBOOK.md](../PLAYBOOK.md)'s standing rule — *the fix goes in the general scorer, never in a
+per-card branch* — measured instead of asserted, and it is the cheapest evidence for it this project
+has produced.
+
+**Its other clause found where the line sits.** *"Bind before Poisonpowder can be afforded"* is a cost
+sequence, but the bot also prefers Bind against a big threat regardless — measured, Bind overtakes
+Poisonpowder between an incoming 20 and 40. Tangela has 50 HP, so a 40 threat two-shots it and the
+paralysis is most of a life. **That is the 22 Aug barrier rule reaching paralysis**, and it is correct
+play rather than a fault; both sides are asserted so the boundary is pinned rather than assumed.

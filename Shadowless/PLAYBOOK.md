@@ -142,6 +142,14 @@ node tools/claimtest.js Arcanine --explore   # what does the bot ACTUALLY do her
 node tools/claimtest.js                 # assert them all
 ```
 
+**PICK THE OPPONENT ON PURPOSE, because the obvious one is the format's extreme.** A Chansey
+holding four Fighting Energy threatens 80 — a fully charged Double-edge, lethal against most of the
+format — and it silently turns every claim into *"...against something about to kill you"*. Three rows
+in one batch "failed" to it, and all three were the bot correctly choosing to survive, because a
+barrier or a paralysis preventing a **lethal** turn is priced as a life on purpose. **Where a note has
+a defensive exception, assert both sides**; the pair says where the line is and one row never can.
+*[The boards to reach for instead →](tools/claims/base1.js)*
+
 **ONE NOTE IS SEVERAL CLAIMS, and this is the trap the whole method turns on.** Dark Alakazam's note
 is six: hit and run with Teleport Blast; hide behind fodder; hide behind a *tank* instead, which is a
 different trade; Mind Shock when they resist Psychic; Mind Shock when the extra 10 is lethal; stay in

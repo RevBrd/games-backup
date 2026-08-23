@@ -21,6 +21,25 @@
 // `powertest.js` paid for it once: a test pinned a barrier at exactly 16 and had
 // to be rewritten the next day by the person changing the constant, who is the
 // one person least able to notice they broke the idea.
+//
+// ---------------------------------------------------------------------------
+// PICK THE OPPONENT ON PURPOSE. A Chansey holding four Fighting Energy is the
+// most extreme board in Base Set — a fully charged Double-edge, 80 damage, which
+// is lethal against most of the format. It is the obvious thing to reach for and
+// it silently turns every claim into *"...against something about to kill you"*.
+//
+// Batch 2 lost three rows to this in one run — Tangela, Kakuna and Wartortle all
+// "failed", and all three were the bot correctly choosing to survive: a barrier
+// or a paralysis that prevents a LETHAL turn is priced as a life, deliberately,
+// since 22 Aug. Measured across the threat range, every one of Trevor's three
+// notes held at threats of 0 to 40 and inverted only at 80.
+//
+// So: **use `Hitmonchan +3 Fighting` (threat 40) or `Squirtle +1 Water` (threat
+// 10) for an ordinary board**, keep the armed Chansey for when you actually mean
+// "lethal", and where a note has a defensive exception, assert BOTH — the pair
+// says where the line is, which one row never can. Watch the defender's HP too:
+// two boards in these batches were built on a Chansey that is weak to Fighting,
+// and one on a Squirtle whose 40 HP made the small attack already lethal.
 
 const CLAIMS = [
 
@@ -205,8 +224,9 @@ const CLAIMS = [
     // a benched body — linear, and sharply negative once the bench is near death
     // — so the crossover sits at THREE benched Pokemon, which is a normal board.
     // At an EMPTY bench Earthquake is strictly better with no downside at all, so
-    // "Slash is preferred" cannot be meant literally. Asserted at a realistic
-    // bench; whether Trevor wants Slash at one or two as well is a question.
+    // "Slash is preferred" cannot be meant literally. **Settled 23 Aug 2026 —
+    // Trevor took the measurement over his own note**, so the crossover stands
+    // where the arithmetic puts it and this row is the whole claim.
     claim: 'Slash on a realistic bench, where Earthquake\'s extra 30 no longer pays for the splash',
     board: {
       me:   { card: 'Dugtrio', energy: '4 Fighting' },
@@ -262,8 +282,25 @@ const CLAIMS = [
   {
     id: 'base1-17', card: 'Beedrill', pattern: 'Setup turn',
     note: "To use Poison Sting first, and then Twineedle when the opponent is already poisoned. Poison Sting is preferred again when a guaranteed 40 damage or less is needed, rather than gambled on Twineedle's coin flip",
-    claim: '...then Twineedle once they are already poisoned',
-    open: 'ASK TREVOR. The redundancy half of this note was right and is now built — Poison Sting lost its dead poison credit against an already-poisoned target, 46 down to 43. But Twineedle still loses, and NOT to a scoring fault: Poison Sting does 40 FLAT while Twineedle averages 30 across two coins and can land on nothing at all. With the rider worth exactly zero, 40 still beats 30. So either the note is shorthand and Poison Sting is simply right here, or he is valuing Twineedle\'s 60-on-double-heads to reach a kill Poison Sting cannot — which would be a lethality claim rather than a preference, and the third Beedrill row already covers that shape from the other side.',
+    // ANSWERED 23 Aug 2026, and the note lost. Trevor: *"you're right, rather than
+    // my original note."* The redundancy half was real and is built — Poison Sting
+    // dropped from 46 to 43 against an already-poisoned target. But Twineedle
+    // still loses and NOT to a scoring fault: **Poison Sting does 40 flat while
+    // Twineedle averages 30** across two coins and can land on nothing at all. With
+    // the rider worth exactly zero, 40 still beats 30.
+    //
+    // Kept as an assertion of the CORRECT behaviour rather than deleted, so the
+    // next person to read the workbook cell does not re-open it. This is the
+    // Cloyster and Paras outcome from 22 Aug: asking for the *because* sometimes
+    // says the bot was already right, and that is a result.
+    claim: 'Poison Sting even AFTER they are poisoned — 40 flat beats a two-coin 30 (note settled as shorthand)',
+    board: {
+      me:   { card: 'Beedrill', energy: '3 Grass' },
+      them: { card: 'Chansey', energy: '4 Fighting', status: 'poisoned' },
+    },
+    sane: b => b.them.active.status.poisoned && b.affordable().includes('Twineedle')
+            && b.lethal('Poison Sting') === 0,
+    expect: b => b.prefers('Poison Sting'),
   },
   {
     id: 'base1-17', card: 'Beedrill', pattern: 'Attack choice',
@@ -419,6 +456,248 @@ const CLAIMS = [
     },
     sane: b => b.affordable().includes('Amnesia') && b.affordable().includes('Doubleslap'),
     expect: b => b.prefers('Doubleslap'),
+  },
+  // ==========================================================================
+  // BATCH 2 — 23 Aug 2026. The attack-choice and prohibition shapes still open
+  // on Base Set, per the sequencing agreed with Trevor: cheapest rows and the
+  // highest remaining yield, before the Power/bench-engine notes that need the
+  // board builder extended, and before the lookahead family that should be
+  // sized as one job rather than nibbled at note by note.
+  // ==========================================================================
+
+  // ---------------------------------------------------------------- Tangela --
+  // THE ONE TO WATCH. Trevor's note points at Nidoking's reasoning explicitly,
+  // and Nidoking's fault was closed this morning by a GENERAL term. If a general
+  // fix is really general, this card should already behave without anybody
+  // having touched it — which is the whole argument for fixing the scorer rather
+  // than the card, tested rather than asserted.
+  {
+    id: 'base1-66', card: 'Tangela', pattern: 'Setup turn',
+    note: 'Poisonpowder first, Bind once poisoned or before it can be afforded. See Nidoking for reasoning',
+    // MEASURED across the threat range. The note holds up to a threat of 40 and
+    // inverts at 80, where Bind's paralysis is preventing a LETHAL turn rather
+    // than an ordinary one — the 22 Aug barrier-as-a-life rule, arriving through
+    // paralysis instead. Asserted at a representative threat, with the lethal
+    // case asserted the other way below so the pair says where the line is.
+    claim: 'Poisonpowder first against a target carrying no poison, at an ordinary threat',
+    board: {
+      me:   { card: 'Tangela', energy: '3 Grass' },
+      them: { card: 'base1:Squirtle', energy: '1 Water' },
+    },
+    sane: b => !b.them.active.status.poisoned && b.threat() > 0 && b.threat() * 3 < b.hp()
+            && b.affordable().includes('Bind'),
+    expect: b => b.prefers('Poisonpowder'),
+  },
+  {
+    id: 'base1-66', card: 'Tangela', pattern: 'Attack choice',
+    note: 'Poisonpowder first, Bind once poisoned or before it can be afforded. See Nidoking for reasoning',
+    claim: '...but Bind against a threat that would kill it, where the paralysis is a life',
+    board: {
+      me:   { card: 'Tangela', energy: '3 Grass' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.threat() >= b.hp() && !b.them.active.status.poisoned,
+    expect: b => b.prefers('Bind'),
+  },
+  {
+    id: 'base1-66', card: 'Tangela', pattern: 'Setup turn',
+    note: 'Poisonpowder first, Bind once poisoned or before it can be afforded. See Nidoking for reasoning',
+    claim: '...then Bind once they are poisoned — same damage, and the poison has nothing to add',
+    board: {
+      me:   { card: 'Tangela', energy: '3 Grass' },
+      them: { card: 'Chansey', energy: '4 Fighting', status: 'poisoned' },
+    },
+    sane: b => b.them.active.status.poisoned && b.affordable().includes('Bind'),
+    expect: b => b.prefers('Bind'),
+  },
+
+  // ---------------------------------------------------- the Stiffen family --
+  // Kakuna is Metapod's note again on a different card, and the reasoning is
+  // identical: same cost, same coin, and one side also deals damage.
+  {
+    id: 'base1-33', card: 'Kakuna', pattern: 'Attack choice',
+    note: 'Is a good fighting mid-stage that likes to meddle with Poisonpowder. Damage and chance to poison is almost always preferable to a 50/50 chance at damage prevention with Stiffen',
+    // Metapod's note on a second card, and it holds everywhere except against a
+    // threat that kills outright. Stiffen scores 0.0 / 2.3 / 15.8 against threats
+    // of 0 / 10 / 40 and 49 against a lethal 80 — a barrier graded by what it
+    // prevents, which is the 22 Aug rule, not a fault.
+    claim: 'Poisonpowder over Stiffen at any threat it can survive',
+    board: {
+      me:   { card: 'Kakuna', energy: '2 Grass' },
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+    },
+    sane: b => b.affordable().includes('Stiffen') && b.threat() > 0 && b.threat() < b.hp(),
+    expect: b => b.prefers('Poisonpowder'),
+  },
+  {
+    id: 'base1-42', card: 'Wartortle', pattern: 'Attack choice',
+    note: "Only withdraws when it can't use Bite. Doesn't mind fighting while it waits to evolve",
+    // Same shape a third time. Withdraw is worth 0.0 against nothing and 49
+    // against a threat that kills — so 'only withdraws when it can't Bite' is
+    // true of every board except the one where withdrawing saves its life.
+    claim: 'Bite once affordable, at any threat Wartortle can survive',
+    board: {
+      me:   { card: 'Wartortle', energy: '3 Water' },
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+    },
+    sane: b => b.affordable().includes('Withdraw') && b.affordable().includes('Bite')
+            && b.threat() > 0 && b.threat() < b.hp(),
+    expect: b => b.prefers('Bite'),
+  },
+  {
+    id: 'base1-42', card: 'Wartortle', pattern: 'Walls',
+    note: "Only withdraws when it can't use Bite. Doesn't mind fighting while it waits to evolve",
+    claim: "doesn't mind fighting — it does not retreat away while it waits to evolve",
+    board: {
+      me:   { card: 'Wartortle', energy: '3 Water', dmg: 30 },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+      myBench: [{ card: 'Chansey', energy: '2 Fighting' }],
+    },
+    sane: b => b.me.bench.length > 0 && b.me.active.energy.length >= b.card(b.me.active).retreat,
+    expect: b => !b.does('retreat'),
+  },
+
+  // ---------------------------------------------------------------- Starmie --
+  // "See Kadabra entry for more detail" — the same prohibition on a second card,
+  // and the second half of a finding that arrived sideways: sweeping every
+  // Energy-burning attack for the discard work, Recover scored exactly 0.00 on
+  // both of these without anybody looking for it.
+  {
+    id: 'base1-64', card: 'Starmie', pattern: 'Attack choice',
+    note: 'Recover needs an Energy Funnel and should be avoided. See Kadabra entry for more detail',
+    claim: 'Recover is avoided — Star Freeze even while badly hurt',
+    board: {
+      me:   { card: 'Starmie', energy: '3 Water', dmg: 40 },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.affordable().includes('Recover') && b.hp() <= 20,
+    expect: b => b.prefers('Star Freeze'),
+  },
+
+  // ----------------------------------------------------------------- Magmar --
+  {
+    id: 'base1-36', card: 'base1:Magmar', pattern: 'Energy funnel',
+    note: 'Flamethrower does good damage but requires an energy funnel, and this is not a pokemon you want consuming all your energies. Use Fire Punch as default but be ready for Flamethrower when needed. Low HP means it dies rather quickly.',
+    claim: 'Flamethrower when it is needed — it reaches a kill Fire Punch cannot',
+    board: {
+      me:   { card: 'base1:Magmar', energy: '3 Fire' },
+      them: { card: 'base1:Squirtle' },
+    },
+    sane: b => b.lethal('Flamethrower') === 1 && b.lethal('Fire Punch') === 0,
+    expect: b => b.prefers('Flamethrower'),
+  },
+
+  // ------------------------------------------------------------- Kamikazes --
+  // Magnemite and Magneton are one note: Thunder Wave is the standing attack and
+  // Selfdestruct is a TIMER, not a move. It hits BOTH benches, so the note asks
+  // for the damage to each to be weighed rather than for the attack to be
+  // avoided — which the Dugtrio measurement says the bench term already does.
+  {
+    id: 'base1-53', card: 'base1:Magnemite', pattern: 'Kamikaze timing',
+    note: 'Thunder Wave is primary and tries to paralyze, while Selfdestruct should be a Kamakaze Timer that also weighs the damage to both players\' benches',
+    claim: 'Thunder Wave is the standing attack — Selfdestruct is not a move you open with',
+    board: {
+      me:   { card: 'base1:Magnemite', energy: '2 Lightning' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+      myBench: [{ card: 'base1:Pikachu' }, { card: 'base1:Magikarp' }],
+    },
+    sane: b => b.affordable().includes('Selfdestruct') && b.lethal('Selfdestruct') === 0
+            && b.me.bench.length === 2,
+    expect: b => b.prefers('Thunder Wave'),
+  },
+  {
+    id: 'base1-53', card: 'base1:Magnemite', pattern: 'Kamikaze timing',
+    note: 'Thunder Wave is primary and tries to paralyze, while Selfdestruct should be a Kamakaze Timer that also weighs the damage to both players\' benches',
+    claim: 'the damage to BOTH benches is weighed — a hurt bench of mine makes Selfdestruct worse',
+    board: {
+      me:   { card: 'base1:Magnemite', energy: '2 Lightning' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+      myBench: [{ card: 'base1:Magikarp', dmg: 20 }, { card: 'base1:Pikachu', dmg: 30 }],
+    },
+    sane: b => b.me.bench.length === 2,
+    expect: (b, alt) => b.score('Selfdestruct') < alt({
+      me:   { card: 'base1:Magnemite', energy: '2 Lightning' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+      myBench: [{ card: 'base1:Magikarp' }, { card: 'base1:Pikachu' }],
+    }).score('Selfdestruct'),
+  },
+  {
+    id: 'base1-9', card: 'base1:Magneton', pattern: 'Kamikaze timing',
+    note: 'The same logic as base1 Magnemite and other Kamakaze Timers. Thunder Wave is used as a status lock until that\'s needed',
+    claim: 'Thunder Wave as the status lock, with Selfdestruct held for when it is needed',
+    board: {
+      me:   { card: 'base1:Magneton', energy: '4 Lightning' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+      myBench: [{ card: 'base1:Pikachu' }, { card: 'base1:Magikarp' }],
+    },
+    sane: b => b.affordable().includes('Selfdestruct') && b.lethal('Selfdestruct') === 0
+            && b.me.bench.length === 2,
+    expect: b => b.prefers('Thunder Wave'),
+  },
+
+  // ---------------------------------------------------------------- Pikachu --
+  {
+    id: 'base1-58', card: 'Pikachu', pattern: 'Attack choice',
+    note: 'Thunder Jolt is the preferred attack but risks self-damage toward a low-HP pokemon. Prefers to evolve on the bench. There are about a thousand Pikachu variants and our autobuilder should prefer most of the others over this one.',
+    claim: 'Thunder Jolt is the preferred attack while Pikachu can afford the risk',
+    board: {
+      me:   { card: 'base1:Pikachu', energy: '2 Lightning' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.affordable().includes('Gnaw') && b.affordable().includes('Thunder Jolt')
+            && b.hp() > 10,
+    expect: b => b.prefers('Thunder Jolt'),
+  },
+  {
+    id: 'base1-58', card: 'Pikachu', pattern: 'Attack choice',
+    note: 'Thunder Jolt is the preferred attack but risks self-damage toward a low-HP pokemon. Prefers to evolve on the bench. There are about a thousand Pikachu variants and our autobuilder should prefer most of the others over this one.',
+    claim: '...but Gnaw at 10 HP, where Thunder Jolt\'s own coin can kill it for nothing',
+    board: {
+      me:   { card: 'base1:Pikachu', energy: '2 Lightning', dmg: 30 },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.hp() === 10 && b.lethal('Thunder Jolt') === 0,
+    expect: b => b.prefers('Gnaw'),
+  },
+
+  // ---------------------------------------------------------------- Machoke --
+  {
+    id: 'base1-34', card: 'Machoke', pattern: 'Damage scaling',
+    note: 'A tough card to use because one attack\'s damage shrinks very quickly with damage taken, and the other deals self-damage. Can deal high damage to an opponent quickly but can become useless after that. Prefers to evolve on the bench unless a quick cheap hit is needed, at which time it does have a use',
+    claim: 'a fresh Machoke hits with Karate Chop, which is at full strength and costs nothing',
+    board: {
+      me:   { card: 'Machoke', energy: '4 Fighting' },
+      them: { card: 'Blastoise', energy: '4 Water' },
+    },
+    sane: b => b.hp() === 80 && b.affordable().includes('Submission')
+            && b.lethal('Submission') === 0,
+    expect: b => b.prefers('Karate Chop'),
+  },
+  {
+    id: 'base1-34', card: 'Machoke', pattern: 'Damage scaling',
+    note: 'A tough card to use because one attack\'s damage shrinks very quickly with damage taken, and the other deals self-damage. Can deal high damage to an opponent quickly but can become useless after that. Prefers to evolve on the bench unless a quick cheap hit is needed, at which time it does have a use',
+    claim: '...and a badly hurt one switches to Submission, because Karate Chop has shrunk to nothing',
+    board: {
+      me:   { card: 'Machoke', energy: '4 Fighting', dmg: 40 },
+      them: { card: 'Blastoise', energy: '4 Water' },
+    },
+    sane: b => b.damage('Karate Chop') < b.damage('Submission') && b.hp() === 40,
+    expect: b => b.prefers('Submission'),
+  },
+
+  // ---------------------------------------------------------------- Koffing --
+  {
+    id: 'base1-51', card: 'base1:Koffing', pattern: 'Coin luck',
+    note: 'Loves to open and wreaks havok when it does. Foul Gas guarantees one of two different status conditions',
+    claim: 'Foul Gas is priced as a GUARANTEED status — the coin picks which one, not whether',
+    board: {
+      me:   { card: 'base1:Koffing', energy: '2 Grass' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.affordable().includes('Foul Gas') && b.threat() >= 70,
+    // 10 damage plus a certainty. It must beat what 10 damage alone is worth,
+    // by more than a single coin-flip rider would be.
+    expect: b => b.score('Foul Gas') > b.damage('Foul Gas') + 10,
   },
 ];
 
