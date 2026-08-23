@@ -165,7 +165,7 @@ pattern. They link, they do not overlap.
 
 ## Possible patterns
 
-#22 Tentatively identified 15-16 behavior patterns so far that could eventually be built into this, and some already have been. There are expected to be more added as we go. The ones not listed as documents here still need to be verified and built into the game. These patterns are used as references in the Wants and behaviors column in the v1 Opponent Deck file index page.
+#22 Tentatively identified 16 behavior patterns so far that could eventually be built into this, and some already have been. There are expected to be more added as we go. The ones not listed as documents here still need to be verified and built into the game. These patterns are used as references in the Wants and behaviors column in the v1 Opponent Deck file index page. More will be added as identified.
 
 
 - Attack Choice - choosing between two legal attacks
@@ -173,7 +173,7 @@ pattern. They link, they do not overlap.
 - Bench Target - attacks vulnerable pokemon on the opponent's bench
 - Walls - exists to stall, not attack or retreat
 - Evolution Timing - wants to evolve quickly to get a jump on the opponent or gate the opponent's evolutions (Aerodactyl)
-- Setup Turn - using one attack to set up the next one, usually the turn before the second attack became affordable
+- Setup Turn - using one attack to set up the next one, usually the turn before the second attack becomes affordable
 - Over-Attach - wants extra energy past the listed amount on the card
 - Kamikaze Timing - pokemon that want to self-destruct at high damage and take the opponent with it
 - Copy Effects - pokemon like Ditto or Clefable who want to copy a pokemon or its moves
@@ -184,6 +184,7 @@ pattern. They link, they do not overlap.
 - Power Suppression - Prevents pokemon powers from working
 - Defensive Type Manipulation - changing its own type to avoid a weak type matchup
 - Coin Luck - relies on coin flips to be effective at all, beyond the baseline
+- Energy Feed - wants a constant supply of energy fed to it due to its primary move requiring an energy discard. Applies to many Fire types.
 
 
 

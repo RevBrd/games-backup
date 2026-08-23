@@ -135,10 +135,10 @@ Measured, on one card with one Energy load and no lethal outcome anywhere:
 | Marowak | Bonemerang primarily | **passes** comfortably |
 | Venonat | Stun Spore primarily | **passes** |
 | Grimer | almost never use Minimize | **passes** at every threat |
-| Cloyster | mainly use Clamp | **passes under threat**, prefers Spike Cannon at zero |
+| Cloyster | ~~mainly use Clamp~~ → **Spike Cannon**, corrected | **passes** — the bot already preferred it |
 | Fearow | Agility unless Drill Peck can kill | **failed** → fixed |
 | Seadra | hide behind Agility until Water Gun kills | **failed** → fixed |
-| Paras | Scratch instead of Spore in most cases | **disputed** — see below |
+| Paras | Scratch instead of Spore in most cases | **answered, no change** — the clause is true and measures at 6.2% |
 
 **Fearow and Seadra were one cause, and it was not the one this file predicted.** The barrier read the
 right quantity after the morning's work; what it did not do was price *dying*. `selfKO` charges 70 for

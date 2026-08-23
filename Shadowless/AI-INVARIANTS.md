@@ -14,6 +14,14 @@ change; correct one that turns out wrong; never shorten one. An invariant conden
 loses the reason, and the reason is what stops the next pass undoing it. Split out of `AI.md` on
 22 Aug 2026 at 549 lines, the same shape `LOGBOOK.md` and `Rulings/` took.
 
+**Sign your entries with your designation, beside the date — Trevor's ask, 22 Aug 2026**, so the
+sequence of events is readable without cross-referencing `CREDITS.md`. The twenty-three entries that
+predate the convention were signed retroactively **only where the evidence is unambiguous** — a
+`CREDITS.md` row naming that exact change, or a `GRABHIST.md` heading naming the instance. **Two are
+deliberately left unsigned**, the 18 Aug Energy-pool fix and the 19 Aug Prize picker, because two
+instances were working on each of those days and nothing names which one. A guessed attribution is
+worse than a blank: nobody re-checks it, and it is somebody's work.
+
 **When this file passes ~450, start `AI-INVARIANTS-ARCHIVE-1.md` at a job boundary** rather than
 growing it. Stated here at the top, before the decision, rather than only at the bottom where it
 would be read too late.
@@ -42,14 +50,14 @@ material a home at all. *[That refusal, and why it expired →](HISTORY.md)*
 
 Chronological, oldest first.
 
-**The retreat re-tune — a curve, not a number.** *13 Aug.* `retreatPrize` divides by the Prizes the
+**The retreat re-tune — a curve, not a number.** *13 Aug — #12.* `retreatPrize` divides by the Prizes the
 opponent still needs, and the divisor is **squared**: 1.7 at six Prizes, 6.7 at three, 60 at one.
 **Do not replace it with a scalar.** A flat sweep improves monotonically all the way to *deleting the
 term*, because the scalar moves both ends of the curve at once and a duel cannot see the endgame case
 at all — every one of those rows buys the early game by selling the last Prize. **When a sweep
 plateaus at zero, suspect the shape before you believe the conclusion.**
 
-**Stickiness — what a Pokémon is *for*.** *13 Aug.* Some cards exist to stand there and soak, and no
+**Stickiness — what a Pokémon is *for*.** *13 Aug — #12.* Some cards exist to stand there and soak, and no
 weight can express that because it is a claim about the card rather than the position. Three things
 about how it is built are load-bearing. It is **derived, not tagged** — a tag would be re-typing a
 fact already in the card data on 1,251 cards. It is **terminal Basics only**, because "cannot evolve
@@ -60,19 +68,19 @@ is how Trevor's caveat, leave them in *unless the opponent has one Prize*, falls
 instead of being a special case. Kept on correctness rather than on a duel result; eight assertions in
 `powertest.js` hold it.
 
-**Weakness and Resistance reach the retreat comparison.** *13 Aug.* `bestAffordableDamage` was the one
+**Weakness and Resistance reach the retreat comparison.** *13 Aug — #12.* `bestAffordableDamage` was the one
 forecast path not going through `computeDamage`, so the "one currency" comparator answered in printed
 numbers. **The engine's own comment promises the AI can never predict something the engine would not
 do** — that is the property being preserved.
 
-**Recoil is priced on what it leaves you, and overkill is not paid for.** *14 Aug.* Recoil costs a
+**Recoil is priced on what it leaves you, and overkill is not paid for.** *14 Aug — #12.* Recoil costs a
 share of the HP remaining, **squared, meeting the old flat cliff exactly at `frac` of 1**, so every
 decision the cliff got right is unchanged and only the slope below it is new. Separately `forecast`
 returns `expUseful` beside `expDmg`, capped **per outcome** rather than on the mean. **`expUseful` is a
 second field and not a cap in place, and that is not caution:** PlusPower asks *"is this 10 short of
 lethal"*, a question about real damage that capping makes unanswerable for anything already lethal.
 
-**Inert Energy, and an attachment that could never make anything bigger.** *16 Aug.* Attaching a Grass
+**Inert Energy, and an attachment that could never make anything bigger.** *16 Aug — #16.* Attaching a Grass
 onto a cost of F strands the card. The rule was the easy half; **the exception was the whole job** —
 every inert attachment was waved through on *"but it could pay for a retreat"*, and only the Active
 can be made to retreat, so the exception is one slot wide now. **When a rule already has a carve-out,
@@ -80,7 +88,7 @@ measure the carve-out before you widen the rule.** A real bug fell out of a test
 else: `potential()` counted hypothetical Energy against attack *costs* only and never put it on the
 slot, so **no attack in the game could be known to get bigger from an attachment.**
 
-**Progress is worth a share of what it is progress toward.** *16 Aug, and the design came out of
+**Progress is worth a share of what it is progress toward.** *16 Aug — #16, and the design came out of
 Trevor's plain-English reasoning rather than out of the code.* Advancing an attack used to pay a flat
 `attachBuild` with no idea what was at the end of the road, so one Energy completing a 10-damage
 Tackle beat one of four toward a 60 — permanently and by construction. Advancing is **amortised** now.
@@ -88,14 +96,14 @@ Two details are load-bearing: **`potential()` returns `goal` beside `short`**, b
 toward an attack the Pokémon will never afford prices a road it is not on; and **`survivesCharge`
 discounts only the Active**, graded rather than a cliff.
 
-**Who gets sent up.** *16 Aug.* Promoting, being Whirlwinded up and choosing a Switch target were three
+**Who gets sent up.** *16 Aug — #16.* Promoting, being Whirlwinded up and choosing a Switch target were three
 nearly-identical formulas with no obligation to agree. **They are one `promoteValue` now — keep it
 that way.** Survival inside it is priced with **the retreat rule's own arithmetic**, because it is the
 same bill read from the other side and one formula cannot disagree with itself. **The sacrificial
 promote survives for free**: a bare Basic has nothing invested, so feeding it stays cheap without a
 rule saying so.
 
-**Two things the scorer could not see at all.** *16 Aug, both omissions rather than misjudgements.*
+**Two things the scorer could not see at all.** *16 Aug, both omissions rather than misjudgements — #16.*
 **Attacking while Confused had no price**, and **both directions are asserted** — "never attack while
 Confused" would be worse play than the bug. *The generalisable half: the retreat rule learned about
 Confusion on 13 Aug and the attack path never did. **Check any decision that reads `status` for one
@@ -103,7 +111,7 @@ branch and not its siblings.*** And **recoil is waived when the defender prevent
 [Rulings/PREVENTED-DAMAGE-RECOIL.md](Rulings/PREVENTED-DAMAGE-RECOIL.md) — priced at `f.pStopped`
 rather than as an on/off switch, so it does not become entry seven in the cliff table above.
 
-**Don't lose the game either.** *16 Aug, the exact mirror of "win the game if you can win the game".*
+**Don't lose the game either.** *16 Aug, the exact mirror of "win the game if you can win the game" — #16.*
 A 10 HP Electabuzz Knocked out its target, killed itself, handed over the last Prize and lost on the
 turn it scored — rated 73.5 against a safe alternative at 33. **An average hid it, and that is the
 part that generalises:** expected recoil was 5, and this scorer is built on expected value, so *any*
@@ -114,7 +122,7 @@ term, not a bigger one** — a self-Knock-Out that *ends the match* is charged `
 returns a near-certain lethal *before any scoring runs*. **Where to look for more of these: anywhere
 the scorer averages over outcomes and one of those outcomes is terminal.**
 
-**Your own deck is a resource, and running out of it loses.** *16 Aug, from two of Trevor's grab bag
+**Your own deck is a resource, and running out of it loses.** *16 Aug — #17, from two of Trevor's grab bag
 items that turned out to be one.* The bot understood decking *you* out as a weapon and had no concept
 of doing it to itself. Two terms, and the split is the recoil work's lesson reused: `deckBurn` is a
 cost on the **squared share of what remains**, and `deckLoss` is terminal for a play that empties the
@@ -126,7 +134,7 @@ card in the game, and its credit has its own weight (`deckRecycle`) rather than 
 That split is load-bearing — the two were one number, and widening the burn band would have quietly
 made recycling pay more than a Knock Out. ***A constant doing two jobs gets retuned for one.***
 
-**Opening placement ranks before it measures.** *18 Aug.* `setupAuto` chose the opening Active by
+**Opening placement ranks before it measures.** *18 Aug — #15.* `setupAuto` chose the opening Active by
 one line — highest HP among the Basics in hand — and it is **both sides'**, since the player's "auto"
 button calls it too. That makes it a shared sensible default rather than an AI decision, which is why
 the fix stayed in `engine.js`; an earlier draft of this file said to move it into `ai.js` and that was
@@ -188,7 +196,7 @@ wrong.** I proposed gating it on whether the engine could see that the choice wa
 *engine* can judge realness objectively, while with a Prize only the player can, so the gate would
 have taken the decision away in both directions. *[The setting, and where it lives →](INTERACTION.md)*
 
-**A retreat is priced on the Pokemon ARRIVING, not the one leaving.** *21 Aug.* The guard that was
+**A retreat is priced on the Pokemon ARRIVING, not the one leaving.** *21 Aug — #21.* The guard that was
 supposed to stop the bot walking into a Knock Out compared `incomingThreat` — the threat against the
 Active that is *leaving* — with the remaining HP of the one *arriving*. Those agree only when both
 have the same matchup against the attacker, which is precisely when the guard is not needed. The
@@ -206,7 +214,7 @@ pool, with the control at 49.9% ±0.8. Do not re-run it expecting a different an
 which is the right size for a fault that fires only when the two Pokemon differ in weakness or
 resistance.
 
-**Teleport is worth where it goes, and the bot has to choose where that is.** *21 Aug.* `selfSwitch`
+**Teleport is worth where it goes, and the bot has to choose where that is.** *21 Aug — #21.* `selfSwitch`
 scored `frail ? dangerSwap : 2` — flat, and blind to the Bench — so an even swap and a rescue were the
 same number. It is a **difference in `promoteValue`** between the best benched Pokemon and the Active
 now, which makes a mirror swap worth exactly zero without a rule saying so, and prices dying on both
@@ -217,7 +225,7 @@ attack instead of a Power, and the same remedy applies: **the scorer fills in `a
 scores**, so the fallback is never reached. A `may` version can decline, and does, by writing
 `bench: -1`.
 
-**`promoteValue` on the ACTIVE slot re-enters `scoreAttack`.** *21 Aug, and this is a trap rather than
+**`promoteValue` on the ACTIVE slot re-enters `scoreAttack`.** *21 Aug — #21, and this is a trap rather than
 a feature.* `promoteValue` → `potential` → `scoreAttackHypothetical` → and for the Active that last
 one *is* `scoreAttack`. Any new caller of `promoteValue` from inside `scoreAttack` needs the same
 re-entry guard `bestSelfSwitch` carries, or the stack dies on the first board where the attack is
@@ -225,7 +233,7 @@ legal. Nothing caught it for the length of a full suite run: **no theme deck hol
 attack**, so 402 assertions and 144 complete games passed with the loop sitting there. It has its own
 regression test now.
 
-**An Energy paid for a retreat costs what an Energy lost costs.** *21 Aug.* The retreat rule charged
+**An Energy paid for a retreat costs what an Energy lost costs.** *21 Aug — #21.* The retreat rule charged
 `cost * 4` for the Energy it discards while `retreatSaveEnergy` credits **7** for the same commodity
 two lines below — one function, one Energy, two prices, so a retreat that spent two to save three came
 out ahead by more than the one Energy it actually netted. Trevor's argument is economic rather than a
@@ -233,7 +241,7 @@ preference: **you may attach one Energy per turn, so an Energy is a turn**, and 
 the sense `retreatSaveEnergy` already measures. Both are `retreatSaveEnergy` now. `retreatBase` is
 **purely tempo** from here — the turn spent, not the cards; do not read it as covering Energy again.
 
-**A wall's low damage is not a deficiency, so it is not an upgrade opportunity either.** *21 Aug.* The
+**A wall's low damage is not a deficiency, so it is not an upgrade opportunity either.** *21 Aug — #21.* The
 tempo half of the retreat rule compares the best affordable printed damage of the Bench candidate
 against the Active's — and **Chansey's is Scrunch at zero**, which made every benched Pokemon read as
 an upgrade every single turn. Trevor: *"Chansey is meant to go in there, use Scrunch, and stall while
@@ -249,7 +257,7 @@ games got measurably *longer*, which is what less Energy churn looks like. The b
 from 8th to 7th of thirteen. That last figure is the point of the benchmark and not a small result: see
 [MEASUREMENT.md](MEASUREMENT.md).
 
-**Ammunition is not surplus.** *21 Aug.* An attack that discards its own Energy to fire turns spare
+**Ammunition is not surplus.** *21 Aug — #21.* An attack that discards its own Energy to fire turns spare
 Energy into rounds, and the surplus rule — which refuses an attachment that unlocks no new attack —
 hard-capped Charizard at four. Measured: a fifth Fire scored **−2**, Active or benched. Fire Spin
 discards two cards per use against one attachment per turn, so **the bot could never fire it twice in
@@ -265,7 +273,7 @@ had been below. Both halves of it came out of Trevor describing how he plays the
 half is an engine fix and lives in [ENGINE.md](ENGINE.md)'s `takeEnergy` section, because the pay
 order was discarding the Double Colorless first on the one Pokemon where it is worth two Fire.
 
-**A rider is worth nothing on a Pokemon the attack removes.** *22 Aug.* Paralysing a corpse buys no
+**A rider is worth nothing on a Pokemon the attack removes.** *22 Aug — #22.* Paralysing a corpse buys no
 turn — the Knocked Out Pokemon leaves and a fresh one arrives unafflicted — but the status block had
 no lethality term, so Gyarados scored Bubblebeam at **293 against an equally lethal Dragon Rage's
 280** and spent an extra Water on a coin that could not land on anything. Every rider in that block
@@ -278,7 +286,7 @@ existed one flag over and had never been generalised** — `f.flags.bounce` has 
 since it was written. *That is the transferable part: when you find a guard on one rider, check its
 siblings in the same block* — the same lesson the Confusion work left, arriving from a new direction.
 
-**A barrier is worth what it prevents.** *22 Aug, and it is cliff instance seven.* `shieldSelf` was
+**A barrier is worth what it prevents.** *22 Aug, and it is cliff instance seven — #22.* `shieldSelf` was
 flat at 0.7 below the frail line, so Fearow's Agility scored an identical **27.00 against an incoming
 0, 30 and 60**. It is linear in `min(danger, hpLeft) / hpLeft` now, with the coefficient chosen so the
 curve passes through the old constant at **half HP** — every board the flat value got about right is
@@ -286,7 +294,7 @@ unchanged and only the two ends move. **The frail multiplier is untouched**, so 
 changed at all. Both halves came from Trevor naming Agility, Rapidash and Seadra as one shape with
 Ice Beam: *spend a turn on the weaker attack to buy a turn.*
 
-**A turn taken away is worth the attack it denies.** *22 Aug, and it is the other half of the same
+**A turn taken away is worth the attack it denies.** *22 Aug — #22, and it is the other half of the same
 idea.* `paralyze` was a flat **26** whether the opponent was a charged Zapdos or a Chansey with no
 Energy — a constant standing in for a quantity that is entirely about the board. **The old constant
 was the average board, and not loosely**: this file measures the format's mean attack at 25.4 printed
@@ -322,7 +330,7 @@ threat, because an unarmed Chansey now satisfies *survives* and *buys nothing* a
 fix was four Fighting Energy, not a weaker assertion. ***A fixture encodes the model that was true
 when it was written**, and it only warns you when it fails.*
 
-**A barrier that saves your life is priced as a life.** *22 Aug, and it is the Energy-priced-twice
+**A barrier that saves your life is priced as a life.** *22 Aug — #22, and it is the Energy-priced-twice
 fault in a new place.* `selfKO` charges **70** for a Pokemon the bot kills with its own recoil, while
 preventing exactly that outcome credited `0.5 × shieldSelf × 1.6` = **16**. One event, two prices, and
 the cheap one was the defensive side — so Fearow took Drill Peck's 40 over the Agility that was its

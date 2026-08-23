@@ -188,11 +188,19 @@ AI ought to play individual cards.
 **`base3_decks.json` is Trevor's six Fossil decks, live the day it was written**, 21 Aug 2026 — three
 T2, two T3 and the T4 that is Fossil's boss. **Zero id corrections for the third workbook running.**
 
-**One stale cell, and the guard caught it rather than the eye.** `F T2-1` names Omastar as its cover
-card and contains no Omastar — the sheet's Cover Card cell was carried over from another tab.
-`gen_cards.js` refuses a cover that is not in its own deck's list and warns, so the field is simply
-omitted and `heroOfList` picks Hypno instead. **Ask Trevor what that deck's cover should be** rather
-than guessing; everything else about the deck validates clean.
+**One stale cell, and the guard caught it rather than the eye — resolved 22 Aug 2026.** `F T2-1`
+named Omastar as its cover card and contained no Omastar; the sheet's Cover Card cell predated
+Trevor rebuilding the deck. `gen_cards.js` refuses a cover that is not in its own deck's list and
+warns, so the field was omitted and `heroOfList` guessed. **Trevor's answer was Hypno** — `base3-23`,
+the non-holo print, which is what `heroOfList` had landed on anyway. **The guard is the thing to
+keep**: it turned a silently wrong tile into a warning naming the deck, and a cover that is present
+and wrong is exactly what a not-null check cannot catch. Same shape as the `SET_INFO` name guard two
+sections up.
+
+**The eight Base Set decks had no cover cell at all until the same day**, so all nine authored `b1:`
+and `b3:` decks now declare their own hero instead of leaving it to `heroOfList` — which disagrees
+more often than it looks like it would, since the biggest Pokemon in a deck is frequently not its
+point. Trevor's picks; each was checked to resolve to exactly one printing inside its own list.
 
 **`fullpool.json` is a flat list of card ids across the unbuilt sets and is read by nothing.** It
 predates the corpus being the source of truth. Left in place rather than deleted, but do not generate
