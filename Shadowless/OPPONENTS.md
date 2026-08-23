@@ -233,18 +233,24 @@ So an opponent deck **may** carry a **pressure tag**, independent of tier. **The
 derived from the DSL rather than invented** — each one is a real family of verbs in `effects.js`, which
 is what makes `tools/pressure.js` able to count them:
 
-| Pressure | What it does to you | Verb family |
-|---|---|---|
-| Energy denial | strips the investment you already made | `DISCARD_DEF_ENERGY`, `T_DISCARD_OPP_ENERGY` |
-| Bench damage | your safe cards are not safe | the `BENCH_SNIPE` / `BENCH_SPLASH` family |
-| Position control | you fight with the wrong Pokemon | `WHIRLWIND`, `SWITCH_DEFENDER_*` |
-| Status lock | it takes your turns away | `STATUS*`, `TOXIC`, `ATTACK_LOCK`, `JAM_DEFENDER` |
-| Hand / Trainer denial | your outs stop arriving | `NO_TRAINERS_NEXT_TURN`, `T_LASS` |
-| Wall / prevention | your damage stops landing | `PREVENT_*`, `DAMAGE_REDUCTION*`, `BARRIER`, `HARDEN` |
-| Attrition / recovery | it refuses to run out | `ENERGY_FROM_DISCARD`, `HEAL_SELF_*` |
-| High damage (HD) | it simply out-hits you | — **deck-level, see below** |
-| Bench growth (BG) | it builds a board you cannot race | — **deck-level, see below** |
-| Deck-out | it refuses to supply a clock | — **deck-level, see below** |
+| Code | Pressure | What it does to you | Verb family |
+|---|---|---|---|
+| `ED` | Energy denial | strips the investment you already made | `DISCARD_DEF_ENERGY`, `T_DISCARD_OPP_ENERGY` |
+| `BD` | Bench damage | your safe cards are not safe | the `BENCH_SNIPE` / `BENCH_SPLASH` family |
+| `PC` | Position control | you fight with the wrong Pokemon | `WHIRLWIND`, `SWITCH_DEFENDER_*` |
+| `SL` | Status lock | it takes your turns away | `STATUS*`, `TOXIC`, `ATTACK_LOCK`, `JAM_DEFENDER` |
+| `HT` | Hand / Trainer denial | your outs stop arriving | `NO_TRAINERS_NEXT_TURN`, `T_LASS` |
+| `WP` | Wall / prevention | your damage stops landing | `PREVENT_*`, `DAMAGE_REDUCTION*`, `BARRIER`, `HARDEN` |
+| `AP` | Attrition / recovery | it refuses to run out | `ENERGY_FROM_DISCARD`, `HEAL_SELF_*` |
+| `HD` | High damage | it hits harder than you can absorb | — **deck-level, see below** |
+| `BG` | Bench growth | it builds reserves faster than you can race — **Trevor has widened this** to cover drawing cards and buying turns through quick evolution or extra attachments | — **deck-level, see below** |
+| — | Deck-out | it refuses to supply a clock | — **deck-level, see below** |
+
+**The two-letter codes are what the data actually holds** — `pressure` in `data/base2_decks.json` and
+`data/base3_decks.json` is a code, and until 23 Aug 2026 it was decodable nowhere in this repo. The
+key lives in the workbook's Index tab; this table is the copy the code can be read against. **Where a
+card lists more than one, the FIRST has priority** — Trevor's rule, and the copy-count derivation
+relies on it.
 
 **The last three have no verb family and that is the distinction to preserve.** The seven above them
 are derived from the DSL, so `pressure.js` counts them and the answer cannot drift from the cards.
