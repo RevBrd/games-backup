@@ -11,6 +11,8 @@ proposed again, or when you want to know why something looks the way it does.
 Live decisions live in `CLAUDE.md` and `COLLECTION.md`. Card-level judgement calls live in
 `RULINGS.md`. This file is the losing side of settled arguments.
 
+If moving over a fragment, please include the authoring instance's number or the author date, if known. This allows chronology to be traced a little better and specific authorship to be remembered. If not known, don't guess.
+
 **This file is an append-only register and the 200-line target does not apply to it.** Same category
 as [RULINGS.md](RULINGS.md) and [LOGBOOK.md](LOGBOOK.md), and for the same reason: a rejection cannot
 be condensed without deleting the *why*, which is the only part that stops the idea coming back.
@@ -144,6 +146,8 @@ banners — not by a test. The guard is now in `setupConfirm`; the call sites we
 they were, because they now prove it works. See [MEASUREMENT.md](MEASUREMENT.md) for what it means for the measurements.
 
 ## A fresh Arcanine used to prefer Take Down — reversed 23 Aug 2026
+
+*Asserted by #12 on 14 Aug 2026; reversed by #24 on 23 Aug 2026, on Trevor's card note.*
 
 **The only assertion in this project to have been overturned by a later one**, so it is worth the
 space even though the change itself was small.
