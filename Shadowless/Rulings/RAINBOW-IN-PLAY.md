@@ -106,3 +106,28 @@ if the `W` greedily eats the Rainbow — the `R` then has only a real Water left
 plainly pay refuses to. Spending a universal substitute while a specific one is available is never
 right, which makes exact-first optimal rather than merely better. `powertest.js` asserts it in both
 card orders, and the assertion was watched going red against a single-pass matcher.
+
+## A fourth reader, and the exploit the printed clause was guarding against
+
+**Added 23 Aug 2026, from Trevor reading his own workbook entry back.** Two Team Rocket cards gate an
+attack on Energy rather than counting it, which is a use of the sentinel the table above does not
+cover:
+
+> **Dark Charmeleon**, Fireball — *"Use this attack only if there are any Fire Energy cards attached
+> to Dark Charmeleon."* **Dark Flareon**, Playing with Fire, the same clause.
+
+**The clause says "Energy cards", and while attached a Rainbow is one.** So three Rainbow and no Fire
+makes Fireball legal, and a Rainbow is a legal discard for it. That follows from this entry rather
+than extending it — recorded because it was checked against the engine and reported as a suspected
+bug first, and the thing that refuted the report was this file.
+
+**Why the clause exists at all, which is the part worth keeping.** Trevor: it stops somebody dropping
+a Dark Charmeleon into a deck with no Fire in it and paying for a cheap high-damage Fire attack out
+of three Rainbow. Requiring *one real Fire* keeps the card in a Fire deck. **That is a deckbuilding
+guard, not a combat rule** — which is exactly why our reading does not break it and why he closed the
+question rather than pushing on it: *"such a limited-use exploit that our game probably doesn't need
+to account for it."*
+
+**Settled: we implement the ruling, not the intent.** Recorded so the same suspicion does not get
+raised a third time, and so that nobody "fixes" the gate to demand a physical Fire — which would
+contradict every other reader in the table above for the sake of a deck nobody is going to build.

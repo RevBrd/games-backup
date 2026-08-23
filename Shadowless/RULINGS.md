@@ -43,6 +43,8 @@ enough to settle a call in plain English, so ask him — he can be a resource on
 | "Retreats" is the retreat that worked; "tries to retreat" is the attempt | [RETREATS-MEANS-SUCCEEDED.md](Rulings/RETREATS-MEANS-SUCCEEDED.md) |
 | Rainbow Energy is a basic Energy card while it is IN PLAY, and not before | [RAINBOW-IN-PLAY.md](Rulings/RAINBOW-IN-PLAY.md) |
 | Rainbow's 10 damage can Knock Out the Pokémon it lands on, and the attachment still happens | [RAINBOW-ATTACH-DAMAGE.md](Rulings/RAINBOW-ATTACH-DAMAGE.md) |
+| A promo's name does not decide whether it can evolve — the WotC ruling does | [PROMO-EVOLUTION.md](Rulings/PROMO-EVOLUTION.md) |
+| A card that reads the real world gets a fixed stand-in, declared once | [VARIABLE-ATTACK-DAMAGE.md](Rulings/VARIABLE-ATTACK-DAMAGE.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -122,6 +124,9 @@ that matches.
 | **When a wording is ambiguous, look for a later card that says the OTHER thing explicitly** — the pair is better evidence than deciding what they probably meant | [Sinkhole vs. Unown [C]](Rulings/RETREATS-MEANS-SUCCEEDED.md) |
 | **A card's own text outranks its category**, and a category is exactly what a confident wrong answer is reasoned from — Rainbow is a Special Energy card that is a basic one in one zone, and says so in a parenthesis | [Rainbow, in play](Rulings/RAINBOW-IN-PLAY.md) |
 | **The same property can answer differently by ZONE** — in play, in hand, in the deck. A check that takes only a card is asking half a question | [Rainbow, `isBasicEnergyOf`](Rulings/RAINBOW-IN-PLAY.md) |
+| **Implement the ruling, not the intent** — a clause printed to stop a *deckbuilding* exploit is not a combat rule, and reading it as one contradicts every other reader of the same property | [Dark Charmeleon's Fire clause](Rulings/RAINBOW-IN-PLAY.md) |
+| **Some answers are a lookup and not a principle**, and saying so is the ruling — where a source ruled case by case, no derivable rule exists and an exception list is the honest shape | [promo evolution](Rulings/PROMO-EVOLUTION.md) |
+| **A card reading state the game does not model gets a declared constant** — not a new system, and not a deletion of the card's point | [`_____`'s Pikachu](Rulings/VARIABLE-ATTACK-DAMAGE.md) |
 
 ## What *settled with Trevor* means
 
@@ -148,6 +153,11 @@ Calls we already know are coming, so nobody is surprised by them.
   unknown.
 - **Baby Pokémon (Neo era, 10 cards)** — the Baby Rule is a coin flip that can negate an attack
   entirely. Not a Base Set problem, but it is a whole rule, not a card effect.
+- **The promos are Job 12 and two of their calls are already made** — see the two entries added
+  23 Aug 2026 above. Both came out of Trevor's workbook rather than out of the cards, which is the
+  thing to notice: **his spreadsheets have been accumulating rulings**, and a ruling that lives only
+  in a spreadsheet gets re-derived by whoever opens the card next. When Job 12 starts, read the
+  workbook's Index legend before the corpus.
 - **~~Rainbow Energy's 10 damage on attachment~~ — settled**, and it was never as open as this list
   said: the damage half was decided with Trevor on 19 Aug 2026 and written into `engine.js`, and the
   Prize half had been answered by [Buzzap](Rulings/BUZZAP.md) two weeks earlier. It sat here because

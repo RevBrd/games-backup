@@ -41,6 +41,7 @@ still open, so it stays with its reason and with what evidence would revive it.
 - Introductions for rare cards when pulled, light for RH, heavy for Shadowless, all cheap. I have ideas about this one, whoever takes it, let's chat before we build.
 - Defender should also defend from self-harm the turn that it's placed, per GBC. If it takes 20 damage from self-harm, it's used up. If it takes 10 damage, it's free. We can talk about this one if you want.
 - I either pulled a really lucky Shiny -> 1st Edition Shiny -> Shadowless (my first one) in back to back to back packs, or the odds are messed up. We should check them with a sim to be sure. First shiny pull not shown in log - log# 21-35-11
+- Add a "ended the turn without attacking" entry to the in-game log and event logger for both the player and AI ending their turn without an attack.
 
  
 
