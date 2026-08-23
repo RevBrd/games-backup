@@ -140,7 +140,7 @@ the mean, or you will conclude there was never a problem.**
 
 ## The cliff: a quantity about proximity, written as an equality check
 
-**Seven instances, and it is the most productive sniff test this project has.** A term that should
+**Eight instances, and it is the most productive sniff test this project has.** A term that should
 fall away with distance from an edge, written flat with a cliff at the end:
 
 | Where | Was | Is |
@@ -153,6 +153,7 @@ fall away with distance from an edge, written flat with a cliff at the end:
 | `survivesCharge` | — | written graded from the start, *because* of the other five |
 | the Agility barrier, damage half | flat 0.7 below the frail line — a shield stopping nothing priced like one stopping 60 | **linear in the damage prevented**, through the old constant at half HP |
 | the Agility barrier, death half | a `frail` boolean, and priced off a tempo weight at that | **squared** in the same fraction, and priced off `selfKO` |
+| an Energy discard | flat, 7 a card, however much or little was left behind | **turns of silence, squared**, and discounted by whether it lives to feel them |
 
 **The last two rows are the same line of code and they disagree on the curve, which is the most
 useful thing in this table.** A barrier does two things at once. *Damage prevented* is a quantity and
@@ -206,6 +207,7 @@ holding up. **The `Term` column is the index**: grep it in `ai.js`, then read it
 | 22 Aug | A barrier is worth what it prevents, **linear** in the damage stopped | `shieldSelf` |
 | 22 Aug | A turn taken away is worth the attack it denies; Poison is excluded because it is a clock, not a stolen turn | `DENIES_A_TURN` |
 | 22 Aug | A barrier that saves your life is priced **as a life**, squared, off `selfKO` rather than off a tempo weight | `shieldSelf`, `selfKO` |
+| 23 Aug | A discard costs **turns of silence**, squared, discounted by survival — and it reads the CHEAPEST attack, never the best | `discardSilence` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -285,14 +287,21 @@ on it.**
    [OPPONENTS.md](OPPONENTS.md), which argues the AI probably should *not* be the dial.
 8. **The failing rows in `tools/claims/` are open AI faults, and they are not listed here on
    purpose.** From 23 Aug 2026 a claim out of Trevor's workbook is a row the bot is held to, and a red
-   one is a fault report rather than a broken build. **`node tools/claimtest.js` is the live list** and
-   `--open` is the sub-list of clauses with no term to assert against at all.
+   one is a fault report rather than a broken build. **`node tools/claimtest.js` is the live list**
+   and `--open` is the sub-list of clauses with no term to assert against at all.
 
    Copying them into this file would create exactly the duplication claim that has gone stale three
-   times at the top of it. **What belongs here is the shape**, and the first eleven rows produced one:
-   *an attack's cost to its OWN future is underpriced against its damage.* Zapdos discards all four
-   Energy for about three points, against this project's own settled doctrine that an Energy is a
-   turn; Arcanine's recoil is graded correctly but too shallow at the top, so Take Down wins at full
-   HP and only loses once 40 damage is already on the board. Two cards, one direction, and both were
-   found by the harness on the day it was built.
+   times at the top of it. **What belongs here is the shape.** The first eleven rows produced one on
+   the day the harness was built — *an attack's cost to its own future is underpriced against its
+   damage* — and it shipped the same day, so the entry that would have described it is an invariant
+   rather than an open item. See `discardSilence` in [AI-INVARIANTS.md](AI-INVARIANTS.md).
+
+   **One clause survives and it is worth naming, because three cards ask for it rather than one.**
+   Nothing prices holding an attack **in reserve**. Arcanine wants Take Down to stay affordable while
+   it attacks with Flamethrower, and the discard rule cannot express that — what it measures is being
+   unable to act *at all*, and Arcanine can always act. Ninetales' *"never be required to choose
+   between Lure and nothing"* and Charmeleon's refusal to spend down the funnel it is saving for
+   Charizard are the same shape. **Build it once for the family or not at all**, and ask Trevor first:
+   this is the half he flagged himself, and it may belong with [Ammo](Playbook/AMMO.md)'s open
+   Charmeleon note rather than standing alone.
    *[How a note becomes a row →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*

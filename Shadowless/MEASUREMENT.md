@@ -233,8 +233,13 @@ Its run on 21 Aug 2026, all three figures from the same 30-seed merged field:
 | after the retreat repricing | 7 of 13 | 47.5% | 54% |
 | after the Charizard fixes | **6 of 13** | **52.8%** | 56% |
 | 22 Aug, after the bought-turn work | 6 of 13 | 52.9% | 55% |
+| 23 Aug, after the discard repricing | **5 of 13** | 53.8% | 55% |
 
-**That last row is a null and it is recorded as one.** The three status and barrier changes of 22 Aug
+**The 22 Aug row is a null and it is recorded as one.** *(It said "that last row" until 23 Aug added
+one underneath it, at which point the sentence silently began describing different work. **Name the
+row, never point at the end of a table** — a growing table makes a positional reference wrong without
+touching it, which is this file's own favourite kind of error arriving in its own prose.)* The three
+status and barrier changes of 22 Aug
 moved 40.8% of games and did not move the benchmark. **Exposure was checked before that was believed,
 and the instrument is not blind here** — all thirteen decks carry a paralysis, sleep, confusion or
 barrier. What the benchmark deck has is the *thinnest* holding of them in the field: Chansey's Scrunch
@@ -243,6 +248,15 @@ gained least from a change every one of its opponents also received, and holding
 expected shape rather than a disappointment. **Do not read it as evidence the work did nothing, and
 do not read it as evidence it worked** — it is the wrong instrument for a symmetric change, which is
 the standing lesson of this whole file.
+
+**The 23 Aug row moved and the accompanying duel did not, which is the most useful pair in the
+table.** The discard repricing took the benchmark from 6th to 5th at +0.9 points with **assembly flat
+at 55%**, while `aiduel` against the pin read **51.4% ±0.5** against the 51.5% ±0.9 standing before
+it — a null. Exposure was checked before that null was believed: **17 of 37 ladder decks carry a card
+whose attack burns its own Energy, 65 copies**, so the instrument is not blind. Read the two together
+rather than picking the flattering one. A rank that climbs while assembly holds says the bot got
+better at *this archetype*, which is the narrow claim the benchmark can actually support; a flat duel
+says it did not get better at the field in general, and both can be true of one change.
 
 `--benchmark=KEY` picks a different deck; `--no-benchmark` turns it off. **If Trevor ever says a
 different deck is his daily driver, change the default** — the value of this number is entirely in the

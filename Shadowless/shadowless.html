@@ -5707,6 +5707,7 @@ class AI {
     const statuses = {};
     const flags = {};
     let selfDmg = 0, energyCost = 0;
+    const discardTypes = [];        // [n, type] per COST_DISCARD_ENERGY, for discardSilence
     // WORST-CASE self-damage and how often it happens, alongside the expected
     // figure. An average hides the branch that ends the game: 10 recoil on a
     // coin is "5 expected", and 5 never killed anybody.
@@ -5720,7 +5721,7 @@ class AI {
 
     for (const v of script) {
       switch (v.v) {
-        case 'COST_DISCARD_ENERGY': energyCost += v.n; break;
+        case 'COST_DISCARD_ENERGY': energyCost += v.n; discardTypes.push([v.n, v.t]); break;
         case 'FLIP_OR_NOTHING':
           split(() => [[0.5, 0], [0.5, base]]);
           flags.halfWhiff = true;
@@ -5764,7 +5765,10 @@ class AI {
         // selftest.js that now refuses to let a verb land here unnoticed.
         case 'COST_DISCARD_ALL_ENERGY':
           // Thunderbolt. The bot thought this was free and fired it on sight.
-          energyCost += atkSlot.energy.length; break;
+          // The flag matters as much as the count: emptying the slot is a
+          // different event from spending two of six, and `discardSilence` reads
+          // it rather than re-deriving which cards would have gone.
+          energyCost += atkSlot.energy.length; flags.discardAll = true; break;
         case 'DMG_PER_SPARE_ENERGY': {
           // The Water Gun / Hydro Pump family. Mirrors the engine's arithmetic:
           // Energy of type t attached, minus what this attack's own cost eats.
@@ -5904,7 +5908,7 @@ class AI {
     // FLIP_OR_NOTHING suppresses the whole attack, statuses included.
     if (flags.halfWhiff) for (const k in statuses) statuses[k] *= 0.5;
     return { outcomes, statuses, selfDmg, selfWorst, pSelfWorst: selfWorst ? pSelfWorst : 0,
-             energyCost, flags };
+             energyCost, discardTypes, flags };
   }
 
   // Run each raw outcome through the engine's own damage maths.
@@ -6161,7 +6165,14 @@ class AI {
       const leavesUsEmpty = me.bench.length === 0;
       if (givesTheirLastPrize || leavesUsEmpty) s -= (f.pSelfWorst || 1) * W.lastPrize;
     }
-    if (f.energyCost > 0) s -= f.energyCost * W.energyDiscard;
+    // A DISCARD COSTS TURNS OF SILENCE, NOT CARDS. Flat at `energyCost * 7`
+    // until 23 Aug 2026, which charged Charizard the same rate for ammunition it
+    // would replace as it charged Zapdos for emptying itself to nothing.
+    // *[Both halves of the rule, and whose they are →](discardSilence)*
+    if (f.energyCost > 0) {
+      const silence = this.discardSilence(pi, atkSlot, f);
+      s -= W.energyDiscard * silence * silence * this.survivesCharge(pi, atkSlot, silence);
+    }
 
     // bench splash cuts both ways
     if (f.flags.benchSplash) {
@@ -6863,6 +6874,75 @@ class AI {
   // Only the Active is being hit, so only the Active is discounted. Graded
   // rather than a cliff, on the by-now well-earned suspicion of any quantity
   // about proximity to an edge written as an equality test.
+  // HOW MANY TURNS OF SILENCE A DISCARD BUYS — the cost of an attack that eats
+  // its own Energy, measured in the thing you actually lose.
+  //
+  // Trevor, 23 Aug 2026, in two halves he did not know were one term. On
+  // Arcanine: *"an energy burn while holding an energy abundance is rather cheap
+  // ... you don't really lose a turn if it was an extra energy."* On Zapdos:
+  // *"could this be weighed over turns of expected life? If it's expected to die
+  // on the opponent's next turn then burning energy doesn't really matter."*
+  //
+  // Those are the two factors of one quantity: **how much you will miss it**,
+  // and **how long you will live to miss it.** A flat charge per card knows
+  // neither, and a flat charge is what this was — `energyDiscard` at 7 a card,
+  // the same rate `retreatSaveEnergy` pays, applied identically to Charizard
+  // spending two of six and to Zapdos emptying itself down to nothing.
+  //
+  // WHAT IT MEASURES: symbols short of the CHEAPEST attack once the discard has
+  // happened. You may attach one Energy a turn, so that number is turns you
+  // cannot attack at all. Six Fire firing Fire Spin leaves four and can fire
+  // again — zero. Four Lightning firing Thunderbolt leaves nothing and needs
+  // four — four.
+  //
+  // AND IT IS SQUARED, which is the cliff table's own rule rather than a taste:
+  // silence is a COST, and a cost is squared where a benefit is linear. Two
+  // turns of standing there doing nothing while they attack you freely is worse
+  // than twice one turn, because the turns compound. `shieldSelf` settled the
+  // same argument in the same words on 22 Aug.
+  //
+  // THE SURVIVAL FACTOR IS NOT A SECOND IDEA. `survivesCharge` already answers
+  // "will this Pokemon live long enough for a shortfall of N to matter", and a
+  // discard is exactly that question asked backwards. So Thunderbolt is priced
+  // out of a healthy Zapdos and priced back IN when it is about to die anyway —
+  // which is Trevor's own endgame clause, closed by the term that was written
+  // for the other half of his note.
+  //
+  // It reads the cheapest attack rather than the best on purpose, and that is
+  // the opposite of what Arcanine's note asks for at first reading. "Keep Take
+  // Down in reserve" is a claim about an option this does not price. What it
+  // does price is being unable to act at all, and Arcanine at four Fire can
+  // Flamethrower again at three — so the burn is free and Flamethrower wins on
+  // the recoil alone. If the reserve half turns out to need its own term, it is
+  // a separate change with its own measurement; see PLAYBOOK's Energy Funnel.
+  discardSilence(pi, slot, f) {
+    const n = f.energyCost || 0;
+    if (n <= 0 || !slot) return 0;
+    let left;
+    if (f.flags && f.flags.discardAll) left = [];
+    else {
+      // Which cards go is the engine's call and it has its own rule; rather than
+      // mirroring it — the failure `openercheck.js` was built out of — drop the
+      // cards that hurt LEAST and accept an under-charge. Wrong in the safe
+      // direction is the only kind of wrong worth building in here.
+      const want = [];
+      for (const [k, t] of (f.discardTypes || [])) for (let i = 0; i < k; i++) want.push(t);
+      left = slot.energy.slice();
+      for (const t of want) {
+        let idx = -1;
+        for (let i = 0; i < left.length; i++) {
+          const syms = this.E.db[left[i].id] && this.E.db[left[i].id].provides || '';
+          if (!t || syms.includes(t)) { if (idx < 0 || syms.length < 2) idx = i; }
+        }
+        if (idx < 0) idx = left.length - 1;
+        if (idx >= 0) left.splice(idx, 1);
+      }
+      if (left.length === slot.energy.length) left = slot.energy.slice(0, -n);
+    }
+    const after = Object.assign({}, slot, { energy: left });
+    return this.shortfallFor(after, this.top(slot));
+  }
+
   survivesCharge(pi, slot, turnsNeeded) {
     if (turnsNeeded <= 0 || slot !== this.E.state.players[pi].active) return 1;
     const threat = this.incomingThreat(pi);
@@ -8585,7 +8665,8 @@ class AI {
       default: return a.t;
     }
   }
-}
+}
+
 
 // ============================================================================
 // RULES ENGINE  —  WOTC-era (Base Set) Pokemon TCG

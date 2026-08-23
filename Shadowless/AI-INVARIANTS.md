@@ -352,3 +352,45 @@ Grimer and Cloyster-under-threat needed nothing; Fearow and Seadra needed this. 
 argument for building the boards rather than reasoning about them* — the two that failed were not the
 two anybody would have guessed, and three of the five that passed had been on a list of suspects.
 
+
+**A discard costs TURNS OF SILENCE, not cards.** *23 Aug — #24, and it is the first invariant that
+came from a claim row rather than from a log or a suite.* `energyCost * energyDiscard` charged a flat
+**7 a card** for every attack that eats its own Energy — the same rate whether Charizard spent two of
+six it would replace on the next two turns, or Zapdos emptied itself to nothing and stood silent for
+four. **`discardSilence` measures symbols short of the CHEAPEST attack after the discard**, which is
+turns you cannot attack at all because you may attach one Energy a turn, and it is **squared** on the
+cliff table's own rule: silence is a cost, and two turns of standing there while they attack you
+freely is worse than twice one turn.
+
+**The survival factor is not a second idea and that is the whole shape of this entry.**
+`survivesCharge` already answered *"will this Pokemon live long enough for a shortfall of N to
+matter"*, written for attachment; a discard is that question asked backwards, so it took no new term.
+Thunderbolt is priced out of a healthy Zapdos at **44 against Thunder's 46**, and priced back in at
+**72** the moment Zapdos will die to the next hit — Trevor's endgame clause, closed by the term
+written for the other half of his note.
+
+**Both halves are Trevor's, sent as two guesses about two different cards.** *"An energy burn while
+holding an energy abundance is rather cheap"* and *"could this be weighed over turns of expected
+life"* are the two factors of one quantity: how much you will miss it, and how long you will live to
+miss it. **The second time he has unified a cluster from outside it** — the first was paralysis and an
+Agility barrier being one bought turn. *[The pattern, with the note verbatim →](Playbook/AMMO.md)*
+
+**IT READS THE CHEAPEST ATTACK AND NOT THE BEST, DELIBERATELY.** Arcanine's note asks for Take Down to
+be held *in reserve*, which is an option value nothing here prices; what this prices is being unable
+to act at all. Do not "fix" that by switching it to the most expensive attack — Charizard would then
+be charged for a Fire Spin it can fire again next turn, which is the ammunition rule inverted.
+
+**Measured, and the honest reading is mixed.** Every card that burns Energy was swept and none was
+turned off; Recover still scores exactly 0 on Starmie and Kadabra, which is Trevor's *"Recover should
+never be used"* arriving from a direction nobody was testing. The benchmark deck went **rank 6 to
+rank 5**, 52.9% → 53.8%, assembly flat at 55%. **`aiduel` against the pin reads 51.4% ±0.5 against
+51.5% ±0.9 before it — a null**, and exposure was checked before that was believed: **17 of 37 ladder
+decks carry a burner, 65 copies**, so the instrument is not blind here. A symmetric perception change
+reading flat is what [MEASUREMENT.md](MEASUREMENT.md) predicts, and it is recorded rather than
+explained away.
+
+**It reversed a 14 Aug assertion**, which is the only invariant in this file to have overturned
+another. `powertest.js` held that a fresh Arcanine prefers Take Down; Trevor's card note says
+Flamethrower. The test was rewritten rather than deleted, because what it was *protecting* — that
+recoil pricing must not turn Take Down off — is still true and is still worth a guard.
+*[Why, and what the rewrite asserts instead →](HISTORY.md)*

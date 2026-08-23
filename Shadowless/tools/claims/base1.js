@@ -132,8 +132,17 @@ const CLAIMS = [
   {
     id: 'base1-16', card: 'Zapdos', pattern: 'Attack choice',
     note: 'To deal high damage and die rather quickly. Prefers to go down fighting over retreat, though not by self-kill. Thunder is the preferred attack until Zapdos looks like it will die on the opponent\'s next turn, or it risks a self-kill on this turn. In those cases, Thunderbolt should be used.',
-    claim: 'Thunderbolt instead when Zapdos will die next turn anyway — the discard costs nothing it will get to use',
-    open: 'Needs the bot to price its OWN death next turn against an Energy cost it will never pay. `survivesCharge` knows the survival half and nothing spends against it. Not a board problem — the term does not exist.',
+    // DONE 23 Aug 2026. Closed by `discardSilence`'s survival factor rather than
+    // by anything written for this clause — Trevor's Arcanine idea and his Zapdos
+    // idea turned out to be two factors of one term. The target here is a 120 HP
+    // Chansey that neither attack can kill, so lethality cannot be what moves it.
+    claim: 'Thunderbolt when Zapdos will die next turn anyway — the discard costs nothing it lives to feel',
+    board: {
+      me:   { card: 'base1:Zapdos', energy: '4 Lightning', dmg: 20 },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.threat() >= b.hp() && b.lethal('Thunderbolt') === 0 && b.lethal('Thunder') === 0,
+    expect: b => b.prefers('Thunderbolt'),
   },
 
   // ---------------------------------------------------------------- Arcanine --
@@ -153,7 +162,34 @@ const CLAIMS = [
     id: 'base1-23', card: 'Arcanine', pattern: 'Energy funnel',
     note: 'Both attacks do high damage and both have drawbacks. Flamethrower requires an energy funnel but should be the default due to Take Down\'s self-damage. However, Take Down should stay powered up and ready to go for when it\'s needed, meaning the bot should not want to use even Flamethrower until Arcanine has four energies attached, as it requires that constant funnel that would make Take Down unavailable if used at three energies',
     claim: 'at THREE Energy it should hold Flamethrower, because using it drops Take Down out of reach',
-    open: 'The clause is clear and the term is not there: nothing prices an attack by what it takes AWAY from the same Pokemon next turn. Related to Ammo\'s open half. Ask before building — this may want to be one rule with Charmeleon and Ninetales.',
+    open: 'STILL OPEN after the 23 Aug discard work, and the ordering claim above now passing does NOT close it. Nothing prices holding an attack in RESERVE — `discardSilence` prices being unable to act at all, which is a different thing, and at three Energy Take Down is already unaffordable so there is no choice to make on the board. Related to Ammo\'s open half. Ask before building; this probably wants to be one rule with Charmeleon and Ninetales.',
+  },
+
+  // THE DISCARD RULE ITSELF, asserted where it has a real margin. The ordering
+  // claim above passes by 0.3 points and that is not the rule working — it is two
+  // attacks the model genuinely rates as equivalent, with the discard no longer
+  // breaking the tie the wrong way. These two have room in them.
+  {
+    id: 'base1-4', card: 'Charizard', pattern: 'Ammo',
+    note: '(the ammo doctrine, 21 Aug 2026 — pre-load past four and Fire Spin keeps firing)',
+    claim: 'ammunition it will replace is not charged for — Fire Spin at six Fire costs nothing to fire',
+    board: {
+      me:   { card: 'Charizard', energy: '6 Fire' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.me.active.energy.length === 6 && b.affordable().includes('Fire Spin'),
+    expect: b => b.score('Fire Spin') >= b.damage('Fire Spin'),
+  },
+  {
+    id: 'base1-4', card: 'Charizard', pattern: 'Ammo',
+    note: '(the ammo doctrine, 21 Aug 2026 — pre-load past four and Fire Spin keeps firing)',
+    claim: '...but firing at exactly four, which empties it below its own cost, is charged for',
+    board: {
+      me:   { card: 'Charizard', energy: '4 Fire' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.me.active.energy.length === 4 && b.affordable().includes('Fire Spin'),
+    expect: b => b.score('Fire Spin') < b.damage('Fire Spin') - 20,
   },
 ];
 

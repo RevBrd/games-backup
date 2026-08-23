@@ -143,6 +143,36 @@ Found by reading a match log and noticing the deck lose seven cards between two 
 banners — not by a test. The guard is now in `setupConfirm`; the call sites were deliberately left as
 they were, because they now prove it works. See [MEASUREMENT.md](MEASUREMENT.md) for what it means for the measurements.
 
+## A fresh Arcanine used to prefer Take Down — reversed 23 Aug 2026
+
+**The only assertion in this project to have been overturned by a later one**, so it is worth the
+space even though the change itself was small.
+
+On 14 Aug the recoil curve landed — *priced on what it leaves you, squared* — and it shipped with a
+guard: **a fresh Arcanine must still prefer Take Down.** The reasoning was sound and is quoted in the
+test itself: *"At full HP 30 recoil is cheap and 80 beats 50, which is the whole reason the card
+prints the attack."* Nobody had asked Trevor.
+
+On 23 Aug his card note said the opposite — *"Flamethrower ... should be the default due to Take
+Down's self-damage"* — and he is the arbiter on how a card plays. The ordering flipped.
+
+**But the test was rewritten rather than deleted, and the distinction is the reusable part.** What it
+was *protecting* was not the ordering. It was protecting against **recoil being over-priced**, and
+that concern is still live and still worth a guard. The ordering was merely the symptom it happened
+to measure — and it stopped being a valid measurement the moment the *other* attack got cheaper,
+because Flamethrower's Energy burn went from a flat 7 to nothing at four Fire. The comparison had one
+side move underneath it.
+
+**That is the `CHANSEY_ARMED` failure wearing different clothes**, one section away in the same file:
+a fixture that quietly stops being able to isolate the thing it asserts, and passes or fails for a
+reason unrelated to its own claim. The rewrite asserts the property instead — Take Down must remain a
+live option at full HP, and the two attacks must stay close — plus a second case pinning the recoil
+curve on its own, so the property survives whatever happens to the comparison.
+
+**The rule, for the next reversal:** when a test fails because a decision was overturned, ask what it
+was *protecting* before you touch it. If that thing is still true, the test does not go away — it
+gets re-expressed in terms that do not depend on the decision that changed.
+
 ## How the documentation tree got its shape
 
 The rules that came out of these are in [MAINTENANCE.md](MAINTENANCE.md). This is how they were

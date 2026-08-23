@@ -2613,11 +2613,41 @@ function arcanine(selfDmg, defId, defDmg) {
            td: A.scoreAttackHypothetical(0, p.active, 1) };
 }
 
-T('a fresh Arcanine still takes the recoil for the bigger hit', () => {
-  // The fix must not turn Take Down off. At full HP 30 recoil is cheap and 80
-  // beats 50, which is the whole reason the card prints the attack.
+// REVERSED 23 Aug 2026, and rewritten rather than deleted. This asserted that a
+// fresh Arcanine PREFERS Take Down, and Trevor's own note on the card says the
+// opposite: *"Flamethrower ... should be the default due to Take Down's
+// self-damage."* He is the arbiter on how a card plays, so the ordering flips.
+//
+// But read what the test was actually protecting before assuming it was simply
+// wrong. Its purpose was *"the fix must not turn Take Down off"* — a guard
+// against RECOIL being over-priced, written the day the recoil curve landed. The
+// recoil curve has not changed. What changed is that Flamethrower's Energy burn
+// stopped costing a flat 7 and started costing what it actually takes away,
+// which at four Fire is nothing — so the comparison this test used to detect
+// over-priced recoil became a comparison whose other side had moved.
+//
+// That is the CHANSEY_ARMED failure again, one section up in this same file: a
+// fixture that quietly stops being able to isolate the thing it asserts. The
+// answer is the same one — assert the property, not the ordering it happened to
+// produce. Take Down must remain a LIVE OPTION at full HP, which is what "not
+// turned off" always meant; whether it wins by a hair is Trevor's call and it is
+// now a claim row in tools/claims/base1.js.
+T('a fresh Arcanine still finds Take Down worth taking', () => {
   const r = arcanine(0, 'base1-2', 0);              // vs Blastoise, neither kills
-  if (!(r.td > r.fl)) throw new Error(`Take Down abandoned while healthy: ${r.fl} vs ${r.td}`);
+  if (!(r.td > 0)) throw new Error(`Take Down turned off entirely at full HP: ${r.td}`);
+  // Near-equivalent is the honest state of the model: 80 damage minus a recoil
+  // that is cheapest here, against 50 that now costs nothing to fire. A LARGE
+  // gap either way means somebody moved a weight without meaning to.
+  if (Math.abs(r.td - r.fl) > 12)
+    throw new Error(`the two attacks are no longer close at full HP: ${r.fl} vs ${r.td}`);
+  return true;
+});
+
+T('...and the recoil curve still bites as Arcanine gets hurt', () => {
+  // The half of the reversed test that was never in question, pinned on its own
+  // so the property survives whatever happens to the comparison above.
+  const fresh = arcanine(0, 'base1-2', 0), hurt = arcanine(60, 'base1-2', 0);
+  if (!(fresh.td > hurt.td)) throw new Error(`Take Down not discounted by damage taken: ${fresh.td} vs ${hurt.td}`);
   return true;
 });
 
