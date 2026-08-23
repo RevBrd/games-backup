@@ -6080,7 +6080,8 @@ class AI {
       if (!f.statusProof) for (const st in f.statuses) {
         const key = STATUS_VALUE[st];
         if (!key) continue;
-        s += f.statuses[st] * W[key] * survives * (DENIES_A_TURN[st] ? turnScale : 1);
+        s += f.statuses[st] * W[key] * survives * (DENIES_A_TURN[st] ? turnScale : 1)
+             * this.statusNovelty(st, you.active);
       }
       // Jam is Confusion by another name, so it reads the same board.
       if (f.flags.jam) s += W.confuse * survives * 0.5 * turnScale;
@@ -6874,6 +6875,56 @@ class AI {
   // Only the Active is being hit, so only the Active is discounted. Graded
   // rather than a cliff, on the by-now well-earned suspicion of any quantity
   // about proximity to an edge written as an equality test.
+  // IS THIS STATUS WORTH ANYTHING AGAINST A TARGET THAT ALREADY HAS ONE?
+  //
+  // The 22 Aug rider rule said a rider is worth nothing on a Pokemon the attack
+  // REMOVES. This is the same sentence with a different ending: a rider is worth
+  // nothing on a Pokemon that already HAS it. Both were flat — every status verb
+  // in the game scored identically against a clean target and an afflicted one,
+  // so Poison Sting kept its poison credit against something already poisoned
+  // and Toxic scored 44 against a target it could not affect in any way.
+  //
+  // **Found by two of Trevor's notes landing on one cause**, 23 Aug 2026.
+  // Nidoking: *"Once the opponent is poisoned, Toxic cannot add additional poison
+  // damage, so Thrash becomes more valuable."* Beedrill: *"Poison Sting first, and
+  // then Twineedle when the opponent is already poisoned."* Neither note is about
+  // the other's card and neither mentions a scoring term.
+  //
+  // IT IS NOT ONE RULE FOR ALL FOUR, AND THAT IS THE WHOLE CARE IN IT. The answer
+  // is read off what the engine actually does with each, not off a table of
+  // opinions:
+  //
+  //   Poisoned     persists until cured, so re-applying is worthless — EXCEPT
+  //                Toxic, which raises the tick from 10 to 20 and is printed
+  //                "(even if it was already Poisoned)" precisely because of this
+  //   Asleep       persists until a wake flip succeeds; re-applying changes nothing
+  //   Confused     persists until cured; likewise
+  //   Paralyzed    **NOT redundant.** `endTurn` clears it when `paralyzedTurn <
+  //                turn`, so a second application REFRESHES the timer and really
+  //                does buy another turn
+  //
+  // And the big three are mutually exclusive — `applyStatus` clears all of them
+  // before setting one — so putting a DIFFERENT one on an afflicted Pokemon is a
+  // swap rather than a redundancy, and swaps are not discounted here at all.
+  //
+  // Returns a multiplier rather than a boolean because a partial case exists:
+  // Toxic against a 10-poison target is genuinely worth something, just not
+  // full price.
+  statusNovelty(st, defSlot) {
+    if (!defSlot) return 1;
+    const cur = defSlot.status || {};
+    if (st === 'Paralyzed') return 1;                    // refreshes; see above
+    if (st === 'Poisoned') {
+      if (!cur.poisoned) return 1;
+      // Already poisoned. The only thing left to gain is a stronger tick, and
+      // `poisonDamage` is where the engine keeps it.
+      return (defSlot.poisonDamage || 10) < 20 ? 0.5 : 0;
+    }
+    if (st === 'Asleep')   return cur.asleep ? 0 : 1;
+    if (st === 'Confused') return cur.confused ? 0 : 1;
+    return 1;
+  }
+
   // HOW MANY TURNS OF SILENCE A DISCARD BUYS — the cost of an attack that eats
   // its own Energy, measured in the thing you actually lose.
   //

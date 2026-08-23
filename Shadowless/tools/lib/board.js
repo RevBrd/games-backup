@@ -153,6 +153,11 @@ function makeSlot(E, spec) {
     slot.status[k] = true;
     if (k === 'paralyzed') slot.paralyzedTurn = 0;
   }
+  // Poison has a STRENGTH as well as a presence, and Toxic is the card that
+  // makes the difference matter: it upgrades a 10 to a 20 and does nothing at
+  // all to a target already on 20. A board that cannot say which is which
+  // cannot test Nidoking's note.
+  if (o.poisonDamage) slot.poisonDamage = o.poisonDamage;
   slot.playedTurn = 0;             // arrived long enough ago to act
   return slot;
 }

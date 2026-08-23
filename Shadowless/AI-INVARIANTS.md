@@ -394,3 +394,37 @@ another. `powertest.js` held that a fresh Arcanine prefers Take Down; Trevor's c
 Flamethrower. The test was rewritten rather than deleted, because what it was *protecting* — that
 recoil pricing must not turn Take Down off — is still true and is still worth a guard.
 *[Why, and what the rewrite asserts instead →](HISTORY.md)*
+
+**A rider is worth nothing on a Pokemon that ALREADY has it.** *23 Aug — #24, and it is the 22 Aug
+rider rule with a different ending.* That one said a rider is worth nothing on a Pokemon the attack
+*removes*; this one says the same about one it cannot affect. Both were flat: **every status verb in
+the game scored identically against a clean target and an afflicted one.** Poison Sting kept its full
+poison credit against something already poisoned, and Toxic scored **44** against a target it could
+not change in any way.
+
+**Found by two of Trevor's notes landing on one term**, neither of which mentions scoring and neither
+of which is about the other's card. Nidoking: *"Once the opponent is poisoned, Toxic cannot add
+additional poison damage, so Thrash becomes more valuable."* Beedrill: *"Poison Sting first, and then
+Twineedle when the opponent is already poisoned."*
+
+**IT IS NOT ONE RULE FOR ALL FOUR STATUSES, and that is the care in it.** `statusNovelty` reads what
+the engine actually does rather than a table of opinions. Poison, Sleep and Confusion persist until
+cured, so re-applying is worthless. **Paralysis is not redundant** — `endTurn` clears it on
+`paralyzedTurn < turn`, so a second application refreshes the timer and genuinely buys another turn.
+And the big three replace each other in `applyStatus`, so a *different* one on an afflicted Pokemon
+is a swap and is not discounted at all. **Toxic against a 10-poison target is the partial case**, worth
+half: it cannot re-poison but it can raise the tick to 20, which is why the card is printed "(even if
+it was already Poisoned)".
+
+**Measured, and the exposure is small — recorded rather than dressed up.** 250 games, 1,791 attacks: a
+defender is afflicted by anything at all in **1.5%** of attacks, and **10 of 333 status attacks (3.0%)**
+landed where the rider was fully or partly redundant. Both aggregates read null — `aiduel` against the
+pin held at 51.4% ±0.5, the benchmark held at rank 5 — and **the exposure was measured before either
+null was believed.**
+
+**Kept anyway, and not for the win rate.** A bot that Toxics a Pokemon already carrying Toxic is
+*visibly* stupid to the person sitting opposite, and [MISREADINGS.md](MISREADINGS.md) already says a
+duel cannot see the rare error that matters to a human. Compare the Paras finding of 22 Aug, measured
+at 6.2% and deliberately **not** built: the difference is cost, not size. That one needed a new
+capability; this one needed a multiplier on a term that already existed and is derived rather than
+tuned, so there is nothing to maintain.

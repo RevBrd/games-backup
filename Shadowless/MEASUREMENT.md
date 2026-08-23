@@ -234,6 +234,7 @@ Its run on 21 Aug 2026, all three figures from the same 30-seed merged field:
 | after the Charizard fixes | **6 of 13** | **52.8%** | 56% |
 | 22 Aug, after the bought-turn work | 6 of 13 | 52.9% | 55% |
 | 23 Aug, after the discard repricing | **5 of 13** | 53.8% | 55% |
+| 23 Aug, after the status-novelty rule | 5 of 13 | 54.2% | 54% |
 
 **The 22 Aug row is a null and it is recorded as one.** *(It said "that last row" until 23 Aug added
 one underneath it, at which point the sentence silently began describing different work. **Name the

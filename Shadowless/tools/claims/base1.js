@@ -191,6 +191,235 @@ const CLAIMS = [
     sane: b => b.me.active.energy.length === 4 && b.affordable().includes('Fire Spin'),
     expect: b => b.score('Fire Spin') < b.damage('Fire Spin') - 20,
   },
+  // ==========================================================================
+  // BATCH 1 — 23 Aug 2026. Twelve notes off `wants.js base1 --todo`, decomposed.
+  // Written before running them, so the failures are findings rather than things
+  // that were tuned into passing.
+  // ==========================================================================
+
+  // ---------------------------------------------------------------- Dugtrio --
+  {
+    id: 'base1-19', card: 'Dugtrio', pattern: 'Attack choice',
+    note: "Slash is preferred unless Earthquake would kill and Slash wouldn't. The damage to its user's own bench should be weighed against Earthquake",
+    // MEASURED 23 Aug 2026, and the note is shorthand. Earthquake costs a flat 9
+    // a benched body — linear, and sharply negative once the bench is near death
+    // — so the crossover sits at THREE benched Pokemon, which is a normal board.
+    // At an EMPTY bench Earthquake is strictly better with no downside at all, so
+    // "Slash is preferred" cannot be meant literally. Asserted at a realistic
+    // bench; whether Trevor wants Slash at one or two as well is a question.
+    claim: 'Slash on a realistic bench, where Earthquake\'s extra 30 no longer pays for the splash',
+    board: {
+      me:   { card: 'Dugtrio', energy: '4 Fighting' },
+      them: { card: 'Blastoise', energy: '4 Water' },
+      myBench: [{ card: 'Chansey' }, { card: 'base1:Zapdos' },
+                { card: 'base1:Squirtle' }, { card: 'base1:Magikarp' }],
+    },
+    sane: b => b.lethal('Earthquake') === 0 && b.lethal('Slash') === 0 && b.me.bench.length === 4,
+    expect: b => b.prefers('Slash'),
+  },
+  {
+    id: 'base1-19', card: 'Dugtrio', pattern: 'Attack choice',
+    note: "Slash is preferred unless Earthquake would kill and Slash wouldn't. The damage to its user's own bench should be weighed against Earthquake",
+    claim: '...unless Earthquake kills and Slash does not',
+    board: {
+      me:   { card: 'Dugtrio', energy: '4 Fighting' },
+      them: { card: 'Blastoise', dmg: 40, energy: '4 Water' },
+      myBench: [{ card: 'Chansey' }],
+    },
+    sane: b => b.lethal('Earthquake') === 1 && b.lethal('Slash') === 0,
+    expect: b => b.prefers('Earthquake'),
+  },
+  {
+    id: 'base1-19', card: 'Dugtrio', pattern: 'Attack choice',
+    note: "Slash is preferred unless Earthquake would kill and Slash wouldn't. The damage to its user's own bench should be weighed against Earthquake",
+    claim: 'the bench damage is actually weighed — Earthquake is worth less with a hurt bench behind it',
+    board: {
+      me:   { card: 'Dugtrio', energy: '4 Fighting' },
+      them: { card: 'Blastoise', energy: '4 Water' },
+      myBench: [{ card: 'base1:Squirtle', dmg: 30 }, { card: 'base1:Magikarp', dmg: 20 }],
+    },
+    sane: b => b.me.bench.length === 2 && b.lethal('Earthquake') === 0,
+    // `alt` builds a second board from the same helper, for claims that are
+    // comparisons between two positions rather than between two attacks.
+    expect: (b, alt) => b.score('Earthquake') < alt({
+      me:   { card: 'Dugtrio', energy: '4 Fighting' },
+      them: { card: 'Blastoise', energy: '4 Water' },
+    }).score('Earthquake'),
+  },
+
+  // --------------------------------------------------------------- Beedrill --
+  {
+    id: 'base1-17', card: 'Beedrill', pattern: 'Setup turn',
+    note: "To use Poison Sting first, and then Twineedle when the opponent is already poisoned. Poison Sting is preferred again when a guaranteed 40 damage or less is needed, rather than gambled on Twineedle's coin flip",
+    claim: 'Poison Sting first, against a target that is not yet poisoned',
+    board: {
+      me:   { card: 'Beedrill', energy: '3 Grass' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => !b.them.active.status.poisoned && b.affordable().includes('Twineedle'),
+    expect: b => b.prefers('Poison Sting'),
+  },
+  {
+    id: 'base1-17', card: 'Beedrill', pattern: 'Setup turn',
+    note: "To use Poison Sting first, and then Twineedle when the opponent is already poisoned. Poison Sting is preferred again when a guaranteed 40 damage or less is needed, rather than gambled on Twineedle's coin flip",
+    claim: '...then Twineedle once they are already poisoned',
+    open: 'ASK TREVOR. The redundancy half of this note was right and is now built — Poison Sting lost its dead poison credit against an already-poisoned target, 46 down to 43. But Twineedle still loses, and NOT to a scoring fault: Poison Sting does 40 FLAT while Twineedle averages 30 across two coins and can land on nothing at all. With the rider worth exactly zero, 40 still beats 30. So either the note is shorthand and Poison Sting is simply right here, or he is valuing Twineedle\'s 60-on-double-heads to reach a kill Poison Sting cannot — which would be a lethality claim rather than a preference, and the third Beedrill row already covers that shape from the other side.',
+  },
+  {
+    id: 'base1-17', card: 'Beedrill', pattern: 'Attack choice',
+    note: "To use Poison Sting first, and then Twineedle when the opponent is already poisoned. Poison Sting is preferred again when a guaranteed 40 damage or less is needed, rather than gambled on Twineedle's coin flip",
+    claim: 'a guaranteed 40 that kills beats a coin flip for 60 that can land on nothing',
+    board: {
+      me:   { card: 'Beedrill', energy: '3 Grass' },
+      them: { card: 'base1:Squirtle', status: 'poisoned' },
+    },
+    sane: b => b.lethal('Poison Sting') === 1 && b.lethal('Twineedle') < 1,
+    expect: b => b.prefers('Poison Sting'),
+  },
+
+  // ----------------------------------------------------------------- Raichu --
+  {
+    id: 'base1-14', card: 'base1:Raichu', pattern: 'Attack choice',
+    note: "To use Agility when Thunder wouldn't kill, or when Thunder risks a self-kill that isn't worthwhile. Does need some degree of Kamakaze Timing. Agility buys turns through damage *and status* denial on a coin flip, while Thunder risks 30 self-dmg on a coin flip.",
+    claim: 'Agility when Thunder cannot kill and something real is coming back',
+    board: {
+      me:   { card: 'base1:Raichu', energy: '4 Lightning' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.lethal('Thunder') === 0 && b.threat() >= 70,
+    expect: b => b.prefers('Agility'),
+  },
+  {
+    id: 'base1-14', card: 'base1:Raichu', pattern: 'Attack choice',
+    note: "To use Agility when Thunder wouldn't kill, or when Thunder risks a self-kill that isn't worthwhile. Does need some degree of Kamakaze Timing. Agility buys turns through damage *and status* denial on a coin flip, while Thunder risks 30 self-dmg on a coin flip.",
+    claim: '...but Thunder when it kills',
+    board: {
+      me:   { card: 'base1:Raichu', energy: '4 Lightning' },
+      them: { card: 'Chansey', dmg: 70, energy: '4 Fighting' },
+    },
+    sane: b => b.lethal('Thunder') === 1,
+    expect: b => b.prefers('Thunder'),
+  },
+  {
+    id: 'base1-14', card: 'base1:Raichu', pattern: 'Kamikaze timing',
+    note: "To use Agility when Thunder wouldn't kill, or when Thunder risks a self-kill that isn't worthwhile. Does need some degree of Kamakaze Timing. Agility buys turns through damage *and status* denial on a coin flip, while Thunder risks 30 self-dmg on a coin flip.",
+    claim: "Agility when Thunder's own 30 would kill Raichu for nothing",
+    board: {
+      me:   { card: 'base1:Raichu', energy: '4 Lightning', dmg: 60 },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.hp() <= 30 && b.lethal('Thunder') === 0,
+    expect: b => b.prefers('Agility'),
+  },
+
+  // --------------------------------------------------------------- Nidoking --
+  {
+    id: 'base1-11', card: 'Nidoking', pattern: 'Setup turn',
+    note: "Both its moves cost the same and both are worth using, but it usually wants to start with Toxic due to the extra poision damage before switching to Thrash, as the extra poision damage on top of Toxic's natural damage equal the 50/50 damage potential of Thrash. Once the opponent is poisoned, Toxic cannot add additional poison damage, so Thrash becomes more valuable.",
+    claim: 'Toxic first, against a target carrying no poison at all',
+    board: {
+      me:   { card: 'Nidoking', energy: '3 Grass' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => !b.them.active.status.poisoned && b.affordable().includes('Thrash'),
+    expect: b => b.prefers('Toxic'),
+  },
+  {
+    id: 'base1-11', card: 'Nidoking', pattern: 'Setup turn',
+    note: "Both its moves cost the same and both are worth using, but it usually wants to start with Toxic due to the extra poision damage before switching to Thrash, as the extra poision damage on top of Toxic's natural damage equal the 50/50 damage potential of Thrash. Once the opponent is poisoned, Toxic cannot add additional poison damage, so Thrash becomes more valuable.",
+    claim: '...then Thrash, because a target already on 20 poison gains nothing from a second Toxic',
+    board: {
+      me:   { card: 'Nidoking', energy: '3 Grass' },
+      them: { card: 'Chansey', energy: '4 Fighting', status: 'poisoned', poisonDamage: 20 },
+    },
+    sane: b => b.them.active.status.poisoned && b.them.active.poisonDamage === 20,
+    expect: b => b.prefers('Thrash'),
+  },
+
+  // -------------------------------------------------------------- Poliwrath --
+  {
+    id: 'base1-13', card: 'Poliwrath', pattern: 'Attack choice',
+    note: "An Attack Choice, as both attacks are valid. Whirlpool is preferred due to the very high value of discarding opponent energy cards, but Water Gun can be Over-Attached into doing higher damage. Water Gun should be used when it results in a kill that Whrilpool wouldn't, and the bot should be willing to add that fifth energy to do so",
+    claim: 'Whirlpool when neither kills and the target is carrying Energy worth taking',
+    board: {
+      me:   { card: 'Poliwrath', energy: '4 Water' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.them.active.energy.length >= 4 && b.lethal('Whirlpool') === 0 && b.lethal('Water Gun') === 0,
+    expect: b => b.prefers('Whirlpool'),
+  },
+  {
+    id: 'base1-13', card: 'Poliwrath', pattern: 'Attack choice',
+    note: "An Attack Choice, as both attacks are valid. Whirlpool is preferred due to the very high value of discarding opponent energy cards, but Water Gun can be Over-Attached into doing higher damage. Water Gun should be used when it results in a kill that Whrilpool wouldn't, and the bot should be willing to add that fifth energy to do so",
+    claim: '...but Water Gun when the Over-Attach makes it lethal and Whirlpool is not',
+    board: {
+      me:   { card: 'Poliwrath', energy: '5 Water' },
+      them: { card: 'Chansey', dmg: 70, energy: '4 Fighting' },
+    },
+    sane: b => b.lethal('Water Gun') === 1 && b.lethal('Whirlpool') === 0,
+    expect: b => b.prefers('Water Gun'),
+  },
+
+  // ------------------------------------------------- the five prohibitions --
+  // Trevor names an attack that should almost never come out. These are the
+  // cheapest rows in the file to write and the sharpest to fail: one board
+  // proves or disproves each, which is why PLAYBOOK.md calls a prohibition the
+  // most valuable kind of note.
+  {
+    id: 'base1-32', card: 'Kadabra', pattern: 'Attack choice',
+    note: "Super Psy does high damage for what it is, and even outdoes its own evolution's damage. The evolution is still preferred in most situations though due to its pokemon power and chance to confuse. Recover should never be used. It drains an energy from a pokemon that wants to stay at 3 energies at all times. Getting in a 50 dmg hit and dying is almost always preferable to recovery or retreat",
+    claim: 'Recover should never be used — Super Psy even while badly hurt',
+    board: {
+      me:   { card: 'Kadabra', energy: '3 Psychic', dmg: 40 },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.affordable().includes('Recover') && b.hp() <= 20,
+    expect: b => b.prefers('Super Psy'),
+  },
+  {
+    id: 'base1-49', card: 'base1:Drowzee', pattern: 'Attack choice',
+    note: "Pound only used when Confuse Ray can't be",
+    claim: 'Confuse Ray whenever it is affordable — Pound is the fallback, not the choice',
+    board: {
+      me:   { card: 'base1:Drowzee', energy: '2 Psychic' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.affordable().includes('Pound') && b.affordable().includes('Confuse Ray'),
+    expect: b => b.prefers('Confuse Ray'),
+  },
+  {
+    id: 'base1-54', card: 'Metapod', pattern: 'Attack choice',
+    note: 'Stun Spore is always preferred, and there are extremely few situations Stiffen is used due to the 50/50 damage block chance. For the same energy cost and same 50/50 chance, Stun Spore can cost a turn through paralysis while dealing 20 guaranteed damage',
+    claim: 'Stun Spore over Stiffen even under a heavy threat — same cost, same coin, strictly more',
+    board: {
+      me:   { card: 'Metapod', energy: '2 Grass' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.affordable().includes('Stiffen') && b.threat() >= 70,
+    expect: b => b.prefers('Stun Spore'),
+  },
+  {
+    id: 'base1-37', card: 'Nidorino', pattern: 'Attack choice',
+    note: "Horn Drill preferred, Double Kick only when it can't be afforded",
+    claim: 'Horn Drill whenever both are affordable',
+    board: {
+      me:   { card: 'Nidorino', energy: '4 Grass' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.affordable().includes('Double Kick') && b.affordable().includes('Horn Drill'),
+    expect: b => b.prefers('Horn Drill'),
+  },
+  {
+    id: 'base1-38', card: 'Poliwhirl', pattern: 'Attack choice',
+    note: "Amnesia can block an opponent's damage before Doubleslap has the energy to be used or if Poliwhirl needs to survive to the next turn to evolve. Otherwise Doubleslap is always preferred",
+    claim: 'Doubleslap once it is affordable — Amnesia is the thing you do before that',
+    board: {
+      me:   { card: 'Poliwhirl', energy: '3 Water' },
+      them: { card: 'Chansey', energy: '4 Fighting' },
+    },
+    sane: b => b.affordable().includes('Amnesia') && b.affordable().includes('Doubleslap'),
+    expect: b => b.prefers('Doubleslap'),
+  },
 ];
 
 module.exports = { CLAIMS };

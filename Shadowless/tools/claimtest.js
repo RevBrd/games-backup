@@ -160,8 +160,11 @@ for (const c of runnable) {
     continue;
   }
 
+  // Some claims are comparisons between two POSITIONS rather than between two
+  // attacks on one — "Earthquake is worth less with a bench behind it" cannot be
+  // said on a single board. `alt` builds a second one, so those rows stay rows.
   let ok = false, err = null;
-  try { ok = !!c.expect(b); } catch (e) { err = e; }
+  try { ok = !!c.expect(b, spec => setup(spec)); } catch (e) { err = e; }
   if (ok) { pass++; if (!EXPLORE) console.log(`  ok    ${c.card.padEnd(12)} ${c.claim}`); }
   else {
     fail++;
