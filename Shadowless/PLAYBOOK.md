@@ -26,6 +26,22 @@ each one is a strict superset of the last — `Challenge 1` was verified as exac
 workbook's 229 rows plus 28 promos and a `Gated Until` column. **Read the newest and never diff two
 of them for content.**
 
+**`node tools/wants.js` reads it, and reading it by hand is no longer the job.** Until 23 Aug 2026
+nothing in the project could open an `.xlsx`, so the inbox was only reachable through Excel and
+[DATA.md](DATA.md) called these workbooks reference-only. They were never reference; they are the
+source this entire method runs on. **Do not quote a note count in prose** — run the tool, which also
+prints which notes have no claim yet.
+
+**Being pointed at a stale workbook is the failure this tool exists to prevent, and it is not
+hypothetical.** A session read `Challenge 1` believing it was current, found Team Rocket absent,
+concluded the newest live set had no annotation at all, and sized the job at a third of its real
+weight. `wants.js` picks by modification date and **prints which file it opened and how many it
+ignored, every single run.** The note register changed shape at the same time and that is the tell if
+you ever suspect a stale read: Base Set and Team Rocket run to full paragraphs, median over 200
+characters, while Jungle and Fossil are still one-liners **awaiting the same overhaul** — Trevor,
+23 Aug 2026. **Do not work a Jungle or Fossil claim from the current text; it is about to be
+rewritten.**
+
 **Its promos are not in the game yet**, which is why `Gated Until` exists. A `Wants` on a card that no
 set has made live is a note filed early, not a gap — do not treat one as unfiled work, and if you
 build a coverage tool, filter to the live sets.
@@ -113,9 +129,34 @@ second copy.
 reproduced from a constructed board first, and two of them turned out to be a different fault than the
 note described. [PLAYTEST.md](PLAYTEST.md) is the method file and it applies here unchanged.
 
-**Assert it in `powertest.js`, not in a duel.** These are almost all symmetric between the two seats,
-or about what the bot can *perceive*, and `aiduel.js` is blind to both by construction. It will report
-~50% and that reads as "your change did nothing".
+**Write the claim as a row in `tools/claims/`, and run it with `--explore` BEFORE you know the answer.**
+That is the whole loop, and the investigation leaves an artifact instead of a table in a document —
+every measurement in [ATTACK-CHOICE.md](Playbook/ATTACK-CHOICE.md) came out of a throwaway script that
+is gone, so none of them can be re-run. `tools/lib/board.js` builds the position out of card *names*.
+*[The harness, what it refuses to do, and the control that proves it can fail →](TOOLING.md)*
+
+```bash
+node tools/wants.js base1 --todo        # which notes have no claim yet
+node tools/claimtest.js Arcanine --explore   # what does the bot ACTUALLY do here
+node tools/claimtest.js                 # assert them all
+```
+
+**ONE NOTE IS SEVERAL CLAIMS, and this is the trap the whole method turns on.** Dark Alakazam's note
+is six: hit and run with Teleport Blast; hide behind fodder; hide behind a *tank* instead, which is a
+different trade; Mind Shock when they resist Psychic; Mind Shock when the extra 10 is lethal; stay in
+when they are harmless. **A card reads DONE the moment one clause is tested and the other five go
+invisible forever** — which is why `wants.js` prints the note's own text beside its claims and says
+outright that its coverage figure is the weak reading. Decomposing the paragraph *is* the work; the
+board is the easy part.
+
+**A clause with no term to assert against is a ROW, not an omission.** Give it `open:` and say what is
+missing. `claimtest.js --open` lists them, never passes them, and that list is where the next AI job
+comes from. Dropping the half of a sentence the scorer cannot reach is how a note quietly shrinks to
+the part that already worked.
+
+**Assert it here, not in a duel.** These are almost all symmetric between the two seats, or about what
+the bot can *perceive*, and `aiduel.js` is blind to both by construction. It will report ~50% and that
+reads as "your change did nothing".
 *[Every way this project's measurement has lied →](MEASUREMENT.md)*
 
 **Mark it, do not delete it.** Unlike a grab bag item, a satisfied claim stays — it is the reason its
@@ -184,7 +225,7 @@ pattern. They link, they do not overlap.
 - Power Suppression - Prevents pokemon powers from working
 - Defensive Type Manipulation - changing its own type to avoid a weak type matchup
 - Coin Luck - relies on coin flips to be effective at all, beyond the baseline
-- Energy Feed - wants a constant supply of energy fed to it due to its primary move requiring an energy discard. Applies to many Fire types.
+- Energy Funnel - wants a constant supply of energy fed to it due to its primary move requiring an energy discard. Applies to many Fire types. *(Written as "Energy Feed" when this list was first made and as "Energy Funnel" in every note since; Trevor settled it on 23 Aug 2026. **Its relationship to the built [Ammo](Playbook/AMMO.md) pattern is open** — Arcanine's note reads like Ammo's unbuilt half, Charmeleon's reads like something else, and whether that is one pattern or two gets decided when the family is worked, not before.)*
 
 
 

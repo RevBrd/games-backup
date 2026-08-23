@@ -218,7 +218,16 @@ Decks.xlsx` is the source of `decks.json` (above) and `Jungle Decks.xlsx` is the
 `jungle_decks.json`. **`data/v1 Opp Decks/` holds Trevor's own opponent workbooks** — `Base1 Opponent
 Decks v1.xlsx` and `Jungle Opponent Decks v1.xlsx`, the sources of `base1_decks.json` and
 `base2_decks.json`. Those two are **not** quarantined; they are live upstream, and the JSON is the
-thing to read. **`Base4 Decks.xlsx`** is Base
+thing to read.
+
+**As of 23 Aug 2026 `data/v1 Opp Decks/` is not reference-only at all, and the `Wants` column is the
+part that matters.** `tools/lib/xlsx.js` reads an `.xlsx` with no dependencies and `tools/wants.js`
+reports it. **The newest workbook is the live one and nothing else should be read** — it picks by
+modification date and prints which file it opened, because a session once worked from a stale one and
+mis-sized a job by a factor of three. *[What the column is for, and how a note becomes a claim
+→](PLAYBOOK.md)*
+
+**`Base4 Decks.xlsx`** is Base
 Set 2 theme decks, incomplete, kept and not converted — and note it is named for the set code, so it
 is Base Set 2 and not Team Rocket. **`GB2 Opponent Deck Guide (Alamedyang, English-patch names).txt`**
 is the find of 14 Aug: a hex-extracted guide to ~90 opponents from *Pokémon Card GB2*, the Japan-only

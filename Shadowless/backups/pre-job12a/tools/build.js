@@ -1,0 +1,134 @@
+// Assemble the source modules into the single self-contained shadowless.html.
+//
+//   node tools/build.js                 -> ../shadowless.html
+//   node tools/build.js path/to/out.html
+//   node tools/build.js --check         build to memory and diff against the
+//                                       committed HTML; exit 1 if they differ
+//
+// A Node port of the original build.py, which cannot run here — this machine has
+// no Python. Behaviour is otherwise identical: concatenate the modules in
+// dependency order, inline the CSS, strip the CommonJS export tails.
+
+const fs = require('fs');
+const path = require('path');
+
+const HERE = path.join(__dirname, '..');
+const SRC = path.join(HERE, 'src');
+// collection.js and packs.js sit between the engine and the UI: both are pure
+// data with no dependency on either, and the UI is the only thing that reads
+// them. packs.js emits variant FLAG ARRAYS, which collection.js's grant()
+// canonicalises — so the two never need to know about each other, and the
+// order between them does not matter.
+// eventlog.js is pure data too, and reads nothing at all — it is handed strings
+// by the UI. Same tier as collection.js and packs.js.
+// progress.js (Job 7) joins that tier. It derives the ladder from LADDER and the
+// live set list, and it deliberately does NOT import deckgen or collection: a
+// generated opponent's deck comes in through a callback and packs are granted by
+// the caller, so the pure tier stays free of internal dependencies.
+const ORDER = ['cards.js', 'effects.js', 'art.js', 'deckgen.js', 'ai.js', 'engine.js', 'collection.js', 'packs.js', 'eventlog.js', 'progress.js', 'ui.js'];
+const TITLE = 'Shadowless — a WotC-era Pokémon TCG';
+
+const read = n => fs.readFileSync(path.join(SRC, n), 'utf8');
+
+// Each module ends with a `if (typeof module ...)` export line so Node can require
+// it directly. Those lines are meaningless in a browser and get stripped on the way in.
+const stripExports = src => src.replace(/^\s*if \(typeof module.*$/gm, '');
+
+// The stripper is line-anchored, so a module whose export list is wrapped over
+// several lines loses only its first line and leaves the orphaned object body
+// behind — which builds happily and then dies as "Unexpected token '}'" some
+// thousands of lines into the generated HTML. Cost a session once.
+//
+// This has to run on the SOURCE, not on the stripped output: stripping removes
+// the `module.exports = {` along with the rest of the line, so by then there is
+// nothing left to recognise. What gives it away is the opening line itself —
+// an unbalanced brace, or no closing semicolon.
+function checkExportLine(name, src) {
+  src.split('\n').forEach((ln, i) => {
+    if (!/^\s*if \(typeof module\b/.test(ln)) return;
+    const opens = (ln.match(/\{/g) || []).length;
+    const closes = (ln.match(/\}/g) || []).length;
+    if (opens === closes && /;\s*$/.test(ln)) return;
+    console.error(`ERROR: ${name}:${i + 1} — the CommonJS export spans more than one line.`);
+    console.error('  tools/build.js strips it with a line-anchored regex, so the rest of');
+    console.error('  the export would be left behind in the bundle. Put it on one line.');
+    console.error(`  ${ln.trim().slice(0, 90)}`);
+    process.exit(1);
+  });
+}
+
+// A NUL byte in a source file is never intentional and no test will ever see
+// it — every suite passed with one sitting inside a string literal in ui.js,
+// because a NUL is a perfectly valid string character. It got there from a
+// mangled edit and shipped in the built HTML. Editors hide it, `grep` gives up
+// and calls the file binary, and the only symptom is that tooling starts
+// behaving oddly. One line to refuse it.
+// (Written with a LITERAL NUL in the search string until 12 Aug 2026, which made
+// this file the very thing it warns about: grep called tools/build.js binary and
+// refused to search it. '\0' is the same character and stays greppable.)
+function checkNoNul(name, src) {
+  const i = src.indexOf('\0');
+  if (i < 0) return;
+  const line = src.slice(0, i).split('\n').length;
+  console.error(`ERROR: ${name}:${line} contains a NUL byte at offset ${i}.`);
+  console.error(`  ...${JSON.stringify(src.slice(Math.max(0, i - 50), i + 20))}`);
+  process.exit(1);
+}
+
+function build() {
+  const js = ORDER.map(f => {
+    const src = read(f);
+    checkExportLine(f, src);
+    checkNoNul(f, src);
+    return stripExports(src);
+  }).join('\n');
+  const css = read('style.css');
+  checkNoNul('style.css', css);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${TITLE}</title>
+<style>
+${css}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+${js}
+</script>
+</body>
+</html>
+`;
+}
+
+const html = build();
+const args = process.argv.slice(2);
+
+if (args[0] === '--check') {
+  const current = fs.readFileSync(path.join(HERE, 'shadowless.html'), 'utf8');
+  if (current === html) {
+    console.log('shadowless.html is in sync with the sources.');
+    process.exit(0);
+  }
+  console.error('shadowless.html DIFFERS from a fresh build of the sources.');
+  console.error(`  built:     ${html.length.toLocaleString()} bytes`);
+  console.error(`  committed: ${current.length.toLocaleString()} bytes`);
+  const a = html.split('\n'), b = current.split('\n');
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if (a[i] !== b[i]) {
+      console.error(`  first difference at line ${i + 1}:`);
+      console.error(`    built:     ${JSON.stringify((a[i] ?? '').slice(0, 120))}`);
+      console.error(`    committed: ${JSON.stringify((b[i] ?? '').slice(0, 120))}`);
+      break;
+    }
+  }
+  process.exit(1);
+}
+
+const out = args[0] ? path.resolve(args[0]) : path.join(HERE, 'shadowless.html');
+fs.mkdirSync(path.dirname(out), { recursive: true });
+fs.writeFileSync(out, html);
+console.log(`wrote ${out}  (${html.length.toLocaleString()} bytes)`);

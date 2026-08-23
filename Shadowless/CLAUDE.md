@@ -60,7 +60,7 @@ the tree and not orientation.
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
 | [PLAYTEST.md](PLAYTEST.md) | Trevor points you at `GRABBAG.md`, hands you a match log, or says something felt off while playing. How to work a report from a human: why it is a symptom and not a diagnosis, what to do when it turns out to be wrong, and the two traps that make a real fix look like it did nothing |
 | [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one |
-| [PLAYBOOK.md](PLAYBOOK.md) | **The highest-value list in the tree.** How the cards are *supposed* to be played, from Trevor's plain English, as testable claims. Every AI fault found on 21 Aug 2026 came from a sentence of his and none came from a tag, a weight sweep or a duel. **It is a directory: the unit is the PATTERN and each one is its own file in `Playbook/`**, because all four of the original per-card entries generalised to a family. His inbox is the `Wants` column of the workbooks in `data/v1 Opp Decks/`, not a file here |
+| [PLAYBOOK.md](PLAYBOOK.md) | **The highest-value list in the tree.** How the cards are *supposed* to be played, from Trevor's plain English, as testable claims. Every AI fault found on 21 Aug 2026 came from a sentence of his and none came from a tag, a weight sweep or a duel. **It is a directory: the unit is the PATTERN and each one is its own file in `Playbook/`**, because all four of the original per-card entries generalised to a family. His inbox is the `Wants` column of the workbooks in `data/v1 Opp Decks/`, not a file here — **`node tools/wants.js` reads it now**, and the claims it becomes live in `tools/claims/`. **One note is several claims**, which is the trap the method turns on |
 
 ## Status
 
@@ -115,6 +115,11 @@ assets/cards/<set>/  the real printed card faces. GITIGNORED and DERIVED —
                   `node tools/fetch_art.js base1` rebuilds them
 backups/          pre-job safety copies, including the ten Claude Chat snapshots
 tools/            two generators, six suites, a screenshotter, an art fetcher
+       lib/       shared harness machinery — a dependency-free .xlsx reader, and
+                  the board builder that makes a position out of card NAMES
+       claims/    Trevor's card notes as rows the bot can be held to. One file
+                  per set. ADDING A CLAIM IS A ROW, NOT A FIXTURE — that is the
+                  point of it. See PLAYBOOK.md, then TOOLING.md
        chat-era/  the original Python tools, superseded. Kept for provenance
 ```
 
@@ -143,6 +148,10 @@ node tools/collectiontest.js             # the save file, decks and variants
 node tools/progresstest.js               # the ladder, unlocks and rewards
 node tools/packtest.js                   # 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
+node tools/wants.js base1 --todo         # Trevor's card notes, and which have no claim yet
+node tools/claimtest.js Arcanine --explore   # what the bot ACTUALLY does on a built board
+node tools/claimtest.js                  # assert the playbook claims — RED IS A FAULT REPORT,
+                                         # not a broken build, so it is NOT in the six-suite gate
 node tools/aitest.js 6 --gbc              # AI behaviour counts — not pass/fail; --gbc for ladder decks
 node tools/aiduel.js 8 --baseline --gbc  # AI vs a PINNED commit — the only form that accumulates
 node tools/aiduel.js 8                   # ...vs HEAD, which resets every commit; --control first
@@ -275,11 +284,21 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   closed across three sessions, every one of them found by Trevor describing how a card is meant to be
   played rather than by any instrument — see [PLAYBOOK.md](PLAYBOOK.md), which is the method that
   produced them. **The UI half is untouched.**
-- **Job 11.5** - Continued maintenance passes. We need to make the structure more load-bearing before we continue.
-- **Job 12** - Rulings and additions for the Promo cards through the Team Rocket set.
-- **Job 13** - Deck autobuilder major work.
-- **Job 13.5** - Scheduled pre-new set maintenance and grab bag run. Scheduling out future Job order.
-- **Job 14+** - Gym Leader sets and onwards.
+- **Job 11.5** - Continued maintenance passes. We need to make the structure more load-bearing before we continue. *Job Closed*
+- **Job 12a** - Continuing the AI pattern overhaul and testing behaviors. **It did need its own
+  infrastructure and that half is built** — `tools/wants.js` reads Trevor's workbook, `tools/lib/board.js`
+  makes a position out of card names, and `tools/claims/` holds the notes as rows. Proved by a control
+  that goes red against the pre-fix commit. **The remaining work is claims**, and the backlog is a
+  command rather than a number here: `node tools/wants.js --coverage`. Base Set first, and **Jungle and
+  Fossil are on hold** — their notes are one-liners awaiting the same overhaul base1 and base5 got.
+- **Job 12b** - UI updates from GRABBAG.md. 
+- **Job 12c** - Pack and rarity drop overhaul. Might run concurrently with others.
+- **Job 12d** - Scheduled document pass and grab bag run
+- **Job 13** - Rulings, cards, and AI logic additions for Promo cards up to Team Rocket.
+- **Job 14** - Maintenance passes in the shape of Job 12
+- **Job 15** - Deck autobuilder overhaul, if ready to do so.
+- **Job 16+** - Future sets and maintenance passes
+
 
 - **Base Set 2 and Legendary Collection are deprioritised, and the reason is that they are cheap
   rather than despite it.** 124 printings for **zero** new behaviours and 110 for twenty. They add

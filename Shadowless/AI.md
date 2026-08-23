@@ -283,3 +283,16 @@ on it.**
    Every opponent plays at the tier deck select hands them. Whether a named rival should play better
    than a Club Master is an unasked design question — see [PROGRESSION.md](PROGRESSION.md) and
    [OPPONENTS.md](OPPONENTS.md), which argues the AI probably should *not* be the dial.
+8. **The failing rows in `tools/claims/` are open AI faults, and they are not listed here on
+   purpose.** From 23 Aug 2026 a claim out of Trevor's workbook is a row the bot is held to, and a red
+   one is a fault report rather than a broken build. **`node tools/claimtest.js` is the live list** and
+   `--open` is the sub-list of clauses with no term to assert against at all.
+
+   Copying them into this file would create exactly the duplication claim that has gone stale three
+   times at the top of it. **What belongs here is the shape**, and the first eleven rows produced one:
+   *an attack's cost to its OWN future is underpriced against its damage.* Zapdos discards all four
+   Energy for about three points, against this project's own settled doctrine that an Energy is a
+   turn; Arcanine's recoil is graded correctly but too shallow at the top, so Take Down wins at full
+   HP and only loses once 40 damage is already on the board. Two cards, one direction, and both were
+   found by the harness on the day it was built.
+   *[How a note becomes a row →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*

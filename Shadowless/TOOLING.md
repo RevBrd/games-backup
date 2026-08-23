@@ -187,6 +187,66 @@ as a figure to quote. Run the suite for the real number.
   20000` is a fast pass while iterating. It also prints, without asserting, how many packs it takes
   to finish a set. That number is the one the economy turns on and nothing else computes it.
 
+## `claimtest.js` — pass/fail, but a red row is not a broken build
+
+**Deliberately not one of the six, and this is the whole point of the section.** It is pass/fail, so
+it does not belong with [MEASUREMENT.md](MEASUREMENT.md)'s instruments — there is no sample and no
+interval, a claim is true on its board or it is not. But it is **not a regression suite either**, and
+putting it in the six-suite gate would teach everybody to read it wrong.
+
+**A failing row here is a fault report about the AI, filed on purpose.** You write a claim out of
+Trevor's note *before* you know whether the bot satisfies it; red means you found something. That is
+the opposite of every other suite in this file, where red means you broke something. **Never "fix" a
+red claim by weakening the row** — either fix the scorer or move the row to `open:` with the reason.
+
+```bash
+node tools/claimtest.js                      # assert everything
+node tools/claimtest.js Arcanine --explore   # what the bot ACTUALLY does, scored
+node tools/claimtest.js --open               # clauses with no term to assert against
+node tools/claimtest.js --baseline 96c53fd   # the control — see below
+node tools/wants.js base1 --todo             # which notes have no claim yet
+```
+
+**Three parts, and the split matters.** `tools/lib/xlsx.js` reads Trevor's workbook with no
+dependencies, because it is a zip of XML and adding a package to a project whose deliverable is one
+double-clickable file was not worth it. `tools/wants.js` reports the inbox and the backlog.
+`tools/lib/board.js` builds a position out of card **names** and hands you probes written from player
+0's seat — `prefers('Ice Beam')`, `threat()`, `lethal('Take Down')`, `explain()`.
+
+**It exists because twenty-nine bespoke fixture functions in `powertest.js` were the bottleneck.**
+`zardBoard`, `dyingWall`, `weezingBoard`, `duel2`, `arbokBoard` — most of them the same eight lines,
+and with 148 plain-English notes waiting to become several claims each, that boilerplate was the tax
+on the whole method. **The existing fixtures were left alone.** Migrating them wholesale would be a
+large diff across a green 421-case suite to buy nothing; new work goes here, and `powertest.js` keeps
+what it has.
+
+**`board.js` refuses to guess between two printings of a name**, and the refusal is about behaviour
+rather than about printing: `base5-1` and `base5-18` are both Dark Alakazam and play identically, so
+it picks one, while two mechanically different Pikachus are a real ambiguity and it makes you say
+which. The fingerprint is what separates them, so no set needs a line of exceptions.
+
+**Every row carries a `sane` fixture assertion and it is required, not encouraged.** It states what
+the board must be for the claim to mean anything, and its failure is reported as its own kind —
+*"your board no longer isolates anything"* and *"the bot got this wrong"* want completely different
+responses. The reason is written into `powertest.js` at `CHANSEY_ARMED`: two tests there used a bare
+Chansey to mean "cannot be killed", which quietly also meant "cannot threaten" the moment a bought
+turn started reading the opponent's threat.
+
+### The control, which is the reason to believe any of it
+
+**A suite that has only ever been green proves nothing about itself.** `--baseline REF` materialises
+`src/` from a git ref (the same trick as `abtest.js`, with the same stated limit — the whole of `src/`
+comes from the ref) and runs the identical rows against the older bot.
+
+Run against `96c53fd`, the commit before the 22 Aug bought-turn work, **the Dewgong and Gyarados rows
+go red with the numbers `Playbook/ATTACK-CHOICE.md` recorded at the time** — Aurora Beam 50 against
+Ice Beam 43, and a Bubblebeam beating an equally lethal Dragon Rage. Three rows that were never about
+that work stay green. **If that ever stops happening, this harness is not measuring what it claims and
+nothing it reports should be believed.**
+
+That run also separated two open faults from two fixed ones for free: Zapdos and Arcanine fail against
+*both* commits, so they are standing gaps rather than regressions.
+
 ## Looking at it: `tools/shot.js`
 
 You do not have to guess and you do not have to ask for a screenshot.
