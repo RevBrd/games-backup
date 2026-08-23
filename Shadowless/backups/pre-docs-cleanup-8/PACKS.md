@@ -5,7 +5,7 @@ Job 5b** — `src/packs.js` is the implementation, `tools/packtest.js` opens 200
 a fixed seed and checks every row below.
 
 The research that produced this, and the three passes the rarity table went through, are in
-[HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md). How a variant is *stored* and *drawn* once pulled is in
+[HISTORY.md](HISTORY.md). How a variant is *stored* and *drawn* once pulled is in
 [COLLECTION.md](COLLECTION.md). This file is generation only.
 
 **Every number in `PACK_ODDS` is a placeholder** in the sense that Trevor's framing is a pacing
@@ -133,7 +133,7 @@ Notes on the invented ones:
   was rare enough to be forgettable between sightings. It sits outside the ~5x ladder below on
   purpose — that ladder is the per-card chases, and this is not one.
   It is **independent of Shadowless**, because across the full 14-set pool the two are independent
-  facts about a print run; the nesting only holds for Base Set. See [HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md).
+  facts about a print run; the nesting only holds for Base Set. See [HISTORY.md](HISTORY.md).
 - **Reverse Holo borrows a later-era term.** Real reverse holo did not exist until the e-Card era
   (Expedition, 2002), which is after this corpus ends at Neo Destiny. It rolls only on the 10
   Common/Uncommon slots — Rares already have their own holo axis, and a holographic Common is a

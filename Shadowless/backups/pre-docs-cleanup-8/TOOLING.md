@@ -97,7 +97,7 @@ do and do not appear is a standing design decision in `CLAUDE.md`.
 **If you change either generator, reproduce its verification rather than eyeballing the diff.**
 Neither Node tool was trusted on inspection — `build.js` was diffed byte-for-byte against the
 artifact as it arrived from Chat, and `gen_cards.js` was checked against two independent sources
-that agreed exactly. The accounts are in [HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md).
+that agreed exactly. The accounts are in [HISTORY.md](HISTORY.md).
 
 ## Adding a set
 
@@ -155,7 +155,7 @@ as a figure to quote. Run the suite for the real number.
 - **`powertest.js`** builds boards by hand — no decks, no setup — fires a Power and
   asserts the exact state change. Half its cases assert that something is **illegal**, which is
   where these rules actually live. It also covers AI *usage*, which is not the same thing as the
-  Power working. See [POWERS.md](POWERS.md).
+  Power working. See [ENGINE.md](ENGINE.md).
   Its **AI verb scoring** section is the only place eleven unscored verbs could ever have been seen,
   for the same reason it is the only suite that can see a Power. Those cases assert `rawOutcomes()`
   — the raw distribution, before weights — so retuning a weight cannot fail them for the wrong
@@ -284,7 +284,7 @@ script deleted by a bad merge is caught the same way a missing one is.
 
 `build.py` and `gen_cards.py` are the originals, superseded by the Node equivalents. **Keep them, and
 don't try to revive them** — it looks like a one-line fix and is not, for reasons in
-[HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md).
+[HISTORY.md](HISTORY.md).
 
 ## Three more tools live next door, because they are not pass/fail
 

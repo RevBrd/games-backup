@@ -223,10 +223,13 @@ on their own**. Every figure on this page predates all three.
 
 ### How to read a run of this
 
-**The reading rules belong to the instrument, so they live with it** — the centrepiece column that
-usually explains the standings, what makes a tier boundary real, and why both seats on the same seeds
-is not optional. *[All three →](MEASUREMENT.md)*
+**Read the centrepiece columns beside the standings — they usually explain them.** A Stage 2 that
+lands in 45% of games at a median of turn 17, in a game decided by turn 20, is not a centrepiece, and
+that single column is what diagnosed the T4 above.
 
-They were duplicated here until 22 Aug 2026. This file is the **evidence**, appended once per roster;
-how to interpret a `decksim` run is a fact about `decksim` and belongs where the tool is documented,
-or the two copies drift and the one a reader hits first wins.
+**A tier boundary is real when the tier bands do not overlap.** That is the whole verdict this
+instrument delivers; it is not pass/fail and it never says a deck is *good*.
+
+**Both seats, same seeds, or the number is worthless.** Seat correlates with a deterministic opening
+flip — `aiduel.js` shipped unmirrored for an hour and reported a six-point edge for a change that did
+not exist. *[Every other way this project's measurements have lied →](MEASUREMENT.md)*

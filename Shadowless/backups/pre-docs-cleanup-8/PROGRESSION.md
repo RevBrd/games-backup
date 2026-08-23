@@ -59,33 +59,6 @@ summon anybody. This is the easy thing to get wrong and it has its own test.
 
 ## What a win pays, and the constant that was hiding
 
-**Record ratios, never counts.** Pack size may drop to ten cards, and every absolute in an outline
-becomes a lie the moment it does.
-
-| Rung | Pays |
-|---|---|
-| T1 intro | ½ a standard win — it is a faucet, not a reward |
-| T2 / T3 | 1 standard win |
-| T4 boss | 1, and **1.5 on the first victory only** |
-| Rival | 2, sets chosen at random without repeats |
-
-That table came from [OPPONENTS.md](OPPONENTS.md) on 22 Aug 2026 and belongs here: it is what
-`winReward` pays, and the tunables above are what it pays *with*. One subject, one file — the tier
-each rung *is* stays over there.
-
-**Repeat wins pay full, which makes farming optimal and dull.** The fix is optional **challenge
-conditions on re-battles** — an entry condition, for a better reward — which turns the re-battle loop
-from grinding into a decision and reuses a mechanism [OPPONENTS.md](OPPONENTS.md) already specifies
-rather than inventing one. What the better reward *is* — richer pack odds, or a differently-composed
-pack — is a [PACKS.md](PACKS.md) question. Note it is not a tuning change: a pack with different odds
-is a new pack **type**.
-
-**Two things were proposed on 15 Aug 2026 and dropped the same day, for the same shape of reason:**
-paying out free play by chosen Prize count, and gating the main line on dex completion %. Both would
-fund the collection from something that is not a decision. **Free play still pays nothing** and **dex
-% is a good unlock for the optional challenge tier and a bad one for the main line.**
-*[Both arguments in full, so neither comes back as a fresh idea →](HISTORY.md)*
-
 **A win pays in its bracket's own set.** `winReward()` computes it without touching the save;
 `recordWin()` records the win and returns the same thing. Neither grants a pack — `collection.js`
 owns the save's pack data and the caller does `addPacks(save, r.set, r.packs)`, so the one function
@@ -143,59 +116,71 @@ automatically harder than an early one with nobody tuning a number.
 
 ## The roster as it stands
 
-**Verified against the live ladder 22 Aug 2026**, and the way to check it is to read the data rather
-than this table — see below.
+Contents are **placeholders and Trevor expects to replace them** — the structure is what had to be
+right. Everything marked `placeholder: true` in the data is ours rather than the GBC's.
 
 | Bracket | Roster | Boss | Extra |
 |---|---|---|---|
 | Base — The Clubs | 4 theme decks (T1) + 5 T2 + 2 T3, **all Trevor's** | the T4, *Ashfall* | Ronald, *I'm Ronald!* |
 | Jungle — The Jungle | 2 Jungle theme decks (T1) + 3 T2 + 1 T3, **all Trevor's** | the T4, *Deep Bloom* | Ronald, *Invincible Ronald* |
-| Fossil — The Dome | the 4 Grand Masters (T1 stand-ins) + 3 T2 + 2 T3, **the six Trevor's** | the T4, *Nightshade* | Ronald, *Powerful Ronald* |
-| Team Rocket — The Syndicate | **all 8** Club Masters, placeholders | Ronald, *Legendary Ronald* | — |
+| Fossil — The Dome | the 4 Grand Masters + 3 T2 + 2 T3, **the six Trevor's** | the T4, *Nightshade* | Ronald, *Powerful Ronald* |
+| Team Rocket — The Syndicate | **all 8** Club Masters | Ronald, *Legendary Ronald* | — |
 
-**Fossil is the one place the placeholder rule bends**, and it is worth one line: its own theme decks
-are not in `data/`, so the T1 intro slot is genuinely empty and the four Grand Masters hold it. Their
-legendary birds are Fossil cards, which makes them the least wrong stand-in available. Getting the
-real Fossil theme decks in is the fix — not shuffling placeholders.
+**Jungle followed on 21 Aug 2026, and the move settled what a placeholder IS.** Trevor's five Jungle
+decks made the bracket intro → body → gate → boss on their own, which displaced the eight Club Masters
+that had been filling it. His rule: **anybody not holding a hand-built deck or an authentic theme deck
+is a placeholder filling the gap between a set going live and its own decks being authored.** So they
+were not deleted — `data/gbc_decks.json` keeps every one on file — they moved **down** to Fossil, which
+is the last bracket where they are set-appropriate. Every GBC deck plays only Base, Jungle and Fossil
+cards, so putting them in a Team Rocket bracket would be worse than the generated decks already there.
+Fossil's two `generate` placeholders were dropped in the same move, since it now has twelve real ones.
 
-**What a placeholder IS — Trevor's rule, and it is the only part of this worth carrying.** Anybody
-not holding a **hand-built deck or an authentic theme deck** is a placeholder, filling the gap between
-a set going live and its own decks being authored. Base Set, Jungle and Fossil all have their own
-decks now; Team Rocket does not, so it runs on GBC placeholders.
+**And every bracket ends in its T4.** Ronald's second deck joined his first in an `extra`; he is the
+boss of nothing except Fossil, and only until Fossil has an authored T4. **The rival is not a segment
+and is not per bracket** — Trevor, 21 Aug: roughly four encounters across the whole ladder, a small
+group with a leader, decks drawn from every previous set and paying combined packs. That is a design
+sketch and not a spec; see [OPPONENTS.md](OPPONENTS.md), whose open item 3 it replaces.
 
-**Where a given placeholder currently sits is not worth tracking, and this file used to track it
-badly.** Trevor, 22 Aug 2026: any GBC deck can fill any gap — they are not a tier, a bracket or a
-roster, and none of them is going to stay. Four separate paragraphs here narrated the Club Masters
-being moved between brackets, and two of them **disagreed about where the eight ended up**, twelve
-lines apart. **The table above is generated from the same data the game reads and is the answer; read
-it, or run the snippet under it.** Nothing was wrong with the ladder — only with the prose describing
-it, which is the failure mode to expect from any file that narrates a state instead of naming where
-the state lives.
+**Fossil followed within hours of Jungle, and it is the one place the placeholder rule bends.** Trevor's
+six Fossil decks took the body, gate and boss on 21 Aug — but **the four Grand Masters stayed**, because
+Fossil's own theme decks are not in `data/` and so the T1 intro slot is genuinely empty. Their legendary
+birds are Fossil cards, which makes them the least wrong stand-in available; getting the real Fossil
+theme decks in is the fix rather than shuffling placeholders. The eight Club Masters moved on to **Team
+Rocket, which until then had no authored bracket at all** and was running on the generated fallback.
+They are wrong-era on purpose — every GBC deck plays only Base, Jungle and Fossil cards — and they are
+still better opponents than today's generator, which is what Job 13 exists to fix.
 
-```bash
-node -e "const{LADDER}=require('./src/cards.js');console.log(JSON.stringify(LADDER.brackets,null,1))"
-```
+**Base Set stopped being a placeholder on 19 Aug 2026.** Its eleven rungs are Trevor's own decks
+built to [OPPONENTS.md](OPPONENTS.md)'s tier spec, and the bracket now reads intro → body → gate →
+boss exactly as that file describes. **The names and titles are still ours and still marked
+`placeholder: true`** — that flag has always meant *the identity is ours*, not *the deck is*, which
+is why the theme-deck rungs carry it too. The detailing pass is what clears them.
 
-**`placeholder: true` means the IDENTITY is ours, not the deck.** That is why the theme-deck rungs
-carry it too — the lists are authentic, the names and titles are not. The detailing pass is what
-clears the flag, and it is a *labelling* job precisely because nothing mechanical hangs off it.
+Two consequences. **Ronald moved from boss to `extra`**, because the boss slot is the T4 by
+definition and Ronald is a rival rather than a tier; he is the post-boss challenger now, the same
+shape *Legendary Ronald* has in Fossil. And **the four Club Masters he shared the bracket with joined
+the other four in Jungle**, which is more faithful than the old split-by-Base-heaviness — PROGRESSION
+called that "the arbitrary call in there" and it no longer has to be made.
 
-**Every bracket ends in its own T4 where one has been authored**, and in Ronald where one has not.
-The boss slot is a tier, so a rival cannot hold it on merit; he holds Team Rocket's because that
-bracket has no T4 yet. **The rival is not a segment and is not per bracket** — Trevor, 21 Aug:
-roughly four encounters across the whole ladder, a small group with a leader, decks drawn from every
-previous set and paying combined packs. That is a design sketch and not a spec; see
-[OPPONENTS.md](OPPONENTS.md), where it became the Challenge brackets.
+**Team Rocket's bracket is generated, and that is the derivation working rather than a gap.**
+`base5` went live in Job 10 with nothing authored for it in `ladder.json`, `buildLadder()`
+synthesised a bracket, and no code or data changed for it to appear. It is what the claim above looks
+like when it actually happens. Authoring a roster over the top is an override — see
+[OPPONENTS.md](OPPONENTS.md). (This paragraph used to end by noting that `data/base1_decks.json` was
+read by no part of the game. Both hand-built roster files are wired in now, through `gen_cards.js`'s
+`b1:` and `b2:` sources.)
 
-**Team Rocket's bracket was generated for two days and that is the derivation working rather than a
-gap.** `base5` went live in Job 10 with nothing authored for it in `ladder.json`, `buildLadder()`
-synthesised a bracket, and no code or data changed for it to appear. Authoring a roster over the top
-is an override, which is what then happened.
+All 16 GBC decks are assigned and none is stranded; `progresstest.js` asserts that, and its count moved
+from 30 authored opponents to 35 when the Jungle roster went in. The eight Club Masters used to be
+split across two brackets by how Base-heavy each deck was — "the arbitrary call in there" — and that
+call no longer has to be made: they are all in Fossil. Ronald's fourth deck, *Legendary Ronald*, is the **post-boss challenger**
+in Fossil: a bracket's `extra` list unlocks once its own boss falls. When a fourth set goes live it
+should probably become that bracket's boss instead.
 
 **None of the 16 GBC decks is Base-Set-only** — every one plays Jungle or Fossil cards, Isaac the
 fewest at 3 and Nikki the most at 16. So a bracket is named for **what beating it unlocks**, not for
 what its opponents may field. Seeing a Fossil Lapras before you can buy Fossil packs is a lure, and
-it is what the GBC game did. `progresstest.js` asserts that no GBC deck is stranded.
+it is what the GBC game did.
 
 ## The screen, and the four things only a screenshot caught
 

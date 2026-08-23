@@ -42,15 +42,6 @@ Not always on a schedule. The triggers that actually mean something:
   is worse than no rule: the next reader either "fixes" a non-bug or trusts the wording and breaks
   the real one. State invariants against the thing that matters, not against a position that
   happened to coincide with it.
-- **A file NARRATES a state instead of naming where the state lives.** Added on the eighth pass,
-  which found `PROGRESSION.md` telling the story of the same eight opponent decks being moved between
-  brackets **four times**, with two of the tellings contradicting each other twelve lines apart. Each
-  paragraph was correct on the day it was written; each was appended rather than replacing the last.
-  **The tell is the past tense in a section that answers a present-tense question** — *"they moved
-  down to Fossil"* where the reader asked *"where are they now?"*. The fix is a table checkable
-  against the data plus the command that prints it, and it applies to any roster, count, or roll of
-  who-holds-what. **The prose was wrong and the game was right the whole time**, which is the usual
-  shape: nobody notices, because nothing breaks.
 
 ## The rules that did the work
 
@@ -173,22 +164,14 @@ trim on the grounds that something is preserved elsewhere, go and look at the el
 were going. The live `LOGBOOK.md` now carries the rule at the point of decision as well, which is the
 general fix: **a constraint stated only in the thing being constrained is read too late.**
 
-- **Exempt: every append-only register and every archive of one.** As of 22 Aug 2026 that is
-  `LOGBOOK.md` and its three archives, `Rulings/*.md`, `HISTORY.md`, `GRABHIST.md`,
-  `AI-INVARIANTS.md`, `MISREADINGS.md` and the `-ARCHIVE-1` of each. **Do not maintain that list —
-  read each file's header**, because it is the count that rots and the label that does not. None can
-  be shortened without deleting something: a session's account of its own work, a ruling somebody
-  then has to make again, a rejection's *why*, an invariant's reason, or the gap between what a
-  playtest report said and what was actually found. Correct entries in them; never condense them.
-  **Any file of this shape must say so in its own header**, as all of them do — `GRABHIST.md` spent
-  two days without the label, which is how one gets tidied by mistake.
-
-  **A register needs its own split threshold, stated at the TOP of the live file and not only in the
-  archive.** Every one here now carries *"when this passes ~450, start the next archive"* in its
-  header. That rule was already written in two files on 22 Aug 2026 and **both had sailed past it** —
-  `GRABHIST.md` at 649 and `HISTORY.md` at 461 — because a limit is only obeyed if it is read before
-  the growth, and nobody re-opens a header they have already scrolled past. **Check every register's
-  own number at the start of a pass**; it is one `wc -l` and it is the cheapest finding available.
+- **Exempt: `LOGBOOK.md` and both its archives, `Rulings/*.md`, `HISTORY.md` and `GRABHIST.md`.**
+  All are append-only registers, and none can be shortened without deleting something — a
+  session's account of its own work, a ruling somebody then has to make again, a rejection's *why*,
+  or the gap between what a playtest report said and what was actually found. Correct entries in
+  them; never condense them. `HISTORY.md` joined on the fourth pass, when it became the destination
+  for material trimmed out of the live files; `GRABHIST.md` and the logbook archive joined on the
+  fifth. **Any future file of this shape must say so in its own header**, as all of them now do —
+  `GRABHIST.md` spent two days without the label, which is how one of these gets tidied by mistake.
 
   **The exemption moved off `RULINGS.md` itself on 15 Aug 2026** and this is the shape to copy when a
   register outgrows one file. It split into a directory page plus one file per ruling in `Rulings/`,
@@ -210,15 +193,6 @@ general fix: **a constraint stated only in the thing being constrained is read t
     its seven narratives already had a fuller, append-only account in `GRABHIST.md`. A folder would
     have been a third copy. `RULINGS.md` earned its folder because its entries were the *only* copy.
     **Ask what else already holds this before you build it a home.**
-  - **But that refusal was about a DIRECTORY, and a register is not always a directory.** The eighth
-    pass split the same section out as one append-only sibling, `AI-INVARIANTS.md`, and the reasoning
-    is the shape to reuse rather than the answer. Three things had changed: the twin was no longer
-    one file but three (`GRABHIST.md`, its archive, and `Playbook/`), several entries had no twin at
-    all, and the section had reached twenty-three entries growing by three or four per AI pass. **A
-    directory would still have been wrong** — twenty-three files of eight lines each is worse
-    navigation than the section was. **One sibling with an index in the parent is the middle option**,
-    and it is what `LOGBOOK.md` has always been. So: *how many entries, how long is each, and how many
-    copies already exist* — three questions, three different right answers.
 - **`CLAUDE.md` has an honest floor and it is not 200.** The fourth pass took it 313 → 259; the sixth
   found it back at 284, cut the job history and the status table into prose, and landed at **276** —
   and the gap is not drift, it is four new siblings, two more jobs and a fourth cost-a-session fact

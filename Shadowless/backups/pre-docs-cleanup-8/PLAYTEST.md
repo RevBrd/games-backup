@@ -112,15 +112,14 @@ right about that.
 **A fix nobody can measure still ships, if it is correctness.** Several of these faults are rare,
 symmetric between the two seats, or about what the bot can *perceive* — and `aiduel.js` is blind to
 all three by construction. It will report ~50% and that reads as "your change did nothing". The
-standing doctrine is to assert those in `powertest.js` instead of asking the duel, and it is one
-entry in a register of every way a measurement here has misled somebody. *[Read that before
-concluding anything from a null result →](MISREADINGS.md)*
+standing doctrine is to assert those in `powertest.js` instead of asking the duel, and it is written
+up with the five other ways measurement lies here. *[Read that before concluding anything from a
+null result →](MEASUREMENT.md)*
 
-**Check the instrument can see the situation before you believe it.** A blind harness reports ~50%
-for anything, **fails silently, and fails in the safe direction** — which reads as "your change did
-nothing", the one verdict nobody argues with. It has happened here with a duel whose deck pool
-contained none of the cards the change was about. The fix was a flag on the tool, and finding it was
-worth more than the feature that exposed it.
+**Check the instrument can see the situation before you believe it.** The stickiness work measured
+51.0% because the duel only played four Base Set decks, which contain none of the four Pokémon the
+change was about. **A blind harness fails silently and in the safe direction.** The fix was a flag on
+the tool, and finding it was worth more than the feature that exposed it.
 
 *Watch for that shape generally: an item about the game surprisingly often turns out to be an item
 about the thing measuring the game.* Two of the first batch's most valuable outcomes were tooling
