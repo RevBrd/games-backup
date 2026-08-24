@@ -48,6 +48,11 @@ const UI = {
   aiTimer: null,
   flipDelay: 2000,      // "Flipping coin..." hold
   flipHold: 800,        // how long the result sits on screen after landing
+  // How long the opponent's Trainer sits on the centre line before the board
+  // moves. 1000ms is Trevor's starting figure and his reasoning is that both the
+  // Game Boy game and Pocket hold theirs slightly too long. Set it to 0 to turn
+  // the pause off entirely; the log line still gets written either way.
+  trainerHold: 1000,
   presTimer: null,
   view: null,           // frozen board snapshot while a flip is being presented
   pres: null,           // {queue, banner}
@@ -567,7 +572,7 @@ function dispatch(pi, action) {
   }
   UI.sel = null; UI.targeting = null; UI.retreatArmed = false;
   const fresh = UI.E.state.log.slice(mark);
-  if (!fresh.some(e => e.kind === 'flip') || UI.flipDelay < 250) {
+  if (!fresh.some(presStops) || UI.flipDelay < 250) {
     diffForFx(before, UI.E.state); render(); return;
   }
   // THE FX MUST NOT FIRE UNTIL THE COIN HAS LANDED. `diffForFx` reads the real
@@ -581,10 +586,30 @@ function dispatch(pi, action) {
   stepPresentation();
 }
 
+// The two things a presentation STOPS on. A flip, because the game genuinely
+// waits on it — and the opponent playing a Trainer, because otherwise their
+// whole turn lands in one frame and the only record of it is a line of 9.5px
+// type in the rail. Trevor's, from playing it: "it sometimes goes too fast and
+// has you checking the really small print of the log."
+//
+// Your OWN Trainers are not in here and must not be. You played it; you know.
+// The entry's own `p` is what says whose it was, not the dispatching seat —
+// there are effects that make the other player act on your turn.
+// Note what is NOT in here: the `UI.flipDelay < 250` master switch, which lives
+// at the two call sites instead. That figure means "no presentation at all" —
+// about forty places in smoke.js set it to deal a board with no pauses in it —
+// so a stop that could ignore it would silently change every one of those tests.
+// The DEV panel says so on screen, because the label reads "coin pause" and
+// nothing about it suggests it also governs this.
+function presStops(e) {
+  if (e.kind === 'flip') return true;
+  return e.kind === 'trainer' && e.p === 1 && !!e.card && UI.trainerHold >= 100;
+}
+
 function stepPresentation() {
   const p = UI.pres;
   if (!p) return;
-  while (p.queue.length && p.queue[0].kind !== 'flip') UI.view.log.push(p.queue.shift());
+  while (p.queue.length && !presStops(p.queue[0])) UI.view.log.push(p.queue.shift());
   if (!p.queue.length) {
     UI.pres = null; UI.view = null;
     // Unfrozen at last: the board and its effects update in the same frame, which
@@ -595,6 +620,18 @@ function stepPresentation() {
   }
 
   const entry = p.queue.shift();
+
+  // The opponent's Trainer. Unlike a coin, the line goes into the frozen log at
+  // the same moment the card appears — the card IS the announcement, and holding
+  // the text back would leave the rail contradicting the mat for a second.
+  if (entry.kind === 'trainer') {
+    UI.view.log.push(entry);
+    p.trainer = { id: entry.card, v: entry.v || null };
+    render();
+    UI.presTimer = setTimeout(() => { p.trainer = null; stepPresentation(); }, UI.trainerHold);
+    return;
+  }
+
   const m = entry.text.match(/^Coin flip(?: \((.*?)\))?: (HEADS|TAILS)$/);
   const reason = (m && m[1]) ? m[1] : '';
   const result = m ? m[2] : '';
@@ -1251,6 +1288,30 @@ function renderCoinToss(b) {
   return box;
 }
 
+// The opponent's Trainer, held on the centre line for a beat. It shares the
+// coin's zero-height strip and its capsule, so the two read as the same kind of
+// event — the game stopping to tell you something — and neither can reflow the
+// mat. See LAYOUT.md on why nothing here may be in normal flow.
+//
+// The printed scan, not a rendered face: this is the standing decision about
+// where scans belong. A card is the SUBJECT here, the way it is in the preview
+// rail and the pack reveal, rather than a token you are steering. `pullFace`
+// falls back to the sigil for a set whose art has not been fetched.
+function renderTrainerPop(tr) {
+  const card = CARD_DB[tr.id];
+  const box = el('div', 'trainerpop');
+  const cap = el('div', 'coincap tpcap');
+  const art = el('div', 'tpart');
+  art.appendChild(pullFace(card, tr.v ? vflags(tr.v) : []));
+  cap.appendChild(art);
+  const txt = el('div', 'cointext tptext');
+  txt.appendChild(el('div', 'tpwho', 'OPPONENT PLAYS'));
+  txt.appendChild(el('div', 'tpname', card.name));
+  cap.appendChild(txt);
+  box.appendChild(cap);
+  return box;
+}
+
 // ------------------------------------------------- choosing which Energy ---
 // Seven effects discard Energy off a Pokemon and the engine used to pick by
 // array order. Which Fire leaves a Charizard is the difference between attacking
@@ -1377,6 +1438,13 @@ function renderCentreLine() {
   // action still gets its banner once the coin has landed and play resumes.
   const b = UI.pres && UI.pres.banner;
   if (b) { m.classList.add('tossing'); m.appendChild(renderCoinToss(b)); return m; }
+  // The opponent's Trainer, in the coin's own place and for the coin's own
+  // reason: a thing that appears wherever the action is makes you hunt for it
+  // every time, and a fixed place is learned once (Trevor, 12 Aug). The board
+  // behind it is frozen on the pre-action snapshot, so it announces what is
+  // about to happen rather than captioning what already did.
+  const tr = UI.pres && UI.pres.trainer;
+  if (tr) { m.classList.add('tossing'); m.appendChild(renderTrainerPop(tr)); return m; }
   // Same slot as the coin, and they cannot both be live: a coin is presentation
   // and this is an interaction the game is waiting on.
   if (UI.energyPick) {
@@ -2075,8 +2143,12 @@ function renderActionBar() {
     // has stopped, quietly — announcing the result in two places at once made
     // the mat's version feel like a decoration rather than the event.
     const b = UI.pres.banner;
+    const tr = UI.pres.trainer;
+    // Three presentations share this bar now, so it can no longer assume a coin.
+    // It said "Coin flip" underneath a Trainer for one build.
     bar.appendChild(el('div', 'barmsg dimtxt',
-      b && b.reason ? 'Coin flip — ' + b.reason : 'Coin flip'));
+      tr ? "Your opponent's turn"
+        : b && b.reason ? 'Coin flip — ' + b.reason : 'Coin flip'));
     return bar;
   }
 
@@ -4672,6 +4744,22 @@ function renderDev() {
   fpRow.appendChild(fp);
   fpRow.appendChild(el('span', 'dimtxt small', UI.flipDelay < 250 ? 'off' : (UI.flipDelay / 1000).toFixed(2) + 's'));
   g2.appendChild(fpRow);
+
+  // The coin pause doubles as the master switch for ALL presentation, which is
+  // not obvious from its label and is worth saying on screen rather than only
+  // in a comment. It is that way because ~40 places in smoke.js already use
+  // `flipDelay = 0` to mean "give me a board with no pauses in it", and giving
+  // the Trainer hold its own independent escape would have made every one of
+  // them wrong in a way nothing would have caught.
+  const tpRow = el('div', 'row');
+  tpRow.appendChild(el('label', null, 'trainer hold'));
+  const tp = el('input'); tp.type = 'range'; tp.min = 0; tp.max = 2500; tp.step = 100; tp.value = UI.trainerHold;
+  tp.oninput = () => { UI.trainerHold = parseInt(tp.value, 10); render(); };
+  tpRow.appendChild(tp);
+  tpRow.appendChild(el('span', 'dimtxt small',
+    UI.flipDelay < 250 ? 'off (coin pause is off)'
+      : UI.trainerHold < 100 ? 'off' : (UI.trainerHold / 1000).toFixed(2) + 's'));
+  g2.appendChild(tpRow);
   box.appendChild(g2);
 
   // What the page actually got, which is never what the screen says. Display

@@ -102,8 +102,9 @@ What makes it work is `min-height:0`. A flex item's automatic minimum size is it
 prompt did until 23 Aug 2026: 0.892 → 0.875 at Trevor's viewport, 1.000 → 0.982 at 1366x768, and
 nothing at all at 1600x900 and above — which is why it survived so long and why he could never catch
 it in a screenshot. Everything on that line now hangs off `.midstrip`, which shares `.cointoss`'s
-zero-height geometry. **Four things live on the centre line and all four are out of flow. A fifth
-must be too.**
+zero-height geometry. **Several things live on the centre line and every one of them is out of flow.
+The next one must be too** — deliberately not counted, because that sentence said "four" for exactly
+as long as it took to add the fifth.
 
 A `.midline{min-height:0}` rule sat in `style.css` matching nothing in `ui.js` — an orphan from a
 rename, and half the fix. *An orphan selector is not dead weight; it is a rule that lost its

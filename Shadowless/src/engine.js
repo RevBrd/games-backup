@@ -143,8 +143,14 @@ class Engine {
   }
 
   // ------------------------------------------------------------ logging ----
-  log(text, kind = 'info') {
-    this.state.log.push({ t: this.state.turn, p: this.state.active, text, kind });
+  log(text, kind = 'info', extra = null) {
+    const e = { t: this.state.turn, p: this.state.active, text, kind };
+    // A log line may carry the card it is ABOUT, so the UI can show that card's
+    // face instead of parsing a name back out of the sentence. Names repeat
+    // across sets — there are four printings called Rattata — so a name is not
+    // an identifier and never was.
+    if (extra) Object.assign(e, extra);
+    this.state.log.push(e);
     if (this.state.log.length > 4000) this.state.log.shift();
   }
 
@@ -2687,7 +2693,7 @@ class Engine {
     if (!this.trainerPlayable(pi, inst)) return this.fail(`${c.name} would do nothing`);
 
     p.hand.splice(a.hand, 1);
-    this.log(`${p.name} plays ${c.name}.`, 'trainer');
+    this.log(`${p.name} plays ${c.name}.`, 'trainer', { card: inst.id, v: inst.v || null });
     let toDiscard = true;
 
     for (const v of script) {

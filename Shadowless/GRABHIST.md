@@ -30,12 +30,51 @@ rule in its own header. It was split on 22 Aug 2026 and the archive is closed.
 
 | When | Instance | Items |
 |---|---|---|
+| 23 Aug 2026 | #25, Job 12b | The opponent's Trainer held on the centre line for a beat — a grab bag item that stayed small because the presentation queue already did the hard half |
 | 23 Aug 2026 | #25, Job 12b | The centre line, which turned out to be the mat's shock absorber; the setup Active that was a bar because its bottom half was empty; the booster reveal climbing 61px as you turned cards over |
 | 21 Aug 2026 | #21, third pass | Charizard capped at four Energy; the pay order discarding the Double Colorless first; a duel that reset its own baseline every commit |
 | 21 Aug 2026 | #21, second pass | The Charizard benchmark; an Energy priced twice in one function; a wall is not an upgrade opportunity; why the evolve fix has to wait for the attach fix |
 | 21 Aug 2026 | #21, Job 11 | Retreating into the wrong matchup; Teleport's flat 22 and the destination nobody chose; the Colorless Energy dead end; a counter that said "must be 0" and was counting the wrong thing |
 | 19 Aug 2026 | #20, the UI pass | The hand that resized itself — a correct report whose stated cause was wrong twice over |
 | *13–17 Aug* | *#12, #16, #17* | *[Archive 1](GRABHIST-ARCHIVE-1.md) — five passes, its own index at the top* |
+
+---
+
+### 23 Aug 2026 — Opus 5 #25 (the opponent's Trainer, held for a beat)
+
+**"Visual popup on screen or in side panel (screen preferred) when a trainer card is played by the
+CPU, with a short pause in the action while it's shown."** From the grab bag, and Trevor's *because*
+when asked for it: "it sometimes goes too fast and has you checking the really small print of the
+log," plus pacing. He named 1 second as a starting figure on the grounds that the Game Boy game and
+Pocket both hold theirs slightly too long.
+
+**The whole thing was cheap because it is not a new mechanism.** The coin-flip presentation already
+freezes the board on a pre-action snapshot and replays the log pausing on each flip, so a Trainer
+stop is one predicate: `presStops()` returns true for a flip, and now also for `kind:'trainer'` on
+the opponent's side. The freeze, the AI gating, the unfreeze and the effects firing in the right
+frame all came free. **The note called it a medium item and a large one if it went on screen** — it
+went on screen and stayed small, because the surface it needed was already built for something else.
+*Worth checking, before estimating a UI item here, whether the presentation queue already does the
+hard half.*
+
+**Three things I would tell whoever touches it next.**
+
+The engine's `log()` takes an optional extra object now, and the Trainer line carries `card: inst.id`.
+**A name is not an identifier** — four printings are called Rattata — so parsing the card back out of
+the sentence could never have picked the right face.
+
+**`UI.flipDelay < 250` is the master switch for all presentation, and I found that out by the
+feature silently not working.** About forty places in `smoke.js` set it to mean "deal me a board with
+no pauses in it". Giving the Trainer hold its own independent escape would have changed every one of
+those tests in a way nothing would have caught, so the coupling stays — and the DEV panel now says so
+on screen, because the slider is labelled *coin pause* and nothing about it suggests it governs this.
+
+**And the sabotage check is not optional.** All four new tests passed the moment I wrote them, which
+is exactly when a test is least trustworthy. Stubbing `presStops` to `return false` turned one red
+and left three green — so three of the four were not testing what their names claim, and the one that
+went red is the one carrying the feature. Then the restoring `sed` matched two *other* `return false`
+lines elsewhere in `ui.js` and quietly broke a Super Energy Removal test; `git diff` caught it in
+about ten seconds. **Diff before you believe a green suite you have just been editing under.**
 
 ---
 

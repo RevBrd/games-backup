@@ -72,6 +72,37 @@ about two seconds early. `diffForFx` now runs when the presentation queue emptie
 the board unfreezes. **Anything else that reacts to the outcome must be armed there too**, not in
 `dispatch`.
 
+## The opponent's Trainer is held on the coin's strip too
+
+**Trevor, from playing it: "it sometimes goes too fast and has you checking the really small print of
+the log."** The opponent's whole turn resolved in one frame and the only record of a Trainer was a
+line of 9.5px type in the rail. Now the board freezes and the card is shown for a beat — the same
+treatment as a coin, in the same place, for the same reason the Energy picker is there.
+
+**It is a stop in the presentation queue, not a new mechanism**, and that is the whole reason it was
+cheap. `stepPresentation()` already froze the board on a pre-action snapshot and replayed the log
+pausing on each flip; `presStops()` now also stops on `kind:'trainer'`. Everything else came free —
+the freeze, the AI being gated (`maybeRunAI` returns early while `presenting()`), the unfreeze, and
+`diffForFx` firing in the right frame.
+
+Four things about it are load-bearing:
+
+- **`UI.trainerHold` is 1000ms**, Trevor's figure, on the reasoning that both the Game Boy game and
+  Pocket hold theirs slightly too long. Set it to 0 and the pause goes away while the log line still
+  gets written. There is a DEV slider.
+- **`UI.flipDelay < 250` is the master switch for ALL presentation and always was.** About forty
+  places in `smoke.js` use it to mean "deal me a board with no pauses in it", so a Trainer hold with
+  its own independent escape would have silently changed every one of them. The DEV panel says so on
+  screen, because the label reads *coin pause* and nothing about it suggests it governs this.
+- **Your own Trainers never pop.** You played it; you know. The test for that is one `e.p === 1` away
+  from being wrong, so `smoke.js` asserts it directly.
+- **The log line goes into the frozen log in the same frame the card appears.** The card *is* the
+  announcement, and holding the text back would leave the rail contradicting the mat for a second.
+
+The engine's `log()` takes an optional extra object now, and the Trainer line carries `card: inst.id`.
+**A name is not an identifier** — four printings are called Rattata — so parsing the card back out of
+the sentence could never have picked the right face.
+
 ## The Energy picker shares the coin's spot
 
 **Which Energy gets discarded is asked on the centre line, in the coin's own place** — Trevor's call,

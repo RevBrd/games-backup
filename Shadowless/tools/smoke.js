@@ -252,6 +252,73 @@ function riggedFlipBoard(flipDelay) {
   return E;
 }
 
+// --- the opponent's Trainer, held on the centre line ------------------------
+// The opponent's whole turn used to land in one frame, with the only record of
+// it a line of 9.5px type in the rail. It gets the coin's own treatment now:
+// the board freezes on the pre-action snapshot and the card is shown.
+//
+// Board where it is the OPPONENT's turn with a guaranteed-playable Trainer in
+// hand. Professor Oak, because it is legal from any position.
+function trainerBoard(who) {
+  UI.seedDraft = '5'; UI.flipDelay = 0; startMatch(); UI.E.setupAuto(0);
+  const E = UI.E, s = E.state;
+  s.active = who; s.phase = 'main'; s.pendingPromote = null; s.promoteQueue = [];
+  s.players[who].trainersPlayed = 0;
+  s.players[who].hand.push({ id: 'base1-88' });
+  UI.flipDelay = 2000;
+  const act = E.legalActions(who).filter(a => a.t === 'playTrainer').pop();
+  if (!act) throw new Error('no playable Trainer for player ' + who);
+  return act;
+}
+
+T("the opponent's Trainer is presented on the centre line", () => {
+  const act = trainerBoard(1);
+  dispatch(1, act);
+  if (!presenting()) throw new Error('no presentation started');
+  if (!UI.pres.trainer || UI.pres.trainer.id !== 'base1-88')
+    throw new Error('wrong pop: ' + JSON.stringify(UI.pres.trainer));
+  // Frozen on the PRE-action board, so the pop announces what is about to
+  // happen rather than captioning what already did — and the log line is in
+  // the frozen log, so the rail cannot contradict the mat.
+  const frozen = UI.view !== null;
+  const logged = UI.view.log[UI.view.log.length - 1].text.indexOf('Professor Oak') >= 0;
+  drain();
+  return frozen && logged && !presenting();
+});
+
+// You played it. You know. This is the half that would be most annoying to get
+// wrong, and it is one `e.p === 1` away from being wrong.
+T('your own Trainer is not presented', () => {
+  const act = trainerBoard(0);
+  dispatch(0, act);
+  return !presenting();
+});
+
+// The engine's log line carries the card ID rather than only its name. Names
+// repeat across sets — four printings are called Rattata — so a name could
+// never have picked the right face.
+T('the trainer log entry carries the card it is about', () => {
+  const act = trainerBoard(1);
+  const mark = UI.E.state.log.length;
+  dispatch(1, act);
+  const e = UI.E.state.log.slice(mark).find(x => x.kind === 'trainer');
+  drain();
+  return !!e && e.card === 'base1-88' && e.p === 1;
+});
+
+// `trainerHold` at 0 must leave the game exactly as it was before this existed:
+// the line is still written, nothing pauses.
+T('trainerHold 0 turns the pause off and still logs the play', () => {
+  const act = trainerBoard(1);
+  UI.trainerHold = 0;
+  const mark = UI.E.state.log.length;
+  dispatch(1, act);
+  const stillLogged = UI.E.state.log.slice(mark).some(x => x.kind === 'trainer');
+  const quiet = !presenting();
+  UI.trainerHold = 1000;
+  return stillLogged && quiet;
+});
+
 // The flip that decides who goes first was resolved inside newGame() and only
 // ever reported as a line of log text — the one coin in the match the player was
 // told about rather than shown. It is also the flip with the largest measured

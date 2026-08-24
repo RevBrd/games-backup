@@ -393,7 +393,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    of `.centreline` until 23 Aug 2026, which cost the board a rescale every time
    either appeared — see the note on `.centreline`. Four things share this line
    now and all four are out of flow. Anything that joins them must be too. */
-.cointoss,.midstrip{
+.cointoss,.midstrip,.trainerpop{
   position:absolute;left:0;right:0;top:50%;height:0;z-index:6;
   display:flex;align-items:center;justify-content:center;pointer-events:none;
 }
@@ -421,6 +421,31 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 @keyframes cointumble{from{transform:rotateX(0)}to{transform:rotateX(360deg)}}
 .coincap.landed.heads .coin{transform:rotateX(0)}
 .coincap.landed.tails .coin{transform:rotateX(180deg)}
+
+/* ---- the opponent's Trainer, on the coin's own strip ----
+   Deliberately the coin's capsule: same rounded plate, same dark fill, same
+   drop shadow, so a Trainer and a flip read as the same class of event — the
+   game stopping to tell you something. It lands and leaves; there is nothing
+   to click, so it keeps `.cointoss`'s pointer-events:none.
+   Sized by HEIGHT against the viewport like the pack reveal's cards, because
+   this hangs over both halves of a mat that may be at 0.78 zoom. A card scan
+   at its natural size would cover the Actives it is talking about. */
+/* Not the coin's pill. `.coincap` is `border-radius:999px`, which is right for
+   a round object and wrong around a rectangular card — the corners of the plate
+   run away from the corners of the thing on it. */
+.tpcap{gap:13px;padding:9px 20px 9px 9px;border-radius:9px;
+  animation:coinland .34s cubic-bezier(.2,1.5,.4,1)}
+.tpart{display:flex;line-height:0}
+.tpart .cardface{display:block;width:auto;max-width:none;margin:0;border-radius:3px;
+  height:clamp(92px,16vh,142px);aspect-ratio:240/330;
+  box-shadow:0 3px 8px rgba(0,0,0,.55)}
+/* The no-scan fallback. `.sigil.lg` is sized elsewhere for a full-width card
+   face, so it needs its own height here or it would set the capsule's. */
+.tpart .sigil{width:clamp(67px,11.6vh,103px);height:clamp(92px,16vh,142px)}
+.tptext{min-width:132px;max-width:230px}
+.tpwho{font-size:8.5px;letter-spacing:.2em;color:#5E6E68}
+.tpname{font-family:var(--serif);font-size:16px;font-weight:600;letter-spacing:.01em;
+  color:var(--stock);line-height:1.15}
 
 .cointext{display:flex;flex-direction:column;gap:2px;min-width:104px}
 .coinresult{font-size:15px;font-weight:700;letter-spacing:.22em;color:var(--matink)}
