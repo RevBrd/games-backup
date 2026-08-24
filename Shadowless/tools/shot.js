@@ -21,62 +21,19 @@
 // ============================================================================
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
-
-const CHROME_CANDIDATES = [
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-  'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
-  '/usr/bin/google-chrome',
-  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-];
-
-function findBrowser() {
-  if (process.env.SHADOWLESS_CHROME) return process.env.SHADOWLESS_CHROME;
-  for (const c of CHROME_CANDIDATES) if (fs.existsSync(c)) return c;
-  return null;
-}
+// Finding the browser, calibrating the viewport, staging the page beside the
+// real one and launching it — all four moved to lib/chrome.js on 23 Aug 2026,
+// when probe.js needed exactly the same four things. The comments moved with
+// them; nothing here behaves differently, and the viewport is still calibrated
+// on every run rather than assumed.
+const C = require('./lib/chrome.js');
 
 function arg(name, dflt) {
   const i = process.argv.indexOf('--' + name);
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : dflt;
 }
 const flag = (name) => process.argv.includes('--' + name);
-
-// --- viewport calibration -----------------------------------------------------
-// `--window-size` is NOT the viewport. Headless Chrome reserves room for a
-// virtual frame and a scrollbar gutter, so `--window-size=1366,768` renders the
-// page at 1348x672 — 96px shorter than asked for, which is more than the whole
-// action bar. Every conclusion drawn from an uncalibrated shot is drawn about a
-// window nobody has.
-//
-// The offset was (18, 96) on Chrome 140 in both headless modes, but it is a
-// browser implementation detail and baking it in would fail silently the day it
-// changes. So we ask, every run: load a page that reports its own innerWidth /
-// innerHeight through --dump-dom, and subtract. It costs about two seconds and
-// it is the difference between measuring and guessing.
-function measureViewport(browser, w, h) {
-  const probe = path.join(os.tmpdir(), 'shadowless-vp-probe.html');
-  fs.writeFileSync(probe, '<!doctype html><body><b id=v></b><script>' +
-    'addEventListener("load",()=>{v.textContent="VP:"+innerWidth+"x"+innerHeight});<\/script>');
-  try {
-    const dom = execFileSync(browser, [
-      '--headless=new', '--disable-gpu', '--hide-scrollbars',
-      '--force-device-scale-factor=1', '--virtual-time-budget=1500',
-      '--window-size=' + w + ',' + h, '--dump-dom',
-      'file:///' + probe.replace(/\\/g, '/'),
-    ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    const m = /VP:(\d+)x(\d+)/.exec(dom);
-    return m ? { w: +m[1], h: +m[2] } : null;
-  } catch (e) {
-    return null;
-  } finally {
-    try { fs.unlinkSync(probe); } catch (e) { /* nothing to clean up */ }
-  }
-}
 
 // --- what to run in the page before the shot ---------------------------------
 // `--board` skips the title screen and deals a real game. Setup is driven the
@@ -119,7 +76,7 @@ function main() {
     console.error('usage: node tools/shot.js <out.png> [--size WxH] [--board] [--seed N] [--turns N] [--js "..."]');
     process.exit(2);
   }
-  const browser = findBrowser();
+  const browser = C.findBrowser();
   if (!browser) {
     console.error('No Chrome or Edge found. Set SHADOWLESS_CHROME to the executable.');
     process.exit(1);
@@ -137,47 +94,24 @@ function main() {
   // --size is the VIEWPORT the page will see. Ask for it, measure what we got,
   // and correct the window by the shortfall. `--raw` opts out and passes the
   // size straight through as a window size.
-  let win = { w: want.w, h: want.h };
-  if (!flag('raw')) {
-    const probe = measureViewport(browser, want.w, want.h);
-    if (!probe) { console.error('Could not calibrate the viewport; re-run with --raw.'); process.exit(1); }
-    win = { w: want.w + (want.w - probe.w), h: want.h + (want.h - probe.h) };
-  }
+  const cal = C.calibrate(browser, want, flag('raw'));
+  if (!cal) { console.error('Could not calibrate the viewport; re-run with --raw.'); process.exit(1); }
+  const win = cal.win;
 
-  // The temp page must sit BESIDE the real one: card faces are loaded from the
-  // relative path assets/cards/, so a copy in the system temp folder would show
-  // a board with every scan missing and look like a regression that isn't one.
-  const boot = bootstrapScript();
-  let pageUrl = 'file:///' + srcHtml.replace(/\\/g, '/');
-  let tmp = null;
-  if (boot) {
-    let html = fs.readFileSync(srcHtml, 'utf8');
-    const inject = `<script>window.addEventListener('load',()=>{try{\n${boot}\n}catch(e){document.title='SHOT ERROR: '+e.message;console.error(e);}});<\/script>\n</body>`;
-    if (!html.includes('</body>')) { console.error('No </body> in the built file'); process.exit(1); }
-    html = html.replace('</body>', inject);
-    tmp = path.join(root, '.shot-tmp.html');
-    fs.writeFileSync(tmp, html);
-    pageUrl = 'file:///' + tmp.replace(/\\/g, '/');
-  }
+  let staged;
+  try { staged = C.stagePage(root, srcHtml, bootstrapScript()); }
+  catch (e) { console.error(e.message); process.exit(1); }
 
   const outAbs = path.resolve(process.cwd(), out);
   fs.mkdirSync(path.dirname(outAbs), { recursive: true });
 
   try {
-    execFileSync(browser, [
-      '--headless=new', '--disable-gpu', '--hide-scrollbars',
-      '--allow-file-access-from-files',
-      '--force-device-scale-factor=1',
-      '--virtual-time-budget=' + (arg('wait', '4000')),
-      '--window-size=' + win.w + ',' + win.h,
-      '--screenshot=' + outAbs,
-      pageUrl,
-    ], { stdio: ['ignore', 'ignore', 'pipe'] });
+    C.launch(browser, { url: staged.url, win, wait: arg('wait', '4000'), mode: 'shot', out: outAbs });
   } catch (e) {
     console.error('Chrome failed: ' + (e.stderr ? String(e.stderr).trim() : e.message));
     process.exit(1);
   } finally {
-    if (tmp) fs.unlinkSync(tmp);
+    staged.cleanup();
   }
 
   // The PNG comes out at the WINDOW size while the page was laid out at the

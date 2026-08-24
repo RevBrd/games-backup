@@ -1384,27 +1384,12 @@ function renderCentreLine() {
     m.appendChild(renderEnergyPick(UI.energyPick));
     return m;
   }
-  // Both of these hang off the same zero-height strip the coin uses. They were
-  // ordinary children of the centre line until 23 Aug 2026, and because that
-  // strip is the only shrinkable item in the mat's column, putting anything in
-  // its normal flow gave it a content-driven minimum height, stopped it
-  // absorbing the squeeze, and made fitBoard() rescale the whole board — 0.892
-  // to 0.875 at 1191x684. Trevor reported it as the field stretching when
-  // something was knocked out, which is exactly what it was.
   if (UI.fxActive('ko0') || UI.fxActive('ko1')) {
-    m.appendChild(midStrip(el('div', 'kobanner', 'KNOCKED OUT')));
+    m.appendChild(el('div', 'kobanner', 'KNOCKED OUT'));
   } else if (UI.targeting) {
-    m.appendChild(midStrip(el('div', 'prompt', UI.targeting.prompt)));
+    m.appendChild(el('div', 'prompt', UI.targeting.prompt));
   }
   return m;
-}
-
-// The centre line's out-of-flow strip. Anything that appears on the centre line
-// goes through here — see the `.cointoss,.midstrip` rule in style.css.
-function midStrip(node) {
-  const s = el('div', 'midstrip');
-  s.appendChild(node);
-  return s;
 }
 
 // ---------------------------------------------------------------- zones ----

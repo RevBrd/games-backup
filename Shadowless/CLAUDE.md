@@ -114,9 +114,11 @@ data/             the card corpus, the deck lists the game reads, and the quaran
 assets/cards/<set>/  the real printed card faces. GITIGNORED and DERIVED —
                   `node tools/fetch_art.js base1` rebuilds them
 backups/          pre-job safety copies, including the ten Claude Chat snapshots
-tools/            two generators, six suites, a screenshotter, an art fetcher
-       lib/       shared harness machinery — a dependency-free .xlsx reader, and
-                  the board builder that makes a position out of card NAMES
+tools/            two generators, six suites, a screenshotter, a geometry probe,
+                  an art fetcher
+       lib/       shared harness machinery — a dependency-free .xlsx reader, the
+                  board builder that makes a position out of card NAMES, and the
+                  headless-Chrome plumbing shot.js and probe.js share
        claims/    Trevor's card notes as rows the bot can be held to. One file
                   per set. ADDING A CLAIM IS A ROW, NOT A FIXTURE — that is the
                   point of it. See PLAYBOOK.md, then TOOLING.md
@@ -148,6 +150,7 @@ node tools/collectiontest.js             # the save file, decks and variants
 node tools/progresstest.js               # the ladder, unlocks and rewards
 node tools/packtest.js                   # 200k packs (takes a count: `20000` is fast)
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
+node tools/probe.js --size 1191x684      # ...and whether it MOVES between two states
 node tools/wants.js base1 --todo         # Trevor's card notes, and which have no claim yet
 node tools/claimtest.js Arcanine --explore   # what the bot ACTUALLY does on a built board
 node tools/claimtest.js                  # assert the playbook claims — RED IS A FAULT REPORT,
@@ -247,6 +250,9 @@ the code.
 **The smoke stub has no layout engine and no real DOM, so a green suite proves nothing visual.**
 `tools/shot.js` is not optional polish on a UI change — it is the only test that exists for a whole
 class of bug, and two of them have already got through 68 passing tests in a single session.
+**And when the complaint is that the board MOVES, neither of those can see it**: a shot is one state.
+`tools/probe.js` measures one board across several UI states and prints what differed — run it at a
+CRAMPED viewport, because the roomy ones are where a layout bug hides.
 *[What they were, and how to measure a screenshot instead of squinting at it →](TOOLING.md)*
 
 ## Data
@@ -291,9 +297,9 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   that goes red against the pre-fix commit. **The remaining work is claims**, and the backlog is a
   command rather than a number here: `node tools/wants.js --coverage`. Base Set first, and **Jungle and
   Fossil are on hold** — their notes are one-liners awaiting the same overhaul base1 and base5 got.
-- **Job 12b** - UI updates from GRABBAG.md. 
+- **Job 12b** - Layout pass and then UI updates from GRABBAG.md. 
 - **Job 12c** - Pack and rarity drop overhaul. Might run concurrently with others.
-- **Job 12d** - Scheduled document pass and grab bag run
+- **Job 12d** - Scheduled document pass and grab bag run.
 - **Job 13** - Rulings, cards, and AI logic additions for Promo cards up to Team Rocket.
 - **Job 14** - Maintenance passes in the shape of Job 12
 - **Job 15** - Deck autobuilder overhaul, if ready to do so.

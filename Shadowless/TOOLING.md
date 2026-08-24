@@ -247,6 +247,45 @@ nothing it reports should be believed.**
 That run also separated two open faults from two fixed ones for free: Zapdos and Arcanine fail against
 *both* commits, so they are standing gaps rather than regressions.
 
+## Comparing two states: `tools/probe.js`
+
+**Reach for this one first whenever the complaint is that something MOVES.** It is the only
+instrument in the project that measures the same board twice.
+
+```bash
+node tools/probe.js --size 1191x684          # every state, at Trevor's real viewport
+node tools/probe.js --only ko,prompt-long    # just these
+node tools/probe.js --setup                  # the opening-setup screen instead of a board
+node tools/probe.js --state "mine:UI.sel={idx:0}"          # an ad hoc one
+node tools/probe.js --setup --eval "<expression>"          # re-derive a MEASURED number
+```
+
+It boots the built file in headless Chrome exactly the way `shot.js` does, then walks a list of
+named UI states — a Knock Out banner, a targeting prompt, a coin in the air, a card selected, four
+more cards in hand — applying each, measuring the geometry, and reverting. It prints only the
+columns that ever moved, so the one that changed is not buried under eleven that did not.
+
+**Three things about it are worth knowing before you read a table.**
+
+- **`idle` is measured again at the end, as `idle-again`, and it is the control.** Every state is
+  applied to one board in one page load, so an incomplete revert would accumulate down the table and
+  every row after it would be measuring drift. If the two `idle` rows disagree the tool says so and
+  tells you to fix the revert rather than the game. Run it, read it, do not skip it —
+  [MISREADINGS.md](MISREADINGS.md) is a file full of what happens otherwise.
+- **A null result here is meaningful in a way most of this project's null results are not.** There is
+  no sample and no interval: the geometry either changed or it did not. But it is only null *for the
+  viewport you ran it at* — the centre-line fault moved the board at 1191x684, 1280x600 and 1366x768
+  and did **nothing at all** at 1600x900 and above. **Run the cramped sizes.** The roomy ones are
+  where a layout bug hides.
+- **`--eval` is for re-deriving the measured numbers**, of which `style.css` has several — the
+  Active's 249px, the hand card's 118px, the setup Active's 99px. It runs one expression after the
+  control and prints what it returns, so sweeping the whole card pool through a slot is a command
+  rather than a throwaway script. It runs *after* the control on purpose: an expression that
+  mutates the DOM would otherwise corrupt the one row certifying the table.
+
+The Chrome plumbing both this and `shot.js` need lives in `tools/lib/chrome.js` — finding the
+browser, calibrating the viewport, staging the page beside the real one, launching it.
+
 ## Looking at it: `tools/shot.js`
 
 You do not have to guess and you do not have to ask for a screenshot.

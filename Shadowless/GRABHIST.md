@@ -30,6 +30,7 @@ rule in its own header. It was split on 22 Aug 2026 and the archive is closed.
 
 | When | Instance | Items |
 |---|---|---|
+| 23 Aug 2026 | #25, Job 12b | The centre line, which turned out to be the mat's shock absorber; the setup Active spot that lost its own placeholder to a specificity fight |
 | 21 Aug 2026 | #21, third pass | Charizard capped at four Energy; the pay order discarding the Double Colorless first; a duel that reset its own baseline every commit |
 | 21 Aug 2026 | #21, second pass | The Charizard benchmark; an Energy priced twice in one function; a wall is not an upgrade opportunity; why the evolve fix has to wait for the attach fix |
 | 21 Aug 2026 | #21, Job 11 | Retreating into the wrong matchup; Teleport's flat 22 and the destination nobody chose; the Colorless Energy dead end; a counter that said "must be 0" and was counting the wrong thing |
@@ -38,7 +39,59 @@ rule in its own header. It was split on 22 Aug 2026 and the archive is closed.
 
 ---
 
-### 21 Aug 2026 — Opus 5 #21 (four retreat notes that were three faults and an instrument)
+### 23 Aug 2026 — Opus 5 #25 (the last of the shifting layout, and a strip nobody knew was load-bearing)
+
+**"There are some events like a Pokemon being knocked out that cause a message to appear in that
+centre line, causing the entire field to stretch."** Trevor's, with red brackets drawn on a
+screenshot of where the centre line is, and the note that it happens too fast to capture. #20 had
+already fixed the big one — the hand card whose height followed its contents — and this was the
+residue: "very minor now, and I think I've found one."
+
+**He was right about the location and right about the mechanism, which is not the usual outcome
+here.** [PLAYTEST.md](PLAYTEST.md) is full of reports that meant something other than what they
+said; this one meant exactly what it said. Worth recording, because the file's own table can read
+as "assume the report is wrong."
+
+**What it was.** `.centreline` is the only shrinkable item in the mat's flex column — both `.side`s
+are `flex:0 0 auto`. So it is the mat's **shock absorber**: when the mat is squeezed it gives up its
+own height first, and at Trevor's 1191x684 it sits at 4px rather than its declared 17. Nobody had
+written that down and I do not think anybody knew it. The Knock Out banner and the targeting prompt
+were ordinary flex children of that strip, and **a flex item's automatic minimum size is its
+content's** — so the moment either appeared, the strip could no longer shrink, the mat overflowed,
+and `fitBoard()` rescaled the entire board. Measured: **zoom 0.892 → 0.875** at 1191x684, 1.000 →
+0.982 at 1366x768, 0.782 → 0.767 at 1280x600, and **nothing at all at 1600x900 and above**.
+
+That last figure is the whole reason it survived a year. It is invisible on a roomy window, and the
+tighter the viewport the worse it gets — so it was only ever reproducible on the machine of the one
+person who could not stop to screenshot it.
+
+**The fix was already written down, one section away.** `LAYOUT.md` says the coin's strip is
+zero-height and absolutely positioned so a flip cannot reflow the mat, and adds *"anything else that
+appears on the centre line inherits that."* The coin obeyed it. The Energy picker obeyed it. The
+banner and the prompt never did. They hang off a `.midstrip` now, sharing the coin's geometry, and
+`.centreline` carries an explicit `min-height:0`.
+
+**And half the fix was sitting in the stylesheet as an orphan.** `.midline{min-height:0}` matched
+nothing in `ui.js` — a rule left behind by a rename to `.centreline`, which had taken the element
+and left the guard. *An orphan selector is not dead weight; it is a rule that lost its element.* Ask
+what it was protecting before deleting it.
+
+**The second item, which Trevor raised as "probably a separate pass".** The opening-setup screen,
+where "the card being added to the active spot often gets horizontally stretched." Also true, also
+not quite what it looked like. The setup Active is deliberately freed from the board's measured
+249px min-height, by a five-class selector — and that selector **also beat the `CHOOSE A BASIC`
+placeholder's own `min-height:106px`**, which is four classes. So the empty shape stood at **26px**
+against the placed card's **99px**: a thin bar that popped to a squat card, and the strip grew 14px
+under it. Both come from one `--setupact` custom property now, and 99 is measured rather than
+chosen — all 113 Basic printings in the four live sets render at exactly 99px in that slot.
+
+**The instrument is the part worth stealing.** Neither `shot.js` nor `smoke.js` can see this class
+of bug — one shoots a single state and the other has no layout engine — and #20 hit the same wall,
+built a throwaway Chrome probe, found its fault with it and threw it away. `tools/probe.js` is that
+instrument, kept: it walks one board through a list of named UI states in a single page load,
+measures after each, reverts, and prints only the columns that moved. It re-measures `idle` at the
+end as a control, because an incomplete revert would otherwise silently corrupt every row below it.
+Both faults above went from "somewhere in the layout" to a named CSS rule in one run each.
 
 Four notes across four logs all pointed at retreating and promoting. **They were not one fault, and
 they were not four either.** Two were real and share a root, one was a design question wearing a bug's

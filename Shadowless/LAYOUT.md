@@ -17,6 +17,17 @@ are run, in **[TOOLING.md](TOOLING.md)**, along with the two traps that will oth
 screenshot is stretched relative to the layout, so **judge proportion from the DEV tab and not off
 the PNG**.
 
+**And when the complaint is that the board MOVES, neither of those is the instrument.** A shot is one
+state and the smoke stub has no layout engine at all, so "did this get 9px taller" is a question
+only `tools/probe.js` answers: it measures one board in a series of UI states inside a single page
+load and prints what differed. Every resizing fault this project has had was invisible to both of
+the others and obvious to that one, twice over — #20 built the same thing as a throwaway and had to.
+
+```bash
+node tools/probe.js --size 1191x684          # every state, at Trevor's real viewport
+node tools/probe.js --setup                  # the opening-setup screen instead
+```
+
 ## Why the mat has a visible rim
 
 `--mat2` (the cloth's bottom stop) and `--bg` (the desk) are four points apart, and `.side.mine`'s
@@ -78,6 +89,34 @@ poisoned and confused so the status row is populated (Clefairy and Chansey win).
 rendering the pool if the card face or fonts change. The status row is always appended even when
 empty for the same reason: poisoning something used to grow the card by a line and shift the whole
 board.
+
+**The centre line is the mat's SHOCK ABSORBER, and nothing may be put in its normal flow.** Both
+`.side`s are `flex:0 0 auto`, so `.centreline` is the only shrinkable item in the column — when the
+mat is squeezed it gives up its own height first and the board keeps its zoom. At Trevor's 1191x684
+it sits at **4px** rather than its declared 17, at 1280x600 at 3px, and that is the system working
+rather than a bug.
+
+What makes it work is `min-height:0`. A flex item's automatic minimum size is its *content's*, so
+**anything placed in normal flow in there stops the strip shrinking**, the mat overflows, and
+`fitBoard()` rescales the whole board. That is exactly what the Knock Out banner and the targeting
+prompt did until 23 Aug 2026: 0.892 → 0.875 at Trevor's viewport, 1.000 → 0.982 at 1366x768, and
+nothing at all at 1600x900 and above — which is why it survived so long and why he could never catch
+it in a screenshot. Everything on that line now hangs off `.midstrip`, which shares `.cointoss`'s
+zero-height geometry. **Four things live on the centre line and all four are out of flow. A fifth
+must be too.**
+
+A `.midline{min-height:0}` rule sat in `style.css` matching nothing in `ui.js` — an orphan from a
+rename, and half the fix. *An orphan selector is not dead weight; it is a rule that lost its
+element*, and it is worth asking what it was protecting before deleting it.
+
+**The opening-setup Active spot is one height for both states, and it is `--setupact`.** The empty
+placeholder and the placed card are declared from the same custom property on `.setupmat` because
+they were declared separately and drifted: the five-class `min-height:0` that frees the setup card
+from the board's 249px also beat the four-class `min-height:106px` on the `CHOOSE A BASIC`
+placeholder, so the empty shape stood at **26px** against the card's **99px** and the row jumped
+73px the moment you placed a Basic. 99 is measured — every one of the 113 Basic printings in the
+four live sets renders at exactly 99px in that slot. Re-derive with
+`node tools/probe.js --setup --eval`.
 
 **Anything that measures a size must pick one coordinate space.** `getBoundingClientRect()` reports
 *post*-zoom screen pixels; `offsetWidth` / `clientWidth` / `scrollHeight` report *pre*-zoom layout
