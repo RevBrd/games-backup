@@ -1,0 +1,833 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-24 02:18:48
+decks    you: New deck 4   opponent: Murray — Psychic Club
+opponent expert
+seed     338920904   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Kangaskhan, Kadabra, Psychic Energy, Scoop Up, Professor Oak, Professor Oak, Kangaskhan
+  HIDDEN  your opening hand: Switch, Lightning Energy, Lightning Energy, Zapdos, Pikachu, Energy Removal, Lightning Energy
+  HIDDEN  opponent's Prizes: Alakazam, Psychic Energy, Psychic Energy, Psychic Energy, Snorlax, Abra
+  HIDDEN  your Prizes: Jigglypuff, Bill, Pikachu, Lightning Energy, Electabuzz, Lightning Energy
+  HIDDEN  opponent's opening board: Kangaskhan A active, bench Kangaskhan B
+  HIDDEN  your opening board: Pikachu active, bench Zapdos
+          New game. Seed 338920904.
+          Coin flip (who goes first): TAILS
+          Murray will go first.
+
+--- Turn 1 — Murray ----------------------------
+          Murray draws a card. (46 left)
+  AI      attach   [15.9]
+          holding: Kadabra, Psychic Energy, Scoop Up, Professor Oak, Professor Oak, Scoop Up
+          Murray attaches Psychic Energy to Kangaskhan A.
+  AI      trainer   [30.3]
+          holding: Kadabra, Scoop Up, Professor Oak, Professor Oak, Scoop Up
+          passed over: trainer 30.3, trainer -6, trainer -6
+          Murray plays Professor Oak.
+          Murray discards 4 card(s) and draws 7.
+  AI      trainer   [21.8]
+          holding: Psychic Energy, Gust of Wind, Mr. Mime, Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy
+          passed over: bench 7
+          Murray plays Gust of Wind.
+          You's Zapdos is dragged into the Active spot.
+  AI      bench   [7]
+          holding: Psychic Energy, Mr. Mime, Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy
+          Murray benches Mr. Mime.
+  AI      attack:Fetch   [4.8]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy
+          Kangaskhan uses Fetch.
+          Murray draws 1.
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (46 left)
+          You attaches Lightning Energy to Zapdos.
+          You plays Energy Removal.
+          Psychic Energy discarded from Kangaskhan A.
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): TAILS
+          Poke Ball: tails, nothing found.
+
+--- Turn 3 — Murray ----------------------------
+          Murray draws a card. (37 left)
+  AI      attach   [15.8]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Gambler, Snorlax
+          passed over: attach 15.8, attach 15.8, attach 15.8, attach 15.8, attach 10
+          Murray attaches Psychic Energy to Kangaskhan A.
+  AI      bench   [7]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Gambler, Snorlax
+          passed over: trainer -8.5
+          Murray benches Snorlax.
+  AI      attack:Fetch   [4.8]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Gambler
+          Kangaskhan uses Fetch.
+          Murray draws 1.
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (45 left)
+          You attaches Lightning Energy to Zapdos.
+
+--- Turn 5 — Murray ----------------------------
+          Murray draws a card. (35 left)
+  AI      attach   [10]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Gambler, Chansey, Alakazam
+          passed over: attach 10, attach 10, attach 10, attach 8.5, attach 8.5
+          Murray attaches Psychic Energy to Mr. Mime.
+  AI      bench   [2]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Gambler, Chansey, Alakazam
+          passed over: trainer -6.7
+          Murray benches Chansey.
+  AI      attack:Fetch   [4.8]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Gambler, Alakazam
+          Kangaskhan uses Fetch.
+          Murray draws 1.
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (44 left)
+          You attaches Lightning Energy to Zapdos.
+
+--- Turn 7 — Murray ----------------------------
+          Murray draws a card. (33 left)
+  AI      attach   [22]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Gambler, Alakazam, Psychic Energy, Switch
+          passed over: attach 22, attach 22, attach 22, attach 8.5, attach 8.5
+          Murray attaches Psychic Energy to Mr. Mime.
+  AI      attack:Fetch   [4.8]
+          holding: Psychic Energy, Psychic Energy, Gambler, Alakazam, Psychic Energy, Switch
+          Kangaskhan uses Fetch.
+          Murray draws 1.
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (43 left)
+          You attaches Lightning Energy to Zapdos.
+          Zapdos uses Thunderstorm.
+          Kangaskhan takes 40. (50/90 left)
+          Coin flip (hit Kangaskhan B?): HEADS
+          Kangaskhan takes 20. (70/90 left)
+          Coin flip (hit Mr. Mime?): HEADS
+          Mr. Mime takes 20. (20/40 left)
+          Coin flip (hit Snorlax?): TAILS
+          Coin flip (hit Chansey?): TAILS
+          2 tail(s): Zapdos takes 20. (20 total)
+
+--- Turn 9 — Murray ----------------------------
+          Murray draws a card. (31 left)
+  AI      attach   [8.5]
+          holding: Psychic Energy, Psychic Energy, Gambler, Alakazam, Psychic Energy, Switch, Psychic Energy, Scoop Up
+          passed over: attach 8.5, attach 8.5, attach 8.5, attach 8, attach 8
+          Murray attaches Psychic Energy to Snorlax.
+  AI      attack:Fetch   [4.7]
+          holding: Psychic Energy, Gambler, Alakazam, Psychic Energy, Switch, Psychic Energy, Scoop Up
+          Kangaskhan uses Fetch.
+          Murray draws 1.
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (42 left)
+          You attaches Lightning Energy to Pikachu.
+          Zapdos uses Thunderstorm.
+          Kangaskhan takes 40. (10/90 left)
+          Coin flip (hit Kangaskhan B?): HEADS
+          Kangaskhan takes 20. (50/90 left)
+          Coin flip (hit Mr. Mime?): HEADS
+          Mr. Mime takes 20. (0/40 left)
+          Coin flip (hit Snorlax?): TAILS
+          Coin flip (hit Chansey?): TAILS
+          2 tail(s): Zapdos takes 20. (40 total)
+          Mr. Mime is Knocked Out!
+          You takes a Prize. (5 left)
+
+--- Turn 11 — Murray ----------------------------
+          Murray draws a card. (29 left)
+  AI      trainer   [37]
+          holding: Psychic Energy, Gambler, Alakazam, Psychic Energy, Switch, Psychic Energy, Scoop Up, Energy Removal, Switch
+          passed over: trainer 24, trainer 24, trainer 17, attach 11, attach 11
+          Murray plays Scoop Up.
+          Kangaskhan A is scooped up; Kangaskhan returns to hand and everything else is discarded.
+  AI      promote   [50.3]
+          holding: Psychic Energy, Gambler, Alakazam, Psychic Energy, Switch, Psychic Energy, Energy Removal, Switch, Kangaskhan
+          passed over: promote 37.8, promote 30
+          Murray promotes Chansey to Active.
+  AI      trainer   [17]
+          holding: Psychic Energy, Gambler, Alakazam, Psychic Energy, Switch, Psychic Energy, Energy Removal, Switch, Kangaskhan
+          passed over: attach 11, attach 11, attach 11, attach 9, attach 9
+          Murray plays Energy Removal.
+          Lightning Energy discarded from Zapdos.
+  AI      attach   [11]
+          holding: Psychic Energy, Gambler, Alakazam, Psychic Energy, Switch, Psychic Energy, Switch, Kangaskhan
+          passed over: attach 11, attach 11, attach 9, attach 9, attach 9
+          Murray attaches Psychic Energy to Snorlax.
+  AI      bench   [7]
+          holding: Gambler, Alakazam, Psychic Energy, Switch, Psychic Energy, Switch, Kangaskhan
+          passed over: trainer -4, trainer -4, trainer -11
+          Murray benches Kangaskhan.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Gambler, Alakazam, Psychic Energy, Switch, Psychic Energy, Switch
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (41 left)
+          You benches Electabuzz.
+          You attaches Lightning Energy to Zapdos.
+          Zapdos uses Thunderstorm.
+          Chansey takes 40. (80/120 left)
+          Coin flip (hit Kangaskhan A?): HEADS
+          Kangaskhan takes 20. (30/90 left)
+          Coin flip (hit Snorlax?): TAILS
+          Coin flip (hit Kangaskhan B?): HEADS
+          Kangaskhan takes 20. (70/90 left)
+          1 tail(s): Zapdos takes 10. (50 total)
+
+--- Turn 13 — Murray ----------------------------
+          Murray draws a card. (28 left)
+  AI      attach   [16]
+          holding: Gambler, Alakazam, Psychic Energy, Switch, Psychic Energy, Switch, Kadabra
+          passed over: attach 16, attach 9, attach 9, attach 8, attach 8
+          Murray attaches Psychic Energy to Snorlax.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Gambler, Alakazam, Switch, Psychic Energy, Switch, Kadabra
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (40 left)
+          You benches Voltorb.
+          You attaches Lightning Energy to Electabuzz.
+          Zapdos uses Thunderstorm.
+          Chansey takes 40. (40/120 left)
+          Coin flip (hit Kangaskhan A?): HEADS
+          Kangaskhan takes 20. (10/90 left)
+          Coin flip (hit Snorlax?): HEADS
+          Snorlax takes 20. (70/90 left)
+          Coin flip (hit Kangaskhan B?): HEADS
+          Kangaskhan takes 20. (50/90 left)
+
+--- Turn 15 — Murray ----------------------------
+          Murray draws a card. (27 left)
+  AI      attach   [38]
+          holding: Gambler, Alakazam, Switch, Psychic Energy, Switch, Kadabra, Energy Removal
+          passed over: trainer 24, trainer 24, trainer 17, attach 9, attach 8
+          Murray attaches Psychic Energy to Snorlax.
+  AI      trainer   [24]
+          holding: Gambler, Alakazam, Switch, Switch, Kadabra, Energy Removal
+          passed over: trainer 24, trainer 17, trainer 5.8
+          Murray plays Switch.
+          Snorlax is now Active.
+  AI      trainer   [11]
+          holding: Gambler, Alakazam, Switch, Kadabra, Energy Removal
+          passed over: trainer 9.6, trainer -4, retreat -64.5, retreat -106.5, retreat -106.5
+          Murray plays Energy Removal.
+          Lightning Energy discarded from Pikachu.
+  AI      trainer   [12.8]
+          holding: Gambler, Alakazam, Switch, Kadabra
+          passed over: trainer -4, retreat -64.5, retreat -106.5, retreat -106.5
+          Murray plays Gambler.
+          Coin flip (Gambler pays off?): HEADS
+          Gambler: 3 shuffled away, heads, 8 drawn.
+  AI      trainer   [11]
+          holding: Psychic Energy, Abra, Psychic Energy, Psychic Energy, Gust of Wind, Energy Removal, Abra, Psychic Energy
+          passed over: bench 2, bench 2, retreat -64.5, retreat -106.5, retreat -106.5
+          Murray plays Energy Removal.
+          Lightning Energy discarded from Electabuzz.
+  AI      bench   [2]
+          holding: Psychic Energy, Abra, Psychic Energy, Psychic Energy, Gust of Wind, Abra, Psychic Energy
+          passed over: bench 2, retreat -64.5, retreat -106.5, retreat -106.5
+          Murray benches Abra.
+  AI      bench   [2]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Gust of Wind, Abra, Psychic Energy
+          passed over: retreat -64.5, retreat -106.5, retreat -106.5, retreat -106.5
+          Murray benches Abra.
+  AI      attack:Body Slam   [85]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Gust of Wind, Psychic Energy
+          Snorlax uses Body Slam.
+          Zapdos takes 30. (0/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Zapdos is now Paralyzed.
+          Zapdos is Knocked Out!
+          Murray takes a Prize. (5 left)
+          You promotes Electabuzz to Active.
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Lightning Energy to Electabuzz.
+          Electabuzz uses Thundershock.
+          Snorlax takes 10. (60/90 left)
+          Coin flip (Paralyzed?): HEADS
+          Thick Skinned: Snorlax can't be Paralyzed.
+
+--- Turn 17 — Murray ----------------------------
+          Murray draws a card. (21 left)
+  AI      trainer   [26.6]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Gust of Wind, Psychic Energy, Psychic Energy, Switch
+          passed over: attach 22, attach 22, attach 22, attach 22, attach 22
+          Murray plays Gust of Wind.
+          You's Voltorb is dragged into the Active spot.
+  AI      attach   [22]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Switch
+          passed over: attach 22, attach 22, attach 22, attach 22, attach 22
+          Murray attaches Psychic Energy to Abra A.
+  AI      attack:Body Slam   [30]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Switch
+          Snorlax uses Body Slam.
+          Voltorb takes 30. (10/40 left)
+          Coin flip (Paralyzed?): HEADS
+          Voltorb is now Paralyzed.
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (38 left)
+          You benches Pikachu.
+          Voltorb is no longer Paralyzed.
+
+--- Turn 19 — Murray ----------------------------
+          Murray draws a card. (20 left)
+  AI      attach   [22]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Psychic Energy, Switch, Chansey
+          passed over: attach 22, attach 22, attach 22, attach 8, attach 8
+          Murray attaches Psychic Energy to Abra B.
+  AI      attack:Body Slam   [65]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Switch, Chansey
+          Snorlax uses Body Slam.
+          Voltorb takes 30. (0/40 left)
+          Coin flip (Paralyzed?): HEADS
+          Voltorb is now Paralyzed.
+          Voltorb is Knocked Out!
+          Murray takes a Prize. (4 left)
+          You promotes Electabuzz to Active.
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (37 left)
+          You benches Electabuzz.
+          Electabuzz uses Thundershock.
+          Snorlax takes 10. (50/90 left)
+          Coin flip (Paralyzed?): HEADS
+          Thick Skinned: Snorlax can't be Paralyzed.
+
+--- Turn 21 — Murray ----------------------------
+          Murray draws a card. (19 left)
+  AI      trainer   [25.4]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Switch, Chansey, Psychic Energy, Gust of Wind
+          passed over: attach 8, attach 8, attach 8, attach 8, attach 8
+          Murray plays Gust of Wind.
+          You's Pikachu A is dragged into the Active spot.
+  AI      attach   [8]
+          holding: Psychic Energy, Psychic Energy, Psychic Energy, Switch, Chansey, Psychic Energy
+          passed over: attach 8, attach 8, attach 8, attach 8, attach 8
+          Murray attaches Psychic Energy to Kangaskhan A.
+  AI      attack:Body Slam   [30]
+          holding: Psychic Energy, Psychic Energy, Switch, Chansey, Psychic Energy
+          Snorlax uses Body Slam.
+          Pikachu takes 30. (20/50 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Lightning Energy to Electabuzz A.
+
+--- Turn 23 — Murray ----------------------------
+          Murray draws a card. (18 left)
+  AI      attach   [8]
+          holding: Psychic Energy, Psychic Energy, Switch, Chansey, Psychic Energy, Psychic Energy
+          passed over: attach 8, attach 8, attach 8, attach 6, attach 6
+          Murray attaches Psychic Energy to Kangaskhan B.
+  AI      attack:Body Slam   [75]
+          holding: Psychic Energy, Switch, Chansey, Psychic Energy, Psychic Energy
+          Snorlax uses Body Slam.
+          Pikachu takes 30. (0/50 left)
+          Coin flip (Paralyzed?): TAILS
+          Pikachu is Knocked Out!
+          Murray takes a Prize. (3 left)
+          You promotes Electabuzz A to Active.
+
+--- Turn 24 — You -------------------------------
+          You draws a card. (35 left)
+          You attaches Lightning Energy to Pikachu.
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): TAILS
+          Tails -> 30 damage, and Electabuzz will take 10.
+          Snorlax takes 30. (20/90 left)
+          Electabuzz does 10 damage to itself. (10 total)
+
+--- Turn 25 — Murray ----------------------------
+          Murray draws a card. (17 left)
+  AI      trainer   [52.5]
+          holding: Psychic Energy, Switch, Chansey, Psychic Energy, Psychic Energy, Abra, Pokémon Center
+          passed over: trainer 24, attach 6, attach 6, attach 6, attach -2
+          Murray plays Pokémon Center.
+          Pokemon Center removes 270 damage and discards 6 Energy.
+  AI      attach   [11.5]
+          holding: Psychic Energy, Switch, Chansey, Psychic Energy, Psychic Energy, Abra
+          passed over: attach 11.5, attach 11.5, attach 8, attach 8, attach 8
+          Murray attaches Psychic Energy to Snorlax.
+  AI      pass — no attack available — Body Slam: Not enough Energy   [0]
+          holding: Switch, Chansey, Psychic Energy, Psychic Energy, Abra
+
+--- Turn 26 — You -------------------------------
+          You draws a card. (34 left)
+          You attaches Lightning Energy to Pikachu.
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): HEADS
+          Heads -> 40 damage.
+          Snorlax takes 40. (50/90 left)
+
+--- Turn 27 — Murray ----------------------------
+          Murray draws a card. (16 left)
+  AI      attach   [14]
+          holding: Switch, Chansey, Psychic Energy, Psychic Energy, Abra, Psychic Energy
+          passed over: attach 14, attach 14, attach 8, attach 8, attach 8
+          Murray attaches Psychic Energy to Snorlax.
+  AI      pass — no attack available — Body Slam: Not enough Energy   [0]
+          holding: Switch, Chansey, Psychic Energy, Abra, Psychic Energy
+
+--- Turn 28 — You -------------------------------
+          You draws a card. (33 left)
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): TAILS
+          Tails -> 30 damage, and Electabuzz will take 10.
+          Snorlax takes 30. (20/90 left)
+          Electabuzz does 10 damage to itself. (20 total)
+
+--- Turn 29 — Murray ----------------------------
+          Murray draws a card. (15 left)
+  AI      trainer   [24]
+          holding: Switch, Chansey, Psychic Energy, Abra, Psychic Energy, Psychic Energy
+          passed over: attach 19, attach 19, attach 19, attach 8, attach 8
+          Murray plays Switch.
+          Chansey is now Active.
+  AI      attach   [16]
+          holding: Chansey, Psychic Energy, Abra, Psychic Energy, Psychic Energy
+          passed over: attach 16, attach 16, attach 9, attach 9, attach 9
+          Murray attaches Psychic Energy to Snorlax.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Chansey, Abra, Psychic Energy, Psychic Energy
+
+--- Turn 30 — You -------------------------------
+          You draws a card. (32 left)
+          You attaches Lightning Energy to Pikachu.
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): TAILS
+          Tails -> 30 damage, and Electabuzz will take 10.
+          Chansey takes 30. (90/120 left)
+          Electabuzz does 10 damage to itself. (30 total)
+
+--- Turn 31 — Murray ----------------------------
+          Murray draws a card. (14 left)
+  AI      attach   [38]
+          holding: Chansey, Abra, Psychic Energy, Psychic Energy, Alakazam
+          passed over: attach 38, attach 9, attach 9, attach 8, attach 8
+          Murray attaches Psychic Energy to Snorlax.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Chansey, Abra, Psychic Energy, Alakazam
+
+--- Turn 32 — You -------------------------------
+          You draws a card. (31 left)
+          You attaches Lightning Energy to Pikachu.
+          Electabuzz uses Thundershock.
+          Chansey takes 10. (80/120 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 33 — Murray ----------------------------
+          Murray draws a card. (13 left)
+  AI      attach   [9]
+          holding: Chansey, Abra, Psychic Energy, Alakazam, Psychic Energy
+          passed over: attach 9, attach 8, attach 8, attach 8, attach 8
+          Murray attaches Psychic Energy to Chansey.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Chansey, Abra, Alakazam, Psychic Energy
+
+--- Turn 34 — You -------------------------------
+          You draws a card. (30 left)
+          You plays Energy Removal.
+          Psychic Energy discarded from Chansey.
+          Electabuzz uses Thundershock.
+          Chansey takes 10. (70/120 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 35 — Murray ----------------------------
+          Murray draws a card. (12 left)
+  AI      attach   [9]
+          holding: Chansey, Abra, Alakazam, Psychic Energy, Chansey
+          passed over: attach 8, attach 8, attach -2, attach -2, attach -2
+          Murray attaches Psychic Energy to Chansey.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Chansey, Abra, Alakazam, Chansey
+
+--- Turn 36 — You -------------------------------
+          You draws a card. (29 left)
+          You plays Gust of Wind.
+          Murray's Snorlax is dragged into the Active spot.
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): HEADS
+          Heads -> 40 damage.
+          Snorlax takes 40. (0/90 left)
+          Snorlax is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [44]
+          holding: Chansey, Abra, Alakazam, Chansey
+          passed over: promote 44, promote 37, promote 26.8, promote 26.8
+          Murray promotes Kangaskhan A to Active.
+
+--- Turn 37 — Murray ----------------------------
+          Murray draws a card. (11 left)
+  AI      bench   [2]
+          holding: Chansey, Abra, Alakazam, Chansey, Abra
+          passed over: bench 2, bench 2, bench 2
+          Murray benches Chansey.
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Abra, Alakazam, Chansey, Abra
+
+--- Turn 38 — You -------------------------------
+          You draws a card. (28 left)
+          You attaches Lightning Energy to Electabuzz B.
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): HEADS
+          Heads -> 40 damage.
+          Kangaskhan takes 40. (50/90 left)
+
+--- Turn 39 — Murray ----------------------------
+          Murray draws a card. (10 left)
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Abra, Alakazam, Chansey, Abra, Switch
+
+--- Turn 40 — You -------------------------------
+          You draws a card. (27 left)
+          You plays Bill.
+          You draws 2.
+          You benches Voltorb.
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): HEADS
+          Heads -> 40 damage.
+          Kangaskhan takes 40. (10/90 left)
+
+--- Turn 41 — Murray ----------------------------
+          Murray draws a card. (9 left)
+  AI      trainer   [24]
+          holding: Abra, Alakazam, Chansey, Abra, Switch, Mr. Mime
+          Murray plays Switch.
+          Chansey B is now Active.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Abra, Alakazam, Chansey, Abra, Mr. Mime
+
+--- Turn 42 — You -------------------------------
+          You draws a card. (24 left)
+          You attaches Lightning Energy to Voltorb.
+          Electabuzz uses Thundershock.
+          Chansey takes 10. (110/120 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 43 — Murray ----------------------------
+          Murray draws a card. (8 left)
+  AI      evolve   [29.5]
+          holding: Abra, Alakazam, Chansey, Abra, Mr. Mime, Kadabra
+          passed over: evolve 29.5
+          Abra A evolves into Kadabra. Special Conditions removed.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Abra, Alakazam, Chansey, Abra, Mr. Mime
+
+--- Turn 44 — You -------------------------------
+          You draws a card. (23 left)
+          You attaches Lightning Energy to Voltorb.
+          Electabuzz uses Thundershock.
+          Chansey takes 10. (100/120 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 45 — Murray ----------------------------
+          Murray draws a card. (7 left)
+  AI      evolve   [25]
+          holding: Abra, Alakazam, Chansey, Abra, Mr. Mime, Psychic Energy
+          passed over: attach 12, attach 9, attach 8, attach 8, attach 8
+          Kadabra evolves into Alakazam. Special Conditions removed.
+  AI      attach   [20]
+          holding: Abra, Chansey, Abra, Mr. Mime, Psychic Energy
+          passed over: attach 9, attach 8, attach 8, attach 8, power:MOVE_DAMAGE 6
+          Murray attaches Psychic Energy to Alakazam.
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Chansey, Abra, Mr. Mime
+          passed over: power:MOVE_DAMAGE 6
+          Damage Swap: 1 damage counter moved from Kangaskhan A to Chansey B. (90/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Chansey, Abra, Mr. Mime
+          passed over: power:MOVE_DAMAGE 6
+          Damage Swap: 1 damage counter moved from Kangaskhan A to Chansey B. (80/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Chansey, Abra, Mr. Mime
+          passed over: power:MOVE_DAMAGE 6
+          Damage Swap: 1 damage counter moved from Kangaskhan A to Chansey B. (70/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Chansey, Abra, Mr. Mime
+          passed over: power:MOVE_DAMAGE 6
+          Damage Swap: 1 damage counter moved from Kangaskhan A to Chansey B. (60/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Chansey, Abra, Mr. Mime
+          passed over: power:MOVE_DAMAGE 6
+          Damage Swap: 1 damage counter moved from Kangaskhan A to Chansey B. (50/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Chansey, Abra, Mr. Mime
+          passed over: power:MOVE_DAMAGE 6
+          Damage Swap: 1 damage counter moved from Kangaskhan A to Chansey B. (40/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Chansey, Abra, Mr. Mime
+          passed over: power:MOVE_DAMAGE 6
+          Damage Swap: 1 damage counter moved from Kangaskhan A to Chansey B. (30/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Chansey, Abra, Mr. Mime
+          passed over: power:MOVE_DAMAGE 6
+          Damage Swap: 1 damage counter moved from Kangaskhan A to Chansey B. (20/120 left)
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Abra, Chansey, Abra, Mr. Mime
+
+--- Turn 46 — You -------------------------------
+          You draws a card. (22 left)
+          You attaches Lightning Energy to Voltorb.
+          Electabuzz uses Thunderpunch.
+          Coin flip (bonus damage?): TAILS
+          Tails -> 30 damage, and Electabuzz will take 10.
+          Chansey takes 30. (0/120 left)
+          Electabuzz does 10 damage to itself. (40 total)
+          Chansey is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [44]
+          holding: Abra, Chansey, Abra, Mr. Mime
+          passed over: promote 44, promote 40.5, promote 37, promote 23.8
+          Murray promotes Kangaskhan B to Active.
+
+--- Turn 47 — Murray ----------------------------
+          Murray draws a card. (6 left)
+  AI      bench   [2]
+          holding: Abra, Chansey, Abra, Mr. Mime, Scoop Up
+          passed over: bench 2, bench 2, bench 2, trainer -0.5
+          Murray benches Abra.
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Chansey, Abra, Mr. Mime, Scoop Up
+
+--- Turn 48 — You -------------------------------
+          You draws a card. (21 left)
+          You plays Bill.
+          You draws 2.
+          Pikachu evolves into Raichu. Special Conditions removed.
+          You retreats Electabuzz A; Raichu is now Active.
+          You attaches Lightning Energy to Voltorb.
+          You plays PlusPower.
+          PlusPower attached to Raichu (+10 this turn).
+          Raichu uses Agility.
+          +10 from a bonus -> 30.
+          Kangaskhan takes 30. (60/90 left)
+          Coin flip (Agility): HEADS
+          Raichu will prevent all effects of attacks during the opponent's next turn.
+          PlusPower is discarded.
+
+--- Turn 49 — Murray ----------------------------
+          Murray draws a card. (5 left)
+  AI      trainer   [31.5]
+          holding: Chansey, Abra, Mr. Mime, Scoop Up, Kangaskhan
+          passed over: power:MOVE_DAMAGE 25.3
+          Murray plays Scoop Up.
+          Kangaskhan B is scooped up; Kangaskhan returns to hand and everything else is discarded.
+  AI      promote   [44]
+          holding: Chansey, Abra, Mr. Mime, Kangaskhan, Kangaskhan
+          passed over: promote 40.5, promote 37, promote 23.8, promote 16.3
+          Murray promotes Kangaskhan to Active.
+  AI      bench   [2]
+          holding: Chansey, Abra, Mr. Mime, Kangaskhan, Kangaskhan
+          passed over: bench 2, bench 2, bench 2, bench 2
+          Murray benches Chansey.
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan
+          Raichu: PREVENT_ALL_EFFECTS wears off.
+
+--- Turn 50 — You -------------------------------
+          You draws a card. (18 left)
+          Raichu uses Agility.
+          Kangaskhan takes 20. (70/90 left)
+          Coin flip (Agility): TAILS
+
+--- Turn 51 — Murray ----------------------------
+          Murray draws a card. (4 left)
+  AI      trainer   [17.5]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Pokémon Center
+          passed over: power:MOVE_DAMAGE 6, power:MOVE_DAMAGE 6
+          Murray plays Pokémon Center.
+          Pokemon Center removes 70 damage and discards 1 Energy.
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan
+
+--- Turn 52 — You -------------------------------
+          You draws a card. (17 left)
+          Raichu uses Agility.
+          Kangaskhan takes 20. (70/90 left)
+          Coin flip (Agility): HEADS
+          Raichu will prevent all effects of attacks during the opponent's next turn.
+
+--- Turn 53 — Murray ----------------------------
+          Murray draws a card. (3 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 6, trainer -4
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (110/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 6, trainer -4
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (100/120 left)
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          Raichu: PREVENT_ALL_EFFECTS wears off.
+
+--- Turn 54 — You -------------------------------
+          You draws a card. (16 left)
+          You attaches Lightning Energy to Electabuzz B.
+          You plays Defender.
+          Defender attached to Raichu (-20 damage until the end of the opponent's next turn).
+          You plays Professor Oak.
+          You discards 5 card(s) and draws 7.
+          Voltorb evolves into Electrode. Special Conditions removed.
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): HEADS
+          Poke Ball: found Voltorb.
+          You benches Lickitung.
+          You benches Pikachu.
+          Raichu uses Agility.
+          Kangaskhan takes 20. (70/90 left)
+          Coin flip (Agility): TAILS
+
+--- Turn 55 — Murray ----------------------------
+          Murray draws a card. (2 left)
+  AI      evolve   [29.5]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch, Kadabra
+          passed over: evolve 29.5, power:MOVE_DAMAGE 6, power:MOVE_DAMAGE 6, trainer -4
+          Abra A evolves into Kadabra. Special Conditions removed.
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 6, trainer -4
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (90/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 6, trainer -4
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (80/120 left)
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          Defender is discarded.
+
+--- Turn 56 — You -------------------------------
+          You draws a card. (7 left)
+          Raichu uses Thunder.
+          Kangaskhan takes 60. (30/90 left)
+          Coin flip (avoid recoil?): TAILS
+          Raichu does 30 damage to itself. (30 total)
+
+--- Turn 57 — Murray ----------------------------
+          Murray draws a card. (1 left)
+  AI      attach   [42]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch, Psychic Energy
+          passed over: power:MOVE_DAMAGE 25.3, power:MOVE_DAMAGE 25.3, trainer 24, attach 22, attach 12
+          Murray attaches Psychic Energy to Alakazam.
+  AI      power:MOVE_DAMAGE   [25.3]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 25.3, trainer 24
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (70/120 left)
+  AI      power:MOVE_DAMAGE   [25.3]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 25.3, trainer 24
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (60/120 left)
+  AI      power:MOVE_DAMAGE   [25.3]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 25.3, trainer 24
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (50/120 left)
+  AI      power:MOVE_DAMAGE   [25.3]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 25.3, trainer 24
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (40/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 6, trainer -4
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (30/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: power:MOVE_DAMAGE 6, trainer -4
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (20/120 left)
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+
+--- Turn 58 — You -------------------------------
+          You draws a card. (6 left)
+          You plays Potion.
+          Raichu heals 20. (10 damage left)
+          You attaches Lightning Energy to Lickitung.
+          Raichu uses Thunder.
+          Kangaskhan takes 60. (30/90 left)
+          Coin flip (avoid recoil?): TAILS
+          Raichu does 30 damage to itself. (40 total)
+
+--- Turn 59 — Murray ----------------------------
+          Murray draws a card. (0 left)
+  AI      power:MOVE_DAMAGE   [25.3]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch, Psychic Energy
+          passed over: power:MOVE_DAMAGE 25.3, trainer 24, attach 22, attach 12, attach 11
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey A. (10/120 left)
+  AI      power:MOVE_DAMAGE   [25.3]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch, Psychic Energy
+          passed over: trainer 24, attach 22, attach 12, attach 11, attach 6
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey B. (110/120 left)
+  AI      power:MOVE_DAMAGE   [25.3]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch, Psychic Energy
+          passed over: trainer 24, attach 22, attach 12, attach 11, attach 6
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey B. (100/120 left)
+  AI      power:MOVE_DAMAGE   [25.3]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch, Psychic Energy
+          passed over: trainer 24, attach 22, attach 12, attach 11, attach 6
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey B. (90/120 left)
+  AI      attach   [22]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch, Psychic Energy
+          passed over: attach 12, attach 11, attach 6, attach 6, power:MOVE_DAMAGE 6
+          Murray attaches Psychic Energy to Abra.
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: trainer -4
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey B. (80/120 left)
+  AI      power:MOVE_DAMAGE   [6]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+          passed over: trainer -4
+          Damage Swap: 1 damage counter moved from Kangaskhan to Chansey B. (70/120 left)
+  AI      pass — no attack available — Fetch: Not enough Energy; Comet Punch: Not enough Energy   [0]
+          holding: Abra, Mr. Mime, Kangaskhan, Kangaskhan, Switch
+
+--- Turn 60 — You -------------------------------
+          You draws a card. (5 left)
+          You attaches Lightning Energy to Pikachu.
+          Raichu uses Thunder.
+          Kangaskhan takes 60. (30/90 left)
+          Coin flip (avoid recoil?): TAILS
+          Raichu does 30 damage to itself. (70 total)
+
+--- Turn 61 — Murray ----------------------------
+          GAME OVER - You wins: Murray could not draw a card
+
+==========================================================
+RESULT   You wins — Murray could not draw a card
+         61 turns
+
+==========================================================
+PACKS OPENED
+
+  Team Rocket
+    Dark Electrode  Uncommon   NEW
+    Dark Golduck  Uncommon
+    Dark Vaporeon  Uncommon
+    Zubat  Common
+    Magnemite  Common
+    Voltorb  Common
+    Meowth  Common
+    Goop Gas Attack  Common
+    Eevee  Common  [rh]
+    Dratini  Common
+    Dark Dragonite  Rare Holo
+
+  Team Rocket
+    Dark Jolteon  Uncommon
+    Dark Vaporeon  Uncommon
+    Magikarp  Uncommon
+    Drowzee  Common
+    Slowpoke  Common
+    Psyduck  Common
+    Abra  Common
+    Lightning Energy  
+    Fire Energy  
+    Meowth  Common
+    Dark Vileplume  Rare Holo   NEW
