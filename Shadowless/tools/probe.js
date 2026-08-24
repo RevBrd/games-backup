@@ -20,6 +20,7 @@
 //   node tools/probe.js --size 1191x684          # Trevor's real viewport
 //   node tools/probe.js --only ko,prompt-long
 //   node tools/probe.js --setup                  # the opening-setup screen
+//   node tools/probe.js --pack                   # the booster-pack reveal
 //   node tools/probe.js --state "myown:UI.sel={idx:0}"
 //   node tools/probe.js --raw-json               # the measurements, unformatted
 //   node tools/probe.js --eval "<expression>"    # re-derive a MEASURED number
@@ -110,6 +111,21 @@ const SETUP_STATES = [
           if (UI.__n > 0) UI.E.setupTakeBack(0, 'active', 0);` },
 ];
 
+// The pack screen is its own render path too, and its states are how many of
+// the eleven cards have been turned over. `--pack` swaps the table.
+const PACK_STATES = [
+  { key: 'reveal-1', why: 'one card turned over', on: `UI.pack.revealed[0] = true;`,
+    off: `UI.pack.revealed[0] = false;` },
+  { key: 'reveal-5', why: 'the whole top row', on: `for (let i = 0; i < 5; i++) UI.pack.revealed[i] = true;`,
+    off: `UI.pack.revealed = UI.pack.revealed.map(() => false);` },
+  { key: 'reveal-10', why: 'both rows, Rare still face down',
+    on: `for (let i = 0; i < 10; i++) UI.pack.revealed[i] = true;`,
+    off: `UI.pack.revealed = UI.pack.revealed.map(() => false);` },
+  { key: 'reveal-all', why: 'the Rare too — and the summary line arrives with it',
+    on: `UI.pack.revealed = UI.pack.revealed.map(() => true);`,
+    off: `UI.pack.revealed = UI.pack.revealed.map(() => false);` },
+];
+
 // --- what gets measured -----------------------------------------------------
 // offsetWidth/offsetHeight everywhere, never getBoundingClientRect: fitBoard()
 // zooms the board column, and getBoundingClientRect reports POST-zoom screen
@@ -136,6 +152,13 @@ const MEASURE = `(function () {
     setupRow: box(q('.setupmat .activerow')),
     setupAct: box(q('.setupmat .activerow > *')),
     setupBench: box(q('.setupmat .bench')),
+    // The pack screen centres its box in the viewport, so a box that grows
+    // moves everything already on screen. packTop is what the eye actually
+    // notices: where the title sits.
+    packbox: box(q('.packbox')),
+    packgrid: box(q('.packgrid')),
+    packTop: (function () { var e = q('.packhead'); return e ? [0, Math.round(e.getBoundingClientRect().top)] : [0, 0]; })(),
+    pullslot: box(q('.pullslot')),
     myAct:   box(q('.side.mine .slot.act')),
     foeAct:  box(q('.side.foe .slot.act')),
     handpnl: box(UI.handPanelEl),
@@ -147,6 +170,19 @@ function bootstrap(states, opts) {
   const L = [];
   L.push(`UI.seedDraft = ${JSON.stringify(String(opts.seed))};`);
   L.push(`UI.flipDelay = 0; UI.aiDelay = 100000;`);
+  if (opts.pack) {
+    // A real pack, opened the way the game opens one: grant one, take it, roll
+    // it. Nothing here hand-builds UI.pack, because a fake would not carry the
+    // isNew and variant flags the ribbons are made of — and the ribbons are
+    // what this mode exists to measure.
+    L.push(`UI.save = UI.save || newSave();`);
+    L.push(`addPacks(UI.save, ${JSON.stringify(opts.packSet)}, 1);`);
+    L.push(`openNextPack(${JSON.stringify(opts.packSet)});`);
+    L.push(`render();`);
+    L.push(`const OUT = [];`);
+    L.push(`const take = (k, why) => OUT.push(Object.assign({ state: k, why: why || '' }, ${MEASURE}));`);
+    return finish(L, states, opts);
+  }
   L.push(`startMatch();`);
   if (!opts.setup) {
     // setupAuto() confirms for us, which is why nothing here calls
@@ -164,6 +200,11 @@ function bootstrap(states, opts) {
   L.push(`render();`);
   L.push(`const OUT = [];`);
   L.push(`const take = (k, why) => OUT.push(Object.assign({ state: k, why: why || '' }, ${MEASURE}));`);
+  return finish(L, states, opts);
+}
+
+// The states, the control and the sink — identical whichever screen we booted.
+function finish(L, states, opts) {
   L.push(`take('idle', 'nothing happening — the baseline');`);
   for (const s of states) {
     L.push(`try { ${s.on} } catch (e) { OUT.push({ state: ${JSON.stringify(s.key)}, error: String(e && e.message) }); }`);
@@ -194,7 +235,9 @@ function bootstrap(states, opts) {
 
 // --- reporting ---------------------------------------------------------------
 const FIELDS = ['zoom', 'wide', 'col', 'table', 'tblOver', 'mat', 'centre',
-  'setupmat', 'setupRow', 'setupAct', 'setupBench', 'myAct', 'foeAct', 'handpnl', 'bar'];
+  'setupmat', 'setupRow', 'setupAct', 'setupBench',
+  'packbox', 'packgrid', 'packTop', 'pullslot',
+  'myAct', 'foeAct', 'handpnl', 'bar'];
 const fmt = (v) => Array.isArray(v) ? v[0] + 'x' + v[1] : String(v);
 const same = (a, b) => fmt(a) === fmt(b);
 
@@ -216,7 +259,8 @@ function report(allRows, opts) {
   const nameW = Math.max(...rows.map(r => r.state.length));
 
   console.log(`\nviewport ${opts.want.w}x${opts.want.h}   seed ${opts.seed}   ` +
-    (opts.setup ? 'OPENING SETUP' : `turns ${opts.turns}`));
+    (opts.pack ? 'PACK OPENING - ' + opts.packSet
+      : opts.setup ? 'OPENING SETUP' : `turns ${opts.turns}`));
   console.log('  ' + 'state'.padEnd(nameW) + '  ' + live.map(f => f.padStart(w[f])).join('  '));
   console.log('  ' + '-'.repeat(nameW) + '  ' + live.map(f => '-'.repeat(w[f])).join('  '));
   for (const r of rows) {
@@ -271,11 +315,13 @@ function main() {
     seed: arg('seed', '814247252'),
     turns: parseInt(arg('turns', '4'), 10) || 0,
     setup: flag('setup'),
+    pack: flag('pack'),
+    packSet: arg('pack-set', 'base5'),
     evalExpr: arg('eval', ''),
     want: cal.want,
   };
 
-  let states = (opts.setup ? SETUP_STATES : BOARD_STATES).slice();
+  let states = (opts.pack ? PACK_STATES : opts.setup ? SETUP_STATES : BOARD_STATES).slice();
   for (const spec of argAll('state')) {
     const at = spec.indexOf(':');
     if (at < 0) { console.error('--state wants name:js'); process.exit(2); }

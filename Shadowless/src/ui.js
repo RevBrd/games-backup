@@ -1671,7 +1671,16 @@ function renderSlot(slot, pi, where, idx) {
   // and nothing else. The text is deliberately absent: it would double the card's
   // height for something you can read in the rail by hovering. Knowing the
   // numbers is the part you steer by.
-  if (pi === 1 && where === 'active' && (c.attacks || []).length) {
+  //
+  // YOUR Active gets the same read-only list during SETUP, and for the same
+  // reason one level over: the buttons below are gated on `phase === 'main'`, so
+  // in opening setup the card had nothing at all in its bottom half and came out
+  // 318 wide by 99 tall — a bar rather than a card, which is what Trevor saw as
+  // it being stretched. The lines are what the card is missing, not padding, and
+  // "what can this thing actually do on turn one" is the question the opening
+  // screen exists to answer.
+  const readOnlyAtks = where === 'active' && (pi === 1 || S().phase === 'setup');
+  if (readOnlyAtks && (c.attacks || []).length) {
     const atks = el('div', 'attacks foeatks');
     c.attacks.forEach(a => {
       const l = el('div', 'pc-atkline');
@@ -2859,6 +2868,13 @@ function renderPackScreen() {
       const back = el('div', 'packback');
       back.appendChild(el('i'));
       slot.appendChild(back);
+      // An EMPTY ribbon, always, exactly like the Active card's status row and
+      // for the same reason: a revealed card carries a NEW tag or a count, and
+      // if the face-down slot does not reserve that space then turning any card
+      // over grows its row, grows the grid, and shifts the whole centred box —
+      // including the cards you have not turned over yet. Measured at 1191x684:
+      // 16px per row, and the screen climbed 61px on the final reveal.
+      slot.appendChild(el('div', 'vribbon'));
       slot.onclick = () => { p.revealed[i] = true; render(); };
     } else {
       slot.appendChild(pullFace(card, c.flags));
@@ -2881,15 +2897,19 @@ function renderPackScreen() {
   });
   box.appendChild(grid);
 
+  // Always in the DOM, empty until the last card is over. Its one line arrives
+  // at the exact moment you are looking at the Rare, and adding it then moved
+  // everything on screen — the worst possible timing for a shift. `.packsum`
+  // reserves its own line for the whole reveal instead.
+  const sum = el('div', 'packsum');
   if (allRevealed) {
     const nNew = p.isNew.filter(Boolean).length;
     const nVar = p.order.filter(c => c.flags.length).length;
-    const sum = el('div', 'packsum');
     sum.appendChild(el('b', null, String(nNew)));
     sum.appendChild(el('span', null, nNew === 1 ? ' card you did not have' : ' cards you did not have'));
     if (nVar) { sum.appendChild(el('span', null, '  ·  ')); sum.appendChild(el('b', null, String(nVar))); sum.appendChild(el('span', null, ' with a variant')); }
-    box.appendChild(sum);
   }
+  box.appendChild(sum);
 
   const bar = el('div', 'packbar');
   if (renderLogAsk(bar)) { box.appendChild(bar); ov.appendChild(box); return ov; }

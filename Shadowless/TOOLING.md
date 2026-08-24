@@ -256,6 +256,7 @@ instrument in the project that measures the same board twice.
 node tools/probe.js --size 1191x684          # every state, at Trevor's real viewport
 node tools/probe.js --only ko,prompt-long    # just these
 node tools/probe.js --setup                  # the opening-setup screen instead of a board
+node tools/probe.js --pack                   # the booster reveal (--pack-set base1)
 node tools/probe.js --state "mine:UI.sel={idx:0}"          # an ad hoc one
 node tools/probe.js --setup --eval "<expression>"          # re-derive a MEASURED number
 ```
@@ -264,6 +265,12 @@ It boots the built file in headless Chrome exactly the way `shot.js` does, then 
 named UI states — a Knock Out banner, a targeting prompt, a coin in the air, a card selected, four
 more cards in hand — applying each, measuring the geometry, and reverting. It prints only the
 columns that ever moved, so the one that changed is not buried under eleven that did not.
+
+**Three screens, three state tables.** The board is the default; `--setup` boots the opening-setup
+sheet and places Basics into it; `--pack` grants a booster, opens it through the real `openNextPack`
+and turns cards over one, five, ten and eleven at a time. A hand-built `UI.pack` would have been
+easier and would have measured nothing — the `NEW`/`×N` ribbons come off `isNew` and the variant
+flags, and the ribbons were the whole fault. **Boot the screen the way the game boots it.**
 
 **Three things about it are worth knowing before you read a table.**
 

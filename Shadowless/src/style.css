@@ -675,11 +675,13 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    is margin by construction, so the strip stops where the board stops instead
    of stranding the bench against one edge of an 900px sheet. */
 /* One height for the Active spot, filled or empty, declared once so the two
-   cannot drift apart. 99px is MEASURED, not chosen: every one of the 113 Basic
-   printings in the four live sets renders at exactly 99px in this slot, swept
-   with `node tools/probe.js --setup --eval`. Re-derive it the same way if the
-   card face changes. */
-.setupmat{--setupact:99px;
+   cannot drift apart — and fixed rather than natural, so that swapping one
+   Basic for another does not move the strip either.
+   150px is MEASURED, not chosen. Swept over all 113 Basic printings in the four
+   live sets with `node tools/probe.js --setup --eval`: 72 come out at 150 (two
+   attacks), 39 at 129 (one), and 2 at 99 (none — the Trainers that play as
+   Pokemon). Re-derive the same way if the card face changes. */
+.setupmat{--setupact:150px;
   margin:14px auto;border-radius:4px;gap:10px;width:max-content;max-width:100%;
   background:linear-gradient(0deg,rgba(226,168,75,.05),rgba(0,0,0,.16) 70%);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.045);
@@ -1319,8 +1321,26 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    survive. Height-driven clamps shrink on a short page the way the mat does;
    width-driven ones cannot, because the column width does not know how tall
    the page is. Same lesson as fitBoard(); see LAYOUT.md. */
-.pullslot .cardface{width:auto;max-width:100%;height:clamp(80px,17vh,168px);margin:0}
+.pullslot .cardface{width:auto;max-width:100%;height:clamp(80px,17vh,168px);margin:0;
+  /* `display:block`, because `.vfx` is an inline-block and an INLINE image
+     inside one sits on the text baseline with a ~2px descender gap under it.
+     That gap is the difference between a face-down slot and a revealed one, and
+     it is the last 2px of this screen's shift. `.picktile .vfx` solves the same
+     thing the same way. NOT `line-height:0` — see TOOLING.md for what that did
+     the last time somebody reached for it. */
+  display:block;
+  /* The scan is 240x330 and `width:auto` only knows that once the image has
+     LOADED — so a freshly revealed card is 0px wide for a frame and pops out to
+     its full width. Declaring the ratio reserves the width up front. */
+  aspect-ratio:240/330}
 .pullslot.rare .cardface{height:clamp(112px,24vh,232px)}
+/* The Rare's face-down back must be the Rare's height, not a common's. It was
+   the common clamp, so turning the last card over grew its row by 48px on top
+   of everything else — the single biggest jump on this screen. */
+.pullslot.rare .packback{height:clamp(112px,24vh,232px)}
+/* Reserved on every slot, revealed or not — see renderPackScreen(). 12px is the
+   tallest of the two tags that can sit here (a ×N count; NEW is shorter). */
+.pullslot .vribbon{min-height:12px}
 /* The count a duplicate arrives at. Deliberately quieter than NEW — it sits in
    the same slot and answers the same question, and a pack of eleven duplicates
    should not read as eleven announcements. */
@@ -1333,7 +1353,9 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
   display:flex;align-items:center;justify-content:center}
 .packback i{width:16px;height:16px;border:2px solid #4E626F;border-radius:50%;display:block}
 .packbar{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
-.packsum{font-size:10.5px;color:var(--matink);text-align:center}
+/* Always present, empty until the last card is over, so its arrival does not
+   move the grid. min-height is one line of its own type. */
+.packsum{font-size:10.5px;color:var(--matink);text-align:center;min-height:15px}
 .packsum b{color:var(--stock);font-weight:600}
 
 /* Pull detail: the scan and your copy, side by side. The scan is what the card

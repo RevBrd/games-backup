@@ -114,9 +114,16 @@ placeholder and the placed card are declared from the same custom property on `.
 they were declared separately and drifted: the five-class `min-height:0` that frees the setup card
 from the board's 249px also beat the four-class `min-height:106px` on the `CHOOSE A BASIC`
 placeholder, so the empty shape stood at **26px** against the card's **99px** and the row jumped
-73px the moment you placed a Basic. 99 is measured — every one of the 113 Basic printings in the
-four live sets renders at exactly 99px in that slot. Re-derive with
-`node tools/probe.js --setup --eval`.
+73px the moment you placed a Basic.
+
+**And 99px was itself the symptom of something else.** Trevor read the setup Active as *stretched*,
+and it was: 318 wide by 99 tall is a bar, not a card. The cause is that the attack buttons are gated
+on `phase === 'main'`, so in setup the card had **nothing in its bottom half at all**. It carries the
+opponent-Active's read-only attack lines now — cost, name, damage — which is the content it was
+missing rather than padding, and which answers the question that screen exists to ask. `--setupact`
+is **150px**, measured across all 113 Basics: 72 at 150 with two attacks, 39 at 129 with one, 2 at 99
+with none. Fixed rather than natural, so swapping one Basic for another does not move the strip
+either. Re-derive with `node tools/probe.js --setup --eval`.
 
 **Anything that measures a size must pick one coordinate space.** `getBoundingClientRect()` reports
 *post*-zoom screen pixels; `offsetWidth` / `clientWidth` / `scrollHeight` report *pre*-zoom layout
@@ -273,6 +280,33 @@ and absolutely positioned**, so a flip overhangs both mat halves without reflowi
 behind it is frozen on a pre-action snapshot, and a coin that resized the mat would move the very
 cards you are waiting on. Anything else that appears on the centre line inherits that. *[The rest of
 the coin, and everything that shares its strip →](INTERACTION.md)*
+
+## The pack reveal: every slot reserves what a revealed slot needs
+
+`.packscreen` centres its box in the viewport, so **anything that grows the box moves everything
+already on screen** — including the ten cards you have not turned over yet. It is not fitted and does
+not need to be; the cards are sized by `vh` clamps. It just has to stop changing size.
+
+Three things were making it change, and they compounded. Measured at 1191x684, the header climbed
+**61px** on the final reveal:
+
+- **A revealed slot carries a ribbon — `NEW` or a `×N` count — and a face-down slot did not.** So
+  turning any card over grew its whole grid row by 16px. `renderPackScreen()` appends an **empty**
+  `.vribbon` to face-down slots for exactly the reason the Active card always appends its status row.
+- **The Rare's face-down back was a common's height.** `.packback` had one clamp; the revealed Rare
+  has a taller one. The last card in the pack therefore jumped its row by another **48px** — the
+  biggest single move on the screen, arriving at the most conspicuous possible moment.
+- **`.packsum` was rendered only once everything was revealed.** It is always in the DOM now, empty
+  until then, with a `min-height` of its own one line.
+
+Two smaller rules came out of the same pass and generalise. **`.pullslot .cardface` declares
+`aspect-ratio:240/330`**, because `width:auto` against a fixed height only knows the ratio once the
+image has *loaded* — so a freshly revealed card is 0px wide for a frame and pops out. And it is
+`display:block`: an inline image inside an inline-block `.vfx` sits on the text baseline with a ~2px
+descender gap under it, which was the last 2px of the shift. **Not `line-height:0`** — see
+[TOOLING.md](TOOLING.md) for what that did the last time somebody reached for it.
+
+`node tools/probe.js --pack` walks the reveal and is what found all five.
 
 ## The title screen is not fitted, and deck select is now bounded
 

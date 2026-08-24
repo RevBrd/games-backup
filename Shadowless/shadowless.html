@@ -682,11 +682,13 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    is margin by construction, so the strip stops where the board stops instead
    of stranding the bench against one edge of an 900px sheet. */
 /* One height for the Active spot, filled or empty, declared once so the two
-   cannot drift apart. 99px is MEASURED, not chosen: every one of the 113 Basic
-   printings in the four live sets renders at exactly 99px in this slot, swept
-   with `node tools/probe.js --setup --eval`. Re-derive it the same way if the
-   card face changes. */
-.setupmat{--setupact:99px;
+   cannot drift apart — and fixed rather than natural, so that swapping one
+   Basic for another does not move the strip either.
+   150px is MEASURED, not chosen. Swept over all 113 Basic printings in the four
+   live sets with `node tools/probe.js --setup --eval`: 72 come out at 150 (two
+   attacks), 39 at 129 (one), and 2 at 99 (none — the Trainers that play as
+   Pokemon). Re-derive the same way if the card face changes. */
+.setupmat{--setupact:150px;
   margin:14px auto;border-radius:4px;gap:10px;width:max-content;max-width:100%;
   background:linear-gradient(0deg,rgba(226,168,75,.05),rgba(0,0,0,.16) 70%);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.045);
@@ -1326,8 +1328,26 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    survive. Height-driven clamps shrink on a short page the way the mat does;
    width-driven ones cannot, because the column width does not know how tall
    the page is. Same lesson as fitBoard(); see LAYOUT.md. */
-.pullslot .cardface{width:auto;max-width:100%;height:clamp(80px,17vh,168px);margin:0}
+.pullslot .cardface{width:auto;max-width:100%;height:clamp(80px,17vh,168px);margin:0;
+  /* `display:block`, because `.vfx` is an inline-block and an INLINE image
+     inside one sits on the text baseline with a ~2px descender gap under it.
+     That gap is the difference between a face-down slot and a revealed one, and
+     it is the last 2px of this screen's shift. `.picktile .vfx` solves the same
+     thing the same way. NOT `line-height:0` — see TOOLING.md for what that did
+     the last time somebody reached for it. */
+  display:block;
+  /* The scan is 240x330 and `width:auto` only knows that once the image has
+     LOADED — so a freshly revealed card is 0px wide for a frame and pops out to
+     its full width. Declaring the ratio reserves the width up front. */
+  aspect-ratio:240/330}
 .pullslot.rare .cardface{height:clamp(112px,24vh,232px)}
+/* The Rare's face-down back must be the Rare's height, not a common's. It was
+   the common clamp, so turning the last card over grew its row by 48px on top
+   of everything else — the single biggest jump on this screen. */
+.pullslot.rare .packback{height:clamp(112px,24vh,232px)}
+/* Reserved on every slot, revealed or not — see renderPackScreen(). 12px is the
+   tallest of the two tags that can sit here (a ×N count; NEW is shorter). */
+.pullslot .vribbon{min-height:12px}
 /* The count a duplicate arrives at. Deliberately quieter than NEW — it sits in
    the same slot and answers the same question, and a pack of eleven duplicates
    should not read as eleven announcements. */
@@ -1340,7 +1360,9 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
   display:flex;align-items:center;justify-content:center}
 .packback i{width:16px;height:16px;border:2px solid #4E626F;border-radius:50%;display:block}
 .packbar{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
-.packsum{font-size:10.5px;color:var(--matink);text-align:center}
+/* Always present, empty until the last card is over, so its arrival does not
+   move the grid. min-height is one line of its own type. */
+.packsum{font-size:10.5px;color:var(--matink);text-align:center;min-height:15px}
 .packsum b{color:var(--stock);font-weight:600}
 
 /* Pull detail: the scan and your copy, side by side. The scan is what the card
@@ -16610,7 +16632,16 @@ function renderSlot(slot, pi, where, idx) {
   // and nothing else. The text is deliberately absent: it would double the card's
   // height for something you can read in the rail by hovering. Knowing the
   // numbers is the part you steer by.
-  if (pi === 1 && where === 'active' && (c.attacks || []).length) {
+  //
+  // YOUR Active gets the same read-only list during SETUP, and for the same
+  // reason one level over: the buttons below are gated on `phase === 'main'`, so
+  // in opening setup the card had nothing at all in its bottom half and came out
+  // 318 wide by 99 tall — a bar rather than a card, which is what Trevor saw as
+  // it being stretched. The lines are what the card is missing, not padding, and
+  // "what can this thing actually do on turn one" is the question the opening
+  // screen exists to answer.
+  const readOnlyAtks = where === 'active' && (pi === 1 || S().phase === 'setup');
+  if (readOnlyAtks && (c.attacks || []).length) {
     const atks = el('div', 'attacks foeatks');
     c.attacks.forEach(a => {
       const l = el('div', 'pc-atkline');
@@ -17798,6 +17829,13 @@ function renderPackScreen() {
       const back = el('div', 'packback');
       back.appendChild(el('i'));
       slot.appendChild(back);
+      // An EMPTY ribbon, always, exactly like the Active card's status row and
+      // for the same reason: a revealed card carries a NEW tag or a count, and
+      // if the face-down slot does not reserve that space then turning any card
+      // over grows its row, grows the grid, and shifts the whole centred box —
+      // including the cards you have not turned over yet. Measured at 1191x684:
+      // 16px per row, and the screen climbed 61px on the final reveal.
+      slot.appendChild(el('div', 'vribbon'));
       slot.onclick = () => { p.revealed[i] = true; render(); };
     } else {
       slot.appendChild(pullFace(card, c.flags));
@@ -17820,15 +17858,19 @@ function renderPackScreen() {
   });
   box.appendChild(grid);
 
+  // Always in the DOM, empty until the last card is over. Its one line arrives
+  // at the exact moment you are looking at the Rare, and adding it then moved
+  // everything on screen — the worst possible timing for a shift. `.packsum`
+  // reserves its own line for the whole reveal instead.
+  const sum = el('div', 'packsum');
   if (allRevealed) {
     const nNew = p.isNew.filter(Boolean).length;
     const nVar = p.order.filter(c => c.flags.length).length;
-    const sum = el('div', 'packsum');
     sum.appendChild(el('b', null, String(nNew)));
     sum.appendChild(el('span', null, nNew === 1 ? ' card you did not have' : ' cards you did not have'));
     if (nVar) { sum.appendChild(el('span', null, '  ·  ')); sum.appendChild(el('b', null, String(nVar))); sum.appendChild(el('span', null, ' with a variant')); }
-    box.appendChild(sum);
   }
+  box.appendChild(sum);
 
   const bar = el('div', 'packbar');
   if (renderLogAsk(bar)) { box.appendChild(bar); ov.appendChild(box); return ov; }

@@ -30,7 +30,7 @@ rule in its own header. It was split on 22 Aug 2026 and the archive is closed.
 
 | When | Instance | Items |
 |---|---|---|
-| 23 Aug 2026 | #25, Job 12b | The centre line, which turned out to be the mat's shock absorber; the setup Active spot that lost its own placeholder to a specificity fight |
+| 23 Aug 2026 | #25, Job 12b | The centre line, which turned out to be the mat's shock absorber; the setup Active that was a bar because its bottom half was empty; the booster reveal climbing 61px as you turned cards over |
 | 21 Aug 2026 | #21, third pass | Charizard capped at four Energy; the pay order discarding the Double Colorless first; a duel that reset its own baseline every commit |
 | 21 Aug 2026 | #21, second pass | The Charizard benchmark; an Energy priced twice in one function; a wall is not an upgrade opportunity; why the evolve fix has to wait for the attach fix |
 | 21 Aug 2026 | #21, Job 11 | Retreating into the wrong matchup; Teleport's flat 22 and the destination nobody chose; the Colorless Energy dead end; a counter that said "must be 0" and was counting the wrong thing |
@@ -82,8 +82,37 @@ not quite what it looked like. The setup Active is deliberately freed from the b
 249px min-height, by a five-class selector — and that selector **also beat the `CHOOSE A BASIC`
 placeholder's own `min-height:106px`**, which is four classes. So the empty shape stood at **26px**
 against the placed card's **99px**: a thin bar that popped to a squat card, and the strip grew 14px
-under it. Both come from one `--setupact` custom property now, and 99 is measured rather than
-chosen — all 113 Basic printings in the four live sets render at exactly 99px in that slot.
+under it. Both come from one `--setupact` custom property now.
+
+**And when I showed him that, he said the card was still stretched — which it was, and I had stopped
+one step short.** Fixing the jump made the two states agree at 318 wide by 99 tall, and 318x99 is a
+bar rather than a card. The reason is that the attack buttons are gated on `phase === 'main'`, so in
+setup the card had **nothing in its bottom half at all**. It carries the opponent-Active's read-only
+attack lines now — cost, name, damage — which is the content it was missing rather than padding, and
+which happens to answer the question the opening screen exists to ask. `--setupact` is **150px**,
+swept across all 113 Basics: 72 at 150 with two attacks, 39 at 129 with one, 2 at 99 with none.
+*The general shape: making two states agree is not the same as either of them being right.*
+
+**Then Trevor found a third screen doing it, and it was the worst of them.** The booster reveal.
+Same shape, three causes compounding, and the numbers are at 1191x684:
+
+- A revealed slot carries a `NEW` tag or a `×N` count and a face-down slot did not, so turning any
+  card over grew its grid row by **16px**.
+- **The Rare's face-down back was sized with the commons' clamp** while the revealed Rare has its
+  own taller one, so the last card jumped its row by another **48px** — at the most conspicuous
+  possible moment, which is the one you are actually watching.
+- The summary line was rendered only once everything was revealed, arriving in the same frame.
+
+Total: the header climbed **61px** on the final flip. All three are the Active card's status-row rule
+in different clothes — *reserve what the filled state needs in the empty one* — and it is now written
+in [LAYOUT.md](LAYOUT.md) as a rule about that screen rather than as three separate patches.
+
+Two smaller ones fell out of the same run and both generalise. **`width:auto` against a fixed height
+does not know an image's ratio until it has loaded**, so a freshly revealed card was 0px wide for a
+frame; declaring `aspect-ratio` reserves it. And **an inline image inside an inline-block sits on the
+text baseline**, with a ~2px descender gap under it — that gap was literally the last 2px of the
+shift, and `display:block` on the image is the fix. Not `line-height:0`; this project has a scar from
+that one already.
 
 **The instrument is the part worth stealing.** Neither `shot.js` nor `smoke.js` can see this class
 of bug — one shoots a single state and the other has no layout engine — and #20 hit the same wall,
