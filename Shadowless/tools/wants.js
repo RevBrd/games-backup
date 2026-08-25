@@ -94,6 +94,51 @@ function loadClaims() {
 const claims = loadClaims();
 const claimsFor = id => claims.filter(c => c.id === id || (c.ids || []).includes(id));
 
+// ---- drift: has a note been REWRITTEN since its claim was written? ---------
+//
+// The dangerous case, and it runs on every invocation because it is cheap and
+// because nobody would remember to ask for it. A claim quotes Trevor's note
+// verbatim so a reader can check the row against the sentence it came from — and
+// the moment he revises that sentence, the row is silently testing something he
+// no longer says. It still passes. Nothing else in the project can see it.
+//
+// This is the same shape as every other stale-claim failure in the tree: a fact
+// asserted about two things that decays whenever either one moves. Here the two
+// things are a spreadsheet cell and a JS string, which cannot possibly stay in
+// step on their own.
+//
+// A note VANISHING matters too, and differently: it means the card lost its
+// `Wants`, so the claim is now orphaned rather than wrong.
+const norm = s => String(s).replace(/\s+/g, ' ').trim().toLowerCase();
+const noteById = {};
+for (const n of notes) noteById[n.id] = n.note;
+
+const drift = [];
+const orphan = [];
+const checked = new Set();
+for (const c of claims) {
+  if (!c.note || !c.id || c.note.startsWith('(')) continue;    // '(' marks a claim with no workbook note
+  const key = c.id + '|' + c.note;
+  if (checked.has(key)) continue;
+  checked.add(key);
+  const cur = noteById[c.id];
+  if (cur === undefined) orphan.push(c);
+  else if (norm(cur) !== norm(c.note)) drift.push({ c, cur });
+}
+if (drift.length || orphan.length) {
+  console.log('');
+  for (const { c, cur } of drift) {
+    console.log(`  !! REWRITTEN  ${c.card} (${c.id}) — the claim quotes a note Trevor has since changed`);
+    console.log(`     claim: ${c.note.slice(0, 110)}`);
+    console.log(`     now:   ${cur.slice(0, 110)}`);
+  }
+  for (const c of orphan) {
+    console.log(`  !! ORPHANED   ${c.card} (${c.id}) — no Wants on this card in the current workbook`);
+  }
+  console.log('  Re-read the note and the row together. A claim that still passes against a');
+  console.log('  sentence he no longer stands behind is the worst outcome here, not the best.');
+}
+
 // ---- output ----------------------------------------------------------------
 
 const isLive = g => LIVE.includes(g.set) && !g.gated;

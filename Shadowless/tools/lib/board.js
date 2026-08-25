@@ -226,6 +226,41 @@ class Board {
     return !!b && b.toLowerCase() === String(name).toLowerCase();
   }
 
+  // ---- Trainers ---------------------------------------------------------
+  // A whole half of `ai.js` the playbook method had not touched until 24 Aug
+  // 2026, when the workbook turned out to carry 36 Trainer notes. They are
+  // played from hand, so `myHand` has to contain the card; this finds it and
+  // scores the actual legal action rather than reaching into `scoreTrainer`
+  // with a hand-built one, because filling `a.opts` is half of what that
+  // function does and a synthetic action skips it.
+  trainerAction(name) {
+    const id = resolve(name);
+    const acts = this.E.legalActions(0).filter(a => a.t === 'playTrainer');
+    for (const a of acts) {
+      const inst = this.me.hand[a.hand];
+      if (inst && inst.id === id) return a;
+    }
+    return null;
+  }
+  playable(name) { return !!this.trainerAction(name); }
+  trainer(name) {
+    const a = this.trainerAction(name);
+    if (!a) {
+      const inHand = this.me.hand.some(h => h.id === resolve(name));
+      throw new Error(inHand
+        ? `${name} is in hand but not a legal play on this board`
+        : `${name} is not in hand — put it in myHand`);
+    }
+    return this.ai.scoreTrainer(0, a);
+  }
+  // Would the bot actually play it this turn, against everything else it could do?
+  wouldPlay(name) {
+    const m = this.move();
+    if (!m || m.action.t !== 'playTrainer') return false;
+    const inst = this.me.hand[m.action.hand];
+    return !!inst && inst.id === resolve(name);
+  }
+
   // What the bot would actually DO with the whole turn — not just which attack.
   // Retreat, evolution, bench and Power claims all need this one.
   move() {

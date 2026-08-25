@@ -699,6 +699,37 @@ const CLAIMS = [
     // by more than a single coin-flip rider would be.
     expect: b => b.score('Foul Gas') > b.damage('Foul Gas') + 10,
   },
+
+  // ------------------------------------------------------------------ Potion --
+  // THE FIRST TRAINER CLAIM, and it PASSED — which is a result, because Trevor
+  // logged the opposite from real play: *"Opponent used Potion right at the start
+  // to heal only 10 damage"* is a live item in GRABBAG.md. The general case is
+  // correct on a built board, so that report needs its own position before it can
+  // be worked. PLAYTEST.md is the method file and this is exactly its subject.
+  {
+    id: 'base1-94', card: 'Potion', pattern: 'Heal & attrition',
+    note: 'To not be used to heal only 10 damage unless that has the immediate potential to be life saving (and the pokemon is worth saving)',
+    claim: 'refused on a barely scratched Pokemon — 10 damage healed is not worth a card',
+    board: {
+      me:   { card: 'Chansey', energy: '2 Fighting', dmg: 10 },
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['Potion'],
+    },
+    sane: b => b.playable('Potion') && b.me.active.dmg === 10 && b.hp() > 100,
+    expect: b => !b.wouldPlay('Potion'),
+  },
+  {
+    id: 'base1-94', card: 'Potion', pattern: 'Heal & attrition',
+    note: 'To not be used to heal only 10 damage unless that has the immediate potential to be life saving (and the pokemon is worth saving)',
+    claim: '...unless it is life-saving, which is the clause the note turns on',
+    board: {
+      me:   { card: 'base1:Pikachu', energy: '2 Lightning', dmg: 30 },
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['Potion'],
+    },
+    sane: b => b.playable('Potion') && b.hp() === 10 && b.threat() >= b.hp(),
+    expect: b => b.wouldPlay('Potion'),
+  },
 ];
 
 module.exports = { CLAIMS };

@@ -1538,6 +1538,30 @@ class AI {
   // Only the Active is being hit, so only the Active is discounted. Graded
   // rather than a cliff, on the by-now well-earned suspicion of any quantity
   // about proximity to an edge written as an equality test.
+  // HOW LIKELY IS THIS PLAYER TO KILL THE DEFENDING POKEMON THIS TURN?
+  //
+  // The attack path gets this for free — `forecast` computes `pLethal` for the
+  // attack being scored. A Trainer does not: it is played BEFORE the attack, so
+  // "will this target still be here" has to be asked about the best attack the
+  // Pokemon could follow up with.
+  //
+  // Deliberately the MAXIMUM across affordable attacks rather than the one the
+  // bot will actually pick. Over-stating the kill chance under-values the rider,
+  // which is the safe direction — the failure being fixed is a Trainer spent on
+  // something already leaving, so erring toward "do not spend it" costs a card
+  // and erring the other way wastes one.
+  pLethalThisTurn(pi) {
+    const me = this.E.state.players[pi];
+    if (!me.active || !this.E.state.players[1 - pi].active) return 0;
+    let best = 0;
+    for (const a of this.E.legalActions(pi)) {
+      if (a.t !== 'attack') continue;
+      const f = this.forecast(pi, a.idx, a.opts);
+      if (f && f.pLethal > best) best = f.pLethal;
+    }
+    return best;
+  }
+
   // IS THIS STATUS WORTH ANYTHING AGAINST A TARGET THAT ALREADY HAS ONE?
   //
   // The 22 Aug rider rule said a rider is worth nothing on a Pokemon the attack
@@ -2636,10 +2660,41 @@ class AI {
         case 'T_POKE_BALL': s += 0.5 * W.drawCard * 2; break;
 
         // ---- Job 10e ------------------------------------------------------
-        case 'T_STATUS_ON_FLIP': {
+        // A TRAINER'S STATUS IS THE SAME STATUS AN ATTACK APPLIES — 24 Aug 2026.
+        //
+        // This was a flat `0.5 * W[key]` and carried none of the three things the
+        // attack path had learned about riders, because all three were written
+        // into `scoreAttack` and this is a different function. Sleep! scored an
+        // identical 11.00 against a healthy target, a target the bot could kill
+        // that same turn, and a target **already asleep**.
+        //
+        // Trevor's note names two of the three from play: *"should not be played
+        // against a pokemon that's going to die in the same turn or is already
+        // asleep."* The third — pricing a bought turn off what it actually denies
+        // — is not in his note and is included anyway, because leaving it out
+        // would mean the game holds two different prices for one bought turn, and
+        // that exact inconsistency is the fault #22 fixed for attacks on 22 Aug.
+        //
+        // **The lesson is about code paths, not about this card.** A rule proven
+        // in `scoreAttack` does not reach `scoreTrainer`, and nothing was going to
+        // tell us: no suite covers it, the situation is rare enough to be a null
+        // in every duel, and the card works perfectly for the human.
+        case 'T_STATUS_ON_FLIP':
+        case 'T_STATUS': {
           const key = STATUS_VALUE[v.s];
           if (!key || !you.active) return -Infinity;
-          s += 0.5 * W[key];
+          const certain = v.v === 'T_STATUS' ? 1 : 0.5;
+          // Already has it? Worth nothing — and Paralysis is exempt because it
+          // refreshes its own timer. Same derivation as the attack path.
+          const novel = this.statusNovelty(v.s, you.active);
+          // About to die anyway? A status on a corpse buys nothing, and the
+          // Pokemon that replaces it comes up clean.
+          const pKill = this.pLethalThisTurn(pi);
+          // And a bought turn is worth the attack it denies.
+          const scale = DENIES_A_TURN[v.s]
+            ? Math.min(this.incomingThreat(pi), this.remainingHP(me.active) || Infinity) / AVG_ATTACK
+            : 1;
+          s += certain * W[key] * novel * (1 - pKill) * scale;
           break;
         }
         case 'T_SEARCH_TO_HAND': {

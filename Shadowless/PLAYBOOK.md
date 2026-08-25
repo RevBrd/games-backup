@@ -99,6 +99,19 @@ the system at whatever the list happens to say today.
 **Treat a note that fits nothing as a finding.** It is the candidate pile for the seventeenth pattern,
 and it is worth more than a note filed neatly under the wrong one.
 
+**And the pile has a shape, surveyed 24 Aug 2026 when Trevor’s overhauled workbook took the live
+notes to 219.** Eighty-seven of them match none of the sixteen, and **thirty-six are TRAINERS** — a
+whole category the vocabulary does not name, sitting in a different function (`scoreTrainer`) from
+everything the playbook had touched until then. *Computer Search, PlusPower, Energy Removal, Gust of
+Wind, Defender, Digger, Goop Gas Attack.* **The first two probed found one fault and one pass**, which
+is a better rate than the Pokemon notes were returning by then.
+
+**Naming the seventeenth pattern is Trevor’s**, since the list is the controlled vocabulary he writes
+into the column — this is the candidate pile reported, not a rename. Note that ~25 of the 87 are
+**deckbuild** wants rather than play ones (*“the autobuilder should avoid”*, *“exist in almost every
+deck”*, *“weak decks have 1-2”*), so the pile is at least two things and splitting it is the first job
+rather than the last.
+
 **Two taxonomies that already exist elsewhere are deliberately not patterns here.** Opener archetypes
 are the workbook's column G and are half-built in `setupAuto`; pressure tags are deck-level and belong
 to [OPPONENTS.md](OPPONENTS.md) and `tools/pressure.js`. Do not fork either into this folder.

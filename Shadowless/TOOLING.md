@@ -207,6 +207,14 @@ node tools/claimtest.js --baseline 96c53fd   # the control — see below
 node tools/wants.js base1 --todo             # which notes have no claim yet
 ```
 
+**`wants.js` checks for DRIFT on every run, and that is the check worth copying.** A claim quotes
+Trevor's note verbatim so a reader can hold the row against the sentence it came from — and the moment
+he revises that sentence, the row is silently testing something he no longer says, **while still
+passing**. Nothing else in the project can see it. The tool re-reads the workbook every run and prints
+`!! REWRITTEN` or `!! ORPHANED` with both texts. Added 24 Aug 2026 when a workbook update took the
+live notes from 148 to 219; nothing had drifted that time, and it was verified by deliberately
+corrupting a claim and watching it fire.
+
 **Three parts, and the split matters.** `tools/lib/xlsx.js` reads Trevor's workbook with no
 dependencies, because it is a zip of XML and adding a package to a project whose deliverable is one
 double-clickable file was not worth it. `tools/wants.js` reports the inbox and the backlog.

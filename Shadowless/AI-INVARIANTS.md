@@ -428,3 +428,29 @@ duel cannot see the rare error that matters to a human. Compare the Paras findin
 at 6.2% and deliberately **not** built: the difference is cost, not size. That one needed a new
 capability; this one needed a multiplier on a term that already existed and is derived rather than
 tuned, so there is nothing to maintain.
+
+**A rule proven in `scoreAttack` does not reach `scoreTrainer`.** *24 Aug — #24, and the entry is
+about the code path rather than the card.* `T_STATUS_ON_FLIP` scored a flat `0.5 * W[key]` and carried
+**none** of the three things the attack path had learned about riders during the same week — novelty,
+lethality, and pricing a bought turn off what it denies. All three were built, tested and shipped;
+none of them was in this function. Sleep! scored an identical **11.00** against a healthy target, a
+target the bot could Knock Out that same turn, and a target **already asleep**.
+
+**Trevor's note named two of the three from play** — *"should not be played against a pokemon that's
+going to die in the same turn or is already asleep"* — and the third was added anyway, because leaving
+it out would have left the game holding two different prices for one bought turn, which is exactly the
+inconsistency #22 fixed for attacks two days earlier.
+
+**`pLethalThisTurn` is the new part and it is deliberately pessimistic.** A Trainer is played *before*
+the attack, so there is no `forecast` to read `pLethal` off; it takes the **maximum** across affordable
+attacks rather than the one the bot will pick. Over-stating the kill chance under-values the rider,
+and that is the safe direction here — the failure being fixed is a card spent on something already
+leaving.
+
+**LIVE EXPOSURE IS ONE CARD AND THAT IS STATED RATHER THAN BURIED.** `Sleep!` is the only printing in
+the four live sets carrying either verb. `T_STATUS` was folded into the same case for the sets that
+come later, where status Trainers are common. **The value here is not the card; it is the class.** No
+suite covered it, the situation is far too rare to move any duel, and the card works perfectly for a
+human — which is the silent-failure surface `AI.md` opens with, arriving in a function nobody had
+checked. **Worth a systematic pass**: `scoreTrainer` has never been read against the invariants above
+it in this file, and 36 of Trevor's 219 live notes are Trainers.
