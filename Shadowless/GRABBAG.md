@@ -22,7 +22,6 @@ still open, so it stays with its reason and with what evidence would revive it.
   something else. **Revive it with a log showing a paralyzed Pokémon leaving the Active spot.** →
   [GRABHIST](GRABHIST.md)
 * Booster pack selection screen (medium item)
-* Verify 1st Edition pack drop odds with simulation
 * Opponent uses Gust of Wind to drag out a pokemon already in the active spot — open, but **not what
   it looks like** and not Gust-specific. → [GRABHIST](GRABHIST.md)
 - **Intra-turn sequencing.** Two items are the same fault: the CPU should spend consumables *before*
@@ -40,7 +39,7 @@ still open, so it stays with its reason and with what evidence would revive it.
 - The AI evolves as soon as it CAN rather than as soon as it is READY — Vileplume arrives unable to attack. Measured: `evolve` scores a flat 31.0 whether the target holds one Energy or three. **Do not fix this on its own** — attaching a third Grass to a Gloom scores −2, so evolving is currently what unblocks the Energy, and a naive penalty strands Vileplume at two forever. The attach half has to come first and it is narrow: when the evolution is in hand, measure the target's shortfall against the evolved form. → [AI.md](AI.md) open item 4
 - Introductions for rare cards when pulled, light for RH, heavy for Shadowless, all cheap. I have ideas about this one, whoever takes it, let's chat before we build.
 - Defender should also defend from self-harm the turn that it's placed, per GBC. If it takes 20 damage from self-harm, it's used up. If it takes 10 damage, it's free. We can talk about this one if you want.
-- I either pulled a really lucky Shiny -> 1st Edition Shiny -> Shadowless (my first one) in back to back to back packs, or the odds are messed up. We should check them with a sim to be sure. First shiny pull not shown in log - log# 21-35-11
+- A pack pull missing from the saved match log — **PARKED 24 Aug 2026**, and it is what is LEFT of the odds item. The odds half is closed: every rate is on the table in all four live sets and on the RNG path the game actually uses, and `node tools/pullcheck.js` says your own save is ordinary on every variant. But the note also said *"first shiny pull not shown in log — log# 21-35-11"*, and that is a separate claim nobody has checked. `openNextPack` does call `logPack` with the flags, so if it is real it is a timing or save-point problem. **Revive it with the log file, or with a pack whose pull you can show is missing from one.** → [GRABHIST](GRABHIST.md)
 - Alakazam moves damage from a weaker pokemon to a tank (Chansey). Except that Chansey was in the active spot and got killed because of it (but not by it) - log# 02-18-48.
 
 

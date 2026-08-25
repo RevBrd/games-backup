@@ -184,7 +184,9 @@ as a figure to quote. Run the suite for the real number.
 - **`packtest.js`** opens 200,000 packs against a fixed seed and checks every row of the
   odds table in [PACKS.md](PACKS.md). Deterministic, so it cannot flake; the tolerances are sized to
   catch a wrong denominator, not to absorb noise. **It takes a count** — `node tools/packtest.js
-  20000` is a fast pass while iterating. It also prints, without asserting, how many packs it takes
+  20000` is a fast pass while iterating. **It sweeps every live set and the fresh-RNG-per-pack path
+  the game actually uses**, both added 24 Aug 2026 after 200,000 packs turned out to cover one set
+  and one RNG stream — see [MISREADINGS.md](MISREADINGS.md). It also prints, without asserting, how many packs it takes
   to finish a set. That number is the one the economy turns on and nothing else computes it.
 
 ## `claimtest.js` — pass/fail, but a red row is not a broken build
@@ -254,6 +256,32 @@ nothing it reports should be believed.**
 
 That run also separated two open faults from two fixed ones for free: Zapdos and Arcanine fail against
 *both* commits, so they are standing gaps rather than regressions.
+
+## `pullcheck.js` — did MY packs behave?
+
+```bash
+node tools/pullcheck.js "Save File/shadowless-collection (15).json"
+node tools/pullcheck.js <file> --packs 140      # override the denominator
+```
+
+**Not a suite and not in the gate.** `packtest.js` asks whether the generator matches the table;
+this asks whether one real save's pulls are consistent with it, which is the question a *player*
+asks and the one that has now come up twice. It reads an exported save, counts variants against
+`stats.packsOpened`, and prints an exact two-sided Poisson p per row.
+
+Three things it is built to stop, each of which cost time the first time:
+
+- **1st Edition is a whole-pack roll**, so a bare tally of flagged *cards* reads eleven times too
+  lucky. It reports packs.
+- **Poisson, not a normal interval.** At the means a realistic save produces — Shadowless and
+  Misprint are both under 1 — a symmetric interval calls an ordinary zero surprising.
+- **p < 0.01, not 0.05**, because five rows are tested at once and at 0.05 apiece roughly one save
+  in four would flag something by chance, which teaches whoever runs it to ignore the output.
+
+**And the caveat it prints is the point of it.** A count you went looking for *because it felt wrong*
+is a filtered sample — the noticing came first. So it is good at saying "that is ordinary" and weak
+at saying "something is broken", and if a row does look extreme the next step is `packtest.js`, which
+samples fresh, rather than a change to `PACK_ODDS`.
 
 ## Comparing two states: `tools/probe.js`
 

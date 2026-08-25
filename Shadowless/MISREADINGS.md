@@ -143,3 +143,32 @@ control and stays silent against a real diff. *The transferable part is not abou
 **A harness that reports on its own inputs can be wrong about them**, and that class of error is
 invisible precisely when the harness is otherwise behaving — every game in those runs was simulated
 correctly, and only the commentary was false.
+
+**`packtest.js` opened 200,000 packs and only ever opened Base Set.** *24 Aug 2026.* Four sets are
+live; the pools differ in size and rarity split; Trevor was opening Team Rocket when he reported his
+Shiny and 1st Edition pulls feeling too frequent. **Making the run bigger could never have found
+this**, which is the part worth carrying: a sample of 200,000 reads as overwhelming and says nothing
+at all about the three sets it does not contain. It is the same shape as the `--gbc` entries above —
+a fixture that does not contain the thing you are asking about — arriving in a suite rather than in
+an AI harness, and arriving with a five-figure sample size as camouflage. **Ask what the fixture
+covers before you ask how big it is.** Swept now, and every live set lands on the table.
+
+**And it reused ONE RNG stream where the game makes a fresh one per pack.** Same day, same
+investigation, and this one is nastier because nothing about the code looks wrong. `packtest` drew
+200,000 packs from a single `mulberry32(20260809)`. `openNextPack` builds a **new** `mulberry32` per
+pack from `Math.random()`, so every real pack samples the first ~50 outputs of a brand new stream —
+the one property a single long stream cannot test, by construction. A PRNG whose early output was
+biased as a function of its seed would have produced exactly the reported symptom while the suite
+stayed green forever. Measured in both directions: clean, and now asserted. *The general shape is
+that a harness can reproduce a system's LOGIC exactly while differing in how it is DRIVEN, and the
+difference is invisible in a diff because neither side is wrong on its own.*
+
+**Then the fixture built to close that gap flaked deterministically, and read as a finding.** The
+fresh-stream check first seeded each pack from an arithmetic stride, `i * 2654435761`. Structured
+seeds give structured first outputs: Reverse Holo read **1-in-9.1 at the fast-pass sizes and 1-in-9.9
+at the full one**, so `packtest 20000` went red identically on every run and `packtest 200000` was
+green. Deterministic, reproducible, and entirely about the fixture — the same trap as the
+`selftest.js` AI ladder above, in a file written the same afternoon by someone who had just read this
+entry's neighbour. Fixed at the cause rather than by widening the tolerance: the seeds come from a
+generator now, which is also what `Math.random()` actually is. **A tolerance you widened until the
+suite went green is a finding you deleted.**

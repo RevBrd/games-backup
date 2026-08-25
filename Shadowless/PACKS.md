@@ -151,6 +151,30 @@ Verified at 200,000 packs: holo 1-in-3.0, 1st Edition 1-in-20.1, Reverse Holo 1-
 1-in-39.3, Shadowless 1-in-200.2, Misprint 1-in-897. The ~5x ladder between the per-card tiers holds
 at 3.96x / 5.09x / 4.48x, so it survives as the rule for extending the table.
 
+**That run covered a quarter of the live content and one RNG stream, and both gaps are now closed —
+24 Aug 2026.** Trevor reported his Shiny and 1st Edition pulls feeling too frequent, twice, and
+neither gap could have been seen by making the run bigger:
+
+- **It only ever opened `base1`.** Three other sets are live and the pools differ. Swept at N/4 each:
+  every rate in every live set lands on the table, Team Rocket included, which is the set he was
+  actually opening.
+- **It reused one `mulberry32` stream across all 200,000 packs. The game makes a fresh one per
+  pack**, seeded from `Math.random()` — so a real pack only ever samples the *first ~50 outputs of a
+  brand new stream*, which a single long stream cannot test by construction. A PRNG whose early
+  output was biased by its seed would have produced precisely the reported symptom while this file
+  stayed green forever. Measured: clean.
+
+**So the odds are right, and saying so is a result rather than a formality.** *[Both gaps, and the
+deterministic flake found while closing them →](MISREADINGS.md)*
+
+**`tools/pullcheck.js` answers the other question**, the one `packtest.js` cannot: not "does the
+generator match the table" but *"did MY packs behave"*. It reads an exported save, counts the
+variants against `packsOpened`, and gives an exact Poisson two-sided p per row. Two traps it exists
+to stop: **1st Edition is a whole-pack roll**, so counting flagged *cards* reads eleven times too
+lucky — it reports packs; and **a tally you went looking for because it felt wrong is a filtered
+sample**, so the tool is good at saying *that is ordinary* and weak at saying *something is broken*.
+It says so in its own output.
+
 ## The pacing number the economy turns on
 
 `packtest.js` prints this without asserting it:

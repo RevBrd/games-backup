@@ -149,6 +149,7 @@ node tools/smoke.js shadowless.html      # integration tests against the BUILT f
 node tools/collectiontest.js             # the save file, decks and variants
 node tools/progresstest.js               # the ladder, unlocks and rewards
 node tools/packtest.js                   # 200k packs (takes a count: `20000` is fast)
+node tools/pullcheck.js "Save File/<export>.json"   # ...and did MY packs behave?
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 node tools/probe.js --size 1191x684      # ...and whether it MOVES between two states
 node tools/wants.js base1 --todo         # Trevor's card notes, and which have no claim yet

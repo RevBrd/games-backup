@@ -173,6 +173,87 @@ for (let i = 1; i < rungs.length; i++) {
 }
 
 // ===========================================================================
+// EVERY LIVE SET, AND THE RNG PATH THE GAME ACTUALLY USES — 24 Aug 2026.
+//
+// Both halves of this exist because of a report from Trevor that his Shiny and
+// 1st Edition pulls felt too frequent, and both are gaps the 200,000-pack run
+// above could not have seen no matter how large it got:
+//
+//   1. It only ever opened `base1`. Three other sets are live, the pools differ
+//      in size and rarity split, and he was opening Team Rocket. A gate that
+//      covers a quarter of the live content and reports clean is the shape
+//      MISREADINGS.md is full of.
+//   2. It reuses ONE mulberry32 stream across every pack. The game makes a
+//      FRESH mulberry32 per pack, seeded from Math.random() — so every real
+//      pack samples the first ~50 outputs of a brand new stream, and that is
+//      the one property a single long stream can never test. A PRNG whose
+//      early output was biased as a function of its seed would have produced
+//      exactly the symptom reported, while this file stayed green forever.
+//
+// Both came back clean, and that is a result rather than a formality: it is
+// what turns "the odds are broken" into "you got lucky", which is not a claim
+// anyone should make without having looked.
+head('The rates hold in every live set');
+
+const LIVE_SETS = ['base1', 'base2', 'base3', 'base5'];
+// A quarter of the main run each, so the sweep costs about what one more set
+// of the main run would. Tolerances are widened to match the smaller sample
+// rather than to accommodate a fault — at N/4 the Shadowless interval is
+// genuinely that wide, and pretending otherwise is how a gate starts flaking.
+const SWEEP = Math.max(4000, Math.round(N / 4));
+for (const set of LIVE_SETS) {
+  const rng = mulberry32(20260824);
+  const st = { fe: 0, rh: 0, sh: 0, sl: 0 };
+  for (let i = 0; i < SWEEP; i++) {
+    const pk = P.openPack(CARD_DB, set, rng);
+    if (pk.firstEd) st.fe++;
+    for (const c of pk.cards) {
+      if (c.flags.indexOf('rh') >= 0) st.rh++;
+      if (c.flags.indexOf('sh') >= 0) st.sh++;
+      if (c.flags.indexOf('sl') >= 0) st.sl++;
+    }
+  }
+  // Misprint is deliberately absent: at 1-in-1000 the sweep sample holds ~50
+  // hits and the interval is wider than any fault worth catching. The main run
+  // above is where that one is asserted, and saying so beats a check that
+  // passes whatever happens.
+  near(SWEEP / st.fe, 20, 8, `${set}: 1st Edition`);
+  near(SWEEP / st.rh, 10, 8, `${set}: Reverse Holo`);
+  near(SWEEP / st.sh, 40, 15, `${set}: Shiny`);
+  near(SWEEP / st.sl, 200, 30, `${set}: Shadowless`);
+}
+
+head('...and on the fresh-RNG-per-pack path the game uses');
+
+// A NEW generator per pack, which is the property under test — but seeded
+// deterministically, so this cannot flake the way a Math.random() run would.
+//
+// The seeds come from a shared generator rather than from an arithmetic
+// stride, and that is not cosmetic. The first version used `i * 2654435761`,
+// which read 1-in-9.1 for Reverse Holo at the fast-pass sizes and 1-in-9.9 at
+// the full one: a structured seed sequence gives structured first outputs, so
+// it went red identically on every run at 20,000 and green at 200,000.
+// Deterministic, reproducible, and a finding about the fixture rather than
+// about the game — the worst kind, because it reads as a result. Drawing the
+// seeds from a generator is also what the game actually does, since
+// Math.random() is not an arithmetic sequence either.
+const seeder = mulberry32(20260824);
+const liveRng = { fe: 0, rh: 0, sh: 0, sl: 0 };
+for (let i = 0; i < SWEEP; i++) {
+  const pk = P.openPack(CARD_DB, 'base1', mulberry32((seeder() * 2147483647) | 0));
+  if (pk.firstEd) liveRng.fe++;
+  for (const c of pk.cards) {
+    if (c.flags.indexOf('rh') >= 0) liveRng.rh++;
+    if (c.flags.indexOf('sh') >= 0) liveRng.sh++;
+    if (c.flags.indexOf('sl') >= 0) liveRng.sl++;
+  }
+}
+near(SWEEP / liveRng.fe, 20, 8, 'fresh stream per pack: 1st Edition');
+near(SWEEP / liveRng.rh, 10, 8, 'fresh stream per pack: Reverse Holo');
+near(SWEEP / liveRng.sh, 40, 15, 'fresh stream per pack: Shiny');
+near(SWEEP / liveRng.sl, 200, 30, 'fresh stream per pack: Shadowless');
+
+// ===========================================================================
 head('Intrusion, with a promo pool supplied');
 
 // No promos exist at Base Set, so a fake pool proves the mechanism instead of

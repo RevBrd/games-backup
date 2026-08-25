@@ -30,6 +30,7 @@ rule in its own header. It was split on 22 Aug 2026 and the archive is closed.
 
 | When | Instance | Items |
 |---|---|---|
+| 24 Aug 2026 | #25, Job 12b | The pack odds, which were fine — and the 200,000-pack suite that covered one set of four and never once used the RNG the game runs on |
 | 23 Aug 2026 | #25, Job 12b | The opponent's Trainer held on the centre line for a beat — a grab bag item that stayed small because the presentation queue already did the hard half |
 | 23 Aug 2026 | #25, Job 12b | The centre line, which turned out to be the mat's shock absorber; the setup Active that was a bar because its bottom half was empty; the booster reveal climbing 61px as you turned cards over |
 | 21 Aug 2026 | #21, third pass | Charizard capped at four Energy; the pay order discarding the Double Colorless first; a duel that reset its own baseline every commit |
@@ -37,6 +38,60 @@ rule in its own header. It was split on 22 Aug 2026 and the archive is closed.
 | 21 Aug 2026 | #21, Job 11 | Retreating into the wrong matchup; Teleport's flat 22 and the destination nobody chose; the Colorless Energy dead end; a counter that said "must be 0" and was counting the wrong thing |
 | 19 Aug 2026 | #20, the UI pass | The hand that resized itself — a correct report whose stated cause was wrong twice over |
 | *13–17 Aug* | *#12, #16, #17* | *[Archive 1](GRABHIST-ARCHIVE-1.md) — five passes, its own index at the top* |
+
+---
+
+### 24 Aug 2026 — Opus 5 #25 (the odds were fine, and the instrument was not)
+
+**"I either pulled a really lucky Shiny -> 1st Edition Shiny -> Shadowless in back to back to back
+packs, or the odds are messed up."** Then, when I offered to look: *"I actually had another back to
+back shiny pull, and another 1st Ed. Shiny... I'm happy to chalk it up to luck as well but it would
+make me feel better if we did the full sweep."*
+
+**A repeated over-frequency is a different signal from one lucky run, and that is why it was worth
+doing rather than dismissing.** One streak is an anecdote. A second one, reported independently
+weeks later, is the point at which "you got unlucky with luck" stops being a satisfying answer — and
+the person asking had already offered to accept it, which is exactly when you should look harder
+rather than take the offer.
+
+**The odds are right.** But finding that out took two runs the existing suite could never have done,
+and both were real gaps:
+
+**`packtest.js` opened 200,000 packs and only ever opened Base Set.** Four sets are live, the pools
+differ, and Trevor was opening Team Rocket. *Making the run bigger could never have found this*,
+which is the part worth carrying: 200,000 reads as overwhelming and says nothing about the three
+sets it does not contain.
+
+**And it reused ONE RNG stream where the game makes a fresh one per pack.** This was the strong
+hypothesis and I expected it to be the answer. `packtest` drew every pack from a single
+`mulberry32`; `openNextPack` builds a **new** one per pack from `Math.random()`, so a real pack only
+ever samples the first ~50 outputs of a brand-new stream — the one property a single long stream
+cannot test by construction. A PRNG with seed-correlated early output would have produced precisely
+the reported symptom while the suite stayed green forever. Measured: clean, in both directions.
+*A harness can reproduce a system's logic exactly while differing in how it is DRIVEN, and neither
+side looks wrong in a diff.*
+
+**Then the fixture I built to close that gap flaked deterministically**, seeding each pack from an
+arithmetic stride: Reverse Holo read 1-in-9.1 at `packtest 20000` and 1-in-9.9 at 200,000, red
+identically on every run at the size the file's own header recommends for iterating. Structured seeds
+give structured first outputs. Fixed at the cause — the seeds come from a generator now, which is
+what `Math.random()` is — rather than by widening the tolerance, because *a tolerance you widened
+until it went green is a finding you deleted.*
+
+**And the answer to the actual question came from his save, not from a simulation.** 63 packs: four
+1st Edition packs against 3.2 expected, eight Reverse Holo against 6.3, two Shiny against 1.6. Every
+row ordinary. `tools/pullcheck.js` is that check made repeatable, and it exists because the arithmetic
+is easy to get wrong in one specific way: **1st Edition is a whole-pack roll**, so counting flagged
+*cards* reads eleven times too lucky. Anyone eyeballing a save's variant tally would have seen 44
+first-edition cards on 63 packs and concluded the odds were broken.
+
+The tool prints its own caveat, which is the honest part: **a count you went looking for because it
+felt wrong is a filtered sample.** It is good at saying *that is ordinary* and weak at saying
+*something is broken*.
+
+**What is left of the item is parked, and it is not the odds.** The original note also said "first
+shiny pull not shown in log", which is a separate claim nobody has checked and which needs the log
+file.
 
 ---
 
