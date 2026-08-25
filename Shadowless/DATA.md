@@ -141,6 +141,8 @@ source — **grep `readFileSync` in the generator rather than trusting the table
 | `base1_decks.json` | `OPPONENT_DECKS`, `b1:` prefix | the whole Base Set bracket — Trevor's eight, built to the tier spec |
 | `base2_decks.json` | `OPPONENT_DECKS`, `b2:` prefix | the Jungle bracket's body, gate and boss — Trevor's five |
 | `base3_decks.json` | `OPPONENT_DECKS`, `b3:` prefix | the Fossil bracket's body, gate and boss — Trevor's six |
+| `team_rocket_decks.json` | `OPPONENT_DECKS`, `tr:` prefix | the Team Rocket bracket's T1 intro — the two authentic theme decks, Devastation and Trouble |
+| `base5_decks.json` | `OPPONENT_DECKS`, `b5:` prefix | the Team Rocket bracket's body, gate and boss — Trevor's eight |
 | `ladder.json` | `LADDER` | `buildLadder()`. See [PROGRESSION.md](PROGRESSION.md) |
 
 **The opponent files fail soft where `decks.json` fails hard.** An opponent deck naming a card outside
@@ -188,6 +190,23 @@ AI ought to play individual cards.
 **`base3_decks.json` is Trevor's six Fossil decks, live the day it was written**, 21 Aug 2026 — three
 T2, two T3 and the T4 that is Fossil's boss. **Zero id corrections for the third workbook running.**
 
+**`team_rocket_decks.json` is the two authentic WotC Team Rocket theme decks, Devastation and Trouble,
+live as of 25 Aug 2026.** Bulbapedia-sourced (`Special:Export` wikitext), both real WotC theme decks
+mix Team Rocket cards with Base Set 2 (`base4`) reprints, which is normal for the product and not an
+error — but `base4` is not a generated set, so every `base4` id was substituted for its identical
+live-set printing before this file could be wired in. **`base4` prints zero new behaviours** (see "How
+big is the set you are about to add" below), so every substitution is an exact mechanical match, not
+an approximation — verified by matching HP, attacks and text against the corpus, not by name alone,
+since a few names (Abra, Haunter, Gastly) exist as genuinely different printings across live sets. The
+substitution map is `_meta.base4subs` in the file itself.
+
+**`base5_decks.json` is Trevor's eight Team Rocket decks, live the day it was written**, 25 Aug 2026 —
+four T2, three T3 and the T4 that is Team Rocket's boss. Converted from `data/v1 Opp Decks/Team Rocket
+Opponent Decks v1.xlsx` (sheets `R T2-1` through `R T4`) directly via `tools/lib/xlsx.js`, the same
+reader `tools/wants.js` uses. Zero id corrections needed, for the fourth workbook running. Keys are
+named from each deck's own cover card (`b5_t2_charizard`, not a tier-number slug) for readability,
+which the earlier three files did not do consistently — worth normalising if anyone revisits them.
+
 **One stale cell, and the guard caught it rather than the eye — resolved 22 Aug 2026.** `F T2-1`
 named Omastar as its cover card and contained no Omastar; the sheet's Cover Card cell predated
 Trevor rebuilding the deck. `gen_cards.js` refuses a cover that is not in its own deck's list and
@@ -215,10 +234,12 @@ the balance figures all move.
 **Two folders hold the spreadsheets and they were renamed on 21 Aug 2026** — this section said
 `data/Deck Lists/` until then. `data/Old Deck Lists/` holds the theme-deck workbooks: `Base1
 Decks.xlsx` is the source of `decks.json` (above) and `Jungle Decks.xlsx` is the source of
-`jungle_decks.json`. **`data/v1 Opp Decks/` holds Trevor's own opponent workbooks** — `Base1 Opponent
-Decks v1.xlsx` and `Jungle Opponent Decks v1.xlsx`, the sources of `base1_decks.json` and
-`base2_decks.json`. Those two are **not** quarantined; they are live upstream, and the JSON is the
-thing to read.
+`jungle_decks.json`. **`data/v1 Opp Decks/` holds Trevor's own opponent workbooks**, five of them now
+— `Base1`, `Jungle`, `Fossil` and `Team Rocket Opponent Decks v1.xlsx` are the sources of
+`base1_decks.json`, `base2_decks.json`, `base3_decks.json` and `base5_decks.json` respectively, **all
+four live upstream**, and the JSON is the thing to read. `Challenge 1 Opponent Decks v1.xlsx` is the
+fifth and is still genuinely reference-only — nothing reads it, since the Challenge bracket concept in
+[OPPONENTS.md](OPPONENTS.md) is unbuilt.
 
 **As of 23 Aug 2026 `data/v1 Opp Decks/` is not reference-only at all, and the `Wants` column is the
 part that matters.** `tools/lib/xlsx.js` reads an `.xlsx` with no dependencies and `tools/wants.js`

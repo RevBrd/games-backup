@@ -230,3 +230,47 @@ is not optional. *[All three →](MEASUREMENT.md)*
 They were duplicated here until 22 Aug 2026. This file is the **evidence**, appended once per roster;
 how to interpret a `decksim` run is a fact about `decksim` and belongs where the tool is documented,
 or the two copies drift and the one a reader hits first wins.
+
+## Team Rocket — Trevor's eight decks, 25 Aug 2026
+
+**Live on the ladder since 25 Aug 2026**, alongside the two authentic Team Rocket theme decks
+(Devastation, Trouble) as the bracket's T1 intro — the first bracket with both an authored roster and
+its own real theme decks on day one. Eight decks converted from `data/v1 Opp Decks/Team Rocket
+Opponent Decks v1.xlsx` into `data/base5_decks.json`, verified against `Engine.prototype.validateDeck`
+— all 60 cards, 4-copy clean, every card implemented. Four T2, three T3, one T4.
+
+### What the sim said
+
+```bash
+node tools/decksim.js 30 6 data/base5_decks.json
+```
+
+30 seeds × both seats per ordered pair, 6 Prizes, expert both sides:
+
+| Tier | Field win rate | Range |
+|---|---|---|
+| T4 (one deck) | **64.5%** | — |
+| T3 (three decks) | **57.8%** | 48.3 – 67.2 |
+| T2 (four decks) | **40.4%** | 30.2 – 48.2 |
+
+**The tiers order, and cleanly — the first roster where they do without qualification.** T2's ceiling
+(48.2%) sits just under T3's floor (48.3%), and T3's floor sits under T4's only entry (64.5%). Base
+Set's boss finished eighth of eight; Jungle's finished ninth of thirteen. This one finished first,
+Dark Blastoise the strongest deck in its own field.
+
+**Read that against the standing caution above, not as vindication.** "The reason to distrust every
+standing above" is not a Jungle-specific finding — it is a fact about the instrument, measured once
+against Jungle because that is where it was noticed. This run used the same AI, which was last shown
+playing the whole field badly on 21 Aug and has not been re-measured since. A roster ordering cleanly
+against a bot that plays badly is one data point in the right direction, not a result that survives
+the AI improving.
+
+**One real bug had to be fixed to get a clean run at all, and it was not a deck problem.** Three of
+`scorePower`'s PROVISIONAL cases (`SEARCH_EVOLUTION_TO_HAND`, `STATUS_COIN_EITHER_POWER`,
+`DISCARD_THEN_DRAW`) crashed the instant the AI tried to use them — each referenced a `me` the function
+never defines. No roster before this one had fielded enough of these three Powers for the AI to ever
+reach the code path, so it had simply never run. See [AI-INVARIANTS.md](AI-INVARIANTS.md) for the fix;
+the weights themselves are untouched and still provisional — this cleared the crash, not the pricing.
+
+**Not yet measured against the other three rosters in a merged field**, unlike Jungle's run against
+Base Set. That comparison is next if it's wanted, following the same method.

@@ -1187,6 +1187,249 @@ const OPPONENT_DECKS = {
     [1, "base1-82"],  // Full Heal
     [2, "base3-21"],  // Haunter
   ]},
+  "tr:devastation": { name: "Devastation", list: [
+    [1, "base5-14"],  // Dark Weezing
+    [3, "base5-55"],  // Eevee
+    [1, "base1-42"],  // Wartortle
+    [3, "base1-63"],  // Squirtle
+    [1, "base1-35"],  // Magikarp
+    [1, "base5-46"],  // Dark Wartortle
+    [2, "base5-45"],  // Dark Vaporeon
+    [3, "base1-69"],  // Weedle
+    [3, "base1-66"],  // Tangela
+    [3, "base5-63"],  // Oddish
+    [4, "base5-58"],  // Koffing
+    [1, "base5-36"],  // Dark Gloom
+    [1, "base1-90"],  // Super Potion
+    [2, "base1-94"],  // Potion
+    [1, "base5-76"],  // Imposter Oak's Revenge
+    [1, "base1-93"],  // Gust of Wind
+    [1, "base1-82"],  // Full Heal
+    [10, "base1-102"],  // Water Energy
+    [18, "base1-99"],  // Grass Energy
+  ]},
+  "tr:trouble": { name: "Trouble", list: [
+    [1, "base5-2"],  // Dark Arbok
+    [2, "base5-62"],  // Meowth
+    [2, "base1-27"],  // Farfetch'd
+    [2, "base1-69"],  // Weedle
+    [4, "base5-56"],  // Ekans
+    [1, "base1-32"],  // Kadabra
+    [1, "base1-31"],  // Jynx
+    [1, "base1-29"],  // Haunter
+    [2, "base1-50"],  // Gastly
+    [3, "base5-54"],  // Drowzee
+    [2, "base1-43"],  // Abra
+    [2, "base5-49"],  // Abra
+    [2, "base5-39"],  // Dark Kadabra
+    [1, "base1-95"],  // Switch
+    [2, "base1-94"],  // Potion
+    [1, "base1-93"],  // Gust of Wind
+    [1, "base5-73"],  // The Boss's Way
+    [1, "base1-91"],  // Bill
+    [1, "base5-81"],  // Full Heal Energy
+    [10, "base1-99"],  // Grass Energy
+    [18, "base1-101"],  // Psychic Energy
+  ]},
+  "b5:b5_t2_eevee": { name: "R T2-1", cover: "base5-55", list: [
+    [4, "base5-55"],  // Eevee
+    [1, "base5-38"],  // Dark Jolteon
+    [1, "base5-35"],  // Dark Flareon
+    [1, "base5-45"],  // Dark Vaporeon
+    [3, "base5-60"],  // Magnemite
+    [1, "base5-28"],  // Dark Magneton
+    [3, "base5-64"],  // Ponyta
+    [1, "base5-44"],  // Dark Rapidash
+    [3, "base3-56"],  // Tentacool
+    [1, "base3-44"],  // Tentacruel
+    [8, "base1-100"],  // Lightning Energy
+    [8, "base1-98"],  // Fire Energy
+    [8, "base1-102"],  // Water Energy
+    [2, "base1-96"],  // Double Colorless Energy
+    [1, "base1-36"],  // Magmar
+    [1, "base1-20"],  // Electabuzz
+    [1, "base3-10"],  // Lapras
+    [2, "base5-80"],  // Rainbow Energy
+    [2, "base3-59"],  // Energy Search
+    [2, "base1-81"],  // Energy Retrieval
+    [2, "base1-91"],  // Bill
+    [1, "base1-88"],  // Professor Oak
+    [1, "base5-79"],  // Sleep!
+    [1, "base1-95"],  // Switch
+    [1, "base1-77"],  // Pokémon Trader
+  ]},
+  "b5:b5_t2_raichu": { name: "R T2-2", cover: "base5-83", list: [
+    [2, "base2-60"],  // Pikachu
+    [2, "base1-58"],  // Pikachu
+    [2, "base5-83"],  // Dark Raichu
+    [3, "base5-69"],  // Voltorb
+    [1, "base5-34"],  // Dark Electrode
+    [3, "base5-56"],  // Ekans
+    [2, "base5-2"],  // Dark Arbok
+    [3, "base5-70"],  // Zubat
+    [1, "base5-24"],  // Dark Golbat
+    [2, "base5-66"],  // Rattata
+    [1, "base5-51"],  // Dark Raticate
+    [15, "base1-100"],  // Lightning Energy
+    [12, "base1-99"],  // Grass Energy
+    [1, "base3-59"],  // Energy Search
+    [2, "base1-91"],  // Bill
+    [1, "base1-88"],  // Professor Oak
+    [1, "base5-79"],  // Sleep!
+    [1, "base5-74"],  // Challenge!
+    [1, "base1-73"],  // Impostor Professor Oak
+    [1, "base5-76"],  // Imposter Oak's Revenge
+    [1, "base1-94"],  // Potion
+    [1, "base5-82"],  // Potion Energy
+    [1, "base1-82"],  // Full Heal
+  ]},
+  "b5:b5_t2_charizard": { name: "R T2-3", cover: "base5-4", list: [
+    [16, "base1-98"],  // Fire Energy
+    [10, "base1-101"],  // Psychic Energy
+    [4, "base5-50"],  // Charmander
+    [3, "base5-32"],  // Dark Charmeleon
+    [1, "base5-4"],  // Dark Charizard
+    [3, "base5-64"],  // Ponyta
+    [2, "base5-44"],  // Dark Rapidash
+    [3, "base5-54"],  // Drowzee
+    [2, "base5-26"],  // Dark Hypno
+    [3, "base5-65"],  // Psyduck
+    [1, "base5-37"],  // Dark Golduck
+    [2, "base5-80"],  // Rainbow Energy
+    [2, "base1-91"],  // Bill
+    [1, "base1-88"],  // Professor Oak
+    [1, "base5-75"],  // Digger
+    [1, "base1-94"],  // Potion
+    [1, "base1-75"],  // Lass
+    [1, "base5-79"],  // Sleep!
+    [1, "base3-59"],  // Energy Search
+    [1, "base5-76"],  // Imposter Oak's Revenge
+    [1, "base1-80"],  // Defender
+  ]},
+  "b5:b5_t2_alakazam": { name: "R T2-4", cover: "base5-1", list: [
+    [4, "base5-49"],  // Abra
+    [3, "base5-39"],  // Dark Kadabra
+    [1, "base5-1"],  // Dark Alakazam
+    [2, "base5-67"],  // Slowpoke
+    [1, "base5-29"],  // Dark Slowbro
+    [3, "base5-65"],  // Psyduck
+    [2, "base5-37"],  // Dark Golduck
+    [3, "base5-66"],  // Rattata
+    [1, "base5-51"],  // Dark Raticate
+    [2, "base5-62"],  // Meowth
+    [1, "base5-42"],  // Dark Persian
+    [1, "base1-96"],  // Double Colorless Energy
+    [1, "base5-82"],  // Potion Energy
+    [1, "base5-81"],  // Full Heal Energy
+    [22, "base1-101"],  // Psychic Energy
+    [1, "base1-10"],  // Mewtwo
+    [1, "base5-48"],  // Porygon
+    [1, "base5-79"],  // Sleep!
+    [2, "base1-91"],  // Bill
+    [1, "base1-88"],  // Professor Oak
+    [1, "base1-93"],  // Gust of Wind
+    [1, "base1-94"],  // Potion
+    [1, "base1-74"],  // Item Finder
+    [1, "base1-84"],  // PlusPower
+    [1, "base1-80"],  // Defender
+    [1, "base5-78"],  // Goop Gas Attack
+  ]},
+  "b5:b5_t3_vileplume": { name: "R T3-1", cover: "base5-13", list: [
+    [21, "base1-99"],  // Grass Energy
+    [4, "base5-63"],  // Oddish
+    [3, "base5-36"],  // Dark Gloom
+    [2, "base5-13"],  // Dark Vileplume
+    [3, "base5-57"],  // Grimer
+    [2, "base5-41"],  // Dark Muk
+    [3, "base5-58"],  // Koffing
+    [1, "base5-31"],  // Dark Weezing
+    [1, "base5-14"],  // Dark Weezing
+    [1, "base2-25"],  // Pinsir
+    [1, "base2-9"],  // Pinsir
+    [2, "base5-79"],  // Sleep!
+    [3, "base1-91"],  // Bill
+    [2, "base1-88"],  // Professor Oak
+    [1, "base1-77"],  // Pokémon Trader
+    [2, "base1-80"],  // Defender
+    [2, "base1-94"],  // Potion
+    [2, "base5-82"],  // Potion Energy
+    [1, "base1-82"],  // Full Heal
+    [1, "base1-92"],  // Energy Removal
+    [1, "base5-81"],  // Full Heal Energy
+    [1, "base5-77"],  // Nightly Garbage Run
+  ]},
+  "b5:b5_t3_machamp": { name: "R T3-2", cover: "base5-10", list: [
+    [4, "base5-59"],  // Machop
+    [3, "base5-40"],  // Dark Machoke
+    [2, "base5-10"],  // Dark Machamp
+    [3, "base5-61"],  // Mankey
+    [2, "base5-43"],  // Dark Primeape
+    [3, "base5-52"],  // Diglett
+    [2, "base5-6"],  // Dark Dugtrio
+    [2, "base3-7"],  // Hitmonlee
+    [1, "base2-38"],  // Lickitung
+    [22, "base1-97"],  // Fighting Energy
+    [1, "base5-81"],  // Full Heal Energy
+    [1, "base5-82"],  // Potion Energy
+    [3, "base1-91"],  // Bill
+    [2, "base1-88"],  // Professor Oak
+    [2, "base1-94"],  // Potion
+    [1, "base1-74"],  // Item Finder
+    [1, "base5-16"],  // Rocket's Sneak Attack
+    [1, "base1-95"],  // Switch
+    [2, "base5-79"],  // Sleep!
+    [2, "base1-80"],  // Defender
+  ]},
+  "b5:b5_t3_dragonite": { name: "R T3-3", cover: "base5-5", list: [
+    [4, "base5-55"],  // Eevee
+    [1, "base5-45"],  // Dark Vaporeon
+    [1, "base5-38"],  // Dark Jolteon
+    [1, "base5-35"],  // Dark Flareon
+    [4, "base5-53"],  // Dratini
+    [3, "base5-33"],  // Dark Dragonair
+    [2, "base5-5"],  // Dark Dragonite
+    [1, "base3-10"],  // Lapras
+    [1, "base1-20"],  // Electabuzz
+    [1, "base3-39"],  // Magmar
+    [4, "base1-96"],  // Double Colorless Energy
+    [1, "base5-82"],  // Potion Energy
+    [1, "base5-81"],  // Full Heal Energy
+    [6, "base1-100"],  // Lightning Energy
+    [6, "base1-98"],  // Fire Energy
+    [6, "base1-102"],  // Water Energy
+    [3, "base3-59"],  // Energy Search
+    [3, "base5-79"],  // Sleep!
+    [3, "base1-91"],  // Bill
+    [2, "base1-88"],  // Professor Oak
+    [1, "base1-77"],  // Pokémon Trader
+    [2, "base1-80"],  // Defender
+    [1, "base1-92"],  // Energy Removal
+    [1, "base1-81"],  // Energy Retrieval
+    [1, "base1-74"],  // Item Finder
+  ]},
+  "b5:b5_t4_blastoise": { name: "R T4", cover: "base5-3", list: [
+    [4, "base5-68"],  // Squirtle
+    [3, "base5-46"],  // Dark Wartortle
+    [2, "base5-3"],  // Dark Blastoise
+    [3, "base5-47"],  // Magikarp
+    [2, "base5-8"],  // Dark Gyarados
+    [3, "base3-10"],  // Lapras
+    [1, "base2-5"],  // Kangaskhan
+    [1, "base2-38"],  // Lickitung
+    [22, "base1-102"],  // Water Energy
+    [1, "base5-82"],  // Potion Energy
+    [1, "base5-81"],  // Full Heal Energy
+    [3, "base1-91"],  // Bill
+    [2, "base1-88"],  // Professor Oak
+    [3, "base5-79"],  // Sleep!
+    [2, "base1-73"],  // Impostor Professor Oak
+    [1, "base5-76"],  // Imposter Oak's Revenge
+    [2, "base1-80"],  // Defender
+    [1, "base1-77"],  // Pokémon Trader
+    [1, "base1-92"],  // Energy Removal
+    [1, "base1-82"],  // Full Heal
+    [1, "base1-94"],  // Potion
+  ]},
 };
 
 const LADDER = {
@@ -1446,63 +1689,89 @@ const LADDER = {
     },
     "base5": {
       "name": "The Syndicate",
-      "blurb": "Every club master in one place, and a rival who has been waiting since the Clubs.",
+      "blurb": "Two authentic Team Rocket boosters to open on, seven built from the set itself, and a rival who has been waiting since the Clubs.",
       "roster": [
         {
-          "id": "gbc-nikki",
-          "name": "Nikki",
-          "title": "Grass Club",
-          "deck": "gbc:nikki_flower_power"
+          "id": "base5-devastation",
+          "name": "Deke",
+          "title": "Devastation",
+          "deck": "tr:devastation",
+          "ai": "novice",
+          "placeholder": true
         },
         {
-          "id": "gbc-amy",
-          "name": "Amy",
-          "title": "Water Club",
-          "deck": "gbc:amy_rain_dancer"
+          "id": "base5-trouble",
+          "name": "Rell",
+          "title": "Trouble",
+          "deck": "tr:trouble",
+          "ai": "novice",
+          "placeholder": true
         },
         {
-          "id": "gbc-ken",
-          "name": "Ken",
-          "title": "Fire Club",
-          "deck": "gbc:ken_fire_charge"
+          "id": "base5-t2-eevee",
+          "name": "Domino",
+          "title": "Current Split",
+          "deck": "b5:b5_t2_eevee",
+          "placeholder": true
         },
         {
-          "id": "gbc-gene",
-          "name": "Gene",
-          "title": "Rock Club",
-          "deck": "gbc:gene_rock_crusher"
+          "id": "base5-t2-raichu",
+          "name": "Proton",
+          "title": "Live Wire",
+          "deck": "b5:b5_t2_raichu",
+          "placeholder": true
         },
         {
-          "id": "gbc-isaac",
-          "name": "Isaac",
-          "title": "Lightning Club",
-          "deck": "gbc:isaac_zapping_selfdestruct"
+          "id": "base5-t2-charizard",
+          "name": "Petrel",
+          "title": "Scorch Line",
+          "deck": "b5:b5_t2_charizard",
+          "placeholder": true
         },
         {
-          "id": "gbc-mitch",
-          "name": "Mitch",
-          "title": "Fighting Club",
-          "deck": "gbc:mitch_first_strike"
+          "id": "base5-t2-alakazam",
+          "name": "Ariana",
+          "title": "Mind Games",
+          "deck": "b5:b5_t2_alakazam",
+          "placeholder": true
         },
         {
-          "id": "gbc-murray",
-          "name": "Murray",
-          "title": "Psychic Club",
-          "deck": "gbc:murray_strange_psyshock"
+          "id": "base5-t3-vileplume",
+          "name": "Archer",
+          "title": "Toxic Bloom",
+          "deck": "b5:b5_t3_vileplume",
+          "placeholder": true
         },
         {
-          "id": "gbc-rick",
-          "name": "Rick",
-          "title": "Science Club",
-          "deck": "gbc:rick_wonders_of_science"
+          "id": "base5-t3-machamp",
+          "name": "Butch",
+          "title": "Iron Grip",
+          "deck": "b5:b5_t3_machamp",
+          "placeholder": true
+        },
+        {
+          "id": "base5-t3-dragonite",
+          "name": "Cassidy",
+          "title": "Last Flight",
+          "deck": "b5:b5_t3_dragonite",
+          "placeholder": true
         }
       ],
       "boss": {
-        "id": "gbc-ronald-4",
-        "name": "Ronald",
-        "title": "Legendary Ronald",
-        "deck": "gbc:ronald_legendary"
-      }
+        "id": "base5-t4",
+        "name": "Giovanni",
+        "title": "Undertow",
+        "deck": "b5:b5_t4_blastoise",
+        "placeholder": true
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-4",
+          "name": "Ronald",
+          "title": "Legendary Ronald",
+          "deck": "gbc:ronald_legendary"
+        }
+      ]
     }
   }
 };

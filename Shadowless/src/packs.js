@@ -16,8 +16,12 @@
 // for exactly that reason.
 // ============================================================================
 
-// 1 Rare + 3 Uncommon + 7 Common-tier = 11, constant across the whole game.
-const PACK_SHAPE = { rare: 1, uncommon: 3, common: 7 };
+// 1 Rare + 2 Uncommon + 5 Common = 8. Shrunk from 11 on 25 Aug 2026 — Trevor,
+// from play: Commons and Uncommons were filling up too fast. See PACKS.md for
+// the pacing reasoning and what the shrink did to the variant-cosmetic odds
+// below, which nobody touched but which move anyway because they roll per
+// slot and there are fewer slots now.
+const PACK_SHAPE = { rare: 1, uncommon: 2, common: 5 };
 const PACK_SIZE = PACK_SHAPE.rare + PACK_SHAPE.uncommon + PACK_SHAPE.common;
 
 const PACK_ODDS = {
@@ -25,17 +29,36 @@ const PACK_ODDS = {
   // each set's real pool ratio, which drifts 45-55% and isn't worth chasing.
   holo: 1 / 3,
 
-  // Whole-pack rolls.
+  // Whole-pack rolls. Unaffected by PACK_SHAPE — these fire once per pack,
+  // not once per slot, so shrinking the pack does not move them.
   firstEd: 1 / 20,
   intrusion: 1 / 100,      // a promo or Southern Islands card replaces one Common
 
-  // Per-card rolls. reverseHolo is offered only on the 10 Common/Uncommon
-  // slots — the Rare slot already has its own holo axis. The other three roll
-  // against all 11.
+  // Per-card rolls. reverseHolo is offered only on non-Rare slots — the Rare
+  // slot already has its own holo axis. The other three roll against every
+  // slot. All four fire less often per pack than PACKS.md's older numbers say,
+  // now that there are 8 slots instead of 11 — see PACKS.md's open items for
+  // the rebalance this owes them.
   reverseHolo: 1 / 100,
   shiny: 1 / 440,
   shadowless: 1 / 2200,
   misprint: 1 / 11000,
+
+  // BONUS RARE-TIER JUMP — 25 Aug 2026, Trevor's third tuning pass. A small
+  // independent chance for a lesser slot to resolve as something better
+  // instead, so "exactly one Rare per pack" stops being an absolute. Tuned so
+  // a bonus Rare-tier card (of either kind) beats Reverse Holo's own per-pack
+  // frequency, and the two-tier jump stays clearly under it — see PACKS.md
+  // for the measured rates, since RH's own frequency is a function of how
+  // many eligible slots exist and that moved when the pack shrank.
+  // Nudged from Trevor's original 0.03 to 0.033 — measured, his v3 numbers
+  // landed the bonus-rare pack rate (6.38%) just under Reverse Holo's own
+  // (6.79%), missing the explicit goal by a hair. This clears it with a
+  // little room (~6.96%). Flagged rather than left quiet; revert to 0.03 if
+  // the near-tie was actually fine.
+  jumpUncommonToRare: 0.033,
+  jumpCommonToUncommon: 0.024,
+  jumpCommonToRare: 0.001,
 };
 
 // PACKS.md wants 2-3 glitch flavours so a Misprint sighting reads as a fresh
@@ -237,6 +260,19 @@ function rollVariants(rand, slot, odds, firstEd) {
   return flags;
 }
 
+// The Rare slot's draw: roll holo-vs-not, then pick within that tier. Used
+// for the guaranteed Rare slot AND for a bonus jump, so both get literally
+// the same treatment — Trevor's framing, 25 Aug 2026: "it does the same 1:2
+// holo/non-holo roll that it normally would."
+function drawRareCard(pools, rand, odds, isEnergy, taken) {
+  let holo = rand() < odds.holo;
+  if (holo && !pools.rareHolo.length) holo = false;
+  if (!holo && !pools.rare.length) holo = true;
+  const pool = holo ? pools.rareHolo : pools.rare;
+  const [id] = drawSlots(pool, 1, rand, isEnergy, taken);
+  return { id, holo };
+}
+
 // --------------------------------------------------------------- a pack ----
 // Returns:
 //   {
@@ -264,49 +300,80 @@ function openPack(db, setCode, rand, opts = {}) {
   const taken = {};
   const cards = [];
 
-  // --- the Rare slot. Roll holo-vs-not FIRST, then pick within that tier.
-  // If a set has only one side (nothing does today, but Job 8 might), fall
-  // back rather than throwing.
-  let holo = rand() < odds.holo;
-  if (holo && !pools.rareHolo.length) holo = false;
-  if (!holo && !pools.rare.length) holo = true;
-  const rareId = pickFrom(holo ? pools.rareHolo : pools.rare, rand);
-  taken[rareId] = 1;
-  cards.push({ id: rareId, slot: 'rare', holo, flags: rollVariants(rand, 'rare', odds, firstEd) });
+  // --- the guaranteed Rare slot. If a set has only one side (nothing does
+  // today, but Job 8 might), drawRareCard falls back rather than throwing.
+  const guaranteed = drawRareCard(pools, rand, odds, isEnergy, taken);
+  cards.push({ id: guaranteed.id, slot: 'rare', holo: guaranteed.holo, jump: null,
+    flags: rollVariants(rand, 'rare', odds, firstEd) });
 
-  // --- 3 Uncommon
-  for (const id of drawSlots(pools.uncommon, PACK_SHAPE.uncommon, rand, isEnergy, taken)) {
-    cards.push({ id, slot: 'uncommon', holo: false, flags: rollVariants(rand, 'uncommon', odds, firstEd) });
+  // --- 2 Uncommon, each with a small independent chance to jump straight to
+  // Rare instead. A jumped card is pushed with slot: 'rare' and gets exactly
+  // the guaranteed slot's treatment downstream — same holo split, and Reverse
+  // Holo excluded for the same reason it is excluded from the guaranteed slot.
+  // `jump` records which rule fired, for measurement and for a reveal that
+  // wants to know a card is a surprise rather than the norm.
+  for (let i = 0; i < PACK_SHAPE.uncommon; i++) {
+    if (rand() < odds.jumpUncommonToRare) {
+      const r = drawRareCard(pools, rand, odds, isEnergy, taken);
+      cards.push({ id: r.id, slot: 'rare', holo: r.holo, jump: 'u2r',
+        flags: rollVariants(rand, 'rare', odds, firstEd) });
+    } else {
+      const [id] = drawSlots(pools.uncommon, 1, rand, isEnergy, taken);
+      cards.push({ id, slot: 'uncommon', holo: false, jump: null,
+        flags: rollVariants(rand, 'uncommon', odds, firstEd) });
+    }
   }
 
-  // --- 7 Common-tier: the floor first, then the rest against the cap.
+  // --- 5 Common-tier: the floor first, then the rest against the cap, each
+  // non-floor slot also carrying the two Common jump chances.
   //
-  // The floor slots draw from `energy`; the rest draw from `common`, which
-  // CONTAINS Energy, so it can still turn up at its natural share — and that is
-  // exactly what used to let a base1 pack run to five or six of them. The draw
-  // is now one slot at a time so it can switch to `commonNoEnergy` the moment
-  // the cap is reached. `taken` is threaded through, so no-repeats still holds.
+  // The floor is deliberately NOT eligible to jump — it draws straight from
+  // `energy` before this loop even starts, never touching the roll below. A
+  // set's Energy guarantee has to stay a guarantee; letting it occasionally
+  // jump away would make "the floor and the cap meet at two" a claim that
+  // isn't always true.
+  //
+  // The rest draw from `common`, which CONTAINS Energy, so it can still turn
+  // up at its natural share — and that is exactly what used to let a base1
+  // pack run to five or six of them. The draw is one slot at a time so it can
+  // switch to `commonNoEnergy` the moment the cap is reached. `taken` is
+  // threaded through, so no-repeats still holds.
   const cap = Math.max(0, opts.energyCap === undefined ? ENERGY_CAP : opts.energyCap);
   const floor = Math.min(ENERGY_FLOOR[setCode] || 0, cap, pools.energy.length ? PACK_SHAPE.common : 0);
-  const commonIds = [];
+  const commonCards = [];
   let energyCount = 0;
   if (floor > 0) {
     const got = drawSlots(pools.energy, floor, rand, isEnergy, taken);
     energyCount += got.length;
-    commonIds.push(...got);
+    for (const id of got) {
+      commonCards.push({ id, slot: 'common', holo: false, jump: null,
+        flags: rollVariants(rand, 'common', odds, firstEd) });
+    }
   }
-  while (commonIds.length < PACK_SHAPE.common) {
+  while (commonCards.length < PACK_SHAPE.common) {
+    const roll = rand();
+    if (roll < odds.jumpCommonToRare) {
+      const r = drawRareCard(pools, rand, odds, isEnergy, taken);
+      commonCards.push({ id: r.id, slot: 'rare', holo: r.holo, jump: 'c2r',
+        flags: rollVariants(rand, 'rare', odds, firstEd) });
+      continue;
+    }
+    if (roll < odds.jumpCommonToRare + odds.jumpCommonToUncommon) {
+      const [id] = drawSlots(pools.uncommon, 1, rand, isEnergy, taken);
+      commonCards.push({ id, slot: 'uncommon', holo: false, jump: 'c2u',
+        flags: rollVariants(rand, 'uncommon', odds, firstEd) });
+      continue;
+    }
     const roomLeft = energyCount < cap && pools.energy.length;
     const wantEnergy = roomLeft && rand() < pools.energyShare;
     const from = wantEnergy ? pools.energy
       : (pools.commonNoEnergy.length ? pools.commonNoEnergy : pools.common);
     const [id] = drawSlots(from, 1, rand, isEnergy, taken);
     if (isEnergy[id]) energyCount++;
-    commonIds.push(id);
+    commonCards.push({ id, slot: 'common', holo: false, jump: null,
+      flags: rollVariants(rand, 'common', odds, firstEd) });
   }
-  for (const id of commonIds) {
-    cards.push({ id, slot: 'common', holo: false, flags: rollVariants(rand, 'common', odds, firstEd) });
-  }
+  cards.push(...commonCards);
 
   // --- intrusion replaces ONE Common, never the Rare. PACKS.md: the Rare slot
   // stays the pack's emotional centre, and an intrusion is a bonus surprise
@@ -316,14 +383,15 @@ function openPack(db, setCode, rand, opts = {}) {
     const at = cards.findIndex(c => c.slot === 'common');
     if (at >= 0) {
       intrusion = pickFrom(promos, rand);
-      cards[at] = { id: intrusion, slot: 'promo', holo: false, flags: rollVariants(rand, 'promo', odds, firstEd) };
+      cards[at] = { id: intrusion, slot: 'promo', holo: false, jump: null,
+        flags: rollVariants(rand, 'promo', odds, firstEd) };
     }
   }
 
   // The STIPEND is gone — 16 Aug 2026. It hung two extra Energy off the side of
   // a pack for any set printing none, which made a Jungle booster thirteen cards
   // with two of them mandatory. Borrowed Energy is in the Common pool now and is
-  // drawn like anything else, so a pack is eleven cards again, always.
+  // drawn like anything else, so a pack is PACK_SIZE cards, always.
   return { set: setCode, firstEd, intrusion, cards };
 }
 

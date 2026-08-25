@@ -136,7 +136,8 @@ for (const b of L) {
     if (!r.ok) illegal.push(`${o.id}: ${r.errors.join('; ')}`);
   }
 }
-eq(authored, 41, 'the four brackets name 41 authored opponents — 16 GBC, 4 theme, 2 Jungle, and Trevor 8 + 5 + 6');
+eq(authored, 43, 'the four brackets name 43 authored opponents — 8 GBC (4 Grand Masters + 4 Ronald extras), ' +
+  '6 theme (4 Base + 2 Jungle + 2 Team Rocket), and Trevor 8 + 5 + 6 + 8');
 ok(illegal.length === 0, `every authored opponent fields a legal 60-card deck${illegal.length ? '\n        ' + illegal.join('\n        ') : ''}`);
 
 // Nothing in a deck FILE is stranded. A deck that resolves but that no rung fields is
@@ -149,9 +150,17 @@ const usedFrom = prefix => {
   }));
   return used;
 };
-eq(usedFrom('gbc').size, 16, 'all sixteen GBC decks are assigned to an opponent');
+// Eight of the sixteen retired on 25 Aug 2026 when Team Rocket got its own
+// roster — the placeholder rule says they are never deleted, and gbc_decks.json
+// still carries all sixteen, but only the four Grand Masters (base3's stand-in
+// intro) and the four Ronalds (one per bracket's `extra`) are still ASSIGNED.
+eq(usedFrom('gbc').size, 8, 'eight GBC decks are still assigned — 4 Grand Masters, 4 Ronalds');
 eq(usedFrom('b1').size, 8, "all eight of Trevor's Base Set decks are assigned to an opponent");
-eq(usedFrom('jungle').size, 2, 'both Jungle decks are assigned to an opponent');
+eq(usedFrom('b2').size, 5, "all five of Trevor's Jungle decks are assigned to an opponent");
+eq(usedFrom('b3').size, 6, "all six of Trevor's Fossil decks are assigned to an opponent");
+eq(usedFrom('b5').size, 8, "all eight of Trevor's Team Rocket decks are assigned to an opponent");
+eq(usedFrom('jungle').size, 2, 'both Jungle theme decks are assigned to an opponent');
+eq(usedFrom('tr').size, 2, 'both Team Rocket theme decks are assigned to an opponent');
 
 group('a generated opponent brings a legal deck, and the same one every time');
 

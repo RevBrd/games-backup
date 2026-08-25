@@ -62,8 +62,11 @@ real term, and is flagged as such.
 had good decks, and packs became filler. Every axis exists to keep a pack worth opening
 indefinitely.
 
-**Pack shape is constant: 1 Rare + 3 Uncommon + 7 Common-tier = 11.** Energy is a Common-tier card
-inside that 7-slot bucket rather than a separate slot, which is what the sets actually did.
+**Pack shape is 1 Rare + 2 Uncommon + 5 Common-tier = 8, shrunk from 11 on 25 Aug 2026** — Trevor,
+from play: Commons and Uncommons were filling up too fast. Energy is a Common-tier card inside that
+5-slot bucket rather than a separate slot, which is what the sets actually did. See "Bonus rare-tier
+jumps" below for the mechanic that shipped alongside the shrink, and "Still open" for what the shrink
+did to the cosmetic axes further down this file, which nobody touched but which moved anyway.
 
 **A floor and a cap, and they are different things** — `ENERGY_FLOOR` and `ENERGY_CAP`, rebuilt
 16 Aug 2026 from two of Trevor's playtest notes. The floor is a per-set guarantee and **only base1
@@ -118,11 +121,16 @@ should be able to happen, and should be funny when it does.
 |---|---|---|---|---|---|
 | Holo Rare | no | the Rare slot | 1/3 | — | — |
 | 1st Edition | yes | **whole pack** | 1/20 | ~20 | ~10 |
-| Reverse Holo | yes | each of the 10 Common/Uncommon slots | 1/100 | 10 | 5 |
+| Reverse Holo | yes | each of the 7 Common/Uncommon slots | 1/100 | ~15 | ~7 |
 | Promo/SI intrusion | yes | whole pack, replaces 1 Common | 1/100 | ~100 | ~50 |
-| Shiny | yes | each of 11 slots | 1/440 | 40 | 20 |
-| Shadowless | yes | each of 11 slots | 1/2200 | 200 | 100 |
-| Misprint | yes | each of 11 slots | 1/11000 | 1000 | 500 |
+| Shiny | yes | each of 8 slots | 1/440 | ~55 | ~28 |
+| Shadowless | yes | each of 8 slots | 1/2200 | ~275 | ~138 |
+| Misprint | yes | each of 8 slots | 1/11000 | ~1375 | ~688 |
+
+**The "Packs to expect one" and "Wins @2/win" columns moved on 25 Aug 2026 when the pack shrank from
+11 cards to 8** — the four per-slot odds above did not change, but there are fewer slots to roll them
+against, so they all fire less often per pack than they used to. See "Still open" for whether that
+rebalances back.
 
 Notes on the invented ones:
 
@@ -135,9 +143,10 @@ Notes on the invented ones:
   It is **independent of Shadowless**, because across the full 14-set pool the two are independent
   facts about a print run; the nesting only holds for Base Set. See [HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md).
 - **Reverse Holo borrows a later-era term.** Real reverse holo did not exist until the e-Card era
-  (Expedition, 2002), which is after this corpus ends at Neo Destiny. It rolls only on the 10
-  Common/Uncommon slots — Rares already have their own holo axis, and a holographic Common is a
-  distinct, better feeling than overlapping with a system that exists.
+  (Expedition, 2002), which is after this corpus ends at Neo Destiny. It rolls only on the
+  Common/Uncommon slots (7 of them, since the shrink) — Rares already have their own holo axis, and
+  a holographic Common is a distinct, better feeling than overlapping with a system that exists. A
+  card that jumped up to Rare-tier (see "Bonus rare-tier jumps") is excluded too, for the same reason.
 - **Shiny is the forever-chase**, the layer the original game lacked entirely, and unrelated to RS.
   Any card in any slot can be Shiny, including a Common.
 - **Misprint is a digital-error joke, not a period miscut** — text overflowing its box, artwork at
@@ -147,9 +156,46 @@ Notes on the invented ones:
 - **Promo/SI intrusion replaces a Common slot, never the Rare** — the Rare stays the pack's
   emotional centre and intrusion is a bonus surprise, not competition for the headline pull.
 
-Verified at 200,000 packs: holo 1-in-3.0, 1st Edition 1-in-20.1, Reverse Holo 1-in-9.9, Shiny
-1-in-39.3, Shadowless 1-in-200.2, Misprint 1-in-897. The ~5x ladder between the per-card tiers holds
-at 3.96x / 5.09x / 4.48x, so it survives as the rule for extending the table.
+Verified at 200,000 packs against the 8-card pack (25 Aug 2026): holo 1-in-3.0, 1st Edition 1-in-20.1,
+Reverse Holo 1-in-14.3, Shiny 1-in-55.5, Shadowless 1-in-264.2, Misprint 1-in-1183.4. The ~5x ladder
+between the per-card tiers holds at 3.89x / 4.76x / 4.48x, so it survives as the rule for extending
+the table. **The pre-shrink numbers were holo 1-in-3.0, 1st Edition 1-in-20.1, Reverse Holo 1-in-9.9,
+Shiny 1-in-39.3, Shadowless 1-in-200.2, Misprint 1-in-897** — every per-slot axis is rarer now, purely
+because there are fewer slots for the same odds to roll against. See "Still open".
+
+### Bonus rare-tier jumps
+
+**Since 25 Aug 2026, "exactly one Rare per pack" is the norm rather than a promise.** Each Uncommon
+slot and each Common slot carries a small independent chance to resolve as something better instead —
+TCG Pocket's tier-jump is the reference point, not anything WotC printed. A jumped card gets EXACTLY
+the guaranteed Rare slot's treatment: the same 2:1 holo split, and the same Reverse Holo exclusion,
+because once a card is Rare-tier it has its own holo axis for the same reason the guaranteed slot does.
+
+| Roll | Chance per card | Applies to |
+|---|---|---|
+| Uncommon → Rare | 3.3% | both Uncommon slots |
+| Common → Uncommon | 2.4% | Common slots past the floor |
+| Common → Rare (the two-tier jump) | 0.1% | Common slots past the floor |
+
+**Three tuning drafts, all Trevor's, landed here.** v1 gave any bonus Rare-tier card about a 1-in-29
+pack rate; v2 doubled the per-card odds and shrank Uncommon from 3 slots to 2, landing near 1-in-20 —
+the same frequency as 1st Edition; v3 is shipped, retuned so a bonus Rare-tier card beats Reverse
+Holo's own per-pack frequency and the two-tier jump stays clearly under it. **The Uncommon-to-Rare odds
+were nudged from Trevor's original 3% to 3.3%** after measurement showed his three v3 numbers landed
+the "beats Reverse Holo" goal as a near-tie (6.38% vs 6.79%) rather than clearing it. Flagged rather
+than applied quietly; `PACK_ODDS` carries the same note and a one-line revert.
+
+**The Energy floor is exempt from the jump roll, on purpose.** base1's two guaranteed Energy slots are
+drawn before the jump-eligible loop even starts, so "the floor and the cap meet at two" (above) stays
+literally true — a floor that could occasionally jump away would defeat its own purpose.
+
+**One consequence of that exemption is worth recording rather than rediscovering.** base1 is the only
+live set with a floor, so only 3 of its 5 Common slots are jump-eligible instead of 5. Measured at
+200,000 packs, Base Set's own bonus-Rare-tier rate lands at essentially a **tie with Reverse Holo**
+(~6.8% either side, inside each other's sampling noise) even after the nudge above, while every other
+live set clears it comfortably (~6.9-7.5%, per-set sweep). **Whether that is an acceptable
+"Base-Set-is-already-the-exception" outcome, or worth its own further nudge, is open** — flagged to
+Trevor rather than resolved a second time by guessing.
 
 **That run covered a quarter of the live content and one RNG stream, and both gaps are now closed —
 24 Aug 2026.** Trevor reported his Shiny and 1st Edition pulls feeling too frequent, twice, and
@@ -177,25 +223,31 @@ It says so in its own output.
 
 ## The pacing number the economy turns on
 
-`packtest.js` prints this without asserting it:
+`packtest.js` prints this without asserting it. Re-measured 25 Aug 2026 against the 8-card pack; the
+pre-shrink figures (11-card pack) are alongside for comparison:
 
-| To complete Base Set | Median packs | ~Wins at 2 packs/win |
-|---|---|---|
-| Commons + Energy | 27 | 14 |
-| Uncommons | 42 | 21 |
-| Rares (non-holo) | 71 | 36 |
-| **Rare Holos** | **164** | **82** |
-| **All 102** | **157** | **79** |
+| To complete Base Set | Median packs | ~Wins at 2 packs/win | Pre-shrink median |
+|---|---|---|---|
+| Commons + Energy | 43 | 22 | 27 |
+| Uncommons | 59 | 30 | 42 |
+| Rares (non-holo) | 63 | 32 | 71 |
+| **Rare Holos** | **140** | **70** | **164** |
+| **All 102** | **156** | **78** | **157** |
 
-**The whole Base Set collection game is the sixteen Rare Holos.** Everything else finishes inside
-the first third of the run — by the time you have your last Uncommon you are barely a quarter of the
-way to the set. Each specific holo arrives at 1/3 × 1/16 per pack, and coupon-collecting sixteen of
-those is the long tail that *is* the game.
+**The whole Base Set collection game is still the sixteen Rare Holos, but a smaller share of it than
+before.** Commons now finish about 28% of the way to the set (43 of 156 packs) and Uncommons about
+38% (59 of 156) — both a larger share than pre-shrink (17% and 27%), because the Common and Uncommon
+slots shrank while the Rare slot's own rate barely moved. Each specific holo still arrives at
+1/3 × 1/16 per pack **plus whatever the bonus rare-tier jump adds on top** (see above) — and
+coupon-collecting sixteen of those is still the long tail that *is* the game, now finishing slightly
+FASTER than before (140 median packs vs. 164) because the jump mechanic hands out a small trickle of
+extra Rare-tier pulls the old shape never gave it.
 
-Two consequences. **~79 wins to finish one set is a good length**, so the economy does not need a
-duplicate sink to have a purpose. And **any future pity timer or duplicate protection should aim at
-the Rare Holo slot specifically** — the 34-to-390 pack spread on holos is by far the widest of any
-tier, so two players can have wildly different experiences of the same economy.
+Two consequences, both still holding. **~78 wins to finish one set is still a good length**, almost
+unchanged from before, so the economy still does not need a duplicate sink to have a purpose. And
+**any future pity timer or duplicate protection should still aim at the Rare Holo slot specifically**
+— the 73-to-389 pack spread on holos is still by far the widest of any tier, so two players can have
+wildly different experiences of the same economy.
 
 ## Still open
 
@@ -243,6 +295,21 @@ tier, so two players can have wildly different experiences of the same economy.
    rolls, so a Challenge pack would also become the best place in the game to pull a Shadowless or a 1st
    Edition. That is probably wanted — it is the biggest reward on the ladder — but it should be a
    decision, because nobody would have chosen it and it would arrive anyway.
+4. **Restoring the pre-shrink pacing on the four per-slot cosmetic axes is a deferred agenda item, not
+   an oversight.** Reverse Holo, Shiny, Shadowless and Misprint all roll once per SLOT rather than once
+   per pack, so shrinking the pack from 11 cards to 8 on 25 Aug 2026 silently thinned all four —
+   Reverse Holo alone moved from 1-in-9.9 to 1-in-14.3 packs, with nobody touching its `PACK_ODDS`
+   value. Trevor's call, same day: leave the four odds as they are for now — retuning them on top of
+   the rarity-jump mechanic that shipped the same day risks losing track of which change did what —
+   and revisit as its own pass once the new pack shape has actually been played. Whoever picks this up
+   should run `packtest.js` first rather than trust this file: its per-axis targets are now DERIVED
+   from `PACK_ODDS` + `PACK_SHAPE` rather than hardcoded, so a wrong number there means the derivation
+   needs revisiting, not just the odds.
+5. **Base Set's bonus-Rare-tier rate runs close to a tie with Reverse Holo, specifically because of the
+   Energy floor** — see "Bonus rare-tier jumps" above for the mechanism. Every other live set clears
+   Reverse Holo's rate comfortably; base1 alone does not, because its floor removes 2 of 5 Common slots
+   from jump eligibility. Open because whether that is an acceptable Base-Set-is-already-the-exception
+   outcome, or worth its own nudge, is Trevor's call.
 
 ## Sources
 

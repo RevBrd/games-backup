@@ -69,9 +69,9 @@ the tree and not orientation.
 ladder that makes them reachable, Job 9 was the first AI pass driven by real playtest, and Job 10
 added Team Rocket. You pick a starter deck, work down a roster of named challengers, beat a bracket's boss to open the
 next set, earn packs of whatever set you are on, open them, browse what you own, and build decks from
-it — and all of it persists. **Three brackets are built from Trevor's own hand-made decks** rather
-than from placeholders — Base Set, Jungle and Fossil. Team Rocket is the one still running on GBC
-placeholders, which is what a placeholder is for.
+it — and all of it persists. **All four brackets are now built from Trevor's own hand-made decks or
+real theme decks** rather than from placeholders — Base Set, Jungle, Fossil, and Team Rocket as of
+25 Aug 2026, which also retired the eight GBC club masters that had been standing in for it.
 
 **Four sets are live and complete: Base, Jungle, Fossil and Team Rocket — 311 of 311 cards.** Run
 `node tools/selftest.js` for the live figures rather than trusting a number in prose; it prints
@@ -290,7 +290,10 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   by tier and the report is in [ROSTERS.md](ROSTERS.md). **The AI half is well under way**: ten faults
   closed across three sessions, every one of them found by Trevor describing how a card is meant to be
   played rather than by any instrument — see [PLAYBOOK.md](PLAYBOOK.md), which is the method that
-  produced them. **The UI half is untouched.**
+  produced them. **The UI half is untouched.** **The GBC placeholders left on Team Rocket are now gone
+  too** — 25 Aug 2026, Job 12c/#26: Trevor's eight Team Rocket decks plus the two authentic Team Rocket
+  theme decks replaced them, and this is the first roster measured where the tiers actually order
+  cleanly. See [ROSTERS.md](ROSTERS.md#team-rocket--trevors-eight-decks-25-aug-2026).
 - **Job 11.5** - Continued maintenance passes. We need to make the structure more load-bearing before we continue. *Job Closed*
 - **Job 12a** - Continuing the AI pattern overhaul and testing behaviors. **It did need its own
   infrastructure and that half is built** — `tools/wants.js` reads Trevor's workbook, `tools/lib/board.js`
@@ -299,7 +302,11 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   command rather than a number here: `node tools/wants.js --coverage`. Base Set first, and **Jungle and
   Fossil are on hold** — their notes are one-liners awaiting the same overhaul base1 and base5 got.
 - **Job 12b** - Layout pass and then UI updates from GRABBAG.md. 
-- **Job 12c** - Pack and rarity drop overhaul. Might run concurrently with others.
+- **Job 12c** - Pack and rarity drop overhaul. **The pack shape and the bonus rare-tier jump mechanic
+  landed 25 Aug 2026** — pack shrank from 11 cards to 8, and a lesser slot can now jump to a better
+  tier at a small independent chance. **Rebalancing the four per-slot cosmetic axes (Reverse Holo,
+  Shiny, Shadowless, Misprint) to restore the pre-shrink pacing is deliberately deferred**, tracked as
+  its own open item in [PACKS.md](PACKS.md).
 - **Job 12d** - Scheduled document pass and grab bag run.
 - **Job 13** - Rulings, cards, and AI logic additions for Promo cards up to Team Rocket.
 - **Job 14** - Maintenance passes in the shape of Job 12

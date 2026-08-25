@@ -3,7 +3,29 @@
     "source": "Bulbapedia, Special:Export wikitext for Devastation (TCG) and Trouble (TCG) -- the {{decklist/entry}} tables",
     "retrieved": "2026-08-14",
     "scope": "The two authentic WotC Team Rocket theme decks. Reference data -- NOTHING READS THIS YET. base5 is not a live set yet. Both decks mix Team Rocket cards with Base Set 2 reprints (energy, generic trainers) -- normal for a WotC theme deck, not an error.",
-    "status": "Both resolved against data/raw/base5.json and data/raw/base4.json by exact (set, printed number) -- every card name matched the corpus, both total exactly 60, no 4-copy violations."
+    "status": "Both resolved against data/raw/base5.json and data/raw/base4.json by exact (set, printed number) -- every card name matched the corpus, both total exactly 60, no 4-copy violations. base4 (Base Set 2) card ids substituted 25 Aug 2026 for their identical live-set printings (base4 is 0-new-behaviour reprints; every substitution verified by matching HP/attacks/text) so the decks resolve without base4 being generated -- see the \"base4subs\" note.",
+    "base4subs": {
+      "base4-63": "base1-42",
+      "base4-93": "base1-63",
+      "base4-50": "base1-35",
+      "base4-100": "base1-69",
+      "base4-96": "base1-66",
+      "base4-117": "base1-90",
+      "base4-122": "base1-94",
+      "base4-120": "base1-93",
+      "base4-111": "base1-82",
+      "base4-130": "base1-102",
+      "base4-127": "base1-99",
+      "base4-40": "base1-27",
+      "base4-46": "base1-32",
+      "base4-45": "base1-31",
+      "base4-43": "base1-29",
+      "base4-75": "base1-50",
+      "base4-65": "base1-43",
+      "base4-123": "base1-95",
+      "base4-118": "base1-91",
+      "base4-129": "base1-101"
+    }
   },
   "devastation": {
     "name": "Devastation",
@@ -21,17 +43,17 @@
       ],
       [
         1,
-        "base4-63",
+        "base1-42",
         "Wartortle"
       ],
       [
         3,
-        "base4-93",
+        "base1-63",
         "Squirtle"
       ],
       [
         1,
-        "base4-50",
+        "base1-35",
         "Magikarp"
       ],
       [
@@ -46,12 +68,12 @@
       ],
       [
         3,
-        "base4-100",
+        "base1-69",
         "Weedle"
       ],
       [
         3,
-        "base4-96",
+        "base1-66",
         "Tangela"
       ],
       [
@@ -71,12 +93,12 @@
       ],
       [
         1,
-        "base4-117",
+        "base1-90",
         "Super Potion"
       ],
       [
         2,
-        "base4-122",
+        "base1-94",
         "Potion"
       ],
       [
@@ -86,22 +108,22 @@
       ],
       [
         1,
-        "base4-120",
+        "base1-93",
         "Gust of Wind"
       ],
       [
         1,
-        "base4-111",
+        "base1-82",
         "Full Heal"
       ],
       [
         10,
-        "base4-130",
+        "base1-102",
         "Water Energy"
       ],
       [
         18,
-        "base4-127",
+        "base1-99",
         "Grass Energy"
       ]
     ]
@@ -122,12 +144,12 @@
       ],
       [
         2,
-        "base4-40",
+        "base1-27",
         "Farfetch'd"
       ],
       [
         2,
-        "base4-100",
+        "base1-69",
         "Weedle"
       ],
       [
@@ -137,22 +159,22 @@
       ],
       [
         1,
-        "base4-46",
+        "base1-32",
         "Kadabra"
       ],
       [
         1,
-        "base4-45",
+        "base1-31",
         "Jynx"
       ],
       [
         1,
-        "base4-43",
+        "base1-29",
         "Haunter"
       ],
       [
         2,
-        "base4-75",
+        "base1-50",
         "Gastly"
       ],
       [
@@ -162,7 +184,7 @@
       ],
       [
         2,
-        "base4-65",
+        "base1-43",
         "Abra"
       ],
       [
@@ -177,17 +199,17 @@
       ],
       [
         1,
-        "base4-123",
+        "base1-95",
         "Switch"
       ],
       [
         2,
-        "base4-122",
+        "base1-94",
         "Potion"
       ],
       [
         1,
-        "base4-120",
+        "base1-93",
         "Gust of Wind"
       ],
       [
@@ -197,7 +219,7 @@
       ],
       [
         1,
-        "base4-118",
+        "base1-91",
         "Bill"
       ],
       [
@@ -207,12 +229,12 @@
       ],
       [
         10,
-        "base4-127",
+        "base1-99",
         "Grass Energy"
       ],
       [
         18,
-        "base4-129",
+        "base1-101",
         "Psychic Energy"
       ]
     ]

@@ -454,3 +454,18 @@ suite covered it, the situation is far too rare to move any duel, and the card w
 human — which is the silent-failure surface `AI.md` opens with, arriving in a function nobody had
 checked. **Worth a systematic pass**: `scoreTrainer` has never been read against the invariants above
 it in this file, and 36 of Trevor's 219 live notes are Trainers.
+
+**Three of Job 10c's "ordinary Powers" referenced a `me` (and one a bare `p`) that this function never
+defines, and every one of them crashed the instant the bot actually held the card.** *25 Aug — #26.*
+`SEARCH_EVOLUTION_TO_HAND`, `STATUS_COIN_EITHER_POWER` and `DISCARD_THEN_DRAW` all read `me.deck` /
+`me.hand` / (in the last case) `p.status` straight off, with no local binding — `scorePower(pi, a)`
+has no outer `me`, unlike `scoreAttack`'s scope. `STEP_IN`, `COWARDICE` and `BUZZAP` in the same switch
+each define their own (`me`, `me`, `me3`), which is what a ReferenceError looks like next to three
+cases that quietly never ran. **Found by `decksim.js` against `data/base5_decks.json`** — the Team
+Rocket roster is the first to field enough Powers of these three kinds for the AI to actually choose
+one in a simulated game, so nothing had ever called this code path before. Fixed by giving each case
+its own `const me = E.state.players[pi]` (and reading the Power's own config via `E.powerOf(slot)`
+for the `status` field, the same pattern `MOVE_DAMAGE` already used for `side`) — see PLAYTEST.md's
+own warning that a blind harness "fails silently, and fails in the safe direction": these three did not
+fail safely, they threw, and only because nothing had ever reached them to notice. **The weights
+themselves are still PROVISIONAL and untouched** — this fixed the crash, not the pricing.

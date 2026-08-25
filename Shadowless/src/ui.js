@@ -2928,7 +2928,7 @@ function renderPackScreen() {
   // whole-pack roll lands as a discovery rather than as a spoiler in the header.
   head.appendChild(el('div', 'sub', anyRevealed && p.firstEd
     ? '— 1ST EDITION PRINT RUN —'
-    : 'eleven cards'));
+    : `${PACK_SIZE} cards`));
   box.appendChild(head);
 
   const grid = el('div', 'packgrid');

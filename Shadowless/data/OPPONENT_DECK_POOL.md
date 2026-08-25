@@ -19,7 +19,7 @@ form that's actually pluggable now instead of prose:
 |---|---|
 | `data/fossil_decks.json` | BodyGuard, LockDown — both also pass `Engine.prototype.validateDeck` for real, since Fossil is live |
 | `data/base4_decks.json` | Grass Chopper, Hot Water, Lightning Bug, Psych Out |
-| `data/team_rocket_decks.json` | Devastation, Trouble |
+| `data/team_rocket_decks.json` | Devastation, Trouble — **LIVE 25 Aug 2026**, the Team Rocket bracket's T1 intro. No longer quarantined; the row below is stale, kept for provenance |
 | `data/gym_decks.json` | All 8 Gym Leader decks |
 | `data/gbc2_flavor_decks.json` | The 8 GB2-Island flavor decks — only `allison_psychic_battle` is clean (also engine-validated); the other 7 carry `subs` entries per card needing a real substitution decision, not resolved automatically |
 
@@ -55,8 +55,8 @@ ID-mapped and count-verified where that file's own counts are not.
 | ✅ | Base Set 2 (`base4`) | Hot Water | Fire/Water. Same caveat |
 | ✅ | Base Set 2 (`base4`) | Lightning Bug | Grass/Lightning. Same caveat |
 | ✅ | Base Set 2 (`base4`) | Psych Out | Water/Psychic. Same caveat |
-| ✅ | Team Rocket (`base5`) | Devastation | Grass/Water, Dark Pokémon. Same caveat |
-| ✅ | Team Rocket (`base5`) | Trouble | Grass/Psychic, Dark Pokémon. Same caveat |
+| 🔒 | Team Rocket (`base5`) | Devastation | Grass/Water, Dark Pokémon. **Live 25 Aug 2026** as the bracket's T1 intro — its `base4` ids were substituted for identical live-set printings first, see DATA.md |
+| 🔒 | Team Rocket (`base5`) | Trouble | Grass/Psychic, Dark Pokémon. Same |
 | ✅ | Gym Heroes (`gym1`) | Brock (Fighting) | every card is a "Brock's ___" print — most personality-forward official source found. Counts unverified, recount before use |
 | ✅ | Gym Heroes (`gym1`) | Misty (Water) | same |
 | ✅ | Gym Heroes (`gym1`) | Lt. Surge (Lightning) | same |

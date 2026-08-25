@@ -1881,6 +1881,7 @@ class AI {
         // fetches something that fits the board than when it fetches a card to
         // look at. Priced as a draw, plus a real bonus for a live one — and the
         // pick is filled in here so the engine's random fallback is never used.
+        const me = E.state.players[pi];
         const inPlay = new Set(E.allSlots(pi).map(sl => this.top(sl).name));
         const pool = me.deck.filter(x => {
           const c = this.db[x.id];
@@ -1901,9 +1902,10 @@ class AI {
         // the same condition against us, both halved — which correctly makes it
         // close to worthless in the abstract and genuinely good when their
         // Active is a threat and ours is expendable.
-        const key = STATUS_VALUE[p.status];
+        const pw = E.powerOf(slot) || {};
+        const key = STATUS_VALUE[pw.status];
         if (!key) return -Infinity;
-        const them = E.state.players[1 - pi];
+        const me = E.state.players[pi], them = E.state.players[1 - pi];
         if (!me.active || !them.active) return -Infinity;
         let sc = 0.5 * W[key];
         // Confusing or sleeping our OWN Active costs what it costs us: the
@@ -1920,6 +1922,7 @@ class AI {
         // worst card in hand and an unknown one — near zero on a good hand and
         // real on a hand of dead Energy. Reuses the junk-picking the Trainers
         // already do rather than inventing a second opinion about what is junk.
+        const me = E.state.players[pi];
         if (!me.hand.length || !me.deck.length) return -Infinity;
         const junk = this.junkiestInHand(pi);
         if (junk === null) return -Infinity;

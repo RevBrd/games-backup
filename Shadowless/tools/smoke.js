@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, deckFor, resolveDeck, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, leaveMatch, downloadMatchLog, setPrizePick, forfeitMatch, prizePickSetting, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, deckFor, resolveDeck, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, leaveMatch, downloadMatchLog, setPrizePick, forfeitMatch, prizePickSetting, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten, PACK_SIZE};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -70,7 +70,7 @@ const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, star
   addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, deckSummary,
   LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin,
   leaveMatch, downloadMatchLog, setPrizePick, forfeitMatch, prizePickSetting,
-  availableOpponents, bracketOpen, bossAvailable, hasBeaten } = ctx;
+  availableOpponents, bracketOpen, bossAvailable, hasBeaten, PACK_SIZE } = ctx;
 
 console.log('\n=== BUILT ARTIFACT SMOKE ===');
 
@@ -1060,12 +1060,16 @@ T('opening a pack you do not have is refused', () => {
 T('a pack opens into the reveal screen face-down', () => {
   addPacks(UI.save, 'base1', 3);
   if (!openNextPack()) throw new Error('openNextPack refused a pack we hold');
-  return UI.screen === 'packs' && UI.pack.order.length === 11
+  return UI.screen === 'packs' && UI.pack.order.length === PACK_SIZE
     && UI.pack.revealed.every(r => r === false);
 });
 T('the Rare is shown last, so the reveal has somewhere to go', () => {
-  return UI.pack.order[10].slot === 'rare'
-    && UI.pack.order.slice(0, 10).every(c => c.slot !== 'rare');
+  // Only the GUARANTEED slot's placement is asserted. Since 25 Aug 2026 a
+  // lesser slot can jump to Rare-tier too, so an earlier card being 'rare' is
+  // no longer a fault — this pack opens on real Math.random(), not a fixed
+  // seed, and asserting "nothing before it is rare" would flake on whichever
+  // run happened to roll a bonus one.
+  return UI.pack.order[PACK_SIZE - 1].slot === 'rare';
 });
 T('the cards are granted on open, not on flip', () => {
   // Closing the tab mid-reveal must not cost you the pack.
@@ -1073,7 +1077,7 @@ T('the cards are granted on open, not on flip', () => {
 });
 T('opening a pack decrements what you hold and counts the stats', () => {
   return packsHeld(UI.save, 'base1') === 2 && UI.save.stats.packsOpened === 1
-    && UI.save.stats.cardsPulled === 11;
+    && UI.save.stats.cardsPulled === PACK_SIZE;
 });
 T('the pack screen renders face-down, part-revealed and fully revealed', () => {
   render();
@@ -1082,7 +1086,7 @@ T('the pack screen renders face-down, part-revealed and fully revealed', () => {
   return created > 0;
 });
 T('a revealed card opens the detail overlay and closes again', () => {
-  UI.detail = { id: UI.pack.order[10].id, flags: [] };
+  UI.detail = { id: UI.pack.order[PACK_SIZE - 1].id, flags: [] };
   render();
   UI.detail = null; render();
   return true;

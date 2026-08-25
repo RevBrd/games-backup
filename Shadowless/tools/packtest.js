@@ -3,12 +3,19 @@
 //   node tools/packtest.js              200,000 packs
 //   node tools/packtest.js 20000        faster pass while iterating
 //
-// Half of this is structural (a pack is 11 cards, the Energy floor holds, no
-// card repeats itself). The other half is the point: PACKS.md's rarity table
-// is a PACING SCHEDULE — "one Shadowless every 200 packs" — and a pacing
-// schedule is a claim about long-run frequency that can only be checked by
-// running it. So it runs it, and compares observed packs-per-hit against the
-// numbers the document promises.
+// Half of this is structural (a pack is PACK_SIZE cards, the Energy floor
+// holds, no card repeats itself). The other half is the point: PACKS.md's
+// rarity table is a PACING SCHEDULE — "one Shadowless every N packs" — and a
+// pacing schedule is a claim about long-run frequency that can only be
+// checked by running it. So it runs it, and compares observed packs-per-hit
+// against what the odds in PACK_ODDS actually predict.
+//
+// Most per-axis targets below are DERIVED from PACK_ODDS + PACK_SHAPE rather
+// than copied as literals — 25 Aug 2026, after the pack shrank from 11 cards
+// to 8 and every one of Reverse Holo/Shiny/Shadowless/Misprint's hardcoded
+// "~10"/"~40"/"~200"/"~1000" targets went stale at once, because all four
+// roll per SLOT and the slot count moved. A literal target silently rots the
+// next time PACK_SHAPE changes; a derived one cannot.
 //
 // The seed is fixed, so this is deterministic and cannot flake. Tolerances are
 // therefore set to catch a real mistake (a wrong denominator, a roll on the
@@ -34,8 +41,26 @@ const head = t => console.log(`\n${t}`);
 // Observed packs-per-hit vs. what PACKS.md promises, within a tolerance.
 const near = (observed, want, tolPct, label) => {
   const off = Math.abs(observed - want) / want * 100;
-  check(off <= tolPct, label, `1 per ${observed.toFixed(1)} packs, want ~${want} (${off.toFixed(1)}% off)`);
+  check(off <= tolPct, label, `1 per ${observed.toFixed(1)} packs, want ~${want.toFixed(1)} (${off.toFixed(1)}% off)`);
 };
+// A rate (0-1), for the per-card jump odds — the actual PACK_ODDS values,
+// rather than a derived pack-level frequency.
+const nearRate = (observed, want, tolPct, label) => {
+  const off = Math.abs(observed - want) / want * 100;
+  check(off <= tolPct, label,
+    `${(observed * 100).toFixed(2)}%, want ~${(want * 100).toFixed(2)}% (${off.toFixed(1)}% off)`);
+};
+
+// Expected packs-per-hit for a flat per-slot probability `p` rolled
+// independently across `slots` cards in every pack — the general form behind
+// "one Shadowless every N packs". See the header comment for why these
+// targets are computed rather than copied.
+const packsPerHit = (p, slots) => 1 / (1 - Math.pow(1 - p, slots));
+const RH_SLOTS = P.PACK_SHAPE.uncommon + P.PACK_SHAPE.common;   // the Rare slot is excluded
+const RH_TARGET = packsPerHit(P.PACK_ODDS.reverseHolo, RH_SLOTS);
+const SHINY_TARGET = packsPerHit(P.PACK_ODDS.shiny, P.PACK_SIZE);
+const SL_TARGET = packsPerHit(P.PACK_ODDS.shadowless, P.PACK_SIZE);
+const MP_TARGET = packsPerHit(P.PACK_ODDS.misprint, P.PACK_SIZE);
 
 // ===========================================================================
 head('Pools partition Base Set correctly');
@@ -63,10 +88,11 @@ eq(P.promoPool(CARD_DB).length, 0, 'no promos are loaded at Base Set, so none ca
 head('One pack, structurally');
 
 const one = P.openPack(CARD_DB, 'base1', mulberry32(7));
-eq(one.cards.length, 11, 'a pack is eleven cards');
-eq(one.cards.filter(c => c.slot === 'rare').length, 1, 'exactly one Rare slot');
-eq(one.cards.filter(c => c.slot === 'uncommon').length, 3, 'three Uncommon');
-eq(one.cards.filter(c => c.slot === 'common').length, 7, 'seven Common-tier');
+eq(one.cards.length, P.PACK_SIZE, `a pack is ${P.PACK_SIZE} cards`);
+// Exactly one Rare slot is no longer a promise — the guarantee is "at LEAST
+// one", since 25 Aug 2026 a lesser slot can jump up and add a second (or
+// third) Rare-tier card. See the jump-rate section below for how often.
+check(one.cards.filter(c => c.slot === 'rare').length >= 1, 'at least one Rare-tier card, the guaranteed slot');
 eq(one.cards[0].slot, 'rare', 'the Rare comes first, so a reveal can build to it');
 check(one.cards.every(c => !!CARD_DB[c.id]), 'every card in a pack is a real card');
 
@@ -91,16 +117,18 @@ const tally = { firstEd: 0, rh: 0, sh: 0, sl: 0, mp: 0, holo: 0, intrusion: 0 };
 const mpFlavour = {};
 let energyShort = 0, energyOver = 0, dupes = 0, wrongSize = 0, rareRH = 0, feStraggler = 0;
 let totalCards = 0, energyCards = 0;
+let jumpU2R = 0, jumpC2U = 0, jumpC2R = 0, bonusRarePacks = 0;
 const seenIds = {};
 
 for (let i = 0; i < N; i++) {
   const pk = P.openPack(CARD_DB, 'base1', rand, { pools });
-  if (pk.cards.length !== 11) wrongSize++;
+  if (pk.cards.length !== P.PACK_SIZE) wrongSize++;
   totalCards += pk.cards.length;
 
   if (pk.firstEd) tally.firstEd++;
   if (pk.intrusion) tally.intrusion++;
   if (pk.cards[0].holo) tally.holo++;
+  if (pk.cards.filter(c => c.slot === 'rare').length > 1) bonusRarePacks++;
 
   let nEnergy = 0;
   const seenHere = {};
@@ -117,6 +145,9 @@ for (let i = 0; i < N; i++) {
     if (c.flags.indexOf('sl') >= 0) tally.sl++;
     const mp = c.flags.find(f => f[0] === 'm');
     if (mp) { tally.mp++; mpFlavour[mp] = (mpFlavour[mp] || 0) + 1; }
+    if (c.jump === 'u2r') jumpU2R++;
+    else if (c.jump === 'c2u') jumpC2U++;
+    else if (c.jump === 'c2r') jumpC2R++;
 
     // 1st Edition is a WHOLE-PACK roll: if the pack has it, every card has it.
     if (pk.firstEd !== (c.flags.indexOf('fe') >= 0)) feStraggler++;
@@ -128,7 +159,7 @@ const secs = ((Date.now() - t0) / 1000).toFixed(1);
 console.log(`  (${secs}s)`);
 
 // --- structural, across the whole run ------------------------------------
-eq(wrongSize, 0, 'every pack was eleven cards');
+eq(wrongSize, 0, `every pack was ${P.PACK_SIZE} cards`);
 eq(energyShort, 0, 'every Base Set pack met the two-Energy floor');
 eq(dupes, 0, 'no pack ever repeated a non-Energy card');
 eq(feStraggler, 0, '1st Edition is all-or-nothing across a pack');
@@ -151,10 +182,44 @@ head('Do the odds match the pacing schedule in PACKS.md?');
 
 near(N / tally.holo, 3, 2, 'Rare slot is holo about one time in three');
 near(N / tally.firstEd, 20, 3, '1st Edition: one pack in ~20');
-near(N / tally.rh, 10, 4, 'Reverse Holo: one pack in ~10');
-near(N / tally.sh, 40, 6, 'Shiny: one pack in ~40');
-near(N / tally.sl, 200, 12, 'Shadowless: one pack in ~200');
-near(N / tally.mp, 1000, 25, 'Misprint: one pack in ~1000');
+near(N / tally.rh, RH_TARGET, 4, `Reverse Holo: one pack in ~${RH_TARGET.toFixed(1)}`);
+near(N / tally.sh, SHINY_TARGET, 6, `Shiny: one pack in ~${SHINY_TARGET.toFixed(1)}`);
+near(N / tally.sl, SL_TARGET, 12, `Shadowless: one pack in ~${SL_TARGET.toFixed(1)}`);
+near(N / tally.mp, MP_TARGET, 25, `Misprint: one pack in ~${MP_TARGET.toFixed(1)}`);
+
+// ===========================================================================
+head('Does the bonus rare-tier jump land where v3 tuned it? (25 Aug 2026)');
+
+// Common-slot jumps are only rolled on the slots that reach the while loop in
+// openPack — the Energy FLOOR is drawn before it and is deliberately exempt
+// (a set's Energy guarantee has to stay a guarantee, not "usually two"). base1
+// is the one live set with a floor, and this whole run only opens base1
+// packs, so the per-card denominator has to subtract it out or the observed
+// rate reads as mysteriously low against the configured odds.
+const eligibleCommon = P.PACK_SHAPE.common - (P.ENERGY_FLOOR[SET] || 0);
+nearRate(jumpU2R / (N * P.PACK_SHAPE.uncommon), P.PACK_ODDS.jumpUncommonToRare, 6,
+  'Uncommon-to-Rare jump fires at its per-card odds');
+nearRate(jumpC2U / (N * eligibleCommon), P.PACK_ODDS.jumpCommonToUncommon, 6,
+  'Common-to-Uncommon jump fires at its per-card odds (floor-exempt slots excluded)');
+nearRate(jumpC2R / (N * eligibleCommon), P.PACK_ODDS.jumpCommonToRare, 15,
+  'Common-to-Rare (two-tier) jump fires at its per-card odds (floor-exempt slots excluded)');
+
+// The two design goals from the tuning conversation — Trevor: a bonus
+// Rare-tier card should feel more common than Reverse Holo, and the two-tier
+// jump should feel rarer than it. Checked against what this run actually
+// produced, not a formula, because base1's floor is exactly the kind of
+// interaction a formula can get wrong quietly (it did, once, above).
+//
+// INFORMATIONAL rather than asserted, and on purpose: base1 is the one live
+// set where the floor trims 2 of its 5 Common slots out of jump eligibility,
+// so its bonus-rare rate runs closer to Reverse Holo's than every other live
+// set does (see the per-set sweep below for the sets without a floor). Left
+// as a print rather than a `check` because whether that's an acceptable
+// Base-Set-is-already-the-exception outcome, or something to retune further,
+// is Trevor's call — the same way ENERGY_FLOOR itself was.
+const rhRate = tally.rh / N, bonusRareRate = bonusRarePacks / N;
+console.log(`  base1: bonus Rare-tier card ${(bonusRareRate * 100).toFixed(2)}% of packs ` +
+  `vs Reverse Holo ${(rhRate * 100).toFixed(2)}% — ${bonusRareRate > rhRate ? 'clears it' : 'DOES NOT clear it, floor-trimmed'}`);
 
 // The ladder PACKS.md asks to be preserved if these are ever retuned: each
 // tier roughly 5x the one below. Checked as a property of the table rather
@@ -203,10 +268,11 @@ const LIVE_SETS = ['base1', 'base2', 'base3', 'base5'];
 const SWEEP = Math.max(4000, Math.round(N / 4));
 for (const set of LIVE_SETS) {
   const rng = mulberry32(20260824);
-  const st = { fe: 0, rh: 0, sh: 0, sl: 0 };
+  const st = { fe: 0, rh: 0, sh: 0, sl: 0, bonusRare: 0 };
   for (let i = 0; i < SWEEP; i++) {
     const pk = P.openPack(CARD_DB, set, rng);
     if (pk.firstEd) st.fe++;
+    if (pk.cards.filter(c => c.slot === 'rare').length > 1) st.bonusRare++;
     for (const c of pk.cards) {
       if (c.flags.indexOf('rh') >= 0) st.rh++;
       if (c.flags.indexOf('sh') >= 0) st.sh++;
@@ -218,9 +284,20 @@ for (const set of LIVE_SETS) {
   // above is where that one is asserted, and saying so beats a check that
   // passes whatever happens.
   near(SWEEP / st.fe, 20, 8, `${set}: 1st Edition`);
-  near(SWEEP / st.rh, 10, 8, `${set}: Reverse Holo`);
-  near(SWEEP / st.sh, 40, 15, `${set}: Shiny`);
-  near(SWEEP / st.sl, 200, 30, `${set}: Shadowless`);
+  near(SWEEP / st.rh, RH_TARGET, 8, `${set}: Reverse Holo`);
+  near(SWEEP / st.sh, SHINY_TARGET, 15, `${set}: Shiny`);
+  near(SWEEP / st.sl, SL_TARGET, 30, `${set}: Shadowless`);
+
+  // Design intent — INFORMATIONAL, not asserted, and that took a wrong turn
+  // to learn. The true gap in expectation is only ~0.2 percentage points
+  // (bonus-rare ~7.5% vs Reverse Holo ~6.8% at these odds), and at a 50,000-
+  // pack sample that is inside ordinary sampling noise for either rate — a
+  // `check()` here would pass or fail depending on which set's fixed seed
+  // happened to land, which is a property of the sample, not of PACK_ODDS.
+  // Printed so the real numbers stay visible without a flaky gate pretending
+  // to measure something a margin this thin cannot reliably show.
+  console.log(`    ${set}: bonus Rare-tier card ${(st.bonusRare / SWEEP * 100).toFixed(2)}% ` +
+    `vs Reverse Holo ${(st.rh / SWEEP * 100).toFixed(2)}%`);
 }
 
 head('...and on the fresh-RNG-per-pack path the game uses');
@@ -249,9 +326,9 @@ for (let i = 0; i < SWEEP; i++) {
   }
 }
 near(SWEEP / liveRng.fe, 20, 8, 'fresh stream per pack: 1st Edition');
-near(SWEEP / liveRng.rh, 10, 8, 'fresh stream per pack: Reverse Holo');
-near(SWEEP / liveRng.sh, 40, 15, 'fresh stream per pack: Shiny');
-near(SWEEP / liveRng.sl, 200, 30, 'fresh stream per pack: Shadowless');
+near(SWEEP / liveRng.rh, RH_TARGET, 8, 'fresh stream per pack: Reverse Holo');
+near(SWEEP / liveRng.sh, SHINY_TARGET, 15, 'fresh stream per pack: Shiny');
+near(SWEEP / liveRng.sl, SL_TARGET, 30, 'fresh stream per pack: Shadowless');
 
 // ===========================================================================
 head('Intrusion, with a promo pool supplied');
@@ -265,13 +342,13 @@ for (let i = 0; i < 20000; i++) {
   const pk = P.openPack(CARD_DB, 'base1', ir, { pools, promos: fakePromos, odds: { intrusion: 0.5 } });
   if (!pk.intrusion) continue;
   intruded++;
-  if (pk.cards.length !== 11) intrudedSize++;
+  if (pk.cards.length !== P.PACK_SIZE) intrudedSize++;
   if (pk.cards[0].slot === 'promo') intrudedRare++;
   if (pk.cards.filter(c => c.slot === 'promo').length !== 1) intrudedSize++;
 }
 check(intruded > 9000 && intruded < 11000, 'intrusion fires at the rate it is given', `${intruded}/20000`);
 eq(intrudedRare, 0, 'an intrusion never displaces the Rare slot');
-eq(intrudedSize, 0, 'and an intruded pack is still eleven cards with one promo');
+eq(intrudedSize, 0, `and an intruded pack is still ${P.PACK_SIZE} cards with one promo`);
 
 // ===========================================================================
 head('A pack feeds the collection directly');
@@ -283,8 +360,8 @@ const pk = P.openPack(CARD_DB, 'base1', mulberry32(3));
 for (const c of pk.cards) C.grant(save, c.id, c.flags);
 let owned = 0;
 for (const id in save.owned) owned += C.ownedTotal(save, id);
-eq(owned, 11, 'all eleven cards land in the collection');
-check(C.collectionStats(save, CARD_DB).cards.owned <= 11, 'and the dex counts them as distinct cards');
+eq(owned, P.PACK_SIZE, `all ${P.PACK_SIZE} cards land in the collection`);
+check(C.collectionStats(save, CARD_DB).cards.owned <= P.PACK_SIZE, 'and the dex counts them as distinct cards');
 
 // A 1st Edition pack must produce piles that are actually flagged, not plain.
 const feSave = C.newSave({ now: 1 });

@@ -8,21 +8,23 @@ wiring the ladder you want that file; if you are deciding what goes *in* a rung,
 Read it when adding a set's roster, hand-building an opponent deck, or working the auto-builder
 (Job 13), which is the consumer this was written for.
 
-**Status: design, and THREE brackets are now built to it** — Base Set's eleven rungs on 19 Aug 2026,
-Jungle's seven and Fossil's on 21 Aug, all from decks Trevor hand-made against this spec. Job 8,
-15 Aug 2026, worked out with him. Everything about *naming, entry conditions, pressure assignment and
-the rival* is still unbuilt. It is the target the set jobs build against, and it is deliberately about
-*parameters* rather than card lists — the lists come per-set, when we can see what the set actually
-offers. **When a section here ships, rewrite it in the past tense and say where it lives.** A planning
-document that outlives its plan is the nastiest thing in this tree: specific, confident, and wrong.
-See [MAINTENANCE.md](MAINTENANCE.md).
+**Status: design, and ALL FOUR live brackets are now built to it** — Base Set's eleven rungs on
+19 Aug 2026, Jungle's seven and Fossil's on 21 Aug, and Team Rocket's ten on 25 Aug, all from decks
+Trevor hand-made or authentic theme decks against this spec. Job 8, 15 Aug 2026, worked out with him.
+Everything about *naming, entry conditions, pressure assignment and the rival* is still unbuilt. It is
+the target the set jobs build against, and it is deliberately about *parameters* rather than card
+lists — the lists come per-set, when we can see what the set actually offers. **When a section here
+ships, rewrite it in the past tense and say where it lives.** A planning document that outlives its
+plan is the nastiest thing in this tree: specific, confident, and wrong. See [MAINTENANCE.md](MAINTENANCE.md).
 
 **Which set has hand-authored decks is the thing to check, and it is not a fact about this file.**
 Trevor, 22 Aug 2026: the GBC decks are **placeholders, and any of them can fill any gap** — they are
 not a tier, a bracket or a roster, and where a particular one currently sits is not worth tracking or
-writing down. A bracket uses them only until that set's own decks are authored. As of 22 Aug that is
-Team Rocket alone. `data/` is the answer; two paragraphs in this tree disagreed about it before the
-question was retired.
+writing down. A bracket uses them only until that set's own decks are authored. **As of 25 Aug 2026
+every live set has its own**, so the eight GBC decks that had been standing in for Team Rocket retired
+rather than moving on — `data/gbc_decks.json` keeps all sixteen on file regardless, four Grand Masters
+and four Ronalds still assigned elsewhere. `data/` is the answer; two paragraphs in this tree disagreed
+about it before the question was retired.
 
 **And when you rewrite a section, move its rejections to [HISTORY.md](HISTORY.md) first.** This file
 carries several ideas that were proposed and dropped *with the reason each one lost*, which is the
