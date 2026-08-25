@@ -89,9 +89,16 @@ The tool prints its own caveat, which is the honest part: **a count you went loo
 felt wrong is a filtered sample.** It is good at saying *that is ordinary* and weak at saying
 *something is broken*.
 
-**What is left of the item is parked, and it is not the odds.** The original note also said "first
-shiny pull not shown in log", which is a separate claim nobody has checked and which needs the log
-file.
+**I parked a second item off this note and there was no second item.** "First shiny pull not shown
+in log" reads as *the log is missing an entry*; Trevor meant *that pull happened in an earlier
+session whose log was never saved*. Nothing was wrong, and I had filed a bug against the event
+logger on the strength of a sentence I had reparsed rather than asked about.
+
+*It is the [PLAYTEST.md](PLAYTEST.md) rule pointing the other way.* That file is about a report
+meaning something other than what it says, and the guard against it is to reproduce before you
+redesign — which I did, correctly, for the odds. Then I took a **five-word aside** in the same note
+and did the opposite: read it once, decided what it must mean, and parked an item on it. The aside
+is where it happens, because the main claim gets the scrutiny. **Ask about the clause you skimmed.**
 
 ---
 
