@@ -100,6 +100,21 @@ It is worth more than its size suggests. The 12-Prize bug — every scripted gam
 at twice the intended length since Job 4 — was found by reading one of these and noticing a deck lose
 seven cards between two identical turn banners. No test could see it, because every test was making
 the same mistake.
+
+**A turn that ends with no attack now says so**, in both the rail and the saved log — Trevor's, from
+the grab bag, 24 Aug 2026. It had no line at all, so the fact was carried by the *absence* of one,
+which is the hardest thing there is to read out of a log and effectively impossible in a saved one a
+week later. The line names the status when a status caused it (`— Asleep`, `— Paralyzed`), because
+that is the case a reader is usually trying to reconstruct. It is styled quieter than everything
+around it: it is the only line that reports something **not** happening, and turns without attacks
+are common enough that announcing them at the volume of a Knock Out would bury the real events.
+
+Two things in it are deliberate and both are asserted in `powertest.js`. **A Confusion tails still
+counts as attacking** — you declared it and it was your attack for the turn, which is how the Game
+Boy game treats it. And the line is suppressed on turn 1 **only if** `firstPlayerMayAttack` is off,
+which it is not: that flag ships `true` as a flagged assumption in `CONFIG_DEFAULTS`, so under the
+live config turn 1 is an ordinary turn. Both directions are tested so reversing the assumption cannot
+silently strand either half.
 ## Standing measurements
 
 Neither of these is a job. They are properties of the game that move when the AI moves, recorded here

@@ -6064,5 +6064,75 @@ T('POISON does not scale with their threat, because it is not a bought turn', ()
   return true;
 });
 
+// ------------------------------------------- ending a turn with no attack --
+// Trevor's, from the grab bag. The log reported everything a turn DID and
+// nothing about a turn that did nothing, so "did they just not attack?" was a
+// question you answered by noticing an absence — which cannot be done at all in
+// a saved log read back a week later.
+const noAtkLines = (E) => E.state.log.filter(e => e.kind === 'noattack');
+
+T('passing the turn logs that no attack was made', () => {
+  const E = board('base1-46', [], 'base1-58');       // Charmander, no Energy
+  E.state.turn = 4;
+  const before = noAtkLines(E).length;
+  E.act(0, { t: 'pass' });
+  const added = noAtkLines(E).slice(before);
+  eq(added.length, 1, 'lines added');
+  return /ended the turn without attacking\.$/.test(added[0].text);
+});
+
+T('attacking does not log it', () => {
+  const E = board('base1-46', [], 'base1-58');
+  E.state.turn = 4;
+  E.state.players[0].active.energy = [{ uid: 9101, id: 'base1-98' }];
+  const r = E.act(0, { t: 'attack', idx: 0 });
+  if (!r.ok) throw new Error('the attack was refused: ' + r.error);
+  return noAtkLines(E).length === 0;
+});
+
+// The status is the case a player actually goes looking for, so it is named.
+T('a status that blocked the attack is named in the line', () => {
+  const E = board('base1-46', [], 'base1-58');
+  E.state.turn = 4;
+  E.state.players[0].active.status.asleep = true;
+  E.act(0, { t: 'pass' });
+  const line = noAtkLines(E).pop();
+  return !!line && /without attacking — Asleep\.$/.test(line.text);
+});
+
+// The exemption is CONDITIONAL on the rule it exists for, and this pair is the
+// point. `firstPlayerMayAttack` ships as `true` — a flagged ASSUMPTION in
+// CONFIG_DEFAULTS — so under the live config turn 1 is an ordinary turn and the
+// line is informative. Flip the assumption and the first player is forbidden to
+// attack, at which point saying they did not is noise. Both directions are
+// asserted so that reversing the assumption cannot silently strand either half.
+T('turn 1 reports normally while the first player MAY attack', () => {
+  const E = board('base1-46', [], 'base1-58');
+  E.state.turn = 1;
+  E.act(0, { t: 'pass' });
+  return noAtkLines(E).length === 1;
+});
+
+T('...and is exempt once the first player may NOT', () => {
+  const E = board('base1-46', [], 'base1-58');
+  E.cfg.firstPlayerMayAttack = false;
+  E.state.turn = 1;
+  E.act(0, { t: 'pass' });
+  return noAtkLines(E).length === 0;
+});
+
+// A Confusion tails means the attack was declared and fizzled. You spent your
+// attack; the Game Boy game agrees, and the log must not claim otherwise.
+T('an attack lost to Confusion still counts as attacking', () => {
+  const E = board('base1-46', [], 'base1-58');
+  E.state.turn = 4;
+  E.state.players[0].active.energy = [{ uid: 9102, id: 'base1-98' }];
+  E.state.players[0].active.status.confused = true;
+  E.dev.forceFlip = 'T';                              // tails: it fizzles
+  E.act(0, { t: 'attack', idx: 0 });
+  E.dev.forceFlip = null;
+  return noAtkLines(E).length === 0;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

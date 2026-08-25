@@ -804,6 +804,10 @@ class Engine {
     s.turn++;
     const p = this.cur();
     p.turnsTaken++; p.energyAttached = false; p.retreated = false; p.trainersPlayed = 0;
+    // Set at the top of doAttack, once the legality checks have passed, so a
+    // Confusion tails still counts: you declared the attack and it was your
+    // attack for the turn, which is how the Game Boy game treats it too.
+    p.attacked = false;
 
     // purge lasting effects that expire at the start of this turn
     this.eachSlot((slot) => {
@@ -841,6 +845,23 @@ class Engine {
         return true;
       });
     });
+
+    // Trevor's, from the grab bag. A turn that ends with no attack had no line
+    // at all, so you were left inferring it from the ABSENCE of one — which is
+    // the hardest thing there is to read out of a log, and impossible to
+    // reconstruct afterwards from a saved one.
+    //
+    // Turn 1 is exempt: the first player is not allowed to attack, so the line
+    // would be noise on the one turn where it carries no information. A status
+    // that blocked the attack is named, because that is precisely the case a
+    // player is trying to work out when they go looking.
+    const ep = s.players[ended];
+    if (!ep.attacked && (this.cfg.firstPlayerMayAttack || s.turn > 1)) {
+      const ea = ep.active;
+      const why = !ea ? '' : ea.status.asleep ? ' — Asleep'
+        : ea.status.paralyzed ? ' — Paralyzed' : '';
+      this.log(`${ep.name} ended the turn without attacking${why}.`, 'noattack');
+    }
 
     this.betweenTurns(ended);
     if (s.phase === 'over') return { ok: true };
@@ -3343,6 +3364,7 @@ class Engine {
     const card = topCard(this.db, atk);
     const attack = card.attacks[a.idx];
     const script = (this.effects[card.id] && this.effects[card.id].a && this.effects[card.id].a[a.idx]) || [];
+    me.attacked = true;
     this.log(`${card.name} uses ${attack.name}.`, 'attack');
 
     // Confusion gate

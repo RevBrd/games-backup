@@ -238,6 +238,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .mlline.k-ko{color:#B4574C;font-weight:700}
 .mlline.k-prize{color:#A0864F}
 .mlline.k-flip{color:#7C8C84}
+.mlline.k-noattack{color:#5B6A63;font-style:italic}
 .mlline.k-win{color:#6FAE5A;font-weight:700}
 
 /* `.midline{min-height:0}` used to sit here, matching nothing in ui.js — an
@@ -495,6 +496,11 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .logline.k-eff .lx{color:#7FC4D6}
 .logline.k-flip .lx{color:#8D97A2}
 .logline.k-trainer .lx{color:#A9B6C4}
+/* Quieter than everything around it on purpose. It is the only line in the log
+   that reports something NOT happening, and a turn with no attack in it is
+   common — announcing it at the volume of a Knock Out would bury the events
+   that did occur. */
+.logline.k-noattack .lx{color:#6D7B84;font-style:italic}
 .logline.k-err .lx{color:var(--red)}
 .logline.k-win{border-left-color:var(--grn)}
 .logline.k-win .lx{color:var(--grn);font-weight:700}
