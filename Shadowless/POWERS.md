@@ -33,10 +33,7 @@ override on the card **instance**, which is why `energyProvides()` consults that
 the card definition. It is the most structurally unusual thing in the engine and the pattern
 generalises to anything that changes what a card *is* while in play.
 
-Six in Base Set. **182 cards carry a Power across the WotC era**, so this is the system that scales
-furthest. Neo adds one **Poké-Body**, which the generator already emits as a Power (filtered from
-upstream's `abilities`), and 10 **Baby** Pokémon whose coin-flip rule is a whole rule rather than a
-card effect — see the Pending section of `RULINGS.md`.
+Six in Base Set; the era-wide figure and what Neo adds are in this file's header, not repeated here.
 
 **"As often as you like during your turn" is a mode you enter and leave, and that is a standing
 design decision rather than an implementation detail.** Click the power; the board enters that mode

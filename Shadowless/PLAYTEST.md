@@ -62,12 +62,13 @@ says outright you have agency over their shape.** Everything above is about diag
 A wish is a different job and the failure mode reverses — there is nothing to reproduce, and the risk
 is building exactly what was written without asking what it is *for*.
 
-Three currently sitting there are the shape to watch: *"cap energy drops at 2 per pack"*, *"booster
-pack selection screen"*, and swapping the two free Energy for basics in the card pool. Each is one
-line, each is a real design decision, and each has a *because* behind it that the line does not
-carry. **Ask for the because.** The stickiness item turned into a system that composes to 1,251 cards
-instead of a tag on four, and it did that because the reasoning behind the request survived contact
-with a counter-proposal.
+The shape to watch is a one-line wish that is really a design decision — *"booster pack selection
+screen"*, *"introductions for rare cards when pulled"*, *"lower cards per pack"*. Each has a *because*
+behind it that the line does not carry. **Ask for the because.** The stickiness item turned into a
+system that composes to 1,251 cards instead of a tag on four, and it did that because the reasoning
+behind the request survived contact with a counter-proposal. **Do not quote the examples above as a
+list of what is open** — two of the three this paragraph named originally had shipped by the time
+anybody re-read it.
 
 **Push back on these when you disagree** — it is invited, in writing, in both that file and the
 global instructions. A wish also gets weighed against the standing decisions in `CLAUDE.md` and the

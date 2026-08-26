@@ -1,4 +1,4 @@
-﻿# Shadowless — the built rosters, measured
+# Shadowless — the built rosters, measured
 
 What `tools/decksim.js` actually says when a roster meets itself. [OPPONENTS.md](OPPONENTS.md) is the
 **spec** — what a tier is, what a rung has to specify, what the player must bring. This file is the

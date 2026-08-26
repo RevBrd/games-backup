@@ -8,7 +8,11 @@ Descriptions often use shorthand and are left vague for ease of jotting down eve
 
 
 
-The list is in no meaningful order. Please edit or remove items appropriately if you finish one.
+**Grouped by area since 26 Aug 2026, and every item's text is untouched.** #27 did it during the
+Job 12d docs pass because Trevor's header says the order is not meaningful, and the sections make it
+possible to answer "what UI work is waiting" without reading fifteen unrelated notes. **The grouping
+is a convenience, not a claim** — an item filed under one heading often turns out to belong to
+another, which is the whole lesson of [PLAYTEST.md](PLAYTEST.md). Add new notes wherever you like.
 
 **Take a finished item off the list rather than striking it with a note.** This list is a work
 surface, not a record — six closed items with their diagnoses attached had built up by 15 Aug, and
@@ -17,35 +21,52 @@ Arcanine. If the finding was worth keeping, [GRABHIST.md](GRABHIST.md) is where 
 Trevor in the reply is the part that always happens. **The exception is a PARKED item** — that one is
 still open, so it stays with its reason and with what evidence would revive it.
 
-* Block paralyzed pokemon from retreating — **PARKED 13 Aug.** `canRetreat` already refuses both
-  Asleep and Paralyzed, asserted two ways in `powertest.js`. Either this predates a fix or it was
-  something else. **Revive it with a log showing a paralyzed Pokémon leaving the Active spot.** →
-  [GRABHIST](GRABHIST.md)
-* Booster pack selection screen (medium item)
-* Opponent uses Gust of Wind to drag out a pokemon already in the active spot — open, but **not what
+### The AI
+
+Faults and behaviour, from Trevor's play. [AI.md](AI.md) has what the scorer already does, and a note here is a symptom rather than a diagnosis.
+
+- Opponent uses Gust of Wind to drag out a pokemon already in the active spot — open, but **not what
   it looks like** and not Gust-specific. → [GRABHIST](GRABHIST.md)
 - **Intra-turn sequencing.** Two items are the same fault: the CPU should spend consumables *before*
   playing Professor Oak or Gambler, and it played two Gusts in one turn that undid each other. The
   scorer evaluates each Trainer independently within a turn and has no memory that it just acted.
   → [GRABHIST](GRABHIST.md)
-- Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
 - If the opponent has a tank in the active spot and is starting to run out of cards in the deck before the player, it begins to power up that tank to attack with or retreat rather than tank to a loss - Some preemptive, some log# 06-13-50. **The draw half of this is done** (deck spending is priced, as a curve rather than a floor at 20); what is left is the bot noticing it is losing a race it can count and changing plan. → [GRABHIST](GRABHIST.md)
 - Opponent used Potion right at the start to heal only 10 damage. Also promotes a pokemon only to switch it out immediately - log# 00-28-40
-- Visual popup on screen or in side panel (screen preferred) when a trainer card is played by the CPU, with a short pause in the action while it's shown. (medium item). If on screen, LAYOUT.md and INTERACTION.md might get involved and it becomes a large item.
-- Lower cards per pack to 10 for pacing reasons. Let's talk about which one to yeet out.
-- Missing visual rarity variants for sigil cards - Reverse Holo reuses the same filter as the scan card if possible. Misprint mimics visual formatting glitches. Text runs off the screen, the sigil is out of frame, etc. The "no intentional bugs" line in the CLAUDE.md will need to be changed. Decided with #4 (the Sonnet 5 PACKS.md creator) but I think the documentation was lost. Perfectly open to relitagation.
 - I think the enemy Ivysaur decided not to kill on turn 12 - log# 04-37-10. **Still open, and it is the last live part of this note.** The two Exeggutor Teleports are fixed and gone; the Gloom retreat on turn 14 turned out to be defensible — it set up the Bulbasaur Leech Seed that took the Prize, and Gloom had one Grass against Poisonpowder's two, so it could not have killed itself. The Ivysaur turn is not reproduced yet: it had just evolved and Vine Whip's 30 was exactly lethal on Lickitung, but whether it could pay GGC that turn is not in the log. → [GRABHIST](GRABHIST.md)
-- **CLOSED as not-a-bug, kept one line because it will be re-found.** The bot refusing basic Energy on a Colorless Pokemon is real and is not about type — every basic type scores identically on a Chansey, measured. It is that `potential()`'s `short` measures distance to the CHEAPEST reachable attack, so it pins at 0 once any attack is payable, and Chansey never walks up to Double-edge. **Trevor's answer, 21 Aug: that is correct play for Chansey** — Double-edge is a kamikaze you only set up when a DCE finishes it in one turn. The rule is right here and wrong elsewhere, so the fix is per-card judgement rather than a weight. → [GRABHIST](GRABHIST.md)
 - The AI evolves as soon as it CAN rather than as soon as it is READY — Vileplume arrives unable to attack. Measured: `evolve` scores a flat 31.0 whether the target holds one Energy or three. **Do not fix this on its own** — attaching a third Grass to a Gloom scores −2, so evolving is currently what unblocks the Energy, and a naive penalty strands Vileplume at two forever. The attach half has to come first and it is narrow: when the evolution is in hand, measure the target's shortfall against the evolved form. → [AI.md](AI.md) open item 4
-- Introductions for rare cards when pulled, light for RH, heavy for Shadowless, all cheap. I have ideas about this one, whoever takes it, let's chat before we build.
-- Defender should also defend from self-harm the turn that it's placed, per GBC. If it takes 20 damage from self-harm, it's used up. If it takes 10 damage, it's free. We can talk about this one if you want.
 - Alakazam moves damage from a weaker pokemon to a tank (Chansey). Except that Chansey was in the active spot and got killed because of it (but not by it) - log# 02-18-48.
 
+### The screen
 
+Presentation and screens. Two are marked *medium* and one grows to large the moment it lands on the mat — [LAYOUT.md](LAYOUT.md) and [INTERACTION.md](INTERACTION.md) say why.
 
-Optional place to document gab bag items: [GRABHIST.md](GRABHIST.md)
+- Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
+- Visual popup on screen or in side panel (screen preferred) when a trainer card is played by the CPU, with a short pause in the action while it's shown. (medium item). If on screen, LAYOUT.md and INTERACTION.md might get involved and it becomes a large item.
+- Booster pack selection screen (medium item)
+- Missing visual rarity variants for sigil cards - Reverse Holo reuses the same filter as the scan card if possible. Misprint mimics visual formatting glitches. Text runs off the screen, the sigil is out of frame, etc. The "no intentional bugs" line in the CLAUDE.md will need to be changed. Decided with #4 (the Sonnet 5 PACKS.md creator) but I think the documentation was lost. Perfectly open to relitagation.
+- Introductions for rare cards when pulled, light for RH, heavy for Shadowless, all cheap. I have ideas about this one, whoever takes it, let's chat before we build.
+
+### Rules
+
+A rules call rather than a bug, and Trevor has offered to talk it through.
+
+- Defender should also defend from self-harm the turn that it's placed, per GBC. If it takes 20 damage from self-harm, it's used up. If it takes 10 damage, it's free. We can talk about this one if you want.
+
+### Parked and kept
+
+**Neither of these is work.** A *parked* item is still open and stays with the evidence that would revive it; a *closed* one is kept only because it will otherwise be re-found and re-diagnosed from scratch. Do not delete either.
+
+- Block paralyzed pokemon from retreating — **PARKED 13 Aug.** `canRetreat` already refuses both
+  Asleep and Paralyzed, asserted two ways in `powertest.js`. Either this predates a fix or it was
+  something else. **Revive it with a log showing a paralyzed Pokémon leaving the Active spot.** →
+  [GRABHIST](GRABHIST.md)
+- **CLOSED as not-a-bug, kept one line because it will be re-found.** The bot refusing basic Energy on a Colorless Pokemon is real and is not about type — every basic type scores identically on a Chansey, measured. It is that `potential()`'s `short` measures distance to the CHEAPEST reachable attack, so it pins at 0 once any attack is payable, and Chansey never walks up to Double-edge. **Trevor's answer, 21 Aug: that is correct play for Chansey** — Double-edge is a kamikaze you only set up when a DCE finishes it in one turn. The rule is right here and wrong elsewhere, so the fix is per-card judgement rather than a weight. → [GRABHIST](GRABHIST.md)
+
+---
+
+Optional place to document grab bag items: [GRABHIST.md](GRABHIST.md)
 
 If you are an instance arriving here cold: [PLAYTEST.md](PLAYTEST.md) is the method file for this
 list — what these notes are, what they are not, and the three times a report has turned out not to
 mean what it said.
-

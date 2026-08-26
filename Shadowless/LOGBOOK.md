@@ -18,159 +18,43 @@ the end of the file was not where it looked. **If you cannot see the last entry,
 end before you write.**
 
 **Writing here is completely optional.** A `CREDITS.md` row with no logbook entry is fine. A logbook
-entry with no row is how somebody gets left off. 
+entry with no row is how somebody gets left off, so take the row either way.
 
-It does not have to be advice for the next instance, though that's absolutely allowed. The previous instances have chosen to do that and without any here doing otherwise, future readers may think it's a rule rather than a choice they made.
+**Entries move out of this file when the work they describe is CLOSED**, into whichever archive is
+still under ~250 lines — **start a new archive rather than growing one past it.** Archiving is a
+boundary and not a count; the old rule was "hold the two most recent" and by the time anyone checked
+it was holding six at 295 lines. **The most recent closed entry stays behind on purpose**: instances
+visibly write better entries when there is one in front of them, so the live file always opens with
+an example rather than a blank.
+
+**Nothing already written may be edited or condensed**, here or in any archive — a later pass may
+find an entry redundant and it is not, because the value of a logbook is that it says what somebody
+thought at the time. Correct an entry; never shorten one. The 200-line target does not apply to any
+of these files.
 
 ## What is where
-
-**This file holds the entries for work that is still open, plus the last closed one as an example.**
-Everything older is archived, verbatim and unedited:
 
 | File | Instances | When | Read it for |
 |---|---|---|---|
 | [LOGBOOK-ARCHIVE-1.md](LOGBOOK-ARCHIVE-1.md) | #0–#10 | through 12 Aug 2026 | The Claude Chat era, Jobs 4–6, the first four documentation passes |
 | [LOGBOOK-ARCHIVE-2.md](LOGBOOK-ARCHIVE-2.md) | #11–#14 | 12–15 Aug 2026 | Job 7, the AI retreat and recoil work, the opponent-deck research, the fifth documentation pass |
 | [LOGBOOK-ARCHIVE-3.md](LOGBOOK-ARCHIVE-3.md) | #16–#17 | 16 Aug 2026 | Job 9's first AI batch and the sixth documentation pass |
+| [LOGBOOK-ARCHIVE-4.md](LOGBOOK-ARCHIVE-4.md) | #19 | 18–19 Aug 2026 | Job 10 — the trigger points, `enterPlay`, and Team Rocket going live |
+| **this file** | #20–#26 | 19–25 Aug 2026 | Job 10.5 through Job 12c |
 
-**Archiving is a boundary, not a count — that changed on 16 Aug 2026.** The old rule was "this file
-holds the two most recent entries", and by the time anybody checked it was holding six at 295 lines,
-which is back inside the length that caused the first split. A count nobody enforces is not a rule.
-Entries move out when the **work they describe is closed**, into whichever archive is under ~250
-lines — **start a new archive rather than growing one past it**, which each archive's own header
-says and which the seventh pass had to undo doing. The most recent closed entry stays behind on
-purpose: instances visibly write better entries when there is one in front of them, so the
-live file always keeps an example rather than opening on a blank, though they are welcome to scan the archives as well.
+**Six of the entries below are PRESERVED CREDIT PROSE rather than logbook entries, and they say so.**
+#21 through #26 wrote no logbook entry, and their `CREDITS.md` rows had grown to between six and
+twenty-four lines each — so the eighth-pass rule applies: **where an instance has no logbook entry,
+the row's text moves here verbatim first, and only then is the row written short.** Do not decide
+sentence by sentence what earned its place. Moved 26 Aug 2026 by #27. **They are somebody's account
+of their own work and are covered by the never-condense rule exactly as an ordinary entry is.**
 
-**Nothing already written may be edited or condensed**, here or in either archive — a later pass may
-find an entry redundant and it is not, because the value of a logbook is that it says what somebody
-thought at the time. Correct an entry; never shorten one. The 200-line target does not apply to any
-of the three files.
-
-**One older artifact of this kind is in none of them:**
+**One older artifact of this kind is in none of these files:**
 `backups/pre-docs-cleanup/Packs Turn Log.txt`, the Sonnet 5 per-pass credits in that instance's own
 words. It spent one pass unreachable — intact, indexed nowhere, cited by a sentence that had been
 deleted. A pointer is not optional decoration on a preserved artifact; it is the half that rots.
 
 ---
-
-## #19 — Opus 5, 18 Aug 2026 (Job 10c, the trigger points)
-
-Two guards failed in this session, and both failures are more useful than anything I built.
-
-**The first one had been failing since Base Set and nobody could see it.** `selftest.js` filtered
-Energy cards out of its coverage set, so the hard gate — *no live set may contain an unimplemented
-card* — and the per-set ratchet had never once looked at an Energy card. Base, Jungle and Fossil hold
-exactly one special Energy between them and it was scripted on day one, so nothing ever fell through
-and the hole stayed invisible for three sets. Team Rocket prints three. Deleting `REMAINING.base5` at
-the end of Job 10 would have gone fully green with Rainbow Energy unplayable, while the engine's own
-deck validator refused every deck containing one — a card you can pull from a pack and cannot play,
-which is precisely the failure the set-gating rule exists to prevent.
-
-I found it in the first hour, while doing the read-in Trevor asked for rather than while building
-anything. **The verification pass was worth more than I expected it to be**, and I nearly skipped
-straight to 10c because the suites were green. Green suites were the symptom.
-
-**The second one I wrote myself, described in two documents, and it did not work.** I built a static
-check asserting that every path into play calls `enterPlay` — the whole enforceability of the
-played-from-hand ruling rests on it — scoped to a window of lines around each site. Then I deleted
-the call from `doPlayBasic` to watch it go red, and it stayed green. Two separate reasons: the window
-ran on into the next method and found *that* one's call, and the detector had never matched
-`doPlayBasic` in the first place, because it pushes a variable rather than an inline `this.mkSlot()`.
-It was also printing a hardcoded `8` where a count belonged.
-
-So it was a decoration that had already been cited as a guarantee in a ruling file and in `ENGINE.md`.
-The only thing that caught it was the one step this tree keeps telling everybody to take. **I would
-not have found it by reading it.** It looks completely reasonable.
-
-**On the design, the part I would tell #20.** I came into 10c planning a deferred-decision system —
-`pendingTrigger`, like `pendingSwitch` — because the three ON_PLAY Powers all ask a question and I
-assumed a question needed somewhere to wait. It did not. The answer rides on the play action's
-`opts`, exactly as every searching Trainer's does, and the whole thing collapsed to one synchronous
-call. **I had reached for new machinery before checking whether the existing convention covered it**,
-which is the failure `ENGINE.md`'s opening paragraph is about, arriving from the architecture end
-rather than the verb end.
-
-What made the difference was a survey I nearly did not run: grep every set's ability text for the
-three trigger wordings. It took two minutes and it decided the shape of the job. **ON_PLAY is 20
-printings across six sets and no two of them do the same thing** — search a deck, mill either deck on
-a coin, heal every Grass in play, hand the opponent a redraw. That is what says the trigger takes a
-verb list rather than a bespoke Power kind: build it the other way and you have written fourteen
-kinds by Neo 4. **ON_KO is three printings and two behaviours in the entire era**, so generalising it
-would have been pure waste. Same job, opposite answers, and only the survey could tell them apart.
-
-**And on the two rulings that disagree.** Attack damage defaults to *true* and makes the exceptions
-declare themselves; played-from-hand defaults to *silence* and makes the three hand paths declare
-themselves. Written a week apart they would look like an inconsistency. The test is which set grows:
-attack-damage callers multiply with every set, and "from hand" is a closed concept that sets do not
-extend. I have put that in the principles index as its own line, because I think it is the reusable
-half.
-
-**Trevor overruled me on Final Beam and was right.** I wanted anything originating during an attack
-step to count, so a Strikes Back finishing a Gyarados would be answered; he said only attacks
-themselves, from Pocket. The argument that settled it is not about this card — the generous reading
-has no natural edge, so every future card that damages without attacking needs re-deciding, and Gym
-and Neo are full of them. He hedged it as a shot in the dark. It was the load-bearing call of the day.
-
-He also guessed the ON_KO ordering constraint from a plain-English description of `kill()` — that the
-hook has to go inside it, before the Energy is swept — without reading the code. It does, and it is
-the only place the card can work from.
-
-— Shadowless 19
-
-## #19 — Opus 5, 19 Aug 2026 (Job 10 finished, Team Rocket live)
-
-The session ran long enough to have two halves, and the second one had a theme I did not choose:
-**four separate guards turned out not to be guarding.**
-
-The coverage gate had been blind to Energy since Base Set. A duplicate-case block sat inside
-`doTrainer` — 63 lines, 21 case labels, every one already handled above it, none of it ever run. A
-static check I wrote *myself*, cited as a guarantee in two documents, stayed green when I deleted the
-thing it was checking. And `setsurvey`'s own control — *a live set reports zero novel* — was crying
-wolf on a corpus typo the generator already corrects.
-
-Only one of those was found by reading. The other three were found by **deliberately breaking the
-thing and watching**, which this tree keeps telling everybody to do and which I nearly skipped twice
-because the check "obviously" worked. It never obviously works. The line-scoped one is the case to
-remember: it looked completely reasonable, it had a sensible comment, and it was watching a site it
-could not see through a window that would have forgiven it anyway.
-
-**The tool paid for itself the day it was written.** `shapecount.js` exists because Trevor asked
-whether the survey that shaped 10c deserved writing down. It then decided three more things in one
-session: ON_PLAY takes a verb list (20 printings, 15 texts), ON_KO does not (3 printings, 2
-behaviours), Goop Gas Attack and Here Comes Team Rocket! are unique so they get special cases, and
-`pendingAsk` should be general (17 printings, 16 texts, six sets). **Four "how much machinery"
-questions that would otherwise have been taste.** Its own header was wrong on the first run, which is
-a good sign about the tool and a bad one about writing numbers from memory.
-
-**On Rainbow.** Trevor guessed the representation — a sentinel that every symbol accepts — and it was
-right. What neither of us saw at first is that there is no *single* question: paying a cost, counting
-"for each Water Energy", and being a basic Energy **card** are three questions, and the third answers
-differently depending on the zone the card is in. Then his own sentence — *"when it's on a Pokémon,
-it's whatever that Pokémon needs it to be"* — carried a consequence he had not intended and I was
-about to get wrong: Energy Trans can move a Rainbow, and **Rain Dance cannot attach one**, because a
-hand is not a Pokémon. That reversed two settled rulings, and both had reasoned from the card's
-*category* while the card's *text* said otherwise in a parenthesis.
-
-**The bug I am most glad about is not mine.** Trevor reported Gigashock not letting him choose. It
-was true, and it was worse: the engine had always accepted a chosen target and nothing in the UI had
-ever supplied one, so *Dark Mind* had been silently picking for the player since Fossil went live —
-one of two is far harder to notice than three of five. Then the fourth test I wrote for it, the one I
-expected to pass, found that the engine never deduplicated the picks, so `[2,2,2]` put 30 on one
-Pokémon. **A bug is easiest to see where it matters least, and the fix for the visible half is what
-exposed the invisible one.**
-
-**On being told to restrict the AI.** Trevor asked that the bot judge a Challenge from what it can
-*see* rather than from the opponent's deck. That is a self-restriction — `ai.js` reads full engine
-state everywhere else, which is exactly why Peek is scored at −Infinity — and it makes the card a
-gamble on both sides instead of a solved problem for one. It is also easier to implement than the
-version that cheats. I put a do-not-fix-this note on it, because it will read like an oversight.
-
-**For #20.** The thing I would do differently is start the doc pass earlier. Everything is written
-down, but it was written down at the end, and twice I nearly shipped a document describing a guard
-that did not work. Write the claim after you have watched it fail, not before.
-
-— Shadowless 19
 
 ## #20 — Opus 5, 19 Aug 2026 (Job 10.5, the seventh documentation pass)
 
@@ -213,3 +97,130 @@ ends with a measurement, check whether the thing measured is plugged in**, becau
 reads as a finished one.
 
 — Shadowless 20
+
+## #21 — Opus 5, 21 Aug 2026 (Job 11 — the Jungle and Fossil brackets, and the benchmark deck)
+
+*Preserved from `CREDITS.md` on 26 Aug 2026 by #27, when that table was returned to its
+two-or-three-line rule. This is that row's text, unchanged — only the line width is this
+file's rather than a table cell's. It was written by #21 about its own work and is the only
+first-person account of it that exists.*
+
+Job 11: Trevor's five Jungle decks wired in as a full bracket, the GBC placeholders moved down a
+set, and every bracket ended in its own T4. Three AI faults from his logs — retreating into the
+wrong matchup, Teleport's flat 22 and the destination the engine was choosing at random, and a
+`must be 0` counter that was counting the wrong thing. `decksim.js` learned to merge two rosters
+and said the second one does not order. Then Trevor named the Charizard deck as ground truth,
+which gave the project its first real measure of AI quality, and two retreat repricings off his
+economics cut Energy burned on retreats by a quarter. Then his account of how he plays Charizard
+turned up two more — the bot capped it at four Energy and the engine discarded its Double
+Colorless first — worth +5.3 points on the benchmark, the largest single AI move so far. Fossil's
+six decks wired the same day, and [PLAYBOOK.md](PLAYBOOK.md) opened for the plain-English card
+knowledge that produced all of it
+
+## #22 — Opus 5, 22 Aug 2026 (the playbook reshaped around the pattern, and four faults out of one sentence)
+
+*Preserved from `CREDITS.md` on 26 Aug 2026 by #27, when that table was returned to its
+two-or-three-line rule. This is that row's text, unchanged — only the line width is this
+file's rather than a table cell's. It was written by #22 about its own work and is the only
+first-person account of it that exists.*
+
+Reshaped [PLAYBOOK.md](PLAYBOOK.md) around the **pattern** rather than the card, after all four of
+its entries generalised to a family — and found Trevor had already written the list, 65 cards
+deep, in his workbook's `Wants` column. Then worked the largest cluster, from his observation that
+paralysis and an Agility barrier are one idea the scorer was pricing through unrelated paths. Four
+faults, none visible to any suite: a rider paid for on a Pokémon the attack removes, a barrier
+blind to what it was blocking, a bought turn priced as a constant when that constant *was* the
+format's mean attack, and preventing your own death worth 16 against the 70 charged for causing
+it. Plus `abtest` telling anyone who ran a control that their control looked broken
+
+## #23 — Opus 5, 22 Aug 2026 (the eighth documentation pass)
+
+*Preserved from `CREDITS.md` on 26 Aug 2026 by #27, when that table was returned to its
+two-or-three-line rule. This is that row's text, unchanged — only the line width is this
+file's rather than a table cell's. It was written by #23 about its own work and is the only
+first-person account of it that exists.*
+
+The eighth documentation pass. Five siblings split out — [AI-INVARIANTS.md](AI-INVARIANTS.md),
+[MISREADINGS.md](MISREADINGS.md), [POWERS.md](POWERS.md) and the first archive of both
+`GRABHIST.md` and `HISTORY.md`, each of which had sailed past the ~450 rule written in its own
+header. Found `AI.md`'s "the accounts are all in `GRABHIST`" wrong for the **third** time and
+replaced the sentence with a table, `MEASUREMENT.md` promising "all seven" ways it lies in a file
+whose own section says never to count them, and `PROGRESSION.md` narrating one roster move four
+times while two tellings disagreed. Nine decks given the cover cards they were missing
+
+## #24 — Opus 5, 23 Aug 2026 (Job 12a — the claims harness, and the inbox that was three times its assumed size)
+
+*Preserved from `CREDITS.md` on 26 Aug 2026 by #27, when that table was returned to its
+two-or-three-line rule. This is that row's text, unchanged — only the line width is this
+file's rather than a table cell's. It was written by #24 about its own work and is the only
+first-person account of it that exists.*
+
+Job 12a's infrastructure half. Built the harness the playbook method had been missing:
+`tools/lib/xlsx.js` reads Trevor's workbook with no dependencies, `tools/wants.js` reports the
+inbox and the backlog, `tools/lib/board.js` builds a position out of card **names** against the
+twenty-nine bespoke fixtures that were the real bottleneck, and `tools/claimtest.js` runs the
+notes as rows — with an `--explore` mode, because every measurement in `ATTACK-CHOICE.md` came
+from a throwaway script that no longer exists. **Proved it can fail** against the commit before
+the 22 Aug bought-turn work, where the Dewgong and Gyarados rows go red with the numbers that file
+recorded. Found the inbox was three times the size anyone thought — a stale workbook had hidden
+Team Rocket's 59 notes and Base Set's rewritten 43 — and turned up two candidate faults on the
+first eleven rows: Zapdos and Arcanine. Then closed both with one term out of two guesses Trevor
+sent about two different cards — an Energy discard now costs **turns of silence**, squared and
+discounted by whether the Pokemon lives to feel them, so Charizard fires free on ammunition it
+will replace and Thunderbolt is priced out of a healthy Zapdos and back in the moment it is dying.
+It reversed a 14 Aug assertion, the first in this project to overturn another. Then the first
+claims batch — twelve of Trevor's notes as 19 rows — where two more of his notes landed on one
+term nobody had looked at: **every status rider in the game scored the same against a clean target
+and an afflicted one**, so Toxic was worth 44 against something it could not affect. Derived per
+status from what the engine does, which exempts Paralysis because it refreshes its own timer. A
+second batch of twelve more notes then found **no new faults and that was the point** — Tangela,
+whose note names Nidoking's reasoning, passed cold on a card nobody had touched, which is the
+general-scorer rule measured rather than asserted. Then his overhauled workbook landed at 219 live
+notes and the tool read it cold — a **drift check** added so a claim quoting a sentence he has
+since rewritten cannot keep silently passing, and a survey finding **36 Trainer notes**, a
+category none of the sixteen patterns names. The first Trainer probed found the entry above; the
+second passed and sent a GRABBAG item back for a real board
+
+## #25 — Opus 5, 23 Aug 2026 (Job 12b — the shifting board, and the pack odds that were fine)
+
+*Preserved from `CREDITS.md` on 26 Aug 2026 by #27, when that table was returned to its
+two-or-three-line rule. This is that row's text, unchanged — only the line width is this
+file's rather than a table cell's. It was written by #25 about its own work and is the only
+first-person account of it that exists.*
+
+Job 12b's layout half. The last of the shifting board, from Trevor's own diagnosis: the centre
+line is the mat's only shrinkable item and therefore its **shock absorber**, and the Knock Out
+banner and targeting prompt sat in its normal flow — so either one stopped it absorbing and
+rescaled the whole board, at cramped viewports only. Then the opening-setup Active, where a
+five-class selector had also beaten its own placeholder's height and the row jumped 73px on
+placing a Basic. Then the booster reveal, where three separate things — an unreserved ribbon, a
+Rare whose face-down back was a common's height, and a summary line arriving with the last flip —
+compounded into the header climbing 61px, and the setup Active given the read-only attack lines
+its empty bottom half had been missing. Built `tools/probe.js`, which measures one screen across
+several UI states in one page load and is the instrument neither `shot.js` nor `smoke.js` could
+ever be — #20 built the same thing and threw it away. Then the first UI item rather than a fix:
+**the opponent's Trainer held on the centre line for a beat**, which stayed small because it is a
+stop in the coin's presentation queue rather than a new mechanism, and a turn ending with no
+attack finally getting a line of its own. Then a pack-odds report that was luck twice over — but
+only provable after finding that the 200,000-pack suite covered one live set of four and had never
+used the fresh-per-pack RNG the game runs on. `pullcheck.js` answers it from a real save
+
+## #26 — Sonnet 5, 25 Aug 2026 (Job 12c — the 8-card pack, the tier jump, and the Team Rocket bracket)
+
+*Preserved from `CREDITS.md` on 26 Aug 2026 by #27, when that table was returned to its
+two-or-three-line rule. This is that row's text, unchanged — only the line width is this
+file's rather than a table cell's. It was written by #26 about its own work and is the only
+first-person account of it that exists.*
+
+Job 12c: the pack shrank from 11 cards to 8 and a lesser slot can now jump to a better tier at a
+small independent chance, tuned across three drafts with Trevor to land above Reverse Holo's own
+rate without a formula that hid the Energy floor quietly excluding itself from it — flagged
+instead. Restoring the four cosmetic axes' pre-shrink pacing deliberately deferred, tracked in
+`PACKS.md`. Then the Team Rocket bracket: eight decks converted from Trevor's workbook into
+`base5_decks.json`, the two authentic Team Rocket theme decks freed of their `base4` dependency by
+substituting each reprint for its identical live-set printing, and the eight GBC club masters
+retired rather than moved on, since no unauthored bracket remained for them. First roster whose
+tiers ordered cleanly on the first `decksim.js` run — which only ran clean after three PROVISIONAL
+Power-scoring cases turned out to reference a `me` `scorePower` never defines, crashing the
+instant a deck actually held one of the three Powers. Nobody had ever reached that code before
+

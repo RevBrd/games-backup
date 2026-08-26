@@ -213,7 +213,7 @@ targeting branch in the bar skips forced targeting so it cannot render one.
 lived in `renderActionBar()` first, which is wrong by exactly one step: `render()` builds the table
 and *then* the bar, so the bench tiles asked `slotTargetable()` while `UI.targeting` was still null
 and drew themselves unhighlighted. The prompt appeared and nothing lit up. Same shape as
-`writeViewportDump()` having to run after `chooseLayout()` — see [TOOLING.md](TOOLING.md).
+`writeViewportDump()` having to run after `chooseLayout()` — see [INSPECTION.md](INSPECTION.md).
 
 **Retreat is a row on the Active card and is the one confirmation-gated action.** It sits under the
 attacks, beside the retreat cost it charges. Two things earn it the gate where attacking does not:

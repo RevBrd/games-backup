@@ -40,7 +40,9 @@ the doc tree, which is under active revision. What moved is the account of work 
 | The coin toss: moving it into the ticker | Proposed, rejected — occlusion beat connotation |
 | Every scripted game ran at 12 Prizes | Why no absolute figure from before 11 Aug 2026 is usable |
 | How the documentation tree got its shape | The two splits reached by the wrong criterion first, the directory that was refused, the count-to-boundary change, and why the playbook's unit is the pattern rather than the card |
+| A fresh Arcanine used to prefer Take Down | The only assertion here overturned by a later one, and what to do when a test fails because a decision changed |
 | Ideas raised and shelved | Opponent collections, Mirror Move reading the log, reviving chat-era, deleting `greedy` |
+| The job plan for Jobs 10.5 to 12c | Five plan entries as they read while the work was open, moved out of `CLAUDE.md` when they were collapsed |
 
 ## Shiny was a sheen twice before it was a palette shift
 
@@ -274,7 +276,7 @@ person stops earning its lines once that person has written the thing it describ
   optional. And the optional **challenge conditions on re-battles** deliver the identical loop — vary
   the difficulty, vary the reward — *on* the ladder, where it cannot undermine anything. So the idea
   was not rejected for being bad; it was rejected for already existing somewhere safer. See
-  [OPPONENTS.md](OPPONENTS.md).
+  [CHALLENGES.md](CHALLENGES.md).
 - **Gating the main ladder line on dex completion %** — proposed and dropped 15 Aug 2026. A
   requirement satisfied by *owning* is pack luck with no decision in it, and grind belongs in opt-in
   content. It survives as a good unlock for the **optional challenge tier**, where going back to an
@@ -287,3 +289,38 @@ person stops earning its lines once that person has written the thing it describ
   and the real AI would be slower and noisier for no gain. Recorded 15 Aug 2026 because it was
   otherwise written down nowhere and the same reasonable proposal will arrive again. It has since
   acquired a second reason to exist: the ladder wants more than two difficulty settings eventually,
+
+## The job plan for Jobs 10.5 to 12c, as it stood while they were open
+
+*Moved out of `CLAUDE.md` on 26 Aug 2026 by #27, verbatim, when those five entries were collapsed to
+two lines. Every one of them was written in the present tense by a session in the middle of the work,
+which is exactly what makes them worth keeping and exactly what made them wrong to leave in an
+orientation file — three said "what is left is X" about things that had since shipped.*
+
+- **Job 10.5** - Scheduled post-new set maintenance. **The docs pass and the Base Set wiring are
+  done** — Trevor's eight decks went live as the whole base1 bracket, the first built to
+  [OPPONENTS.md](OPPONENTS.md). **What is left is the layout-related grab bag items.**
+- **Job 11** - Major grab bag pass, AI and UI focused, add Trevor's new Jungle decks. **The Jungle
+  and Fossil decks are in and live** — eleven hand-built decks across two brackets, body, gate and
+  boss each, with the GBC placeholders pushed on to Team Rocket. Measured; neither new roster orders
+  by tier and the report is in [ROSTERS.md](ROSTERS.md). **The AI half is well under way**: ten faults
+  closed across three sessions, every one of them found by Trevor describing how a card is meant to be
+  played rather than by any instrument — see [PLAYBOOK.md](PLAYBOOK.md), which is the method that
+  produced them. **The UI half is untouched.** **The GBC placeholders left on Team Rocket are now gone
+  too** — 25 Aug 2026, Job 12c/#26: Trevor's eight Team Rocket decks plus the two authentic Team Rocket
+  theme decks replaced them, and this is the first roster measured where the tiers actually order
+  cleanly. See [ROSTERS.md](ROSTERS.md#team-rocket--trevors-eight-decks-25-aug-2026).
+- **Job 11.5** - Continued maintenance passes. We need to make the structure more load-bearing before we continue. *Job Closed*
+- **Job 12a** - Continuing the AI pattern overhaul and testing behaviors. **It did need its own
+  infrastructure and that half is built** — `tools/wants.js` reads Trevor's workbook, `tools/lib/board.js`
+  makes a position out of card names, and `tools/claims/` holds the notes as rows. Proved by a control
+  that goes red against the pre-fix commit. **The remaining work is claims**, and the backlog is a
+  command rather than a number here: `node tools/wants.js --coverage`. Base Set first, and **Jungle and
+  Fossil are on hold** — their notes are one-liners awaiting the same overhaul base1 and base5 got.
+- **Job 12b** - Layout pass and then UI updates from GRABBAG.md. 
+- **Job 12c** - Pack and rarity drop overhaul. **The pack shape and the bonus rare-tier jump mechanic
+  landed 25 Aug 2026** — pack shrank from 11 cards to 8, and a lesser slot can now jump to a better
+  tier at a small independent chance. **Rebalancing the four per-slot cosmetic axes (Reverse Holo,
+  Shiny, Shadowless, Misprint) to restore the pre-shrink pacing is deliberately deferred**, tracked as
+  its own open item in [PACKS.md](PACKS.md).
+

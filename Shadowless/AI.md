@@ -14,9 +14,12 @@ The one-line summary: **the AI is an expected-value scorer over enumerated coin-
 its one structural weakness is that a verb it cannot score costs nothing at runtime and is misplayed
 forever.**
 
-**This file is the model. The twenty-three shipped invariants are in
-[AI-INVARIANTS.md](AI-INVARIANTS.md)** — one entry per change, each stating what must stay true. The
-index to them is below, so you can find the one you need without opening it.
+**This file is the model. Every shipped invariant is in [AI-INVARIANTS.md](AI-INVARIANTS.md)** and
+its [archive](AI-INVARIANTS-ARCHIVE-1.md) — one entry per change, each stating what must stay true.
+The index to them is below, so you can find the one you need without opening either.
+**Deliberately not counted**: this sentence said *twenty-three* for four days after it stopped being
+true, in two files at once, while the index table below silently kept telling the truth. The table
+is the count.
 
 **Where the fuller account of each fault lives is a table in that file's header, not a sentence, and
 the reason is worth thirty seconds.** The sentence version has been written three times and gone
@@ -140,8 +143,10 @@ the mean, or you will conclude there was never a problem.**
 
 ## The cliff: a quantity about proximity, written as an equality check
 
-**Eight instances, and it is the most productive sniff test this project has.** A term that should
-fall away with distance from an edge, written flat with a cliff at the end:
+**The most productive sniff test this project has**, and the table is the count — the prose said
+*eight* above nine rows, and `CLAUDE.md` said six, which is the sniff test's own lesson arriving in
+its own section. A term that should fall away with distance from an edge, written flat with a cliff
+at the end:
 
 | Where | Was | Is |
 |---|---|---|
@@ -172,31 +177,34 @@ above is not confined to `ai.js`: one of them is in a test suite.
 
 ## What has shipped, and the invariant each one left
 
-**Twenty-three changes, each with a rule that must stay true, and they are in
+**Every change, each with a rule that must stay true, and they are in
 [AI-INVARIANTS.md](AI-INVARIANTS.md).** They moved there on 22 Aug 2026 because the section had
 become a register — append-only, one entry per shipped change, growing by three or four every AI
 pass — sitting inside a file that is supposed to be the model and had reached 549 lines because of
-it.
+it. **Everything before Job 11 is one door further along**, in
+[AI-INVARIANTS-ARCHIVE-1.md](AI-INVARIANTS-ARCHIVE-1.md), split off 25 Aug 2026 at 471 lines. An
+archived invariant binds exactly as hard as a recent one; the rows below say which file each lives in.
 
-**Read the entry before you touch the term.** Every row below is a rule somebody paid for with a
+**† marks an entry in [AI-INVARIANTS-ARCHIVE-1.md](AI-INVARIANTS-ARCHIVE-1.md); the rest are in the
+live file.** **Read the entry before you touch the term.** Every row below is a rule somebody paid for with a
 wrong version first, and several of them look like arbitrary constants until you know what they are
 holding up. **The `Term` column is the index**: grep it in `ai.js`, then read its entry.
 
 | When | The invariant | Term |
 |---|---|---|
-| 13 Aug | The retreat re-tune is a **curve, not a number** — do not replace the squared divisor with a scalar | `retreatPrize` |
-| 13 Aug | **Stickiness is derived, not tagged**, terminal Basics only, matched by effect verb — and it suppresses the rescue, never the Prize | `STALL_VERBS` |
-| 13 Aug | Weakness and Resistance reach the retreat comparison; the AI can never predict a number the engine would not produce | `bestAffordableDamage` |
-| 14 Aug | Recoil is priced on **what it leaves you**, squared, meeting the old cliff exactly; overkill is not paid for, and `expUseful` is a second field rather than a cap in place | `expUseful` |
-| 16 Aug | An attachment that could never make anything bigger is refused — and the carve-out for retreat is one slot wide | `potential` |
-| 16 Aug | **Progress is worth a share of what it is progress toward**, amortised, and only toward an attack the Pokémon can actually afford | `attachBuild`, `goal` |
-| 16 Aug | Promote, Whirlwind and Switch are **one formula**, priced with the retreat rule's own arithmetic | `promoteValue` |
-| 16 Aug | Attacking while Confused has a price, and **both directions are asserted**; prevented damage waives recoil proportionally | `f.pStopped` |
-| 16 Aug | **Losing is not a large Knock Out** — a self-KO that ends the match is its own term, because an average hides a terminal branch | `lastPrize` |
-| 16 Aug | Your own deck is a resource: a squared cost on what remains, a terminal one for emptying it, and Gambler priced on **net** | `deckBurn`, `deckRecycle` |
-| 18 Aug | Opening placement ranks **stranded last** and then sorts by HP — and it stays in `engine.js`, because the player's auto button calls it too | `setupAuto` |
-| 18 Aug | **Never re-derive what a slot provides; ask the engine.** Reading Energy off the printed card made the whole Charizard archetype invisible | `slotSymbols` |
-| 19 Aug | The bot takes a Prize at **random** unless they are face up — it may only act on what it could legitimately know | `prizeIndex` |
+| 13 Aug † | The retreat re-tune is a **curve, not a number** — do not replace the squared divisor with a scalar | `retreatPrize` |
+| 13 Aug † | **Stickiness is derived, not tagged**, terminal Basics only, matched by effect verb — and it suppresses the rescue, never the Prize | `STALL_VERBS` |
+| 13 Aug † | Weakness and Resistance reach the retreat comparison; the AI can never predict a number the engine would not produce | `bestAffordableDamage` |
+| 14 Aug † | Recoil is priced on **what it leaves you**, squared, meeting the old cliff exactly; overkill is not paid for, and `expUseful` is a second field rather than a cap in place | `expUseful` |
+| 16 Aug † | An attachment that could never make anything bigger is refused — and the carve-out for retreat is one slot wide | `potential` |
+| 16 Aug † | **Progress is worth a share of what it is progress toward**, amortised, and only toward an attack the Pokémon can actually afford | `attachBuild`, `goal` |
+| 16 Aug † | Promote, Whirlwind and Switch are **one formula**, priced with the retreat rule's own arithmetic | `promoteValue` |
+| 16 Aug † | Attacking while Confused has a price, and **both directions are asserted**; prevented damage waives recoil proportionally | `f.pStopped` |
+| 16 Aug † | **Losing is not a large Knock Out** — a self-KO that ends the match is its own term, because an average hides a terminal branch | `lastPrize` |
+| 16 Aug † | Your own deck is a resource: a squared cost on what remains, a terminal one for emptying it, and Gambler priced on **net** | `deckBurn`, `deckRecycle` |
+| 18 Aug † | Opening placement ranks **stranded last** and then sorts by HP — and it stays in `engine.js`, because the player's auto button calls it too | `setupAuto` |
+| 18 Aug † | **Never re-derive what a slot provides; ask the engine.** Reading Energy off the printed card made the whole Charizard archetype invisible | `slotSymbols` |
+| 19 Aug † | The bot takes a Prize at **random** unless they are face up — it may only act on what it could legitimately know | `prizeIndex` |
 | 21 Aug | A retreat is priced on the Pokémon **arriving**, not the one leaving; `incomingThreat` answers for the Active and only the Active | `threatAgainst` |
 | 21 Aug | A self-switch is worth **where it goes**, and the scorer fills in `a.opts` so the engine's random fallback is never reached | `selfSwitch` |
 | 21 Aug | **A trap:** `promoteValue` on the Active slot re-enters `scoreAttack`. Any new caller needs the re-entry guard | `bestSelfSwitch` |

@@ -1,18 +1,25 @@
-# Shadowless — the build pipeline and the tools
+# Shadowless — the build pipeline and the suites
 
 Depth behind the Tooling section of `CLAUDE.md`. Read that first; come here when you are about to
-regenerate cards, widen a set, look at the board, or wonder what a suite actually covers.
+regenerate cards, widen a set, or wonder what a suite actually covers.
 
-The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, six test suites, a
-screenshotter and an art fetcher; the command list is in `CLAUDE.md`. Two neighbours own the parts that are not build
-steps — **what the inputs are** is in [DATA.md](DATA.md), and **the three instruments that measure
-whether a change worked** are in [MEASUREMENT.md](MEASUREMENT.md). The suites here are pass/fail;
-those three are not, and neither kind substitutes for the other. In particular **no suite in this
-file can tell you that a rules change did anything at all** — that is `abtest.js`, and the reason it
-exists is that `selftest.js` reported byte-identical win rates for a ruling reversal that altered a
-quarter of ladder games.
+The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, six test suites and
+an art fetcher; the command list is in `CLAUDE.md`. **Three neighbours own the parts that are not
+build steps**, and the split between them is what the tool *returns*:
 
-Both generators accept `--check`: regenerate to memory, diff against what's committed, exit non-zero
+| | Owns | Returns |
+|---|---|---|
+| this file | the generators and the six suites | **pass / fail** |
+| [MEASUREMENT.md](MEASUREMENT.md) | whether the change made it *better* | a rate, with an interval |
+| [INSPECTION.md](INSPECTION.md) | `shot.js`, `probe.js`, the DEV tab — what it *looks* like | a picture, or a row that moved |
+| [DATA.md](DATA.md) | what the inputs are | — |
+
+Neither kind substitutes for the other, and mixing them is how a measurement gets quoted as a
+verdict. In particular **no suite in this file can tell you that a rules change did anything at
+all** — that is `abtest.js`, and the reason it exists is that `selftest.js` reported byte-identical
+win rates for a ruling reversal that altered a quarter of ladder games.
+
+Both generators accept `--check`: regenerate to memory, diff against what is committed, exit non-zero
 if they differ. Cheap to run and the fastest way to catch someone having hand-edited a generated file.
 
 ## shapecount.js — ask this before choosing a SHAPE
@@ -20,10 +27,10 @@ if they differ. Cheap to run and the fastest way to catch someone having hand-ed
 `node tools/shapecount.js "<regex>"`, with `--attacks` / `--trainers` to search elsewhere than
 ability text and `--texts` to dump the distinct wordings.
 
-**It is not `setsurvey` with a different flag, and the two get confused because both print counts.**
-`setsurvey` looks *down* at one set and asks how much of it is already built. This looks *across* all
-fourteen and asks how often a shape recurs — which is the question that decides whether the thing in
-front of you gets machinery or a special case.
+**It is not `setsurvey` with a different flag**, and the two get confused because both print
+counts. This one looks *across* all fourteen sets and asks how often a shape recurs — the question
+that decides whether the thing in front of you gets machinery or a special case.
+*[The three-way table, `selftest` included →](ENGINE.md)*
 
 **Read the DISTINCT-TEXT count, not the printing count.** Written during Job 10c, where it decided the
 whole design in two minutes: 20 printings and fifteen distinct texts for "when you play this from your
@@ -50,10 +57,9 @@ every card in them is implemented — if they do not, the reuse detection is bro
 prints for an unbuilt set is too high. Run one of them alongside whatever you are surveying.
 
 It also flags **same name, different mechanics** inside a set, which is either a real printing
-variation or a corpus error and needs a human either way. It found one on its first run: Team
-Rocket's two Dark Vileplume differ in **Weakness** — `base5-13` Fire, `base5-30` Fighting — and
-`data/wotc_pokemon.csv`, the independent cross-check, agrees. So it is preserved, not aliased. Do not
-"tidy" those two together.
+variation or a corpus error and needs a human either way. It found the era's one genuine case on its
+first run — Team Rocket's two Dark Vileplume, which differ in Weakness and **must never be aliased
+together**. *[Both sources, the photograph that settled it, and the typo they shared →](DATA.md)*
 
 ## gen_cards.js
 
@@ -118,9 +124,8 @@ memoised pools, a set-scoped `packsToComplete`, and a `--check` that reads the c
 2. **Nothing, usually — `ENERGY_FLOOR` is base1's alone.** A new set needs no entry: if it prints
    basic Energy it draws its own, and if it prints none it borrows base1's into its Common pool
    under base1's ids. Either way `ENERGY_CAP` holds it to two. An entry is only for a set you want
-   to *guarantee* Energy from, which so far is Base Set and the early-game pacing it carries. This
-   step used to read "an `ENERGY_GRANT` entry, or deliberately none" and described a stipend
-   mechanism that no longer exists. See [PACKS.md](PACKS.md).
+   to *guarantee* Energy from, which so far is Base Set and the early-game pacing it carries. See
+   [PACKS.md](PACKS.md).
 3. **`REMAINING` in `selftest.js`**, while the set is being written. Forgetting it is safe:
    the live-set assertion fires immediately and names the set, because a set with gaps and
    no `REMAINING` entry is by definition a live set with a hole in it.
@@ -183,8 +188,13 @@ as a figure to quote. Run the suite for the real number.
   See [PROGRESSION.md](PROGRESSION.md).
 - **`packtest.js`** opens 200,000 packs against a fixed seed and checks every row of the
   odds table in [PACKS.md](PACKS.md). Deterministic, so it cannot flake; the tolerances are sized to
-  catch a wrong denominator, not to absorb noise. **It takes a count** — `node tools/packtest.js
-  20000` is a fast pass while iterating. **It sweeps every live set and the fresh-RNG-per-pack path
+  catch a wrong denominator, not to absorb noise. **It takes a count, and a small one goes RED for
+  reasons that are not a fault** — the whole run takes about four seconds, so **just run it whole.**
+  Measured 26 Aug 2026 on an unmodified tree: `20000` fails six assertions, `50000` fails one,
+  `100000` and up are clean. Misprint at 1-in-1375 has fifteen sightings in 20,000 packs, which is
+  not a sample; the tolerance is honest and the count was not. **A documented command that goes red
+  on a clean tree teaches whoever runs it to stop reading the output**, which is exactly what
+  `pullcheck.js` sets its own threshold at p<0.01 to avoid, one section down. **It sweeps every live set and the fresh-RNG-per-pack path
   the game actually uses**, both added 24 Aug 2026 after 200,000 packs turned out to cover one set
   and one RNG stream — see [MISREADINGS.md](MISREADINGS.md). It also prints, without asserting, how many packs it takes
   to finish a set. That number is the one the economy turns on and nothing else computes it.
@@ -283,120 +293,17 @@ is a filtered sample — the noticing came first. So it is good at saying "that 
 at saying "something is broken", and if a row does look extreme the next step is `packtest.js`, which
 samples fresh, rather than a change to `PACK_ODDS`.
 
-## Comparing two states: `tools/probe.js`
+## Looking at it lives next door — [INSPECTION.md](INSPECTION.md)
 
-**Reach for this one first whenever the complaint is that something MOVES.** It is the only
-instrument in the project that measures the same board twice.
+**`shot.js`, `probe.js`, the DEV tab, and the four classes of bug the smoke stub cannot see moved
+there on 25 Aug 2026.** Same seam that created [MEASUREMENT.md](MEASUREMENT.md): the callers. Every
+UI file in this tree was reaching in here for that one section and wanting none of the rest of it.
 
-```bash
-node tools/probe.js --size 1191x684          # every state, at Trevor's real viewport
-node tools/probe.js --only ko,prompt-long    # just these
-node tools/probe.js --setup                  # the opening-setup screen instead of a board
-node tools/probe.js --pack                   # the booster reveal (--pack-set base1)
-node tools/probe.js --state "mine:UI.sel={idx:0}"          # an ad hoc one
-node tools/probe.js --setup --eval "<expression>"          # re-derive a MEASURED number
-```
-
-It boots the built file in headless Chrome exactly the way `shot.js` does, then walks a list of
-named UI states — a Knock Out banner, a targeting prompt, a coin in the air, a card selected, four
-more cards in hand — applying each, measuring the geometry, and reverting. It prints only the
-columns that ever moved, so the one that changed is not buried under eleven that did not.
-
-**Three screens, three state tables.** The board is the default; `--setup` boots the opening-setup
-sheet and places Basics into it; `--pack` grants a booster, opens it through the real `openNextPack`
-and turns cards over one, five, ten and eleven at a time. A hand-built `UI.pack` would have been
-easier and would have measured nothing — the `NEW`/`×N` ribbons come off `isNew` and the variant
-flags, and the ribbons were the whole fault. **Boot the screen the way the game boots it.**
-
-**Three things about it are worth knowing before you read a table.**
-
-- **`idle` is measured again at the end, as `idle-again`, and it is the control.** Every state is
-  applied to one board in one page load, so an incomplete revert would accumulate down the table and
-  every row after it would be measuring drift. If the two `idle` rows disagree the tool says so and
-  tells you to fix the revert rather than the game. Run it, read it, do not skip it —
-  [MISREADINGS.md](MISREADINGS.md) is a file full of what happens otherwise.
-- **A null result here is meaningful in a way most of this project's null results are not.** There is
-  no sample and no interval: the geometry either changed or it did not. But it is only null *for the
-  viewport you ran it at* — the centre-line fault moved the board at 1191x684, 1280x600 and 1366x768
-  and did **nothing at all** at 1600x900 and above. **Run the cramped sizes.** The roomy ones are
-  where a layout bug hides.
-- **`--eval` is for re-deriving the measured numbers**, of which `style.css` has several — the
-  Active's 249px, the hand card's 118px, the setup Active's 99px. It runs one expression after the
-  control and prints what it returns, so sweeping the whole card pool through a slot is a command
-  rather than a throwaway script. It runs *after* the control on purpose: an expression that
-  mutates the DOM would otherwise corrupt the one row certifying the table.
-
-The Chrome plumbing both this and `shot.js` need lives in `tools/lib/chrome.js` — finding the
-browser, calibrating the viewport, staging the page beside the real one, launching it.
-
-## Looking at it: `tools/shot.js`
-
-You do not have to guess and you do not have to ask for a screenshot.
-
-```bash
-node tools/shot.js out.png --size 1366x768 --board --seed 4242 --turns 4
-node tools/shot.js out.png --size 1915x863 --board --js "UI.devTab='dev'; render()"
-```
-
-It drives the locally installed Chrome headless against the built file. `--board` skips the title
-screen and deals a real game; `--turns N` lets the AI play N plies synchronously so the shot is of
-a board with something on it; `--js` runs anything you like in the page first. Chrome cannot be
-handed a script on the command line, so the tool copies the built HTML **beside itself** — the card
-scans load from a relative path, and a copy in the system temp folder would show a board with every
-face missing and look like a regression.
-
-Two things about it that will bite otherwise:
-
-- **`--window-size` is not the viewport.** Headless Chrome reserves a virtual frame and a scrollbar
-  gutter, so asking for `1366x768` lays the page out at **1348x672** — 96px short, which is more
-  than the whole action bar. The tool measures the offset every run (via a `--dump-dom` probe) and
-  corrects the window so `--size` really is the viewport. Do not replace that with a constant.
-- **The PNG is stretched.** The image comes out at the *window* size while the page was laid out at
-  the *viewport* size, and the frame is 96px tall against an 18px gutter, so the bitmap is stretched
-  about 1.13x vertically and 1.01x horizontally. Fine for "is the text clipped", wrong for "is that
-  gap too big". The tool prints the skew. **Judge proportion from the DEV tab, not off the PNG.**
-
-## Reading it: the DEV tab
-
-The DEV tab's Viewport panel prints the page size, the device pixels, the display scaling, and then
-what the fitter actually did with all of it — the applied zoom, which layout was chosen, the board
-column's size, the mat cloth's width and whether it got the height it wanted, and the desk showing
-between the mat and the hand.
-
-Those bottom lines are filled by `writeViewportDump()`, which `render()` calls **after**
-`chooseLayout()` and `layoutHand()`. It has to: `renderDev()` runs while the rail is still being
-built, so the board column it wants to measure is not in the document yet and every size reads 0.
-That is not a hypothetical — it shipped that way for one build and reported a confident row of
-zeroes.
-
-The "spare desk" figure measures `handpanel.offsetTop` against the mat's bottom rather than
-subtracting heights, because the gap is made by the hand panel's `margin-top:auto` and therefore
-lives *inside* `scrollHeight` where a height subtraction cannot see it.
-
-What both of these are *for* — the rules they exist to check — is [LAYOUT.md](LAYOUT.md).
-
-## What the smoke stub cannot see
-
-A green `smoke.js` run proves nothing visual, and the gap is not theoretical — two bugs got through
-68 passing tests in one session, both found by `tools/shot.js` in a single screenshot each:
-
-- **`node.children` is an HTMLCollection in Chrome and a plain Array in the stub.** `.filter`,
-  `.some` and `.map` on it pass every test and throw in the browser. Walk children with an index
-  loop. This one silently deleted the pull-detail overlay while the screen behind it rendered fine.
-- **`line-height` inherits.** `.vfx` had `line-height:0` — correct for an inline-block wrapping a
-  bare image, catastrophic once the same host also wrapped a card full of text. Every line
-  collapsed, the type chip became a 2px dash, and the card lost 90px of height.
-- **`position:absolute` with no positioned ancestor escapes to the page.** The variant markings were
-  wired into the in-play card faces with **204 tests passing**, and the first screenshot showed a
-  SHADOWLESS watermark painted across the middle of the board and a stray 1st Edition stamp beside
-  the End Turn button. Two causes, both invisible to a stub: `.sigil` had `overflow:hidden` but not
-  `position:relative`, and `sigilOf` searched direct children only, so on the Active card it found
-  nothing and the caller appended the mark to the card root. **A stubbed DOM has no cascade and no
-  containing blocks, so it cannot see where an absolutely-positioned child actually lands.**
-
-When a screenshot looks subtly wrong, **measure it rather than squinting** — inject a snippet that
-writes `offsetHeight`/`getComputedStyle` into the page and screenshot *that*. It turns "something
-looks off" into `lineHeight=0px` immediately.
+**The half of it that belongs to this file is the warning: a green `smoke.js` run proves nothing
+visual.** It has no layout engine and no cascade, so it cannot see where an absolutely-positioned
+child lands, that a `line-height` inherited, or that 864px of content is in a 768px viewport. Two
+bugs got through 68 passing tests in one session and four were live under 136. **A screenshot is not
+optional polish on a UI change** — it is the only test that exists for a whole class of defect.
 
 ## The two things the builder refuses
 

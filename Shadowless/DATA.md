@@ -84,8 +84,9 @@ alias, not a job.
 Read against Jungle + Fossil at 96: Team Rocket was about two-thirds of Job 6 and came in at that;
 the two Gym sets
 together are **two and a half times** it and are Trainer-heavy, which is where new verbs come from;
-and Neo is larger than everything else combined. **Base Set 2 and Legendary Collection are
-deprioritised because they are cheap rather than despite it** — see `CLAUDE.md`'s job plan.
+and Neo is larger than everything else combined. **Base Set 2 and Legendary Collection are cancelled
+except for cards that exist nowhere else, because they are cheap rather than despite it** — see
+`CLAUDE.md`'s job plan.
 
 **Two traps, and the first one moved two numbers by a factor of two.**
 
@@ -178,7 +179,7 @@ field that was not there), `coverCard`, and `pressure`.
 about, resolved to an id at generation and used for the challenger's tile — `heroOfList()` is the
 fallback and it disagrees more often than it looks like it would, since the biggest Pokemon in a deck
 is frequently not its point. The pressure tags are derived from the workbook's Index tab by copy count
-and are documentation until [OPPONENTS.md](OPPONENTS.md)'s no-repeat rule is built.
+and are documentation until [CHALLENGES.md](CHALLENGES.md)'s no-repeat rule is built.
 
 **The workbook's Index tab is the interesting part of this file's source and nothing reads it.** It
 carries a per-card **Feature Tier**, **Opener Archetype**, **Trainer Function**, **Pressure**, and a
@@ -239,7 +240,7 @@ Decks.xlsx` is the source of `decks.json` (above) and `Jungle Decks.xlsx` is the
 `base1_decks.json`, `base2_decks.json`, `base3_decks.json` and `base5_decks.json` respectively, **all
 four live upstream**, and the JSON is the thing to read. `Challenge 1 Opponent Decks v1.xlsx` is the
 fifth and is still genuinely reference-only — nothing reads it, since the Challenge bracket concept in
-[OPPONENTS.md](OPPONENTS.md) is unbuilt.
+[CHALLENGES.md](CHALLENGES.md) is unbuilt.
 
 **As of 23 Aug 2026 `data/v1 Opp Decks/` is not reference-only at all, and the `Wants` column is the
 part that matters.** `tools/lib/xlsx.js` reads an `.xlsx` with no dependencies and `tools/wants.js`
@@ -257,16 +258,21 @@ its second half runs on Team Rocket cards in named, personality-forward decks.
 
 **`data/OPPONENT_DECK_POOL.md` is the tracker, and it is the file to open**, not this one, when you
 are picking opponents for a set going live. It carries a status per deck, a legend, and the record of
-what has been adopted. The five JSON files below are its output, all in the same `[qty, id, name]` /
+what has been adopted. The JSON files below are its output, all in the same `[qty, id, name]` /
 `subs` shape as `gbc_decks.json` so that adopting one is a wiring change and not a conversion:
 
 | File | Contents |
 |---|---|
 | `fossil_decks.json` | BodyGuard, LockDown — both pass the real `validateDeck`, since Fossil is live |
 | `base4_decks.json` | Grass Chopper, Hot Water, Lightning Bug, Psych Out |
-| `team_rocket_decks.json` | Devastation, Trouble |
 | `gym_decks.json` | all 8 Gym Leader decks |
 | `gbc2_flavor_decks.json` | the 8 GB2-Island flavour decks. Only `allison_psychic_battle` is clean; the other 7 carry `subs` entries needing a real substitution decision |
+
+**`team_rocket_decks.json` came out of this pool and is no longer in it** — it went live on 25 Aug
+2026 and is listed with the other four files the generator reads, above. **That is what adoption
+looks like from here**, and it is worth one line because for a day this file listed it in both
+places: quarantined material that ships has to leave the quarantine table, or the section promising
+that everything below it is read by nothing stops being true.
 
 **One lesson from that research is worth more than the decks and is recorded here so it is not
 re-learned.** A fetch through a page summariser gave counts that did not match the itemised lists

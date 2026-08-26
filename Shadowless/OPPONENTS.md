@@ -1,38 +1,39 @@
 # Shadowless — what an opponent is made of
 
-The **content** of the ladder: what separates a tutorial opponent from a champion, what a deck has to
-specify before somebody can build one, and what the player must bring to be allowed at the table.
-[PROGRESSION.md](PROGRESSION.md) is the **machinery** — brackets, unlocks, `winReward`. If you are
-wiring the ladder you want that file; if you are deciding what goes *in* a rung, you want this one.
+The **content** of the ladder: what separates a tutorial opponent from a champion, and what a deck
+has to specify before somebody can build one. [PROGRESSION.md](PROGRESSION.md) is the **machinery** —
+brackets, unlocks, `winReward`. If you are wiring the ladder you want that file; if you are deciding
+what goes *in* a rung, you want this one.
 
 Read it when adding a set's roster, hand-building an opponent deck, or working the auto-builder
-(Job 13), which is the consumer this was written for.
+(Job 15), which is the consumer this was written for.
 
-**Status: design, and ALL FOUR live brackets are now built to it** — Base Set's eleven rungs on
-19 Aug 2026, Jungle's seven and Fossil's on 21 Aug, and Team Rocket's ten on 25 Aug, all from decks
-Trevor hand-made or authentic theme decks against this spec. Job 8, 15 Aug 2026, worked out with him.
-Everything about *naming, entry conditions, pressure assignment and the rival* is still unbuilt. It is
-the target the set jobs build against, and it is deliberately about *parameters* rather than card
-lists — the lists come per-set, when we can see what the set actually offers. **When a section here
-ships, rewrite it in the past tense and say where it lives.** A planning document that outlives its
-plan is the nastiest thing in this tree: specific, confident, and wrong. See [MAINTENANCE.md](MAINTENANCE.md).
+**All four live brackets are built to this spec and it survived.** Base Set's eleven rungs went in on
+19 Aug 2026, Jungle's seven and Fossil's ten on 21 Aug, Team Rocket's ten on 25 Aug — every one of
+them from decks Trevor hand-made or authentic WotC theme decks. Job 8 wrote the spec on 15 Aug 2026;
+this file has been past tense since the fourth roster landed. **Build the next one against the four
+that exist**, not against the tables below, and expect the tables to move as more brackets do.
+
+**The unbuilt half moved out on 25 Aug 2026 — [CHALLENGES.md](CHALLENGES.md)**: entry conditions,
+the pressure vocabulary and its no-repeat rule, the Challenge brackets that replaced the rival, and
+the open questions those three carry. Not one of them is built, and keeping them beside four shipped
+rosters was making a reader walk through a hundred lines of speculation to reach the part that works.
+**Names, dialogue, gimmick rules and story are an explicit non-goal here** and are deferred to a
+detailing pass; the reasoning is over there.
 
 **Which set has hand-authored decks is the thing to check, and it is not a fact about this file.**
 Trevor, 22 Aug 2026: the GBC decks are **placeholders, and any of them can fill any gap** — they are
 not a tier, a bracket or a roster, and where a particular one currently sits is not worth tracking or
 writing down. A bracket uses them only until that set's own decks are authored. **As of 25 Aug 2026
-every live set has its own**, so the eight GBC decks that had been standing in for Team Rocket retired
-rather than moving on — `data/gbc_decks.json` keeps all sixteen on file regardless, four Grand Masters
-and four Ronalds still assigned elsewhere. `data/` is the answer; two paragraphs in this tree disagreed
-about it before the question was retired.
+every live set has its own**, so the eight GBC club masters that had been standing in for Team Rocket
+retired rather than moving on; `data/gbc_decks.json` keeps all sixteen on file regardless, and the
+four Grand Masters still hold Fossil's T1 intro because Fossil's own theme decks are not in `data/`.
+**`data/ladder.json` is the answer**, and two paragraphs in this tree disagreed about it before the
+question was retired. *[The live roster, and the one-line command that prints it →](PROGRESSION.md)*
 
-**And when you rewrite a section, move its rejections to [HISTORY.md](HISTORY.md) first.** This file
-carries several ideas that were proposed and dropped *with the reason each one lost*, which is the
-only thing stopping them coming back. They would otherwise die with the paragraph around them.
-
-**Explicit non-goal: names, dialogue, gimmick rules and story.** Trevor's call — those come in a
-detailing pass after every set is in, so that nothing here has to be unpicked when the fiction
-arrives. Excluded on purpose, not forgotten.
+**If you rewrite a section here, move its rejections to [HISTORY.md](HISTORY.md) first.** Several
+claims below record an idea that was proposed and dropped *with the reason it lost*, which is the
+only thing stopping it coming back.
 
 ## The four tiers
 
@@ -89,8 +90,8 @@ question is not *does the centrepiece need an engine* but *can this deck reliabl
 
 ### What the rosters measured, and where they disagree
 
-Three rosters have been built to this spec and two have been played against each other by
-`tools/decksim.js`, from both seats. **The standings, the assembly rates and every number behind the
+Four rosters have been built to this spec and every one has been played by `tools/decksim.js` from
+both seats; two of them have also been played against each other in a merged field. **The standings, the assembly rates and every number behind the
 claims below are in [ROSTERS.md](ROSTERS.md), one section per roster** — that file is the evidence and
 this one is the spec, and the numbers deliberately live in exactly one of them.
 
@@ -101,16 +102,23 @@ What the spec learned:
   supported by something other than construction, and it is what to aim at when building the next one.
 - **The recipe is a recipe and not evidence.** Trevor was tracking all five axes while building, so
   they agree by construction. `decksim.js` is the only instrument that can disagree with them.
-- **The T2/T3 boundary is real in Base Set and did not reproduce in Jungle.** That is the first time
-  this spec has been contradicted by the same instrument that confirmed it, and the likely cause is one
-  row of the recipe — draw-and-search — inverting between the two tiers.
-- **The T4 boundary is not real in either.** Both bosses finish inside their own T2 band. **Do not
-  "fix" this by weakening the T3 decks**; they are the part that works.
-- **A pressure that arrives on time can still fail to convert.** Jungle's T4 has the best assembly rate
-  in the whole field and finishes ninth of thirteen. **Nobody has measured whether Status Lock is worth
-  less than it looks or whether the bot cannot press it** — a better question than rebalancing the deck.
-- **And every standing above was measured with a bot we now know plays the field badly**, which is why
-  none of it has been acted on. Trevor's call, 21 Aug 2026.
+- **The T2/T3 boundary is real in Base Set, did not reproduce in Jungle, and reproduced cleanly in
+  Team Rocket.** Jungle is the first time this spec was contradicted by the same instrument that
+  confirmed it, and the likely cause is one row of the recipe — draw-and-search — inverting between
+  the two tiers.
+- **The T4 boundary held for the first time on the fourth roster.** Base Set's boss finished eighth of
+  eight and Jungle's ninth of thirteen, both inside their own T2 band; Team Rocket's finished **first**
+  in its own field, with T2's ceiling sitting just under T3's floor. **Do not "fix" the two that did
+  not order by weakening their T3 decks**; those are the part that works.
+- **One clean run is not the spec vindicated**, and the file holding the numbers says so first: it
+  was measured with the same bot that was last shown playing the whole field badly, so it is one data
+  point pointing the right way rather than a result that survives the AI improving.
+- **A pressure that arrives on time can still fail to convert.** Jungle's T4 has the best assembly
+  rate in the whole field and finishes ninth of thirteen. **Nobody has measured whether Status Lock is
+  worth less than it looks or whether the bot cannot press it** — a better question than rebalancing
+  the deck. The pressure vocabulary itself is in [CHALLENGES.md](CHALLENGES.md).
+- **Every standing above was measured with a bot we know plays the field badly**, which is why none
+  of it has been acted on. Trevor's call, 21 Aug 2026, and it still stands.
 
 **featureWeight is not comparable across rosters.** Each workbook scales its own decks relative to each
 other — Jungle had more weight to distribute, because Base Set opened evolution lines that Jungle
@@ -165,15 +173,15 @@ to expect is a set with an unreasonable number of them**, which gets trimmed rat
 twelve-rung intro. Exceptions where exceptions need to happen.
 
 **None of the above is settled and Trevor says so explicitly: the four-tier shape is the current
-DRAFT.** What makes it usable now is that there is a worked model rather than a specification — three
+DRAFT.** What makes it usable now is that there is a worked model rather than a specification — four
 live brackets, built from decks he hand-made for the purpose. **Build the next one against those, not
 against this table**, and expect the table to move as more brackets exist.
 
-**The auto-builder is the release valve.** If Job 13 gets deck generation good enough, a bracket
+**The auto-builder is the release valve.** If Job 15 gets deck generation good enough, a bracket
 short of authored decks can be padded with generated opponents rather than left thin — which is what
 makes a flexible tier size affordable at fourteen sets. See [PROGRESSION.md](PROGRESSION.md) for how
-a generated challenger already works today, and Open item 2 below for the sets that want no bracket
-at all.
+a generated challenger already works today, and [CHALLENGES.md](CHALLENGES.md) for the sets that want
+no bracket at all.
 
 **Length is a stated goal, not a side effect.** The GBC game was too short and turned into re-battle
 grinding once the champions fell; that is the failure mode being designed against. A long ladder is
@@ -184,173 +192,15 @@ progressions this way, so the blueprint is in front of us and the open work is p
 known shape rather than proving the shape. That is also the reason to be suspicious of any future
 proposal to restructure it: the burden is on the new idea.
 
-## Entry conditions — one mechanism, three uses
-
-Three separate ideas turned out to be the same object, and unifying them is the main structural call
-in this document. **A rung carries zero or more constraints on the deck you bring**, checked against
-the deck list before the match, with no engine involvement:
-
-| Kind | Example | Used for |
-|---|---|---|
-| Minimum from a set | "at least 12 cards from Fossil" | The T3 gate and the T4 boss, scaling up between them |
-| Minimum of a type | "at least 10 Grass cards" | Late rungs and optional challenges |
-| A construction ban | "no Stage 2 Pokémon", "max 20 Energy" | Optional challenge re-battles |
-
-One concept for the deck validator, one input for the auto-builder, one thing for the player to
-learn. **Add a fourth kind rather than a fourth mechanism.**
-
-**The set-minimum sits on T3 *and* T4, not only at the bracket boundary, because owning is not
-playing.** The first version gated only the boss, on the reasoning that a player reaching T3 has
-banked enough packs to satisfy any sane requirement incidentally — true, and beside the point.
-Owning thirty Fossil cards does not put one of them in the Charizard deck you have been carrying
-since Base, and a working deck gives its owner every reason to leave it alone. **The gate is on deck
-composition, so it fires regardless of collection size**, twice per bracket. Trevor's read, with a
-source rather than an instinct behind it: it is what TCG Pocket does, and a shipped game doing it is
-what settles an argument that was genuinely plausible both ways.
-
-**The constraints are crude on purpose, and gaming them is fine.** A player can satisfy "12 Fossil
-cards" by stuffing in twelve bad Fossil commons. Twelve dead cards in sixty is a real cost, so they
-have traded deck quality for access, which is a genuine decision, and it self-corrects because they
-will want those twelve to be good. Policing "meaningfully uses" is unbuildable and would be worse.
-The **type** constraint is stronger still: if a late rung demands ten cards of a type that is *weak
-to* what you are about to face, then complying badly IS the handicap. It cannot be gamed, because
-satisfying it is the cost.
-
-**None of it can soft-lock**, which is what makes it safe: `winReward` pays `packsPerWin` on every
-win including repeats, so a player short of a requirement can farm any opponent they have already
-beaten. Verified in `progress.js`, not assumed.
-
-**Every number here is a tunable in `ladder.json`'s `defaults`, and none of them can be set today.**
-They have to be measured against real pull rates from real play — Trevor's own save is the
-instrument. Start conservative. A gate set too high does not lock anybody out; it turns the game into
-a grind, which is the same damage arriving slowly.
-
-## Pressure tags
-
-Tier says how *strong* a deck is. It does not say what the deck *does to you*, and that is the half
-that makes a player rebuild. Two T3 decks "built around a Stage 2 line with support" can play
-identically. What forces a new deck is meeting one that punishes something yours has no answer to.
-
-So an opponent deck **may** carry a **pressure tag**, independent of tier. **The vocabulary below is
-derived from the DSL rather than invented** — each one is a real family of verbs in `effects.js`, which
-is what makes `tools/pressure.js` able to count them:
-
-| Code | Pressure | What it does to you | Verb family |
-|---|---|---|---|
-| `ED` | Energy denial | strips the investment you already made | `DISCARD_DEF_ENERGY`, `T_DISCARD_OPP_ENERGY` |
-| `BD` | Bench damage | your safe cards are not safe | the `BENCH_SNIPE` / `BENCH_SPLASH` family |
-| `PC` | Position control | you fight with the wrong Pokemon | `WHIRLWIND`, `SWITCH_DEFENDER_*` |
-| `SL` | Status lock | it takes your turns away | `STATUS*`, `TOXIC`, `ATTACK_LOCK`, `JAM_DEFENDER` |
-| `HT` | Hand / Trainer denial | your outs stop arriving | `NO_TRAINERS_NEXT_TURN`, `T_LASS` |
-| `WP` | Wall / prevention | your damage stops landing | `PREVENT_*`, `DAMAGE_REDUCTION*`, `BARRIER`, `HARDEN` |
-| `AP` | Attrition / recovery | it refuses to run out | `ENERGY_FROM_DISCARD`, `HEAL_SELF_*` |
-| `HD` | High damage | it hits harder than you can absorb | — **deck-level, see below** |
-| `BG` | Bench growth | it builds reserves faster than you can race — **Trevor has widened this** to cover drawing cards and buying turns through quick evolution or extra attachments | — **deck-level, see below** |
-| — | Deck-out | it refuses to supply a clock | — **deck-level, see below** |
-
-**The two-letter codes are what the data actually holds** — `pressure` in `data/base2_decks.json` and
-`data/base3_decks.json` is a code, and until 23 Aug 2026 it was decodable nowhere in this repo. The
-key lives in the workbook's Index tab; this table is the copy the code can be read against. **Where a
-card lists more than one, the FIRST has priority** — Trevor's rule, and the copy-count derivation
-relies on it.
-
-**The last three have no verb family and that is the distinction to preserve.** The seven above them
-are derived from the DSL, so `pressure.js` counts them and the answer cannot drift from the cards.
-These three are properties of a **deck**: nothing in this era mills, no verb means "hits hard", and a
-bench that grows is a curve rather than an effect. **Tag them on the roster entry; never go looking
-for cards that produce them.** HD and BG are Trevor's, from his workbook key, and the vocabulary is
-not a closed list — it may grow with the era.
-
-The rule that makes it work:
-
-> **The gate and the boss must not share a pressure with each other or with anything in the body,
-> and no two body rungs in a row may share one.**
-
-That is what turns eight opponents into eight opponents rather than one opponent getting bigger, and
-it is a specifiable request for the auto-builder in a way "make it harder" is not: *build a T3 Water
-deck whose pressure is Energy denial.*
-
-**The first draft said simply "a bracket may not repeat a pressure tag", and it was unsatisfiable** —
-7–10 rungs against a vocabulary of seven fails arithmetic before it ever meets a card. The version
-above binds where it matters: the rungs a player remembers are the gate and the boss, and consecutive
-sameness is what makes a body feel like one opponent. **T1 intro decks carry no pressure tag at all**;
-they are theme decks, and having no identity is the identity.
-
-**Count a set's pressures before authoring its roster, and count them with `pressure.js` rather than
-by reading the cards.** The profiles are sharply different, so a roster that ignores one asks a set
-for something it cannot supply, and the length of a bracket is partly a fact about how many distinct
-pressures its set can field. **Do not quote a figure from memory**: an earlier version of this
-paragraph said Base Set supported "about three", which came from eyeballing the Trainer pool and
-missed that attacks create pressure too. *[The tool, each set's profile, and what it will not tell
-you →](MEASUREMENT.md)*
-
-**So this file owns the vocabulary and the no-repeat rule; each set job picks its own tags from what
-it actually has.** Trevor's correction and the right one — we use what the set gives us rather than
-forcing a schedule onto it.
-
-**"No pressure — straight beatdown" is a legitimate and common state**, and the rule constrains only
-the decks that carry a tag. In every built roster so far a minority of decks have a strong pressure
-identity and the rest are honest beatdown, which is the right outcome. The tags are also the natural
-seed for the detailing pass — an opponent whose deck strips your Energy writes their own personality —
-which is a bonus, not a reason.
 
 ## Open
 
 1. **The player-facing Prize selector is going away** on the ladder, keeping the tier dial from being
    opt-out. It survives in free play, which is a relic of the early build rather than a design.
-   Trevor's call, 15 Aug.
-2. **A set needs a flag saying whether it is ladder content, pack content, or both.**
-   `buildLadder()` currently derives exactly one bracket per live set, and Southern Islands and the
-   promos are to be *sprinkled into packs* rather than laddered — See [PACKS.md](PACKS.md) Cheap now,
-   irritating once eleven sets are in.
-3. **The rival problem is solved, and the answer is CHALLENGES 1–3.** Trevor's proposal, 21 Aug 2026,
-   arrived while he was building the Fossil decks. Three special brackets — **after Fossil, after Gym
-   Challenge, and after Neo** — each one **an opponent per Energy type, with the strongest of them as
-   its overall boss.** Names, personalities and any story are deferred to the detailing pass as usual.
-
-   **Take it.** It does four things at once and none of them is a compromise:
-
-   - **It makes the rival a ROUND rather than a person**, which is what the entry below had been
-     circling for two revisions without landing. A boss you beat is a wall; seven you must beat is a
-     campaign, and it is the natural home for the combined-pack reward.
-   - **It is the only mono-type situation on the whole ladder**, and in this era Weakness is ×2. So a
-     Challenge is the one place where "build a counter-type deck" is dramatically right — and the
-     player has to decide whether to build ONE deck that survives all seven or rebuild between them.
-     No other rung asks that, and it is a decision rather than a difficulty.
-   - **It scales itself.** Challenge 3 sits after Neo, which prints Darkness and Metal, so it is bigger
-     than Challenge 1 without anyone tuning a number. Same property that makes the brackets derived.
-   - **It is where entry conditions finally have a reason to exist.** The mechanism above is specified
-     and unbuilt because nothing needed it yet. "Beat the Fire challenger with no Water in your deck"
-     is exactly the optional-challenge shape, and it fits a Challenge better than it fits a T4.
-
-   **Two things to watch, neither fatal.**
-
-   **A Challenge bracket belongs to NO SET, and the ladder is set-indexed.** `buildLadder()` derives
-   exactly one bracket per live set and `winReward()` pays in the bracket's own set — so as the code
-   stands today a Challenge bracket cannot exist and could not pay if it did. That is the second and
-   harder case of open item 2 below. **The consequence is worth stating because it validates the
-   design**: combined packs are not flavour on top of the idea, they are *forced* by the structure —
-   there is no single set for a Challenge to pay in. See [PACKS.md](PACKS.md); a differently-composed
-   pack is a new pack **type**, not a tuning change.
-
-   **"One per type" may need to mean "one LED by each type."** A mono-Lightning deck before Neo is
-   thin, and a strict reading would produce one weak rung per Challenge for reasons that have nothing
-   to do with design. Trevor will feel this while building; the fix is to loosen the rule rather than
-   to force the deck.
-
-4. **What still has to be answered about a Challenge's leader**, carried over from the rival entry
-   this replaced: what makes them *tougher than a T4* without leaning on "mostly Colorless", which is a
-   deck constraint fighting a difficulty requirement. The exit recorded before fits the new shape better
-   than the old one — **a leader's pool is every set you have unlocked at once** while everyone else is
-   set-flavoured. Under Challenges that is nearly free, because a Challenge already sits outside the
-   set-per-bracket structure. Ronald is the placeholder until this exists.
-
-5. **The spec is playable across three brackets and nobody has walked any of them.** Base Set, Jungle
-   and Fossil all read intro → body → gate → boss. The cheapest remaining test of this whole document
-   is somebody playing them end to end and reporting where it does not survive contact.
-   **Entry conditions are still not built**, so no rung carries one.
-6. **Pressure tags exist as data and are read by nothing.** Trevor's workbooks carry a per-card
-   Pressure column, `gen_cards.js` derives a deck-level tag from it by copy count, and a minority of
-   decks earn one — the rest are honest beatdown, which is the right outcome. **Trevor's key extends
-   the vocabulary above with two more: HD (High Damage) and BG (Bench Growth).** The no-repeat rule has
-   never been checked against a real bracket, and now there are three to check it with.
+   Trevor's call, 15 Aug 2026.
+2. **Four brackets read intro → body → gate → boss and nobody has walked one end to end.** That is
+   still the cheapest remaining test of this whole document, and it is the one nothing here can do
+   for itself: `decksim.js` plays the rosters against each other and cannot tell you how the ladder
+   *feels* from the seat of somebody climbing it. Report where the spec does not survive contact.
+3. **Everything else this file used to hold as open is in [CHALLENGES.md](CHALLENGES.md)**, because
+   all of it was about a bracket's *demands* rather than a deck's *construction*.

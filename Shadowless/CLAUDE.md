@@ -53,8 +53,8 @@ the tree and not orientation.
 | [RULINGS.md](RULINGS.md) | A card's printed text usually settles how it behaves, but there can be exceptions. The four-step order that replaced the arbiter, and the principles index you match a new card against by *shape*. **It is a directory: each ruling is its own file in `Rulings/`**, one per judgement call, with its reasoning and source |
 | [DATA.md](DATA.md) | Generating a set, trusting a set code, or adopting one of the deck spreadsheets. The corpus, the two set codes that read backwards, and what is reference-only |
 | [PROGRESSION.md](PROGRESSION.md) | Touching the ladder, an opponent, or anything that grants a pack. How brackets are derived from the live sets rather than declared, the tunables, why free play pays nothing, and the four layout defects only a screenshot caught |
-| [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck, adding a set's roster, or working the auto-builder. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, the one entry-condition mechanism behind three different gates, and the pressure tags. **Design, not built.** Its sibling `ROSTERS.md` is the report card — what `decksim.js` said when each built roster met the spec, and what the Prize count is actually worth |
-| [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, looking at the board with `tools/shot.js`, or wondering what each test suite actually covers |
+| [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck or adding a set's roster. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, and the intro→body→gate→boss rung pattern. **All four live brackets are built to it.** Two siblings: `ROSTERS.md` is the report card — what `decksim.js` said when each roster met the spec — and **`CHALLENGES.md` is everything still unbuilt**, which is what a bracket *demands* rather than how a deck is *constructed*: entry conditions, the pressure vocabulary and its no-repeat rule, and the Challenge brackets that replaced the rival |
+| [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers. Everything in it returns **pass or fail**. **Its sibling `INSPECTION.md` is how you LOOK at it** — `shot.js`, `probe.js`, the DEV tab, and the four classes of bug a green suite cannot see. Read that one before any UI change, not after |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Rejected ideas and superseded reasoning, each with the reason it lost, plus how this doc tree got its shape. **The build era — the whole job history for Jobs 1–10 — is in `HISTORY-ARCHIVE-1.md`** |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md` and its three archives, where each instance's own account of its work is kept verbatim |
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
@@ -64,26 +64,21 @@ the tree and not orientation.
 
 ## Status
 
-**Jobs 1–10 are complete, and Job 11 is in progress.** The engine and AI came out of Claude Chat; Job 5 built everything a
-*collection* game needs on top of them, Job 6 took the card pool to three sets, Job 7 built the
-ladder that makes them reachable, Job 9 was the first AI pass driven by real playtest, and Job 10
-added Team Rocket. You pick a starter deck, work down a roster of named challengers, beat a bracket's boss to open the
-next set, earn packs of whatever set you are on, open them, browse what you own, and build decks from
-it — and all of it persists. **All four brackets are now built from Trevor's own hand-made decks or
-real theme decks** rather than from placeholders — Base Set, Jungle, Fossil, and Team Rocket as of
-25 Aug 2026, which also retired the eight GBC club masters that had been standing in for it.
+**The game is playable end to end.** You pick a starter deck, work down a roster of named
+challengers, beat a bracket's boss to open the next set, earn packs of whatever set you are on, open
+them, browse what you own, and build decks from it — and all of it persists. **Done and shipped,
+none of it a stub:** the rules engine and every card in the live sets, the four-tier AI, the
+collection, packs, dex, save file and deck builder, and the ladder with its named opponents. Each has
+a row in the table above naming the file that owns it. *[How each job got there →](HISTORY.md)*
 
-**Four sets are live and complete: Base, Jungle, Fossil and Team Rocket — 311 of 311 cards.** Run
-`node tools/selftest.js` for the live figures rather than trusting a number in prose; it prints
-coverage per set. **There is one unit now and there used to be two**, so an older figure — Base Set
-as 95, the three sets as 221 — is measuring the smaller one rather than disagreeing with this one.
-`selftest.js` counts printings; it used to exclude Energy, which was a hole in the set-gating rule
-that Team Rocket's three special Energy would have been the first to fall through.
+**Four sets are live and complete: Base, Jungle, Fossil and Team Rocket — 311 of 311 printings**, and
+all four brackets are built from Trevor's own hand-made decks or authentic theme decks rather than
+from placeholders. Run `node tools/selftest.js` for the live figures rather than trusting a number in
+prose; it prints coverage per set. **There is one unit now and there used to be two**, so an older
+figure — Base Set as 95, the three sets as 221 — is measuring the smaller one rather than disagreeing
+with this one. `selftest.js` counts printings; it used to exclude Energy, which was a hole in the
+set-gating rule that Team Rocket's three special Energy would have been the first to fall through.
 *[The guard that was blind, and the three others found with it →](HISTORY-ARCHIVE-1.md)*
-
-**Done and shipped, none of it a stub:** the rules engine and every card in the four live sets; the
-four-tier AI; the collection, packs, dex, save file and deck builder; the ladder and its named
-opponents. Each has a row in the table above naming the file that owns it.
 
 **Not built: audio, at all**, and nothing has been decided about it. **The other ten sets** are
 unblocked rather than started — all fourteen generate cleanly.
@@ -148,7 +143,8 @@ node tools/powertest.js                  # Powers, the bespoke cards, setup, and
 node tools/smoke.js shadowless.html      # integration tests against the BUILT file
 node tools/collectiontest.js             # the save file, decks and variants
 node tools/progresstest.js               # the ladder, unlocks and rewards
-node tools/packtest.js                   # 200k packs (takes a count: `20000` is fast)
+node tools/packtest.js                   # 200k packs in ~4s. It takes a count; DO NOT pass a small
+                                         # one — under 100k the rare axes go red on a clean tree
 node tools/pullcheck.js "Save File/<export>.json"   # ...and did MY packs behave?
 node tools/shot.js out.png --size 1366x768 --board --turns 4    # look at it
 node tools/probe.js --size 1191x684      # ...and whether it MOVES between two states
@@ -238,9 +234,11 @@ it against `null`, never for truthiness. **Unimplemented cards can never silentl
 deck validator refuses any deck containing a card with no effect script, which is why the card counts
 above can be trusted — preserve that property. **A verb `ai.js` cannot score is that same failure one
 level up** — free at runtime, misplayed forever, invisible to every suite. And a sniff test that has
-now paid six times across three files: *a quantity that should fall away with distance from an edge,
-written flat with a cliff at the end.* **If a term is about proximity and it is written as an
-equality check, look again.** The last two are in [AI.md](AI.md), which carries the running tally.
+now paid across three files, most recently in a test suite rather than in `ai.js`: *a quantity that
+should fall away with distance from an edge, written flat with a cliff at the end.* **If a term is
+about proximity and it is written as an equality check, look again.** The last two are in
+[AI.md](AI.md), whose table is the tally — **do not quote a count of them**, because this sentence
+said six while that file said eight above a table of nine.
 
 **Adding a card is a `cards.js` entry plus an `effects.js` entry, and [ENGINE.md](ENGINE.md) has the
 rest** — including the nine systems that already exist for the shapes the DSL cannot express.
@@ -254,7 +252,8 @@ class of bug, and two of them have already got through 68 passing tests in a sin
 **And when the complaint is that the board MOVES, neither of those can see it**: a shot is one state.
 `tools/probe.js` measures one board across several UI states and prints what differed — run it at a
 CRAMPED viewport, because the roomy ones are where a layout bug hides.
-*[What they were, and how to measure a screenshot instead of squinting at it →](TOOLING.md)*
+*[Both instruments, the traps in reading them, and the four bug classes a green suite cannot see
+→](INSPECTION.md)*
 
 ## Data
 
@@ -278,36 +277,25 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   planning any set:
   it was split by *machinery* rather than by set, and the reason 126 printings were only **95 distinct
   behaviours** is the kind of count that decides how big a job actually is.
-  **Two are still live as *documents* rather than as work.** [OPPONENTS.md](OPPONENTS.md) is Job 8's
-  spec and nothing in it is built; Job 9 continues wherever [GRABBAG.md](GRABBAG.md) has AI items in
-  it, and the invariants it has left are in [AI.md](AI.md).
-- **Job 10.5** - Scheduled post-new set maintenance. **The docs pass and the Base Set wiring are
-  done** — Trevor's eight decks went live as the whole base1 bracket, the first built to
-  [OPPONENTS.md](OPPONENTS.md). **What is left is the layout-related grab bag items.**
-- **Job 11** - Major grab bag pass, AI and UI focused, add Trevor's new Jungle decks. **The Jungle
-  and Fossil decks are in and live** — eleven hand-built decks across two brackets, body, gate and
-  boss each, with the GBC placeholders pushed on to Team Rocket. Measured; neither new roster orders
-  by tier and the report is in [ROSTERS.md](ROSTERS.md). **The AI half is well under way**: ten faults
-  closed across three sessions, every one of them found by Trevor describing how a card is meant to be
-  played rather than by any instrument — see [PLAYBOOK.md](PLAYBOOK.md), which is the method that
-  produced them. **The UI half is untouched.** **The GBC placeholders left on Team Rocket are now gone
-  too** — 25 Aug 2026, Job 12c/#26: Trevor's eight Team Rocket decks plus the two authentic Team Rocket
-  theme decks replaced them, and this is the first roster measured where the tiers actually order
-  cleanly. See [ROSTERS.md](ROSTERS.md#team-rocket--trevors-eight-decks-25-aug-2026).
-- **Job 11.5** - Continued maintenance passes. We need to make the structure more load-bearing before we continue. *Job Closed*
-- **Job 12a** - Continuing the AI pattern overhaul and testing behaviors. **It did need its own
-  infrastructure and that half is built** — `tools/wants.js` reads Trevor's workbook, `tools/lib/board.js`
-  makes a position out of card names, and `tools/claims/` holds the notes as rows. Proved by a control
-  that goes red against the pre-fix commit. **The remaining work is claims**, and the backlog is a
-  command rather than a number here: `node tools/wants.js --coverage`. Base Set first, and **Jungle and
-  Fossil are on hold** — their notes are one-liners awaiting the same overhaul base1 and base5 got.
-- **Job 12b** - Layout pass and then UI updates from GRABBAG.md. 
-- **Job 12c** - Pack and rarity drop overhaul. **The pack shape and the bonus rare-tier jump mechanic
-  landed 25 Aug 2026** — pack shrank from 11 cards to 8, and a lesser slot can now jump to a better
-  tier at a small independent chance. **Rebalancing the four per-slot cosmetic axes (Reverse Holo,
-  Shiny, Shadowless, Misprint) to restore the pre-shrink pacing is deliberately deferred**, tracked as
-  its own open item in [PACKS.md](PACKS.md).
-- **Job 12d** - Scheduled document pass and grab bag run. More UI, maybe more AI.
+  **Two are still live as *documents* rather than as work.** Job 8's spec is now four built brackets
+  in [OPPONENTS.md](OPPONENTS.md) and one unbuilt file in [CHALLENGES.md](CHALLENGES.md); Job 9
+  continues wherever [GRABBAG.md](GRABBAG.md) has AI items in it, and the invariants it has left are
+  in [AI.md](AI.md).
+- **Jobs 10.5 through 12c are done.** Between them they wired all four brackets from Trevor's own
+  hand-built decks, closed the layout faults that had been shifting the board since the Chat days,
+  built the claims harness that turns his card notes into rows the bot is held to, and reshaped the
+  pack. **What each one left behind is in [HISTORY.md](HISTORY.md)**; the live consequences are in the
+  files that own them — [ROSTERS.md](ROSTERS.md) for what the rosters measured,
+  [AI-INVARIANTS.md](AI-INVARIANTS.md) for what the AI work must keep true, [PACKS.md](PACKS.md) for
+  the 8-card pack and the tier jump.
+  **Two things from them are still open and both are named where they live**: Job 12a's claims
+  backlog is a command rather than a number — `node tools/wants.js --coverage`, Base Set first, with
+  **Jungle and Fossil on hold** until their one-line notes get the overhaul base1 and base5 got — and
+  Job 12c deliberately deferred rebalancing the four cosmetic axes after the pack shrank, tracked as
+  its own item in [PACKS.md](PACKS.md).
+- **Job 12d** - Scheduled document pass and grab bag run. More UI, maybe more AI. **The docs pass is
+  done** — three siblings and two archives split out, and four files found stating a fact their own
+  data contradicted. See [CREDITS.md](CREDITS.md) #27.
 - **Job 13** - Rulings, cards, and AI logic additions for Promo cards up to Team Rocket.
 - **Job 14** - Maintenance passes in the shape of Job 12
 - **Job 15** - Deck autobuilder overhaul, if ready to do so.

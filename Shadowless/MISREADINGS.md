@@ -172,3 +172,24 @@ green. Deterministic, reproducible, and entirely about the fixture — the same 
 entry's neighbour. Fixed at the cause rather than by widening the tolerance: the seeds come from a
 generator now, which is also what `Math.random()` actually is. **A tolerance you widened until the
 suite went green is a finding you deleted.**
+
+**And the fast pass that survived all of that still goes red on a clean tree.** Measured 26 Aug 2026
+during a documentation pass, on a tree with no code change in it at all: `node tools/packtest.js
+20000` fails **six** assertions, `50000` fails one, `100000` and up are clean. Nothing is wrong. The
+rare axes are 1-in-275 and 1-in-1375, so twenty thousand packs give a Shadowless about seventy
+sightings and a Misprint about fifteen, and fifteen is not a sample — the tolerances are correctly
+sized for the full run and the *count* was the thing that was wrong.
+
+**The reason this one is worth an entry is that the bad count was in the documentation.** Both
+`CLAUDE.md` and `TOOLING.md` advertised `20000` as "a fast pass while iterating", so the recommended
+command produced a red suite for reasons that were not a fault, in a project whose gate is *run all
+six before calling anything done*. **That does not make somebody investigate; it teaches them that
+this suite is noisy and to skim past it** — which is the exact failure `pullcheck.js` sets its own
+threshold at p<0.01 to avoid, and it would have hidden a real regression the day one arrived. Both
+files now say to run it whole; the full run takes about four seconds, so there was never anything to
+save.
+
+**The general shape: a sample size named in prose is a threshold, and it rots the same way any
+other number in prose does.** Nobody re-derived it when the pack shrank from eleven cards to eight
+on 25 Aug 2026 and every per-slot axis got rarer — which is what moved the fast pass from *mostly
+green* to *reliably red* without one line of the suite changing.

@@ -204,7 +204,7 @@ or the next instance will dutifully fix them. Two rules keep it working and both
 positioned host they resolve against the page — a SHADOWLESS watermark painted across the whole
 board), and **`sigilOf` searches descendants, not just direct children** (the in-play sigil hangs off
 `.pc-body`, so a direct-child search found nothing and the marks landed on the card root). *[What
-204 passing tests could not see →](TOOLING.md)*
+204 passing tests could not see →](INSPECTION.md)*
 
 | | On the real scan | On the Sigil Card |
 |---|---|---|

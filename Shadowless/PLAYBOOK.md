@@ -114,7 +114,7 @@ rather than the last.
 
 **Two taxonomies that already exist elsewhere are deliberately not patterns here.** Opener archetypes
 are the workbook's column G and are half-built in `setupAuto`; pressure tags are deck-level and belong
-to [OPPONENTS.md](OPPONENTS.md) and `tools/pressure.js`. Do not fork either into this folder.
+to [CHALLENGES.md](CHALLENGES.md) and `tools/pressure.js`. Do not fork either into this folder.
 
 ## Writing a pattern file
 

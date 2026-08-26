@@ -179,7 +179,7 @@ nothing else has wired up yet. The standing figure and what to do about it are i
 
 ### `pressure.js` — what a set can threaten you with
 
-**Derived, never hand-tagged.** [OPPONENTS.md](OPPONENTS.md) asks a bracket for *variety* of pressure
+**Derived, never hand-tagged.** [CHALLENGES.md](CHALLENGES.md) asks a bracket for *variety* of pressure
 rather than a ramp of strength, and which pressures a set can field is a fact about the set. This reads
 the effect scripts and counts them, so nobody has to read 102 cards — and so the answer cannot drift
 away from the cards the way a hand-maintained list would.

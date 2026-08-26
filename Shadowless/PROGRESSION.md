@@ -59,8 +59,8 @@ summon anybody. This is the easy thing to get wrong and it has its own test.
 
 ## What a win pays, and the constant that was hiding
 
-**Record ratios, never counts.** Pack size may drop to ten cards, and every absolute in an outline
-becomes a lie the moment it does.
+**Record ratios, never counts.** Pack size dropped from eleven cards to eight on 25 Aug 2026, and
+every absolute written into an outline became a lie the moment it did.
 
 | Rung | Pays |
 |---|---|
@@ -75,7 +75,7 @@ each rung *is* stays over there.
 
 **Repeat wins pay full, which makes farming optimal and dull.** The fix is optional **challenge
 conditions on re-battles** — an entry condition, for a better reward — which turns the re-battle loop
-from grinding into a decision and reuses a mechanism [OPPONENTS.md](OPPONENTS.md) already specifies
+from grinding into a decision and reuses a mechanism [CHALLENGES.md](CHALLENGES.md) already specifies
 rather than inventing one. What the better reward *is* — richer pack odds, or a differently-composed
 pack — is a [PACKS.md](PACKS.md) question. Note it is not a tuning change: a pack with different odds
 is a new pack **type**.
@@ -143,25 +143,27 @@ automatically harder than an early one with nobody tuning a number.
 
 ## The roster as it stands
 
-**Verified against the live ladder 22 Aug 2026**, and the way to check it is to read the data rather
-than this table — see below.
+**Verified against the live ladder 26 Aug 2026, and the way to check it is to read the data rather
+than this table** — the snippet below prints it, and this table has been a job out of date before.
 
-| Bracket | Roster | Boss | Extra |
-|---|---|---|---|
-| Base — The Clubs | 4 theme decks (T1) + 5 T2 + 2 T3, **all Trevor's** | the T4, *Ashfall* | Ronald, *I'm Ronald!* |
-| Jungle — The Jungle | 2 Jungle theme decks (T1) + 3 T2 + 1 T3, **all Trevor's** | the T4, *Deep Bloom* | Ronald, *Invincible Ronald* |
-| Fossil — The Dome | the 4 Grand Masters (T1 stand-ins) + 3 T2 + 2 T3, **the six Trevor's** | the T4, *Nightshade* | Ronald, *Powerful Ronald* |
-| Team Rocket — The Syndicate | **all 8** Club Masters, placeholders | Ronald, *Legendary Ronald* | — |
+| Bracket | Intro (T1) | Body + gate | Boss | Extra |
+|---|---|---|---|---|
+| Base — The Clubs | 4 theme decks | 5 T2 + 2 T3, **all Trevor's** | the T4, *Ashfall* | Ronald, *I'm Ronald!* |
+| Jungle — The Jungle | 2 Jungle theme decks | 3 T2 + 1 T3, **all Trevor's** | the T4, *Deep Bloom* | Ronald, *Invincible Ronald* |
+| Fossil — The Dome | the 4 Grand Masters, standing in | 3 T2 + 2 T3, **all Trevor's** | the T4, *Nightshade* | Ronald, *Powerful Ronald* |
+| Team Rocket — The Syndicate | 2 Team Rocket theme decks | 4 T2 + 3 T3, **all Trevor's** | the T4, *Undertow* | Ronald, *Legendary Ronald* |
 
-**Fossil is the one place the placeholder rule bends**, and it is worth one line: its own theme decks
-are not in `data/`, so the T1 intro slot is genuinely empty and the four Grand Masters hold it. Their
-legendary birds are Fossil cards, which makes them the least wrong stand-in available. Getting the
-real Fossil theme decks in is the fix — not shuffling placeholders.
+**Fossil is the one place the placeholder rule still bends**, and it is worth one line: its own theme
+decks are not in `data/`, so the T1 intro slot is genuinely empty and the four Grand Masters hold it.
+Their legendary birds are Fossil cards, which makes them the least wrong stand-in available. Getting
+the real Fossil theme decks in is the fix — not shuffling placeholders.
 
 **What a placeholder IS — Trevor's rule, and it is the only part of this worth carrying.** Anybody
 not holding a **hand-built deck or an authentic theme deck** is a placeholder, filling the gap between
-a set going live and its own decks being authored. Base Set, Jungle and Fossil all have their own
-decks now; Team Rocket does not, so it runs on GBC placeholders.
+a set going live and its own decks being authored. **As of 25 Aug 2026 every live set has its own
+decks**, so the only placeholders left on the ladder are the four Grand Masters holding Fossil's
+empty intro, and Ronald. The eight Club Masters retired rather than moving on, because no unauthored
+bracket remained for them to fill.
 
 **Where a given placeholder currently sits is not worth tracking, and this file used to track it
 badly.** Trevor, 22 Aug 2026: any GBC deck can fill any gap — they are not a tier, a bracket or a
@@ -180,12 +182,12 @@ node -e "const{LADDER}=require('./src/cards.js');console.log(JSON.stringify(LADD
 carry it too — the lists are authentic, the names and titles are not. The detailing pass is what
 clears the flag, and it is a *labelling* job precisely because nothing mechanical hangs off it.
 
-**Every bracket ends in its own T4 where one has been authored**, and in Ronald where one has not.
-The boss slot is a tier, so a rival cannot hold it on merit; he holds Team Rocket's because that
-bracket has no T4 yet. **The rival is not a segment and is not per bracket** — Trevor, 21 Aug:
+**Every bracket ends in its own T4, and as of 25 Aug 2026 all four do.** The boss slot is a tier, so
+a rival cannot hold it on merit; Ronald held Team Rocket's until that bracket had a T4 and is now the
+post-boss `extra` in all four. **The rival is not a segment and is not per bracket** — Trevor, 21 Aug:
 roughly four encounters across the whole ladder, a small group with a leader, decks drawn from every
 previous set and paying combined packs. That is a design sketch and not a spec; see
-[OPPONENTS.md](OPPONENTS.md), where it became the Challenge brackets.
+[CHALLENGES.md](CHALLENGES.md), where it became the Challenge brackets.
 
 **Team Rocket's bracket was generated for two days and that is the derivation working rather than a
 gap.** `base5` went live in Job 10 with nothing authored for it in `ladder.json`, `buildLadder()`
@@ -197,29 +199,18 @@ fewest at 3 and Nikki the most at 16. So a bracket is named for **what beating i
 what its opponents may field. Seeing a Fossil Lapras before you can buy Fossil packs is a lure, and
 it is what the GBC game did. `progresstest.js` asserts that no GBC deck is stranded.
 
-## The screen, and the four things only a screenshot caught
+## The screen this file makes unbounded
 
-Deck select is **the one screen whose content grows without bound** — every set that goes live adds
-a bracket. It is pinned to the viewport with the ladder as the single flexible child, and the Play
-bar is `position:sticky`. Still CSS-only, so [LAYOUT.md](LAYOUT.md)'s rule that this screen needs no
-JS fitter still holds.
+**Deck select is the one screen in the game whose content grows without bound, and that is a fact
+about the ladder rather than about CSS** — every set that goes live adds a bracket, forever. It is
+the one thing this file owes the layout, so it is stated here and the rules are next door.
 
-`smoke.js` had 136 tests passing while every one of these was live. **The stub has no layout engine;
-`tools/shot.js` is the only instrument that can see any of it.**
-
-- **864px of content in a 768px viewport** — the Play button simply gone.
-- **Locked brackets drawn as full grids of unclickable tiles**, ~150px each, which is what caused
-  that. They are one line each now, and they sit **outside** the scroller so what is ahead never
-  scrolls away.
-- **At 1280x600 the ladder was squeezed to ~70px**: a row of card art with every name, title and
-  status clipped off. It has a floor of one full tile now.
-- **With that floor, the locked strips escaped their wrapper** and painted over the options row —
-  `min-height:0` on a box that has to stay as tall as its contents.
-
-**The sticky Play bar is the fix that holds**, and it replaced three rounds of shaving pixels off
-other things. The fixed chrome plus one full row of challengers exceeds 768px; there is no
-viewport-independent way to fit both, and the ladder only grows. So the box scrolls and the one
-control you always need stays put. Verified at 1280x600, 1366x768, 1600x900 and 1920x1080.
+**Four defects were live on that screen while `smoke.js` had 136 tests passing**, including 864px of
+content in a 768px viewport with the Play button simply gone. The stub has no layout engine, so not
+one of them was visible to it. **The three CSS rules that hold the screen together each look wrong
+until you know what they protect**, and one of them is a `min-height` that must NOT be applied.
+*[All four, the rules, and the viewports they were verified at →](LAYOUT.md)* ·
+*[the instrument that found them →](INSPECTION.md)*
 
 ## Open
 
@@ -227,11 +218,12 @@ control you always need stays put. Verified at 1280x600, 1366x768, 1600x900 and 
    portraits — a challenger's face is their deck's hero card, which reuses the deck-tile idiom
    rather than inventing an art system.
 2. **The real per-set decks are a future job**, Trevor's and mine together: hand-built lists per set
-   and a better automated builder. **What those decks have to hit is now specified —
-   [OPPONENTS.md](OPPONENTS.md)**, Job 8: tiers, rung composition, entry conditions and pressure
-   tags. This file stays the machinery; that one is the content.
-   The GBC 16 are placeholders until then, and the `subs` records in
-   `data/gbc_decks.json` say which cards are standing in for something we cannot generate yet.
+   and a better automated builder. **What those decks have to hit is specified and four brackets are
+   built to it — [OPPONENTS.md](OPPONENTS.md)** for tiers and rung composition,
+   [CHALLENGES.md](CHALLENGES.md) for entry conditions and pressure tags, neither of which is built.
+   This file stays the machinery; those two are the content. The only GBC placeholders left are the
+   four Grand Masters on Fossil, and the `subs` records in `data/gbc_decks.json` say which cards are
+   standing in for something we cannot generate yet.
    **The candidate pool for that job already exists and is researched** — 16 official WotC theme
    decks, 8 Gym Leader decks and 8 GB2 flavour decks, ID-mapped and count-verified but read by
    nothing. `data/OPPONENT_DECK_POOL.md` is the tracker; see [DATA.md](DATA.md) for what is in each

@@ -214,12 +214,9 @@ neither gap could have been seen by making the run bigger:
 deterministic flake found while closing them →](MISREADINGS.md)*
 
 **`tools/pullcheck.js` answers the other question**, the one `packtest.js` cannot: not "does the
-generator match the table" but *"did MY packs behave"*. It reads an exported save, counts the
-variants against `packsOpened`, and gives an exact Poisson two-sided p per row. Two traps it exists
-to stop: **1st Edition is a whole-pack roll**, so counting flagged *cards* reads eleven times too
-lucky — it reports packs; and **a tally you went looking for because it felt wrong is a filtered
-sample**, so the tool is good at saying *that is ordinary* and weak at saying *something is broken*.
-It says so in its own output.
+generator match the table" but *"did MY packs behave"* — it reads a real exported save. Reach for it
+when Trevor reports a rate feeling wrong, and read its own caveats before believing either answer.
+*[The three traps it exists to stop, each of which cost time the first time →](TOOLING.md)*
 
 ## The pacing number the economy turns on
 
@@ -262,7 +259,7 @@ wildly different experiences of the same economy.
    `save.progress.beaten` rather than stored. So the eligible pool is computable from the save
    without adding anything to it. Nobody has built it. See [PROGRESSION.md](PROGRESSION.md).
 3. **The Challenge pack — a pool of every card up to that point.** Trevor's proposal, 21 Aug 2026, as
-   the reward for the Challenge brackets in [OPPONENTS.md](OPPONENTS.md). **It works, and most of the
+   the reward for the Challenge brackets in [CHALLENGES.md](CHALLENGES.md). **It works, and most of the
    machinery is already here**, which is worth knowing before anyone plans it as a large job:
    `buildPools(db, null)` already returns a union of every booster set — 65 rare-holo, 64 rare, 88
    uncommon, 88 common — and `openPack` already accepts a pre-built pool through `opts.pools`. Two

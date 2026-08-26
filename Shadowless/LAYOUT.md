@@ -13,7 +13,7 @@ number, and never by a media query.**
 **You do not have to guess and you do not have to ask for a screenshot.** `tools/shot.js` renders the
 built game at any exact viewport, and the DEV tab prints what the fitter actually did with it — the
 applied zoom, the layout chosen, the mat cloth width, the spare desk. Both are documented where they
-are run, in **[TOOLING.md](TOOLING.md)**, along with the two traps that will otherwise bite: the
+are run, in **[INSPECTION.md](INSPECTION.md)**, along with the two traps that will otherwise bite: the
 screenshot is stretched relative to the layout, so **judge proportion from the DEV tab and not off
 the PNG**.
 
@@ -285,7 +285,7 @@ the coin, and everything that shares its strip →](INTERACTION.md)*
 ## The pack reveal: every slot reserves what a revealed slot needs
 
 `.packscreen` centres its box in the viewport, so **anything that grows the box moves everything
-already on screen** — including the ten cards you have not turned over yet. It is not fitted and does
+already on screen** — including every card you have not turned over yet. It is not fitted and does
 not need to be; the cards are sized by `vh` clamps. It just has to stop changing size.
 
 Three things were making it change, and they compounded. Measured at 1191x684, the header climbed
@@ -305,7 +305,7 @@ Two smaller rules came out of the same pass and generalise. **`.pullslot .cardfa
 image has *loaded* — so a freshly revealed card is 0px wide for a frame and pops out. And it is
 `display:block`: an inline image inside an inline-block `.vfx` sits on the text baseline with a ~2px
 descender gap under it, which was the last 2px of the shift. **Not `line-height:0`** — see
-[TOOLING.md](TOOLING.md) for what that did the last time somebody reached for it.
+[INSPECTION.md](INSPECTION.md) for what that did the last time somebody reached for it.
 
 `node tools/probe.js --pack` walks the reveal and is what found all five.
 
@@ -329,5 +329,12 @@ the options row. Only the scroll container may shrink, and only to its floor.
 
 **The sticky Play bar is what actually holds.** The fixed chrome plus one full row of challengers
 exceeds 768px and no amount of shaving fixes that as the ladder grows, so the box scrolls and the
-one control you always need stays put. *[The four defects a screenshot caught here, and what 136
-passing tests could not see →](PROGRESSION.md)*
+one control you always need stays put. Verified at 1280x600, 1366x768, 1600x900 and 1920x1080.
+
+**Four defects were live on this screen while `smoke.js` had 136 tests passing**, and the two above
+are the pair that were each fixed by a wrong version first. The other two were **864px of content in
+a 768px viewport**, the Play button simply gone, caused by **locked brackets drawn as full grids of
+unclickable ~150px tiles** — they are one line each now and sit *outside* the scroller, so what is
+ahead never scrolls away. **Why this screen and no other** — the ladder gains a bracket every time a
+set goes live — is [PROGRESSION.md](PROGRESSION.md); the instrument that found all four is
+[INSPECTION.md](INSPECTION.md).

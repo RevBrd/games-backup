@@ -1,10 +1,17 @@
 # Shadowless — maintaining the documentation
 
-This tree is around twenty files and it will drift. This is how to bring it back, written 10 Aug 2026
-by the instance that did the second split and extended by each one since, for whoever does the next.
+This tree is many files and it will drift. This is how to bring it back, written 10 Aug 2026 by the
+instance that did the second split and extended by each one since, for whoever does the next.
+(*Deliberately not counted. This sentence said "around twenty" while the tree held thirty-five, which
+is the very first thing the triggers below tell you to look for.*)
 
 It is about **the docs**, not the code. It generalises to any game whose docs outgrew one file, but
 the examples are from here.
+
+**This file runs over the 200-line target on purpose, and three passes have now decided not to split
+it.** Its only reader is a session about to do a docs pass, who needs all of it — so the split test
+below returns *no*, and every paragraph is a rule somebody paid for. **Don't spend a pass shortening
+it; spend the pass on the tree.** Trim it only where a paragraph has genuinely become a duplicate.
 
 ## When a pass is worth doing
 
@@ -115,12 +122,14 @@ turns a settled question back into an open one.
   version fresh, so the judgement call is about what to *summarise* and never about what to *drop*.
   The logbook is append-only and exempt from the line target; say so in any file like it.
 
-  **`CREDITS.md`'s two-or-three-line rule needs re-imposing about once a week.** The fifth pass found
-  it abandoned by every instance since it was set, including the one that set it, with rows grown to
-  a paragraph each. **Trimming is safe only where that instance has a logbook entry** — that is the
-  test to apply row by row. Where one exists the row is a duplicate and the logbook holds more; where
-  none exists, move the row's text into the logbook **verbatim first**, then write the short version.
-  #12 was the only row in that state. Do not decide sentence by sentence what earned its place.
+  **`CREDITS.md`'s two-or-three-line rule needs re-imposing about once a week, and the rule plus its
+  method now live in that file's own header.** Apply it row by row: **trimming is safe only where
+  that instance has a logbook entry**; where none exists the row's text moves to the logbook
+  **verbatim first**, and only then is the short version written. Never decide sentence by sentence
+  what earned its place. **The violations are always the recent rows** — everything up to #18 has sat
+  inside the limit since the day it was set, because the detail only feels indispensable to the
+  instance that just did the work. On 26 Aug 2026 six rows needed the verbatim move and eight needed
+  trimming; the longest was twenty-four lines.
 
 ## What is safe to cut
 
@@ -145,13 +154,11 @@ after the fourth pass found the tree had been measured two ways: the third pass 
 "ends at 283" for a file `wc -l` calls 357, because it had counted non-blank lines. Nobody noticed,
 and the file everyone was protecting as slightly over was 78% over.
 
-**Then the sixth pass did it again, with this warning in front of it, and the reason is worth more
-than the warning was.** It measured the whole tree with PowerShell's
-`(Get-Content f | Measure-Object -Line).Lines` — which **silently does not count blank lines**, so
-every figure in its opening report to Trevor was about 25% low and `AI.md` was reported at 300 when
-it was 380. Knowing the unit does not help if the command you reach for quietly uses a different one.
-**Run `wc -l` — the literal command — and nothing that looks equivalent.** Git Bash is available on
-this machine; the Bash tool takes it.
+**Then the sixth pass did it again with this warning in front of it**, measuring the tree with
+PowerShell's `(Get-Content f | Measure-Object -Line).Lines` — which **silently does not count blank
+lines**, so every figure in its opening report to Trevor was ~25% low. Knowing the unit does not help
+if the command you reach for quietly uses a different one. **Run `wc -l` — the literal command — and
+nothing that looks equivalent.** Git Bash is on this machine and the Bash tool takes it.
 
 Being over beats cutting the paragraph that stops the next session losing a morning. If you go over,
 say why in the commit.
@@ -173,10 +180,8 @@ trim on the grounds that something is preserved elsewhere, go and look at the el
 were going. The live `LOGBOOK.md` now carries the rule at the point of decision as well, which is the
 general fix: **a constraint stated only in the thing being constrained is read too late.**
 
-- **Exempt: every append-only register and every archive of one.** As of 22 Aug 2026 that is
-  `LOGBOOK.md` and its three archives, `Rulings/*.md`, `HISTORY.md`, `GRABHIST.md`,
-  `AI-INVARIANTS.md`, `MISREADINGS.md` and the `-ARCHIVE-1` of each. **Do not maintain that list —
-  read each file's header**, because it is the count that rots and the label that does not. None can
+- **Exempt: every append-only register and every archive of one.** **Do not maintain a list of them —
+  read each file's header**, because it is the roll that rots and the label that does not. None can
   be shortened without deleting something: a session's account of its own work, a ruling somebody
   then has to make again, a rejection's *why*, an invariant's reason, or the gap between what a
   playtest report said and what was actually found. Correct entries in them; never condense them.
@@ -184,11 +189,13 @@ general fix: **a constraint stated only in the thing being constrained is read t
   two days without the label, which is how one gets tidied by mistake.
 
   **A register needs its own split threshold, stated at the TOP of the live file and not only in the
-  archive.** Every one here now carries *"when this passes ~450, start the next archive"* in its
-  header. That rule was already written in two files on 22 Aug 2026 and **both had sailed past it** —
-  `GRABHIST.md` at 649 and `HISTORY.md` at 461 — because a limit is only obeyed if it is read before
-  the growth, and nobody re-opens a header they have already scrolled past. **Check every register's
-  own number at the start of a pass**; it is one `wc -l` and it is the cheapest finding available.
+  archive**, and every one here carries *"when this passes ~450, start the next archive"*. **Check
+  every register's own number at the start of a pass**; it is one `wc -l` and it is the cheapest
+  finding available. **It is also the one nobody runs.** Three passes in a row have now found a
+  register past the limit written in its own header — `GRABHIST.md` at 649 and `HISTORY.md` at 461 on
+  22 Aug 2026, `AI-INVARIANTS.md` at 471 on 26 Aug, the last of those set by the pass that had just
+  written the warning above it. A limit is obeyed only if it is read before the growth, and nobody
+  re-opens a header they have already scrolled past. **Assume one is over and go and look.**
 
   **The exemption moved off `RULINGS.md` itself on 15 Aug 2026** and this is the shape to copy when a
   register outgrows one file. It split into a directory page plus one file per ruling in `Rulings/`,
@@ -196,8 +203,14 @@ general fix: **a constraint stated only in the thing being constrained is read t
   it should stay short. The register is the folder. Stating the exemption against `RULINGS.md` after
   that split would have been the "invariant stated in terms that stopped being true" trigger above,
   aimed at the very file that warns about it.
-- **Three lessons about splitting, each paid for by a file in this tree.** The narratives are in
-  [HISTORY.md](HISTORY.md); these are the parts you act on.
+- **What has been learned about splitting, each item paid for by a file in this tree.** The
+  narratives are in [HISTORY.md](HISTORY.md); these are the parts you act on. **Deliberately not
+  counted** — this line said *three lessons* above four bullets for a week, in the file that bans
+  counts in prose.
+
+  **The first question is whether to split at all.** A file nobody but its own specialist reads does
+  not want splitting however long it gets, and this file is the example: every route into it is a
+  session about to do a docs pass, who needs all of it. Length is a reason to look, not a verdict.
   - **When a split feels right but the topic argument keeps failing, the criterion is probably wrong,
     not the instinct.** `LAYOUT.md` survived two proposals on *sizing vs. interaction*, both
     correctly withdrawn, and was split on the third by Trevor using the split test above instead.
@@ -219,12 +232,20 @@ general fix: **a constraint stated only in the thing being constrained is read t
     navigation than the section was. **One sibling with an index in the parent is the middle option**,
     and it is what `LOGBOOK.md` has always been. So: *how many entries, how long is each, and how many
     copies already exist* — three questions, three different right answers.
-- **`CLAUDE.md` has an honest floor and it is not 200.** The fourth pass took it 313 → 259; the sixth
-  found it back at 284, cut the job history and the status table into prose, and landed at **276** —
-  and the gap is not drift, it is four new siblings, two more jobs and a fourth cost-a-session fact
-  since. What is left is the index, the status, the tree, the commands, the standing decisions and
-  those four facts. **Getting under 200 means deleting orientation, which is the one thing this file
-  is for.** Expect it to creep upward by a line or two per job and treat that as correct.
+  - **When one file holds a spec's SHIPPED half and its UNBUILT half, split by state, not by topic.**
+    The ninth pass took `CHALLENGES.md` out of `OPPONENTS.md` on that criterion and it is a genuinely
+    new one here — every earlier split in this tree was by subject. The argument is the planning-doc
+    trigger at the top of this file, applied at file scale rather than at section scale: four live
+    rosters were being described in the same voice as three unbuilt mechanisms, so a reader could not
+    tell by tone which half they were standing in, and the unbuilt half is the half that reads as
+    *specific, confident and actionable*. **The test is whether the shipped half can be rewritten in
+    the past tense on its own.** If it can, the two halves were never one document.
+- **`CLAUDE.md` has an honest floor and it is not 200.** What it holds is the index, the status, the
+  tree, the commands, the standing decisions and the handful of facts that have each cost a session an
+  hour. **Getting under 200 means deleting orientation, which is the one thing this file is for.**
+  Four passes have now cut it and every one of them was reversed by the next two jobs, because each
+  job adds a sibling to the index and a line to the plan. **Expect the creep and treat it as correct**;
+  what to check is that the growth is index and status rather than depth that belongs in a sibling.
 
 ## The procedure
 
@@ -244,12 +265,23 @@ general fix: **a constraint stated only in the thing being constrained is read t
 5. Verify:
 
 ```bash
-grep -oh "](\([A-Za-z0-9_./-]*\.md\)[^)]*)" *.md | sed 's/](\([^):]*\).*/\1/' | sort -u | while read f; do [ -f "$f" ] || echo "MISSING: $f"; done
+grep -oh "](\([A-Za-z0-9_./#-]*\.md\)[^)]*)" *.md | sed 's/](\([^):#]*\).*/\1/' | sort -u | while read f; do [ -f "$f" ] || echo "MISSING: $f"; done
 ```
 
-   **Run it in `data/` and `Rulings/` too.** Both folders have their own markdown, and the fifth pass
-   found a link in `data/` pointing one directory too high — a root-only sweep cannot see it. Every
-   link out of `Rulings/` to a root doc needs the `../` prefix, which is the same trap one level over.
+   **Run it in `data/`, `Rulings/` and `Playbook/` too.** All three folders have their own markdown,
+   and the fifth pass found a link in `data/` pointing one directory too high — a root-only sweep
+   cannot see it. Every link out of a subfolder to a root doc needs the `../` prefix, which is the
+   same trap one level over.
+
+   **The `#` in those two character classes is not decoration, and it was missing until 26 Aug 2026.**
+   A link carrying a section anchor — `](ROSTERS.md#team-rocket-…)` — was reported **MISSING** for a
+   file that exists, because the old `sed` captured the anchor as part of the filename. That is the
+   worst failure a verifier can have: a false positive on a *working* link. The next pass either
+   "fixes" something that was never broken or learns to distrust the output, and the second costs more.
+   **A checker that cries wolf is worse than no checker.** The fixed version was confirmed to still
+   catch a genuinely broken link *and* a genuinely broken anchored one before being trusted — a
+   verifier that has only ever been green proves nothing about itself, which is `claimtest.js`'s own
+   doctrine one file over.
 
    Then `node tools/gen_cards.js --check`, `node tools/build.js --check`, and the six suites — a
    docs pass should not touch code, and that proves it didn't. If it did touch code (the fifth pass
