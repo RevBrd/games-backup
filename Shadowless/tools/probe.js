@@ -111,19 +111,27 @@ const SETUP_STATES = [
           if (UI.__n > 0) UI.E.setupTakeBack(0, 'active', 0);` },
 ];
 
-// The pack screen is its own render path too, and its states are how many of
-// the eleven cards have been turned over. `--pack` swaps the table.
+// The pack screen is its own render path too, and its states are how many cards
+// have been turned over. `--pack` swaps the table.
+//
+// COUNTED FROM THE PACK, never written down. These said `reveal-5` / `reveal-10`
+// for a pack that had eleven cards; the pack shrank to eight on 25 Aug 2026 and
+// `reveal-10` quietly became a duplicate of `reveal-all` — a state that measured
+// nothing, in the one instrument built to notice that something moved. Deriving
+// the boundary from `UI.pack.revealed.length` means the next reshape cannot do
+// it again.
+const reset = `UI.pack.revealed = UI.pack.revealed.map(() => false);`;
 const PACK_STATES = [
   { key: 'reveal-1', why: 'one card turned over', on: `UI.pack.revealed[0] = true;`,
     off: `UI.pack.revealed[0] = false;` },
-  { key: 'reveal-5', why: 'the whole top row', on: `for (let i = 0; i < 5; i++) UI.pack.revealed[i] = true;`,
-    off: `UI.pack.revealed = UI.pack.revealed.map(() => false);` },
-  { key: 'reveal-10', why: 'both rows, Rare still face down',
-    on: `for (let i = 0; i < 10; i++) UI.pack.revealed[i] = true;`,
-    off: `UI.pack.revealed = UI.pack.revealed.map(() => false);` },
-  { key: 'reveal-all', why: 'the Rare too — and the summary line arrives with it',
-    on: `UI.pack.revealed = UI.pack.revealed.map(() => true);`,
-    off: `UI.pack.revealed = UI.pack.revealed.map(() => false);` },
+  { key: 'reveal-half', why: 'half the strip',
+    on: `for (let i = 0; i < Math.floor((UI.pack.revealed.length - 1) / 2); i++) UI.pack.revealed[i] = true;`,
+    off: reset },
+  { key: 'reveal-strip', why: 'the whole strip, hero still face down',
+    on: `for (let i = 0; i < UI.pack.revealed.length - 1; i++) UI.pack.revealed[i] = true;`,
+    off: reset },
+  { key: 'reveal-all', why: 'the hero too — and the summary line arrives with it',
+    on: `UI.pack.revealed = UI.pack.revealed.map(() => true);`, off: reset },
 ];
 
 // --- what gets measured -----------------------------------------------------

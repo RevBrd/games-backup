@@ -282,59 +282,14 @@ behind it is frozen on a pre-action snapshot, and a coin that resized the mat wo
 cards you are waiting on. Anything else that appears on the centre line inherits that. *[The rest of
 the coin, and everything that shares its strip →](INTERACTION.md)*
 
-## The pack reveal: every slot reserves what a revealed slot needs
+## The other sized screens live next door — [SCREENS.md](SCREENS.md)
 
-`.packscreen` centres its box in the viewport, so **anything that grows the box moves everything
-already on screen** — including every card you have not turned over yet. It is not fitted and does
-not need to be; the cards are sized by `vh` clamps. It just has to stop changing size.
+**The pack reveal, deck select and the title screen moved there on 26 Aug 2026**, on this file's own
+split test: none of them is the board, none of them is fitted, and a session changing how the mat
+sizes itself needs none of them. What they share is a different problem — a centred box whose content
+arrives over time, where anything that grows the box moves what is already on screen.
 
-Three things were making it change, and they compounded. Measured at 1191x684, the header climbed
-**61px** on the final reveal:
-
-- **A revealed slot carries a ribbon — `NEW` or a `×N` count — and a face-down slot did not.** So
-  turning any card over grew its whole grid row by 16px. `renderPackScreen()` appends an **empty**
-  `.vribbon` to face-down slots for exactly the reason the Active card always appends its status row.
-- **The Rare's face-down back was a common's height.** `.packback` had one clamp; the revealed Rare
-  has a taller one. The last card in the pack therefore jumped its row by another **48px** — the
-  biggest single move on the screen, arriving at the most conspicuous possible moment.
-- **`.packsum` was rendered only once everything was revealed.** It is always in the DOM now, empty
-  until then, with a `min-height` of its own one line.
-
-Two smaller rules came out of the same pass and generalise. **`.pullslot .cardface` declares
-`aspect-ratio:240/330`**, because `width:auto` against a fixed height only knows the ratio once the
-image has *loaded* — so a freshly revealed card is 0px wide for a frame and pops out. And it is
-`display:block`: an inline image inside an inline-block `.vfx` sits on the text baseline with a ~2px
-descender gap under it, which was the last 2px of the shift. **Not `line-height:0`** — see
-[INSPECTION.md](INSPECTION.md) for what that did the last time somebody reached for it.
-
-`node tools/probe.js --pack` walks the reveal and is what found all five.
-
-## The title screen is not fitted, and deck select is now bounded
-
-`.deckscreen` sizes itself with `clamp(..vh..)` rather than the board's JS fitter. **Still no JS
-fitter, and do not add one** — CSS is enough here and there is nothing to measure.
-
-What changed in Job 7b is that **deck select is the one screen whose content grows without bound**:
-the opponent ladder gains a bracket every time a set goes live. So `.deckscreen:not(.starter)` is
-pinned to `100vh`, the ladder is the single `flex:1 1 auto` child that absorbs the leftover, and the
-Play bar is `position:sticky`. The starter pick is excluded — it is one row on an empty page and
-wants to grow.
-
-Two rules in there were each paid for with a wrong version first, and both are the same mistake in
-opposite directions. **The ladder needs a `min-height` floor of one full tile**: without it the flex
-squeeze wins on a short viewport and at 1280x600 it collapsed to ~70px of card art with every name
-clipped off. **Its two wrapper divs must NOT have `min-height:0`**: with the floor in place but the
-wrappers allowed to shrink below their contents, the locked strips escaped and painted straight over
-the options row. Only the scroll container may shrink, and only to its floor.
-
-**The sticky Play bar is what actually holds.** The fixed chrome plus one full row of challengers
-exceeds 768px and no amount of shaving fixes that as the ladder grows, so the box scrolls and the
-one control you always need stays put. Verified at 1280x600, 1366x768, 1600x900 and 1920x1080.
-
-**Four defects were live on this screen while `smoke.js` had 136 tests passing**, and the two above
-are the pair that were each fixed by a wrong version first. The other two were **864px of content in
-a 768px viewport**, the Play button simply gone, caused by **locked brackets drawn as full grids of
-unclickable ~150px tiles** — they are one line each now and sit *outside* the scroller, so what is
-ahead never scrolls away. **Why this screen and no other** — the ladder gains a bracket every time a
-set goes live — is [PROGRESSION.md](PROGRESSION.md); the instrument that found all four is
-[INSPECTION.md](INSPECTION.md).
+**One rule from over there is really a board rule and stays here**: `.deckscreen` and the pack screen
+are sized with `clamp()` against the viewport and **must not gain a JS fitter**. The board has one
+because the mat has a shape to preserve and a zoom to apply; these have neither, and adding a second
+fitter would give the project two answers to "how big is the page".

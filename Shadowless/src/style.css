@@ -1336,23 +1336,35 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .packhead{text-align:center}
 .packhead h2{margin:0;font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:.02em;color:var(--stock)}
 .packhead .sub{font-size:10px;letter-spacing:.14em;color:var(--matink);margin-top:3px}
-/* FIVE columns, not six. A pack is ten cards plus the Rare, and six columns
-   wrapped them 6+4 with the short row hanging off the left edge — which read as
-   the grid having run out rather than as a layout. Five splits the ten evenly
-   into two rows of five above the headline Rare. Nothing about card SIZE
-   changes: the cards are sized by height (below) and centred in their columns,
-   so the column count only decides where they sit. */
-.packgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;justify-items:center}
+/* ONE ROW, not a column count. This was a five-column grid while a pack was ten
+   cards plus the Rare, and five split the ten evenly into two rows. The pack
+   shrank to eight on 25 Aug 2026 and nobody re-derived it: seven ordinary cards
+   in five columns is 5 + a two-card row hanging off the LEFT edge, so rows one
+   and three sat on the viewport centre line at x=683 and row two's centre was at
+   x=362. That mismatch is what reads as unbalanced.
+
+   Seven always fits one row, so there is nothing left to wrap and nothing left
+   to go ragged — 7x125 + 6x10 is 935 inside 1060, and it still fits at 1191x684
+   and 1280x600 where the height clamps do the work instead. Flex rather than a
+   grid because only flex can CENTRE a short row, and a wrap has to stay possible
+   for whatever the pack shape becomes next.
+
+   The media query that dropped this to four columns under 820px is gone with it:
+   flex wraps on its own, which is what the query was hand-rolling. */
+.packgrid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;width:100%}
 .pullslot{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
-/* The Rare is the emotional centre, so it gets the whole last row to itself. */
-.pullslot.rare{grid-column:1/-1;margin-top:2px}
+/* The hero gets the whole last row to itself. `width:100%` is what forces the
+   break in a flex row, and it is on a POSITION rather than on a rarity — a
+   bonus tier jump also carries slot:'rare' and used to render hero-sized
+   wherever it landed. See openNextPack in ui.js. */
+.pullslot.rare{width:100%;margin-top:10px}
 /* Sized by HEIGHT against the viewport, not by column width. Eleven cards plus
    a headline Rare plus a bar do not fit a short window otherwise, and the first
    version overflowed at 1500x760 — a size this game is explicitly supposed to
    survive. Height-driven clamps shrink on a short page the way the mat does;
    width-driven ones cannot, because the column width does not know how tall
    the page is. Same lesson as fitBoard(); see LAYOUT.md. */
-.pullslot .cardface{width:auto;max-width:100%;height:clamp(80px,17vh,168px);margin:0;
+.pullslot .cardface{width:auto;max-width:100%;height:clamp(80px,21vh,200px);margin:0;
   /* `display:block`, because `.vfx` is an inline-block and an INLINE image
      inside one sits on the text baseline with a ~2px descender gap under it.
      That gap is the difference between a face-down slot and a revealed one, and
@@ -1364,14 +1376,44 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
      LOADED — so a freshly revealed card is 0px wide for a frame and pops out to
      its full width. Declaring the ratio reserves the width up front. */
   aspect-ratio:240/330}
-.pullslot.rare .cardface{height:clamp(112px,24vh,232px)}
+.pullslot.rare .cardface{height:clamp(112px,30vh,280px)}
 /* The Rare's face-down back must be the Rare's height, not a common's. It was
    the common clamp, so turning the last card over grew its row by 48px on top
    of everything else — the single biggest jump on this screen. */
-.pullslot.rare .packback{height:clamp(112px,24vh,232px)}
+.pullslot.rare .packback{height:clamp(112px,30vh,280px)}
 /* Reserved on every slot, revealed or not — see renderPackScreen(). 12px is the
    tallest of the two tags that can sit here (a ×N count; NEW is shorter). */
-.pullslot .vribbon{min-height:12px}
+/* `width:100%` is the load-bearing half and it is not cosmetic. A percentage
+   width does not contribute to a shrink-to-fit parent's INTRINSIC width, so this
+   makes `.pullslot` as wide as its card face and nothing else. Without it the
+   ribbon's own content sized the slot: a card carrying `1ST EDITION` + `MISPRINT`
+   widened its slot from 104px to 157px, which dropped the strip below seven per
+   row, added a row, and moved the whole box **175px** at the instant that card
+   was turned over — on the rarest pull a player will ever see. Two chips already
+   reached 140px. **Ribbon content must never decide strip geometry.**
+
+   The height that content needs is then reserved per PACK, in `renderPackScreen`,
+   not per card. See `chipRows` there.
+
+   15px is MEASURED, not chosen, and it is the taller of the two things that can
+   sit here: a `.pullnew` renders at 14px and a `.pulldup` at 15px (9px type plus
+   1px padding and 1px border, top and bottom). It reserved **12px** from the day
+   it was written — short of BOTH — so every card that was turned over grew its
+   own row by 3px and the box with it. That is the exact fault the empty ribbon
+   below exists to prevent, arriving through the ribbon that is not empty.
+
+   It hid for a fortnight because the two rows of a five-column grid absorbed it
+   into a rounding boundary; `probe.js` only started reporting it once its
+   `reveal-10` state stopped being a duplicate of `reveal-all` and could see a
+   strip revealed with the hero still face down. **Measure the thing you are
+   reserving for** — over 1,200 slots the populated heights are 14 and 15, and
+   nothing else. It is now only a FLOOR — the height a populated ribbon actually
+   needs is reserved by rendering the real one hidden underneath the card back,
+   which no number can get wrong. See `ribbonFor` in ui.js. */
+.pullslot .vribbon{width:0;min-width:100%;min-height:15px}
+/* Occupies its space and paints nothing. NOT `display:none`, which would reserve
+   nothing, and not `opacity:0`, which would still respond to a hover. */
+.vribbon.ghost{visibility:hidden}
 /* The count a duplicate arrives at. Deliberately quieter than NEW — it sits in
    the same slot and answers the same question, and a pack of eleven duplicates
    should not read as eleven announcements. */
@@ -1379,14 +1421,24 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
   border:1px solid var(--line);border-radius:3px;padding:1px 4px;background:rgba(0,0,0,.25)}
 .pullnew{font-size:8px;letter-spacing:.14em;color:#12161B;background:var(--amber);
   padding:0 4px;border-radius:2px;font-weight:700}
-.packback{height:clamp(80px,17vh,168px);aspect-ratio:240/330;border-radius:4px;
+.packback{height:clamp(80px,21vh,200px);aspect-ratio:240/330;border-radius:4px;
   background:linear-gradient(160deg,#2A3A44,#1A2530);border:1px solid #3C4E5A;
   display:flex;align-items:center;justify-content:center}
 .packback i{width:16px;height:16px;border:2px solid #4E626F;border-radius:50%;display:block}
 .packbar{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
 /* Always present, empty until the last card is over, so its arrival does not
-   move the grid. min-height is one line of its own type. */
-.packsum{font-size:10.5px;color:var(--matink);text-align:center;min-height:15px}
+   move the grid.
+
+   `line-height` and `min-height` are the SAME number on purpose, and that is the
+   whole fix. This reserved a bare `min-height:15px` for a line that actually
+   renders at 15.22px, so the box grew a fifth of a pixel at the exact moment the
+   summary arrived — the one thing the reservation exists to prevent. It survived
+   because a fifth of a pixel rounds away: `probe.js` reported the screen as
+   stable for a fortnight, and only started reporting it when the 26 Aug card
+   resize moved the box total across a .5 boundary. **A reservation guessed from
+   a font size is a reservation that is wrong by a fraction**; state the line box
+   instead, so it cannot drift with the font metrics either. */
+.packsum{font-size:10.5px;color:var(--matink);text-align:center;line-height:16px;min-height:16px}
 .packsum b{color:var(--stock);font-weight:600}
 
 /* Pull detail: the scan and your copy, side by side. The scan is what the card
@@ -1396,10 +1448,6 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .pulldetail .dcol{display:flex;flex-direction:column;align-items:center;gap:5px;max-width:270px}
 .pulldetail .dcol .lbl{font-size:8.5px;letter-spacing:.16em;color:var(--matink)}
 .pulldetail .pcard{width:262px}
-
-@media (max-width:820px){
-  .packgrid{grid-template-columns:repeat(4,1fr)}
-}
 
 /* ---- 5d: the collection browser ---- */
 /* height, NOT min-height, and the box must be allowed to shrink. The grid can

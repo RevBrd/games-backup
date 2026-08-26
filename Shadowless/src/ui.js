@@ -2712,11 +2712,21 @@ function openNextPack(setCode) {
   if (!UI.save || !takePack(UI.save, set)) return false;
   const seed = (Math.random() * 2147483647) | 0;
   const pk = openPack(CARD_DB, set, mulberry32(seed));
-  // The Rare comes out of packs.js first; it is shown LAST, because a reveal
-  // that opens on the best card has nowhere to go.
+  // The guaranteed Rare comes out of packs.js first; it is shown LAST, because
+  // a reveal that opens on the best card has nowhere to go.
   const order = pk.cards.slice(1).concat([pk.cards[0]]);
   UI.pack = {
     set: pk.set, firstEd: pk.firstEd, seed, order,
+    // `hero` is the ONE card the reveal is built around, and it is recorded here
+    // rather than sniffed later. A bonus tier jump also carries `slot: 'rare'`
+    // (deliberately — it draws from the Rare pool and takes the same 2:1 holo
+    // split), so `slot === 'rare'` is a question about ODDS and was read for a
+    // week as a question about LAYOUT: every jumped card rendered full-width and
+    // hero-sized wherever it happened to sit, which split the strip into
+    // fragments and opened ~7% of reveals on the best card in the pack — the
+    // exact thing the line above exists to prevent. Keep this derived where the
+    // order is decided, so the two cannot drift apart.
+    hero: order.length - 1,
     revealed: order.map(() => false),
     // Computed BEFORE granting, or every card is already owned by the time we ask.
     isNew: order.map(c => !isOwned(UI.save, c.id)),
@@ -2915,9 +2925,10 @@ function renderNewSave() {
 function renderPackScreen() {
   const p = UI.pack;
   const ov = el('div', 'packscreen');
-  // A stipend used to add a whole extra row here, and `hasstipend` tightened
-  // the eleven so the action bar still fitted at 768px. Borrowed Energy is drawn
-  // inside the pack now, so a pack is always eleven cards and the row is gone.
+  // A stipend used to add a whole extra row here, and `hasstipend` tightened the
+  // grid so the action bar still fitted at 768px. Borrowed Energy is drawn inside
+  // the pack now, so the extra row is gone and a pack is exactly PACK_SIZE cards
+  // — 8 since 25 Aug 2026, and read from the constant rather than written here.
   const box = el('div', 'packbox');
   const anyRevealed = p.revealed.some(Boolean);
   const allRevealed = p.revealed.every(Boolean);
@@ -2931,38 +2942,58 @@ function renderPackScreen() {
     : `${PACK_SIZE} cards`));
   box.appendChild(head);
 
+  // The ribbon a slot will carry once it is turned over, built the same way for
+  // both states. A face-down slot gets this EXACT element with `visibility:hidden`
+  // on it, which is what makes the reservation exact by construction rather than
+  // by a number somebody measured — for any chip count, any label, any viewport,
+  // forever. Three separate reservations on this screen were guessed and all
+  // three were wrong: the ribbon at 12px against 15, `.packsum` at 15 against
+  // 15.22, and a two-line estimate that was right for two chips and short for
+  // three. **If you can render the real thing and hide it, do that instead of
+  // measuring it.**
+  const ribbonFor = (c, i) => {
+    const tag = el('div', 'vribbon');
+    // NEW or a count, never both — they answer the same question and the
+    // interesting half of "not new" is HOW not-new. Trevor's ask, and the
+    // count is read live from the save rather than captured at open time, so
+    // a second copy in the same pack reads 2 then 3 rather than 2 then 2.
+    // ownedTotal already includes this pull: the pack is granted on open.
+    if (p.isNew[i]) tag.appendChild(el('span', 'pullnew', 'NEW'));
+    else tag.appendChild(el('span', 'pulldup', '×' + ownedTotal(UI.save, c.id)));
+    c.flags.forEach(f => {
+      const v = VARIANT_BY_KEY[f];
+      if (v) tag.appendChild(el('span', 'vchip c-' + v.family, v.label));
+    });
+    return tag;
+  };
   const grid = el('div', 'packgrid');
   p.order.forEach((c, i) => {
     const card = CARD_DB[c.id];
-    const isRare = c.slot === 'rare';
-    const slot = el('div', 'pullslot' + (isRare ? ' rare' : '') + (p.revealed[i] ? '' : ' hidden'));
+    // The hero is a POSITION, not a rarity — see openNextPack. A jumped Rare is
+    // an ordinary card in the strip on purpose: Trevor's call, 26 Aug 2026, that
+    // a Rare is recognisable on sight and is better as a bonus hiding in the
+    // crowd than as a second headline. Two hero cards means neither is one.
+    const isHero = i === p.hero;
+    const slot = el('div', 'pullslot' + (isHero ? ' rare' : '') + (p.revealed[i] ? '' : ' hidden'));
     if (!p.revealed[i]) {
       const back = el('div', 'packback');
       back.appendChild(el('i'));
       slot.appendChild(back);
-      // An EMPTY ribbon, always, exactly like the Active card's status row and
-      // for the same reason: a revealed card carries a NEW tag or a count, and
-      // if the face-down slot does not reserve that space then turning any card
-      // over grows its row, grows the grid, and shifts the whole centred box —
-      // including the cards you have not turned over yet. Measured at 1191x684:
-      // 16px per row, and the screen climbed 61px on the final reveal.
-      slot.appendChild(el('div', 'vribbon'));
+      // The REAL ribbon, hidden — not an empty one. Same reason the Active card
+      // always appends its status row: if the face-down slot does not reserve
+      // what the revealed one needs, turning any card over grows its row, grows
+      // the grid, and shifts the whole centred box including the cards you have
+      // not turned over yet. An *empty* ribbon reserved one line of nothing,
+      // which was right until a card carried two variant chips and wrapped.
+      // `visibility:hidden` occupies the space and paints nothing, so it cannot
+      // spoil the pull either.
+      const ghost = ribbonFor(c, i);
+      ghost.classList.add('ghost');
+      slot.appendChild(ghost);
       slot.onclick = () => { p.revealed[i] = true; render(); };
     } else {
       slot.appendChild(pullFace(card, c.flags));
-      const tag = el('div', 'vribbon');
-      // NEW or a count, never both — they answer the same question and the
-      // interesting half of "not new" is HOW not-new. Trevor's ask, and the
-      // count is read live from the save rather than captured at open time, so
-      // a second copy in the same pack reads 2 then 3 rather than 2 then 2.
-      // ownedTotal already includes this pull: the pack is granted on open.
-      if (p.isNew[i]) tag.appendChild(el('span', 'pullnew', 'NEW'));
-      else tag.appendChild(el('span', 'pulldup', '×' + ownedTotal(UI.save, c.id)));
-      c.flags.forEach(f => {
-        const v = VARIANT_BY_KEY[f];
-        if (v) tag.appendChild(el('span', 'vchip c-' + v.family, v.label));
-      });
-      slot.appendChild(tag);
+      slot.appendChild(ribbonFor(c, i));
       slot.onclick = () => { UI.detail = { id: c.id, flags: c.flags }; render(); };
     }
     grid.appendChild(slot);

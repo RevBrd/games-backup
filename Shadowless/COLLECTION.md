@@ -244,7 +244,7 @@ Two traps that surface here, both already documented and both live:
 
 - **`.colltile` sets `line-height:0`** for the scan it usually wraps, and line-height inherits. A
   missing tile has real text in it, so it has to set its own — this is the same bug that once cost
-  the pull-detail card 90px of height. See [LAYOUT.md](LAYOUT.md).
+  the pull-detail card 90px of height. See [INSPECTION.md](INSPECTION.md).
 - **The sigil is positioned absolutely, not as a flex child.** A sigil is a square viewBox with no
   intrinsic size, so as a flex item it resolves its basis from its own width and *sets* the row
   height instead of consuming what is left. Taking it out of flow sidesteps the whole problem.

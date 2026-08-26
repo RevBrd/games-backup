@@ -209,7 +209,7 @@ the one thing this file owes the layout, so it is stated here and the rules are 
 content in a 768px viewport with the Play button simply gone. The stub has no layout engine, so not
 one of them was visible to it. **The three CSS rules that hold the screen together each look wrong
 until you know what they protect**, and one of them is a `min-height` that must NOT be applied.
-*[All four, the rules, and the viewports they were verified at →](LAYOUT.md)* ·
+*[All four, the rules, and the viewports they were verified at →](SCREENS.md)* ·
 *[the instrument that found them →](INSPECTION.md)*
 
 ## Open

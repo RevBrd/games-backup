@@ -168,8 +168,17 @@ because there are fewer slots for the same odds to roll against. See "Still open
 **Since 25 Aug 2026, "exactly one Rare per pack" is the norm rather than a promise.** Each Uncommon
 slot and each Common slot carries a small independent chance to resolve as something better instead —
 TCG Pocket's tier-jump is the reference point, not anything WotC printed. A jumped card gets EXACTLY
-the guaranteed Rare slot's treatment: the same 2:1 holo split, and the same Reverse Holo exclusion,
+the guaranteed Rare slot's **odds**: the same 2:1 holo split, and the same Reverse Holo exclusion,
 because once a card is Rare-tier it has its own holo axis for the same reason the guaranteed slot does.
+
+**That word is *odds*, and the sentence was read as being about PRESENTATION.** Worth the line,
+because the misreading shipped and lasted a day. A jumped card carries `slot: 'rare'` in the data —
+correctly, since that names which pool it was drawn from — and the reveal screen read the same field
+to mean *hero*, so every jumped card rendered full-width and hero-sized wherever it happened to sit
+in the order. **A jumped Rare gets no special presentation at all**, not even a ribbon: Trevor's
+call, 26 Aug 2026, that a Rare is recognisable on sight and is better as a bonus hiding in the crowd
+than as a second headline. The general shape is worth more than the fix — **a field naming a card's
+ORIGIN is not a field naming its ROLE**, and one screen read it as both. *[The reveal →](SCREENS.md)*
 
 | Roll | Chance per card | Applies to |
 |---|---|---|
