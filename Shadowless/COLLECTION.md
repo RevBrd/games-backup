@@ -195,11 +195,21 @@ typography, which the lock covers), 1st Edition stamps the ①, Shadowless print
 card changes size — the marks are absolutely positioned inside a fixed box.
 
 **Adding a variant's in-play marking is a row in `SIGIL_MARKS` plus at most one CSS rule, and that
-seam is the point.** Reverse Holo and Misprint are deliberately absent from that table — they have
-scan treatments and no sigil treatment. **Trevor's spec for both is in [GRABBAG.md](GRABBAG.md)**,
-and note what it costs: Misprint mimicking formatting glitches means this game acquires artifacts
-that *look* like bugs, so `CLAUDE.md`'s "no authored defects" line has to change in the same commit
-or the next instance will dutifully fix them. Two rules keep it working and both were paid for with a wrong version:
+seam is the point.** **Reverse Holo is the only one deliberately absent** — it has a scan treatment
+and no sigil treatment, and the row in `SIGIL_MARKS` says so. Trevor's spec for it is in
+[GRABBAG.md](GRABBAG.md).
+
+**Misprint IS built on the sigil card, all three flavours, and this paragraph said otherwise for a
+fortnight.** `mp1` sets the rules text `white-space:nowrap` so it runs off the right edge and clips
+mid-sentence, `mp2` stretches the card and its art to the wrong aspect, and `mp3` inverts the four
+stock/ink custom properties so the whole card prints as a negative. **The doc being wrong is why
+nobody knew** — Trevor read this file, believed the feature unbuilt, and has not pulled one to find
+out otherwise (Misprint is 1-in-1,183 packs). Corrected 26 Aug 2026 after rendering all three.
+**Misprint expresses itself as a TYPESETTING failure here and as an IMAGE defect on the scan**, which
+is the distinction to preserve: same word, two media, two idioms.
+
+**So the game does now acquire artifacts that LOOK like bugs**, which is what Trevor predicted this
+would cost. `CLAUDE.md`'s "no authored defects" line carries the exception. Two rules keep it working and both were paid for with a wrong version:
 **`.sigil` must stay `position:relative`** (the marks are `position:absolute`, and without a
 positioned host they resolve against the page — a SHADOWLESS watermark painted across the whole
 board), and **`sigilOf` searches descendants, not just direct children** (the in-play sigil hangs off
@@ -210,7 +220,7 @@ board), and **`sigilOf` searches descendants, not just direct children** (the in
 |---|---|---|
 | Shiny | `hue-rotate(150deg) saturate(1.35)` — a palette shift, which is what "shiny" means in the mainline games. Shifts differently per card, so it reads as an alternate colouring rather than a filter | every line of ink turns teal, via `--ink`/`--ink2`; the sigil drawing takes the same rotation |
 | Reverse Holo | fine diagonal banding, `screen` | — |
-| Misprint | mp1 channel split · mp2 wrong aspect · mp3 inverted | — |
+| Misprint | mp1 channel split · mp2 wrong aspect · mp3 inverted | **all three, as TYPESETTING failures** — mp1 runs the rules text off the edge, mp2 stretches the card, mp3 prints it as a negative |
 | 1st Edition | ribbon only | the ① stamp, inside the art window |
 | Shadowless | ribbon only | **"SHADOWLESS" printed across the art window** in the title-screen face, plus the shadow A/B |
 

@@ -80,7 +80,7 @@ const UI = {
   detail: null,         // {card, flags} — the pull the detail overlay is showing
   collView: 'cards',    // 'cards' (every printing) | 'dex' (one per species)
   collFilter: 'all',    // 'all' | 'owned' | 'missing'
-  importing: false, importText: '', importErr: '',
+  importing: false, importText: '', importErr: '', importNote: '',
   // The Shadowless A/B, switched from the DEV tab. 'shadow' draws the art
   // window with a drop shadow and Shadowless removes it (correct real-world
   // scarcity). 'inverted' makes Shadowless the base state, matching our
@@ -3603,15 +3603,61 @@ function applyImportedSave(text) {
   return '';
 }
 
+// Reads a chosen file into UI.importText and re-renders. Guarded exactly like
+// downloadSave(): the smoke stub has no FileReader and no <input type="file">,
+// and a browser that refuses the picker must still leave the paste box working.
+// The file is never applied on its own — it fills the box, and the player still
+// presses Replace, because this sheet is the one place in the game that can
+// destroy a collection.
+function loadSaveFile(file) {
+  if (!file) return;
+  try {
+    const fr = new FileReader();
+    fr.onload = () => {
+      UI.importText = String(fr.result || '');
+      UI.importErr = '';
+      UI.importNote = file.name + '  ·  ' + Math.round(UI.importText.length / 1024) + ' KB loaded. Check it below, then Replace.';
+      render();
+    };
+    fr.onerror = () => {
+      UI.importErr = 'Could not read that file. Open it in a text editor and paste it instead.';
+      render();
+    };
+    fr.readAsText(file);
+  } catch (e) {
+    UI.importErr = 'This build cannot open files directly — paste the contents instead.';
+    render();
+  }
+}
+
 function renderImport() {
   const ov = el('div', 'overlay');
   const box = el('div', 'sheet collsheet');
   box.appendChild(el('h2', null, 'Import a save'));
   box.appendChild(el('p', 'dimtxt',
-    'Paste an exported collection. This REPLACES what you have now, so export the current one first if you want to keep it.'));
+    'Choose an exported collection file, or paste one in. This REPLACES what you have now, so export the current one first if you want to keep it.'));
+
+  // A real exported save is tens of kilobytes, which is more than anyone will
+  // paste by hand — Trevor could not get his own 23 KB file into the box, which
+  // is what this exists for. The <input> is built defensively because none of
+  // this exists in the smoke stub.
+  try {
+    const pick = el('div', 'filepick');
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = '.json,application/json';
+    inp.onchange = () => loadSaveFile(inp.files && inp.files[0]);
+    const btn = el('button', 'btn', 'Choose a file…');
+    btn.onclick = () => { if (typeof inp.click === 'function') inp.click(); };
+    pick.appendChild(btn);
+    pick.appendChild(inp);
+    if (UI.importNote) pick.appendChild(el('span', 'fileok', UI.importNote));
+    box.appendChild(pick);
+  } catch (e) { /* no picker here; the paste box below still works */ }
+
   const ta = el('textarea');
   ta.value = UI.importText || '';
-  ta.oninput = () => { UI.importText = ta.value; };
+  ta.oninput = () => { UI.importText = ta.value; UI.importNote = ''; };
   box.appendChild(ta);
   if (UI.importErr) box.appendChild(el('p', 'verr', UI.importErr));
   const bar = el('div', 'actionbar');
@@ -3622,7 +3668,7 @@ function renderImport() {
     render();
   };
   const cancel = el('button', 'btn ghost', 'Cancel');
-  cancel.onclick = () => { UI.importing = false; UI.importErr = ''; render(); };
+  cancel.onclick = () => { UI.importing = false; UI.importErr = ''; UI.importNote = ''; render(); };
   bar.appendChild(go); bar.appendChild(cancel);
   box.appendChild(bar);
   ov.appendChild(box);

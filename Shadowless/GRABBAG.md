@@ -34,13 +34,27 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
 
 - Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
 - Booster pack selection screen (medium item, raise it for detail first)
-- **The coin still moves the board a hair, and this one is #27's rather than Trevor's.** `probe.js`
-  at 1191x684 reports zoom 0.892 -> 0.893 on both coin states: the centre line grows from 4px to 5px
-  while a coin is in the air, so `fitBoard()` rescales everything. Same class as the Knock Out banner
-  and the targeting prompt that #25 fixed — [LAYOUT.md](LAYOUT.md) says everything on that strip must
-  be out of flow, and the coin is *supposed* to be the zero-height one. Verified pre-existing against
-  the pre-26-Aug build, so it is not fallout from the pack work. Invisible at 1600x900 and above.
-- Missing visual rarity variants for sigil cards - Reverse Holo reuses the same filter as the scan card if possible. Misprint mimics visual formatting glitches. Text runs off the screen, the sigil is out of frame, etc. The "no intentional bugs" line in the CLAUDE.md will need to be changed. Decided with #4 (the Sonnet 5 PACKS.md creator) but I think the documentation was lost. Perfectly open to relitagation.
+- **The board grows 1px while a coin is in the air, and it is the ACTION BAR rather than the coin.**
+  #27's, not Trevor's, and the first version of this note blamed the wrong element — worth keeping
+  because the symptom points somewhere else entirely. `probe.js` at 1191x684 reports zoom 0.892 ->
+  0.893 and the centre line growing 4px -> 5px, which reads as *something on the centre line is in
+  flow*. It is not: the coin is `position:absolute;height:0` and always was. **The bar swaps a 25px
+  `btn end` for a 14px `barmsg`, so it shrinks 36px -> 34px, and `fitBoard()` grows the board into
+  the 2px that just came free.** The centre line growing is the *result* of the zoom, not the cause.
+  Same family as the pack reveal's three reservations: a container whose height depends on which of
+  two different-height things is in it. The fix is probably one `min-height` on `.actionbar` sized to
+  a button, but it is the board, so it is an ask rather than a do. Verified pre-existing against the
+  pre-26-Aug build. Invisible at 1600x900 and above. **Nothing anywhere records a reason for leaving
+  it** — I looked, since Trevor thought #25 might have had one, and #25's own notes are about the
+  Knock Out banner and the targeting prompt rather than this. Absent reasoning is not consent either
+  way; treat it as open.
+- **Missing sigil-card treatment for Reverse Holo** — reuse the same filter as the scan card if
+  possible. `SIGIL_MARKS` has the row commented as absent *by design*, so this is a row plus at most
+  one CSS rule. **The Misprint half of this note is DONE and has been for a while** — all three
+  flavours render on the sigil card: mp1 runs the rules text off the right edge, mp2 stretches the
+  card and its art, mp3 prints the whole thing as a negative. `COLLECTION.md` said they were absent
+  and that is why nobody knew; corrected 26 Aug 2026. Trevor has not pulled one — Misprint is
+  1-in-1,183 packs and he is 162 in.
 - Introductions for rare cards when pulled, light for RH, heavy for Shadowless, all cheap. I have ideas about this one, whoever takes it, let's chat before we build.
 
 ### Rules

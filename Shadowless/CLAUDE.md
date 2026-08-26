@@ -9,8 +9,16 @@ the art frame. A set-printing term is the right register for a project whose rea
 pool, and the collection's games carry their own names rather than licensed ones. Anything still
 reading "Pokemon TCG" in code or data is the old placeholder.
 
-**This game is sincere. It has no authored defects.** Bugs are bugs — fix them freely. Nothing in
-it is pretending to be broken, and there is no register of intentional artifacts to check against.
+**This game is sincere and bugs are bugs — fix them freely.** Nothing in it is pretending to be
+broken, with **one narrow exception you must know about before you fix it**: a **Misprint** card is a
+collectible variant that renders as a *deliberately* broken card. On the real scan it is an image
+defect; on the Sigil Card it is a **typesetting** failure — rules text running off the right edge and
+clipping mid-sentence (`mp1`), a card stretched to the wrong aspect (`mp2`), or the whole card printed
+as a negative (`mp3`). All three are in `SIGIL_MARKS` and `style.css`, all three are wanted, and a
+card showing one is **1-in-1,183 packs** rather than a rendering bug you have just found.
+
+**That is the whole register.** Anything else that looks broken is broken. *[What each flavour does
+and why they are separate variant keys →](COLLECTION.md)*
 
 ## Read this first: the HTML is a build artifact
 
