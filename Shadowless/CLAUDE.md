@@ -307,14 +307,14 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   tier at a small independent chance. **Rebalancing the four per-slot cosmetic axes (Reverse Holo,
   Shiny, Shadowless, Misprint) to restore the pre-shrink pacing is deliberately deferred**, tracked as
   its own open item in [PACKS.md](PACKS.md).
-- **Job 12d** - Scheduled document pass and grab bag run.
+- **Job 12d** - Scheduled document pass and grab bag run. More UI, maybe more AI.
 - **Job 13** - Rulings, cards, and AI logic additions for Promo cards up to Team Rocket.
 - **Job 14** - Maintenance passes in the shape of Job 12
 - **Job 15** - Deck autobuilder overhaul, if ready to do so.
 - **Job 16+** - Future sets and maintenance passes
 
 
-- **Base Set 2 and Legendary Collection are deprioritised, and the reason is that they are cheap
+- **Base Set 2 and Legendary Collection are canceled except for cards that exist nowhere else, and the reason is that they are cheap
   rather than despite it.** 124 printings for **zero** new behaviours and 110 for twenty. They add
   collectibles the player already owns, which is the worst version of the chase — Trevor's call,
   15 Aug 2026, to bring one back later as an *improvement* to progression rather than as structure.
