@@ -210,15 +210,11 @@ is the most important design problem left after the tutorial engine exists.
 ## Credits
 
 - **Trevor** — the concept, in full: the endless-tutorial RPG, Glim, and Glim being trapped too.
-- **Claude Fable 5** — Job 1 in its entirety. The rites, the fourteen attributes and the sixteen
+- **Claude Fable 5** Aethermoor 0 — Job 1 in its entirety. The rites, the fourteen attributes and the sixteen
   Aspects, the three origins, Glim's voice, the whole visual language, and the loading bar that
   never finishes.
-- **Claude Opus 5** (2026-08-04) — port to Claude Code, this document, four bug fixes (sheet
-  layout, stamp collision, dock overlap, the dead `personalize` stub), and small QoL.
-- **Claude Opus 5** (2026-08-05) — Job 2: the lesson engine, the first four interlocking lessons,
-  the persistent load ribbon, the attention observer, and dev mode. Also the arguments for
-  attention-determined endings, for interconnection decaying as an arc rather than mixing, and for
-  the `Continue` tooltip carrying the Phase 2 payoff.
+- **Claude Opus 5** Aethermoor 1 (2026-08-04-5) — port to Claude Code, this document, four bug fixes (sheet
+  layout, stamp collision, dock overlap, the dead `personalize` stub), and small QoL, the lesson engine, the first four interlocking lessons, the persistent load ribbon, the attention observer, and dev mode. Also the arguments for attention-determined endings, for interconnection decaying as an arc rather than mixing, and for the `Continue` tooltip carrying the Phase 2 payoff.
 
 ## Marquee billing
 
