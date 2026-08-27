@@ -2070,6 +2070,25 @@ class Engine {
       if (v.v === 'SEARCH_BASIC_TO_BENCH') {
         if (p.bench.length >= this.cfg.benchMax) return { ok: false, why: 'Bench is full' };
       }
+      if (v.v === 'REQUIRE_EQUAL_ENERGY') {
+        // Sabrina's Abra, Synchronize. "can't be used unless Sabrina's Abra and
+        // the Defending Pokemon have the same number of Energy cards attached."
+        //
+        // CARDS, not symbols — a Double Colorless is one card here even though it
+        // pays for two, which is the same Energy-versus-Energy-card distinction
+        // the basic-only verbs turn on. See Rulings/ENERGY-VS-ENERGY-CARD.md.
+        //
+        // It is a COST-phase gate rather than a damage-shaping no-op so that the
+        // attack is refused before the turn is spent, and so the AI never scores
+        // a move it cannot make.
+        const meSlot = this.state.players[pi].active;
+        const defSlot = this.state.players[1 - pi].active;
+        const mine = meSlot ? meSlot.energy.length : 0;
+        const theirs = defSlot ? defSlot.energy.length : 0;
+        if (mine !== theirs) {
+          return { ok: false, why: `Energy must match (${mine} vs ${theirs})` };
+        }
+      }
       if (v.v === 'REQUIRE_DEF_STATUS') {
         const def = this.state.players[1 - pi].active;
         if (!def || !def.status[v.s]) return { ok: false, why: `Defending Pokemon must be ${v.label || v.s}` };
@@ -3606,6 +3625,11 @@ class Engine {
     // Confusion happens "after doing damage". Kept separate from pendingStatus
     // because that list goes to the DEFENDER and is gated on their Barrier,
     // which has no bearing on what a Pokemon does to itself.
+    // Consequences a DAMAGE-SHAPING coin bought, held until the damage has landed.
+    // `pendingStatus` is the same idea and predates this; these are the ones that
+    // are not statuses — a Bench splash, a snipe, a Barrier. Kept as descriptors
+    // rather than closures so a log or a test can read what is owed.
+    const pendingHeads = [];
     const selfStatus = [];
     for (const v of script) {
       if (v.v === 'FLIP_OR_NOTHING') { if (!this.flip('attack succeeds?')) nothing = true; }
@@ -3674,6 +3698,19 @@ class Engine {
         if (v.onTails ? !paid : paid) {
           base = v.base + v.bonus;
           if (v.statusOnHeads) pendingStatus.push(v.statusOnHeads);
+          // THREE MORE CONSEQUENCES THIS COIN CAN CARRY — Job 13, and every one
+          // of them is here rather than in its own verb for the reason stated
+          // above: two verbs flip twice, and a card that says "if heads, X and Y"
+          // cannot do X without Y. Diamond Dust paralyses AND splashes their
+          // Bench on one coin; Lightning Burn snipes on heads or hurts itself on
+          // tails; Fly raises a Barrier on the heads that lands the damage.
+          //
+          // Deferred to `pendingHeads` for the same reason `statusOnHeads` is
+          // deferred: this phase runs BEFORE the damage, and all three must land
+          // after it and respect a Barrier where a Barrier applies.
+          if (v.benchSplashOnHeads) pendingHeads.push({ kind: 'BENCH_SPLASH', ...v.benchSplashOnHeads });
+          if (v.snipeOnHeads) pendingHeads.push({ kind: 'SNIPE', ...v.snipeOnHeads });
+          if (v.barrierOnHeads) pendingHeads.push({ kind: 'BARRIER' });
           if (v.discardOnHeads) {
             const got = this.takeEnergy(atk, v.discardOnHeads.n || 1, v.discardOnHeads.t || null,
               (a && a.opts && a.opts.costUids) || null);
@@ -3681,6 +3718,13 @@ class Engine {
             if (got.length) this.log(`${card.name} discards ${got.length} Energy.`, 'eff');
           }
           this.log(`${paid ? 'Heads' : 'Tails'} -> ${base} damage.`);
+        } else if (v.nothingOnTails) {
+          // Fly. "if tails, this attack does nothing (not even damage)" — which is
+          // FLIP_OR_NOTHING's outcome reached by THIS verb's coin rather than by a
+          // second one. Stacking the two would flip twice and could raise the
+          // Barrier on an attack that did nothing.
+          nothing = true;
+          this.log(`${paid ? 'Heads' : 'Tails'} -> the attack does nothing.`);
         } else {
           base = v.base;
           pendingRecoil += v.recoil;
@@ -3688,6 +3732,73 @@ class Engine {
           if (v.recoil) this.log(`${face} -> ${base} damage, and ${card.name} will take ${v.recoil}.`);
           else this.log(`${face} -> ${base} damage.`);
         }
+      } else if (v.v === 'BIRTHDAY') {
+        // _____'s Pikachu, Birthday Surprise. The one card in the corpus whose
+        // damage depends on the calendar, and the only thing in the whole engine
+        // that reads the world outside the game.
+        //
+        // THAT BREAKS SEEDED REPRODUCIBILITY AND IT IS WORTH KNOWING BEFORE YOU
+        // CHASE IT AS A BUG. "Replay this seed" is exact everywhere else; on this
+        // one card a match recorded on 31 July replays differently in August,
+        // because the birthday branch consumes a coin the ordinary branch does
+        // not, and every flip after it shifts. Nothing is wrong — the card is a
+        // joke about the date and cannot be faithful and deterministic at once.
+        //
+        // `cfg.today` exists so a test can pin the date rather than skipping the
+        // card for 364 days a year, and so a future player profile can supply a
+        // real birthday instead of the one hard-coded in the effect script.
+        // Trevor, 26 Aug 2026: a profile screen is the right home for this and
+        // this job is not the one that builds it.
+        // A BIRTHDAY IS A LOCAL DATE AND new Date('2026-07-31') IS NOT ONE. That
+        // string parses as UTC midnight, so west of Greenwich it reads back as the
+        // 30th — this card would have fired a day early for most of the Americas,
+        // one day a year, looking exactly like an unlucky coin. Caught by a probe
+        // that pinned the date and never once saw the bonus.
+        //
+        // So a YYYY-MM-DD string is split rather than parsed, and the live path
+        // stays on getMonth/getDate, which have always been local.
+        let moNow, dyNow;
+        const pin = this.cfg.today;
+        if (typeof pin === 'string' && /^\d{4}-\d{2}-\d{2}/.test(pin)) {
+          const bits = pin.slice(0, 10).split('-');
+          moNow = +bits[1]; dyNow = +bits[2];
+        } else {
+          const when = pin ? new Date(pin) : new Date();
+          moNow = when.getMonth() + 1; dyNow = when.getDate();
+        }
+        const itIs = moNow === v.month && dyNow === v.day;
+        if (!itIs) {
+          base = v.base;
+          this.log(`It is not ${v.whose || 'their'} birthday -> ${base} damage.`);
+        } else if (this.flip('birthday surprise?')) {
+          base = v.base + v.bonus;
+          this.log(`It IS ${v.whose || 'their'} birthday, and heads -> ${base} damage!`);
+        } else {
+          base = v.base;
+          this.log(`It IS ${v.whose || 'their'} birthday, but tails -> ${base} damage.`);
+        }
+      } else if (v.v === 'DMG_PER_HEAD_IN_PLAY') {
+        // Team Rocket's Meowth, Miraculous Comeback. "Flip a number of coins equal
+        // to the number of Pokemon IN PLAY" — both sides, Actives and Benches —
+        // "10 damage times the number of heads. Then it does 10 damage times the
+        // number of TAILS to itself."
+        //
+        // ONE ROLL, BOTH HALVES, which is why the self-damage is a parameter here
+        // and not a RECOIL verb beside it: heads and tails come out of the same
+        // coins and must sum to the count. Two verbs would flip twice and could
+        // pay full damage and take none, which the card cannot do.
+        //
+        // Trevor's note is the strategy that falls out of it: "to enter play when
+        // a lot of pokemon occupy both benches against a strong opponent and
+        // attempt a Kamikaze" — a wide board is more coins, and more of both.
+        const inPlay = this.allSlots(pi).length + this.allSlots(1 - pi).length;
+        let mcHeads = 0;
+        for (let i = 0; i < inPlay; i++) if (this.flip(`coin ${i + 1}/${inPlay}`)) mcHeads++;
+        const mcTails = inPlay - mcHeads;
+        base = v.per * mcHeads;
+        pendingRecoil += v.per * mcTails;
+        this.log(`${inPlay} Pokemon in play: ${mcHeads} head(s) -> ${base} damage, `
+          + `${mcTails} tail(s) -> ${v.per * mcTails} to itself.`);
       } else if (v.v === 'DMG_PER_DEF_ENERGY') {
         const n2 = def ? def.energy.length : 0;
         base = v.base + v.per * n2;
@@ -3831,6 +3942,35 @@ class Engine {
       else if (def) this.applyStatus(def, st);
     }
     for (const st of selfStatus) this.applyStatus(atk, st);
+    // What a damage-shaping coin bought, now that the damage has landed. Each is
+    // gated the way its standalone equivalent is gated: a Bench hit checks
+    // protection PER TARGET rather than inheriting the defender's, because a
+    // protected Pokemon should be protected wherever it is standing.
+    for (const h of pendingHeads) {
+      if (h.kind === 'BARRIER') {
+        // On SELF, so the defender's protection has no bearing on it.
+        atk.effects.push({ kind: 'PREVENT_ALL_EFFECTS', expireAtStartOfTurn: s.turn + 2 });
+        this.log(`${card.name} is out of reach - all effects of attacks are prevented during the opponent's next turn.`, 'eff');
+      } else if (h.kind === 'BENCH_SPLASH') {
+        const side = h.side === 'mine' ? me : you;
+        for (const b of side.bench) {
+          if (this.effectsBlocked(b)) { this.log(`${this.nameOf(b)} is protected.`, 'eff'); continue; }
+          this.dealDamage(atk, b, h.n, { noWR: true });
+          this.log(`${h.n} to ${this.nameOf(b)} on the Bench.`, 'eff');
+        }
+      } else if (h.kind === 'SNIPE') {
+        // "and if your opponent has any Benched Pokemon, choose 1 of them" — the
+        // Bench only, and a coin that came up heads against an empty Bench simply
+        // buys nothing.
+        if (!you.bench.length) { this.log('They have no Benched Pokemon to hit.', 'eff'); continue; }
+        const bi = (a && a.opts && a.opts.bench !== undefined && you.bench[a.opts.bench])
+          ? a.opts.bench : this.pick(you.bench.length);
+        const tgt = you.bench[bi];
+        if (this.effectsBlocked(tgt)) { this.log(`${this.nameOf(tgt)} is protected.`, 'eff'); continue; }
+        this.dealDamage(atk, tgt, h.dmg, { noWR: true });
+        this.log(`${h.dmg} to ${this.nameOf(tgt)} on the Bench.`, 'eff');
+      }
+    }
     for (const v of script) {
       switch (v.v) {
         // `s` may be a list. Venom Powder applies Confused AND Poisoned on one
@@ -4447,6 +4587,49 @@ class Engine {
             bench[bi].energy.push(e);
           });
           this.log(`${card.name} scatters ${pile.length} Energy onto the Bench.`, 'eff');
+          break;
+        }
+        // ---- Job 13, the coin batch --------------------------------------
+        case 'SWITCH_DEFENDER_CHOOSE_ON_FLIP': {
+          // Dark Persian's Tempt. SWITCH_DEFENDER_CHOOSE on a coin — the ATTACKER
+          // drags one of their Benched up, which is Gust of Wind's effect and the
+          // reason Trevor's note prices it against Ninetales' Lure and then
+          // discounts it again for the flip.
+          //
+          // "If your opponent has any Benched Pokemon, FLIP a coin" — no Bench
+          // means no coin at all, not a coin that cannot pay. The attack stays
+          // legal and simply does nothing, unlike Fling and Drag Off which print a
+          // hard requirement and get REQUIRE_OPP_BENCH instead.
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (!you.bench.length) { this.log('They have no Benched Pokemon to tempt.', 'eff'); break; }
+          if (!this.flip(v.label || 'switch them?')) break;
+          const tpBi = (a && a.opts && a.opts.bench !== undefined && you.bench[a.opts.bench])
+            ? a.opts.bench : this.pick(you.bench.length);
+          const tpUp = you.bench[tpBi];
+          const tpOld = you.active;
+          you.bench.splice(tpBi, 1);
+          you.active = tpUp;
+          if (tpOld) { clearStatus(tpOld); you.bench.push(tpOld); }
+          this.log(`${this.nameOf(tpUp)} is tempted into the Active spot.`, 'eff');
+          break;
+        }
+        case 'DISCARD_ENERGY_COIN': {
+          // Moltres' Hyper Flame. ONE coin choosing between two DIFFERENT discards
+          // — one Fire on heads, everything on tails — which is the same
+          // one-coin-many-consequences rule as FLIP_BONUS_OR_RECOIL, except that
+          // here the coin does not touch the damage at all, so it does not belong
+          // in the damage-shaping phase.
+          //
+          // "If you can't discard Energy cards, this attack does nothing" is
+          // checked in the COST phase by REQUIRE_SELF_ENERGY on the script, not
+          // here: an attack that does nothing should be illegal rather than a
+          // wasted turn the player has already spent.
+          const hot = this.flip(v.label || 'discard just one?');
+          const take = hot ? (v.heads && v.heads.n) || 1 : atk.energy.length;
+          const type = hot ? (v.heads && v.heads.t) || null : null;
+          const burned = this.takeEnergy(atk, take, type, (a && a.opts && a.opts.costUids) || null);
+          burned.forEach(e => me.discard.push(e));
+          this.log(`${hot ? 'Heads' : 'Tails'} -> ${card.name} discards ${burned.length} Energy.`, 'eff');
           break;
         }
         // ---- Job 13, the promo batch ------------------------------------

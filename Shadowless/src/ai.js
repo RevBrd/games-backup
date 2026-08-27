@@ -425,7 +425,17 @@ class AI {
         case 'STATUS_ON_FLIP': for (const st of [].concat(v.s)) statuses[st] = 0.5; break;
         case 'RECOIL': selfDmg += v.n; selfWorst += v.n; break;
         case 'RECOIL_ON_FLIP': selfDmg += v.n * 0.5; selfWorst += v.n; pSelfWorst *= 0.5; break;
-        case 'BENCH_SPLASH': flags.benchSplash = v.n; break;
+        // `side` WAS DROPPED HERE — Job 13. The verb has taken a side since Team
+        // Rocket (Poison Vapor hits THEIRS only, the Selfdestruct family hits
+        // both) and this scorer read only the number, so Dark Arbok was charged
+        // for wrecking a Bench it never touches. Both printings, on a live
+        // bracket. Same shape as the `base` that went missing from
+        // DMG_PER_COUNTER_SELF: one verb, two implementations, nothing asserting
+        // they agree.
+        case 'BENCH_SPLASH':
+          flags.benchSplash = v.n;
+          flags.benchSplashSide = v.side || 'both';
+          break;
         case 'SWITCH_DEFENDER_CHOOSE': flags.drag = true; break;
         case 'PREVENT_ALL_DMG_SELF_ON_FLIP': flags.shield = 0.5; break;
         case 'BARRIER': flags.shield = 1; break;
@@ -460,8 +470,20 @@ class AI {
           split(() => [[1, defSlot ? Math.ceil(this.remainingHP(defSlot) / 2 / 10) * 10 : 0]]);
           break;
         case 'FLIP_BONUS_OR_RECOIL':
-          split(() => [[0.5, v.base + v.bonus], [0.5, v.base]]);
-          selfDmg += v.recoil * 0.5; selfWorst += v.recoil; pSelfWorst *= 0.5; break;
+          // `nothingOnTails` is Fly: the tails branch pays NO damage at all rather
+          // than the base, so the split is against 0. Everything else this verb
+          // can carry rides the same 50%, because it is the same coin.
+          split(() => v.nothingOnTails
+            ? [[0.5, v.base + v.bonus], [0.5, 0]]
+            : [[0.5, v.base + v.bonus], [0.5, v.base]]);
+          selfDmg += v.recoil * 0.5; selfWorst += v.recoil; pSelfWorst *= 0.5;
+          if (v.barrierOnHeads) flags.shield = 0.5;
+          if (v.benchSplashOnHeads) {
+            flags.benchSplash = v.benchSplashOnHeads.n * 0.5;
+            flags.benchSplashSide = v.benchSplashOnHeads.side || 'both';
+          }
+          if (v.snipeOnHeads) flags.snipe = { n: 1, dmg: v.snipeOnHeads.dmg * 0.5 };
+          break;
         case 'STATUS_COIN_EITHER':
           statuses[v.heads] = 0.5; statuses[v.tails] = 0.5; break;
         case 'TOXIC':
@@ -563,6 +585,35 @@ class AI {
         case 'SWITCH_DEFENDER_FIRST': flags.dragFirst = true; break;
         case 'SCATTER_OWN_ENERGY': flags.scatter = true; break;
         case 'MOVE_DEF_ENERGY_TO_BENCH': flags.stripToBench = true; break;
+        // ---- Job 13, the coin batch ----
+        // Miraculous Comeback. Both halves come off ONE roll of N coins, so the
+        // expectation is exact and symmetric: half the coins land, half do not.
+        // Enumerating N+1 outcomes would be honest too but tells the scorer
+        // nothing it does not already get from the mean at these sizes.
+        case 'DMG_PER_HEAD_IN_PLAY': {
+          // rawOutcomes works from SLOTS and has no `pi` or `E` in scope — the
+          // side comes off the attacker, the way DMG_PER_OWN_BENCH already does it.
+          const mcSide = this.E.sideOf(atkSlot);
+          const inPlay = this.E.allSlots(mcSide).length + this.E.allSlots(1 - mcSide).length;
+          split(() => [[1, v.per * inPlay / 2]]);
+          selfDmg += v.per * inPlay / 2; selfWorst += v.per * inPlay; pSelfWorst *= 0.5;
+          break;
+        }
+        // Tempt. Half a Gust of Wind, and Trevor prices it below one: "only
+        // useful in the same pattern as Ninetales' Lure, except it relies on a
+        // coin flip and should be treated with even less value because of that."
+        case 'SWITCH_DEFENDER_CHOOSE_ON_FLIP': flags.drag = 0.5; break;
+        // Hyper Flame. Heads burns one, tails empties the slot — so the EXPECTED
+        // discard is halfway between, and `discardAll` is not set because half
+        // the time it is not an emptying at all. discardSilence reads this.
+        case 'DISCARD_ENERGY_COIN':
+          flags.energyDiscard = (flags.energyDiscard || 0) + 1;
+          flags.discardCoin = v;
+          break;
+        // Birthday Surprise. Scored at its floor on all but one day of the year,
+        // which is correct rather than pessimistic — and the engine, not the
+        // scorer, decides which day it is.
+        case 'BIRTHDAY': split(() => [[1, v.base]]); break;
         // ---- Job 13, the promo batch ----
         case 'ENERGY_FROM_DISCARD_TO_SELF': flags.absorb = v.n; break;
         case 'DAMAGE_HALVE_SELF': flags.halveSelf = true; break;
@@ -772,7 +823,10 @@ class AI {
       }
       // Jam is Confusion by another name, so it reads the same board.
       if (f.flags.jam) s += W.confuse * survives * 0.5 * turnScale;
-      if (f.flags.drag && you.bench.length) s += W.drag;
+      // Scaled the way `dragWeak` directly below already is, so Tempt's
+      // coin-gated drag is worth half of Gust of Wind's certain one. Existing
+      // callers pass `true` and are unchanged.
+      if (f.flags.drag && you.bench.length) s += W.drag * (f.flags.drag === true ? 1 : f.flags.drag);
       // Whirlwind drags too, but THEY choose, so they send up their best answer.
       if (f.flags.dragWeak && you.bench.length) s += W.drag * 0.5 * (f.flags.dragWeak === true ? 1 : f.flags.dragWeak);
       // Amnesia. Shuts off one attack rather than making them flip for all of
@@ -869,7 +923,9 @@ class AI {
         s += Math.min(n, this.remainingHP(b)) * W.benchDamageFoe;
         if (this.remainingHP(b) <= n) s += W.knockout * 0.6;
       }
-      for (const b of me.bench) {
+      // Only when the splash actually reaches our own side. Poison Vapor does
+      // not, and pretending otherwise made a one-sided attack look like a trade.
+      for (const b of (f.flags.benchSplashSide === 'theirs' ? [] : me.bench)) {
         s -= Math.min(n, this.remainingHP(b)) * W.benchDamageMine;
         if (this.remainingHP(b) <= n) s -= W.selfKO * 0.6;
       }

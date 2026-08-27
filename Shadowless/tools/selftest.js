@@ -91,7 +91,7 @@ const REMAINING = {
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
   // remaining 25 are Neo-era promos nobody has written logic for. A 25 that never
   // moves again is the correct resting state for this entry, not an unfinished one.
-  basep: 37,
+  basep: 29,
 };
 
 console.log('\nCard coverage');
@@ -359,6 +359,7 @@ const UNSCORED_ON_PURPOSE = new Set([
   'REQUIRE_DEF_STATUS',
   'REQUIRE_SELF_ENERGY',
   'REQUIRE_OPP_BENCH',
+  'REQUIRE_EQUAL_ENERGY',
 
   // Mankey's Mischief — shuffle the opponent's deck. Unscored SCORES AS ZERO,
   // which is the honest number: this bot has no memory of deck order, so it

@@ -37,6 +37,10 @@
 //     COST_DISCARD_ENERGY {n, t}   discard n Energy providing type t, attached to self
 //     COST_DISCARD_ALL_ENERGY      discard every Energy attached to self
 //     ONCE_WHILE_IN_PLAY           this attack may be used only once per stay in play
+//     REQUIRE_EQUAL_ENERGY         illegal unless self and the defender have the
+//                                  SAME NUMBER OF ENERGY CARDS attached. Cards,
+//                                  not symbols — a Double Colorless counts once
+//                                  though it pays for two (Synchronize)
 //     REQUIRE_DEF_STATUS {s, label}  illegal unless the defender has status s
 //     REQUIRE_SELF_DAMAGED         illegal unless self has damage to remove
 //     REQUIRE_OPP_BENCH            illegal unless the opponent has a Benched
@@ -123,7 +127,9 @@
 //                                  the damage is DEALT — but it belongs beside
 //                                  them because it changes the number that lands
 //     FLIP_BONUS_OR_RECOIL {base, bonus, recoil, label,
-//                           statusOnHeads, discardOnHeads: {n, t}}
+//                           statusOnHeads, discardOnHeads: {n, t},
+//                           benchSplashOnHeads: {n, side}, snipeOnHeads: {dmg},
+//                           barrierOnHeads, nothingOnTails}
 //                                  ONE flip governs EVERYTHING listed: heads =>
 //                                  base + bonus, plus a status on the defender
 //                                  and/or an Energy discard off self; tails =>
@@ -203,6 +209,37 @@
 //     SCATTER_OWN_ENERGY           move EVERY Energy off the attacker onto your
 //                                  own Bench, distributed as you like; DISCARD it
 //                                  all if you have no Bench (Energy Bomb)
+//     DMG_PER_HEAD_IN_PLAY {per}   one coin per Pokemon IN PLAY — both sides,
+//                                  Actives and Benches — damage = per * heads,
+//                                  and self takes per * TAILS off the SAME roll.
+//                                  The self-damage is a parameter rather than a
+//                                  RECOIL beside it because the two halves must
+//                                  sum to the coin count (Miraculous Comeback)
+//     BIRTHDAY {month, day, base, bonus, whose}
+//                                  base damage, except on one calendar date when
+//                                  a coin pays the bonus. THE ONLY THING IN THE
+//                                  ENGINE THAT READS THE WORLD OUTSIDE THE GAME,
+//                                  so a seeded replay of a match played on that
+//                                  date does NOT reproduce in another month —
+//                                  the birthday branch consumes a coin the
+//                                  ordinary branch does not. `cfg.today` pins it
+//                                  for tests and is where a player profile would
+//                                  eventually supply a real date
+//                                  (_____'s Pikachu, Birthday Surprise)
+//     SWITCH_DEFENDER_CHOOSE_ON_FLIP {label}
+//                                  flip; heads => the ATTACKER drags one of their
+//                                  Benched into the Active spot. Gust of Wind on
+//                                  a coin. No Bench means no coin at all rather
+//                                  than a coin that cannot pay, so the attack
+//                                  stays legal and does nothing (Tempt)
+//     DISCARD_ENERGY_COIN {heads: {n, t}, label}
+//                                  ONE coin choosing between two DIFFERENT
+//                                  discards off self: `heads` on heads, EVERYTHING
+//                                  on tails. Pair it with REQUIRE_SELF_ENERGY for
+//                                  "if you can't discard, this attack does
+//                                  nothing" — an attack that can do nothing should
+//                                  be refused rather than waste the turn
+//                                  (Hyper Flame)
 //     ENERGY_FROM_DISCARD_TO_SELF {n}
 //                                  take UP TO n Energy cards out of your discard
 //                                  pile and ATTACH them to the attacker. The
@@ -1984,6 +2021,57 @@ const EFFECTS = {
     // all in play should be considered potential targets."
     [{ v: 'BENCH_SNIPE', n: 1, dmg: 30, target: 'any', label: 'Telekinesis' },
      { v: 'NO_WR' }],                                  //   Telekinesis
+  ]},
+  // WAVE 3 — the one-coin-many-consequences group. Four of the seven are
+  // parameters on FLIP_BONUS_OR_RECOIL rather than verbs of their own, which is
+  // that verb's stated purpose: a card tying several outcomes to ONE coin cannot
+  // be two verbs, because two verbs flip twice.
+
+  'basep-17': { a: [                                   // Dark Persian
+    [{ v: 'SWITCH_DEFENDER_CHOOSE_ON_FLIP', label: 'tempt them out?' }],   // Tempt
+    [{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }],          //   Poison Claws
+  ]},
+  'basep-18': { a: [                                   // Team Rocket's Meowth
+    [{ v: 'DMG_PER_HEAD_IN_PLAY', per: 10 }],          //   Miraculous Comeback
+  ]},
+  'basep-19': { a: [                                   // Sabrina's Abra
+    [],                                                //   Pound
+    [{ v: 'REQUIRE_EQUAL_ENERGY' }],                   //   Synchronize
+  ]},
+  'basep-21': { a: [                                   // Moltres
+    // "If you can't discard Energy cards, this attack does nothing" — enforced as
+    // a COST requirement so the turn is never spent on an attack that cannot do
+    // anything. The attack's own RRR cost already guarantees Fire is attached, so
+    // this only bites when something else has emptied the slot mid-turn.
+    [{ v: 'REQUIRE_SELF_ENERGY', t: 'R' },
+     { v: 'DISCARD_ENERGY_COIN', heads: { n: 1, t: 'R' }, label: 'discard just one Fire?' }],
+  ]},
+  'basep-22': { a: [                                   // Articuno
+    // ONE coin: the Paralysis and the Bench splash both ride it. Scripted as
+    // three verbs this card could paralyse without splashing, which it cannot do.
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 20, bonus: 0, recoil: 0,
+       statusOnHeads: 'Paralyzed', benchSplashOnHeads: { n: 10, side: 'theirs' },
+       label: 'Diamond Dust' }],                       //   Diamond Dust
+  ]},
+  'basep-23': { a: [                                   // Zapdos
+    // The 30 to the Active lands either way; the coin only decides whether the
+    // Bench takes 30 as well or Zapdos takes it instead.
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 30, bonus: 0, recoil: 30,
+       snipeOnHeads: { dmg: 30 }, label: 'Lightning Burn' }],   //   Lightning Burn
+  ]},
+  'basep-24': { a: [                                   // _____'s Pikachu
+    // Trevor's, and the date is his. A player profile is the right long-term home
+    // for a real birthday — settled 26 Aug 2026 as out of scope here — so the day
+    // is written into the effect script and `cfg.today` lets a test pin it.
+    [{ v: 'BIRTHDAY', month: 7, day: 31, base: 30, bonus: 50, whose: "Trevor's" }],
+  ]},
+  'basep-25': { a: [                                   // Flying Pikachu
+    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Thundershock
+    // "if tails, this attack does nothing (not even damage)" plus a Barrier on
+    // heads, off ONE coin. FLIP_OR_NOTHING beside BARRIER_ON_FLIP would flip
+    // twice and could shield a Flying Pikachu whose attack did nothing.
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 30, bonus: 0, recoil: 0,
+       barrierOnHeads: true, nothingOnTails: true, label: 'Fly' }],   //   Fly
   ]},
 };
 
