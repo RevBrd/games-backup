@@ -337,6 +337,15 @@ function setup(spec = {}) {
   if (spec.myHand) me.hand = toHand(spec.myHand);
   if (spec.theirHand) them.hand = toHand(spec.theirHand);
 
+  // THE DISCARD PILE IS A BOARD FEATURE — Job 13. Energy Absorption, Energy
+  // Retrieval, Item Finder and Nightly Garbage Run all read it, and until now a
+  // claim about any of them could only be written against whatever the shuffle
+  // happened to leave there, which is not a board anybody wrote down. Mewtwo MS
+  // is the card that needed it: Trevor's note turns entirely on whether two
+  // Energy are sitting in the discard, and both halves of that are a claim.
+  if (spec.discard) me.discard = toHand(spec.discard);
+  if (spec.theirDiscard) them.discard = toHand(spec.theirDiscard);
+
   // Prizes must exist or the engine reads an empty pile as somebody having won.
   const pr = () => ({ id: 'base1-99', uid: E.uid++ });
   const pz = spec.prizes == null ? 6 : spec.prizes;
