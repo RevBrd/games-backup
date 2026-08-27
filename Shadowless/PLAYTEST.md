@@ -37,6 +37,7 @@ said — **the rate is not the point, the habit is.**
 | "Building a new deck does not let you use the new deck you just built" | A blueprint and the built deck shared the builder's **default name**, and the resolver preferred the wrong one. Nothing to do with deck select |
 | "Block paralyzed pokemon from retreating" | Already implemented, and had been for a while |
 | "Used Take Down to KO instead of Flamethrower" | Not in the log he attached — but real, and reproducible once built. The logged fault was a *different* one on the turns that killed nothing |
+| "I unlocked Dark Raichu and it does not show in my collection" | Both artifacts true, neither about the game — the session had been played in a **different browser**, which is a different localStorage and therefore a different save |
 
 The first is the expensive one. Trevor had also proposed a fix — replace a deck tile with a
 scrollable list — and it was a good idea for a problem he did not have. **Building it would have been
@@ -141,3 +142,46 @@ but aimed at the wrong target, because it usually is.
 agreed*, which is his own reading of the convention and worth knowing before you treat one as sealed.
 He has never claimed a design call is final, and the marked entries are open to new evidence like any
 other. *[Where the marker is defined, and what it does and does not license →](RULINGS.md)*
+
+## Two browsers means two saves, and the artifacts will not say so
+
+**27 Aug 2026, and worth its own section because the evidence pointed convincingly at a bug in the
+game for about an hour.** The report was *"I unlocked Dark Raichu, shown in log# 03-56-31, and it
+does not show as unlocked in my card collection"* — with a log proving the pull and a save file
+proving the absence.
+
+Both artifacts were real and both were telling the truth. The game had been played in a **different
+browser** from the one the save was exported out of. The save lives in `localStorage`, `localStorage`
+is per-origin *per browser*, and Trevor runs this in both a real browser and an Electron wrapper.
+Two browsers, two collections, no indication anywhere on screen which one you are looking at.
+
+### The fingerprint, so nobody spends an hour on it again
+
+**Diff the two exports that bracket the session and compare the cards gained against the log.** This
+is the check that gives it away, and it is cheap:
+
+| What you see | What it means |
+|---|---|
+| Save's new cards **match** the log's packs | the report is about the game |
+| Save's new cards **match nothing in any log** | **the session ran somewhere else** |
+
+Here `packsOpened` went 162 → 164 and exactly one new card id appeared, which looked like a perfect
+match for a log recording two packs and one NEW card — right up until the sixteen cards actually
+granted turned out to be a completely different pair of packs. **That mismatch is the tell.** A card
+that failed to save leaves the *rest* of its pack behind; a session that ran in another browser
+leaves nothing recognisable at all.
+
+### What was ruled out on the way, which is worth not re-running
+
+The pull path was followed end to end and is sound: `Rare Secret` is in `HOLO_RARITIES` and reaches
+the `rareHolo` pool, `openPack` produces the card, `grant` records it (12 pulls, 12 grants in a
+seeded reproduction), `persist` writes immediately and *reports* a failed write rather than
+swallowing it, `validate` throws rather than stripping, and the rarity filter reveals a tier the
+moment `owned > 0`. **None of that needs checking again for a report of this shape.**
+
+### And it still paid for itself
+
+Looking at the collection screen at all is what turned up the CARDS grid reading `CARD_DB` where
+every other surface reads `LIVE_DB` — 53 uncollectible promo tiles, introduced the same morning.
+**A report does not have to be right to be worth working.** That is the argument for taking the
+symptom seriously even when it dissolves; the hour is rarely wasted on a codebase this size.
