@@ -25,6 +25,18 @@
 // when there are and you did not. Silently picking one is the kind of failure
 // that produces a green test measuring the wrong card.
 //
+// THE FAILURE MODE IS A NEW SET, AND IT DOES NOT LOOK LIKE A FAILURE. Every set
+// added reprints names, so a claim board that has read unambiguously for months
+// starts throwing the moment somebody runs `gen_cards.js --sets`. Job 13 generated
+// `basep` and turned three passing rows into "unusable" — and claimtest reports
+// UNUSABLE separately from FAILED and is deliberately not in the six-suite gate,
+// so the total simply dropped from 52 to 49 with nothing red anywhere.
+//
+// After widening a build, run `claimtest.js` and compare the PASS count against
+// the one before, not just the fail count. The repair is to prefix the printing
+// you meant (`base1:Arcanine`), which is always the right fix — the refusal above
+// is the feature working.
+//
 // THE COORDINATE TRAP, STATED ONCE. Player 0 is always "me" and player 1 is
 // always "them", and every probe on the returned object is written from player
 // 0's seat. The engine's own methods are not — `incomingThreat(0)` means the

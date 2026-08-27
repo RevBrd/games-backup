@@ -64,7 +64,7 @@ const CLAIMS = [
     claim: 'Ice Beam when Aurora Beam cannot kill and there IS something to be afraid of',
     board: {
       me:   { card: 'Dewgong', energy: '4 Water' },
-      them: { card: 'Electabuzz', energy: '3 Lightning' },
+      them: { card: 'base1:Electabuzz', energy: '3 Lightning' },
     },
     sane: b => b.threat() > 60 && b.lethal('Aurora Beam') === 0,
     expect: b => b.prefers('Ice Beam'),
@@ -86,7 +86,7 @@ const CLAIMS = [
     claim: "doesn't retreat — it attacks rather than leaving, even at a retreat cost it can pay",
     board: {
       me:   { card: 'Dewgong', energy: '4 Water', dmg: 40 },
-      them: { card: 'Electabuzz', energy: '3 Lightning' },
+      them: { card: 'base1:Electabuzz', energy: '3 Lightning' },
       myBench: [{ card: 'Chansey', energy: '2 Fighting' }],
     },
     sane: b => b.me.bench.length > 0 && b.me.active.energy.length >= b.card(b.me.active).retreat,
@@ -170,7 +170,7 @@ const CLAIMS = [
     note: 'Both attacks do high damage and both have drawbacks. Flamethrower requires an energy funnel but should be the default due to Take Down\'s self-damage. However, Take Down should stay powered up and ready to go for when it\'s needed, meaning the bot should not want to use even Flamethrower until Arcanine has four energies attached, as it requires that constant funnel that would make Take Down unavailable if used at three energies',
     claim: 'Flamethrower over Take Down at four Energy — the self-damage is the tiebreaker',
     board: {
-      me:   { card: 'Arcanine', energy: '4 Fire' },
+      me:   { card: 'base1:Arcanine', energy: '4 Fire' },
       them: { card: 'Chansey', energy: '4 Fighting' },
     },
     sane: b => b.affordable().includes('Flamethrower') && b.affordable().includes('Take Down')

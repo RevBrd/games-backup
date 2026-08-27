@@ -3872,22 +3872,6 @@ class Engine {
           if (stopped) break;
           atk.dmg += v.n;
           this.log(`${card.name} does ${v.n} damage to itself. (${atk.dmg} total)`, 'eff'); break;
-        // A PLAIN self-heal, unconditional. Deliberately NOT HEAL_SELF_IF_DAMAGED,
-        // which is Leech Seed's verb and consults `res.prevented` because Leech
-        // Seed's own text ties the heal to the damage it dealt. First Aid deals no
-        // damage and touches the opponent not at all, so a Barrier on the far side
-        // of the board must not stop Jigglypuff healing itself. Two different
-        // cards, two verbs.
-        //
-        // `n` is COUNTERS, matching HEAL_SELF_IF_DAMAGED. shapecount reports five
-        // more distinct printings of this shape waiting in gym1, gym2, neo3 and
-        // neo4, so it is machinery rather than a one-off.
-        case 'HEAL_SELF':
-          if (atk.dmg > 0) {
-            const h = Math.min(v.n * 10, atk.dmg); atk.dmg -= h;
-            this.log(`${card.name} removes ${h} damage from itself.`, 'eff');
-          }
-          break;
         case 'HEAL_SELF_ALL':
           if (atk.dmg > 0) { this.log(`${card.name} removes all ${atk.dmg} damage from itself.`, 'eff'); atk.dmg = 0; }
           break;
@@ -4517,30 +4501,12 @@ class Engine {
         opts: { copyIdx: i }, label: `Metronome: copy ${dc.attacks[i].name}`,
       }));
     }
-    // THE TWO CONVERSIONS, and the order of these branches is load-bearing.
-    //
-    // Porygon (base1-39) prints them as two separate attacks and either branch
-    // alone is correct for it. Cool Porygon (basep-15) does BOTH in one attack —
-    // the only card in all fourteen sets that does, checked with shapecount — and
-    // that broke the old `if (weakness) return []` guard in a way no suite could
-    // see: the Weakness half is conditional on the defender HAVING a Weakness, so
-    // against the 22 live Pokemon printed with none, Texture Magic enumerated zero
-    // options and became unusable. Its Resistance half is unconditional and is the
-    // half the card is actually played for, so the attack must stay legal.
-    //
-    // Hence: RESISTANCE GOVERNS THE ENUMERATION whenever it is present, and the
-    // Weakness half rides along and no-ops itself if there is nothing to change.
-    const hasWk = script.some(v => v.v === 'CONVERT_DEF_WEAKNESS');
-    const hasRs = script.some(v => v.v === 'CONVERT_SELF_RESISTANCE');
-    if (hasRs) {
-      return types.map(t => ({
-        opts: { type: t },
-        label: hasWk ? `Texture Magic: Resistance to ${t}` : `Conversion 2: Resistance to ${t}`,
-      }));
-    }
-    if (hasWk) {
+    if (script.some(v => v.v === 'CONVERT_DEF_WEAKNESS')) {
       if (!def || !this.weaknessOf(def)) return [];            // "if it HAS a Weakness"
       return types.map(t => ({ opts: { type: t }, label: `Conversion 1: Weakness to ${t}` }));
+    }
+    if (script.some(v => v.v === 'CONVERT_SELF_RESISTANCE')) {
+      return types.map(t => ({ opts: { type: t }, label: `Conversion 2: Resistance to ${t}` }));
     }
     return [null];
   }

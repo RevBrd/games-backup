@@ -169,7 +169,7 @@ const STALL_VERBS = {
   STATUS: 1, STATUS_ON_FLIP: 1, STATUS_COIN_EITHER: 1,   // Snorlax, Electabuzz, Lapras
   PREVENT_ALL_DMG_SELF_ON_FLIP: 1,               // Chansey's Scrunch
   DAMAGE_REDUCTION_SELF: 1,
-  HEAL_SELF: 1, HEAL_SELF_ALL: 1, HEAL_SELF_IF_DAMAGED: 1, HEAL_SELF_ON_FLIP: 1,
+  HEAL_SELF_ALL: 1, HEAL_SELF_IF_DAMAGED: 1, HEAL_SELF_ON_FLIP: 1,
   HEAL_SELF_EQUAL_DAMAGE: 1,
 };
 // STATUS_SELF and STATUS_SELF_ON_TAILS are POINTEDLY absent. So is
@@ -399,21 +399,8 @@ class AI {
           split(() => dist);
           break;
         }
-        // `base` was DROPPED here and read one line below — Job 13, found while
-        // pricing Arcanine's Flames of Rage. The engine has supported an optional
-        // base on this verb since Dodrio (`base + per * counters`, engine.js), and
-        // this scorer multiplied and never added, so the bot has been undervaluing
-        // four live cards by a flat amount forever: Dodrio and Cubone's Rage and
-        // Dark Flareon's by 10, Tauros's Rampage by 20.
-        //
-        // Textbook silent failure, and the shape is worth recognising: TWO
-        // implementations of one verb, in two modules, with nothing asserting they
-        // agree. Nothing could see it. The attack is legal, it deals full damage
-        // when used, and every suite is green — the bot simply declines to reach
-        // for it and no counter anywhere goes up. The sibling verb directly below
-        // reads `v.base` correctly, which is what made the omission visible at all.
         case 'DMG_PER_COUNTER_SELF':
-          split(() => [[1, (v.base || 0) + v.per * Math.floor(atkSlot.dmg / 10)]]); break;
+          split(() => [[1, v.per * Math.floor(atkSlot.dmg / 10)]]); break;
         case 'DMG_MINUS_PER_COUNTER_SELF':
           split(() => [[1, Math.max(0, v.base - v.per * Math.floor(atkSlot.dmg / 10))]]); break;
         case 'DMG_PER_DEF_ENERGY':
@@ -433,7 +420,6 @@ class AI {
         case 'DESTINY_BOND': flags.destinyBond = true; break;
         case 'JAM_DEFENDER': flags.jam = true; break;
         case 'HEAL_SELF_ALL': flags.healAll = true; break;
-        case 'HEAL_SELF': flags.heal = v.n; break;
         case 'HEAL_SELF_IF_DAMAGED': flags.heal = v.n; break;
         case 'ONCE_WHILE_IN_PLAY': flags.oncePerStay = true; break;
 
@@ -2085,25 +2071,11 @@ class AI {
         }
         if (a.opts && a.opts.type && me.active) {
           const scr = this.script(me.active, a.idx);
-          const wk = scr.some(v => v.v === 'CONVERT_DEF_WEAKNESS');
-          const rs = scr.some(v => v.v === 'CONVERT_SELF_RESISTANCE');
-          // TWO BONUSES THAT PULL OPPOSITE WAYS, and on Cool Porygon they were
-          // both being charged against ONE chosen type. Weakness wants a type MY
-          // team deals; Resistance wants the type THEY deal. Those are different
-          // types in every matchup that matters, so scoring both made the choice
-          // incoherent — it rewarded a type for being simultaneously mine and
-          // theirs, which is only true in a mirror.
-          //
-          // When a card does both (Texture Magic, and nothing else in the era),
-          // the chosen type governs the RESISTANCE and the Weakness half rides
-          // along, so only the Resistance bonus is real. That also matches what
-          // the card is played for: Trevor's note is "become resistant to its
-          // opponent, and then use 3-D Attack".
-          if (wk && !rs) {
+          if (scr.some(v => v.v === 'CONVERT_DEF_WEAKNESS')) {
             const mine = new Set(E.allSlots(pi).map(x => this.top(x).type));
             if (mine.has(a.opts.type)) sc += 12;
           }
-          if (rs) {
+          if (scr.some(v => v.v === 'CONVERT_SELF_RESISTANCE')) {
             const theirs = E.state.players[1 - pi].active;
             if (theirs && this.top(theirs).type === a.opts.type) sc += 10;
           }

@@ -82,7 +82,44 @@ check(pools.uncommon.indexOf(dce) >= 0, 'Double Colorless sits in the Uncommon p
 check(pools.energy.indexOf(dce) < 0, 'and does not count toward the Energy floor');
 check(pools.energy.every(id => CARD_DB[id].cls === 'Basic'), 'the Energy floor pool is basic Energy only');
 
-eq(P.promoPool(CARD_DB).length, 0, 'no promos are loaded at Base Set, so none can intrude');
+// PROMO INTRUSION IS OPT-IN, and this used to be asserted by a proxy that Job 13
+// falsified. The line was `promoPool(CARD_DB).length === 0` labelled "so none can
+// intrude" — but that was only ever true because `basep` was not in the build. It
+// measured what had been GENERATED while claiming to measure what the pack DOES,
+// and the moment the promos were generated it read 53 and went red without a
+// single behaviour having changed.
+//
+// The property that actually holds the line is openPack's `opts.promos || []`: a
+// pack intrudes nothing unless a caller hands it an eligible pool. That is now
+// asserted directly, against a build that HAS the promos in it, which is the only
+// version of this test worth having.
+{
+  const promos = P.promoPool(CARD_DB);
+  check(promos.length > 0, 'the promo pool is non-empty once basep is generated', `${promos.length} promos`);
+  check(promos.every(id => P.NON_BOOSTER_SETS[CARD_DB[id].set]),
+    'and holds nothing from a booster set');
+  eq(P.promoPool(CARD_DB, ['base1']).length, 0,
+    'gating to a booster set alone yields no eligible promos');
+  eq(P.promoPool(CARD_DB, ['basep']).length, promos.length,
+    'gating to basep yields all of them — the switch has something to hand over');
+
+  // The real guard: 20,000 ordinary packs, promos generated, none passed in.
+  let intruded = 0;
+  const pools = P.buildPools(CARD_DB, SET);
+  for (let i = 0; i < 20000; i++) {
+    const pk = P.openPack(CARD_DB, SET, mulberry32(90000 + i), { pools });
+    if (pk.intrusion || pk.cards.some(c => c.slot === 'promo')) intruded++;
+  }
+  eq(intruded, 0, 'no pack intrudes a promo unless the caller supplies the eligible pool');
+
+  // ...and that it DOES when one is supplied, or the guard above is vacuous.
+  let withPool = 0;
+  for (let i = 0; i < 20000; i++) {
+    const pk = P.openPack(CARD_DB, SET, mulberry32(90000 + i), { pools, promos });
+    if (pk.intrusion) withPool++;
+  }
+  check(withPool > 0, 'and DOES intrude when one is supplied — the control', `${withPool} of 20000`);
+}
 
 // ===========================================================================
 head('One pack, structurally');

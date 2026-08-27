@@ -89,37 +89,13 @@ function generatedOpponent(setCode, n, cfg) {
 //
 // Pure, so the suites can call it. Order follows SET_INFO, which is generation
 // order, which is release order.
-//
-// A NON-BOOSTER SET IS NEVER LIVE, however complete it is — Job 13, and this is a
-// landmine rather than a tidy-up. `basep` and `si1` sell no boosters; they reach
-// the player through the pack INTRUSION roll, which is a pack type and not a set.
-// But this derivation only ever asked "is every card scripted?", and every caller
-// of it — the ladder, the pack pool, the dex — reads the answer as "is this a
-// set". So the day somebody finished the last promo script, `basep` would have
-// promoted itself to a ladder bracket titled "Wizards Black Star Promos", with a
-// generated roster, a dex section and a completion percentage, and nothing in the
-// tree would have said a word. Nobody would have connected it to a card they wrote
-// six months earlier.
-//
-// The flag lives in SET_INFO because that is where a set is DECLARED — so the
-// question gets asked when someone adds the name, which is the only moment anybody
-// is thinking about it. packs.js holds the same fact as `NON_BOOSTER_SETS` and
-// cannot read SET_INFO (it takes a `db`); selftest.js asserts the two name the
-// same sets, because two lists that must agree and cannot see each other is this
-// tree's most reliable source of drift.
-//
-// DO NOT REACH FOR THIS FILTER WHEN THE PROMO SWITCH GETS BUILT. Making promos
-// collectible is a COLLECTIBLE-sets question, and that is a wider set than this
-// one; un-filtering here would buy the collection a ladder bracket it does not
-// want. See PACKS.md "Still open" and CHALLENGES.md on pack-type-versus-set.
 function liveSets(cardDb, effects, setInfo) {
   const gaps = {};
   for (const id in cardDb) {
     const c = cardDb[id];
     if (c.kind !== 'energy' && !effects[id]) gaps[c.set] = 1;
   }
-  return Object.keys(setInfo).filter(code =>
-    !gaps[code] && (setInfo[code] || {}).booster !== false);
+  return Object.keys(setInfo).filter(code => !gaps[code]);
 }
 // liveSets  ordered set codes that are LIVE, from liveSets() above
 // data      the parsed data/ladder.json

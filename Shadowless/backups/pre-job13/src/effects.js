@@ -68,16 +68,7 @@
 //                                  would flip six times and could pay full
 //                                  damage without the Confusion, which is a
 //                                  different card
-//     DMG_PER_COUNTER_SELF {base, per}
-//                                  base + per * (own damage / 10). `base` is
-//                                  optional and defaults to 0 — Flail is pure
-//                                  multiplication, Rage is "10 damage plus 10
-//                                  more for each counter". UNDOCUMENTED UNTIL
-//                                  JOB 13, and ai.js had quietly dropped it, so
-//                                  four live cards scored low for months. If you
-//                                  add a parameter to a verb, add it here too:
-//                                  the completeness test below checks verb NAMES
-//                                  and cannot see a missing argument.
+//     DMG_PER_COUNTER_SELF {per}   damage = per * (own damage / 10)
 //     DMG_MINUS_PER_COUNTER_SELF {base, per}
 //                                  base - per * (own damage / 10), floored at 0
 //     DMG_PER_DEF_ENERGY {base, per}   base + per * Energy attached to the defender
@@ -147,11 +138,6 @@
 //                                  Poison damage to n instead of the usual 10
 //     RECOIL {n}                   self takes n damage (never W/R, never Retaliate)
 //     RECOIL_ON_FLIP {n, label}    flip; TAILS => self takes n damage
-//     HEAL_SELF {n}                remove n COUNTERS from self, unconditionally.
-//                                  Not HEAL_SELF_IF_DAMAGED, which is Leech
-//                                  Seed's and reads the defender's protection
-//                                  because its own text ties the heal to the
-//                                  damage dealt. First Aid touches nobody else
 //     HEAL_SELF_ALL                remove all damage counters from self
 //     HEAL_SELF_IF_DAMAGED {n}     remove n counters from self unless ALL damage
 //                                  was prevented
@@ -1818,75 +1804,6 @@ const EFFECTS = {
     [{ v: 'DMG_PER_HEAD', coins: 2, per: 10 }],      //   Doubleslap
     [{ v: 'MIRROR_SHELL' }],                         //   Mirror Shell
   ]},
-
-  // ============================================================================
-  // JOB 13 — WIZARDS BLACK STAR PROMOS, basep-1..28.
-  //
-  // NOT A SET, and the distinction is enforced rather than remembered: `basep`
-  // carries `booster: false` in SET_INFO, so progress.js's liveSets() refuses it
-  // a ladder bracket and a dex section however complete it gets. The player meets
-  // these through the pack INTRUSION roll. See PACKS.md and progress.js.
-  //
-  // basep-29..53 are Neo-era promos and are DELIBERATELY unscripted — out of the
-  // job's scope, gated behind sets that do not exist. `REMAINING.basep` in
-  // selftest.js is expected to come to rest at 25 rather than reach zero.
-  //
-  // GATING IS DATA, NOT CODE. Which promo becomes reachable at which bracket lives
-  // in the `Gated Until (promo only)` column of the workbook in data/v1 Opp Decks/
-  // and is read by tools/wants.js. Nothing here knows about it; the switch that
-  // does is a separate job.
-  //
-  // WAVE 1 — the nine that needed no new machinery at all.
-  // ============================================================================
-
-  'basep-1': { a: [                                    // Pikachu
-    // "(Benching either Pokemon ends this effect.)" is FREE — DAMAGE_REDUCTION_FROM
-    // carries a fromUid and the engine drops the effect when either slot leaves.
-    [{ v: 'DAMAGE_REDUCTION_FROM', n: 10, label: 'Growl' }],   //   Growl
-    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Thundershock
-  ]},
-  'basep-4': { a: [                                    // Pikachu
-    // Recharge is a SETUP TURN, not a stall: it pulls the Lightning out of the
-    // deck rather than off the turn's one attachment, so a Thunderbolt that
-    // emptied the slot is back in two turns instead of three. Trevor's note.
-    [{ v: 'SEARCH_ENERGY_TO_SELF', t: 'L' }],          //   Recharge
-    [{ v: 'COST_DISCARD_ALL_ENERGY' }],                //   Thunderbolt
-  ]},
-  'basep-6': { a: [                                    // Arcanine
-    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Quick Attack' }],
-    // Flames of Rage is the card that exposed ai.js dropping `base` from this
-    // verb — at 40 it is most of the attack, where Dodrio's 10 was survivable.
-    [{ v: 'COST_DISCARD_ENERGY', n: 2, t: 'R' },
-     { v: 'DMG_PER_COUNTER_SELF', base: 40, per: 10 }],  //   Flames of Rage
-  ]},
-  'basep-7': { a: [                                    // Jigglypuff
-    [{ v: 'HEAL_SELF', n: 1 }],                        //   First Aid
-    [{ v: 'RECOIL', n: 20 }],                          //   Double-edge
-  ]},
-  'basep-15': { a: [                                   // Cool Porygon
-    // Both halves of Texture Magic already existed as Porygon's two SEPARATE
-    // attacks (base1-39, Conversion 1 and 2). This card does both at once, which
-    // is a composition rather than a new verb — the card that looked hardest on
-    // the survey and turned out to be free.
-    [{ v: 'CONVERT_SELF_RESISTANCE' },
-     { v: 'CONVERT_DEF_WEAKNESS' }],                   //   Texture Magic
-    [{ v: 'DMG_PER_HEAD', coins: 3, per: 20 }],        //   3-D Attack
-  ]},
-  'basep-26': { a: [                                   // Pikachu
-    // The printed text drops "in order to use this attack" that base1-16's
-    // Thunderbolt carries, so strictly this is a post-damage discard rather than a
-    // cost. Scripted as a COST anyway and the outcome is identical either way: the
-    // attack's own LL cost guarantees there is something to discard, and a
-    // self-effect is not stopped by anything the defender can do. Consistency with
-    // every other Thunderbolt in the corpus wins the tie.
-    [],                                                //   Scratch
-    [{ v: 'COST_DISCARD_ALL_ENERGY' }],                //   Thunderbolt
-  ]},
-  'basep-27': { a: [                                   // Pikachu
-    [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Thundershock
-    [{ v: 'BARRIER_ON_FLIP', label: 'Agility' }],      //   Agility
-  ]},
-  'basep-28': { a: [ [] ]},                            // Surfing Pikachu / Surf
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -1959,20 +1876,6 @@ const EFFECT_ALIASES = {
   'base5-71': 'base5-15',     // Here Comes Team Rocket!
   'base5-72': 'base5-16',     // Rocket's Sneak Attack
   'base5-80': 'base5-17',     // Rainbow Energy
-  // ---- Promos ----
-  // basep-14 and basep-9 are the same card printed twice in the promo run, which
-  // is the ordinary holo/non-holo shape above. Trevor's workbook independently
-  // says "Identical to basep-3" and "Identical to basep-8" on exactly these two,
-  // and selftest's in-set duplicate check named the same pair unprompted.
-  'basep-14': 'basep-3',      // Mewtwo
-  'basep-9': 'basep-8',       // Mew
-  // AND ONE CROSS-SET, which is new here and is why it gets a note. basep-20 is
-  // Fossil's Psyduck reprinted as a promo — same HP, type, retreat, weakness and
-  // both attacks, verified field by field rather than by name. selftest's
-  // duplicate check is IN-SET by construction and cannot see this one, so nothing
-  // would have complained about a second copy of the script; it is aliased because
-  // two identical cards running two scripts is how they drift apart later.
-  'basep-20': 'base3-53',     // Psyduck
 };
 
 // Applied by reference on purpose: the two ids resolve to the SAME object, so

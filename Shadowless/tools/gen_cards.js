@@ -78,8 +78,15 @@ const SET_INFO = {
   neo2:  { name: 'Neo Discovery',        short: 'Discovery' },
   neo3:  { name: 'Neo Revelation',       short: 'Revelation' },
   neo4:  { name: 'Neo Destiny',          short: 'Destiny' },
-  basep: { name: 'Wizards Black Star Promos', short: 'Promo' },
-  si1:   { name: 'Southern Islands',     short: 'Islands' },
+
+  // `booster: false` — this set sells no booster packs. It is NOT a synonym for
+  // 'unfinished': these two can be fully scripted and still must never become a
+  // ladder bracket, a dex section or a pack pool, because the player reaches them
+  // through the pack INTRUSION roll instead. progress.js's liveSets() reads this
+  // flag and the long comment there is the one worth reading. Declared HERE, beside
+  // the name, because adding a set is the only moment anyone thinks about it.
+  basep: { name: 'Wizards Black Star Promos', short: 'Promo', booster: false },
+  si1:   { name: 'Southern Islands',     short: 'Islands', booster: false },
 };
 
 // Upstream spells types out; the engine uses single letters throughout.

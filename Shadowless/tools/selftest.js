@@ -86,7 +86,13 @@ for (const name of DECK_NAMES) {
 //
 // Put a set back in here the moment work starts on it, with the count it starts
 // at. The ratchet only ever goes down.
-const REMAINING = {};
+const REMAINING = {
+  // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
+  // basep-1..28, so this number is expected to land at 25 and STOP there — the
+  // remaining 25 are Neo-era promos nobody has written logic for. A 25 that never
+  // moves again is the correct resting state for this entry, not an unfinished one.
+  basep: 44,
+};
 
 console.log('\nCard coverage');
 // ENERGY IS COUNTED, and it used to be filtered out of this line entirely.
@@ -119,6 +125,33 @@ const liveGaps = sets.filter(s => REMAINING[s] === undefined && bySet[s]);
 check(liveGaps.length === 0, 'no live set contains an unimplemented card',
   liveGaps.map(s => `${s}: ${unscripted.filter(id => CARD_DB[id].set === s)
     .map(id => CARD_DB[id].name).join(', ')}`).join(' | '));
+
+// TWO LISTS THAT MUST AGREE AND CANNOT SEE EACH OTHER — Job 13. `basep` and `si1`
+// sell no boosters, and that fact is written down twice: as `booster: false` in
+// SET_INFO (read by progress.js's liveSets, which is pure and takes setInfo) and
+// as NON_BOOSTER_SETS in packs.js (which is pure and takes a `db`). Neither module
+// can import the other without giving up the purity that lets these suites run
+// with no browser, so the agreement is asserted here instead.
+//
+// What it protects: a non-booster set that loses its flag becomes a ladder bracket
+// with a generated roster and a dex section the moment its last script lands, and
+// the person who wrote that script months earlier would never connect the two.
+// The other direction is quieter and worse — a flagged set missing from
+// NON_BOOSTER_SETS would have its cards drawn into an ordinary pack pool.
+{
+  const { SET_INFO } = require('../src/cards.js');
+  const { NON_BOOSTER_SETS } = require('../src/packs.js');
+  const flagged = Object.keys(SET_INFO).filter(s => SET_INFO[s].booster === false);
+  const listed = Object.keys(NON_BOOSTER_SETS).filter(s => SET_INFO[s]);
+  const missingFlag = listed.filter(s => SET_INFO[s].booster !== false);
+  const missingList = flagged.filter(s => !NON_BOOSTER_SETS[s]);
+  check(missingFlag.length === 0 && missingList.length === 0,
+    'non-booster sets agree between SET_INFO and packs.js',
+    [missingFlag.length ? `packs.js says non-booster, SET_INFO does not: ${missingFlag.join(', ')}` : '',
+     missingList.length ? `SET_INFO says non-booster, packs.js does not: ${missingList.join(', ')}` : '']
+      .filter(Boolean).join(' | '));
+  if (flagged.length) console.log(`  non-booster (never a bracket, never a pack pool): ${flagged.join(', ')}`);
+}
 
 // The ratchet. A set under construction may have at most as many gaps as the
 // last time somebody looked — never more.

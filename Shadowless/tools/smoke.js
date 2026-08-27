@@ -776,10 +776,19 @@ T('the hand face renders every card and carries no attack names or rules text', 
     // print as its type tag. Attack names that are also type names cannot be
     // told apart by string search, so they sit this one out.
     const typeNames = new Set(Object.keys(ENERGY_NAME).map(k => ENERGY_NAME[k]));
+    // AND THE CARD'S OWN NAME COMES OUT BEFORE THE ATTACK SEARCH TOO — the third
+    // instance of the collision the two notes below already describe, found by
+    // Job 13 generating the promos. Surfing Pikachu's attack is "Surf", which is a
+    // substring of the card's own title, so a face printing nothing but the title
+    // reported a leaked attack name. Same fix as the rules-text search: strip the
+    // name, then look. Neither carve-out weakens the assertion, because a face
+    // that really did print the attack name would print it somewhere other than
+    // inside its own title.
+    const nameless = text.split(c.name).join(' ');
     for (const a of (c.attacks || [])) {
       // A very short attack name could collide with a damage figure, so only
       // names long enough to be unambiguous are checked.
-      if (a.name && a.name.length > 3 && !typeNames.has(a.name) && text.includes(a.name)) {
+      if (a.name && a.name.length > 3 && !typeNames.has(a.name) && nameless.includes(a.name)) {
         leaked = c.name + ' / ' + a.name;
       }
       // SEARCH ON TEXT THAT IS NOT THE CARD'S OWN NAME. Team Rocket is the
