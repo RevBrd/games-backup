@@ -985,6 +985,53 @@ T('the AI picks a Conversion type it can actually exploit', () => {
   return true;
 });
 
+// ---------------------------------------------------------------------------
+// THE PROMO EVOLUTION LOOKUP, ASSERTED — Job 13.
+//
+// Rulings/PROMO-EVOLUTION.md records a WotC lookup with no derivable rule behind
+// it: Flying and Surfing Pikachu may NOT evolve, plain Pikachu may, Cool Porygon
+// may. It also says "there is no guard that can catch a missing entry — a Pikachu
+// that wrongly evolves is a legal-looking board that nobody will question."
+//
+// There is one now, and it turns out nothing had to be built to satisfy it: the
+// engine matches `evolvesFrom` against the card's NAME, and Raichu evolves from
+// "Pikachu" rather than from "Flying Pikachu". The lookup falls out of name
+// matching for every case the live sets can reach.
+//
+// SO THIS TEST IS ABOUT THE DAY THAT STOPS BEING TRUE. If anyone ever makes
+// evolution match on species, or adds a prefix-stripping rule to be helpful, both
+// promo Pikachu quietly become legal Raichu targets and nothing else complains.
+// The Cool Porygon half of the ruling is NOT asserted here because Porygon2 is
+// Neo and unreachable — it is the half that will need real work, and it fails in
+// the safe direction (refused when it should be allowed) until then.
+// ---------------------------------------------------------------------------
+T('the promo evolution lookup holds — prefixed Pikachu cannot become Raichu', () => {
+  const RAICHU = 'base1-14';
+  const canTake = (baseId) => {
+    const E = board(baseId, [], 'base1-3');
+    const p = E.state.players[0];
+    p.active.playedTurn = -5; p.turnsTaken = 5;
+    p.hand.push({ id: RAICHU, uid: E.uid++ });
+    return E.legalActions(0).some(a => a.t === 'evolve');
+  };
+  const rows = [
+    ['basep-25', false, 'Flying Pikachu'],
+    ['basep-28', false, 'Surfing Pikachu'],
+    ['basep-1', true, 'Pikachu (plain promo)'],
+    ['basep-4', true, 'Pikachu (plain promo)'],
+    ['basep-26', true, 'Pikachu (plain promo)'],
+    ['basep-27', true, 'Pikachu (plain promo)'],
+    ['base1-58', true, 'Pikachu (Base Set control)'],
+  ];
+  for (const [id, want, label] of rows) {
+    const got = canTake(id);
+    if (got !== want) {
+      throw new Error(`${label} (${id}) ${got ? 'CAN' : 'cannot'} evolve into Raichu, ruling says it ${want ? 'should' : 'must not'}`);
+    }
+  }
+  return true;
+});
+
 T('no Power can leave one of your own Pokemon Knocked Out', () => {
   // The invariant behind the rule, checked across a lot of real boards rather
   // than one contrived one.

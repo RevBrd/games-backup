@@ -426,6 +426,15 @@
 //     T_POKEMON_TRADER             T_POKEMON_BREEDER         T_POKE_BALL
 //     T_ENERGY_SEARCH              T_GAMBLER                 T_MR_FUJI
 //     T_RECYCLE
+//     T_COMPUTER_ERROR             you draw up to 5, THEN your opponent draws up
+//                                  to 5, and your turn ends without an attack.
+//                                  The only Trainer in the era that ends your own
+//                                  turn — deferred through endTurn rather than
+//                                  switching sides here, because a draw can deck
+//                                  somebody out and either player may owe a Prize
+//                                  or a promotion first. `opts.mine`/`opts.theirs`
+//                                  take fewer than five ("up to"); an unattended
+//                                  caller takes the lot (Computer Error)
 //
 //   TRAINERS, Job 10e. Parameterised rather than named for their card, because
 //   Gym and Neo reprint every one of these shapes with a different setting:
@@ -469,6 +478,36 @@
 //                                  instead. Accepting fills BOTH Benches from
 //                                  BOTH decks. Always legal, because the floor
 //                                  is a draw (Challenge!)
+//
+//
+//   POKEMON POWERS — `p:` rather than `a:` or `t:`. Three MECHANISMS, not three
+//   flavours, and filing one under the wrong kind is the standing mistake:
+//   INTERACTIVE (offered as an action), TRIGGERED (a definite moment, nobody
+//   chooses) and PASSIVE (consulted, never fired). See POWERS.md. Job 13 adds:
+//     TOP_DECK_SWAP                INTERACTIVE, once a turn. Draw one, then put a
+//                                  card from hand on TOP of the deck. The draw
+//                                  comes first and that is the whole card — the
+//                                  card just drawn is a legal thing to put back,
+//                                  so it is a free look at your deck that costs
+//                                  nothing when the top card is bad
+//                                  (Dragonite, Special Delivery)
+//     CLEAR_STATUS_BOTH_ACTIVE     INTERACTIVE, once a turn. Every Special
+//                                  Condition off BOTH Active Pokemon, the
+//                                  opponent's included — which is a real drawback
+//                                  and why the AI scores it NEGATIVE on a board
+//                                  where only they are afflicted. It cannot heal
+//                                  itself and that falls out rather than being
+//                                  coded (Venusaur, Solar Power)
+//     CHAIN_REACTION               TRIGGERED, and the FOURTH trigger — the first
+//                                  added since Job 10c. When one of YOUR Pokemon
+//                                  evolves, this one searches the deck for its own
+//                                  Evolution and evolves too. Allied only; the
+//                                  card says "a Pokemon" and does not say whose.
+//                                  Not re-entrant — a second Eevee would otherwise
+//                                  answer the first. Hangs off enterPlay, the same
+//                                  doorway the other three use
+//                                  (Eevee, Chain Reaction)
+//                                  *[Whose evolutions count →](Rulings/CHAIN-REACTION-ALLIED-ONLY.md)*
 //
 //   QUESTION KINDS — not verbs. engine.ask() defers a decision to the OTHER
 //   player mid-turn and engine.resolveAsk() continues the card once it is
@@ -2073,6 +2112,30 @@ const EFFECTS = {
     [{ v: 'FLIP_BONUS_OR_RECOIL', base: 30, bonus: 0, recoil: 0,
        barrierOnHeads: true, nothingOnTails: true, label: 'Fly' }],   //   Fly
   ]},
+  // WAVE 4 — the three Powers and the Trainer. This finishes basep-1..28, the
+  // whole of Job 13's scope.
+
+  'basep-5': {                                         // Dragonite
+    p: { kind: 'TOP_DECK_SWAP', name: 'Special Delivery' },
+    a: [
+      [{ v: 'FLIP_OR_NOTHING' }],                      //   Supersonic Flight
+    ],
+  },
+  'basep-11': {                                        // Eevee
+    // The card prints no status clause of its own beyond the standard one, so it
+    // does NOT get `always` — see POWERS.md on why that flag needs the card read.
+    p: { kind: 'CHAIN_REACTION', name: 'Chain Reaction' },
+    a: [
+      [],                                              //   Bite
+    ],
+  },
+  'basep-13': {                                        // Venusaur
+    p: { kind: 'CLEAR_STATUS_BOTH_ACTIVE', name: 'Solar Power' },
+    a: [
+      [{ v: 'HEAL_SELF_EQUAL_DAMAGE', half: true }],   //   Mega Drain
+    ],
+  },
+  'basep-16': { t: [{ v: 'T_COMPUTER_ERROR' }] },      // Computer Error
 };
 
 // ---------------------------------------------------------------- ALIASES --

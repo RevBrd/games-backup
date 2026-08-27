@@ -1956,6 +1956,44 @@ class AI {
       // ENERGY_AS is passive as of 16 Aug 2026 — Charizard's Energy Burn is
       // simply always on, so there is no action to score and no flag to flip.
       // `bestAttackScore` already sees Fire symbols wherever the engine does.
+      // ---- Job 13, the promo Powers ----
+      case 'TOP_DECK_SWAP': {
+        // Special Delivery. Net card count is UNCHANGED — draw one, put one back —
+        // so this is worth a look at the top of the deck plus the option to bury
+        // the worst card in hand, not a draw. Priced well below drawCard for that
+        // reason, and above zero because it is free and repeats every turn.
+        //
+        // Trevor: "the card just drawn from the deck [can] be the one returned if
+        // it's not desirable", so the floor is a free peek and the ceiling is
+        // cycling a dead card. A bigger hand has more dead weight to bury.
+        const me = E.state.players[pi];
+        if (!me.deck.length) return -Infinity;
+        return W.drawCard * 0.35 + Math.min(me.hand.length, 6) * 0.4;
+      }
+      case 'CLEAR_STATUS_BOTH_ACTIVE': {
+        // Solar Power. Worth exactly what it removes, and it removes from BOTH
+        // Actives — so a board where only the opponent is afflicted is a card that
+        // helps THEM and must score negative, which is the half a naive "count the
+        // statuses" version gets backwards.
+        const mine = E.state.players[pi].active;
+        const theirs = E.state.players[1 - pi].active;
+        // PRICED WITH FULL HEAL'S OWN NUMBERS rather than a new weight. Solar
+        // Power clears exactly what Full Heal clears, and the first draft of this
+        // reached for a W.statusClear that does not exist — which would have made
+        // the whole Power score NaN in silence, the failure this file warns about
+        // two hundred lines up. Check a weight against the W block, never memory.
+        const worth = sl => {
+          if (!sl) return 0;
+          const st = sl.status;
+          return (st.paralyzed || st.asleep ? 24 : 0) + (st.confused ? 16 : 0)
+               + (st.poisoned ? (sl.poisonDamage || 10) : 0);
+        };
+        const count = sl => sl ? Object.keys(sl.status).filter(k => sl.status[k]).length : 0;
+        const gain = worth(mine) - worth(theirs);
+        // Nothing to clear on either side is a wasted use of a once-a-turn Power,
+        // not a neutral one — it is spent for the turn either way.
+        return count(mine) + count(theirs) === 0 ? -1 : gain;
+      }
       case 'MOVE_DAMAGE': {
         // Gengar's Curse moves the OPPONENT's counters, so both slots live on
         // the other side of the board. Looking them up on ours returned
@@ -3316,6 +3354,28 @@ class AI {
           if (st.paralyzed || st.asleep) s += 24;
           if (st.confused) s += 16;
           if (st.poisoned) s += (me.active.poisonDamage || 10);
+          break;
+        }
+        case 'T_COMPUTER_ERROR': {
+          // Trevor: "to be used only when desperate, as the card drawing also
+          // benefits your opponent AND it makes you miss a turn."
+          //
+          // FILED AS UNSCORED FIRST, AND THAT WAS WRONG. Unscored means zero, and
+          // zero is exactly what End turn scores — so on a board where the bot
+          // could not act it tied, and the tie broke on list order in favour of
+          // handing the opponent five cards for nothing. A card that ENDS YOUR OWN
+          // TURN cannot be left to a default; the default is indistinguishable
+          // from the alternative it is supposed to lose to.
+          //
+          // NO FLAT TURN PENALTY. The turn is already paid for by competing with
+          // the attack action, which scores what the attack is worth; charging it
+          // again here would price the turn twice and is the double-count that
+          // ENGINE.md's Energy note warns about. What is left is three real terms.
+          const mineDraw = Math.min(5, me.deck.length);
+          const theirDraw = Math.min(5, you.deck.length);
+          s += Math.max(0, 5 - me.hand.length) * W.drawCard * 0.5;   // escaping a dead hand
+          s += (mineDraw - theirDraw) * W.drawCard * 0.5;            // and a deck-length edge
+          s -= theirDraw * 1.5;                                      // they get the cards too
           break;
         }
         case 'T_IMPOSTOR_OAK':

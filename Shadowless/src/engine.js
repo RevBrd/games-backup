@@ -710,10 +710,74 @@ class Engine {
   // asserts statically that every mkSlot and stack.push site in this file is
   // followed by an enterPlay call, so a ninth path added in Gym cannot quietly
   // skip it. See ENGINE.md.
+  // THE FOURTH TRIGGER — Job 13, and the first one added since Job 10c.
+  //
+  // Eevee's Chain Reaction: "This power can only be used when a Pokemon evolves.
+  // Search your deck for a card that evolves from Eevee and attach it to Eevee.
+  // This counts as evolving Eevee."
+  //
+  // It is TRIGGERED and not interactive, on POWERS.md's own test: nobody chooses
+  // it, and there is a definite moment it happens. The player's control is over
+  // WHEN they evolve something else, which is Trevor's "timing that can be
+  // important" — not over whether Eevee answers.
+  //
+  // ALLIED EVOLUTIONS ONLY. The card says "a Pokemon" with nothing qualifying it,
+  // and the opponent's evolution reads as a legal trigger on a literal reading.
+  // Trevor's call. *[The ruling →](../Rulings/CHAIN-REACTION-ALLIED-ONLY.md)*
+  //
+  // It reuses doEvolve's three mechanics rather than reimplementing them —
+  // stack.push, evolvedTurn, clearStatus — for the same reason Rapid Evolution
+  // does: those three together ARE evolving, and a card saying it counts as
+  // evolving must not become a fourth thing that merely looks similar.
+  //
+  // NOT RE-ENTRANT. Chain Reaction evolving Eevee is itself an evolution, so a
+  // second Eevee would answer it, and a third would answer that. Two Eevees on a
+  // Bench is an ordinary board, so this is reachable rather than theoretical. The
+  // guard is a flag on the engine and not a depth counter, because "one Eevee per
+  // evolution" is the rule; a chain of them is not a deeper version of the card.
+  fireChainReactions(pi, evolved) {
+    if (this._chaining) return;
+    this._chaining = true;
+    try {
+      for (const slot of this.allSlots(pi)) {
+        if (slot === evolved) continue;
+        const p = this.powerOf(slot);
+        if (!p || p.kind !== 'CHAIN_REACTION' || !this.powerUsable(slot)) continue;
+        const me = this.state.players[pi];
+        const from = topCard(this.db, slot).name;
+        const legal = i => {
+          const c2 = this.db[me.deck[i].id];
+          return c2 && c2.kind === 'pokemon' && c2.evolvesFrom === from;
+        };
+        const idxs = me.deck.map((_, i) => i).filter(legal);
+        if (!idxs.length) {
+          this.log(`${p.name}: no Evolution for ${from} in the deck.`, 'eff');
+          continue;
+        }
+        const k = idxs[0];
+        const inst = me.deck.splice(k, 1)[0];
+        const was = this.nameOf(slot);
+        slot.stack.push(inst);
+        this.log(`${p.name}: ${was} evolves into ${this.db[inst.id].name}.`, 'eff');
+        // Through the one doorway, exactly as doEvolve goes through it — so the
+        // stamp, the status clear and any ON_PLAY on the new card all happen. The
+        // source is the DECK rather than the hand, which is what stops a Stage 2's
+        // played-from-hand Power firing off a tutor. See Rulings/PLAYED-FROM-HAND.md.
+        this.enterPlay(pi, slot, { source: 'deck', evolved: true });
+        this.shuffle(me.deck);
+      }
+    } finally {
+      this._chaining = false;
+    }
+  }
   enterPlay(pi, slot, opts = {}) {
     if (opts.evolved) { slot.evolvedTurn = this.state.turn; clearStatus(slot); }
     else if (opts.source !== 'setup') slot.playedTurn = this.state.turn;
     if (opts.source === 'hand') this.fireOnPlay(pi, slot, opts.opts || null);
+    // The fourth trigger, and it hangs off the SAME doorway the other three do —
+    // so every route that evolves something fires it, including Rapid Evolution
+    // and Chain Reaction itself. See fireChainReactions for why that is guarded.
+    if (opts.evolved) this.fireChainReactions(pi, slot);
     return slot;
   }
 
@@ -1583,6 +1647,34 @@ class Engine {
           acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
                       label: `${p.name}: discard 1 to draw 1` });
           break;
+        case 'TOP_DECK_SWAP':
+          // Dragonite's Special Delivery. "You may draw a card. If you do, choose a
+          // card from your hand and put it on top of your deck."
+          //
+          // THE DRAW COMES FIRST AND THAT IS THE WHOLE CARD. Trevor: "it allows for
+          // the card just drawn from the deck to be the one returned if it is not
+          // desirable" — so it is a free look at the top of your deck that costs
+          // you nothing when the card is bad, and cycles your worst card when it is
+          // good. Reversing the order would make it an ordinary shuffle-back.
+          if (this.powerSpent(slot)) break;
+          if (!me.deck.length) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
+                      label: `${p.name}: draw 1, then put a card back on top` });
+          break;
+        case 'CLEAR_STATUS_BOTH_ACTIVE':
+          // Venusaur's Solar Power. It clears BOTH Actives, the opponent's
+          // included, which reads like a drawback and is the reason Trevor's note
+          // parks it on the Bench: "sit on the bench against status-pressure
+          // opponents and heal every status infliction right after it's inflicted".
+          //
+          // IT CANNOT HEAL ITSELF, and that falls out rather than being coded: on
+          // the Bench it is not "your Active Pokemon", and as the Active it would
+          // have to be Asleep, Confused or Paralyzed to need it — which is exactly
+          // when powerUsable refuses. Trevor named both halves independently.
+          if (this.powerSpent(slot)) break;
+          acts.push({ t: 'power', uid: slot.uid, kind: p.kind,
+                      label: `${p.name}: clear Special Conditions on both Active Pokemon` });
+          break;
         case 'PRIZE_SWAP':
           // Rattata's Trickery. Enumerated PER PRIZE, because which one you
           // swap is a real choice to anybody who has seen a Prize — and Here
@@ -1795,6 +1887,40 @@ class Engine {
         mine2.hand.push(mine2.deck.shift());
         this.markPower(slot);
         this.log(`${p.name}: ${this.db[gone.id].name} discarded, one card drawn.`, 'eff');
+        return { ok: true };
+      }
+      case 'TOP_DECK_SWAP': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const mineTD = this.state.players[pi];
+        if (!mineTD.deck.length) return this.fail('No cards left in your deck');
+        mineTD.hand.push(mineTD.deck.shift());
+        // The card just drawn is a legal thing to put back — that IS the card, per
+        // Trevor's note. Unattended fallback is the LAST card in hand, which is the
+        // one just drawn, so the deterministic path is also the honest one.
+        let kTD = a.handUid !== undefined ? mineTD.hand.findIndex(x => x.uid === a.handUid) : -1;
+        if (kTD < 0) kTD = mineTD.hand.length - 1;
+        const back = mineTD.hand.splice(kTD, 1)[0];
+        mineTD.deck.unshift(back);
+        this.markPower(slot);
+        // The card is NAMED in the log because it is the player's own and they
+        // chose it; nothing about it is hidden from them.
+        this.log(`${p.name}: one card drawn, ${this.db[back.id].name} placed on top of the deck.`, 'eff');
+        return { ok: true };
+      }
+      case 'CLEAR_STATUS_BOTH_ACTIVE': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        let cleared = 0;
+        for (const side of [pi, 1 - pi]) {
+          const act = this.state.players[side].active;
+          if (!act) continue;
+          const had = Object.keys(act.status).filter(k => act.status[k]);
+          if (!had.length) continue;
+          clearStatus(act);
+          cleared += had.length;
+          this.log(`${p.name}: ${this.nameOf(act)} is no longer ${had.join(', ')}.`, 'eff');
+        }
+        this.markPower(slot);
+        if (!cleared) this.log(`${p.name}: nothing to clear.`, 'eff');
         return { ok: true };
       }
       case 'PRIZE_SWAP': {
@@ -2198,6 +2324,13 @@ class Engine {
         case 'T_POKEMON_TRADER':
           if (!p.deck.some(x => this.db[x.id].kind === 'pokemon')) return false;
           if (!p.hand.some(x => x.uid !== inst.uid && this.db[x.id].kind === 'pokemon')) return false;
+          break;
+        // Computer Error's floor is a DRAW, and 'up to 5' means an empty deck is
+        // still a legal play — it just draws nothing and ends your turn, which is
+        // a thing a desperate player may genuinely want. But an empty deck on BOTH
+        // sides plus a turn skipped is a card that cannot do anything at all.
+        case 'T_COMPUTER_ERROR':
+          if (!p.deck.length && !this.state.players[1 - pi].deck.length) return false;
           break;
         case 'T_POKEDEX': if (!p.deck.length) return false; break;
         case 'T_POKEMON_BREEDER': {
@@ -2827,6 +2960,8 @@ class Engine {
     p.hand.splice(a.hand, 1);
     this.log(`${p.name} plays ${c.name}.`, 'trainer', { card: inst.id, v: inst.v || null });
     let toDiscard = true;
+    // Computer Error ends the turn AFTER the card resolves and is discarded.
+    let endsTurn = false;
 
     for (const v of script) {
       switch (v.v) {
@@ -3416,12 +3551,45 @@ class Engine {
           }
           this.log(`Energy Retrieval: recovered ${got} basic Energy.`); break;
         }
+        case 'T_COMPUTER_ERROR': {
+          // "You may draw up to 5 cards, then your opponent may draw up to 5 cards.
+          // Your turn is over now (you don't get to attack)."
+          //
+          // A Rocket's Secret Machine, and the only Trainer in the era that ENDS
+          // YOUR OWN TURN. Trevor: "to be used only when desperate, as the card
+          // drawing also benefits your opponent AND it makes you miss a turn."
+          //
+          // "UP TO 5" TWICE, and both are real. A short deck draws what it has, and
+          // `opts.mine` / `opts.theirs` let a player who is counting their deck take
+          // fewer; an unattended caller has to be deterministic, so it takes the
+          // full five where they exist.
+          const want = n => (n === undefined ? 5 : Math.max(0, Math.min(5, n)));
+          for (const [who, n] of [[p, want(a.opts && a.opts.mine)],
+                                  [this.state.players[1 - pi], want(a.opts && a.opts.theirs)]]) {
+            let drew = 0;
+            for (let i = 0; i < n && who.deck.length; i++) { who.hand.push(who.deck.shift()); drew++; }
+            this.log(`${who.name} draws ${drew}.`, 'eff');
+          }
+          // BREAK, NOT RETURN. The tail below is what discards the Trainer and
+          // counts it against the per-turn limit, and an early return leaves
+          // Computer Error sitting in the hand it was just played from.
+          endsTurn = true;
+          break;
+        }
         default: return this.fail(`Unimplemented verb ${v.v}`);
       }
     }
     p.trainersPlayed++;
     if (toDiscard) p.discard.push(inst);
     this.checkKOs();
+    // Deferred through endTurn rather than switching `active` here, because a
+    // draw can deck somebody out and a Prize or a promotion owed by EITHER player
+    // has to be answered before the turn changes hands. endTurn is the one path
+    // that already knows all of that; pressing End Turn takes it too.
+    if (endsTurn && this.state.phase !== 'over') {
+      this.log(`${p.name} does not get to attack this turn.`, 'eff');
+      return this.endTurn();
+    }
     return { ok: true };
   }
 

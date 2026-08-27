@@ -91,7 +91,7 @@ const REMAINING = {
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
   // remaining 25 are Neo-era promos nobody has written logic for. A 25 that never
   // moves again is the correct resting state for this entry, not an unfinished one.
-  basep: 29,
+  basep: 25,
 };
 
 console.log('\nCard coverage');
@@ -361,6 +361,7 @@ const UNSCORED_ON_PURPOSE = new Set([
   'REQUIRE_OPP_BENCH',
   'REQUIRE_EQUAL_ENERGY',
 
+
   // Mankey's Mischief — shuffle the opponent's deck. Unscored SCORES AS ZERO,
   // which is the honest number: this bot has no memory of deck order, so it
   // cannot be hurt by a shuffle and cannot value inflicting one. Mischief does
@@ -602,6 +603,13 @@ console.log('\nAI verb coverage');
     // which Pokemon it finishes and with what, and nothing reads it — the
     // forecast has no term for what dying does back to you. AI.md's open list.
     'ON_KO',
+    // The fourth trigger, Job 13. Eevee answers an allied evolution with one of
+    // its own and NOBODY chooses it, so there is no action for ai.js to score —
+    // the decision it belongs to is the evolve that fires it, which the evolve
+    // case already prices. A genuine gap remains and it is small: the bot does
+    // not know that evolving something ALSO evolves its Eevee, so it undervalues
+    // that evolve by a whole Stage 1. AI.md, when somebody plays a deck with one.
+    'CHAIN_REACTION',
   ]);
   const kinds = new Set([...effSrc.matchAll(/\bkind:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
   const blindKinds = [...kinds].filter(k => !handled.has(k)
