@@ -294,9 +294,20 @@
 //                                  during the opponent's next turn (after W/R)
 //     DESTINY_BOND                 if something KOs self during the opponent's next
 //                                  turn, that Pokemon is Knocked Out too
-//     CONVERT_DEF_WEAKNESS         set the defender's Weakness to a chosen type,
+//     CONVERT_DEF_WEAKNESS {endsOnBench}
+//                                  set the defender's Weakness to a chosen type,
 //                                  PERMANENTLY while it stays in play (Conversion 1)
-//     CONVERT_SELF_RESISTANCE      the same for self's Resistance (Conversion 2)
+//     CONVERT_SELF_RESISTANCE {endsOnBench}
+//                                  the same for self's Resistance (Conversion 2)
+//                                  `endsOnBench` is Texture Magic's parenthetical
+//                                  and NOTHING else in the era carries it, so it
+//                                  is per-card. Swept by settleConversions() the
+//                                  way Ditto's Transform is, because there are
+//                                  seven routes onto the Bench and a clear-on-move
+//                                  would have to find all of them. The two halves
+//                                  expire SEPARATELY — "the effect on that
+//                                  Pokemon" — so one can be Benched while the
+//                                  other keeps what it was given
 //
 //   SPECIAL ENERGY — also `t`, because a card is either a Trainer or an Energy and
 //   never both, and `isImplemented` already reads `t` for everything that is not
@@ -1878,8 +1889,11 @@ const EFFECTS = {
     // attacks (base1-39, Conversion 1 and 2). This card does both at once, which
     // is a composition rather than a new verb — the card that looked hardest on
     // the survey and turned out to be free.
-    [{ v: 'CONVERT_SELF_RESISTANCE' },
-     { v: 'CONVERT_DEF_WEAKNESS' }],                   //   Texture Magic
+    // `endsOnBench` is Texture Magic's parenthetical and Porygon has no such
+    // clause, so the flag is per-card rather than per-verb. Both halves carry it:
+    // the card says "the effect on that Pokemon", so they expire separately.
+    [{ v: 'CONVERT_SELF_RESISTANCE', endsOnBench: true },
+     { v: 'CONVERT_DEF_WEAKNESS', endsOnBench: true }],   //   Texture Magic
     [{ v: 'DMG_PER_HEAD', coins: 3, per: 20 }],        //   3-D Attack
   ]},
   'basep-26': { a: [                                   // Pikachu

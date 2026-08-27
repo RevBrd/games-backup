@@ -3896,9 +3896,20 @@ const SET_INFO = {
 //                                  during the opponent's next turn (after W/R)
 //     DESTINY_BOND                 if something KOs self during the opponent's next
 //                                  turn, that Pokemon is Knocked Out too
-//     CONVERT_DEF_WEAKNESS         set the defender's Weakness to a chosen type,
+//     CONVERT_DEF_WEAKNESS {endsOnBench}
+//                                  set the defender's Weakness to a chosen type,
 //                                  PERMANENTLY while it stays in play (Conversion 1)
-//     CONVERT_SELF_RESISTANCE      the same for self's Resistance (Conversion 2)
+//     CONVERT_SELF_RESISTANCE {endsOnBench}
+//                                  the same for self's Resistance (Conversion 2)
+//                                  `endsOnBench` is Texture Magic's parenthetical
+//                                  and NOTHING else in the era carries it, so it
+//                                  is per-card. Swept by settleConversions() the
+//                                  way Ditto's Transform is, because there are
+//                                  seven routes onto the Bench and a clear-on-move
+//                                  would have to find all of them. The two halves
+//                                  expire SEPARATELY — "the effect on that
+//                                  Pokemon" — so one can be Benched while the
+//                                  other keeps what it was given
 //
 //   SPECIAL ENERGY — also `t`, because a card is either a Trainer or an Energy and
 //   never both, and `isImplemented` already reads `t` for everything that is not
@@ -5480,8 +5491,11 @@ const EFFECTS = {
     // attacks (base1-39, Conversion 1 and 2). This card does both at once, which
     // is a composition rather than a new verb — the card that looked hardest on
     // the survey and turned out to be free.
-    [{ v: 'CONVERT_SELF_RESISTANCE' },
-     { v: 'CONVERT_DEF_WEAKNESS' }],                   //   Texture Magic
+    // `endsOnBench` is Texture Magic's parenthetical and Porygon has no such
+    // clause, so the flag is per-card rather than per-verb. Both halves carry it:
+    // the card says "the effect on that Pokemon", so they expire separately.
+    [{ v: 'CONVERT_SELF_RESISTANCE', endsOnBench: true },
+     { v: 'CONVERT_DEF_WEAKNESS', endsOnBench: true }],   //   Texture Magic
     [{ v: 'DMG_PER_HEAD', coins: 3, per: 20 }],        //   3-D Attack
   ]},
   'basep-26': { a: [                                   // Pikachu
@@ -7597,6 +7611,16 @@ class AI {
   // Flamethrower again at three — so the burn is free and Flamethrower wins on
   // the recoil alone. If the reserve half turns out to need its own term, it is
   // a separate change with its own measurement; see PLAYBOOK's Energy Funnel.
+  //
+  // A SECOND ARCANINE SHARPENED THIS — 26 Aug 2026. basep-6's Flames of Rage
+  // discards TWO where Flamethrower discards one, against one attachment a turn,
+  // and Trevor's note on it asks for the opposite ordering. The paragraph above
+  // is still right; what it does not say is that a card with a CHEAP FALLBACK
+  // defeats the cheapest-attack reading entirely. Arcanine keeps Quick Attack at
+  // CC, so burning two of four Fire leaves it "not silenced" and unpenalised
+  // while the attack it actually cannot repeat is the expensive one.
+  // Measurements, and why this wants extending rather than rebuilding:
+  // Playbook/AMMO.md, "Silence is measured against the CHEAPEST attack".
   discardSilence(pi, slot, f) {
     const n = f.energyCost || 0;
     if (n <= 0 || !slot) return 0;
@@ -8035,7 +8059,39 @@ class AI {
           }
           if (rs) {
             const theirs = E.state.players[1 - pi].active;
-            if (theirs && this.top(theirs).type === a.opts.type) sc += 10;
+            if (theirs && this.top(theirs).type === a.opts.type) {
+              // A RESISTANCE IS A BARRIER THAT DOES NOT EXPIRE, and this was a
+              // flat 10 — the cliff sniff test again, worth the same whether it
+              // denied nothing or denied every point coming at you.
+              //
+              // Priced in the currency that already exists rather than a new
+              // constant: `softShield` values a ONE-TURN reduction of n as
+              // min(n, danger) / 20 * shieldSelf, and era Resistance is always
+              // -30. The only thing added here is persistence.
+              //
+              // Trevor confirmed the mechanic on 26 Aug: it holds while the
+              // Pokemon stays Active, which is what makes the multiplier legal.
+              // Capped at three turns because an uncapped one is unbounded the
+              // moment the reduction meets or beats the incoming damage — the
+              // Pokemon becomes immortal against THAT attacker and the score
+              // runs away, and a cap is honest where an infinity is not.
+              const cut = 30;
+              const danger = this.incomingThreat(pi);
+              const perTurn = Math.min(cut, danger) / 20 * W.shieldSelf;
+              const hp = me.active ? this.remainingHP(me.active) : 0;
+              const after = Math.max(0, danger - cut);
+              const holds = after > 0 ? Math.ceil(hp / after) : 3;
+              // THE FLOOR IS NOT A FUDGE, and leaving it out reintroduced the very
+              // cliff this block removes — at the other end. Against an opponent
+              // holding no Energy the threat is 0, so every type priced at exactly 0,
+              // and the bot picked whichever came first in the list. A powertest that
+              // had guarded this since 14 Aug went red immediately and correctly.
+              //
+              // Matching their type is INFORMATION and is worth something even when
+              // the denial is currently nothing, because they will attach Energy. The
+              // threat scales the size; the floor only keeps the ordering.
+              sc += 2 + perTurn * Math.min(3, Math.max(1, holds));
+            }
           }
         }
         return sc;
@@ -10568,6 +10624,38 @@ class Engine {
   // mirror. It holds until Ditto is benched, at which point it becomes a Ditto
   // again and re-snapshots on its way back up. Anything that switches the Power
   // off blocks the firing but never reverses one already made.
+  // "(Benching either Pokemon ends the effect on that Pokemon.)" — Texture Magic,
+  // and NOTHING ELSE in the era carries that clause on a conversion. Porygon's
+  // two Conversions have no such line and are permanent while the Pokemon stays
+  // in play, which is what `wkOverride`/`rsOverride` already did and must keep
+  // doing. So the clause is a FLAG set beside the override rather than a change
+  // to how overrides work.
+  //
+  // Swept here rather than cleared at the point of benching because there are
+  // seven ways onto the Bench — retreat, Whirlwind, a chosen switch, Teleport,
+  // Scoop Up and two attack verbs — and a clear-on-move would have to find all of
+  // them and stay found. `settleTransforms` above solves the identical problem for
+  // Ditto the identical way, and this runs immediately after it from the same
+  // caller. "The effect on that Pokemon" is per-Pokemon, so the two halves expire
+  // independently: Cool Porygon can be benched while the defender keeps the
+  // Weakness it was given, and the reverse.
+  settleConversions() {
+    for (let i = 0; i < 2; i++) {
+      const me = this.state.players[i];
+      for (const sl of this.allSlots(i)) {
+        if (me.active === sl) continue;
+        if (sl.rsOverrideEndsOnBench && sl.rsOverride !== undefined) {
+          delete sl.rsOverride; delete sl.rsOverrideEndsOnBench;
+          this.log(`${this.nameOf(sl)} is Benched — its Resistance is its own again.`, 'eff');
+        }
+        if (sl.wkOverrideEndsOnBench && sl.wkOverride !== undefined) {
+          delete sl.wkOverride; delete sl.wkOverrideEndsOnBench;
+          this.log(`${this.nameOf(sl)} is Benched — its Weakness is its own again.`, 'eff');
+        }
+      }
+    }
+  }
+
   settleTransforms() {
     let changed = false;
     for (let i = 0; i < 2; i++) {
@@ -11638,6 +11726,7 @@ class Engine {
 
     const r = this.dispatchAction(pi, a);
     this.settleTransforms();
+    this.settleConversions();
     this.settleWinConditions();
     return r;
   }
@@ -12082,6 +12171,7 @@ class Engine {
           return;
         }
         def.wkOverride = value;
+        if (q.ctx.endsOnBench) def.wkOverrideEndsOnBench = true;
         this.log(`${this.nameOf(def)}'s Weakness is now ${value}.`, 'eff');
         return;
       }
@@ -13269,7 +13359,7 @@ class Engine {
             opts.push({ value: '', label: 'Leave it' });      // the card says "you MAY"
             this.ask(pi, 'CONVERT_WEAKNESS',
               `${card.name}: change ${this.nameOf(def)}'s Weakness?`,
-              opts, { defUid: def.uid }, true);
+              opts, { defUid: def.uid, endsOnBench: !!v.endsOnBench }, true);
             break;
           }
           const t = (a && a.opts && a.opts.type) || this.energyTypes().filter(x => x !== 'C')[0];
@@ -13280,6 +13370,7 @@ class Engine {
         case 'CONVERT_SELF_RESISTANCE': {
           const t2 = (a && a.opts && a.opts.type) || this.energyTypes().filter(x => x !== 'C')[0];
           atk.rsOverride = t2;
+          if (v.endsOnBench) atk.rsOverrideEndsOnBench = true;
           this.log(`Conversion 2: ${card.name}'s Resistance is now ${t2}.`, 'eff');
           break;
         }

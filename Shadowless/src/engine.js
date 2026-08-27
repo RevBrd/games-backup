@@ -1153,6 +1153,38 @@ class Engine {
   // mirror. It holds until Ditto is benched, at which point it becomes a Ditto
   // again and re-snapshots on its way back up. Anything that switches the Power
   // off blocks the firing but never reverses one already made.
+  // "(Benching either Pokemon ends the effect on that Pokemon.)" — Texture Magic,
+  // and NOTHING ELSE in the era carries that clause on a conversion. Porygon's
+  // two Conversions have no such line and are permanent while the Pokemon stays
+  // in play, which is what `wkOverride`/`rsOverride` already did and must keep
+  // doing. So the clause is a FLAG set beside the override rather than a change
+  // to how overrides work.
+  //
+  // Swept here rather than cleared at the point of benching because there are
+  // seven ways onto the Bench — retreat, Whirlwind, a chosen switch, Teleport,
+  // Scoop Up and two attack verbs — and a clear-on-move would have to find all of
+  // them and stay found. `settleTransforms` above solves the identical problem for
+  // Ditto the identical way, and this runs immediately after it from the same
+  // caller. "The effect on that Pokemon" is per-Pokemon, so the two halves expire
+  // independently: Cool Porygon can be benched while the defender keeps the
+  // Weakness it was given, and the reverse.
+  settleConversions() {
+    for (let i = 0; i < 2; i++) {
+      const me = this.state.players[i];
+      for (const sl of this.allSlots(i)) {
+        if (me.active === sl) continue;
+        if (sl.rsOverrideEndsOnBench && sl.rsOverride !== undefined) {
+          delete sl.rsOverride; delete sl.rsOverrideEndsOnBench;
+          this.log(`${this.nameOf(sl)} is Benched — its Resistance is its own again.`, 'eff');
+        }
+        if (sl.wkOverrideEndsOnBench && sl.wkOverride !== undefined) {
+          delete sl.wkOverride; delete sl.wkOverrideEndsOnBench;
+          this.log(`${this.nameOf(sl)} is Benched — its Weakness is its own again.`, 'eff');
+        }
+      }
+    }
+  }
+
   settleTransforms() {
     let changed = false;
     for (let i = 0; i < 2; i++) {
@@ -2223,6 +2255,7 @@ class Engine {
 
     const r = this.dispatchAction(pi, a);
     this.settleTransforms();
+    this.settleConversions();
     this.settleWinConditions();
     return r;
   }
@@ -2667,6 +2700,7 @@ class Engine {
           return;
         }
         def.wkOverride = value;
+        if (q.ctx.endsOnBench) def.wkOverrideEndsOnBench = true;
         this.log(`${this.nameOf(def)}'s Weakness is now ${value}.`, 'eff');
         return;
       }
@@ -3854,7 +3888,7 @@ class Engine {
             opts.push({ value: '', label: 'Leave it' });      // the card says "you MAY"
             this.ask(pi, 'CONVERT_WEAKNESS',
               `${card.name}: change ${this.nameOf(def)}'s Weakness?`,
-              opts, { defUid: def.uid }, true);
+              opts, { defUid: def.uid, endsOnBench: !!v.endsOnBench }, true);
             break;
           }
           const t = (a && a.opts && a.opts.type) || this.energyTypes().filter(x => x !== 'C')[0];
@@ -3865,6 +3899,7 @@ class Engine {
         case 'CONVERT_SELF_RESISTANCE': {
           const t2 = (a && a.opts && a.opts.type) || this.energyTypes().filter(x => x !== 'C')[0];
           atk.rsOverride = t2;
+          if (v.endsOnBench) atk.rsOverrideEndsOnBench = true;
           this.log(`Conversion 2: ${card.name}'s Resistance is now ${t2}.`, 'eff');
           break;
         }

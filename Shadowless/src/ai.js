@@ -1667,6 +1667,16 @@ class AI {
   // Flamethrower again at three — so the burn is free and Flamethrower wins on
   // the recoil alone. If the reserve half turns out to need its own term, it is
   // a separate change with its own measurement; see PLAYBOOK's Energy Funnel.
+  //
+  // A SECOND ARCANINE SHARPENED THIS — 26 Aug 2026. basep-6's Flames of Rage
+  // discards TWO where Flamethrower discards one, against one attachment a turn,
+  // and Trevor's note on it asks for the opposite ordering. The paragraph above
+  // is still right; what it does not say is that a card with a CHEAP FALLBACK
+  // defeats the cheapest-attack reading entirely. Arcanine keeps Quick Attack at
+  // CC, so burning two of four Fire leaves it "not silenced" and unpenalised
+  // while the attack it actually cannot repeat is the expensive one.
+  // Measurements, and why this wants extending rather than rebuilding:
+  // Playbook/AMMO.md, "Silence is measured against the CHEAPEST attack".
   discardSilence(pi, slot, f) {
     const n = f.energyCost || 0;
     if (n <= 0 || !slot) return 0;
@@ -2105,7 +2115,39 @@ class AI {
           }
           if (rs) {
             const theirs = E.state.players[1 - pi].active;
-            if (theirs && this.top(theirs).type === a.opts.type) sc += 10;
+            if (theirs && this.top(theirs).type === a.opts.type) {
+              // A RESISTANCE IS A BARRIER THAT DOES NOT EXPIRE, and this was a
+              // flat 10 — the cliff sniff test again, worth the same whether it
+              // denied nothing or denied every point coming at you.
+              //
+              // Priced in the currency that already exists rather than a new
+              // constant: `softShield` values a ONE-TURN reduction of n as
+              // min(n, danger) / 20 * shieldSelf, and era Resistance is always
+              // -30. The only thing added here is persistence.
+              //
+              // Trevor confirmed the mechanic on 26 Aug: it holds while the
+              // Pokemon stays Active, which is what makes the multiplier legal.
+              // Capped at three turns because an uncapped one is unbounded the
+              // moment the reduction meets or beats the incoming damage — the
+              // Pokemon becomes immortal against THAT attacker and the score
+              // runs away, and a cap is honest where an infinity is not.
+              const cut = 30;
+              const danger = this.incomingThreat(pi);
+              const perTurn = Math.min(cut, danger) / 20 * W.shieldSelf;
+              const hp = me.active ? this.remainingHP(me.active) : 0;
+              const after = Math.max(0, danger - cut);
+              const holds = after > 0 ? Math.ceil(hp / after) : 3;
+              // THE FLOOR IS NOT A FUDGE, and leaving it out reintroduced the very
+              // cliff this block removes — at the other end. Against an opponent
+              // holding no Energy the threat is 0, so every type priced at exactly 0,
+              // and the bot picked whichever came first in the list. A powertest that
+              // had guarded this since 14 Aug went red immediately and correctly.
+              //
+              // Matching their type is INFORMATION and is worth something even when
+              // the denial is currently nothing, because they will attach Energy. The
+              // threat scales the size; the floor only keeps the ordering.
+              sc += 2 + perTurn * Math.min(3, Math.max(1, holds));
+            }
           }
         }
         return sc;

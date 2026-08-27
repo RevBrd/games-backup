@@ -223,12 +223,22 @@ class Board {
 
   // The best-scoring AFFORDABLE attack, by name. This is the question almost
   // every attack-choice claim is really asking.
+  // SCORED AS AN ACTION, NOT AS AN ATTACK INDEX — Job 13. `scoreAttack(idx)` takes
+  // only the attack's position on the card and therefore cannot see `a.opts`, so
+  // every attack whose value lives in its OPTION was measured as though it had
+  // none: both Conversions, Texture Magic and Metronome. Cool Porygon's Texture
+  // Magic scored 90 as an action and 0 here, and a claim written on `prefers()`
+  // read the 0 — a row failing against a bot that was doing the right thing.
+  //
+  // For an attack with no options the two agree, which was checked by making this
+  // change and re-running every claim in the suite: none moved.
   bestAttack() {
     const legal = this.E.legalActions(0).filter(a => a.t === 'attack');
     if (!legal.length) return null;
     let best = null, bs = -Infinity;
     for (const a of legal) {
-      const sc = this.ai.scoreAttack(0, a.idx);
+      let sc;
+      try { sc = this.ai.scoreAction(0, a); } catch (e) { sc = this.ai.scoreAttack(0, a.idx); }
       if (sc > bs) { bs = sc; best = a.idx; }
     }
     return (this.card(this.me.active).attacks || [])[best].name;

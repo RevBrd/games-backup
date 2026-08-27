@@ -114,3 +114,59 @@ Charmeleon rather than three.
 
 **It reversed a 14 Aug assertion in `powertest.js`** which had a fresh Arcanine preferring Take Down.
 *[Why that test was rewritten rather than deleted →](../HISTORY.md)*
+
+## Silence is measured against the CHEAPEST attack — 26 Aug 2026
+
+**A second Arcanine, and the finding is about the first one.** `basep-6`'s Flames of Rage discards
+**two** Fire where Flamethrower discards one, and Trevor's note on it says the opposite of what the
+table above concluded: *"It requires a double Energy Funnel to maintain, so it should not plan to be
+maintained. Quick Attack is preferred unless near death."*
+
+**That is not a contradiction and reading it as one would send the next session round in a circle.**
+It is a difference of degree the model should be able to see on its own:
+
+| | discards | re-attach | sustainable |
+|---|---|---|---|
+| Flamethrower | 1 | 1/turn | **every turn** — the burn really is free, which is why the row above is right |
+| Flames of Rage | 2 | 1/turn | **every other turn** — half your tempo, which is why the note says don't plan on it |
+
+### What `discardSilence` actually asks
+
+**`shortfallFor` measures the CHEAPEST attack the slot owns**, which answers *"can I attack at all?"*
+That was the right question for Charizard, whose only attack is the expensive one — empty it and it
+is genuinely mute, and the four-Fire row above is that working.
+
+**A card with a cheap fallback defeats it.** Arcanine keeps Quick Attack at CC, so after burning two
+of four Fire it still has two, still affordable, shortfall **0**, no penalty at all. The bot reads
+"not silenced" and fires. But the attack it cannot repeat is Flames of Rage, and *that* is what
+Trevor's note is about. **"Can I act?" and "can I keep doing THIS?" are different questions and only
+the first is asked.**
+
+Measured, `basep:Arcanine` at 0 self-damage against a threat-40 Hitmonchan:
+
+| Fire attached | Flames of Rage | Quick Attack | picks | why |
+|---|---|---|---|---|
+| 2 | **12** | 20 | Quick Attack | discarding 2 of 2 silences everything — the term fires correctly |
+| 3 | **33** | 20 | Flames of Rage | partial shortfall, partial penalty |
+| 4+ | **40** | 20 | Flames of Rage | shortfall 0, **no penalty exists** |
+
+**The shape is already right and one term is missing.** Two of the three rows in
+`tools/claims/basep.js` pass — it escalates as Arcanine is hurt, and it refuses outright at two Fire.
+Only "healthy, with Energy to spare" fails. **Do not rebuild this term; extend it.**
+
+### Trevor's note, verbatim and append-only
+
+> The logic behind the Flames of Rage one is that it discards both energy cards each time, requiring
+> a double energy funnel. You can only attach one per turn, so this means you can only attack once
+> every two turns. So while Quick Attack might work out to the same damage on average, it doesn't
+> require an *enormous* energy investment that takes away from readying the bench.
+
+**The second sentence names a cost nothing in the scorer has**: Energy spent here is Energy that
+never reached the Bench. `discardSilence` prices the tempo of *this slot* and stops there. That is a
+board-level opportunity cost, and it is the same missing capability the Charmeleon half of this file
+and [Evolution timing](EVOLUTION-TIMING.md) both wait on — *reasoning about Energy as a resource with
+somewhere else to be.*
+
+**Left unbuilt deliberately.** It is probably one rule with the reserve half above rather than a
+second one, and both of them want the same capability. If that capability lands, it lands once and
+every row in this file reads it.
