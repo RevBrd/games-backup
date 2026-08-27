@@ -3220,7 +3220,19 @@ function renderCollection() {
       grid.appendChild(collTile(pick, count, count ? bestVariant(save, pick) : '', '#' + s.dex));
     });
   } else {
-    Object.keys(CARD_DB).forEach(id => {
+    // LIVE_DB, NOT CARD_DB — the only surface in this file that had it wrong, and
+    // it went unnoticed because until Job 13 the two were the same object with a
+    // different name. Generating basep made CARD_DB 364 cards against LIVE_DB's
+    // 311, and this grid immediately grew 53 tiles for promo cards no pack can
+    // hand out, sitting there permanently missing — while the stats line directly
+    // above it, which correctly reads LIVE_DB, went on saying 311. One screen,
+    // two totals.
+    //
+    // The dex branch above already reads LIVE_DB. Generating a set that is not
+    // live is the SUPPORTED workflow (gen_cards.js --sets runs at the START of a
+    // set job), so any surface reading CARD_DB directly is a latent version of
+    // this — a half-written set leaking into the collection.
+    Object.keys(LIVE_DB).forEach(id => {
       const n = ownedTotal(save, id);
       if (!show(n > 0)) return;
       grid.appendChild(collTile(id, n, bestVariant(save, id), CARD_DB[id].num));

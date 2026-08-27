@@ -1309,6 +1309,44 @@ T('the collection screen renders in every view and filter', () => {
   UI.collView = 'cards'; UI.collFilter = 'all';
   return created > 0;
 });
+T('the CARDS grid shows the live pool and nothing a pack cannot hand out', () => {
+  // JOB 13. This grid read CARD_DB while every other surface on the screen read
+  // LIVE_DB, and the two were the same object under two names until a set was
+  // generated that was not live. `gen_cards.js --sets` at the START of a set job
+  // is the SUPPORTED workflow, so that day was always coming: generating basep
+  // put 53 promo tiles into the collection that no pack can hand out, permanently
+  // missing, while the stats line directly above them went on saying 311.
+  //
+  // Counted by walking the rendered tree rather than by reading the source,
+  // because the assertion is about what the player sees. A card from a set that
+  // is not live must not have a tile at any filter.
+  const notLive = Object.keys(CARD_DB).filter(id => !LIVE_DB[id]);
+  if (!notLive.length) return true;            // nothing generated-but-unfinished today
+  const names = new Set(notLive.map(id => CARD_DB[id].name));
+  // Names shared with a live printing cannot be told apart in rendered text, so
+  // only the ones unique to the unfinished set are searched for.
+  const liveNames = new Set(Object.keys(LIVE_DB).map(id => CARD_DB[id].name));
+  const onlyThere = [...names].filter(n => !liveNames.has(n));
+  if (!onlyThere.length) return true;
+  UI.screen = 'collection'; UI.detail = null;
+  const leaked = [];
+  for (const f of ['all', 'missing']) {
+    UI.collView = 'cards'; UI.collFilter = f; render();
+    const text = deepText(document.getElementById('app'));
+    // WORD BOUNDARIES, because "Mew" is a substring of "Mewtwo" and Mewtwo is
+    // live. That is the THIRD name collision this job has turned up — Surfing
+    // Pikachu contains its own attack "Surf", and Dark Raichu sits inside a set
+    // whose names repeat across printings. A plain indexOf on a card name is
+    // never safe in this corpus.
+    for (const n of onlyThere) {
+      const re = new RegExp(`(^|[^A-Za-z])${n.replace(/[.*+?^${}()|[]\]/g, "\    for (const n of onlyThere) if (text.indexOf(n) >= 0) leaked.push(`${n} (${f})`);")}([^A-Za-z]|$)`);
+      if (re.test(text)) leaked.push(`${n} (${f})`);
+    }
+  }
+  UI.collView = 'cards'; UI.collFilter = 'all'; render();
+  if (leaked.length) throw new Error(`not-live cards on the collection grid: ${leaked.slice(0, 5).join(', ')}`);
+  return true;
+});
 T('CARDS and DEX count different things', () => {
   // Against LIVE_DB, which is what the screen actually counts — CARD_DB holds
   // every set that GENERATES, including ones still being written. Derived
