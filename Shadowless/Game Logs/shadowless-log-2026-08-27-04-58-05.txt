@@ -1,0 +1,253 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-27 04:58:05
+decks    you: New deck 4   opponent: Ariana — Mind Games
+opponent expert
+seed     2085519255   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Potion Energy, Abra, Porygon, Rattata, Meowth, PlusPower, Dark Kadabra
+  HIDDEN  your opening hand: Pikachu, Bill, Lightning Energy, Jigglypuff, Bill, Poké Ball, Lightning Energy
+  HIDDEN  opponent's Prizes: Psychic Energy, Gust of Wind, Psychic Energy, Psychic Energy, Psychic Energy, Defender
+  HIDDEN  your Prizes: Lightning Energy, Defender, Electrode, Gust of Wind, Lightning Energy, Pikachu
+  HIDDEN  opponent's opening board: Abra active, bench Porygon, Rattata, Meowth
+  HIDDEN  your opening board: Pikachu active, bench Jigglypuff
+          New game. Seed 2085519255.
+          Coin flip (who goes first): HEADS
+          You will go first.
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (46 left)
+          You plays Bill.
+          You draws 2.
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): HEADS
+          Poke Ball: found Jigglypuff.
+          You plays Bill.
+          You draws 2.
+          You benches Voltorb.
+          You attaches Lightning Energy to Pikachu.
+          You ended the turn without attacking.
+
+--- Turn 2 — Ariana ----------------------------
+          Ariana draws a card. (46 left)
+  AI      attach   [18]
+          holding: Potion Energy, PlusPower, Dark Kadabra, Meowth
+          Ariana attaches Potion Energy to Rattata.
+          Potion Energy: nothing to heal.
+  AI      bench   [2]
+          holding: PlusPower, Dark Kadabra, Meowth
+          Ariana benches Meowth.
+  AI      pass — no attack available — Vanish: Not enough Energy; Psyshock: Not enough Energy   [0]
+          holding: PlusPower, Dark Kadabra
+          Ariana ended the turn without attacking.
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (40 left)
+          You attaches Lightning Energy to Pikachu.
+          Pikachu uses Spark.
+          Abra takes 20. (20/40 left)
+          Rattata takes 10. (30/40 left)
+          10 to Rattata on the Bench.
+
+--- Turn 4 — Ariana ----------------------------
+          Ariana draws a card. (45 left)
+  AI      attach   [35]
+          holding: PlusPower, Dark Kadabra, Psychic Energy
+          passed over: evolve 26.5, attach 8, attach 6, attach 6, attach -2
+          Ariana attaches Psychic Energy to Abra.
+  AI      evolve   [26.5]
+          holding: PlusPower, Dark Kadabra
+          passed over: trainer 6, retreat 3.7, retreat -9.8, retreat -9.8, retreat -9.8
+          Abra evolves into Dark Kadabra. Special Conditions removed.
+  AI      power:DISCARD_THEN_DRAW   [2]
+          holding: PlusPower
+          Matter Exchange: PlusPower discarded, one card drawn.
+  AI      pass — no attack available — Mind Shock: Not enough Energy   [0]
+          holding: Dark Alakazam
+          Ariana ended the turn without attacking.
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (39 left)
+          You plays Energy Removal.
+          Psychic Energy discarded from Dark Kadabra.
+          Illegal: No such benched Pokemon
+          Pikachu uses Spark.
+          Dark Kadabra takes 20. (10/50 left)
+          Rattata takes 10. (20/40 left)
+          10 to Rattata on the Bench.
+
+--- Turn 6 — Ariana ----------------------------
+          Ariana draws a card. (43 left)
+  AI      evolve   [26.5]
+          holding: Dark Alakazam, Mewtwo
+          passed over: power:DISCARD_THEN_DRAW 3.5, bench 2
+          Dark Kadabra evolves into Dark Alakazam. Special Conditions removed.
+  AI      bench   [2]
+          holding: Mewtwo
+          Ariana benches Mewtwo.
+  AI      pass — no attack available — Teleport Blast: Not enough Energy; Mind Shock: Not enough Energy   [0]
+          holding: (empty)
+          Ariana ended the turn without attacking.
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (38 left)
+          Pikachu evolves into Raichu. Special Conditions removed.
+          You attaches Lightning Energy to Raichu.
+          Raichu uses Agility.
+          Dark Alakazam takes 20. (0/60 left)
+          Coin flip (Agility): HEADS
+          Raichu will prevent all effects of attacks during the opponent's next turn.
+          Dark Alakazam is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [29.3]
+          holding: (empty)
+          passed over: promote 26.5, promote 24.6, promote 22.3, promote 22.3
+          Ariana promotes Mewtwo to Active.
+
+--- Turn 8 — Ariana ----------------------------
+          Ariana draws a card. (42 left)
+  AI      evolve   [25]
+          holding: Dark Persian
+          passed over: evolve 25
+          Meowth A evolves into Dark Persian. Special Conditions removed.
+  AI      pass — no attack available — Psychic: Not enough Energy; Barrier: Not enough Energy   [0]
+          holding: (empty)
+          Ariana ended the turn without attacking.
+          Raichu: PREVENT_ALL_EFFECTS wears off.
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (37 left)
+          You attaches Lightning Energy to Raichu.
+          Raichu uses Thunder.
+          Mewtwo takes 60. (0/60 left)
+          Coin flip (avoid recoil?): HEADS
+          Mewtwo is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [23.3]
+          holding: (empty)
+          passed over: promote 22.8, promote 20.8, promote 18.6
+          Ariana promotes Rattata to Active.
+
+--- Turn 10 — Ariana ----------------------------
+          Ariana draws a card. (41 left)
+  AI      bench   [2]
+          holding: Rattata
+          passed over: retreat -18.7, retreat -18.7, retreat -18.7
+          Ariana benches Rattata.
+  AI      attack:Quick Attack   [15]
+          holding: (empty)
+          Rattata uses Quick Attack.
+          Coin flip (bonus damage?): TAILS
+          Tails -> 10 damage.
+          Raichu takes 10. (70/80 left)
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Lightning Energy to Voltorb.
+          Raichu uses Agility.
+          Rattata takes 20. (0/40 left)
+          Coin flip (Agility): TAILS
+          Rattata is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [19.8]
+          holding: (empty)
+          passed over: promote 19.8, promote 17.8, promote 15.7
+          Ariana promotes Porygon to Active.
+
+--- Turn 12 — Ariana ----------------------------
+          Ariana draws a card. (40 left)
+  AI      pass — no attack available — Conversion 1: Not enough Energy; Psybeam: Not enough Energy   [0]
+          holding: Potion
+          Ariana ended the turn without attacking.
+
+--- Turn 13 — You -------------------------------
+          You draws a card. (35 left)
+          You attaches Lightning Energy to Voltorb.
+          Voltorb evolves into Electrode. Special Conditions removed.
+          Raichu uses Thunder.
+          Porygon takes 60. (0/40 left)
+          Coin flip (avoid recoil?): TAILS
+          Raichu does 30 damage to itself. (40 total)
+          Porygon is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [11.5]
+          holding: Potion
+          passed over: promote 9.5, promote 7.3
+          Ariana promotes Rattata to Active.
+
+--- Turn 14 — Ariana ----------------------------
+          Ariana draws a card. (39 left)
+  AI      retreat   [1]
+          holding: Potion, Dark Kadabra
+          passed over: retreat 1
+          Ariana retreats Rattata; Dark Persian is now Active.
+  AI      pass — no attack available — Fascinate: Not enough Energy; Poison Claws: Not enough Energy   [0]
+          holding: Potion, Dark Kadabra
+          Ariana ended the turn without attacking.
+
+--- Turn 15 — You -------------------------------
+          You draws a card. (34 left)
+          You attaches Lightning Energy to Jigglypuff.
+          Raichu uses Thunder.
+          Dark Persian takes 60. (0/60 left)
+          Coin flip (avoid recoil?): TAILS
+          Raichu does 30 damage to itself. (70 total)
+          Dark Persian is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [-33.5]
+          holding: Potion, Dark Kadabra
+          passed over: promote -37.7
+          Ariana promotes Rattata to Active.
+
+--- Turn 16 — Ariana ----------------------------
+          Ariana draws a card. (38 left)
+  AI      attach   [76]
+          holding: Potion, Dark Kadabra, Psychic Energy
+          passed over: retreat 46, attach 6
+          Ariana attaches Psychic Energy to Rattata.
+  AI      retreat   [37.5]
+          holding: Potion, Dark Kadabra
+          Ariana retreats Rattata; Meowth is now Active.
+  AI      pass — no attack available — Coin Hurl: Not enough Energy   [0]
+          holding: Potion, Dark Kadabra
+          Ariana ended the turn without attacking.
+
+--- Turn 17 — You -------------------------------
+          You draws a card. (33 left)
+          Raichu uses Thunder.
+          Meowth takes 60. (0/40 left)
+          Coin flip (avoid recoil?): HEADS
+          Meowth is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         17 turns
+
+==========================================================
+PACKS OPENED
+
+  Team Rocket
+    Dark Muk  Uncommon
+    Dark Flareon  Uncommon
+    Slowpoke  Common
+    Water Energy  
+    Magnemite  Common
+    Dark Raticate  Common
+    Goop Gas Attack  Common
+    Here Comes Team Rocket!  Rare Holo   NEW
+
+  Team Rocket
+    Dark Primeape  Uncommon
+    Digger  Uncommon   NEW
+    Fire Energy  
+    Eevee  Common
+    Slowpoke  Common
+    Diglett  Common
+    Psyduck  Common
+    Dark Dragonite  Rare   NEW

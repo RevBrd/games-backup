@@ -28,6 +28,7 @@ Faults and behaviour, from Trevor's play. [AI.md](AI.md) has what the scorer alr
 - The AI evolves as soon as it CAN rather than as soon as it is READY — Vileplume arrives unable to attack. Measured: `evolve` scores a flat 31.0 whether the target holds one Energy or three. **Do not fix this on its own** — attaching a third Grass to a Gloom scores −2, so evolving is currently what unblocks the Energy, and a naive penalty strands Vileplume at two forever. The attach half has to come first and it is narrow: when the evolution is in hand, measure the target's shortfall against the evolved form. → [AI.md](AI.md) open item 4
 - Alakazam moves damage from a weaker pokemon to a tank (Chansey). Except that Chansey was in the active spot and got killed because of it (but not by it) - log# 02-18-48.
 - base5 Charmander uses its pokemon power to strip an energy from the active pokemon that it depended on. Then on the next turn attaches an energy that it couldn't use - log# 03-56-31
+- AI retreats Rattata instead of scoring a kill - log# 04-58-05
 
 ### The screen
 
@@ -58,6 +59,7 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
   1-in-1,183 packs and he is 162 in.
 - Introductions for rare cards when pulled, light for RH, heavy for Shadowless, all cheap. I have ideas about this one, whoever takes it, let's chat before we build.
 - Attaching an energy or applying an item to a pokemon needs to not be canceled by the item clicked underneath it.
+- I unlocked Dark Raichu, shown in log# 03-56-31 and it does not show as unlocked in my card collection. See the most recent save file in the Save File folder.
 
 ### Rules
 

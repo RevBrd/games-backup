@@ -16,7 +16,7 @@ card-shaped answer. Cards are the *evidence*. The pattern is the entry.
 **Trevor writes per card, in the workbook, while going through a set** — the `Wants` column of the
 Index tab in `data/v1 Opp Decks/`. That is the inbox and there is no second one, because asking him
 to retype a note here that he already wrote with the card in front of him is the same job twice in
-the worse place. #15 proposed the column, Trevor filled it, #21 spotted it was worth more than the
+the worse place, though it's perfectly fine to ask for clarification or more detail. #15 proposed the column, Trevor filled it, #21 spotted it was worth more than the
 scoring tags it sits beside. **65 cards carried a `Wants` when this file was reshaped, and they
 clustered into sixteen patterns** — that clustering is what produced the directory below.
 
@@ -90,7 +90,7 @@ of a *clause* — *"unless Drill Peck can kill"*, *"when there's something to be
 sleeping basic can just evolve to wake up anyway"*. A label carries none of those, and a cell reading
 only `Attack Choice` would have produced a category and nothing testable.
 
-**The load-bearing version: these sixteen patterns exist only because sixty-five notes were written
+**The load-bearing version: these sixteen (plus) patterns exist only because sixty-five notes were written
 as prose.** Nothing clustered them into being except the paragraphs. A label can only route to a
 pattern that already exists; **prose is the only thing that can produce a new one.** So
 under-categorising is cheap and self-corrects on the next pass, while over-categorising silently caps
