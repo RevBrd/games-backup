@@ -563,6 +563,16 @@ class AI {
         case 'SWITCH_DEFENDER_FIRST': flags.dragFirst = true; break;
         case 'SCATTER_OWN_ENERGY': flags.scatter = true; break;
         case 'MOVE_DEF_ENERGY_TO_BENCH': flags.stripToBench = true; break;
+        // ---- Job 13, the promo batch ----
+        case 'ENERGY_FROM_DISCARD_TO_SELF': flags.absorb = v.n; break;
+        case 'DAMAGE_HALVE_SELF': flags.halveSelf = true; break;
+        case 'DEVOLVE_CHOOSE': flags.devolve = true; break;
+        // Trevor: "Energy Control should only be used when Telekinesis can't, and
+        // should not be intentionally used as a stalling move." So it is priced as
+        // Magnetic Lines is and no higher — half an Energy discard, on a coin —
+        // which leaves the three-Energy attack winning whenever it is affordable.
+        case 'MOVE_OPP_ENERGY_ON_FLIP': flags.stripToBench = 0.5; break;
+        case 'CAT_PUNCH': flags.catPunch = v.dmg; break;
         case 'OPTIONAL_DISCARD_THEN_SNIPE': flags.snipe = { n: 1, dmg: v.dmg }; break;
         case 'SEARCH_BASIC_TO_BENCH': flags.callFamily = true; break;
         // Rapid Evolution. Priced on the HP SWING it buys rather than as a flat
@@ -1055,6 +1065,79 @@ class AI {
     // Magnetic Lines moves ONE basic Energy off their Active. Strictly weaker
     // than discarding it — they keep the card — so priced under energyDiscard.
     if (f.flags.stripToBench && you.active && you.bench.length) s += W.energyDiscard * 0.5;
+    // ---- Job 13, the promo batch -------------------------------------------
+
+    // Mewtwo's Energy Absorption. Trevor's note is a conditional, not a value:
+    // "Does not want to fight if there is insufficient energy in the discard pile
+    // and doesn't have enough energy for Psyburn on its own." So the term is
+    // gated on what is ACTUALLY in the discard pile and is worth nothing when it
+    // is empty — the attack becomes a wasted turn there, and the old failure mode
+    // for a verb like this is scoring the intent rather than the outcome.
+    if (f.flags.absorb) {
+      const inDiscard = me.discard.filter(x => {
+        const c = this.db[x.id];
+        return c && c.kind === 'energy';
+      }).length;
+      const gets = Math.min(f.flags.absorb, inDiscard);
+      if (gets > 0) {
+        // Worth what it saves: each Energy is a turn of attaching that no longer
+        // has to happen, priced with the same weight the deck-search fetch uses.
+        const short = this.shortfallFor(atkSlot, this.top(atkSlot));
+        s += Math.min(gets, Math.max(1, short)) * W.attachBuild;
+      }
+    }
+
+    // Light Screen. `softShield` prices a FLAT reduction and this one is
+    // proportional, so it is valued where `danger` is known rather than at flag
+    // time: halving denies half of whatever is coming, rounded down to 10 the way
+    // the engine rounds it. Against an opponent that cannot hurt you it denies
+    // nothing and correctly scores nothing — no cliff at either end.
+    if (f.flags.halveSelf) {
+      const denies = Math.floor(danger / 2 / 10) * 10;
+      s += Math.min(denies, danger) / 20 * W.shieldSelf;
+    }
+
+    // Mew's Devolution Beam, and Trevor's note is the whole rule: "only when the
+    // HP reduction from the de-evolved opponent would result in its death.
+    // Otherwise, the opponent can just re-evolve it again."
+    //
+    // So this is scored as a KNOCK OUT when the damage already on the target
+    // meets the devolved card's HP, and as nearly nothing otherwise. Checked
+    // against every evolved Pokemon they have rather than just the Active, since
+    // the attack may be aimed anywhere.
+    if (f.flags.devolve) {
+      let best = 0;
+      for (const sl of E.allSlots(1 - pi)) {
+        if (sl.stack.length < 2) continue;
+        const under = this.db[sl.stack[sl.stack.length - 2].id];
+        if (!under) continue;
+        // The engine caps damage at the new HP, so "would result in its death" is
+        // damage already taken reaching what the smaller card can hold.
+        if (sl.dmg >= under.hp) best = Math.max(best, W.knockout);
+        else best = Math.max(best, W.stripEnergy * 0.3);   // a tempo nuisance, no more
+      }
+      s += best;
+    }
+
+    // Meowth's Cat Punch. Trevor: "50/50 chance to force the opponent to choose
+    // which pokemon to damage on the bench. Our bot should probably weight that
+    // slightly below getting to pick its own pokemon to damage."
+    //
+    // Half the time it is ordinary damage to the Active. The other half it is a
+    // Bench hit THEY aim, which is strictly worse than a snipe the attacker aims
+    // — they will feed it whatever they care least about — so the Bench half is
+    // priced against their CHEAPEST Pokemon rather than their best, and then
+    // discounted again. With no Bench, tails does nothing at all and that half is
+    // worth zero rather than being quietly averaged away.
+    if (f.flags.catPunch) {
+      const dmg = f.flags.catPunch;
+      if (you.active) s += 0.5 * Math.min(dmg, this.remainingHP(you.active)) * W.damage;
+      if (you.active && this.remainingHP(you.active) <= dmg) s += 0.5 * W.knockout;
+      if (you.bench.length) {
+        const worst = Math.min(...you.bench.map(b => this.remainingHP(b)));
+        s += 0.5 * Math.min(dmg, worst) * W.benchDamageFoe * 0.6;
+      }
+    }
     // Energy Bomb empties the attacker to seed the Bench. Good when the Bench
     // wants it, an outright loss when there is no Bench and it all burns.
     if (f.flags.scatter && me.active) {
@@ -2159,6 +2242,34 @@ class AI {
         // of these; the mechanism is general and this switch grows per card.
         const q = this.E.state.pendingAsk;
         if (!q) return -Infinity;
+        if (q.kind === 'CAT_PUNCH') {
+          // The bot is the DEFENDER here, naming which of its own Benched Pokemon
+          // eats 20. Without this case the switch below returns 0 for every option
+          // and it picks at random — the silent-failure surface exactly, and the
+          // reason Trevor's note on this card is a spec rather than a nicety:
+          // "as long as the bot doesn't do anything obviously dumb like killing
+          // something with it or picking a pokemon it was actively investing in."
+          //
+          // Those two sentences are the two terms, and nothing more is needed. No
+          // call to promoteValue: it re-enters scoreAttack for the Active slot and
+          // that trap has cost this file a session once already (AI-INVARIANTS).
+          // Remaining HP and Energy attached answer both halves on their own.
+          const b = me.bench[a.value];
+          if (!b) return -Infinity;
+          const dmg = (q.ctx && q.ctx.dmg) || 20;
+          let sc = 0;
+          if (this.remainingHP(b) <= dmg) sc -= W.selfKO;                  // never feed it a kill
+          sc -= b.energy.length * W.energyDiscard;                         // nor the one being built
+          sc -= (this.top(b).stage === 'Basic' ? 0 : W.knockout * 0.15);   // nor an evolved card
+          // AND A TIEBREAK THAT IS NOT POSITIONAL. Two undamaged Basics with no
+          // Energy on them scored an identical 0 and the bot took whichever came
+          // first — flat with a cliff at the end, the sniff test this tree keeps
+          // paying for. 20 damage is a bigger share of a 40 HP Voltorb than of a
+          // 60 HP Growlithe, so the hit goes where it costs the least. Small
+          // enough that the three terms above always outrank it.
+          sc -= (dmg / Math.max(10, this.remainingHP(b))) * W.knockout * 0.1;
+          return sc;
+        }
         if (q.kind === 'CONVERT_WEAKNESS') {
           // Texture Magic's Weakness half, asked of the ATTACKER rather than the
           // opponent. This is the bonus that used to ride on the attack's own

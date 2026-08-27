@@ -3805,6 +3805,44 @@ const SET_INFO = {
 //     SCATTER_OWN_ENERGY           move EVERY Energy off the attacker onto your
 //                                  own Bench, distributed as you like; DISCARD it
 //                                  all if you have no Bench (Energy Bomb)
+//     ENERGY_FROM_DISCARD_TO_SELF {n}
+//                                  take UP TO n Energy cards out of your discard
+//                                  pile and ATTACH them to the attacker. The
+//                                  sibling above puts them in HAND and that is a
+//                                  different card. Does NOT spend the turn's one
+//                                  attachment, which governs playing an Energy
+//                                  from hand — same reasoning as
+//                                  SEARCH_ENERGY_TO_SELF (Energy Absorption)
+//     DAMAGE_HALVE_SELF {label}    damage to self is HALVED during the opponent's
+//                                  next turn, rounded DOWN to the nearest 10.
+//                                  Shares its arithmetic with the passive Power
+//                                  of the same name (Kabuto Armor) and
+//                                  computeDamage reads both, applying it once
+//                                  rather than compounding. NOT a Barrier —
+//                                  "any other effects of attacks still happen",
+//                                  so statuses and discards land (Light Screen)
+//     DEVOLVE_CHOOSE               return the HIGHEST Stage Evolution card on any
+//                                  ONE evolved Pokemon, either side, to its
+//                                  OWNER'S HAND — so a Stage 2 becomes a Stage 1
+//                                  rather than collapsing to its Basic. Status
+//                                  and effects clear exactly as doEvolve clears
+//                                  them, which is what "just as if you had
+//                                  evolved it" asks for. Not T_DEVOLUTION_SPRAY:
+//                                  that DISCARDS, and only hits your own side
+//                                  (Devolution Beam)
+//     MOVE_OPP_ENERGY_ON_FLIP      flip; heads => move one BASIC Energy from any
+//                                  of the OPPONENT'S Pokemon to any other of
+//                                  theirs, attacker choosing both ends. Magnetic
+//                                  Lines with both ends free and a coin on it;
+//                                  basic by CLASS, so a Rainbow never moves
+//                                  (Energy Control)
+//     CAT_PUNCH {dmg}              flip; heads => dmg to the Defending Pokemon
+//                                  normally. Tails => THE DEFENDING PLAYER names
+//                                  one of their own Benched Pokemon and it takes
+//                                  dmg with no W/R. Tails with an empty Bench
+//                                  does nothing, and the Active is never the
+//                                  tails target. Rides engine.ask(), so the
+//                                  damage lands in resolveAsk and not here
 //     MOVE_DEF_ENERGY_TO_BENCH     take one BASIC Energy off the defender and put
 //                                  it on one of THEIR Benched. Basic by CLASS, so
 //                                  Rainbow does not qualify — the card says
@@ -4002,6 +4040,11 @@ const SET_INFO = {
 //   answered; `kind` names which continuation to run. The mechanism is general
 //   and the continuations are per-card, which is the ON_PLAY split again.
 //     CHALLENGE                    accept or decline (Challenge!)
+//     CAT_PUNCH                    which of THEIR OWN Benched Pokemon takes the
+//                                  hit, asked of the DEFENDER. The one question
+//                                  in this list the opponent answers about their
+//                                  own board, and the one the AI must score or it
+//                                  feeds Cat Punch whatever comes first
 //     CONVERT_WEAKNESS             which type to make the defender weak to, asked
 //                                  of the ATTACKER — engine.ask()'s `self` flag.
 //                                  Texture Magic grants two independent type
@@ -5513,6 +5556,37 @@ const EFFECTS = {
     [{ v: 'BARRIER_ON_FLIP', label: 'Agility' }],      //   Agility
   ]},
   'basep-28': { a: [ [] ]},                            // Surfing Pikachu / Surf
+
+  // WAVE 2 — the five that needed new machinery. Four of the five reuse a shape
+  // that already existed; only Cat Punch needed a mechanism, and that mechanism
+  // was built in Job 10e for a different card.
+
+  'basep-2': { a: [                                    // Electabuzz
+    [{ v: 'DAMAGE_HALVE_SELF', label: 'Light Screen' }],   //   Light Screen
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Quick Attack' }],
+  ]},
+  'basep-3': { a: [                                    // Mewtwo
+    // Trevor's Setup Turn: two Energy out of the discard costs a turn and skips
+    // a turn, which is only worth it when the discard actually holds them.
+    [{ v: 'ENERGY_FROM_DISCARD_TO_SELF', n: 2 }],      //   Energy Absorption
+    [],                                                //   Psyburn
+  ]},
+  'basep-8': { a: [                                    // Mew
+    [{ v: 'DMG_PER_DEF_ENERGY', base: 0, per: 10 }],   //   Psywave
+    [{ v: 'DEVOLVE_CHOOSE' }],                         //   Devolution Beam
+  ]},
+  'basep-10': { a: [                                   // Meowth
+    [{ v: 'CAT_PUNCH', dmg: 20 }],                     //   Cat Punch
+  ]},
+  'basep-12': { a: [                                   // Mewtwo
+    [{ v: 'MOVE_OPP_ENERGY_ON_FLIP' }],                //   Energy Control
+    // "1 of your opponent's Pokemon" — the Active included, which is the wider
+    // Team Rocket scope rather than Base Set's Bench-only wording. Trevor's note
+    // says the same: "Telekinesis can also hit the active pokemon if desired, so
+    // all in play should be considered potential targets."
+    [{ v: 'BENCH_SNIPE', n: 1, dmg: 30, target: 'any', label: 'Telekinesis' },
+     { v: 'NO_WR' }],                                  //   Telekinesis
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -6507,6 +6581,16 @@ class AI {
         case 'SWITCH_DEFENDER_FIRST': flags.dragFirst = true; break;
         case 'SCATTER_OWN_ENERGY': flags.scatter = true; break;
         case 'MOVE_DEF_ENERGY_TO_BENCH': flags.stripToBench = true; break;
+        // ---- Job 13, the promo batch ----
+        case 'ENERGY_FROM_DISCARD_TO_SELF': flags.absorb = v.n; break;
+        case 'DAMAGE_HALVE_SELF': flags.halveSelf = true; break;
+        case 'DEVOLVE_CHOOSE': flags.devolve = true; break;
+        // Trevor: "Energy Control should only be used when Telekinesis can't, and
+        // should not be intentionally used as a stalling move." So it is priced as
+        // Magnetic Lines is and no higher — half an Energy discard, on a coin —
+        // which leaves the three-Energy attack winning whenever it is affordable.
+        case 'MOVE_OPP_ENERGY_ON_FLIP': flags.stripToBench = 0.5; break;
+        case 'CAT_PUNCH': flags.catPunch = v.dmg; break;
         case 'OPTIONAL_DISCARD_THEN_SNIPE': flags.snipe = { n: 1, dmg: v.dmg }; break;
         case 'SEARCH_BASIC_TO_BENCH': flags.callFamily = true; break;
         // Rapid Evolution. Priced on the HP SWING it buys rather than as a flat
@@ -6999,6 +7083,79 @@ class AI {
     // Magnetic Lines moves ONE basic Energy off their Active. Strictly weaker
     // than discarding it — they keep the card — so priced under energyDiscard.
     if (f.flags.stripToBench && you.active && you.bench.length) s += W.energyDiscard * 0.5;
+    // ---- Job 13, the promo batch -------------------------------------------
+
+    // Mewtwo's Energy Absorption. Trevor's note is a conditional, not a value:
+    // "Does not want to fight if there is insufficient energy in the discard pile
+    // and doesn't have enough energy for Psyburn on its own." So the term is
+    // gated on what is ACTUALLY in the discard pile and is worth nothing when it
+    // is empty — the attack becomes a wasted turn there, and the old failure mode
+    // for a verb like this is scoring the intent rather than the outcome.
+    if (f.flags.absorb) {
+      const inDiscard = me.discard.filter(x => {
+        const c = this.db[x.id];
+        return c && c.kind === 'energy';
+      }).length;
+      const gets = Math.min(f.flags.absorb, inDiscard);
+      if (gets > 0) {
+        // Worth what it saves: each Energy is a turn of attaching that no longer
+        // has to happen, priced with the same weight the deck-search fetch uses.
+        const short = this.shortfallFor(atkSlot, this.top(atkSlot));
+        s += Math.min(gets, Math.max(1, short)) * W.attachBuild;
+      }
+    }
+
+    // Light Screen. `softShield` prices a FLAT reduction and this one is
+    // proportional, so it is valued where `danger` is known rather than at flag
+    // time: halving denies half of whatever is coming, rounded down to 10 the way
+    // the engine rounds it. Against an opponent that cannot hurt you it denies
+    // nothing and correctly scores nothing — no cliff at either end.
+    if (f.flags.halveSelf) {
+      const denies = Math.floor(danger / 2 / 10) * 10;
+      s += Math.min(denies, danger) / 20 * W.shieldSelf;
+    }
+
+    // Mew's Devolution Beam, and Trevor's note is the whole rule: "only when the
+    // HP reduction from the de-evolved opponent would result in its death.
+    // Otherwise, the opponent can just re-evolve it again."
+    //
+    // So this is scored as a KNOCK OUT when the damage already on the target
+    // meets the devolved card's HP, and as nearly nothing otherwise. Checked
+    // against every evolved Pokemon they have rather than just the Active, since
+    // the attack may be aimed anywhere.
+    if (f.flags.devolve) {
+      let best = 0;
+      for (const sl of E.allSlots(1 - pi)) {
+        if (sl.stack.length < 2) continue;
+        const under = this.db[sl.stack[sl.stack.length - 2].id];
+        if (!under) continue;
+        // The engine caps damage at the new HP, so "would result in its death" is
+        // damage already taken reaching what the smaller card can hold.
+        if (sl.dmg >= under.hp) best = Math.max(best, W.knockout);
+        else best = Math.max(best, W.stripEnergy * 0.3);   // a tempo nuisance, no more
+      }
+      s += best;
+    }
+
+    // Meowth's Cat Punch. Trevor: "50/50 chance to force the opponent to choose
+    // which pokemon to damage on the bench. Our bot should probably weight that
+    // slightly below getting to pick its own pokemon to damage."
+    //
+    // Half the time it is ordinary damage to the Active. The other half it is a
+    // Bench hit THEY aim, which is strictly worse than a snipe the attacker aims
+    // — they will feed it whatever they care least about — so the Bench half is
+    // priced against their CHEAPEST Pokemon rather than their best, and then
+    // discounted again. With no Bench, tails does nothing at all and that half is
+    // worth zero rather than being quietly averaged away.
+    if (f.flags.catPunch) {
+      const dmg = f.flags.catPunch;
+      if (you.active) s += 0.5 * Math.min(dmg, this.remainingHP(you.active)) * W.damage;
+      if (you.active && this.remainingHP(you.active) <= dmg) s += 0.5 * W.knockout;
+      if (you.bench.length) {
+        const worst = Math.min(...you.bench.map(b => this.remainingHP(b)));
+        s += 0.5 * Math.min(dmg, worst) * W.benchDamageFoe * 0.6;
+      }
+    }
     // Energy Bomb empties the attacker to seed the Bench. Good when the Bench
     // wants it, an outright loss when there is no Bench and it all burns.
     if (f.flags.scatter && me.active) {
@@ -8103,6 +8260,34 @@ class AI {
         // of these; the mechanism is general and this switch grows per card.
         const q = this.E.state.pendingAsk;
         if (!q) return -Infinity;
+        if (q.kind === 'CAT_PUNCH') {
+          // The bot is the DEFENDER here, naming which of its own Benched Pokemon
+          // eats 20. Without this case the switch below returns 0 for every option
+          // and it picks at random — the silent-failure surface exactly, and the
+          // reason Trevor's note on this card is a spec rather than a nicety:
+          // "as long as the bot doesn't do anything obviously dumb like killing
+          // something with it or picking a pokemon it was actively investing in."
+          //
+          // Those two sentences are the two terms, and nothing more is needed. No
+          // call to promoteValue: it re-enters scoreAttack for the Active slot and
+          // that trap has cost this file a session once already (AI-INVARIANTS).
+          // Remaining HP and Energy attached answer both halves on their own.
+          const b = me.bench[a.value];
+          if (!b) return -Infinity;
+          const dmg = (q.ctx && q.ctx.dmg) || 20;
+          let sc = 0;
+          if (this.remainingHP(b) <= dmg) sc -= W.selfKO;                  // never feed it a kill
+          sc -= b.energy.length * W.energyDiscard;                         // nor the one being built
+          sc -= (this.top(b).stage === 'Basic' ? 0 : W.knockout * 0.15);   // nor an evolved card
+          // AND A TIEBREAK THAT IS NOT POSITIONAL. Two undamaged Basics with no
+          // Energy on them scored an identical 0 and the bot took whichever came
+          // first — flat with a cliff at the end, the sniff test this tree keeps
+          // paying for. 20 damage is a bigger share of a 40 HP Voltorb than of a
+          // 60 HP Growlithe, so the hit goes where it costs the least. Small
+          // enough that the three terms above always outrank it.
+          sc -= (dmg / Math.max(10, this.remainingHP(b))) * W.knockout * 0.1;
+          return sc;
+        }
         if (q.kind === 'CONVERT_WEAKNESS') {
           // Texture Magic's Weakness half, asked of the ATTACKER rather than the
           // opponent. This is the bonus that used to ride on the attack's own
@@ -12162,7 +12347,29 @@ class Engine {
       // Out, retreated or evolved before the answer arrives. Nothing here can
       // assume the board stood still, and an absent target is a legal outcome
       // rather than an error.
-      case 'CONVERT_WEAKNESS': {
+      // Cat Punch's tails branch — the defending player naming which of their own
+      // Benched Pokemon takes the hit. `q.player` is that player, `q.asker` is
+      // Meowth's controller, and unlike CONVERT_WEAKNESS above they are genuinely
+      // different people here.
+      //
+      // Both slots are re-found rather than captured: nothing may assume the board
+      // stood still across the gap, and the attacker in particular can have been
+      // Knocked Out by a Retaliate before the answer arrives. An absent attacker is
+      // still a legal hit — the damage is the ATTACK's, not the Pokemon's — so it
+      // falls back to the Active rather than fizzling.
+      case 'CAT_PUNCH': {
+        const bench = asked.bench;
+        const tgt = bench[value];
+        if (!tgt) { this.log('That Pokemon is no longer on the Bench.', 'eff'); return; }
+        if (this.effectsBlocked(tgt)) { this.log(`${this.nameOf(tgt)} is protected.`, 'eff'); return; }
+        const src = this.allSlots(this.state.players.indexOf(asker))
+          .find(x => x.uid === q.ctx.atkUid) || asker.active;
+        // No Weakness or Resistance: "(Don't apply Weakness and Resistance for
+        // Benched Pokemon.)"
+        this.dealDamage(src, tgt, q.ctx.dmg, { noWR: true });
+        this.log(`${q.ctx.dmg} to ${this.nameOf(tgt)} on the Bench.`, 'eff');
+        return;
+      }      case 'CONVERT_WEAKNESS': {
         if (!value) { this.log(`${asked.name} leaves the Weakness alone.`, 'eff'); return; }
         const pi = this.state.players.indexOf(asker);
         const def = this.state.players[1 - pi].active;
@@ -13898,6 +14105,148 @@ class Engine {
           this.log(`${card.name} scatters ${pile.length} Energy onto the Bench.`, 'eff');
           break;
         }
+        // ---- Job 13, the promo batch ------------------------------------
+        case 'ENERGY_FROM_DISCARD_TO_SELF': {
+          // Mewtwo's Energy Absorption. The sibling verb puts them in HAND; this
+          // ATTACHES them, which is a different card and the reason Trevor's note
+          // calls it a Setup Turn — "as long as two energy exist in discard it can
+          // attach a single energy and use a Setup Turn to power up the rest of
+          // the way, essentially skipping a turn of powerup".
+          //
+          // It does NOT consume the turn's one attachment. That rule governs
+          // playing an Energy from HAND; this comes off the discard pile, the same
+          // way SEARCH_ENERGY_TO_SELF comes off the deck.
+          //
+          // "UP TO 2", so an empty discard is a legal, quiet no-op.
+          const wantE = (a && a.opts && a.opts.uids) || null;
+          const gotE = [];
+          if (wantE) {
+            for (const u of wantE.slice(0, v.n)) {
+              const k = me.discard.findIndex(x => x.uid === u);
+              if (k >= 0 && this.db[me.discard[k].id].kind === 'energy') gotE.push(me.discard.splice(k, 1)[0]);
+            }
+          } else {
+            // Unattended fallback: most recently discarded first, so a seeded game
+            // stays reproducible. Same rule as ENERGY_FROM_DISCARD.
+            for (let i = me.discard.length - 1; i >= 0 && gotE.length < v.n; i--) {
+              if (this.db[me.discard[i].id].kind === 'energy') gotE.push(me.discard.splice(i, 1)[0]);
+            }
+          }
+          gotE.forEach(x => atk.energy.push(x));
+          this.log(gotE.length
+            ? `${card.name} absorbs ${gotE.length} Energy from the discard pile.`
+            : `${card.name} finds no Energy in the discard pile.`, 'eff');
+          break;
+        }
+        case 'DAMAGE_HALVE_SELF':
+          // Electabuzz's Light Screen. The HALVING already exists as a passive
+          // Power (Kabuto Armor) and the arithmetic is shared with it — rounded
+          // DOWN to the nearest 10 — so this is that same rule with an expiry on
+          // it rather than a second implementation. computeDamage reads both.
+          //
+          // "(Any other effects of attacks still happen.)" is why this is a
+          // reduction and not a Barrier: statuses, discards and switches all land
+          // exactly as they would have.
+          atk.effects.push({ kind: 'DAMAGE_HALVE', label: v.label || 'Light Screen',
+                             expireAtStartOfTurn: s.turn + 2 });
+          this.log(`${card.name} raises a Light Screen - damage to it is halved during the opponent's next turn.`, 'eff');
+          break;
+        case 'DEVOLVE_CHOOSE': {
+          // Mew's Devolution Beam. Devolution Spray is the same idea and NOT the
+          // same card, in two ways that both matter: the Trainer DISCARDS the
+          // Evolution cards and hits only your OWN Pokemon, while this returns ONE
+          // card to its owner's HAND and may be aimed at either side.
+          //
+          // "the highest Stage Evolution card" is exactly one card off the top, so
+          // a Stage 2 becomes a Stage 1 rather than collapsing to its Basic.
+          const dvPool = [];
+          for (const side of [pi, 1 - pi]) {
+            for (const sl of this.allSlots(side)) if (sl.stack.length > 1) dvPool.push([side, sl]);
+          }
+          if (!dvPool.length) { this.log('Nothing in play is evolved.', 'eff'); break; }
+          const dvWant = a && a.opts && a.opts.targetUid;
+          const dvPick = dvPool.find(x => x[1].uid === dvWant) || dvPool[0];
+          const dvOwner = dvPick[0], dvTgt = dvPick[1];
+          // Protection is asked of the TARGET, per the snipe rule — it can be a
+          // Benched Pokemon, and `blocked` upstream answers only for the Active.
+          if (dvOwner !== pi && this.effectsBlocked(dvTgt)) {
+            this.log(`${this.nameOf(dvTgt)} is protected.`, 'eff');
+            break;
+          }
+          const dvWas = this.nameOf(dvTgt);
+          const dvTop = dvTgt.stack.pop();
+          this.state.players[dvOwner].hand.push(dvTop);
+          // "no longer Asleep, Confused, Paralyzed, or Poisoned, or anything else
+          // that might be the result of an attack (just as if you had evolved it)"
+          // — the same clearing doEvolve does, which is what that parenthetical is
+          // pointing at.
+          clearStatus(dvTgt);
+          dvTgt.effects = dvTgt.effects.filter(e => {
+            if (e.card) this.state.players[dvOwner].discard.push(e.card);
+            return false;
+          });
+          const dvCap = topCard(this.db, dvTgt).hp;
+          if (dvTgt.dmg > dvCap) dvTgt.dmg = dvCap;
+          this.log(`${dvWas} devolves to ${this.nameOf(dvTgt)}; ${this.db[dvTop.id].name} returns to `
+            + `${this.state.players[dvOwner].name}'s hand.`, 'eff');
+          this.checkKOs();
+          break;
+        }
+        case 'MOVE_OPP_ENERGY_ON_FLIP': {
+          // Mewtwo's Energy Control. Magnetic Lines with the leash off, which is
+          // Trevor's own reading — his note says the Energy choices should follow
+          // Dark Magneton's pattern. Two differences: a coin gates it, and BOTH
+          // ends are free among the opponent's Pokemon rather than fixed at "off
+          // the defender, onto their Bench".
+          //
+          // BASIC Energy only, the same class reading as Magnetic Lines, so a
+          // Rainbow does not qualify. See Rulings/ENERGY-VS-ENERGY-CARD.md.
+          if (!this.flip('Energy Control')) break;
+          const ecAll = you.active ? [you.active].concat(you.bench) : you.bench.slice();
+          if (ecAll.length < 2) { this.log('There is nowhere to move Energy to.', 'eff'); break; }
+          const ecBasic = e => { const c2 = this.db[e.id]; return c2 && c2.kind === 'energy' && c2.cls === 'Basic'; };
+          const ecFromWant = a && a.opts && a.opts.fromUid;
+          const ecFrom = ecAll.find(x => x.uid === ecFromWant && x.energy.some(ecBasic))
+                      || ecAll.find(x => x.energy.some(ecBasic));
+          if (!ecFrom) { this.log('They have no basic Energy to move.', 'eff'); break; }
+          const ecOpts = ecFrom.energy.filter(ecBasic);
+          const ecMoved = ecOpts.find(e => e.uid === (a && a.opts && a.opts.energyUid)) || ecOpts[0];
+          const ecRest = ecAll.filter(x => x !== ecFrom);
+          const ecTo = ecRest.find(x => x.uid === (a && a.opts && a.opts.toUid)) || ecRest[0];
+          ecFrom.energy.splice(ecFrom.energy.indexOf(ecMoved), 1);
+          ecTo.energy.push(ecMoved);
+          this.log(`${this.db[ecMoved.id].name} moves from ${this.nameOf(ecFrom)} to ${this.nameOf(ecTo)}.`, 'eff');
+          break;
+        }
+        case 'CAT_PUNCH': {
+          // Meowth's Cat Punch, and the ONLY reason it is a bespoke verb is the
+          // tails branch: "he or she chooses 1 of them". That is a decision owed to
+          // the DEFENDING player during the attacker's turn, which is what
+          // engine.ask() is for — built general in Job 10e precisely because the
+          // question recurs across seventeen printings and the effects never do.
+          //
+          // Heads is ordinary damage through dealDamage, so Weakness, Resistance,
+          // Retaliate and a Mirror Shell all behave. Tails is a Bench hit and the
+          // card says not to apply W/R there.
+          if (this.flip('Cat Punch')) {
+            if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+            this.dealDamage(atk, def, v.dmg, {});
+            this.log(`${v.dmg} to ${this.nameOf(def)}.`, 'eff');
+            break;
+          }
+          if (!you.bench.length) {
+            // "If tails AND if your opponent has any Benched Pokemon" — with an
+            // empty Bench the attack does nothing, and the Active is NOT an
+            // eligible target on tails.
+            this.log('Tails, and there is nothing on their Bench - the attack does nothing.', 'eff');
+            break;
+          }
+          this.ask(pi, 'CAT_PUNCH',
+            `Cat Punch: ${you.name} chooses which Benched Pokemon takes ${v.dmg}.`,
+            you.bench.map((b, i) => ({ value: i, label: this.nameOf(b) })),
+            { atkUid: atk.uid, dmg: v.dmg });
+          break;
+        }
         case 'MOVE_DEF_ENERGY_TO_BENCH': {
           // Dark Magneton's Magnetic Lines. BASIC Energy only — the card says
           // "basic Energy cards", which under the Energy/Energy-card ruling means
@@ -14209,10 +14558,15 @@ class Engine {
     // Defender. Deterministic on purpose: this function is PURE and the AI
     // forecasts with it, so Haunter's coin lives in dealDamage instead.
     if (dmg > 0) {
-      const halve = this.activePower(defSlot, 'DAMAGE_HALVE');
+      // TWO SOURCES, ONE HALVING. Kabuto Armor is a passive Power; Light Screen
+      // is a one-turn effect an attack leaves behind. Applied ONCE if either is
+      // present rather than compounding — no card in the era can carry both, and
+      // halving twice would be a rule nothing prints.
+      const halve = this.activePower(defSlot, 'DAMAGE_HALVE')
+                 || defSlot.effects.find(e => e.kind === 'DAMAGE_HALVE');
       if (halve) {
         dmg = Math.floor(dmg / 2 / 10) * 10;                 // "rounded DOWN to the nearest 10"
-        steps.push(`${halve.name}: halved to ${dmg}.`);
+        steps.push(`${halve.name || halve.label}: halved to ${dmg}.`);
       }
     }
     let prevented = false;

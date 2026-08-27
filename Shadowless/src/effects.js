@@ -203,6 +203,44 @@
 //     SCATTER_OWN_ENERGY           move EVERY Energy off the attacker onto your
 //                                  own Bench, distributed as you like; DISCARD it
 //                                  all if you have no Bench (Energy Bomb)
+//     ENERGY_FROM_DISCARD_TO_SELF {n}
+//                                  take UP TO n Energy cards out of your discard
+//                                  pile and ATTACH them to the attacker. The
+//                                  sibling above puts them in HAND and that is a
+//                                  different card. Does NOT spend the turn's one
+//                                  attachment, which governs playing an Energy
+//                                  from hand — same reasoning as
+//                                  SEARCH_ENERGY_TO_SELF (Energy Absorption)
+//     DAMAGE_HALVE_SELF {label}    damage to self is HALVED during the opponent's
+//                                  next turn, rounded DOWN to the nearest 10.
+//                                  Shares its arithmetic with the passive Power
+//                                  of the same name (Kabuto Armor) and
+//                                  computeDamage reads both, applying it once
+//                                  rather than compounding. NOT a Barrier —
+//                                  "any other effects of attacks still happen",
+//                                  so statuses and discards land (Light Screen)
+//     DEVOLVE_CHOOSE               return the HIGHEST Stage Evolution card on any
+//                                  ONE evolved Pokemon, either side, to its
+//                                  OWNER'S HAND — so a Stage 2 becomes a Stage 1
+//                                  rather than collapsing to its Basic. Status
+//                                  and effects clear exactly as doEvolve clears
+//                                  them, which is what "just as if you had
+//                                  evolved it" asks for. Not T_DEVOLUTION_SPRAY:
+//                                  that DISCARDS, and only hits your own side
+//                                  (Devolution Beam)
+//     MOVE_OPP_ENERGY_ON_FLIP      flip; heads => move one BASIC Energy from any
+//                                  of the OPPONENT'S Pokemon to any other of
+//                                  theirs, attacker choosing both ends. Magnetic
+//                                  Lines with both ends free and a coin on it;
+//                                  basic by CLASS, so a Rainbow never moves
+//                                  (Energy Control)
+//     CAT_PUNCH {dmg}              flip; heads => dmg to the Defending Pokemon
+//                                  normally. Tails => THE DEFENDING PLAYER names
+//                                  one of their own Benched Pokemon and it takes
+//                                  dmg with no W/R. Tails with an empty Bench
+//                                  does nothing, and the Active is never the
+//                                  tails target. Rides engine.ask(), so the
+//                                  damage lands in resolveAsk and not here
 //     MOVE_DEF_ENERGY_TO_BENCH     take one BASIC Energy off the defender and put
 //                                  it on one of THEIR Benched. Basic by CLASS, so
 //                                  Rainbow does not qualify — the card says
@@ -400,6 +438,11 @@
 //   answered; `kind` names which continuation to run. The mechanism is general
 //   and the continuations are per-card, which is the ON_PLAY split again.
 //     CHALLENGE                    accept or decline (Challenge!)
+//     CAT_PUNCH                    which of THEIR OWN Benched Pokemon takes the
+//                                  hit, asked of the DEFENDER. The one question
+//                                  in this list the opponent answers about their
+//                                  own board, and the one the AI must score or it
+//                                  feeds Cat Punch whatever comes first
 //     CONVERT_WEAKNESS             which type to make the defender weak to, asked
 //                                  of the ATTACKER — engine.ask()'s `self` flag.
 //                                  Texture Magic grants two independent type
@@ -1911,6 +1954,37 @@ const EFFECTS = {
     [{ v: 'BARRIER_ON_FLIP', label: 'Agility' }],      //   Agility
   ]},
   'basep-28': { a: [ [] ]},                            // Surfing Pikachu / Surf
+
+  // WAVE 2 — the five that needed new machinery. Four of the five reuse a shape
+  // that already existed; only Cat Punch needed a mechanism, and that mechanism
+  // was built in Job 10e for a different card.
+
+  'basep-2': { a: [                                    // Electabuzz
+    [{ v: 'DAMAGE_HALVE_SELF', label: 'Light Screen' }],   //   Light Screen
+    [{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Quick Attack' }],
+  ]},
+  'basep-3': { a: [                                    // Mewtwo
+    // Trevor's Setup Turn: two Energy out of the discard costs a turn and skips
+    // a turn, which is only worth it when the discard actually holds them.
+    [{ v: 'ENERGY_FROM_DISCARD_TO_SELF', n: 2 }],      //   Energy Absorption
+    [],                                                //   Psyburn
+  ]},
+  'basep-8': { a: [                                    // Mew
+    [{ v: 'DMG_PER_DEF_ENERGY', base: 0, per: 10 }],   //   Psywave
+    [{ v: 'DEVOLVE_CHOOSE' }],                         //   Devolution Beam
+  ]},
+  'basep-10': { a: [                                   // Meowth
+    [{ v: 'CAT_PUNCH', dmg: 20 }],                     //   Cat Punch
+  ]},
+  'basep-12': { a: [                                   // Mewtwo
+    [{ v: 'MOVE_OPP_ENERGY_ON_FLIP' }],                //   Energy Control
+    // "1 of your opponent's Pokemon" — the Active included, which is the wider
+    // Team Rocket scope rather than Base Set's Bench-only wording. Trevor's note
+    // says the same: "Telekinesis can also hit the active pokemon if desired, so
+    // all in play should be considered potential targets."
+    [{ v: 'BENCH_SNIPE', n: 1, dmg: 30, target: 'any', label: 'Telekinesis' },
+     { v: 'NO_WR' }],                                  //   Telekinesis
+  ]},
 };
 
 // ---------------------------------------------------------------- ALIASES --
