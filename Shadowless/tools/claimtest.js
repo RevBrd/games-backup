@@ -135,7 +135,11 @@ for (const c of runnable) {
     }
     console.log('  the whole turn:');
     for (const e of b.explain().slice(0, 6)) {
-      console.log(`      ${e.label.padEnd(22)} ${Number.isFinite(e.score) ? e.score.toFixed(2).padStart(8) : '       —'}`);
+      // `detail` is the engine's own label and carries the OPTION an attack was
+      // scored with. Without it this list printed seven identical Texture Magic
+      // rows with seven different scores — see board.js's explain().
+      const shown = e.detail && e.detail !== e.label ? e.detail : e.label;
+      console.log(`      ${shown.padEnd(34)} ${Number.isFinite(e.score) ? e.score.toFixed(2).padStart(8) : '       —'}`);
     }
   }
 

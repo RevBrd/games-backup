@@ -286,12 +286,22 @@ class Board {
 
   // Every legal action with its score, sorted. This is the --explore payload and
   // the reason a claim can be investigated before anybody knows the answer.
+  // `detail` and `opts` are here because `actionLabel` collapses an attack's
+  // OPTIONS — Job 13. Cool Porygon's Texture Magic offers seven type choices and
+  // --explore printed seven identical "attack:Texture Magic" lines with seven
+  // different scores beside them, which is precisely the question the tool exists
+  // to answer and precisely the one it could not show. Metronome and both
+  // Conversions have the same shape.
+  //
+  // The engine's own action label carries the choice ("Texture Magic: Resistance
+  // to F"), so it rides along rather than replacing `label` — existing rows read
+  // `label` and `does()` reads the engine's separately.
   explain() {
     const out = [];
     for (const a of this.E.legalActions(0)) {
       let sc;
       try { sc = this.ai.scoreAction(0, a); } catch (e) { sc = NaN; }
-      out.push({ label: this.ai.actionLabel(a), score: sc });
+      out.push({ label: this.ai.actionLabel(a), detail: a.label || '', opts: a.opts || null, score: sc });
     }
     return out.sort((x, y) => y.score - x.score);
   }

@@ -389,6 +389,16 @@
 //   answered; `kind` names which continuation to run. The mechanism is general
 //   and the continuations are per-card, which is the ON_PLAY split again.
 //     CHALLENGE                    accept or decline (Challenge!)
+//     CONVERT_WEAKNESS             which type to make the defender weak to, asked
+//                                  of the ATTACKER — engine.ask()'s `self` flag.
+//                                  Texture Magic grants two independent type
+//                                  choices in one attack and the attack-options
+//                                  list can only carry one, so the first rides
+//                                  `opts.type` and the second is a question.
+//                                  Enumerating both would be 7 x 8 buttons.
+//                                  Carries a "Leave it" because the card says
+//                                  "you MAY", and the AI takes it when its own
+//                                  board is Colorless-only and has nothing to gain
 //
 //     T_COIN_PINGPONG {n}          flip; tails does n to YOUR Active and stops,
 //                                  heads passes the coin to your opponent, and

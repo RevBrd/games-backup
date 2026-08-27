@@ -2117,6 +2117,21 @@ class AI {
         // of these; the mechanism is general and this switch grows per card.
         const q = this.E.state.pendingAsk;
         if (!q) return -Infinity;
+        if (q.kind === 'CONVERT_WEAKNESS') {
+          // Texture Magic's Weakness half, asked of the ATTACKER rather than the
+          // opponent. This is the bonus that used to ride on the attack's own
+          // type option and pulled against the Resistance choice; it lives here
+          // now, where it is a decision of its own and can be priced properly.
+          //
+          // Worth a type MY side can actually exploit. Colorless is excluded by
+          // the card, so a Colorless-only board genuinely has nothing to gain and
+          // should decline rather than set a Weakness at random — declining is
+          // the printed option ("you may") and 0 beats a wrong guess.
+          if (!a.value) return 0.5;                     // "Leave it", just above nothing
+          const mine = E.allSlots(pi).map(x => this.top(x).type).filter(t => t !== 'C');
+          const hits = mine.filter(t => t === a.value).length;
+          return hits ? 12 + 2 * (hits - 1) : 0;
+        }
         if (q.kind === 'CHALLENGE') {
           const mine = this.challengeGain(pi, true);
           const theirs = this.challengeGain(1 - pi, false);

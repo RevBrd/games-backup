@@ -2602,8 +2602,23 @@ class Engine {
   // The asking player's action returns while the question is outstanding — the
   // engine is synchronous and cannot block — so the CONTINUATION runs later, in
   // resolveAsk, and everything the card still needs must be carried in `ctx`.
-  ask(pi, kind, prompt, options, ctx) {
-    this.state.pendingAsk = { player: 1 - pi, asker: pi, kind, prompt, options, ctx: ctx || {} };
+  // `self: true` asks the CURRENT player instead of their opponent — Job 13, for
+  // Texture Magic, which grants two independent type choices in one attack and
+  // could not express the second one through the attack-options list without
+  // enumerating every pair of them (7 x 8 buttons in the action bar).
+  //
+  // NOTHING ELSE HAD TO CHANGE, which is worth stating because it looks like it
+  // should have. Every gate in the engine and the UI keys on `pendingAsk.player`
+  // and not on "whoever is not active" — legalActions, act()'s guard, the action
+  // bar, the AI driver and ai.js's choose() all compare against `pi`. So a
+  // question a player owes THEMSELVES flows through the existing machinery
+  // untouched. The one place that assumed otherwise was this line.
+  //
+  // THE CONTINUATION RUNS LATER, so anything after the asking verb in a script
+  // runs BEFORE the answer arrives. The engine is synchronous and cannot block.
+  // Put an asking verb last in its script, or carry what it needs in `ctx`.
+  ask(pi, kind, prompt, options, ctx, self) {
+    this.state.pendingAsk = { player: self ? pi : 1 - pi, asker: pi, kind, prompt, options, ctx: ctx || {} };
     this.log(prompt, 'eff');
   }
 
@@ -2634,6 +2649,27 @@ class Engine {
   resolveAsk(q, value) {
     const asker = this.state.players[q.asker], asked = this.state.players[q.player];
     switch (q.kind) {
+      // Texture Magic's SECOND type. `q.asker` and `q.player` are the same person
+      // here — this is the self-directed ask — so the defender is 1 - q.asker
+      // exactly as it would be anywhere else.
+      //
+      // The slot is re-found by uid rather than held by reference: `pendingAsk`
+      // lives in state and a slot captured across the gap could have been Knocked
+      // Out, retreated or evolved before the answer arrives. Nothing here can
+      // assume the board stood still, and an absent target is a legal outcome
+      // rather than an error.
+      case 'CONVERT_WEAKNESS': {
+        if (!value) { this.log(`${asked.name} leaves the Weakness alone.`, 'eff'); return; }
+        const pi = this.state.players.indexOf(asker);
+        const def = this.state.players[1 - pi].active;
+        if (!def || def.uid !== q.ctx.defUid) {
+          this.log('The Pokemon whose Weakness would change is no longer there.', 'eff');
+          return;
+        }
+        def.wkOverride = value;
+        this.log(`${this.nameOf(def)}'s Weakness is now ${value}.`, 'eff');
+        return;
+      }
       case 'CHALLENGE': {
         if (!value) {
           // "If your opponent declines... draw 2 cards."
@@ -3804,6 +3840,23 @@ class Engine {
         case 'CONVERT_DEF_WEAKNESS': {
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def || !this.weaknessOf(def)) { this.log('The Defending Pokemon has no Weakness to change.', 'eff'); break; }
+          // TEXTURE MAGIC ASKS A SECOND TIME. When the card also converts its own
+          // Resistance, the attack's chosen type belongs to THAT half — the two
+          // choices are independent on the card and want different types in every
+          // matchup that is not a mirror. So the Weakness gets its own prompt
+          // rather than inheriting a type picked for another purpose.
+          //
+          // Porygon prints the two as separate attacks and never reaches this: one
+          // verb, one choice, and `opts.type` is unambiguously its own.
+          if (script.some(x => x.v === 'CONVERT_SELF_RESISTANCE')) {
+            const opts = this.energyTypes().filter(x => x !== 'C')
+              .map(t => ({ value: t, label: `Weakness to ${t}` }));
+            opts.push({ value: '', label: 'Leave it' });      // the card says "you MAY"
+            this.ask(pi, 'CONVERT_WEAKNESS',
+              `${card.name}: change ${this.nameOf(def)}'s Weakness?`,
+              opts, { defUid: def.uid }, true);
+            break;
+          }
           const t = (a && a.opts && a.opts.type) || this.energyTypes().filter(x => x !== 'C')[0];
           def.wkOverride = t;
           this.log(`Conversion 1: ${this.nameOf(def)}'s Weakness is now ${t}.`, 'eff');
