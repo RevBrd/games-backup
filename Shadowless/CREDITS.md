@@ -59,6 +59,7 @@ again for a day. No blank lines, and check every row ends in `|`.
 | **Opus 5** #25 | 23 Aug 2026 | **Job 12b's layout half.** The last of the shifting board, from Trevor's own diagnosis: the centre line is the mat's **shock absorber** and two things sat in its normal flow. Built `tools/probe.js`, the instrument neither `shot.js` nor `smoke.js` could ever be |
 | **Sonnet 5** #26 | 25 Aug 2026 | **Job 12c:** the pack shrank from 11 cards to 8 and a lesser slot can now jump a tier. Then the Team Rocket bracket — Trevor's eight decks plus the two authentic theme decks — the first roster whose tiers ordered cleanly, and only after three PROVISIONAL Power cases turned out to crash |
 | **Opus 5** #27 | 26 Aug 2026 | Job 12d, the ninth documentation pass. [CHALLENGES.md](CHALLENGES.md), [INSPECTION.md](INSPECTION.md) and two archives split out; this table returned to its rule, six rows preserved whole in the logbook first. Found four files stating a fact their own data contradicted, including the link checker that cannot see an anchor |
+| **Opus 5** #28 | 26 Aug 2026 | **Job 13:** the Wizards Black Star Promos, basep-1..28, and the fourth trigger. Four AI scorers turned out to be reading a verb their engine half had outgrown — the worst of them undervaluing four live cards since Base Set. `booster: false` stops a finished promo set ever becoming a ladder bracket |
 
 Trevor's own contributions are not a row here because they are not a model's — but they are load
 bearing and they are named where they were made: the four authentic theme deck lists in

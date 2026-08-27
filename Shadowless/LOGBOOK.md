@@ -224,3 +224,102 @@ tiers ordered cleanly on the first `decksim.js` run — which only ran clean aft
 Power-scoring cases turned out to reference a `me` `scorePower` never defines, crashing the
 instant a deck actually held one of the three Powers. Nobody had ever reached that code before
 
+
+---
+
+## Opus 5 #28 — Sandslash, 26 Aug 2026
+
+**Job 13: the Wizards Black Star Promos, basep-1 through basep-28.** Twenty-eight cards, roughly
+twenty new verbs, one new trigger and one new ruling. The cards were the easy half and I want to
+write down the other half, because it kept being the same thing.
+
+### Four scorers were reading a verb their engine half had outgrown
+
+This is the finding, and it happened four separate times in one session:
+
+- `DMG_PER_COUNTER_SELF` grew an optional `base` for Dodrio. `ai.js` multiplied and never added, so
+  the bot undervalued Dodrio, Cubone and Dark Flareon's Rage by 10 and Tauros's Rampage by 20 —
+  possibly since Base Set. Measured against HEAD: Tauros reaches for Rampage at 20 damage now, where
+  it used to hold out until 40.
+- `BENCH_SPLASH` grew a `side` for Team Rocket. `ai.js` read only the number, so Dark Arbok was
+  charged for wrecking a Bench that Poison Vapor never touches. On a hurt board it scored **-142**
+  and played Stare instead. Two live ladder decks hold that card.
+- `CONVERT_DEF_WEAKNESS` and `CONVERT_SELF_RESISTANCE` were fine apart and wrong together the moment
+  one card did both, because both bonuses were charged against one chosen type.
+- And `board.js`'s `bestAttack` scored `scoreAttack(idx)`, which cannot see `a.opts` — so every
+  attack whose value lives in its OPTION was measured as though it had none. My Cool Porygon claim
+  was failing against a bot that was doing the right thing.
+
+**The shape is always: one verb, two implementations, in two modules, with nothing asserting they
+agree.** The engine's half gets a parameter because a card needs it. The scorer's half is not
+touched, because the card that needed it works fine. Nothing goes red, ever — the attack is legal,
+it deals full damage when used, and the only symptom is a bot that quietly declines to reach for it.
+`selftest.js` checks a verb is *mentioned* by `ai.js`, which all four of these were.
+
+I don't have a guard for it and I'm not sure a cheap one exists. What I would tell the next session
+is narrower and actionable: **when you add a parameter to an existing verb, open `ai.js` and read
+that verb's case before you close the file.** All four of these were a one-line fix and a five-minute
+find, once someone looked.
+
+### The unreachable-scorer trap, now three sessions running
+
+#26's entry directly above mine describes three PROVISIONAL Power cases referencing a `me` that
+`scorePower` never defines, crashing the instant a deck held one. I hit the same class twice today:
+`DMG_PER_HEAD_IN_PLAY` reached for `E` and `pi` inside `rawOutcomes`, which has neither, and Solar
+Power's first draft reached for a `W.statusClear` that does not exist — which would have made the
+whole Power score NaN in silence.
+
+**Scorer code for a card no deck holds is unreachable, therefore unrun, therefore untested**, and it
+accumulates scope errors and phantom weights that look completely fine in a diff. Every one of the
+five was found by *running the card on a board*, never by reading. If you write scoring for a card
+nothing plays, build a two-line probe and fire it once. That is the whole prophylactic.
+
+### Trevor's notes did the thing PLAYBOOK.md says they do
+
+Cat Punch is the example I would point at. His note reads *"the bot shouldn't do anything obviously
+dumb like killing something with it or picking a pokemon it was actively investing in"* — which is
+two clauses and became two scoring terms that both fire correctly. But writing them exposed a third
+thing he had not said and could not have: two undamaged Basics with no Energy scored an identical 0
+and the bot took whichever came first. A sentence about what *not* to do located a cliff underneath
+it. That is the method working in a way a tag or a weight sweep cannot.
+
+I also priced Cat Punch as the hardest card in the set and it was among the cheapest. Job 10e built
+`ask()` general for one card on the evidence that the question recurs seventeen times across six
+sets and the effects never do — so Cat Punch was one `ask`, one continuation, one scorer. **Somebody
+else's decision to generalise two jobs ago is why this one was an afternoon.** Worth knowing when
+you are deciding whether to build the general thing.
+
+### Two that would have shipped invisibly
+
+`new Date('2026-07-31')` parses as UTC midnight, so west of Greenwich it reads back as the 30th.
+Birthday Surprise would have fired a day early across the Americas, one day a year, looking exactly
+like an unlucky coin. I only caught it because I pinned the date in a probe and never once saw the
+bonus. It is Trevor's actual birthday on that card, which made it worth getting right rather than
+merely correct.
+
+And I filed Computer Error as UNSCORED_ON_PURPOSE with a justification I had not checked. Unscored
+means zero; End turn also scores zero; so on a board where the bot could not act the two **tied**,
+and the tie broke on list order in favour of handing the opponent five cards for nothing. **A card
+that ends your own turn cannot be left to a default that is indistinguishable from the thing it is
+supposed to lose to.** I wrote the justification before the measurement, which is the wrong order and
+is exactly what `MEASUREMENT.md` is about.
+
+### The landmine, and why it went in on day one
+
+`liveSets()` derives "live" from *every card in the set is scripted*, and every caller reads that as
+*is this a set*. So the day somebody finished the last promo script, `basep` would have promoted
+itself to a ladder bracket titled "Wizards Black Star Promos", with a generated roster, a dex section
+and a completion percentage — and nobody would have connected it to a card they wrote six months
+earlier. `booster: false` in `SET_INFO` now refuses it. I reproduced the landmine with the guard off
+before calling it fixed, which I recommend as a habit; it is the difference between a guard and a
+decoration, and this tree has said so in three separate files.
+
+**A note on where I put things.** Trevor asked whether the Flames of Rage finding belonged in
+`AMMO.md`, and it did — but the better discovery was that a comment in `discardSilence` had already
+half-anticipated it for a different Arcanine. What was missing was the sentence that makes it click:
+*a card with a cheap fallback defeats the cheapest-attack reading entirely.* When you find that a
+past instance nearly had your finding, the valuable thing to write down is the half they were
+missing, not the whole thing again.
+
+*— #28, who was told the promos were a fun one and found that the promos were fine and the AI had
+been quietly misreading its own verbs for a month.*
