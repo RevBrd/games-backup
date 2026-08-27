@@ -374,27 +374,64 @@ function copiesByNameIn(db, list) {
 // ------------------------------------------------------------------ dex ----
 // Denominators come from `db`, never from a constant. A dex that hardcodes 102
 // starts lying the moment tools/gen_cards.js is run with --sets.
+// Rarity tiers in ascending order of how much of a chase they are, which is the
+// order the collection screen lists them in. It is the same idea as VARIANTS
+// being declared by impressiveness: one array decides the order everywhere.
+//
+// **Every tier the era prints is here, not just the ones a live set holds.**
+// Rare Shining arrives with Neo Revelation and Promo with `basep`, and listing
+// them now means a set going live needs no change here — the same reason the
+// ladder derives its brackets. A tier nothing prints simply never appears.
+//
+// The empty string is basic Energy: the corpus leaves `rarity` blank on it,
+// which is a corpus quirk rather than a statement about distribution, and those
+// six cards are #97-102 of Base Set's 102. Dropping them would make the tiers
+// stop summing to the total, which reads as a bug. See PACKS.md.
+const RARITY_ORDER = ['', 'Common', 'Uncommon', 'Rare', 'Rare Holo', 'Rare Shining', 'Rare Secret', 'Promo'];
+const RARITY_LABEL = { '': 'ENERGY' };
+const rarityLabel = r => RARITY_LABEL[r] || String(r).toUpperCase();
+const rarityRank = r => {
+  const i = RARITY_ORDER.indexOf(r || '');
+  return i < 0 ? RARITY_ORDER.length : i;      // anything unknown sorts last
+};
+
 function collectionStats(save, db) {
   const ids = Object.keys(db);
   let ownedCards = 0, totalCards = 0;
   const speciesAll = {}, speciesOwned = {};
   const bySet = {};
+  const byRarity = {};
   for (const id of ids) {
     const c = db[id];
     totalCards++;
     const set = (bySet[c.set] = bySet[c.set] || { owned: 0, total: 0 });
     set.total++;
+    const rk = c.rarity || '';
+    const rar = (byRarity[rk] = byRarity[rk] || { owned: 0, total: 0 });
+    rar.total++;
     const have = isOwned(save, id);
-    if (have) { ownedCards++; set.owned++; }
+    if (have) { ownedCards++; set.owned++; rar.owned++; }
     if (c.dex) {
       speciesAll[c.dex] = 1;
       if (have) speciesOwned[c.dex] = 1;
     }
   }
+  // Sorted, labelled, and **filtered to tiers the player has actually opened**.
+  // Trevor's rule: an unearned tier is not shown at all. That is a chase rule
+  // rather than a tidiness one — `base5-83` Dark Raichu is the era's only Rare
+  // Secret, so a player who has not pulled it should not learn from a counter
+  // that the tier exists. Same instinct as the dex drawing a missing card as a
+  // Sigil rather than handing over the printed face.
+  const rarityRows = Object.keys(byRarity)
+    .filter(r => byRarity[r].owned > 0)
+    .sort((a, b) => rarityRank(a) - rarityRank(b))
+    .map(r => ({ key: r, label: rarityLabel(r), owned: byRarity[r].owned, total: byRarity[r].total }));
   return {
     cards: { owned: ownedCards, total: totalCards },
     species: { owned: Object.keys(speciesOwned).length, total: Object.keys(speciesAll).length },
     bySet,
+    byRarity,
+    rarityRows,
   };
 }
 
@@ -508,4 +545,4 @@ function importSave(text) {
 // ONE LINE, deliberately. tools/build.js strips this with a line-anchored
 // regex, so a multi-line export leaves its own body behind in the bundle and
 // breaks the built HTML. The builder now refuses that rather than emitting it.
-if (typeof module !== 'undefined') module.exports = { SAVE_VERSION, SAVE_KEY, SAVE_BACKUP_KEY, PLAIN, VARIANTS, VARIANT_ORDER, VARIANT_BY_KEY, vkey, vflags, isPlain, vscore, vlabel, newSave, ensureShape, grant, grantDeck, ownedOf, ownedTotal, isOwned, bestVariant, pilesOf, packsHeld, packsTotal, addPacks, takePack, deckIsBuilt, builtDecks, nextDeckId, findDeck, uniqueDeckName, canUnbuild, deckShortfall, reservedCounts, available, copiesByNameIn, collectionStats, MIGRATIONS, migrate, validate, loadSave, writeSave, exportSave, importSave };
+if (typeof module !== 'undefined') module.exports = { SAVE_VERSION, SAVE_KEY, SAVE_BACKUP_KEY, PLAIN, VARIANTS, VARIANT_ORDER, VARIANT_BY_KEY, vkey, vflags, isPlain, vscore, vlabel, newSave, ensureShape, grant, grantDeck, ownedOf, ownedTotal, isOwned, bestVariant, pilesOf, packsHeld, packsTotal, addPacks, takePack, deckIsBuilt, builtDecks, nextDeckId, findDeck, uniqueDeckName, canUnbuild, deckShortfall, reservedCounts, available, copiesByNameIn, collectionStats, RARITY_ORDER, rarityLabel, rarityRank, MIGRATIONS, migrate, validate, loadSave, writeSave, exportSave, importSave };

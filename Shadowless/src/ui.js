@@ -3159,6 +3159,30 @@ function renderCollection() {
   head.appendChild(counts);
   box.appendChild(head);
 
+  // The header count, broken out by rarity tier. Trevor's, from the grab bag.
+  //
+  // **CARDS view only.** The dex counts SPECIES, and a species has no rarity —
+  // Charizard is one entry there and three printings here — so a tier row under
+  // a species count would be decomposing a different number.
+  //
+  // **It ignores the ALL/OWNED/MISSING filter on purpose.** This is a fact about
+  // the collection, not a description of the list below it; a counter that moved
+  // when you changed filters would be answering a question nobody asked.
+  //
+  // Which tiers appear, and why an unearned one does not, is decided in
+  // `collectionStats` where the data is — not here. See collection.js.
+  if (UI.collView !== 'dex' && st.rarityRows.length) {
+    const tiers = el('div', 'raritybar');
+    st.rarityRows.forEach(r => {
+      const done = r.owned >= r.total;
+      const t = el('div', 'rartier r-' + r.key.toLowerCase().replace(/[^a-z]+/g, '') + (done ? ' done' : ''));
+      t.appendChild(el('span', 'rlbl', r.label));
+      t.appendChild(el('span', 'rnum', r.owned + '/' + r.total));
+      tiers.appendChild(t);
+    });
+    box.appendChild(tiers);
+  }
+
   const bar = el('div', 'collbar');
   const chip = (label, on, fn) => {
     const c = el('div', 'collchip' + (on ? ' on' : ''), label);

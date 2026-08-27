@@ -233,6 +233,34 @@ keeps real-world scarcity pointing the right way. `inverted` is the losing side 
 stays switchable in the DEV tab as a back-pocket option. Do not delete it as dead code; it isn't.
 Both are covered by `smoke.js`.
 
+## The rarity tiers, and the one that is not there
+
+The headline count is broken out by tier under it — `ENERGY 6/6  COMMON 88/88  UNCOMMON 84/88
+RARE 46/64  RARE HOLO 38/64`. Trevor's, from the grab bag, and three of its rules are decisions
+rather than details.
+
+**A tier you own none of is not shown at all**, and that is a chase rule rather than a tidiness one.
+`base5-83` **Dark Raichu is the era's only Rare Secret**, so a row reading `RARE SECRET 0/1` would
+tell a player the tier exists before they have pulled it — the same thing the dex avoids by drawing a
+missing card as a Sigil rather than handing over the printed face. The filtering happens in
+`collectionStats`, where the data is, so no renderer can forget it. `collectiontest.js` asserts the
+rule in both directions and the cases were **watched going red** with the filter removed.
+
+**`byRarity` still holds every tier; `rarityRows` is the filtered view.** Keeping both means the rule
+is a presentation choice that anything else can ignore, rather than a hole in the data.
+
+**CARDS view only.** The dex counts *species*, and a species has no rarity — Charizard is one entry
+there and three printings here — so a tier row under a species count decomposes the wrong number.
+And it **ignores the ALL/OWNED/MISSING filter**, because it is a fact about the collection rather
+than a description of the list under it.
+
+**`RARITY_ORDER` declares every tier the era prints, not just the ones a live set holds.** Rare
+Shining arrives with Neo Revelation and Promo with `basep`; listing them now means a set going live
+needs no change here, which is the same reason the ladder derives its brackets. A tier nothing prints
+simply never appears, and one nobody declared sorts last instead of throwing. **The empty-string tier
+is basic Energy** — the corpus leaves `rarity` blank on it, and dropping those six would make the
+tiers stop summing to the total, which reads as a bug. See [PACKS.md](PACKS.md).
+
 ## A missing slot names what you are missing
 
 Both grids used to print a card's **number and nothing else** in an empty slot, which meant the

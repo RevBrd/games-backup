@@ -225,6 +225,44 @@ const dup = C.newSave({ now: 1 });
 C.grant(dup, 'base1-4', '', 4);
 eq(C.collectionStats(dup, CARD_DB).cards.owned, 1, 'duplicates do not inflate the dex');
 
+// --- the rarity tiers, and the rule that an UNEARNED one is not shown --------
+// The interesting half is the filtering, not the arithmetic. Trevor's rule is a
+// chase rule: `base5-83` Dark Raichu is the era's only Rare Secret, so a counter
+// that listed the tier at 0/1 would tell a player it exists before they have
+// pulled it. These cases are written so that removing the filter goes red.
+const rar = C.newSave({ now: 1 });
+eq(C.collectionStats(rar, CARD_DB).rarityRows.length, 0,
+   'a fresh save shows no rarity tiers at all');
+
+const rarAll = C.collectionStats(rar, CARD_DB).byRarity;
+check(Object.keys(rarAll).length > 1,
+      '...but byRarity still holds every tier, so the filter is a VIEW and not a gap in the data');
+const rarSum = Object.values(rarAll).reduce((a, x) => a + x.total, 0);
+eq(rarSum, Object.keys(CARD_DB).length, 'per-rarity totals add up to the pool');
+
+C.grant(rar, 'base1-1', '', 1);                       // Alakazam, a Rare Holo
+let rows = C.collectionStats(rar, CARD_DB).rarityRows;
+eq(rows.length, 1, 'owning one card reveals exactly one tier');
+eq(rows[0].label, 'RARE HOLO', '...the tier that card belongs to');
+eq(rows[0].owned, 1, '...counted as one owned');
+check(rows[0].total > 1, '...against the whole tier as the denominator');
+
+check(!rows.some(r => r.key === 'Rare Secret'),
+      'Dark Raichu’s tier stays hidden until it is pulled — the whole point of the rule');
+C.grant(rar, 'base5-83', '', 1);
+rows = C.collectionStats(rar, CARD_DB).rarityRows;
+check(rows.some(r => r.key === 'Rare Secret' && r.owned === 1 && r.total === 1),
+      '...and appears complete the moment it is');
+
+// Order is declared once, in RARITY_ORDER, and everything reads it from there.
+const ranks = rows.map(r => C.rarityRank(r.key));
+check(ranks.every((v, i) => i === 0 || ranks[i - 1] <= v),
+      'rows come out in RARITY_ORDER, ascending');
+eq(C.rarityLabel(''), 'ENERGY', 'blank rarity is basic Energy, not an empty label');
+check(C.rarityRank('Rare Holo') > C.rarityRank('Common'), 'a holo outranks a common');
+check(C.rarityRank('Nonsense Tier') === C.RARITY_ORDER.length,
+      'a tier nobody declared sorts last rather than throwing');
+
 // ===========================================================================
 head('Validation');
 

@@ -1464,6 +1464,29 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .collhead{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .collhead h2{margin:0;font-family:var(--serif);font-weight:600;font-size:20px;color:var(--stock)}
 .collbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* The rarity tier counters. Deliberately NOT `.collchip` — everything in that
+   row is clickable and these are a readout, so they take a different shape
+   (no border, no hover, a rule under the label) to say so at a glance.
+   Which tiers appear is decided in collection.js, not here. */
+.raritybar{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;
+  margin:10px 0 2px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rartier{display:flex;flex-direction:column;gap:2px;line-height:1.1}
+.rartier .rlbl{font-size:8px;letter-spacing:.16em;color:var(--dim)}
+.rartier .rnum{font-size:13px;font-family:var(--mono);color:var(--txt)}
+/* A finished tier is stated rather than decorated: the label goes amber and the
+   number keeps its weight. No tick, no bar — the screen already has enough
+   chrome and this row sits directly under the headline count. */
+.rartier.done .rlbl{color:var(--amber)}
+.rartier.done .rnum{color:var(--amber)}
+/* The chase tiers read warmer as they get rarer, which is the same ordering
+   RARITY_ORDER declares. Anything without a rule here falls back to --txt, so a
+   set introducing a new tier looks plain rather than broken. */
+.rartier.rrare .rnum{color:#C8B98A}
+.rartier.rrareholo .rnum{color:#D7C56B}
+.rartier.rrareshining .rnum{color:#9FD3C4}
+.rartier.rraresecret .rnum{color:#E0A0D8}
+.rartier.rpromo .rnum{color:#A8D8F0}
 .collchip{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;cursor:pointer;
   border:1px solid var(--matline);border-radius:2px;color:var(--matink);background:rgba(0,0,0,.28)}
 .collchip:hover{border-color:#6E837B;color:#B7C6BE}

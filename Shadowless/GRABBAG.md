@@ -32,9 +32,9 @@ Faults and behaviour, from Trevor's play. [AI.md](AI.md) has what the scorer alr
 
 Presentation and screens. Two are marked *medium* and one grows to large the moment it lands on the mat — [SCREENS.md](SCREENS.md), [LAYOUT.md](LAYOUT.md) and [INTERACTION.md](INTERACTION.md) say why.
 
-- Visually displayed rare card counter added to the collection screen for each tier. Unearned tiers aren't shown at all.
 - Booster pack selection screen (medium item, raise it for detail first)
-- **The board grows 1px while a coin is in the air, and it is the ACTION BAR rather than the coin.**
+- **LOW PRIORITY — Trevor, 26 Aug: not noticeable in play.** The board grows 1px while a coin is in
+  the air, and it is the ACTION BAR rather than the coin.
   #27's, not Trevor's, and the first version of this note blamed the wrong element — worth keeping
   because the symptom points somewhere else entirely. `probe.js` at 1191x684 reports zoom 0.892 ->
   0.893 and the centre line growing 4px -> 5px, which reads as *something on the centre line is in
