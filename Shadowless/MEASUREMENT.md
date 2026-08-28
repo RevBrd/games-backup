@@ -345,8 +345,39 @@ this file. The two honest workarounds, both used on 28 Aug:
 - **Duel against `HEAD` instead** and accept that it answers the smaller question: *did this change
   help*, rather than *how far has the AI come*. For a single change that is the right question anyway.
 
-**If the pin is ever moved, it should move to a commit AFTER the three PROVISIONAL crashes were
-fixed**, and whoever moves it should say here which readings are no longer comparable.
+**It WAS moved, the same day, on Trevor's call** — to `582761b`, the first commit carrying that fix,
+verified with `--checkpin` against the live ladder before the line was changed. The pin table below
+is what replaced the loose instruction this paragraph used to end with.
+
+### The pin table — move it deliberately, and add a row when you do
+
+| Pin | Set | Retired | Why it was retired | Last reading against it |
+|---|---|---|---|---|
+| `e23c747` | 21 Aug 2026 | **28 Aug 2026** | Predates the 25 Aug fix for three PROVISIONAL Power crashes. The Team Rocket roster then fielded one and `--baseline --gbc` began dying inside the baseline | **51.4% ±0.5**, 23 Aug 2026 |
+| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified against the live ladder before the pin was moved | — |
+
+**What moving it cost, stated rather than hidden.** Readings against `e23c747` are not comparable
+with readings against `582761b`, so the 21–25 Aug accumulation now sits *behind* the pin and is no
+longer measured by it. The 51.4% above is the last number anyone will ever take against the old one,
+and it is kept in this table for exactly that reason. **A retired pin's row never gets deleted.**
+
+### `--checkpin` is the answer to the rot, and it takes seconds
+
+```bash
+node tools/aiduel.js --checkpin --baseline --gbc     # PIN OK / PIN BROKEN
+```
+
+**Run it after adding a set or a roster.** Those are the only things that have ever broken a pin,
+and the mechanism is always the same: new cards go in front of a frozen scorer that did not exist
+when it was frozen. It plays the baseline against **itself** across every adjacent deck pairing —
+the question is *"can this old file still take a turn against today's cards"*, not how well it does —
+and names the matchup that crashed.
+
+**It exists because the failure is loud but invisible in calendar terms.** A broken pin throws a
+stack trace, which is the good half; but `aiduel` is only run when somebody changes the AI, so it sat
+broken for three days and would have sat longer. `--checkpin` moves the discovery to whoever *caused*
+it. The same instruction is in [TOOLING.md](TOOLING.md)'s "Adding a set", which is where somebody
+will actually be standing when it matters.
 
 **Not pass/fail.** A tier boundary is real when the tier bands do not overlap. On the Base Set roster
 T2 and T3 separate cleanly and T4 does not — **the standings, the assembly rates and what to do about

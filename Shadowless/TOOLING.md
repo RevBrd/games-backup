@@ -162,6 +162,12 @@ part of adding the set.**
 than it sounds: a card with no scan falls back to the Sigil Card, and until 27 Aug 2026 that fallback
 was correct in the DOM and wrong in the layout. See [INSPECTION.md](INSPECTION.md).
 
+**And run `node tools/aiduel.js --checkpin --baseline --gbc` when the set joins the LADDER.** A new
+roster puts cards in front of the frozen AI baseline that did not exist when it was pinned, which is
+the only thing that has ever broken it — and it broke silently for three days in Aug 2026 because
+nobody runs a duel unless they are changing the AI. Seconds, and it prints PIN OK or names the
+matchup that crashed. *[The pin table, and what moving one costs →](MEASUREMENT.md)*
+
 ## The six test suites
 
 **None of them subsumes the others**, and they overlap barely at all. Run all six before calling

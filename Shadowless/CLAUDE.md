@@ -172,6 +172,8 @@ node tools/claimtest.js                  # assert the playbook claims — RED IS
                                          # not a broken build, so it is NOT in the six-suite gate
 node tools/aitest.js 6 --gbc              # AI behaviour counts — not pass/fail; --gbc for ladder decks
 node tools/aiduel.js 8 --baseline --gbc  # AI vs a PINNED commit — the only form that accumulates
+node tools/aiduel.js --checkpin --baseline --gbc   # ...and is that pin still RUNNABLE? Run after
+                                         # adding a set or a roster; that is what breaks it
 node tools/aiduel.js 8                   # ...vs HEAD, which resets every commit; --control first
 node tools/abtest.js 8 HEAD~1            # RULES vs a commit: how many games came out different
 node tools/openercheck.js                # what the opening-Active rule promotes
