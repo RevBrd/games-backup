@@ -1,0 +1,351 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-28 03:50:54
+decks    you: New deck 3   opponent: Butch — Iron Grip
+opponent expert
+seed     1352122335   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Fighting Energy, Fighting Energy, Machop, Fighting Energy, Dark Dugtrio, Dark Primeape, Diglett
+  HIDDEN  your opening hand: Fighting Energy, Fighting Energy, Hitmonchan, Fighting Energy, Bill, Fighting Energy, Bill
+  HIDDEN  opponent's Prizes: Dark Primeape, Rocket's Sneak Attack, Fighting Energy, Bill, Potion, Sleep!
+  HIDDEN  your Prizes: Fighting Energy, Fighting Energy, Hitmonlee, Pokémon Trader, Fighting Energy, Hitmonlee
+  HIDDEN  opponent's opening board: Diglett active, bench Machop
+  HIDDEN  your opening board: Hitmonchan active, empty bench
+          New game. Seed 1352122335.
+          You has no Basic Pokemon - mulligan.
+          Coin flip (who goes first): TAILS
+          Butch will go first.
+          Butch draws 1 extra (opponent mulligans).
+
+--- Turn 1 — Butch -----------------------------
+          Butch draws a card. (45 left)
+  AI      attach   [15]
+          holding: Fighting Energy, Fighting Energy, Fighting Energy, Dark Dugtrio, Dark Primeape, Dark Dugtrio, Hitmonlee
+          Butch attaches Fighting Energy to Diglett.
+  AI      bench   [7]
+          holding: Fighting Energy, Fighting Energy, Dark Dugtrio, Dark Primeape, Dark Dugtrio, Hitmonlee
+          passed over: retreat -20
+          Butch benches Hitmonlee.
+  AI      pass — no attack was worth taking   [0]
+          holding: Fighting Energy, Fighting Energy, Dark Dugtrio, Dark Primeape, Dark Dugtrio
+          passed over: attack:Dig Under 0
+          Butch ended the turn without attacking.
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (46 left)
+          You plays Bill.
+          You draws 2.
+          You plays Energy Removal.
+          Fighting Energy discarded from Diglett.
+          You plays Bill.
+          You draws 2.
+          You benches Mysterious Fossil.
+          You attaches Fighting Energy to Hitmonchan.
+          Hitmonchan uses Jab.
+          Diglett takes 20. (20/40 left)
+
+--- Turn 3 — Butch -----------------------------
+          Butch draws a card. (44 left)
+  AI      attach   [55]
+          holding: Fighting Energy, Fighting Energy, Dark Dugtrio, Dark Primeape, Dark Dugtrio, Fighting Energy
+          passed over: attach 55, attach 55, evolve 26.5, evolve 26.5, attach 15
+          Butch attaches Fighting Energy to Diglett.
+  AI      evolve   [26.5]
+          holding: Fighting Energy, Dark Dugtrio, Dark Primeape, Dark Dugtrio, Fighting Energy
+          passed over: evolve 26.5, retreat 2.7, retreat 2.7
+          Diglett evolves into Dark Dugtrio. Special Conditions removed.
+  AI      pass — no attack available — Knock Down: Not enough Energy   [0]
+          holding: Fighting Energy, Dark Primeape, Dark Dugtrio, Fighting Energy
+          Butch ended the turn without attacking.
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (41 left)
+          Mysterious Fossil evolves into Aerodactyl. Special Conditions removed.
+          You attaches Fighting Energy to Hitmonchan.
+          Hitmonchan uses Jab.
+          Dark Dugtrio takes 20. (10/50 left)
+
+--- Turn 5 — Butch -----------------------------
+          Butch draws a card. (43 left)
+  AI      attach   [45]
+          holding: Fighting Energy, Dark Primeape, Dark Dugtrio, Fighting Energy, Dark Machamp
+          passed over: attach 45, attach 15, attach 15, attach 10, attach 10
+          Butch attaches Fighting Energy to Dark Dugtrio.
+  AI      attack:Knock Down   [30]
+          holding: Dark Primeape, Dark Dugtrio, Fighting Energy, Dark Machamp
+          Dark Dugtrio uses Knock Down.
+          Coin flip (their coin — TAILS pays the bonus): TAILS
+          Tails -> 40 damage.
+          Hitmonchan takes 40. (30/70 left)
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (40 left)
+          You plays Potion.
+          Hitmonchan heals 20. (20 damage left)
+          You attaches Fighting Energy to Aerodactyl.
+          Hitmonchan uses Jab.
+          Dark Dugtrio takes 20. (0/50 left)
+          Dark Dugtrio is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [29.3]
+          holding: Dark Primeape, Dark Dugtrio, Fighting Energy, Dark Machamp
+          passed over: promote 25.8
+          Butch promotes Hitmonlee to Active.
+
+--- Turn 7 — Butch -----------------------------
+          Butch draws a card. (42 left)
+  AI      attach   [15]
+          holding: Dark Primeape, Dark Dugtrio, Fighting Energy, Dark Machamp, Fighting Energy
+          passed over: attach 15, attach 13, attach 13
+          Butch attaches Fighting Energy to Machop.
+  AI      pass — no attack available — Stretch Kick: Not enough Energy; High Jump Kick: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Fighting Energy
+          Butch ended the turn without attacking.
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (39 left)
+          You benches Hitmonlee.
+          You attaches Fighting Energy to Hitmonchan.
+          Hitmonchan uses Special Punch.
+          Hitmonlee takes 40. (20/60 left)
+
+--- Turn 9 — Butch -----------------------------
+          Butch draws a card. (41 left)
+  AI      attach   [32]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Fighting Energy, Mankey
+          passed over: attach 13, bench 7
+          Butch attaches Fighting Energy to Machop.
+  AI      bench   [7]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Mankey
+          Butch benches Mankey.
+  AI      pass — no attack available — Stretch Kick: Not enough Energy; High Jump Kick: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp
+          Butch ended the turn without attacking.
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (38 left)
+          You attaches Fighting Energy to Hitmonchan.
+          You plays Super Energy Removal.
+          Hitmonchan discards 1 Energy; 2 Energy discarded from Machop.
+          Hitmonchan uses Special Punch.
+          Hitmonlee takes 40. (0/60 left)
+          Hitmonlee is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [25.8]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp
+          passed over: promote 22.8
+          Butch promotes Machop to Active.
+
+--- Turn 11 — Butch -----------------------------
+          Butch draws a card. (40 left)
+  AI      trainer   [9.4]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Bill
+          Butch plays Bill.
+          Butch draws 2.
+  AI      attach   [18]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Fighting Energy, Machop
+          passed over: attach 12, bench 7
+          Butch attaches Fighting Energy to Machop.
+  AI      bench   [7]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Machop
+          passed over: retreat -59
+          Butch benches Machop.
+  AI      pass — no attack available — Punch: Not enough Energy; Kick: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp
+          Butch ended the turn without attacking.
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (37 left)
+          You benches Diglett.
+          Hitmonchan uses Special Punch.
+          Machop takes 40. (10/50 left)
+
+--- Turn 13 — Butch -----------------------------
+          Butch draws a card. (37 left)
+  AI      retreat   [7.8]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Lickitung
+          passed over: bench 7, retreat -10.2
+          Butch retreats Machop A; Machop B is now Active.
+  AI      bench   [7]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Lickitung
+          Butch benches Lickitung.
+  AI      pass — no attack available — Punch: Not enough Energy; Kick: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp
+          Butch ended the turn without attacking.
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Fighting Energy to Aerodactyl.
+          Hitmonchan uses Special Punch.
+          Machop takes 40. (10/50 left)
+
+--- Turn 15 — Butch -----------------------------
+          Butch draws a card. (36 left)
+  AI      attach   [18]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Fighting Energy
+          passed over: attach 18, attach 15, attach 12
+          Butch attaches Fighting Energy to Machop B.
+  AI      retreat   [7.8]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp
+          passed over: retreat -10.2, retreat -10.2
+          Butch retreats Machop B; Lickitung is now Active.
+  AI      pass — no attack available — Tongue Wrap: Not enough Energy; Supersonic: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp
+          Butch ended the turn without attacking.
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (35 left)
+          You attaches Fighting Energy to Hitmonlee.
+          Hitmonchan uses Special Punch.
+          Weakness: Lickitung takes double -> 80.
+          Lickitung takes 80. (10/90 left)
+
+--- Turn 17 — Butch -----------------------------
+          Butch draws a card. (35 left)
+  AI      bench   [2]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Machop
+          Butch benches Machop.
+  AI      pass — no attack available — Tongue Wrap: Not enough Energy; Supersonic: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp
+          Butch ended the turn without attacking.
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (34 left)
+          Hitmonchan uses Special Punch.
+          Weakness: Lickitung takes double -> 80.
+          Lickitung takes 80. (0/90 left)
+          Lickitung is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [25.8]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp
+          passed over: promote 19.8, promote 5.2, promote 5.2
+          Butch promotes Machop C to Active.
+
+--- Turn 19 — Butch -----------------------------
+          Butch draws a card. (34 left)
+  AI      attach   [18]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Fighting Energy
+          passed over: attach 15, attach 15, attach 12
+          Butch attaches Fighting Energy to Machop C.
+  AI      pass — no attack available — Punch: Not enough Energy; Kick: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp
+          Butch ended the turn without attacking.
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (33 left)
+          You benches Sandshrew.
+          Hitmonchan uses Special Punch.
+          Machop takes 40. (10/50 left)
+
+--- Turn 21 — Butch -----------------------------
+          Butch draws a card. (33 left)
+  AI      pass — no attack available — Punch: Not enough Energy; Kick: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke
+          Butch ended the turn without attacking.
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (32 left)
+          You benches Mysterious Fossil.
+          Hitmonchan uses Special Punch.
+          Machop takes 40. (0/50 left)
+          Machop is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [11.5]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke
+          passed over: promote -3.2, promote -3.2
+          Butch promotes Mankey to Active.
+
+--- Turn 23 — Butch -----------------------------
+          Butch draws a card. (32 left)
+  AI      bench   [7]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke, Machop
+          passed over: retreat 1, retreat 1
+          Butch benches Machop.
+  AI      retreat   [19]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke
+          passed over: retreat 1, retreat 1
+          Butch retreats Mankey; Machop C is now Active.
+  AI      pass — no attack available — Punch: Not enough Energy; Kick: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke
+          Butch ended the turn without attacking.
+
+--- Turn 24 — You -------------------------------
+          You draws a card. (31 left)
+          You attaches Fighting Energy to Mysterious Fossil.
+          Hitmonchan uses Special Punch.
+          Machop takes 40. (10/50 left)
+
+--- Turn 25 — Butch -----------------------------
+          Butch draws a card. (31 left)
+  AI      attach   [18]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke, Fighting Energy
+          passed over: attach 15, attach 15, attach 12
+          Butch attaches Fighting Energy to Machop C.
+  AI      retreat   [1]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke
+          passed over: retreat 1, retreat 1
+          Butch retreats Machop C; Machop A is now Active.
+  AI      pass — no attack available — Punch: Not enough Energy; Kick: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke
+          Butch ended the turn without attacking.
+
+--- Turn 26 — You -------------------------------
+          You draws a card. (30 left)
+          You attaches Fighting Energy to Hitmonlee.
+          Hitmonchan uses Special Punch.
+          Machop takes 40. (0/50 left)
+          Machop is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [-33.5]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke
+          passed over: promote -48.2, promote -48.2
+          Butch promotes Mankey to Active.
+
+--- Turn 27 — Butch -----------------------------
+          Butch draws a card. (30 left)
+  AI      retreat   [46]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke, Dark Machamp
+          passed over: retreat 46
+          Butch retreats Mankey; Machop A is now Active.
+  AI      pass — no attack available — Punch: Not enough Energy; Kick: Not enough Energy   [0]
+          holding: Dark Primeape, Dark Dugtrio, Dark Machamp, Dark Machoke, Dark Machamp
+          Butch ended the turn without attacking.
+
+--- Turn 28 — You -------------------------------
+          You draws a card. (29 left)
+          Hitmonchan uses Special Punch.
+          Machop takes 40. (0/50 left)
+          Machop is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         28 turns
+
+==========================================================
+PACKS OPENED
+
+  Team Rocket
+    Dark Rapidash  Uncommon
+    Dark Primeape  Uncommon
+    Water Energy  
+    Psychic Energy  
+    Charmander  Common
+    Abra  Common
+    Zubat  Common
+    Dark Golbat  Rare   NEW
+
+  Team Rocket
+    Dark Primeape  Uncommon
+    Dark Vaporeon  Uncommon
+    Goop Gas Attack  Common
+    Grimer  Common
+    Meowth  Common
+    Ekans  Common
+    Dratini  Common
+    Dark Machamp  Rare   NEW

@@ -1,0 +1,435 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-28 04:16:41
+decks    you: New deck 4   opponent: Ronald — Legendary Ronald
+opponent expert
+seed     1172061497   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Fire Energy, Fire Energy, Eevee, Dratini, Zapdos, Moltres, Scoop Up
+  HIDDEN  your opening hand: Electabuzz, Voltorb, Lickitung, Wigglytuff, Zapdos, Raichu, Energy Removal
+  HIDDEN  opponent's Prizes: Scoop Up, Energy Removal, Fire Energy, Bill, Fire Energy, Fire Energy
+  HIDDEN  your Prizes: Lightning Energy, Lightning Energy, Pikachu, Lightning Energy, Jigglypuff, Lightning Energy
+  HIDDEN  opponent's opening board: Zapdos active, bench Moltres, Eevee, Dratini
+  HIDDEN  your opening board: Lickitung active, bench Electabuzz, Voltorb, Zapdos
+          New game. Seed 1172061497.
+          You has no Basic Pokemon - mulligan.
+          Coin flip (who goes first): TAILS
+          Ronald will go first.
+          Ronald draws 1 extra (opponent mulligans).
+
+--- Turn 1 — Ronald ----------------------------
+          Ronald draws a card. (45 left)
+  AI      attach   [18]
+          holding: Fire Energy, Fire Energy, Scoop Up, Energy Removal, Fire Energy
+          Ronald attaches Fire Energy to Dratini.
+  AI      pass — no attack available — Thunderstorm: Not enough Energy   [0]
+          holding: Fire Energy, Scoop Up, Energy Removal, Fire Energy
+          Ronald ended the turn without attacking.
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (46 left)
+          You ended the turn without attacking.
+
+--- Turn 3 — Ronald ----------------------------
+          Ronald draws a card. (44 left)
+  AI      attach   [18]
+          holding: Fire Energy, Scoop Up, Energy Removal, Fire Energy, Double Colorless Energy
+          passed over: attach 12, attach 12, attach 8, attach 8, attach 4.4
+          Ronald attaches Double Colorless Energy to Eevee.
+  AI      pass — no attack available — Thunderstorm: Not enough Energy   [0]
+          holding: Fire Energy, Scoop Up, Energy Removal, Fire Energy
+          Ronald ended the turn without attacking.
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (45 left)
+          You ended the turn without attacking.
+
+--- Turn 5 — Ronald ----------------------------
+          Ronald draws a card. (43 left)
+  AI      attach   [12]
+          holding: Fire Energy, Scoop Up, Energy Removal, Fire Energy, Fire Energy
+          passed over: attach 12, attach 12, attach 4.4, attach 4.4, attach 4.4
+          Ronald attaches Fire Energy to Moltres.
+  AI      pass — no attack available — Thunderstorm: Not enough Energy   [0]
+          holding: Scoop Up, Energy Removal, Fire Energy, Fire Energy
+          Ronald ended the turn without attacking.
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (44 left)
+          You attaches Lightning Energy to Lickitung.
+          Lickitung uses Tongue Wrap.
+          Zapdos takes 10. (70/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Zapdos is now Paralyzed.
+
+--- Turn 7 — Ronald ----------------------------
+          Ronald draws a card. (42 left)
+  AI      evolve   [25]
+          holding: Scoop Up, Energy Removal, Fire Energy, Fire Energy, Jolteon
+          passed over: trainer 17, attach 4.4, attach 4.4, attach -2, attach -2
+          Eevee evolves into Jolteon. Special Conditions removed.
+  AI      trainer   [17]
+          holding: Scoop Up, Energy Removal, Fire Energy, Fire Energy
+          passed over: attach 4.4, attach 4.4, attach -2, attach -2, attach -2
+          Ronald plays Energy Removal.
+          Lightning Energy discarded from Lickitung.
+  AI      attach   [4.4]
+          holding: Scoop Up, Fire Energy, Fire Energy
+          passed over: attach 4.4, attach -2, attach -2, attach -2, attach -2
+          Ronald attaches Fire Energy to Zapdos.
+  AI      pass — the Active is Paralyzed   [0]
+          holding: Scoop Up, Fire Energy
+          Ronald ended the turn without attacking — Paralyzed.
+          Zapdos is no longer Paralyzed.
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (43 left)
+          You attaches Lightning Energy to Lickitung.
+          Lickitung uses Tongue Wrap.
+          Zapdos takes 10. (60/80 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 9 — Ronald ----------------------------
+          Ronald draws a card. (41 left)
+  AI      attach   [4.4]
+          holding: Scoop Up, Fire Energy, Fire Energy
+          passed over: attach 4.4, attach -2, attach -2, attach -2, attach -2
+          Ronald attaches Fire Energy to Zapdos.
+  AI      retreat   [0.8]
+          holding: Scoop Up, Fire Energy
+          passed over: retreat 0.8, trainer -13, retreat -16
+          Ronald retreats Zapdos; Jolteon is now Active.
+  AI      attack:Quick Attack   [20]
+          holding: Scoop Up, Fire Energy
+          Jolteon uses Quick Attack.
+          Coin flip (Quick Attack): HEADS
+          Heads -> 30 damage.
+          Lickitung takes 30. (60/90 left)
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (42 left)
+          You plays Energy Removal.
+          Double Colorless Energy discarded from Jolteon.
+          You plays Bill.
+          You draws 2.
+          You attaches Lightning Energy to Electabuzz.
+          Lickitung uses Tongue Wrap.
+          Jolteon takes 10. (60/70 left)
+          Coin flip (Paralyzed?): HEADS
+          Jolteon is now Paralyzed.
+
+--- Turn 11 — Ronald ----------------------------
+          Ronald draws a card. (40 left)
+  AI      attach   [9]
+          holding: Scoop Up, Fire Energy, Fire Energy
+          passed over: attach 9, trainer -1, attach -2, attach -2, attach -2
+          Ronald attaches Fire Energy to Jolteon.
+  AI      pass — the Active is Paralyzed   [0]
+          holding: Scoop Up, Fire Energy
+          Ronald ended the turn without attacking — Paralyzed.
+          Jolteon is no longer Paralyzed.
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Lightning Energy to Zapdos.
+          Lickitung uses Tongue Wrap.
+          Jolteon takes 10. (50/70 left)
+          Coin flip (Paralyzed?): HEADS
+          Jolteon is now Paralyzed.
+
+--- Turn 13 — Ronald ----------------------------
+          Ronald draws a card. (39 left)
+  AI      attach   [31]
+          holding: Scoop Up, Fire Energy, Fire Energy
+          passed over: attach 31, trainer -1, attach -2, attach -2, attach -2
+          Ronald attaches Fire Energy to Jolteon.
+  AI      pass — the Active is Paralyzed   [0]
+          holding: Scoop Up, Fire Energy
+          Ronald ended the turn without attacking — Paralyzed.
+          Jolteon is no longer Paralyzed.
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (38 left)
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): TAILS
+          Poke Ball: tails, nothing found.
+          You attaches Lightning Energy to Zapdos.
+          Lickitung uses Tongue Wrap.
+          Jolteon takes 10. (40/70 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 15 — Ronald ----------------------------
+          Ronald draws a card. (38 left)
+  AI      bench   [2]
+          holding: Scoop Up, Fire Energy, Eevee
+          passed over: trainer -1, attach -2, attach -2, attach -2, attach -2
+          Ronald benches Eevee.
+  AI      attach   [8]
+          holding: Scoop Up, Fire Energy
+          passed over: trainer -1, attach -2, attach -2, attach -2, attach -2
+          Ronald attaches Fire Energy to Eevee.
+  AI      attack:Quick Attack   [20]
+          holding: Scoop Up
+          Jolteon uses Quick Attack.
+          Coin flip (Quick Attack): HEADS
+          Heads -> 30 damage.
+          Lickitung takes 30. (30/90 left)
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (37 left)
+          You attaches Lightning Energy to Zapdos.
+          Lickitung uses Tongue Wrap.
+          Jolteon takes 10. (30/70 left)
+          Coin flip (Paralyzed?): HEADS
+          Jolteon is now Paralyzed.
+
+--- Turn 17 — Ronald ----------------------------
+          Ronald draws a card. (37 left)
+  AI      bench   [2]
+          holding: Scoop Up, Articuno
+          passed over: trainer -1
+          Ronald benches Articuno.
+  AI      pass — the Active is Paralyzed   [0]
+          holding: Scoop Up
+          Ronald ended the turn without attacking — Paralyzed.
+          Jolteon is no longer Paralyzed.
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Lightning Energy to Zapdos.
+          Lickitung uses Tongue Wrap.
+          Jolteon takes 10. (20/70 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 19 — Ronald ----------------------------
+          Ronald draws a card. (36 left)
+  AI      attack:Quick Attack   [47.5]
+          holding: Scoop Up, Pokémon Breeder
+          Jolteon uses Quick Attack.
+          Coin flip (Quick Attack): HEADS
+          Heads -> 30 damage.
+          Lickitung takes 30. (0/90 left)
+          Lickitung is Knocked Out!
+          Ronald takes a Prize. (5 left)
+          You promotes Zapdos to Active.
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (35 left)
+          You attaches Lightning Energy to Voltorb.
+          Zapdos uses Thunderstorm.
+          Jolteon takes 40. (0/70 left)
+          Coin flip (hit Moltres?): HEADS
+          Moltres takes 20. (50/70 left)
+          Coin flip (hit Dratini?): HEADS
+          Dratini takes 20. (20/40 left)
+          Coin flip (hit Zapdos?): HEADS
+          Zapdos takes 20. (40/80 left)
+          Coin flip (hit Eevee?): HEADS
+          Eevee takes 20. (30/50 left)
+          Coin flip (hit Articuno?): HEADS
+          Articuno takes 20. (50/70 left)
+          Jolteon is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [42.5]
+          holding: Scoop Up, Pokémon Breeder, Fire Energy
+          passed over: promote 26.1, promote 24.6, promote 23.8, promote 16.6
+          Ronald promotes Moltres to Active.
+
+--- Turn 21 — Ronald ----------------------------
+          Ronald draws a card. (35 left)
+  AI      attach   [14.5]
+          holding: Scoop Up, Pokémon Breeder, Fire Energy, Fire Energy
+          passed over: attach 14.5, attach 8.4, attach 8.4, trainer 4, attach -2
+          Ronald attaches Fire Energy to Eevee.
+  AI      trainer   [4]
+          holding: Scoop Up, Pokémon Breeder, Fire Energy
+          Ronald plays Scoop Up.
+          Zapdos is scooped up; Zapdos returns to hand and everything else is discarded.
+  AI      bench   [2]
+          holding: Pokémon Breeder, Fire Energy, Zapdos
+          Ronald benches Zapdos.
+  AI      pass — no attack was worth taking   [0]
+          holding: Pokémon Breeder, Fire Energy
+          passed over: attack:Wildfire -2.8
+          Ronald ended the turn without attacking.
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (34 left)
+          Voltorb evolves into Electrode. Special Conditions removed.
+          You attaches Lightning Energy to Electrode.
+          Zapdos uses Thunderstorm.
+          Moltres takes 40. (10/70 left)
+          Coin flip (hit Dratini?): HEADS
+          Dratini takes 20. (0/40 left)
+          Coin flip (hit Eevee?): TAILS
+          Coin flip (hit Articuno?): HEADS
+          Articuno takes 20. (30/70 left)
+          Coin flip (hit Zapdos?): TAILS
+          2 tail(s): Zapdos takes 20. (20 total)
+          Dratini is Knocked Out!
+          You takes a Prize. (4 left)
+
+--- Turn 23 — Ronald ----------------------------
+          Ronald draws a card. (34 left)
+  AI      attach   [8.4]
+          holding: Pokémon Breeder, Fire Energy, Dratini
+          passed over: bench 2, attach -2, attach -2, attach -2
+          Ronald attaches Fire Energy to Moltres.
+  AI      retreat   [2.2]
+          holding: Pokémon Breeder, Dratini
+          passed over: bench 2, retreat -4.5, retreat -15.8
+          Ronald retreats Moltres; Zapdos is now Active.
+  AI      bench   [2]
+          holding: Pokémon Breeder, Dratini
+          Ronald benches Dratini.
+  AI      pass — no attack available — Thunderstorm: Not enough Energy   [0]
+          holding: Pokémon Breeder
+          Ronald ended the turn without attacking.
+
+--- Turn 24 — You -------------------------------
+          You draws a card. (33 left)
+          You attaches Lightning Energy to Electrode.
+          You benches Pikachu.
+          Zapdos uses Thunderstorm.
+          Zapdos takes 40. (40/80 left)
+          Coin flip (hit Eevee?): TAILS
+          Coin flip (hit Articuno?): TAILS
+          Coin flip (hit Moltres?): HEADS
+          Moltres takes 20. (0/70 left)
+          Coin flip (hit Dratini?): HEADS
+          Dratini takes 20. (20/40 left)
+          2 tail(s): Zapdos takes 20. (40 total)
+          Moltres is Knocked Out!
+          You takes a Prize. (3 left)
+
+--- Turn 25 — Ronald ----------------------------
+          Ronald draws a card. (33 left)
+  AI      attach   [18]
+          holding: Pokémon Breeder, Fire Energy
+          passed over: attach 4.4, attach -2, attach -2
+          Ronald attaches Fire Energy to Dratini.
+  AI      pass — no attack available — Thunderstorm: Not enough Energy   [0]
+          holding: Pokémon Breeder
+          Ronald ended the turn without attacking.
+
+--- Turn 26 — You -------------------------------
+          You draws a card. (32 left)
+          You attaches Lightning Energy to Pikachu.
+          Zapdos uses Thunderstorm.
+          Zapdos takes 40. (0/80 left)
+          Coin flip (hit Eevee?): TAILS
+          Coin flip (hit Articuno?): TAILS
+          Coin flip (hit Dratini?): HEADS
+          Dratini takes 20. (0/40 left)
+          2 tail(s): Zapdos takes 20. (60 total)
+          Zapdos is Knocked Out!
+          You takes a Prize. (2 left)
+          Dratini is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [-36.5]
+          holding: Pokémon Breeder
+          passed over: promote -43.2
+          Ronald promotes Eevee to Active.
+
+--- Turn 27 — Ronald ----------------------------
+          Ronald draws a card. (32 left)
+  AI      trainer   [42.7]
+          holding: Pokémon Breeder, Professor Oak
+          passed over: retreat 37.5
+          Ronald plays Professor Oak.
+          Ronald discards 1 card(s) and draws 7.
+  AI      retreat   [37.5]
+          holding: Dragonair, Moltres, Flareon, Fire Energy, Double Colorless Energy, Eevee, Dratini
+          passed over: evolve 31, bench 7, bench 7, bench 7, attach -2
+          Ronald retreats Eevee; Articuno is now Active.
+  AI      evolve   [25]
+          holding: Dragonair, Moltres, Flareon, Fire Energy, Double Colorless Energy, Eevee, Dratini
+          passed over: attach 14.5, attach 14.5, bench 7, bench 7, bench 7
+          Eevee evolves into Flareon. Special Conditions removed.
+  AI      attach   [22]
+          holding: Dragonair, Moltres, Fire Energy, Double Colorless Energy, Eevee, Dratini
+          passed over: attach 18, bench 7, bench 7, bench 7, attach 4.4
+          Ronald attaches Fire Energy to Flareon.
+  AI      bench   [7]
+          holding: Dragonair, Moltres, Double Colorless Energy, Eevee, Dratini
+          passed over: bench 7, bench 7
+          Ronald benches Moltres.
+  AI      bench   [7]
+          holding: Dragonair, Double Colorless Energy, Eevee, Dratini
+          passed over: bench 7
+          Ronald benches Eevee.
+  AI      bench   [2]
+          holding: Dragonair, Double Colorless Energy, Dratini
+          Ronald benches Dratini.
+  AI      pass — no attack available — Freeze Dry: Not enough Energy; Blizzard: Not enough Energy   [0]
+          holding: Dragonair, Double Colorless Energy
+          Ronald ended the turn without attacking.
+
+--- Turn 28 — You -------------------------------
+          You draws a card. (31 left)
+          You plays Switch.
+          Electrode is now Active.
+          You attaches Lightning Energy to Pikachu.
+          Pikachu evolves into Raichu. Special Conditions removed.
+          Electrode uses Chain Lightning.
+          Articuno takes 20. (10/70 left)
+          10 to every Benched W Pokemon on both sides.
+
+--- Turn 29 — Ronald ----------------------------
+          Ronald draws a card. (24 left)
+  AI      attach   [54.5]
+          holding: Dragonair, Double Colorless Energy, Gambler
+          passed over: evolve 34, attach 18, attach 18, attach 4.4, trainer 0.2
+          Ronald attaches Double Colorless Energy to Flareon.
+  AI      evolve   [34]
+          holding: Dragonair, Gambler
+          passed over: trainer 13
+          Dratini evolves into Dragonair. Special Conditions removed.
+  AI      trainer   [15.7]
+          holding: Gambler
+          Ronald plays Gambler.
+          Coin flip (Gambler pays off?): TAILS
+          Gambler: 0 shuffled away, tails, 1 drawn.
+  AI      pass — no attack available — Freeze Dry: Not enough Energy; Blizzard: Not enough Energy   [0]
+          holding: Dragonite
+          Ronald ended the turn without attacking.
+
+--- Turn 30 — You -------------------------------
+          You draws a card. (30 left)
+          Electrode uses Chain Lightning.
+          Articuno takes 20. (0/70 left)
+          10 to every Benched W Pokemon on both sides.
+          Articuno is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         30 turns
+
+==========================================================
+PACKS OPENED
+
+  Team Rocket
+    Dark Vileplume  Rare Holo
+    Potion Energy  Uncommon
+    Lightning Energy  
+    Squirtle  Common
+    Ekans  Common
+    Oddish  Common
+    Charmander  Common
+    Dark Vileplume  Rare   NEW
+
+  Team Rocket
+    Digger  Uncommon
+    Dark Golduck  Uncommon
+    Fire Energy  
+    Eevee  Common
+    Rattata  Common
+    Oddish  Common
+    Dark Raticate  Common
+    Dark Blastoise  Rare
