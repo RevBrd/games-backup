@@ -59,7 +59,7 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
   1-in-1,183 packs and he is 162 in.
 - Introductions for rare cards when pulled, light for RH, heavy for Shadowless, all cheap. I have ideas about this one, whoever takes it, let's chat before we build.
 - Attaching an energy or applying an item to a pokemon needs to not be canceled by the item clicked underneath it.
-- I unlocked Dark Raichu, shown in log# 03-56-31 and it does not show as unlocked in my card collection. See the most recent save file in the Save File folder.
+
 
 ### Rules
 
