@@ -221,6 +221,7 @@ holding up. **The `Term` column is the index**: grep it in `ai.js`, then read it
 | 25 Aug | Three PROVISIONAL Power cases referenced a `me` this function never defines and crashed the instant a deck actually fielded one — none had ever been reached before | `SEARCH_EVOLUTION_TO_HAND`, `STATUS_COIN_EITHER_POWER`, `DISCARD_THEN_DRAW` |
 | 28 Aug | **Ammunition is only ammunition if you have nothing else to shoot with.** The discard verb was too wide a derivation on its own — a card that DRAINS and owns a free attack stockpiles nothing | `ammoSymbols` |
 | 28 Aug | **A Pokemon about to become something else is not paid up.** Shortfall is measured against the evolution when it is in hand, and `evolve` waits until one Energy short of it. Shipped on a measured NULL | `evolutionInHand`, `potentialAs`, `evolveEarly` |
+| 28 Aug | **One of the twins gets fed.** The evolution ROAD is rationed to the most-invested copy that is not yet ready — the other keeps its own road, so it is resistant and never blocked | `evolutionRoadFor`, `benchDuplicate` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn

@@ -354,7 +354,7 @@ is what replaced the loose instruction this paragraph used to end with.
 | Pin | Set | Retired | Why it was retired | Last reading against it |
 |---|---|---|---|---|
 | `e23c747` | 21 Aug 2026 | **28 Aug 2026** | Predates the 25 Aug fix for three PROVISIONAL Power crashes. The Team Rocket roster then fielded one and `--baseline --gbc` began dying inside the baseline | **51.4% ±0.5**, 23 Aug 2026 |
-| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified against the live ladder before the pin was moved | — |
+| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified against the live ladder before the pin was moved | **50.1% ±0.5**, 28 Aug 2026 |
 
 **What moving it cost, stated rather than hidden.** Readings against `e23c747` are not comparable
 with readings against `582761b`, so the 21–25 Aug accumulation now sits *behind* the pin and is no

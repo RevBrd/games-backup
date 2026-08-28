@@ -126,6 +126,94 @@ is visible to a human in a way 0.4% of attachments is not; and [MEASUREMENT.md](
 standing prediction is that symmetric perception fixes read flat. **What is NOT claimed is that the
 AI got better.** If a later pass finds this term is costing something, the null is why it is fair game.
 
+## The duplicates rule — BUILT 28 Aug 2026
+
+### Trevor's note, verbatim and append-only
+
+> If you have two (or more) equal basics, then you should primarily invest in only one of them for
+> evolution (or attack if it's a single-stage). If investing for evolution, then once one is fully at
+> the point it needs to be and is just waiting on the evolution card, the other one can be invested in
+> as a staller or attacker in its own right, or even as a backup evolution if there's time and
+> surplus. The point is one should be selected and invested in first, and then the other isn't blocked
+> but evolution investment gets weighted much lower than maybe other pokemon on the bench that might
+> want energy. If there are more than two, then maybe the AI would be more resistant to even playing
+> the third one onto the bench, to ensure room for variety when future cards are drawn. Not blocked
+> but resistant.
+
+### What is withheld is the ROAD, not the Energy
+
+That distinction is the whole of *"not blocked"*. A non-primary duplicate still scores attachments
+against **its own** attacks exactly as any other Pokemon does — it can be built as a staller or an
+attacker, which is Trevor's second sentence. What it does not get is the **evolution road**:
+`potentialAs` measuring it against the card it might become, and the fourth surplus exception that
+travels with it. Those two are what make a Growlithe worth a third Fire, so withholding them is
+"weighted much lower" without ever being a veto.
+
+### The release is automatic, because the primary is defined by what it lacks
+
+**The primary is the most-invested copy that is not yet ready.** Once the leader's shortfall against
+its evolution reaches zero it stops being short, drops out of the running, and the next copy inherits
+the road. That is Trevor's *"once one is fully at the point it needs to be and is just waiting on the
+evolution card"* — expressed as the definition rather than as a second rule that could disagree with
+the first.
+
+**Stable by construction**, because a leader that flip-flops is worse than no rule: the ordering is by
+Energy attached, and feeding the leader is what keeps it the leader. `uid` breaks the opening tie,
+where every copy is identical and any stable choice is right.
+
+Two Charmander, a Charmeleon in hand, a Squirtle on the bench for contrast:
+
+| leader holds | leader | twin | Squirtle | what happens |
+|---|---|---|---|---|
+| 0 Fire | **34.67** | 22.00 | −2.00 | leader fed |
+| 1 Fire | **53.00** | 22.00 | −2.00 | leader fed |
+| 2 Fire | **58.00** | 22.00 | −2.00 | leader fed — the last step before ready |
+| 3 Fire | 8.40 | **31.67** | −2.00 | **releases**; leader waits on the card, twin inherits |
+
+The twin never drops below 22 and never goes negative. That is the difference between resistance and
+a block, and it is visible in the same table as the rule working.
+
+### The rule exposed an older fault — and it was mine, from the same morning
+
+**At two Fire the leader originally scored 15.00 and the untouched twin scored 22.00**, so the bot fed
+the twin and left the leader one Energy short of a Charmeleon. That is not the duplicates rule failing;
+it is the **evolution road** being mispriced at its last step.
+
+`attachValue`'s completing branch pays a flat `attachBuild * short * 2` on the stated grounds that
+*"`attachEnable` has already paid the attack's real value"*. **That sentence is only true when the
+attack is on the card standing there.** `attachEnable` reads `best`, and `best` is deliberately the
+*current* card's — so on an evolution road it paid nothing at all, and the last Fire before a
+50-damage Charmeleon was priced at seven. An evolution road now always takes the amortise branch,
+where a step is worth its share of what is waiting at the end.
+
+**Worth knowing as a shape**: a rule can be right and still look wrong because the thing it depends on
+was never exercised at that value before. The duplicates rule is what put two roads side by side and
+made the mispricing visible.
+
+### Third-copy resistance
+
+`benchDuplicate`, counted across the **whole board** by name — an Active Growlithe is as much "one of
+them" as a benched one. It is a slope, not a cap: the third copy pays once, the fourth twice. And it
+is **deliberately silent for the first two**, because the duplicates rule above is built on there
+being a second copy to fall back on; charging for it would fight the rule directly overhead.
+
+| already on board | benching another | a different Basic |
+|---|---|---|
+| 1 | 7.00 | 7.00 |
+| 2 | **−2.00** | 7.00 |
+| 3 | **−16.00** | 2.00 |
+
+The cost is not the third Rattata. It is the bench slot a Chansey drawn three turns from now will not
+have.
+
+### Measured: null, again, and shipped for the same reasons
+
+`aiduel 8 --gbc` against HEAD reads **50.3% ±0.5** — inside the interval. Against the freshly moved
+pin the whole day's AI work reads **50.1% ±0.5**. Both nulls, both with the harness behaving.
+See [AI.md](../AI.md) open item 4 and [MEASUREMENT.md](../MEASUREMENT.md) on why a specified,
+play-visible behaviour is still worth shipping on a null — and on why nobody should quote these as
+improvements.
+
 ## Still open here
 
 **The two clauses of Trevor's note that were not built**, both deliberately:
@@ -134,9 +222,9 @@ AI got better.** If a later pass finds this term is costing something, the null 
   much higher if they actually had the evolution card in their hand"* has a lower-weight arm for the
   ones you do not hold. That needs the deck as a *probability* rather than as a fact, which is a
   different kind of reasoning from anything in the scorer.
-- **The duplicates rule.** *"On a single pokemon of the same name, not duplicates at the same time
-  unless nowhere else to go and energies aren't in short supply."* Nothing stops the bot funnelling
-  two Gloom at once, and the exception clause needs the scarcity measure that
-  [AI.md](../AI.md) open item 9(b) measured at near-inert — so building it would need that first,
-  for a term that fires about once in a thousand attachments. **Raise it with Trevor rather than
-  assuming it follows.**
+- ~~**The duplicates rule.**~~ **BUILT the same day** — raised with Trevor, and his answer replaced the
+  clause this bullet was worried about. The version here does not need the scarcity measure at all:
+  the release condition is *"the leader is ready and waiting on the card"*, which the board already
+  knows, rather than *"energies aren't in short supply"*, which it does not. **Asking was worth more
+  than the four lines it cost** — the note's own wording pointed at a term measured at near-inert, and
+  the rule he actually wanted rests on something free. See the section above.

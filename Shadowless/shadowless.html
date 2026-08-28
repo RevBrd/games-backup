@@ -6306,6 +6306,8 @@ const AI_WEIGHTS = {
                         // it falls under `threshold` and the card is HELD
   evolveHP: 0.45,       // per point of max-HP gained
   evolveBase: 16,       // evolving is good almost always
+  benchDuplicate: 9,    // per copy already on the board, from the SECOND onward,
+                        // when benching another of the same name. Resistance, not a cap
   evolveEarly: 8,       // per Energy short of the EVOLUTION being able to attack,
                         // beyond the first. Trevor's GBC rule; a penalty, not a veto
   benchFirst: 26,       // first spare Basic on the bench is important
@@ -7941,6 +7943,54 @@ class AI {
     return best;
   }
 
+  // ONE OF THE TWINS GETS FED — 28 Aug 2026, Trevor, and it is the clause of his
+  // GBC note the first evolution pass deliberately left out:
+  //
+  //   "If you have two or more equal basics, then you should primarily invest in
+  //    only one of them for evolution. Once one is fully at the point it needs to
+  //    be and is just waiting on the evolution card, the other can be invested in
+  //    as a staller or attacker in its own right, or even as a backup evolution if
+  //    there's time and surplus. The point is one should be selected and invested
+  //    in first, and then the other isn't blocked but evolution investment gets
+  //    weighted much lower."
+  //
+  // WHAT IS WITHHELD IS THE ROAD, NOT THE ENERGY, and that distinction is the
+  // whole of "not blocked". A non-primary duplicate still scores attachments
+  // against its OWN attacks the way any other Pokemon does — it can be built as
+  // a staller or an attacker, which is Trevor's second sentence. What it does not
+  // get is the evolution road: `potentialAs` measuring it against the card it
+  // might one day become, and the fourth surplus exception that goes with it.
+  // Both of those are what make a Growlithe worth a third Fire, so withholding
+  // them is exactly "weighted much lower" without ever being a veto.
+  //
+  // THE PRIMARY IS THE MOST-INVESTED COPY THAT IS NOT YET READY, which makes the
+  // release automatic rather than a second rule. Once the leader's shortfall
+  // against its evolution reaches 0 it stops being short, drops out of the
+  // running, and the next copy inherits the road — Trevor's "once one is fully at
+  // the point it needs to be and is just waiting on the evolution card".
+  //
+  // STABLE BY CONSTRUCTION, because a leader that flip-flops is worse than no
+  // rule at all: ordering is by Energy attached, and feeding the leader is what
+  // keeps it the leader. `uid` breaks the opening tie, where every copy is
+  // identical and any stable choice is correct.
+  //
+  // MATCHED BY NAME rather than by card id. Two printings of Growlithe are two
+  // Growlithe to a player, and the workbook's notes are about names.
+  evolutionRoadFor(pi, slot) {
+    const evo = this.evolutionInHand(pi, slot);
+    if (!evo) return null;
+    const name = this.top(slot).name;
+    const twins = this.E.allSlots(pi).filter(x => this.top(x).name === name);
+    if (twins.length < 2) return evo;
+    // Only copies still short of the evolution are in the running; a ready one
+    // has had its turn and steps aside.
+    const contenders = twins.filter(x => this.potentialAs(pi, x, evo, null).short > 0);
+    if (!contenders.length) return evo;              // all ready — nothing to ration
+    contenders.sort((a, b) =>
+      (b.energy.length - a.energy.length) || (a.uid - b.uid));
+    return contenders[0] === slot ? evo : null;
+  }
+
   // `potential` for a card this slot is not yet — same push/pop shape, so a
   // hypothetical Energy and a hypothetical card compose.
   potentialAs(pi, slot, cardId, extraEnergyId) {
@@ -8017,7 +8067,7 @@ class AI {
     // crediting a Gloom with Vileplume's damage would be a lie the rest of the
     // scorer reads as fact. What changes is the ROAD: how short it is, and what
     // is waiting at the end of it. See the amortise branch below.
-    const evo = this.evolutionInHand(pi, slot);
+    const evo = this.evolutionRoadFor(pi, slot);
     const beforeR = evo ? this.potentialAs(pi, slot, evo, null) : before;
     const afterR = evo ? this.potentialAs(pi, slot, evo, energyId) : after;
     let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
@@ -8044,9 +8094,23 @@ class AI {
     // and this card's otherwise. `before`/`after` stay on the last branch because
     // "did this card get me a bigger attack RIGHT NOW" is a question about what is
     // standing there, not about what it is going to be.
-    if (afterR.short === 0 && beforeR.short > 0) {
+    if (afterR.short === 0 && beforeR.short > 0 && !evo) {
       // Completing. `attachEnable` has already paid the attack's real value, so
       // this stays the flat finishing bonus it has always been.
+      //
+      // `!evo` — AND THAT GUARD IS NOT DEFENSIVE, it repairs an assumption this
+      // branch has always made and that the evolution road broke the same day it
+      // was written. The sentence above is only true when the attack is on the
+      // card that is STANDING THERE: `attachEnable` reads `best`, and `best` is
+      // deliberately the current card's, so on an evolution road it paid nothing
+      // at all. Completing a Charmeleon's cost through a flat `attachBuild * 1 * 2`
+      // priced the last Fire before a 50-damage evolution at SEVEN — below what a
+      // second, untouched Charmander scored for its first Energy, so the bot fed
+      // the twin and left the leader one short. Trevor's duplicates rule made it
+      // visible; the fault is older and belongs to the evolution road itself.
+      //
+      // An evolution road therefore always takes the amortise branch below, where
+      // the step is worth its share of what is waiting at the end.
       s += W.attachBuild * beforeR.short * 2;
     } else if (afterR.short < beforeR.short) {
       const steps = beforeR.short - afterR.short;
@@ -8880,7 +8944,7 @@ class AI {
         // evolving", and it composes with the readiness term in `case 'evolve'` —
         // that one fires at one-short, so the card evolves a turn before this
         // exception would have closed and attaches onto the evolved form instead.
-        const evoId = this.evolutionInHand(pi, slot);
+        const evoId = this.evolutionRoadFor(pi, slot);
         const evolving = !!evoId && this.potentialAs(pi, slot, evoId, null).short > 0;
 
         if (noProgress && !needsEscape && !stocking && !evolving) return W.attachSurplus;
@@ -8947,6 +9011,30 @@ class AI {
         const n = me.bench.length;
         let s = n === 0 ? W.benchFirst : n < 3 ? W.benchMore : W.benchTooMany;
         s += this.scoreOnPlay(pi, a, me.hand[a.hand].id);
+
+        // A THIRD OF THE SAME THING CROWDS OUT WHAT YOU HAVE NOT DRAWN YET —
+        // 28 Aug 2026, Trevor, and the word he used is the specification:
+        //
+        //   "If there are more than two, then maybe the AI would be more
+        //    resistant to even playing the third one onto the bench, to ensure
+        //    room for variety when future cards are drawn. Not blocked but
+        //    resistant."
+        //
+        // RESISTANT AND NOT BLOCKED, so it is a slope rather than a cap: the
+        // third copy pays once, the fourth twice. A bench of five Rattata is a
+        // bench that cannot answer anything, and the cost is not the Rattata —
+        // it is the slot a Chansey drawn three turns from now will not have.
+        //
+        // Counted across the WHOLE board rather than the bench alone, because an
+        // Active Growlithe is just as much "one of them" as a benched one, and by
+        // NAME for the same reason `evolutionRoadFor` matches by name.
+        //
+        // Deliberately silent for the first two: Trevor's duplicates rule is
+        // built on there being a second copy to fall back on, so making one
+        // expensive would fight the rule directly above it.
+        const named = this.db[me.hand[a.hand].id].name;
+        const already = this.E.allSlots(pi).filter(x => this.top(x).name === named).length;
+        if (already >= 2) s -= (already - 1) * W.benchDuplicate;
         return s;
       }
 
