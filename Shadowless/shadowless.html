@@ -17015,12 +17015,29 @@ const PROMO_GATES = {
 // per card here because a promo arrives per card. Omitting it returns everything
 // the ladder has opened, which is what a suite wants and what the game must not
 // use: basep is deliberately half-scripted and will be for a long time.
+// SORTED BY GATE, THEN BY NUMBER, and the order is load-bearing twice over.
+//
+// It is what the collection screen shows, so the promos you can chase RIGHT NOW
+// sit at the front of the group and the ones from later brackets trail behind
+// them — Trevor's ask, 28 Aug 2026. A plain `.sort()` gave lexicographic id
+// order, which put basep-12 between basep-1 and basep-2 and told the player
+// nothing.
+//
+// It is also the array a pack indexes into, and gate order happens to be the
+// STABLER of the two for that. Unlocking a bracket appends its promos to the
+// end, so every index that already existed keeps meaning the same card;
+// lexicographic order inserted new ids into the middle and silently repointed
+// every seed after them. Neither is wrong, but only one of them lets a seed keep
+// its meaning across a boss fight.
 function unlockedPromos(save, ladder, isPlayable) {
   const open = {};
+  const rank = {};
   unlockedSets(save, ladder).forEach(s => { open[s] = 1; });
+  ladder.forEach((b, i) => { rank[b.set] = i; });
+  const num = id => parseInt(id.split('-')[1], 10) || 0;
   return Object.keys(PROMO_GATES)
     .filter(id => open[PROMO_GATES[id]] && (!isPlayable || isPlayable(id)))
-    .sort();
+    .sort((a, b) => (rank[PROMO_GATES[a]] - rank[PROMO_GATES[b]]) || (num(a) - num(b)));
 }
 
 // Everything you are allowed to play right now, bracket by bracket. An opponent

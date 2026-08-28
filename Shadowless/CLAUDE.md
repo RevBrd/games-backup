@@ -221,7 +221,10 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
 - **Card art is split by function.** The scans are *complete printed cards*, not illustration crops,
   and no crop exists anywhere — so they appear only where the card is the **subject**: the preview
   rail, the title screen, the dex, the pack reveal. In play, cards keep the rendered face, which is
-  an instrument you can overlay damage onto. Derived assets, ~16 MB per set, gitignored.
+  an instrument you can overlay damage onto. Derived assets, ~8-16 MB per set,
+  gitignored — and **fetching them for a set you are adding is standing permission, not an ask**
+  (Trevor, 28 Aug 2026). Forgotten twice, both times after the set was already live, and no suite can
+  see it. *[Why, and the two times →](TOOLING.md)*
 - **A set is gated as a whole, and goes live only when every card in it is playable.** Settled with
   Trevor 10 Aug. No half-open sets, and **no collecting a card you cannot play** — a Jungle Scyther
   sitting in your binder rejecting every deck *is* a card silently doing nothing, which inverts the

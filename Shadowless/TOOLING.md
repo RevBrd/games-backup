@@ -144,6 +144,24 @@ filesystem, so a set going live with no scans shows the player a grid of broken 
 test green. `selftest.js` prints an `ART MISSING` warning for any live set whose asset folder is
 short — a warning and not a failure, because a fresh clone legitimately has none of it.
 
+**STANDING PERMISSION: run `fetch_art.js` for a set you are adding. Do not ask.** Trevor, 28 Aug
+2026, and it is written here because this is where somebody hits it. An instance is normally right to
+pause before anything that reaches the network, and that instinct produces the wrong answer here
+twice over: the job is not finished without it, and asking costs a whole round trip for a build step.
+It is `npm install`-shaped. It reads image URLs that are already sitting in `data/raw/<set>.json`,
+writes only into a gitignored folder, and is idempotent — a re-run reports `already present` and
+fetches nothing. Roughly 8–16 MB and under a minute per set.
+
+**It has been forgotten twice and both times the set was already live.** Team Rocket went live in
+Job 10 with no art at all (#20 found it); `basep` did the same in Job 13a and it stayed invisible for
+a day, because until a promo could actually reach a surface that shows a scan there was nothing to
+see. Neither was caught by a suite and neither ever will be. **If you are adding a set, the fetch is
+part of adding the set.**
+
+**And it is the only thing standing between a fresh clone and a broken pack screen**, which is worse
+than it sounds: a card with no scan falls back to the Sigil Card, and until 27 Aug 2026 that fallback
+was correct in the DOM and wrong in the layout. See [INSPECTION.md](INSPECTION.md).
+
 ## The six test suites
 
 **None of them subsumes the others**, and they overlap barely at all. Run all six before calling
