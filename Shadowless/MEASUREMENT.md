@@ -309,6 +309,45 @@ pin, the same day's work together reads **51.5% ±0.9**, outside the interval. N
 changed between those two numbers; only the yardstick did. **A tool that resets its own baseline every
 commit cannot show progress, and this one had been doing that since it was written.**
 
+### THE PIN IS BROKEN AS OF 28 AUG 2026, AND THE WAY IT BROKE IS THE LESSON
+
+**`node tools/aiduel.js 8 --baseline --gbc` does not run.** It dies inside the pinned file:
+
+```
+shadowless-ai-e23c747.js:1509
+        const key = STATUS_VALUE[p.status];
+ReferenceError: p is not defined
+```
+
+**That is a bug in the baseline, not in the working tree, and it was fixed three days after the pin
+was set.** `STATUS_COIN_EITHER_POWER` is one of the three PROVISIONAL Power cases #26 found on 25 Aug
+2026 that referenced a variable their function never defines — see `AI.md`'s invariant table. The note
+there says they "crashed the instant a deck actually fielded one — none had ever been reached before".
+`e23c747` predates that fix, so the pinned copy still contains it.
+
+**Nothing about the pin changed. The GAME grew into it.** The pin is a fixed old `ai.js` run against
+the **current engine and the current decks**, and the Team Rocket roster — built 25 Aug, after the pin
+— fields a card with that Power. So the baseline was fine on the day it was set, fine for the runs
+recorded above, and became unrunnable later without anybody touching it.
+
+**A frozen yardstick measured against a growing game has a shelf life**, and this is the failure mode
+of the whole idea rather than an accident of one commit. It fails LOUDLY, which is the good half — a
+stack trace rather than a wrong number. But it fails **silently in calendar terms**: the tool is only
+run when somebody changes the AI, so it can sit broken for days, and it did. Between the pin working
+and this discovery, the recorded 51.4% became the last reading anyone will ever take against it.
+
+**Do not move the pin to make this go away.** That is Trevor's call and it costs every comparison in
+this file. The two honest workarounds, both used on 28 Aug:
+
+- **`--gbc` is what breaks it**, because the ladder decks are what field the Power. The four theme
+  decks are Base Set only, so `--baseline` without `--gbc` may still run — at the cost of the
+  blindness that `--gbc` exists to fix.
+- **Duel against `HEAD` instead** and accept that it answers the smaller question: *did this change
+  help*, rather than *how far has the AI come*. For a single change that is the right question anyway.
+
+**If the pin is ever moved, it should move to a commit AFTER the three PROVISIONAL crashes were
+fixed**, and whoever moves it should say here which readings are no longer comparable.
+
 **Not pass/fail.** A tier boundary is real when the tier bands do not overlap. On the Base Set roster
 T2 and T3 separate cleanly and T4 does not — **the standings, the assembly rates and what to do about
 it are in [ROSTERS.md](ROSTERS.md)**, and the spec they are judged against is

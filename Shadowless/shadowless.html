@@ -6306,6 +6306,8 @@ const AI_WEIGHTS = {
                         // it falls under `threshold` and the card is HELD
   evolveHP: 0.45,       // per point of max-HP gained
   evolveBase: 16,       // evolving is good almost always
+  evolveEarly: 8,       // per Energy short of the EVOLUTION being able to attack,
+                        // beyond the first. Trevor's GBC rule; a penalty, not a veto
   benchFirst: 26,       // first spare Basic on the bench is important
   benchMore: 7,         // each additional one
   benchTooMany: 2,
@@ -7871,10 +7873,24 @@ class AI {
       }
       const spare = pool.filter((x, j) => !used[j]).length;
       if (spare < generic) short += generic - spare;
+      // `isReal` GUARDS AN ASSUMPTION THIS FUNCTION HELD SILENTLY UNTIL 28 AUG
+      // 2026: that `c` is the card actually on the slot. It always was, because
+      // `potential()` was the only caller and it passes `this.top(slot)`.
+      // `scoreAttackHypothetical` takes an attack INDEX and looks it up on the
+      // real top card — so the moment `potentialAs` started asking "what would
+      // this slot be worth as its evolution", an evolution with more attacks than
+      // the Basic underneath it indexed off the end and the whole scorer threw on
+      // `a.dmg` of undefined. Three Overgrowth games, caught by selftest.
+      //
+      // Printed damage is the right fallback and not just the safe one: a card
+      // that is not on the board yet cannot be scored as though it were attacking
+      // this turn, which is the same reason the Bench takes the printed number.
+      // See AI.md on the two currencies.
       const isActive = E.state.players[pi].active === slot;
+      const isReal = c === this.top(slot);
       let val;
       if (short === 0) {
-        val = isActive ? this.scoreAttackHypothetical(pi, slot, i) : aiParseDamage(a.dmg);
+        val = (isActive && isReal) ? this.scoreAttackHypothetical(pi, slot, i) : aiParseDamage(a.dmg);
       } else {
         val = -1;
       }
@@ -7884,6 +7900,57 @@ class AI {
       if (val > best) best = val;
     });
     return { best: best === -Infinity ? 0 : best, short: bestShort, goal };
+  }
+
+  // ------------------------------------------------ evolving, as a PLAN -----
+  // THE AI HAS NO LOOKAHEAD, and these two functions are the narrowest possible
+  // exception to that: one card ahead, and only when the card is already in hand.
+  // Job 13b, 28 Aug 2026, from Trevor's account of how the GBC game does it:
+  //
+  //   "their AI planned for future evolutions, but this was weighted much higher
+  //    if they actually had the evolution card in their hand. It was usually
+  //    careful not to evolve unless it was one energy away from being able to use
+  //    the evolution's cheapest attack of value, so it would get energies close to
+  //    that point before actually evolving."
+  //
+  // That is TWO rules and they are the two halves AI.md's open item 4 says must
+  // ship together — "the attach half has to come first" — because a readiness
+  // penalty on its own strands Vileplume at two Energy forever. Attaching to a
+  // Gloom scores -2 today, so evolving is currently the only thing that unblocks
+  // the Energy; take that away without giving the Gloom a reason to be fed and
+  // the bot simply stops.
+  //
+  // ONLY FROM HAND, deliberately. Trevor's account has the GBC bot planning for
+  // evolutions it does not hold as well, at a lower weight. That needs the deck as
+  // a probability rather than as a fact and it is a bigger change; this is the
+  // half where the plan is CERTAIN, which is where the weight belongs anyway.
+
+  // The card in hand that this slot is about to become, or null. Name-matched on
+  // `evolvesFrom` the way the engine matches it, and it deliberately does NOT ask
+  // whether the evolution is legal THIS turn — a Pokemon played this turn cannot
+  // evolve yet, and that is exactly when you want to start feeding it.
+  evolutionInHand(pi, slot) {
+    const me = this.E.state.players[pi];
+    const from = this.top(slot).name;
+    let best = null, bestHP = -1;
+    for (const h of me.hand) {
+      const c = this.db[h.id];
+      if (!c || c.kind !== 'pokemon' || c.evolvesFrom !== from) continue;
+      if (c.hp > bestHP) { bestHP = c.hp; best = c.id; }
+    }
+    return best;
+  }
+
+  // `potential` for a card this slot is not yet — same push/pop shape, so a
+  // hypothetical Energy and a hypothetical card compose.
+  potentialAs(pi, slot, cardId, extraEnergyId) {
+    const fake = extraEnergyId ? { id: extraEnergyId, uid: -1 } : null;
+    if (fake) slot.energy.push(fake);
+    try {
+      return this.potentialOf(pi, slot, this.db[cardId]);
+    } finally {
+      if (fake) slot.energy.pop();
+    }
   }
 
   // What putting `energyId` on `slot` is worth. ONE home, used by both the
@@ -7939,6 +8006,20 @@ class AI {
     const W = this.W, E = this.E;
     const before = this.potential(pi, slot, null);
     const after = this.potential(pi, slot, energyId);
+    // SHORTFALL IS MEASURED AGAINST WHAT THIS SLOT IS BECOMING, when the card
+    // that turns it into that is already in hand. AI.md open item 4 asked for
+    // exactly this sentence and Trevor's GBC account is the same rule: get the
+    // Energy close BEFORE evolving, rather than evolving and then discovering the
+    // new card cannot attack.
+    //
+    // ONLY THE PROGRESS HALF SWITCHES. `best` stays the current card's, because
+    // that is what this Pokemon can actually do if it is attacked this turn —
+    // crediting a Gloom with Vileplume's damage would be a lie the rest of the
+    // scorer reads as fact. What changes is the ROAD: how short it is, and what
+    // is waiting at the end of it. See the amortise branch below.
+    const evo = this.evolutionInHand(pi, slot);
+    const beforeR = evo ? this.potentialAs(pi, slot, evo, null) : before;
+    const afterR = evo ? this.potentialAs(pi, slot, evo, energyId) : after;
     let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
     s += this.energyOnAttachValue(pi, slot, energyId);
 
@@ -7959,14 +8040,18 @@ class AI {
     // down to, not the biggest number on the card — amortising a step toward
     // Thunder against a Thunderbolt the Pokemon will never afford would price
     // the wrong road.
-    if (after.short === 0 && before.short > 0) {
+    // `beforeR`/`afterR` — the ROAD, which is the evolution's when one is in hand
+    // and this card's otherwise. `before`/`after` stay on the last branch because
+    // "did this card get me a bigger attack RIGHT NOW" is a question about what is
+    // standing there, not about what it is going to be.
+    if (afterR.short === 0 && beforeR.short > 0) {
       // Completing. `attachEnable` has already paid the attack's real value, so
       // this stays the flat finishing bonus it has always been.
-      s += W.attachBuild * before.short * 2;
-    } else if (after.short < before.short) {
-      const steps = before.short - after.short;
-      s += Math.max(10, before.goal) * (steps / before.short)
-         * W.attachAmortise * this.survivesCharge(pi, slot, after.short);
+      s += W.attachBuild * beforeR.short * 2;
+    } else if (afterR.short < beforeR.short) {
+      const steps = beforeR.short - afterR.short;
+      s += Math.max(10, beforeR.goal) * (steps / beforeR.short)
+         * W.attachAmortise * this.survivesCharge(pi, slot, afterR.short);
     } else if (after.best > before.best) s += W.attachBuild;
     else s += 0.4;
     s += (slot === E.state.players[pi].active) ? 4 : 1;   // the Active uses it soonest
@@ -8777,7 +8862,28 @@ class AI {
         // Dodrio was not consulted at all.
         const needsEscape = isActive
           && this.E.energyTotal(slot) < this.E.retreatCostOf(slot);
-        if (noProgress && !needsEscape && !stocking) return W.attachSurplus;
+
+        // A POKEMON THAT IS ABOUT TO BECOME SOMETHING ELSE IS NOT PAID UP — the
+        // fourth exception, 28 Aug 2026, and the one AI.md's open item 4 has been
+        // waiting for by name. `noProgress` asks whether the card buys the SLOT a
+        // new attack; a Gloom holding two Grass can already pay for Foul Odor, so
+        // a third Grass scored `attachSurplus` and the bot refused it — even with
+        // a Vileplume in hand needing three.
+        //
+        // That is why open item 4 says a readiness penalty on `evolve` must not
+        // ship alone: evolving was the ONLY thing that unblocked the Energy, so
+        // penalising it without this would strand Vileplume at two Grass forever.
+        //
+        // BOUNDED BY THE EVOLUTION'S OWN COST, so it is not a licence to hoard: it
+        // stops the moment the evolved form could pay for its cheapest attack.
+        // That is Trevor's "get energies close to that point before actually
+        // evolving", and it composes with the readiness term in `case 'evolve'` —
+        // that one fires at one-short, so the card evolves a turn before this
+        // exception would have closed and attaches onto the evolved form instead.
+        const evoId = this.evolutionInHand(pi, slot);
+        const evolving = !!evoId && this.potentialAs(pi, slot, evoId, null).short > 0;
+
+        if (noProgress && !needsEscape && !stocking && !evolving) return W.attachSurplus;
 
         // The surplus rule above is deliberately NOT in attachValue: it is about
         // whether to spend the once-per-turn attachment, and Rain Dance does not
@@ -8791,6 +8897,28 @@ class AI {
         const oldC = this.top(slot), newC = this.db[me.hand[a.hand].id];
         let s = W.evolveBase + Math.max(0, newC.hp - oldC.hp) * W.evolveHP;
         if (slot === me.active) s += 6;
+
+        // READY, NOT MERELY ABLE — 28 Aug 2026, Trevor, from the GBC game: "it
+        // was usually careful not to evolve unless it was one energy away from
+        // being able to use the evolution's cheapest attack of value."
+        //
+        // This is AI.md open item 4, which measured `evolve` at a flat 31.0
+        // whether the target held one Energy or three, and Vileplume arriving
+        // unable to attack. **It must not ship without the attach half** — see the
+        // fourth exception in `case 'attachEnergy'` — because until that landed,
+        // evolving was the only thing that unblocked the Energy.
+        //
+        // "Cheapest attack of value" is `potentialOf().short`, which already means
+        // exactly that: symbols short of the cheapest attack this card can reach,
+        // ties broken by damage. No new definition, and no threshold anybody had
+        // to invent.
+        //
+        // A PENALTY AND NOT A VETO, which is Trevor's "usually". Everything above
+        // can outvote it — a status wipe is 14, a big HP jump is real, and an ON_PLAY
+        // Power is priced on its own. Evolving early to survive is still allowed;
+        // it just stops being free.
+        const readiness = this.potentialOf(pi, slot, newC).short;
+        if (readiness > 1) s -= (readiness - 1) * W.evolveEarly;
         // evolving also wipes Special Conditions
         const st = slot.status;
         if (st.asleep || st.paralyzed || st.confused) s += 14;

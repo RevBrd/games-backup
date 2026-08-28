@@ -220,6 +220,7 @@ holding up. **The `Term` column is the index**: grep it in `ai.js`, then read it
 | 24 Aug | **A rule proven in `scoreAttack` does not reach `scoreTrainer`.** Three rider rules were missing from the Trainer path entirely | `pLethalThisTurn` |
 | 25 Aug | Three PROVISIONAL Power cases referenced a `me` this function never defines and crashed the instant a deck actually fielded one — none had ever been reached before | `SEARCH_EVOLUTION_TO_HAND`, `STATUS_COIN_EITHER_POWER`, `DISCARD_THEN_DRAW` |
 | 28 Aug | **Ammunition is only ammunition if you have nothing else to shoot with.** The discard verb was too wide a derivation on its own — a card that DRAINS and owns a free attack stockpiles nothing | `ammoSymbols` |
+| 28 Aug | **A Pokemon about to become something else is not paid up.** Shortfall is measured against the evolution when it is in hand, and `evolve` waits until one Energy short of it. Shipped on a measured NULL | `evolutionInHand`, `potentialAs`, `evolveEarly` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -258,24 +259,24 @@ on it.**
    inherits `cardKeepValue`'s weights rather than adding its own — so there is nothing new to tune,
    but nothing has duelled it either. It cannot go on `selftest.js`'s `PROVISIONAL` list, which holds
    effect verbs, so it is recorded here instead.
-4. **`evolve` cannot see readiness, and fixing that ALONE would make the bot worse.** Measured 21 Aug
-   2026: evolving scores a flat **31.0** whether the target holds one Energy or three — there is no term
-   anywhere for whether the evolved form can attack. Trevor named it from play ("the AI evolves pokemon
-   as soon as it can rather than as soon as it's ready"), and Vileplume is the clean case: Gloom attacks
-   for one Energy, Vileplume's only attack costs three, so evolving early buys a silent Active.
+4. ~~**`evolve` cannot see readiness, and fixing that ALONE would make the bot worse.**~~ **BUILT
+   28 Aug 2026, both halves in one commit, from Trevor's account of how the GBC game does it.** Evolve
+   scored a flat **31.0** whether the target held one Energy or three; on the Vileplume case it now
+   reads 15 / 23 / 31 / 31 as the Gloom is fed, and the bot evolves at **one Energy short of the
+   evolution's cheapest attack** rather than as soon as it legally may.
 
-   **The trap is that it is coupled to the attach rule and the coupling runs the wrong way.** Attaching a
-   third Grass to a Gloom scores **−2**, because `potential`'s `short` is the distance to the *cheapest*
-   attack the card can reach and both of Gloom's are already paid. So the bot cannot walk a Gloom to
-   three Energy — **and evolving is what unblocks it**, since Vileplume's shortfall of 1 then reads as
-   real progress. Penalise early evolution on its own and Vileplume is stranded at two Energy forever.
-   Verified in a constructed position, not reasoned about.
+   **The coupling this item warned about was real and the blocker was one level higher than predicted.**
+   It named `attachValue` as the thing to fix; the actual refusal came from the **surplus rule** above
+   it, which returns `attachSurplus` before `attachValue` is called at all. A Gloom on two Grass can
+   pay for Foul Odor, so `noProgress` was true and the third Grass was refused at −2 no matter what
+   `attachValue` thought. It took a fourth exception — *a Pokemon about to become something else is not
+   paid up* — bounded by the evolution's own cost.
 
-   So the order is fixed: the attach rule first, or neither. And the attach half is **not** the general
-   cliff fix — Trevor's own doctrine is that Chansey should *not* walk up to Double-edge one card at a
-   time, so the cliff is right there and irrelevant here. What Gloom needs is narrower: **when the
-   evolution is in your hand, the target's shortfall should be measured against the evolved form.** One
-   specific, cheap case rather than lookahead in general.
+   **It reads as a NULL on win rate and it shipped anyway.** `aiduel 8 --gbc` against HEAD: no
+   significant difference, `--control` likewise, so the null is real rather than a broken harness. The
+   change does fire — 228,832 attachments became 229,737 over 17,672 ladder games. **Do not inherit
+   "this helped" from the fact that it shipped.** *[The three grounds, and the two clauses of Trevor's
+   note left unbuilt →](Playbook/EVOLUTION-TIMING.md)*
 
 5. **Sleep against Paralysis: two methods disagree and the weight was left alone.** Reading `endTurn`
    says a Sleep costs **0.67** of a turn — the wake flip runs on both Actives every turn end, so the
@@ -364,16 +365,18 @@ on it.**
    every thousand attachments. **Build it for correctness if you like; do not expect it to move a
    win rate, and do not read a null from `aiduel` as evidence it failed.**
 
-   **(c) Attaching toward a card that is not in play yet. UNBUILT, unmeasured, and the whole of what
-   is left.** Trevor's *"if the bench has enough energies including potential evolutions"* is about
-   future need, and `potential()` reads only the card on top of the stack — **the AI has no lookahead
-   at all.** Nothing can express "this Charmeleon is worth four Fire because a Charizard is coming",
-   nor "decline this attach because next turn has a better home for it". No instrument in the repo
-   measures it, because there is nothing to measure yet.
+   **(c) Attaching toward a card that is not in play yet — HALF BUILT, 28 Aug 2026.** *"This
+   Charmeleon is worth four Fire because a Charizard is coming"* is now expressible, but **only when
+   the Charizard is in hand.** `evolutionInHand` plus `potentialAs` give the scorer exactly one card
+   of lookahead, and only where the plan is a certainty rather than a probability — which is where the
+   weight belongs anyway, and is the arm Trevor's GBC account weights "much higher".
+   *[Both halves, the null they measured, and why they shipped →](Playbook/EVOLUTION-TIMING.md)*
 
-   **So the honest scope is (c) alone**, and it is a capability rather than a term: the scorer would
-   have to reason about the hand and deck as a *plan* rather than as a pool. Three patterns want it,
-   it lands once, and it is the only one of the three that could plausibly move a win rate. Ask
-   Trevor before starting — this is his idea and the version he is excited about is bigger than the
-   two parts that turned out to be finished.
+   **Two clauses of his note are still open and neither follows automatically.**
+   **Evolutions in the DECK** need it as a probability rather than a fact, which is a different kind of
+   reasoning from anything in the scorer. **The duplicates rule** — *"on a single pokemon of the same
+   name, not duplicates at the same time unless nowhere else to go and energies aren't in short
+   supply"* — has its exception clause resting on the scarcity measure (b) above found near-inert, so
+   it would be built on a term that fires once in a thousand attachments. **Raise both with Trevor
+   rather than assuming they follow from (c) landing.**
 
