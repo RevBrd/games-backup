@@ -327,9 +327,13 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   suite that supplied the argument), and **two CSS rules were quietly cancelling the no-scan
   fallback** on the pack screen for any set generated before its art was fetched. See
   [PACKS.md](PACKS.md), [COLLECTION.md](COLLECTION.md) and [INSPECTION.md](INSPECTION.md).
-- **Job 14** - Maintenance passes in the shape of Job 12
-- **Job 15** - Deck autobuilder overhaul, if ready to do so.
-- **Job 16+** - Future sets and maintenance passes
+- **Job 14a** - Document pass, then grab bag UI/AI items.
+- **Job 14b** - AI validation work.
+- **Job 15a** - Adding the Challenge 1 bracket.
+- **Job 15b** - Rebalancing variant odds to match new pack sizes.
+- **Job 15c** - Document pass, AI validation, grab bag.
+- **Job 16** - Card additions and logic for gym1.
+- **Job 17+** - Additional packs.
 
 
 - **Base Set 2 and Legendary Collection are canceled except for cards that exist nowhere else, and the reason is that they are cheap
