@@ -290,7 +290,16 @@ on purpose: a symmetric null from an instrument with no exposure is the exact fa
 **Three claim rows now hold it**, including a **control**: a fifth Fire on Charizard must still score
 positive. Without that row, deleting `ammoSymbols` entirely would pass.
 
-### Still open, and unchanged
+### Still open — and MEASURED on 28 Aug 2026, which narrowed it
+
+**Before anyone scopes "Energy as a resource with somewhere else to be" as one large job, read
+[AI.md](../AI.md) open item 9.** It was measured over 17,672 ladder games and two of its three halves
+turned out to be finished or inert: misrouting runs at **0.26% of attachments** and a hold-for-later
+term would fire about once in a thousand. **What is left is the forward-looking half** — attaching
+toward a card that is not in play yet — which is exactly the Charmeleon note above, and which no
+instrument in this repo can currently measure.
+
+## Still open, and unchanged
 
 **The board-level half is still unbuilt and Trevor's answer sharpened it rather than closing it.**
 *"If the bench has enough energies including potential evolutions, then saving the energy for later

@@ -325,3 +325,55 @@ on it.**
    this is the half he flagged himself, and it may belong with [Ammo](Playbook/AMMO.md)'s open
    Charmeleon note rather than standing alone.
    *[How a note becomes a row →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*
+9. **"Energy is a resource with somewhere else to be" — MEASURED 28 Aug 2026, and two of its three
+   halves are already done or would do nothing.** This is the capability [Ammo](Playbook/AMMO.md)'s
+   Charmeleon note, its Arcanine GP note and [Evolution timing](Playbook/EVOLUTION-TIMING.md) all
+   name as their blocker, so it is worth knowing what is actually left before anyone scopes it as one
+   large job. Trevor's sentence decomposes into three, and they are in very different states.
+
+   **(a) Misrouting — putting the card on the wrong slot. Effectively solved: 0.26%.**
+   `aitest.js 8 --gbc`, **17,672 games and 228,832 attachments**: 3% surplus (the target could
+   already pay for everything it owns), 1% inert (still short afterwards and no new attack), and
+   **605 misdirected — 0.26%, which the report prints as 0%.** That is one attachment in 380. The
+   per-slot competition through `attachValue` already routes correctly.
+
+   **Quoted from the 228k-attachment run, not from the 1,540-attachment probe that found it.** The
+   scratch probe read 0 of 1540 and would have supported "never happens"; at the real rate it should
+   have seen about four. **A rate of one-in-380 is indistinguishable from zero in a sample that
+   size**, and the difference between "zero" and "rare" is the difference between a closed question
+   and an open one. Both were run; the bigger one is the number.
+
+   **And the neighbouring quantity is 27x larger.** 7% of attachments go onto an Active that dies
+   before it can spend them, and 1% onto one that could not attack anyway — 15,117 and 2,462 against
+   misdirection's 605. `survivesCharge` already discounts for exactly this and 7% still get through.
+   Whether that is a fault or is simply what attaching under pressure looks like is unmeasured, but
+   **if anyone goes looking for waste in the attach decision, that is where it is**, and it is not
+   the thing this open item is about.
+
+   **Read that null carefully, because it is partly tautological.** The bot picks the highest-scoring
+   action, so this counter can only fire when the SCORE disagrees with a `short`-based notion of need.
+   It says the scoring is internally consistent. It cannot say the routing is *strategically* right,
+   and no local counter can — that question is only answerable by outcome, which means any change
+   here has to be justified by `aiduel`/`decksim` rather than by a counter going down.
+
+   **(b) Holding the card when Energy is scarce — real, and near-inert. ~0.1% of attachments.** Only
+   **1.4%** of attachments score under 6 at all, and of those only **2 of 1540** were made with six or
+   fewer Energy left in hand and deck. Scarcity itself is real at the tail — 8.4% of attachments
+   happen with ≤6 left, and a tenth of games end with one or none — but when Energy is scarce the bot
+   is nearly always attaching it somewhere that matters. A hold-for-later term would fire about once
+   every thousand attachments. **Build it for correctness if you like; do not expect it to move a
+   win rate, and do not read a null from `aiduel` as evidence it failed.**
+
+   **(c) Attaching toward a card that is not in play yet. UNBUILT, unmeasured, and the whole of what
+   is left.** Trevor's *"if the bench has enough energies including potential evolutions"* is about
+   future need, and `potential()` reads only the card on top of the stack — **the AI has no lookahead
+   at all.** Nothing can express "this Charmeleon is worth four Fire because a Charizard is coming",
+   nor "decline this attach because next turn has a better home for it". No instrument in the repo
+   measures it, because there is nothing to measure yet.
+
+   **So the honest scope is (c) alone**, and it is a capability rather than a term: the scorer would
+   have to reason about the hand and deck as a *plan* rather than as a pool. Three patterns want it,
+   it lands once, and it is the only one of the three that could plausibly move a win rate. Ask
+   Trevor before starting — this is his idea and the version he is excited about is bigger than the
+   two parts that turned out to be finished.
+
