@@ -219,6 +219,7 @@ holding up. **The `Term` column is the index**: grep it in `ai.js`, then read it
 | 23 Aug | A rider is worth nothing on a Pokemon that **already has it** — but Paralysis refreshes, so it is exempt | `statusNovelty` |
 | 24 Aug | **A rule proven in `scoreAttack` does not reach `scoreTrainer`.** Three rider rules were missing from the Trainer path entirely | `pLethalThisTurn` |
 | 25 Aug | Three PROVISIONAL Power cases referenced a `me` this function never defines and crashed the instant a deck actually fielded one — none had ever been reached before | `SEARCH_EVOLUTION_TO_HAND`, `STATUS_COIN_EITHER_POWER`, `DISCARD_THEN_DRAW` |
+| 28 Aug | **Ammunition is only ammunition if you have nothing else to shoot with.** The discard verb was too wide a derivation on its own — a card that DRAINS and owns a free attack stockpiles nothing | `ammoSymbols` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -306,6 +307,14 @@ on it.**
    the day the harness was built — *an attack's cost to its own future is underpriced against its
    damage* — and it shipped the same day, so the entry that would have described it is an invariant
    rather than an open item. See `discardSilence` in [AI-INVARIANTS.md](AI-INVARIANTS.md).
+
+   **And a red row can mean the CLAIM is wrong — 28 Aug 2026, and it had not happened before.**
+   Arcanine GP's row asserted Quick Attack at four Fire and was red for two days while two sessions
+   looked for a missing term in attack choice. Trevor's answer was that the bot was right and the
+   fault was one decision upstream, in what it ATTACHED. **A red row localises a fault to a card, not
+   to a verb** — check which decision is actually wrong before pricing the one the row is written
+   about. The row was rewritten to assert the correct behaviour rather than deleted.
+   *[The rule that came out of it →](AI-INVARIANTS.md)*
 
    **One clause survives and it is worth naming, because three cards ask for it rather than one.**
    Nothing prices holding an attack **in reserve**. Arcanine wants Take Down to stay affordable while

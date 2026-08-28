@@ -214,3 +214,87 @@ and the note is about a card at three Fire or fewer, where the rate genuinely bi
 scores Flames of Rage 33 against Quick Attack's 20 and is still wrong by the note, so the rate rule
 would earn its keep there. **Ask before building.** *[Why a report can turn out not to mean what it
 says →](../PLAYTEST.md)*
+
+## Resolved — the claim was wrong and the fault was one decision upstream, 28 Aug 2026
+
+**Trevor, asked the question this file left open:**
+
+> If it ever found itself in a situation where it did have 4 energies attached then yes, it should
+> use Flames of Rage. However, it should be **exceedingly rare** that it finds itself in that
+> situation, since Over-Attaching in anticipation of that move for Arcanine GP is **the same price as
+> spending the energy reactively instead**. After it's at 2 energies, additional ones better serve the
+> bench. If the bench has enough energies including potential evolutions, then saving the energy for
+> later might even be preferable unless they're in abundance. If they're in abundance and no other
+> card is worth building up, then it becomes cheap.
+>
+> The reason it's different from Charizard is the damage potential. Flames of Rage and Fire Spin have
+> hugely different levels of output, plus Charizard accepts DCE, plus Charizard has a much higher HP
+> to fight for a long time and burn all those pre-loaded energies in high damage attacks. Plus
+> there's no alternative for Charizard, so an opponent with 10 HP left still needs a 2 card burn to
+> finish it.
+
+**The bot was right and the claim was wrong.** Two sessions read a red row as a scoring fault in
+ATTACK CHOICE and went looking for a sustain term. The attack choice at four Fire was correct the
+whole time; what was wrong was that the bot was **stocking Arcanine GP to six Fire** — `ammoSymbols`
+returned `cost + burn × ammoTurns` = 2 + 4, handing a 40-damage attack the pre-load treatment written
+for a 100-damage one. *[Why a report is a symptom and not a diagnosis →](../PLAYTEST.md)*
+
+### The rule, and why the verb alone was too wide
+
+**Ammunition is only ammunition if you have nothing else to shoot with.** Headroom exists to buy
+rounds you would otherwise not get, so it needs two things to be true and both are things the card
+says about itself:
+
+1. **The burn outpaces the attachment.** One a turn in, one a turn out is rate-neutral — the round
+   always arrives, so there is nothing to stockpile *for*. Only a burn of two or more falls behind.
+2. **The card has no free attack.** Fire Spin is all Charizard has, so an empty Charizard is mute and
+   every spare Fire is a turn it gets to act. Arcanine GP keeps Quick Attack and burns nothing to fire
+   it, so it is never mute — a spare Fire buys it a *bigger* attack rather than a *possible* one, and
+   Trevor's first sentence is that the bigger attack costs the same either way.
+
+**This is the same discriminator `discardSilence` already turns on**, which is the reason to trust
+it: that function reads the *cheapest* attack for exactly this reason, and #28 named "a card with a
+cheap fallback defeats it" as the shape of the fault. Both halves of the Ammo family hinge on whether
+the card owns a non-burning attack.
+
+Trevor's other three reasons — 100 damage against 40, Energy Burn making a DCE worth two Fire, and
+120 HP to live long enough to spend a pre-load — all point the same way and **none of them
+generalises without a threshold somebody would have to invent.** They are why the answer is right,
+not how the code finds it.
+
+### The nesting is the whole care — it moved FIFTEEN cards before it moved one
+
+Written flat first: *no headroom for any card with a free attack.* Swept, and it took the headroom
+off **Ninetales, Charmeleon, Charmander, Magmar, Starmie, Kadabra, Mewtwo, Gastly, Slowpoke, both
+Flareons, Ponyta, Dark Golduck and base1 Arcanine** — fourteen rate-neutral cards, most of them in
+live ladder decks, on the strength of an argument about two cards that are nothing like them.
+
+**A rate-neutral card was never at risk of running out, so the fallback test has nothing to say about
+it.** Asking it second, and only under a real drain, moves exactly one card. That is the difference
+between a derivation and a coincidence, and the sweep is the only thing that told them apart.
+
+| | headroom before | after |
+|---|---|---|
+| **Charizard**, Fire Spin | 8 | **8** — unchanged, and the 21 Aug +5.3 result with it |
+| **Arcanine GP**, Flames of Rage | 6 | **0** — the surplus rule now bites at four Fire instead of six |
+| every other burner | unchanged | unchanged |
+
+### What the instruments can and cannot say about it
+
+**`aiduel` and `decksim` are blind to this and running them would produce a null that means nothing.**
+`basep-6` appears in **0 of 51 authored decks**, and promos are excluded from *generated* decks by
+design, so the card the change touches never reaches the table. This is recorded rather than measured
+on purpose: a symmetric null from an instrument with no exposure is the exact failure
+[MISREADINGS.md](../MISREADINGS.md) exists for. The evidence here is the claim rows and the sweep.
+
+**Three claim rows now hold it**, including a **control**: a fifth Fire on Charizard must still score
+positive. Without that row, deleting `ammoSymbols` entirely would pass.
+
+### Still open, and unchanged
+
+**The board-level half is still unbuilt and Trevor's answer sharpened it rather than closing it.**
+*"If the bench has enough energies including potential evolutions, then saving the energy for later
+might even be preferable unless they're in abundance"* is three conditions about the rest of the
+board, and nothing in the scorer reasons about Energy as a resource with somewhere else to be. It is
+still the same capability the Charmeleon half and [Evolution timing](EVOLUTION-TIMING.md) wait on,
+and it is still one rule rather than three.

@@ -21,22 +21,56 @@
 const CLAIMS = [
 
   // ------------------------------------------------------------ Arcanine GP --
-  // The first row is RED ON PURPOSE and is a fault report, not a broken build.
-  // The other two pass, which is what makes it a useful one: the model already
-  // has the shape of Trevor's note — it escalates as Arcanine is hurt, and it
-  // refuses the attack outright when firing would silence the card — and is
-  // missing exactly one term. See AI.md.
+  // THE FIRST ROW USED TO ASSERT THE OPPOSITE AND IT WAS WRONG — 28 Aug 2026.
+  // It read "Quick Attack while healthy, even holding Energy to spare", was red
+  // for two days, and two sessions spent that time looking for the missing term
+  // in ATTACK CHOICE. Trevor, asked directly: "If it ever found itself in a
+  // situation where it did have 4 energies attached then yes, it should use
+  // Flames of Rage. However, it should be exceedingly rare that it finds itself
+  // in that situation."
+  //
+  // The claim was reading the right card and the wrong verb. The bot was correct
+  // at four Fire and the fault was one decision upstream — it was STOCKING
+  // Arcanine GP to six, because `ammoSymbols` gave a 40-damage attack the same
+  // pre-load treatment as Charizard's 100. Rewritten to assert the behaviour
+  // that turned out to be right, and the real claim is the attach row below.
+  //
+  // *[Why a report is a symptom and not a diagnosis →](../../PLAYTEST.md)*
   {
     id: 'basep-6', card: 'Arcanine GP', pattern: 'Ammo',
-    note: 'Flames of Rage is a Damage Scaling move that should be treated like a Kamikaze Timer. It requires a double Energy Funnel to maintain, so it should not plan to be maintained. Quick Attack is preferred unless near death, then Flames of Rage becomes valuable. This card should be expected to be lost on the following turn.',
-    claim: 'Quick Attack while healthy, even holding Energy to spare — Flames of Rage is not a move you maintain',
+    note: 'If it ever found itself in a situation where it did have 4 energies attached then yes, it should use Flames of Rage. However, it should be exceedingly rare that it finds itself in that situation, since Over-Attaching in anticipation of that move for Arcanine GP is the same price as spending the energy reactively instead.',
+    claim: 'Flames of Rage IS right at four Fire — the fault was ever getting there, not firing it',
     board: {
       me:   { card: 'basep:Arcanine', energy: '4 Fire' },
       them: { card: 'base1:Hitmonchan', energy: '3 Fighting' },   // Arcanine is weak to WATER, so this is threat 40
     },
     sane: b => b.affordable().includes('Flames of Rage') && b.affordable().includes('Quick Attack')
             && b.lethal('Flames of Rage') === 0 && b.threat() < 70,
-    expect: b => b.prefers('Quick Attack'),
+    expect: b => b.prefers('Flames of Rage'),
+  },
+  {
+    id: 'basep-6', card: 'Arcanine GP', pattern: 'Ammo',
+    note: 'After it\u2019s at 2 energies, additional ones better serve the bench. Over-Attaching in anticipation of that move for Arcanine GP is the same price as spending the energy reactively instead.',
+    claim: 'and a FIFTH Fire is surplus — the pre-load that buys Charizard a second shot buys this card nothing',
+    board: {
+      me:   { card: 'basep:Arcanine', energy: '4 Fire' },
+      them: { card: 'base1:Hitmonchan', energy: '3 Fighting' },
+      myHand: ['Fire Energy'],
+    },
+    sane: b => b.explain().some(e => e.label === 'attach'),
+    expect: b => b.explain().filter(e => e.label === 'attach').every(e => e.score < 0),
+  },
+  {
+    id: 'base1-4', card: 'Charizard', pattern: 'Ammo',
+    note: 'Evolve it on the bench and pre-load it with as much Energy as you can beyond the four the attack costs. Fire Spin discards two per turn and you can only attach one, so pre-load enough to last.',
+    claim: 'THE CONTROL — a fifth Fire on Charizard is still ammunition, because Fire Spin is all it has',
+    board: {
+      me:   { card: 'Charizard', energy: '5 Fire' },
+      them: { card: 'Chansey', energy: '3 Water' },
+      myHand: ['Fire Energy'],
+    },
+    sane: b => b.explain().some(e => e.label === 'attach'),
+    expect: b => b.explain().filter(e => e.label === 'attach').every(e => e.score > 0),
   },
   {
     id: 'basep-6', card: 'Arcanine GP', pattern: 'Ammo',

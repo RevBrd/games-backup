@@ -1436,12 +1436,70 @@ class AI {
   // `COST_DISCARD_ALL_ENERGY` is deliberately NOT counted. Wildfire discards any
   // number and mills that many, so "how much is useful" is unbounded and a
   // headroom figure would be a guess dressed as a derivation.
+  // TWO CONDITIONS, AND THE VERB ALONE WAS THE WRONG GENERALISATION — 28 Aug
+  // 2026, Trevor. This rule was written from Charizard and generalised by the
+  // presence of `COST_DISCARD_ENERGY`, which is a derivation and was still too
+  // wide: it told the bot to stock Arcanine GP to SIX Fire (cost 2 + 2 x
+  // ammoTurns) for a 40-damage attack, and Trevor's account is that past two
+  // "additional ones better serve the bench". Both conditions below are things
+  // the card says about itself, so this is still a derivation and not a list.
+  //
+  // 1. THE BURN MUST ACTUALLY OUTPACE THE ATTACHMENT. You may attach one Energy
+  //    a turn. An attack burning ONE is rate-neutral — it replaces itself every
+  //    turn forever, so there are no "extra rounds" to stock up for, and the
+  //    23 Aug table's Flamethrower row is that fact stated per card. Only a burn
+  //    of two or more falls behind. Swept: of nineteen discard-to-fire attacks
+  //    in the live pool, fourteen burn one, three burn everything (excluded
+  //    below and priced by `discardSilence` instead), and exactly TWO burn two.
+  //
+  // 2. THE CARD MUST HAVE NOTHING ELSE TO SHOOT WITH. Ammunition buys rounds,
+  //    and rounds are only worth stockpiling if running out means standing there.
+  //    Fire Spin is Charizard's ONLY attack, so an empty Charizard is mute and
+  //    every spare Fire is a turn it gets to act. Arcanine GP keeps Quick Attack
+  //    at CC and burns nothing to fire it, so it is never mute and a spare Fire
+  //    buys it a bigger attack rather than a turn.
+  //
+  //    THIS IS THE SAME DISCRIMINATOR `discardSilence` ALREADY TURNS ON, which
+  //    is the reason to trust it: that function reads the CHEAPEST attack for
+  //    exactly this reason, and #28 named "a card with a cheap fallback defeats
+  //    it" as the shape of the Arcanine GP fault. Both halves of the Ammo family
+  //    hinge on whether the card owns a non-burning attack. See Playbook/AMMO.md.
+  //
+  // Together they select Charizard and nothing else in the live pool, which is
+  // the card the rule was written for. Trevor's other three reasons — 100 damage
+  // against 40, Energy Burn making a DCE worth two Fire, and 120 HP to live long
+  // enough to spend a pre-load — all point the same way and none of them
+  // generalises without a threshold somebody would have to invent.
+  //
+  // `COST_DISCARD_ALL_ENERGY` is still deliberately NOT counted. Wildfire
+  // discards any number and mills that many, so "how much is useful" is unbounded
+  // and a headroom figure would be a guess dressed as a derivation.
+  // THE SECOND TEST IS NESTED INSIDE THE FIRST, AND THE NESTING IS THE WHOLE
+  // CARE. Written flat first — "no headroom for any card with a free attack" —
+  // and swept: that moved FIFTEEN cards, not one. Ninetales, Charmeleon,
+  // Charmander, Magmar, Starmie, Kadabra, Mewtwo, Gastly, Slowpoke, both
+  // Flareons, Ponyta, Dark Golduck and base1 Arcanine all lost their headroom on
+  // the strength of an argument about two cards that are nothing like them.
+  //
+  // A rate-neutral card was never at risk of running out, so the fallback test
+  // has nothing to say about it. Burning one against attaching one means the next
+  // round always arrives; the headroom there is a small buffer, it is the
+  // behaviour the 23 Aug measurement blessed, and it is not what Trevor was
+  // talking about. The fallback only discriminates between cards that actually
+  // DRAIN — which is why it is asked second and only when the first has fired.
   ammoSymbols(slot) {
     const c = this.top(slot);
+    const attacks = c.attacks || [];
+    // Does this card own an attack it can fire without eating Energy? Asked once
+    // for the card rather than per attack, and consulted only under a real drain.
+    const hasFreeAttack = attacks.some((a, i) =>
+      !this.script(slot, i).some(v => v.v === 'COST_DISCARD_ENERGY' || v.v === 'COST_DISCARD_ALL_ENERGY'));
     let target = 0;
-    (c.attacks || []).forEach((a, i) => {
+    attacks.forEach((a, i) => {
       for (const v of this.script(slot, i)) {
         if (v.v !== 'COST_DISCARD_ENERGY' || !v.n) continue;
+        // Condition 1: a burn of one replaces itself every turn. Untouched.
+        if (v.n > 1 && hasFreeAttack) continue;       // condition 2, drain cards only
         target = Math.max(target, a.cost.length + v.n * this.W.ammoTurns);
       }
     });
