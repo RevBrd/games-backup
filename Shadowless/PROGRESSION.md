@@ -44,6 +44,23 @@ there is no version bump: a save written before Job 7 has beaten nobody, which i
 empty map means. See [COLLECTION.md](COLLECTION.md) for why absent and empty are the same thing
 there and corruption is not.
 
+## The promos hang off this, per card
+
+The promo gates live here rather than in `packs.js` because "has the player reached this" is a
+progression question. `PROMO_GATES` maps a card id to the **bracket key** that must be OPEN, and
+`unlockedPromos(save, ladder, isPlayable)` resolves it against the same derived `unlockedSets` as
+everything else — so it stores nothing, exactly like unlock itself.
+
+**Four of the eight keys name brackets that do not exist**, and they fail closed. `gym1` and `gym2`
+resolve for free the day those sets go live. `challenge1` and `challenge2` need
+[CHALLENGES.md](CHALLENGES.md)'s bracket, which "belongs to NO SET" — so whoever builds it has to
+pick that key deliberately, and that is the only step.
+
+**The second filter is not optional.** `isPlayable` is the caller's own test, and the game passes
+"does this card have an effect script" — `basep` is half-scripted and stays that way for a long
+time. A gate opening is necessary and not sufficient. See [PACKS.md](PACKS.md) for the gates
+themselves and [COLLECTION.md](COLLECTION.md) for what a gated-open promo does to the binder.
+
 ## The tunables, and their starting values
 
 All in `data/ladder.json`'s `defaults`, overridable per bracket via `cfg`. Trevor's numbers, 12 Aug:

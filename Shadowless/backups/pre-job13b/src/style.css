@@ -834,7 +834,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
    what the rendered data sheet underneath is for. */
 .cardface{width:100%;max-width:240px;display:block;margin:0 auto 10px;border-radius:5px;
   box-shadow:0 2px 4px rgba(0,0,0,.5), 0 14px 30px -14px #000}
-/* `.miss` lives at the BOTTOM of this file now, not here. See the end. */
+.cardface.miss{display:none}
 /* When the real face is there, it IS the panel. The rendered card underneath was
    restating a name, HP, type and attack text that the scan already shows
    perfectly legibly at native size — so everything but the printing credits goes
@@ -1333,10 +1333,6 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .packscreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;
   background:radial-gradient(120% 90% at 50% 0%,var(--mat) 0%,var(--mat2) 55%,#121917 100%)}
 .packbox{width:100%;max-width:1060px;display:flex;flex-direction:column;gap:12px;align-items:center}
-/* An intruded pack is nine cards, and eight on the ordinary line needs ~1136px.
-   See renderPackScreen: the promo joining the row rather than sitting alone on
-   one is the point, because a lone card reads as a second hero. */
-.packbox.wide{max-width:1220px}
 .packhead{text-align:center}
 .packhead h2{margin:0;font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:.02em;color:var(--stock)}
 .packhead .sub{font-size:10px;letter-spacing:.14em;color:var(--matink);margin-top:3px}
@@ -1751,83 +1747,3 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .zone.prizes.picking .cardback.pz.pickable{cursor:pointer;border-color:var(--amber);
   box-shadow:0 0 0 1px var(--amber)}
 .zone.prizes.picking .cardback.pz.pickable:hover{transform:translateY(-3px)}
-
-/* ------------------------------------------------- the unearned promo -----
-   Job 13b. A THIRD tile state, and the fact that it is a third rather than a
-   tweak to the second is the whole design.
-
-   `.collmiss` draws a card you have not pulled: a ghosted Sigil Card, the name,
-   the number. It leaks the card's SHAPE on purpose — petals are the attack
-   count, rings the retreat cost — because a Base Set card you are missing is a
-   known hole in a checklist you can see, and COLLECTION.md wanted that chase to
-   be specific.
-
-   A promo is not that. It arrives on its own gate, from a set you cannot buy a
-   pack of, and it is supposed to be a RUMOUR — you have heard one exists and you
-   do not know what it does. So this state gives the name and nothing else: no
-   scan, no sigil, no number. Trevor's ask, 27 Aug 2026.
-
-   The two rules coexist on one screen deliberately. If a later pass reads that
-   as an inconsistency and unifies them, the thing lost is the distinction — see
-   COLLECTION.md before touching it. */
-.colllock{aspect-ratio:240/330;border-radius:3px;border:1px dashed #4A4032;
-  border-left:3px solid #7A6636;
-  background:repeating-linear-gradient(135deg,rgba(0,0,0,.30) 0 6px,rgba(122,102,54,.05) 6px 12px);
-  position:relative;overflow:hidden;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;padding:6px 5px 7px;text-align:center;line-height:1.15}
-.colllock .lockmark{font-size:15px;color:#7A6636;line-height:1}
-.colllock .lockname{font-size:8.5px;color:#8A7A54;font-weight:600;
-  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.colllock .locktag{font-size:7px;color:#5C5030;letter-spacing:.14em}
-.colltile:hover .colllock{border-color:#9C8446;background:rgba(122,102,54,.10)}
-.colltile:hover .colllock .lockname{color:#CBB77E}
-/* The same plate, at detail size, so the overlay says the same thing the tile
-   did rather than falling back to the printed card. */
-.lockbig{width:240px;max-width:44vw;aspect-ratio:240/330;border-radius:5px;
-  border:1px dashed #4A4032;border-left:4px solid #7A6636;
-  background:repeating-linear-gradient(135deg,rgba(0,0,0,.30) 0 9px,rgba(122,102,54,.05) 9px 18px);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:8px;text-align:center;line-height:1.2}
-.lockbig .lockmark{font-size:34px;color:#7A6636;line-height:1}
-.lockbig .locktag{font-size:9px;color:#6C5C38;letter-spacing:.16em;padding:0 14px}
-
-/* ---------------------------------------- the no-scan fallback, on a pack ---
-   `pullFace` promises that "a set whose art has not been fetched falls back to
-   the sigil rather than a blank tile", and until 27 Aug 2026 that was true of the
-   DOM and false of the layout. `.cardface` carries this screen's height clamp and
-   `.miss` hides it when the image 404s — but the sigil that replaces it is not a
-   `.cardface`, so it fell through to `.sigil.lg`, which is `width:100%` and a flat
-   `height:150px`. On the pack screen that made the fallback slot wider than a card
-   and taller than the common clamp: it forced a flex wrap onto its own row and
-   pushed the hero Rare off the bottom of a 1366x768 window.
-
-   Found by shooting a forced promo intrusion, because `basep` has no fetched art —
-   so this had never been on screen. It is NOT a promo bug. Any set renders like
-   this between `gen_cards.js` and `fetch_art.js`, which is the supported order,
-   and it would have hit the next set's first pack screenshot exactly the same way.
-
-   The fix is to give the fallback the box the scan would have had. `aspect-ratio`
-   rather than a width, so it tracks the same 240/330 the scans are. */
-.pullslot .sigil.lg{width:auto;aspect-ratio:240/330;height:clamp(80px,21vh,200px);margin:0}
-.pullslot.rare .sigil.lg{height:clamp(112px,30vh,280px)}
-
-/* ------------------------------------------------- LAST RULE IN THE FILE ---
-   `.miss` means the scan 404'd and this element is not really here. It has to
-   beat every layout rule that touches `.cardface`, so it is last: at equal
-   specificity the later rule wins, and every override in this file is (0,2,0)
-   just as this is.
-
-   IT LIVED AT LINE 837 AND WAS SILENTLY DEFEATED. `.pullslot .cardface` sets
-   `display:block` — added for a 2px baseline gap, nothing to do with missing
-   art — and being 500 lines further down it won. So on the pack screen a card
-   whose set had no fetched art rendered the browser's broken-image box AND the
-   sigil fallback underneath it, in a real browser, permanently. Nobody saw it
-   because every live set's art was fetched; a forced promo intrusion put an
-   unfetched card on that screen for the first time on 27 Aug 2026.
-
-   The general shape is worth more than the fix, and it is the CSS twin of a
-   lesson this tree already has in JavaScript: a rule that means "this thing is
-   OFF" must not sit where an ordinary styling rule can outrank it by accident.
-   Keeping it last makes that structural instead of lucky. ADD NOTHING BELOW IT. */
-.cardface.miss{display:none}

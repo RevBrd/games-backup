@@ -323,3 +323,56 @@ missing, not the whole thing again.
 
 *— #28, who was told the promos were a fun one and found that the promos were fine and the AI had
 been quietly misreading its own verbs for a month.*
+
+---
+
+## #29 — the cards existed and could not be reached
+
+I arrived to what was described as the tail end of Job 13: the promo cards were written and scored,
+and what remained was "adding them into the game." That framing was exactly right and I want to
+record what it turned out to mean, because the shape recurs.
+
+**The feature was 90% built and 0% reachable.** `promoPool()` existed. `openPack` took an
+`opts.promos`. `packtest.js` had five assertions proving the intrusion mechanism worked. And the
+default was `[]`, and no caller in the game ever passed anything, so the 1-in-100 promo roll built in
+Job 5b had never fired once in three weeks of Trevor's play. Every suite was green the whole time.
+
+The guard that should have caught it is the one that was *testing the thing*. `packtest.js` supplies
+a fake promo pool and checks the mechanism honours it — which is correct and which cannot, even in
+principle, notice that nothing else supplies one. **A default that makes a feature inert is invisible
+to a test that passes the argument.** I do not have a general fix for that and I do not think one
+exists; the specific fix is to ask, once per feature, "who calls this in the real game", and the
+place that question survives is a doc line rather than a suite.
+
+**The doc tree paid off in the most direct way I have seen.** `progress.js`'s header contains a
+paragraph addressed to whoever built this, by name, telling them not to reach for `liveSets()` and
+explaining that "collectible" is a wider question than "live". #28 wrote it while working on
+something else, from an inference about what would happen later. It was completely correct, and it
+saved me from a change that would have handed the collection a ladder bracket titled *Wizards Black
+Star Promos* with a generated roster and a completion percentage. **Write the paragraph for the job
+you are not doing.** It is the cheapest thing in this repo and it has the best hit rate.
+
+**Two CSS bugs came out of one screenshot, and neither was a promo bug.** Shooting a forced
+intrusion put a card from an unfetched set on the pack screen for the first time ever, and the
+fallback that `pullFace` promises in a comment turned out to be false in two independent ways:
+`.cardface.miss{display:none}` was silently outranked by a `display:block` added 500 lines later for
+an unrelated 2px gap, and the sigil that replaces the scan had no size on that screen and blew the
+layout apart. **Both would have hit the next set's first pack screenshot identically.** The `.miss`
+rule now lives last in the stylesheet, which makes "this element is OFF" structurally unbeatable
+rather than luckily unbeaten — the CSS twin of a lesson this tree already had.
+
+**On the change Trevor made mid-job.** He asked whether the intrusion should still replace a Common
+now that the pack is eight cards rather than eleven, and asked for an honest opinion rather than
+agreement. The argument that convinced me is not "more cards is nicer": it is that the replacement
+rule was *priced* against an eleven-card pack and the 25 Aug shrink repriced it without anyone
+connecting the two. `PACKS.md` already had a paragraph about four cosmetic axes that moved that way.
+This was the fifth. **When a structural constant changes, the rules written against the old value do
+not announce themselves** — they keep working and start meaning something different.
+
+The thing I would tell the next session: the eleven promos still locked behind `challenge1`,
+`challenge2`, `gym1` and `gym2` need no code at all. A ladder bracket carrying that key turns each
+one on. I deliberately did not build a placeholder for them, and `progresstest.js` asserts they stay
+closed until something real exists — a gate that fails open is a card leaking out of a bracket
+nobody has designed yet.
+
+*— #29, who was handed a finished feature and found the wire that was never connected.*

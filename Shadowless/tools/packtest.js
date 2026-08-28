@@ -372,20 +372,43 @@ head('Intrusion, with a promo pool supplied');
 
 // No promos exist at Base Set, so a fake pool proves the mechanism instead of
 // waiting for Job 8. Odds are raised so the run does not need to be enormous.
+//
+// THE SIZE ASSERTION INVERTED ON 27 AUG 2026 and it is worth knowing why the old
+// one is gone rather than wrong. Until Job 13b an intrusion REPLACED a Common, so
+// this line read "an intruded pack is still PACK_SIZE cards with one promo" and
+// was the correct guard for the rule of the day. Trevor reversed the rule — the
+// promo is now an EXTRA card — so the guard now checks the opposite, and the
+// interesting part is that it went red by itself the moment packs.js changed.
+// That is what a structural assertion is for. See PACKS.md.
 const fakePromos = ['base1-4', 'base1-58'];
-let intruded = 0, intrudedRare = 0, intrudedSize = 0;
+let intruded = 0, intrudedRare = 0, intrudedShort = 0, intrudedDouble = 0, cleanSize = 0;
 const ir = mulberry32(99);
 for (let i = 0; i < 20000; i++) {
   const pk = P.openPack(CARD_DB, 'base1', ir, { pools, promos: fakePromos, odds: { intrusion: 0.5 } });
-  if (!pk.intrusion) continue;
+  if (!pk.intrusion) { if (pk.cards.length !== P.PACK_SIZE) cleanSize++; continue; }
   intruded++;
-  if (pk.cards.length !== P.PACK_SIZE) intrudedSize++;
+  if (pk.cards.length !== P.PACK_SIZE + 1) intrudedShort++;
   if (pk.cards[0].slot === 'promo') intrudedRare++;
-  if (pk.cards.filter(c => c.slot === 'promo').length !== 1) intrudedSize++;
+  if (pk.cards.filter(c => c.slot === 'promo').length !== 1) intrudedDouble++;
 }
 check(intruded > 9000 && intruded < 11000, 'intrusion fires at the rate it is given', `${intruded}/20000`);
 eq(intrudedRare, 0, 'an intrusion never displaces the Rare slot');
-eq(intrudedSize, 0, `and an intruded pack is still ${P.PACK_SIZE} cards with one promo`);
+eq(intrudedShort, 0, `an intruded pack is ${P.PACK_SIZE + 1} cards — the promo is ADDED, not swapped in`);
+eq(intrudedDouble, 0, 'and exactly one of them is the promo');
+eq(cleanSize, 0, `while a pack that did NOT intrude is still exactly ${P.PACK_SIZE}`);
+
+// The point of the change, stated as a measurement rather than as prose: the
+// eight set cards you were always going to get are still there. Under the old
+// rule one of them was gone.
+let commonsWhenIntruded = 0, intrudedRuns = 0;
+const ir2 = mulberry32(1234);
+for (let i = 0; i < 4000; i++) {
+  const pk = P.openPack(CARD_DB, 'base1', ir2, { pools, promos: fakePromos, odds: { intrusion: 1 } });
+  intrudedRuns++;
+  commonsWhenIntruded += pk.cards.filter(c => c.slot !== 'promo').length;
+}
+eq(commonsWhenIntruded / intrudedRuns, P.PACK_SIZE,
+  'and the set cards are untouched — an intrusion costs the player nothing');
 
 // ===========================================================================
 head('A pack feeds the collection directly');

@@ -139,6 +139,24 @@ A green `smoke.js` run proves nothing visual, and the gap is not theoretical —
   nothing and the caller appended the mark to the card root. **A stubbed DOM has no cascade and no
   containing blocks, so it cannot see where an absolutely-positioned child actually lands.**
 
+- **A stub has no cascade, so it cannot see one rule silently defeating another.** `.cardface.miss`
+  is how a 404'd scan hides itself, and `.pullslot .cardface{display:block}` — added 500 lines
+  further down for an unrelated 2px baseline gap — has the same specificity and therefore won. On
+  the pack screen a card whose set had no fetched art rendered the browser's **broken-image box and
+  the sigil fallback underneath it**, in a real browser, permanently. Nobody had seen it because
+  every live set's art was fetched; a forced promo intrusion put an unfetched card on that screen
+  for the first time on 27 Aug 2026, and the `smoke.js` DOM stub — which has no stylesheet at all —
+  could never have reported it. **The fix was structural rather than local**: `.miss` now sits last
+  in `style.css`, where an equal-specificity rule cannot outrank it by accident. A rule meaning
+  "this element is OFF" must not sit where ordinary styling can beat it, which is the CSS twin of a
+  lesson this tree already had in JavaScript.
+- **A fallback can exist in the DOM and not in the layout.** The same screenshot showed the second
+  half: `pullFace` promises that an unfetched set "falls back to the sigil rather than a blank
+  tile", and it did — but `.sigil.lg` is `width:100%` with a flat `height:150px`, so the fallback
+  came out wider than a card and taller than the slot clamp, forced a flex wrap onto its own row,
+  and pushed the hero Rare off the bottom of a 1366x768 window. **Both halves were general, not
+  promo bugs**: any set renders this way between `gen_cards.js` and `fetch_art.js`, which is the
+  supported order.
 When a screenshot looks subtly wrong, **measure it rather than squinting** — inject a snippet that
 writes `offsetHeight`/`getComputedStyle` into the page and screenshot *that*. It turns "something
 looks off" into `lineHeight=0px` immediately.

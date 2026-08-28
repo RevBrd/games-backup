@@ -270,6 +270,106 @@ eq(packsHeld(s4, 'base1'), 0, 'still none — progress.js never touches the coll
 addPacks(s4, rw.set, rw.packs);
 eq(packsHeld(s4, 'base1'), 2, 'the caller grants them, through the one function that creates packs');
 
+group('the promo gates');
+
+// A PROMO IS GATED PER CARD, so these are the two things that can go wrong:
+// the table disagrees with the workbook it was copied from, and a gate lets a
+// card through at the wrong moment. Both are checked directly.
+
+const GATE_KEY = {
+  'base1': 'base1', 'Jungle': 'base2', 'Fossil': 'base3', 'Team Rocket': 'base5',
+  'Challenge 1': 'challenge1', 'Challenge 2': 'challenge2',
+  'Gym Heroes': 'gym1', 'Gym Challenge': 'gym2',
+};
+
+// THE DRIFT GUARD. PROMO_GATES is a hand-copied transcription of the `Gated
+// Until` column in the workbook's Index tab, and the two cannot see each other —
+// which is this tree's most reliable source of a wrong fact. So the suite reads
+// the workbook and asserts they still agree.
+//
+// IF THIS GOES RED, TREVOR MOVED A GATE. That is a normal thing for him to do:
+// he said on 27 Aug 2026 that he is reconsidering the whole gate ORDER against a
+// cleared-based reading. Regenerate the table from the workbook rather than
+// editing the one line that differs, and do not "fix" it by loosening this.
+//
+// A row for a card that is not in CARD_DB is SKIPPED rather than failed —
+// `basep-54` Ancient Mew is an unnumbered movie promo that the corpus does not
+// carry, so Trevor's note for it is filed ahead of the card existing. That is the
+// documented state, not a gap. See DATA.md.
+{
+  const { openWorkbook, tabulate, newestWorkbook } = require('./lib/xlsx.js');
+  const path = require('path');
+  const picked = newestWorkbook(path.join(__dirname, '..', 'data', 'v1 Opp Decks'));
+  const rows = tabulate(openWorkbook(picked.file).sheet('Index'));
+
+  const fromBook = {};
+  let skipped = 0, unmapped = 0;
+  for (const r of rows) {
+    if (!r.ID || !r.ID.trim().startsWith('basep')) continue;
+    const id = r.ID.trim();
+    const raw = (r['Gated Until (promo only)'] || '').trim();
+    if (!CARD_DB[id]) { skipped++; continue; }
+    if (!raw) continue;
+    if (!GATE_KEY[raw]) { unmapped++; continue; }
+    fromBook[id] = GATE_KEY[raw];
+  }
+
+  eq(unmapped, 0, 'every gate Trevor wrote maps to a bracket key this suite knows');
+  eq(skipped, 1, 'exactly one gated promo has no card in the corpus (basep-54, Ancient Mew)');
+
+  const a = Object.keys(fromBook).sort().join(',');
+  const b = Object.keys(P.PROMO_GATES).sort().join(',');
+  eq(a, b, 'PROMO_GATES covers exactly the promos the workbook gates');
+
+  const wrong = Object.keys(fromBook).filter(id => P.PROMO_GATES[id] !== fromBook[id]);
+  eq(wrong.length, 0, `and every gate matches the workbook${wrong.length ? ` — ${wrong.join(', ')}` : ''}`);
+}
+
+// PLAYABILITY IS THE SECOND TEST AND IT IS NOT OPTIONAL. basep is deliberately
+// half-scripted, so a gate opening is necessary but not sufficient — CLAUDE.md's
+// "no collecting a card you cannot play" is what the callback enforces.
+{
+  const gated = Object.keys(P.PROMO_GATES);
+  const unscripted = gated.filter(id => !EFFECTS[id]);
+  eq(unscripted.length, 0,
+    'every promo with a gate is scripted today, so the gate is currently the only filter');
+  ok(gated.length < Object.keys(CARD_DB).filter(id => CARD_DB[id].set === 'basep').length,
+    '...but not every promo has a gate, which is why the filter still has to exist');
+}
+
+// THE GATE IS "BRACKET OPEN", NOT "BRACKET CLEARED" — Trevor's call, 27 Aug 2026.
+// The base1 bracket is open from the first second, so a brand-new save can pull
+// its four base1-gated promos immediately. If this ever reads 0 for a fresh save,
+// somebody has changed the reading and PACKS.md has to change with it.
+{
+  const s = fresh();
+  const day1 = P.unlockedPromos(s, L);
+  eq(day1.length, 4, 'a brand-new save has already unlocked the four base1-gated promos');
+  ok(day1.indexOf('basep-8') >= 0, '...including Mew, the only #151 anywhere in the live pool');
+  ok(day1.every(id => P.PROMO_GATES[id] === 'base1'), 'and nothing from a later bracket');
+
+  // Beat Base Set's boss and Jungle's five arrive. Derived from the same
+  // `beaten` map as everything else, never stored.
+  P.recordWin(s, L, L[0].boss.id);
+  const day2 = P.unlockedPromos(s, L);
+  eq(day2.length, 9, 'clearing Base Set opens Jungle\u2019s five');
+  ok(day2.indexOf('basep-12') >= 0, '...including Mewtwo GP');
+
+  // Eleven of the twenty-eight are gated on brackets that do not exist. They
+  // must FAIL CLOSED — an unmatched key locks a card rather than leaking one.
+  const everything = { progress: { beaten: {} } };
+  L.forEach(b => { everything.progress.beaten[b.boss.id] = 1; });
+  const all = P.unlockedPromos(everything, L);
+  eq(all.length, 17, 'clearing every live bracket still opens only 17 of the 28');
+  const locked = Object.keys(P.PROMO_GATES).filter(id => all.indexOf(id) < 0);
+  ok(locked.every(id => ['challenge1', 'challenge2', 'gym1', 'gym2'].indexOf(P.PROMO_GATES[id]) >= 0),
+    'and every one still locked is waiting on a bracket that does not exist yet');
+
+  // The playability callback, proved rather than assumed.
+  eq(P.unlockedPromos(everything, L, () => false).length, 0,
+    'an isPlayable that refuses everything yields nothing, however far you have got');
+}
+
 group('reporting');
 
 const st = P.progressStats(s, L);

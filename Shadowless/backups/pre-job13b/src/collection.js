@@ -395,26 +395,7 @@ const rarityRank = r => {
   return i < 0 ? RARITY_ORDER.length : i;      // anything unknown sorts last
 };
 
-// `opts.uncounted` names sets that are in the collection but NOT in the score:
-// their cards appear in `bySet` and count toward the DEX, and they are absent
-// from `cards`, from `byRarity` and so from the tier bar.
-//
-// Job 13b, and it exists for the promos. A promo is not part of any set you can
-// complete — it arrives per card on its own gate, and the pool GROWS as you climb
-// the ladder, so folding it into "311 of 311 cards" would produce a completion
-// counter whose denominator moves every time you beat a boss. A percentage that
-// falls when you make progress is the exact shape of thing this tree keeps a file
-// about. Trevor's call, 27 Aug 2026: out of the counter, in the dex.
-//
-// IN THE DEX IS NOT A ROUNDING DECISION. Mew #151 is printed in none of the four
-// live sets; `basep-8` and `basep-9` are the only #151s in the game, so excluding
-// promos from the species count would hide a species that genuinely exists.
-//
-// The caller names the sets rather than this module deriving them, for the same
-// reason every other pure module here takes what it needs as an argument: this
-// file has never imported cards.js and is not going to start.
-function collectionStats(save, db, opts = {}) {
-  const uncounted = opts.uncounted || {};
+function collectionStats(save, db) {
   const ids = Object.keys(db);
   let ownedCards = 0, totalCards = 0;
   const speciesAll = {}, speciesOwned = {};
@@ -422,18 +403,14 @@ function collectionStats(save, db, opts = {}) {
   const byRarity = {};
   for (const id of ids) {
     const c = db[id];
-    const scored = !uncounted[c.set];
-    if (scored) totalCards++;
+    totalCards++;
     const set = (bySet[c.set] = bySet[c.set] || { owned: 0, total: 0 });
     set.total++;
     const rk = c.rarity || '';
-    const rar = scored ? (byRarity[rk] = byRarity[rk] || { owned: 0, total: 0 }) : null;
-    if (rar) rar.total++;
+    const rar = (byRarity[rk] = byRarity[rk] || { owned: 0, total: 0 });
+    rar.total++;
     const have = isOwned(save, id);
-    if (have) {
-      set.owned++;
-      if (scored) { ownedCards++; rar.owned++; }
-    }
+    if (have) { ownedCards++; set.owned++; rar.owned++; }
     if (c.dex) {
       speciesAll[c.dex] = 1;
       if (have) speciesOwned[c.dex] = 1;

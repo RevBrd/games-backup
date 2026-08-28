@@ -88,6 +88,15 @@ with this one. `selftest.js` counts printings; it used to exclude Energy, which 
 set-gating rule that Team Rocket's three special Energy would have been the first to fall through.
 *[The guard that was blind, and the three others found with it →](HISTORY-ARCHIVE-1.md)*
 
+**The promos are collectible without being a set, and the distinction is load-bearing.** 28 of the 53
+Wizards Black Star Promos are playable and each carries its own gate — a bracket that must be open
+before that card can turn up, rather than a set going live all at once. They arrive only through the
+pack **intrusion** roll, as a bonus ninth card, and 17 of the 28 are reachable today. A promo is
+never a ladder bracket, never a pack of its own, and never in a **generated** deck. So there are now
+two pools where there used to be one: `LIVE_DB` is the *set* pool and `collectibleDb(save)` is what
+you may *own*. *[Which promos, and why the gate is per card →](PACKS.md)* · *[What the split changes
+→](COLLECTION.md)*
+
 **Not built: audio, at all**, and nothing has been decided about it. **The other ten sets** are
 unblocked rather than started — all fourteen generate cleanly.
 
@@ -105,7 +114,8 @@ src/  engine.js   the whole ruleset. Pure logic, no DOM
       collection.js  what the player owns + the save file. Pure data
       packs.js    booster generation. PACK_ODDS is the whole rarity table
       progress.js the opponent ladder. Brackets DERIVED from the live sets, and
-                  what a win is worth. Pure data
+                  what a win is worth, and PROMO_GATES — which promo each
+                  bracket unlocks. Pure data
       eventlog.js the match recorder. Pure data
       deckgen.js  builds a legal 60-card deck from a pool
       art.js      deterministic sigils. Petals = attack count, rings = retreat
@@ -304,7 +314,14 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
 - **Job 12d** - Scheduled document pass and grab bag run. More UI, maybe more AI. **The docs pass is
   done** — three siblings and two archives split out, and four files found stating a fact their own
   data contradicted. See [CREDITS.md](CREDITS.md) #27.
-- **Job 13** - Rulings, cards, and AI logic additions for Promo cards up to Team Rocket.
+- **Job 13 is done.** The Wizards Black Star Promos, `basep-1..28`, are written, ruled, scored and
+  now **reachable**: gated per card off the ladder, pulled through the pack intrusion roll, kept in
+  the binder and the dex, buildable with. The other 25 promos are a much later job. Two things it
+  turned up are worth more than the feature — **the intrusion roll had never fired in the shipped
+  game** (`openPack` defaulted its promo pool to empty and no caller ever passed one, invisible to a
+  suite that supplied the argument), and **two CSS rules were quietly cancelling the no-scan
+  fallback** on the pack screen for any set generated before its art was fetched. See
+  [PACKS.md](PACKS.md), [COLLECTION.md](COLLECTION.md) and [INSPECTION.md](INSPECTION.md).
 - **Job 14** - Maintenance passes in the shape of Job 12
 - **Job 15** - Deck autobuilder overhaul, if ready to do so.
 - **Job 16+** - Future sets and maintenance passes
@@ -325,10 +342,10 @@ The per-area open lists live in the files that own them; this is the index to th
    live list, with what each would cost, is at the bottom of [AI.md](AI.md).
 2. **Blueprints have no dedicated screen** — a "this deck is four cards away" view over your saved
    layouts. The mechanism exists; see [COLLECTION.md](COLLECTION.md).
-3. **Two pack questions, and one of them is no longer blocked.** Southern Islands' fixed 18-card
-   distribution against our probabilistic intrusion model is unsettled and always was. Progression-
-   gating the intrusion pool was waiting on Job 7 and is now buildable from the save. See
-   [PACKS.md](PACKS.md).
+3. **One pack question left, and Southern Islands is it.** Its fixed 18-card distribution against
+   our probabilistic intrusion model is unsettled and always was. **Progression-gating the
+   intrusion pool is BUILT** (Job 13b) and gated per card rather than per era, which is further
+   than that item asked for. See [PACKS.md](PACKS.md).
 4. **Opponents do not speak, and nothing reads `progress.lost`.** Both in
    [PROGRESSION.md](PROGRESSION.md), both small, neither started.
 5. **Audio: none.** Nothing has been decided about it.

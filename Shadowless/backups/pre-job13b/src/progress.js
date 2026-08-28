@@ -208,92 +208,6 @@ function unlockedSets(save, ladder) {
   return ladder.filter((b, i) => bracketOpen(save, ladder, i)).map(b => b.set);
 }
 
-
-// ------------------------------------------------------- the promo gates ---
-// WHICH PROMOS THE PLAYER HAS REACHED. Job 13b, and the second half of Job 13:
-// the cards landed in Job 13a and nothing could hand them out.
-//
-// A PROMO IS GATED PER CARD, NOT PER SET, and that is the whole reason this
-// table exists rather than a `basep` entry in the ladder. Promos were printed
-// across four years of magazines, tins, movie tickets and league seasons, so
-// "the promo set" is not an era the player passes through — it is a drip that
-// runs alongside every era. Trevor authored the drip in the `Gated Until` column
-// of the workbook's Index tab, one row per card, and this is that column.
-//
-// THE VALUE IS A BRACKET KEY, matched against `unlockedSets()`. Today that is a
-// live set's code; when a Challenge bracket exists it will be that bracket's own
-// key. Trevor's call, 27 Aug 2026: the gate is the bracket being OPEN, not
-// CLEARED — so the four `base1` promos are reachable from the first pack. He is
-// reconsidering the gate ORDER against a cleared-based reading, which would be a
-// change to the values here and to nothing else.
-//
-// FOUR KEYS RESOLVE TODAY AND FOUR DO NOT, AND THAT IS THE DESIGN. `challenge1`,
-// `challenge2`, `gym1` and `gym2` name brackets that do not exist, so eleven of
-// the twenty-eight are permanently locked — and they FAIL CLOSED, which is the
-// safe direction: an unmatched key locks a card rather than leaking one. The
-// condition that turns each on is exactly one thing, with no code change here: a
-// ladder bracket whose `set` equals the key. `gym1`/`gym2` get theirs for free
-// the day those sets go live; the Challenge keys need CHALLENGES.md's bracket,
-// which "belongs to NO SET" and so must pick this key deliberately.
-//
-// TWENTY-EIGHT OF FIFTY-THREE, and the other twenty-five are absent rather than
-// ungated. A promo with no row here can never be pulled, which is what keeps
-// CLAUDE.md's "no collecting a card you cannot play" true for a set that is
-// deliberately half-scripted — the callers also test playability, so this table
-// and the effects file have to agree twice before a card reaches a pack.
-//
-// GENERATED FROM THE WORKBOOK, NOT TYPED. tools/packtest.js re-reads the Index
-// tab and asserts this table still matches it, because a hand-copied table and
-// its source are two lists that must agree and cannot see each other — this
-// tree's most reliable source of drift. If that check goes red, Trevor moved a
-// gate: regenerate, do not edit one line.
-const PROMO_GATES = {
-  'basep-1':  'base1',       // Pikachu GP
-  'basep-2':  'base1',       // Electabuzz MS
-  'basep-3':  'base1',       // Mewtwo MS
-  'basep-4':  'base2',       // Pikachu MS
-  'basep-5':  'base2',       // Dragonite MS
-  'basep-6':  'base2',       // Arcanine GP
-  'basep-7':  'base3',       // Jigglypuff GP
-  'basep-8':  'base1',       // Mew GP
-  'basep-9':  'base2',       // Mew GP CH
-  'basep-10': 'base3',       // Meowth CH
-  'basep-11': 'base3',       // Eevee CH
-  'basep-12': 'base2',       // Mewtwo GP
-  'basep-13': 'challenge1',  // Venusaur CH
-  'basep-14': 'base3',       // Mewtwo GP 2
-  'basep-15': 'challenge1',  // Cool Porygon
-  'basep-16': 'base5',       // Computer Error
-  'basep-17': 'base5',       // Dark Persian CH
-  'basep-18': 'gym2',        // Team Rocket's Meowth
-  'basep-19': 'gym1',        // Sabrina's Abra
-  'basep-20': 'base5',       // Psyduck GP
-  'basep-21': 'challenge2',  // Moltres GP
-  'basep-22': 'challenge2',  // Articuno GP
-  'basep-23': 'challenge2',  // Zapdos GP
-  'basep-24': 'gym1',        // _____'s Pikachu
-  'basep-25': 'challenge1',  // Flying Pikachu
-  'basep-26': 'base3',       // Pikachu GP 2
-  'basep-27': 'gym2',        // Pikachu GP 3
-  'basep-28': 'challenge1',  // Surfing Pikachu
-};
-
-// The promos this save has reached, sorted so a seeded pull is reproducible.
-//
-// `isPlayable(id)` is the caller's own eligibility test and is the second of the
-// two agreements described above. The game passes "does this card have an effect
-// script", which is the same question `liveSets()` asks of a whole set — asked
-// per card here because a promo arrives per card. Omitting it returns everything
-// the ladder has opened, which is what a suite wants and what the game must not
-// use: basep is deliberately half-scripted and will be for a long time.
-function unlockedPromos(save, ladder, isPlayable) {
-  const open = {};
-  unlockedSets(save, ladder).forEach(s => { open[s] = 1; });
-  return Object.keys(PROMO_GATES)
-    .filter(id => open[PROMO_GATES[id]] && (!isPlayable || isPlayable(id)))
-    .sort();
-}
-
 // Everything you are allowed to play right now, bracket by bracket. An opponent
 // stays fightable forever once it is open — that is what makes the ~79 wins a
 // set takes reachable at all, and it is why nothing here consumes anything.
@@ -390,4 +304,4 @@ function progressStats(save, ladder) {
   return { beaten, total, bosses, bossTotal, sets: unlockedSets(save, ladder) };
 }
 
-if (typeof module !== 'undefined') module.exports = { PROGRESS_DEFAULTS, liveSets, opponentSeed, buildLadder, allOpponents, findOpponent, bracketOf, timesBeaten, hasBeaten, rosterCleared, bossAvailable, bracketCleared, bracketOpen, unlockedSets, PROMO_GATES, unlockedPromos, availableOpponents, canFight, winReward, recordWin, recordLoss, resolveOpponentDeck, poolSetsFor, progressStats };
+if (typeof module !== 'undefined') module.exports = { PROGRESS_DEFAULTS, liveSets, opponentSeed, buildLadder, allOpponents, findOpponent, bracketOf, timesBeaten, hasBeaten, rosterCleared, bossAvailable, bracketCleared, bracketOpen, unlockedSets, availableOpponents, canFight, winReward, recordWin, recordLoss, resolveOpponentDeck, poolSetsFor, progressStats };

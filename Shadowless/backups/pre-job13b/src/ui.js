@@ -131,57 +131,6 @@ const LIVE_DB = (() => {
   return out;
 })();
 
-
-// ------------------------------------------------------ what you may OWN ---
-// LIVE_DB is the SET pool. This is the COLLECTIBLE pool, and Job 13b is where
-// the two stopped being the same thing.
-//
-// progress.js's header calls this out by name — "DO NOT REACH FOR THIS FILTER
-// WHEN THE PROMO SWITCH GETS BUILT... un-filtering there would buy the collection
-// a ladder bracket it does not want" — and it is right. `liveSets()` answers "is
-// this a set", and every caller of it reads the answer as such: the ladder builds
-// a bracket per live set, `packSets` offers a pack per live set, `winReward` pays
-// in one. A promo is none of those. It is a card you can own.
-//
-// So the split is: LIVE_DB keeps the ladder, the pack pools and the score.
-// COLLECTIBLE adds the promos whose gate is open, and feeds the binder, the dex
-// and the deck builder — the three surfaces that are about OWNING rather than
-// about sets.
-//
-// IT IS A FUNCTION OF THE SAVE, and that is the whole difference from LIVE_DB.
-// Which cards are live is a property of the build and can be computed once at
-// load; which promos are reachable is a property of how far the player has got,
-// and it changes the moment a boss goes down. Anything that caches this across a
-// win is wrong.
-//
-// TWO TESTS, BOTH REQUIRED. `unlockedPromos` asks the ladder whether the gate is
-// open; the `isPlayable` callback asks whether the card has an effect script.
-// basep is deliberately half-scripted — 28 of 53, and the other 25 are a job for
-// much later — so without the second test the binder would offer a card the deck
-// validator refuses, which is CLAUDE.md's "no collecting a card you cannot play"
-// broken from the other end.
-const UNCOUNTED_SETS = (() => {
-  const out = {};
-  for (const k in SET_INFO) if (SET_INFO[k].booster === false) out[k] = 1;
-  return out;
-})();
-const promoIsPlayable = id => !!EFFECTS[id];
-const unlockedPromoIds = save => (save ? unlockedPromos(save, LADDER_VIEW, promoIsPlayable) : []);
-const collectibleDb = save => {
-  const out = Object.assign({}, LIVE_DB);
-  unlockedPromoIds(save).forEach(id => { out[id] = CARD_DB[id]; });
-  return out;
-};
-
-// What the title screen means by "cards implemented", which is a different
-// question from either of the pools above: it is a fact about the BUILD, so it
-// counts every playable card whether or not any save has reached it. Derived the
-// same way selftest.js counts coverage, so the two cannot drift — the title used
-// to read Object.keys(LIVE_DB).length, which stopped being the honest number the
-// day the first promo script landed.
-const IMPLEMENTED_COUNT = Object.keys(CARD_DB)
-  .filter(id => CARD_DB[id].kind === 'energy' || EFFECTS[id]).length;
-
 // What retreating this Pokemon ACTUALLY costs right now. Dodrio's Retreat Aid
 // discounts it from the Bench, so the printed number on the card face and the
 // number the player is about to pay are two different things — the card preview
@@ -227,13 +176,6 @@ function opponentDeckFor(opp) {
   return resolveOpponentDeck(opp, DECK_SOURCES, {
     poolSets,
     generate: (sets, seed, o) => {
-      // LIVE_DB ON PURPOSE, and this one is load-bearing. A GENERATED deck must
-      // never contain a promo: a challenger walking on holding a card you have not
-      // earned spoils the chase, and it drops cards with bespoke AI demands into
-      // rosters nobody authored. Trevor, 27 Aug 2026. The line is drawn at
-      // GENERATED rather than at CPU — an AUTHORED opponent deck may name a promo
-      // freely, and the Challenge 1 decks already do on paper. That is what keeps
-      // the promo AI work in tools/claims/basep.js live.
       const pool = Object.keys(LIVE_DB).filter(id => sets.indexOf(LIVE_DB[id].set) >= 0);
       return generateDeck(LIVE_DB, pool, mulberry32(seed), { name: `${o.name}'s deck` });
     },
@@ -2769,17 +2711,7 @@ function openNextPack(setCode) {
   const set = setCode || (UI.save ? packSets(UI.save)[0] : null) || homeSet();
   if (!UI.save || !takePack(UI.save, set)) return false;
   const seed = (Math.random() * 2147483647) | 0;
-  // THE INTRUSION POOL, and this argument is the whole of Job 13b at the point of
-  // use. It was `[]` by default and nothing ever passed it, so the 1-in-100 promo
-  // roll had never fired in a real game since Job 5b built it.
-  //
-  // Read fresh from the save every open rather than captured once: the pool grows
-  // the moment a boss goes down, and a promo whose gate opened this match should be
-  // pullable from the next pack. Empty is a valid answer and packs.js handles it —
-  // it simply never rolls an intrusion, which is what a brand-new save gets for the
-  // few minutes before it beats anybody. (Not zero, in fact: four promos are gated
-  // on the base1 bracket, which is open from the first second.)
-  const pk = openPack(CARD_DB, set, mulberry32(seed), { promos: unlockedPromoIds(UI.save) });
+  const pk = openPack(CARD_DB, set, mulberry32(seed));
   // The guaranteed Rare comes out of packs.js first; it is shown LAST, because
   // a reveal that opens on the best card has nowhere to go.
   const order = pk.cards.slice(1).concat([pk.cards[0]]);
@@ -2995,25 +2927,9 @@ function renderPackScreen() {
   const ov = el('div', 'packscreen');
   // A stipend used to add a whole extra row here, and `hasstipend` tightened the
   // grid so the action bar still fitted at 768px. Borrowed Energy is drawn inside
-  // the pack now, so the extra row is gone — and a pack is PACK_SIZE cards, 8
-  // since 25 Aug 2026, EXCEPT on the 1-in-100 promo intrusion, which since Job 13b
-  // adds a ninth rather than replacing a Common.
-  //
-  // `.packgrid` is flex-wrap with height-driven sizing, so the ninth card is a
-  // reflow and not a layout state — nothing here special-cases it. The one thing
-  // that had to be decided is the header, below.
-  // WIDER WHEN A PROMO INTRUDES, so the extra card joins the line instead of
-  // taking one of its own. Trevor asked for the promo to sit ON the same line as
-  // the other seven, and the reason is the same one the hero comment gives: a card
-  // alone on a row reads as a second headline, and two headlines means neither is
-  // one. 1060px holds seven; eight needs ~1136. Widening the box rather than
-  // shrinking the cards keeps the tell honest — the ROW is longer, which is the
-  // thing that should look odd, rather than the cards quietly getting smaller.
-  //
-  // Below about 1200px of viewport it wraps anyway and that is correct: flex-wrap
-  // already handles every narrow case, and there is no size at which this makes
-  // the screen worse than the eight-card version of itself.
-  const box = el('div', 'packbox' + (p.order.length > PACK_SIZE ? ' wide' : ''));
+  // the pack now, so the extra row is gone and a pack is exactly PACK_SIZE cards
+  // — 8 since 25 Aug 2026, and read from the constant rather than written here.
+  const box = el('div', 'packbox');
   const anyRevealed = p.revealed.some(Boolean);
   const allRevealed = p.revealed.every(Boolean);
 
@@ -3021,17 +2937,9 @@ function renderPackScreen() {
   head.appendChild(el('h2', null, `${setName(p.set)} booster`));
   // The 1st Edition line is held back until something has been flipped, so the
   // whole-pack roll lands as a discovery rather than as a spoiler in the header.
-  // THE COUNT IS THE REAL ONE, not PACK_SIZE, and this was a genuine call. An
-  // intruded pack shows NINE face-down slots, so a header insisting on eight
-  // contradicts something the player can see and count in half a second — which
-  // reads as a bug, not as a secret. Saying nine spoils nothing that matters: the
-  // tell is only that this pack is odd, and WHICH card and WHAT it is stay hidden
-  // behind the same face-down back as everything else. That "something is wrong
-  // with this pack" moment before you touch it is the best part of the mechanic
-  // and it is free.
   head.appendChild(el('div', 'sub', anyRevealed && p.firstEd
     ? '— 1ST EDITION PRINT RUN —'
-    : `${p.order.length} cards`));
+    : `${PACK_SIZE} cards`));
   box.appendChild(head);
 
   // The ribbon a slot will carry once it is turned over, built the same way for
@@ -3155,24 +3063,6 @@ function renderPullDetail() {
   const ov = el('div', 'overlay');
   const box = el('div', 'sheet');
   box.appendChild(el('h2', null, card.name));
-
-  // THE ONE PLACE THE SCAN COULD LEAK. Every other surface already withholds it
-  // from a card you do not own — the grid draws a Sigil, the builder draws a
-  // number — but this overlay renders the printed face for anything you click,
-  // owned or not, and that is correct for the 311 set cards. `A card you do not
-  // own still opens` was a deliberate decision: you can read what you are
-  // chasing off a checklist you can already see.
-  //
-  // An unearned promo is the exception and it is the only one. See collTile.
-  if (d.locked) {
-    box.appendChild(el('p', 'dimtxt', 'Not yet earned'));
-    const plate = el('div', 'lockbig');
-    plate.appendChild(el('div', 'lockmark', '?'));
-    plate.appendChild(el('div', 'locktag', 'A PROMO YOU HAVE NOT PULLED'));
-    const row0 = el('div', 'pulldetail');
-    row0.appendChild(plate);
-    box.appendChild(row0);
-  } else {
   box.appendChild(el('p', 'dimtxt', d.flags.length ? vlabel(vkey(d.flags)) : 'Normal printing'));
 
   const row = el('div', 'pulldetail');
@@ -3185,7 +3075,6 @@ function renderPullDetail() {
   b.appendChild(sigilCard(card, d.flags));
   row.appendChild(b);
   box.appendChild(row);
-  }
 
   const bar = el('div', 'actionbar');
   const close = el('button', 'btn ghost', 'Close');
@@ -3230,25 +3119,6 @@ function collTile(id, count, best, label) {
       t.appendChild(dots);
     }
     t.onclick = () => { UI.detail = { id, flags: vflags(best) }; render(); };
-  } else if (UNCOUNTED_SETS[card.set]) {
-    // AN UNEARNED PROMO, and a different kind of unknown from the branch below.
-    // A card from a set you cannot buy a pack of is a rumour rather than a hole
-    // in a checklist: you have heard it exists, you do not know what it does. So
-    // it gets the name and nothing else — no scan, no sigil, no number. Trevor's
-    // ask, 27 Aug 2026, and the reasoning is in style.css beside `.colllock`.
-    //
-    // The tile still OPENS, because the overlay says the same thing at a size you
-    // can read. What it must not do is fall through to the printed card.
-    const m = el('div', 'colllock');
-    m.appendChild(el('div', 'lockmark', '?'));
-    m.appendChild(el('div', 'lockname', card.name));
-    // In the DEX the label is '#151', which identifies the SPECIES rather than
-    // the card and is the entire point of that view — so it survives. In CARDS the
-    // label is the promo's own number, which is a fact about the card you have not
-    // earned, so it does not.
-    m.appendChild(el('div', 'locktag', (label && label.charAt(0) === '#') ? label : 'PROMO'));
-    t.appendChild(m);
-    t.onclick = () => { UI.detail = { id, flags: [], locked: true }; render(); };
   } else {
     // A missing slot used to be the card's number and nothing else, which made
     // both grids a wall of small grey digits: you could see how much was left
@@ -3276,12 +3146,7 @@ function collTile(id, count, best, label) {
 
 function renderCollection() {
   const save = UI.save;
-  // COLLECTIBLE, not LIVE — the binder and the dex are about what you can OWN.
-  // `uncounted` is what keeps the promos out of the completion counter while
-  // leaving them in the species count and in `bySet`; see collection.js.
-  const db = collectibleDb(save);
-  const st = collectionStats(save, db, { uncounted: UNCOUNTED_SETS });
-  const promoSt = st.bySet.basep || { owned: 0, total: 0 };
+  const st = collectionStats(save, LIVE_DB);
   const ov = el('div', 'collscreen');
   const box = el('div', 'collbox');
 
@@ -3291,19 +3156,6 @@ function renderCollection() {
   counts.appendChild(el('span', null, UI.collView === 'dex'
     ? `${st.species.owned} of ${st.species.total} species`
     : `${st.cards.owned} of ${st.cards.total} cards`));
-  // A SECOND COUNTER RATHER THAN A BIGGER ONE. Promos stay out of the completion
-  // figure because their denominator MOVES — the pool grows every time a bracket
-  // opens, and a percentage that falls when you make progress is not a score.
-  //
-  // But they are on the screen: 17 promo tiles the counter above does not admit
-  // to reads as a bug, and "the counter is wrong" is a worse first impression
-  // than a slightly busier header. So they get counted here, separately, where
-  // the moving denominator is honest instead of hidden. Not in the DEX view —
-  // there they are already inside the species count, which is where Trevor put
-  // them and where Mew #151 only exists at all.
-  if (UI.collView !== 'dex' && promoSt.total) {
-    counts.appendChild(el('span', 'dimtxt', ` · ${promoSt.owned} of ${promoSt.total} promos`));
-  }
   head.appendChild(counts);
   box.appendChild(head);
 
@@ -3353,7 +3205,7 @@ function renderCollection() {
     // One row per species, represented by the best card of it that you own —
     // or the lowest-numbered printing as a placeholder if you own none.
     const species = {};
-    Object.keys(db).forEach(id => {
+    Object.keys(LIVE_DB).forEach(id => {
       const c = CARD_DB[id];
       if (!c.dex) return;
       const s = species[c.dex] || (species[c.dex] = { dex: c.dex, name: c.name, ids: [] });
@@ -3368,21 +3220,19 @@ function renderCollection() {
       grid.appendChild(collTile(pick, count, count ? bestVariant(save, pick) : '', '#' + s.dex));
     });
   } else {
-    // `db`, NOT CARD_DB — this was the only surface in this file that had it
-    // wrong, and it went unnoticed because until Job 13 CARD_DB and LIVE_DB were
-    // the same object with a different name. Generating basep made CARD_DB 364
-    // cards against LIVE_DB's 311, and this grid immediately grew 53 tiles for
-    // promo cards no pack could hand out, sitting there permanently missing —
-    // while the stats line directly above it, which correctly read LIVE_DB, went
-    // on saying 311. One screen, two totals.
+    // LIVE_DB, NOT CARD_DB — the only surface in this file that had it wrong, and
+    // it went unnoticed because until Job 13 the two were the same object with a
+    // different name. Generating basep made CARD_DB 364 cards against LIVE_DB's
+    // 311, and this grid immediately grew 53 tiles for promo cards no pack can
+    // hand out, sitting there permanently missing — while the stats line directly
+    // above it, which correctly reads LIVE_DB, went on saying 311. One screen,
+    // two totals.
     //
-    // KEEP THE LESSON, WHICH SURVIVED THE FIX. Generating a set that is not live
-    // is the SUPPORTED workflow (gen_cards.js --sets runs at the START of a set
-    // job), so any surface reading CARD_DB directly is a latent version of this —
-    // a half-written set leaking into the collection. Job 13b changed which pool
-    // is right here (28 of those 53 tiles are wanted now, on their own gates) and
-    // changed nothing about why CARD_DB is wrong.
-    Object.keys(db).forEach(id => {
+    // The dex branch above already reads LIVE_DB. Generating a set that is not
+    // live is the SUPPORTED workflow (gen_cards.js --sets runs at the START of a
+    // set job), so any surface reading CARD_DB directly is a latent version of
+    // this — a half-written set leaking into the collection.
+    Object.keys(LIVE_DB).forEach(id => {
       const n = ownedTotal(save, id);
       if (!show(n > 0)) return;
       grid.appendChild(collTile(id, n, bestVariant(save, id), CARD_DB[id].num));
@@ -3602,13 +3452,8 @@ function renderBuilder() {
   const main = el('div', 'buildmain');
 
   // ---- the pool ----
-  // COLLECTIBLE, not LIVE. If you can own a promo you can build with it —
-  // CLAUDE.md's "no collecting a card you cannot play" cuts this way too, and a
-  // Flying Pikachu sitting in the binder that the builder refuses to show is the
-  // same silent nothing as an unimplemented card. The pool therefore GROWS as you
-  // climb the ladder, which is a first for this screen.
   const grid = keepScroll(el('div', 'collgrid'), 'builder-pool');
-  Object.keys(collectibleDb(UI.save)).forEach(id => {
+  Object.keys(LIVE_DB).forEach(id => {
     const card = CARD_DB[id];
     if (!poolMatches(card)) return;
     const owned = ownedTotal(UI.save, id);
@@ -3876,13 +3721,13 @@ function renderDeckSelect() {
   title.appendChild(el('h1', 'gametitle', 'SHADOWLESS'));
   title.appendChild(el('div', 'gamesub', 'The Wizards of the Coast era, played to the letter of the original rules.'));
   title.appendChild(el('div', 'gamenote',
-    `Named for the early Base Set sheets, printed before the drop shadow. ${IMPLEMENTED_COUNT} cards implemented.`));
+    `Named for the early Base Set sheets, printed before the drop shadow. ${Object.keys(LIVE_DB).length} cards implemented.`));
   box.appendChild(title);
 
   // What you own, and what is waiting to be opened. This is the first thing on
   // the screen after the title because in a collection game it is the score.
   if (UI.save) {
-    const st = collectionStats(UI.save, collectibleDb(UI.save), { uncounted: UNCOUNTED_SETS });
+    const st = collectionStats(UI.save, LIVE_DB);
     const strip = el('div', 'collstrip');
     const stat = (n, label) => {
       const s = el('div', 'collstat');

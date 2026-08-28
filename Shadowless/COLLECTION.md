@@ -261,6 +261,57 @@ simply never appears, and one nobody declared sorts last instead of throwing. **
 is basic Energy** — the corpus leaves `rarity` blank on it, and dropping those six would make the
 tiers stop summing to the total, which reads as a bug. See [PACKS.md](PACKS.md).
 
+## Collectible is not the same thing as live
+
+**Job 13b, and it is the split `progress.js` warned about by name.** Until the promos arrived,
+`LIVE_DB` was doing two jobs that happened to have the same answer:
+
+| Pool | What it is | What reads it |
+|---|---|---|
+| `LIVE_DB` | the **set** pool — every card in a set where every card is playable | the ladder, the pack pools, `winReward`, the completion counter, **generated** opponent decks |
+| `collectibleDb(save)` | `LIVE_DB` **plus the promos this save has unlocked** | the binder, the dex, the deck builder |
+
+The distinction is that the first is about **sets** and the second is about **owning**. `liveSets()`
+answers "is this a set", and every caller reads the answer as such — a live set gets a bracket, a
+pack and a payout. A promo is none of those. `progress.js` says it outright, in a comment written
+before this was built: *"DO NOT REACH FOR THIS FILTER WHEN THE PROMO SWITCH GETS BUILT… un-filtering
+here would buy the collection a ladder bracket it does not want."*
+
+**`collectibleDb` is a function of the SAVE, and that is the whole difference from `LIVE_DB`.**
+Which cards are live is a property of the build and is computed once at load. Which promos are
+reachable changes the moment a boss goes down. **Anything that caches it across a win is wrong.**
+
+**Two tests, both required.** The gate must be open *and* the card must have an effect script.
+`basep` is deliberately half-scripted, so without the second test the binder would offer a card the
+deck validator refuses — which is CLAUDE.md's "no collecting a card you cannot play" broken from the
+other end. See [PACKS.md](PACKS.md) for the gates themselves.
+
+**Generated opponent decks stay on `LIVE_DB` on purpose**, and it is load-bearing: a challenger
+walking on holding a promo you have not earned spoils the chase, and it drops cards with bespoke AI
+demands into rosters nobody authored. **The line is drawn at *generated*, not at *CPU*** — an
+authored opponent deck may name a promo freely, and the Challenge 1 decks already do on paper. That
+is what keeps the promo scoring work in `tools/claims/basep.js` live.
+
+### Promos count in the dex and not in the completion counter
+
+Trevor's call, 27 Aug 2026, and each half has its own reason.
+
+**Out of the counter, because the denominator moves.** The promo pool grows every time a bracket
+opens, so folding it into "311 of 311 cards" would give the player a completion figure that *falls
+when they make progress*. `collectionStats` takes an `uncounted` option naming the non-booster sets;
+their cards are absent from `cards` and from `byRarity` — so there is no PROMO tier row with a
+sliding total — while `bySet` still counts them, which is what the second counter reads.
+
+**In the dex, because a species is a species.** And this is not a rounding decision: **Mew #151 is
+printed in none of the four live sets.** `basep-8` and `basep-9` are the only #151s in the game, so
+excluding promos from the species count would hide a species that genuinely exists — and it makes
+the `base1`-gated Mew a real headline chase from the first pack.
+
+**A second counter rather than a bigger one.** The header reads `18 of 311 cards · 0 of 4 promos`.
+Seventeen tiles the counter does not admit to would read as a bug, and *"the counter is wrong"* is a
+worse first impression than a slightly busier header. It is CARDS-view only — in the dex they are
+already inside the species count.
+
 ## A missing slot names what you are missing
 
 Both grids used to print a card's **number and nothing else** in an empty slot, which meant the
@@ -286,6 +337,29 @@ Two traps that surface here, both already documented and both live:
 - **The sigil is positioned absolutely, not as a flex child.** A sigil is a square viewBox with no
   intrinsic size, so as a flex item it resolves its basis from its own width and *sets* the row
   height instead of consuming what is left. Taking it out of flow sidesteps the whole problem.
+
+### The third tile state — an unearned promo
+
+**There are now two rules on this screen for what an unowned card shows, and the inconsistency is
+the design.** If a later pass reads it as untidy and unifies them, what is lost is a distinction
+Trevor asked for on 27 Aug 2026.
+
+A Base Set card you have not pulled is a **known hole in a checklist you can see**, so the tile above
+leaks the card's shape on purpose. A promo is a **rumour**: it comes from a set you cannot buy a pack
+of, it arrives on its own gate, and you are supposed to have heard it exists without knowing what it
+does. So `.colllock` gives the **name and nothing else** — no scan, no sigil, no number — over a
+hatched plate that reads as a different kind of hole at a glance.
+
+Two details worth keeping:
+
+- **The dex number survives, the card number does not.** In the dex the label is `#151`, which
+  identifies the *species* and is the entire point of that view. In CARDS the label is the promo's
+  own number, which is a fact about a card you have not earned.
+- **The tile still opens**, and the overlay is the one place the scan could have leaked. It renders
+  `THE PRINTED CARD` beside `YOUR COPY` for anything you click — correct for the 311 set cards,
+  where *"a card you do not own still opens, so you can read what you are chasing"* was a deliberate
+  decision. An unearned promo is the only exception, and `smoke.js` asserts the overlay names the
+  card and offers neither panel.
 
 ## Left open on purpose
 

@@ -32,7 +32,7 @@ const PACK_ODDS = {
   // Whole-pack rolls. Unaffected by PACK_SHAPE — these fire once per pack,
   // not once per slot, so shrinking the pack does not move them.
   firstEd: 1 / 20,
-  intrusion: 1 / 100,      // a promo or Southern Islands card, ADDED to the pack
+  intrusion: 1 / 100,      // a promo or Southern Islands card replaces one Common
 
   // Per-card rolls. reverseHolo is offered only on non-Rare slots — the Rare
   // slot already has its own holo axis. The other three roll against every
@@ -375,45 +375,23 @@ function openPack(db, setCode, rand, opts = {}) {
   }
   cards.push(...commonCards);
 
-  // --- intrusion is an EXTRA card, and never touches the Rare. PACKS.md: the
-  // Rare slot stays the pack's emotional centre, and an intrusion is a bonus
-  // surprise rather than competition for the headline pull.
-  //
-  // IT USED TO REPLACE A COMMON, and Trevor reversed that on 27 Aug 2026. The
-  // replacement rule was priced against an ELEVEN-card pack, where one slot was
-  // ~9% of what you opened; the 25 Aug shrink to eight silently repriced it to
-  // 12.5%, and PACKS.md already carries a paragraph about four cosmetic axes
-  // that moved the same way without anyone touching them. This was the fifth,
-  // and the only one whose movement ran against the player at the exact moment
-  // something rare happened.
-  //
-  // The Common slot is not nothing, which is the part the old rule missed. It
-  // carries its own Reverse Holo chase and it is the currency of set completion,
-  // so the principle that protects the Rare protects it too — just more quietly.
-  // The precedent was three days old either way: the bonus rare-tier jump had
-  // already turned "exactly one Rare per pack" from a promise into a norm, so
-  // the pack already had a mechanism for sometimes just getting more.
-  //
-  // SO A PACK IS PACK_SIZE CARDS *OR PACK_SIZE + 1*, and PACK_SIZE stops being
-  // an invariant. That is deliberate and it is asserted rather than assumed —
-  // packtest.js checks the size against the intrusion flag, not against a
-  // constant. The ninth face-down slot is also the reveal: you sit down to a
-  // pack that is visibly one card too long without knowing which one it is, so
-  // the header reports the REAL count rather than PACK_SIZE — a header insisting
-  // on eight while nine slots sit face-down reads as a bug, not as a secret, and
-  // WHICH card it is stays hidden either way. See renderPackScreen.
+  // --- intrusion replaces ONE Common, never the Rare. PACKS.md: the Rare slot
+  // stays the pack's emotional centre, and an intrusion is a bonus surprise
+  // rather than competition for the headline pull.
   let intrusion = null;
   if (wantIntrusion) {
-    intrusion = pickFrom(promos, rand);
-    cards.push({ id: intrusion, slot: 'promo', holo: false, jump: null,
-      flags: rollVariants(rand, 'promo', odds, firstEd) });
+    const at = cards.findIndex(c => c.slot === 'common');
+    if (at >= 0) {
+      intrusion = pickFrom(promos, rand);
+      cards[at] = { id: intrusion, slot: 'promo', holo: false, jump: null,
+        flags: rollVariants(rand, 'promo', odds, firstEd) };
+    }
   }
 
   // The STIPEND is gone — 16 Aug 2026. It hung two extra Energy off the side of
   // a pack for any set printing none, which made a Jungle booster thirteen cards
   // with two of them mandatory. Borrowed Energy is in the Common pool now and is
-  // drawn like anything else. So a pack is PACK_SIZE cards -- plus the promo, on
-  // the 1-in-100 that intrudes, which is the ONLY thing that makes it longer.
+  // drawn like anything else, so a pack is PACK_SIZE cards, always.
   return { set: setCode, firstEd, intrusion, cards };
 }
 

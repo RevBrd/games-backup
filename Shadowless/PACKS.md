@@ -122,7 +122,7 @@ should be able to happen, and should be funny when it does.
 | Holo Rare | no | the Rare slot | 1/3 | — | — |
 | 1st Edition | yes | **whole pack** | 1/20 | ~20 | ~10 |
 | Reverse Holo | yes | each of the 7 Common/Uncommon slots | 1/100 | ~15 | ~7 |
-| Promo/SI intrusion | yes | whole pack, replaces 1 Common | 1/100 | ~100 | ~50 |
+| Promo/SI intrusion | yes | whole pack, **adds** a 9th card | 1/100 | ~100 | ~50 |
 | Shiny | yes | each of 8 slots | 1/440 | ~55 | ~28 |
 | Shadowless | yes | each of 8 slots | 1/2200 | ~275 | ~138 |
 | Misprint | yes | each of 8 slots | 1/11000 | ~1375 | ~688 |
@@ -153,8 +153,64 @@ Notes on the invented ones:
   the wrong aspect ratio, an inverted card. Three flavours (`mp1`/`mp2`/`mp3`) so a sighting reads
   as a fresh joke rather than "oh, the misprint effect again", and they are separate variant keys so
   two differently-broken cards are different collectibles.
-- **Promo/SI intrusion replaces a Common slot, never the Rare** — the Rare stays the pack's
-  emotional centre and intrusion is a bonus surprise, not competition for the headline pull.
+- **Promo/SI intrusion is an EXTRA card, never the Rare, and never at a Common's expense** — the
+  Rare stays the pack's emotional centre and an intrusion is a bonus surprise rather than
+  competition for the headline pull. **It replaced a Common until 27 Aug 2026 and now adds a
+  ninth card instead**, which is Trevor's reversal and worth the paragraph below, because the old
+  rule was not wrong when it was written — it was repriced by a change nobody connected to it.
+
+### Why the intrusion stopped replacing a Common
+
+**The replacement rule was priced against an eleven-card pack.** One slot was ~9% of what you
+opened. The 25 Aug shrink to eight silently moved that to 12.5%, and this file already carries a
+paragraph about four cosmetic axes that moved the same way without anyone touching them — this was
+the fifth, and the only one whose movement ran *against the player at the exact moment something
+rare happened*.
+
+Three things settled it:
+
+- **The Common slot is not nothing.** It carries its own Reverse Holo chase and it is the currency
+  of set completion, which is the long game. The principle that protects the Rare from competition
+  protects the Commons too, just more quietly. The old rule read the Rare as the only slot with
+  anything at stake.
+- **The precedent was three days old.** The bonus rare-tier jump had already turned "exactly one
+  Rare per pack" from a promise into a norm, so the pack already had a mechanism for *sometimes you
+  just get more*. An additive intrusion is the same idea one step further.
+- **The ninth face-down slot is a better reveal than the flip.** You sit down to a pack that is
+  visibly one card too long and do not know which one it is. Under the old rule the surprise only
+  existed after you turned over the specific slot; now it exists before you touch anything.
+
+**`PACK_SIZE` is therefore no longer an invariant, and that is asserted rather than assumed.**
+`packtest.js` checks a pack's length against its intrusion flag, and the old line — *"an intruded
+pack is still PACK_SIZE cards with one promo"* — went red by itself the moment `packs.js` changed,
+which is what a structural assertion is for. It now also measures the point of the change directly:
+**an intruded pack still contains all eight set cards**, so an intrusion costs the player nothing.
+
+**Two small consequences on screen.** The reveal header reports the *real* count rather than
+`PACK_SIZE` — nine face-down slots against a header insisting on eight reads as a bug rather than
+as a secret, and *which* card it is stays hidden either way. And `.packbox` widens from 1060px to
+1220px on an intruded pack so the promo joins the row of seven instead of sitting alone on one; a
+lone card reads as a second headline, which is the same reason the hero is a *position* rather than
+a rarity. Below ~1200px of viewport it wraps, which flex already handled.
+
+### Which promos can actually intrude
+
+**A promo is gated PER CARD, not per set**, and the gates are Trevor's, authored in the `Gated
+Until` column of the workbook's Index tab. `PROMO_GATES` in `src/progress.js` is that column, and
+`tools/progresstest.js` re-reads the workbook and asserts the two still agree — a hand-copied table
+and its source being two lists that cannot see each other.
+
+**The gate is the bracket being OPEN, not CLEARED** (Trevor, 27 Aug 2026), so the four `base1`-gated
+promos are reachable from the very first pack. He is reconsidering the gate *order* against a
+cleared-based reading; that would change the values in that table and nothing else.
+
+**Twenty-eight of the fifty-three promos carry a gate and seventeen resolve today.** The other
+eleven name `challenge1`, `challenge2`, `gym1` or `gym2` — brackets that do not exist — and they
+**fail closed**, which is the safe direction. Each turns on with no code change the day a ladder
+bracket carries that key. The twenty-five promos with no gate at all are the unscripted half of
+`basep`, and a second test keeps them out independently: the eligible pool is filtered by *has an
+effect script* as well as by gate, so CLAUDE.md's "no collecting a card you cannot play" holds for a
+set that is deliberately half-built.
 
 Verified at 200,000 packs against the 8-card pack (25 Aug 2026): holo 1-in-3.0, 1st Edition 1-in-20.1,
 Reverse Holo 1-in-14.3, Shiny 1-in-55.5, Shadowless 1-in-264.2, Misprint 1-in-1183.4. The ~5x ladder
@@ -261,12 +317,17 @@ wildly different experiences of the same economy.
    guaranteed contents, not a randomised pack, so folding 18 fixed cards into a probabilistic
    intrusion chance is itself an invented mechanic wearing a real set's name. Flagged rather than
    let ride on the promo idea by association.
-2. **Progression-gating the intrusion pool.** A promo from an era the player hasn't reached would
-   read as broken rather than delightful, so the eligible pool should track whatever era is
-   unlocked. **This was blocked on Job 7 and no longer is** — Job 7 shipped 12 Aug 2026, and the
-   fact it needed exists: a bracket is open if the previous boss has been beaten, derived from
-   `save.progress.beaten` rather than stored. So the eligible pool is computable from the save
-   without adding anything to it. Nobody has built it. See [PROGRESSION.md](PROGRESSION.md).
+2. ~~**Progression-gating the intrusion pool.**~~ **BUILT, Job 13b, 27 Aug 2026.** It went further
+   than this item asked. The item wanted the pool to track the unlocked *era*; Trevor had already
+   authored a gate per *card*, so it is gated per card instead — see "Which promos can actually
+   intrude" above. The rest of the prediction held exactly: it needed nothing added to the save,
+   because `unlockedSets` was already derived from `save.progress.beaten`.
+   **The part nobody had noticed is that the intrusion had never fired at all.** `openPack` took an
+   `opts.promos` pool, defaulted it to empty, and no caller ever passed one — so the 1-in-100 roll
+   built in Job 5b was dead code in the shipped game for three weeks, in a suite-green tree. The
+   guard that would have caught it is the one that now exists: `packtest.js` asserted the mechanism
+   worked *when given a pool* and never asked whether anything gave it one. **A default that makes a
+   feature inert is invisible to a test that supplies the argument.**
 3. **The Challenge pack — a pool of every card up to that point.** Trevor's proposal, 21 Aug 2026, as
    the reward for the Challenge brackets in [CHALLENGES.md](CHALLENGES.md). **It works, and most of the
    machinery is already here**, which is worth knowing before anyone plans it as a large job:

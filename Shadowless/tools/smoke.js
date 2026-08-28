@@ -62,7 +62,7 @@ global.clearTimeout = (id) => { timers = timers.filter(t => t.id !== id); };
 function drain(limit = 200) { let c = 0; while (timers.length && c++ < limit) { const t = timers.shift(); t.fn(); } return c; }
 
 const ctx = new Function('window', 'document', 'alert', 'setTimeout', 'clearTimeout',
-  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, deckFor, resolveDeck, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, leaveMatch, downloadMatchLog, setPrizePick, forfeitMatch, prizePickSetting, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten, PACK_SIZE};')
+  js + '\nreturn {UI, Engine, CARD_DB, LIVE_DB, DECKS, EFFECTS, render, newGame, dispatch, presenting, startMatch, backToDeckSelect, handCard, fullCard, inspectCard, railPeek, ENERGY_NAME, bootSave, startNewSave, openNextPack, settleResult, myDeckNames, deckFor, resolveDeck, sigilCard, pullFace, addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, renderCollection, applyImportedSave, exportSave, newSave, grantDeck, grant, bestVariant, collTile, openBuilder, builderAdd, builderFree, builderStatus, builderTotal, commitBuilder, deleteBuilderDeck, shortfallText, findDeck, deckIsBuilt, builtDecks, available, poolClick, builderPiles, builderQty, pilesOf, vkey, handVerbs, clickHandCard, armForcedChoice, myLegal, openPicker, deckSummary, keepScroll, resetScroll, toggleEnergyPick, askEnergy, renderEventLog, logOpeningPrizes, leaveMatch, downloadMatchLog, setPrizePick, forfeitMatch, prizePickSetting, LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin, availableOpponents, bracketOpen, bossAvailable, hasBeaten, PACK_SIZE, collectibleDb, unlockedPromoIds};')
   (global.window, global.document, global.alert, global.setTimeout, global.clearTimeout);
 
 const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, startMatch, backToDeckSelect, ENERGY_NAME,
@@ -70,7 +70,8 @@ const { UI, render, newGame, CARD_DB, LIVE_DB, DECKS, dispatch, presenting, star
   addPacks, packsHeld, ownedTotal, collectionStats, SAVE_KEY, deckSummary,
   LADDER_VIEW, currentFoe, pickFirstOpponent, opponentDeckFor, recordWin,
   leaveMatch, downloadMatchLog, setPrizePick, forfeitMatch, prizePickSetting,
-  availableOpponents, bracketOpen, bossAvailable, hasBeaten, PACK_SIZE } = ctx;
+  availableOpponents, bracketOpen, bossAvailable, hasBeaten, PACK_SIZE,
+  collectibleDb, unlockedPromoIds } = ctx;
 
 console.log('\n=== BUILT ARTIFACT SMOKE ===');
 
@@ -1309,7 +1310,7 @@ T('the collection screen renders in every view and filter', () => {
   UI.collView = 'cards'; UI.collFilter = 'all';
   return created > 0;
 });
-T('the CARDS grid shows the live pool and nothing a pack cannot hand out', () => {
+T('the CARDS grid shows the collectible pool and nothing a pack cannot hand out', () => {
   // JOB 13. This grid read CARD_DB while every other surface on the screen read
   // LIVE_DB, and the two were the same object under two names until a set was
   // generated that was not live. `gen_cards.js --sets` at the START of a set job
@@ -1317,36 +1318,92 @@ T('the CARDS grid shows the live pool and nothing a pack cannot hand out', () =>
   // put 53 promo tiles into the collection that no pack can hand out, permanently
   // missing, while the stats line directly above them went on saying 311.
   //
+  // JOB 13b MOVED THE LINE AND DID NOT MOVE THE RULE. The right pool is no longer
+  // LIVE_DB: it is LIVE_DB plus the promos this save has actually unlocked, which
+  // is what `collectibleDb` returns. Twenty-eight promos carry a gate and only the
+  // ones whose bracket is open may appear -- so this now asserts BOTH directions,
+  // because a guard that only looks for leaks would happily pass an
+  // implementation that showed nothing at all.
+  //
   // Counted by walking the rendered tree rather than by reading the source,
-  // because the assertion is about what the player sees. A card from a set that
-  // is not live must not have a tile at any filter.
-  const notLive = Object.keys(CARD_DB).filter(id => !LIVE_DB[id]);
-  if (!notLive.length) return true;            // nothing generated-but-unfinished today
-  const names = new Set(notLive.map(id => CARD_DB[id].name));
-  // Names shared with a live printing cannot be told apart in rendered text, so
-  // only the ones unique to the unfinished set are searched for.
-  const liveNames = new Set(Object.keys(LIVE_DB).map(id => CARD_DB[id].name));
-  const onlyThere = [...names].filter(n => !liveNames.has(n));
-  if (!onlyThere.length) return true;
+  // because the assertion is about what the player sees.
+  const db = collectibleDb(UI.save);
+  const unlocked = unlockedPromoIds(UI.save);
+
+  // Names shared with a card that IS shown cannot be told apart in rendered
+  // text, so only names unique to the hidden side are searched for. That drops
+  // most of the promos -- a promo Pikachu is indistinguishable from base1's --
+  // and what is left still catches the whole-pool mistake this exists for.
+  const shownNames = new Set(Object.keys(db).map(id => CARD_DB[id].name));
+  const hidden = Object.keys(CARD_DB).filter(id => !db[id]);
+  const hiddenOnly = [...new Set(hidden.map(id => CARD_DB[id].name))].filter(n => !shownNames.has(n));
+
+  // WORD BOUNDARIES, because "Mew" is a substring of "Mewtwo" and Mewtwo is
+  // live. That is the THIRD name collision this job has turned up -- Surfing
+  // Pikachu contains its own attack "Surf", and Dark Raichu sits in a set whose
+  // names repeat across printings. A plain indexOf is never safe in this corpus.
+  //
+  // THE ESCAPE WAS CORRUPT AND IT SHIPPED. Until 27 Aug 2026 this was a regex
+  // built by escaping the card name, and the .replace() doing the escaping had an
+  // entire unrelated line of code spliced in as its replacement STRING. It was
+  // valid JavaScript, so nothing ever threw, and any card name carrying a regex
+  // metacharacter would have been rewritten into gibberish before being searched
+  // for. `Unown [J]` is the live example; it never bit only because that card is
+  // not in a live set.
+  //
+  // SO THERE IS NO REGEX ANY MORE. Escaping a card name to build a pattern is the
+  // step that broke, and this corpus is full of names that need it -- brackets,
+  // full stops, apostrophes, and `_____'s Pikachu`. Walking the matches and
+  // checking the characters either side does the same job with nothing to escape.
+  // Recorded because a test that quietly stops testing is worse than one that
+  // fails.
+  const alpha = ch => ch >= 'A' && ch <= 'z' && /[A-Za-z]/.test(ch);
+  const seen = (text, n) => {
+    for (let i = text.indexOf(n); i >= 0; i = text.indexOf(n, i + 1)) {
+      const before = i === 0 ? '' : text.charAt(i - 1);
+      const after = text.charAt(i + n.length);
+      if (!alpha(before) && !alpha(after)) return true;
+    }
+    return false;
+  };
+
   UI.screen = 'collection'; UI.detail = null;
   const leaked = [];
   for (const f of ['all', 'missing']) {
     UI.collView = 'cards'; UI.collFilter = f; render();
     const text = deepText(document.getElementById('app'));
-    // WORD BOUNDARIES, because "Mew" is a substring of "Mewtwo" and Mewtwo is
-    // live. That is the THIRD name collision this job has turned up — Surfing
-    // Pikachu contains its own attack "Surf", and Dark Raichu sits inside a set
-    // whose names repeat across printings. A plain indexOf on a card name is
-    // never safe in this corpus.
-    for (const n of onlyThere) {
-      const re = new RegExp(`(^|[^A-Za-z])${n.replace(/[.*+?^${}()|[]\]/g, "\    for (const n of onlyThere) if (text.indexOf(n) >= 0) leaked.push(`${n} (${f})`);")}([^A-Za-z]|$)`);
-      if (re.test(text)) leaked.push(`${n} (${f})`);
-    }
+    for (const n of hiddenOnly) if (seen(text, n)) leaked.push(n + ' (' + f + ')');
   }
+
+  // ...and the other direction. An unlocked promo whose name is unique to the
+  // promo set MUST be on the grid. Without this half the test passes trivially
+  // the day somebody wires the pool up backwards.
   UI.collView = 'cards'; UI.collFilter = 'all'; render();
-  if (leaked.length) throw new Error(`not-live cards on the collection grid: ${leaked.slice(0, 5).join(', ')}`);
+  const allText = deepText(document.getElementById('app'));
+  const liveNames = new Set(Object.keys(LIVE_DB).map(id => CARD_DB[id].name));
+  const shouldShow = unlocked.map(id => CARD_DB[id].name).filter(n => !liveNames.has(n));
+  const absent = [...new Set(shouldShow)].filter(n => !seen(allText, n));
+
+  if (leaked.length) throw new Error('not-collectible cards on the collection grid: ' + leaked.slice(0, 5).join(', '));
+  if (absent.length) throw new Error('unlocked promos missing from the grid: ' + absent.slice(0, 5).join(', '));
   return true;
 });
+T('an unearned promo shows its name and nothing else -- no scan, no sigil', () => {
+  // The one exception to "a card you do not own still opens". A promo is a
+  // rumour rather than a hole in a checklist you can see, so the tile and the
+  // overlay give the name and stop. See collTile and style.css `.colllock`.
+  const promo = unlockedPromoIds(UI.save).find(id => ownedTotal(UI.save, id) === 0);
+  if (!promo) return true;                   // every unlocked promo already owned
+  UI.screen = 'collection'; UI.collView = 'cards'; UI.collFilter = 'all';
+  UI.detail = { id: promo, flags: [], locked: true };
+  render();
+  const text = deepText(document.getElementById('app'));
+  UI.detail = null; render();
+  return text.indexOf(CARD_DB[promo].name) >= 0
+    && text.indexOf('THE PRINTED CARD') < 0
+    && text.indexOf('YOUR COPY') < 0;
+});
+
 T('CARDS and DEX count different things', () => {
   // Against LIVE_DB, which is what the screen actually counts — CARD_DB holds
   // every set that GENERATES, including ones still being written. Derived
