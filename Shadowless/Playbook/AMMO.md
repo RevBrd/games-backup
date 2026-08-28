@@ -170,3 +170,47 @@ somewhere else to be.*
 **Left unbuilt deliberately.** It is probably one rule with the reserve half above rather than a
 second one, and both of them want the same capability. If that capability lands, it lands once and
 every row in this file reads it.
+
+## How wide is this rule really — 28 Aug 2026
+
+**Two cards. That is the entire blast radius of any sustain rule, and nobody had counted.**
+Swept every attack in the live pool carrying `COST_DISCARD_ENERGY` or `COST_DISCARD_ALL_ENERGY` —
+nineteen attacks across nineteen cards — and grouped them by how much they burn:
+
+| burns | attacks | what a sustain rule would do to them |
+|---|---|---|
+| **1** | fourteen — Flamethrower ×4, Ember ×2, Fire Blast, Recover ×2, Barrier, Destiny Bond, Scavenge, Third Eye, Quick-Attack Flareons | **nothing.** One burned against one attached a turn is rate-neutral, which is the 23 Aug table's Flamethrower row arriving as a general fact rather than a card |
+| **2** | **Charizard** (Fire Spin) and **Arcanine GP** (Flames of Rage) | the only two that can be charged at all |
+| **all** | Zapdos, Pikachu MS, Pikachu GP 2 (Thunderbolt ×3) | already fully priced — `discardAll` empties the slot and `discardSilence` reads the whole shortfall |
+
+**And one of the two has nothing to choose between.** Fire Spin is Charizard's only attack, so any
+term here can move its absolute score and can never change its decision. **So a sustain rule is, in
+this pool, a rule about one card** — which is worth knowing before anyone designs a general mechanism
+for it, in either direction: it means the risk is tiny, and it means the evidence for tuning it is
+one data point.
+
+## The reserve arithmetic, which the obvious fix runs into
+
+**Written down because the obvious fix is obvious, and it does not bind on the board the claim
+uses.** Trevor's note reads as a rate — *"you can only attack once every two turns"*, and 40 every
+other turn is 20 a turn, which is Quick Attack exactly. That is a real rule and it needs no unbuilt
+capability. It is also **not what is happening at four Fire**:
+
+| Fire | fires FoR on turn… | because |
+|---|---|---|
+| 4 | 1, 2, 3, 4, then every other | attach 1 and burn 2 is a net drain of **one**, so four attached is three turns of buffer over a cost of two |
+| 2 | 1, 2, then every other | same drain, no buffer |
+
+**"Once every two turns" is the steady state, not the board.** An Arcanine sitting on four Fire can
+fire Flames of Rage four turns running, so a rule that reads the rate correctly still says *fire it*
+here. Any version that charges anyway is charging the card for a shortage it does not have, and it
+would take Charizard's ammunition rule down with it — at six Fire, Charizard has exactly the same
+buffer and the 23 Aug row says that buffer is free.
+
+**So the healthy-board claim wants one of two things, and they are different rules.** Either the cost
+is the **board-level** one this file already names — four Fire on an Arcanine is four Energy that
+never reached the Bench, and sustaining it means it never will — or **the claim's board is wrong**
+and the note is about a card at three Fire or fewer, where the rate genuinely binds. At three the bot
+scores Flames of Rage 33 against Quick Attack's 20 and is still wrong by the note, so the rate rule
+would earn its keep there. **Ask before building.** *[Why a report can turn out not to mean what it
+says →](../PLAYTEST.md)*
