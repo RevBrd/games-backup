@@ -128,6 +128,29 @@ to have faked a six-point AI improvement once. It may still be a true property o
 than a bug. What is settled is that **no AI measurement here is trustworthy unless it mirrors
 seats**.
 
+**The retreat counters, 29 Aug 2026, recorded as a baseline rather than as a finding.** Trevor
+reported a Gengar retreating instead of attacking with nothing threatening it, which is the
+intersection of two `aitest.js` counters — and **one run cannot judge itself**, which is this file's
+own first rule. So the figures are here to give the next run something to be compared against.
+
+`node tools/aitest.js 6 --gbc`, 17,672 ladder games, at the commit before the `T_DEFENDER` scoring
+change (which cannot move these — it fires only with a Defender in hand):
+
+| | | |
+|---|---|---|
+| retreats | 28,208 | 6.1 per 100 turns |
+| ...that cost that turn's attack | 6,787 | **24%** of retreats, 24.0 attack score given up each |
+| ...that improved our hit (good) | 17,110 | 61% of retreats |
+| ...**with nothing threatening the Active** | 11,784 | **42%** of retreats |
+| Energy burned on retreat costs | 28,010 | 6.0 per 100 turns |
+
+**Every counter here is a suspicion and not a bug** — each of those is occasionally the right play,
+and a retreat with nothing threatening the Active is exactly what repositioning for a better matchup
+looks like. **What makes it worth a row is that a human watching a game independently flagged the
+same behaviour**, which is the one thing a counter cannot do for itself. It is a lead for the AI
+work, filed against the open T4 conversion question in [ROSTERS.md](ROSTERS.md); it is not evidence
+of a fault.
+
 **Deck balance moves whenever the AI changes, so it is measured here rather than fixed.** Every
 figure below is a snapshot with a date on it, and **the snapshot is the point** — read the trend, not
 the row.

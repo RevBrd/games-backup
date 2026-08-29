@@ -51,7 +51,7 @@ the tree and not orientation.
 
 | File | Read it when |
 |---|---|
-| [ENGINE.md](ENGINE.md) | Adding or changing cards. Six of the nine systems built for the awkward ones — `runAttack`, `lastAttackResult`, the four owed choices, `playsAs`, the `baseCard`/`topCard` split and `takeEnergy`. Also: why full games never test any of it. **The other three are Pokémon Powers and are in its sibling `POWERS.md`** — interactive, triggered and passive, which are three mechanisms rather than three flavours |
+| [ENGINE.md](ENGINE.md) | Adding or changing cards. The machinery built for the awkward ones — `runAttack`, `lastAttackResult`, the four owed choices, `playsAs`, the `baseCard`/`topCard` split, `takeEnergy` and `selfDamage`. Also: why full games never test any of it. **The Pokémon Powers are three more and are in its sibling `POWERS.md`** — interactive, triggered and passive, which are three mechanisms rather than three flavours |
 | [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, the cliff sniff test, and an `Open` list at the bottom that is the current one. **Its sibling `AI-INVARIANTS.md` is the register**, now with two archives behind it: one entry per shipped change saying what must stay true. `AI.md`'s own table indexes all three by the term each one governs, which is the only place they are indexed together |
 | [MEASUREMENT.md](MEASUREMENT.md) | **Before you believe any number.** Every instrument in the project that is not pass/fail, how to read a saved match log, and the standing figures. Reached from four directions and none of them wants scoring weights on the way. **Its sibling `MISREADINGS.md` is every way one of them has lied** — read it before you believe a null result |
 | [LAYOUT.md](LAYOUT.md) | Touching **the board**, the mat, the hand or anything **sized** on it. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. If you have trouble with the layout, re-read it — and check you can still see the top of the file, because a compacted read of it has cost a session before. **Its sibling `SCREENS.md` is every other sized screen** — the pack reveal, deck select, the title screen — which share a problem the board does not have: a centred box whose content arrives over time |
@@ -264,7 +264,7 @@ about proximity and it is written as an equality check, look again.** The last t
 said six while that file said eight above a table of nine.
 
 **Adding a card is a `cards.js` entry plus an `effects.js` entry, and [ENGINE.md](ENGINE.md) has the
-rest** — including the nine systems that already exist for the shapes the DSL cannot express.
+rest** — including the machinery that already exists for the shapes the DSL cannot express.
 **Trevor is happy to work through new card logic in plain English**, which is the part that is only
 written here: he has good instincts for how the logic should hang together but is not able to read
 the code.
@@ -335,7 +335,10 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   worst at converting it** — 73% assembly against T3's 50%, for 48.7% wins against T3's 57.6%. That is
   an AI question and it is [ROSTERS.md](ROSTERS.md)'s. Stage 2 reliance was checked and is not the
   cause; a stronger first version of the claim was corrected the same day and both are recorded.
-  See [CREDITS.md](CREDITS.md) #30. **The grab bag half is not started.**
+  See [CREDITS.md](CREDITS.md) #30. **The grab bag half has one item done** — Defender now blunts an
+  attack's own self-harm and is used up if it spends its whole 20, a rules call settled with Trevor
+  rather than a bug. It also turned up a fourth self-damage site the recoil ruling never enumerated.
+  *[The ruling →](Rulings/DEFENDER-BLUNTS-SELF-HARM.md)*
 - **Job 14b** - AI validation work.
 - **Job 15a** - Adding the Challenge 1 bracket.
 - **Job 15b** - Rebalancing variant odds to match new pack sizes.

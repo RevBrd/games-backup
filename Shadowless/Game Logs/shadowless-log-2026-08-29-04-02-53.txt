@@ -1,0 +1,740 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-29 04:02:53
+decks    you: Zap   opponent: Cassia — Ashfall
+opponent expert
+seed     1502734133   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Computer Search, Double Colorless Energy, Double Colorless Energy, Fire Energy, Charmander, Charmander, Fire Energy
+  HIDDEN  your opening hand: Alakazam, Abra, Mewtwo, Psychic Energy, Abra, Psychic Energy, Psychic Energy
+  HIDDEN  opponent's Prizes: Ninetales, Fire Energy, Fire Energy, Fire Energy, Pidgeotto, Charmeleon
+  HIDDEN  your Prizes: Alakazam, Potion, Psychic Energy, Kadabra, Computer Search, Super Potion
+  HIDDEN  opponent's opening board: Charmander A active, bench Charmander B
+  HIDDEN  your opening board: Abra active, bench Mewtwo
+          New game. Seed 1502734133.
+          You has no Basic Pokemon - mulligan.
+          Coin flip (who goes first): TAILS
+          Cassia will go first.
+          Cassia draws 1 extra (opponent mulligans).
+
+--- Turn 1 — Cassia ----------------------------
+          Cassia draws a card. (45 left)
+  AI      attach   [25]
+          holding: Computer Search, Double Colorless Energy, Double Colorless Energy, Fire Energy, Fire Energy, Fire Energy, Pidgey
+          Cassia attaches Fire Energy to Charmander A.
+  AI      trainer   [12]
+          holding: Computer Search, Double Colorless Energy, Double Colorless Energy, Fire Energy, Fire Energy, Pidgey
+          passed over: bench 7, retreat -32.5
+          Cassia plays Computer Search.
+          Computer Search: found Charmeleon.
+  AI      bench   [7]
+          holding: Fire Energy, Fire Energy, Pidgey, Charmeleon
+          passed over: retreat -32.5
+          Cassia benches Pidgey.
+  AI      attack:Scratch   [10]
+          holding: Fire Energy, Fire Energy, Charmeleon
+          Charmander uses Scratch.
+          Abra takes 10. (20/30 left)
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (46 left)
+          You attaches Psychic Energy to Abra.
+          You benches Abra.
+          Abra uses Psyshock.
+          Charmander takes 10. (40/50 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 3 — Cassia ----------------------------
+          Cassia draws a card. (43 left)
+  AI      attach   [76.5]
+          holding: Fire Energy, Fire Energy, Charmeleon, Double Colorless Energy
+          passed over: attach 76.5, attach 72.5, evolve 35.5, evolve 29.5, attach 25
+          Cassia attaches Fire Energy to Charmander A.
+  AI      evolve   [35.5]
+          holding: Fire Energy, Charmeleon, Double Colorless Energy
+          passed over: evolve 29.5, retreat -43.5, retreat -43.5
+          Charmander A evolves into Charmeleon. Special Conditions removed.
+  AI      pass — no attack available — Slash: Not enough Energy; Flamethrower: Not enough Energy   [0]
+          holding: Fire Energy, Double Colorless Energy
+          Cassia ended the turn without attacking.
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (45 left)
+          You attaches Psychic Energy to Mewtwo.
+          Abra uses Psyshock.
+          Charmeleon takes 10. (60/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Charmeleon is now Paralyzed.
+
+--- Turn 5 — Cassia ----------------------------
+          Cassia draws a card. (42 left)
+  AI      attach   [90]
+          holding: Fire Energy, Double Colorless Energy, Fire Energy
+          passed over: attach 90, attach 86, attach 25, attach 22, attach 22
+          Cassia attaches Fire Energy to Charmeleon.
+  AI      pass — the Active is Paralyzed   [0]
+          holding: Double Colorless Energy, Fire Energy
+          Cassia ended the turn without attacking — Paralyzed.
+          Charmeleon is no longer Paralyzed.
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (44 left)
+          You attaches Psychic Energy to Mewtwo.
+          Abra uses Psyshock.
+          Charmeleon takes 10. (50/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Charmeleon is now Paralyzed.
+
+--- Turn 7 — Cassia ----------------------------
+          Cassia draws a card. (41 left)
+  AI      attach   [25]
+          holding: Double Colorless Energy, Fire Energy, Fire Energy
+          passed over: attach 22, attach 22, attach 18, attach 8.4, attach 8.4
+          Cassia attaches Double Colorless Energy to Pidgey.
+  AI      pass — the Active is Paralyzed   [0]
+          holding: Fire Energy, Fire Energy
+          Cassia ended the turn without attacking — Paralyzed.
+          Charmeleon is no longer Paralyzed.
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (43 left)
+          You attaches Psychic Energy to Abra B.
+          Abra uses Psyshock.
+          Charmeleon takes 10. (40/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Charmeleon is now Paralyzed.
+
+--- Turn 9 — Cassia ----------------------------
+          Cassia draws a card. (40 left)
+  AI      attach   [22]
+          holding: Fire Energy, Fire Energy, Professor Oak
+          passed over: attach 22, trainer 12.9, attach 8.4, attach 8.4, attach -2
+          Cassia attaches Fire Energy to Charmander.
+  AI      trainer   [21.8]
+          holding: Fire Energy, Professor Oak
+          Cassia plays Professor Oak.
+          Cassia discards 1 card(s) and draws 7.
+  AI      evolve   [25]
+          holding: Fire Energy, Fire Energy, Pidgeotto, Fire Energy, Chansey, Vulpix, Fire Energy
+          passed over: bench 7, bench 7
+          Pidgey evolves into Pidgeotto. Special Conditions removed.
+  AI      bench   [7]
+          holding: Fire Energy, Fire Energy, Fire Energy, Chansey, Vulpix, Fire Energy
+          passed over: bench 7
+          Cassia benches Chansey.
+  AI      bench   [2]
+          holding: Fire Energy, Fire Energy, Fire Energy, Vulpix, Fire Energy
+          Cassia benches Vulpix.
+  AI      pass — the Active is Paralyzed   [0]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy
+          Cassia ended the turn without attacking — Paralyzed.
+          Charmeleon is no longer Paralyzed.
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (42 left)
+          You attaches Psychic Energy to Abra B.
+          Abra uses Psyshock.
+          Charmeleon takes 10. (30/80 left)
+          Coin flip (Paralyzed?): HEADS
+          Charmeleon is now Paralyzed.
+
+--- Turn 11 — Cassia ----------------------------
+          Cassia draws a card. (32 left)
+  AI      attach   [28.5]
+          holding: Fire Energy, Fire Energy, Fire Energy, Fire Energy, Energy Removal
+          passed over: attach 28.5, attach 28.5, attach 28.5, trainer 11, attach 10
+          Cassia attaches Fire Energy to Charmander.
+  AI      trainer   [11]
+          holding: Fire Energy, Fire Energy, Fire Energy, Energy Removal
+          Cassia plays Energy Removal.
+          Psychic Energy discarded from Mewtwo.
+  AI      pass — the Active is Paralyzed   [0]
+          holding: Fire Energy, Fire Energy, Fire Energy
+          Cassia ended the turn without attacking — Paralyzed.
+          Charmeleon is no longer Paralyzed.
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (41 left)
+          You attaches Psychic Energy to Mewtwo.
+          Abra uses Psyshock.
+          Charmeleon takes 10. (20/80 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 13 — Cassia ----------------------------
+          Cassia draws a card. (31 left)
+  AI      attach   [10]
+          holding: Fire Energy, Fire Energy, Fire Energy, Switch
+          passed over: attach 10, attach 10, attach 8.4, attach 8.4, attach 8.4
+          Cassia attaches Fire Energy to Vulpix.
+  AI      attack:Slash   [75]
+          holding: Fire Energy, Fire Energy, Switch
+          passed over: attack:Flamethrower 68
+          Charmeleon uses Slash.
+          Abra takes 30. (0/30 left)
+          Abra is Knocked Out!
+          Cassia takes a Prize. (5 left)
+          You promotes Mewtwo to Active.
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (40 left)
+          You benches Abra.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (3) -> 40 damage.
+          Charmeleon takes 40. (0/80 left)
+          Charmeleon is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [50.3]
+          holding: Fire Energy, Fire Energy, Switch, Charmeleon
+          passed over: promote 50, promote 48.5, promote 30
+          Cassia promotes Chansey to Active.
+
+--- Turn 15 — Cassia ----------------------------
+          Cassia draws a card. (30 left)
+  AI      evolve   [29.5]
+          holding: Fire Energy, Fire Energy, Switch, Charmeleon, Chansey
+          passed over: attach 22, attach 22, attach 9, attach 9, attach 5.4
+          Charmander evolves into Charmeleon. Special Conditions removed.
+  AI      attach   [62]
+          holding: Fire Energy, Fire Energy, Switch, Chansey
+          passed over: attach 62, attach 22, attach 22, attach 9, attach 9
+          Cassia attaches Fire Energy to Charmeleon.
+  AI      bench   [2]
+          holding: Fire Energy, Switch, Chansey
+          passed over: trainer -4
+          Cassia benches Chansey.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Fire Energy, Switch
+          Cassia ended the turn without attacking.
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (39 left)
+          Abra A evolves into Kadabra. Special Conditions removed.
+          You attaches Psychic Energy to Kadabra.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (0) -> 10 damage.
+          Resistance: -30 -> 0.
+
+--- Turn 17 — Cassia ----------------------------
+          Cassia draws a card. (29 left)
+  AI      attach   [22]
+          holding: Fire Energy, Switch, Vulpix
+          passed over: attach 9, attach 6, attach 5.4, bench 2, attach -2
+          Cassia attaches Fire Energy to Vulpix.
+  AI      bench   [2]
+          holding: Switch, Vulpix
+          passed over: trainer -4
+          Cassia benches Vulpix.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Switch
+          Cassia ended the turn without attacking.
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (38 left)
+          Kadabra evolves into Alakazam. Special Conditions removed.
+          You attaches Psychic Energy to Mewtwo.
+          You retreats Mewtwo; Alakazam is now Active.
+          Alakazam uses Confuse Ray.
+          Resistance: -30 -> 0.
+          Coin flip (Confused?): TAILS
+
+--- Turn 19 — Cassia ----------------------------
+          Cassia draws a card. (28 left)
+  AI      trainer   [26]
+          holding: Switch, Professor Oak
+          passed over: trainer -4
+          Cassia plays Professor Oak.
+          Cassia discards 1 card(s) and draws 7.
+  AI      evolve   [29.5]
+          holding: Charmeleon, Double Colorless Energy, Fire Energy, Energy Retrieval, Chansey, Ninetales, Fire Energy
+          passed over: evolve 29.5, attach 18, attach 15, trainer 12, attach 10
+          Vulpix A evolves into Ninetales. Special Conditions removed.
+  AI      attach   [18]
+          holding: Charmeleon, Double Colorless Energy, Fire Energy, Energy Retrieval, Chansey, Fire Energy
+          passed over: attach 15, trainer 12, attach 10, attach 10, attach 9
+          Cassia attaches Double Colorless Energy to Chansey A.
+  AI      trainer   [12]
+          holding: Charmeleon, Fire Energy, Energy Retrieval, Chansey, Fire Energy
+          passed over: retreat 0.5, retreat -2.8, retreat -19, retreat -27, retreat -27
+          Cassia plays Energy Retrieval.
+          Energy Retrieval: recovered 2 basic Energy.
+  AI      pass — no attack was worth taking   [0]
+          holding: Fire Energy, Chansey, Fire Energy, Fire Energy, Fire Energy
+          passed over: attack:Scrunch 0
+          Cassia ended the turn without attacking.
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (37 left)
+          You attaches Psychic Energy to Mewtwo.
+          Alakazam uses Confuse Ray.
+          Resistance: -30 -> 0.
+          Coin flip (Confused?): HEADS
+          Chansey A is now Confused.
+
+--- Turn 21 — Cassia ----------------------------
+          Cassia draws a card. (20 left)
+  AI      attach   [10]
+          holding: Fire Energy, Chansey, Fire Energy, Fire Energy, Fire Energy, Pidgey
+          passed over: attach 10, attach 10, attach 10, attach 6, attach 6
+          Cassia attaches Fire Energy to Vulpix.
+  AI      pass — no attack was worth taking   [0]
+          holding: Chansey, Fire Energy, Fire Energy, Fire Energy, Pidgey
+          passed over: attack:Scrunch -14.2
+          Cassia ended the turn without attacking.
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Psychic Energy to Mewtwo.
+          Alakazam uses Confuse Ray.
+          Resistance: -30 -> 0.
+          Coin flip (Confused?): TAILS
+
+--- Turn 23 — Cassia ----------------------------
+          Cassia draws a card. (19 left)
+  AI      attach   [22]
+          holding: Chansey, Fire Energy, Fire Energy, Fire Energy, Pidgey, Pokémon Trader
+          passed over: attach 22, attach 22, trainer 14, attach 6, attach 6
+          Cassia attaches Fire Energy to Vulpix.
+  AI      trainer   [14]
+          holding: Chansey, Fire Energy, Fire Energy, Pidgey, Pokémon Trader
+          passed over: retreat 0.3, retreat -1.4, retreat -1.9, retreat -9.5, retreat -13.5
+          Cassia plays Pokémon Trader.
+          Traded Chansey for Charizard.
+  AI      evolve   [34]
+          holding: Fire Energy, Fire Energy, Pidgey, Charizard
+          passed over: retreat 0.3, retreat -1.4, retreat -1.9, retreat -9.5, retreat -13.5
+          Charmeleon evolves into Charizard. Special Conditions removed.
+  AI      pass — no attack was worth taking   [0]
+          holding: Fire Energy, Fire Energy, Pidgey
+          passed over: attack:Scrunch -14.2
+          Cassia ended the turn without attacking.
+
+--- Turn 24 — You -------------------------------
+          You draws a card. (35 left)
+          You ended the turn without attacking.
+
+--- Turn 25 — Cassia ----------------------------
+          Cassia draws a card. (18 left)
+  AI      attach   [112]
+          holding: Fire Energy, Fire Energy, Pidgey, Vulpix
+          passed over: attach 112, attach 6, attach 6, attach 5.4, attach 5.4
+          Cassia attaches Fire Energy to Charizard.
+  AI      retreat   [3]
+          holding: Fire Energy, Pidgey, Vulpix
+          passed over: retreat -1.4, retreat -1.9, retreat -9.5, retreat -13.5
+          Coin flip (Confused - retreat?): HEADS
+          Cassia retreats Chansey A; Charizard is now Active.
+  AI      attack:Fire Spin   [107]
+          holding: Fire Energy, Pidgey, Vulpix
+          Charizard uses Fire Spin.
+          Charizard discards 2 Energy as a cost.
+          Alakazam takes 100. (0/80 left)
+          Alakazam is Knocked Out!
+          Cassia takes a Prize. (4 left)
+          You promotes Mewtwo to Active.
+
+--- Turn 26 — You -------------------------------
+          You draws a card. (34 left)
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (2) -> 30 damage.
+          Charizard takes 30. (90/120 left)
+
+--- Turn 27 — Cassia ----------------------------
+          Cassia draws a card. (17 left)
+  AI      attach   [58]
+          holding: Fire Energy, Pidgey, Vulpix, Ninetales, Potion
+          passed over: evolve 29.5, trainer 7, attach 6, attach 6, attach 5.4
+          Cassia attaches Fire Energy to Charizard.
+  AI      evolve   [29.5]
+          holding: Pidgey, Vulpix, Ninetales, Potion
+          passed over: trainer 7, retreat 2, retreat -3.5, retreat -23, retreat -31
+          Vulpix evolves into Ninetales. Special Conditions removed.
+  AI      trainer   [7]
+          holding: Pidgey, Vulpix, Potion
+          passed over: retreat 2, retreat -23, retreat -23, retreat -31, retreat -31
+          Cassia plays Potion.
+          Charizard heals 20. (10 damage left)
+  AI      retreat   [2]
+          holding: Pidgey, Vulpix
+          passed over: retreat -23, retreat -23, retreat -31, retreat -31
+          Cassia retreats Charizard; Pidgeotto is now Active.
+  AI      attack:Whirlwind   [27]
+          holding: Pidgey, Vulpix
+          Pidgeotto uses Whirlwind.
+          Mewtwo takes 20. (40/60 left)
+          You must choose a Benched Pokemon to switch in.
+          You sends up Abra.
+
+--- Turn 28 — You -------------------------------
+          You draws a card. (33 left)
+          You benches Abra.
+          You plays Switch.
+          Mewtwo is now Active.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Pidgeotto takes 20. (40/60 left)
+
+--- Turn 29 — Cassia ----------------------------
+          Cassia draws a card. (16 left)
+  AI      attach   [30]
+          holding: Pidgey, Vulpix, Fire Energy
+          passed over: attach 6, attach 6, attach 5.4, attach 5.4, attach -2
+          Cassia attaches Fire Energy to Charizard.
+  AI      attack:Whirlwind   [27]
+          holding: Pidgey, Vulpix
+          Pidgeotto uses Whirlwind.
+          Mewtwo takes 20. (20/60 left)
+          You must choose a Benched Pokemon to switch in.
+          You sends up Abra B.
+
+--- Turn 30 — You -------------------------------
+          You draws a card. (32 left)
+          You attaches Psychic Energy to Abra B.
+          Abra uses Psyshock.
+          Pidgeotto takes 10. (30/60 left)
+          Coin flip (Paralyzed?): HEADS
+          Pidgeotto is now Paralyzed.
+
+--- Turn 31 — Cassia ----------------------------
+          Cassia draws a card. (15 left)
+  AI      attach   [38.3]
+          holding: Pidgey, Vulpix, Fire Energy
+          passed over: attach 6, attach 6, attach 5.4, attach 5.4, attach -2
+          Cassia attaches Fire Energy to Charizard.
+  AI      pass — the Active is Paralyzed   [0]
+          holding: Pidgey, Vulpix
+          Cassia ended the turn without attacking — Paralyzed.
+          Pidgeotto is no longer Paralyzed.
+
+--- Turn 32 — You -------------------------------
+          You draws a card. (31 left)
+          You attaches Psychic Energy to Abra B.
+          Abra uses Psyshock.
+          Pidgeotto takes 10. (20/60 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 33 — Cassia ----------------------------
+          Cassia draws a card. (14 left)
+  AI      trainer   [4.9]
+          holding: Pidgey, Vulpix, Bill
+          passed over: retreat -30, retreat -30, retreat -38, retreat -38, retreat -38
+          Cassia plays Bill.
+          Cassia draws 2.
+  AI      attach   [55]
+          holding: Pidgey, Vulpix, Fire Energy, Charmander
+          passed over: attach 6, attach 6, attach 5.4, attach 5.4, attach -2
+          Cassia attaches Fire Energy to Charizard.
+  AI      attack:Whirlwind   [27]
+          holding: Pidgey, Vulpix, Charmander
+          Pidgeotto uses Whirlwind.
+          Abra takes 20. (10/30 left)
+          You must choose a Benched Pokemon to switch in.
+          You sends up Mewtwo.
+
+--- Turn 34 — You -------------------------------
+          You draws a card. (30 left)
+          You benches Jynx.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (1) -> 20 damage.
+          Pidgeotto takes 20. (0/60 left)
+          Pidgeotto is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [53]
+          holding: Pidgey, Vulpix, Charmander
+          passed over: promote 53, promote 51, promote 50.3, promote 50.3
+          Cassia promotes Ninetales A to Active.
+
+--- Turn 35 — Cassia ----------------------------
+          Cassia draws a card. (11 left)
+  AI      attach   [112]
+          holding: Pidgey, Vulpix, Charmander, Fire Energy
+          passed over: attach 8.4, attach 6, attach 6, attach 5.4, bench 2
+          Cassia attaches Fire Energy to Charizard.
+  AI      retreat   [50]
+          holding: Pidgey, Vulpix, Charmander
+          passed over: bench 2, bench 2, bench 2, retreat -19, retreat -27
+          Cassia retreats Ninetales A; Charizard is now Active.
+  AI      bench   [2]
+          holding: Pidgey, Vulpix, Charmander
+          passed over: bench 2, bench 2
+          Cassia benches Pidgey.
+  AI      attack:Fire Spin   [47]
+          holding: Vulpix, Charmander
+          Charizard uses Fire Spin.
+          Charizard discards 2 Energy as a cost.
+          Mewtwo takes 100. (0/60 left)
+          Mewtwo is Knocked Out!
+          Cassia takes a Prize. (3 left)
+          You promotes Abra B to Active.
+
+--- Turn 36 — You -------------------------------
+          You draws a card. (29 left)
+          You attaches Psychic Energy to Abra B.
+          Abra B evolves into Kadabra. Special Conditions removed.
+          Kadabra uses Super Psy.
+          Charizard takes 50. (60/120 left)
+
+--- Turn 37 — Cassia ----------------------------
+          Cassia draws a card. (10 left)
+  AI      attach   [58]
+          holding: Vulpix, Charmander, Fire Energy, Gust of Wind
+          passed over: trainer 27.8, attach 12, attach 6, attach 6, attach 6
+          Cassia attaches Fire Energy to Charizard.
+  AI      trainer   [27.8]
+          holding: Vulpix, Charmander, Gust of Wind
+          passed over: retreat -23, retreat -31, retreat -31, retreat -31, retreat -73
+          Cassia plays Gust of Wind.
+          You's Abra is dragged into the Active spot.
+  AI      pass — no attack available — Fire Spin: Not enough Energy   [0]
+          holding: Vulpix, Charmander
+          Cassia ended the turn without attacking.
+
+--- Turn 38 — You -------------------------------
+          You draws a card. (28 left)
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): HEADS
+          Poke Ball: found Jynx.
+          You plays Item Finder.
+          Item Finder recovers Switch.
+          You plays Switch.
+          Kadabra is now Active.
+          You plays PlusPower.
+          PlusPower attached to Kadabra (+10 this turn).
+          Kadabra uses Super Psy.
+          +10 from a bonus -> 60.
+          Charizard takes 60. (0/120 left)
+          Charizard is Knocked Out!
+          You takes a Prize. (3 left)
+          PlusPower is discarded.
+  AI      promote   [53]
+          holding: Vulpix, Charmander
+          passed over: promote 50.3, promote 50.3, promote 40.5, promote 15.7
+          Cassia promotes Ninetales B to Active.
+
+--- Turn 39 — Cassia ----------------------------
+          Cassia draws a card. (9 left)
+  AI      attach   [12]
+          holding: Vulpix, Charmander, Fire Energy
+          passed over: attach 8.4, attach 6, attach 6, attach 6, bench 2
+          Cassia attaches Fire Energy to Ninetales A.
+  AI      bench   [2]
+          holding: Vulpix, Charmander
+          passed over: bench 2, retreat -19, retreat -27, retreat -27, retreat -69
+          Cassia benches Vulpix.
+  AI      attack:Lure   [14]
+          holding: Charmander
+          Ninetales uses Lure.
+          Abra is dragged into the Active spot.
+
+--- Turn 40 — You -------------------------------
+          You draws a card. (26 left)
+          You ended the turn without attacking.
+
+--- Turn 41 — Cassia ----------------------------
+          Cassia draws a card. (8 left)
+  AI      trainer   [2]
+          holding: Charmander, Pokémon Trader
+          passed over: retreat -19, retreat -27, retreat -27, retreat -27, retreat -27
+          Cassia plays Pokémon Trader.
+          Traded Charmander for Chansey.
+  AI      attack:Lure   [14]
+          holding: Chansey
+          Ninetales uses Lure.
+          Jynx is dragged into the Active spot.
+
+--- Turn 42 — You -------------------------------
+          You draws a card. (25 left)
+          You ended the turn without attacking.
+
+--- Turn 43 — Cassia ----------------------------
+          Cassia draws a card. (7 left)
+  AI      attack:Lure   [14]
+          holding: Chansey, Pidgey
+          Ninetales uses Lure.
+          Abra is dragged into the Active spot.
+
+--- Turn 44 — You -------------------------------
+          You draws a card. (24 left)
+          You attaches Psychic Energy to Abra.
+          Abra uses Psyshock.
+          Ninetales takes 10. (70/80 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 45 — Cassia ----------------------------
+          Cassia draws a card. (6 left)
+  AI      attack:Lure   [14]
+          holding: Chansey, Pidgey, Charmander
+          Ninetales uses Lure.
+          Kadabra is dragged into the Active spot.
+
+--- Turn 46 — You -------------------------------
+          You draws a card. (23 left)
+          You attaches Psychic Energy to Jynx.
+          Kadabra uses Super Psy.
+          Ninetales takes 50. (20/80 left)
+
+--- Turn 47 — Cassia ----------------------------
+          Cassia draws a card. (5 left)
+  AI      retreat   [23.7]
+          holding: Chansey, Pidgey, Charmander, Fire Energy
+          passed over: retreat 15.7, retreat 15.7, attach 10, attach 8.4, attach 6
+          Cassia retreats Ninetales B; Ninetales A is now Active.
+  AI      attach   [12]
+          holding: Chansey, Pidgey, Charmander, Fire Energy
+          passed over: attach 10, attach 8.4, attach 6, attach 6, attach 6
+          Cassia attaches Fire Energy to Ninetales B.
+  AI      attack:Lure   [14]
+          holding: Chansey, Pidgey, Charmander
+          Ninetales uses Lure.
+          Jynx is dragged into the Active spot.
+
+--- Turn 48 — You -------------------------------
+          You draws a card. (22 left)
+          You plays Bill.
+          You draws 2.
+          Jynx uses Doubleslap.
+          Coin flip (coin 1/2): HEADS
+          Coin flip (coin 2/2): TAILS
+          1 head(s) -> 10 damage.
+          Ninetales takes 10. (70/80 left)
+
+--- Turn 49 — Cassia ----------------------------
+          Cassia draws a card. (4 left)
+  AI      trainer   [12]
+          holding: Chansey, Pidgey, Charmander, Energy Retrieval
+          passed over: retreat -27, retreat -27, retreat -27, retreat -27, retreat -61
+          Cassia plays Energy Retrieval.
+          Energy Retrieval: recovered 2 basic Energy.
+  AI      attach   [10]
+          holding: Pidgey, Charmander, Fire Energy, Fire Energy
+          passed over: attach 10, attach 8.4, attach 8.4, attach 6, attach 6
+          Cassia attaches Fire Energy to Vulpix.
+  AI      attack:Lure   [14]
+          holding: Pidgey, Charmander, Fire Energy
+          Ninetales uses Lure.
+          Kadabra is dragged into the Active spot.
+
+--- Turn 50 — You -------------------------------
+          You draws a card. (19 left)
+          Kadabra uses Super Psy.
+          Ninetales takes 50. (20/80 left)
+
+--- Turn 51 — Cassia ----------------------------
+          Cassia draws a card. (3 left)
+  AI      attach   [22]
+          holding: Pidgey, Charmander, Fire Energy, Bill
+          passed over: retreat 15.7, retreat 15.7, attach 8.4, attach 6, attach 6
+          Cassia attaches Fire Energy to Vulpix.
+  AI      retreat   [15.7]
+          holding: Pidgey, Charmander, Bill
+          passed over: retreat 15.7, retreat 11.2, retreat 5.7, retreat -2.3, trainer -101.1
+          Cassia retreats Ninetales A; Chansey B is now Active.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Pidgey, Charmander, Bill
+          Cassia ended the turn without attacking.
+
+--- Turn 52 — You -------------------------------
+          You draws a card. (18 left)
+          You plays Gust of Wind.
+          Cassia's Ninetales B is dragged into the Active spot.
+          Kadabra uses Super Psy.
+          Ninetales takes 50. (0/80 left)
+          Ninetales is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [50.3]
+          holding: Pidgey, Charmander, Bill
+          passed over: promote 50.3, promote 15.5, promote 7.3, promote -11.5
+          Cassia promotes Chansey A to Active.
+
+--- Turn 53 — Cassia ----------------------------
+          Cassia draws a card. (2 left)
+  AI      bench   [2]
+          holding: Pidgey, Charmander, Bill, Bill
+          passed over: bench 2, trainer -140, trainer -140
+          Cassia benches Pidgey.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Charmander, Bill, Bill
+          Cassia ended the turn without attacking.
+
+--- Turn 54 — You -------------------------------
+          You draws a card. (17 left)
+          You plays Gust of Wind.
+          Cassia's Ninetales is dragged into the Active spot.
+          Kadabra uses Super Psy.
+          Ninetales takes 50. (0/80 left)
+          Ninetales is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [50.3]
+          holding: Charmander, Bill, Bill
+          passed over: promote 50.3, promote -29.5, promote -37.7, promote -37.7
+          Cassia promotes Chansey B to Active.
+
+--- Turn 55 — Cassia ----------------------------
+          Cassia draws a card. (1 left)
+  AI      attach   [9]
+          holding: Charmander, Bill, Bill, Fire Energy
+          passed over: attach 6, attach 6, attach 6, bench 2, attach -2
+          Cassia attaches Fire Energy to Chansey B.
+  AI      bench   [2]
+          holding: Charmander, Bill, Bill
+          passed over: retreat -17, retreat -35.9, retreat -59, retreat -59, trainer -140
+          Cassia benches Charmander.
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Bill, Bill
+          Cassia ended the turn without attacking.
+
+--- Turn 56 — You -------------------------------
+          You draws a card. (16 left)
+          You benches Mewtwo.
+          You attaches Psychic Energy to Jynx.
+          Kadabra uses Super Psy.
+          Resistance: -30 -> 20.
+          Chansey takes 20. (100/120 left)
+
+--- Turn 57 — Cassia ----------------------------
+          Cassia draws a card. (0 left)
+  AI      pass — no attack available — Scrunch: Not enough Energy; Double-edge: Not enough Energy   [0]
+          holding: Bill, Bill, Charmander
+          Cassia ended the turn without attacking.
+
+--- Turn 58 — You -------------------------------
+          You draws a card. (15 left)
+          You plays Bill.
+          You draws 2.
+          You attaches Psychic Energy to Jynx.
+          Kadabra uses Super Psy.
+          Resistance: -30 -> 20.
+          Chansey takes 20. (80/120 left)
+
+--- Turn 59 — Cassia ----------------------------
+          GAME OVER - You wins: Cassia could not draw a card
+
+==========================================================
+RESULT   You wins — Cassia could not draw a card
+         59 turns
+
+==========================================================
+PACKS OPENED
+
+  Base Set
+    Full Heal  Uncommon
+    Dewgong  Uncommon
+    Grass Energy  
+    Psychic Energy  
+    Sandshrew  Common
+    Machop  Common
+    Bulbasaur  Common
+    Devolution Spray  Rare
+
+  Base Set
+    Dewgong  Uncommon
+    Magikarp  Uncommon  [sh]
+    Grass Energy  
+    Fire Energy  
+    Potion  Common
+    Gastly  Common  [rh]
+    Bill  Common
+    Lass  Rare

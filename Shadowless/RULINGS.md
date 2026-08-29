@@ -46,6 +46,7 @@ enough to settle a call in plain English, so ask him — he can be a resource on
 | A promo's name does not decide whether it can evolve — the WotC ruling does | [PROMO-EVOLUTION.md](Rulings/PROMO-EVOLUTION.md) |
 | A card that reads the real world gets a fixed stand-in, declared once | [VARIABLE-ATTACK-DAMAGE.md](Rulings/VARIABLE-ATTACK-DAMAGE.md) |
 | Chain Reaction answers YOUR evolutions, not the opponent's | [CHAIN-REACTION-ALLIED-ONLY.md](Rulings/CHAIN-REACTION-ALLIED-ONLY.md) |
+| Defender blunts an attack's self-harm, and is used up if it spends its whole 20 | [DEFENDER-BLUNTS-SELF-HARM.md](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -129,6 +130,8 @@ that matches.
 | **Some answers are a lookup and not a principle**, and saying so is the ruling — where a source ruled case by case, no derivable rule exists and an exception list is the honest shape | [promo evolution](Rulings/PROMO-EVOLUTION.md) |
 | **A card reading state the game does not model gets a declared constant** — not a new system, and not a deletion of the card's point | [`_____`'s Pikachu](Rulings/VARIABLE-ATTACK-DAMAGE.md) |
 | **An unqualified trigger is owner-scoped unless the card says otherwise** — every other trigger in the engine is, and the one exception says "opponent" in its own name | [Chain Reaction](Rulings/CHAIN-REACTION-ALLIED-ONLY.md) |
+| **A card's printed qualifier defines its whole scope** — Defender says *after applying Weakness and Resistance*, so the band IS the W/R band and anything skipping W/R skips it. Confusion, Poison and an attachment cost all fall outside for free | [Defender, self-harm](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
+| **A question that DISSOLVES beats a question answered** — two readings that differ only where the timing cannot reach are one reading, and the implementation takes the one with fewer conditions | [Defender, consumption](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
 
 ## What *settled with Trevor* means
 

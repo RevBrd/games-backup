@@ -33,6 +33,7 @@ Faults and behaviour, from Trevor's play. [AI.md](AI.md) has what the scorer alr
 - Best value would have been for the AI to attach its opening water energy to Lickitung, its starter, a very solid tank that can paralyze - log# 04-00-06
 - Zapdos gets a fire energy even though it doesn't want those - log# 04-16-31
 - Gengar had no reason to retreat - log# 03-08-27
+- Chansey ended the turn without attacking instead of using Scrunch, possibly because it priced its resistance to take no damage from Alakazam's attack. But it should still do it anyway because it would protect from any attack on my turn, even if I switched pokemon. Also, Charizard came in wayyyyy too early. It had more than enough time to pile up energies while Chansey stalled, especially since I couldn't even damage Chansey. It then retreated Charizard for no reason, costing it all of its energy when it needs to 4 to attack and to Over-Attack as many as possible before then. I can see why this deck loses matches in the sims. Also used Bill when dangerously low on cards and much lower than me. Ninetales also used Lure to draw out a much more dangerous pokemon on turn 49 - log# 04-02-53
 
 
 ### The screen
@@ -66,12 +67,6 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
 - Attaching an energy or applying an item to a pokemon needs to not be canceled by the item clicked underneath it.
 - In the deck building screen, we need a way to zoom in on a card to read the move or view the scan
 
-
-### Rules
-
-A rules call rather than a bug, and Trevor has offered to talk it through.
-
-- Defender should also defend from self-harm the turn that it's placed, per GBC. If it takes 20 damage from self-harm, it's used up. If it takes 10 damage, it's free. We can talk about this one if you want.
 
 ### Parked and kept
 

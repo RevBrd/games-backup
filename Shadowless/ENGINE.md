@@ -1,9 +1,13 @@
 # Shadowless — the engine's awkward-card machinery
 
 Depth behind the card rows in `CLAUDE.md`'s status table. Read this before adding cards, and
-before writing a special case for one — **nine systems** already exist for the shapes that do not fit
-the DSL, and every set after Base Set leans on them. **Three of the nine are Pokémon Powers and live
-in [POWERS.md](POWERS.md)**; the other six are here.
+before writing a special case for one — **the shapes that do not fit the DSL already have machinery**,
+and every set after Base Set leans on it. **The Pokémon Powers are three of it and live in
+[POWERS.md](POWERS.md)**; the rest are the headings below.
+
+*(This said "nine systems", "three of the nine" and "the other six" until a tenth was added on
+29 Aug 2026 — three numbers to keep in step across two files, in a file that warns about exactly this
+two paragraphs down. **The headings are the count.**)*
 
 Ordinary cards need none of this. A `cards.js` entry plus an `effects.js` entry is the whole job,
 and the DSL verb reference is the comment block at the top of `effects.js` — **larger than most
@@ -58,11 +62,11 @@ and how many print rules text implemented verbatim somewhere live. It is a **low
 construction, and its control is the live sets, which must each report zero novel — see
 [TOOLING.md](TOOLING.md).
 
-## The nine systems
+## The systems
 
 ### The three kinds of Pokémon Power — [POWERS.md](POWERS.md)
 
-**Three of the nine are Powers, and they are three mechanisms rather than three flavours of one.**
+**The Powers are three of these, and they are three mechanisms rather than three flavours of one.**
 An **interactive** Power is offered as an action and the player chooses it. A **triggered** Power is
 never chosen — there is a definite moment it happens. A **passive** Power is never *fired* at all;
 it is consulted at the moment the answer matters, which is Muk's Toxic Gas being switchable from
@@ -216,6 +220,26 @@ enumerates the legal payments, `retreatPayOrder` picks the fallback out of that 
 `retreatChoiceIsReal` decides whether the player is asked at all. **The fallback must be chosen from
 the enumeration rather than constructed**, and that is not style: a greedy version could build a
 payment `doRetreat` then refused as redundant, which hung 26% of ladder games in a retreat loop.
+
+### `selfDamage` — an attack's self-harm is damage done by an attack
+
+Added 29 Aug 2026. **The three recoil sites and one more all route through it**, and it applies the
+`DAMAGE_REDUCTION` band to the attacker's own slot — so a Defender on your Arcanine turns Take Down's
+30 recoil into 10, and is discarded if it spends its whole 20 doing so.
+
+**The scope rule is generated rather than listed, and it is worth knowing before you add a
+self-damaging card.** Defender prints *"after applying Weakness and Resistance"*, so the band is the
+W/R band: **anything that skips W/R skips this.** Confusion's 30 is a flat add that never reaches
+`computeDamage`, Poison is a between-turns clock, Rainbow's 10 lands on attachment. None of the three
+comes through here and none should. *[The ruling, the scope table and the invented half
+→](Rulings/DEFENDER-BLUNTS-SELF-HARM.md)*
+
+**Consumption is a property of the CARD, not of the effect.** `e.card` is what separates a Defender
+that gets discarded from a Minimize that runs to its own expiry, and it was already in the data.
+
+**Wiring a new self-damaging card means calling `selfDamage`, not `atk.dmg +=`.** Two sites in the
+engine still add directly and both are correct — Confusion's penalty, and Thunderstorm's log line
+before it defers. Grep `selfDamage` for the live set rather than trusting a count here.
 
 ## A question this raised, and the answer
 

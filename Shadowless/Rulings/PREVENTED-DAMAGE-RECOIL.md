@@ -53,6 +53,13 @@ It has an assertion now so it stays true rather than staying lucky.
 
 ## Where it lives
 
+**Those three sites now route through `selfDamage`, and there is a fourth.** Zapdos' Thunderstorm
+self-damages per tail under a different verb and was never enumerated here — see
+[DEFENDER-BLUNTS-SELF-HARM.md](DEFENDER-BLUNTS-SELF-HARM.md), which also carries the rule that an
+attack's self-damage now passes the DAMAGE_REDUCTION band. **Grep `selfDamage` for the live set
+rather than trusting the number in the next sentence.** Nothing below changed: the `stopped` gate
+still governs whether recoil happens at all, and the band only shapes it once it does.
+
 `runAttack` in `engine.js` has **three** recoil sites — a pending one applied straight after the
 damage step, plus `RECOIL` and `RECOIL_ON_FLIP` in the post-damage verb loop — and all three are
 gated on the same `stopped` flag. `RECOIL_ON_FLIP` skips its coin entirely rather than rolling one

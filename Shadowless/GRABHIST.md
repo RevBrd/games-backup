@@ -32,6 +32,7 @@ inform — which is how this file reached **649** the first time and **526** the
 
 | When | Instance | Items |
 |---|---|---|
+| 29 Aug 2026 | #30, Job 14a | Defender blunts an attack's own self-harm — a question that dissolved on timing, a scope line two existing files generated between them, and a fourth self-damage site nobody had enumerated |
 | 26 Aug 2026 | #27, Job 12d | The pack reveal, where the tier jump had been rendering a second hero card wherever it landed — and three reservations that were guessed |
 | 26 Aug 2026 | *retired by Trevor* | Two AI items taken off the list as out of date, preserved here because neither diagnosis existed anywhere else |
 | 24 Aug 2026 | #25, Job 12b | The pack odds, which were fine — and the 200,000-pack suite that covered one set of four and never once used the RNG the game runs on |
@@ -39,6 +40,64 @@ inform — which is how this file reached **649** the first time and **526** the
 | 23 Aug 2026 | #25, Job 12b | The centre line, which turned out to be the mat's shock absorber; the setup Active that was a bar because its bottom half was empty; the booster reveal climbing 61px as you turned cards over |
 | *19–21 Aug* | *#20, #21* | *[Archive 2](GRABHIST-ARCHIVE-2.md) — Jobs 10.5 and 11, its own index at the top* |
 | *13–17 Aug* | *#12, #16, #17* | *[Archive 1](GRABHIST-ARCHIVE-1.md) — five passes, its own index at the top* |
+
+---
+
+### 29 Aug 2026 — Opus 5 #30 (Defender, and the fourth self-damage site)
+
+> *"Defender should also defend from self-harm the turn that it's placed, per GBC. If it takes 20
+> damage from self-harm, it's used up. If it takes 10 damage, it's free. We can talk about this one
+> if you want."*
+
+**A rules call rather than a bug, and it went the way the note said.** Built 29 Aug 2026 after a
+conversation. *[The ruling, its scope table and the invented half →](Rulings/DEFENDER-BLUNTS-SELF-HARM.md)*
+
+**The premise checked out exactly.** `RECOIL` did `atk.dmg += v.n` and never touched
+`computeDamage`, which is where `DAMAGE_REDUCTION` lives — so a Defender genuinely could not see your
+own recoil, and there was nothing to argue about on that half.
+
+**The interesting part was a question that dissolved.** I asked whether Defender should be consumed
+only by the holder's own attack damage or by any 20+ hit, and recommended self-harm only. Trevor's
+answer was that the timing makes it moot: the card is live for the rest of your turn plus the
+opponent's next turn, so the window contains **at most one self-harm event and at most one opponent
+attack, in that order**. Consumption from the opponent's side always coincides with the natural
+expiry. **So the two readings are behaviourally identical and the implementation takes the one with
+no source check**, which is one condition instead of two. Worth writing down as a shape: when two
+readings differ only where the timing cannot reach, they are one reading, and the cheaper one wins on
+no other grounds than being cheaper.
+
+**I came in against the consumption half and changed my mind, which is the other half of this
+entry.** It is a mechanic nothing else in the reduction band has — Minimize, Pounce, Snivel and
+Defender itself are all duration effects — and `RULINGS.md`'s tiebreaker explicitly prefers fewer
+live dependencies. Trevor's counter is the argument: **without consumption this is a free buff.**
+You would always want a Defender on a Take Down Arcanine and there would be no decision in it.
+Consumption is the price that turns a buff into a choice.
+
+**The scope line generated itself and I did not expect that.** Defender prints *"(after applying
+Weakness and Resistance)"*, and `engine.js`'s confusion code already carries the comment *"Never
+Weakness or Resistance: Confusion damage is not an attack's."* Those two sentences together give a
+derivable boundary — **anything that skips W/R skips Defender** — which settles Confusion, Poison and
+Rainbow Energy's attach damage without three separate judgement calls. **Two facts already in the
+tree, neither written for this, answering a question neither was about.**
+
+**A fourth self-damage site turned up.** `Rulings/PREVENTED-DAMAGE-RECOIL.md` says `runAttack` has
+three recoil sites and is right about the `RECOIL` family; Zapdos' Thunderstorm self-damages per tail
+under `BENCH_SPLASH_PER_FLIP` and nobody had enumerated it. Routed through the same band. **Grep
+`selfDamage` for the live set rather than trusting a count, including the one in that sentence.**
+
+**Both directions of the boundary were watched going red before being trusted.** Sabotaging the
+reduction fails the four positive cases; the negative cases stay green — which is correct and also
+proves nothing, since a do-nothing implementation passes them too. So the Confusion case was then
+sabotaged the *other* way, by deliberately leaking Confusion into the band, and it went red. **A
+boundary test that has only ever been green has not been shown to be a boundary.**
+
+**The AI half was not optional and is recorded as unmeasured.** A rules capability the scorer cannot
+reach is a capability the bot does not have, and the standing invariant is that a rule proven in
+`scoreAttack` does not reach `scoreTrainer`. Priced through `shieldSelf`'s existing curve rather than
+a new one. It carries a known limit written into its entry rather than left to be found: **a Defender
+can unlock an attack the bot has already ruled out**, because `bestAttackScore` runs before the
+Trainer is played, so the term goes quiet exactly where the play is most interesting.
+*[The entry →](AI-INVARIANTS.md)*
 
 ---
 

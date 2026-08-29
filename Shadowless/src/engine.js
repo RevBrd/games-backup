@@ -3692,6 +3692,64 @@ class Engine {
   // for free — Weakness and Resistance are computed from `atk`, so a copied
   // attack really is Colorless — and makes "does N damage to itself" land on
   // Clefairy rather than on the Pokemon it was copied from.
+  // AN ATTACK'S SELF-DAMAGE IS DAMAGE DONE BY AN ATTACK, so it passes the same
+  // DAMAGE_REDUCTION band the attack's damage to its target passes — on the
+  // attacker's OWN slot. Settled with Trevor 29 Aug 2026; the ruling is in
+  // Rulings/DEFENDER-BLUNTS-SELF-HARM.md and it carries the scope table.
+  //
+  // The line is Defender's own text: "damage done to that Pokemon by attacks is
+  // reduced by 20 (AFTER APPLYING WEAKNESS AND RESISTANCE)". So the band is the
+  // W/R band, and the corollary is the thing to hold on to — ANYTHING THAT SKIPS
+  // W/R SKIPS THIS. Confusion's 30 is a flat add that never sees computeDamage
+  // (its own comment two functions up says so), Poison is a between-turns clock,
+  // and Rainbow Energy's 10 lands on attachment and is not an attack at all.
+  // None of the three comes through here, and none of them should.
+  //
+  // Deliberately NOT the whole defensive stack. Barrier, Harden, the halving
+  // family and the prevent-on-flip family are different verbs with different
+  // printed wording, and widening to them was not asked for and is not implied.
+  // The `DAMAGE_REDUCTION` kind holds exactly Defender and Minimize here;
+  // Pounce and Snivel carry `fromUid` and exclude themselves, because a
+  // reduction placed by somebody else is not a reduction against yourself.
+  //
+  // CONSUMPTION IS A PROPERTY OF THE CARD, NOT OF THE EFFECT. A Defender that
+  // fully spends its 20 is discarded there and then; Minimize is an attack's
+  // lingering effect with no card behind it and runs to its own expiry. `e.card`
+  // is what tells them apart and it was already in the data.
+  selfDamage(pi, slot, amount, label) {
+    if (amount <= 0) return 0;
+    let dmg = amount;
+    const spent = [];
+    for (const e of slot.effects) {
+      if (dmg <= 0) break;
+      if (e.kind !== 'DAMAGE_REDUCTION') continue;
+      if (e.fromUid !== undefined && slot.uid !== e.fromUid) continue;
+      const absorbed = Math.min(dmg, e.amount);
+      dmg -= absorbed;
+      this.log(`-${absorbed} from ${e.label || 'a shield'} -> ${dmg}.`, 'eff');
+      // "Used up" means it spent the whole 20, which is the phrasing Trevor
+      // settled on over "20 is consumed, 10 is free": same outcomes, and it
+      // still knows what to do if a card ever self-damages an amount that is
+      // not a multiple of the reduction.
+      if (e.card && absorbed >= e.amount) spent.push(e);
+    }
+    if (dmg < 0) dmg = 0;
+    if (spent.length) {
+      slot.effects = slot.effects.filter(e => !spent.includes(e));
+      for (const e of spent) {
+        this.state.players[pi].discard.push(e.card);
+        this.log(`${this.db[e.card.id].name} is used up and discarded.`, 'eff');
+      }
+    }
+    if (dmg > 0) {
+      slot.dmg += dmg;
+      this.log(`${label} does ${dmg} damage to itself. (${slot.dmg} total)`, 'eff');
+    } else {
+      this.log(`${label}'s self-damage is fully blunted.`, 'eff');
+    }
+    return dmg;
+  }
+
   runAttack(pi, atk, def, card, attack, script, a, opts = {}) {
     const s = this.state;
     const me = s.players[pi], you = s.players[1 - pi];
@@ -4099,8 +4157,7 @@ class Engine {
       this.log(`${this.nameOf(def)} took no damage, so ${card.name} takes no recoil.`, 'eff');
     }
     if (pendingRecoil > 0 && !stopped) {
-      atk.dmg += pendingRecoil;
-      this.log(`${card.name} does ${pendingRecoil} damage to itself. (${atk.dmg} total)`, 'eff');
+      this.selfDamage(pi, atk, pendingRecoil, card.name);
     }
 
     // post-damage verbs
@@ -4257,8 +4314,7 @@ class Engine {
           // announced to the player, and a coin nobody is bound by is noise.
           if (stopped) break;
           if (!this.flip(v.label || 'avoid recoil?')) {
-            atk.dmg += v.n;
-            this.log(`${card.name} does ${v.n} damage to itself. (${atk.dmg} total)`, 'eff');
+            this.selfDamage(pi, atk, v.n, card.name);
           }
           break;
         case 'HARDEN':
@@ -4288,8 +4344,8 @@ class Engine {
         }
         case 'RECOIL':
           if (stopped) break;
-          atk.dmg += v.n;
-          this.log(`${card.name} does ${v.n} damage to itself. (${atk.dmg} total)`, 'eff'); break;
+          this.selfDamage(pi, atk, v.n, card.name);
+          break;
         // A PLAIN self-heal, unconditional. Deliberately NOT HEAL_SELF_IF_DAMAGED,
         // which is Leech Seed's verb and consults `res.prevented` because Leech
         // Seed's own text ties the heal to the damage it dealt. First Aid deals no
@@ -4520,8 +4576,16 @@ class Engine {
             else tails++;
           }
           if (tails > 0) {
-            atk.dmg += tails * v.selfPerTail;
-            this.log(`${tails} tail(s): ${card.name} takes ${tails * v.selfPerTail}. (${atk.dmg} total)`, 'eff');
+            // A FOURTH SELF-DAMAGE SITE, and the recoil ruling never enumerated
+            // it — it says "three recoil sites" and means the RECOIL-family
+            // verbs. This is Thunderstorm's own coins, so it is not gated on
+            // `stopped` (the attacker's bad luck, same principle as Tauros) but
+            // it IS an attack damaging its own Pokemon, so it goes through the
+            // reduction band like the other three. Found 29 Aug 2026 while
+            // wiring Defender; grep `selfDamage` for the full set rather than
+            // trusting a count anywhere.
+            this.log(`${tails} tail(s) against ${card.name}.`, 'eff');
+            this.selfDamage(pi, atk, tails * v.selfPerTail, card.name);
           }
           break;
         }

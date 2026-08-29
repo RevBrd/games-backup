@@ -1,7 +1,7 @@
 # Shadowless — the three kinds of Pokémon Power
 
 **Read this before adding a card that carries a Power, and before assuming a Power has to be
-*fired*.** Three of the nine systems in [ENGINE.md](ENGINE.md) are Powers, and they are three
+*fired*.** Three of the systems in [ENGINE.md](ENGINE.md) are Powers, and they are three
 different mechanisms rather than three flavours of one — which is the thing to hold on to, because
 the mistake is always to file a new one under the wrong kind.
 

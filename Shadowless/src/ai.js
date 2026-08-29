@@ -3597,6 +3597,38 @@ class AI {
           a.opts.targetUid = me.active.uid;
           s += danger > 0 ? 8 : -2;
           if (danger >= this.remainingHP(me.active) && danger - 20 < this.remainingHP(me.active)) s += 26;
+
+          // DEFENDER ALSO BLUNTS THE ATTACK WE ARE ABOUT TO MAKE — 29 Aug 2026,
+          // settled with Trevor. A Defender on a Take Down Arcanine turns 30
+          // recoil into 10, at the price of the card being used up before their
+          // turn. Without this the bot owns a capability it can never reach for,
+          // which is the silent-failure surface arriving in `scoreTrainer` — and
+          // the standing invariant is that a rule proven in `scoreAttack` does
+          // NOT reach this function on its own.
+          //
+          // PRICED AS THE BARRIER IT IS, reusing `shieldSelf`'s own curve rather
+          // than inventing a second notion of prevented self-damage: linear in
+          // the damage stopped, squared in the share of remaining HP it stops,
+          // off `selfKO`. Those two curves disagree on purpose and the reason is
+          // in AI.md's cliff table — a quantity is linear, a risk is squared.
+          //
+          // The attack is read the way `T_PLUSPOWER` directly above reads it,
+          // through `bestAttackScore` + `forecast`. That is deliberately the
+          // attack the bot would pick ANYWAY rather than the worst self-harm it
+          // could choose: over-stating the recoil here would buy Defenders for
+          // attacks it was never going to use, and the failure this closes is a
+          // capability never used at all, so the conservative direction is the
+          // safe one.
+          const best = this.bestAttackScore(pi);
+          if (best && best.idx >= 0) {
+            const f = this.forecast(pi, best.idx);
+            if (f && f.selfDmg > 0) {
+              const stopped = Math.min(20, f.selfDmg);
+              const left = this.remainingHP(me.active);
+              const frac = left > 0 ? Math.min(1, stopped / left) : 1;
+              s += 1.4 * (stopped / 20) * W.shieldSelf + frac * frac * W.selfKO;
+            }
+          }
           break;
         }
 

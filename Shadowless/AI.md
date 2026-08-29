@@ -226,6 +226,7 @@ which is what keeps a split from costing anybody a search.
 | 28 Aug | **Ammunition is only ammunition if you have nothing else to shoot with.** The discard verb was too wide a derivation on its own — a card that DRAINS and owns a free attack stockpiles nothing | `ammoSymbols` |
 | 28 Aug | **A Pokemon about to become something else is not paid up.** Shortfall is measured against the evolution when it is in hand, and `evolve` waits until one Energy short of it. Shipped on a measured NULL | `evolutionInHand`, `potentialAs`, `evolveEarly` |
 | 28 Aug | **One of the twins gets fed.** The evolution ROAD is rationed to the most-invested copy that is not yet ready — the other keeps its own road, so it is resistant and never blocked | `evolutionRoadFor`, `benchDuplicate` |
+| 29 Aug | **A shield is a shield whichever direction the damage comes from.** Defender now blunts your own recoil, priced through `shieldSelf`'s curve rather than a second one — and it reads the attack the bot would pick anyway, which is the opposite choice from `pLethalThisTurn` for the same reason | `T_DEFENDER` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn

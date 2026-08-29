@@ -6181,5 +6181,127 @@ T('an attack lost to Confusion still counts as attacking', () => {
   return noAtkLines(E).length === 0;
 });
 
+// ------------------------------------------- Defender blunts self-harm -----
+// Settled with Trevor 29 Aug 2026. An attack's self-damage is damage done BY AN
+// ATTACK, so it passes the same DAMAGE_REDUCTION band the attack's damage to its
+// target passes, on the attacker's own slot — and a Defender that fully spends
+// its 20 is discarded there and then.
+//
+// THE NEGATIVE CASES ARE THE POINT, as usual in this file. The band is defined
+// by Defender's own "(after applying Weakness and Resistance)", so the rule is
+// that anything skipping W/R skips this. Confusion and Poison are the two that
+// prove it, and both are asserted below — if either ever starts being blunted,
+// the scope has leaked and the ruling has quietly changed.
+// See Rulings/DEFENDER-BLUNTS-SELF-HARM.md.
+const defenderOn = (E, slot) => {
+  slot.effects.push({
+    kind: 'DAMAGE_REDUCTION', amount: 20, label: 'Defender',
+    expireAtEndOfTurn: E.state.turn + 1, card: { id: 'base1-80', uid: 8801 },
+  });
+};
+// Attack, returning [self-damage taken, Defender still attached, Defender in discard].
+const selfHarm = (activeId, atkIdx, energy, withDefender, oppId = 'base1-58') => {
+  const E = board(activeId, [], oppId);
+  E.state.turn = 4;
+  const me = E.state.players[0];
+  me.active.energy = energy.map((id, i) => ({ uid: 8810 + i, id }));
+  if (withDefender) defenderOn(E, me.active);
+  const before = me.active.dmg;
+  const r = E.act(0, { t: 'attack', idx: atkIdx });
+  if (!r.ok) throw new Error('attack refused: ' + r.error);
+  return [me.active.dmg - before,
+          me.active.effects.some(e => e.label === 'Defender'),
+          me.discard.some(c => c.id === 'base1-80')];
+};
+const FIRE = 'base1-98', FIGHT = 'base1-97', PSY = 'base1-101';
+
+T('without a Defender, recoil is unchanged', () => {
+  const [dmg] = selfHarm('base1-23', 1, [FIRE, FIRE, FIRE, FIRE], false);   // Arcanine, Take Down
+  return eq(dmg, 30, 'Take Down recoil');
+});
+
+T('a Defender blunts recoil by 20 and is used up by it', () => {
+  const [dmg, still, discarded] = selfHarm('base1-23', 1, [FIRE, FIRE, FIRE, FIRE], true);
+  eq(dmg, 10, 'Take Down recoil through a Defender');
+  eq(still, false, 'Defender still attached');
+  return eq(discarded, true, 'Defender in the discard');
+});
+
+// The threshold, stated as "it spent its whole 20" rather than as the number 20 —
+// Trevor's phrasing, and it is what makes the rule survive a card that
+// self-damages an amount the reduction does not divide.
+T('recoil of exactly 20 is fully blunted AND uses the Defender up', () => {
+  const [dmg, still, discarded] = selfHarm('base1-34', 1, [FIGHT, FIGHT, FIGHT, FIGHT], true);  // Machoke, Submission
+  eq(dmg, 0, 'Submission recoil through a Defender');
+  eq(still, false, 'Defender still attached');
+  return eq(discarded, true, 'Defender in the discard');
+});
+
+T('recoil UNDER 20 is free — the Defender survives at full strength', () => {
+  const [dmg, still, discarded] = selfHarm('base3-33', 1, [PSY, PSY], true);   // Fossil Gastly, Energy Conversion
+  eq(dmg, 0, 'Energy Conversion recoil through a Defender');
+  eq(still, true, 'Defender still attached');
+  return eq(discarded, false, 'Defender NOT discarded');
+});
+
+// --- the boundary: anything that skips Weakness and Resistance skips this ---
+
+T('Confusion self-damage is NOT blunted, and does not spend the Defender', () => {
+  const E = board('base1-23', [], 'base1-58');
+  E.state.turn = 4;
+  const me = E.state.players[0];
+  me.active.energy = [FIRE, FIRE, FIRE].map((id, i) => ({ uid: 8830 + i, id }));
+  me.active.status.confused = true;
+  defenderOn(E, me.active);
+  E.dev.forceFlip = 'T';                       // tails: the attack fails and it hits itself
+  const before = me.active.dmg;
+  E.act(0, { t: 'attack', idx: 0 });
+  E.dev.forceFlip = null;
+  eq(me.active.dmg - before, 30, 'Confusion self-damage');
+  return eq(me.active.effects.some(e => e.label === 'Defender'), true, 'Defender survives');
+});
+
+T('Poison is NOT blunted by a Defender', () => {
+  const E = board('base1-58', [], 'base1-23');
+  E.state.turn = 4;
+  const me = E.state.players[0];
+  me.active.status.poisoned = true;
+  defenderOn(E, me.active);
+  const before = me.active.dmg;
+  E.act(0, { t: 'pass' });
+  return eq(me.active.dmg - before, 10, 'Poison damage through a Defender');
+});
+
+// A reduction somebody ELSE placed is not a reduction against yourself. Pounce
+// and Snivel carry `fromUid`, and they exclude themselves for free — asserted
+// so that a future refactor of the band cannot quietly widen them into it.
+T('a fromUid reduction does not blunt your own recoil', () => {
+  const E = board('base1-23', [], 'base1-58');
+  E.state.turn = 4;
+  const me = E.state.players[0], them = E.state.players[1];
+  me.active.energy = [FIRE, FIRE, FIRE, FIRE].map((id, i) => ({ uid: 8840 + i, id }));
+  me.active.effects.push({ kind: 'DAMAGE_REDUCTION', amount: 20, label: 'Pounce',
+                           fromUid: them.active.uid, expireAtEndOfTurn: E.state.turn + 1 });
+  const before = me.active.dmg;
+  E.act(0, { t: 'attack', idx: 1 });
+  return eq(me.active.dmg - before, 30, 'Take Down recoil under a Pounce');
+});
+
+// Minimize is an attack's lingering effect with no card behind it, so it blunts
+// and is NEVER consumed — consumption is a property of the CARD, which is what
+// `e.card` says. Getting this wrong would expire a duration effect early.
+T('Minimize blunts recoil and is not consumed by it', () => {
+  const E = board('base1-23', [], 'base1-58');
+  E.state.turn = 4;
+  const me = E.state.players[0];
+  me.active.energy = [FIRE, FIRE, FIRE, FIRE].map((id, i) => ({ uid: 8850 + i, id }));
+  me.active.effects.push({ kind: 'DAMAGE_REDUCTION', amount: 20, label: 'Minimize',
+                           expireAtEndOfTurn: E.state.turn + 1 });
+  const before = me.active.dmg;
+  E.act(0, { t: 'attack', idx: 1 });
+  eq(me.active.dmg - before, 10, 'Take Down recoil under a Minimize');
+  return eq(me.active.effects.some(e => e.label === 'Minimize'), true, 'Minimize survives');
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
