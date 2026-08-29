@@ -211,3 +211,27 @@ measured your own patience.
 **And the report rounds.** 0.26% displaying as `0%` is the same trap arriving a second time in the
 same afternoon, from the formatter rather than from the sample. A counter that can print zero for a
 non-zero quantity needs either a decimal or a raw count beside it.
+
+**A correlation over three points is not a correlation, and the tier with the interesting result is
+always the one with fewest members.** *29 Aug 2026.* The three T4 bosses assemble at 89% / 76% / 53%
+and finish 12th / 10th / 9th of nineteen — a perfect inverse ordering, which got written into two
+files as *"a boss that assembles more reliably wins less."* Checked against all fourteen decks that
+have a centrepiece within the hour, Pearson r is **+0.31**, and **+0.60 within T2 and +0.76 within
+T3**. Assembling your centrepiece helps, and it helps more the higher the tier is built. The −0.91
+inside T4 is three points; any three non-collinear points produce a large coefficient.
+
+**The pull is structural rather than careless.** The finding you want to write up lives in the group
+that is interesting *because* it is small — one boss per roster, by design. So the temptation to
+generalise is strongest exactly where the sample cannot carry it, every time, and it does not feel
+like extrapolating: three out of three reads as unanimous rather than as n=3.
+
+**What actually survived is a LEVEL difference, not a relationship** — T4 assembles at 73% against
+T3's 50% and wins 48.7% against 57.6%. That is a comparison of means over nineteen decks and it holds.
+**Ask which shape your claim is** before writing it: *these two quantities move together* needs a
+sample, *this group sits above that group* needs only the groups.
+
+**And the second trap in the same block, which nearly landed too.** Computing the tier means over only
+the decks that *have* a centrepiece put T2 at 58.3% — above T3 — because the five decks with no
+centrepiece sit mostly at the bottom of the standings, so excluding them is selection on the outcome.
+`decksim.js` prints tier averages over every deck it ran. **Take the tier average from the tool, never
+from a filtered subset of its rows.**

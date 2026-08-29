@@ -331,8 +331,10 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   AI invariants got their second archive, nine claims were found stating something their own data
   refuted, and the **Fossil roster turned out never to have been measured at all** while two files
   said every roster had been. Running it produced the most useful thing the pass found: across three
-  rosters in one field, **every T4 boss lands below every roster's best T3, and the better a boss
-  assembles the worse it finishes.** That is an AI question and it is [ROSTERS.md](ROSTERS.md)'s.
+  rosters in one field, **T4 decks are the best in the field at assembling their centrepiece and the
+  worst at converting it** — 73% assembly against T3's 50%, for 48.7% wins against T3's 57.6%. That is
+  an AI question and it is [ROSTERS.md](ROSTERS.md)'s. Stage 2 reliance was checked and is not the
+  cause; a stronger first version of the claim was corrected the same day and both are recorded.
   See [CREDITS.md](CREDITS.md) #30. **The grab bag half is not started.**
 - **Job 14b** - AI validation work.
 - **Job 15a** - Adding the Challenge 1 bracket.

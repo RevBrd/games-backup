@@ -122,10 +122,16 @@ What the spec learned:
   each other and all three sit below every roster's best T3** — 49.9 / 49.2 / 47.1 against a T3
   average of 57.6. One roster could not say that; three can. **Do not "fix" it by weakening the T3
   decks**, which are the part that works.
-- **A boss that assembles more reliably wins LESS, across all three.** Gengar lands in 89% of games,
-  Vileplume 76%, Charizard 53% — and they finish in exactly that order, worst first. **That is an AI
-  question, not a deck question**, and it is the most concrete thing four rosters have produced.
-  *[The three-boss table and what survives the round-robin confound →](ROSTERS.md)*
+- **T4 decks are the best in the field at ASSEMBLING and the worst at CONVERTING** — mean assembly
+  73% against T3's 50% and T2's 40%, for a mean win rate of 48.7% against T3's 57.6%. The bosses
+  arrive, reliably and on time, and then do not win. **That is an AI question, not a deck question**,
+  and it is the most concrete thing four rosters have produced.
+  *(Stated as a level difference between tiers on purpose. The first version of this bullet said
+  assembly and winning were **anti-correlated**, off the three bosses alone; across all fourteen decks
+  that have a centrepiece the correlation is **+0.31**, and it is +0.60 within T2 and +0.76 within T3.
+  Assembling helps. **Corrected the same day it was written**, which is the only reason it is worth
+  the parenthesis — a three-point correlation is not a correlation.)*
+  *[The tables, the correction, and the Stage 2 hypothesis this killed →](ROSTERS.md)*
 - **One clean run is not the spec vindicated**, and the file holding the numbers says so first: it
   was measured with the same bot that was last shown playing the whole field badly, so it is one data
   point pointing the right way rather than a result that survives the AI improving.

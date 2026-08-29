@@ -331,7 +331,15 @@ almost exactly the field average. **No single roster could say this.** Base Set'
 own T2 band read as one deck being mis-built; Jungle's read as a second; the third turns it into a
 statement about T4 **as a class**, which is a different question and a better one.
 
-**And the assembly figures point the opposite way to the standings, which is the part worth chasing.**
+**And the T4 decks are the best in the field at assembling and the worst at converting.** That is a
+**level** difference between the tiers, not a relationship inside them, and the distinction cost one
+wrong version the same afternoon — see the correction below.
+
+| | mean assembly | mean win% |
+|---|---|---|
+| T2 | 40% | 46.9 |
+| T3 | 50% | **57.6** |
+| T4 | **73%** | 48.7 |
 
 | Boss | Centrepiece | Lands | Median turn | Merged rank |
 |---|---|---|---|---|
@@ -339,16 +347,44 @@ statement about T4 **as a class**, which is a different question and a better on
 | `b2_t4_grass` | Vileplume | 76% | 18 | 10 of 19 |
 | `b1_t4_fire` | Charizard | 53% | 13 | 9 of 19 |
 
-**Assembly and win rate are inversely ordered across all three.** Gengar's 89% is the highest
-assembly rate ever recorded in this project and it finishes last of the three. `ROSTERS.md` has been
-carrying Jungle's version of this question since 21 Aug — *"either the pressure is worth less than it
-looks or the bot cannot press it"* — as a one-deck observation. **It is now a three-deck trend, and
-it survives the obvious objection**: a bot that plays the whole field badly should be *helped*, not
-hurt, by a deck that reliably assembles the thing it is built around. Something is wrong with what
-happens **after** the centrepiece lands, and that is an AI question rather than a deck question.
+**So the bosses arrive, reliably and on time, and then do not win.** This file has carried Jungle's
+one-deck version of that question since 21 Aug — *"either the pressure is worth less than it looks or
+the bot cannot press it"* — without anyone able to say whether it generalised. **Three bosses across
+three sets say it does**, and it survives the obvious objection: a bot that plays the whole field
+badly should be *helped*, not hurt, by a deck that reliably assembles the thing it is built around.
+**Something is going wrong after the centrepiece lands**, which is an AI question rather than a deck
+question.
 
-**Three points are three points, and the round-robin confound below still applies to every number on
-this page.** What changed is the shape of the question, not the confidence.
+**Stage 2 dependence is NOT the explanation, and it was the first thing checked.** Trevor raised it —
+Fossil leans on Stage 2 lines and perhaps the bot handles them badly. Mean Stage 2 count is **T2 0.5,
+T3 2.2, T4 2.0**: it separates T2 from the two tiers above it and does not separate T3 from T4, which
+is the boundary the anomaly sits on. Both upper tiers are Stage 2 decks and one of them wins by nine
+points. **A good hypothesis, cheaply killed, and worth recording so Job 14b does not spend a day on
+it.**
+
+#### The correction, kept because the wrong version is the more tempting one
+
+**The first draft of this section said assembly and winning were ANTI-correlated. That is not
+supported.** It was written off the three bosses in the table above, where the ordering is perfect and
+backwards. Checking it against all fourteen decks that have a centrepiece killed it:
+
+| | Pearson r, assembly vs win% |
+|---|---|
+| all 14 decks with a centrepiece | **+0.31** |
+| within T2 (6 decks) | +0.60 |
+| within T3 (5 decks) | +0.76 |
+| within T4 (3 decks) | −0.91 |
+
+**Assembling your centrepiece helps, and it helps MORE the higher the tier is built.** The −0.91 is
+three points, and any three points that are not collinear produce a large coefficient — it is not
+evidence of anything. **The tier means are the finding; the correlation was an artefact of quoting the
+smallest group in the set**, which is this tree's own favourite error wearing a statistic.
+
+**Two traps in one block, and the second nearly landed as well.** Taking tier means over only the
+decks that *have* a centrepiece puts T2 at 58.3% — above T3 — because the five decks with no
+centrepiece sit mostly at the bottom of the table, so dropping them is selection on the outcome. **The
+tier means above are `decksim`'s own, over all nineteen decks.** Take a tier average from the tool,
+never from a filtered subset of its rows.
 
 ### The benchmark reading from this run, and why it is NOT in `MEASUREMENT.md`'s table
 
