@@ -1,0 +1,323 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-29 04:21:18
+decks    you: Zap   opponent: Domino — Current Split
+opponent expert
+seed     2019024194   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Dark Magneton, Bill, Dark Vaporeon, Pokémon Trader, Ponyta, Fire Energy, Energy Retrieval
+  HIDDEN  your opening hand: Defender, Psychic Energy, Bill, Psychic Energy, Psychic Energy, Mr. Mime, Professor Oak
+  HIDDEN  opponent's Prizes: Magnemite, Eevee, Lightning Energy, Lightning Energy, Professor Oak, Double Colorless Energy
+  HIDDEN  your Prizes: Psychic Energy, Psychic Energy, Potion, Psychic Energy, Psychic Energy, Mewtwo
+  HIDDEN  opponent's opening board: Ponyta active, empty bench
+  HIDDEN  your opening board: Mr. Mime active, empty bench
+          New game. Seed 2019024194.
+          Coin flip (who goes first): HEADS
+          You will go first.
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (46 left)
+          You plays Bill.
+          You draws 2.
+          You benches Jynx.
+          You attaches Psychic Energy to Mr. Mime.
+          You ended the turn without attacking.
+
+--- Turn 2 — Domino ----------------------------
+          Domino draws a card. (46 left)
+  AI      attach   [23]
+          holding: Dark Magneton, Bill, Dark Vaporeon, Pokémon Trader, Fire Energy, Energy Retrieval, Fire Energy
+          Domino attaches Fire Energy to Ponyta.
+  AI      trainer   [14]
+          holding: Dark Magneton, Bill, Dark Vaporeon, Pokémon Trader, Energy Retrieval, Fire Energy
+          passed over: trainer 9.5
+          Domino plays Pokémon Trader.
+          Traded Dark Magneton for Dark Rapidash.
+  AI      trainer   [9.5]
+          holding: Bill, Dark Vaporeon, Energy Retrieval, Fire Energy, Dark Rapidash
+          Domino plays Bill.
+          Domino draws 2.
+  AI      bench   [26]
+          holding: Dark Vaporeon, Energy Retrieval, Fire Energy, Dark Rapidash, Eevee, Double Colorless Energy
+          Domino benches Eevee.
+  AI      pass — no attack available — Ember: Not enough Energy   [0]
+          holding: Dark Vaporeon, Energy Retrieval, Fire Energy, Dark Rapidash, Double Colorless Energy
+          Domino ended the turn without attacking.
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (43 left)
+          You attaches Psychic Energy to Mr. Mime.
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (0) -> 10 damage.
+          Ponyta takes 10. (40/50 left)
+
+--- Turn 4 — Domino ----------------------------
+          Domino draws a card. (43 left)
+  AI      evolve   [26.5]
+          holding: Dark Vaporeon, Energy Retrieval, Fire Energy, Dark Rapidash, Double Colorless Energy, Lapras
+          passed over: evolve 25, attach 18, attach 18, attach 15, attach 11
+          Ponyta evolves into Dark Rapidash. Special Conditions removed.
+  AI      attach   [35]
+          holding: Dark Vaporeon, Energy Retrieval, Fire Energy, Double Colorless Energy, Lapras
+          passed over: attach 31, evolve 25, attach 18, attach 18, bench 7
+          Domino attaches Fire Energy to Dark Rapidash.
+  AI      evolve   [25]
+          holding: Dark Vaporeon, Energy Retrieval, Double Colorless Energy, Lapras
+          passed over: bench 7, retreat -31
+          Eevee evolves into Dark Vaporeon. Special Conditions removed.
+  AI      bench   [7]
+          holding: Energy Retrieval, Double Colorless Energy, Lapras
+          passed over: retreat -31
+          Domino benches Lapras.
+  AI      attack:Rear Kick   [20]
+          holding: Energy Retrieval, Double Colorless Energy
+          passed over: attack:Flame Pillar 7
+          Dark Rapidash uses Rear Kick.
+          Mr. Mime takes 20. (20/40 left)
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (42 left)
+          You plays Defender.
+          Defender attached to Mr. Mime (-20 damage until the end of the opponent's next turn).
+          You benches Mewtwo.
+          You attaches Psychic Energy to Jynx.
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (1) -> 20 damage.
+          Dark Rapidash takes 20. (30/60 left)
+
+--- Turn 6 — Domino ----------------------------
+          Domino draws a card. (42 left)
+  AI      attach   [21]
+          holding: Energy Retrieval, Double Colorless Energy, Tentacool
+          passed over: retreat 12.2, retreat 12.2, bench 7, attach -2, attach -2
+          Domino attaches Double Colorless Energy to Dark Vaporeon.
+  AI      retreat   [12.2]
+          holding: Energy Retrieval, Tentacool
+          passed over: retreat 12.2, bench 7
+          Domino retreats Dark Rapidash; Dark Vaporeon is now Active.
+  AI      bench   [7]
+          holding: Energy Retrieval, Tentacool
+          Domino benches Tentacool.
+  AI      pass — no attack available — Bite: Not enough Energy; Whirlpool: Not enough Energy   [0]
+          holding: Energy Retrieval
+          Defender is discarded.
+          Domino ended the turn without attacking.
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (41 left)
+          You attaches Psychic Energy to Jynx.
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (0) -> 10 damage.
+          Dark Vaporeon takes 10. (50/60 left)
+
+--- Turn 8 — Domino ----------------------------
+          Domino draws a card. (41 left)
+  AI      attach   [11]
+          holding: Energy Retrieval, Lightning Energy
+          passed over: attach -2, attach -2, attach -2, retreat -17, retreat -17
+          Domino attaches Lightning Energy to Dark Vaporeon.
+  AI      pass — no attack was worth taking   [0]
+          holding: Energy Retrieval
+          passed over: attack:Bite 0
+          Domino ended the turn without attacking.
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (40 left)
+          You attaches Psychic Energy to Jynx.
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (1) -> 20 damage.
+          Dark Vaporeon takes 20. (30/60 left)
+
+--- Turn 10 — Domino ----------------------------
+          Domino draws a card. (40 left)
+  AI      attach   [22]
+          holding: Energy Retrieval, Water Energy
+          passed over: attach 22, retreat 11.7, retreat 10.7, retreat 10.7, attach -2
+          Domino attaches Water Energy to Lapras.
+  AI      retreat   [24.2]
+          holding: Energy Retrieval
+          passed over: retreat 11.7, retreat 10.7
+          Domino retreats Dark Vaporeon; Lapras is now Active.
+  AI      attack:Water Gun   [10]
+          holding: Energy Retrieval
+          Lapras uses Water Gun.
+          10 plus 10 per spare W Energy (0) -> 10 damage.
+          Mr. Mime takes 10. (10/40 left)
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Psychic Energy to Mewtwo.
+          Mr. Mime uses Meditate.
+          10 plus 10 per damage counter on the defender (0) -> 10 damage.
+          Lapras takes 10. (70/80 left)
+
+--- Turn 12 — Domino ----------------------------
+          Domino draws a card. (39 left)
+  AI      attach   [41.2]
+          holding: Energy Retrieval, Rainbow Energy
+          passed over: attach 7.6, trainer 6, attach -2, attach -2
+          Domino attaches Rainbow Energy to Dark Vaporeon.
+          Rainbow Energy does 10 damage to Dark Vaporeon.
+  AI      attack:Water Gun   [65]
+          holding: Energy Retrieval
+          Lapras uses Water Gun.
+          10 plus 10 per spare W Energy (0) -> 10 damage.
+          Mr. Mime takes 10. (0/40 left)
+          Mr. Mime is Knocked Out!
+          Domino takes a Prize. (5 left)
+          You promotes Jynx to Active.
+
+--- Turn 13 — You -------------------------------
+          You draws a card. (38 left)
+          You benches Abra.
+          You attaches Psychic Energy to Abra.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (1) -> 30 damage.
+          Lapras takes 30. (40/80 left)
+
+--- Turn 14 — Domino ----------------------------
+          Domino draws a card. (38 left)
+  AI      trainer   [6]
+          holding: Energy Retrieval, Lightning Energy, Dark Jolteon
+          passed over: attach 4.4, attach -2, attach -2, attach -2
+          Domino plays Energy Retrieval.
+          Energy Retrieval: recovered 1 basic Energy.
+  AI      attach   [4.4]
+          holding: Lightning Energy, Lightning Energy
+          passed over: attach 4.4, attach -2, attach -2, attach -2, attach -2
+          Domino attaches Lightning Energy to Lapras.
+  AI      attack:Water Gun   [10]
+          holding: Lightning Energy
+          Lapras uses Water Gun.
+          10 plus 10 per spare W Energy (0) -> 10 damage.
+          Jynx takes 10. (60/70 left)
+
+--- Turn 15 — You -------------------------------
+          You draws a card. (37 left)
+          You attaches Psychic Energy to Mewtwo.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (4) -> 60 damage.
+          Lapras takes 60. (0/80 left)
+          Lapras is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [23]
+          holding: Lightning Energy
+          passed over: promote 17.1, promote 13.6
+          Domino promotes Tentacool to Active.
+
+--- Turn 16 — Domino ----------------------------
+          Domino draws a card. (37 left)
+  AI      pass — no attack available — Acid: Not enough Energy   [0]
+          holding: Lightning Energy, Fire Energy
+          Domino ended the turn without attacking.
+
+--- Turn 17 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Psychic Energy to Abra.
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (0) -> 20 damage.
+          Tentacool takes 20. (10/30 left)
+
+--- Turn 18 — Domino ----------------------------
+          Domino draws a card. (36 left)
+  AI      retreat   [12.9]
+          holding: Lightning Energy, Fire Energy, Fire Energy
+          passed over: retreat 12.9, power:COWARDICE 8, attach -2, attach -2, attach -2
+          Domino retreats Tentacool; Dark Rapidash is now Active.
+  AI      attack:Flame Pillar   [37]
+          holding: Lightning Energy, Fire Energy, Fire Energy
+          passed over: attack:Rear Kick 20
+          Dark Rapidash uses Flame Pillar.
+          Jynx takes 30. (30/70 left)
+          Abra takes 10. (20/30 left)
+          Dark Rapidash burns an Energy and hits Abra for 10.
+
+--- Turn 19 — You -------------------------------
+          You draws a card. (35 left)
+          Jynx uses Meditate.
+          20 plus 10 per damage counter on the defender (3) -> 50 damage.
+          Dark Rapidash takes 50. (0/60 left)
+          Dark Rapidash is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [12.3]
+          holding: Lightning Energy, Fire Energy, Fire Energy
+          passed over: promote 12.3
+          Domino promotes Dark Vaporeon to Active.
+
+--- Turn 20 — Domino ----------------------------
+          Domino draws a card. (35 left)
+  AI      attack:Bite   [85]
+          holding: Lightning Energy, Fire Energy, Fire Energy, Sleep!
+          Dark Vaporeon uses Bite.
+          Jynx takes 30. (0/70 left)
+          Jynx is Knocked Out!
+          Domino takes a Prize. (4 left)
+          You promotes Mewtwo to Active.
+
+--- Turn 21 — You -------------------------------
+          You draws a card. (34 left)
+          You attaches Psychic Energy to Abra.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (2) -> 30 damage.
+          Dark Vaporeon takes 30. (0/60 left)
+          Dark Vaporeon is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [9.3]
+          holding: Lightning Energy, Fire Energy, Fire Energy, Sleep!, Double Colorless Energy
+          Domino promotes Tentacool to Active.
+
+--- Turn 22 — Domino ----------------------------
+          Domino draws a card. (34 left)
+  AI      trainer   [4.2]
+          holding: Lightning Energy, Fire Energy, Fire Energy, Sleep!, Double Colorless Energy, Lightning Energy
+          passed over: attach -2, attach -2, attach -2, attach -2, attach -2
+          Domino plays Sleep!.
+          Coin flip (Sleep!?): TAILS
+          Sleep!: tails, nothing happens.
+  AI      pass — no attack available — Acid: Not enough Energy   [0]
+          holding: Lightning Energy, Fire Energy, Fire Energy, Double Colorless Energy, Lightning Energy
+          Domino ended the turn without attacking.
+
+--- Turn 23 — You -------------------------------
+          You draws a card. (33 left)
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): HEADS
+          Poke Ball: found Kadabra.
+          Abra evolves into Kadabra. Special Conditions removed.
+          Mewtwo uses Psychic.
+          10 plus 10 per Energy on the defender (0) -> 10 damage.
+          Tentacool takes 10. (0/30 left)
+          Tentacool is Knocked Out!
+          You takes a Prize. (2 left)
+          GAME OVER - You wins: Domino has no Pokemon left
+
+==========================================================
+RESULT   You wins — Domino has no Pokemon left
+         23 turns
+
+==========================================================
+PACKS OPENED
+
+  Team Rocket
+    Dark Wartortle  Uncommon   NEW
+    Dark Gloom  Uncommon
+    Sleep!  Common
+    Koffing  Common
+    Dark Raticate  Common
+    Porygon  Uncommon   NEW
+    Water Energy  
+    Here Comes Team Rocket!  Rare
+
+  Team Rocket
+    Challenge!  Uncommon
+    Dark Kadabra  Uncommon
+    Dark Raticate  Common
+    Dark Jolteon  Uncommon
+    Dratini  Common
+    Psychic Energy  
+    Abra  Common
+    Dark Dragonite  Rare
