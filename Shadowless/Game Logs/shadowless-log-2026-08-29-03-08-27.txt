@@ -1,0 +1,588 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-08-29 03:08:27
+decks    you: New deck 4   opponent: Verity — Nightshade
+opponent expert
+seed     1960762366   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Haunter, Switch, Psychic Energy, Psychic Energy, Mr. Mime, Psychic Energy, Gust of Wind
+  HIDDEN  your opening hand: Poké Ball, Lightning Energy, Bill, Pikachu, Lightning Energy, Jigglypuff, Lightning Energy
+  HIDDEN  opponent's Prizes: Psychic Energy, Psychic Energy, Psychic Energy, Poké Ball, Hypno, Psychic Energy
+  HIDDEN  your Prizes: Defender, Professor Oak, Lightning Energy, Pikachu, Electabuzz, Lightning Energy
+  HIDDEN  opponent's opening board: Mr. Mime active, empty bench
+  HIDDEN  your opening board: Jigglypuff active, bench Pikachu
+          New game. Seed 1960762366.
+          Coin flip (who goes first): TAILS
+          Verity will go first.
+
+--- Turn 1 — Verity ----------------------------
+          Verity draws a card. (46 left)
+  AI      bench   [26]
+          holding: Haunter, Switch, Psychic Energy, Psychic Energy, Psychic Energy, Gust of Wind, Gastly
+          Verity benches Gastly.
+  AI      trainer   [25.4]
+          holding: Haunter, Switch, Psychic Energy, Psychic Energy, Psychic Energy, Gust of Wind
+          passed over: attach 22, attach 22, attach 22, attach 13, attach 13
+          Verity plays Gust of Wind.
+          You's Pikachu is dragged into the Active spot.
+  AI      attach   [22]
+          holding: Haunter, Switch, Psychic Energy, Psychic Energy, Psychic Energy
+          passed over: attach 22, attach 22, attach 13, attach 13, attach 13
+          Verity attaches Psychic Energy to Gastly.
+  AI      pass — no attack available — Meditate: Not enough Energy   [0]
+          holding: Haunter, Switch, Psychic Energy, Psychic Energy
+          Verity ended the turn without attacking.
+
+--- Turn 2 — You -------------------------------
+          You draws a card. (46 left)
+          You plays Bill.
+          You draws 2.
+          You benches Voltorb.
+          You attaches Lightning Energy to Pikachu.
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): TAILS
+          Poke Ball: tails, nothing found.
+          You ended the turn without attacking.
+
+--- Turn 3 — Verity ----------------------------
+          Verity draws a card. (45 left)
+  AI      evolve   [16]
+          holding: Haunter, Switch, Psychic Energy, Psychic Energy, Poké Ball
+          passed over: attach 13, attach 13, trainer 5, attach -2, attach -2
+          Gastly evolves into Haunter. Special Conditions removed.
+  AI      attach   [22]
+          holding: Switch, Psychic Energy, Psychic Energy, Poké Ball
+          passed over: attach 22, attach 13, attach 13, trainer 5, trainer -4
+          Verity attaches Psychic Energy to Haunter.
+  AI      trainer   [5]
+          holding: Switch, Psychic Energy, Poké Ball
+          passed over: trainer -4
+          Verity plays Poké Ball.
+          Coin flip (Poke Ball finds something?): HEADS
+          Poke Ball: found Hypno.
+  AI      pass — no attack available — Meditate: Not enough Energy   [0]
+          holding: Switch, Psychic Energy, Hypno
+          Verity ended the turn without attacking.
+
+--- Turn 4 — You -------------------------------
+          You draws a card. (43 left)
+          You attaches Lightning Energy to Pikachu.
+          Pikachu uses Spark.
+          Mr. Mime takes 20. (20/40 left)
+          Haunter takes 10. (40/50 left)
+          10 to Haunter on the Bench.
+
+--- Turn 5 — Verity ----------------------------
+          Verity draws a card. (43 left)
+  AI      trainer   [24]
+          holding: Switch, Psychic Energy, Hypno, Psychic Energy
+          passed over: attach 13, attach 13, attach -2, attach -2
+          Verity plays Switch.
+          Haunter is now Active.
+  AI      attach   [10]
+          holding: Psychic Energy, Hypno, Psychic Energy
+          passed over: attach 10, attach -2, attach -2, retreat -67.5
+          Verity attaches Psychic Energy to Mr. Mime.
+  AI      attack:Nightmare   [26.9]
+          holding: Hypno, Psychic Energy
+          Haunter uses Nightmare.
+          Pikachu takes 10. (40/50 left)
+          Pikachu is now Asleep.
+          Coin flip (Pikachu waking): TAILS
+          Pikachu is still Asleep.
+
+--- Turn 6 — You -------------------------------
+          You draws a card. (42 left)
+          You attaches Lightning Energy to Pikachu.
+          Pikachu evolves into Raichu. Special Conditions removed.
+          Raichu uses Agility.
+          Coin flip (Transparency: prevent the attack?): HEADS
+          Transparency: everything done to Haunter is prevented.
+          Coin flip (Agility): TAILS
+
+--- Turn 7 — Verity ----------------------------
+          Verity draws a card. (42 left)
+  AI      attach   [22]
+          holding: Hypno, Psychic Energy, Drowzee
+          passed over: bench 7, attach -2, retreat -67.5
+          Verity attaches Psychic Energy to Mr. Mime.
+  AI      bench   [7]
+          holding: Hypno, Drowzee
+          passed over: retreat -54
+          Verity benches Drowzee.
+  AI      attack:Nightmare   [26.9]
+          holding: Hypno
+          Haunter uses Nightmare.
+          Raichu takes 10. (60/80 left)
+          Raichu is now Asleep.
+          Coin flip (Raichu waking): TAILS
+          Raichu is still Asleep.
+
+--- Turn 8 — You -------------------------------
+          You draws a card. (41 left)
+          You ended the turn without attacking — Asleep.
+          Coin flip (Raichu waking): HEADS
+          Raichu woke up.
+
+--- Turn 9 — Verity ----------------------------
+          Verity draws a card. (41 left)
+  AI      evolve   [34]
+          holding: Hypno, Lickitung
+          passed over: bench 7, retreat -25.5, retreat -54
+          Drowzee evolves into Hypno. Special Conditions removed.
+  AI      bench   [7]
+          holding: Lickitung
+          passed over: retreat -25.5, retreat -54
+          Verity benches Lickitung.
+  AI      attack:Nightmare   [26.9]
+          holding: (empty)
+          Haunter uses Nightmare.
+          Raichu takes 10. (50/80 left)
+          Raichu is now Asleep.
+          Coin flip (Raichu waking): TAILS
+          Raichu is still Asleep.
+
+--- Turn 10 — You -------------------------------
+          You draws a card. (40 left)
+          You attaches Lightning Energy to Jigglypuff.
+          You ended the turn without attacking — Asleep.
+          Coin flip (Raichu waking): TAILS
+          Raichu is still Asleep.
+
+--- Turn 11 — Verity ----------------------------
+          Verity draws a card. (40 left)
+  AI      bench   [2]
+          holding: Gastly
+          passed over: retreat -25.5, retreat -25.5, retreat -54
+          Verity benches Gastly.
+  AI      attack:Nightmare   [10]
+          holding: (empty)
+          Haunter uses Nightmare.
+          Raichu takes 10. (40/80 left)
+          Raichu is now Asleep.
+          Coin flip (Raichu waking): HEADS
+          Raichu woke up.
+
+--- Turn 12 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Lightning Energy to Voltorb.
+          You benches Pikachu.
+          You plays Gust of Wind.
+          Verity's Mr. Mime is dragged into the Active spot.
+          Raichu uses Agility.
+          Mr. Mime takes 20. (0/40 left)
+          Coin flip (Agility): TAILS
+          Mr. Mime is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [44]
+          holding: (empty)
+          passed over: promote 44, promote 41, promote 30
+          Verity promotes Hypno to Active.
+
+--- Turn 13 — Verity ----------------------------
+          Verity draws a card. (39 left)
+  AI      attach   [22]
+          holding: Psychic Energy
+          passed over: attach 19.5, attach 18, attach -2
+          Verity attaches Psychic Energy to Gastly.
+  AI      pass — no attack available — Prophecy: Not enough Energy; Dark Mind: Not enough Energy   [0]
+          holding: (empty)
+          Verity ended the turn without attacking.
+
+--- Turn 14 — You -------------------------------
+          You draws a card. (38 left)
+          You attaches Lightning Energy to Voltorb.
+          Raichu uses Agility.
+          Hypno takes 20. (70/90 left)
+          Coin flip (Agility): TAILS
+
+--- Turn 15 — Verity ----------------------------
+          Verity draws a card. (38 left)
+  AI      pass — no attack available — Prophecy: Not enough Energy; Dark Mind: Not enough Energy   [0]
+          holding: Pokémon Trader
+          Verity ended the turn without attacking.
+
+--- Turn 16 — You -------------------------------
+          You draws a card. (37 left)
+          You attaches Lightning Energy to Jigglypuff.
+          Raichu uses Agility.
+          Hypno takes 20. (50/90 left)
+          Coin flip (Agility): HEADS
+          Raichu will prevent all effects of attacks during the opponent's next turn.
+
+--- Turn 17 — Verity ----------------------------
+          Verity draws a card. (37 left)
+  AI      trainer   [14]
+          holding: Pokémon Trader, Drowzee
+          passed over: bench 2
+          Verity plays Pokémon Trader.
+          Traded Drowzee for Gengar.
+  AI      evolve   [29.5]
+          holding: Gengar
+          Haunter evolves into Gengar. Special Conditions removed.
+  AI      power:MOVE_DAMAGE   [4]
+          holding: (empty)
+          passed over: power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4
+          Curse: 1 damage counter moved from Raichu to Jigglypuff. (50/60 left)
+  AI      pass — no attack available — Prophecy: Not enough Energy; Dark Mind: Not enough Energy   [0]
+          holding: (empty)
+          Verity ended the turn without attacking.
+          Raichu: PREVENT_ALL_EFFECTS wears off.
+
+--- Turn 18 — You -------------------------------
+          You draws a card. (36 left)
+          You attaches Lightning Energy to Pikachu.
+          Raichu uses Agility.
+          Hypno takes 20. (30/90 left)
+          Coin flip (Agility): HEADS
+          Raichu will prevent all effects of attacks during the opponent's next turn.
+
+--- Turn 19 — Verity ----------------------------
+          Verity draws a card. (36 left)
+  AI      power:MOVE_DAMAGE   [7.6]
+          holding: Gengar
+          passed over: power:MOVE_DAMAGE 5.2, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4
+          Curse: 1 damage counter moved from Jigglypuff to Raichu. (40/80 left)
+  AI      pass — no attack available — Prophecy: Not enough Energy; Dark Mind: Not enough Energy   [0]
+          holding: Gengar
+          Verity ended the turn without attacking.
+          Raichu: PREVENT_ALL_EFFECTS wears off.
+
+--- Turn 20 — You -------------------------------
+          You draws a card. (35 left)
+          You attaches Lightning Energy to Pikachu.
+          Raichu uses Agility.
+          Hypno takes 20. (10/90 left)
+          Coin flip (Agility): TAILS
+
+--- Turn 21 — Verity ----------------------------
+          Verity draws a card. (35 left)
+  AI      attach   [42]
+          holding: Gengar, Psychic Energy
+          passed over: attach 19.5, attach 18, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4
+          Verity attaches Psychic Energy to Gengar.
+  AI      power:MOVE_DAMAGE   [4]
+          holding: Gengar
+          passed over: power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4
+          Curse: 1 damage counter moved from Raichu to Jigglypuff. (50/60 left)
+  AI      pass — no attack available — Prophecy: Not enough Energy; Dark Mind: Not enough Energy   [0]
+          holding: Gengar
+          Verity ended the turn without attacking.
+
+--- Turn 22 — You -------------------------------
+          You draws a card. (34 left)
+          Raichu uses Agility.
+          Hypno takes 20. (0/90 left)
+          Coin flip (Agility): TAILS
+          Hypno is Knocked Out!
+          You takes a Prize. (4 left)
+  AI      promote   [55.5]
+          holding: Gengar
+          passed over: promote 44.5, promote 44
+          Verity promotes Gengar to Active.
+
+--- Turn 23 — Verity ----------------------------
+          Verity draws a card. (34 left)
+  AI      power:MOVE_DAMAGE   [7.6]
+          holding: Gengar, Full Heal
+          passed over: power:MOVE_DAMAGE 5.2, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4
+          Curse: 1 damage counter moved from Jigglypuff to Raichu. (40/80 left)
+  AI      attack:Dark Mind   [37]
+          holding: Gengar, Full Heal
+          Gengar uses Dark Mind.
+          Raichu takes 30. (10/80 left)
+          Jigglypuff takes 10. (50/60 left)
+          10 to Jigglypuff on the Bench.
+
+--- Turn 24 — You -------------------------------
+          You draws a card. (33 left)
+          You attaches Lightning Energy to Voltorb.
+          Raichu uses Agility.
+          Gengar takes 20. (50/80 left)
+          Coin flip (Agility): HEADS
+          Raichu will prevent all effects of attacks during the opponent's next turn.
+
+--- Turn 25 — Verity ----------------------------
+          Verity draws a card. (33 left)
+  AI      power:MOVE_DAMAGE   [67]
+          holding: Gengar, Full Heal, Psychic Energy
+          passed over: attach 18, power:MOVE_DAMAGE 5.2, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4
+          Curse: 1 damage counter moved from Jigglypuff to Raichu. (0/80 left)
+          Raichu is Knocked Out!
+          Verity takes a Prize. (5 left)
+          You promotes Jigglypuff to Active.
+  AI      attach   [18]
+          holding: Gengar, Full Heal, Psychic Energy, Hypno
+          passed over: attach -2, attach -2, retreat -19, retreat -27
+          Verity attaches Psychic Energy to Lickitung.
+  AI      retreat   [0.5]
+          holding: Gengar, Full Heal, Hypno
+          passed over: retreat -19
+          Verity retreats Gengar; Lickitung is now Active.
+  AI      attack:Tongue Wrap   [20]
+          holding: Gengar, Full Heal, Hypno
+          Lickitung uses Tongue Wrap.
+          Jigglypuff takes 10. (50/60 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 26 — You -------------------------------
+          You draws a card. (32 left)
+          You attaches Lightning Energy to Pikachu.
+          Jigglypuff uses Pound.
+          Lickitung takes 20. (70/90 left)
+
+--- Turn 27 — Verity ----------------------------
+          Verity draws a card. (32 left)
+  AI      attach   [42]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy
+          passed over: attach 4.4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, attach -2
+          Verity attaches Psychic Energy to Gengar.
+  AI      power:MOVE_DAMAGE   [4]
+          holding: Gengar, Full Heal, Hypno
+          passed over: power:MOVE_DAMAGE 4
+          Curse: 1 damage counter moved from Jigglypuff to Voltorb. (30/40 left)
+  AI      attack:Tongue Wrap   [20]
+          holding: Gengar, Full Heal, Hypno
+          Lickitung uses Tongue Wrap.
+          Jigglypuff takes 10. (50/60 left)
+          Coin flip (Paralyzed?): HEADS
+          Jigglypuff is now Paralyzed.
+
+--- Turn 28 — You -------------------------------
+          You draws a card. (31 left)
+          You benches Lickitung.
+          You attaches Lightning Energy to Lickitung.
+          You ended the turn without attacking — Paralyzed.
+          Jigglypuff is no longer Paralyzed.
+
+--- Turn 29 — Verity ----------------------------
+          Verity draws a card. (31 left)
+  AI      power:MOVE_DAMAGE   [5.2]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy
+          passed over: power:MOVE_DAMAGE 5.2, attach 4.4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4
+          Curse: 1 damage counter moved from Jigglypuff to Voltorb. (20/40 left)
+  AI      attach   [4.4]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy
+          passed over: attach -2, attach -2
+          Verity attaches Psychic Energy to Lickitung.
+  AI      attack:Tongue Wrap   [20]
+          holding: Gengar, Full Heal, Hypno
+          passed over: attack:Supersonic 5.8
+          Lickitung uses Tongue Wrap.
+          Jigglypuff takes 10. (50/60 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 30 — You -------------------------------
+          You draws a card. (30 left)
+          Pikachu evolves into Raichu. Special Conditions removed.
+          Jigglypuff uses Pound.
+          Lickitung takes 20. (50/90 left)
+
+--- Turn 31 — Verity ----------------------------
+          Verity draws a card. (30 left)
+  AI      power:MOVE_DAMAGE   [6.4]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy
+          passed over: power:MOVE_DAMAGE 5.2, attach 4.4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4
+          Curse: 1 damage counter moved from Jigglypuff to Voltorb. (10/40 left)
+  AI      attach   [4.4]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy
+          passed over: attach -2, attach -2
+          Verity attaches Psychic Energy to Lickitung.
+  AI      attack:Tongue Wrap   [20]
+          holding: Gengar, Full Heal, Hypno
+          passed over: attack:Supersonic 5.8
+          Lickitung uses Tongue Wrap.
+          Jigglypuff takes 10. (50/60 left)
+          Coin flip (Paralyzed?): TAILS
+
+--- Turn 32 — You -------------------------------
+          You draws a card. (29 left)
+          Jigglypuff uses Pound.
+          Lickitung takes 20. (30/90 left)
+
+--- Turn 33 — Verity ----------------------------
+          Verity draws a card. (29 left)
+  AI      power:MOVE_DAMAGE   [67]
+          holding: Gengar, Full Heal, Hypno, PlusPower
+          passed over: trainer 6, power:MOVE_DAMAGE 5.2, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4
+          Curse: 1 damage counter moved from Jigglypuff to Voltorb. (0/40 left)
+          Voltorb is Knocked Out!
+          Verity takes a Prize. (4 left)
+  AI      trainer   [6]
+          holding: Gengar, Full Heal, Hypno, PlusPower, Psychic Energy
+          passed over: attach -2, attach -2, attach -2, retreat -38.5, retreat -38.5
+          Verity plays PlusPower.
+          PlusPower attached to Lickitung (+10 this turn).
+  AI      attack:Tongue Wrap   [30]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy
+          passed over: attack:Supersonic 5.8
+          Lickitung uses Tongue Wrap.
+          +10 from a bonus -> 20.
+          Jigglypuff takes 20. (40/60 left)
+          Coin flip (Paralyzed?): TAILS
+          PlusPower is discarded.
+
+--- Turn 34 — You -------------------------------
+          You draws a card. (28 left)
+          You attaches Lightning Energy to Raichu.
+          You plays PlusPower.
+          PlusPower attached to Jigglypuff (+10 this turn).
+          Jigglypuff uses Pound.
+          +10 from a bonus -> 30.
+          Lickitung takes 30. (0/90 left)
+          Lickitung is Knocked Out!
+          You takes a Prize. (3 left)
+          PlusPower is discarded.
+  AI      promote   [48.5]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy
+          passed over: promote 44.5
+          Verity promotes Gengar to Active.
+
+--- Turn 35 — Verity ----------------------------
+          Verity draws a card. (28 left)
+  AI      bench   [7]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy, Kangaskhan
+          passed over: power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, attach -2, attach -2, retreat -19
+          Verity benches Kangaskhan.
+  AI      attach   [8]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy
+          passed over: power:MOVE_DAMAGE 4, power:MOVE_DAMAGE 4, attach -2, attach -2, retreat -19
+          Verity attaches Psychic Energy to Kangaskhan.
+  AI      power:MOVE_DAMAGE   [4]
+          holding: Gengar, Full Heal, Hypno
+          passed over: power:MOVE_DAMAGE 4, retreat -19, retreat -19
+          Curse: 1 damage counter moved from Jigglypuff to Raichu. (70/80 left)
+  AI      attack:Dark Mind   [7]
+          holding: Gengar, Full Heal, Hypno
+          Gengar uses Dark Mind.
+          Resistance: -30 -> 0.
+          Raichu takes 10. (60/80 left)
+          10 to Raichu on the Bench.
+
+--- Turn 36 — You -------------------------------
+          You draws a card. (27 left)
+          You retreats Jigglypuff; Raichu is now Active.
+          You plays Potion.
+          Raichu heals 20. (0 damage left)
+          You plays Defender.
+          Defender attached to Raichu (-20 damage until the end of the opponent's next turn).
+          You attaches Lightning Energy to Jigglypuff.
+          You benches Electabuzz.
+          Raichu uses Thunder.
+          Gengar takes 60. (0/80 left)
+          Coin flip (avoid recoil?): TAILS
+          Raichu does 30 damage to itself. (30 total)
+          Gengar is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [56.5]
+          holding: Gengar, Full Heal, Hypno
+          passed over: promote 22.5
+          Verity promotes Kangaskhan to Active.
+
+--- Turn 37 — Verity ----------------------------
+          Verity draws a card. (27 left)
+  AI      attach   [4.4]
+          holding: Gengar, Full Heal, Hypno, Psychic Energy
+          passed over: attach -2
+          Verity attaches Psychic Energy to Kangaskhan.
+  AI      attack:Fetch   [4.7]
+          holding: Gengar, Full Heal, Hypno
+          Kangaskhan uses Fetch.
+          Verity draws 1.
+          Defender is discarded.
+
+--- Turn 38 — You -------------------------------
+          You draws a card. (26 left)
+          You benches Voltorb.
+          You attaches Lightning Energy to Electabuzz.
+          You plays Gust of Wind.
+          Verity's Gastly is dragged into the Active spot.
+          Raichu uses Thunder.
+          Gastly takes 60. (0/50 left)
+          Coin flip (avoid recoil?): HEADS
+          Gastly is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [56.5]
+          holding: Gengar, Full Heal, Hypno, Computer Search
+          Verity promotes Kangaskhan to Active.
+
+--- Turn 39 — Verity ----------------------------
+          Verity draws a card. (25 left)
+  AI      trainer   [12]
+          holding: Gengar, Full Heal, Hypno, Computer Search, Pokémon Trader
+          passed over: trainer 2
+          Verity plays Computer Search.
+          Computer Search: found Drowzee.
+  AI      bench   [26]
+          holding: Full Heal, Pokémon Trader, Drowzee
+          passed over: trainer 2
+          Verity benches Drowzee.
+  AI      attack:Fetch   [4.6]
+          holding: Full Heal, Pokémon Trader
+          Kangaskhan uses Fetch.
+          Verity draws 1.
+
+--- Turn 40 — You -------------------------------
+          You draws a card. (25 left)
+          You plays Energy Removal.
+          Psychic Energy discarded from Kangaskhan.
+          Raichu uses Thunder.
+          Kangaskhan takes 60. (30/90 left)
+          Coin flip (avoid recoil?): HEADS
+
+--- Turn 41 — Verity ----------------------------
+          Verity draws a card. (22 left)
+  AI      attach   [22]
+          holding: Full Heal, Pokémon Trader, Recycle, Psychic Energy
+          passed over: attach 4.4, trainer 3.5
+          Verity attaches Psychic Energy to Drowzee.
+  AI      trainer   [3.5]
+          holding: Full Heal, Pokémon Trader, Recycle
+          Verity plays Recycle.
+          Coin flip (Recycle?): HEADS
+          Recycle: Psychic Energy goes on top of the deck.
+  AI      attack:Fetch   [4.5]
+          holding: Full Heal, Pokémon Trader
+          Kangaskhan uses Fetch.
+          Verity draws 1.
+
+--- Turn 42 — You -------------------------------
+          You draws a card. (24 left)
+          Raichu uses Thunder.
+          Kangaskhan takes 60. (0/90 left)
+          Coin flip (avoid recoil?): TAILS
+          Raichu does 30 damage to itself. (60 total)
+          Kangaskhan is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         42 turns
+
+==========================================================
+PACKS OPENED
+
+  Fossil
+    Kingler  Uncommon
+    Magmar  Uncommon
+    Krabby  Common
+    Slowpoke  Common
+    Tentacool  Common
+    Fighting Energy  
+    Gambler  Common
+    Moltres  Rare   NEW
+
+  Fossil
+    Cloyster  Uncommon
+    Omastar  Uncommon
+    Fire Energy  
+    Lightning Energy  
+    Zubat  Common
+    Slowpoke  Common
+    Psyduck  Common
+    Gengar  Rare   NEW

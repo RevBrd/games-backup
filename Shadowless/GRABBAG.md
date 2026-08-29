@@ -32,6 +32,7 @@ Faults and behaviour, from Trevor's play. [AI.md](AI.md) has what the scorer alr
 - base5 diglett's Dig Under attacking should be able to target the opponent's active pokemon as well, and I don't think it does. This is a maybe but there is a log - #03-50-54
 - Best value would have been for the AI to attach its opening water energy to Lickitung, its starter, a very solid tank that can paralyze - log# 04-00-06
 - Zapdos gets a fire energy even though it doesn't want those - log# 04-16-31
+- Gengar had no reason to retreat - log# 03-08-27
 
 
 ### The screen
