@@ -64,6 +64,7 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
   1-in-1,183 packs and he is 162 in.
 - Introductions for rare cards when pulled, light for RH, heavy for Shadowless, all cheap. I have ideas about this one, whoever takes it, let's chat before we build.
 - Attaching an energy or applying an item to a pokemon needs to not be canceled by the item clicked underneath it.
+- In the deck building screen, we need a way to zoom in on a card to read the move or view the scan
 
 
 ### Rules
