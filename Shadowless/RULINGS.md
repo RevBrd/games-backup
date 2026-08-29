@@ -155,11 +155,14 @@ Calls we already know are coming, so nobody is surprised by them.
   unknown.
 - **Baby Pokémon (Neo era, 10 cards)** — the Baby Rule is a coin flip that can negate an attack
   entirely. Not a Base Set problem, but it is a whole rule, not a card effect.
-- **The promos are Job 12 and two of their calls are already made** — see the two entries added
-  23 Aug 2026 above. Both came out of Trevor's workbook rather than out of the cards, which is the
-  thing to notice: **his spreadsheets have been accumulating rulings**, and a ruling that lives only
-  in a spreadsheet gets re-derived by whoever opens the card next. When Job 12 starts, read the
-  workbook's Index legend before the corpus.
+- **~~The promos are Job 12~~ — they were Job 13 and they SHIPPED**, 26–28 Aug 2026, with both of
+  their calls already in the folder: [promo evolution](Rulings/PROMO-EVOLUTION.md) and
+  [variable attack damage](Rulings/VARIABLE-ATTACK-DAMAGE.md). Left here rather than deleted for the
+  observation underneath it, which is still live and still pays: **both came out of Trevor's workbook
+  rather than out of the cards.** His spreadsheets accumulate rulings, and a ruling that lives only in
+  a spreadsheet gets re-derived by whoever opens the card next. **Read the workbook's Index legend
+  before the corpus** on any set job — that instruction was written for a job that has been and gone,
+  and it is the general rule that survives it. The other 25 promos are a much later job.
 - **~~Rainbow Energy's 10 damage on attachment~~ — settled**, and it was never as open as this list
   said: the damage half was decided with Trevor on 19 Aug 2026 and written into `engine.js`, and the
   Prize half had been answered by [Buzzap](Rulings/BUZZAP.md) two weeks earlier. It sat here because

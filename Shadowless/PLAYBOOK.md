@@ -48,8 +48,9 @@ build a coverage tool, filter to the live sets.
 
 **Two kinds of note live in that column and they have different consumers.** *"To use Agility unless
 Drill Peck can kill"* is an in-play decision and belongs to `ai.js`. *"Replace 4x R energy with DCE in
-deck"* and *"5-ish extra W energy in deck"* are **deckbuild** wants and belong to the autobuilder,
-Job 13. Filing one as the other sends a real instruction to a component that cannot act on it.
+deck"* and *"5-ish extra W energy in deck"* are **deckbuild** wants and belong to the autobuilder —
+**which was deferred indefinitely on 29 Aug 2026**, so they are parked rather than pending. Filing one
+as the other sends a real instruction to a component that cannot act on it.
 *[The deckbuild ones, parked with their cards →](Playbook/DECKBUILD-WANTS.md)*
 
 ### The inbox, for notes with no card to sit on
@@ -68,14 +69,22 @@ and it changed every retreat in the game. It goes here, loose, and gets filed li
 | [Ammo](Playbook/AMMO.md) | An attack that discards its own Energy turns spare Energy into rounds, so surplus is not surplus | **Built**, one half open |
 | [Attack choice](Playbook/ATTACK-CHOICE.md) | The small utility attack is usually right; the big one is conditional on lethal — and on there being something to fear | **Built.** 11 of 11 cards measured; 2 questions open |
 | [Setup turn](Playbook/SETUP-TURN.md) | One attack sets up the next. A rider is worth nothing on a target that already has it | **Half built.** Cashing-in is general; setting-up needs lookahead |
-| [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Open**, blocked in a known order |
-| [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns. Parked for the autobuilder | **Parked** — Job 13 |
+| [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Built** 28 Aug 2026; two clauses of the note open |
+| [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns. Parked for the autobuilder | **Parked** — no scheduled job; the autobuilder was deferred 29 Aug 2026 |
 
-**The rest of the sixteen are named and defined at the bottom of this file, under *Possible
-patterns*, and that list is the authority.** The clustering is #22's, out of the 65 `Wants`; the
-one-line definitions are Trevor's. **It is the controlled vocabulary he writes into the `Wants`
-column**, so a pattern's name there has to match a name here. Do not restate it up here; a second
-copy would drift, and the copy a reader hits first wins.
+**The rest are named and defined at the bottom of this file, under *Possible patterns*, and that
+list is the authority.** The clustering is #22's, out of the 65 `Wants`; the one-line definitions are
+Trevor's. **It is the controlled vocabulary he writes into the `Wants` column**, so a pattern's name
+there has to match a name here. Do not restate it up here; a second copy would drift, and the copy a
+reader hits first wins.
+
+**Deliberately not counted, as of 29 Aug 2026, and this file had to learn it the hard way.** The
+clustering produced sixteen, that number went into four sentences, and then Energy Funnel was added
+as a genuine seventeenth on 23 Aug — so this file spent six days saying *sixteen* over a
+seventeen-item list **while simultaneously describing the naming of "the seventeenth pattern" as
+outstanding work.** Both halves were written by instances who had the list in front of them. **The
+list is the count**; the vocabulary is expected to grow, which is exactly why no sentence should
+carry its size.
 
 Each of the unwritten ones already has between two and nine cards behind it. **Write the file when
 you work the pattern, not before** — an empty pattern file is a planning document, and
@@ -90,23 +99,23 @@ of a *clause* — *"unless Drill Peck can kill"*, *"when there's something to be
 sleeping basic can just evolve to wake up anyway"*. A label carries none of those, and a cell reading
 only `Attack Choice` would have produced a category and nothing testable.
 
-**The load-bearing version: these sixteen (plus) patterns exist only because sixty-five notes were written
+**The load-bearing version: every pattern in that list exists only because sixty-five notes were written
 as prose.** Nothing clustered them into being except the paragraphs. A label can only route to a
 pattern that already exists; **prose is the only thing that can produce a new one.** So
 under-categorising is cheap and self-corrects on the next pass, while over-categorising silently caps
 the system at whatever the list happens to say today.
 
-**Treat a note that fits nothing as a finding.** It is the candidate pile for the seventeenth pattern,
+**Treat a note that fits nothing as a finding.** It is the candidate pile for the NEXT pattern,
 and it is worth more than a note filed neatly under the wrong one.
 
 **And the pile has a shape, surveyed 24 Aug 2026 when Trevor’s overhauled workbook took the live
-notes to 219.** Eighty-seven of them match none of the sixteen, and **thirty-six are TRAINERS** — a
+notes to 219.** Eighty-seven of them match none of the patterns below, and **thirty-six are TRAINERS** — a
 whole category the vocabulary does not name, sitting in a different function (`scoreTrainer`) from
 everything the playbook had touched until then. *Computer Search, PlusPower, Energy Removal, Gust of
 Wind, Defender, Digger, Goop Gas Attack.* **The first two probed found one fault and one pass**, which
 is a better rate than the Pokemon notes were returning by then.
 
-**Naming the seventeenth pattern is Trevor’s**, since the list is the controlled vocabulary he writes
+**Naming the pattern that would cover them is Trevor’s**, since the list is the controlled vocabulary he writes
 into the column — this is the candidate pile reported, not a rename. Note that ~25 of the 87 are
 **deckbuild** wants rather than play ones (*“the autobuilder should avoid”*, *“exist in almost every
 deck”*, *“weak decks have 1-2”*), so the pile is at least two things and splitting it is the first job

@@ -1,7 +1,13 @@
 # Deckbuild wants — not AI patterns
 
-**Read this if you are working the deck autobuilder (Job 13), or if you are filing a `Wants` note and
-it does not seem to be about a decision the bot makes in play.**
+**Read this if you are filing a `Wants` note and it does not seem to be about a decision the bot
+makes in play** — or if the deck autobuilder is ever revived. **It was deferred indefinitely on
+29 Aug 2026** (Trevor) to the phase-two bundle with dialogue and art, so the consumer these notes were
+parked for does not currently exist and has no scheduled date. *[Both reasons →](../HISTORY.md)*
+
+**They stay parked anyway, and the deferral makes that MORE right rather than less.** A note filed
+against `ai.js` is a note sent to a component that cannot obey it; that was true when the builder was
+next quarter and it is true now that it is nowhere.
 
 **These are parked on purpose and it is not neglect.** The workbook's `Wants` column carries two kinds
 of note with two different consumers. *"To use Agility unless Drill Peck can kill"* is an in-play
@@ -44,5 +50,5 @@ that direction is the expensive way round.
 ## What the builder should not read this as
 
 **Not a target list.** These are things a human noticed while going through a set, not a spec. The
-autobuilder is Job 13 and its design is unstarted; when it starts, this file is input, not
+autobuilder is deferred and its design is unstarted; if it ever starts, this file is input, not
 requirements.

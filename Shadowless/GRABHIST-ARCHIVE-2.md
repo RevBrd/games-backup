@@ -5,7 +5,7 @@ Job 11. Split off [GRABHIST.md](GRABHIST.md) on 26 Aug 2026, when that file reac
 the ~450 its own header sets, at the **job boundary** between Job 11 and Job 12.
 
 **Read it when you meet one of the behaviours below**, or when you want the account behind an
-[AI-INVARIANTS-ARCHIVE-1.md](AI-INVARIANTS-ARCHIVE-1.md) entry dated 21 Aug. Nothing here is
+[AI-INVARIANTS-ARCHIVE-2.md](AI-INVARIANTS-ARCHIVE-2.md) entry dated 21 Aug. Nothing here is
 superseded; it is older, not wrong.
 
 | When | Instance | Items |

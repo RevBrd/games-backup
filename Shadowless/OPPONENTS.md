@@ -5,8 +5,10 @@ has to specify before somebody can build one. [PROGRESSION.md](PROGRESSION.md) i
 brackets, unlocks, `winReward`. If you are wiring the ladder you want that file; if you are deciding
 what goes *in* a rung, you want this one.
 
-Read it when adding a set's roster, hand-building an opponent deck, or working the auto-builder
-(Job 15), which is the consumer this was written for.
+Read it when adding a set's roster or hand-building an opponent deck. **It was written for the
+auto-builder, which was deferred indefinitely on 29 Aug 2026** — so its intended consumer is gone and
+its actual one is a person with a spreadsheet, which is who has built all four live brackets anyway.
+*[Why, and what the deferral cost this file →](HISTORY.md)*
 
 **All four live brackets are built to this spec and it survived.** Base Set's eleven rungs went in on
 19 Aug 2026, Jungle's seven and Fossil's ten on 21 Aug, Team Rocket's ten on 25 Aug — every one of
@@ -90,10 +92,16 @@ question is not *does the centrepiece need an engine* but *can this deck reliabl
 
 ### What the rosters measured, and where they disagree
 
-Four rosters have been built to this spec and every one has been played by `tools/decksim.js` from
-both seats; two of them have also been played against each other in a merged field. **The standings, the assembly rates and every number behind the
-claims below are in [ROSTERS.md](ROSTERS.md), one section per roster** — that file is the evidence and
-this one is the spec, and the numbers deliberately live in exactly one of them.
+Four rosters have been built to this spec and **all four have now been played by `tools/decksim.js`
+from both seats**; three of them have also met each other in a merged field. **The standings, the
+assembly rates and every number behind the claims below are in [ROSTERS.md](ROSTERS.md), one section
+per roster** — that file is the evidence and this one is the spec, and the numbers deliberately live
+in exactly one of them.
+
+*(This sentence said all four had been measured while Fossil never had — true of three rosters when
+it was written, and nothing re-read it when the fourth arrived. Closed 29 Aug 2026 by running Fossil
+rather than by softening the claim. **A sentence quantifying over a growing set is a claim that
+expires silently**, and this file makes several; if you add a roster, grep this file for "four".)*
 
 What the spec learned:
 
@@ -102,14 +110,22 @@ What the spec learned:
   supported by something other than construction, and it is what to aim at when building the next one.
 - **The recipe is a recipe and not evidence.** Trevor was tracking all five axes while building, so
   they agree by construction. `decksim.js` is the only instrument that can disagree with them.
-- **The T2/T3 boundary is real in Base Set, did not reproduce in Jungle, and reproduced cleanly in
-  Team Rocket.** Jungle is the first time this spec was contradicted by the same instrument that
-  confirmed it, and the likely cause is one row of the recipe — draw-and-search — inverting between
-  the two tiers.
-- **The T4 boundary held for the first time on the fourth roster.** Base Set's boss finished eighth of
-  eight and Jungle's ninth of thirteen, both inside their own T2 band; Team Rocket's finished **first**
-  in its own field, with T2's ceiling sitting just under T3's floor. **Do not "fix" the two that did
-  not order by weakening their T3 decks**; those are the part that works.
+- **The T2/T3 boundary separates in two rosters of four.** Real in Base Set and clean in Team Rocket;
+  it does not reproduce in Jungle or in Fossil. Jungle's failure had a candidate cause — one row of
+  the recipe, draw-and-search, inverting between the tiers — and **Fossil kills that explanation as a
+  general one**: its recipe is monotone on all six axes, more widely separated than any other roster's,
+  and its tiers still do not order. **Do not respond by tuning the recipe.**
+- **The T4 boundary is the one that has now been measured as a CLASS rather than a deck at a time, and
+  it does not hold.** Base Set's boss finished eighth of eight and Jungle's ninth of thirteen, both
+  inside their own T2 band; Team Rocket's finished **first** in its own field. In a merged
+  nineteen-deck run of the first three rosters, **all three of their bosses land within 2.8 points of
+  each other and all three sit below every roster's best T3** — 49.9 / 49.2 / 47.1 against a T3
+  average of 57.6. One roster could not say that; three can. **Do not "fix" it by weakening the T3
+  decks**, which are the part that works.
+- **A boss that assembles more reliably wins LESS, across all three.** Gengar lands in 89% of games,
+  Vileplume 76%, Charizard 53% — and they finish in exactly that order, worst first. **That is an AI
+  question, not a deck question**, and it is the most concrete thing four rosters have produced.
+  *[The three-boss table and what survives the round-robin confound →](ROSTERS.md)*
 - **One clean run is not the spec vindicated**, and the file holding the numbers says so first: it
   was measured with the same bot that was last shown playing the whole field badly, so it is one data
   point pointing the right way rather than a result that survives the AI improving.
@@ -177,11 +193,19 @@ DRAFT.** What makes it usable now is that there is a worked model rather than a 
 live brackets, built from decks he hand-made for the purpose. **Build the next one against those, not
 against this table**, and expect the table to move as more brackets exist.
 
-**The auto-builder is the release valve.** If Job 15 gets deck generation good enough, a bracket
-short of authored decks can be padded with generated opponents rather than left thin — which is what
-makes a flexible tier size affordable at fourteen sets. See [PROGRESSION.md](PROGRESSION.md) for how
-a generated challenger already works today, and [CHALLENGES.md](CHALLENGES.md) for the sets that want
-no bracket at all.
+**There used to be a release valve here and it has been withdrawn — say so rather than leaving the
+sentence.** This file argued that a good auto-builder would pad a bracket short of authored decks,
+which is what made a flexible tier size affordable across fourteen sets. **Trevor deferred the
+auto-builder indefinitely on 29 Aug 2026**, to the phase-two bundle with dialogue and art, on two
+grounds: it cannot be trained on strategy until the AI is further along, and its only customer was
+opponent decks, which he is hand-building anyway.
+
+**So a bracket short of authored decks is simply short, and that has to be fine.** The rung pattern
+already flexes everywhere except the boss, and a small set is supposed to earn a small bracket — the
+argument is one paragraph up and does not depend on the valve. **What still works today is the crude
+version**: `deckgen.js` backfills any roster entry whose deck will not resolve, and a bracket is never
+shorter than `bossAfter`, so the ladder cannot dangle. See [PROGRESSION.md](PROGRESSION.md).
+*[The deferral, both reasons, and what this argument lost →](HISTORY.md)*
 
 **Length is a stated goal, not a side effect.** The GBC game was too short and turned into re-battle
 grinding once the champions fell; that is the failure mode being designed against. A long ladder is

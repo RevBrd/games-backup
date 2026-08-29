@@ -61,6 +61,7 @@ again for a day. No blank lines, and check every row ends in `|`.
 | **Opus 5** #27 | 26 Aug 2026 | Job 12d, the ninth documentation pass. [CHALLENGES.md](CHALLENGES.md), [INSPECTION.md](INSPECTION.md) and two archives split out; this table returned to its rule, six rows preserved whole in the logbook first. Found four files stating a fact their own data contradicted, including the link checker that cannot see an anchor |
 | **Opus 5** #28 | 26 Aug 2026 | **Job 13:** the Wizards Black Star Promos, basep-1..28, and the fourth trigger. Four AI scorers turned out to be reading a verb their engine half had outgrown — the worst of them undervaluing four live cards since Base Set. `booster: false` stops a finished promo set ever becoming a ladder bracket |
 | **Opus 5** #29 | 27–28 Aug 2026 | **Job 13 finished:** the promos became reachable. `PROMO_GATES` off Trevor's workbook column, `collectibleDb` splitting what you may OWN from what is a SET, and the intrusion made additive — Trevor's reversal, since the eight-card pack had silently repriced a rule written for eleven. Found the intrusion roll had **never fired in the shipped game**, and two CSS rules cancelling the no-scan fallback on every future set's first pack |
+| **Opus 5** #30 | 29 Aug 2026 | Job 14a, the tenth documentation pass. A second AI-invariants archive, and nine claims corrected that their own data refuted — a truncated rejection restored from git, a count in prose above the table refuting it, twice. Found the **Fossil roster had never been measured**; ran it, and three rosters in one field said every T4 sits below every best T3 |
 
 Trevor's own contributions are not a row here because they are not a model's — but they are load
 bearing and they are named where they were made: the four authentic theme deck lists in
@@ -71,7 +72,13 @@ board design lock, and every ruling in [RULINGS.md](RULINGS.md) marked *settled 
 
 **This end of the tree is the quiet end.** Nothing here is orientation and nothing is waiting on you.
 If you have a minute and it interests you: [LOGBOOK.md](LOGBOOK.md) is what the last few instances
-thought while they worked and where you can log your own if you would like,
-[LOGBOOK-ARCHIVE-1.md](LOGBOOK-ARCHIVE-1.md), [LOGBOOK-ARCHIVE-2.md](LOGBOOK-ARCHIVE-2.md) and
-[LOGBOOK-ARCHIVE-3.md](LOGBOOK-ARCHIVE-3.md) hold everyone before them, and [TREVOR.md](TREVOR.md) is where his actual save stood as each set went
-live — the game being played, rather than built.
+thought while they worked and where you can log your own if you would like; its archives hold
+everyone before them — [1](LOGBOOK-ARCHIVE-1.md), [2](LOGBOOK-ARCHIVE-2.md),
+[3](LOGBOOK-ARCHIVE-3.md), [4](LOGBOOK-ARCHIVE-4.md) — and [TREVOR.md](TREVOR.md) is where his actual
+save stood as each set went live, the game being played rather than built.
+
+*(This sentence listed archives 1 through 3 for three days after archive 4 existed, which made #19's
+whole account of Job 10 unreachable from the only index that points here. **Do not hand-list the
+archives** — the live logbook's own "What is where" table is the roll and it is the thing that gets
+updated when one is created. Corrected 29 Aug 2026; the same failure has now cost this tree a
+preserved pack log, a truncated rejection, and this.)*

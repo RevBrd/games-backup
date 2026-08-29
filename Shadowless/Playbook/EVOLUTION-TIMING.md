@@ -5,8 +5,17 @@
 default behaviour Trevor wants for every evolution in the game, not a Gloom rule** — he retitled the
 entry to say so.
 
-**State: open, and blocked in a known order.** Fixing the evolve side alone makes the bot worse.
-*[The ordering, measured →](../AI.md)* — open item 4.
+**State: BUILT 28 Aug 2026, both halves in one commit** — and the blocked-in-a-known-order warning
+this header used to carry was right, so it is preserved in the section below rather than deleted.
+Fixing the evolve side alone *would* have made the bot worse; the attach rule went first, in the same
+commit, and the actual blocker turned out to sit one level higher than predicted. **Two clauses of
+Trevor's note are still open** and they are at the bottom of this file, not here.
+*[What shipped, and the measured null it shipped on →](../AI.md)* — open item 4.
+
+*(This line said **open** for a day after the work landed, while its own body carried a section headed
+`BUILT`. A header contradicting its file is worse than a stale header alone: a reader who trusts it
+stops reading, which is exactly the audience a state marker exists for. Corrected by #30, 29 Aug 2026
+— **when you ship a pattern, the header is the first thing to change, not the last.**)*
 
 ## Trevor's notes
 

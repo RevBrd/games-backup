@@ -131,8 +131,13 @@ before "fixing" them.
 wired both into the live ladder on 12 Aug. A doc that quarantines live data is worse than one that
 says nothing, because a session will treat the ladder's own decks as scratch.
 
-`gen_cards.js` reads exactly four files out of `data/` besides the corpus, and the list is in the
-source — **grep `readFileSync` in the generator rather than trusting the table below.**
+`gen_cards.js` reads `decks.json`, `ladder.json` and every file in its own `OPPONENT_SOURCES` list —
+**grep `OPPONENT_SOURCES` in the generator rather than trusting the table below**, because that list
+is the thing that grows and this table is the thing that lags. *(It said "exactly four files" above a
+nine-row table until 29 Aug 2026. Four was right when it was written; nothing re-read the sentence
+when a roster was wired in, and the sentence and the table sat one line apart disagreeing for weeks.
+**Name the mechanism, never the count** — a count in prose is this tree's most reliable source of
+wrong facts, and one directly above the data that refutes it is the cheapest possible version.)*
 
 | File | Emitted as | Consumed by |
 |---|---|---|

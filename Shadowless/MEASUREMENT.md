@@ -224,6 +224,11 @@ reported a 6-point edge for a change that did not exist.
 **Read the centrepiece columns beside the standings — they usually explain them.** A Stage 2 that
 lands in 45% of games at a median of turn 17, in a game decided by turn 20, is not a centrepiece.
 
+**A tier boundary is real when the tier bands do not overlap**, and as of 29 Aug 2026 two of the four
+rosters clear that and two do not. **The standings, the assembly rates and what to do about them are
+in [ROSTERS.md](ROSTERS.md)**, and the spec they are judged against is [OPPONENTS.md](OPPONENTS.md).
+Do not quote a roster verdict from here — this file owns the instrument, that one owns the results.
+
 ### The benchmark deck — the only ground truth this project has for AI quality
 
 **`b1_t4_fire` is very close to the deck Trevor personally won the whole Base Set bracket with**, and
@@ -274,6 +279,14 @@ rather than picking the flattering one. A rank that climbs while assembly holds 
 better at *this archetype*, which is the narrow claim the benchmark can actually support; a flat duel
 says it did not get better at the field in general, and both can be true of one change.
 
+**Every row in that table is the same field — 30 seeds, base1 + base2 merged — and it has to stay
+that way for the column to mean anything.** A reading from a *different* field is not a better or
+worse number, it is an unrelated one: the rank moves when decks join, and the win rate moves when the
+seed count does. There is now one such reading, from the 19-deck three-roster run of 29 Aug 2026
+(9th of 19 at 49.9%), and it is deliberately recorded in [ROSTERS.md](ROSTERS.md) beside the field it
+came from rather than appended here. **If you run the benchmark in a wider field, do the same** —
+otherwise the next reader sees 5th become 9th and reports an AI regression that did not happen.
+
 `--benchmark=KEY` picks a different deck; `--no-benchmark` turns it off. **If Trevor ever says a
 different deck is his daily driver, change the default** — the value of this number is entirely in the
 claim behind it.
@@ -309,9 +322,14 @@ pin, the same day's work together reads **51.5% ±0.9**, outside the interval. N
 changed between those two numbers; only the yardstick did. **A tool that resets its own baseline every
 commit cannot show progress, and this one had been doing that since it was written.**
 
-### THE PIN IS BROKEN AS OF 28 AUG 2026, AND THE WAY IT BROKE IS THE LESSON
+### The pin, how it rotted, and the check that catches it
 
-**`node tools/aiduel.js 8 --baseline --gbc` does not run.** It dies inside the pinned file:
+**A frozen yardstick measured against a growing game has a shelf life**, and that is the failure mode
+of the whole idea rather than an accident of one commit. The pin is an old `ai.js` played against
+**today's** engine and today's decks, so new cards eventually walk in front of a scorer that did not
+exist when it was frozen.
+
+**That happened on 28 Aug 2026.** `--baseline --gbc` stopped running and died *inside the baseline*:
 
 ```
 shadowless-ai-e23c747.js:1509
@@ -320,69 +338,45 @@ ReferenceError: p is not defined
 ```
 
 **That is a bug in the baseline, not in the working tree, and it was fixed three days after the pin
-was set.** `STATUS_COIN_EITHER_POWER` is one of the three PROVISIONAL Power cases #26 found on 25 Aug
-2026 that referenced a variable their function never defines — see `AI.md`'s invariant table. The note
-there says they "crashed the instant a deck actually fielded one — none had ever been reached before".
-`e23c747` predates that fix, so the pinned copy still contains it.
+was set.** `STATUS_COIN_EITHER_POWER` was one of the three PROVISIONAL Power cases #26 found on
+25 Aug; `e23c747` predates that fix, and the Team Rocket roster — built after the pin — was the first
+thing to field a card carrying that Power. **Nothing about the pin changed. The game grew into it.**
 
-**Nothing about the pin changed. The GAME grew into it.** The pin is a fixed old `ai.js` run against
-the **current engine and the current decks**, and the Team Rocket roster — built 25 Aug, after the pin
-— fields a card with that Power. So the baseline was fine on the day it was set, fine for the runs
-recorded above, and became unrunnable later without anybody touching it.
-
-**A frozen yardstick measured against a growing game has a shelf life**, and this is the failure mode
-of the whole idea rather than an accident of one commit. It fails LOUDLY, which is the good half — a
-stack trace rather than a wrong number. But it fails **silently in calendar terms**: the tool is only
-run when somebody changes the AI, so it can sit broken for days, and it did. Between the pin working
-and this discovery, the recorded 51.4% became the last reading anyone will ever take against it.
-
-**Do not move the pin to make this go away.** That is Trevor's call and it costs every comparison in
-this file. The two honest workarounds, both used on 28 Aug:
-
-- **`--gbc` is what breaks it**, because the ladder decks are what field the Power. The four theme
-  decks are Base Set only, so `--baseline` without `--gbc` may still run — at the cost of the
-  blindness that `--gbc` exists to fix.
-- **Duel against `HEAD` instead** and accept that it answers the smaller question: *did this change
-  help*, rather than *how far has the AI come*. For a single change that is the right question anyway.
-
-**It WAS moved, the same day, on Trevor's call** — to `582761b`, the first commit carrying that fix,
-verified with `--checkpin` against the live ladder before the line was changed. The pin table below
-is what replaced the loose instruction this paragraph used to end with.
-
-### The pin table — move it deliberately, and add a row when you do
-
-| Pin | Set | Retired | Why it was retired | Last reading against it |
-|---|---|---|---|---|
-| `e23c747` | 21 Aug 2026 | **28 Aug 2026** | Predates the 25 Aug fix for three PROVISIONAL Power crashes. The Team Rocket roster then fielded one and `--baseline --gbc` began dying inside the baseline | **51.4% ±0.5**, 23 Aug 2026 |
-| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified against the live ladder before the pin was moved | **50.1% ±0.5**, 28 Aug 2026 |
-
-**What moving it cost, stated rather than hidden.** Readings against `e23c747` are not comparable
-with readings against `582761b`, so the 21–25 Aug accumulation now sits *behind* the pin and is no
-longer measured by it. The 51.4% above is the last number anyone will ever take against the old one,
-and it is kept in this table for exactly that reason. **A retired pin's row never gets deleted.**
-
-### `--checkpin` is the answer to the rot, and it takes seconds
+**It fails loudly and it fails invisibly, and those are not a contradiction.** A stack trace is the
+good half — far better than a wrong number. But `aiduel` is only ever run by somebody who is changing
+the AI, so a broken pin sits unnoticed until one of them turns up; it sat for three days and would
+have sat longer. **`--checkpin` moves the discovery to whoever caused it, and takes seconds:**
 
 ```bash
 node tools/aiduel.js --checkpin --baseline --gbc     # PIN OK / PIN BROKEN
 ```
 
-**Run it after adding a set or a roster.** Those are the only things that have ever broken a pin,
-and the mechanism is always the same: new cards go in front of a frozen scorer that did not exist
-when it was frozen. It plays the baseline against **itself** across every adjacent deck pairing —
-the question is *"can this old file still take a turn against today's cards"*, not how well it does —
-and names the matchup that crashed.
+**Run it after adding a set or a roster.** Those are the only things that have ever broken a pin. It
+plays the baseline against **itself** across every adjacent deck pairing — the question is *"can this
+old file still take a turn against today's cards"*, not how well it does — and names the matchup that
+crashed. The same instruction is in [TOOLING.md](TOOLING.md)'s "Adding a set", which is where somebody
+is actually standing when it matters.
 
-**It exists because the failure is loud but invisible in calendar terms.** A broken pin throws a
-stack trace, which is the good half; but `aiduel` is only run when somebody changes the AI, so it sat
-broken for three days and would have sat longer. `--checkpin` moves the discovery to whoever *caused*
-it. The same instruction is in [TOOLING.md](TOOLING.md)'s "Adding a set", which is where somebody
-will actually be standing when it matters.
+**Two honest workarounds while a pin is broken**, both used on 28 Aug. **`--gbc` is what breaks it**,
+because the ladder decks are what field the card — the four theme decks are Base Set only, so
+`--baseline` without `--gbc` may still run, at the cost of the blindness `--gbc` exists to fix. Or
+**duel against `HEAD`** and accept the smaller question: *did this change help*, rather than *how far
+has the AI come*. For a single change that is the right question anyway.
 
-**Not pass/fail.** A tier boundary is real when the tier bands do not overlap. On the Base Set roster
-T2 and T3 separate cleanly and T4 does not — **the standings, the assembly rates and what to do about
-it are in [ROSTERS.md](ROSTERS.md)**, and the spec they are judged against is
-[OPPONENTS.md](OPPONENTS.md).
+### The pin table — move it deliberately, and add a row when you do
+
+**Do not move a pin to make a break go away.** That is Trevor's call, and it costs every comparison
+anyone has written down against the old one.
+
+| Pin | Set | Retired | Why it was retired | Last reading against it |
+|---|---|---|---|---|
+| `e23c747` | 21 Aug 2026 | **28 Aug 2026** | Predates the 25 Aug fix for three PROVISIONAL Power crashes. The Team Rocket roster then fielded one and `--baseline --gbc` began dying inside the baseline | **51.4% ±0.5**, 23 Aug 2026 |
+| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified with `--checkpin` against the live ladder before the pin was moved | **50.1% ±0.5**, 28 Aug 2026 |
+
+**Readings against different pins are not comparable**, so the 21–25 Aug accumulation now sits
+*behind* the current pin and is no longer measured by it. The last reading taken against a retired pin
+is kept in its row for exactly that reason. **A retired pin's row never gets deleted.**
+
 
 ## Where the rest of it is
 

@@ -212,16 +212,13 @@ as a figure to quote. Run the suite for the real number.
   See [PROGRESSION.md](PROGRESSION.md).
 - **`packtest.js`** opens 200,000 packs against a fixed seed and checks every row of the
   odds table in [PACKS.md](PACKS.md). Deterministic, so it cannot flake; the tolerances are sized to
-  catch a wrong denominator, not to absorb noise. **It takes a count, and a small one goes RED for
-  reasons that are not a fault** — the whole run takes about four seconds, so **just run it whole.**
-  Measured 26 Aug 2026 on an unmodified tree: `20000` fails six assertions, `50000` fails one,
-  `100000` and up are clean. Misprint at 1-in-1375 has fifteen sightings in 20,000 packs, which is
-  not a sample; the tolerance is honest and the count was not. **A documented command that goes red
-  on a clean tree teaches whoever runs it to stop reading the output**, which is exactly what
-  `pullcheck.js` sets its own threshold at p<0.01 to avoid, one section down. **It sweeps every live set and the fresh-RNG-per-pack path
-  the game actually uses**, both added 24 Aug 2026 after 200,000 packs turned out to cover one set
-  and one RNG stream — see [MISREADINGS.md](MISREADINGS.md). It also prints, without asserting, how many packs it takes
-  to finish a set. That number is the one the economy turns on and nothing else computes it.
+  catch a wrong denominator, not to absorb noise. It sweeps every live set and the fresh-RNG-per-pack
+  path the game actually uses. It also prints, without asserting, how many packs it takes to finish a
+  set — the number the economy turns on, and nothing else computes it.
+  **It takes a count, and a small one goes RED for reasons that are not a fault, so just run it
+  whole**; the full run is about four seconds and there was never anything to save. *[Which counts go
+  red, why the tolerance is the honest half, and what a documented red command teaches whoever runs it
+  →](MISREADINGS.md)*
 
 ## `claimtest.js` — pass/fail, but a red row is not a broken build
 

@@ -15,8 +15,9 @@ its one structural weakness is that a verb it cannot score costs nothing at runt
 forever.**
 
 **This file is the model. Every shipped invariant is in [AI-INVARIANTS.md](AI-INVARIANTS.md)** and
-its [archive](AI-INVARIANTS-ARCHIVE-1.md) — one entry per change, each stating what must stay true.
-The index to them is below, so you can find the one you need without opening either.
+its [two](AI-INVARIANTS-ARCHIVE-1.md) [archives](AI-INVARIANTS-ARCHIVE-2.md) — one entry per change,
+each stating what must stay true. The index to them is below, so you can find the one you need
+without opening any of the three.
 **Deliberately not counted**: this sentence said *twenty-three* for four days after it stopped being
 true, in two files at once, while the index table below silently kept telling the truth. The table
 is the count.
@@ -181,14 +182,17 @@ above is not confined to `ai.js`: one of them is in a test suite.
 [AI-INVARIANTS.md](AI-INVARIANTS.md).** They moved there on 22 Aug 2026 because the section had
 become a register — append-only, one entry per shipped change, growing by three or four every AI
 pass — sitting inside a file that is supposed to be the model and had reached 549 lines because of
-it. **Everything before Job 11 is one door further along**, in
-[AI-INVARIANTS-ARCHIVE-1.md](AI-INVARIANTS-ARCHIVE-1.md), split off 25 Aug 2026 at 471 lines. An
-archived invariant binds exactly as hard as a recent one; the rows below say which file each lives in.
+it. **Everything before Job 13 is one door further along**, in two archives, split off at a job
+boundary each time — 25 Aug 2026 at 471 lines and 28 Aug 2026 at 476. An archived invariant binds
+exactly as hard as a recent one; the rows below say which file each lives in.
 
-**† marks an entry in [AI-INVARIANTS-ARCHIVE-1.md](AI-INVARIANTS-ARCHIVE-1.md); the rest are in the
-live file.** **Read the entry before you touch the term.** Every row below is a rule somebody paid for with a
-wrong version first, and several of them look like arbitrary constants until you know what they are
-holding up. **The `Term` column is the index**: grep it in `ai.js`, then read its entry.
+**† is [archive 1](AI-INVARIANTS-ARCHIVE-1.md) (Jobs 9–10.5), ‡ is
+[archive 2](AI-INVARIANTS-ARCHIVE-2.md) (Jobs 11–12c), and an unmarked row is in the live
+[AI-INVARIANTS.md](AI-INVARIANTS.md).** **Read the entry before you touch the term.** Every row below
+is a rule somebody paid for with a wrong version first, and several of them look like arbitrary
+constants until you know what they are holding up. **The `Term` column is the index**: grep it in
+`ai.js`, then read its entry — **this table is the only place all three files are indexed together**,
+which is what keeps a split from costing anybody a search.
 
 | When | The invariant | Term |
 |---|---|---|
@@ -205,20 +209,20 @@ holding up. **The `Term` column is the index**: grep it in `ai.js`, then read it
 | 18 Aug † | Opening placement ranks **stranded last** and then sorts by HP — and it stays in `engine.js`, because the player's auto button calls it too | `setupAuto` |
 | 18 Aug † | **Never re-derive what a slot provides; ask the engine.** Reading Energy off the printed card made the whole Charizard archetype invisible | `slotSymbols` |
 | 19 Aug † | The bot takes a Prize at **random** unless they are face up — it may only act on what it could legitimately know | `prizeIndex` |
-| 21 Aug | A retreat is priced on the Pokémon **arriving**, not the one leaving; `incomingThreat` answers for the Active and only the Active | `threatAgainst` |
-| 21 Aug | A self-switch is worth **where it goes**, and the scorer fills in `a.opts` so the engine's random fallback is never reached | `selfSwitch` |
-| 21 Aug | **A trap:** `promoteValue` on the Active slot re-enters `scoreAttack`. Any new caller needs the re-entry guard | `bestSelfSwitch` |
-| 21 Aug | **An Energy is a turn**, so a retreat pays the same price a lost Energy costs. `retreatBase` is purely tempo from here | `retreatSaveEnergy` |
-| 21 Aug | A wall's low damage is not a deficiency, so it is not an upgrade opportunity — asymmetric on purpose | `wallScore` |
-| 21 Aug | **Ammunition is not surplus.** Headroom is derived from the discard verb, not from a list of cards | `ammoSymbols` |
-| 22 Aug | A rider is worth nothing on a Pokémon the attack removes — a **proportion**, not a switch, and `drag` is the exception | `1 - pLethal` |
-| 22 Aug | A barrier is worth what it prevents, **linear** in the damage stopped | `shieldSelf` |
-| 22 Aug | A turn taken away is worth the attack it denies; Poison is excluded because it is a clock, not a stolen turn | `DENIES_A_TURN` |
-| 22 Aug | A barrier that saves your life is priced **as a life**, squared, off `selfKO` rather than off a tempo weight | `shieldSelf`, `selfKO` |
-| 23 Aug | A discard costs **turns of silence**, squared, discounted by survival — and it reads the CHEAPEST attack, never the best | `discardSilence` |
-| 23 Aug | A rider is worth nothing on a Pokemon that **already has it** — but Paralysis refreshes, so it is exempt | `statusNovelty` |
-| 24 Aug | **A rule proven in `scoreAttack` does not reach `scoreTrainer`.** Three rider rules were missing from the Trainer path entirely | `pLethalThisTurn` |
-| 25 Aug | Three PROVISIONAL Power cases referenced a `me` this function never defines and crashed the instant a deck actually fielded one — none had ever been reached before | `SEARCH_EVOLUTION_TO_HAND`, `STATUS_COIN_EITHER_POWER`, `DISCARD_THEN_DRAW` |
+| 21 Aug ‡ | A retreat is priced on the Pokémon **arriving**, not the one leaving; `incomingThreat` answers for the Active and only the Active | `threatAgainst` |
+| 21 Aug ‡ | A self-switch is worth **where it goes**, and the scorer fills in `a.opts` so the engine's random fallback is never reached | `selfSwitch` |
+| 21 Aug ‡ | **A trap:** `promoteValue` on the Active slot re-enters `scoreAttack`. Any new caller needs the re-entry guard | `bestSelfSwitch` |
+| 21 Aug ‡ | **An Energy is a turn**, so a retreat pays the same price a lost Energy costs. `retreatBase` is purely tempo from here | `retreatSaveEnergy` |
+| 21 Aug ‡ | A wall's low damage is not a deficiency, so it is not an upgrade opportunity — asymmetric on purpose | `wallScore` |
+| 21 Aug ‡ | **Ammunition is not surplus.** Headroom is derived from the discard verb, not from a list of cards | `ammoSymbols` |
+| 22 Aug ‡ | A rider is worth nothing on a Pokémon the attack removes — a **proportion**, not a switch, and `drag` is the exception | `1 - pLethal` |
+| 22 Aug ‡ | A barrier is worth what it prevents, **linear** in the damage stopped | `shieldSelf` |
+| 22 Aug ‡ | A turn taken away is worth the attack it denies; Poison is excluded because it is a clock, not a stolen turn | `DENIES_A_TURN` |
+| 22 Aug ‡ | A barrier that saves your life is priced **as a life**, squared, off `selfKO` rather than off a tempo weight | `shieldSelf`, `selfKO` |
+| 23 Aug ‡ | A discard costs **turns of silence**, squared, discounted by survival — and it reads the CHEAPEST attack, never the best | `discardSilence` |
+| 23 Aug ‡ | A rider is worth nothing on a Pokemon that **already has it** — but Paralysis refreshes, so it is exempt | `statusNovelty` |
+| 24 Aug ‡ | **A rule proven in `scoreAttack` does not reach `scoreTrainer`.** Three rider rules were missing from the Trainer path entirely | `pLethalThisTurn` |
+| 25 Aug ‡ | Three PROVISIONAL Power cases referenced a `me` this function never defines and crashed the instant a deck actually fielded one — none had ever been reached before | `SEARCH_EVOLUTION_TO_HAND`, `STATUS_COIN_EITHER_POWER`, `DISCARD_THEN_DRAW` |
 | 28 Aug | **Ammunition is only ammunition if you have nothing else to shoot with.** The discard verb was too wide a derivation on its own — a card that DRAINS and owns a free attack stockpiles nothing | `ammoSymbols` |
 | 28 Aug | **A Pokemon about to become something else is not paid up.** Shortfall is measured against the evolution when it is in hand, and `evolve` waits until one Energy short of it. Shipped on a measured NULL | `evolutionInHand`, `potentialAs`, `evolveEarly` |
 | 28 Aug | **One of the twins gets fed.** The evolution ROAD is rationed to the most-invested copy that is not yet ready — the other keeps its own road, so it is resistant and never blocked | `evolutionRoadFor`, `benchDuplicate` |
@@ -327,57 +331,43 @@ on it.**
    this is the half he flagged himself, and it may belong with [Ammo](Playbook/AMMO.md)'s open
    Charmeleon note rather than standing alone.
    *[How a note becomes a row →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*
-9. **"Energy is a resource with somewhere else to be" — MEASURED 28 Aug 2026, and two of its three
-   halves are already done or would do nothing.** This is the capability [Ammo](Playbook/AMMO.md)'s
-   Charmeleon note, its Arcanine GP note and [Evolution timing](Playbook/EVOLUTION-TIMING.md) all
-   name as their blocker, so it is worth knowing what is actually left before anyone scopes it as one
-   large job. Trevor's sentence decomposes into three, and they are in very different states.
+9. **"Energy is a resource with somewhere else to be" — MEASURED 28 Aug 2026. Two of its three halves
+   are done or would do nothing, and this item exists mainly to stop it being re-scoped as one large
+   job.** It is the capability [Ammo](Playbook/AMMO.md)'s Charmeleon and Arcanine notes and
+   [Evolution timing](Playbook/EVOLUTION-TIMING.md) all name as their blocker. Trevor's sentence
+   decomposes into three and they are in very different states.
 
-   **(a) Misrouting — putting the card on the wrong slot. Effectively solved: 0.26%.**
-   `aitest.js 8 --gbc`, **17,672 games and 228,832 attachments**: 3% surplus (the target could
-   already pay for everything it owns), 1% inert (still short afterwards and no new attack), and
-   **605 misdirected — 0.26%, which the report prints as 0%.** That is one attachment in 380. The
-   per-slot competition through `attachValue` already routes correctly.
-
-   **Quoted from the 228k-attachment run, not from the 1,540-attachment probe that found it.** The
-   scratch probe read 0 of 1540 and would have supported "never happens"; at the real rate it should
-   have seen about four. **A rate of one-in-380 is indistinguishable from zero in a sample that
-   size**, and the difference between "zero" and "rare" is the difference between a closed question
-   and an open one. Both were run; the bigger one is the number.
+   **(a) Misrouting — putting the card on the wrong slot. Effectively solved: 0.26%.** `aitest.js 8
+   --gbc`, **17,672 games and 228,832 attachments**: 605 misdirected, one attachment in 380. The
+   per-slot competition through `attachValue` already routes correctly. **Read that null carefully,
+   because it is partly tautological** — the bot picks the highest-scoring action, so this counter can
+   only fire where the *score* disagrees with a `short`-based notion of need. It says the scoring is
+   internally consistent. It cannot say the routing is *strategically* right, and no local counter can;
+   that is only answerable by outcome, so any change here needs `aiduel`/`decksim` rather than a
+   counter going down. *[Why the small probe that found it read zero →](MISREADINGS.md)*
 
    **And the neighbouring quantity is 27x larger.** 7% of attachments go onto an Active that dies
-   before it can spend them, and 1% onto one that could not attack anyway — 15,117 and 2,462 against
-   misdirection's 605. `survivesCharge` already discounts for exactly this and 7% still get through.
-   Whether that is a fault or is simply what attaching under pressure looks like is unmeasured, but
-   **if anyone goes looking for waste in the attach decision, that is where it is**, and it is not
-   the thing this open item is about.
+   before spending them and 1% onto one that could not attack anyway — 15,117 and 2,462 against
+   misdirection's 605. `survivesCharge` already discounts for this and 7% still get through. Whether
+   that is waste or simply what attaching under pressure looks like is **unmeasured**, and if anyone
+   goes hunting for waste in the attach decision, that is where it is.
 
-   **Read that null carefully, because it is partly tautological.** The bot picks the highest-scoring
-   action, so this counter can only fire when the SCORE disagrees with a `short`-based notion of need.
-   It says the scoring is internally consistent. It cannot say the routing is *strategically* right,
-   and no local counter can — that question is only answerable by outcome, which means any change
-   here has to be justified by `aiduel`/`decksim` rather than by a counter going down.
+   **(b) Holding the card when Energy is scarce — real, and near-inert at ~0.1% of attachments.** Only
+   1.4% of attachments score under 6 at all, and 2 of 1,540 were made with six or fewer Energy left in
+   hand and deck. Scarcity is real at the tail — 8.4% of attachments happen with ≤6 left, a tenth of
+   games end with one or none — but when Energy is scarce the bot is nearly always attaching it
+   somewhere that matters. **Build it for correctness if you like; do not expect it to move a win
+   rate, and do not read a null from `aiduel` as evidence it failed.**
 
-   **(b) Holding the card when Energy is scarce — real, and near-inert. ~0.1% of attachments.** Only
-   **1.4%** of attachments score under 6 at all, and of those only **2 of 1540** were made with six or
-   fewer Energy left in hand and deck. Scarcity itself is real at the tail — 8.4% of attachments
-   happen with ≤6 left, and a tenth of games end with one or none — but when Energy is scarce the bot
-   is nearly always attaching it somewhere that matters. A hold-for-later term would fire about once
-   every thousand attachments. **Build it for correctness if you like; do not expect it to move a
-   win rate, and do not read a null from `aiduel` as evidence it failed.**
+   **(c) Attaching toward a card not yet in play — HALF BUILT.** *"This Charmeleon is worth four Fire
+   because a Charizard is coming"* is expressible now, but **only while the Charizard is in hand**:
+   `evolutionInHand` plus `potentialAs` give the scorer one card of lookahead, and only where the plan
+   is a certainty rather than a probability — which is the arm Trevor's GBC account weights much
+   higher anyway. *[Both halves, the null they shipped on, and why →](Playbook/EVOLUTION-TIMING.md)*
 
-   **(c) Attaching toward a card that is not in play yet — HALF BUILT, 28 Aug 2026.** *"This
-   Charmeleon is worth four Fire because a Charizard is coming"* is now expressible, but **only when
-   the Charizard is in hand.** `evolutionInHand` plus `potentialAs` give the scorer exactly one card
-   of lookahead, and only where the plan is a certainty rather than a probability — which is where the
-   weight belongs anyway, and is the arm Trevor's GBC account weights "much higher".
-   *[Both halves, the null they measured, and why they shipped →](Playbook/EVOLUTION-TIMING.md)*
-
-   **Two clauses of his note are still open and neither follows automatically.**
-   **Evolutions in the DECK** need it as a probability rather than a fact, which is a different kind of
-   reasoning from anything in the scorer. **The duplicates rule** — *"on a single pokemon of the same
-   name, not duplicates at the same time unless nowhere else to go and energies aren't in short
-   supply"* — has its exception clause resting on the scarcity measure (b) above found near-inert, so
-   it would be built on a term that fires once in a thousand attachments. **Raise both with Trevor
-   rather than assuming they follow from (c) landing.**
-
+   **Two clauses of his note are still open and neither follows automatically from (c) landing.**
+   **Evolutions in the DECK** need probability rather than fact, which is a different kind of reasoning
+   from anything in the scorer. **The duplicates rule** was built on 28 Aug — but on a release
+   condition the board already knows rather than on the scarcity clause he first wrote, because (b)
+   above had measured that clause near-inert hours earlier. **Raise the deck arm with Trevor rather
+   than assuming it follows.**

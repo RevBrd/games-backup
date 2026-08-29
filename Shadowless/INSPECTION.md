@@ -49,7 +49,15 @@ columns that ever moved, so the one that changed is not buried under eleven that
 
 **Three screens, three state tables.** The board is the default; `--setup` boots the opening-setup
 sheet and places Basics into it; `--pack` grants a booster, opens it through the real `openNextPack`
-and turns cards over one, five, ten and eleven at a time. A hand-built `UI.pack` would have been
+and walks `reveal-1` → `reveal-half` → `reveal-strip` → `reveal-all`. **Those states are derived from
+`UI.pack.revealed.length`, never written down**, and this paragraph named the old hard-coded ones —
+*"one, five, ten and eleven at a time"* — for three days after they were removed. They were removed
+because `reveal-10` had silently become a duplicate of `reveal-all` when the pack shrank from eleven
+cards to eight: **a state measuring nothing, inside the one instrument built to notice that something
+moved.** The state that replaced it found the ribbon fault on its first run.
+*[The reveal screen those states are walking →](SCREENS.md)*
+
+A hand-built `UI.pack` would have been
 easier and would have measured nothing — the `NEW`/`×N` ribbons come off `isNew` and the variant
 flags, and the ribbons were the whole fault. **Boot the screen the way the game boots it.**
 

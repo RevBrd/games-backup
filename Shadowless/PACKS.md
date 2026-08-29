@@ -242,13 +242,12 @@ ORIGIN is not a field naming its ROLE**, and one screen read it as both. *[The r
 | Common → Uncommon | 2.4% | Common slots past the floor |
 | Common → Rare (the two-tier jump) | 0.1% | Common slots past the floor |
 
-**Three tuning drafts, all Trevor's, landed here.** v1 gave any bonus Rare-tier card about a 1-in-29
-pack rate; v2 doubled the per-card odds and shrank Uncommon from 3 slots to 2, landing near 1-in-20 —
-the same frequency as 1st Edition; v3 is shipped, retuned so a bonus Rare-tier card beats Reverse
-Holo's own per-pack frequency and the two-tier jump stays clearly under it. **The Uncommon-to-Rare odds
-were nudged from Trevor's original 3% to 3.3%** after measurement showed his three v3 numbers landed
-the "beats Reverse Holo" goal as a near-tie (6.38% vs 6.79%) rather than clearing it. Flagged rather
-than applied quietly; `PACK_ODDS` carries the same note and a one-line revert.
+**The target the shipped numbers hit: a bonus Rare-tier card beats Reverse Holo's own per-pack
+frequency, and the two-tier jump stays clearly under it.** That is the thing to preserve if anyone
+retunes — the ordering, not the three constants. **The Uncommon-to-Rare odds were nudged from
+Trevor's 3% to 3.3%** because his numbers landed the goal as a near-tie (6.38% vs 6.79%) rather than
+clearing it; flagged rather than applied quietly, and `PACK_ODDS` carries the same note and a
+one-line revert. *[The three tuning drafts this went through →](HISTORY.md)*
 
 **The Energy floor is exempt from the jump roll, on purpose.** base1's two guaranteed Energy slots are
 drawn before the jump-eligible loop even starts, so "the floor and the cap meet at two" (above) stays
@@ -262,21 +261,13 @@ live set clears it comfortably (~6.9-7.5%, per-set sweep). **Whether that is an 
 "Base-Set-is-already-the-exception" outcome, or worth its own further nudge, is open** — flagged to
 Trevor rather than resolved a second time by guessing.
 
-**That run covered a quarter of the live content and one RNG stream, and both gaps are now closed —
-24 Aug 2026.** Trevor reported his Shiny and 1st Edition pulls feeling too frequent, twice, and
-neither gap could have been seen by making the run bigger:
-
-- **It only ever opened `base1`.** Three other sets are live and the pools differ. Swept at N/4 each:
-  every rate in every live set lands on the table, Team Rocket included, which is the set he was
-  actually opening.
-- **It reused one `mulberry32` stream across all 200,000 packs. The game makes a fresh one per
-  pack**, seeded from `Math.random()` — so a real pack only ever samples the *first ~50 outputs of a
-  brand new stream*, which a single long stream cannot test by construction. A PRNG whose early
-  output was biased by its seed would have produced precisely the reported symptom while this file
-  stayed green forever. Measured: clean.
-
-**So the odds are right, and saying so is a result rather than a formality.** *[Both gaps, and the
-deterministic flake found while closing them →](MISREADINGS.md)*
+**That run covered a quarter of the live content and one RNG stream, and both gaps are closed —
+24 Aug 2026.** Trevor reported Shiny and 1st Edition feeling too frequent, twice; neither gap could
+have been seen by making the run bigger, because one was *which set* it opened and the other was that
+it reused a single stream where the game builds a fresh one per pack. Both were measured clean, and
+`packtest.js` now sweeps every live set and the fresh-RNG path. **So the odds are right, and saying so
+is a result rather than a formality.** *[Both gaps in full, and the deterministic flake found while
+closing them →](MISREADINGS.md)*
 
 **`tools/pullcheck.js` answers the other question**, the one `packtest.js` cannot: not "does the
 generator match the table" but *"did MY packs behave"* — it reads a real exported save. Reach for it
@@ -362,21 +353,20 @@ wildly different experiences of the same economy.
    rolls, so a Challenge pack would also become the best place in the game to pull a Shadowless or a 1st
    Edition. That is probably wanted — it is the biggest reward on the ladder — but it should be a
    decision, because nobody would have chosen it and it would arrive anyway.
-4. **Restoring the pre-shrink pacing on the four per-slot cosmetic axes is a deferred agenda item, not
-   an oversight.** Reverse Holo, Shiny, Shadowless and Misprint all roll once per SLOT rather than once
-   per pack, so shrinking the pack from 11 cards to 8 on 25 Aug 2026 silently thinned all four —
-   Reverse Holo alone moved from 1-in-9.9 to 1-in-14.3 packs, with nobody touching its `PACK_ODDS`
-   value. Trevor's call, same day: leave the four odds as they are for now — retuning them on top of
-   the rarity-jump mechanic that shipped the same day risks losing track of which change did what —
-   and revisit as its own pass once the new pack shape has actually been played. Whoever picks this up
-   should run `packtest.js` first rather than trust this file: its per-axis targets are now DERIVED
-   from `PACK_ODDS` + `PACK_SHAPE` rather than hardcoded, so a wrong number there means the derivation
-   needs revisiting, not just the odds.
-5. **Base Set's bonus-Rare-tier rate runs close to a tie with Reverse Holo, specifically because of the
-   Energy floor** — see "Bonus rare-tier jumps" above for the mechanism. Every other live set clears
-   Reverse Holo's rate comfortably; base1 alone does not, because its floor removes 2 of 5 Common slots
-   from jump eligibility. Open because whether that is an acceptable Base-Set-is-already-the-exception
-   outcome, or worth its own nudge, is Trevor's call.
+4. **Restoring the pre-shrink pacing on the four per-slot cosmetic axes.** Reverse Holo, Shiny,
+   Shadowless and Misprint each roll once per SLOT, so the 25 Aug 2026 shrink from 11 cards to 8
+   thinned all four without anyone touching a value in `PACK_ODDS` — the before-and-after figures are
+   in the verification paragraph above. **Deferred deliberately, Trevor, same day**: retuning them on
+   top of the rarity-jump mechanic that shipped the same day would lose track of which change did
+   what, so it waits until the new pack shape has actually been played. **Run `packtest.js` before
+   trusting anything here** — its per-axis targets are DERIVED from `PACK_ODDS` + `PACK_SHAPE` now, so
+   a wrong number means the derivation needs revisiting rather than the odds.
+5. **Base Set alone does not clear Reverse Holo with its bonus-Rare-tier rate**, because the Energy
+   floor removes 2 of its 5 Common slots from jump eligibility — mechanism and measurement both under
+   "Bonus rare-tier jumps" above. Whether that is an acceptable Base-Set-is-already-the-exception
+   outcome or wants its own nudge is Trevor's call. **It is a consequence of item 4 and should be
+   decided in the same pass**, since any nudge to the four axes moves the comparison it is measured
+   against.
 
 ## Sources
 

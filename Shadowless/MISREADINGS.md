@@ -193,3 +193,21 @@ save.
 other number in prose does.** Nobody re-derived it when the pack shrank from eleven cards to eight
 on 25 Aug 2026 and every per-slot axis got rarer — which is what moved the fast pass from *mostly
 green* to *reliably red* without one line of the suite changing.
+
+**A rate of one in 380 is indistinguishable from zero in a sample of 1,540, and "zero" and "rare" are
+different answers to different questions.** *28 Aug 2026.* A scratch probe was written to find out how
+often the bot attaches an Energy to the wrong slot — *misdirection* — and read **0 of 1,540
+attachments**. That looks like a closed question, and the sentence it supports is *"this never
+happens."* The real rate, measured the same day over `aitest.js 8 --gbc` at **228,832 attachments**,
+is **605 — 0.26%**, which the report prints as 0%. At that rate the small probe should have seen about
+four, and seeing none was ordinary luck rather than evidence.
+
+**Both runs were correct and only one of them could answer the question.** The distinction is not
+sample-size pedantry: *never happens* closes an open item and deletes a line of reasoning, while *one
+in 380* leaves it open and small. **Before you write "never", compute how many the sample should have
+contained** — if the answer is single digits, the probe cannot tell zero from rare and you have
+measured your own patience.
+
+**And the report rounds.** 0.26% displaying as `0%` is the same trap arriving a second time in the
+same afternoon, from the formatter rather than from the sample. A counter that can print zero for a
+non-zero quantity needs either a decimal or a raw count beside it.

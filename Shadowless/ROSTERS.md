@@ -14,8 +14,20 @@ wants the spec and the *lessons*, and does not want 630-games-per-deck standings
 session arguing with the spec needs exactly those. Both halves are load-bearing and neither wants to
 read the other. See [MAINTENANCE.md](MAINTENANCE.md).
 
-**One section per roster, appended as each is built.** The lesson goes back into `OPPONENTS.md` as a
-claim with a link; the evidence stays here.
+**One section per roster, in the order the rosters were built.** The lesson goes back into
+`OPPONENTS.md` as a claim with a link; the evidence stays here.
+
+**This is an append-only register and the 200-line target does not apply** — a standing is a
+measurement somebody took on a date, and condensing one deletes the only record of it. Correct an
+entry; never shorten one. **When this file passes ~450, start `ROSTERS-ARCHIVE-1.md` at a set
+boundary rather than growing it.** Stated here, at the top, before the decision — four rosters is
+already 395 lines and there are fourteen sets, so this file is on course to be the longest thing in
+the tree and is the one register that had no threshold written down. Added 29 Aug 2026 by #30, after
+finding a roster that had never been measured at all.
+
+**A section may be added late.** Fossil's was written eight days after its decks went live, and it
+says so in its own heading — **date the measurement separately from the build** whenever the two are
+not the same day, or a later reader will attribute the numbers to a bot that did not exist yet.
 
 **Every figure carries the date it was measured and the AI it was measured with.** Deck strength
 moves whenever the AI moves — [MEASUREMENT.md](MEASUREMENT.md) has the standing version of that
@@ -230,6 +242,125 @@ is not optional. *[All three →](MEASUREMENT.md)*
 They were duplicated here until 22 Aug 2026. This file is the **evidence**, appended once per roster;
 how to interpret a `decksim` run is a fact about `decksim` and belongs where the tool is documented,
 or the two copies drift and the one a reader hits first wins.
+
+## Fossil — Trevor's six decks, built 21 Aug 2026, **measured 29 Aug 2026**
+
+**Live on the ladder since 21 Aug 2026**, alongside the four GBC Grand Masters standing in for the
+T1 intro that Fossil's own theme decks would fill. Three T2, two T3, one T4, in
+`data/base3_decks.json`, converted from `Fossil Opponent Decks v1.xlsx` with **zero id corrections**.
+
+**This section is eight days younger than the roster and that gap is the finding.** Fossil went live
+in the same job as Jungle and was assumed to have had the same treatment; it had not been run
+through `decksim.js` at all, while [OPPONENTS.md](OPPONENTS.md) said in as many words that *"every
+one has been played by `tools/decksim.js` from both seats"* and `CLAUDE.md` promised this file held
+what the sim said about **each** roster. Both were written when three of four were true. **A claim
+that quantifies over a growing set has to be re-checked every time the set grows**, and nobody had —
+including the pass that split this file out of `OPPONENTS.md`. Found and closed by #30 on
+29 Aug 2026; the numbers below are what the run actually said.
+
+```bash
+node tools/decksim.js 45 6 data/base3_decks.json                                            # alone
+node tools/decksim.js 20 6 data/base1_decks.json data/base2_decks.json data/base3_decks.json  # merged, 220s
+```
+
+### The recipe
+
+| | T2 (three decks) | T3 (two) | T4 (one) |
+|---|---|---|---|
+| Feature weight | 11.5 | 16 | 19 |
+| Draw + search cards | 4 – 6 | 7 | 11 |
+| Rare Trainers | 1 | 3 – 4 | 3 |
+| Basic Energy | 28 | 21 – 24 | 24 |
+| Basic Pokemon | 15 – 16 | 7 – 9 | 12 |
+| Trainers | 10 | 18 – 20 | 17 |
+
+**The Energy-down, Trainers-up shape holds for the third independent roster, and here it is the
+widest it has ever been** — 28 basic Energy down to 21, 10 Trainers up to 20. *Consistency, not
+power, is what climbs* now has three rosters behind it and is the most durable claim the recipe has.
+
+**And the row Jungle inverted, Fossil does not.** Jungle's T3 ran five draw-and-search against a T2
+on six, the only place a lower tier was better supplied than the one above it, and `OPPONENTS.md`
+names that as the likely cause of Jungle's tiers failing to order. Fossil's T3s run **seven** against
+a T2 band of four to six. Every one of the six axes above is monotone. **Read that against the
+standings below before reaching for the recipe as an explanation of anything.**
+
+### What the sim said
+
+Alone — 45 seeds × both seats per ordered pair, 6 Prizes, expert both sides:
+
+| Tier | Field win rate | Range |
+|---|---|---|
+| T3 (two decks) | **56.7%** | 51.3 – 62.0 |
+| T2 (three decks) | **46.7%** | 37.3 – 54.9 |
+| T4 (one deck) | **46.7%** | — |
+
+**The T2/T3 boundary does not separate here, and the T4 sits in the T2 band.** T2's ceiling is 54.9
+against T3's floor of 51.3 — overlapping by 3.6 points — and the boss finishes **fifth of six**. It
+overlaps in the merged field too, more widely: Fossil's best T2 comes **fifth of nineteen** at 60.0%,
+above its own second T3 at 51.4%.
+
+**So the recipe is monotone on all six axes and the tiers still do not order.** That is the strongest
+version of this file's standing warning that has been measured: *the recipe is a recipe and not
+evidence.* Base Set separated, Jungle did not, Team Rocket did, Fossil does not — **two of four**, and
+the one with the cleanest recipe is on the losing side. **Do not respond by tuning the recipe**; it is
+not currently known to predict the thing it is being read as predicting.
+
+### The merged field, and the T4 finding that needed three rosters to see
+
+19 decks across base1, base2 and base3 — 20 seeds × both seats per ordered pair, 6 Prizes:
+
+| Tier | Merged | Range |
+|---|---|---|
+| T3 (five decks) | **57.6%** | 41.9 – 65.7 |
+| T4 (three decks) | **48.7%** | 47.1 – 49.9 |
+| T2 (eleven decks) | **46.9%** | 33.3 – 61.9 |
+
+| Roster | Field win rate | Range |
+|---|---|---|
+| base1 — Trevor's eight | 50.8% | 36.1 – 65.7 |
+| base3 — Trevor's six | **50.5%** | 37.2 – 63.8 |
+| base2 — Trevor's five | 48.0% | 33.3 – 61.9 |
+
+**Fossil is a strong bracket and that is the first thing to say** — level with Base Set and above
+Jungle, holding third place overall with `b3_t3_water` and fifth with a T2.
+
+**Every T4 in the game finishes below every roster's best T3, and the three of them land within 2.8
+points of each other.** 49.9 / 49.2 / 47.1, against a T3 average of 57.6. Three bosses, three
+independently built rosters, three different sets, three different centrepieces — and they cluster at
+almost exactly the field average. **No single roster could say this.** Base Set's T4 sitting in its
+own T2 band read as one deck being mis-built; Jungle's read as a second; the third turns it into a
+statement about T4 **as a class**, which is a different question and a better one.
+
+**And the assembly figures point the opposite way to the standings, which is the part worth chasing.**
+
+| Boss | Centrepiece | Lands | Median turn | Merged rank |
+|---|---|---|---|---|
+| `b3_t4_psychic` | Gengar | **89%** | 18 | 12 of 19 |
+| `b2_t4_grass` | Vileplume | 76% | 18 | 10 of 19 |
+| `b1_t4_fire` | Charizard | 53% | 13 | 9 of 19 |
+
+**Assembly and win rate are inversely ordered across all three.** Gengar's 89% is the highest
+assembly rate ever recorded in this project and it finishes last of the three. `ROSTERS.md` has been
+carrying Jungle's version of this question since 21 Aug — *"either the pressure is worth less than it
+looks or the bot cannot press it"* — as a one-deck observation. **It is now a three-deck trend, and
+it survives the obvious objection**: a bot that plays the whole field badly should be *helped*, not
+hurt, by a deck that reliably assembles the thing it is built around. Something is wrong with what
+happens **after** the centrepiece lands, and that is an AI question rather than a deck question.
+
+**Three points are three points, and the round-robin confound below still applies to every number on
+this page.** What changed is the shape of the question, not the confidence.
+
+### The benchmark reading from this run, and why it is NOT in `MEASUREMENT.md`'s table
+
+`b1_t4_fire` came **9th of 19 at 49.9%**, Charizard landing 53% at median turn 13.
+
+**Do not read that against the 5th-of-13 standing in [MEASUREMENT.md](MEASUREMENT.md) — it is a
+different field and a different seed count, so it is not a lower reading, it is an unrelated one.**
+Six decks joined the field and three of them finished above it; the seed count is 20 rather than 30.
+That file's benchmark table is deliberately all one field for exactly this reason, and appending a
+row from a wider one would break the only property that makes the table readable. It is recorded
+here, with its field stated, which is where a one-off reading belongs.
+
 
 ## Team Rocket — Trevor's eight decks, 25 Aug 2026
 

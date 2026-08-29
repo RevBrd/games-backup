@@ -43,6 +43,20 @@ Not always on a schedule. The triggers that actually mean something:
   the file, and an instance appended its logbook entry into the *middle* of another's because the end
   of the file was not where it looked. **This trigger can justify a split that topic purity cannot**,
   and it is why the seam below was finally taken. Watch for it above ~300 lines.
+- **A QUANTIFIER over a set that has since grown — and this is the highest-yield trigger in the file,
+  measured.** Added on the tenth pass, where **nine of eleven findings had this exact shape**. Not a
+  count somebody got wrong: a sentence that was arithmetically correct on the day, about a set that
+  then gained a member while nothing made anyone re-read it. *"`gen_cards.js` reads exactly four
+  files"* sat one line above a nine-row table. *"The rest of the sixteen"* sat four paragraphs from a
+  seventeen-item list, in a file that in the same breath called naming the seventeenth an open job.
+  *"Every roster has been played by `decksim.js`"* was true of three of four, and the fourth had never
+  been run at all.
+  **A count reads as a fact somebody might check; a quantifier reads as a property, and nobody checks
+  a property.** So the rule *don't put counts in prose* undersells it — **grep for "exactly", "all
+  four", "the rest of the", "both", "every one of them" and "two of them also"**, and for each one go
+  and count the thing. It is the cheapest sweep in this document and it has the best hit rate.
+  **The generative fix is to name the MECHANISM instead of the members**: "everything in
+  `OPPONENT_SOURCES`" cannot rot, "exactly four files" rots the next time somebody adds a roster.
 - **An invariant stated in terms that stopped being true, while the invariant itself holds.**
   `.boardcol.wide` "must stay last in `style.css`" had not been last since Job 5, and nothing was
   broken, because the real rule was *after the CARD SYSTEM section*. A rule that reads as violated
@@ -266,6 +280,24 @@ general fix: **a constraint stated only in the thing being constrained is read t
 
 ```bash
 grep -oh "](\([A-Za-z0-9_./#-]*\.md\)[^)]*)" *.md | sed 's/](\([^):#]*\).*/\1/' | sort -u | while read f; do [ -f "$f" ] || echo "MISSING: $f"; done
+```
+
+   **Before any split, grep the file you are splitting for positional references** — "the entry
+   above", "two above this one", "the last row", "below". A split silently re-points them at
+   different material rather than breaking loudly, and the tenth pass nearly shipped one: the newest
+   `AI-INVARIANTS.md` entry opened *"the 21 Aug entry two above this one"* while the 21 Aug entries
+   were being moved into an archive. **Name the entry, never point at a position** — `MEASUREMENT.md`
+   learned this from a growing table and it applies identically to a shrinking file.
+
+   **And check every file ends with a newline.** `HISTORY.md`'s `greedy` rejection lost its closing
+   clause — *"and `greedy` is one already built"* — because it was the last line of a file with no
+   trailing newline and the next append landed on top of it. It sat as a sentence ending in a comma
+   for a week, in an **append-only register**, and nobody noticed because a truncation reads as
+   somebody's ellipsis where a deleted paragraph would have been obvious. Append-only protects
+   against editing; it does not protect against a missing newline. The sweep is one line:
+
+```bash
+for f in *.md */*.md; do [ -n "$(tail -c 1 "$f")" ] && echo "NO TRAILING NEWLINE: $f"; done
 ```
 
    **Run it in `data/`, `Rulings/` and `Playbook/` too.** All three folders have their own markdown,

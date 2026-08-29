@@ -261,6 +261,26 @@ filename and the whole *Writing an entry (Trevor)* section. Both were about writ
 internalised by the person they addressed, and neither was reinstated. **A guide addressed to one
 person stops earning its lines once that person has written the thing it describes.**
 
+## The bonus rare-tier jump went through three tuning drafts
+
+*Moved out of [PACKS.md](PACKS.md) on 29 Aug 2026 by #30. All three drafts are Trevor's. The live
+rule — and the ordering the shipped numbers are protecting — stayed in that file; this is how it was
+reached, which nobody needs in order to change a number.*
+
+- **v1** gave any bonus Rare-tier card about a **1-in-29** pack rate.
+- **v2** doubled the per-card odds and shrank Uncommon from 3 slots to 2, landing near **1-in-20** —
+  the same frequency as 1st Edition, which was the thing that made it feel wrong: two different
+  mechanics arriving at the same cadence read as one mechanic.
+- **v3 shipped**, retuned so a bonus Rare-tier card *beats* Reverse Holo's per-pack frequency while
+  the two-tier jump stays clearly under it. Measurement then showed the three v3 numbers landed that
+  goal as a near-tie (6.38% against 6.79%), so Uncommon-to-Rare was nudged 3% → 3.3%.
+
+**Worth keeping for the shape rather than the numbers:** each draft was a whole-shape change rather
+than a nudge, and what finally settled it was naming a *relationship between two axes* — beat this
+one, stay under that one — instead of picking a rate. A target expressed as an ordering survives the
+pack size changing; a target expressed as 1-in-20 does not, which the 25 Aug shrink then proved on
+four other axes.
+
 ## Ideas raised and shelved, with the reason
 
 - **Opponent cards getting variant treatment** — wanted, and started deliberately small. Agreed
@@ -282,6 +302,37 @@ person stops earning its lines once that person has written the thing it describ
   content. It survives as a good unlock for the **optional challenge tier**, where going back to an
   older bracket to fill a gap is a choice rather than a toll. Same shape as the entry above: the
   right home for it is the opt-in half.
+- **The deck auto-builder — deferred indefinitely to a phase-two bundle. Trevor, 29 Aug 2026, and
+  the reasons are worth keeping because the idea reads as obviously good.** It had been carried as a
+  scheduled job since 15 Aug and was named by three files as the consumer they were written for. It
+  is now filed with opponents that talk, a bare-bones storyline, and graphics and style passes —
+  **after the game's structure is built, if even then.** Two reasons, and they are independent:
+
+  **It cannot be trained yet.** Strategy is what would make a generated deck worth anything, and the
+  AI work has not gone far enough to supply it. An auto-builder shipped before the bot can pilot what
+  it builds produces exactly the confound [ROSTERS.md](ROSTERS.md) already warns about — a good deck
+  and a badly-flown deck are indistinguishable to the only instrument that could grade it, so the
+  thing would be tuned against a measurement that cannot see its own subject.
+
+  **And its only customer withdrew.** It was never going to be offered to the *player* — the labour
+  of building is what makes a collection mean anything, which [COLLECTION.md](COLLECTION.md) records
+  as a standing decision. Its sole purpose was generating **opponent** decks, and Trevor has been
+  hand-building those instead, four rosters deep. A tool whose one consumer stopped needing it is not
+  a delayed job, it is a job that lost its reason.
+
+  **What is NOT deferred, and this is the part to hold on to:** `deckgen.js`'s crude backfill stays
+  load-bearing today. A roster entry whose deck cannot be resolved is filled with a generated
+  challenger, and a bracket is never shorter than `bossAfter` — which is what keeps a narrow
+  `gen_cards.js --sets base1` producing a working ladder instead of a dangling reference. **Deleting
+  `deckgen.js` as dead code would break that**, the same way deleting `greedy` would break the suites
+  one bullet up. The deferral is of the *good* builder, not the safety net.
+
+  **One argument lost something and it should be said rather than quietly dropped.**
+  [OPPONENTS.md](OPPONENTS.md) used the auto-builder as *the release valve* — the thing that makes a
+  flexible tier size affordable across fourteen sets, by padding a bracket short of authored decks.
+  That support is gone, and what replaces it is that a bracket can simply be short: the rung pattern
+  flexes everywhere except the boss, and a small set is supposed to earn a small bracket. Worth
+  re-testing when a set arrives that Trevor does not want to hand-build a roster for.
 - **Reviving `tools/chat-era/`** — see `TOOLING.md`. It looks like a one-line fix and is not.
 - **Deleting the `greedy` AI mode** — Trevor's proposal, and reasonable on its face: it is a
   damage-only bot that nothing in the game offers a player. It stayed because **`selftest.js` and
@@ -289,6 +340,16 @@ person stops earning its lines once that person has written the thing it describ
   and the real AI would be slower and noisier for no gain. Recorded 15 Aug 2026 because it was
   otherwise written down nowhere and the same reasonable proposal will arrive again. It has since
   acquired a second reason to exist: the ladder wants more than two difficulty settings eventually,
+  and `greedy` is one already built. See [OPPONENTS.md](OPPONENTS.md).
+
+  *(That closing line spent several days missing, and how it went is worth the two lines it costs.
+  The entry was the last thing in the file and the file had **no trailing newline**, so the next
+  append landed on the same line and the clause was gone — inside an append-only register, where
+  nothing is supposed to be able to disappear. Restored verbatim from `6a21d89` by #30 on
+  29 Aug 2026. **Nobody noticed for a week**, because a sentence that stops at a comma reads as
+  someone's ellipsis rather than as damage; a deleted paragraph would have been obvious.
+  **Append-only protects against editing, not against a missing newline** — and the same shape has
+  now cost this tree a preserved log, a broken anchor, and this.)*
 
 ## The job plan for Jobs 10.5 to 12c, as it stood while they were open
 
