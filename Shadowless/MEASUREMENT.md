@@ -55,7 +55,7 @@ node tools/abtest.js 8 HEAD~1 --card base1-96   # ...measured only where it can 
 ```
 
 **`abtest.js` has its own control and it is free: run it against `HEAD` with a clean tree and it must
-report 0% divergence.** It says so itself when `src/` matches the baseline. Every instrument in this
+report 0% divergence — and its STALL count on that run is the floor, not a finding.** It says so itself when `src/` matches the baseline. Every instrument in this
 file has lied at least once and the two that had a control got caught fastest.
 
 ### Every way this measurement has lied — [MISREADINGS.md](MISREADINGS.md)

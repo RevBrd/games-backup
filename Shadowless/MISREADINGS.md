@@ -235,3 +235,28 @@ the decks that *have* a centrepiece put T2 at 58.3% — above T3 — because the
 centrepiece sit mostly at the bottom of the standings, so excluding them is selection on the outcome.
 `decksim.js` prints tier averages over every deck it ran. **Take the tier average from the tool, never
 from a filtered subset of its rows.**
+
+**`abtest.js` prints "investigate before reading anything else" on a CLEAN TREE, and the number is
+noise.** *29 Aug 2026.* Its stall counter reads ~33 of 2880 games per side — about 1.1% — with `src/`
+identical to the baseline and divergence at a correct 0.0%. So the loudest line in the report fires
+when nothing is wrong, which is the same disease as `packtest 20000` two entries up: **a documented
+command that shouts on a clean tree teaches whoever runs it to skim the output**, and the next real
+stall will be skimmed with it.
+
+**The control is what says so, and it is free.** A rules change measured the same afternoon read 34
+stalls and 4.0% divergence; the control read **33 stalls and 0.0%**. One stall of difference against a
+change that altered 4% of games is nothing, and without the control the 34 would have looked like
+something the change had introduced. **Run `abtest` against `HEAD` on a clean tree before you believe
+any stall count**, exactly as you would before believing a divergence.
+
+**The cause was NOT found and that is stated rather than implied.** The obvious candidate is wrong:
+`abtest`'s game loop dispatches only `pendingSwitch` and `pendingPromote`, where the engine has
+**four** owed choices — but a hand-rolled reproduction of that loop over 140 ladder games produced
+zero stalls, so `pendingAsk` and `pendingPrize` are not reaching it. The remaining difference is that
+one side of an `abtest` run is `src/` **materialised from a git ref**, so the stall may live in the
+harness's own plumbing rather than in either engine. **Whoever picks this up: instrument the stall
+branch to print `state.pending*` and which side stalled, rather than reasoning about it — two of us
+have now reasoned wrong about the same 8000-action cap.**
+
+**What is safe to conclude today:** a stall count near 33 on a Defender-restricted run is the floor,
+not a finding. **A stall count that moves a lot is worth reading.**
