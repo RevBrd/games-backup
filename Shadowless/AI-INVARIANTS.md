@@ -430,3 +430,45 @@ sets, and Ninetales is in Trevor's own ladder decks, which is why he saw it.
 **Measured.** `abtest 8 HEAD`: **4.1% of 17,296 games diverge**, median first difference at action 83
 — late, which is when a Lure gets used — against a null control reading 0.0%. Win rate flat and
 symmetric, as it must be.
+
+## 30 Aug 2026 — a Switch is worth the retreat cost it nullifies, and half of that is open
+
+**`T_SWITCH_OWN`** · Job 14b · Trevor's `Wants` on Switch.
+
+**The invariant: a Switch on a Pokemon that can already walk away for nothing is worth nothing**, because
+retreating does the identical thing and keeps the card. The retreat cost was not read anywhere in
+this case. Measured before the fix: **a Switch on a free-retreat Rattata scored 24.00 and was
+played**, while one on a retreat-4 Snorlax — the card in the format it is worth most on — scored
+**-4.00** and was refused.
+
+**A GATE, NOT A WEIGHT, and only half his note deliberately.** *"Does not want to be used on a
+free-retreat cost pokemon"* is a gate with no number in it. *"Prefers heavier retreat costs to
+nullify"* is a quantity, it is **not built**, and there is an `open:` row saying why: the saving is
+only real if you wanted to move at all, so adding `cost * retreatSaveEnergy` unconditionally buys
+Switches for Snorlaxes that were perfectly happy standing there — and gating it on *"did we want to
+move"* is circular, because that is the sum the term would be part of. **Ask before building it, and
+build it once**: the retreat path already owns this quantity as `retreatSaveEnergy` and there must
+not be a second rate for it.
+
+**All three conditions on the gate are load-bearing and none is defensive.** `canRetreat` is what
+makes it safe under Paralysis and Sleep, where retreating is illegal and the card is the only way
+out. `retreated` is the once-a-turn limit, after which the card is again the only way out — there is
+a control row for exactly that board. And the cost is read **live** through `retreatCostOf` rather
+than off the printed card, so Dodrio's Retreat Aid is already in it.
+
+**`T_SWITCH_OWN` also computes its best destination and throws the value away**, which is the third
+time this session that pattern has turned up — `bestDragTarget`'s old home did it, and so did the
+Gust ranking. **When a scorer picks an index out of a loop, check whether the score that chose it
+survives.** It usually should.
+
+**Measured.** `abtest 8 HEAD`: **3.3% of 17,296 games diverge**, against a null control reading 0.0%.
+Win rate 49.1% → 48.9%, which is 23 games and symmetric; **do not read it in either direction.**
+
+---
+
+**`AI-INVARIANTS.md` has passed 450 lines here, and this is the named deferral rather than a silent
+one.** The four Job 14b entries above were written the same day as the work, and the 28 Aug precedent
+in this file's header is that archiving fresh reasoning buries it before anybody reads it. **The owner
+is Job 15c's document pass** — `AI-INVARIANTS-ARCHIVE-3.md`, split at the Job 14b boundary, which
+puts Jobs 13 through 14b in it. A deferral with a named owner is a decision; one without is a limit
+quietly becoming advisory.

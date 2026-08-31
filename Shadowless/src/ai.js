@@ -3556,6 +3556,27 @@ class AI {
 
         case 'T_SWITCH_OWN': {
           if (!me.bench.length || !me.active) return -Infinity;
+          // A SWITCH IS WORTH THE RETREAT COST IT NULLIFIES, so on a Pokemon that
+          // can already walk away for nothing it is worth nothing at all —
+          // retreating does the identical thing and keeps the card. Trevor:
+          // "Does not want to be used on a free-retreat cost pokemon."
+          //
+          // Measured before this: a Switch on a free-retreat Rattata scored 24.00
+          // and was played. The retreat cost was not read anywhere in this case.
+          //
+          // A GATE, NOT A WEIGHT, and deliberately only the half of his note that
+          // is one. "Prefers heavier retreat costs to nullify" is a quantity and
+          // pricing it is open — see the `open:` row in `tools/claims/base1.js`,
+          // which says why the obvious version is circular.
+          //
+          // The three conditions are all load-bearing. `canRetreat` is what makes
+          // this safe under Paralysis and Sleep, where retreating is illegal and
+          // the card is the only way out; `retreated` is the once-a-turn limit,
+          // after which the card is again the only way out; and the cost is read
+          // LIVE through `retreatCostOf` rather than off the printed card, so
+          // Dodrio's Retreat Aid is already in it.
+          if (!me.retreated && E.canRetreat(me.active) && E.retreatCostOf(me.active) === 0)
+            return -Infinity;
           // Same yardstick as promoting, deliberately. When these were two
           // formulas they picked different Pokemon, and the visible symptom was
           // the bot promoting one and then spending a Switch to undo it.

@@ -415,6 +415,12 @@ function setup(spec = {}) {
   me.prizes = Array.from({ length: mine }, pr);
   them.prizes = Array.from({ length: theirs }, pr);
 
+  // A SPENT RETREAT IS A BOARD FEATURE. Switch and retreating do the same thing
+  // for different prices, so a claim about which to reach for has to be able to
+  // say that the cheap one is already gone this turn.
+  if (spec.retreated) me.retreated = true;
+  if (spec.theirRetreated) them.retreated = true;
+
   E.state.phase = 'main';
   E.state.active = 0;
   E.state.turn = spec.turn == null ? 3 : spec.turn;

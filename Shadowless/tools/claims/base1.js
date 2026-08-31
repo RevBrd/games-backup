@@ -1022,6 +1022,67 @@ const CLAIMS = [
     sane: b => b.playable('Gust of Wind') && b.them.bench.length === 2,
     expect: b => b.dragsUp('Gust of Wind') === 'Rattata',
   },
+  // =================================================================== Switch
+  // THE CARD IS WORTH THE RETREAT COST IT NULLIFIES, and the retreat cost was
+  // not read at all. `T_SWITCH_OWN` scored danger, status, and nothing else - it
+  // even computes the best destination and then discards its value, the same
+  // shape the drag bug had.
+  //
+  // Measured: a Switch on a FREE-retreat Rattata scored 24.00 and was played,
+  // when simply retreating would have done the identical thing and kept the
+  // card. A Switch on a retreat-4 Snorlax - the card in the format it is worth
+  // most on - scored -4.00 and was refused.
+  //
+  // TWO HALVES, AND ONLY ONE IS BUILDABLE WITHOUT ASKING HIM. "Does not want to
+  // be used on a free-retreat cost pokemon" is a gate with no weight in it: if
+  // the Active can retreat right now for nothing, the card buys nothing. "Prefers
+  // heavier retreat costs to nullify" is a quantity, and pricing it means
+  // deciding whether the saving is an addend or a multiplier on wanting to move
+  // at all - which is circular the obvious way round. That half is `open:`.
+  {
+    id: 'base1-95', card: 'Switch', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "To retreat a high value pokemon without paying the retreat cost, or launch a sudden switch for a quick attack that the opponent wasn't expecting. Does not want to be used on a free-retreat cost pokemon and prefers heavier retreat costs to nullify. Should not be played just because it exists in the bot's hand",
+    claim: 'held when the Active can already retreat for free - retreating does the same and keeps the card',
+    board: {
+      me:   { card: 'base1:Rattata', energy: '1 Fighting' },   // retreat 0
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],
+      them: { card: 'base1:Magmar', energy: '2 Fire' },
+      myHand: ['Switch'],
+    },
+    sane: b => b.playable('Switch') && b.E.retreatCostOf(b.me.active) === 0
+            && b.E.canRetreat(b.me.active) && !b.me.retreated,
+    expect: b => !b.wouldPlay('Switch'),
+  },
+  {
+    id: 'base1-95', card: 'Switch', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // THE CONTROL. A free-retreat Active that CANNOT retreat - already retreated
+    // this turn - is the case the gate must not swallow. Here the card is the
+    // only way to move at all and the note's objection does not apply.
+    note: "To retreat a high value pokemon without paying the retreat cost, or launch a sudden switch for a quick attack that the opponent wasn't expecting. Does not want to be used on a free-retreat cost pokemon and prefers heavier retreat costs to nullify. Should not be played just because it exists in the bot's hand",
+    claim: 'THE CONTROL - ...but not held when the retreat has already been spent, where the card IS the move',
+    board: {
+      me:   { card: 'base1:Rattata', energy: '1 Fighting' },
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],
+      them: { card: 'base1:Magmar', energy: '2 Fire' },
+      myHand: ['Switch'],
+      retreated: true,
+    },
+    sane: b => b.playable('Switch') && b.me.retreated === true,
+    expect: b => b.wouldPlay('Switch'),
+  },
+  {
+    id: 'base1-95', card: 'Switch', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "To retreat a high value pokemon without paying the retreat cost, or launch a sudden switch for a quick attack that the opponent wasn't expecting. Does not want to be used on a free-retreat cost pokemon and prefers heavier retreat costs to nullify. Should not be played just because it exists in the bot's hand",
+    claim: 'prefers a heavy retreat cost to a light one, which is what the card is FOR',
+    open: "Nothing prices the retreat cost a Switch nullifies, and the half-fix is worse than " +
+          "nothing. The saving is only real if you wanted to move at all, so adding " +
+          "`cost * retreatSaveEnergy` unconditionally buys Switches for Snorlaxes that were " +
+          "perfectly happy standing there - and gating it on \"did we want to move\" is " +
+          "circular, since that is the sum this term is part of. It also wants `bestSelfSwitch`'s " +
+          "gain, which `T_SWITCH_OWN` already computes and throws away. ASK TREVOR whether the " +
+          "saving is an addend or a scale on the move, then build it once - the retreat path " +
+          "already owns this quantity as `retreatSaveEnergy` and there should not be a second rate.",
+  },
 ];
 
 module.exports = { CLAIMS };
