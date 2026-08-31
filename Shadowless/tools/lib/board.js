@@ -275,6 +275,43 @@ class Board {
     }
     return this.ai.scoreTrainer(0, a);
   }
+  // WHICH ENERGY A TRAINER ACTUALLY TAKES, by playing it and watching what left.
+  // Returns the Energy card names removed from the opponent, in the order the
+  // engine discarded them.
+  //
+  // IT EXECUTES ON PURPOSE, AND THAT IS THE WHOLE VALUE OF IT. Reading
+  // `a.opts` back would have said Energy Removal was choosing — it sets
+  // `energyIdx: 0`, which LOOKS like a considered pick and is a key the engine
+  // has not read since the human's Energy picker replaced it. The choice was
+  // falling through to `energyPayOrder`, the order written for a Pokemon paying
+  // its OWN cost, which spends what the card needs least. On a hostile strip
+  // that is exactly inverted, and no probe that trusts `a.opts` can see it.
+  //
+  // Every claim gets a fresh `setup()`, so mutating the board here is safe —
+  // but it is the last thing a row should do.
+  strips(name) {
+    const before = this.E.allSlots(1).flatMap(s => s.energy.map(e => ({ uid: e.uid, n: this.E.db[e.id].name })));
+    const a = this.trainerAction(name);
+    if (!a) throw new Error(`${name} is not a legal play on this board`);
+    this.ai.scoreTrainer(0, a);           // fills a.opts, which is half of what it does
+    this.E.act(0, a);
+    const left = new Set(this.E.allSlots(1).flatMap(s => s.energy.map(e => e.uid)));
+    return before.filter(e => !left.has(e.uid)).map(e => e.n);
+  }
+
+  // ...and the same question for what the card costs YOU. Super Energy Removal
+  // is two separate choices in one card and only one of them is hostile.
+  spends(name) {
+    const before = this.E.allSlots(0).flatMap(s => s.energy.map(e => ({ uid: e.uid, n: this.E.db[e.id].name })));
+    const a = this.trainerAction(name);
+    if (!a) throw new Error(`${name} is not a legal play on this board`);
+    this.ai.scoreTrainer(0, a);
+    this.E.act(0, a);
+    const left = new Set(this.E.allSlots(0).flatMap(s => s.energy.map(e => e.uid)));
+    return before.filter(e => !left.has(e.uid)).map(e => e.n);
+  }
+
+
   // Would the bot actually play it this turn, against everything else it could do?
   wouldPlay(name) {
     const m = this.move();

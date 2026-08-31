@@ -2702,6 +2702,44 @@ class Engine {
     });
   }
 
+  // THE SAME TWO KEYS, INVERTED, FOR WHEN THE ENERGY IS BEING TAKEN FROM YOU.
+  // `energyPayOrder` answers "which of mine do I miss least"; a strip asks
+  // "which of theirs do they miss most", and those are not the same question.
+  //
+  // Energy Removal and Super Energy Removal had no answer at all. `ai.js` set
+  // `a.opts.energyIdx = 0` — a key nothing has read since the human's Energy
+  // picker replaced it — so both fell through to `energyPayOrder` and politely
+  // took whatever the target needed LEAST. It stayed invisible because the two
+  // orders agree wherever the Double Colorless is surplus; they diverge only
+  // where it is load-bearing, which is the only case worth a card.
+  //
+  // THE KEY PRIORITY SWAPS, IT DOES NOT MERELY REVERSE, and Trevor's note is
+  // explicit about the order: "DCE should be the first target and its own energy
+  // type should be the second." So the primary key is how many symbols the card
+  // is worth ON THIS SLOT — a Double Colorless is two, and under Energy Burn it
+  // is two Fire, which is the 21 Aug Charizard finding arriving from the other
+  // side — and the tiebreaker is whether the type is one its attacks actually
+  // require rather than a Colorless filler.
+  //
+  // Reading the SLOT and not the card is the standing invariant here; see
+  // `slotSymbols`. Deriving it means every future Energy-strip card gets this
+  // for free and no card is named anywhere.
+  energyStripOrder(slot, filter) {
+    const c = topCard(this.db, slot);
+    const needed = new Set();
+    (c.attacks || []).forEach(a => a.cost.split('').forEach(x => { if (x !== 'C') needed.add(x); }));
+    const burn = this.activePower(slot, 'ENERGY_AS');
+    const as = burn ? burn.type : null;
+    const symsOf = e => energySymbols(this.db, e).map(x => as || x);
+    return this.energyChoices(slot, filter).sort((x, y) => {
+      const sx = symsOf(x), sy = symsOf(y);
+      if (sx.length !== sy.length) return sy.length - sx.length;      // the bigger card first
+      const nx = sx.some(t => needed.has(t) || t === WILD) ? 1 : 0;
+      const ny = sy.some(t => needed.has(t) || t === WILD) ? 1 : 0;
+      return ny - nx;                                                 // then the one it needs
+    });
+  }
+
   doTakePrize(pi, a) {
     const s = this.state;
     if (s.pendingPrize !== pi) return this.fail('Not waiting on you');

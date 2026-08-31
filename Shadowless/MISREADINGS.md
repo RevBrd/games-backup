@@ -260,3 +260,20 @@ have now reasoned wrong about the same 8000-action cap.**
 
 **What is safe to conclude today:** a stall count near 33 on a Defender-restricted run is the floor,
 not a finding. **A stall count that moves a lot is worth reading.**
+
+## The `abtest` stall floor scales with the run, so quote it as a rate — 30 Aug 2026
+
+**The floor recorded above is 33 of 2880 games per side, and somebody reading that number rather than
+its rate will investigate a healthy run.** At `abtest 8 HEAD` on the full ladder pool the run is
+**17,296 games per side and the floor is 308** — six times the absolute count, and the loudest line
+in the output still says *investigate before reading anything else*.
+
+**The run that prompted this read 313.** Five above a floor of 308, which is nothing; but there was
+no way to know that without running the null control on an identical tree, because the only figure
+written down was an absolute one from a much smaller sample. **The control is the whole answer here
+and it costs one run**: check out `src/` clean, run the same command, read the stall count and the
+0.0% divergence together.
+
+Both figures are the same instrument at two scales — 1.1% and 1.8% — so **the honest form is a rate,
+and even the rate moves with the deck pool**. Treat any stall count as uninterpretable until you have
+the control for *that* command, exactly as you would a divergence.

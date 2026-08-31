@@ -38,7 +38,7 @@ const CLAIMS = [
   // *[Why a report is a symptom and not a diagnosis →](../../PLAYTEST.md)*
   {
     id: 'basep-6', card: 'Arcanine GP', pattern: 'Ammo',
-    note: 'If it ever found itself in a situation where it did have 4 energies attached then yes, it should use Flames of Rage. However, it should be exceedingly rare that it finds itself in that situation, since Over-Attaching in anticipation of that move for Arcanine GP is the same price as spending the energy reactively instead.',
+    note: "Flames of Rage is a Damage Scaling move that should be treated like a Kamikaze Timer. It requires a double Energy Funnel to maintain, so it should not plan to be maintained. Quick Attack is preferred unless near death, then Flames of Rage becomes valuable. This card should be expected to be lost on the following turn.",
     claim: 'Flames of Rage IS right at four Fire — the fault was ever getting there, not firing it',
     board: {
       me:   { card: 'basep:Arcanine', energy: '4 Fire' },
@@ -50,7 +50,12 @@ const CLAIMS = [
   },
   {
     id: 'basep-6', card: 'Arcanine GP', pattern: 'Ammo',
-    note: 'After it\u2019s at 2 energies, additional ones better serve the bench. Over-Attaching in anticipation of that move for Arcanine GP is the same price as spending the energy reactively instead.',
+    // THE CHAT ANSWER THIS ROW WAS WRITTEN FROM, 28 Aug 2026, kept because the
+    // workbook cell does not carry it: "After it is at 2 energies, additional ones
+    // better serve the bench. Over-Attaching in anticipation of that move for
+    // Arcanine GP is the same price as spending the energy reactively instead."
+    // That sentence is what the row asserts; the cell below is what wants.js diffs.
+    note: "Flames of Rage is a Damage Scaling move that should be treated like a Kamikaze Timer. It requires a double Energy Funnel to maintain, so it should not plan to be maintained. Quick Attack is preferred unless near death, then Flames of Rage becomes valuable. This card should be expected to be lost on the following turn.",
     claim: 'and a FIFTH Fire is surplus — the pre-load that buys Charizard a second shot buys this card nothing',
     board: {
       me:   { card: 'basep:Arcanine', energy: '4 Fire' },
@@ -62,7 +67,11 @@ const CLAIMS = [
   },
   {
     id: 'base1-4', card: 'Charizard', pattern: 'Ammo',
-    note: 'Evolve it on the bench and pre-load it with as much Energy as you can beyond the four the attack costs. Fire Spin discards two per turn and you can only attach one, so pre-load enough to last.',
+    // The 21 Aug ammo doctrine, in Trevor's words at the time: "Evolve it on the
+    // bench and pre-load it with as much Energy as you can beyond the four the
+    // attack costs." His current cell says the same thing and adds the DCE
+    // deckbuild want, which is not this row's business.
+    note: "A deck where four DCE replace four R energies, and to be pre-Over-Attached with as many energies as possibe before being sent into battle. Even Charmeleon should be preloaded on the bench before evolution in anticipation of this card's high Energy Funel costs.",
     claim: 'THE CONTROL — a fifth Fire on Charizard is still ammunition, because Fire Spin is all it has',
     board: {
       me:   { card: 'Charizard', energy: '5 Fire' },

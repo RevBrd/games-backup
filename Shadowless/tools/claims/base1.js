@@ -730,6 +730,154 @@ const CLAIMS = [
     sane: b => b.playable('Potion') && b.hp() === 10 && b.threat() >= b.hp(),
     expect: b => b.wouldPlay('Potion'),
   },
+  // ============================================================ Energy Removal
+  // THE AI HAS NEVER CHOSEN WHICH ENERGY TO STRIP, and the line that looks like
+  // it does is the reason nobody noticed. `scoreTrainer` sets
+  // `a.opts.energyIdx = 0` - a key the engine has not read since the human's
+  // Energy picker replaced it (see the comment left behind at `resolveTarget` in
+  // `ui.js`). It is the only occurrence of that name anywhere in the project.
+  //
+  // With no `energyUids`, `takeEnergy` falls through to `energyPayOrder`, which
+  // is the order written for a Pokemon paying its OWN cost: spend what this card
+  // needs least, and among equals spend the smaller one. That is right for a
+  // Super Potion and exactly inverted for a hostile strip.
+  //
+  // IT IS INVISIBLE BECAUSE THE TWO ORDERS AGREE ON THE EASY BOARD. Where the
+  // Double Colorless is genuinely surplus, "what they need least" and "what
+  // costs them most" pick the same card. They diverge only where the Energy is
+  // load-bearing - which is the only case Trevor's note is about.
+  //
+  // Same fault, same fix, two cards: Super Energy Removal below sets neither
+  // `costUids` nor `energyUids` and falls through on both halves.
+  {
+    id: 'base1-92', card: 'Energy Removal', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "To be used liberally and strategically. Do not remove an energy just to remove an energy, do it to something that it would inconvenience by having to re-attach. The opponent's active pokemon usually makes for the best target, but something powerful on the bench could work as well. Denying the active pokemon forces the opponent to re-power that one instead of preparing the bench, might lead to the opponent taking an extra turn to attack, and might completely stop the opponent if he doesn't have any extra energies. After a pokemone is selected, if it has multiple energy types, DCE should be the first target and its own energy type (as in the hard requirements for its moves rather than the colorless extras) should be the second.",
+    claim: 'the Energy its attacks actually require goes, not the colorless filler beside it',
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      them: { card: 'base1:Magmar', energy: '1 Fire, 1 Water' },   // Magmar's costs are R and RR
+      myHand: ['Energy Removal'],
+    },
+    sane: b => b.playable('Energy Removal') && b.them.active.energy.length === 2,
+    expect: b => b.strips('Energy Removal').includes('Fire Energy'),
+  },
+  {
+    id: 'base1-92', card: 'Energy Removal', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "To be used liberally and strategically. Do not remove an energy just to remove an energy, do it to something that it would inconvenience by having to re-attach. The opponent's active pokemon usually makes for the best target, but something powerful on the bench could work as well. Denying the active pokemon forces the opponent to re-power that one instead of preparing the bench, might lead to the opponent taking an extra turn to attack, and might completely stop the opponent if he doesn't have any extra energies. After a pokemone is selected, if it has multiple energy types, DCE should be the first target and its own energy type (as in the hard requirements for its moves rather than the colorless extras) should be the second.",
+    claim: 'a Double Colorless goes first - one card, two symbols, and they only get one back a turn',
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      them: { card: 'Kangaskhan', energy: '1 Water, 1 DCE' },      // every cost Colorless: nothing is "needed"
+      myHand: ['Energy Removal'],
+    },
+    sane: b => b.playable('Energy Removal') && b.them.active.energy.length === 2,
+    expect: b => b.strips('Energy Removal').includes('Double Colorless Energy'),
+  },
+  {
+    id: 'base1-92', card: 'Energy Removal', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // The sharpest board for it. Energy Burn makes every Energy on a Charizard
+    // Fire, so the DCE is worth TWO - which the project already established from
+    // the other side on 21 Aug, when this same order was reversed so Charizard
+    // would stop spending its own DCE first.
+    note: "To be used liberally and strategically. Do not remove an energy just to remove an energy, do it to something that it would inconvenience by having to re-attach. The opponent's active pokemon usually makes for the best target, but something powerful on the bench could work as well. Denying the active pokemon forces the opponent to re-power that one instead of preparing the bench, might lead to the opponent taking an extra turn to attack, and might completely stop the opponent if he doesn't have any extra energies. After a pokemone is selected, if it has multiple energy types, DCE should be the first target and its own energy type (as in the hard requirements for its moves rather than the colorless extras) should be the second.",
+    claim: '...and hardest on a Charizard, where Energy Burn makes that one card worth two Fire',
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      them: { card: 'Charizard', energy: '3 Fire, 1 DCE' },
+      myHand: ['Energy Removal'],
+    },
+    sane: b => b.playable('Energy Removal') && b.them.active.energy.length === 4,
+    expect: b => b.strips('Energy Removal').includes('Double Colorless Energy'),
+  },
+  {
+    id: 'base1-92', card: 'Energy Removal', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // THE CONTROL for the target half, which is already right and must stay so.
+    note: "To be used liberally and strategically. Do not remove an energy just to remove an energy, do it to something that it would inconvenience by having to re-attach. The opponent's active pokemon usually makes for the best target, but something powerful on the bench could work as well. Denying the active pokemon forces the opponent to re-power that one instead of preparing the bench, might lead to the opponent taking an extra turn to attack, and might completely stop the opponent if he doesn't have any extra energies. After a pokemone is selected, if it has multiple energy types, DCE should be the first target and its own energy type (as in the hard requirements for its moves rather than the colorless extras) should be the second.",
+    claim: 'THE CONTROL - the Active is the target over an equally loaded Bench, which already works',
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      them: { card: 'base1:Magmar', energy: '2 Fire' },
+      theirBench: [{ card: 'base1:Squirtle', energy: '2 Water' }],
+      myHand: ['Energy Removal'],
+    },
+    sane: b => b.playable('Energy Removal') && b.them.bench.length === 1
+            && b.them.bench[0].energy.length === b.them.active.energy.length,
+    expect: b => b.strips('Energy Removal').includes('Fire Energy'),
+  },
+  {
+    id: 'base1-92', card: 'Energy Removal', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // THE SECOND CONTROL. Trevor's "do not remove an energy just to remove an
+    // energy" already has one implementation - `killingActiveNow` - and a fix to
+    // the ORDER must not disturb it.
+    note: "To be used liberally and strategically. Do not remove an energy just to remove an energy, do it to something that it would inconvenience by having to re-attach. The opponent's active pokemon usually makes for the best target, but something powerful on the bench could work as well. Denying the active pokemon forces the opponent to re-power that one instead of preparing the bench, might lead to the opponent taking an extra turn to attack, and might completely stop the opponent if he doesn't have any extra energies. After a pokemone is selected, if it has multiple energy types, DCE should be the first target and its own energy type (as in the hard requirements for its moves rather than the colorless extras) should be the second.",
+    claim: 'THE CONTROL - never spent on a Pokemon this turn is about to Knock Out anyway',
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      them: { card: 'base1:Squirtle', energy: '1 Water', dmg: 30 },
+      myHand: ['Energy Removal'],
+    },
+    sane: b => b.playable('Energy Removal') && b.lethal('Jab') === 1,
+    expect: b => !b.wouldPlay('Energy Removal'),
+  },
+
+  // ====================================================== Super Energy Removal
+  {
+    id: 'base1-79', card: 'Super Energy Removal', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "Costs you a turn of tempo in exchange for costing the opponent two turns of tempo. Your own energy drop should be from a pokemon who needs it the least, and the opponent pokemon selected should be one where this would really cost it, usually the active one. DOES NOT want to be used on an opponent pokemon with only one energy because then you don't gain an advantage.",
+    claim: 'the two it takes include the Double Colorless, for the reason Energy Removal takes it',
+    board: {
+      me:   { card: 'Hitmonchan' },
+      myBench: [{ card: 'base1:Squirtle', energy: '2 Water' }],
+      them: { card: 'Charizard', energy: '3 Fire, 1 DCE' },
+      myHand: ['Super Energy Removal'],
+    },
+    sane: b => b.playable('Super Energy Removal') && b.them.active.energy.length === 4,
+    expect: b => b.strips('Super Energy Removal').includes('Double Colorless Energy'),
+  },
+  {
+    id: 'base1-79', card: 'Super Energy Removal', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "Costs you a turn of tempo in exchange for costing the opponent two turns of tempo. Your own energy drop should be from a pokemon who needs it the least, and the opponent pokemon selected should be one where this would really cost it, usually the active one. DOES NOT want to be used on an opponent pokemon with only one energy because then you don't gain an advantage.",
+    claim: 'played against a target carrying enough Energy for the two-for-one to be worth making',
+    board: {
+      me:   { card: 'Hitmonchan' },
+      myBench: [{ card: 'base1:Squirtle', energy: '2 Water' }],
+      them: { card: 'base1:Magmar', energy: '3 Fire' },
+      myHand: ['Super Energy Removal'],
+    },
+    sane: b => b.playable('Super Energy Removal') && !b.affordable().length,
+    expect: b => b.wouldPlay('Super Energy Removal'),
+  },
+  {
+    id: 'base1-79', card: 'Super Energy Removal', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // THE PAIR. Trevor's note says this outright and in capitals, and the row
+    // above is what stops "never plays it" from passing as a fix.
+    note: "Costs you a turn of tempo in exchange for costing the opponent two turns of tempo. Your own energy drop should be from a pokemon who needs it the least, and the opponent pokemon selected should be one where this would really cost it, usually the active one. DOES NOT want to be used on an opponent pokemon with only one energy because then you don't gain an advantage.",
+    claim: '...but NOT against a target holding a single Energy, where you pay one to take one',
+    board: {
+      me:   { card: 'Hitmonchan' },
+      myBench: [{ card: 'base1:Squirtle', energy: '2 Water' }],
+      them: { card: 'base1:Magmar', energy: '1 Fire' },
+      myHand: ['Super Energy Removal'],
+    },
+    sane: b => b.playable('Super Energy Removal') && b.them.active.energy.length === 1
+            && !b.affordable().length,
+    expect: b => !b.wouldPlay('Super Energy Removal'),
+  },
+  {
+    id: 'base1-79', card: 'Super Energy Removal', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // THE CONTROL for the half that is already right: you pay from the Pokemon
+    // that needs it least, which here means not the Active.
+    note: "Costs you a turn of tempo in exchange for costing the opponent two turns of tempo. Your own energy drop should be from a pokemon who needs it the least, and the opponent pokemon selected should be one where this would really cost it, usually the active one. DOES NOT want to be used on an opponent pokemon with only one energy because then you don't gain an advantage.",
+    claim: 'THE CONTROL - the Energy you pay with comes off the Bench, not off the Active',
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'base1:Squirtle', energy: '2 Water' }],
+      them: { card: 'base1:Magmar', energy: '3 Fire' },
+      myHand: ['Super Energy Removal'],
+    },
+    sane: b => b.playable('Super Energy Removal') && b.me.active.energy.length === 3,
+    expect: b => b.spends('Super Energy Removal').every(n => n === 'Water Energy'),
+  },
 ];
 
 module.exports = { CLAIMS };

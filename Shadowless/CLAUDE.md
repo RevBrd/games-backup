@@ -312,8 +312,10 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   [AI-INVARIANTS.md](AI-INVARIANTS.md) for what the AI work must keep true, [PACKS.md](PACKS.md) for
   the 8-card pack and the tier jump.
   **Two things from them are still open and both are named where they live**: Job 12a's claims
-  backlog is a command rather than a number — `node tools/wants.js --coverage`, Base Set first, with
-  **Jungle and Fossil on hold** until their one-line notes get the overhaul base1 and base5 got — and
+  backlog is a command rather than a number — `node tools/wants.js --coverage`. **The Jungle and
+  Fossil hold is LIFTED** (Trevor, 30 Aug 2026): he went back through both in the full-paragraph
+  style after Team Rocket's came back useful, and Fossil's notes are now the longest of the four
+  sets. Two files were still fencing them off. **All four live sets are one pool** — and
   Job 12c deliberately deferred rebalancing the four cosmetic axes after the pack shrank, tracked as
   its own item in [PACKS.md](PACKS.md).
 - **Job 12d** - Scheduled document pass and grab bag run. More UI, maybe more AI. **The docs pass is

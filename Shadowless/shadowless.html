@@ -9811,7 +9811,11 @@ class AI {
           }
           let best = cands[0];
           for (const c of cands) if (c.energy.length > best.energy.length) best = c;
-          a.opts.targetUid = best.uid; a.opts.energyIdx = 0;
+          // WHICH Energy, not just whose. `energyIdx` was a dead key — see
+          // `energyStripOrder`, which is where the ordering lives so that both
+          // removal cards and anything added later share one answer.
+          a.opts.targetUid = best.uid;
+          a.opts.energyUids = [E.energyStripOrder(best)[0].uid];
           s += W.stripEnergy + (best === you.active && !killingActiveNow ? 6 : 0);
           break;
         }
@@ -9827,7 +9831,22 @@ class AI {
           let tgt = theirs[0];
           for (const c of theirs) if (c.energy.length > tgt.energy.length) tgt = c;
           a.opts.selfUid = src.uid; a.opts.targetUid = tgt.uid;
-          s += Math.min(2, tgt.energy.length) * W.stripEnergy - W.energyDiscard;
+          // Both halves were falling through. The self side wants the friendly
+          // order and gets it by default; the hostile side needs the other one.
+          a.opts.energyUids = E.energyStripOrder(tgt).slice(0, 2).map(e => e.uid);
+          // THE CARD IS PART OF THE PRICE, and on this card alone that is what
+          // decides it. Trevor: "DOES NOT want to be used on an opponent pokemon
+          // with only one energy because then you don't gain an advantage." At
+          // one Energy you trade your Energy AND the card for their Energy,
+          // which is a loss; the old formula scored it 4 and played it.
+          //
+          // Written as a term that applies at every count rather than a test for
+          // one, because a quantity about how bad a trade is, expressed as an
+          // equality check, is this project's most reliable sniff test for a
+          // wrong curve. Energy Removal is deliberately NOT charged this — it
+          // costs the card and nothing else, which is the whole difference
+          // between "use it liberally" and this note.
+          s += Math.min(2, tgt.energy.length) * W.stripEnergy - W.energyDiscard - W.drawCard;
           if (src === me.active) s -= 10;
           break;
         }
@@ -13012,6 +13031,44 @@ class Engine {
       const ny = sy.some(t => needed.has(t) || t === WILD) ? 1 : 0;
       if (nx !== ny) return nx - ny;
       return sx.length - sy.length;
+    });
+  }
+
+  // THE SAME TWO KEYS, INVERTED, FOR WHEN THE ENERGY IS BEING TAKEN FROM YOU.
+  // `energyPayOrder` answers "which of mine do I miss least"; a strip asks
+  // "which of theirs do they miss most", and those are not the same question.
+  //
+  // Energy Removal and Super Energy Removal had no answer at all. `ai.js` set
+  // `a.opts.energyIdx = 0` — a key nothing has read since the human's Energy
+  // picker replaced it — so both fell through to `energyPayOrder` and politely
+  // took whatever the target needed LEAST. It stayed invisible because the two
+  // orders agree wherever the Double Colorless is surplus; they diverge only
+  // where it is load-bearing, which is the only case worth a card.
+  //
+  // THE KEY PRIORITY SWAPS, IT DOES NOT MERELY REVERSE, and Trevor's note is
+  // explicit about the order: "DCE should be the first target and its own energy
+  // type should be the second." So the primary key is how many symbols the card
+  // is worth ON THIS SLOT — a Double Colorless is two, and under Energy Burn it
+  // is two Fire, which is the 21 Aug Charizard finding arriving from the other
+  // side — and the tiebreaker is whether the type is one its attacks actually
+  // require rather than a Colorless filler.
+  //
+  // Reading the SLOT and not the card is the standing invariant here; see
+  // `slotSymbols`. Deriving it means every future Energy-strip card gets this
+  // for free and no card is named anywhere.
+  energyStripOrder(slot, filter) {
+    const c = topCard(this.db, slot);
+    const needed = new Set();
+    (c.attacks || []).forEach(a => a.cost.split('').forEach(x => { if (x !== 'C') needed.add(x); }));
+    const burn = this.activePower(slot, 'ENERGY_AS');
+    const as = burn ? burn.type : null;
+    const symsOf = e => energySymbols(this.db, e).map(x => as || x);
+    return this.energyChoices(slot, filter).sort((x, y) => {
+      const sx = symsOf(x), sy = symsOf(y);
+      if (sx.length !== sy.length) return sy.length - sx.length;      // the bigger card first
+      const nx = sx.some(t => needed.has(t) || t === WILD) ? 1 : 0;
+      const ny = sy.some(t => needed.has(t) || t === WILD) ? 1 : 0;
+      return ny - nx;                                                 // then the one it needs
     });
   }
 

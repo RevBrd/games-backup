@@ -37,10 +37,24 @@ hypothetical.** A session read `Challenge 1` believing it was current, found Tea
 concluded the newest live set had no annotation at all, and sized the job at a third of its real
 weight. `wants.js` picks by modification date and **prints which file it opened and how many it
 ignored, every single run.** The note register changed shape at the same time and that is the tell if
-you ever suspect a stale read: Base Set and Team Rocket run to full paragraphs, median over 200
-characters, while Jungle and Fossil are still one-liners **awaiting the same overhaul** — Trevor,
-23 Aug 2026. **Do not work a Jungle or Fossil claim from the current text; it is about to be
-rewritten.**
+you ever suspect a stale read: **every live set now runs to full paragraphs.** `wants.js` prints the
+register per set and the medians are Base Set 208, Jungle 229, **Fossil 251** — the longest of the
+four — and Team Rocket 242.
+
+**The overhaul is DONE and this paragraph told everybody otherwise for six days.** It read *"Jungle
+and Fossil are still one-liners awaiting the same overhaul — do not work a Jungle or Fossil claim
+from the current text"*, which was true of the workbook on 23 Aug and false of the one `wants.js`
+actually opens. Trevor's method, in his own account: the one-line `Wants` were the first thing he
+wrote, Team Rocket got the full-paragraph treatment, and when that came back useful he **went back
+through the earlier sets in the same style.** Jungle and Fossil are in that pass, and the tell is
+that they use the controlled vocabulary — Clefable's names *Copy Effects* and *Setup Turn* in one
+sentence, Lapras's names *Over-Attach* and says explicitly that it is **not** a wall and why.
+
+**The general lesson is the one this file already teaches about stale workbooks, arriving from the
+other side.** A hold written on a dated observation goes stale silently, and nothing in the project
+checks a sentence like that — `wants.js` re-reads the workbook every run and had been printing the
+refutation in its own output the whole time. **A claim about the SHAPE of the inbox is as
+perishable as a claim about its size**, so state it as a command rather than a fact: run the tool.
 
 **Its promos are not in the game yet**, which is why `Gated Until` exists. A `Wants` on a card that no
 set has made live is a note filed early, not a gap — do not treat one as unfiled work, and if you
@@ -114,6 +128,26 @@ whole category the vocabulary does not name, sitting in a different function (`s
 everything the playbook had touched until then. *Computer Search, PlusPower, Energy Removal, Gust of
 Wind, Defender, Digger, Goop Gas Attack.* **The first two probed found one fault and one pass**, which
 is a better rate than the Pokemon notes were returning by then.
+
+**The rate held on the next two, and the fault they found was bigger than either card — 30 Aug 2026.**
+Energy Removal and Super Energy Removal between them produced **five red rows out of five written**,
+one fault, and one fix: the AI had never chosen which Energy to strip at all, because it was writing a
+key the engine stopped reading when the human got a picker. *[The invariant →](AI-INVARIANTS.md)*
+
+**Two things about the Trainer pile are now worth knowing before you pick one.**
+
+**The faults here are in the PLUMBING at least as often as in the weights.** Three of the four
+Trainers probed so far were misplayed because a rule or a key did not reach `scoreTrainer`, not
+because a number was wrong — Sleep! had three shipped rider rules that lived in `scoreAttack`, and
+the removals had an option key nobody had migrated. That is a different failure shape from the
+attack-choice work, and it means **executing the card and watching the board is the probe that
+matters.** `board.js` gained `strips()` and `spends()` for exactly this: reading `a.opts` back
+would have reported a choice being made.
+
+**And the pattern is still unnamed, which is Trevor's call and not a blocker.** These rows carry
+`pattern: 'Trainer (pattern unnamed - see PLAYBOOK.md)'` rather than being forced into one of the
+seventeen. Per this file's own rule, under-categorising is cheap and a note that fits nothing is a
+finding — so the placeholder is deliberate and the rows work fine without it.
 
 **Naming the pattern that would cover them is Trevor’s**, since the list is the controlled vocabulary he writes
 into the column — this is the candidate pile reported, not a rename. Note that ~25 of the 87 are

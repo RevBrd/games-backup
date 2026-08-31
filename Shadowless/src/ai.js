@@ -3558,7 +3558,11 @@ class AI {
           }
           let best = cands[0];
           for (const c of cands) if (c.energy.length > best.energy.length) best = c;
-          a.opts.targetUid = best.uid; a.opts.energyIdx = 0;
+          // WHICH Energy, not just whose. `energyIdx` was a dead key — see
+          // `energyStripOrder`, which is where the ordering lives so that both
+          // removal cards and anything added later share one answer.
+          a.opts.targetUid = best.uid;
+          a.opts.energyUids = [E.energyStripOrder(best)[0].uid];
           s += W.stripEnergy + (best === you.active && !killingActiveNow ? 6 : 0);
           break;
         }
@@ -3574,7 +3578,22 @@ class AI {
           let tgt = theirs[0];
           for (const c of theirs) if (c.energy.length > tgt.energy.length) tgt = c;
           a.opts.selfUid = src.uid; a.opts.targetUid = tgt.uid;
-          s += Math.min(2, tgt.energy.length) * W.stripEnergy - W.energyDiscard;
+          // Both halves were falling through. The self side wants the friendly
+          // order and gets it by default; the hostile side needs the other one.
+          a.opts.energyUids = E.energyStripOrder(tgt).slice(0, 2).map(e => e.uid);
+          // THE CARD IS PART OF THE PRICE, and on this card alone that is what
+          // decides it. Trevor: "DOES NOT want to be used on an opponent pokemon
+          // with only one energy because then you don't gain an advantage." At
+          // one Energy you trade your Energy AND the card for their Energy,
+          // which is a loss; the old formula scored it 4 and played it.
+          //
+          // Written as a term that applies at every count rather than a test for
+          // one, because a quantity about how bad a trade is, expressed as an
+          // equality check, is this project's most reliable sniff test for a
+          // wrong curve. Energy Removal is deliberately NOT charged this — it
+          // costs the card and nothing else, which is the whole difference
+          // between "use it liberally" and this note.
+          s += Math.min(2, tgt.energy.length) * W.stripEnergy - W.energyDiscard - W.drawCard;
           if (src === me.active) s -= 10;
           break;
         }
