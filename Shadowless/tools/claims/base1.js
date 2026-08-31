@@ -951,6 +951,77 @@ const CLAIMS = [
     sane: b => b.playable('PlusPower') && b.theirHP() === 60 && b.threat() >= b.hp(),
     expect: b => b.wouldPlay('PlusPower'),
   },
+  // ================================================== Ninetales / Gust of Wind
+  // ONE EFFECT, TWO CODE PATHS, AND ONLY ONE OF THEM CHOOSES. Gust of Wind runs
+  // through `T_SWITCH_OPPONENT`, which ranks their whole Bench and fills
+  // `a.opts.bench`. An ATTACK that drags - Lure, Fascinate, Tempt - scored a
+  // flat `W.drag` and filled nothing, so `SWITCH_DEFENDER_CHOOSE` fell straight
+  // through to the engine's seeded random pick.
+  //
+  // Trevor saw it in play before it was found here: "Ninetales also used Lure to
+  // draw out a much more dangerous pokemon on turn 49" - GRABBAG, log# 04-02-53.
+  // The identical board with the two Bench slots swapped drags up a Rattata one
+  // way and a fully-charged Charizard the other. Gust of Wind, handed the same
+  // board, takes the Rattata both times.
+  //
+  // THE PAIR IS THE POINT. The first row below passes today, by coincidence, on
+  // this seed. A row a coin is winning looks exactly like a row a rule is
+  // winning, and only the ordering pair tells them apart - the same reason
+  // `dragsUp()` executes rather than reading `a.opts` back.
+  {
+    id: 'base1-12', card: 'Ninetales', pattern: 'Attack choice',
+    note: "To come in after it's ready to use Fire Blast, and to never be required to choose between Lure and nothing. Fire Blast wants an energy funnel but does high damage, so it requires some maintenance and stops bench growth every turn it attacks, but can one-shot many opponents. Lure does have uses, such as removing a dangerous pokemon and replacing it with one that is not ready to attack and is not able to retreat.",
+    claim: "Lure brings up the one that cannot attack, not the one that can",
+    board: {
+      me:   { card: 'Ninetales', energy: '2 Fire' },
+      them: { card: 'Chansey', energy: '1 Fighting' },
+      theirBench: [{ card: 'Charizard', energy: '4 Fire' }, { card: 'base1:Rattata' }],
+    },
+    sane: b => b.affordable().includes('Lure') && b.them.bench.length === 2,
+    expect: b => b.dragsUp('Lure') === 'Rattata',
+  },
+  {
+    id: 'base1-12', card: 'Ninetales', pattern: 'Attack choice',
+    // THE ROW THAT WAS RED. Its twin above was green on nothing but the seed.
+    note: "To come in after it's ready to use Fire Blast, and to never be required to choose between Lure and nothing. Fire Blast wants an energy funnel but does high damage, so it requires some maintenance and stops bench growth every turn it attacks, but can one-shot many opponents. Lure does have uses, such as removing a dangerous pokemon and replacing it with one that is not ready to attack and is not able to retreat.",
+    claim: "...and still does with the Bench the other way round, which is the whole test",
+    board: {
+      me:   { card: 'Ninetales', energy: '2 Fire' },
+      them: { card: 'Chansey', energy: '1 Fighting' },
+      theirBench: [{ card: 'base1:Rattata' }, { card: 'Charizard', energy: '4 Fire' }],
+    },
+    sane: b => b.affordable().includes('Lure') && b.them.bench.length === 2,
+    expect: b => b.dragsUp('Lure') === 'Rattata',
+  },
+  {
+    id: 'base1-93', card: 'Gust of Wind', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // THE CONTROL, and the reason it is here: the fix makes the attack path
+    // call the Trainer path's selection rather than growing a second one.
+    // These two rows are what says the Trainer path did not move meanwhile.
+    note: "To drag in a damaged bench pokemon to finish it off, preferably a strong one that could pose a menace. Bringing in a high damage pokemon from the bench with low HP can still lay a large hit on you before you have a turn to finish it off, and this card allows you to preempt that. It can also shift a dangerous pokemon out of the active spot and replace it with something else that doesn't have the energy to attack or retreat yet.",
+    claim: "THE CONTROL - Gust already chooses, and takes the one that cannot swing",
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      them: { card: 'Chansey', energy: '1 Fighting' },
+      theirBench: [{ card: 'Charizard', energy: '4 Fire' }, { card: 'base1:Rattata' }],
+      myHand: ['Gust of Wind'],
+    },
+    sane: b => b.playable('Gust of Wind') && b.them.bench.length === 2,
+    expect: b => b.dragsUp('Gust of Wind') === 'Rattata',
+  },
+  {
+    id: 'base1-93', card: 'Gust of Wind', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "To drag in a damaged bench pokemon to finish it off, preferably a strong one that could pose a menace. Bringing in a high damage pokemon from the bench with low HP can still lay a large hit on you before you have a turn to finish it off, and this card allows you to preempt that. It can also shift a dangerous pokemon out of the active spot and replace it with something else that doesn't have the energy to attack or retreat yet.",
+    claim: "THE CONTROL - ...and the same with the Bench reversed",
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      them: { card: 'Chansey', energy: '1 Fighting' },
+      theirBench: [{ card: 'base1:Rattata' }, { card: 'Charizard', energy: '4 Fire' }],
+      myHand: ['Gust of Wind'],
+    },
+    sane: b => b.playable('Gust of Wind') && b.them.bench.length === 2,
+    expect: b => b.dragsUp('Gust of Wind') === 'Rattata',
+  },
 ];
 
 module.exports = { CLAIMS };

@@ -7083,7 +7083,14 @@ class AI {
       // Scaled the way `dragWeak` directly below already is, so Tempt's
       // coin-gated drag is worth half of Gust of Wind's certain one. Existing
       // callers pass `true` and are unchanged.
-      if (f.flags.drag && you.bench.length) s += W.drag * (f.flags.drag === true ? 1 : f.flags.drag);
+      // PRICED ON WHO COMES UP, not on the fact that somebody does — the same
+      // ranking Gust of Wind has always used, through `bestDragTarget`. A flat
+      // `W.drag` said a Rattata and a fully charged Charizard were equally good
+      // things to pull into the Active spot.
+      if (f.flags.drag && you.bench.length) {
+        const d = this.bestDragTarget(pi);
+        s += this.dragScore(d) * (f.flags.drag === true ? 1 : f.flags.drag);
+      }
       // Whirlwind drags too, but THEY choose, so they send up their best answer.
       if (f.flags.dragWeak && you.bench.length) s += W.drag * 0.5 * (f.flags.dragWeak === true ? 1 : f.flags.dragWeak);
       // Amnesia. Shuts off one attack rather than making them flip for all of
@@ -8719,6 +8726,18 @@ class AI {
         // Fill in the destination for a self-switch, for the same reason and by
         // the same pattern as `scoreOnPlay`: the engine's fallback is a seeded
         // random pick, so a choice nobody makes is a choice made badly.
+        // AND THE SAME FOR DRAGGING ONE OF THEIRS. Identical shape to the
+        // self-switch below and to `scoreOnPlay`: the engine's fallback is a
+        // seeded random pick, so a choice nobody makes is a choice made badly.
+        // `attackVariants` deliberately does not enumerate this one, so there is
+        // no per-option action to score and the pick has to be filled in here.
+        if (me.active && E.state.players[1 - pi].bench.length) {
+          const scr = this.script(me.active, a.idx);
+          if (scr.some(v => v.v === 'SWITCH_DEFENDER_CHOOSE' || v.v === 'SWITCH_DEFENDER_CHOOSE_ON_FLIP')) {
+            a.opts = a.opts || {};
+            a.opts.bench = this.bestDragTarget(pi).bench;
+          }
+        }
         if (me.active) {
           const scr = this.script(me.active, a.idx);
           const sv = scr.find(v => v.v === 'SWITCH_SELF_CHOOSE');
@@ -9458,6 +9477,48 @@ class AI {
   }
 
   // Also fills in a.opts, so the engine never has to pick targets at random.
+  // WHICH OF THEIR BENCH TO DRAG UP, for every card that drags one of THEIRS.
+  //
+  // This was inside `T_SWITCH_OPPONENT` and nothing else could reach it, so Gust
+  // of Wind chose carefully and Ninetales' Lure — the same effect, printed as an
+  // attack — scored a flat `W.drag` and let the engine's seeded random pick
+  // decide. Trevor caught it in play before anybody found it in the code: "Lure
+  // to draw out a much more dangerous pokemon on turn 49."
+  //
+  // The standing invariant is 21 Aug's, on `selfSwitch`: **the scorer fills in
+  // `a.opts` so the engine's random fallback is never reached.** It was written
+  // for switching one of ours and is exactly as true for dragging one of theirs.
+  //
+  // "Cannot kill it" is NOT the fault on its own, and treating it as one throws
+  // away the card's other real use. Dragging up a Pokemon that cannot pay for an
+  // attack costs them a whole turn — tempo denial is a perfectly good reason to
+  // spend a Gust, and it is the exact use Trevor's Ninetales note names: "removing
+  // a dangerous pokemon and replacing it with one that is not ready to attack."
+  // The genuinely bad drag is the one that pulls up something we can neither kill
+  // NOR silence, which is a free switch performed on the opponent's behalf.
+  bestDragTarget(pi) {
+    const E = this.E, you = E.state.players[1 - pi];
+    let bench = 0, value = -Infinity, kills = false, swings = true;
+    you.bench.forEach((b, i) => {
+      const pot = this.potential(1 - pi, b, null);
+      // Can we finish it once it is up? bestDamageAgainst forecasts our Active
+      // against a defender that is still on their Bench, which is the only way
+      // to ask this before committing the card.
+      const k = this.bestDamageAgainst(pi, b) >= this.remainingHP(b);
+      const canSwing = pot.short === 0;
+      let v = (100 - this.remainingHP(b)) * 0.4 + (canSwing ? 0 : 18);
+      if (k) v += this.W.dragKill;
+      if (v > value) { value = v; bench = i; kills = k; swings = canSwing; }
+    });
+    return { bench, value, kills, swings };
+  }
+
+  // What that drag is worth, so the Trainer and the attack cannot drift apart.
+  dragScore(d) {
+    const W = this.W;
+    return W.drag + d.value * 0.3 + (!d.kills && d.swings ? W.dragNoKill : 0);
+  }
+
   scoreTrainer(pi, a) {
     const E = this.E, W = this.W;
     const me = E.state.players[pi], you = E.state.players[1 - pi];
@@ -9775,27 +9836,12 @@ class AI {
         case 'T_SWITCH_OPPONENT': {
           if (!you.bench.length) return -Infinity;
           if (killingActiveNow) return -Infinity;   // don't rescue a doomed Active
-          // "Cannot kill it" is NOT the fault on its own, and treating it as one
-          // throws away the card's other real use. Dragging up a Pokemon that
-          // cannot pay for an attack costs them a whole turn — tempo denial is a
-          // perfectly good reason to spend a Gust. The genuinely bad drag is the
-          // one that pulls up something we can neither kill NOR silence, which
-          // is a free switch performed on the opponent's behalf.
-          let bestI = 0, bestV = -Infinity, bestKills = false, bestSwings = true;
-          you.bench.forEach((b, i) => {
-            const pot = this.potential(1 - pi, b, null);
-            // Can we finish it once it is up? bestDamageAgainst forecasts our
-            // Active against a defender that is still on their Bench, which is
-            // the only way to ask this before committing the card.
-            const kills = this.bestDamageAgainst(pi, b) >= this.remainingHP(b);
-            const canSwing = pot.short === 0;
-            let v2 = (100 - this.remainingHP(b)) * 0.4 + (canSwing ? 0 : 18);
-            if (kills) v2 += W.dragKill;
-            if (v2 > bestV) { bestV = v2; bestI = i; bestKills = kills; bestSwings = canSwing; }
-          });
-          a.opts.bench = bestI;
-          s += W.drag + bestV * 0.3;
-          if (!bestKills && bestSwings) s += W.dragNoKill;
+          // The ranking moved to `bestDragTarget` on 30 Aug so the ATTACKS that
+          // drag can read the same answer. Behaviour here is unchanged and there
+          // are two claim rows saying so.
+          const d = this.bestDragTarget(pi);
+          a.opts.bench = d.bench;
+          s += this.dragScore(d);
           break;
         }
 

@@ -442,3 +442,22 @@ last is ordinary correct play; the fault is *ending* the turn with the lethal on
 `pass` does. Corrected, and the honest figure across 9,610 games is **0**. That is the nastiest kind of
 instrument failure in this project's collection, because it fails loudly: it points at a bug that does
 not exist and its own label sends you looking.
+
+## Ninetales' Lure, and the half of a bullet that closed — 30 Aug 2026
+
+**The report:** *"Ninetales also used Lure to draw out a much more dangerous pokemon on turn 49"*, one
+clause of the long log# 04-02-53 bullet. **Fixed**; the other three complaints in that bullet — Chansey
+not using Scrunch, Charizard arriving too early, the Bill played on a thin deck — are untouched and
+the bullet is still on the list without this sentence.
+
+**It meant exactly what it said, which is worth recording because most of them have not.** The bot
+was not mis-valuing the drag. It was not choosing a target at all: `SWITCH_DEFENDER_CHOOSE` fell
+through to a seeded random pick, and the flat `W.drag` score was identical whoever came up.
+
+**It was found from the other direction**, from Trevor's Ninetales `Wants` note during the Job 14b
+Trainer sweep, and the grab bag item turned out to be the same fault already witnessed. **Two
+independent routes to one bug is the strongest signal this project gets** — the note said what the
+card *should* do, the log said what it *did*, and neither on its own would have located it in
+`attackVariants`.
+
+*[The invariant, and why both Bench orderings have to be asserted →](AI-INVARIANTS.md)*

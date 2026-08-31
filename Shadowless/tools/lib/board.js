@@ -275,6 +275,30 @@ class Board {
     }
     return this.ai.scoreTrainer(0, a);
   }
+  // WHO AN ATTACK ACTUALLY DRAGS UP, by using it and reading their new Active.
+  // Same reason `strips()` executes: the choice is carried in `a.opts` and the
+  // engine has a seeded random fallback for when nobody made one, so the only
+  // honest way to ask "did the bot choose?" is to look at the board afterwards.
+  //
+  // ASSERT BOTH BENCH ORDERINGS. A random pick is right some of the time, and a
+  // fix that always takes slot 0 is right some of the time, and a single row
+  // cannot tell either of those from a bot that is choosing. The pair can.
+  // IT TAKES AN ATTACK OR A TRAINER, because the whole finding is that the two
+  // paths disagree and a claim comparing them should not have to say which is
+  // which. Gust of Wind and Lure are the same effect.
+  dragsUp(name) {
+    let a = null;
+    try { const idx = this.idxOf(name); a = this.E.legalActions(0).find(x => x.t === 'attack' && x.idx === idx); }
+    catch (e) { a = this.trainerAction(name); }
+    if (!a) a = this.trainerAction(name);
+    if (!a) throw new Error(`${name} is neither a legal attack nor a playable Trainer here`);
+    this.ai.scoreAction(0, a);            // fills a.opts, wherever anything does
+    this.E.act(0, a);
+    const act = this.E.state.players[1].active;
+    return act ? this.E.db[act.stack[act.stack.length - 1].id].name : null;
+  }
+
+
   // WHICH ENERGY A TRAINER ACTUALLY TAKES, by playing it and watching what left.
   // Returns the Energy card names removed from the opponent, in the order the
   // engine discarded them.
