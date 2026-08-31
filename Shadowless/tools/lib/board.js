@@ -424,6 +424,21 @@ function setup(spec = {}) {
   E.state.phase = 'main';
   E.state.active = 0;
   E.state.turn = spec.turn == null ? 3 : spec.turn;
+  // NO CLAIM BOARD COULD TEST AN EVOLUTION UNTIL 30 Aug 2026, and nothing said
+  // so. `canEvolve` refuses while `turnsTaken <= 1` under `noEvolveFirstTurn`,
+  // and this function set `state.turn` without ever advancing either player past
+  // ZERO — so every `evolve` action was silently absent from `legalActions` on
+  // every board this harness has ever built. Not an error, not a red row: the
+  // option simply was not there, and a `sane` fixture asserting something else
+  // passes happily beside it.
+  //
+  // That matters more than it sounds. EVOLUTION TIMING is a BUILT pattern with
+  // its own file, and none of its claims could have been written here.
+  //
+  // Kept consistent with `turn` rather than hardcoded, so a board that sets an
+  // early `turn` on purpose still gets the real first-turn rule.
+  me.turnsTaken = spec.myTurnsTaken == null ? Math.max(2, E.state.turn - 1) : spec.myTurnsTaken;
+  them.turnsTaken = spec.theirTurnsTaken == null ? Math.max(2, E.state.turn - 1) : spec.theirTurnsTaken;
   E.state.pendingPromote = null;
   E.state.pendingSwitch = null;
   E.state.pendingAsk = null;

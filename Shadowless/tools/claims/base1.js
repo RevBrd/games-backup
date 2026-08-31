@@ -177,11 +177,83 @@ const CLAIMS = [
             && b.lethal('Take Down') === 0,
     expect: b => b.prefers('Flamethrower'),
   },
+  // CLOSED BY ITS AUTHOR, 30 Aug 2026, and by measurement rather than by code.
+  // This was an `open:` row from 23 Aug reading "at THREE Energy it should hold
+  // Flamethrower, because using it drops Take Down out of reach", and it is the
+  // clause `AI.md` Open #8 named as surviving because "three cards ask for it
+  // rather than one".
+  //
+  // ALL THREE HAVE NOW GONE, and none of them to a reserve term. Ninetales was
+  // never a reserve case — Trevor: it is about not being Active without Fire
+  // Blast, which is entry, not holding. Charmeleon is lookahead, `AI.md` Open
+  // #9(c) - the attach-toward-a-card-not-in-play half. And Arcanine is this, in his own words on 30 Aug 2026:
+  //
+  //   "Being in the active spot should change things, in terms of it forces
+  //   certain realities before your pokemon is ready sometimes. An Arcanine in
+  //   the active spot with 3 energies should probably attack anyway, if pausing
+  //   for a turn to gather energies would result in a net negative in terms of
+  //   what would be gained by powering up Take Down, which would probably be
+  //   most situations where it would take damage. But on the bench, the AI
+  //   shouldn't want to stop powering it up at Flamethrower, and always continue
+  //   on to Takedown."
+  //
+  // THE ROW WAS ASKING FOR THE OPPOSITE OF WHAT HE WANTS, and the reason it read
+  // plausibly for a week is that it was written about a card rather than about a
+  // SLOT. Standing still to bank an Energy is a thing a Bench does; an Active
+  // that declines to swing is paying a turn of damage for it. The workbook cell
+  // below still carries the older sentence and is quoted unchanged, per the
+  // drift contract — the newer reading is here in the comment.
+  //
+  // Measured against a Snorlax, which survives Take Down and so keeps the lethal
+  // shortcut out of it. Both rows below were ALREADY GREEN when written.
   {
     id: 'base1-23', card: 'Arcanine', pattern: 'Energy funnel',
-    note: 'Both attacks do high damage and both have drawbacks. Flamethrower requires an energy funnel but should be the default due to Take Down\'s self-damage. However, Take Down should stay powered up and ready to go for when it\'s needed, meaning the bot should not want to use even Flamethrower until Arcanine has four energies attached, as it requires that constant funnel that would make Take Down unavailable if used at three energies',
-    claim: 'at THREE Energy it should hold Flamethrower, because using it drops Take Down out of reach',
-    open: 'STILL OPEN after the 23 Aug discard work, and the ordering claim above now passing does NOT close it. Nothing prices holding an attack in RESERVE — `discardSilence` prices being unable to act at all, which is a different thing, and at three Energy Take Down is already unaffordable so there is no choice to make on the board. Related to Ammo\'s open half. Ask before building; this probably wants to be one rule with Charmeleon and Ninetales.',
+    note: "Both attacks do high damage and both have drawbacks. Flamethrower requires an energy funnel but should be the default due to Take Down's self-damage. However, Take Down should stay powered up and ready to go for when it's needed, meaning the bot should not want to use even Flamethrower until Arcanine has four energies attached, as it requires that constant funnel that would make Take Down unavailable if used at three energies",
+    claim: 'an ACTIVE Arcanine on three Energy swings rather than standing still to bank a fourth',
+    board: {
+      me:   { card: 'base1:Arcanine', energy: '3 Fire' },
+      myBench: [{ card: 'Hitmonchan', energy: '1 Fighting' }],
+      them: { card: 'base2:Snorlax', energy: '4 Fighting' },
+      myHand: [],
+    },
+    sane: b => b.affordable().includes('Flamethrower') && !b.affordable().includes('Take Down')
+            && b.threat() > 0 && !b.me.hand.length,
+    expect: b => b.does('attack'),
+  },
+  {
+    id: 'base1-23', card: 'Arcanine', pattern: 'Energy funnel',
+    // THE OTHER HALF OF THE SAME SENTENCE, and the reason both are rows: the two
+    // slots want opposite things out of the same Energy, so a claim that does not
+    // say which slot it is about cannot be right in both places.
+    note: "Both attacks do high damage and both have drawbacks. Flamethrower requires an energy funnel but should be the default due to Take Down's self-damage. However, Take Down should stay powered up and ready to go for when it's needed, meaning the bot should not want to use even Flamethrower until Arcanine has four energies attached, as it requires that constant funnel that would make Take Down unavailable if used at three energies",
+    claim: '...but a BENCHED one is fed past Flamethrower\'s cost and on to Take Down\'s',
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'base1:Arcanine', energy: '3 Fire' }],
+      them: { card: 'base2:Snorlax', energy: '4 Fighting' },
+      myHand: ['Fire Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 3 && b.me.hand.length === 1,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Arcanine') && e.score > 0),
+  },
+  {
+    id: 'base1-23', card: 'Arcanine', pattern: 'Energy funnel',
+    // THE CONTROL, and it is what stops the row above from meaning "the Bench is
+    // always worth feeding". The surplus rule is doing the work: a fourth Fire on
+    // Arcanine buys Take Down, a fourth Fighting on a Hitmonchan that already
+    // pays for Special Punch buys nothing, and only the first is taken.
+    note: "Both attacks do high damage and both have drawbacks. Flamethrower requires an energy funnel but should be the default due to Take Down's self-damage. However, Take Down should stay powered up and ready to go for when it's needed, meaning the bot should not want to use even Flamethrower until Arcanine has four energies attached, as it requires that constant funnel that would make Take Down unavailable if used at three energies",
+    claim: 'THE CONTROL - and refused where the extra Energy unlocks nothing bigger',
+    board: {
+      me:   { card: 'base1:Arcanine', energy: '3 Fire' },
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],
+      them: { card: 'base2:Snorlax', energy: '4 Fighting' },
+      myHand: ['Fighting Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 3 && b.me.hand.length === 1,
+    expect: b => b.explain().filter(e => e.label === 'attach'
+            && (e.detail || '').includes('Hitmonchan')).every(e => e.score <= 0),
   },
 
   // THE DISCARD RULE ITSELF, asserted where it has a real margin. The ordering
@@ -1082,6 +1154,73 @@ const CLAIMS = [
           "gain, which `T_SWITCH_OWN` already computes and throws away. ASK TREVOR whether the " +
           "saving is an addend or a scale on the move, then build it once - the retreat path " +
           "already owns this quantity as `retreatSaveEnergy` and there should not be a second rate.",
+  },
+  // =============================================================== Charmeleon
+  // THE EVOLUTION ROAD CANNOT SEE WHETHER ITS CARRIER WILL LIVE TO TRAVEL IT.
+  //
+  // Trevor, 30 Aug 2026, verbatim: "A Charmeleon that isn't explicitly in a
+  // stalling role doesn't want to fight, but if it finds itself fighting it
+  // might still use Flamethrower if that's what it takes to survive. If a new
+  // Charmander is gained while it's fighting, the AI might shift its future
+  // evolution focus to that instead, if that one seems more realistic to get to
+  // its full evolution at full power."
+  //
+  // Measured. Two Charmeleons, both on two Fire, one Charizard in hand, a threat
+  // of 30 opposite. The road is rationed by `evolutionRoadFor` to "the
+  // most-invested copy that is not yet ready", and the tie falls to the Active:
+  //
+  //   Active on 80 HP   attach -> Active 101.0   |   benched twin 62.0
+  //   Active on 10 HP   attach -> Active 101.0   |   benched twin 62.0
+  //
+  // IDENTICAL. A Charmeleon that dies at the end of this turn holds the road as
+  // firmly as a healthy one, and the healthy twin standing safely on the Bench
+  // is passed over. Sweeping the Active from 80 HP down to 10 never moves the
+  // number by a point.
+  //
+  // This row is RED ON PURPOSE and is a fault report, per TOOLING.md. The fix is
+  // NOT being guessed at, and the `open:` says why - the obvious one lands on a
+  // shared function carrying two shipped invariants.
+  {
+    id: 'base1-24', card: 'Charmeleon', pattern: 'Evolution timing',
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
+    claim: 'the evolution road goes to the twin that will live to reach the evolution',
+    board: {
+      me:   { card: 'base1:Charmeleon', energy: '2 Fire', dmg: 70 },   // 10 left under a threat of 30
+      myBench: [{ card: 'base1:Charmeleon', energy: '2 Fire' }],       // the same investment, safe
+      them: { card: 'base2:Snorlax', energy: '4 Fighting' },
+      myHand: ['Fire Energy', 'Charizard'],
+    },
+    sane: b => b.me.bench.length === 1 && b.me.bench[0].energy.length === b.me.active.energy.length
+            && b.threat() >= b.hp() && b.me.hand.length === 2,
+    expect: b => {
+      const r = b.explain().filter(e => e.label === 'attach');
+      const act = r.find(e => (e.detail || '').includes('Charmeleon'));
+      const others = r.filter(e => e !== act);
+      return others.some(o => o.score >= act.score);
+    },
+  },
+  {
+    id: 'base1-24', card: 'Charmeleon', pattern: 'Evolution timing',
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
+    claim: 'and the same road is worth LESS on a carrier that will not reach the end of it',
+    open: "MEASURED AND NOT BUILT, deliberately. `survivesCharge` is already in the amortise " +
+          "branch of `attachBuild` and returns 1 here, because `turnsLeft = ceil(hp/threat)` " +
+          "counts the attack that KILLS you as a turn you survived. At 10 HP under a threat of " +
+          "30 that is ceil(10/30) = 1, against a shortfall of 1, so min(1, 1/1) = full credit. " +
+          "The honest quantity is future turns of MINE, which is ceil(hp/threat) - 1 = 0. " +
+          "\n\nTHE ONE-LINE FIX IS THE DANGEROUS ONE. `survivesCharge` is shared with " +
+          "`discardSilence`, where the same off-by-one makes Zapdos's Thunderbolt look more " +
+          "expensive than it is - so correcting it re-tunes a shipped invariant (23 Aug, " +
+          "\"a discard costs turns of silence\") that was measured on the current arithmetic. " +
+          "AI.md already records two sessions reasoning wrong about a cap in this area." +
+          "\n\nTHE LOCAL ALTERNATIVE is a filter in `evolutionRoadFor` beside the existing " +
+          "\"a ready copy steps aside\" rule: a copy that will not live to finish its road " +
+          "steps aside too, when another contender can take it up. That touches nothing else, " +
+          "but it is a selection predicate on a quantity, and that file warns in capitals that " +
+          "a leader which flip-flops is worse than no rule at all." +
+          "\n\nASK TREVOR WHICH. His own sentence is hedged (\"might shift... if that one " +
+          "seems more realistic\"), and the two readings have very different blast radii - one " +
+          "is two cards, the other is every discard in the game.",
   },
 ];
 

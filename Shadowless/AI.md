@@ -328,14 +328,25 @@ on it.**
    about. The row was rewritten to assert the correct behaviour rather than deleted.
    *[The rule that came out of it →](AI-INVARIANTS.md)*
 
-   **One clause survives and it is worth naming, because three cards ask for it rather than one.**
-   Nothing prices holding an attack **in reserve**. Arcanine wants Take Down to stay affordable while
-   it attacks with Flamethrower, and the discard rule cannot express that — what it measures is being
-   unable to act *at all*, and Arcanine can always act. Ninetales' *"never be required to choose
-   between Lure and nothing"* and Charmeleon's refusal to spend down the funnel it is saving for
-   Charizard are the same shape. **Build it once for the family or not at all**, and ask Trevor first:
-   this is the half he flagged himself, and it may belong with [Ammo](Playbook/AMMO.md)'s open
-   Charmeleon note rather than standing alone.
+   ~~**One clause survives and it is worth naming, because three cards ask for it rather than one.**~~
+   **RESOLVED 30 Aug 2026, and there was never a family.** The clause was *nothing prices holding an
+   attack in reserve*, and it named Arcanine, Ninetales and Charmeleon. **Asked, and all three left by
+   different doors:**
+
+   - **Ninetales was never a reserve case.** *"Never be required to choose between Lure and nothing"*
+     is about not being **Active** without Fire Blast — entry, not holding. Trevor, 30 Aug. Its Lure
+     half is separately closed by `bestDragTarget`.
+   - **Charmeleon is lookahead**, open item 9(c) above, and has been all along.
+   - **Arcanine is a SLOT question, and the row was asking for the opposite of what he wants.**
+     Trevor, 30 Aug: *"An Arcanine in the active spot with 3 energies should probably attack anyway,
+     if pausing for a turn to gather energies would result in a net negative... But on the bench, the
+     AI shouldn't want to stop powering it up at Flamethrower, and always continue on to Takedown."*
+     **Both halves measured as already correct** and are now claim rows.
+
+   **The transferable part: the item was written about a CARD and the answer was about a SLOT.**
+   Standing still to bank an Energy is a thing a Bench does; an Active that declines to swing pays a
+   turn of damage for it. A note that does not say which slot it is about can be true in one place
+   and wrong in the other, and this one was.
    *[How a note becomes a row →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*
 9. **"Energy is a resource with somewhere else to be" — MEASURED 28 Aug 2026. Two of its three halves
    are done or would do nothing, and this item exists mainly to stop it being re-scoped as one large
@@ -377,3 +388,24 @@ on it.**
    condition the board already knows rather than on the scarcity clause he first wrote, because (b)
    above had measured that clause near-inert hours earlier. **Raise the deck arm with Trevor rather
    than assuming it follows.**
+
+10. **The evolution road cannot see whether its carrier will live to travel it — MEASURED 30 Aug
+    2026, NOT BUILT, and the safe fix is not the obvious one.** Two Charmeleons on two Fire each, one
+    Charizard in hand, a threat of 30: the road is worth **101.0 on an Active at 80 HP and 101.0 on
+    the same Active at 10 HP**, while the healthy benched twin is passed over at 62.0. Sweeping the
+    Active's HP from 80 to 10 never moves the number.
+
+    Trevor's clause, 30 Aug: *"If a new Charmander is gained while it's fighting, the AI might shift
+    its future evolution focus to that instead, if that one seems more realistic to get to its full
+    evolution at full power."*
+
+    **`survivesCharge` is already in that branch and returns 1**, because `turnsLeft =
+    ceil(hp/threat)` counts the attack that **kills** you as a turn you survived — `ceil(10/30) = 1`
+    against a shortfall of 1. The honest quantity is future turns of *mine*, `ceil(hp/threat) - 1`.
+    **Do not just fix that line.** It is shared with `discardSilence`, where the same off-by-one is
+    baked into the 23 Aug measurements, so correcting it re-tunes a shipped invariant. The local
+    alternative is a filter in `evolutionRoadFor` beside its existing *"a ready copy steps aside"*
+    rule — which touches nothing else but is a selection predicate on a quantity, in a function whose
+    own comment warns in capitals that a flip-flopping leader is worse than no rule.
+    **The two readings differ by two cards against every discard in the game; ask before picking.**
+    *[The board, red on purpose →](tools/claims/base1.js)*

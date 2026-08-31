@@ -261,6 +261,23 @@ on the whole method. **The existing fixtures were left alone.** Migrating them w
 large diff across a green 421-case suite to buy nothing; new work goes here, and `powertest.js` keeps
 what it has.
 
+**NO CLAIM BOARD COULD TEST AN EVOLUTION UNTIL 30 Aug 2026, and nothing anywhere said so.**
+`canEvolve` refuses while `turnsTaken <= 1` under `noEvolveFirstTurn`, and `setup()` set
+`state.turn` without ever advancing either player past **zero** — so every `evolve` action was
+silently absent from `legalActions` on every board this harness has ever built.
+
+**It did not look like a failure, which is the whole lesson.** Nothing threw, nothing went red, and a
+`sane` fixture asserting something else passes happily beside it: the option simply was not on the
+table. **EVOLUTION TIMING is a built pattern with its own file**, and none of its claims could have
+been written here. `setup()` now derives `turnsTaken` from `turn`, with `myTurnsTaken` /
+`theirTurnsTaken` overrides for a board that means to sit in the first-turn rule. All 94 rows stayed
+green across the change, which is what says it widened the action list without moving any existing
+answer.
+
+**The shape to watch for in any fixture builder: an absent option is indistinguishable from a
+rejected one.** `board.js` throws loudly when you name a card it cannot resolve and stayed perfectly
+silent about a whole verb it could never reach.
+
 **`board.js` refuses to guess between two printings of a name**, and the refusal is about behaviour
 rather than about printing: `base5-1` and `base5-18` are both Dark Alakazam and play identically, so
 it picks one, while two mechanically different Pikachus are a real ambiguity and it makes you say

@@ -307,3 +307,39 @@ might even be preferable unless they're in abundance"* is three conditions about
 board, and nothing in the scorer reasons about Energy as a resource with somewhere else to be. It is
 still the same capability the Charmeleon half and [Evolution timing](EVOLUTION-TIMING.md) wait on,
 and it is still one rule rather than three.
+
+## The reserve half is closed, and it was never one rule — 30 Aug 2026
+
+**Three files carried the sentence "this probably wants to be one rule with Charmeleon and
+Ninetales."** Asked directly, Trevor took all three apart, and **not one of them turned out to be a
+reserve case**:
+
+| card | what it actually is |
+|---|---|
+| **Ninetales** | *entry*, not holding — "it does not want to be in battle when its main attack is unavailable", plus a narrow Lure exception that `bestDragTarget` now serves |
+| **Charmeleon** | *lookahead*, which is [AI.md](../AI.md)'s open item on attaching toward a card not yet in play, and always was |
+| **Arcanine** | a *slot* question, and the open row was asking for the opposite of what he wants |
+
+**Trevor on Arcanine, verbatim, 30 Aug 2026:**
+
+> Being in the active spot should change things, in terms of it forces certain realities before your
+> pokemon is ready sometimes. An Arcanine in the active spot with 3 energies should probably attack
+> anyway, if pausing for a turn to gather energies would result in a net negative in terms of what
+> would be gained by powering up Take Down, which would probably be most situations where it would
+> take damage. But on the bench, the AI shouldn't want to stop powering it up at Flamethrower, and
+> always continue on to Takedown.
+
+**Both halves measured as already correct** and are claim rows now. An Active on three Fire with
+nothing to attach swings; a benched one on three Fire is fed a fourth at 38.5 while a Hitmonchan that
+already pays for Special Punch is refused one at −2, so the surplus rule is doing the discriminating
+rather than a blanket "feed the Bench".
+
+**What generalises is not about Arcanine.** *The open row was written about a CARD and the answer was
+about a SLOT.* Standing still to bank an Energy is a thing a Bench does; an Active that declines to
+swing is paying a turn of damage for the privilege. **A note that does not say which slot it is about
+can be true in one place and wrong in the other**, and every note in this file should be read with
+that question asked first.
+
+**The genuinely open thing moved rather than closed**, and it is in the neighbouring pattern: the
+evolution road prices a dying carrier exactly like a healthy one. See [AI.md](../AI.md)'s open list
+and [EVOLUTION-TIMING.md](EVOLUTION-TIMING.md).
