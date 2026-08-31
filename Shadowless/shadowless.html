@@ -9858,8 +9858,43 @@ class AI {
           if (best.idx < 0) return -Infinity;
           const f = this.forecast(pi, best.idx);
           if (!f || f.expDmg <= 0) return -Infinity;
-          s += 6;
-          if (f.expDmg < f.hpLeft && f.expDmg + 10 >= f.hpLeft) s += 34;   // turns it lethal
+          // WORTH THE TURN IT TAKES OFF THE KILL, and the old term priced only
+          // the last one. It paid a flat 6 and then +34 for a single case — the
+          // extra 10 makes THIS attack lethal — which is the top rung of a
+          // staircase written as though it were the whole staircase. Trevor
+          // names the general quantity and hands over the arithmetic: "when an
+          // additional 10 damage would result in 1 fewer turn to kill the
+          // opponent, as in a move doing 30 damage attacking a pokemon with 70
+          // HP." Three turns becomes two, and the bot scored that board 6.00 —
+          // the same as a board where the 10 changes nothing whatsoever.
+          //
+          // The cliff table's tenth row. Ask what the quantity IS: turns removed
+          // is a quantity, so it is linear, discounted by how far off the turn it
+          // removes actually is. `turnsWith === 1` is the lethal case and comes
+          // out at the top by arithmetic rather than by a branch.
+          //
+          // PlusPower is applied AFTER Weakness and Resistance — see the
+          // DAMAGE_BONUS loop in `computeDamage` — so `expDmg + 10` is the real
+          // number and not an approximation.
+          const turnsNow  = Math.ceil(f.hpLeft / f.expDmg);
+          const turnsWith = Math.ceil(f.hpLeft / (f.expDmg + 10));
+          if (turnsWith < turnsNow) {
+            s += 40 / turnsWith;
+          } else {
+            // TEN DAMAGE THAT CHANGES NO TURN COUNT CHANGES NOTHING, and playing
+            // it now spends the option of playing it on the turn that it would
+            // have converted. That option is the whole of Trevor's "plan to hit
+            // for 30 on the first turn and use the PlusPower for 40 on the
+            // second" — so the default here is to hold, below `threshold`.
+            //
+            // UNLESS THERE IS NO LATER TURN TO HOLD IT FOR. His own next
+            // sentence: "If you might not survive until the second turn, the
+            // PlusPower could probably be used early." The card survives your
+            // Pokemon; the PLAN does not, because the attacker it was built
+            // around is the thing about to die. Priced back at the old flat 6,
+            // which is what this branch used to pay unconditionally.
+            s += this.incomingThreat(pi) >= this.remainingHP(me.active) ? 6 : 0.2;
+          }
           break;
         }
 

@@ -878,6 +878,79 @@ const CLAIMS = [
     sane: b => b.playable('Super Energy Removal') && b.me.active.energy.length === 3,
     expect: b => b.spends('Super Energy Removal').every(n => n === 'Water Energy'),
   },
+  // ================================================================ PlusPower
+  // THE CLIFF, IN A TRAINER. `T_PLUSPOWER` paid a flat 6 and then +34 for one
+  // case: the extra 10 makes THIS attack lethal. That is the last step of a
+  // staircase, priced as though it were the whole staircase.
+  //
+  // Trevor names the general quantity outright and gives the arithmetic: "when
+  // an additional 10 damage would result in 1 fewer turn to kill the opponent,
+  // as in a move doing 30 damage attacking a pokemon with 70 HP." Three turns
+  // becomes two. The bot scored that board 6.00 - identical to a board where the
+  // extra 10 changes nothing at all.
+  //
+  // A quantity about how much sooner something dies, written as an equality
+  // check on lethality. Same sniff test as the other nine.
+  {
+    id: 'base1-84', card: 'PlusPower', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "To be used strategically but not be held onto like it's in a vault. The best times are when your own pokemon would fall 10 damage short of knocking out the opponent, or when an additional 10 damage would result in 1 fewer turn to kill the opponent, as in a move doing 30 damage attacking a pokemon with 70 HP. The best practice there is to plant to hit for 30 on the first turn and use the PlusPower for 40 on the second turn. If you might not survive until the second turn, the PlusPower could probably be used early",
+    claim: 'played when the extra 10 takes a whole turn off the kill - his own 30-against-70',
+    board: {
+      me:   { card: 'base1:Magmar', energy: '2 Fire' },        // Fire Punch, 30 flat
+      them: { card: 'base1:Electabuzz', energy: '2 Lightning' },  // 70 HP: 3 turns, or 2 with the 10
+      myHand: ['PlusPower'],
+    },
+    sane: b => b.playable('PlusPower') && b.theirHP() === 70 && b.damage('Fire Punch') === 30
+            && b.threat() < b.hp(),
+    expect: b => b.wouldPlay('PlusPower'),
+  },
+  {
+    id: 'base1-84', card: 'PlusPower', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // THE PAIR, and the fault. Ten damage that changes no turn count changes
+    // nothing at all, and spending it now destroys the option of spending it on
+    // the turn it would have converted - which is the plan his note describes.
+    note: "To be used strategically but not be held onto like it's in a vault. The best times are when your own pokemon would fall 10 damage short of knocking out the opponent, or when an additional 10 damage would result in 1 fewer turn to kill the opponent, as in a move doing 30 damage attacking a pokemon with 70 HP. The best practice there is to plant to hit for 30 on the first turn and use the PlusPower for 40 on the second turn. If you might not survive until the second turn, the PlusPower could probably be used early",
+    claim: '...but held when the extra 10 takes nothing off it, because next turn it might',
+    board: {
+      me:   { card: 'base1:Magmar', energy: '2 Fire' },
+      them: { card: 'base1:Electabuzz', energy: '2 Lightning', dmg: 10 },   // 60 left: two turns either way
+      myHand: ['PlusPower'],
+    },
+    sane: b => b.playable('PlusPower') && b.theirHP() === 60 && b.damage('Fire Punch') === 30
+            && b.threat() < b.hp(),
+    expect: b => !b.wouldPlay('PlusPower'),
+  },
+  {
+    id: 'base1-84', card: 'PlusPower', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // THE CONTROL for the case that already worked. The general term has to
+    // subsume it, not replace it - the lethal board is turns 2 -> 1, the top of
+    // the same staircase, and it must stay the most valuable rung.
+    note: "To be used strategically but not be held onto like it's in a vault. The best times are when your own pokemon would fall 10 damage short of knocking out the opponent, or when an additional 10 damage would result in 1 fewer turn to kill the opponent, as in a move doing 30 damage attacking a pokemon with 70 HP. The best practice there is to plant to hit for 30 on the first turn and use the PlusPower for 40 on the second turn. If you might not survive until the second turn, the PlusPower could probably be used early",
+    claim: 'THE CONTROL - taken at once when it converts a Knock Out this turn',
+    board: {
+      me:   { card: 'base1:Magmar', energy: '2 Fire' },
+      them: { card: 'base1:Electabuzz', energy: '2 Lightning', dmg: 30 },   // 40 left
+      myHand: ['PlusPower'],
+    },
+    sane: b => b.playable('PlusPower') && b.theirHP() === 40 && b.damage('Fire Punch') === 30,
+    expect: b => b.wouldPlay('PlusPower'),
+  },
+  {
+    id: 'base1-84', card: 'PlusPower', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    // THE SECOND CONTROL, and the clause that stops the fix going too far.
+    // Holding it is only better if you get the later turn. Trevor: "If you might
+    // not survive until the second turn, the PlusPower could probably be used
+    // early." Same board as the held row, with the attacker about to die.
+    note: "To be used strategically but not be held onto like it's in a vault. The best times are when your own pokemon would fall 10 damage short of knocking out the opponent, or when an additional 10 damage would result in 1 fewer turn to kill the opponent, as in a move doing 30 damage attacking a pokemon with 70 HP. The best practice there is to plant to hit for 30 on the first turn and use the PlusPower for 40 on the second turn. If you might not survive until the second turn, the PlusPower could probably be used early",
+    claim: '...and spent anyway when the attacker may not live to take that later turn',
+    board: {
+      me:   { card: 'base1:Magmar', energy: '2 Fire', dmg: 30 },            // 20 left
+      them: { card: 'base1:Electabuzz', energy: '2 Lightning', dmg: 10 },   // 60 left: still two turns either way
+      myHand: ['PlusPower'],
+    },
+    sane: b => b.playable('PlusPower') && b.theirHP() === 60 && b.threat() >= b.hp(),
+    expect: b => b.wouldPlay('PlusPower'),
+  },
 ];
 
 module.exports = { CLAIMS };

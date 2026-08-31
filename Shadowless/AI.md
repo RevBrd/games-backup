@@ -144,7 +144,7 @@ the mean, or you will conclude there was never a problem.**
 
 ## The cliff: a quantity about proximity, written as an equality check
 
-**The most productive sniff test this project has**, and the table is the count — the prose said
+**The most productive sniff test this project has**, and it has now paid in `ai.js`, in a test suite and in `scoreTrainer`. The table is the count — the prose said
 *eight* above nine rows, and `CLAUDE.md` said six, which is the sniff test's own lesson arriving in
 its own section. A term that should fall away with distance from an edge, written flat with a cliff
 at the end:
@@ -159,6 +159,7 @@ at the end:
 | `survivesCharge` | — | written graded from the start, *because* of the other five |
 | the Agility barrier, damage half | flat 0.7 below the frail line — a shield stopping nothing priced like one stopping 60 | **linear in the damage prevented**, through the old constant at half HP |
 | the Agility barrier, death half | a `frail` boolean, and priced off a tempo weight at that | **squared** in the same fraction, and priced off `selfKO` |
+| PlusPower | flat 6, plus a step for the one board where the extra 10 is **lethal** | **`40 / turnsWith`** — turns removed, discounted by distance; the lethal case is `turnsWith === 1` and lands on the old number |
 | an Energy discard | flat, 7 a card, however much or little was left behind | **turns of silence, squared**, and discounted by whether it lives to feel them |
 
 **The last two rows are the same line of code and they disagree on the curve, which is the most
@@ -226,6 +227,7 @@ which is what keeps a split from costing anybody a search.
 | 28 Aug | **Ammunition is only ammunition if you have nothing else to shoot with.** The discard verb was too wide a derivation on its own — a card that DRAINS and owns a free attack stockpiles nothing | `ammoSymbols` |
 | 28 Aug | **A Pokemon about to become something else is not paid up.** Shortfall is measured against the evolution when it is in hand, and `evolve` waits until one Energy short of it. Shipped on a measured NULL | `evolutionInHand`, `potentialAs`, `evolveEarly` |
 | 28 Aug | **One of the twins gets fed.** The evolution ROAD is rationed to the most-invested copy that is not yet ready — the other keeps its own road, so it is resistant and never blocked | `evolutionRoadFor`, `benchDuplicate` |
+| 30 Aug | **PlusPower is worth the turn it takes off the kill**, discounted by how far off that turn is — the lethal case is the top rung of the staircase, not the whole of it, and it lands on its old value by arithmetic | `turnsWith`, `T_PLUSPOWER` |
 | 30 Aug | **A strip is not a payment.** Which Energy a hostile effect takes is the inverse of the order a Pokemon pays its own costs in — and the AI was not choosing badly, it was not choosing: `energyIdx` is a key nothing has read since the human got a picker | `energyStripOrder`, `energyUids` |
 | 29 Aug | **A shield is a shield whichever direction the damage comes from.** Defender now blunts your own recoil, priced through `shieldSelf`'s curve rather than a second one — and it reads the attack the bot would pick anyway, which is the opposite choice from `pLethalThisTurn` for the same reason | `T_DEFENDER` |
 
