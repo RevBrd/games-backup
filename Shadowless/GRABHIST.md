@@ -443,7 +443,7 @@ last is ordinary correct play; the fault is *ending* the turn with the lethal on
 instrument failure in this project's collection, because it fails loudly: it points at a bug that does
 not exist and its own label sends you looking.
 
-## Ninetales' Lure, and the half of a bullet that closed — 30 Aug 2026
+## Ninetales' Lure, and the half of a bullet that closed — 30 Aug 2026 (#31)
 
 **The report:** *"Ninetales also used Lure to draw out a much more dangerous pokemon on turn 49"*, one
 clause of the long log# 04-02-53 bullet. **Fixed**; the other three complaints in that bullet — Chansey
