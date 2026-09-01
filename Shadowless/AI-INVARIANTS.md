@@ -27,11 +27,7 @@ loses the reason, and the reason is what stops the next pass undoing it. Split o
 22 Aug 2026 at 549 lines, the same shape `LOGBOOK.md` and `Rulings/` took.
 
 **When this file passes ~450, start `AI-INVARIANTS-ARCHIVE-3.md` at a job boundary** rather than
-growing it. **IT IS AT 758 AND THE OWNER IS NAMED: whoever closes Job 14b.** Not done on 31 Aug 2026
-because Job 14b is open and mid-job is not a boundary — the entries below are the job's own working
-notes and archiving them while the job is still running buries them from the sessions most likely to
-need them. Per this paragraph's own rule two lines down, that is a decision rather than a drift
-because it says who does it and when. Stated here at the top, before the decision, rather than only at the bottom where it
+growing it. Stated here at the top, before the decision, rather than only at the bottom where it
 would be read too late. **It has now been reached twice, and the second time is the one worth
 knowing about.** On 28 Aug 2026 the file hit 476 and was deliberately left whole, because the three
 entries that took it there had been written the same day as the work they describe and archiving them
@@ -39,6 +35,12 @@ immediately buries fresh reasoning before anyone has read it. That was a real re
 itself — so the same paragraph named the split as *the next docs pass's first job*, which is how it
 got done rather than re-deferred. **A deferral with a named owner is a decision; one without is a
 limit quietly becoming advisory.**
+
+**Reached a third time, 1 Sep 2026: the file is past 780 and the owner is named — whoever closes
+Job 14b.** Not split then because 14b is open and **mid-job is not a boundary**: the newest entries
+are the job's own working notes, and archiving them while the job is still running buries them from
+the sessions most likely to need them. Same reason as 28 Aug, same remedy — an owner and a moment,
+per the paragraph above.
 
 **Deliberately not counted, here or in `AI.md`.** The number was written into prose as *twenty-three*
 on 22 Aug 2026 and was wrong four entries later, in two files at once, while the index table beside
@@ -760,3 +762,16 @@ list, which is why the flag exists.
 so the next session knows which check was skipped: with 41% of games diverging, the identical-tree
 floor is the wrong baseline by that file's own argument, so the instrumented loop would have had
 nothing to compare against.
+
+### The control, run after committing — 0.0%, and the stall floor for that exact command
+
+`abtest 8 HEAD --card base3-10` with `src/` identical to the baseline: **0.0% divergence over the
+same 2,736 games, and 28 stalls.** The measured run read 29. So the stall line resolves properly
+rather than by appeal to a band — **one above the floor for this command**, which is the check
+[MISREADINGS.md](MISREADINGS.md) says costs one run and settles it. The 41.3% is the change.
+
+**Run the control AFTER committing, not before.** The working tree is the baseline at that moment,
+so the control is free and requires no stash — and stashing a session's uncommitted work to obtain a
+control is how you lose it. *(Nearly done here: a `git checkout --` reflex during a different
+experiment reverted the whole of `src/ai.js`, and it was recovered only because a scratch copy
+happened to exist. Use a targeted edit-and-revert for a control, never a checkout.)*

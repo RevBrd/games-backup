@@ -1308,6 +1308,116 @@ const CLAIMS = [
           "control the moment either row above goes green - a fix that made the bot prefer Slash " +
           "even into a lethal Flamethrower would be worse than the fault.",
   },
+
+  // ===========================================================================
+  // OVER-ATTACH — 31 Aug 2026, and these two Base Set cards are why the pattern
+  // has a printed-text guard as well as an engine-agreement one.
+  //
+  // Blastoise, Poliwrath and Poliwag all print "extra Water Energy after the 2nd
+  // doesn't count" and NONE of them carried the cap — written in Job 4b, before
+  // Job 6 added `maxSpare` for the Jungle and Fossil Water Guns. The engine and
+  // the scorer agreed perfectly on a number the card forbids.
+  //
+  // THE CONTROLS ARE THE POINT OF THESE ROWS. Trevor's Poliwrath note asks for
+  // exactly one extra Energy past the cost ("willing to add that fifth energy"),
+  // which is the cap landing precisely where he put it by hand. A cap off by one
+  // in either direction fails one of the two rows below.
+  // *[The pattern →](../../Playbook/OVER-ATTACH.md)*
+  // ===========================================================================
+  {
+    id: 'base1-13', card: 'Poliwrath', pattern: 'Over-Attach',
+    note: 'An Attack Choice, as both attacks are valid. Whirlpool is preferred due to the very high value of discarding opponent energy cards, but Water Gun can be Over-Attached into doing higher damage. Water Gun should be used when it results in a kill that Whrilpool wouldn\'t, and the bot should be willing to add that fifth energy to do so',
+    claim: 'the FIFTH Water is added, which is the one his note names',
+    // RED ON PURPOSE, AND THE FAULT IS IN THE ENGINE — 1 Sep 2026.
+    //
+    // The bot refuses it at -2.00 and it is right to, given what the engine
+    // believes: `DMG_PER_SPARE_ENERGY` counts the cost's TYPED symbols only, so
+    // a Water paying a COLORLESS symbol is not counted as used. Water Gun is
+    // WWC. Four Water pay it with three cards and leave one spare, but the
+    // engine reads `need = 2` and calls two of them spare — already at the
+    // printed cap of two, so a fifth genuinely adds nothing to a number that was
+    // 10 too high in the first place.
+    //
+    // MEASURED, and the second line is the one that settles it:
+    //   Poliwrath, 4 Water                 -> engine deals 50, card says 40
+    //   Poliwrath, 3 Water + 1 Fighting    -> engine deals 40, card says 40
+    // The same three symbols are paid both times. Using a WORSE Energy to pay
+    // the Colorless deals 10 LESS damage, which no reading of the card supports.
+    //   Lapras, whose cost has no Colorless -> correct at every count (control)
+    //
+    // Affects the six live printings whose spare-Energy cost contains Colorless:
+    // Poliwrath, both Vaporeons, Omastar, Seadra, Psyduck. NOT Blastoise, Lapras,
+    // Omanyte, Poliwag or Dark Blastoise.
+    //
+    // TREVOR'S NOTE IS EVIDENCE FOR THE CORRECTION. "The bot should be willing to
+    // add that fifth energy" is only true under the card's own arithmetic; under
+    // the engine's, the fifth is worthless. He described the card, not the code.
+    //
+    // NOT FIXED HERE because it is an engine rules change, and the sub-question
+    // it carries is a real one for Trevor: when both a Water and a non-Water
+    // could pay the Colorless, the player picks the non-Water, and the engine
+    // needs to be told to. See PLAYBOOK.md on asking. The row stays red until
+    // then — it is a fault report, and it goes green when the engine is right.
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'Poliwrath', energy: '4 Water' }],
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['Water Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 4 && b.me.hand.length === 1,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Poliwrath') && e.score > 0),
+  },
+  {
+    id: 'base1-13', card: 'Poliwrath', pattern: 'Over-Attach',
+    note: 'An Attack Choice, as both attacks are valid. Whirlpool is preferred due to the very high value of discarding opponent energy cards, but Water Gun can be Over-Attached into doing higher damage. Water Gun should be used when it results in a kill that Whrilpool wouldn\'t, and the bot should be willing to add that fifth energy to do so',
+    claim: 'THE CONTROL - and the SIXTH is not, because the card stops counting at two spares',
+    // He says "that fifth energy", not "energy". Water Gun costs WWC and the
+    // printed cap is two spares, so five is the last one worth having — the note
+    // and the card agree to the card, and this row is where that is checked.
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'Poliwrath', energy: '5 Water' }],
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['Water Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 5 && b.me.hand.length === 1,
+    expect: b => b.explain().filter(e => e.label === 'attach'
+            && (e.detail || '').includes('Poliwrath')).every(e => e.score <= 0),
+  },
+  {
+    id: 'base1-2', card: 'Blastoise', pattern: 'Over-Attach',
+    note: "5-ish extra W energy in deck, Over-Attach 2 extra energy for Hydro Pump's max potential, which is worth it. Loves to fight. When it evolves, its user should immediately use Rain Dance to dump as many energy cards on their pokemon as those pokemon require, prioritizing the ones currently fighting and Blastoise itself",
+    claim: 'the two extra for "Hydro Pump\'s max potential" are taken on the bench',
+    // "5-ish extra W energy in deck" is a DECKBUILD want and is parked with the
+    // others; this row is the play half of the same sentence.
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'Blastoise', energy: '4 Water' }],
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['Water Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 4 && b.me.hand.length === 1,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Blastoise') && e.score > 0),
+  },
+  {
+    id: 'base1-2', card: 'Blastoise', pattern: 'Over-Attach',
+    note: "5-ish extra W energy in deck, Over-Attach 2 extra energy for Hydro Pump's max potential, which is worth it. Loves to fight. When it evolves, its user should immediately use Rain Dance to dump as many energy cards on their pokemon as those pokemon require, prioritizing the ones currently fighting and Blastoise itself",
+    claim: 'THE CONTROL - "max potential" is 2 extra, so the sixth Water buys nothing',
+    // The worst place in the game to be uncapped, which is why it gets a row:
+    // Rain Dance can dump a whole hand of Water onto this card, and every one of
+    // them was adding 10 to Hydro Pump until 31 Aug 2026.
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'Blastoise', energy: '5 Water' }],
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['Water Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 5 && b.me.hand.length === 1,
+    expect: b => b.explain().filter(e => e.label === 'attach'
+            && (e.detail || '').includes('Blastoise')).every(e => e.score <= 0),
+  },
 ];
 
 module.exports = { CLAIMS };
