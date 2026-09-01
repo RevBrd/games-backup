@@ -68,6 +68,7 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
 - Attaching an energy or applying an item to a pokemon needs to not be canceled by the item clicked underneath it.
 - In the deck building screen, we need a way to zoom in on a card to read the move or view the scan.
 - I found another source of screen wobble! It's when the player's active card's moves disappear during the opponent's turn, the size of the active card shrinks. See the screenshots in the new screenshots folder.
+- Remove the Grand Masters from the Fossil bracket and replace them with the Fossil theme decks. If we don't have them I can find some. We should also remove Ronald entirely for now due to our own boss waves having taken shape conceptually.
 
 
 ### Parked and kept
@@ -85,3 +86,13 @@ Optional place to document grab bag items: [GRABHIST.md](GRABHIST.md)
 If you are an instance arriving here cold: [PLAYTEST.md](PLAYTEST.md) is the method file for this
 list — what these notes are, what they are not, and the three times a report has turned out not to
 mean what it said.
+
+
+
+
+
+## Ideas stolen from GBC 2
+
+I found an emulator version of the GBC game's sequel that was only released in Japan, and so I have never played it before. The reason being to see what kinds of mechanics their AI uses so we can steal them for ourselves. Right away a first item was found, so I made a new section here to track them as I go.  
+
+- When energies were abundant but pokemon to attach them to were not, the AI started pre-planning evolutions that weren't in hand. A Machop in the active spot and an Eevee on the bench were both powered up to their own desired levels, and when nothing else arrived, the AI attached all of Machamp's required energies to the active Machop in preparation. Unknown if there was a Machamp in its hand and all it was missing was Machoke or if both were missing. 
