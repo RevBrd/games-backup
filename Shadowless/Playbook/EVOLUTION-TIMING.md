@@ -397,3 +397,97 @@ that it shipped, and do not inherit "this failed" from the null.**
 being fed. Both seats play under it. A win rate is close to the least sensitive instrument available
 for that, which is the same argument `abtest` exists for one file over.
 *[What the grounds actually were, and the control that was deliberately not run →](../AI-INVARIANTS.md)*
+
+## The plan is the whole LINE, and each step pays for itself — 1 Sep 2026
+
+**Trevor's, from the GBC game and confirmed in Pocket. It is the rule above, un-truncated.**
+
+> The opponent attaches the energy absolutely last before attacking, almost like the bot goes down a
+> checklist of everything else before it's allowed to roll the energy attach numbers at all. So with
+> that resolved, a pokemon like Machop only needs to power up to 2 energy before it's considered
+> "ready" to evolve on a subsequent turn. Then on the next turn, it evolves into Machoke *first* and
+> gets its energy second.
+>
+> For Abra… it would only give Abra 1 energy. Why? Because Alakazam needs 3, and Abra would need two
+> turns to evolve twice. Turn 2 results in Kadabra with two energies. Turn 3 results in Alakazam with
+> three energies. But if it's in the active spot and a Kadabra shows up in its hand without an
+> Alakazam, the bot will still want to evolve it but will wait an extra turn while it attaches a
+> second energy to Abra… and on turn 3 will evolve to Kadabra with three energies ready to use Super
+> Psy. **Recover is never factored in at all.**
+
+**Every evolution step is a turn, and every turn brings an attachment.** So a card on a road does not
+need its evolution's full cost — the line finances one Energy per step:
+
+> **want = destShort(deepest form the hand can reach) − (evolution steps remaining)**
+
+| plan | destination | steps | target | Trevor said |
+|---|---|---|---|---|
+| Abra → Kadabra → **Alakazam** | Confuse Ray `PPP` = 3 | 2 | **1** | *"only give Abra 1 energy"* |
+| Abra → **Kadabra** only | Super Psy `PPC` = 3 | 1 | **2** | *"wait an extra turn"* |
+| Machop → **Machoke** | Karate Chop `FFC` = 3 | 1 | **2** | *"only needs to power up to 2"* |
+
+**Three for three, and the Machop figure fell out before anyone looked it up.** Measured on a board:
+an Abra with a Kadabra in hand is fed to two and refused a third; **the same Abra with an Alakazam
+behind it is fed to one and refused a second.** The control — nothing in hand — takes one Psychic for
+its own Psyshock and refuses the rest, unchanged.
+
+**The rule shipped hours earlier is this one truncated to depth 1**, and `readiness > 1` is
+`roadWant > 0` when `steps` is 1, so nothing about the one-step case moved. *"Recover is never
+factored in"* is a third independent confirmation of `destShort`, arriving from a different direction
+than the eight `Wants` notes did.
+
+**Only cards in hand count**, so the plan is a certainty. The engine enforces one evolution per
+Pokémon per turn — verified on a board rather than assumed — so the step count really is a turn count.
+
+### And the evolve goes before the attach
+
+The other half of his observation, and **the case #31 named and declined to extend** — its reasoning
+was that `attachBuild` already looks ahead through `evolutionInHand`, so an attachment made first is
+not blind to the evolution. True of the attachment's *value*, and it was the right call without
+evidence.
+
+**What it does not cover is the body.** After the evolve, the card competes for the Energy as the
+evolved form, so every term reading HP rather than the plan sees the one that will actually be holding
+it — `survivesCharge` prices an Abra at 30 and a Kadabra at 60. Measured: an Arcanine attach worth
+38.50 now waits behind an Abra's evolve worth 29.50.
+
+**Ready ones only, and that guard is the whole safety of it.** A `roadWant > 0` evolve is the bot
+deliberately waiting, and promoting one would let an ordering rule silently overrule the readiness
+rule two functions away. Both directions are pinned in `powertest.js`, and the control was watched:
+removing the promotion turns the first red and leaves the second green.
+
+**`playBasic` is still deliberately not extended.** #31 flags it as the one with a real case of its
+own, wanting its own measurement.
+
+## The deck arm — Trevor's framing, 1 Sep 2026, and it is cheaper than "probability"
+
+**Still not built, and this is context for whoever does.** [AI.md](../AI.md)'s open item 9 has parked
+*"evolutions in the DECK"* as needing *"probability rather than fact, which is a different kind of
+reasoning from anything in the scorer"* — and Trevor's own account of what he wants is **not a
+probability model**:
+
+> I think we should have it price "in hand" and "in deck" both as green lights to plan for evolution
+> in favorable conditions, but with "in hand" weighted much higher, whereas "in deck" might result in
+> Machop's second energy being added after some bench pokemon have had their available move powered up
+> or been prepped for a more impending evolution themselves.
+
+**That is a priority ordering, not a likelihood.** An in-deck road is a real claim on Energy that
+**yields to every more concrete one** — a Pokémon whose attack it would switch on now, or a road whose
+evolution is actually in hand. It gets the *surplus*, not a share.
+
+**Which matters for scoping**, because "needs probability" reads as a research problem and this reads
+as a weight below the existing ones. It is still not small — the deck is a pool the scorer has never
+reasoned about, `namesWithAnEvolution` is the only machinery pointing that way, and the
+"favorable conditions" clause is unspecified. But **do not inherit the estimate from the old
+framing**; ask him what "favorable" means and price it as a low-priority road rather than a forecast.
+
+### Measured — 63.8% of games diverge
+
+`abtest 8 HEAD`, full ladder pool: **11,042 of 17,296 games come out differently**, median first
+difference at action 24. Win rate 48.6% → 48.5%, symmetric and uninformative as it always is here.
+
+**That is the second-largest change this project has measured**, behind #31's turn ordering at 75.6%,
+and for the same reason — evolution roads run in most decks in the format. Which is worth holding
+next to the win rate: a change can rewrite two thirds of the games in the pool and leave the outcome
+flat, because both seats got it. *[Why that is the expected shape rather than a null result
+→](../MEASUREMENT.md)*

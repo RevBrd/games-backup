@@ -1322,34 +1322,54 @@ const CLAIMS = [
   {
     id: 'base1-32', card: 'Kadabra', pattern: 'Evolution timing',
     note: "Super Psy does high damage for what it is, and even outdoes its own evolution's damage. The evolution is still preferred in most situations though due to its pokemon power and chance to confuse. Recover should never be used. It drains an energy from a pokemon that wants to stay at 3 energies at all times. Getting in a 50 dmg hit and dying is almost always preferable to recovery or retreat",
-    claim: 'an Abra on TWO Psychic is still fed, because Kadabra wants three',
-    // RED ON PURPOSE, and it names a disagreement this session created.
+    claim: 'an Abra with only a Kadabra coming is fed a SECOND Psychic',
+    // THE PAIR BELOW IS THE POINT AND ONE ROW COULD NEVER SAY IT: the same Abra
+    // on the same Energy wants a different amount depending on how deep the plan
+    // is. Kadabra's Super Psy costs 3, one evolution step supplies one of them on
+    // the turn it evolves, so the target is 2.
     //
-    // `evolve` now measures readiness against the DESTINATION (Super Psy, 3), but
-    // `attachBuild`'s evolution road still measures `.short` — the cheapest
-    // attack the evolution owns, which is Recover at 2. So the two halves of one
-    // idea target different attacks: the road calls the Abra finished at two
-    // Psychic and stops feeding it, while `evolve` still wants a third.
-    //
-    // Measured: an Abra on two Psychic scores the next attach at -2.00, the
-    // surplus refusal. Trevor's sentence says three.
-    //
-    // THIS IS THE SHAPE AI.md's OPEN ITEM 4 WARNED ABOUT — "a naive readiness
-    // penalty strands Vileplume at two forever" — arriving from the other side.
-    // It does not strand anything today, because the penalty is a discount rather
-    // than a veto and evolving still outscores attaching. It is a disagreement
-    // waiting to become one, and the fix is to make the road read the same
-    // destination rather than to weaken either half.
+    // THIS ROW USED TO ASSERT A THIRD PSYCHIC and was written that way the same
+    // day. It was a claim built on the depth-1 truncation — the rule looked
+    // exactly one evolution ahead — and it went red the moment the depth rule
+    // landed. **The bot was right and the claim was wrong**, which is the second
+    // time that has happened here and is the outcome PLAYBOOK.md says to expect.
+    // Trevor's "wants to stay at 3 energies at all times" is about KADABRA; the
+    // Abra underneath it wants one fewer.
     board: {
       me:   { card: 'Hitmonchan', energy: '3 Fighting' },
-      myBench: [{ card: 'base1:Abra', energy: '2 Psychic' }],
+      myBench: [{ card: 'base1:Abra', energy: '1 Psychic' }],
       them: { card: 'Hitmonchan', energy: '3 Fighting' },
       myHand: ['base1:Kadabra', 'Psychic Energy'],
     },
-    sane: b => b.me.bench[0].energy.length === 2
-            && b.me.hand.some(h => h.id === 'base1-32'),
+    sane: b => b.me.bench[0].energy.length === 1
+            && b.me.hand.some(h => h.id === 'base1-32')
+            && !b.me.hand.some(h => h.id === 'base1-1'),
     expect: b => b.explain().some(e => e.label === 'attach'
             && (e.detail || '').includes('Abra') && e.score > 0),
+  },
+  {
+    id: 'base1-32', card: 'Kadabra', pattern: 'Evolution timing',
+    note: "Super Psy does high damage for what it is, and even outdoes its own evolution's damage. The evolution is still preferred in most situations though due to its pokemon power and chance to confuse. Recover should never be used. It drains an energy from a pokemon that wants to stay at 3 energies at all times. Getting in a 50 dmg hit and dying is almost always preferable to recovery or retreat",
+    claim: '...but with an ALAKAZAM behind it, one Psychic is enough and the second is refused',
+    // Trevor, 1 Sep 2026: *"It would only give Abra 1 energy. Why? Because
+    // Alakazam needs 3, and Abra would need two turns to evolve twice."* Two
+    // evolution steps, two turns, two attachments the line supplies itself — so
+    // Confuse Ray's three symbols minus two steps is a target of one.
+    //
+    // The row above is the same board with the Alakazam removed and it wants a
+    // second Energy. **Assert both or neither**: a single row here is green under
+    // a rule that ignores depth entirely, which is what shipped hours earlier.
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'base1:Abra', energy: '1 Psychic' }],
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['base1:Kadabra', 'base1:Alakazam', 'Psychic Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 1
+            && b.me.hand.some(h => h.id === 'base1-32')
+            && b.me.hand.some(h => h.id === 'base1-1'),
+    expect: b => b.explain().filter(e => e.label === 'attach'
+            && (e.detail || '').includes('Abra')).every(e => e.score <= 0),
   },
   {
     id: 'base1-42', card: 'Wartortle', pattern: 'Evolution timing',

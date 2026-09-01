@@ -6527,5 +6527,46 @@ T('a card that EATS your hand is never promoted ahead of the attachment', () => 
      'Oak stays behind the attach');
 });
 
+// ---------------------------------------------------------------------------
+// AND AN EVOLUTION GOES BEFORE THE ATTACH TOO — 1 Sep 2026, from Trevor:
+// "the opponent attaches the energy absolutely last before attacking, almost like
+// the bot goes down a checklist of everything else before it's allowed to roll
+// the energy attach numbers at all."
+//
+// #31 named this case and left it alone for want of evidence. These two tests are
+// the pair, and the SECOND one is the important half — the ordering rule must not
+// be able to overrule the readiness rule two functions away.
+const evoOrderBoard = (abraEnergy, hand) => mkBoard({
+  me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+  myBench: [{ card: 'base1:Abra', energy: `${abraEnergy} Psychic` },
+            { card: 'base1:Arcanine', energy: '3 Fire' }],
+  them: { card: 'Hitmonchan', energy: '3 Fighting' },
+  myHand: hand,
+});
+
+T('a READY evolution goes before the attachment, even a better-scoring one', () => {
+  // The Abra is at its target (Super Psy's 3, less the one Energy the evolution
+  // turn supplies), so evolving is not being deferred. The Arcanine attach scores
+  // 38.5 against the evolve's 29.5 and still waits its turn — after the evolve,
+  // the card competes for that Energy as a Kadabra with 60 HP rather than as an
+  // Abra with 30, which is what every HP-reading term wanted all along.
+  const b = evoOrderBoard(2, ['base1:Kadabra', 'Fire Energy']);
+  const m = b.move();
+  if (!m || m.action.t !== 'evolve')
+    throw new Error(`the attach went first: ${m && m.label}`);
+  return true;
+});
+
+T('...but an UNREADY one does not, or the ordering rule would overrule readiness', () => {
+  // Same board, Abra on nothing. `roadWant` is 2, so the bot is deliberately
+  // WAITING to evolve — and a promotion here would evolve it anyway, silently
+  // undoing the readiness discount from a completely different function.
+  const b = evoOrderBoard(0, ['base1:Kadabra', 'Fire Energy']);
+  const m = b.move();
+  if (!m || m.action.t !== 'attachEnergy')
+    throw new Error(`an unready evolve was promoted: ${m && m.label}`);
+  return true;
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

@@ -1825,6 +1825,90 @@ class AI {
     return best;
   }
 
+  // ==========================================================================
+  // THE PLAN IS THE WHOLE LINE, AND EACH STEP PAYS FOR ITSELF — 1 Sep 2026
+  // ==========================================================================
+  //
+  // Trevor, from the GBC game and confirmed in Pocket: the bot attaches Energy
+  // **last**, after everything else on its checklist. So a Pokemon on an
+  // evolution road does not need its evolution's full cost before it evolves —
+  // **every evolution step is a turn, and every turn brings an attachment**, so
+  // the line finances itself one Energy per step.
+  //
+  //   "It would only give Abra 1 energy. Why? Because Alakazam needs 3, and Abra
+  //    would need two turns to evolve twice. Turn 2 results in Kadabra with two
+  //    energies. Turn 3 results in Alakazam with three energies. But if a Kadabra
+  //    shows up in its hand without an Alakazam, the bot will still want to evolve
+  //    it but will wait an extra turn while it attaches a second energy to Abra."
+  //
+  // **THE SAME CARD WANTS A DIFFERENT AMOUNT DEPENDING ON HOW DEEP THE PLAN IS**,
+  // which is the thing no per-card target could ever express. One Energy on an
+  // Abra when an Alakazam is coming; two when only a Kadabra is.
+  //
+  //   want = destShort(deepest planned form) - (evolution steps remaining)
+  //
+  // Checked against all three of Trevor's own numbers before it was built:
+  //
+  //   Abra -> Kadabra -> Alakazam   Confuse Ray PPP = 3, 2 steps -> target 1
+  //   Abra -> Kadabra only          Super Psy   PPC = 3, 1 step  -> target 2
+  //   Machop -> Machoke             Karate Chop FFC = 3, 1 step  -> target 2
+  //
+  // **The rule shipped earlier today is this one truncated to depth 1.** It looked
+  // exactly one evolution ahead, which is right for Machop and one Energy too
+  // generous for Abra. `readiness > 1` and `roadWant > 0` are the same test when
+  // `steps` is 1, so nothing about the one-step case changes.
+  //
+  // ONLY CARDS IN HAND COUNT, so the plan is a certainty rather than a hope — the
+  // same bound `evolutionInHand` has had since 28 Aug. Planning toward an
+  // evolution that is only in the DECK is a real thing the GBC bot does and it is
+  // deliberately not here; see AI.md's open item 9 for the shape Trevor wants.
+  //
+  // The engine enforces one evolution per Pokemon per turn — verified on a board,
+  // not assumed — so the step count really is a turn count.
+  evolutionPlan(pi, slot) {
+    const me = this.E.state.players[pi];
+    // Walk the line through the hand. Each hop consumes the card it used, so two
+    // Kadabras cannot be counted as two steps.
+    const taken = new Set();
+    let from = this.top(slot).name, cardId = null, steps = 0;
+    for (;;) {
+      let best = null, bestHP = -1, bestUid = null;
+      for (const h of me.hand) {
+        if (taken.has(h.uid)) continue;
+        const c = this.db[h.id];
+        if (!c || c.kind !== 'pokemon' || c.evolvesFrom !== from) continue;
+        if (c.hp > bestHP) { bestHP = c.hp; best = c.id; bestUid = h.uid; }
+      }
+      if (!best) break;
+      taken.add(bestUid);
+      cardId = best; steps++; from = this.db[best].name;
+    }
+    return cardId ? { cardId, steps } : null;
+  }
+
+  // HOW MUCH MORE ENERGY THIS SLOT WANTS BEFORE IT IS READY TO START EVOLVING.
+  // Zero means go. Read by all three places that ask it — the `evolve` case, the
+  // road in `attachBuild`, and the surplus rule's `evolving` exception.
+  //
+  // **THAT IT IS THREE PLACES IS THE WHOLE WARNING.** The surplus rule returns
+  // `attachSurplus` before either of the others is reached, so changing two of
+  // them produces no behaviour change at all — measured exactly that way once,
+  // and it nearly got a correct change written up as a null.
+  // `firstStep` is the immediate evolution the caller already has in hand — the
+  // one `evolutionRoadFor` chose, or the card being played by `case 'evolve'`.
+  // Passing it keeps this honest about WHICH decision is being priced: the plan
+  // is only this slot's if its first hop is that card.
+  roadWant(pi, slot, firstStep) {
+    const plan = this.evolutionPlan(pi, slot);
+    if (!plan) return 0;
+    if (firstStep) {
+      const c = this.db[firstStep];
+      if (!c || c.evolvesFrom !== this.top(slot).name) return 0;
+    }
+    const short = this.potentialOf(pi, slot, this.db[plan.cardId]).destShort;
+    return Math.max(0, short - plan.steps);
+  }
+
   // ONE OF THE TWINS GETS FED — 28 Aug 2026, Trevor, and it is the clause of his
   // GBC note the first evolution pass deliberately left out:
   //
@@ -1997,8 +2081,23 @@ class AI {
     // turn is a real destination — that is Chansey being fed toward Scrunch, and
     // it is the case `attackThreatens` deliberately cannot see, since walls are
     // terminal Basics and never appear on a road.
+    //
+    // AND THE ROAD STOPS AT THE TARGET, NOT AT FULL PAYMENT — 1 Sep 2026. On an
+    // evolution road the length is `roadWant`: `destShort` to the deepest form the
+    // hand can reach, less one Energy per remaining step, because the evolution
+    // turns bring their own attachments. Feeding an Abra past that is feeding it
+    // Energy the line was going to supply anyway.
+    //
+    // The road is measured to the DEEPEST form the hand can reach, so `potentialAs`
+    // is asked about that card rather than about the next one — a Charmander whose
+    // hand holds Charmeleon and Charizard is building toward Fire Spin, not Slash.
+    const plan = evo ? this.evolutionPlan(pi, slot) : null;
     const roadShort = r => (evo ? r.destShort : r.short);
-    const beforeShort = roadShort(beforeR), afterShort = roadShort(afterR);
+    let beforeShort = roadShort(beforeR), afterShort = roadShort(afterR);
+    if (plan) {
+      beforeShort = Math.max(0, this.potentialAs(pi, slot, plan.cardId, null).destShort - plan.steps);
+      afterShort = Math.max(0, this.potentialAs(pi, slot, plan.cardId, energyId).destShort - plan.steps);
+    }
     let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
     s += this.energyOnAttachValue(pi, slot, energyId);
 
@@ -2951,7 +3050,7 @@ class AI {
         // you measure** — this file's own recurring lesson, and it cost a wrong
         // reading of a claim row here.
         const evoId = this.evolutionRoadFor(pi, slot);
-        const evolving = !!evoId && this.potentialAs(pi, slot, evoId, null).destShort > 0;
+        const evolving = !!evoId && this.roadWant(pi, slot, evoId) > 0;
 
         if (noProgress && !needsEscape && !stocking && !evolving) return W.attachSurplus;
 
@@ -2997,8 +3096,12 @@ class AI {
         // can outvote it — a status wipe is 14, a big HP jump is real, and an ON_PLAY
         // Power is priced on its own. Evolving early to survive is still allowed;
         // it just stops being free.
-        const readiness = this.potentialOf(pi, slot, newC).destShort;
-        if (readiness > 1) s -= (readiness - 1) * W.evolveEarly;
+        // `roadWant` is `destShort` minus one Energy per remaining evolution
+        // step, because each step is a turn and each turn brings an attachment.
+        // At depth 1 it is exactly the old `readiness > 1` test — see its comment
+        // for Trevor's Abra and Machop numbers.
+        const want = this.roadWant(pi, slot, newC.id);
+        if (want > 0) s -= want * W.evolveEarly;
         // evolving also wipes Special Conditions
         const st = slot.status;
         if (st.asleep || st.paralyzed || st.confused) s += 14;
@@ -4286,6 +4389,38 @@ class AI {
         const narrow = grow.filter(a => kindOf(a) === 'narrow');
         return pick(narrow.length ? narrow : grow);
       }
+      // AND AN EVOLUTION GOES BEFORE IT TOO — 1 Sep 2026, Trevor, from the GBC
+      // game and confirmed in Pocket: *"the opponent attaches the energy
+      // absolutely last before attacking, almost like the bot goes down a
+      // checklist of everything else before it's allowed to roll the energy
+      // attach numbers at all."*
+      //
+      // #31 named this exact case and declined to extend the rule to it, on the
+      // grounds that `attachBuild` already looks ahead through `evolutionInHand`
+      // so an attachment made first is not blind to the evolution. That is true
+      // of the attachment's VALUE and it was the right call without evidence.
+      // What it does not cover: after the evolve, the card competes for the
+      // Energy as the evolved form, so every term that reads the BODY rather than
+      // the plan sees the right one — `survivesCharge` prices an Abra at 30 HP and
+      // a Kadabra at 60, and only one of them is going to be holding the Energy.
+      //
+      // **READY ONES ONLY, and this guard is the whole safety of it.** A
+      // `roadWant > 0` evolve is the bot deliberately WAITING, and promoting one
+      // would let an ordering rule silently overrule the readiness rule two
+      // functions away — which is exactly the failure #31 was protecting against.
+      //
+      // DELIBERATELY NOT EXTENDED TO `playBasic`, which #31 flags as the one with
+      // a real case of its own. Trevor's observation was about evolving; extending
+      // an ordering rule because its argument happens to reach is how a narrow fix
+      // becomes a turn-structure rewrite.
+      const readyEvolve = a => {
+        if (a.t !== 'evolve') return false;
+        const inst = this.E.state.players[pi].hand[a.hand];
+        const slot = this.E.findSlot(pi, a.target);
+        return !!inst && !!slot && this.roadWant(pi, slot, inst.id) === 0;
+      };
+      const evos = setup.filter(a => readyEvolve(a) && worth(a));
+      if (evos.length) return pick(evos);
       return null;
     }
     // Trevor's Poke Ball point: a search takes a card out of the deck, so every

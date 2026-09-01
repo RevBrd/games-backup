@@ -240,6 +240,8 @@ which is what keeps a split from costing anybody a search.
 | 31 Aug | **One verb, ONE implementation.** `maxSpare` sat in the engine and not in the scorer for eleven weeks; the arithmetic is shared now. **Two guards, because agreement is not correctness** — one runs the engine, one reads the printed card, and three Base Set cards needed the second | `spareEnergyDamage` |
 | 1 Sep | **A Water that pays a Colorless is still a Water that was used.** The clause lives in `engine.js` and `ai.js` calls it — **prefer deleting one of two copies to asserting they match**, because this one drifted twice and only one drift was catchable by agreement | `spareEnergyFor` |
 | 1 Sep | **An evolution road is measured to the attack the evolution is trying to REACH**, not the cheapest one it owns — 22 printings move, eight of Trevor's own notes confirm it. **Asked in THREE places, and the third returns before the other two**: fixing two of them changed nothing at all | `attackThreatens`, `destShort` |
+| 1 Sep | **The plan is the whole LINE and each step pays for itself** — the target is the deepest in-hand form's cost less one Energy per step, so an Abra wants two with a Kadabra coming and **one** with an Alakazam behind it. The entry above is this truncated to depth 1 | `evolutionPlan`, `roadWant` |
+| 1 Sep | **A READY evolution goes before the attachment** — the card should compete for the Energy as the body that will hold it. **Only ready ones**, or an ordering rule overrules a scoring rule two functions away | `playFirst`, `roadWant` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -423,7 +425,14 @@ on it.**
 
    **Two clauses of his note are still open and neither follows automatically from (c) landing.**
    **Evolutions in the DECK** need probability rather than fact, which is a different kind of reasoning
-   from anything in the scorer. **The duplicates rule** was built on 28 Aug — but on a release
+   from anything in the scorer. **— AND TREVOR'S OWN ACCOUNT OF WHAT HE WANTS IS NOT A PROBABILITY
+   MODEL, 1 Sep 2026.** *"Price 'in hand' and 'in deck' both as green lights… but with 'in hand'
+   weighted much higher, whereas 'in deck' might result in Machop's second energy being added after
+   some bench pokemon have had their available move powered up or been prepped for a more impending
+   evolution themselves."* **That is a priority ordering, not a likelihood** — an in-deck road is a
+   real claim on Energy that yields to every more concrete one, and takes the surplus rather than a
+   share. Still not small, and the "favorable conditions" clause is unspecified — but **do not inherit
+   the scope estimate from the sentence above it.** *[The framing in full →](Playbook/EVOLUTION-TIMING.md)* **The duplicates rule** was built on 28 Aug — but on a release
    condition the board already knows rather than on the scarcity clause he first wrote, because (b)
    above had measured that clause near-inert hours earlier. **Raise the deck arm with Trevor rather
    than assuming it follows.**

@@ -353,6 +353,11 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   Derived rather than tagged, 22 printings move, and **eight of his own notes confirm it without any
   of those cards being named in the code** — the strongest argument in this tree for deriving over
   tagging. *[The rule, the curve and the eight →](Playbook/EVOLUTION-TIMING.md)*
+  Then, on his account of the GBC and Pocket turn order: **the plan is the whole LINE and each
+  evolution step pays for one of its own Energy** — an Abra wants two with a Kadabra coming and
+  **one** with an Alakazam behind it, which is the thing no per-card target could express. And a
+  **ready** evolve now goes before the attachment, so the card competes for the Energy as the body
+  that will hold it.
   **Two things this job owes on the way out**: `AI-INVARIANTS.md` is past its own archive threshold
   and its header names *whoever closes Job 14b* as the owner; and `node tools/wants.js --coverage` is
   the live backlog rather than a number here.
