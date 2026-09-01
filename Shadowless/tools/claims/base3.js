@@ -83,6 +83,27 @@ const CLAIMS = [
     id: 'base3-40', card: 'Omastar', pattern: 'Over-Attach',
     note: 'Water Gun asks for an Over-Attach of up to two additional energies. As long as the bot can do that freely and purposefully, it should handle this card fine',
     claim: 'fed a third Water past Water Gun\'s cost, which is the first of the two spares',
+    // RED ON PURPOSE, and the row below is its pair — the bot takes ONE of the
+    // two spares his note asks for, not none and not both.
+    //
+    //   2 Water -> a third scores -2.00   (refused)
+    //   3 Water -> a fourth scores 18.50  (taken)
+    //
+    // THE CAUSE IS SPIKE CANNON, not Water Gun. `potentialOf` prices a benched
+    // slot at printed damage and takes the best attack. Spike Cannon prints
+    // "30x" — two coins, so `aiParseDamage` reads 30 and that is also its
+    // expected value. At two Water, Water Gun deals 20 and the slot's `best` is
+    // already 30. The third Water brings Water Gun LEVEL with Spike Cannon
+    // rather than past it, `best` does not move, and the surplus rule refuses.
+    //
+    // **A guaranteed 30 and a coin-flip 30 are equal in the printed-damage
+    // currency and they are not equal.** That is AI.md's open item 1 — the
+    // Active/Bench unit split — arriving as a card-sized case, and it is the
+    // cheapest statement of it anybody has written down. Deliberately NOT fixed
+    // by the Over-Attach work, which corrected a wrong FACT and left the unit
+    // problem exactly where it was.
+    //
+    // Do not "fix" this by weakening the row or by special-casing Omastar.
     board: {
       me:   { card: 'Hitmonchan', energy: '3 Fighting' },
       myBench: [{ card: 'Omastar', energy: '2 Water' }],
@@ -96,7 +117,21 @@ const CLAIMS = [
   {
     id: 'base3-40', card: 'Omastar', pattern: 'Over-Attach',
     note: 'Water Gun asks for an Over-Attach of up to two additional energies. As long as the bot can do that freely and purposefully, it should handle this card fine',
-    claim: '...and refused a FIFTH, which is past the "up to two" the note names',
+    claim: '...but the FOURTH is taken, which is the second spare and the pair to the row above',
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'Omastar', energy: '3 Water' }],
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['Water Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 3 && b.me.hand.length === 1,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Omastar') && e.score > 0),
+  },
+  {
+    id: 'base3-40', card: 'Omastar', pattern: 'Over-Attach',
+    note: 'Water Gun asks for an Over-Attach of up to two additional energies. As long as the bot can do that freely and purposefully, it should handle this card fine',
+    claim: 'THE CONTROL - and refused a FIFTH, which is past the "up to two" the note names',
     board: {
       me:   { card: 'Hitmonchan', energy: '3 Fighting' },
       myBench: [{ card: 'Omastar', energy: '4 Water' }],

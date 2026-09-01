@@ -142,6 +142,24 @@ printed text rather than either implementation: any attack whose text matches *"
 count"* or *"can't add more than N damage"* must carry a `maxSpare`. Both wordings are the same rule,
 one capping the count and one capping the bonus.
 
+### 4. The clause itself was wrong, in both halves at once
+
+**Found by writing a claim straight off Trevor's Poliwrath note and watching it go red.**
+`DMG_PER_SPARE_ENERGY` counted only the cost's **typed** symbols, so a Water paying a **Colorless**
+was never marked as used — Water Gun is `WWC`, four Water pay it with three cards and leave one
+spare, and the engine called two of them spare.
+
+**Neither half of the game could see it**, because both halves were wrong the same way and the
+agreement guard above passes on a shared mistake. What saw it was the printed card, and what pointed
+at the card was Trevor's own sentence: *"the bot should be willing to add that fifth energy"* is only
+true under the card's arithmetic. Under the engine's, a Poliwrath on four Water was already at the
+cap and the fifth Energy was worth nothing — so the bot's refusal was correct and the **engine** was
+the fault. *[The ruling, including who chooses which Energy pays the Colorless →](../Rulings/SPARE-ENERGY-PAYS-COLORLESS.md)*
+
+Six live printings moved: Poliwrath, both Vaporeons, Omastar, Seadra, Psyduck. The cards whose costs
+are typed all the way through — Blastoise, Lapras, Omanyte, Poliwag, both Dark Blastoises — are
+unchanged and are the control.
+
 ## Where the claims are
 
 `tools/claims/base2.js` and `tools/claims/base3.js` — **both files were created for this pattern and
@@ -157,6 +175,18 @@ would pass every positive row in both files.
 | Poliwag's surplus Grass still held (`powertest.js`) | the surplus rule being switched off rather than informed |
 
 ## Still open
+
+**Omastar takes one of its two spares and refuses the other, and the cause is the OTHER attack.**
+Spike Cannon prints "30×" and `aiParseDamage` reads 30, so at two Water the slot's `best` is already
+30 and the third Water brings Water Gun **level** with it rather than past it — `noProgress`, and the
+surplus rule refuses. The fourth is taken normally.
+
+**A guaranteed 30 and a coin-flip 30 are equal in the printed-damage currency, and they are not
+equal.** That is [AI.md](../AI.md)'s open item 1 — the Active/Bench unit split — showing up as a
+single card, and it is the cheapest statement of that item in the tree. **Deliberately not fixed
+here**: this pattern's whole discipline was correcting a wrong *fact* without touching the *unit*,
+and closing it the other way round would have hidden the item rather than solved it. Red row with the
+diagnosis in `tools/claims/base3.js`.
 
 **Dark Gyarados is in this family through a Pokémon Power, and nothing here reaches it.** Trevor:
 *"It also has the potential to Over-Attach energies to deal even more potential damage upon death,

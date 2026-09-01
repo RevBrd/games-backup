@@ -1532,6 +1532,60 @@ class Engine {
     return out;
   }
 
+  // ==========================================================================
+  // "...BUT NOT USED TO PAY FOR THIS ATTACK'S ENERGY COST" — 1 Sep 2026
+  // ==========================================================================
+  //
+  // The Water Gun / Hydro Pump family counts Energy of one type left over after
+  // the cost is paid. **The cost is paid in SYMBOLS and every symbol consumes an
+  // Energy, including the Colorless ones** — which is the half this engine had
+  // missed since Job 6. It counted only the cost's TYPED symbols, so a Water
+  // paying a Colorless was never marked as used.
+  //
+  // The arithmetic was not the tell. This pair was:
+  //
+  //   Poliwrath (Water Gun, WWC), 4 Water              -> dealt 50, card says 40
+  //   Poliwrath (Water Gun, WWC), 3 Water + 1 Fighting -> dealt 40, card says 40
+  //
+  // The same three symbols are paid both times, and paying the Colorless with a
+  // WORSE Energy dealt ten MORE damage. Lapras, whose cost carries no Colorless,
+  // was correct at every count and is the control. Six live printings were
+  // affected: Poliwrath, both Vaporeons, Omastar, Seadra and Psyduck.
+  //
+  // THE ENGINE CHOOSES FOR THE PLAYER, AND CHOOSES WELL. Trevor, 1 Sep 2026, on
+  // how both the GBC game and Pocket resolve it: the typed Energy answers the
+  // typed symbols, "and then whatever else can fill the C one, even another W".
+  // So non-`t` Energy is spent on Colorless first — it is the one assignment a
+  // human would ever make — and `t` covers only what is left.
+  //
+  // ONE IMPLEMENTATION, NOT TWO THAT AGREE. `ai.js` calls this rather than
+  // keeping its own copy, which is what `maxSpare` sitting in the engine and not
+  // in the scorer for eleven weeks cost. See AI-INVARIANTS.md.
+  spareEnergyFor(slot, attack, t) {
+    const cost = (attack.cost || '').split('');
+    const typedT = cost.filter(x => x === t).length;
+    const typedOther = cost.filter(x => x !== 'C' && x !== t).length;
+    const colorless = cost.filter(x => x === 'C').length;
+
+    let have = 0, otherSymbols = 0;
+    for (const e of slot.energy) {
+      // A Rainbow is every type at once, so it counts as one of `t` AND can pay
+      // the Colorless. Counting it on both sides is the same ruling twice, not a
+      // double count: if it pays the cost it is a `t` that was used.
+      if (energyIsType(this.db, e, t)) have++;
+      else otherSymbols += energySymbols(this.db, e).length;
+    }
+
+    // A transformed Ditto pays any symbol with any Energy, so the whole cost is
+    // fungible and the non-`t` cards absorb as much of it as they have symbols.
+    if (slot.transformedId) return Math.max(0, have - Math.max(0, cost.length - otherSymbols));
+
+    // Non-`t` Energy answers its own typed symbols first — it has no choice —
+    // and whatever it has left goes on the Colorless.
+    const otherLeft = Math.max(0, otherSymbols - typedOther);
+    return Math.max(0, have - typedT - Math.max(0, colorless - otherLeft));
+  }
+
   // "1 Water Energy card" and the like mean a BASIC one, matching the WotC
   // rulings — see Rulings/ENERGY-CARD-MEANS-BASIC.md.
   //
@@ -3921,10 +3975,9 @@ class Engine {
         this.log(`${Math.floor(atk.dmg / 10)} damage counter(s) -> ${base} damage.`);
       } else if (v.v === 'DMG_PER_SPARE_ENERGY') {
         // "plus 10 more for each Water Energy attached but not used to pay
-        // for this attack's cost"
-        const need = attack.cost.split('').filter(x => x === v.t).length;
-        const have = atk.energy.filter(e => energyIsType(this.db, e, v.t)).length;
-        let spare = Math.max(0, have - need);
+        // for this attack's cost" — `spareEnergyFor` is that clause, including
+        // the Colorless symbols this used to forget. See its comment.
+        let spare = this.spareEnergyFor(atk, attack, v.t);
         // Lapras, Omastar, Seadra and Omanyte all cap the bonus; Vaporeon caps
         // the COUNT ("extra Water Energy after the 2nd doesn't count"), which is
         // the same cap expressed the other way round.

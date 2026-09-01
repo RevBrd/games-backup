@@ -238,6 +238,7 @@ which is what keeps a split from costing anybody a search.
 | 29 Aug | **A shield is a shield whichever direction the damage comes from.** Defender now blunts your own recoil, priced through `shieldSelf`'s curve rather than a second one — and it reads the attack the bot would pick anyway, which is the opposite choice from `pLethalThisTurn` for the same reason | `T_DEFENDER` |
 | 31 Aug | **Printed damage is a currency, not a constant.** For sixteen printings it is a function of the Energy on the slot, and all three places that asked in printed units read it wrong — the Bench refused an attachment that grew Water Gun by 10. `aiParseDamage` survives only for a card **in the deck**, which has no slot to read | `slotPrintedDamage` |
 | 31 Aug | **One verb, ONE implementation.** `maxSpare` sat in the engine and not in the scorer for eleven weeks; the arithmetic is shared now. **Two guards, because agreement is not correctness** — one runs the engine, one reads the printed card, and three Base Set cards needed the second | `spareEnergyDamage` |
+| 1 Sep | **A Water that pays a Colorless is still a Water that was used.** The clause lives in `engine.js` and `ai.js` calls it — **prefer deleting one of two copies to asserting they match**, because this one drifted twice and only one drift was catchable by agreement | `spareEnergyFor` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -263,6 +264,15 @@ on it.**
    that is not Active, which is a real refactor of `scoreAttack`'s relationship with engine state,
    against a measured prize of one in six comparisons in a direction that is partly correct already.
    **If you take it on, duel it, and read the tail rather than the mean.**
+
+   **There is now a card-sized case, and it is the cheapest statement of this item anybody has
+   written down — 1 Sep 2026.** A benched **Omastar** takes one of the two Over-Attaches its note
+   asks for and refuses the other. The cause is *Spike Cannon*: it prints "30×", which
+   `aiParseDamage` reads as 30, so at two Water the slot's `best` is already 30 and the third Water
+   brings Water Gun **level** with it rather than past it. `noProgress`, and the surplus rule refuses.
+   **A guaranteed 30 and a coin-flip 30 are equal in the printed-damage currency and they are not
+   equal.** No tail analysis and no duel are needed to see it — it is a red row in
+   `tools/claims/base3.js` with the diagnosis attached, and it will go green when this item does.
 
    **The named case that used to be attached to this item was NOT this item, and separating them is
    worth thirty seconds — 31 Aug 2026.** `powertest.js` asserted that a benched Poliwag was refused a

@@ -277,17 +277,27 @@ class AI {
     return base;
   }
 
-  // THE ENGINE'S ARITHMETIC, IN ONE PLACE, because it has already drifted once.
-  // `maxSpare` was added to the engine in Job 6 for the Jungle and Fossil Water
-  // Guns and `rawOutcomes` never learned it — so the scorer valued a Lapras on
-  // five Water at 50 where the card and the engine both say 30. That is the same
-  // shape #28 found four times in one session (one verb, two implementations, in
-  // two modules, with nothing asserting they agree), and the fix here is to have
-  // one implementation rather than a fifth assertion.
+  // THE ENGINE'S ARITHMETIC, AND NOW LITERALLY THE ENGINE'S — it has drifted
+  // twice, in opposite directions, and an assertion that two copies agree was
+  // not enough either time.
+  //
+  //   `maxSpare` went into the engine in Job 6 and never into the scorer, so the
+  //   bot valued a Lapras on five Water at 50 where both the card and the engine
+  //   say 30. Eleven weeks, invisible.
+  //
+  //   Then the shared arithmetic itself turned out to be wrong — a Water paying a
+  //   Colorless symbol was never counted as used — which no agreement test could
+  //   ever have seen, because both copies were wrong the same way.
+  //
+  // So `spareEnergyFor` lives in `engine.js` and this calls it. Instance methods
+  // resolve at call time, so the concatenation order that forces `aiParseDamage`
+  // and `aiEnergyIsType` to be local copies does not apply here — the same reason
+  // `potentialOf` already asks `E.slotSymbols`. **Do not re-inline it.**
+  //
+  // `maxSpare` stays on this side because it is a scoring-visible cap the engine
+  // applies at its own call site; the two are asserted equal by `powertest.js`.
   spareEnergyDamage(slot, atk, v) {
-    const need = (atk.cost || '').split('').filter(x => x === v.t).length;
-    const have = slot.energy.filter(e => aiEnergyIsType(this.db, e, v.t)).length;
-    let spare = Math.max(0, have - need);
+    let spare = this.E.spareEnergyFor(slot, atk, v.t);
     if (v.maxSpare !== undefined) spare = Math.min(spare, v.maxSpare);
     return (v.base || 0) + v.per * spare;
   }

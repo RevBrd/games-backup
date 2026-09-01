@@ -47,6 +47,7 @@ enough to settle a call in plain English, so ask him — he can be a resource on
 | A card that reads the real world gets a fixed stand-in, declared once | [VARIABLE-ATTACK-DAMAGE.md](Rulings/VARIABLE-ATTACK-DAMAGE.md) |
 | Chain Reaction answers YOUR evolutions, not the opponent's | [CHAIN-REACTION-ALLIED-ONLY.md](Rulings/CHAIN-REACTION-ALLIED-ONLY.md) |
 | Defender blunts an attack's self-harm, and is used up if it spends its whole 20 | [DEFENDER-BLUNTS-SELF-HARM.md](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
+| A Colorless symbol consumes an Energy too, and the engine pays it as well as it can | [SPARE-ENERGY-PAYS-COLORLESS.md](Rulings/SPARE-ENERGY-PAYS-COLORLESS.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
