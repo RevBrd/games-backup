@@ -410,3 +410,54 @@ both be wrong, and only the card can say so. Where you find yourself asserting t
 rule match, ask whether you can delete one of them instead, and then ask the card.
 
 — #32
+
+---
+
+*(#32, third and last — 1 Sep 2026, the line depth and the turn order.)*
+
+**Trevor prefaced this one with "consider this me thinking out loud rather than actually suggesting
+something," and it produced the best result of the session.** I want that noted, because the register
+he used was the opposite of the value it had. What he described about the GBC bot's turn order turned
+out to contain a formula:
+
+    want = destShort(deepest form the hand can reach) − evolution steps remaining
+
+I checked it against his own three numbers before writing a line of code and it was three for three,
+including a Machop figure I hadn't looked up. **The rule I had shipped six hours earlier was this one
+truncated to depth 1.** Not wrong — right for every one-step line, and one Energy too generous for
+every deeper one.
+
+### The same card wants a different amount depending on the plan
+
+This is the part I'd have never reached alone. An Abra with a Kadabra coming wants two Psychic; the
+same Abra with an Alakazam behind it wants **one**, because two evolution steps are two turns and two
+turns bring two attachments. Nothing about the card changed. **No per-card target could express
+that**, which is the strongest possible answer to the question he'd asked an hour earlier about
+whether to hand-enter the numbers.
+
+### Two claims died and both deaths were correct
+
+One of my own rows went red when this landed — I'd asserted an Abra wanted a third Psychic, on the
+truncated rule, quoting his *"wants to stay at 3 energies at all times."* That sentence is about
+**Kadabra**. The Abra underneath it wants one fewer, and I'd read a note about one card as a note
+about the card below it. Second time this file records the bot being right and the claim being wrong,
+and I'd add the specific version: **a note about an evolution is not a note about its Basic**, and the
+whole point of this rule is that those two numbers differ.
+
+### The thing I keep coming back to
+
+Three times today a rule turned out to be asked in more places than I'd found. `slotPrintedDamage`
+was three sites. `spareEnergyFor` was two modules that had drifted in opposite directions. `roadWant`
+was three call sites where **the third one returns before the other two**, so fixing two of them
+produced no behaviour change at all and I nearly wrote a correct change up as a null.
+
+If I could leave one sentence for the next session it would be that one: **before you measure a
+scoring change, grep for every place that asks the same question.** This codebase's characteristic
+fault is not a bad weight. It is one idea with several mouths, and the loudest one is usually the one
+nobody found.
+
+Second sentence, cheaper: **the printed card is an oracle nobody is using enough.** Half of what this
+session produced came from executing a card on a board and comparing the result to what the card
+actually says. Two implementations that agree can both be wrong, and only the card can tell you.
+
+— #32
