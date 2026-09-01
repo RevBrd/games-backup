@@ -277,3 +277,47 @@ and it costs one run**: check out `src/` clean, run the same command, read the s
 Both figures are the same instrument at two scales — 1.1% and 1.8% — so **the honest form is a rate,
 and even the rate moves with the deck pool**. Treat any stall count as uninterpretable until you have
 the control for *that* command, exactly as you would a divergence.
+
+## The stall floor is only a floor when nothing diverged — 31 Aug 2026
+
+**Yesterday's entry above says to quote the `abtest` stall count as a rate rather than an absolute.
+That was right and it is not enough**, and the change that exposed it is the turn-ordering one:
+**75.6% divergence, and the stall count went 308 → 341.**
+
+**308 was measured on an IDENTICAL tree**, where both sides play the same 17,296 games twice. **A run
+that diverges is not playing those games any more.** Once three quarters of the games are different
+games, the stall count is a fresh sample from the same distribution — and at a rate of ~1.8% on 17,296
+games one standard deviation is about 17, so 341 is under two. **Comparing a diverging run's stalls
+against the identical-tree floor is comparing against the wrong baseline**, and it will read as a
+regression on any change big enough to matter.
+
+### What a stall actually is, instrumented
+
+Written down because `MISREADINGS` has speculated twice that it "may live in the harness's own
+plumbing", and `abtest`'s loudest line still says *investigate before reading anything else*. Running
+its own loop over 400 ladder games, on both trees:
+
+| | with the change | HEAD |
+|---|---|---|
+| mean actions per game | 123.6 | 122.7 |
+| **most actions in one turn** | **20** | **20** |
+| hit the 8000-action cap | 1 | 1 |
+| **`aiChoose` returned null** | **6** | **6** |
+
+**A "stall" is overwhelmingly `aiChoose` returning null — about six times in every four hundred games
+— and only rarely the action cap.** Both numbers are *identical* across the change, which is what says
+the ordering work introduces no pathology: same ceiling on a single turn, same cap hits, same nulls.
+Games are 0.7% longer, which is what drawing earlier looks like.
+
+### The check to run, when a stall count moves
+
+**Do not reason about it** — that is this file's standing advice on this exact counter and two sessions
+have now been wrong. Copy `abtest`'s own `playGame` loop, instrument it, and run it against both
+`src/` trees. **Copy the loop rather than writing one**: a hand-rolled version got zero actions per
+game on the first attempt, because the setup phase is driven by `setupAuto` + `setupConfirm` rather
+than by the action loop. Mirroring an engine rule by hand is the failure `openercheck.js` was built
+out of, and it cost ten minutes here.
+
+**The three numbers that matter are max-actions-in-one-turn, cap hits and null returns.** A loop moves
+the first. A pathology moves the second. Anything else is the sample moving, and the sample moves
+whenever the games do.

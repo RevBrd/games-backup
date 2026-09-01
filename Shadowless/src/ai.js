@@ -4058,6 +4058,71 @@ class AI {
   // ------------------------------------------------------------------ choose
   // Sequencing rule that matters more than any weight: attacking ENDS the turn,
   // so every worthwhile non-attack action must happen first.
+  // ORDER OF OPERATIONS, and it is information rather than value — 31 Aug 2026,
+  // from Trevor watching the GBC sequel and Pocket. Both play their hand-growing
+  // cards BEFORE attaching, so the attachment is made knowing what arrived; and
+  // both play a deck-NARROWING card before a random draw, because taking a known
+  // card out of the deck improves the odds of everything drawn after it.
+  //
+  // `choose` picks setup actions purely by score, so an attach scoring 101 has
+  // always gone before a Bill scoring 10 — and then the Bill draws the Charizard
+  // that would have changed where the Energy went. No score can express this,
+  // because the value of the Bill is not higher; it is EARLIER.
+  //
+  // ONLY CARDS THAT COST NOTHING FROM HAND ARE REORDERED, and that carve-out is
+  // the whole care in this. Professor Oak discards your hand, Gambler shuffles it
+  // back, Computer Search pitches two — forcing any of those ahead of an
+  // attachment can eat the very Energy you were about to attach. Trevor's own
+  // Professor Oak note is this rule from the other side: "consumables want to be
+  // used immediately before Professor Oak even if they're not needed, because
+  // they get discarded otherwise." **An action that can consume your hand must
+  // never be promoted ahead of one that uses it.**
+  //
+  // So this is deliberately four verbs rather than a category, and a new card
+  // joins only if it takes nothing from hand.
+  handGrowKind(pi, a) {
+    if (a.t !== 'playTrainer') return null;
+    const inst = this.E.state.players[pi].hand[a.hand];
+    const script = (inst && this.eff[inst.id] && this.eff[inst.id].t) || [];
+    for (const v of script) {
+      if (v.v === 'T_ENERGY_SEARCH' || v.v === 'T_POKE_BALL' || v.v === 'T_SEARCH_TO_HAND') return 'narrow';
+      if (v.v === 'T_DRAW') return 'draw';
+    }
+    return null;
+  }
+
+  // Given the action scoring highest, is there one that should simply happen
+  // first? Returns null when the order is already right, which is most turns.
+  //
+  // It never promotes something the bot did not already want: every candidate
+  // has to clear `threshold` on its own score, exactly as it would have to to be
+  // chosen at all. This reorders; it does not add plays.
+  playFirst(pi, setup, best) {
+    if (!best) return null;
+    const kindOf = a => this.handGrowKind(pi, a);
+    const worth = a => this.scoreAction(pi, a) >= this.W.threshold;
+    const pick = list => (list.length ? this.pickBest(pi, list) : null);
+
+    // An attachment is the last thing you do, because everything else can change
+    // where it should go.
+    if (best.t === 'attachEnergy') {
+      const grow = setup.filter(a => kindOf(a) && worth(a));
+      if (grow.length) {
+        const narrow = grow.filter(a => kindOf(a) === 'narrow');
+        return pick(narrow.length ? narrow : grow);
+      }
+      return null;
+    }
+    // Trevor's Poke Ball point: a search takes a card out of the deck, so every
+    // draw made after it is drawn from a better pool. One card of improvement,
+    // and it is free.
+    if (kindOf(best) === 'draw') {
+      const narrow = setup.filter(a => kindOf(a) === 'narrow' && worth(a));
+      if (narrow.length) return pick(narrow);
+    }
+    return null;
+  }
+
   choose(pi) {
     const E = this.E, s = E.state;
     if (s.phase === 'over') return null;
@@ -4135,7 +4200,20 @@ class AI {
 
     const setup = acts.filter(a => a.t !== 'attack' && a.t !== 'pass');
     const best = setup.length ? this.pickBest(pi, setup) : null;
-    if (best && best.__score >= this.W.threshold) return best;
+    if (best && best.__score >= this.W.threshold) {
+      // Same set of plays, better order. See `playFirst`.
+      const first = this.playFirst(pi, setup, best);
+      // THE PROMOTED ACTION KEEPS ITS OWN SCORE. An earlier version copied the
+      // attachment's score onto it, which would have written a Bill into the match
+      // log at 101.00 — a number that is true of nothing. The log is the one
+      // instrument that shows what the bot weighed, so a promotion has to read as
+      // a promotion; `__why` is what says so.
+      if (first) {
+        first.__why = `played before ${this.actionLabel(best)}, which can only get better for it`;
+        return first;
+      }
+      return best;
+    }
 
     const attacks = acts.filter(a => a.t === 'attack');
     if (attacks.length) {

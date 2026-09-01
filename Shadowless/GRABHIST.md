@@ -461,3 +461,38 @@ card *should* do, the log said what it *did*, and neither on its own would have 
 `attackVariants`.
 
 *[The invariant, and why both Bench orderings have to be asserted →](AI-INVARIANTS.md)*
+
+## The GBC sequel's order of operations — 31 Aug 2026
+
+**Trevor opened a "stolen from GBC 2" section in `GRABBAG.md` while playing the Japan-only sequel for
+the first time, explicitly to watch what its AI does. The second item in it was a structural fault in
+ours and it took one read of `choose()` to confirm.**
+
+> This is something I noticed in Pocket as well, but there's a general order of operations to the AI's
+> turns, where the energy attachment is always last before attacking/ending their turn, that way
+> things are allowed to change if a trainer card alters the scenario mid-turn.
+
+**Ours ordered setup actions purely by score.** An attach worth 101 went before a Bill worth 10, and
+then the Bill drew the card that would have changed where the Energy went. **No score could have
+fixed it** — the Bill is not worth more, it is worth *earlier* — which is why nothing in the project
+had ever flagged it and why no claim row could have caught it.
+
+**He added a second ordering in the same conversation**, from Pocket: a deck-narrowing search goes
+before a random draw, because taking a known card out of the deck improves the odds of everything
+drawn after it by one card, for free. Both are built.
+
+**The carve-out was the actual work.** Professor Oak discards your hand, so promoting it ahead of an
+attachment can destroy the very Energy the turn was about to attach — the play would eat its own
+reason. Only cards costing nothing from hand are promoted, which is four verbs rather than a
+category. *[The invariant, and why the category is wrong →](AI-INVARIANTS.md)*
+
+**Worth noticing as a method rather than a fix.** Two of the strongest AI findings this job came from
+Trevor watching a *different implementation* rather than from watching ours — this one, and the
+pre-planned evolution still open in that section. **A reference implementation is an oracle we do not
+otherwise have**, and it answers a question the claim rows structurally cannot: not *"is this play
+right"* but *"is there a decision here we are not making at all."*
+
+**The item is off `GRABBAG.md` per that file's own rule.** If the GBC 2 section is meant as a
+permanent log of what was taken rather than a work surface, say so and it goes back — the convention
+for a brand-new section is Trevor's to set, and removing it was the existing rule applied rather than
+a judgement about his.

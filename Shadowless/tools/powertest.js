@@ -6303,5 +6303,56 @@ T('Minimize blunts recoil and is not consumed by it', () => {
   return eq(me.active.effects.some(e => e.label === 'Minimize'), true, 'Minimize survives');
 });
 
+// ---------------------------------------------------------------------------
+// ORDER OF OPERATIONS — 31 Aug 2026, from Trevor watching the GBC sequel and
+// Pocket. These are about WHEN a play happens rather than what it is worth, so
+// no score can assert them and they are not claim rows either: they came off the
+// grab bag rather than out of the workbook.
+//
+// They use `lib/board.js` rather than this file's own `board()` because the
+// question is about a whole turn's choice, which is what `setup` was built for.
+const { setup: mkBoard, CARD_DB: ORDER_DB } = require('./lib/board.js');
+
+// The board is deliberately one where the ATTACH is worth a great deal — a
+// Charmeleon on the evolution road with a Charizard in hand scores ~101 — and
+// the Bill is worth about ten. Score alone always picked the attach.
+const orderBoard = hand => mkBoard({
+  me: { card: 'base1:Charmeleon', energy: '2 Fire' },
+  myBench: [{ card: 'base1:Charmander' }],
+  them: { card: 'base2:Snorlax', energy: '4 Fighting' },
+  myHand: hand,
+});
+const firstPlay = b => {
+  const m = b.move();
+  if (!m) return 'nothing';
+  if (m.action.t === 'playTrainer') return ORDER_DB[b.me.hand[m.action.hand].id].name;
+  return m.action.t;
+};
+
+T('the attachment is the last thing in the turn, not the highest-scoring thing', () => {
+  eq(firstPlay(orderBoard(['Fire Energy', 'Charizard'])), 'attachEnergy',
+     'with nothing to draw, the attach happens');
+  return eq(firstPlay(orderBoard(['Fire Energy', 'Charizard', 'Bill'])), 'Bill',
+     'with a Bill in hand it goes first, so the attach is made knowing what arrived');
+});
+
+T('a deck-narrowing search goes before a random draw', () => {
+  // Trevor's example, from Pocket: taking a known card out of the deck improves
+  // the odds of everything drawn after it, by one card, for free.
+  eq(firstPlay(orderBoard(['Fire Energy', 'Charizard', 'Poké Ball'])), 'Poké Ball',
+     'a search goes before the attach like any hand-grower');
+  return eq(firstPlay(orderBoard(['Fire Energy', 'Charizard', 'Bill', 'Poké Ball'])), 'Poké Ball',
+     'and before the Bill, which then draws from a better pool');
+});
+
+T('a card that EATS your hand is never promoted ahead of the attachment', () => {
+  // The carve-out, and the reason the reorder is four verbs rather than a
+  // category. Professor Oak discards your hand — promoting it would throw away
+  // the very Energy the turn was about to attach. Trevor's own Oak note is this
+  // rule from the other side: consumables get used before Oak, not after.
+  return eq(firstPlay(orderBoard(['Fire Energy', 'Charizard', 'Professor Oak'])), 'attachEnergy',
+     'Oak stays behind the attach');
+});
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
