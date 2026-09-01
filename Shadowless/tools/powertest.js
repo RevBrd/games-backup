@@ -6125,6 +6125,44 @@ T('every spare-Energy attack scores exactly what the engine resolves', () => {
 //
 // Both wordings are the same rule — "extra Water Energy after the 2nd doesn't
 // count" caps the COUNT and "you can't add more than 20 damage" caps the BONUS.
+// ---------------------------------------------------------------------------
+// `attackThreatens` DECIDES WHAT A CARD IS EVOLVING TOWARD, and it matches verb
+// NAMES. That is fine and it is exactly the kind of thing that rots quietly, so
+// it is asserted against what the scorer actually produces.
+//
+// ONE DIRECTION MATTERS. Calling a damaging attack harmless is the regression —
+// it is how Stretch Kick, Super Fang and four Bench snipes would drop out of the
+// destination and send a card's readiness one Energy too low. The other
+// direction is safe by construction: a printed damage number or a `DMG_` verb
+// always deals damage.
+T('nothing the destination rule calls harmless actually deals damage', () => {
+  const CHANSEY = 'base1-3';
+  const bad = [];
+  for (const id of Object.keys(CARD_DB)) {
+    const c = CARD_DB[id];
+    if (c.kind !== 'pokemon' || !c.attacks) continue;
+    c.attacks.forEach((a, i) => {
+      // Plenty of Energy of the attack's own typed colour, so the cost is met and
+      // the scorer will actually resolve the script.
+      const t = (a.cost.split('').find(x => x !== 'C')) || 'C';
+      const eId = { G: 'base1-99', R: 'base1-98', W: 'base1-102', L: 'base1-100',
+                    P: 'base1-101', F: 'base1-97', C: 'base1-99' }[t] || 'base1-99';
+      const E = duel2(id, eId, 8, CHANSEY, 0, null, 0);
+      E.state.players[1].bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];
+      const ai = scorer(E);
+      if (ai.attackThreatens(E.state.players[0].active, c, i)) return;
+      let r;
+      try { r = ai.rawOutcomes(E.state.players[0].active, E.state.players[1].active, i); }
+      catch (e) { return; }                      // needs an option it was not given
+      const ev = r.outcomes.reduce((s, o) => s + o.p * o.dmg, 0);
+      const splashes = Object.keys(r.flags).some(k => /^(snipe|splash)/.test(k));
+      if (ev > 0 || splashes) bad.push(`${c.name}'s ${a.name} (${id})`);
+    });
+  }
+  if (bad.length) throw new Error(`called harmless but deals damage: ${bad.join(', ')}`);
+  return true;
+});
+
 T('a printed cap on a spare-Energy attack reaches the effect script', () => {
   const CAP = /after the \d+(st|nd|rd|th) (doesn't|don't) count|can't add more than \d+ damage/i;
   const missing = [];

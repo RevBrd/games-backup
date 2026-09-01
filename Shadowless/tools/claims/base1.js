@@ -1310,6 +1310,69 @@ const CLAIMS = [
   },
 
   // ===========================================================================
+  // THE DESTINATION — 1 Sep 2026, Trevor's general rule for pre-evolution Energy:
+  // price it at what the EVOLVED card needs for its cheapest attack worth
+  // arriving for, minus one, since the last Energy can be attached on the turn it
+  // evolves. `potentialOf().destShort`.
+  //
+  // Kadabra is the cleanest card in the era for it and Trevor's note settles it
+  // in one clause: **"a pokemon that wants to stay at 3 energies at all times."**
+  // Recover costs 2 and does nothing; Super Psy costs 3 and hits for 50.
+  // ===========================================================================
+  {
+    id: 'base1-32', card: 'Kadabra', pattern: 'Evolution timing',
+    note: "Super Psy does high damage for what it is, and even outdoes its own evolution's damage. The evolution is still preferred in most situations though due to its pokemon power and chance to confuse. Recover should never be used. It drains an energy from a pokemon that wants to stay at 3 energies at all times. Getting in a 50 dmg hit and dying is almost always preferable to recovery or retreat",
+    claim: 'an Abra on TWO Psychic is still fed, because Kadabra wants three',
+    // RED ON PURPOSE, and it names a disagreement this session created.
+    //
+    // `evolve` now measures readiness against the DESTINATION (Super Psy, 3), but
+    // `attachBuild`'s evolution road still measures `.short` — the cheapest
+    // attack the evolution owns, which is Recover at 2. So the two halves of one
+    // idea target different attacks: the road calls the Abra finished at two
+    // Psychic and stops feeding it, while `evolve` still wants a third.
+    //
+    // Measured: an Abra on two Psychic scores the next attach at -2.00, the
+    // surplus refusal. Trevor's sentence says three.
+    //
+    // THIS IS THE SHAPE AI.md's OPEN ITEM 4 WARNED ABOUT — "a naive readiness
+    // penalty strands Vileplume at two forever" — arriving from the other side.
+    // It does not strand anything today, because the penalty is a discount rather
+    // than a veto and evolving still outscores attaching. It is a disagreement
+    // waiting to become one, and the fix is to make the road read the same
+    // destination rather than to weaken either half.
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'base1:Abra', energy: '2 Psychic' }],
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['base1:Kadabra', 'Psychic Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 2
+            && b.me.hand.some(h => h.id === 'base1-32'),
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Abra') && e.score > 0),
+  },
+  {
+    id: 'base1-42', card: 'Wartortle', pattern: 'Evolution timing',
+    note: "Only withdraws when it can't use Bite. Doesn't mind fighting while it waits to evolve",
+    claim: 'THE CONTROL - a Squirtle is still fed at Withdraw\'s cost, because Bite is the destination',
+    // The same rule on a card where the road and the evolve half still agree,
+    // because Wartortle's own Basic is cheap enough that neither has run out.
+    // Withdraw costs 2 and does nothing; Bite costs 3. If the destination rule
+    // were reverted, this row would still pass — it is here to say the rule did
+    // not break the ordinary case, not to prove the rule.
+    board: {
+      me:   { card: 'Hitmonchan', energy: '3 Fighting' },
+      myBench: [{ card: 'base1:Squirtle', energy: '1 Water' }],
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['base1:Wartortle', 'Water Energy'],
+    },
+    sane: b => b.me.bench[0].energy.length === 1
+            && b.me.hand.some(h => h.id === 'base1-42'),
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Squirtle') && e.score > 0),
+  },
+
+  // ===========================================================================
   // OVER-ATTACH — 31 Aug 2026, and these two Base Set cards are why the pattern
   // has a printed-text guard as well as an engine-agreement one.
   //

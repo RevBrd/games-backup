@@ -7945,6 +7945,11 @@ class AI {
     // Energy part-way there is a fraction OF, so it has to be the same attack
     // `short` is counting down to and not simply the biggest number on the card.
     let best = -Infinity, bestShort = 99, goal = 0;
+    // `destShort` — the shortfall to the cheapest attack this card is trying to
+    // REACH, which is not always the cheapest attack it owns. See
+    // `attackThreatens`. Computed in this loop rather than in a second one, so
+    // it can never disagree with `short` about what a cost solves to.
+    let destShort = 99;
     (c.attacks || []).forEach((a, i) => {
       const need = a.cost.split('').filter(x => x !== 'C');
       const generic = a.cost.length - need.length;
@@ -7990,8 +7995,59 @@ class AI {
       if (short < bestShort) { bestShort = short; goal = dmg; }
       else if (short === bestShort && dmg > goal) goal = dmg;
       if (val > best) best = val;
+      if (this.attackThreatens(slot, c, i) && short < destShort) destShort = short;
     });
-    return { best: best === -Infinity ? 0 : best, short: bestShort, goal };
+    // NO THREATENING ATTACK AT ALL falls back to the cheapest of any, because
+    // then the utility attack genuinely IS the destination — a card with nothing
+    // but Scrunch is not "never ready", it is ready when Scrunch is affordable.
+    return { best: best === -Infinity ? 0 : best, short: bestShort, goal,
+             destShort: destShort === 99 ? bestShort : destShort };
+  }
+
+  // ==========================================================================
+  // AN ATTACK WORTH ARRIVING FOR — 1 Sep 2026
+  // ==========================================================================
+  //
+  // Trevor's rule, and his own parenthetical is the load-bearing half: *"the AI
+  // prices its pre-evolution energies at what the evolved card needs for its
+  // cheapest offensive (or otherwise specified) attack, minus one."*
+  //
+  // **"Offensive" is nearly right and is wrong on its own**, which is what the
+  // parenthetical was reaching for. Chansey's Scrunch and Ninetales' Lure are
+  // both zero-damage cheapest attacks, and they are opposite cases — standing
+  // there IS Chansey's job, while Ninetales explicitly does not want to be Active
+  // without Fire Blast. What separates them is not the attack; it is that a
+  // **wall is a terminal Basic and is never an evolution target**, so the wall
+  // case cannot reach this predicate at all. See Playbook/WALLS.md.
+  //
+  // MEASURED BEFORE BUILDING: 53 cards in the live pool have a cheapest attack
+  // that deals no damage while a pricier one does, **24 of them Evolutions** —
+  // Kadabra (Recover 2 / Super Psy 3), Wartortle, Graveler, Hypno, Poliwhirl,
+  // Nidorina, Parasect, Victreebel, Dark Arbok, Dark Golduck, Ninetales, Starmie,
+  // Tentacruel, Scizor, Rapidash. On every one the bot was targeting one Energy
+  // lower than it should. Three of Trevor's own notes independently name the
+  // damaging attack as the destination on cards in that list, which is the
+  // corroboration this is derived toward rather than a guess.
+  //
+  // WHY NOT JUST `aiParseDamage(dmg) > 0`. Because that is the exact fault this
+  // job spent two days on — the printed number lying about what the attack does.
+  // Six attacks print NOTHING and deal damage anyway: Stretch Kick, Dig Under,
+  // Stare, Flitter, Coin Hurl and Telekinesis all snipe the Bench, Super Fang
+  // halves the defender, Miraculous Comeback counts heads. Reading the script is
+  // the only honest version, and `powertest.js` asserts this predicate against
+  // what `rawOutcomes` actually produces so the name-matching cannot drift.
+  //
+  // The defensive verbs deliberately do NOT qualify — `DAMAGE_REDUCTION_SELF`
+  // (Minimize), `DAMAGE_HALVE_SELF` (Light Screen), `DAMAGE_REDUCTION_FROM`
+  // (Growl, Snivel) — nor `RECOIL`, which is damage pointed the wrong way.
+  attackThreatens(slot, card, idx) {
+    const c = card || this.top(slot);
+    const atk = (c.attacks || [])[idx];
+    if (!atk) return false;
+    if (aiParseDamage(atk.dmg) > 0) return true;
+    const e = this.eff[c.id];
+    const script = (e && e.a && e.a[idx]) || [];
+    return script.some(v => v.v.indexOf('DMG_') === 0 || v.v === 'BENCH_SNIPE');
   }
 
   // ------------------------------------------------ evolving, as a PLAN -----
@@ -8191,6 +8247,22 @@ class AI {
     const evo = this.evolutionRoadFor(pi, slot);
     const beforeR = evo ? this.potentialAs(pi, slot, evo, null) : before;
     const afterR = evo ? this.potentialAs(pi, slot, evo, energyId) : after;
+
+    // THE ROAD'S LENGTH IS MEASURED TO THE DESTINATION — 1 Sep 2026, and this is
+    // the site Trevor's rule is actually about: *"the AI prices its PRE-EVOLUTION
+    // ENERGIES at what the evolved card needs for its cheapest offensive attack,
+    // minus one."* `evolve` reading `destShort` while the road read `short` made
+    // two halves of one idea target two different attacks — the road called a
+    // Kadabra finished at Recover's two Energy and stopped feeding, while
+    // `evolve` was still waiting for Super Psy's three.
+    //
+    // **Only when there IS an evolution.** A card fighting now is fed toward the
+    // cheapest attack it owns, because a utility attack it can actually use this
+    // turn is a real destination — that is Chansey being fed toward Scrunch, and
+    // it is the case `attackThreatens` deliberately cannot see, since walls are
+    // terminal Basics and never appear on a road.
+    const roadShort = r => (evo ? r.destShort : r.short);
+    const beforeShort = roadShort(beforeR), afterShort = roadShort(afterR);
     let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
     s += this.energyOnAttachValue(pi, slot, energyId);
 
@@ -8215,7 +8287,7 @@ class AI {
     // and this card's otherwise. `before`/`after` stay on the last branch because
     // "did this card get me a bigger attack RIGHT NOW" is a question about what is
     // standing there, not about what it is going to be.
-    if (afterR.short === 0 && beforeR.short > 0 && !evo) {
+    if (afterShort === 0 && beforeShort > 0 && !evo) {
       // Completing. `attachEnable` has already paid the attack's real value, so
       // this stays the flat finishing bonus it has always been.
       //
@@ -8232,11 +8304,11 @@ class AI {
       //
       // An evolution road therefore always takes the amortise branch below, where
       // the step is worth its share of what is waiting at the end.
-      s += W.attachBuild * beforeR.short * 2;
-    } else if (afterR.short < beforeR.short) {
-      const steps = beforeR.short - afterR.short;
-      s += Math.max(10, beforeR.goal) * (steps / beforeR.short)
-         * W.attachAmortise * this.survivesCharge(pi, slot, afterR.short);
+      s += W.attachBuild * beforeShort * 2;
+    } else if (afterShort < beforeShort) {
+      const steps = beforeShort - afterShort;
+      s += Math.max(10, beforeR.goal) * (steps / beforeShort)
+         * W.attachAmortise * this.survivesCharge(pi, slot, afterShort);
     } else if (after.best > before.best) s += W.attachBuild;
     else s += 0.4;
     s += (slot === E.state.players[pi].active) ? 4 : 1;   // the Active uses it soonest
@@ -9124,13 +9196,26 @@ class AI {
         // penalising it without this would strand Vileplume at two Grass forever.
         //
         // BOUNDED BY THE EVOLUTION'S OWN COST, so it is not a licence to hoard: it
-        // stops the moment the evolved form could pay for its cheapest attack.
-        // That is Trevor's "get energies close to that point before actually
-        // evolving", and it composes with the readiness term in `case 'evolve'` —
-        // that one fires at one-short, so the card evolves a turn before this
-        // exception would have closed and attaches onto the evolved form instead.
+        // stops the moment the evolved form could pay for the attack it is
+        // actually trying to reach. That is Trevor's "get energies close to that
+        // point before actually evolving", and it composes with the readiness term
+        // in `case 'evolve'` — that one fires at one-short, so the card evolves a
+        // turn before this exception would have closed and attaches onto the
+        // evolved form instead.
+        //
+        // `destShort`, NOT `short` — 1 Sep 2026, and this is the THIRD of the
+        // three places one idea is asked. `evolve` measures readiness to the
+        // destination and `attachBuild` measures the road to it; if this guard
+        // kept asking about the cheapest attack the evolution merely OWNS, it
+        // returns `attachSurplus` before either of them is ever reached and the
+        // other two changes do nothing at all. Measured exactly that way first:
+        // an Abra on two Psychic with a Kadabra in hand still scored -2.00 after
+        // both other sites were fixed, because Recover costs 2 and Super Psy
+        // costs 3. **When a rule is asked in three places, find all three before
+        // you measure** — this file's own recurring lesson, and it cost a wrong
+        // reading of a claim row here.
         const evoId = this.evolutionRoadFor(pi, slot);
-        const evolving = !!evoId && this.potentialAs(pi, slot, evoId, null).short > 0;
+        const evolving = !!evoId && this.potentialAs(pi, slot, evoId, null).destShort > 0;
 
         if (noProgress && !needsEscape && !stocking && !evolving) return W.attachSurplus;
 
@@ -9157,16 +9242,26 @@ class AI {
         // fourth exception in `case 'attachEnergy'` — because until that landed,
         // evolving was the only thing that unblocked the Energy.
         //
-        // "Cheapest attack of value" is `potentialOf().short`, which already means
-        // exactly that: symbols short of the cheapest attack this card can reach,
-        // ties broken by damage. No new definition, and no threshold anybody had
-        // to invent.
+        // "Cheapest attack of value" is `potentialOf().destShort` — **and it was
+        // `.short` until 1 Sep 2026, which is not the same thing on 24 of the
+        // era's Evolutions.** `short` is the cheapest attack the card OWNS;
+        // `destShort` is the cheapest one it is trying to REACH. A Kadabra
+        // targeting Recover (2) is ready one Energy before a Kadabra targeting
+        // Super Psy (3), and Trevor's rule is the second one.
+        //
+        // Trevor, 1 Sep 2026, proposing the general rule rather than a per-card
+        // number: *"the AI prices its pre-evolution energies at what the evolved
+        // card needs for its cheapest offensive (or otherwise specified) attack,
+        // minus one (because that last energy can be attached on the turn it
+        // evolves)."* The minus-one half is the `> 1` below and shipped 28 Aug;
+        // this is the other half. *[Why "offensive" alone is wrong, and the
+        // fallback when nothing threatens →](`attackThreatens`)*
         //
         // A PENALTY AND NOT A VETO, which is Trevor's "usually". Everything above
         // can outvote it — a status wipe is 14, a big HP jump is real, and an ON_PLAY
         // Power is priced on its own. Evolving early to survive is still allowed;
         // it just stops being free.
-        const readiness = this.potentialOf(pi, slot, newC).short;
+        const readiness = this.potentialOf(pi, slot, newC).destShort;
         if (readiness > 1) s -= (readiness - 1) * W.evolveEarly;
         // evolving also wipes Special Conditions
         const st = slot.status;
@@ -10678,7 +10773,8 @@ class AI {
       default: return a.t;
     }
   }
-}
+}
+
 
 // ============================================================================
 // RULES ENGINE  —  WOTC-era (Base Set) Pokemon TCG

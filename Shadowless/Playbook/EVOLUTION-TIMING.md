@@ -284,3 +284,116 @@ Fire; on a Pokemon that has just been written off, the Energy is lost either way
 Out, so the usual discard argument does not reach. **Ask what the Slash preference is protecting**
 before building it — the last sentence of his note reads as a caution about the whole line rather than
 the reason for the choice.
+
+## The destination is not always the cheapest attack — 1 Sep 2026
+
+**Trevor proposed this as a general rule rather than as data, and it is worth quoting because the
+question he asked is the more interesting half:**
+
+> Would it benefit us if I went back through the list and added target energy numbers for any where
+> it wouldn't automatically be their most expensive move? Or is it better to generalize a rule where
+> the AI prices its pre-evolution energies at what the evolved card needs for its cheapest
+> *offensive* (or otherwise specified) attack, minus one (because that last energy can be attached on
+> the turn it evolves)?
+
+**Generalise, and the deciding argument was not the usual one.** "A tag is a fact we would be
+re-typing" is true and had already turned this down three times. The stronger reason is that
+**his own notes then become the oracle rather than the input** — a handful of cards where the derived
+rule gets it wrong is worth more than 219 hand-entered targets, and it is a much smaller ask.
+
+**The minus-one half already existed**, shipped 28 Aug as `readiness > 1` in the `evolve` case, off
+his GBC account. He re-derived it independently, which is a decent sign it is right.
+
+### "Offensive" is nearly right, and the parenthetical is where the real rule was
+
+**Chansey's Scrunch and Ninetales' Lure are both zero-damage cheapest attacks and they are opposite
+cases.** Standing there *is* Chansey's job; Ninetales explicitly *"never wants to be required to
+choose between Lure and nothing."* What separates them is not the attack — it is that **a wall is a
+terminal Basic and is never an evolution target**, so the wall case cannot reach this rule at all.
+That is [WALLS.md](WALLS.md)'s own derivation doing the work from one file away, and it is why the
+predicate can be as blunt as *"does this attack put damage on them"* without eating the walls.
+
+`attackThreatens` reads the effect script rather than the printed number, because **six attacks print
+nothing and deal damage anyway** — Stretch Kick, Dig Under, Stare, Flitter, Coin Hurl and Telekinesis
+snipe the Bench, Super Fang halves the defender, Miraculous Comeback counts heads. Trusting the
+printed number here would have been the exact fault the Over-Attach work had just finished fixing.
+**Fallback**: a card with no threatening attack at all falls back to the cheapest of any, because then
+the utility attack genuinely is the destination.
+
+### It is asked in THREE places, and fixing two of them does nothing
+
+**This is the part to carry forward.** One idea — *how far is this card from being worth having* —
+turned out to have three call sites, and the third one returns before the other two are reached:
+
+| Site | What it decides |
+|---|---|
+| `evolve`'s `readiness` | when to pull the trigger |
+| `attachBuild`'s road | how long the road is, and what is at the end |
+| **the surplus rule's `evolving` exception** | **whether an attachment is even considered** |
+
+The first two were changed, measured, and produced **no behaviour change at all** — an Abra on two
+Psychic with a Kadabra in hand still scored the next attachment at −2.00, because the surplus rule
+returns `attachSurplus` before either. **Find all the call sites before you measure**, or a correct
+change reads as a null.
+
+**Only the evolution road switches.** A card fighting now is still fed toward the cheapest attack it
+owns, because a utility attack it can use *this turn* is a real destination. Verified as a control: an
+Abra with no Kadabra in hand takes one Psychic and refuses the second, unchanged.
+
+### The curve, and what the rule is worth
+
+Abra on the Bench, Kadabra in hand. Recover costs 2 and does nothing; Super Psy costs 3 and hits 50.
+
+| Abra holds | attach | evolve | |
+|---|---|---|---|
+| 0 Psychic | 18.33 | 13.50 | |
+| 1 | 10.00 | 21.50 | |
+| 2 | **15.00** | **29.50** | full marks — one short of Super Psy |
+| 3 | **−2.00** | 29.50 | the road is finished |
+
+**Before**, the road called the Abra finished at *one* Psychic and the evolve reached full marks
+there too — one short of *Recover*.
+
+### Eight of his own notes confirm it, and none contradicts it
+
+**22 evolution printings of 151 change target**, and the confirmation is the thing worth recording:
+these notes were written before the rule existed, name no code, and every one of them names the
+damaging attack as the destination the derivation independently picked.
+
+| Card | moves | Trevor's note |
+|---|---|---|
+| Ninetales | 2 → 4 | *"to come in after it's ready to use Fire Blast, and to never be required to choose between Lure and nothing"* |
+| Wigglytuff | 1 → 3 | *"Lullaby should only be used when Do The Wave can't be, and this card doesn't like being put in a position where it has to use it"* |
+| Nidorina | 1 → 3 | *"Double Kick is primary. It doesn't want to be in a situation where it has to use Supersonic"* |
+| Hypno | 1 → 3 | *"doesn't want to enter a match when Dark Mind isn't available"* |
+| Kadabra | 2 → 3 | *"a pokemon that wants to stay at 3 energies at all times"* |
+| Wartortle | 2 → 3 | *"only withdraws when it can't use Bite"* |
+| Parasect | 2 → 3 | *"Slash is usually preferable"* |
+| Victreebel | 1 → 2 | *"Acid is the primary attack… Lure follows the same logic as it does with Ninetales"* |
+
+**Three of them use nearly the same sentence** — *"doesn't want to be in a situation where it has to
+use it"* — which is the readiness discount stated in English before anybody wrote it in code.
+
+The other fourteen movers are Dark Golduck, Dark Persian ×2, Gloom, Graveler, Haunter, Hypno's
+second printing, Poliwhirl, Rapidash, Scizor, Starmie, Tentacruel, Victreebel's second printing and
+Wigglytuff's second printing. **None has a note that disagrees**; most have no note at all, which is
+the whole point of deriving it.
+
+### It is a discount, not a veto
+
+Unchanged from 28 Aug and worth restating because the targets got further away: everything else can
+outvote it. A status wipe is 14, a big HP jump is real, an ON_PLAY Power is priced on its own.
+Evolving early to survive is still allowed; it just stops being free.
+
+### And it reads null on a duel, like every other change in this file
+
+`aiduel 8 HEAD --gbc`: **49.9% ±0.5 over 34,564 ladder games, no significant difference.** The 28 Aug
+readiness work shipped on a null too and its section above says the same thing, so this is the
+pattern's normal result rather than a disappointment — **do not inherit "this helped" from the fact
+that it shipped, and do not inherit "this failed" from the null.**
+
+**Why a null is the expected shape here rather than a worrying one.** The rule moves 22 printings of
+151, most of them by one Energy, and only on turns where an evolution is already in hand and already
+being fed. Both seats play under it. A win rate is close to the least sensitive instrument available
+for that, which is the same argument `abtest` exists for one file over.
+*[What the grounds actually were, and the control that was deliberately not run →](../AI-INVARIANTS.md)*

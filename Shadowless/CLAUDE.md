@@ -348,6 +348,11 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   the engine and not the scorer since Job 6, and three Base Set cards printing a cap **neither** half
   had. *[The pattern →](Playbook/OVER-ATTACH.md)* · *[the two guards, and the three green tests that
   were measuring an impossible threat →](AI-INVARIANTS.md)*
+  Then, off Trevor's question about whether to hand-enter per-card Energy targets: **an evolution
+  road is measured to the attack the evolution is trying to REACH, not the cheapest one it owns.**
+  Derived rather than tagged, 22 printings move, and **eight of his own notes confirm it without any
+  of those cards being named in the code** — the strongest argument in this tree for deriving over
+  tagging. *[The rule, the curve and the eight →](Playbook/EVOLUTION-TIMING.md)*
   **Two things this job owes on the way out**: `AI-INVARIANTS.md` is past its own archive threshold
   and its header names *whoever closes Job 14b* as the owner; and `node tools/wants.js --coverage` is
   the live backlog rather than a number here.

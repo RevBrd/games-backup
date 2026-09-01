@@ -239,6 +239,7 @@ which is what keeps a split from costing anybody a search.
 | 31 Aug | **Printed damage is a currency, not a constant.** For sixteen printings it is a function of the Energy on the slot, and all three places that asked in printed units read it wrong — the Bench refused an attachment that grew Water Gun by 10. `aiParseDamage` survives only for a card **in the deck**, which has no slot to read | `slotPrintedDamage` |
 | 31 Aug | **One verb, ONE implementation.** `maxSpare` sat in the engine and not in the scorer for eleven weeks; the arithmetic is shared now. **Two guards, because agreement is not correctness** — one runs the engine, one reads the printed card, and three Base Set cards needed the second | `spareEnergyDamage` |
 | 1 Sep | **A Water that pays a Colorless is still a Water that was used.** The clause lives in `engine.js` and `ai.js` calls it — **prefer deleting one of two copies to asserting they match**, because this one drifted twice and only one drift was catchable by agreement | `spareEnergyFor` |
+| 1 Sep | **An evolution road is measured to the attack the evolution is trying to REACH**, not the cheapest one it owns — 22 printings move, eight of Trevor's own notes confirm it. **Asked in THREE places, and the third returns before the other two**: fixing two of them changed nothing at all | `attackThreatens`, `destShort` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
