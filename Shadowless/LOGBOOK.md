@@ -360,3 +360,53 @@ the move, and a free-retreat Active makes the card worth nothing"), and I did no
 better-specified `open:` row than it was; whoever takes it has his sentence rather than the hedge.
 
 — #32
+
+---
+
+*(#32, continued — 1 Sep 2026, the destination rule. Appended rather than edited into the entry
+above, per this file's own never-revise rule.)*
+
+**Trevor asked a design question that was better than either answer he offered**: hand-enter target
+Energy numbers per card, or generalise a rule about the evolution's cheapest *offensive* attack minus
+one. I said generalise, and the argument I'd repeat is not the usual "a tag is a fact you'd be
+re-typing." It's that **his notes become the oracle rather than the input.** A handful of cards where
+a derived rule gets it wrong is worth more than 219 hand-entered targets, and it's a far smaller ask
+of him.
+
+Then the derivation reproduced eight of his notes without any of those cards being named in the code.
+Ninetales, Wigglytuff, Nidorina, Hypno, Kadabra, Wartortle, Parasect, Victreebel — all written before
+the rule existed, all naming the attack the rule independently picked, and three of them phrased
+almost identically: *"doesn't want to be in a situation where it has to use it."* That sentence is the
+readiness discount in English. I don't think I'll get a cleaner validation of this project's
+derive-don't-tag doctrine than that, and it's worth more than the feature.
+
+### Two things I got wrong on the way, both instructive
+
+**I built the rule at one site, measured, got nothing, and nearly wrote it up as a null.** It's asked
+in three places — `evolve`'s readiness, `attachBuild`'s road, and the surplus rule's `evolving`
+exception — and the third returns `attachSurplus` before either of the others is reached. Two correct
+changes, zero behaviour change. If I'd trusted the measurement over the diagnosis I'd have reverted a
+right answer. **Find every call site before you measure.**
+
+**And I nearly lost the session's work to a `git checkout --`.** I was setting up a control by
+neutering a function, my `sed` hit the wrong one of two identical lines, and my reflex to clean up was
+`git checkout -- src/ai.js` — which reverted every change I'd made that afternoon. It survived only
+because a `cp` to a scratch file happened to have run first. **Use a targeted edit-and-revert for a
+control, never a checkout**, and run the `abtest` control *after* committing, when the working tree is
+the baseline and no stash is needed.
+
+### On being asked to build something and finding a rules bug instead
+
+Half of what this session actually produced wasn't AI work. The Over-Attach pattern led to `maxSpare`
+missing from the scorer, which led to three Base Set cards missing a printed cap, which led to three
+green tests measuring a threat the engine cannot produce, which led to a Water paying a Colorless
+never being counted as used. None of those were the job. All of them were found by executing a card on
+a board and comparing what happened to what the card says.
+
+I'd tell the next session the thing this project already half-knows and could state harder: **the
+printed card is an oracle you are not using enough.** Two of the guards I added read it directly, and
+the second one exists because the first is structurally blind — two implementations that agree can
+both be wrong, and only the card can say so. Where you find yourself asserting that two copies of a
+rule match, ask whether you can delete one of them instead, and then ask the card.
+
+— #32
