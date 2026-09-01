@@ -236,6 +236,8 @@ which is what keeps a split from costing anybody a search.
 | 30 Aug | **PlusPower is worth the turn it takes off the kill**, discounted by how far off that turn is — the lethal case is the top rung of the staircase, not the whole of it, and it lands on its old value by arithmetic | `turnsWith`, `T_PLUSPOWER` |
 | 30 Aug | **A strip is not a payment.** Which Energy a hostile effect takes is the inverse of the order a Pokemon pays its own costs in — and the AI was not choosing badly, it was not choosing: `energyIdx` is a key nothing has read since the human got a picker | `energyStripOrder`, `energyUids` |
 | 29 Aug | **A shield is a shield whichever direction the damage comes from.** Defender now blunts your own recoil, priced through `shieldSelf`'s curve rather than a second one — and it reads the attack the bot would pick anyway, which is the opposite choice from `pLethalThisTurn` for the same reason | `T_DEFENDER` |
+| 31 Aug | **Printed damage is a currency, not a constant.** For sixteen printings it is a function of the Energy on the slot, and all three places that asked in printed units read it wrong — the Bench refused an attachment that grew Water Gun by 10. `aiParseDamage` survives only for a card **in the deck**, which has no slot to read | `slotPrintedDamage` |
+| 31 Aug | **One verb, ONE implementation.** `maxSpare` sat in the engine and not in the scorer for eleven weeks; the arithmetic is shared now. **Two guards, because agreement is not correctness** — one runs the engine, one reads the printed card, and three Base Set cards needed the second | `spareEnergyDamage` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -260,10 +262,21 @@ on it.**
    are scored in different units* above. Closing it means making expected value computable for a slot
    that is not Active, which is a real refactor of `scoreAttack`'s relationship with engine state,
    against a measured prize of one in six comparisons in a direction that is partly correct already.
-   **If you take it on, duel it, and read the tail rather than the mean** — and there is a named case
-   waiting: `powertest.js` asserts that a benched Poliwag is refused a second Water because
-   `aiParseDamage` reads Water Gun's "10+" as 10. **That test is written to fail when you fix this**,
-   and its comment says to delete it.
+   **If you take it on, duel it, and read the tail rather than the mean.**
+
+   **The named case that used to be attached to this item was NOT this item, and separating them is
+   worth thirty seconds — 31 Aug 2026.** `powertest.js` asserted that a benched Poliwag was refused a
+   second Water because `aiParseDamage` reads "10+" as 10, and this entry claimed it as its own
+   waiting test case. It was a different fault sharing a symptom: **printed damage being wrong about
+   itself**, which is a *fact* and needed no unit change, against **printed damage and expected value
+   being different scales**, which is this item and is a refactor. The first shipped in an afternoon;
+   the second is exactly as open as it was. The test now asserts the Bench *can* see spare-Energy
+   scaling. *[The distinction, and what it cost →](Playbook/OVER-ATTACH.md)*
+
+   **The lesson generalises past this pair.** Two faults that produce the same wrong number on the
+   same board are not one fault, and filing the cheap one under the expensive one is how it stays
+   unfixed — this one sat behind a "real refactor of `scoreAttack`'s relationship with engine state"
+   for a fortnight.
    *(The promotion half of this entry is closed — a wall is preferred when promoting now, on survival
    rather than on stickiness.)*
 2. **Nothing has re-tuned the weights as a set.** Every AI change since 13 Aug has been one term at a

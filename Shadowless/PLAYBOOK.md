@@ -81,6 +81,7 @@ and it changed every retreat in the game. It goes here, loose, and gets filed li
 |---|---|---|
 | [Walls](Playbook/WALLS.md) | Some cards go in to be spent. Standing there *is* the job, and low damage is not a deficiency | **Built** |
 | [Ammo](Playbook/AMMO.md) | An attack that discards its own Energy turns spare Energy into rounds, so surplus is not surplus | **Built**, one half open |
+| [Over-Attach](Playbook/OVER-ATTACH.md) | An attack that *reads* its Energy rather than spending it. The printed number is not what the card does, and the Bench could not see that | **Built** 31 Aug 2026; two clauses open |
 | [Attack choice](Playbook/ATTACK-CHOICE.md) | The small utility attack is usually right; the big one is conditional on lethal — and on there being something to fear | **Built.** 11 of 11 cards measured; 2 questions open |
 | [Setup turn](Playbook/SETUP-TURN.md) | One attack sets up the next. A rider is worth nothing on a target that already has it | **Half built.** Cashing-in is general; setting-up needs lookahead |
 | [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Built** 28 Aug 2026; two clauses of the note open |
@@ -261,7 +262,8 @@ you are about to touch:**
 | the retreat / switch case in `scoreAction` | [Walls](Playbook/WALLS.md) |
 | `scoreAttack` choosing between two legal attacks | [Attack choice](Playbook/ATTACK-CHOICE.md) |
 | the `evolve` case, or `scoreOnPlay` | [Evolution timing](Playbook/EVOLUTION-TIMING.md) |
-| `attachBuild`, `potential`, the surplus rule | [Ammo](Playbook/AMMO.md), [Evolution timing](Playbook/EVOLUTION-TIMING.md) |
+| `attachBuild`, `potential`, the surplus rule | [Ammo](Playbook/AMMO.md), [Over-Attach](Playbook/OVER-ATTACH.md), [Evolution timing](Playbook/EVOLUTION-TIMING.md) |
+| `slotPrintedDamage`, or any printed-damage fallback | [Over-Attach](Playbook/OVER-ATTACH.md) |
 | `promoteValue` / `bestSelfSwitch` | [Walls](Playbook/WALLS.md) |
 
 **What the scorer already does about each of these is in [AI.md](AI.md), and it is not repeated here.**

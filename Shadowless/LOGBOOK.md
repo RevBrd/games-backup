@@ -41,7 +41,7 @@ of these files.
 | [LOGBOOK-ARCHIVE-3.md](LOGBOOK-ARCHIVE-3.md) | #16–#17 | 16 Aug 2026 | Job 9's first AI batch and the sixth documentation pass |
 | [LOGBOOK-ARCHIVE-4.md](LOGBOOK-ARCHIVE-4.md) | #19 | 18–19 Aug 2026 | Job 10 — the trigger points, `enterPlay`, and Team Rocket going live |
 | [LOGBOOK-ARCHIVE-5.md](LOGBOOK-ARCHIVE-5.md) | #20–#26 | 19–25 Aug 2026 | Jobs 10.5 to 12c — two documentation passes, the Jungle and Fossil brackets, the claims harness, the 8-card pack |
-| **this file** | #28–#30 | 26–29 Aug 2026 | Job 13 and Job 14a — the promos, and the tenth documentation pass |
+| **this file** | #28–#30, #32 | 26 Aug – 1 Sep 2026 | Job 13 and Job 14a — the promos, and the tenth documentation pass. Then Job 14b's Over-Attach pattern |
 
 **#15, #18 and #27 wrote no logbook entry and are not missing** — writing here is optional and a
 `CREDITS.md` row alone is a complete record. Said explicitly because the Instances column above skips
@@ -277,3 +277,86 @@ would make it again. Nobody has ever lost a morning to a file being 380 lines. T
 this month to files being *confidently wrong*.
 
 *— #30, who came to count lines and stayed to check quantifiers.*
+
+## Opus 5 #32 — Lapras, 31 Aug – 1 Sep 2026 (Job 14b, the Over-Attach pattern)
+
+I picked this off a grep rather than a hunch, and I want to write down the grep because it was the
+best decision I made all session. Jungle and Fossil had 91 notes and zero claims; I counted which
+pattern names Trevor had written into them, and **Over-Attach was the largest by a distance** — nine
+mentions against Attack Choice's six. Then one more question: *what does that pattern have in common
+mechanically?* Answer: the damage number is a function of the Energy. And then the tell, which is
+that `aiParseDamage` reads a leading integer off a string.
+
+Two probes and the fault was on the screen. **Active Lapras +23.04, benched Lapras −2.00**, same
+board, same card, same Energy. I had a measured fault fifteen minutes after opening the file, and
+none of it was cleverness — it was picking the family whose members share a mechanism and then asking
+what the code does with that mechanism.
+
+### The thing I'd tell the next session
+
+**Two faults that produce the same wrong number on the same board are not one fault.**
+
+`AI.md`'s open item 1 has said for a fortnight that the Bench is priced in printed damage while the
+Active gets expected value, that closing it is "a real refactor of `scoreAttack`'s relationship with
+engine state", and that there is a named test case waiting — the benched Poliwag refused a second
+Water. That test case was **not** that item. Two different things were producing an identical symptom:
+
+- *printed damage and expected value are different scales* — a **unit** problem, genuinely a refactor,
+  still completely open
+- *printed damage is wrong about itself* — a **fact** problem, because a Lapras on three Water really
+  does print 30, and no unit change is required to say so
+
+The cheap one had been filed under the expensive one and inherited its cost estimate. It took an
+afternoon. I've split them in `AI.md` and left item 1 exactly as open as it was, because I did not
+touch it and I don't want anyone inheriting "that's done" from this.
+
+### Three green tests were measuring a threat the engine cannot produce
+
+This is the one I'd put on the wall. Underneath the Bench fault was a smaller one: `maxSpare` went
+into `engine.js` in Job 6 and never into `ai.js`, so the scorer thought a Lapras on five Water dealt
+50. When I fixed that, three `powertest.js` assertions went red — and they were **correct assertions**
+about the barrier curve. Their fixture swept the incoming threat by piling Water onto a Lapras, on the
+stated reasoning that its Water Gun "grows with its Energy". It caps at 30. Their rungs of 50, 60 and
+70 were all really 30, and one of them carried its own guard reading *"board is not lethal; the test
+proves nothing"* — a guard that had never once been true.
+
+They passed because the AI agreed with them. Both halves were wrong the same way, so the fixture and
+the thing it measured were in perfect agreement about a number no attack in this game can land.
+
+**A test fixture is AI output too**, and this project already holds the invariant it violated — *the
+AI can never predict a number the engine would not produce*, 13 Aug — asserted about a function in the
+same file. The violation was sitting inside the suite that asserts it.
+
+I fixed the fixture rather than the assertions, and added a fourth test to license the repair, because
+no single live card sweeps a threat from 10 to 80 and I had to use two. The new one says the barrier
+must be a function of the *threat* and not of the card making it — checked where a Poliwag on two
+Water and an Exeggutor on one both threaten exactly 20. It costs nothing and it is the only thing that
+makes a two-card ladder honest.
+
+### On #28's "I don't have a guard for it"
+
+#28's entry above says, of one verb implemented twice in two modules with nothing asserting they
+agree: *"I don't have a guard for it and I'm not sure a cheap one exists."* I think for a subclass
+there is one, and I built it: **where the damage is a pure function of the attacker's own board, make
+the engine resolve the attack and compare the numbers.** No fixture, no expected value, a sweep over
+the live pool so a new set is covered for free. It found Poliwrath when I broke the clamp on purpose.
+
+**But it is only half a guard and I want the limit recorded next to the tool.** Agreement is not
+correctness. Blastoise, Poliwrath and Poliwag print *"extra Water Energy after the 2nd doesn't
+count"* and **neither half had the cap** — written in Job 4b, before the parameter existed, and never
+revisited. Both halves agreed, perfectly, on a number the card forbids. The second guard reads the
+printed text and is the only thing that could ever have seen it.
+
+So: two guards, and if you build one of these for another verb, know which one you are skipping.
+
+### Small, and it kept being true
+
+Every one of these was found by executing the card on a board and looking, and not one by reading the
+scorer. That is now the entry above mine, and the one above that, and I think it is the actual method
+of this project rather than a habit three sessions happen to share.
+
+Also — Trevor answered a question about Switch mid-session that generalised past the card ("it prices
+the move, and a free-retreat Active makes the card worth nothing"), and I did not get to it. It is a
+better-specified `open:` row than it was; whoever takes it has his sentence rather than the hedge.
+
+— #32

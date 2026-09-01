@@ -236,6 +236,62 @@ class AI {
   }
   remainingHP(slot) { return this.top(slot).hp - slot.dmg; }
 
+  // ==========================================================================
+  // OVER-ATTACH: printed damage is a FUNCTION of the Energy on the slot
+  // ==========================================================================
+  //
+  // `aiParseDamage` reads the leading number off a printed damage string, and for
+  // eleven cards in the live pool that number is not what the attack does. Water
+  // Gun prints "10+" and a Lapras on three Water deals 30; Big Eggsplosion prints
+  // "20x" and an Exeggutor on four Energy averages 40. **The bot read 10 and 20.**
+  //
+  // That is not the Active/Bench currency problem in AI.md's open item 1 — this
+  // is the RAW DAMAGE currency being wrong about itself, and it is fixable
+  // without making expected value computable off the Active slot. The two are
+  // deliberately separate; closing this one leaves that one exactly where it was.
+  //
+  // WHAT IT COST. `potentialOf` prices a benched slot in printed damage, so an
+  // attachment that grows one of these attacks moved `best` from 10 to 10 and the
+  // surplus rule in `attachBuild` refused it at `attachSurplus`. Measured on a
+  // Lapras holding one Water with a Water Energy in hand: **Active +23.04,
+  // benched -2.00.** The Over-Attach notes are mostly about the BENCH — Omanyte
+  // "prefers to stay on the bench", Mysterious Fossil's "preferred spot is the
+  // bench, where it's Over-Attached", Charmeleon "prefers to sit on the bench and
+  // pre-Over-Attach" — so the family was refused exactly where it lives.
+  //
+  // DERIVED FROM THE VERB, not from a list of cards, and only the two verbs whose
+  // damage moves when you attach: the other scaling verbs read the bench count,
+  // the damage counters or a coin, and no attachment changes any of them.
+  slotPrintedDamage(slot, card, idx) {
+    const atk = ((card || this.top(slot)).attacks || [])[idx];
+    if (!atk) return 0;
+    const e = this.eff[(card || this.top(slot)).id];
+    const script = (e && e.a && e.a[idx]) || [];
+    let base = aiParseDamage(atk.dmg);
+    for (const v of script) {
+      if (v.v === 'DMG_PER_SPARE_ENERGY') base = this.spareEnergyDamage(slot, atk, v);
+      // Big Eggsplosion and Continuous Fireball: a coin per Energy attached, so
+      // the honest printed-currency number is the mean rather than the print.
+      else if (v.v === 'DMG_PER_ENERGY_HEADS') base = v.per * slot.energy.length / 2;
+    }
+    return base;
+  }
+
+  // THE ENGINE'S ARITHMETIC, IN ONE PLACE, because it has already drifted once.
+  // `maxSpare` was added to the engine in Job 6 for the Jungle and Fossil Water
+  // Guns and `rawOutcomes` never learned it — so the scorer valued a Lapras on
+  // five Water at 50 where the card and the engine both say 30. That is the same
+  // shape #28 found four times in one session (one verb, two implementations, in
+  // two modules, with nothing asserting they agree), and the fix here is to have
+  // one implementation rather than a fifth assertion.
+  spareEnergyDamage(slot, atk, v) {
+    const need = (atk.cost || '').split('').filter(x => x === v.t).length;
+    const have = slot.energy.filter(e => aiEnergyIsType(this.db, e, v.t)).length;
+    let spare = Math.max(0, have - need);
+    if (v.maxSpare !== undefined) spare = Math.min(spare, v.maxSpare);
+    return (v.base || 0) + v.per * spare;
+  }
+
   // ============================================================================
   // YOUR DECK IS A RESOURCE AND RUNNING OUT OF IT LOSES — 16 Aug 2026
   // ============================================================================
@@ -460,15 +516,12 @@ class AI {
           // different event from spending two of six, and `discardSilence` reads
           // it rather than re-deriving which cards would have gone.
           energyCost += atkSlot.energy.length; flags.discardAll = true; break;
-        case 'DMG_PER_SPARE_ENERGY': {
-          // The Water Gun / Hydro Pump family. Mirrors the engine's arithmetic:
-          // Energy of type t attached, minus what this attack's own cost eats.
-          const need = (atk.cost || '').split('').filter(x => x === v.t).length;
-          const have = atkSlot.energy.filter(e =>
-            aiEnergyIsType(this.db, e, v.t)).length;
-          split(() => [[1, v.base + v.per * Math.max(0, have - need)]]);
+        case 'DMG_PER_SPARE_ENERGY':
+          // The Water Gun / Hydro Pump family. `spareEnergyDamage` IS the
+          // engine's arithmetic and is shared with `slotPrintedDamage` — this
+          // case used to re-implement it and had missed `maxSpare` since Job 6.
+          split(() => [[1, this.spareEnergyDamage(atkSlot, atk, v)]]);
           break;
-        }
         case 'DMG_HALF_REMAINING':
           // Super Fang prints no damage number, so the bot valued it at zero.
           split(() => [[1, defSlot ? Math.ceil(this.remainingHP(defSlot) / 2 / 10) * 10 : 0]]);
@@ -1646,11 +1699,20 @@ class AI {
       const isReal = c === this.top(slot);
       let val;
       if (short === 0) {
-        val = (isActive && isReal) ? this.scoreAttackHypothetical(pi, slot, i) : aiParseDamage(a.dmg);
+        // `slotPrintedDamage` rather than `aiParseDamage` — the printed number is
+        // wrong about itself for the Over-Attach family, and this is the branch
+        // that made the whole family invisible on the Bench. `c` is passed
+        // explicitly because `potentialAs` asks this about an evolution that is
+        // not on the slot yet, where `this.top(slot)` is the Basic underneath.
+        val = (isActive && isReal) ? this.scoreAttackHypothetical(pi, slot, i)
+                                   : this.slotPrintedDamage(slot, c, i);
       } else {
         val = -1;
       }
-      const dmg = aiParseDamage(a.dmg);
+      // `goal` is what an Energy part-way there is a fraction OF, so it has to
+      // grow with the Over-Attach too — otherwise `attachBuild` amortises against
+      // a number the attack stopped being worth two Energy ago.
+      const dmg = this.slotPrintedDamage(slot, c, i);
       if (short < bestShort) { bestShort = short; goal = dmg; }
       else if (short === bestShort && dmg > goal) goal = dmg;
       if (val > best) best = val;
@@ -2174,14 +2236,20 @@ class AI {
     const E = this.E;
     const def = E.state.players[1 - pi].active;
     let best = 0;
-    for (const a of (this.top(slot).attacks || [])) {
-      if (!E.costSatisfied(slot, a.cost)) continue;
-      const base = aiParseDamage(a.dmg);
+    (this.top(slot).attacks || []).forEach((a, i) => {
+      if (!E.costSatisfied(slot, a.cost)) return;
+      // `slotPrintedDamage`, not `aiParseDamage` — 31 Aug 2026. The unit here is
+      // deliberately printed damage rather than expected value (see the comment
+      // above), but a Lapras on three Water PRINTS 30 and this read 10. That is
+      // not coarseness, it is the same wrong fact `potentialOf` was holding, and
+      // leaving it here would mean the game answers "how hard does this hit"
+      // two different ways depending on which decision is asking.
+      const base = this.slotPrintedDamage(slot, null, i);
       // No defender is the setup/knockout gap, not a matchup — fall back to the
       // printed number rather than scoring every attack at zero.
       const d = def ? E.computeDamage(slot, def, base).dmg : base;
       if (d > best) best = d;
-    }
+    });
     return best;
   }
 
@@ -2527,11 +2595,13 @@ class AI {
   // Score an attack as if `slot` were Active (used for bench planning).
   scoreAttackHypothetical(pi, slot, idx) {
     const E = this.E, p = E.state.players[pi];
+    // Both fallbacks are the printed-damage currency, so both read the Energy
+    // actually on the slot. See `slotPrintedDamage`.
     if (p.active === slot) {
       const chk = E.canUseAttack(pi, idx);
-      return chk.ok ? this.scoreAttack(pi, idx) : aiParseDamage(this.top(slot).attacks[idx].dmg);
+      return chk.ok ? this.scoreAttack(pi, idx) : this.slotPrintedDamage(slot, null, idx);
     }
-    return aiParseDamage(this.top(slot).attacks[idx].dmg);
+    return this.slotPrintedDamage(slot, null, idx);
   }
 
   // ------------------------------------------------------------ action score

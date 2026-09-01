@@ -321,3 +321,42 @@ out of, and it cost ten minutes here.
 **The three numbers that matter are max-actions-in-one-turn, cap hits and null returns.** A loop moves
 the first. A pathology moves the second. Anything else is the sample moving, and the sample moves
 whenever the games do.
+
+## A fixture can measure a number the engine cannot produce — 31 Aug 2026
+
+**Three green `powertest.js` assertions had been sweeping the barrier curve against damage no attack
+in this game can land, and they were green because the AI agreed with them.**
+
+The fixture piled Water onto a Lapras and read `incomingThreat`, on the stated reasoning that its
+"Water Gun grows with its Energy". It does not grow past 30 — the card prints *"you can't add more
+than 20 damage in this way"* and the engine has capped it since Job 6. The **scorer** never learned
+the cap, so `incomingThreat` cheerfully reported 70 off a Lapras that deals 30, and the three tests
+swept threats of 50, 60 and 70 that were all really 30. One of them asserted *"board is not lethal;
+the test proves nothing"* as its own guard, and that guard had never once been true.
+
+**They were found by fixing the scorer and watching them go red** — never by reading them. Every one
+reads perfectly: the card, the sweep and the comment all say the right thing, and only the printed
+text disagrees.
+
+### The shape, which is the transferable part
+
+**A test fixture is AI output too.** This project already holds the invariant — *the AI can never
+predict a number the engine would not produce*, 13 Aug, asserted about `bestAffordableDamage` — and
+the violation was sitting **inside the suite that asserts it**. Nothing anywhere checks that a
+fixture's premise is reachable, and the failure is silent in the worst way: the test does not
+merely pass, it passes *for the reason it says it does*, right up until somebody fixes the engine
+half and the suite goes red on a correct change.
+
+**The practical check, and it is ten seconds.** If you are sweeping a quantity by attaching Energy to
+a card, **execute the attack once at the top of the sweep and read what it deals.** The engine is
+right there. A sweep whose rungs are 30, 30 and 30 wearing the labels 50, 60 and 70 cannot be seen
+any other way.
+
+**And the repair is not "delete the test".** All three assertions were about the barrier curve and
+all three were correct; only the generator was wrong. It is now two cards, because no single live
+card sweeps a threat from 10 to 80 — which is itself worth knowing before designing a fixture. A
+fourth assertion was added to license the pair: **the barrier must be a function of the threat, not
+of the card making it**, checked where two different cards threaten exactly 20.
+
+*[The scorer half, and the two guards it left →](AI-INVARIANTS.md)* ·
+*[the pattern the fix came out of →](Playbook/OVER-ATTACH.md)*

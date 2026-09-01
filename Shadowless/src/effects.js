@@ -980,7 +980,13 @@ const EFFECTS = {
     [{ v: 'TOXIC', n: 20 }],                                            // Toxic
   ]},
   'base1-13': { a: [                                   // Poliwrath
-    [{ v: 'DMG_PER_SPARE_ENERGY', base: 30, per: 10, t: 'W' }],         // Water Gun
+    // maxSpare 2: "Extra Water Energy after the 2nd doesn't count." THE CAP WAS
+    // MISSING ON ALL THREE BASE SET PRINTINGS OF THIS VERB until 31 Aug 2026.
+    // These were written in Job 4b, before Job 6 added `maxSpare` for the Jungle
+    // and Fossil Water Guns, and nobody went back — so the three oldest cards
+    // carrying the verb were the three the engine over-paid. A Poliwrath on five
+    // Water dealt 60 where the card prints 50.
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 30, per: 10, t: 'W', maxSpare: 2 }],  // Water Gun
     [{ v: 'DISCARD_DEF_ENERGY' }],                                      // Whirlpool
   ]},
   'base1-14': { a: [                                   // Raichu
@@ -1033,7 +1039,9 @@ const EFFECTS = {
     [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],         //   Stun Spore
   ]},
   'base1-59': { a: [                                   // Poliwag
-    [{ v: 'DMG_PER_SPARE_ENERGY', base: 10, per: 10, t: 'W' }],         // Water Gun
+    // maxSpare 2 — see Poliwrath. The corpus words this printing "...after the
+    // 2nd don't count", so it is the same cap and not a Poliwag exception.
+    [{ v: 'DMG_PER_SPARE_ENERGY', base: 10, per: 10, t: 'W', maxSpare: 2 }],  // Water Gun
   ]},
 
   // ================= PASS 4b — remaining Base Set Trainers =================
@@ -1080,7 +1088,10 @@ const EFFECTS = {
   'base1-2': {                                          // Blastoise
     p: { kind: 'EXTRA_ATTACH', name: 'Rain Dance', energy: 'W', targetType: 'W' },
     a: [
-      [{ v: 'DMG_PER_SPARE_ENERGY', base: 40, per: 10, t: 'W' }],   // Hydro Pump
+      // maxSpare 2 — see Poliwrath. Rain Dance makes this the worst place in the
+      // game to be uncapped: the Power can dump a whole hand of Water onto
+      // Blastoise, and every card of it was adding 10 to Hydro Pump.
+      [{ v: 'DMG_PER_SPARE_ENERGY', base: 40, per: 10, t: 'W', maxSpare: 2 }],  // Hydro Pump
     ],
   },
   'base1-15': {                                         // Venusaur

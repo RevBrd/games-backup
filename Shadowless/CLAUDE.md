@@ -341,7 +341,16 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   attack's own self-harm and is used up if it spends its whole 20, a rules call settled with Trevor
   rather than a bug. It also turned up a fourth self-damage site the recoil ruling never enumerated.
   *[The ruling →](Rulings/DEFENDER-BLUNTS-SELF-HARM.md)*
-- **Job 14b** - AI validation work.
+- **Job 14b** - AI validation work, in [PLAYBOOK.md](PLAYBOOK.md)'s shape. **In progress.** #31 opened
+  it on the Trainer half; #32 opened the **Over-Attach** pattern and wrote the first claims Jungle and
+  Fossil have ever had. The printed damage number is a *function of the Energy attached* for sixteen
+  printings and all three places reading it in printed units were wrong — plus `maxSpare` sitting in
+  the engine and not the scorer since Job 6, and three Base Set cards printing a cap **neither** half
+  had. *[The pattern →](Playbook/OVER-ATTACH.md)* · *[the two guards, and the three green tests that
+  were measuring an impossible threat →](AI-INVARIANTS.md)*
+  **Two things this job owes on the way out**: `AI-INVARIANTS.md` is past its own archive threshold
+  and its header names *whoever closes Job 14b* as the owner; and `node tools/wants.js --coverage` is
+  the live backlog rather than a number here.
 - **Job 15a** - Adding the Challenge 1 bracket.
 - **Job 15b** - Rebalancing variant odds to match new pack sizes.
 - **Job 15c** - Document pass, AI validation, grab bag.

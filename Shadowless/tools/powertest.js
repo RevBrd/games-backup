@@ -2808,24 +2808,30 @@ T('an Energy that only makes an existing attack BIGGER is still attached', () =>
   return true;
 });
 
-T('KNOWN GAP: the same Poliwag on the BENCH is refused that Water', () => {
-  // Not a regression and not this rule's doing — it is the Active/Bench unit
-  // split in `potential()`, which prices a benched Pokemon at PRINTED damage.
-  // Water Gun prints "10+", so `aiParseDamage` reads 10 and the scaling is
-  // invisible off the Active. The pre-existing surplus rule already refused this
-  // attachment for exactly the same reason.
+T('...and so is the same Poliwag on the BENCH, which is where Over-Attach lives', () => {
+  // THIS TEST USED TO ASSERT THE OPPOSITE, and it was right to — 31 Aug 2026.
+  // It was written as `KNOWN GAP` and told whoever closed it to delete it; the
+  // case is kept and the claim flipped instead, because a named board is worth
+  // more than a deleted one and the gap it named can come back.
   //
-  // Asserted as it STANDS, deliberately, so that whoever closes AI.md's Open #1
-  // trips over a test that names the case rather than a paragraph describing it.
-  // If this starts failing, the bench learned to see its own attacks — delete
-  // this test and keep the one above.
+  // What it named: `potential()` priced a benched Pokemon at PRINTED damage,
+  // Water Gun prints "10+", so `aiParseDamage` read 10 and the scaling was
+  // invisible off the Active. `slotPrintedDamage` resolves the printed number
+  // against the Energy actually attached, so the Bench can now see it.
   //
-  // Rain Dance is NOT affected: EXTRA_ATTACH goes straight to `attachValue` and
-  // never meets this rule, so piling Water on a benched Blastoise still works.
+  // NOT AI.md's Open #1. That one is about the Bench having no way to say "I
+  // could take a Prize" — expected value off the Active slot — and it is
+  // untouched. This was the raw-damage currency being wrong about itself.
+  //
+  // The control is the test directly below: a surplus Grass on the same Poliwag
+  // must still be held, or this became "always feed the Bench".
+  //
+  // Rain Dance is NOT affected either way: EXTRA_ATTACH goes straight to
+  // `attachValue` and never meets this rule.
   const E = board('base1-3', ['base1-59']);
   attach(E, E.state.players[0].bench[0], 'base1-102', 1);
   const s = attachScore(E, E.state.players[0].bench[0].uid, 'base1-102');
-  if (!(s < HELD)) throw new Error(`the bench can see spare-Energy scaling now: ${s.toFixed(1)}`);
+  if (!(s > HELD)) throw new Error(`the bench still cannot see spare-Energy scaling: ${s.toFixed(1)}`);
   return true;
 });
 
@@ -6010,18 +6016,142 @@ T('a rider is discounted in proportion, not switched off', () => {
   return true;
 });
 
+// ---------------------------------------------------------------------------
+// THESE THREE FIXTURES WERE MEASURING A THREAT THE ENGINE CANNOT PRODUCE.
+//
+// All three swept the barrier curve by piling Water onto a Lapras, "whose Water
+// Gun grows with its Energy". It does not grow past 30 — the card prints "You
+// can't add more than 20 damage in this way" and the engine has always capped
+// it. The SCORER had never learned `maxSpare`, so `incomingThreat` reported 70
+// off a Lapras that deals 30, and the barrier curve was being read against
+// numbers no attack in the game would ever land.
+//
+// That is the 13 Aug invariant arriving from a direction nobody had watched:
+// *the AI can never predict a number the engine would not produce.* It was
+// asserted about `bestAffordableDamage` and the reverse case sat inside the
+// suite that asserts it. Found 31 Aug 2026 by capping the scorer and watching
+// three green tests go red.
+//
+// THE ASSERTIONS ARE UNCHANGED. Only the generator is, and it is now two cards
+// rather than one because no single live card scales a threat from 10 to 80:
+// Poliwag's Water Gun caps at 30, Exeggutor's Big Eggsplosion is uncapped. Both
+// run into the same Fearow at the same 4 Energy with no Weakness or Resistance
+// either way, so the only thing varying is the threat — which is what the curve
+// is a function of, and the ladder below asserts that outright.
+// ---------------------------------------------------------------------------
+
+const barrierWorth = (oppId, n) => {
+  const E = duel2('base2-36', 'base1-99', 4, oppId, 0, 'base1-102', n);
+  return scorer(E).scoreAttack(0, 0) - 20;         // minus Agility's own damage
+};
+
 T('a barrier is worth what it prevents, and rises with the incoming threat', () => {
-  // Fearow's Agility, against a Lapras whose Water Gun grows with its Energy.
-  // This was FLAT at 7 across every threat below the frail line: a shield that
-  // stopped nothing scored the same as one stopping 60. Cliff instance seven.
-  const worth = n => {
-    const E = duel2('base2-36', 'base1-99', 4, 'base3-10', 0, 'base1-102', n);
-    return scorer(E).scoreAttack(0, 0) - 20;       // minus Agility's own damage
-  };
-  const low = worth(1), mid = worth(4), high = worth(6);
-  if (!(low < mid && mid < high))
-    throw new Error(`barrier not graded: ${low} / ${mid} / ${high}`);
-  if (!(low < 4)) throw new Error(`a barrier against a 10-damage threat is worth ${low}`);
+  // Fearow's Agility. This was FLAT at 7 across every threat below the frail
+  // line: a shield that stopped nothing scored the same as one stopping 60.
+  // Cliff instance seven.
+  //
+  // Five rungs rather than three, spanning threats 10 to 60, because the two
+  // generators between them reach further than the one did.
+  const rungs = [
+    ['base1-59', 1],   // Poliwag, threat 10
+    ['base1-59', 2],   //          threat 20
+    ['base1-59', 3],   //          threat 30 — its cap
+    ['base2-35', 2],   // Exeggutor, threat 40
+    ['base2-35', 3],   //            threat 60
+  ].map(([id, n]) => barrierWorth(id, n));
+  for (let i = 1; i < rungs.length; i++) {
+    if (!(rungs[i] > rungs[i - 1]))
+      throw new Error(`barrier not graded: ${rungs.map(x => x.toFixed(1)).join(' / ')}`);
+  }
+  if (!(rungs[0] < 4)) throw new Error(`a barrier against a 10-damage threat is worth ${rungs[0]}`);
+  return true;
+});
+
+// ---------------------------------------------------------------------------
+// ONE VERB, ONE ANSWER — the guard #28 said it had no cheap version of.
+//
+// The recurring fault in this project is not a wrong weight; it is a verb with
+// two implementations, one in `engine.js` and one in `ai.js`, that nothing holds
+// to each other. #28 hit it four times in a single session and wrote that it did
+// not have a guard and was not sure a cheap one existed. For a verb whose damage
+// is a pure function of the attacker's own board it IS cheap, because the engine
+// can simply be made to resolve the attack and the two numbers compared.
+//
+// `maxSpare` is why this exists: the engine learned it in Job 6 and the scorer
+// never did, so the AI valued a Lapras on five Water at 50 where the card, the
+// engine and the printed text all say 30 — for eleven weeks, invisibly.
+//
+// Deliberately a SWEEP over the live pool rather than a list of cards. A new set
+// reprinting a Water Gun is covered the day it goes live, which is the same
+// doctrine `ammoSymbols` and `STALL_VERBS` follow one level up.
+T('every spare-Energy attack scores exactly what the engine resolves', () => {
+  const CHANSEY = 'base1-3';    // 120 HP, no Weakness or Resistance to Water
+  const cards = [];
+  for (const id of Object.keys(EFFECTS)) {
+    const fx = EFFECTS[id];
+    if (!fx || !fx.a || !CARD_DB[id]) continue;
+    fx.a.forEach((s, i) => {
+      if (Array.isArray(s) && s.some(v => v.v === 'DMG_PER_SPARE_ENERGY')) cards.push([id, i]);
+    });
+  }
+  if (cards.length < 8) throw new Error(`the sweep found only ${cards.length} spare-Energy attacks`);
+
+  for (const [id, idx] of cards) {
+    const cost = CARD_DB[id].attacks[idx].cost.length;
+    // Past the cap on every card in the family, so an uncapped scorer diverges.
+    for (let n = cost; n <= cost + 4; n++) {
+      const E = duel2(id, 'base1-102', n, CHANSEY, 0, null, 0);
+      const forecast = scorer(E).rawOutcomes(E.state.players[0].active,
+                                             E.state.players[1].active, idx);
+      if (forecast.outcomes.length !== 1) continue;      // a coin got in; not this test
+      const predicted = forecast.outcomes[0].dmg;
+
+      const F = duel2(id, 'base1-102', n, CHANSEY, 0, null, 0);
+      if (!F.canUseAttack(0, idx).ok) continue;
+      F.act(0, { t: 'attack', idx });
+      const dealt = F.state.players[1].active.dmg;
+      if (predicted !== dealt)
+        throw new Error(`${CARD_DB[id].name} on ${n} Water: AI forecasts ${predicted}, engine deals ${dealt}`);
+    }
+  }
+  return true;
+});
+
+// AGREEMENT IS NOT CORRECTNESS, and the test above cannot tell the difference —
+// two halves that are wrong the same way pass it. That is exactly what happened:
+// Blastoise, Poliwrath and Poliwag print a cap, and NEITHER half had it, so the
+// engine and the scorer agreed on a number the card forbids. This is the other
+// guard, and it reads the printed text rather than either implementation.
+//
+// Both wordings are the same rule — "extra Water Energy after the 2nd doesn't
+// count" caps the COUNT and "you can't add more than 20 damage" caps the BONUS.
+T('a printed cap on a spare-Energy attack reaches the effect script', () => {
+  const CAP = /after the \d+(st|nd|rd|th) (doesn't|don't) count|can't add more than \d+ damage/i;
+  const missing = [];
+  for (const id of Object.keys(EFFECTS)) {
+    const fx = EFFECTS[id], c = CARD_DB[id];
+    if (!fx || !fx.a || !c) continue;
+    fx.a.forEach((s, i) => {
+      if (!Array.isArray(s)) return;
+      const v = s.find(x => x.v === 'DMG_PER_SPARE_ENERGY');
+      if (!v) return;
+      const text = (c.attacks[i] || {}).text || '';
+      if (CAP.test(text) && v.maxSpare === undefined) missing.push(`${c.name} (${id})`);
+    });
+  }
+  if (missing.length) throw new Error(`printed cap not in the script: ${missing.join(', ')}`);
+  return true;
+});
+
+T('...and it is a function of the THREAT, not of the card making it', () => {
+  // Free, and it is what licenses the two-generator ladder above. A Poliwag on
+  // two Water and an Exeggutor on one both threaten 20; the barrier must not be
+  // able to tell them apart. If this ever splits, something in the barrier path
+  // is reading the attacker rather than the damage.
+  const viaPoliwag = barrierWorth('base1-59', 2);
+  const viaExeggutor = barrierWorth('base2-35', 1);
+  if (Math.abs(viaPoliwag - viaExeggutor) > 1e-9)
+    throw new Error(`same threat, two prices: ${viaPoliwag} vs ${viaExeggutor}`);
   return true;
 });
 
@@ -6032,10 +6162,13 @@ T('a barrier is worth what it prevents, and rises with the incoming threat', () 
 // knows the constant has to be edited by whoever changes the constant, which is
 // the one person least able to notice they broke the idea.
 T('a barrier that saves your life is priced as a life, not as tempo', () => {
-  // Fearow, 70 HP, against a Water Gun that would knock it out. `selfKO` charges
-  // 70 for a Pokemon the bot kills itself; preventing the same event used to pay
-  // 16. No value of `shieldSelf` alone can reach here.
-  const E = duel2('base2-36', 'base1-99', 4, 'base3-10', 0, 'base1-102', 7);
+  // Fearow, 70 HP, against a Big Eggsplosion that would knock it out. `selfKO`
+  // charges 70 for a Pokemon the bot kills itself; preventing the same event used
+  // to pay 16. No value of `shieldSelf` alone can reach here.
+  //
+  // This board USED to be a Lapras on seven Water and it was never lethal — see
+  // the header three tests up. Four Energy on an Exeggutor threatens 80 for real.
+  const E = duel2('base2-36', 'base1-99', 4, 'base2-35', 0, 'base1-102', 4);
   const ai = scorer(E);
   if (!(ai.incomingThreat(0) >= 70)) throw new Error('board is not lethal; the test proves nothing');
   const barrier = ai.scoreAttack(0, 0) - 20;              // minus Agility's own damage
@@ -6048,11 +6181,13 @@ T('...and there is no step where the frail boundary used to be', () => {
   // The old code switched multiplier at `danger >= hpLeft`. The curve reaches the
   // top on its own now, so the boundary must be invisible — if a later change
   // reintroduces a threshold here it becomes cliff instance eight.
-  const worth = n => {
-    const E = duel2('base2-36', 'base1-99', 4, 'base3-10', 0, 'base1-102', n);
-    return scorer(E).scoreAttack(0, 0) - 20;
-  };
-  const below = worth(5), edge = worth(6), over = worth(7);   // threats 50 / 60 / 70
+  // Exeggutor rather than Lapras, for the reason in the header above — the old
+  // rungs were threats of 30, 30 and 30 wearing the labels 50, 60 and 70.
+  const worth = n => barrierWorth('base2-35', n);
+  const below = worth(2), edge = worth(3), over = worth(4);   // threats 40 / 60 / 80
+                                                             // Fearow has 70 HP, so
+                                                             // the old frail line
+                                                             // falls between the last two
   const stepIn = edge - below, stepOut = over - edge;
   if (!(stepIn > 0 && stepOut > 0)) throw new Error('barrier is not monotone across the boundary');
   if (stepOut > stepIn * 2)
