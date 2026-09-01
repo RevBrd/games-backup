@@ -115,6 +115,51 @@ Boy game treats it. And the line is suppressed on turn 1 **only if** `firstPlaye
 which it is not: that flag ships `true` as a flagged assumption in `CONFIG_DEFAULTS`, so under the
 live config turn 1 is an ordinary turn. Both directions are tested so reversing the assumption cannot
 silently strand either half.
+## Is that constant a bug or a policy? Break it and see who screams
+
+**A procedure, added 31 Aug 2026 at Trevor's request, after it paid the first time it was used.**
+It costs about a minute and it answers a question this project keeps hitting: *the arithmetic in
+this shared helper looks wrong, but everything downstream works. Do I fix it?*
+
+**Neither reasoning nor a green suite can answer that.** Reasoning gets it wrong — `AI.md` records
+two sessions reasoning wrong about the same cap. And every suite here stays green through it, because
+suites assert what the code does rather than what the cards want.
+
+**`claimtest.js` can answer it, and this is a second use of the harness beyond its documented one.**
+The rows are transcriptions of how Trevor says the cards should be played, so they are the only thing
+in the repo that knows which *behaviours* a constant is holding up.
+
+1. **Apply the correction as an experiment.** Not a commit, not a branch — an edit you are going to
+   revert.
+2. **Run `node tools/claimtest.js`.** Do not run the six suites; they will be green and tell you
+   nothing.
+3. **Read WHICH rows flip, not how many.** The count is noise. The identity of the rows is the answer.
+4. **Revert, whatever it said.** The experiment is for deciding, never for shipping.
+
+**Then it is one of three things:**
+
+| what flipped | what it means |
+|---|---|
+| **nothing** | the arithmetic was genuinely wrong and nothing depended on it. Fix it, and add the row that would have caught it |
+| **rows that all sit in one band** | it is a **policy**, not an error. Name the policy, leave the code alone, and record the experiment beside it |
+| **rows scattered everywhere** | you are looking at a weight the whole model is fitted around. That is a re-tuning job with its own measurement, not a fix |
+
+**The worked example is `survivesCharge`'s `+1`.** It reads one turn more than the worst case says,
+which looks exactly like an off-by-one — a Pokemon acts before each of their attacks, so the attack
+that kills it is not a turn it got. Corrected as an experiment, **three rows flipped and all three sat
+in the same narrow band**: a Pokemon surviving *exactly one more hit*. That is the middle row of the
+table. The `+1` is a hedge against `incomingThreat` being a snapshot projected forward as a
+certainty, it had been doing that job by accident since the function was written, and correcting it
+would have deleted a policy nobody knew we had. *[The invariant, and the three rows →](AI-INVARIANTS.md)*
+
+**What makes this work is that the rows are not ours.** A regression suite written alongside the code
+agrees with the code by construction. The claim rows come from somebody who has never read it, which
+is the whole reason they can referee it. *[Where they come from →](PLAYBOOK.md)*
+
+**And it composes with the control.** `claimtest.js --baseline REF` asks the same question backwards
+— *which rows does the OLD bot fail* — so between them you can ask what a change is worth and what a
+constant is worth without shipping either. *[The control →](TOOLING.md)*
+
 ## Standing measurements
 
 Neither of these is a job. They are properties of the game that move when the AI moves, recorded here

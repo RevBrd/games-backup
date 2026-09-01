@@ -343,3 +343,47 @@ that question asked first.
 **The genuinely open thing moved rather than closed**, and it is in the neighbouring pattern: the
 evolution road prices a dying carrier exactly like a healthy one. See [AI.md](../AI.md)'s open list
 and [EVOLUTION-TIMING.md](EVOLUTION-TIMING.md).
+
+## The board-level half has a first testable case — 31 Aug 2026
+
+**This file has said since 26 August that the missing capability is "Energy as a resource with
+somewhere else to be", and that it is the same one [Evolution timing](EVOLUTION-TIMING.md) waits on.
+Trevor's Charmeleon rule is the first version of it small enough to hold in one board.**
+
+> If it's not actually going to die on the next turn, you can still maximize damage per energy spent
+> by using Slash when Flamethrower can't kill... Slash on the turns that Flamethrower wouldn't kill
+> allows it to be a pest while not depriving the bench of energy due the funnel, except for maybe one
+> or two turns where it resulted in a kill. If it seems like it *would* die on the next turn, burning
+> that energy with Flamethrower just to maximize damage costs nothing.
+
+**Measured at three Fire, where both attacks cost three and neither kills a Chansey:** Slash 30.0 and
+Flamethrower 43.0 on a healthy board, a hurt board and a dying board — **a flat 13-point gap in all
+three.** The rule is not reached anywhere.
+
+### Two reasons, and only one of them is this file's
+
+**The discard costs a flat 7 because `discardSilence` prices the wrong thing here.** It measures being
+unable to *act*, and Charmeleon can always act, so a one-symbol burn is one turn of silence and
+nothing more. **Trevor's cost is not on this slot at all**: you may attach one Energy a turn, so the
+Fire that replaces the burned one is an attachment the **Bench** does not get. That is the board-level
+opportunity cost, stated as a card decision for the first time.
+
+**And something changed underneath it on 31 Aug that this file should know about.**
+`evolutionRoadFor` now names *which* other slot wants the Energy — it picks the copy that will
+actually arrive, and it does it before any of this. **The half of the capability that was missing was
+"who else wants it", and that half now exists.** What is still missing is a rate: what one forgone
+attachment is worth against 20 damage. **Do not invent one** — `attachValue` already prices an
+attachment per slot, and the honest version reads that rather than adding a weight beside it.
+
+### The second reason is a tension, not a gap, and it must not be "fixed"
+
+**Trevor's dying clause cannot fire, and the thing blocking it is load-bearing.**
+`survivesCharge(pi, slot, 1)` returns **1** even at `turnsLeft` zero, because the `+1` hedge exactly
+cancels a one-symbol discard. That hedge is what keeps three other claim rows green — including this
+file's own Arcanine GP row — so this is two of his rules pulling opposite ways rather than a bug.
+*[The hedge, and the experiment that found it →](../AI-INVARIANTS.md)* ·
+*[How to tell a bug from a policy →](../MEASUREMENT.md)*
+
+**Raise it with him before touching either.** The clean resolution may be that the dying clause wants
+`turnsLeft` directly rather than the hedged number — a caller stating its own policy, which is exactly
+what the split was built for — but that is a decision, not a derivation.

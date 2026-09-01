@@ -351,7 +351,18 @@ on it.**
    turn of damage for it. A note that does not say which slot it is about can be true in one place
    and wrong in the other, and this one was.
    *[How a note becomes a row →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*
-9. **"Energy is a resource with somewhere else to be" — MEASURED 28 Aug 2026. Two of its three halves
+9. **"Energy is a resource with somewhere else to be" — and half of what it was waiting for landed on
+   31 Aug 2026 without anybody aiming at it.** The forward-looking arm below has always needed two
+   things: *who else wants this Energy*, and *what is it worth to them*. `evolutionRoadFor` now
+   answers the first — it names the copy that will actually arrive — so what remains is a rate, and
+   `attachValue` already prices an attachment per slot rather than needing a new weight.
+
+   **The first card-sized test case is Trevor's Charmeleon rule**, filed as two rows in
+   `tools/claims/base1.js`: Slash while it expects to live, because the attachment that replaces a
+   burned Fire is one the Bench does not get. Measured as a flat 13-point gap on every board.
+   *[The decomposition, and the tension underneath it →](Playbook/AMMO.md)*
+
+   The original entry, still accurate: **MEASURED 28 Aug 2026. Two of its three halves
    are done or would do nothing, and this item exists mainly to stop it being re-scoped as one large
    job.** It is the capability [Ammo](Playbook/AMMO.md)'s Charmeleon and Arcanine notes and
    [Evolution timing](Playbook/EVOLUTION-TIMING.md) all name as their blocker. Trevor's sentence

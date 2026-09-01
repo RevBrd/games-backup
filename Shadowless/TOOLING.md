@@ -232,6 +232,11 @@ Trevor's note *before* you know whether the bot satisfies it; red means you foun
 the opposite of every other suite in this file, where red means you broke something. **Never "fix" a
 red claim by weakening the row** — either fix the scorer or move the row to `open:` with the reason.
 
+**IT IS ALSO AN ORACLE FOR WHETHER A CONSTANT IS A BUG**, which is a second use and is written up as
+a procedure: apply the correction as an experiment, run only this, read *which* rows flip, revert.
+Nothing else in the repo can tell a wrong number from a policy nobody named.
+*[The procedure and its worked example →](MEASUREMENT.md)*
+
 ```bash
 node tools/claimtest.js                      # assert everything
 node tools/claimtest.js Arcanine --explore   # what the bot ACTUALLY does, scored

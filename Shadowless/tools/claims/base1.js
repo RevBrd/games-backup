@@ -1226,6 +1226,88 @@ const CLAIMS = [
           "seems more realistic\"), and the two readings have very different blast radii - one " +
           "is two cards, the other is every discard in the game.",
   },
+  // ------------------------------------------- Charmeleon, the attack half --
+  // Trevor, 31 Aug 2026, asked why Slash rather than Flamethrower when it does
+  // not kill, since the Energy is lost anyway on a Pokemon being written off:
+  //
+  //   "If it's not actually going to die on the next turn, you can still
+  //   maximize damage per energy spent by using Slash when Flamethrower can't
+  //   kill. And even that energy funnel might be kept up if it looks like
+  //   Charmeleon will survive to deal even more damage. Slash on the turns that
+  //   Flamethrower wouldn't kill allows it to be a pest while not depriving the
+  //   bench of energy due the funnel, except for maybe one or two turns where it
+  //   resulted in a kill. If it seems like it *would* die on the next turn,
+  //   burning that energy with Flamethrower just to maximize damage costs
+  //   nothing."
+  //
+  // THREE CLAUSES AND THE SCORER REACHES NONE OF THEM. Measured at three Fire,
+  // where Slash (CCC, 30) and Flamethrower (RRC, 50, discards a Fire) both cost
+  // three, against a Chansey that survives either:
+  //
+  //   healthy, threat 0     Slash 30.0  Flamethrower 43.0  -> Flamethrower
+  //   hurt, still survives  Slash 30.0  Flamethrower 43.0  -> Flamethrower
+  //   dies next turn        Slash 30.0  Flamethrower 43.0  -> Flamethrower
+  //
+  // A FLAT 13-POINT GAP IN ALL THREE, and two separate reasons for it:
+  //
+  // (1) The discard costs a flat 7. `discardSilence` prices being unable to act
+  //     and Charmeleon can always act, so the whole cost is one turn of silence
+  //     at `energyDiscard`. Trevor's cost is somewhere else entirely - the
+  //     attachment that must replace the burned Fire is one the BENCH does not
+  //     get. That is the board-level opportunity cost `Playbook/AMMO.md` has
+  //     named as unbuilt since 26 Aug and that three files call their blocker.
+  //
+  // (2) The dying clause cannot fire. `survivesCharge(pi, slot, 1)` returns 1
+  //     even at `turnsLeft` zero, because the +1 hedge exactly cancels a
+  //     one-symbol discard. That hedge is load-bearing elsewhere - three rows
+  //     flip without it - so this is a genuine tension between two of Trevor's
+  //     own rules rather than something to go and fix. RAISE IT, do not tune it.
+  {
+    id: 'base1-24', card: 'Charmeleon', pattern: 'Attack choice',
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
+    claim: 'Slash while it expects to live - the extra 20 is not worth an attachment the Bench needs',
+    board: {
+      me:   { card: 'base1:Charmeleon', energy: '3 Fire' },
+      myBench: [{ card: 'base1:Charmeleon', energy: '2 Fire' }],   // the copy waiting on the funnel
+      them: { card: 'Chansey', energy: '2 Fighting' },             // 120 HP: neither attack kills
+      myHand: [],
+    },
+    sane: b => b.affordable().includes('Slash') && b.affordable().includes('Flamethrower')
+            && b.lethal('Flamethrower') === 0 && b.ai.turnsLeft(0, b.me.active) > 0,
+    expect: b => b.prefers('Slash'),
+  },
+  {
+    id: 'base1-24', card: 'Charmeleon', pattern: 'Attack choice',
+    // THE PAIR, and it is what stops "always Slash" passing as a fix.
+    //
+    // IT IS GREEN TODAY AND THAT IS A FALSE GREEN, recorded so nobody reads the
+    // pair as half-solved. It passes because the bot prefers Flamethrower on
+    // EVERY board, including the one above where it should not - so this row is
+    // measuring the fault rather than the rule. It only starts meaning anything
+    // once its twin goes green. Same shape as the Lure ordering pair: a row a
+    // fault is winning looks exactly like a row a rule is winning.
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
+    claim: '...but Flamethrower once it will not see another turn, where the burn costs nothing',
+    board: {
+      me:   { card: 'base1:Charmeleon', energy: '3 Fire', dmg: 60 },
+      myBench: [{ card: 'base1:Charmeleon', energy: '2 Fire' }],
+      them: { card: 'Chansey', energy: '4 Fighting' },
+      myHand: [],
+    },
+    sane: b => b.affordable().includes('Slash') && b.affordable().includes('Flamethrower')
+            && b.lethal('Flamethrower') === 0 && b.ai.turnsLeft(0, b.me.active) === 0,
+    expect: b => b.prefers('Flamethrower'),
+  },
+  {
+    id: 'base1-24', card: 'Charmeleon', pattern: 'Attack choice',
+    claim: 'and Flamethrower whenever the extra 20 converts, which is the exception he names',
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
+    open: "THE CHEAP HALF, and it is only open because the two rows above are. A kill is already " +
+          "worth far more than 13 points, so this clause almost certainly holds today and asserting " +
+          "it now would just bank a green row that proves nothing about the rule. Write it as the " +
+          "control the moment either row above goes green - a fix that made the bot prefer Slash " +
+          "even into a lethal Flamethrower would be worse than the fault.",
+  },
 ];
 
 module.exports = { CLAIMS };
