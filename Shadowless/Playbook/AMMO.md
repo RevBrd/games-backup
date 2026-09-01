@@ -387,3 +387,63 @@ file's own Arcanine GP row — so this is two of his rules pulling opposite ways
 **Raise it with him before touching either.** The clean resolution may be that the dying clause wants
 `turnsLeft` directly rather than the hedged number — a caller stating its own policy, which is exactly
 what the split was built for — but that is a decision, not a derivation.
+
+## Proactive and reactive funnelling, and the sweep that says don't build the guard — 31 Aug 2026
+
+**Trevor's framing, and it is a real thing he is describing:**
+
+> Proactive funnelling is sort of what we've been doing, where the replacement energy is attached
+> right before it's burned in the attack. GBC and general strategy would also use reactive funnelling
+> at times, where it would allow Flamethrower (or similar move) to drain to 2 energies while
+> attaching that turn's energy to a bench pokemon, and then top it back up to 3 if it needs to be used
+> again on the following turn, right before burning again. The situation we're talking about would be
+> a great candidate for reactive funnelling, though proactive should stay the default in my opinion.
+
+**It is correctly observed and it should NOT be built as two modes.** The bot holds no funnelling
+policy — it scores each attach per slot and each attack independently, so proactive and reactive are
+*descriptions of where the attachments landed*, not settings. Building a mode switch would put a
+policy above a scorer that is already capable of producing both, which is the tagging mistake this
+project has turned down three times.
+
+**All four of his clauses fall out of ONE term** — the attachment a self-discarding attack commits,
+priced at what it was worth elsewhere:
+
+| board | the charge | what falls out |
+|---|---|---|
+| nothing on the Bench wants Energy | ~0 | **proactive** — keep burning |
+| a benched copy is on the evolution road | real | **reactive** — Slash, feed the Bench |
+| the burn converts a kill | outweighed | Flamethrower |
+| the attacker will not see another turn | ~0 | Flamethrower |
+
+### The sweep, and it is the reason this is a conversation rather than a commit
+
+**The obvious guard is "the card owns a non-discarding attack" — the same discriminator the 28 Aug
+ammunition rule turns on. Swept across the live sets, it charges FOURTEEN cards to move one:**
+
+| would be charged | | would not |
+|---|---|---|
+| Ninetales, Arcanine, **Charmeleon**, Charmander, Starmie, Mewtwo, Gastly, Kadabra, **Zapdos**, Magmar, Flareon ×2, Slowpoke, Dark Golduck | | Charizard, base5 Ponyta — the burn is all they have |
+
+**And most of them are not funnel cards at all.** Starmie's and Kadabra's burn is *Recover* — the
+discard **is** the healing cost. Mewtwo's is Barrier and Gastly's is Destiny Bond, where it buys a
+utility effect. **Zapdos is the dangerous one**: Thunderbolt against Thunder is a shipped invariant
+with Trevor's own note behind it and three claim rows on it.
+
+**This is the "fifteen cards before it moved one" finding arriving a second time, in the same file.**
+The 28 Aug entry above records exactly this shape and the answer was to nest the condition until it
+moved one card. The same discipline applies and the answer is not the same nesting.
+
+### The nesting that would work, and it only became available on 31 Aug
+
+**Charge only when another slot has an actual claim on the Energy** — which `evolutionRoadFor` now
+answers, because it names the copy that will arrive. That is derived rather than listed, it encodes
+Trevor's own reason (*"not depriving the bench of energy"* means a Bench that **needs** it for a
+plan), and it excludes every card in that table whose deck has no road running.
+
+**It is narrow to the point of being nearly card-specific, and that is honest here** — this file
+already records that a sustain rule in this pool is a rule about one or two cards, which cuts both
+ways: the risk is tiny and the evidence for tuning it is one data point.
+
+**Build it as an experiment and read `claimtest`**, which is the procedure in
+[MEASUREMENT.md](../MEASUREMENT.md) run forwards instead of backwards. If Zapdos, Arcanine or
+Charizard flip, the term is too wide and the sweep was right.
