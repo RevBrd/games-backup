@@ -159,6 +159,7 @@ at the end:
 | `survivesCharge` | — | written graded from the start, *because* of the other five |
 | the Agility barrier, damage half | flat 0.7 below the frail line — a shield stopping nothing priced like one stopping 60 | **linear in the damage prevented**, through the old constant at half HP |
 | the Agility barrier, death half | a `frail` boolean, and priced off a tempo weight at that | **squared** in the same fraction, and priced off `selfKO` |
+| `survivesCharge` | **the inverse case, and the reason to read this table carefully.** Not a flat quantity — a *snapshot* threat projected forward as a certainty. The `+1` that looks like an off-by-one is the hedge against that, and removing it flips three rows | **left alone**, deliberately; `turnsLeft` is the unhedged fact beside it |
 | PlusPower | flat 6, plus a step for the one board where the extra 10 is **lethal** | **`40 / turnsWith`** — turns removed, discounted by distance; the lethal case is `turnsWith === 1` and lands on the old number |
 | an Energy discard | flat, 7 a card, however much or little was left behind | **turns of silence, squared**, and discounted by whether it lives to feel them |
 
@@ -227,6 +228,8 @@ which is what keeps a split from costing anybody a search.
 | 28 Aug | **Ammunition is only ammunition if you have nothing else to shoot with.** The discard verb was too wide a derivation on its own — a card that DRAINS and owns a free attack stockpiles nothing | `ammoSymbols` |
 | 28 Aug | **A Pokemon about to become something else is not paid up.** Shortfall is measured against the evolution when it is in hand, and `evolve` waits until one Energy short of it. Shipped on a measured NULL | `evolutionInHand`, `potentialAs`, `evolveEarly` |
 | 28 Aug | **One of the twins gets fed.** The evolution ROAD is rationed to the most-invested copy that is not yet ready — the other keeps its own road, so it is resistant and never blocked | `evolutionRoadFor`, `benchDuplicate` |
+| 31 Aug | **The `+1` is a hedge, not an off-by-one** — `incomingThreat` is a snapshot projected as a certainty, and the hedge is what stops a full-HP Pokemon being treated as dying. `turnsLeft` is the unhedged fact; state your policy at your own call site | `turnsLeft`, `survivesCharge` |
+| 31 Aug | **A carrier that cannot finish its road steps aside**, when another can take it up — the evolution road ranked on investment alone and fed a Charmeleon on 10 HP exactly as hard as one on 80 | `evolutionRoadFor` |
 | 30 Aug | **A Switch is worth the retreat cost it nullifies** — worth nothing on a Pokemon that can already walk away free. A gate, not a weight; the "prefers heavier retreat costs" half is an `open:` row and wants asking about | `T_SWITCH_OWN` |
 | 30 Aug | **One drag, one rule.** An attack that drags one of theirs was scoring a flat `W.drag` and letting the engine pick the target at random; the Trainer path's ranking is now shared. **Assert both Bench orderings** — a single row is green half the time on nothing | `bestDragTarget`, `dragScore` |
 | 30 Aug | **PlusPower is worth the turn it takes off the kill**, discounted by how far off that turn is — the lethal case is the top rung of the staircase, not the whole of it, and it lands on its old value by arithmetic | `turnsWith`, `T_PLUSPOWER` |
@@ -389,7 +392,14 @@ on it.**
    above had measured that clause near-inert hours earlier. **Raise the deck arm with Trevor rather
    than assuming it follows.**
 
-10. **The evolution road cannot see whether its carrier will live to travel it — MEASURED 30 Aug
+10. ~~**The evolution road cannot see whether its carrier will live to travel it.**~~ **BUILT 31 Aug
+    2026, and not where this item said to look.** Kept because the wrong turning is the useful part:
+    the item pointed at the survival DISCOUNT, and no discount could have fixed it — `evolutionRoadFor`
+    ranks by investment alone, so a cheaper road is still the same road. The fix was in the
+    SELECTION. And the "off-by-one" it named turned out to be a deliberate hedge whose removal flips
+    three claim rows. *[Both, and the experiment →](AI-INVARIANTS.md)*
+
+    The original text, for the reasoning that led there: **MEASURED 30 Aug
     2026, NOT BUILT, and the safe fix is not the obvious one.** Two Charmeleons on two Fire each, one
     Charizard in hand, a threat of 30: the road is worth **101.0 on an Active at 80 HP and 101.0 on
     the same Active at 10 HP**, while the healthy benched twin is passed over at 62.0. Sweeping the

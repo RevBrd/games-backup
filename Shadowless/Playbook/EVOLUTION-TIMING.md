@@ -237,3 +237,50 @@ improvements.
   knows, rather than *"energies aren't in short supply"*, which it does not. **Asking was worth more
   than the four lines it cost** — the note's own wording pointed at a term measured at near-inert, and
   the rule he actually wanted rests on something free. See the section above.
+
+## A carrier that cannot finish its road steps aside — 31 Aug 2026
+
+**The road was rationed on investment and nothing else**, so a Charmeleon about to be Knocked Out held
+it exactly as firmly as a healthy twin standing safely on the Bench. Measured, with two Charmeleons on
+two Fire each and a Charizard in hand against a threat of 30:
+
+| the Active | attach → Active | attach → benched twin |
+|---|---|---|
+| 80 HP | **101.0** | 62.0 |
+| 10 HP | **101.0** | 62.0 |
+
+Sweeping the Active from 80 HP down to 10 never moved the number by a point.
+
+### Trevor's note, verbatim and append-only
+
+> A Charmeleon that isn't explicitly in a stalling role doesn't want to fight, but if it finds itself
+> fighting it might still use Flamethrower if that's what it takes to survive. If a new Charmander is
+> gained while it's fighting, the AI might shift its future evolution focus to that instead, if that
+> one seems more realistic to get to its full evolution at full power.
+>
+> If there's a Charizard in its hand and a Charmeleon on the bench (let's say Charmeleon instead of
+> Charmander), I'd say the active one is pretty safe to write off. Best strategy there in my opinion
+> would be to hit hard with Flamethrower if it results in a kill and Slash if it doesn't, while
+> switching powerup focus to the Charmeleon on the bench. It's just really not good for the viability
+> of the eventual Charizard if the Charmeleon you're powering up ends up active and having to choose
+> between an energy funnel and taking extra damage from an opponent given more time by Slash.
+
+### What was built, and the turning that was nearly taken
+
+**A copy that will not live to finish its road steps aside, exactly as a ready one does** — the same
+shape as the release rule rather than a new kind of rule. **Only when another contender can take it
+up**: a sole carrier keeps its road however doomed it is, because there is no better home for the
+Energy and refusing would strand it.
+
+**The nearly-taken turning is worth more than the fix.** The open item pointed at the survival
+*discount* in `attachBuild`, and **no discount could have fixed this** — the road is a selection, and a
+cheaper road is still the same road. *[Why the "off-by-one" underneath it is a hedge →](../AI-INVARIANTS.md)*
+
+### Still open — the attack half of his note
+
+**"Flamethrower if it results in a kill and Slash if it doesn't" is NOT built**, and it is not
+obviously derivable. Charmeleon's Slash is CCC for 30 and its Flamethrower is RRC for 50 discarding a
+Fire; on a Pokemon that has just been written off, the Energy is lost either way when it is Knocked
+Out, so the usual discard argument does not reach. **Ask what the Slash preference is protecting**
+before building it — the last sentence of his note reads as a caution about the whole line rather than
+the reason for the choice.

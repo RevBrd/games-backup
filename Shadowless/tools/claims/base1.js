@@ -1192,11 +1192,15 @@ const CLAIMS = [
     },
     sane: b => b.me.bench.length === 1 && b.me.bench[0].energy.length === b.me.active.energy.length
             && b.threat() >= b.hp() && b.me.hand.length === 2,
+    // SCORED BY SLOT, NOT BY LABEL. Both Pokemon here are called Charmeleon, so
+    // `explain()`'s "Attach Fire Energy to Charmeleon" is the same string twice
+    // and cannot say which one it means — the first version of this row read the
+    // wrong one and stayed red after the fix had landed. Any claim about twins
+    // has to go through the uid.
     expect: b => {
-      const r = b.explain().filter(e => e.label === 'attach');
-      const act = r.find(e => (e.detail || '').includes('Charmeleon'));
-      const others = r.filter(e => e !== act);
-      return others.some(o => o.score >= act.score);
+      const acts = b.E.legalActions(0).filter(a => a.t === 'attachEnergy');
+      const at = u => { const a = acts.find(x => x.target === u); return a ? b.ai.scoreAction(0, a) : -Infinity; };
+      return at(b.me.bench[0].uid) > at(b.me.active.uid);
     },
   },
   {

@@ -7991,8 +7991,39 @@ class AI {
     if (twins.length < 2) return evo;
     // Only copies still short of the evolution are in the running; a ready one
     // has had its turn and steps aside.
-    const contenders = twins.filter(x => this.potentialAs(pi, x, evo, null).short > 0);
+    // `potentialAs` is not cheap — it pushes a hypothetical card onto the slot and
+    // re-scores it — and this function runs per attach action per slot. Measured
+    // once per twin and reused, because asking twice here doubled an `abtest` run.
+    const shortOf = new Map();
+    for (const x of twins) shortOf.set(x, this.potentialAs(pi, x, evo, null).short);
+    let contenders = twins.filter(x => shortOf.get(x) > 0);
     if (!contenders.length) return evo;              // all ready — nothing to ration
+
+    // A COPY THAT WILL NOT LIVE TO FINISH ITS ROAD STEPS ASIDE TOO, which is the
+    // same shape as the release above rather than a new kind of rule: a leader
+    // stops leading when it can no longer be the one that arrives.
+    //
+    // Trevor, 31 Aug 2026, on an Active Charmeleon with a Charizard in hand and a
+    // second Charmeleon benched: "I'd say the active one is pretty safe to write
+    // off... switching powerup focus to the Charmeleon on the bench."
+    //
+    // Measured before it: the road was worth 101.0 to the Active whether it stood
+    // on 80 HP or on 10, while the safe twin was passed over at 62.0. Sweeping the
+    // Active from 80 down to 10 never moved the number by a point, because the
+    // ranking is investment and nothing else.
+    //
+    // ONLY WHEN SOMEBODY ELSE CAN TAKE IT UP. A sole carrier keeps its road however
+    // doomed it is — there is no better home for the Energy and refusing the road
+    // would just strand it. That is what keeps this from being a veto.
+    //
+    // Hedged, through `survivesCharge`'s own +1 rather than the raw count, so the
+    // two places that ask "will you be here" cannot drift apart. A healthy Active
+    // two turns from death with a shortfall of two keeps the road; the Charmeleon
+    // above, zero turns left against a shortfall of two, does not.
+    if (contenders.length > 1) {
+      const living = contenders.filter(x => this.turnsLeft(pi, x) + 1 >= shortOf.get(x));
+      if (living.length) contenders = living;
+    }
     contenders.sort((a, b) =>
       (b.energy.length - a.energy.length) || (a.uid - b.uid));
     return contenders[0] === slot ? evo : null;
@@ -8311,12 +8342,56 @@ class AI {
     return this.shortfallFor(after, this.top(slot));
   }
 
+  // HOW MANY MORE TURNS OF MINE THIS SLOT GETS. A fact, with no policy in it, and
+  // extracted 31 Aug 2026 because the same idea had been written four times —
+  // here, in `discardSilence`, in `attachBuild`, and as a bare boolean in
+  // `T_PLUSPOWER` that DISAGREED with this function on the same board.
+  //
+  // A Pokemon acts BEFORE each of their attacks, so the attack that kills it is
+  // not a turn it got: at 10 HP under a threat of 30 the answer is zero, not one.
+  // Nothing on the Bench is being attacked, so it has no horizon at all.
+  turnsLeft(pi, slot) {
+    if (!slot || slot !== this.E.state.players[pi].active) return Infinity;
+    const threat = this.incomingThreat(pi);
+    if (threat <= 0) return Infinity;
+    return Math.max(0, Math.ceil(this.remainingHP(slot) / threat) - 1);
+  }
+
+  // ONE TURN OF OPTIMISM, AND IT IS A POLICY RATHER THAN AN ERROR — 31 Aug 2026.
+  //
+  // This function read `ceil(hp / threat)` for as long as it existed, which
+  // counts the attack that kills you as a turn you survived. That looks like an
+  // off-by-one and correcting it was the obvious next move. It was run as an
+  // experiment and it is NOT what it looks like.
+  //
+  // `incomingThreat` is a snapshot of the worst thing they can do RIGHT NOW,
+  // and this projects it forward as a certainty — no heal, no switch, no Prize
+  // taken, no coin landing wrong. That over-projection gets less true the further
+  // out it reaches, and `+1` is the hedge against it: **assume you get one more
+  // turn than the worst case says.**
+  //
+  // IT IS LOAD-BEARING, MEASURED. With the hedge removed, three claim rows flip
+  // and all three sit in the same narrow band — a Pokemon that survives EXACTLY
+  // one more hit, where the honest count halves the discount:
+  //
+  //   Zapdos     70 HP under 80   1 -> 0   already discounted; STAYS GREEN
+  //   Charizard 120 HP under 80   2 -> 1   "firing at four is charged for" FLIPS
+  //   Arcanine   70 HP under 40   2 -> 1   "never at exactly two Fire"      FLIPS
+  //
+  // Trevor's notes are what settle it. Zapdos is genuinely dying and its note
+  // says burn freely; the other two are at or near FULL HP facing one hit, and
+  // his notes say do not silence yourself there. A Pokemon at full HP is not
+  // "about to die" in any sense a player would recognise — it is one heal, one
+  // Gust or one bad coin away from a completely different board.
+  //
+  // SO DO NOT "FIX" THIS. If the hedge is ever revisited it is a POLICY change
+  // wanting its own measurement, not a bug fix — and `turnsLeft` above is the
+  // unhedged fact for anything that wants to decide differently.
   survivesCharge(pi, slot, turnsNeeded) {
     if (turnsNeeded <= 0 || slot !== this.E.state.players[pi].active) return 1;
-    const threat = this.incomingThreat(pi);
-    if (threat <= 0) return 1;
-    const turnsLeft = Math.ceil(this.remainingHP(slot) / threat);
-    return Math.min(1, turnsLeft / turnsNeeded);
+    const left = this.turnsLeft(pi, slot);
+    if (left === Infinity) return 1;
+    return Math.min(1, (left + 1) / turnsNeeded);
   }
 
   // Best printed damage this slot could actually pay for right now, ignoring
@@ -9960,7 +10035,12 @@ class AI {
             // Pokemon; the PLAN does not, because the attacker it was built
             // around is the thing about to die. Priced back at the old flat 6,
             // which is what this branch used to pay unconditionally.
-            s += this.incomingThreat(pi) >= this.remainingHP(me.active) ? 6 : 0.2;
+            // "No later turn to hold it for" is `turnsLeft` at zero, and this used to
+            // say `incomingThreat >= remainingHP` inline. Identical arithmetic —
+            // `hp <= threat` and `ceil(hp/threat) - 1 === 0` are the same
+            // condition — but written once, in the place that owns it, instead of
+            // a fourth private copy of the idea.
+            s += this.turnsLeft(pi, me.active) === 0 ? 6 : 0.2;
           }
           break;
         }
