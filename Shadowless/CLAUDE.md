@@ -392,7 +392,8 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   if you disagree, because it is one line. *[Everything, with the three-column comparison
   →](PACKS.md)*
 - **Job 15c** - Document pass, AI validation, grab bag.
-- **Job 15d** - AI validation, grab bag.
+- **Job 15d** - Test suite revamp.
+- **Job 15e** - AI validation, grab bag.
 - **Job 16** - Card additions and logic for gym1.
 - **Job 17+** - Additional packs.
 
