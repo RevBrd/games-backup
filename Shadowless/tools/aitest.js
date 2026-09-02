@@ -26,6 +26,7 @@
 const { CARD_DB, DECKS, OPPONENT_DECKS } = require('../src/cards.js');
 const { EFFECTS } = require('../src/effects.js');
 const { Engine } = require('../src/engine.js');
+const { owedBy } = require('./lib/owed.js');
 require('../src/ai.js');
 
 const N = parseInt(process.argv[2], 10) || 6;
@@ -289,8 +290,10 @@ function playGame(deckA, deckB, seed, st) {
   const prizesAtStart = E.state.players[1].prizes.length;
   while (E.state.winner === null && acts++ < 8000) {
     const s = E.state;
-    const p = s.pendingSwitch !== null ? s.pendingSwitch
-      : (s.pendingPromote === null || s.pendingPromote === undefined) ? s.active : s.pendingPromote;
+    // owedBy: all four owed choices, one definition. This read only
+    // pendingSwitch and pendingPromote, so an unhandled pendingAsk aborted
+    // ~1.3% of ladder games early. See tools/lib/owed.js. Job 15d.
+    const p = owedBy(s);
     const action = E.aiChoose(p, MODE);
     if (!action) break;
     // Measure seat 0 only. Both seats play identically, so counting one keeps

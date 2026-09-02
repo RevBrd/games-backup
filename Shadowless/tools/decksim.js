@@ -30,6 +30,7 @@ const { CARD_DB } = require('../src/cards.js');
 const { Engine } = require('../src/engine.js');
 const { EFFECTS } = require('../src/effects.js');
 const { AI } = require('../src/ai.js');
+const { owedBy } = require('./lib/owed.js');
 
 const N  = parseInt(process.argv[2], 10) || 45;
 const PR = parseInt(process.argv[3], 10) || 6;
@@ -94,8 +95,10 @@ for (let i = 0; i < keys.length; i++) for (let j = 0; j < keys.length; j++) {
     let a = 0, landed = 0;
     while (E.state.winner === null && a++ < 8000) {
       const st = E.state;
-      const p = st.pendingSwitch !== null ? st.pendingSwitch
-        : (st.pendingPromote == null) ? st.active : st.pendingPromote;
+      // owedBy: all four owed choices, one definition. This read only
+      // pendingSwitch and pendingPromote, so an unhandled pendingAsk aborted
+      // ~1.3% of ladder games early. See tools/lib/owed.js. Job 15d.
+      const p = owedBy(st);
       if (!landed && eng && E.allSlots(seat).some(sl =>
           CARD_DB[sl.stack[sl.stack.length - 1].id].name === eng)) landed = st.turn;
       const act = bots[p].choose(p); if (!act) break;

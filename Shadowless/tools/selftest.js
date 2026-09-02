@@ -12,6 +12,7 @@
 const { CARD_DB, DECKS } = require('../src/cards.js');
 const { EFFECTS } = require('../src/effects.js');
 const { Engine } = require('../src/engine.js');
+const { owedBy } = require('./lib/owed.js');
 require('../src/ai.js');
 require('../src/deckgen.js');
 
@@ -28,8 +29,10 @@ function playGame(deckA, deckB, seed, modeA = 'expert', modeB = 'expert') {
     // just whoever's turn it is. The theme decks contain no Whirlwind today, but
     // relying on that would make this loop quietly wrong the moment they do.
     const st = E.state;
-    const p = st.pendingSwitch !== null ? st.pendingSwitch
-      : (st.pendingPromote === null || st.pendingPromote === undefined) ? st.active : st.pendingPromote;
+    // owedBy: all four owed choices, one definition. This read only
+    // pendingSwitch and pendingPromote, so an unhandled pendingAsk aborted
+    // ~1.3% of ladder games early. See tools/lib/owed.js. Job 15d.
+    const p = owedBy(st);
     const action = E.aiChoose(p, p === 0 ? modeA : modeB);
     if (!action) return { stalled: true, turn: E.state.turn, acts, E };
     E.act(p, action);

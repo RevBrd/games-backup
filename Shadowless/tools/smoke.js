@@ -9,6 +9,12 @@
 // documented form is unchanged.
 const fs = require('fs');
 const nodePath = require('path');
+// The one answer to "who is the engine waiting for". This file had EIGHT copies
+// of that expression and THREE different versions of it, the worst seven of them
+// missing branches that the best one documents in a comment two hundred lines
+// away. See tools/lib/owed.js for the measurement that settled it. Job 15d.
+// It requires nothing, so this suite still has no dependency on src/.
+const { owedBy, owedShape } = require('./lib/owed.js');
 const path = process.argv[2] || nodePath.join(__dirname, '..', 'shadowless.html');
 if (!fs.existsSync(path)) {
   console.error(`\n  No built artifact at ${path}`);
@@ -68,6 +74,45 @@ global.localStorage = {
   setItem: (k, v) => { store[k] = String(v); },
   removeItem: k => { delete store[k]; },
 };
+// ---- seeded randomness ------------------------------------------------------
+// THIS SUITE WAS NOT DETERMINISTIC AND EVERYTHING ELSE ABOUT IT ASSUMED IT WAS.
+// Found 2 Sep 2026, Job 15d, after a run came back 158/3 and twenty-two
+// consecutive re-runs came back green — which is the worst possible way to meet
+// a flake, because the natural response is to disbelieve the failure.
+//
+// `ui.js` reaches for `Math.random()` in exactly two places: the match seed when
+// `UI.seedDraft` is empty, and the pack seed in `openNextPack`, which has no
+// seed knob at all. A scan of every match and pack entry point in this file
+// found 56 of 59 properly pinned and three not — the FIRST `startMatch()` in the
+// suite, and both pack opens.
+//
+// The first one is the expensive one. Seven tests hang off that single match,
+// including one that plays it to completion and throws unless it finishes inside
+// 800 steps. An unlucky seed fails that, and the two that read its result fail
+// behind it: three failures, from one unpinned integer.
+//
+// Somebody already met the pack half of this and weakened the assertion rather
+// than the randomness — see 'the Rare is shown last', which says outright that
+// it opens on real Math.random(). That was a reasonable local fix and it left
+// the cause in place.
+//
+// So the whole harness runs on a seeded PRNG now. `--seed N` sweeps it, and the
+// seed is printed, so a red run is reproducible instead of being an anecdote.
+// This is packtest.js's rule, which has never flaked: fix the seed, and size the
+// assertions to catch a real mistake rather than to absorb noise.
+const SEED = (() => {
+  const i = process.argv.indexOf('--seed');
+  return i > -1 ? (parseInt(process.argv[i + 1], 10) | 0) : 20260902;
+})();
+// mulberry32, inline rather than required from src/ — this suite tests the BUILT
+// artifact and must not develop a dependency on the sources it is a check on.
+Math.random = (a => () => {
+  a |= 0; a = (a + 0x6D2B79F5) | 0;
+  let t = Math.imul(a ^ (a >>> 15), 1 | a);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+})(SEED);
+
 // controllable fake clock: nothing fires until we drain it
 let timers = [], tid = 1;
 global.setTimeout = (fn, ms) => { const id = tid++; timers.push({ id, fn, ms }); return id; };
@@ -130,6 +175,17 @@ T('deck-select screen renders every deck as a choice', () => {
   return created > 0 && Object.keys(DECKS).length === 4;
 });
 T('starting a match moves to setup', () => {
+  // PIN IT. This was the only startMatch() in the file with no seed set, and
+  // seven tests below read the match it creates — including one that plays it
+  // out and throws unless it finishes inside 800 steps. Belt and braces with the
+  // seeded Math.random above: this says which match these tests are about, where
+  // the PRNG only says that it is the same one every run.
+  //
+  // DERIVED FROM --seed RATHER THAN A LITERAL, so that sweeping the flag sweeps
+  // THIS match. Pinning it to a constant would have made the suite deterministic
+  // and simultaneously made the 800-step guard below untestable at any position
+  // but one — which is how a cap gets to be too tight without anyone finding out.
+  UI.seedDraft = String(SEED);
   startMatch();
   return UI.screen === 'setup' && !!UI.E && UI.E.state.phase === 'setup';
 });
@@ -153,13 +209,18 @@ T('renders every state of a full game without throwing (both sides AI)', () => {
   let guard = 0;
   while (UI.E.state.phase !== 'over' && guard++ < 800) {
     const s = UI.E.state;
-    const pi = s.pendingPromote !== null ? s.pendingPromote : s.active;
+    const pi = owedBy(s);
     const a = UI.E.aiChoose(pi, 'greedy');
-    if (!a) break;
+    // SAY WHICH OF THE TWO IT WAS. This used to `break` and fall into the
+    // message below, so a null from aiChoose — the engine waiting on an owed
+    // choice nobody dispatched — was reported as "did not finish in 800 steps",
+    // which sends the reader to look at the step cap. The cap was never the
+    // problem; see tools/lib/owed.js. Job 15d.
+    if (!a) throw new Error(`aiChoose returned null at step ${guard}, asking p${pi} — owed: ${owedShape(UI.E.state)}`);
     UI.E.act(pi, a);
     render();
   }
-  if (UI.E.state.phase !== 'over') throw new Error('game did not finish in 800 steps');
+  if (UI.E.state.phase !== 'over') throw new Error(`game did not finish in 800 steps (reached turn ${UI.E.state.turn})`);
   return true;
 });
 T('game-over overlay renders', () => { render(); return UI.E.state.winner !== null; });
@@ -172,7 +233,7 @@ T('50 full games render at every step, all three tabs', () => {
     let guard = 0;
     while (UI.E.state.phase !== 'over' && guard++ < 800) {
       const s = UI.E.state;
-      const pi = s.pendingPromote !== null ? s.pendingPromote : s.active;
+      const pi = owedBy(s);
       const a = UI.E.aiChoose(pi, seed % 2 ? 'greedy' : 'random');
       if (!a) break;
       UI.E.act(pi, a);
@@ -200,7 +261,7 @@ T('log renders newest-first', () => {
   UI.seedDraft = '3'; UI.flipDelay = 0; startMatch(); UI.E.setupAuto(0);
   for (let i = 0; i < 6; i++) {
     const s = UI.E.state;
-    const pi = s.pendingPromote !== null ? s.pendingPromote : s.active;
+    const pi = owedBy(s);
     const a = UI.E.aiChoose(pi, 'greedy'); if (!a) break;
     UI.E.act(pi, a);
   }
@@ -237,7 +298,7 @@ T('both sides are playable to completion', () => {
     let guard = 0;
     while (UI.E.state.phase !== 'over' && guard++ < 800) {
       const s = UI.E.state;
-      const pi = s.pendingPromote !== null ? s.pendingPromote : s.active;
+      const pi = owedBy(s);
       const a = UI.E.aiChoose(pi, 'greedy'); if (!a) break;
       UI.E.act(pi, a); render();
     }
@@ -490,7 +551,7 @@ T('full game via dispatch + clock completes with flips presented', () => {
   while (UI.E.state.phase !== 'over' && guard++ < 4000) {
     if (presenting()) { presented++; drain(6); continue; }
     const s = UI.E.state;
-    const pi = s.pendingPromote !== null ? s.pendingPromote : s.active;
+    const pi = owedBy(s);
     const a = UI.E.aiChoose(pi, 'random');
     if (!a) break;
     dispatch(pi, a);
@@ -529,7 +590,7 @@ T('every deck pairing plays to completion', () => {
     let guard = 0;
     while (UI.E.state.phase !== 'over' && guard++ < 900) {
       const s = UI.E.state;
-      const pi = s.pendingPromote !== null ? s.pendingPromote : s.active;
+      const pi = owedBy(s);
       const act = UI.E.aiChoose(pi, 'greedy'); if (!act) break;
       dispatch(pi, act); render();
     }
@@ -727,7 +788,7 @@ T('every AI difficulty plays a full game through the bundle', () => {
     let guard = 0;
     while (UI.E.state.phase !== 'over' && guard++ < 1200) {
       const s = UI.E.state;
-      const pi = s.pendingPromote !== null ? s.pendingPromote : s.active;
+      const pi = owedBy(s);
       const a = UI.E.aiChoose(pi, mode);
       if (!a) break;
       dispatch(pi, a); render();
@@ -958,23 +1019,19 @@ T('the Sandbox deck is selectable and plays to completion', () => {
   let guard = 0;
   while (UI.E.state.phase !== 'over' && guard++ < 1200) {
     const s = UI.E.state;
-    // Whirlwind asks the DEFENDER to choose, so pendingSwitch owes an action
-    // just as pendingPromote does. This loop ignored it, which was harmless
-    // only while no card in the Sandbox pool had Whirlwind — Jungle and Fossil
-    // brought four, and the game sat waiting for an answer nobody gave.
-    // ...AND IT HAPPENED AGAIN, 19 Aug 2026, with Challenge! — which asks the
-    // opponent a question mid-turn and owes an action the same way. The note
-    // above was written about Whirlwind and generalises exactly:
+    // This loop is where the rule below was learned, twice, the hard way —
+    // Whirlwind's pendingSwitch, then Challenge!'s pendingAsk:
     //
     //   ANY state that owes an action by somebody other than s.active has to be
-    //   listed here, or the loop asks the wrong player, gets nothing, and breaks
+    //   dispatched, or the loop asks the wrong player, gets nothing, and breaks
     //   out of a game that was merely waiting.
     //
-    // Three now. A fourth will arrive with Gym, where shapecount finds sixteen
-    // more cards that stop to ask the opponent something.
-    const pi = s.pendingAsk ? s.pendingAsk.player
-      : s.pendingSwitch !== null && s.pendingSwitch !== undefined ? s.pendingSwitch
-      : s.pendingPromote !== null ? s.pendingPromote : s.active;
+    // IT WAS WRITTEN HERE AND NEVER REACHED THE SEVEN OTHER LOOPS IN THIS FILE,
+    // which is why the rule now lives in tools/lib/owed.js as code rather than
+    // here as advice. A fourth case will arrive with Gym, where shapecount finds
+    // sixteen more cards that stop to ask the opponent something — and when it
+    // does, it is one branch in one file rather than fourteen.
+    const pi = owedBy(s);
     const a = UI.E.aiChoose(pi, 'expert');
     if (!a) break;
     dispatch(pi, a); render();

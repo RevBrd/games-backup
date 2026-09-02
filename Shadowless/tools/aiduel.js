@@ -27,6 +27,7 @@ const { execSync } = require('child_process');
 const { CARD_DB, DECKS, OPPONENT_DECKS } = require('../src/cards.js');
 const { EFFECTS } = require('../src/effects.js');
 const { Engine } = require('../src/engine.js');
+const { owedBy } = require('./lib/owed.js');
 
 const N = parseInt(process.argv[2], 10) || 8;
 // Positional, but flags may sit anywhere: `aiduel 10 --gbc` used to send `--gbc`
@@ -85,12 +86,16 @@ const ROOT = path.join(__dirname, '..');
 // (240 cards), none of them Kangaskhan, Chansey, Snorlax or Electabuzz. So the
 // stickiness change, which is entirely about how those are played, measured at
 // 51.0% +/- 5.0 — and that number was not "no effect", it was "the harness
-// never dealt the situation". The 18 ladder decks hold 112, and they are what
-// the player actually faces now.
+// never dealt the situation". The ladder decks held 112 at 18 decks, and they
+// are what the player actually faces now.
 //
-// Read the per-deck table with even more care here: 18 unbalanced decks across
-// three sets are further from each other than the four theme decks are, so a
-// row means very little without --control beside it.
+// THAT "18" IS FROZEN ON PURPOSE — it dates the measurement rather than
+// describing the pool, which has since tripled. The banner below prints the live
+// count, so nothing here needs to be kept up to date. Job 15d, 2 Sep 2026.
+//
+// Read the per-deck table with even more care here: the ladder decks are
+// unbalanced across four sets and are further from each other than the four
+// theme decks are, so a row means very little without --control beside it.
 const GBC = process.argv.includes('--gbc');
 const POOL = GBC ? OPPONENT_DECKS : DECKS;
 
@@ -102,8 +107,17 @@ fs.writeFileSync(tmp, baseSrc);
 const NewAI = require('../src/ai.js').AI;
 const OldAI = require(tmp).AI;
 
-console.log(`\nAI duel — working tree vs ${REF}\n`);
-if (baseSrc === fs.readFileSync(path.join(ROOT, 'src/ai.js'), 'utf8')) {
+console.log(`\nAI duel — working tree vs ${REF}`);
+console.log(`  pool ${Object.keys(POOL).length} decks${GBC ? ' (ladder)' : ' (theme)'}, ${N} seeds a matchup\n`);
+// NORMALISE THE LINE ENDINGS BEFORE COMPARING. `git show` hands back the blob as
+// stored; the working copy has whatever the checkout filter put there, and this
+// repo checks out CRLF from LF blobs. abtest.js hit exactly this on 22 Aug 2026
+// — its identity NOTE could never print — fixed it there, and left the identical
+// raw compare standing here. Latent rather than live: ai.js happens to be LF on
+// both sides today, so this line works and would stop working silently the next
+// time a checkout put CRLF on disk. Job 15d, 2 Sep 2026.
+const norm = s => s.replace(/\r\n/g, '\n');
+if (norm(baseSrc) === norm(fs.readFileSync(path.join(ROOT, 'src/ai.js'), 'utf8'))) {
   console.log('  NOTE: the two are identical. Expect ~50%.\n');
 }
 
@@ -121,8 +135,10 @@ function playGame(deckA, deckB, seed, newSeat) {
   let acts = 0;
   while (E.state.winner === null && acts++ < 8000) {
     const s = E.state;
-    const p = s.pendingSwitch !== null ? s.pendingSwitch
-      : (s.pendingPromote === null || s.pendingPromote === undefined) ? s.active : s.pendingPromote;
+    // owedBy: all four owed choices, one definition. This read only
+    // pendingSwitch and pendingPromote, so an unhandled pendingAsk aborted
+    // ~1.3% of ladder games early. See tools/lib/owed.js. Job 15d.
+    const p = owedBy(s);
     const action = bots[p].choose(p);
     if (!action) return null;
     E.act(p, action);
@@ -157,8 +173,10 @@ if (process.argv.includes('--checkpin')) {
       let acts = 0;
       while (E.state.winner === null && acts++ < 8000) {
         const s = E.state;
-        const p = s.pendingSwitch !== null ? s.pendingSwitch
-          : (s.pendingPromote === null || s.pendingPromote === undefined) ? s.active : s.pendingPromote;
+        // owedBy: all four owed choices, one definition. This read only
+        // pendingSwitch and pendingPromote, so an unhandled pendingAsk aborted
+        // ~1.3% of ladder games early. See tools/lib/owed.js. Job 15d.
+        const p = owedBy(s);
         const action = bots[p].choose(p);
         if (!action) break;
         E.act(p, action);
