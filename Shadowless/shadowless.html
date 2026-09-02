@@ -3352,7 +3352,7 @@ const OPPONENT_DECKS = {
     [1, "base1-82"],  // Full Heal
   ]},
   "c1:c1_fire": { name: "C1 Fire", cover: "base3-12", list: [
-    [24, "base1-97"],  // Fighting Energy
+    [24, "base1-98"],  // Fire Energy
     [3, "base3-39"],  // Magmar
     [1, "base3-12"],  // Moltres
     [3, "base2-51"],  // Eevee
@@ -17467,14 +17467,34 @@ const PACK_ODDS = {
   intrusion: 1 / 100,      // a promo or Southern Islands card, ADDED to the pack
 
   // Per-card rolls. reverseHolo is offered only on non-Rare slots — the Rare
-  // slot already has its own holo axis. The other three roll against every
-  // slot. All four fire less often per pack than PACKS.md's older numbers say,
-  // now that there are 8 slots instead of 11 — see PACKS.md's open items for
-  // the rebalance this owes them.
-  reverseHolo: 1 / 100,
-  shiny: 1 / 440,
-  shadowless: 1 / 2200,
-  misprint: 1 / 11000,
+  // slot already has its own holo axis. The other three roll against every slot.
+  //
+  // RETUNED 1 SEP 2026, JOB 15b, TO RESTORE THE PRE-SHRINK PACING. These four
+  // roll per SLOT, so the 25 Aug shrink from eleven cards to eight thinned all
+  // four without anybody touching a value — Reverse Holo from 1-in-9.9 packs to
+  // 1-in-14.3, Shiny 39.3 to 55.5, Shadowless 200 to 264, Misprint 897 to 1183.
+  // The retune was deferred on the day so that it would not be tangled up with
+  // the rarity-jump mechanic that shipped alongside the shrink.
+  //
+  // Each is scaled by the slots it LOST: Reverse Holo by 10/7 (it rolls on the
+  // non-Rare slots, 10 before and 7 now) and the other three by 11/8, then
+  // rounded to a clean denominator. Do not eyeball these against the old ones —
+  // a per-slot odd is not a per-pack rate, and the whole reason this drifted is
+  // that the two look alike written down.
+  //
+  //   reverseHolo  1/100 -> 1/70      ~1 pack in 10.5, was 10.5 before the shrink
+  //   shiny        1/440 -> 1/320     ~1 in 40.5
+  //   shadowless   1/2200 -> 1/1600   ~1 in 200
+  //   misprint     1/11000 -> 1/8000  ~1 in 1000
+  //
+  // The ~5x ladder between the per-card tiers comes out TIGHTER than it was
+  // (4.57x / 5.0x / 5.0x against the old 3.89 / 4.76 / 4.48), which is a bonus
+  // rather than the goal — extend the table with the same 5x if a fifth is ever
+  // wanted. packtest.js DERIVES its targets from these, so it follows.
+  reverseHolo: 1 / 70,
+  shiny: 1 / 320,
+  shadowless: 1 / 1600,
+  misprint: 1 / 8000,
 
   // BONUS RARE-TIER JUMP — 25 Aug 2026, Trevor's third tuning pass. A small
   // independent chance for a lesser slot to resolve as something better
@@ -17488,6 +17508,21 @@ const PACK_ODDS = {
   // (6.79%), missing the explicit goal by a hair. This clears it with a
   // little room (~6.96%). Flagged rather than left quiet; revert to 0.03 if
   // the near-tie was actually fine.
+  //
+  // THAT GOAL IS RETIRED AS OF 1 SEP 2026 AND THE VALUES ARE KEPT ANYWAY.
+  // Restoring Reverse Holo above moves it from ~6.8% of packs to ~9.5%, which
+  // puts it ABOVE the bonus-rare-tier rate and inverts an ordering PACKS.md said
+  // to preserve. The inversion is the right way round and the rule was the thing
+  // that was wrong: it was written while Reverse Holo was 44% below its own
+  // design intent, so it was anchored to a number that was itself broken. And a
+  // Reverse Holo is cosmetic while a bonus Rare is real value — the more valuable
+  // surprise being the rarer one is what you would choose if you were choosing.
+  //
+  // The alternative was to raise these to chase the restored Reverse Holo, which
+  // needs jumpUncommonToRare at ~0.054 and makes Rares about 55% more common from
+  // jumps alone. That accelerates set completion, which PACKS.md's pacing section
+  // says is already at a good length. **Not a tuning detail — say so if you
+  // disagree**, because it is one line either way.
   jumpUncommonToRare: 0.033,
   jumpCommonToUncommon: 0.024,
   jumpCommonToRare: 0.001,
@@ -17497,18 +17532,37 @@ const PACK_ODDS = {
 // The Challenge pack is supposed to — PACKS.md: "slightly richer rarity odds,
 // less chance of a specific card, higher chance of a good one."
 //
-// EMPTY ON PURPOSE, Job 15a. Trevor deferred every odds decision to Job 15b,
-// which is reopening the whole per-slot table anyway: the 25 Aug 2026 shrink from
-// eleven cards to eight thinned four cosmetic axes without anyone touching a
-// value, and nobody has retuned them. Picking a fifth number now would mean
-// measuring the Challenge pack against a table that is about to move underneath
-// it. So the hook is wired, tested and inert, and 15b fills in one object.
+// FILLED IN BY JOB 15b, 1 Sep 2026 — Trevor's proposal: "maybe we can increase
+// the jump rate by 3-4x or something". Taken at 4x, and taken as the ONLY lever.
 //
-// NOTE WHAT RICHER ODDS DRAG WITH THEM, because nobody would choose it and it
-// arrives anyway: the cosmetic rolls compound with the rarity ones, so a Challenge
-// pack also becomes the best place in the game to pull a Shadowless or a 1st
-// Edition. PACKS.md flags that as a decision rather than a side effect.
-const PACK_ODDS_BY_KIND = { challenge1: {} };
+// WHY THE JUMP AND NOTHING ELSE. PACKS.md's brief for this pack is "slightly
+// richer rarity odds, less chance of a specific card, higher chance of a good
+// one", and the jump is the mechanism that already means *sometimes you just get
+// more* — so a Challenge pack is an ordinary pack with the existing surprise
+// turned up, rather than a second system nobody has to learn. One number to
+// revisit, and the pack keeps the standard shape, the standard holo split on its
+// guaranteed Rare, and every cosmetic axis unchanged.
+//
+// AT 4x: a bonus Rare-tier card in 26% of Challenge packs against 7% of ordinary
+// ones, and 1.28 Rare-tier cards per pack against 1.04. Roughly one Challenge
+// pack in four has a second Rare in it.
+//
+// AND IT SIDESTEPS THE THING PACKS.md WARNED ABOUT, which is worth knowing before
+// anybody swaps the lever. That file flags that richer rarity odds compound with
+// the cosmetic rolls, so a Challenge pack would become the best place in the game
+// to pull a Shadowless — arriving as a side effect nobody chose. **The jump does
+// not do that.** Shiny, Shadowless and Misprint roll per slot regardless of what
+// tier the card resolved to, so they are untouched; and a jumped card is Rare-tier,
+// which makes it INELIGIBLE for Reverse Holo, so a Challenge pack is very slightly
+// *worse* for Reverse Holo than an ordinary one. Trevor's instinct picked the one
+// lever with no cosmetic spillover. A holo-rate bump would not have that property.
+const PACK_ODDS_BY_KIND = {
+  challenge1: {
+    jumpUncommonToRare: 0.132,      // 4x
+    jumpCommonToUncommon: 0.096,    // 4x
+    jumpCommonToRare: 0.004,        // 4x
+  },
+};
 
 // PACKS.md wants 2-3 glitch flavours so a Misprint sighting reads as a fresh
 // joke rather than "oh, the misprint effect again". They are separate variant

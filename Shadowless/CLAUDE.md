@@ -379,10 +379,18 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   he occupied was kept and re-tested against a fixture. Four `challenge1`-gated promos turned on with
   no code at all. *[The bracket →](OPPONENTS.md)* · *[the machinery and `bossAfter: 'all'`
   →](PROGRESSION.md)* · *[the pack →](PACKS.md)* · *[what it measured →](ROSTERS.md)*
-- **Job 15b** - Rebalancing variant odds to match new pack sizes. **Three items, not one, and they are
-  bundled on purpose** — the four per-slot cosmetic axes the 8-card shrink thinned, Base Set's
-  bonus-Rare-tier near-tie, and what "richer" means for a Challenge pack. All three in
-  [PACKS.md](PACKS.md)'s Still open. The Challenge hook is wired and inert: `PACK_ODDS_BY_KIND`.
+- **Job 15b is done.** All three bundled items closed. **The four per-slot cosmetic axes are back at
+  their pre-shrink pacing** — each scaled by the slots it lost, Reverse Holo by 10/7 and the rest by
+  11/8, measured at 1-in-10.0 / 40.5 / 194 / 952 against targets of 10.4 / 40.4 / 200 / 1000. **Base
+  Set's bonus-Rare-tier "near-tie" dissolved rather than being fixed** — the comparison it was made
+  against moved, and the residual asymmetry is 0.2 points. **A Challenge pack rolls the rarity jump at
+  4x and changes nothing else**, Trevor's proposal: a bonus Rare-tier card in 25.9% of packs against
+  6.9%, and 1.281 Rare-tier cards per pack against 1.070. That lever turns out to be the only
+  candidate with **no cosmetic spillover** — Shadowless came out at 201 against 199 in 40,000 packs a
+  side, and Reverse Holo went *down*, because a jumped card is Rare-tier and so ineligible for it.
+  **One ordering rule was retired rather than preserved** and the reasoning is in `PACK_ODDS`; say so
+  if you disagree, because it is one line. *[Everything, with the three-column comparison
+  →](PACKS.md)*
 - **Job 15c** - Document pass, AI validation, grab bag.
 - **Job 15d** - AI validation, grab bag.
 - **Job 16** - Card additions and logic for gym1.

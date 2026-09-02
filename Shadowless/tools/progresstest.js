@@ -166,6 +166,69 @@ eq(authored, 46, 'the five brackets name 46 authored opponents — 4 GBC Grand M
   '8 theme (4 Base + 2 Jungle + 2 Team Rocket), and Trevor 8 + 5 + 6 + 8 + 7');
 ok(illegal.length === 0, `every authored opponent fields a legal 60-card deck${illegal.length ? '\n        ' + illegal.join('\n        ') : ''}`);
 
+// ---------------------------------------------------------------------------
+// CAN A DECK PAY FOR ITS OWN ATTACKS? — added 1 Sep 2026, and it exists because
+// nothing else could have found what it found.
+//
+// `validateDeck` passed `c1_fire` without a murmur, and correctly: 60 cards, the
+// 4-copy rule respected, every card implemented. It ran 24 FIGHTING Energy behind
+// an all-Fire roster, because the workbook's Energy row said "F Energy" against
+// base1-97 and in this era's shorthand F is Fighting while R is Fire. **A deck of
+// the wrong Energy is a perfectly legal deck.** Twelve of its twenty-one Pokemon
+// could not pay for a single attack; it measured 20.2% in decksim, the weakest
+// deck ever recorded, and TREVOR FOUND IT BY PLAYING IT rather than any of that.
+//
+// THE UNIT IS THE CARD, NOT THE ATTACK, and the sharpening matters. A Pokemon
+// with one dead attack and one live one is an ordinary design choice — Team
+// Rocket's Alakazam deck plays a Water Psyduck for its [P] Dizziness and never
+// intends to fire Water Gun. A card with NO payable attack is a card doing
+// nothing. The first version flagged both and would have been switched off.
+//
+// TWO KNOWN EXCEPTIONS, BOTH GBC PLACEHOLDERS, both listed rather than silenced.
+// A new name appearing here is a real finding.
+{
+  const LETTER = { 'Fighting Energy': 'F', 'Fire Energy': 'R', 'Grass Energy': 'G',
+                   'Lightning Energy': 'L', 'Psychic Energy': 'P', 'Water Energy': 'W' };
+  const strandedIn = list => {
+    const pool = {};
+    let rainbow = false;
+    for (const [q, id] of list) {
+      const c = CARD_DB[id];
+      if (!c || c.kind !== 'energy') continue;
+      if (c.cls === 'Basic') pool[LETTER[c.name]] = (pool[LETTER[c.name]] || 0) + q;
+      else if (/Rainbow/.test(c.name)) rainbow = true;    // pays any colour
+    }
+    const payable = a => [...(a.cost || '')].every(ch => ch === 'C' || pool[ch] || rainbow);
+    let dead = 0;
+    for (const [q, id] of list) {
+      const c = CARD_DB[id];
+      if (!c || c.kind !== 'pokemon' || !(c.attacks || []).length) continue;
+      if (!c.attacks.some(payable)) dead += q;
+    }
+    return dead;
+  };
+
+  // Faithful transcriptions of GBC decks, both holding a small Fire or Water line
+  // with no Energy for it. `rod_legendary_dragonite` is live on Fossil's stand-in
+  // intro (2 dead Charizard); `ronald_legendary` is fielded by nobody since Ronald
+  // came off the ladder. Reported to Trevor 1 Sep 2026 and left alone — they are
+  // placeholders queued for replacement, and "correcting" a transcription of
+  // somebody else's bad deck is a different decision from fixing ours.
+  const KNOWN = { 'gbc:rod_legendary_dragonite': 2, 'gbc:ronald_legendary': 2 };
+
+  const bad = [];
+  for (const k of Object.keys(OPPONENT_DECKS)) {
+    const dead = strandedIn(OPPONENT_DECKS[k].list);
+    if (dead && dead !== KNOWN[k]) bad.push(`${k}: ${dead} card(s)`);
+  }
+  for (const k of Object.keys(DECKS)) {
+    const dead = strandedIn(DECKS[k].list);
+    if (dead) bad.push(`theme:${k}: ${dead} card(s)`);
+  }
+  ok(bad.length === 0,
+    `no deck fields a Pokemon it cannot pay a single attack for${bad.length ? '\n        ' + bad.join('\n        ') : ''}`);
+}
+
 // Nothing in a deck FILE is stranded. A deck that resolves but that no rung fields is
 // invisible: it passes every other check in here and no player ever meets it, which is
 // how data sits unwired for a week. Asserted per source file rather than once.

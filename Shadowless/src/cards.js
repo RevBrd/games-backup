@@ -1506,7 +1506,7 @@ const OPPONENT_DECKS = {
     [1, "base1-82"],  // Full Heal
   ]},
   "c1:c1_fire": { name: "C1 Fire", cover: "base3-12", list: [
-    [24, "base1-97"],  // Fighting Energy
+    [24, "base1-98"],  // Fire Energy
     [3, "base3-39"],  // Magmar
     [1, "base3-12"],  // Moltres
     [3, "base2-51"],  // Eevee

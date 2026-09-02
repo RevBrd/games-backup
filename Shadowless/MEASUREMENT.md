@@ -308,10 +308,21 @@ reasons, both structural rather than a matter of sample size:
   deck against all seven in an order they do not choose, and the design question is whether that deck
   survives the spread. `decksim` has no player, so it cannot ask.
 
-**Use it on a Challenge as an outlier screen, not as a ranking.** Challenge 1's spread was 58.8
-points — 20.2% to 79.0% — which is wide enough that the two ends are worth looking at whatever the
-wheel is doing, and the four decks in the middle are not usefully ordered. **The instrument a
-Challenge actually wants is a fixed player deck against all seven, and it does not exist.**
+**Use it on a Challenge as an outlier screen, not as a ranking**, and Challenge 1 is the case that
+proves the screen is worth running anyway. Its first run spread 58.8 points, 20.2% to 79.0%. The
+20.2% was **a data-entry error in the deck list** — 24 Fighting Energy behind an all-Fire roster —
+which Trevor found by going and playing the deck after reading the standings. Fixed, it is second at
+57.1% and the spread closes to 44.3.
+
+**So the screen worked twice over: it found something, and what it found was not the thing anybody
+would have guessed.** The section had called that deck a rebuild candidate. It needed one character.
+
+**Nothing in a round-robin is independent**, which is the other lesson and the more general one. One
+unplayable deck did not produce one wrong row; it produced seven, because every other deck's win rate
+included free wins against it. Re-run the whole field after any deck changes, never just the deck.
+
+**The instrument a Challenge actually wants is a fixed player deck against all seven, and it does not
+exist.**
 
 ### The benchmark deck — the only ground truth this project has for AI quality
 

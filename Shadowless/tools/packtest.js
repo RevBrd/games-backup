@@ -254,9 +254,22 @@ nearRate(jumpC2R / (N * eligibleCommon), P.PACK_ODDS.jumpCommonToRare, 15,
 // as a print rather than a `check` because whether that's an acceptable
 // Base-Set-is-already-the-exception outcome, or something to retune further,
 // is Trevor's call — the same way ENERGY_FLOOR itself was.
+//
+// THE GOAL IS RETIRED — 1 Sep 2026, Job 15b — AND THE PRINT IS KEPT. Restoring
+// Reverse Holo to its pre-shrink pacing moved it to ~9.5% of packs, above the
+// bonus-rare rate in EVERY set rather than only in base1, so "does it clear it"
+// is now uniformly no. That is the intended outcome and the reasoning is in
+// PACK_ODDS: the rule was anchored to a Reverse Holo rate that was itself 44%
+// below its design intent, and the rarer of the two surprises being the more
+// valuable one is the right way round.
+//
+// **What is worth watching is now the OTHER number**, and it is why this stayed:
+// base1's own bonus-rare rate against everyone else's. That gap is the real
+// asymmetry the floor creates, it is ~0.2 points (6.7% vs 6.9-7.0%), and it was
+// only ever alarming because it was being read against a moving target.
 const rhRate = tally.rh / N, bonusRareRate = bonusRarePacks / N;
 console.log(`  base1: bonus Rare-tier card ${(bonusRareRate * 100).toFixed(2)}% of packs ` +
-  `vs Reverse Holo ${(rhRate * 100).toFixed(2)}% — ${bonusRareRate > rhRate ? 'clears it' : 'DOES NOT clear it, floor-trimmed'}`);
+  `vs Reverse Holo ${(rhRate * 100).toFixed(2)}% — ordering retired 1 Sep 2026, see PACK_ODDS`);
 
 // The ladder PACKS.md asks to be preserved if these are ever retuned: each
 // tier roughly 5x the one below. Checked as a property of the table rather
@@ -634,13 +647,60 @@ head('The Challenge pack — a pack TYPE, not a set');
   check(kinds.rare > 0 && kinds.uncommon > 0 && kinds.common > 0,
     'all three tiers fill from the union', JSON.stringify(kinds));
 
-  // THE ODDS HOOK. Wired and inert as of Job 15a — see PACK_ODDS_BY_KIND. This
-  // asserts BOTH halves: that the table exists with a challenge1 row (so 15b has
-  // somewhere to put its numbers and cannot quietly not find it), and that the
-  // row is currently empty (so nobody thinks the tuning already happened).
+  // THE ODDS HOOK, filled in by Job 15b at 4x the standard jump — Trevor's
+  // proposal, and the only lever the Challenge pack pulls. Asserted as a
+  // MULTIPLE of the base table rather than as three literals, so a later retune
+  // of the base odds carries the Challenge pack with it instead of silently
+  // leaving it at whatever 4x used to mean.
   check(!!P.PACK_ODDS_BY_KIND.challenge1, 'the per-kind odds table carries a challenge1 row');
-  eq(Object.keys(P.PACK_ODDS_BY_KIND.challenge1).length, 0,
-    '...which is EMPTY — the Challenge pack’s richer odds are Job 15b’s, not shipped');
+  {
+    const c = P.PACK_ODDS_BY_KIND.challenge1;
+    const ratio = k => c[k] / P.PACK_ODDS[k];
+    for (const k of ['jumpUncommonToRare', 'jumpCommonToUncommon', 'jumpCommonToRare']) {
+      const r = ratio(k);
+      check(Math.abs(r - 4) < 0.05, `challenge1 ${k} is 4x the standard rate`, `${r.toFixed(2)}x`);
+    }
+    // THE POINT OF IT, measured rather than computed: a Challenge pack really
+    // does hand out more Rare-tier cards. Both halves matter — the rate has to
+    // move, and the pack must still be a normal pack.
+    let cRare = 0, cBonus = 0, nRare = 0, nBonus = 0;
+    const M = Math.min(N, 40000);
+    for (let i = 0; i < M; i++) {
+      const a = P.openPack(CARD_DB, 'challenge1', mulberry32(50000 + i), { pools });
+      const b = P.openPack(CARD_DB, 'base3', mulberry32(50000 + i));
+      const ra = a.cards.filter(x => x.slot === 'rare').length;
+      const rb = b.cards.filter(x => x.slot === 'rare').length;
+      cRare += ra; nRare += rb;
+      if (ra > 1) cBonus++;
+      if (rb > 1) nBonus++;
+    }
+    check(cBonus / M > 0.20 && cBonus / M < 0.32,
+      'a Challenge pack carries a bonus Rare-tier card in roughly a quarter of packs',
+      `${(cBonus / M * 100).toFixed(1)}% vs an ordinary pack's ${(nBonus / M * 100).toFixed(1)}%`);
+    check(cRare / M > nRare / M * 1.15,
+      '...and averages meaningfully more Rare-tier cards than an ordinary one',
+      `${(cRare / M).toFixed(3)} vs ${(nRare / M).toFixed(3)} per pack`);
+    // The spillover PACKS.md warned about, asserted as ABSENT. Cranking the jump
+    // cannot make a Challenge pack the best place to pull a Shadowless, because
+    // the cosmetic axes roll per slot regardless of tier — and Reverse Holo goes
+    // very slightly DOWN, since a jumped card is Rare-tier and therefore
+    // ineligible. If somebody swaps the lever for a holo bump, this goes red.
+    let cSl = 0, nSl = 0, cRh = 0, nRh = 0;
+    for (let i = 0; i < M; i++) {
+      const a = P.openPack(CARD_DB, 'challenge1', mulberry32(70000 + i), { pools });
+      const b = P.openPack(CARD_DB, 'base3', mulberry32(70000 + i));
+      if (a.cards.some(x => x.flags.includes('sl'))) cSl++;
+      if (b.cards.some(x => x.flags.includes('sl'))) nSl++;
+      if (a.cards.some(x => x.flags.includes('rh'))) cRh++;
+      if (b.cards.some(x => x.flags.includes('rh'))) nRh++;
+    }
+    check(Math.abs(cSl - nSl) <= Math.max(20, nSl * 0.25),
+      'richer jump odds do NOT make a Challenge pack a better place to pull a Shadowless',
+      `${cSl} vs ${nSl} in ${M}`);
+    check(cRh <= nRh * 1.02,
+      '...and Reverse Holo goes down rather than up, since a jumped card is Rare-tier',
+      `${cRh} vs ${nRh} in ${M}`);
+  }
   {
     // ...and that a row, once filled, actually reaches openPack. Proved against a
     // temporary override rather than trusting the Object.assign by eye: an odds

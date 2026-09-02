@@ -300,6 +300,59 @@ acting on before the bracket is played. Moltres is a wincon that demands an engi
 no Pokémon Power at all, and Fire's only favourable type matchup in a mono-type field is Grass, which
 is itself sixth. It is a candidate for a rebuild rather than a tune.
 
+### CORRECTION, same day: the Fire deck was running the wrong Energy
+
+**Everything above this heading is left exactly as it was measured**, per this file's rule, and it is
+all wrong about one deck. Trevor read the standings, went and played `c1_fire`, and diagnosed it in
+one sentence: *"I wrote F energy instead of R energy in the deck list."*
+
+**In this era's shorthand F is Fighting and R is Fire.** The workbook's Energy row read "F Energy"
+against id `base1-97`, which is Fighting Energy; Fire is `base1-98`. The label and the id agreed with
+each other and both disagreed with the deck. **Twelve of its twenty-one Pokémon could not pay for a
+single one of their attacks** — the entire Magmar, Moltres, Growlithe, Arcanine and Vulpix lines.
+
+Re-measured after the one-character fix, same command, same 45 seeds:
+
+| rank | deck | featureWeight | win% | was | centrepiece | lands |
+|---|---|---|---|---|---|---|
+| 1 | c1_water (Articuno) | 20 | **78.1%** | 79.0 | — | — |
+| 2 | c1_fire (Moltres) | 17.5 | **57.1%** | **20.2** | — | — |
+| 3 | c1_fighting (Aerodactyl) | 17.5 | 49.3% | 55.0 | — | — |
+| 4 | c1_colorless (Wigglytuff) | **21** | 48.1% | 56.0 | Dragonite | 76% |
+| 5 | c1_lightning (Zapdos) | 19.5 | 42.6% | 51.3 | — | — |
+| 6 | c1_psychic (Gengar) | 20 | 40.6% | 45.4 | Gengar | 81% |
+| 7 | c1_grass (Vileplume) | 16.5 | **33.8%** | 42.8 | Vileplume | 69% |
+
+**Fire went from last to second and the spread closed from 58.8 points to 44.3.** Every other deck's
+number moved too, downward, because they had all been beating up a deck that could not attack — which
+is the thing to take from this beyond the fix. **In a round-robin every standing is a function of
+every other deck**, so one broken entry does not produce one wrong row, it produces seven.
+
+**Three things this changed and one it did not.**
+
+- **The outlier screen worked, and it is the only reason anybody looked.** The original section said
+  20.2% was "the one number worth acting on before the bracket is played" and called Fire a rebuild
+  candidate. It was a data-entry error instead of a design problem, which is a better outcome than
+  the one predicted, and the prediction is what produced it.
+- **Water is now the standout on its own.** 78.1%, twenty-one points clear of second, in a field
+  where the next five sit inside nine points of each other. Whatever is happening there is not the
+  Fire deck's fault and has not been explained.
+- **The boss slipped to fourth.** Colorless was second at 56.0% and is now 48.1%, below the field
+  average. The featureWeight-versus-play disagreement noted above is therefore *wider* after the fix,
+  not narrower. Still not a reason to move the boss on one run, and still not something to let go
+  quiet.
+- **It did not change the confound below.** A mono-type round-robin still measures the type wheel and
+  still has no player in it.
+
+**No suite could have caught this and one now can.** `validateDeck` passed the deck without a murmur
+and was right to: 60 cards, 4-copy clean, every card implemented. **A deck of the wrong Energy is a
+perfectly legal deck.** `progresstest.js` now asserts that no deck fields a Pokémon it cannot pay a
+single attack for — the unit is the *card*, not the attack, because a Pokémon with one dead attack and
+one live one is an ordinary choice. Run across all 58 authored decks it finds two more, both small,
+both in GBC placeholder decks: `rod_legendary_dragonite` fields 2 stranded Charizard on Fossil's
+stand-in intro, and `ronald_legendary` 2 more in a deck nobody fields any more. Both are listed as
+known exceptions rather than silenced.
+
 ### The confound that makes this run weaker evidence than it looks
 
 **A mono-type round-robin measures the type wheel as much as it measures the decks**, and no other
@@ -347,3 +400,27 @@ is a fifth data point on an AI question that four rosters had already raised, ar
 built specifically to be hard. **Do not rebalance the Challenge decks off it.** The thing that would
 make this measurement mean something is the AI converting a T4 board, and that is
 [AI.md](AI.md)'s.
+
+#### Re-run after the Fire fix — and the bracket does order
+
+Same command, 20 seeds, 13 decks:
+
+| | mean win% | was | range |
+|---|---|---|---|
+| **challenge1** (7 decks) | **52.9%** | 50.3 | 39.7 – 75.0 |
+| **base3** (6 decks) | 46.4% | 49.5 | 32.3 – 60.8 |
+
+**Not a tie: 6.5 points, and the right way round.** A bracket the player reaches after clearing Fossil
+is harder than Fossil. The prediction written above — Challenge up ~3, Fossil down — held (+2.6 and
+−3.1), which is worth a line only because it confirms a round-robin behaves the way you expect when
+you take a free win out of it.
+
+**Everything the original run concluded about T4 CONVERSION survives, which is why re-running it was
+worth more than deleting it.** Fossil's two T3 decks still finish second and third, above five of the
+seven Challenge T4s; the Challenge boss finishes **eighth of thirteen** at 50.4% while assembling
+Dragonite 76% of the time; and Fossil's own T4 is tenth at 40.7% on 84% assembly. **The tier that
+assembles best still converts worst** — now on a fifth roster, and now with the confound removed.
+That is [AI.md](AI.md)'s, and it is the most durable thing five rosters have produced.
+
+**T3 is the strongest band in the merged field at 59.4% against T4's 51.3%**, which is what the
+three-roster run found and what Fossil's own section found. Four independent fields now say it.

@@ -121,16 +121,29 @@ should be able to happen, and should be funny when it does.
 |---|---|---|---|---|---|
 | Holo Rare | no | the Rare slot | 1/3 | — | — |
 | 1st Edition | yes | **whole pack** | 1/20 | ~20 | ~10 |
-| Reverse Holo | yes | each of the 7 Common/Uncommon slots | 1/100 | ~15 | ~7 |
+| Reverse Holo | yes | each of the 7 Common/Uncommon slots | **1/70** | ~10 | ~5 |
 | Promo/SI intrusion | yes | whole pack, **adds** a 9th card | 1/100 | ~100 | ~50 |
-| Shiny | yes | each of 8 slots | 1/440 | ~55 | ~28 |
-| Shadowless | yes | each of 8 slots | 1/2200 | ~275 | ~138 |
-| Misprint | yes | each of 8 slots | 1/11000 | ~1375 | ~688 |
+| Shiny | yes | each of 8 slots | **1/320** | ~40 | ~20 |
+| Shadowless | yes | each of 8 slots | **1/1600** | ~200 | ~100 |
+| Misprint | yes | each of 8 slots | **1/8000** | ~1000 | ~500 |
 
-**The "Packs to expect one" and "Wins @2/win" columns moved on 25 Aug 2026 when the pack shrank from
-11 cards to 8** — the four per-slot odds above did not change, but there are fewer slots to roll them
-against, so they all fire less often per pack than they used to. See "Still open" for whether that
-rebalances back.
+**The four per-slot odds were RETUNED on 1 Sep 2026 (Job 15b) and the pacing is back where it was
+before the pack shrank.** They roll per SLOT, so the 25 Aug drop from eleven cards to eight thinned
+all four without anybody touching a value — Reverse Holo from 1-in-9.9 packs to 1-in-14.3, Shiny 39.3
+to 55.5, Shadowless 200 to 264, Misprint 897 to 1183. Each is now scaled by the slots it lost:
+**Reverse Holo by 10/7** (it rolls on the non-Rare slots, ten before and seven now) and the other
+three **by 11/8**, rounded to a clean denominator.
+
+**Do not eyeball a per-slot odd against a per-pack rate.** They look alike written down, and that is
+exactly how this drifted unnoticed for a week — the table above carries both columns for that reason.
+
+Measured at 200,000 packs after the retune: **Reverse Holo 1-in-10.0, Shiny 1-in-40.5, Shadowless
+1-in-194, Misprint 1-in-952**, against design targets of 10.4 / 40.4 / 200 / 1000. The ~5x ladder came
+out *tighter* than before — 4.03x / 4.80x / 4.90x against the old 3.89 / 4.76 / 4.48 — which is a side
+effect of choosing round denominators rather than the goal. Extend at 5x if a fifth tier is wanted.
+
+**Set-completion pacing did not move**, because not one of these four is a rarity: still a median 156
+packs and ~78 wins for all of Base Set.
 
 Notes on the invented ones:
 
@@ -204,6 +217,20 @@ and its source being two lists that cannot see each other.
 promos are reachable from the very first pack. He is reconsidering the gate *order* against a
 cleared-based reading; that would change the values in that table and nothing else.
 
+**TREVOR WANTS THE GATES REMOVED, and it is queued rather than done** — 1 Sep 2026, raised after
+Challenge 1 shipped: *"I actually didn't realize the promo cards were gated until they were in a CPU
+deck. We're going to have to remove that gate for them at some point, though it doesn't have to be
+now."* The trigger is the asymmetry the Challenge decks created — **an authored opponent deck may name
+a promo freely and four of the seven do**, so the player now meets Pikachu GP and Eevee CH across the
+table while the gate says they cannot own one yet. Being shown a card you are barred from is a worse
+feeling than a drip you never noticed.
+
+**Do not act on this without asking what "remove" means**, because the paragraph admits two readings
+and they are different jobs: drop `PROMO_GATES` entirely so all 28 scripted promos are pullable from
+the first pack, or keep the mechanism and open only the gates for promos an opponent actually fields.
+**The mechanism itself is worth keeping either way** — `gym1`/`gym2` gate eleven promos against sets
+that do not exist, and that half is not the complaint.
+
 **Twenty-eight of the fifty-three promos carry a gate and seventeen resolve today.** The other
 eleven name `challenge1`, `challenge2`, `gym1` or `gym2` — brackets that do not exist — and they
 **fail closed**, which is the safe direction. Each turns on with no code change the day a ladder
@@ -212,12 +239,22 @@ bracket carries that key. The twenty-five promos with no gate at all are the uns
 effect script* as well as by gate, so CLAUDE.md's "no collecting a card you cannot play" holds for a
 set that is deliberately half-built.
 
-Verified at 200,000 packs against the 8-card pack (25 Aug 2026): holo 1-in-3.0, 1st Edition 1-in-20.1,
-Reverse Holo 1-in-14.3, Shiny 1-in-55.5, Shadowless 1-in-264.2, Misprint 1-in-1183.4. The ~5x ladder
-between the per-card tiers holds at 3.89x / 4.76x / 4.48x, so it survives as the rule for extending
-the table. **The pre-shrink numbers were holo 1-in-3.0, 1st Edition 1-in-20.1, Reverse Holo 1-in-9.9,
-Shiny 1-in-39.3, Shadowless 1-in-200.2, Misprint 1-in-897** — every per-slot axis is rarer now, purely
-because there are fewer slots for the same odds to roll against. See "Still open".
+Verified at 200,000 packs after the 1 Sep 2026 retune: **holo 1-in-3.0, 1st Edition 1-in-20.1, Reverse
+Holo 1-in-10.0, Shiny 1-in-40.5, Shadowless 1-in-194, Misprint 1-in-952**, with the ~5x ladder at
+4.03x / 4.80x / 4.90x. **Three sets of numbers now exist for this pack and confusing them is easy**,
+so all three are here:
+
+| | 11-card pack | 8-card pack, pre-retune | 8-card pack, now |
+|---|---|---|---|
+| Holo | 1-in-3.0 | 1-in-3.0 | 1-in-3.0 |
+| 1st Edition | 1-in-20.1 | 1-in-20.1 | 1-in-20.1 |
+| Reverse Holo | 1-in-9.9 | 1-in-14.3 | **1-in-10.0** |
+| Shiny | 1-in-39.3 | 1-in-55.5 | **1-in-40.5** |
+| Shadowless | 1-in-200.2 | 1-in-264.2 | **1-in-194** |
+| Misprint | 1-in-897 | 1-in-1183.4 | **1-in-952** |
+
+The middle column is the accident and the outer two are the intent. Holo and 1st Edition never moved
+because they are not per-slot rolls.
 
 ### The Challenge pack
 
@@ -230,7 +267,7 @@ awkward about it comes from that one fact.
 | Save key | `challenge1` — the bracket's own key, not a set code |
 | Pool | the union of every booster set **before** the bracket: Base, Jungle, Fossil |
 | Shape | identical — 1 Rare + 2 Uncommon + 5 Common, same intrusion roll, same cosmetics |
-| Odds | **identical for now.** See "Still open" item 6 |
+| Odds | **4x the standard rarity-jump rate, and nothing else.** See below |
 | Energy | no floor; drawn at the union's own share of **8.6%**, against Base Set's 15.8% |
 | Called | "Challenge 1" — which is not what the *bracket* is called |
 
@@ -246,6 +283,33 @@ got round to opening it*. *[The field, and the four questions `bracket.set` was 
 capability in `packs.js`; an ordinary booster still calls `buildPools(db, 'base1')` down exactly the
 path it always did, and the memo keys the two forms apart so a union and a single set can never be
 served each other's pool.
+
+**What makes it richer: 4x the jump, and only the jump.** Trevor's proposal, 1 Sep 2026, taken as
+written. `PACK_ODDS_BY_KIND.challenge1` multiplies the three bonus rare-tier jump chances by four and
+leaves every other number alone — same shape, same guaranteed Rare with the same 2:1 holo split, same
+cosmetic axes, same intrusion roll. Measured at 40,000 packs a side against an ordinary Fossil pack:
+
+| | Challenge pack | ordinary pack |
+|---|---|---|
+| Packs with a bonus Rare-tier card | **25.9%** | 6.9% |
+| Rare-tier cards per pack | **1.281** | 1.070 |
+
+So roughly one Challenge pack in four has a second Rare in it, which is what "better cards, any set"
+buys. **The lever is the jump because the jump is the mechanism that already means *sometimes you just
+get more*** — a Challenge pack is an ordinary pack with an existing surprise turned up, rather than a
+second system a player has to learn, and it is one number to revisit.
+
+**AND IT SIDESTEPS THE SPILLOVER THIS FILE WARNED ABOUT.** The warning was that richer rarity odds
+compound with the cosmetic rolls, so a Challenge pack would quietly become the best place in the game
+to pull a Shadowless — arriving as a side effect nobody chose. **The jump does not do that**, and it
+is measured rather than argued: Shiny, Shadowless and Misprint roll per slot regardless of what tier
+the card resolved to, so they came out at 201 against 199 in 40,000 packs a side. Reverse Holo went
+*down* by 4.5%, because a jumped card is Rare-tier and therefore ineligible for it.
+
+**That is a property of this lever and not of the pack**, so it is asserted in `packtest.js` rather
+than trusted: swap the jump for a holo-rate bump and the Shadowless assertion goes red. Trevor's
+instinct picked the one lever with no cosmetic spillover, which is worth knowing before anybody
+"improves" it.
 
 **A promo can still intrude into one**, on the same 1-in-100 as anywhere else, drawn from the same
 gate-filtered pool. Nothing about a Challenge pack changes the intrusion, and the union deliberately
@@ -279,12 +343,26 @@ ORIGIN is not a field naming its ROLE**, and one screen read it as both. *[The r
 | Common → Uncommon | 2.4% | Common slots past the floor |
 | Common → Rare (the two-tier jump) | 0.1% | Common slots past the floor |
 
-**The target the shipped numbers hit: a bonus Rare-tier card beats Reverse Holo's own per-pack
-frequency, and the two-tier jump stays clearly under it.** That is the thing to preserve if anyone
-retunes — the ordering, not the three constants. **The Uncommon-to-Rare odds were nudged from
-Trevor's 3% to 3.3%** because his numbers landed the goal as a near-tie (6.38% vs 6.79%) rather than
-clearing it; flagged rather than applied quietly, and `PACK_ODDS` carries the same note and a
-one-line revert. *[The three tuning drafts this went through →](HISTORY.md)*
+~~**The target the shipped numbers hit: a bonus Rare-tier card beats Reverse Holo's own per-pack
+frequency.**~~ **THAT ORDERING IS RETIRED — 1 Sep 2026, Job 15b — and the three constants are
+unchanged.** Restoring Reverse Holo above moves it from ~6.8% of packs to ~9.5%, which puts it above
+the bonus-rare-tier rate in every set rather than only in Base Set, and inverts an ordering this file
+used to say was the thing to preserve.
+
+**The rule was the part that was wrong, and it is worth saying why rather than just deleting it.** It
+was written while Reverse Holo was sitting 44% below its own design intent, so it was anchored to a
+number that was itself broken by an unrelated change. And on the merits the inversion is the better
+arrangement: a Reverse Holo is cosmetic, a bonus Rare is real value, and the more valuable surprise
+being the rarer one is what anybody would pick if they were picking.
+
+**The alternative was measured and rejected.** Chasing the restored Reverse Holo needs
+`jumpUncommonToRare` at ~0.054, which makes Rares about 55% more common from jumps alone and
+accelerates set completion — and this file's own pacing section says ~78 wins per set is already a
+good length. **Not a tuning detail: it is one line either way and it changes the economy**, so
+disagree out loud rather than quietly.
+
+The 3% → 3.3% nudge that chased the old goal is left in place. It is now doing nothing in particular,
+which is a fine reason to leave a number alone. *[The three tuning drafts →](HISTORY.md)*
 
 **The Energy floor is exempt from the jump roll, on purpose.** base1's two guaranteed Energy slots are
 drawn before the jump-eligible loop even starts, so "the floor and the cap meet at two" (above) stays
@@ -385,7 +463,13 @@ wildly different experiences of the same economy.
    Challenge pack is not competing with that. Its job is *better cards, any set*: slightly richer
    rarity odds, less chance of a specific card, higher chance of a good one. Nothing built yet delivers
    the "richer" half — see item 6.
-4. **Restoring the pre-shrink pacing on the four per-slot cosmetic axes.** Reverse Holo, Shiny,
+4. ~~**Restoring the pre-shrink pacing on the four per-slot cosmetic axes.**~~ **DONE, 1 Sep 2026,
+   Job 15b** — see the axes table above for the new values, the measurement and the three-column
+   comparison. The old text is kept below because its *reasoning about the deferral* was right and is
+   worth reusing: the reason to wait was to avoid tangling the retune with the jump mechanic that
+   shipped the same day, and that is a good instinct that cost nothing and made this pass readable.
+
+   ~~**Restoring the pre-shrink pacing on the four per-slot cosmetic axes.**~~ Reverse Holo, Shiny,
    Shadowless and Misprint each roll once per SLOT, so the 25 Aug 2026 shrink from 11 cards to 8
    thinned all four without anyone touching a value in `PACK_ODDS` — the before-and-after figures are
    in the verification paragraph above. **Deferred deliberately, Trevor, same day**: retuning them on
@@ -393,25 +477,28 @@ wildly different experiences of the same economy.
    what, so it waits until the new pack shape has actually been played. **Run `packtest.js` before
    trusting anything here** — its per-axis targets are DERIVED from `PACK_ODDS` + `PACK_SHAPE` now, so
    a wrong number means the derivation needs revisiting rather than the odds.
-5. **Base Set alone does not clear Reverse Holo with its bonus-Rare-tier rate**, because the Energy
+5. ~~**Base Set alone does not clear Reverse Holo with its bonus-Rare-tier rate.**~~ **DISSOLVED
+   rather than fixed, 1 Sep 2026.** The comparison it was asking about is retired: restoring Reverse
+   Holo puts it above the bonus-rare rate in *every* set, so Base Set stopped being the exception by
+   the rest of the field joining it. **The underlying asymmetry is real and is small** — Base Set's
+   floor removes 2 of its 5 Common slots from jump eligibility, so it runs 6.7% against everyone
+   else's 6.9-7.0%, a gap of about 0.2 points. It was only ever alarming because it was being read
+   against a moving target. `packtest.js` still prints it, now framed as base1-against-the-others
+   rather than against Reverse Holo. **No nudge applied.** The original text follows.
+
+   ~~**Base Set alone does not clear Reverse Holo with its bonus-Rare-tier rate**,~~ because the Energy
    floor removes 2 of its 5 Common slots from jump eligibility — mechanism and measurement both under
    "Bonus rare-tier jumps" above. Whether that is an acceptable Base-Set-is-already-the-exception
    outcome or wants its own nudge is Trevor's call. **It is a consequence of item 4 and should be
    decided in the same pass**, since any nudge to the four axes moves the comparison it is measured
    against.
-6. **What "richer" means for a Challenge pack.** The pack shipped in Job 15a with **exactly the
-   standard odds** — `PACK_ODDS_BY_KIND.challenge1` is an empty object, the hook is wired and inert,
-   and `packtest.js` asserts both that the row exists and that it is empty, so nobody can mistake
-   "not tuned yet" for "tuned to the same values on purpose". **Deferred to Job 15b with items 4 and 5
-   and for the same reason**: 15b reopens the whole per-slot table, and picking a number now would mean
-   measuring the Challenge pack against a table about to move underneath it. Trevor agreed, 1 Sep 2026.
-   **Two things to bring into that decision.** Richer rarity odds compound with the cosmetic rolls, so a
-   Challenge pack also becomes the best place in the game to pull a Shadowless or a 1st Edition — probably
-   wanted, since it is the biggest reward on the ladder, but it should be *chosen* rather than allowed to
-   arrive. And the union's own Energy share is **8.6%** against Base Set's 15.8%, because six Energy are
-   diluted across three sets' Commons; a Challenge pack has no floor and most contain no Energy at all.
-   That is defensible for a reward pack rather than a faucet, but it was a consequence rather than a
-   decision, and 15b is where it becomes one.
+6. ~~**What "richer" means for a Challenge pack.**~~ **ANSWERED, 1 Sep 2026: 4x the rarity jump and
+   nothing else** — Trevor's proposal, taken as written. See "The Challenge pack" above for the
+   measurement and for why this lever, alone among the candidates, produces no cosmetic spillover.
+   **One thing was flagged in the same breath and NOT resolved**: the union's Energy share is 8.6%
+   against Base Set's 15.8%, so a Challenge pack has no floor and most contain no Energy at all. That
+   is defensible for a reward pack rather than a faucet, and it is still a consequence rather than a
+   decision. It is the only open question left about this pack and it is small.
 
 ## Sources
 

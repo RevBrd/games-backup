@@ -127,8 +127,8 @@
   "list": [
    [
     24,
-    "base1-97",
-    "Fighting Energy"
+    "base1-98",
+    "Fire Energy"
    ],
    [
     3,
@@ -836,11 +836,12 @@
   "source": "data/v1 Opp Decks/Challenge 1 Opponent Decks v1.xlsx — Trevor's workbook, the fifth hand-built roster and the first that is not a set. Sheets 'Grass' through 'Colorless', one per Energy type.",
   "retrieved": "2026-09-01, Job 15a, read through tools/lib/xlsx.js.",
   "scope": "The Challenge 1 bracket: seven mono-type decks drawn from Base Set, Jungle and Fossil plus the promos those brackets open. NOT a set — see CHALLENGES.md on why a Challenge bracket belongs to none.",
-  "status": "All seven validate clean against Engine.prototype.validateDeck: 60 cards, no errors, no warnings, 4-copy limit respected, every card implemented. ZERO id corrections needed, for the fifth workbook running.",
+  "status": "All seven validate clean against Engine.prototype.validateDeck: 60 cards, no errors, no warnings, 4-copy limit respected, every card implemented. ONE id correction was needed — see `corrections` below, and note that no validator could have caught it: a deck of the wrong Energy is a perfectly legal 60-card deck.",
   "tier": "ALL SEVEN ARE TIER 4 and that is deliberate rather than a shortcut. Trevor, 1 Sep 2026: a Challenge is a boss round end to end, so there is no intro/body/gate shape here and no T1 faucet rung. See OPPONENTS.md.",
   "weights": "featureWeight is Trevor's own scoring, totalled. Comparable WITHIN this workbook only — the seven run 16.5 to 21, and Colorless at 21 is why Wigglytuff leads. Do not compare against Fossil's 11.5/16/19. See ROSTERS.md.",
   "pressure": "Derived from this workbook's Index tab by copy count, first code where a card lists several. Reported, not enforced — OPPONENTS.md's no-repeat rule is still unbuilt.",
   "coverCard": "The sheet's own Cover Card field. Grass's cell is blank in the workbook; Trevor named Vileplume on 1 Sep 2026.",
-  "promos": "Four of the seven name promo cards. That is legal for an AUTHORED opponent deck and illegal for a GENERATED one — see opponentDeckFor() in ui.js."
+  "promos": "Four of the seven name promo cards. That is legal for an AUTHORED opponent deck and illegal for a GENERATED one — see opponentDeckFor() in ui.js.",
+  "corrections": "ONE ID CORRECTION, and it is the first in five workbooks — 1 Sep 2026, found by Trevor PLAYING the deck. The Fire sheet's Energy row reads \"F Energy\" against id base1-97, which is FIGHTING Energy; Fire is base1-98. Trevor's own diagnosis: \"I wrote F energy instead of R energy in the deck list.\" In this era's shorthand F is Fighting and R is Fire, and the label and the id agreed with each other while both disagreed with the deck. Corrected to base1-98 HERE rather than in the workbook, which is Trevor's file — tell him so the source can be fixed too. THE EFFECT WAS TOTAL: 12 of the deck's 21 Pokemon could not pay for a single one of their attacks, and c1_fire measured 20.2% in decksim, the weakest deck ever recorded in ROSTERS.md. See the stranded-card guard in tools/progresstest.js, which exists because of this."
  }
 }

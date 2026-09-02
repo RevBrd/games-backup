@@ -217,8 +217,26 @@ which the earlier three files did not do consistently — worth normalising if a
 **`challenge1_decks.json` is Trevor's seven Challenge 1 decks, live the day it was written**,
 1 Sep 2026 — one per Energy type, all Tier 4, drawn from Base, Jungle, Fossil and the promos those
 brackets open. Converted from `Challenge 1 Opponent Decks v1.xlsx` (sheets `Grass` through
-`Colorless`) directly via `tools/lib/xlsx.js`. **Zero id corrections needed, for the fifth workbook
-running**, and all seven validate clean first time.
+`Colorless`) directly via `tools/lib/xlsx.js`. All seven validate clean first time.
+
+**ONE ID CORRECTION, the first in five workbooks, and it is the most instructive thing in this
+section.** The Fire sheet's Energy row read **"F Energy" against `base1-97`, which is FIGHTING
+Energy**; Fire is `base1-98`. In this era's shorthand **F is Fighting and R is Fire**, and Trevor's
+own diagnosis was *"I wrote F energy instead of R energy in the deck list."* The label and the id
+agreed with each other and both disagreed with the deck: 24 Fighting Energy behind an all-Fire
+roster, stranding twelve of its twenty-one Pokémon.
+
+**Nothing in this project could have caught it, and now one thing can.** `validateDeck` passed it
+and was right to — 60 cards, 4-copy clean, every card implemented. **A deck of the wrong Energy is a
+perfectly legal deck.** The previous four workbooks' "zero corrections" boast came from checking that
+every id *resolves* and *names the card the sheet names*, with printing suffixes normalised away —
+and **Energy rows are the one place that check cannot run**, because Trevor's shorthand ("F Energy",
+"G Energy", "E Energy") never matches a printed name. The check was skipped exactly where the bug
+was. `progresstest.js` now asserts that no deck fields a Pokémon it cannot pay a single attack for.
+
+**Corrected in the JSON, not in the workbook** — the workbook is Trevor's file, and `_meta.corrections`
+records it the same way `_meta.base4subs` records the Base Set 2 substitutions. **Tell him**, so the
+source can be fixed too.
 
 Three things about this file that the four before it do not have:
 

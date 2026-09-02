@@ -259,9 +259,15 @@ than Challenge 1 without anyone tuning a number — the same property that makes
 *"One per type may need to mean one LED by each type."* Trevor's worry was that a strict mono-Lightning
 deck before Neo would be thin, producing one weak rung for reasons that have nothing to do with design.
 **It did not happen.** Every one of the seven is a genuine 60-card build and the Lightning deck is
-*fourth* of seven on featureWeight. What the worry pointed at was real but landed elsewhere — the
-weakest deck by weight is Grass at 16.5 and the weakest by play is Fire at 20.2%, neither of them the
-type anybody predicted. *[The measurement →](ROSTERS.md)*
+*fourth* of seven on featureWeight. The weakest by weight is Grass at 16.5 and the weakest by play is
+Grass again at 33.8%, so nothing about the type wheel produced a dud rung.
+*[The measurement →](ROSTERS.md)*
+
+*(This paragraph named Fire at 20.2% as the weakest by play, on the day, off a run made with the
+wrong Energy in the deck — 24 Fighting where 24 Fire was meant, which stranded twelve of its Pokémon.
+Trevor found it by playing the deck, within hours of reading the standings. Fixed and re-measured the
+same day: Fire is **second** at 57.1%. Corrected rather than quietly rewritten, because the wrong
+version is the one a reader would find plausible.)*
 
 *"A Challenge bracket cannot exist as the code stands."* True when written, and the fix was one branch.
 The consequence that mattered was the one this predicted for the right reason: **combined packs are not
@@ -275,8 +281,15 @@ Do not assume that luck repeats; check it.
 
 **The boss is Colorless (Wigglytuff), on featureWeight 21, the highest of the seven.** Trevor's call,
 and he flagged it as provisional: *"putting together a really good deck that doesn't significantly
-repeat a previous one was a challenge."* **Play disagrees with the weight**, and that is the live
-question this bracket leaves behind — see [ROSTERS.md](ROSTERS.md).
+repeat a previous one was a challenge."*
+
+**Play disagrees with the weight, and the gap WIDENED once the Fire deck was fixed.** Wigglytuff
+finishes fourth of seven at 48.1%, below the field average; Water finishes first at 78.1%, twenty-one
+points clear of second in a field where the next five sit inside nine points of each other. **Water
+being that far out is not explained**, and it is the live question this bracket leaves behind. Not a
+reason to move the boss on one run — a mono-type round-robin is a weak instrument here, for reasons
+[MEASUREMENT.md](MEASUREMENT.md) now spells out — but not something to let go quiet either.
+*[The standings →](ROSTERS.md)*
 
 **What still has no answer, carried over from the rival entry this replaced:** what makes a Challenge
 *leader* tougher than an ordinary T4. The old exit was "mostly Colorless", which was a deck constraint
