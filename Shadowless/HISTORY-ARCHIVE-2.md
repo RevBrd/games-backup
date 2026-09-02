@@ -283,3 +283,114 @@ tell was that both halves resolved somewhere the item was not looking.
    leader now is position: seventh of seven, on a bracket that demands all six others first. **Nobody
    has played it end to end**, so this is a claim rather than a result. The "mostly Colorless" version
    is rejected and its reasoning is in [HISTORY.md](HISTORY.md).
+
+## The job plan for Jobs 1 to 15b, as it stood when each one closed
+
+*Moved out of `CLAUDE.md` on 2 Sep 2026 by Shadowless 34, verbatim. Its Job plan section had reached
+105 lines of which **90 described jobs already done** — a quarter of the orientation file — while the
+four genuinely forward-looking entries came to six lines between them.*
+
+**These are not the same thing as the mid-job entries in the section above.** Those were written in
+the present tense by a session inside the work and were wrong the moment it shipped. These were
+written *after* each job closed, as a record of what it left behind, and most of them are accurate.
+**They were still in the wrong file**, for a reason worth separating from correctness: `CLAUDE.md` is
+read in full by every session, and a done job's findings are depth. The findings themselves each have
+a home in the file that owns them — the promo intrusion in `PACKS.md`, the roster measurements in
+`ROSTERS.md`, the invariants in `AI-INVARIANTS/` — and the live plan now names those instead.
+
+**Job 6's entry is the one worth ten minutes before planning any set**, and it is why the collapse
+kept a pointer rather than only a link: it was split by *machinery* rather than by set, and the
+reason 126 printings came to only 95 distinct behaviours is the kind of count that decides how big a
+job actually is.
+
+- **Jobs 1–10 are done**, through Team Rocket live at 83 of 83 printings. **What each one left behind
+  is in [HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md)**, and Job 6's entry is worth ten minutes before
+  planning any set:
+  it was split by *machinery* rather than by set, and the reason 126 printings were only **95 distinct
+  behaviours** is the kind of count that decides how big a job actually is.
+  **Two are still live as *documents* rather than as work.** Job 8's spec is now four built brackets
+  in [OPPONENTS.md](OPPONENTS.md) and one unbuilt file in [CHALLENGES.md](CHALLENGES.md); Job 9
+  continues wherever [GRABBAG.md](GRABBAG.md) has AI items in it, and the invariants it has left are
+  in [AI.md](AI.md).
+- **Jobs 10.5 through 12c are done.** Between them they wired all four brackets from Trevor's own
+  hand-built decks, closed the layout faults that had been shifting the board since the Chat days,
+  built the claims harness that turns his card notes into rows the bot is held to, and reshaped the
+  pack. **What each one left behind is in [HISTORY.md](HISTORY.md)**; the live consequences are in the
+  files that own them — [ROSTERS.md](ROSTERS.md) for what the rosters measured,
+  [AI-INVARIANTS.md](AI-INVARIANTS.md) for what the AI work must keep true, [PACKS.md](PACKS.md) for
+  the 8-card pack and the tier jump.
+  **Two things from them are still open and both are named where they live**: Job 12a's claims
+  backlog is a command rather than a number — `node tools/wants.js --coverage`. **The Jungle and
+  Fossil hold is LIFTED** (Trevor, 30 Aug 2026): he went back through both in the full-paragraph
+  style after Team Rocket's came back useful, and Fossil's notes are now the longest of the four
+  sets. Two files were still fencing them off. **All four live sets are one pool** — and
+  Job 12c deliberately deferred rebalancing the four cosmetic axes after the pack shrank, tracked as
+  its own item in [PACKS.md](PACKS.md).
+- **Job 12d** - Scheduled document pass and grab bag run. More UI, maybe more AI. **The docs pass is
+  done** — three siblings and two archives split out, and four files found stating a fact their own
+  data contradicted. See [CREDITS.md](CREDITS.md) #27.
+- **Job 13 is done.** The Wizards Black Star Promos, `basep-1..28`, are written, ruled, scored and
+  now **reachable**: gated per card off the ladder, pulled through the pack intrusion roll, kept in
+  the binder and the dex, buildable with. The other 25 promos are a much later job. Two things it
+  turned up are worth more than the feature — **the intrusion roll had never fired in the shipped
+  game** (`openPack` defaulted its promo pool to empty and no caller ever passed one, invisible to a
+  suite that supplied the argument), and **two CSS rules were quietly cancelling the no-scan
+  fallback** on the pack screen for any set generated before its art was fetched. See
+  [PACKS.md](PACKS.md), [COLLECTION.md](COLLECTION.md) and [INSPECTION.md](INSPECTION.md).
+- **Job 14a** - Document pass, then grab bag UI/AI items. **The docs pass is done** — the tenth. The
+  AI invariants got their second archive, nine claims were found stating something their own data
+  refuted, and the **Fossil roster turned out never to have been measured at all** while two files
+  said every roster had been. Running it produced the most useful thing the pass found: across three
+  rosters in one field, **T4 decks are the best in the field at assembling their centrepiece and the
+  worst at converting it** — 73% assembly against T3's 50%, for 48.7% wins against T3's 57.6%. That is
+  an AI question and it is [ROSTERS.md](ROSTERS.md)'s. Stage 2 reliance was checked and is not the
+  cause; a stronger first version of the claim was corrected the same day and both are recorded.
+  See [CREDITS.md](CREDITS.md) #30. **The grab bag half has one item done** — Defender now blunts an
+  attack's own self-harm and is used up if it spends its whole 20, a rules call settled with Trevor
+  rather than a bug. It also turned up a fourth self-damage site the recoil ruling never enumerated.
+  *[The ruling →](Rulings/DEFENDER-BLUNTS-SELF-HARM.md)*
+- **Job 14b** - AI validation work, in [PLAYBOOK.md](PLAYBOOK.md)'s shape. **In progress.** #31 opened
+  it on the Trainer half; #32 opened the **Over-Attach** pattern and wrote the first claims Jungle and
+  Fossil have ever had. The printed damage number is a *function of the Energy attached* for sixteen
+  printings and all three places reading it in printed units were wrong — plus `maxSpare` sitting in
+  the engine and not the scorer since Job 6, and three Base Set cards printing a cap **neither** half
+  had. *[The pattern →](Playbook/OVER-ATTACH.md)* · *[the two guards, and the three green tests that
+  were measuring an impossible threat →](AI-INVARIANTS.md)*
+  Then, off Trevor's question about whether to hand-enter per-card Energy targets: **an evolution
+  road is measured to the attack the evolution is trying to REACH, not the cheapest one it owns.**
+  Derived rather than tagged, 22 printings move, and **eight of his own notes confirm it without any
+  of those cards being named in the code** — the strongest argument in this tree for deriving over
+  tagging. *[The rule, the curve and the eight →](Playbook/EVOLUTION-TIMING.md)*
+  Then, on his account of the GBC and Pocket turn order: **the plan is the whole LINE and each
+  evolution step pays for one of its own Energy** — an Abra wants two with a Kadabra coming and
+  **one** with an Alakazam behind it, which is the thing no per-card target could express. And a
+  **ready** evolve now goes before the attachment, so the card competes for the Energy as the body
+  that will hold it.
+  **CLOSED 2 Sep 2026** (Trevor), and both debts it left were settled in Job 15c: the invariants
+  register became the `AI-INVARIANTS/` directory rather than being archived again, because the entry
+  had outgrown the shape twice refused for it. The AI validation work is **not** finished and is not
+  meant to be — it is sprinkled through later jobs rather than blocking on one. The live backlog is
+  `node tools/wants.js --coverage`, never a number here.
+- **Job 15a is done.** The **Challenge 1 bracket** is live — seven of Trevor's mono-type decks, one
+  per Energy type, sitting between Fossil and Team Rocket. **It is the first ladder bracket that
+  belongs to no set and the first pack type that is not a set's**, which is the whole of the job:
+  the decks were free, the surgery was `bracket.set` turning out to answer four different questions
+  with only two of them right. `packSets` split the pool question off, derived from **ladder
+  position** rather than from the save — Trevor's correction, and it closed a latent bug this tree had
+  specified for three weeks, where a Challenge pack's contents would have depended on when you got
+  round to opening it. **Ronald is gone from the ladder** (his grab-bag ask) and the `extra` mechanism
+  he occupied was kept and re-tested against a fixture. Four `challenge1`-gated promos turned on with
+  no code at all. *[The bracket →](OPPONENTS.md)* · *[the machinery and `bossAfter: 'all'`
+  →](PROGRESSION.md)* · *[the pack →](PACKS.md)* · *[what it measured →](ROSTERS.md)*
+- **Job 15b is done.** All three bundled items closed. **The four per-slot cosmetic axes are back at
+  their pre-shrink pacing** — each scaled by the slots it lost, Reverse Holo by 10/7 and the rest by
+  11/8, measured at 1-in-10.0 / 40.5 / 194 / 952 against targets of 10.4 / 40.4 / 200 / 1000. **Base
+  Set's bonus-Rare-tier "near-tie" dissolved rather than being fixed** — the comparison it was made
+  against moved, and the residual asymmetry is 0.2 points. **A Challenge pack rolls the rarity jump at
+  4x and changes nothing else**, Trevor's proposal: a bonus Rare-tier card in 25.9% of packs against
+  6.9%, and 1.281 Rare-tier cards per pack against 1.070. That lever turns out to be the only
+  candidate with **no cosmetic spillover** — Shadowless came out at 201 against 199 in 40,000 packs a
+  side, and Reverse Holo went *down*, because a jumped card is Rare-tier and so ineligible for it.
+  **One ordering rule was retired rather than preserved** and the reasoning is in `PACK_ODDS`; say so
+  if you disagree, because it is one line. *[Everything, with the three-column comparison
+  →](PACKS.md)*

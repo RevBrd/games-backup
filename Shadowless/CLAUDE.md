@@ -51,24 +51,24 @@ the tree and not orientation.
 
 | File | Read it when |
 |---|---|
-| [ENGINE.md](ENGINE.md) | Adding or changing cards. The machinery built for the awkward ones — `runAttack`, `lastAttackResult`, the four owed choices, `playsAs`, the `baseCard`/`topCard` split, `takeEnergy` and `selfDamage`. Also: why full games never test any of it. **The Pokémon Powers are three more and are in its sibling `POWERS.md`** — interactive, triggered and passive, which are three mechanisms rather than three flavours |
-| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, the cliff sniff test, and an `Open` list at the bottom that is the current one. **The register is a directory — one file per shipped change in `AI-INVARIANTS/`**, indexed by `AI-INVARIANTS.md`, with two archives behind it. `AI.md`'s own table indexes the folder and both archives by the term each one governs, and is the only place they meet |
-| [MEASUREMENT.md](MEASUREMENT.md) | **Before you believe any number.** Every instrument in the project that is not pass/fail, how to read a saved match log, and the standing figures. Reached from four directions and none of them wants scoring weights on the way. **Its sibling `MISREADINGS.md` is every way one of them has lied** — read it before you believe a null result |
-| [LAYOUT.md](LAYOUT.md) | Touching **the board**, the mat, the hand or anything **sized** on it. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. If you have trouble with the layout, re-read it — and check you can still see the top of the file, because a compacted read of it has cost a session before. **Its sibling `SCREENS.md` is every other sized screen** — the pack reveal, deck select, the title screen — which share a problem the board does not have: a centred box whose content arrives over time |
+| [ENGINE.md](ENGINE.md) | Adding or changing cards. The machinery built for the awkward ones — `runAttack`, `lastAttackResult`, the four owed choices, `playsAs`, the `baseCard`/`topCard` split, `takeEnergy`, `selfDamage`. **Its sibling `POWERS.md` holds the three kinds of Pokémon Power**, which are three mechanisms rather than three flavours |
+| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, the cliff sniff test, and the current `Open` list. **The register is a directory — one file per shipped change in `AI-INVARIANTS/`**, indexed by `AI-INVARIANTS.md`, with two archives behind it. `AI.md`'s own table is the only place the folder and both archives are indexed together |
+| [MEASUREMENT.md](MEASUREMENT.md) | **Before you believe any number.** Every instrument that is not pass/fail, how to read a saved match log, and the standing figures. **Its sibling `MISREADINGS.md` is every way one of them has lied** — read it before you believe a null result |
+| [LAYOUT.md](LAYOUT.md) | Touching **the board**, the mat, the hand, or anything **sized** on it. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap. Several rules look wrong until you know what they protect, and a compacted read of this file has cost a session before. **Its sibling `SCREENS.md` is every other sized screen** — the pack reveal, deck select, the title screen |
 | [INTERACTION.md](INTERACTION.md) | Any moment the board stops and **talks to the player**. The coin toss and why it lands on the centre line, the Energy picker and the opponent's Trainer sharing its strip, the opening flip, the opening-setup screen, the action bar and the retreat gate, and the rail's hover peek that must never call `render()` |
 | [COLLECTION.md](COLLECTION.md) | Touching the save, the collection browser, the dex or the deck builder. The variant-combination storage model, built decks vs. layouts, and how each variant is drawn |
 | [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, and the set-completion pacing the economy turns on |
-| [RULINGS.md](RULINGS.md) | A card's printed text usually settles how it behaves, but there can be exceptions. The four-step order that replaced the arbiter, and the principles index you match a new card against by *shape*. **It is a directory: each ruling is its own file in `Rulings/`**, one per judgement call, with its reasoning and source |
+| [PACKS.md](PACKS.md) | Changing what a pack contains or what it rolls. Pack shape, the odds table as implemented, the Challenge pack, and the set-completion pacing the economy turns on |
 | [DATA.md](DATA.md) | Generating a set, trusting a set code, or adopting one of the deck spreadsheets. The corpus, the two set codes that read backwards, and what is reference-only |
 | [PROGRESSION.md](PROGRESSION.md) | Touching the ladder, an opponent, or anything that grants a pack. How brackets are derived from the live sets rather than declared, the tunables, why free play pays nothing, and the four layout defects only a screenshot caught |
-| [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck or adding a bracket's roster. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, the intro→body→gate→boss rung pattern — and **the Challenge brackets, which deliberately ignore it**, because a Challenge is a boss round end to end. All five live brackets are built to it. Two siblings: `ROSTERS.md` is the report card — what `decksim.js` said when each roster met the spec, append-only, and now with an archive behind it — and **`CHALLENGES.md` is what is still unbuilt**, which is what a bracket *demands* rather than how a deck is *constructed*: entry conditions, and the pressure vocabulary whose no-repeat rule has now been checked against exactly one bracket |
-| [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers. Everything in it returns **pass or fail**. **Its sibling `INSPECTION.md` is how you LOOK at it** — `shot.js`, `probe.js`, the DEV tab, and the four classes of bug a green suite cannot see. Read that one before any UI change, not after |
+| [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck or a bracket's roster — the **content** of the ladder against `PROGRESSION.md`'s machinery. The four silent tiers, why the Prize count selects an archetype rather than a difficulty, the intro→body→gate→boss pattern, and **the Challenge brackets, which ignore it on purpose**. Two siblings: `ROSTERS.md` is the report card, `CHALLENGES.md` is what is still unbuilt |
+| [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what a suite covers. Everything in it returns **pass or fail**. **Its sibling `INSPECTION.md` is how you LOOK at it** — `shot.js`, `probe.js`, the DEV tab, and the four classes of bug a green suite cannot see |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Rejected ideas and superseded reasoning, each with the reason it lost, plus how this doc tree got its shape. **The build era — the whole job history for Jobs 1–10 — is in `HISTORY-ARCHIVE-1.md`** |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md` and its three archives, where each instance's own account of its work is kept verbatim |
 | [MAINTENANCE.md](MAINTENANCE.md) | Occasionally, these files will drift and a dedicated instance will be brought in to reorganise. How to decide what moves, what gets cut, and what must never be. Anything designed to stay intact is left that way in some part of the tree |
-| [PLAYTEST.md](PLAYTEST.md) | Trevor points you at `GRABBAG.md`, hands you a match log, or says something felt off while playing. How to work a report from a human: why it is a symptom and not a diagnosis, what to do when it turns out to be wrong, and the two traps that make a real fix look like it did nothing |
-| [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one |
-| [PLAYBOOK.md](PLAYBOOK.md) | **The highest-value list in the tree.** How the cards are *supposed* to be played, from Trevor's plain English, as testable claims. Every AI fault found on 21 Aug 2026 came from a sentence of his and none came from a tag, a weight sweep or a duel. **It is a directory: the unit is the PATTERN and each one is its own file in `Playbook/`**, because all four of the original per-card entries generalised to a family. His inbox is the `Wants` column of the workbooks in `data/v1 Opp Decks/`, not a file here — **`node tools/wants.js` reads it now**, and the claims it becomes live in `tools/claims/`. **One note is several claims**, which is the trap the method turns on |
+| [MAINTENANCE.md](MAINTENANCE.md) | These files drift and a dedicated instance is brought in to reorganise. How to decide what moves, what gets cut, and what must never be |
+| [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one. **Its register is `GRABHIST.md`**, three archives deep: what each item actually turned out to be, which has often not been what the note said |
+| [PLAYBOOK.md](PLAYBOOK.md) | **The highest-value list in the tree.** How the cards are *supposed* to be played, from Trevor's plain English, as testable claims — every AI fault found on 21 Aug 2026 came from a sentence of his and none from a tag, a sweep or a duel. **A directory: the unit is the PATTERN, one file each in `Playbook/`.** His inbox is the workbooks in `data/v1 Opp Decks/`; `node tools/wants.js` reads it, and the claims live in `tools/claims/`. **One note is several claims** |
 
 ## Status
 
@@ -305,97 +305,29 @@ else in `data/` is in **[DATA.md](DATA.md)**.
 
 The current ordering, decided collaboratively. Trevor is explicit that it is yours to rearrange and to break into sub-jobs.
 
-- **Jobs 1–10 are done**, through Team Rocket live at 83 of 83 printings. **What each one left behind
-  is in [HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md)**, and Job 6's entry is worth ten minutes before
-  planning any set:
-  it was split by *machinery* rather than by set, and the reason 126 printings were only **95 distinct
-  behaviours** is the kind of count that decides how big a job actually is.
-  **Two are still live as *documents* rather than as work.** Job 8's spec is now four built brackets
-  in [OPPONENTS.md](OPPONENTS.md) and one unbuilt file in [CHALLENGES.md](CHALLENGES.md); Job 9
-  continues wherever [GRABBAG.md](GRABBAG.md) has AI items in it, and the invariants it has left are
-  in [AI.md](AI.md).
-- **Jobs 10.5 through 12c are done.** Between them they wired all four brackets from Trevor's own
-  hand-built decks, closed the layout faults that had been shifting the board since the Chat days,
-  built the claims harness that turns his card notes into rows the bot is held to, and reshaped the
-  pack. **What each one left behind is in [HISTORY.md](HISTORY.md)**; the live consequences are in the
-  files that own them — [ROSTERS.md](ROSTERS.md) for what the rosters measured,
-  [AI-INVARIANTS.md](AI-INVARIANTS.md) for what the AI work must keep true, [PACKS.md](PACKS.md) for
-  the 8-card pack and the tier jump.
-  **Two things from them are still open and both are named where they live**: Job 12a's claims
-  backlog is a command rather than a number — `node tools/wants.js --coverage`. **The Jungle and
-  Fossil hold is LIFTED** (Trevor, 30 Aug 2026): he went back through both in the full-paragraph
-  style after Team Rocket's came back useful, and Fossil's notes are now the longest of the four
-  sets. Two files were still fencing them off. **All four live sets are one pool** — and
-  Job 12c deliberately deferred rebalancing the four cosmetic axes after the pack shrank, tracked as
-  its own item in [PACKS.md](PACKS.md).
-- **Job 12d** - Scheduled document pass and grab bag run. More UI, maybe more AI. **The docs pass is
-  done** — three siblings and two archives split out, and four files found stating a fact their own
-  data contradicted. See [CREDITS.md](CREDITS.md) #27.
-- **Job 13 is done.** The Wizards Black Star Promos, `basep-1..28`, are written, ruled, scored and
-  now **reachable**: gated per card off the ladder, pulled through the pack intrusion roll, kept in
-  the binder and the dex, buildable with. The other 25 promos are a much later job. Two things it
-  turned up are worth more than the feature — **the intrusion roll had never fired in the shipped
-  game** (`openPack` defaulted its promo pool to empty and no caller ever passed one, invisible to a
-  suite that supplied the argument), and **two CSS rules were quietly cancelling the no-scan
-  fallback** on the pack screen for any set generated before its art was fetched. See
-  [PACKS.md](PACKS.md), [COLLECTION.md](COLLECTION.md) and [INSPECTION.md](INSPECTION.md).
-- **Job 14a** - Document pass, then grab bag UI/AI items. **The docs pass is done** — the tenth. The
-  AI invariants got their second archive, nine claims were found stating something their own data
-  refuted, and the **Fossil roster turned out never to have been measured at all** while two files
-  said every roster had been. Running it produced the most useful thing the pass found: across three
-  rosters in one field, **T4 decks are the best in the field at assembling their centrepiece and the
-  worst at converting it** — 73% assembly against T3's 50%, for 48.7% wins against T3's 57.6%. That is
-  an AI question and it is [ROSTERS.md](ROSTERS.md)'s. Stage 2 reliance was checked and is not the
-  cause; a stronger first version of the claim was corrected the same day and both are recorded.
-  See [CREDITS.md](CREDITS.md) #30. **The grab bag half has one item done** — Defender now blunts an
-  attack's own self-harm and is used up if it spends its whole 20, a rules call settled with Trevor
-  rather than a bug. It also turned up a fourth self-damage site the recoil ruling never enumerated.
-  *[The ruling →](Rulings/DEFENDER-BLUNTS-SELF-HARM.md)*
-- **Job 14b** - AI validation work, in [PLAYBOOK.md](PLAYBOOK.md)'s shape. **In progress.** #31 opened
-  it on the Trainer half; #32 opened the **Over-Attach** pattern and wrote the first claims Jungle and
-  Fossil have ever had. The printed damage number is a *function of the Energy attached* for sixteen
-  printings and all three places reading it in printed units were wrong — plus `maxSpare` sitting in
-  the engine and not the scorer since Job 6, and three Base Set cards printing a cap **neither** half
-  had. *[The pattern →](Playbook/OVER-ATTACH.md)* · *[the two guards, and the three green tests that
-  were measuring an impossible threat →](AI-INVARIANTS.md)*
-  Then, off Trevor's question about whether to hand-enter per-card Energy targets: **an evolution
-  road is measured to the attack the evolution is trying to REACH, not the cheapest one it owns.**
-  Derived rather than tagged, 22 printings move, and **eight of his own notes confirm it without any
-  of those cards being named in the code** — the strongest argument in this tree for deriving over
-  tagging. *[The rule, the curve and the eight →](Playbook/EVOLUTION-TIMING.md)*
-  Then, on his account of the GBC and Pocket turn order: **the plan is the whole LINE and each
-  evolution step pays for one of its own Energy** — an Abra wants two with a Kadabra coming and
-  **one** with an Alakazam behind it, which is the thing no per-card target could express. And a
-  **ready** evolve now goes before the attachment, so the card competes for the Energy as the body
-  that will hold it.
-  **CLOSED 2 Sep 2026** (Trevor), and both debts it left were settled in Job 15c: the invariants
-  register became the `AI-INVARIANTS/` directory rather than being archived again, because the entry
-  had outgrown the shape twice refused for it. The AI validation work is **not** finished and is not
-  meant to be — it is sprinkled through later jobs rather than blocking on one. The live backlog is
-  `node tools/wants.js --coverage`, never a number here.
-- **Job 15a is done.** The **Challenge 1 bracket** is live — seven of Trevor's mono-type decks, one
-  per Energy type, sitting between Fossil and Team Rocket. **It is the first ladder bracket that
-  belongs to no set and the first pack type that is not a set's**, which is the whole of the job:
-  the decks were free, the surgery was `bracket.set` turning out to answer four different questions
-  with only two of them right. `packSets` split the pool question off, derived from **ladder
-  position** rather than from the save — Trevor's correction, and it closed a latent bug this tree had
-  specified for three weeks, where a Challenge pack's contents would have depended on when you got
-  round to opening it. **Ronald is gone from the ladder** (his grab-bag ask) and the `extra` mechanism
-  he occupied was kept and re-tested against a fixture. Four `challenge1`-gated promos turned on with
-  no code at all. *[The bracket →](OPPONENTS.md)* · *[the machinery and `bossAfter: 'all'`
-  →](PROGRESSION.md)* · *[the pack →](PACKS.md)* · *[what it measured →](ROSTERS.md)*
-- **Job 15b is done.** All three bundled items closed. **The four per-slot cosmetic axes are back at
-  their pre-shrink pacing** — each scaled by the slots it lost, Reverse Holo by 10/7 and the rest by
-  11/8, measured at 1-in-10.0 / 40.5 / 194 / 952 against targets of 10.4 / 40.4 / 200 / 1000. **Base
-  Set's bonus-Rare-tier "near-tie" dissolved rather than being fixed** — the comparison it was made
-  against moved, and the residual asymmetry is 0.2 points. **A Challenge pack rolls the rarity jump at
-  4x and changes nothing else**, Trevor's proposal: a bonus Rare-tier card in 25.9% of packs against
-  6.9%, and 1.281 Rare-tier cards per pack against 1.070. That lever turns out to be the only
-  candidate with **no cosmetic spillover** — Shadowless came out at 201 against 199 in 40,000 packs a
-  side, and Reverse Holo went *down*, because a jumped card is Rare-tier and so ineligible for it.
-  **One ordering rule was retired rather than preserved** and the reasoning is in `PACK_ODDS`; say so
-  if you disagree, because it is one line. *[Everything, with the three-column comparison
-  →](PACKS.md)*
+**Jobs 1 through 15b are done.** One line each below; **what each left behind is in
+[HISTORY-ARCHIVE-2.md](HISTORY-ARCHIVE-2.md)**, moved there on 2 Sep 2026 when this section had
+reached 105 lines of which 90 described finished work. **Every finding is also in the file that owns
+it** — that is the point of the tree, and the links here go to the owner rather than to the story.
+
+| Job | Left behind, and where it lives |
+|---|---|
+| **1–10** | The engine, the AI, four live sets. **Job 6 is worth ten minutes before planning any set** — split by *machinery* rather than by set, and 126 printings came to 95 distinct behaviours. [HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md) |
+| **8, 9** | Live as *documents* rather than as work: the roster spec is [OPPONENTS.md](OPPONENTS.md), the unbuilt half [CHALLENGES.md](CHALLENGES.md), and Job 9 continues wherever [GRABBAG.md](GRABBAG.md) has AI items |
+| **10.5–12c** | All four set brackets wired from Trevor's decks, the layout faults closed, the claims harness built, the pack reshaped. [ROSTERS.md](ROSTERS.md) · [AI-INVARIANTS.md](AI-INVARIANTS.md) · [PACKS.md](PACKS.md) |
+| **12d, 14a** | The ninth and tenth documentation passes. [CREDITS.md](CREDITS.md) #27 and #30 |
+| **13** | The Wizards Black Star Promos, written and made reachable — **and the intrusion roll had never fired in the shipped game.** [PACKS.md](PACKS.md) · [COLLECTION.md](COLLECTION.md) |
+| **14b** | AI validation in [PLAYBOOK.md](PLAYBOOK.md)'s shape. Printed damage is a *function of the Energy attached*; an evolution road runs to the attack it is trying to **reach**; the plan is the whole **line**. Closed 2 Sep 2026 — the work continues, sprinkled through later jobs rather than blocking on one |
+| **15a** | The **Challenge 1 bracket** — the first ladder bracket belonging to no set, and the first pack type that is not a set's. [PROGRESSION.md](PROGRESSION.md) · [OPPONENTS.md](OPPONENTS.md) |
+| **15b** | The pack odds: four cosmetic axes back at their pre-shrink pacing, and a Challenge pack rolls the rarity jump at 4x. [PACKS.md](PACKS.md) |
+
+- **Job 15c** - Document pass, AI validation, grab bag.
+- **Job 15d** - Test suite revamp. **`powertest.js` is 6,572 lines against `smoke.js`'s 2,171** and
+  grew an AI-behaviour wing during Job 11, on bespoke fixtures, before `claimtest.js` and
+  `board.js` existed to do that job properly. Nothing here has ever been audited for drift.
+- **Job 15e** - AI validation, grab bag.
+- **Job 16** - Card additions and logic for gym1.
+- **Job 17+** - Additional packs.
 - **Job 15c** - Document pass, AI validation, grab bag.
 - **Job 15d** - Test suite revamp.
 - **Job 15e** - AI validation, grab bag.

@@ -219,3 +219,78 @@ Trevor had to go and play the deck. The instruments in this repo cannot tell you
 wrong. Only somebody sitting down at the thing can.
 
 — #33
+
+---
+
+## #34 — Job 15c, the eleventh documentation pass (2 Sep 2026)
+
+**The thing I would most want the next session to know is that the highest-yield finding in this pass
+came from a warning somebody had already written, aimed at exactly the situation that then happened,
+and it did not work.**
+
+`OPPONENTS.md` went stale on "four rosters" once, was corrected on 29 Aug, and the correction ended
+with an instruction to the future: *"if you add a roster, grep this file for 'four'."* Job 15a added
+one. Nobody grepped. Seven sentences still said four, with that file's own Challenge 1 section sixty
+lines underneath them. **A warning is only as good as the moment it is read, and the moment this one
+needed to be read was inside a different job than the one that wrote it.** So I deleted the counts
+rather than correcting them again. `data/ladder.json` is the roll and it cannot go stale.
+
+That generalises past this file and it is the argument for every derived count in this tree. A
+correction that leaves a human instruction behind has a half-life. A correction that removes the
+thing needing maintenance does not.
+
+### The directory conversion was a measurement, and it should have been one twice before
+
+Trevor asked whether `AI-INVARIANTS.md` wanted to be a directory. The tree had already refused that
+exact proposal on the sixth pass and answered it a different way on the eighth, and both refusals
+were **right on the evidence they had** — "twenty-three files of eight lines each is worse navigation
+than the section was."
+
+I nearly repeated the refusal from memory of the reasoning. What stopped me was going and measuring
+the entries: 41–129 lines each, averaging 65, against `Rulings/` at 21–133. The premise had expired
+about a fortnight earlier and nothing anywhere re-checks a premise. **A shape decision has an expiry
+date and the tree had no mechanism for noticing.** So the measurement went into the header rather
+than only the conclusion, which is the only way the next person can tell whether it has expired
+again.
+
+**The archives were deliberately not converted**, and holding that line mattered more than it looks:
+their entries genuinely are 8–20 lines, so converting them would have recreated the exact shape the
+sixth pass correctly refused. The right answer was different for two halves of the same register.
+
+### Three positional references, and one had been wrong since it was written
+
+`MAINTENANCE.md` says to grep for these before a split, and it is right, but the reason it gives
+undersells it. Two of the three were ordinary — "the entry above is its other half" — and broke
+predictably. The third said *"`T_PLUSPOWER`'s own pattern three lines above it"* and **PlusPower was
+below it**. That had been false since the day it was typed and nobody had noticed, because a
+positional reference does not look wrong; it looks like a detail you skim. A link that points at the
+wrong file is visibly broken. A phrase that points in the wrong direction is invisible.
+
+### I wrote a wrong count into the sentence banning wrong counts
+
+`ENGINE.md` claimed "47 references in `engine.js`". I checked with `grep -c`, got 53, and wrote that
+into a parenthetical about how counts in prose rot — and `grep -c` counts matching **lines**. The
+occurrence count is 55. I caught it one command later.
+
+I have left that in the file rather than quietly fixing it, because it is a better argument than the
+rule it sits under: **the pass actively removing a stale count produced a fresh one inside sixty
+seconds**, using the obvious tool, for a claim whose unit it had not checked. There is now no number
+there at all.
+
+### Two things I would tell whoever takes 15d
+
+**The suite audit is real and `powertest.js` is where it lives.** 6,572 lines against `smoke.js`'s
+2,171 and `selftest.js`'s 727, for 446 assertions — roughly fifteen lines each. Its section headers
+show why: it grew an AI-behaviour wing during Job 11, on bespoke fixtures, *before* `claimtest.js`
+and `board.js` existed to do that job properly. `TOOLING.md` records the decision to leave those
+alone as "a large diff across a green suite to buy nothing", which was correct then and is the exact
+thing Trevor has now asked to have re-examined. **Do not start by migrating.** Start by asking which
+of those sections still assert something no other suite does.
+
+**And do the audit outside a documentation pass.** The property that makes a docs pass trustworthy is
+that `git status` shows nothing under `src/`, `tools/` or `data/` at the end of it. I checked that
+after every commit here, and it is the cheapest possible proof that a doc change did not quietly
+become a behaviour change.
+
+— #34
+
