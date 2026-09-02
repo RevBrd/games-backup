@@ -28,8 +28,9 @@ section it referred to had stopped counting itself for exactly that reason. Corr
 `selftest.js` proves the AI is correct and that the difficulty ladder is ordered. Neither it nor any
 other suite can tell you whether the bot plays **well**, which is a different question and the one
 that matters for a quality pass. Two tools answer it, and **neither is pass/fail**. A third answers a
-different question again — *did my change alter anything, and where* — which is the one a RULES change
-needs, because a rules change is symmetric and a win rate will sit at 50% however large it is.
+different question again — *did my change alter anything, and where* — which is the one a SYMMETRIC
+change needs, because both seats play under it and a win rate will sit at 50% however large it is.
+**"Symmetric" is a wider category than "rules"** and the section below is about why.
 
 - **`tools/aitest.js`** counts specific decisions across a few hundred games: retreats that cost the
   turn's attack, retreats with nothing threatening the Active, Energy attached to an Active that
@@ -39,12 +40,42 @@ needs, because a rules change is symmetric and a win rate will sit at 50% howeve
 - **`tools/aiduel.js`** seats the working-tree AI against a committed one and returns a win rate with
   a confidence interval. This is the only tool that answers "is it better than it was an hour ago".
 - **`tools/abtest.js`** swaps the whole of `src/` for a committed version and plays identical seeds
-  through both, reporting **how many games came out different** rather than who won. Use it for
-  engine and rules work, where both seats play under the same new rule and a win rate is the wrong
-  instrument entirely. Its `--card` flag is the point of it rather than a convenience: it restricts
-  the pool to decks that actually contain the card your change is about, and refuses — with an
-  explanation — when none do. Added 17 Aug 2026, out of *the instrument may simply not contain the
-  thing you changed* in [MISREADINGS.md](MISREADINGS.md).
+  through both, reporting **how many games came out different** rather than who won. Its `--card`
+  flag is the point of it rather than a convenience: it restricts the pool to decks that actually
+  contain the card your change is about, and refuses — with an explanation — when none do. Added
+  17 Aug 2026, out of *the instrument may simply not contain the thing you changed* in
+  [MISREADINGS.md](MISREADINGS.md).
+
+### Which of the two, and it is not rules-versus-AI
+
+**Asked by Trevor on 2 Sep 2026 — whether `abtest` still carries a purpose "if every change we do is
+reflected on both ends" — and the answer is that this is the condition it was built for.** Worth
+writing down properly, because the header of `abtest.js` said *"A/B the RULES"* for a fortnight while
+eight of the fourteen files in `AI-INVARIANTS/` quoted it for **AI** changes. That reads like drift
+and is not.
+
+| | instrument | headline |
+|---|---|---|
+| **both seats get the change** | `abtest` | divergence |
+| **one seat gets the change** | `aiduel` | win rate |
+
+A rules change is symmetric, so a win rate sits at 50% however large it is — that much was always
+written down. **What was not: a change to what the bot PERCEIVES is symmetric too.** It ships to
+whoever is playing, both seats play under it, and `aiduel` cancels it exactly as it cancels a retreat
+ruling. `PLAY-ORDER`, `DRAG-TARGET` and `EVOLUTION-PLAN` are all scorer changes measured here, and
+correctly.
+
+`aiduel` is the one that **manufactures** an asymmetry — new bot on one seat, committed bot on the
+other — which is what makes a win rate mean anything at all. Its `--baseline` pin is the other half:
+against `HEAD` it answers "did the last commit help", resets every commit, and therefore reads ~50%
+forever no matter how far the AI has come. *[The pin, and what moving one costs →](YARDSTICKS.md)*
+
+**And `abtest`'s cost is quadratic in the roster, which has tripled since it was written.** Every
+figure in `AI-INVARIANTS/` says "17,296 games per side", which is exactly 47×46×8 — true for one
+roster and quoted as though it were a property of the tool. At 54 decks it is 22,896. **The tool
+prints the count now**, so nothing has to remember it, and `--pairs N` subsamples the round-robin
+deterministically when you want an answer this afternoon; it prints the interval so you can see what
+the smaller sample costs you.
 
 ```bash
 node tools/aitest.js 6 --gbc           # behaviour counts — TAKE THE FLAG, see below
@@ -55,8 +86,13 @@ node tools/abtest.js 8 HEAD~1 --card base1-96   # ...measured only where it can 
 ```
 
 **`abtest.js` has its own control and it is free: run it against `HEAD` with a clean tree and it must
-report 0% divergence — and its STALL count on that run is the floor, not a finding.** It says so itself when `src/` matches the baseline. Every instrument in this
+report 0% divergence.** It says so itself when `src/` matches the baseline. Every instrument in this
 file has lied at least once and the two that had a control got caught fastest.
+
+**Its stall floor was ~1.4% and is now ~0.1%**, because the cause was found on 2 Sep 2026 and it was
+one missing branch in the dispatch rather than anything about the bot. Do not compare a stall count
+against a figure written before that date. *[The table, and why 140 games said the cause was
+elsewhere →](MISREADINGS.md)*
 
 ### Every way this measurement has lied — [MISREADINGS.md](MISREADINGS.md)
 
@@ -70,6 +106,9 @@ The shapes, so you can recognise one without opening the file:
 
 - **A counter that says "must be 0" and is not 0 may be counting the wrong thing** — the loudest
   failure mode, because it points at a bug that does not exist.
+- **And one sitting AT its ideal value is the reading nobody goes back to question**, which is why it
+  is the one that most needs a control. `openercheck` reported a perfect 0.0% for a fortnight with no
+  way to tell that from a dead metric.
 - **A harness that never deals the situation reports 50% for anything**, which reads as *"your change
   did nothing"* — the one verdict nobody argues with. This is the dangerous one; it fails silently
   and in the safe direction.
@@ -238,9 +277,24 @@ this, call the engine; never mirror it.** The failure was caught by running it a
 engine — always have a control that is known to fail.
 
 ```bash
-node tools/openercheck.js                          # data/base1_decks.json, 6000 hands per deck
+node tools/openercheck.js                          # data/base1_decks.json, 4000 hands per deck
 node tools/openercheck.js data/jungle_decks.json   # any file in the *_decks.json shape
+node tools/openercheck.js --control                # THE CEILING THE RULE IS BEATING — read this too
 ```
+
+**IT HAD NO CONTROL UNTIL 2 SEP 2026 AND REPORTED 0.0% ON EVERY DECK**, which is either "the rule
+works" or "this has been dead since it was written" — and nothing in the output could tell you which.
+A counter sitting at its ideal value is the reading nobody goes back to question, so it is the one
+that needs a control most.
+
+| | stranded a line-starter |
+|---|---|
+| the rule | **0.0%** |
+| `--control` | **26.2%** |
+
+The control picks the opening Active at random from the legal Basics **on the same hands**, computed
+rather than run through a second engine — mirroring the rule is the exact mistake the paragraph above
+is about. **If the control ever reads 0.0% too, the headline figure means nothing.**
 
 Deterministic seed, so the figure is reproducible run to run and a change to the rule can be measured
 against it. It reads the deck JSON rather than the engine, so it works on quarantined deck files that

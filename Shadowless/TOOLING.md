@@ -4,12 +4,13 @@ Depth behind the Tooling section of `CLAUDE.md`. Read that first; come here when
 regenerate cards, widen a set, or wonder what a suite actually covers.
 
 The shape is: `data/raw/` → `src/cards.js` → `shadowless.html`. Two generators, six test suites and
-an art fetcher; the command list is in `CLAUDE.md`. **Three neighbours own the parts that are not
-build steps**, and the split between them is what the tool *returns*:
+an art fetcher; the command list is in `CLAUDE.md`. **`node tools/test.js` runs the whole gate** —
+both generator `--check`s and all six suites, in the order they have to run in. **Three neighbours
+own the parts that are not build steps**, and the split between them is what the tool *returns*:
 
 | | Owns | Returns |
 |---|---|---|
-| this file | the generators and the six suites | **pass / fail** |
+| this file | the generators, the gate and the six suites | **pass / fail** |
 | [MEASUREMENT.md](MEASUREMENT.md) | whether the change made it *better* | a rate, with an interval |
 | [INSPECTION.md](INSPECTION.md) | `shot.js`, `probe.js`, the DEV tab — what it *looks* like | a picture, or a row that moved |
 | [DATA.md](DATA.md) | what the inputs are | — |
@@ -168,11 +169,45 @@ the only thing that has ever broken it — and it broke silently for three days 
 nobody runs a duel unless they are changing the AI. Seconds, and it prints PIN OK or names the
 matchup that crashed. *[The pin table, and what moving one costs →](YARDSTICKS.md)*
 
-## The six test suites
+## The gate — `node tools/test.js`
 
-**None of them subsumes the others**, and they overlap barely at all. Run all six before calling
-anything done. **The counts below rot** — they are here to say roughly how heavy each suite is, not
-as a figure to quote. Run the suite for the real number.
+**One command, and it is the whole of what returns pass or fail.** Added Job 15d, 2 Sep 2026,
+because "run all six before calling anything done" was six commands, one of which needed an argument
+and one of which goes red if you give it a small number — and nothing made that a single action.
+
+```bash
+node tools/test.js              # the gate, about 30 seconds
+node tools/test.js --quick      # skip packtest, which is most of the runtime
+node tools/test.js --verbose    # stream each suite's own output as well
+```
+
+**THE ORDERING IS THE POINT AND IT CLOSED A REAL HOLE.** The gate runs both generator `--check`s
+*first* and refuses to continue if either fails:
+
+```
+gen_cards --check   is src/cards.js still what data/ generates?
+build --check       is shadowless.html still what src/ builds?
+```
+
+Because `smoke.js` tests the **built** artifact. Edit `src/`, forget to rebuild, and it reads the
+previous build, tests code you have already replaced, and **passes** — so a green six-suite run could
+be describing a version of the game that no longer exists. Every suite was individually correct and
+nothing in the tree could see it. Both `--check`s already existed and were in nobody's routine.
+
+*Demonstrated rather than argued: a comment appended to `src/engine.js` without a rebuild leaves the
+old six green and stops the gate dead at step two.*
+
+**One thing it will catch that is not your fault.** `core.autocrlf` is `true` on this machine and
+Shadowless has no `.gitattributes`, so `git checkout -- src/anything.js` hands the file back with
+CRLF, the build then differs from the committed HTML — and `git status` reports the tree **clean**,
+because git normalises line endings on read and the build does not. The gate is more sensitive than
+git here. Convert the file back to LF; do not rebuild and commit the difference.
+
+### The six suites
+
+**None of them subsumes the others**, and they overlap barely at all. **The counts below rot** — they
+are here to say roughly how heavy each suite is, not as a figure to quote. Run the suite for the real
+number.
 
 - **`selftest.js`** requires the `src/` modules directly — no browser, no DOM stubs, because the
   engine is DOM-free. Validates the decks, checks card coverage, plays ~100 AI-vs-AI games to
@@ -208,6 +243,12 @@ as a figure to quote. Run the suite for the real number.
   `UI.myDeck` and `UI.foeDeck`, which is free play's contract — on the ladder the opponent's deck
   comes off the roster entry and `UI.foeDeck` is ignored. Without that declaration those tests
   quietly stop testing what they say they test.
+  **AND IT RUNS ON A SEEDED PRNG SINCE 2 SEP 2026, because it was not deterministic and everything
+  about how it was read assumed it was.** `ui.js` reaches for `Math.random()` for the match seed and
+  the pack seed; 56 of its 59 entry points pinned one and three did not. `--seed N` sweeps it, and
+  the seed is printed, so a red run is reproducible rather than an anecdote — `packtest.js`'s rule,
+  which has never flaked. **A green re-run is not evidence a red run was noise.**
+  *[The flake, and the twenty-two greens that hid it →](MISREADINGS.md)*
 - **`collectiontest.js`** drives `src/collection.js`, which is pure data. It **stubs
   `localStorage` rather than skipping persistence**, because "does a save survive a round trip" is
   the whole point and testing everything except that would be testing the easy half. Its sharper
@@ -231,12 +272,37 @@ as a figure to quote. Run the suite for the real number.
   red, why the tolerance is the honest half, and what a documented red command teaches whoever runs it
   →](MISREADINGS.md)*
 
+## `tools/lib/owed.js` — who is the engine waiting for
+
+**One expression, and it had fourteen copies in three versions.** `CLAUDE.md` carries the rule as a
+standing decision: *every choice a player is owed is PER PLAYER, and there are four of them* —
+`pendingAsk`, `pendingSwitch`, `pendingPromote`, `pendingPrize`. Getting it wrong hangs the game, and
+it had gone wrong in every harness in the repo rather than in the game.
+
+| what the loop dispatched | where | games finished, of 600 | `aiChoose` returned null |
+|---|---|---|---|
+| `pendingPromote` only | 7 loops, all in `smoke.js` | 547 | **53 (8.8%)** |
+| `+ pendingSwitch` | `selftest`, `abtest`, `aiduel`, `decksim`, `aitest` | 592 | **8 (1.3%)** |
+| `+ pendingAsk` | 1 loop, in `smoke.js` | 600 | 0 |
+| `+ pendingPrize` | nothing | 600 | 0 |
+
+**The correct version was already written, in the same file as the seven worst**, under a comment
+stating the rule in full. It never reached its own siblings. That is why the rule is now code rather
+than advice, and why `selftest.js`'s **2g** scans `tools/` and goes red if a loop stops using it —
+verified by reverting one by hand and watching it name the file.
+
+**`pendingPrize` is dispatched even though it is measurably unreachable from a loop.** A harness that
+silently depends on a state never arising is one card away from this bug, which is how the other
+three got here. Gym brings sixteen more cards that stop to ask the opponent something.
+
+*[The abtest stall floor this explains, and the 91% drop →](MISREADINGS.md)*
+
 ## `claimtest.js` — pass/fail, but a red row is not a broken build
 
 **Deliberately not one of the six, and this is the whole point of the section.** It is pass/fail, so
 it does not belong with [MEASUREMENT.md](MEASUREMENT.md)'s instruments — there is no sample and no
 interval, a claim is true on its board or it is not. But it is **not a regression suite either**, and
-putting it in the six-suite gate would teach everybody to read it wrong.
+putting it in `tools/test.js` would teach everybody to read it wrong.
 
 **A failing row here is a fault report about the AI, filed on purpose.** You write a claim out of
 Trevor's note *before* you know whether the bot satisfies it; red means you found something. That is

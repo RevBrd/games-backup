@@ -20,6 +20,13 @@ growing it. Stated here, at the top, before the decision — because a limit wri
 would be read afterwards is not a limit, which is a lesson three registers in this tree have each
 paid for separately.
 
+> **IT IS OVER THAT LIMIT AS OF 2 SEP 2026, AND THE FOUR ENTRIES THAT DID IT ARE MINE.** Job 15d
+> appended four and took it from 362 to 478. **The archive is owed and is Job 15d's to pay** — it
+> is named here rather than left for whoever next opens the file, because the threshold was written
+> the same day and an unpaid limit on day one is how a limit stops being one. Compare
+> `HISTORY-ARCHIVE-2`, which was over its own limit on day one and had to be told so.
+> — Shadowless 35
+
 *(**This file had no threshold at all until 2 Sep 2026**, and that is worth the two lines rather than
 a silent fix. `MAINTENANCE.md` asserts that every register here carries one — it says so while
 telling you to go and check each register's own number, which is the cheapest finding available and
@@ -373,3 +380,106 @@ of the card making it**, checked where two different cards threaten exactly 20.
 
 *[The scorer half, and the two guards it left →](AI-INVARIANTS/SLOT-PRINTED-DAMAGE.md)* ·
 *[the pattern the fix came out of →](Playbook/OVER-ATTACH.md)*
+
+## The `abtest` stall floor had a cause after all, and it was one missing branch — 2 Sep 2026
+
+**Three entries above this one are about that stall counter.** One says to quote it as a rate, one
+says the rate scales with the pool, and one says outright: *"The cause was NOT found and that is
+stated rather than implied."* It also names the obvious candidate and rules it out — `abtest`'s loop
+dispatches only `pendingSwitch` and `pendingPromote` where the engine owes four choices, but a
+hand-rolled reproduction over 140 games produced zero stalls, so the suspicion moved to the harness's
+git plumbing.
+
+**The candidate was right and the reproduction was under-powered.** Measured over 600 ladder games
+per dispatch form, expert on both seats:
+
+| dispatch | games finished | `aiChoose` returned null |
+|---|---|---|
+| `pendingPromote` only | 547/600 | **53 (8.8%)** |
+| `+ pendingSwitch` | 592/600 | **8 (1.3%)** |
+| `+ pendingAsk` | 600/600 | **0** |
+| `+ pendingPrize` | 600/600 | 0 |
+
+`abtest` was on the second row. Its ~1.1–1.8% floor is an unhandled **`pendingAsk`** — Challenge! and
+its relatives, which stop mid-turn to ask the opponent something. The null control on an identical
+tree, 2400 games a side, went **34 stalls → 3** when the branch was added. Not the bot, not the
+action cap, not git.
+
+**Why 140 games said zero and 600 said eight.** At 1.3% the expected count in 140 games is under two,
+and zero is an ordinary draw. *A null result at a sample that cannot resolve the effect is this
+file's founding shape, and it caught the session that was writing in this file about it.* If you are
+ruling a cause out, work out what the sample could have detected before you write "not found".
+
+**The generalisation is worth more than the fix.** The correct dispatch already existed, in
+`smoke.js`, under a comment stating the rule in full — *"ANY state that owes an action by somebody
+other than `s.active` has to be listed here, or the loop asks the wrong player, gets nothing, and
+breaks out of a game that was merely waiting."* It never reached the seven other loops **in its own
+file**, let alone the five other tools. There were fourteen copies in three versions.
+*[The measurement, and the one definition that replaced them →](../Shadowless/tools/lib/owed.js)*
+
+## `smoke.js` was not deterministic, and a green re-run is what hid it — 2 Sep 2026
+
+**A run came back 158 passed, 3 failed. Twenty-two consecutive re-runs came back green.** That is the
+worst possible way to meet a flake, because the natural reading of twenty-two greens is that the red
+was an artefact of whatever else was happening on the machine — and the session that found it spent
+an hour on exactly that theory, testing it under deliberate CPU load, before looking at the suite.
+
+`ui.js` reaches for `Math.random()` in two places: the match seed when `UI.seedDraft` is empty, and
+the pack seed in `openNextPack`, which has **no seed knob at all**. A scan of all 59 match and pack
+entry points in the suite found 56 pinned and 3 not — the **first** `startMatch()` in the file, and
+both pack opens.
+
+**Seven tests hang off that first match**, including one that plays it to completion and throws
+unless it finishes inside 800 steps. Its failure message said *"game did not finish in 800 steps"*
+for a `break` on a null from `aiChoose`, so the reader was sent to look at a cap that was never the
+problem — the same missing `pendingAsk` as the entry above, seen from the front.
+
+**Somebody had already met the other half of this and fixed the symptom.** The comment on *"the Rare
+is shown last"* says plainly that the pack *"opens on real `Math.random()`, not a fixed seed"* and
+that asserting more *"would flake on whichever run happened to roll a bonus one"* — so the assertion
+was weakened and the randomness left in place. That was a reasonable local call and it left every
+other assertion downstream of that pack exposed.
+
+**The shape: a suite that is deterministic in 95% of its entry points reads as deterministic.** Nobody
+audits the other 5%, because the evidence for determinism is the same evidence either way — it passes
+every time you run it, until it doesn't. `packtest.js` has never flaked because its seed is fixed by
+construction rather than by habit.
+
+## And a counter that reads its ideal value is the one that most needs a control — 2 Sep 2026
+
+**`openercheck.js` reported `OVERALL 0.0%` on every deck, and had done since it was written.** Which
+is either "the opening-Active rule is working perfectly" or "this measurement has been dead for a
+fortnight", and **nothing in the output could tell you which**. This file opens with the inverse
+failure — a counter that should be 0 and is not — and the ideal-value case is worse, because a
+number at its target is the one reading nobody goes back to question.
+
+The control it now has computes the counterfactual on the same hands: pick the opening Active at
+random from the legal Basics instead of by the rule.
+
+| | stranded a line-starter |
+|---|---|
+| the rule | **0.0%** |
+| `--control` | **26.2%** |
+
+So the metric is alive and the rule is removing a quarter of stranded openings — which is a result
+the tool has always been capable of producing and had never been asked for.
+
+**The control had to avoid one specific trap and it is written into the tool's own header.** Its first
+version reimplemented `setupAuto`'s rule in order to measure it, and therefore reported identical
+figures before and after the rule was fixed. So the control computes the counterfactual on the hand
+rather than running a second engine with a mirrored rule.
+
+## The fix for a line that shouts can shout in the other direction — 2 Sep 2026
+
+**Small, and it happened inside one hour, which is the only reason it is here.** `abtest`'s stall line
+said *"investigate before reading anything else"* on every clean-tree run. The fix was to print a rate
+and warn only outside a known band, and the band was written as `[0.5, 3.5]` from the floor recorded
+three entries above.
+
+Then the cause was fixed and the floor went to 0.1%, so the new line said **"OUTSIDE the known band,
+worth reading"** on a null control reading zero divergence. Same disease, opposite sign, four commits
+apart.
+
+**A threshold with a lower bound asserts that the healthy value cannot improve.** Where zero is the
+good reading, the bound belongs on one side only. Worth checking any other "normal range" in this
+tree against that.

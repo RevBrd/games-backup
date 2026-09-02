@@ -137,11 +137,13 @@ data/             the card corpus, the deck lists the game reads, and the quaran
 assets/cards/<set>/  the real printed card faces. GITIGNORED and DERIVED —
                   `node tools/fetch_art.js base1` rebuilds them
 backups/          pre-job safety copies, including the ten Claude Chat snapshots
-tools/            two generators, six suites, a screenshotter, a geometry probe,
-                  an art fetcher
+tools/            two generators, six suites, THE GATE that runs them (test.js),
+                  a screenshotter, a geometry probe, an art fetcher
        lib/       shared harness machinery — a dependency-free .xlsx reader, the
-                  board builder that makes a position out of card NAMES, and the
-                  headless-Chrome plumbing shot.js and probe.js share
+                  board builder that makes a position out of card NAMES, the
+                  headless-Chrome plumbing shot.js and probe.js share, and
+                  owed.js: WHO the engine is waiting for, which every game loop
+                  in this folder answered slightly differently until Job 15d
        claims/    Trevor's card notes as rows the bot can be held to. One file
                   per set. ADDING A CLAIM IS A ROW, NOT A FIXTURE — that is the
                   point of it. See PLAYBOOK.md, then TOOLING.md
@@ -156,9 +158,15 @@ those on the way in.
 
 ## Tooling
 
-**Run the six suites — `selftest` through `packtest` — before calling anything done.** What each one
-actually covers, and why none of them subsumes the others, is in [TOOLING.md](TOOLING.md). **Never
-quote a test count in prose** — they rot, and the tree has had to correct them twice.
+**`node tools/test.js` is the gate and it is one command.** Both generator `--check`s and all six
+suites, in the order they have to run in, in about thirty seconds. What each suite covers, and why
+none of them subsumes the others, is in [TOOLING.md](TOOLING.md). **Never quote a test count in
+prose** — they rot, and the tree has had to correct them twice.
+
+**The two `--check`s run FIRST and stop the gate if they fail, which is not tidiness.** `smoke.js`
+tests the **built** artifact: edit `src/`, forget to rebuild, and it happily tests the code you just
+replaced and goes green. A green six-suite run could describe a version of the game that no longer
+exists, and no suite could see it.
 
 ```bash
 node tools/setsurvey.js base5            # how big is this set REALLY — run before planning one
@@ -166,9 +174,12 @@ node tools/shapecount.js "When you play"   # how often does this SHAPE recur acr
 node tools/gen_cards.js                  # data/ -> src/cards.js (--sets base1,base2,base3,base5)
 node tools/fetch_art.js base1            # real card faces -> assets/ (--hires for the large ones)
 node tools/build.js                      # rebuild the HTML after editing src/
+node tools/test.js                       # THE GATE: both --checks + all six suites, ~30s
+                                         # --quick skips packtest; --verbose streams each one
 node tools/selftest.js                   # rules + AI regression (add a number for a deeper pass)
 node tools/powertest.js                  # Powers, the bespoke cards, setup, and AI verb scoring
-node tools/smoke.js shadowless.html      # integration tests against the BUILT file
+node tools/smoke.js                      # integration tests against the BUILT file
+                                         # --seed N sweeps it; it is seeded, not incidental
 node tools/collectiontest.js             # the save file, decks and variants
 node tools/progresstest.js               # the ladder, unlocks and rewards
 node tools/packtest.js                   # 200k packs in ~4s. It takes a count; DO NOT pass a small
@@ -179,14 +190,16 @@ node tools/probe.js --size 1191x684      # ...and whether it MOVES between two s
 node tools/wants.js base1 --todo         # Trevor's card notes, and which have no claim yet
 node tools/claimtest.js Arcanine --explore   # what the bot ACTUALLY does on a built board
 node tools/claimtest.js                  # assert the playbook claims — RED IS A FAULT REPORT,
-                                         # not a broken build, so it is NOT in the six-suite gate
+                                         # not a broken build, so it is NOT in tools/test.js
 node tools/aitest.js 6 --gbc              # AI behaviour counts — not pass/fail; --gbc for ladder decks
 node tools/aiduel.js 8 --baseline --gbc  # AI vs a PINNED commit — the only form that accumulates
 node tools/aiduel.js --checkpin --baseline --gbc   # ...and is that pin still RUNNABLE? Run after
                                          # adding a set or a roster; that is what breaks it
 node tools/aiduel.js 8                   # ...vs HEAD, which resets every commit; --control first
-node tools/abtest.js 8 HEAD~1            # RULES vs a commit: how many games came out different
-node tools/openercheck.js                # what the opening-Active rule promotes
+node tools/abtest.js 8 HEAD~1            # a SYMMETRIC change vs a commit: how many games came
+                                         # out different. --pairs 400 for a tenth of the run
+node tools/openercheck.js --control      # what the opening-Active rule promotes — CONTROL FIRST,
+                                         # the headline reads 0.0% either way it is broken
 node tools/pressure.js                   # what each set can THREATEN with — run before a roster
 node tools/decksim.js 45 6               # do the tiers actually ORDER? round-robin, both seats
 node tools/decksim.js 30 6 data/base1_decks.json data/base2_decks.json   # ...and do the BRACKETS order?
@@ -195,8 +208,10 @@ node tools/decksim.js 30 6 data/base1_decks.json data/base2_decks.json   # ...an
 ```
 
 **The last six are NOT pass/fail and every one of them has lied at least once.** `aitest`, `aiduel`
-and `abtest` measure whether the bot plays *well* or whether a rules change did anything, which no
-suite can see; `openercheck`, `pressure` and `decksim` measure a rule, a set and a roster. Run
+and `abtest` measure whether the bot plays *well* or whether a change did anything, which no
+suite can see — and **which of `abtest` and `aiduel` you want is decided by whether the change lands
+on both seats, not by whether it is a rules change**; a scorer change is symmetric too, and `aiduel`
+cancels it. *[The dividing line →](MEASUREMENT.md)* `openercheck`, `pressure` and `decksim` measure a rule, a set and a roster. Run
 `--control` first where there is one — skipping it has already produced one confident wrong answer.
 **Named rather than counted from the end of the list**, because that sentence used to say "the last
 two" and quietly stopped being true. See [MEASUREMENT.md](MEASUREMENT.md).
@@ -322,9 +337,19 @@ it** — that is the point of the tree, and the links here go to the owner rathe
 | **15b** | The pack odds: four cosmetic axes back at their pre-shrink pacing, and a Challenge pack rolls the rarity jump at 4x. [PACKS.md](PACKS.md) |
 
 - **Job 15c** - Document pass, AI validation, grab bag.
-- **Job 15d** - Test suite revamp. **`powertest.js` is 6,572 lines against `smoke.js`'s 2,171** and
-  grew an AI-behaviour wing during Job 11, on bespoke fixtures, before `claimtest.js` and
-  `board.js` existed to do that job properly. Nothing here has ever been audited for drift.
+- **Job 15d** - Test suite revamp. **Done 2 Sep 2026, and its premise did not survive the first
+  hour.** The job was framed on `powertest.js` being 6,572 lines against `smoke.js`'s 2,171 — but
+  that is 446 assertions against 161, which is 14.7 lines each against 13.5. The density is the same;
+  `powertest` is simply bigger. Nor was it bloated: **zero dead declarations across fifteen tools**,
+  and only five scorer assertions pinned to a literal, four of which are fixture-sanity pins that
+  *should* be. #34's advice not to start by migrating the AI wing to `claimtest.js` was right, and
+  for a reason worth keeping — that wing asserts `scoreAction`, `rawOutcomes` and `threatAgainst`,
+  which `board.js`'s probes cannot reach.
+  **What was actually wrong was duplication that had DIVERGED, and instruments with no control.**
+  Fourteen copies of the owed-choice dispatch in three versions; a suite that was not deterministic;
+  a gate that could pass against a stale build; two tools reporting a perfect number nobody could
+  check. *[Every finding →](HISTORY.md)* · *[the gate →](TOOLING.md)* · *[the controls
+  →](MEASUREMENT.md)* · *[what lied →](MISREADINGS.md)*
 - **Job 15e** - AI validation, grab bag.
 - **Job 16** - Card additions and logic for gym1.
 - **Job 17+** - Additional packs.
