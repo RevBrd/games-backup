@@ -274,7 +274,7 @@ Energy and refusing would strand it.
 
 **The nearly-taken turning is worth more than the fix.** The open item pointed at the survival
 *discount* in `attachBuild`, and **no discount could have fixed this** — the road is a selection, and a
-cheaper road is still the same road. *[Why the "off-by-one" underneath it is a hedge →](../AI-INVARIANTS.md)*
+cheaper road is still the same road. *[Why the "off-by-one" underneath it is a hedge →](../AI-INVARIANTS/SURVIVES-CHARGE-HEDGE.md)*
 
 ### Still open — the attack half of his note
 

@@ -1,1001 +1,117 @@
 # Shadowless — what has shipped in the AI, and the invariant each one left
 
-**One entry per change to `src/ai.js` that shipped, in the order they shipped, each stating what must
-stay true.** Read the entry before you touch the term it names — every one of these is a rule
-somebody bought with a wrong version first.
+**One entry per change to `src/ai.js` that shipped, each stating what must stay true.** Read the
+entry before you touch the term it names — every one is a rule somebody bought with a wrong version
+first, and several look like arbitrary constants until you know what they are holding up.
+
+**This file is the directory and the method. Each invariant is its own file in
+[`AI-INVARIANTS/`](AI-INVARIANTS/)** — the same shape [`Rulings/`](Rulings/) took, and for the same
+reason: a reader opens one door rather than scrolling past thirteen decisions they did not come for.
 
 [AI.md](AI.md) is the parent and holds the *model*: how the bot scores, where it fails silently, the
-Active/Bench unit split, the cliff table and the open list. It carries an index of everything below
-**and everything in the archive**, so you can find the entry you need from either file without
-reading both. **Nothing here tells you whether a change worked** — that is [MEASUREMENT.md](MEASUREMENT.md).
+Active/Bench unit split, the cliff table and the open list. **Nothing here tells you whether a change
+worked** — that is [MEASUREMENT.md](MEASUREMENT.md).
 
-**Two archives hold everything before Job 13, verbatim, and an archived invariant binds exactly as
-hard as a recent one** — the split is about length, not about authority. Most of the terms you will
-grep for are in one of them:
+## Why a directory now, when this was refused as one before
+
+**The sixth pass refused `AI.md` a directory and the eighth made it a single sibling instead, and
+both were right on the evidence they had.** The refusal's stated reason was *"twenty-three files of
+eight lines each is worse navigation than the section was."* **That premise expired.** Measured
+2 Sep 2026:
+
+| | Entries | Lines each |
+|---|---|---|
+| The two archives — what the refusal was about | ~23 | 8–20, bold-lead paragraphs |
+| **This register, when it was split** | **14** | **41–129, averaging 65, with their own `###` subsections** |
+| [`Rulings/`](Rulings/), for comparison | 28 | 21–133 |
+
+The entry grew by three to six times while the *rule about* the entry did not.
+[MAINTENANCE.md](MAINTENANCE.md)'s three questions — **how many entries, how long is each, and how
+many copies already exist** — now return "directory" on all three: 38 across this folder and both
+archives, file-sized, and the table below says a third of them exist nowhere else. **The lesson is
+not that the earlier passes were wrong. It is that a shape decision has an expiry date and nothing
+re-checks it**, so the measurement is written here rather than only the conclusion.
+
+**The two archives stay as archives and are NOT converted.** Their entries genuinely are
+paragraph-sized, and splitting them would recreate exactly the shape the sixth pass correctly
+refused.
 
 | Archive | Entries | Jobs | Terms that live there |
 |---|---|---|---|
 | [AI-INVARIANTS-ARCHIVE-1.md](AI-INVARIANTS-ARCHIVE-1.md) | 13–19 Aug 2026 | 9 through 10.5 | `retreatPrize`, `STALL_VERBS`, `expUseful`, `setupAuto`, `slotSymbols`, `prizeIndex` |
 | [AI-INVARIANTS-ARCHIVE-2.md](AI-INVARIANTS-ARCHIVE-2.md) | 21–25 Aug 2026 | 11 through 12c | `threatAgainst`, `selfSwitch`, `retreatSaveEnergy`, `wallScore`, `shieldSelf`, `discardSilence`, `statusNovelty`, `pLethalThisTurn` |
 
-**`AI.md`'s index table covers this file and both archives**, marking which one each row is in, so
-you can find the entry you need without opening any of them.
+**`AI.md`'s index table covers this folder and both archives**, marking which one each row is in, so
+you can find the entry you need from either end without opening all three.
 
-**This file is append-only and exempt from the 200-line target.** Add an entry when you ship a
-change; correct one that turns out wrong; never shorten one. An invariant condensed to its claim
-loses the reason, and the reason is what stops the next pass undoing it. Split out of `AI.md` on
-22 Aug 2026 at 549 lines, the same shape `LOGBOOK.md` and `Rulings/` took.
+## Adding an entry
 
-**When this file passes ~450, start `AI-INVARIANTS-ARCHIVE-3.md` at a job boundary** rather than
-growing it. Stated here at the top, before the decision, rather than only at the bottom where it
-would be read too late. **It has now been reached twice, and the second time is the one worth
-knowing about.** On 28 Aug 2026 the file hit 476 and was deliberately left whole, because the three
-entries that took it there had been written the same day as the work they describe and archiving them
-immediately buries fresh reasoning before anyone has read it. That was a real reason and it expires by
-itself — so the same paragraph named the split as *the next docs pass's first job*, which is how it
-got done rather than re-deferred. **A deferral with a named owner is a decision; one without is a
-limit quietly becoming advisory.**
+**A new file in [`AI-INVARIANTS/`](AI-INVARIANTS/), plus a row below.** Copy an existing entry's
+header block. **Name the file for the TERM it governs**, not for the date — the term is what somebody
+greps after reading `ai.js`, and a date is what nobody ever searches for. Four of the fourteen
+original entries were headed by a date, and their filenames were taken from their subject instead.
 
-**Reached a third time, 1 Sep 2026: the file is past 780 and the owner is named — whoever closes
-Job 14b.** Not split then because 14b is open and **mid-job is not a boundary**: the newest entries
-are the job's own working notes, and archiving them while the job is still running buries them from
-the sessions most likely to need them. Same reason as 28 Aug, same remedy — an owner and a moment,
-per the paragraph above.
+**Never point at a position.** *"The entry above"*, *"three lines above it"* — a split re-points those
+at different material rather than breaking loudly, and three had to be repaired on the way into this
+folder. One of the three had been pointing the **wrong way** since the day it was written, which is
+the argument for the rule: a positional reference can be wrong without ever looking wrong. Name the
+entry and link it.
 
 **Deliberately not counted, here or in `AI.md`.** The number was written into prose as *twenty-three*
 on 22 Aug 2026 and was wrong four entries later, in two files at once, while the index table beside
-it silently kept telling the truth — which is this tree's most reliable source of wrong facts
-arriving in the one file that is supposed to be checkable. **The table is the count.**
+it silently kept telling the truth. **The table is the count.**
 
-**Sign your entries with your designation, beside the date — Trevor's ask, 22 Aug 2026**, so the
-sequence of events is readable without cross-referencing `CREDITS.md`. Entries predating the
-convention were signed retroactively **only where the evidence is unambiguous** — a `CREDITS.md` row
-naming that exact change, or a `GRABHIST.md` heading naming the instance. **Two are deliberately left
-unsigned**, the 18 Aug Energy-pool fix and the 19 Aug Prize picker, because two instances were working
-on each of those days and nothing names which one. A guessed attribution is worse than a blank: nobody
-re-checks it, and it is somebody's work.
+**Sign your entries with your designation, beside the date — Trevor's ask, 22 Aug 2026.** Entries
+predating the convention were signed retroactively **only where the evidence is unambiguous**. **Two
+are deliberately left unsigned**, the 18 Aug Energy-pool fix and the 19 Aug Prize picker, because two
+instances were working on each of those days and nothing names which one. A guessed attribution is
+worse than a blank: nobody re-checks it, and it is somebody's work.
 
-## Where each account lives, and why the answer is three files
+## Where each account lives, and why the answer is several places
 
-**The entry below is the rule. The account of how the fault was found is somewhere else — and there
-are now three somewhere-elses.** This has been stated wrong three times, each time by a sentence that
-was true when written, so it is a table rather than a claim:
+**The entry is the rule. The account of how the fault was found is somewhere else.** This has been
+stated wrong three times, each time by a sentence that was true when written, so it is a table rather
+than a claim — and **three of its rows were still wrong on 2 Sep 2026**, all failing the same way:
+they named `GRABHIST.md` for material that had since moved into its archives.
 
 | Entries dated | Fuller account in | Because |
 |---|---|---|
-| 13–16 Aug, 19 Aug — **archived** | [GRABHIST.md](GRABHIST.md) and [its archive](GRABHIST-ARCHIVE-1.md) | they came out of Trevor's grab bag, which has its own append-only register |
-| 18 Aug — **archived** | **nowhere else** | they came out of *set and job work*, and nothing was recording that |
-| 21–22 Aug — **archive 2** | [GRABHIST.md](GRABHIST.md), or [`Playbook/`](Playbook/) | the retreat and Charizard work came from logs; the status, barrier and attack-choice work came from a playbook pattern, and `Playbook/ATTACK-CHOICE.md` holds its measurement tables |
-| 23–25 Aug — **archive 2** | [`Playbook/`](Playbook/) and `tools/claims/`, or **nowhere else** | the claims harness leaves its own artifact; the 25 Aug crash came out of a `decksim.js` run and is recorded only here |
-| 28 Aug — **live, below** | [`Playbook/`](Playbook/) | all three came out of Ammo and Evolution timing, which hold the measurements |
+| 13–16 Aug — **archive 1** | [GRABHIST-ARCHIVE-1.md](GRABHIST-ARCHIVE-1.md) | they came out of Trevor's grab bag, which has its own append-only register |
+| 18 Aug — **archive 1** | **nowhere else** | they came out of *set and job work*, and nothing was recording that |
+| 19, 21 Aug — **archives 1 and 2** | [GRABHIST-ARCHIVE-2.md](GRABHIST-ARCHIVE-2.md) | the hand-resize, retreat and Charizard work all came out of match logs |
+| 22 Aug — **archive 2** | [`Playbook/`](Playbook/) **only** | the status, barrier and attack-choice work came from a playbook pattern. **There is no 22 Aug grab bag entry at all**, and this row promised one |
+| 23–25 Aug — **archive 2** | [`Playbook/`](Playbook/) and `tools/claims/`, or **nowhere else** | the claims harness leaves its own artifact; the 25 Aug Power-scoring crash came out of a `decksim.js` run and is recorded only there |
+| 28–29 Aug — **this folder** | [`Playbook/`](Playbook/) | Ammo and Evolution timing hold the measurements |
+| 30–31 Aug — **this folder** | [`Playbook/`](Playbook/), [GRABHIST.md](GRABHIST.md), [LOGBOOK-ARCHIVE-6.md](LOGBOOK-ARCHIVE-6.md) | the Trainer sweep and the Over-Attach work; Ninetales and the GBC-sequel ordering are grab bag entries |
+| 1 Sep — **this folder** | [Playbook/EVOLUTION-TIMING.md](Playbook/EVOLUTION-TIMING.md) | all three came out of Trevor's account of the GBC turn order |
 
 **The opening placement fix, the Energy-pool fix, the whole triggered-Powers section and the 25 Aug
 Power-scoring crash are the only copy that exists.** Condense one of those and the reasoning is gone.
 
-**Check the table before you trim anything on the grounds that it is preserved elsewhere**, and check
-the elsewhere itself. A "this is duplicated" claim is a claim about *two* files and it decays the
-moment either one moves; the blanket version of it was cited once as grounds for refusing this
-material a home at all. *[That refusal, and why it expired →](HISTORY.md)*
+**Check this table before you trim anything on the grounds that it is preserved elsewhere, and go and
+look at the elsewhere.** A "this is duplicated" claim is a claim about *two* files and it decays the
+moment either one moves — which is exactly how three rows here went stale, and the blanket version of
+it was once cited as grounds for refusing this material a home at all.
+*[That refusal, and why it expired →](HISTORY.md)*
 
 ## The entries
 
-Chronological, oldest first. **Job 13 onward** — for 21–25 Aug see
-[AI-INVARIANTS-ARCHIVE-2.md](AI-INVARIANTS-ARCHIVE-2.md), for 13–19 Aug see
-[AI-INVARIANTS-ARCHIVE-1.md](AI-INVARIANTS-ARCHIVE-1.md).
+**Oldest first, in the order they shipped.** The `Term` column is the index: grep it in `ai.js`, then
+open the entry.
 
----
-
-## `ammoSymbols` — ammunition is only ammunition if you have nothing else to shoot with
-
-*28 Aug 2026, #29. The rule this narrows is **`ammoSymbols`, 21 Aug — #21**, now in
-[archive 2](AI-INVARIANTS-ARCHIVE-2.md); it is still correct, and what was wrong was how wide the
-derivation reached. (It said "the entry two above this one" until the archive split moved that entry
-out from under it — **name the entry, never point at a position**, which is `MEASUREMENT.md`'s own
-lesson about a growing table arriving here in a shrinking file.)*
-
-**Headroom is granted only when the burn OUTPACES the attachment and the card owns no free attack.**
-Both are read off the card's own effect scripts, so this is still a derivation and not a list — but
-the verb alone was not enough. `COST_DISCARD_ENERGY` on its own told the bot to stock **Arcanine GP
-to six Fire** for a 40-damage attack, using the pre-load rule written for Charizard's 100.
-
-**The claim that found it was asserting the wrong thing, and that is the entry.** `tools/claims/basep.js`
-had a red row saying Arcanine GP should prefer Quick Attack at four Fire. It was red for two days and
-two sessions read it as a missing term in attack choice. Trevor, asked directly: *"If it ever found
-itself in a situation where it did have 4 energies attached then yes, it should use Flames of Rage.
-However, it should be exceedingly rare that it finds itself in that situation."* **The attack choice
-was right the whole time and the fault was one decision upstream.** The row was rewritten to assert
-the behaviour that turned out to be correct, the way the 14 Aug `powertest` assertion was rewritten
-rather than deleted — and the real claim is now an *attach* row.
-
-**THE NESTING IS LOAD-BEARING AND THE FLAT VERSION MOVED FIFTEEN CARDS.** Written first as "no
-headroom for any card with a free attack", it stripped Ninetales, Charmeleon, Charmander, Magmar,
-Starmie, Kadabra, Mewtwo, Gastly, Slowpoke, both Flareons, Ponyta, Dark Golduck and base1 Arcanine —
-fourteen rate-neutral cards, most of them in live ladder decks, on the strength of an argument about
-two cards that are nothing like them. A card burning one against one attached a turn was never at
-risk of running out, so the fallback test has nothing to say about it. **Ask it second, and only
-under a real drain.** Then it moves exactly one card. The sweep is the only thing that told the two
-versions apart, and the first one felt just as principled while writing it.
-
-**THE INSTRUMENTS ARE BLIND HERE AND THAT IS STATED RATHER THAN MEASURED AROUND.** `basep-6` appears
-in **0 of 51 authored decks** and promos are excluded from generated decks by design, so `aiduel` and
-`decksim` cannot see this change at all. Running them would return a symmetric null that means
-nothing — the exact failure [MISREADINGS.md](MISREADINGS.md) exists for, and the reason the 23 Aug
-entry above checked exposure before believing its own null. The evidence here is three claim rows and
-a full sweep of every card carrying the verb.
-
-**One of those three rows is a CONTROL and it is not optional.** A fifth Fire on Charizard must still
-score positive. Without it, deleting `ammoSymbols` outright would pass every other row in the file.
-
-**The board-level half is still open and Trevor's answer sharpened it.** *"After it's at 2 energies,
-additional ones better serve the bench... unless they're in abundance"* is three conditions about the
-rest of the board, and nothing in the scorer reasons about Energy as a resource with somewhere else
-to be. Same capability the Charmeleon half and Evolution timing wait on.
-*[The pattern, with the note verbatim →](Playbook/AMMO.md)*
-
----
-
-## `evolutionInHand` / `potentialAs` / `evolveEarly` — a Pokemon about to become something else is not paid up
-
-*28 Aug 2026, #29. AI.md open item 4, closed — and it is the first entry here whose measured result is
-a null that shipped anyway.*
-
-**Two rules, one commit, and the file said so before either existed.** Open item 4's whole warning was
-that a readiness penalty on `evolve` must not ship without the attach half, because evolving was the
-only thing that unblocked the Energy. That held. Trevor's account of the GBC game gave both halves at
-once: *"careful not to evolve unless it was one energy away from being able to use the evolution's
-cheapest attack of value, so it would get energies close to that point before actually evolving."*
-
-**THE BLOCKER WAS ONE LEVEL HIGHER THAN THE OPEN ITEM PREDICTED.** It named `attachValue` as the thing
-to fix. `attachValue` was never reached: the **surplus rule** in `case 'attachEnergy'` returns
-`W.attachSurplus` first, and a Gloom holding two Grass can already pay for Foul Odor, so `noProgress`
-was true and the third Grass was refused at −2 whatever `attachValue` would have said. Fixing the
-predicted site alone would have changed nothing and looked like the rule not working. **A diagnosis
-that names a function is still a hypothesis about which function.**
-
-**`potentialOf` held an assumption silently and my change broke it.** It takes the card as an argument
-and had exactly one caller, which always passed `this.top(slot)` — so its `scoreAttackHypothetical`
-branch could index attacks by position against the real card. Ask it about an *evolution* with more
-attacks than the Basic underneath and it indexes off the end: `Cannot read properties of undefined
-(reading 'dmg')`, three Overgrowth games, caught by `selftest.js` and not by anything else.
-`isReal` now guards it and printed damage is the fallback — which is right rather than merely safe,
-since a card not on the board cannot be scored as though it were attacking this turn.
-
-**THE RESULT IS A NULL AND IT SHIPPED. Read this before citing it as an improvement.** `aiduel 8
---gbc` against HEAD: no significant difference, and `--control` reads the same, so the harness is
-working and the null is real. The change is not inert — 17,672 ladder games went from 228,832
-attachments to 229,737 and from 633,654 turns to 635,509. Three grounds for shipping: it is the
-behaviour Trevor specified; it closes a fault he named from PLAY rather than from a metric, and a
-Vileplume that arrives unable to attack is visible to a human in a way 0.4% of attachments is not; and
-MEASUREMENT.md predicts symmetric perception fixes read flat. **What is not claimed is that the AI got
-better.** If a later pass finds this costs something, the null is why that is fair game.
-
-**Only from hand, deliberately.** Trevor's note has a lower-weighted arm for evolutions still in the
-deck, and a duplicates clause — feed one Gloom, not two. Neither is built; both are named in
-*[Playbook/EVOLUTION-TIMING.md](Playbook/EVOLUTION-TIMING.md)*. The duplicates clause depends on the
-scarcity measure that AI.md open item 9(b) measured at near-inert, so it does not follow automatically
-and should be raised with Trevor rather than assumed.
-
----
-
-## `evolutionRoadFor` / `benchDuplicate` — one of the twins gets fed
-
-*28 Aug 2026, #29, from Trevor's duplicates clause. The entry above is its other half and they were
-built an hour apart.*
-
-**The evolution ROAD is rationed; the Energy is not.** A non-primary duplicate still scores
-attachments against its own attacks like any other Pokemon — it can be built as a staller or an
-attacker. What it loses is `potentialAs` measuring it against what it might become, and the fourth
-surplus exception that travels with that. **Resistance, never a veto**, which is Trevor's own word.
-
-**The primary is the most-invested copy that is NOT YET READY, and defining it that way is what makes
-the release automatic.** When the leader's shortfall against its evolution hits zero it stops being
-short, drops out of the running, and the next copy inherits the road. Trevor's *"once one is fully at
-the point it needs to be and is just waiting on the evolution card"* is then the definition rather
-than a second rule that could disagree with the first. Ordered by Energy attached so feeding the
-leader keeps it the leader; `uid` breaks the opening tie. **A leader that flip-flops is worse than no
-rule at all.**
-
-**IT EXPOSED A FAULT IN THE ENTRY ABOVE, WRITTEN THE SAME MORNING.** At two Fire the leader scored
-**15.00** against an untouched twin's 22.00, so the bot fed the twin and left the leader one short of
-a Charmeleon. `attachValue`'s completing branch pays a flat `attachBuild * short * 2` on the stated
-grounds that *"`attachEnable` has already paid the attack's real value"* — **true only when the attack
-is on the card standing there.** `attachEnable` reads `best`, `best` is deliberately the current
-card's, so on an evolution road it paid nothing and the last Fire before a 50-damage Charmeleon was
-worth seven. An evolution road now always takes the amortise branch. **A rule can be right and still
-look wrong because something it leans on was never exercised at that value before**, and the way this
-surfaced is worth more than the fix: putting two roads side by side is what made one of them
-obviously mispriced.
-
-**`benchDuplicate` is counted across the whole board and is silent for the first two.** An Active
-Growlithe is as much "one of them" as a benched one. Silent for two on purpose — the rationing rule
-above is built on there being a second copy to fall back on, so charging for it would fight the rule
-directly overhead. Third copy pays once, fourth twice: 7.00 → −2.00 → −16.00 while a different Basic
-holds 7.00.
-
-**Null again — 50.3% ±0.5 against HEAD, and 50.1% ±0.5 for the whole day against the freshly moved
-pin.** Same three grounds as the `evolutionInHand` entry, and the same warning: **do not quote either
-as an improvement.**
-
-**Trevor's own wording pointed at a term that would not have worked.** The note as first written said
-duplicates should be fed *"unless nowhere else to go and energies aren't in short supply"* — a
-scarcity condition, and `AI.md` open item 9(b) had measured scarcity at near-inert hours earlier. Asked
-directly, he gave a release condition the board already knows: the leader is ready and waiting on the
-card. **The four lines it cost to ask were worth more than the term they replaced.**
-
----
-
-## `T_DEFENDER` — a shield is a shield whichever direction the damage comes from
-
-*29 Aug 2026, #30. Shipped alongside the engine change, in the same commit, because the two halves
-are worthless apart: a rules capability the scorer cannot reach is a capability the bot does not
-have.*
-
-**Defender now blunts an attack's self-harm** — 30 recoil becomes 10, at the price of the card being
-used up before the opponent's turn. *[The ruling and its scope table
-→](Rulings/DEFENDER-BLUNTS-SELF-HARM.md)*
-
-**The invariant: prevented self-harm is priced through `shieldSelf`'s curve, not a second one.**
-Linear in the damage stopped, squared in the share of remaining HP it stops, off `selfKO`. That is
-the same pair of curves the barrier work settled on 22 Aug and they disagree **on purpose** — a
-quantity is linear, a risk is squared. **Do not collapse them into one term here** any more than
-there; a Defender that stops 20 of a 30 recoil and a Defender that stops the 20 that would have
-killed you are doing two different things, and the second one is worth far more.
-
-**It reads the attack the bot would pick ANYWAY**, through `bestAttackScore` + `forecast`, which is
-`T_PLUSPOWER`'s own pattern three lines above it. **Deliberately not the worst self-harm available:**
-over-stating it would buy Defenders for attacks the bot was never going to use, and the failure being
-closed is a capability *never used at all*, so the conservative direction is the safe one. That is the
-opposite choice from `pLethalThisTurn`, which takes the maximum — **and the reason is the same rule
-applied honestly**: pick the direction whose error is the smaller failure, which depends on which way
-the term is wrong.
-
-**KNOWN LIMIT, recorded rather than discovered later. A Defender can UNLOCK an attack the bot has
-already ruled out, and the bot cannot see it.** At 30 HP an Arcanine refuses Take Down because 30
-recoil kills it — correctly. With a Defender the recoil is 10 and Take Down is safe, but
-`bestAttackScore` runs *before* the Trainer is played, so the forecast it reads is the one without
-the shield. The term therefore goes quiet in exactly the spot where the play is most interesting.
-**This is the `pLethalThisTurn` problem in a second place** — a Trainer is played before the attack
-and there is no forecast of the board it creates — and fixing it properly means letting `scoreTrainer`
-forecast a hypothetical post-Trainer board, which is a real refactor and not worth it for one card.
-**Do not "fix" it by widening the term to the worst attack**; that trades a quiet miss for a noisy one.
-
-**UNMEASURED, and it cannot go on `selftest.js`'s `PROVISIONAL` list**, which holds effect verbs
-rather than Trainer branches — same reason `prizeIndex` is recorded in `AI.md` instead. Exposure is
-thin: Defender is one Uncommon, and the term only fires when the bot's chosen attack self-damages.
-**Do not read a null from `aiduel` as evidence it failed**, and do not retune the two constants off
-one duel — they are `shieldSelf`'s, already measured in their own place.
-
-## 30 Aug 2026 — a strip is not a payment, and the AI was never choosing at all
-
-**`energyStripOrder`, `energyUids`** · Job 14b · Trevor's `Wants` on Energy Removal and Super Energy
-Removal, worked as claims.
-
-**The invariant: which Energy a HOSTILE effect takes is the AI's decision, and it is the inverse of
-the order a Pokemon pays its own costs in.** `energyPayOrder` answers *"which of mine do I miss
-least"*. A strip asks *"which of theirs do they miss most"*. They are different questions and for as
-long as both cards have existed only the first one was being asked.
-
-**The AI was not choosing badly. It was not choosing.** `scoreTrainer` set `a.opts.energyIdx = 0` —
-the only occurrence of that key anywhere in the project, and one the engine has not read since the
-human's Energy picker replaced it. `ui.js` still carries the comment noting the human path moved to
-`energyUids`; the AI path was simply left behind. Super Energy Removal set neither `costUids` nor
-`energyUids`, so **both** its halves fell through. With no uids, `takeEnergy` reaches
-`energyPayOrder` and politely takes whatever the target needed **least**.
-
-**A dead key that looks like a considered choice is worse than no key**, which is the transferable
-half of this. `energyIdx: 0` reads as *"take the first one attached"* — a decision somebody made —
-and it survived a picker migration, a full Trainer scoring pass on 24 Aug, and every suite in the
-repo. Nothing was going to catch it: the card works perfectly for the human, no verb is unscored, and
-`selftest.js`'s guard is about verbs rather than about option keys.
-
-**The key priority SWAPS, it does not merely reverse**, and Trevor's note is explicit about the
-order: *"DCE should be the first target and its own energy type ... should be the second."* So the
-primary key is **how many symbols the card is worth on this slot** and the tiebreaker is **whether
-its type is a hard requirement of the target's attacks**. Reversing `energyPayOrder` outright gives
-needed-first and gets the Charizard board wrong.
-
-**Read the SLOT, never the card** — the 18 Aug `slotSymbols` invariant, arriving here from the other
-side. Under Energy Burn every Energy on a Charizard is Fire, so its Double Colorless is worth two,
-which is exactly why 21 Aug reversed the *friendly* order to stop Charizard spending it first. The
-same fact makes it the right thing to take away.
-
-**Why it stayed invisible, which is the part worth keeping.** The friendly order and the hostile
-order **agree wherever the Double Colorless is surplus** — "what they need least" and "what costs them
-most" pick the same card. They diverge only where the Energy is load-bearing, which is the only case
-worth spending a card on. A probe that read `a.opts` back would have reported a choice being made;
-`board.js`'s new `strips()` plays the card and watches what actually left, which is why it can see
-this at all.
-
-| board | took, before | takes, now |
-|---|---|---|
-| Magmar, 1 Fire + 1 Water (needs R) | Water — the filler | **Fire** |
-| Kangaskhan, 1 Water + 1 DCE (every cost Colorless) | Water | **the DCE** |
-| Charizard, 3 Fire + 1 DCE (Energy Burn) | Fire | **the DCE** — two symbols, not one |
-| Super Energy Removal on that Charizard | two Fire | **the DCE and a Fire** — three symbols, not two |
-
-**And the card is part of the price on Super Energy Removal alone.** Trevor: *"DOES NOT want to be
-used on an opponent pokemon with only one energy because then you don't gain an advantage."* At one
-Energy you trade your Energy **and** the card for their Energy; the old formula scored that 4.00 and
-played it. `- W.drawCard` now applies at every count rather than as a test for one, because a
-quantity about how bad a trade is, written as an equality check, is this project's most reliable
-sniff test for a wrong curve. **Energy Removal is deliberately NOT charged it** — it costs the card
-and nothing else, which is the whole difference between Trevor's two notes.
-
-**Measured, and read the null correctly.** `abtest 8 HEAD`: **12.1% of 17,296 games diverge**, median
-first difference at action 43, against a null control on an identical tree that read **0.0%**. Win
-rate is 49.0% → 49.1%, which is **not** evidence of nothing — both seats get the fix, so this is the
-symmetric case [MISREADINGS.md](MISREADINGS.md) exists for. The evidence is the divergence and the
-five claim rows, all five of which go red against the commit before it.
-
-**Nine rows hold it, four of them controls.** The target half (Active over Bench, and never on a
-Pokemon about to be Knocked Out) was already right and must stay so; the self-payment half of Super
-Energy Removal correctly uses the **friendly** order and must keep using it. **Do not unify the two
-orders** — one card now uses both, in opposite directions, on purpose.
-
-## 30 Aug 2026 — PlusPower is worth the turn it takes off the kill, not only the last one
-
-**`turnsWith`, `T_PLUSPOWER`** · Job 14b · Trevor's `Wants` on PlusPower, worked as claims.
-
-**The invariant: the value of ten damage is how much sooner the target dies, and it is a staircase
-rather than a step.** `T_PLUSPOWER` paid a flat 6 and then +34 for exactly one board — the extra 10
-makes *this* attack lethal. That is the top rung, priced as though it were the only rung.
-
-**Trevor names the general quantity and hands over the arithmetic**: *"when an additional 10 damage
-would result in 1 fewer turn to kill the opponent, as in a move doing 30 damage attacking a pokemon
-with 70 HP."* Three turns becomes two. The bot scored that board **6.00 — identical to a board where
-the extra 10 changes nothing at all.**
-
-**This is the cliff table's tenth row and it is in a Trainer**, which is worth noticing on its own:
-the sniff test has now paid in `ai.js`, in a test suite, and here in `scoreTrainer`. *A quantity
-about proximity, written as an equality check.* Turns removed is a **quantity**, so it is linear,
-discounted by how far off the turn it removes is: `40 / turnsWith`.
-
-**The lethal case comes out at exactly 40.00 by arithmetic, not by a branch** — `turnsWith === 1` —
-which is the same 6 + 34 it used to score. That is the calibration check: a general term that
-subsumes a special case should land on it, and this one does to the point.
-
-| board (Fire Punch, 30 flat) | before | after |
-|---|---|---|
-| 70 HP left — three turns becomes two | 6.00 | **20.00** |
-| 60 HP left — two turns becomes two | 6.00 | **0.20**, held |
-| 40 HP left — two turns becomes one | 40.00 | **40.00**, unchanged |
-| 60 HP left, attacker about to die | 6.00 | **6.00**, spent anyway |
-
-**Holding is the default and it has an escape clause, which is Trevor's next sentence.** Ten damage
-that changes no turn count changes nothing, and spending it now spends the option of playing it on
-the turn it *would* have converted — that option is the whole of *"plan to hit for 30 on the first
-turn and use the PlusPower for 40 on the second."* But: *"If you might not survive until the second
-turn, the PlusPower could probably be used early."* **The card survives your Pokemon; the PLAN does
-not**, because the attacker it was built around is the thing about to die. So the held branch pays
-0.2 — under `threshold` — unless `incomingThreat >= remainingHP`, where it pays the old flat 6.
-
-**`expDmg + 10` is exact, not an approximation.** PlusPower is a `DAMAGE_BONUS` effect and
-`computeDamage` applies those **after** Weakness and Resistance. Checked rather than assumed; if that
-order ever changes, this term changes with it.
-
-**Measured.** `abtest 8 HEAD`: **15.9% of 17,296 games diverge**, median first difference at action
-48, against a null control reading 0.0%. Win rate 49.1% → 49.1% — symmetric, both seats hold
-PlusPowers, and that null says nothing either way. Four rows hold it; three of them are controls and
-**only one goes red against the prior commit**, which is the point of writing the already-correct
-behaviours down.
-
-**Do not re-collapse this into a lethality test.** The old form is recoverable from the new one and
-looks simpler; it is the special case.
-
-## 30 Aug 2026 — one drag, one rule, and the attack half was rolling dice
-
-**`bestDragTarget`, `dragScore`** · Job 14b · Trevor's `Wants` on Ninetales, and his GRABBAG report
-of the same thing from play.
-
-**The invariant: dragging one of THEIRS is one decision with one ranking, wherever it is printed.**
-Gust of Wind, Lure, Fascinate and Tempt are the same effect. `T_SWITCH_OPPONENT` ranked their whole
-Bench and filled `a.opts.bench`; the **attack** path scored a flat `W.drag` and filled nothing, so
-`SWITCH_DEFENDER_CHOOSE` fell through to the engine's seeded random pick.
-
-**This is 21 Aug's `selfSwitch` invariant, unhonoured in the mirror case.** *The scorer fills in
-`a.opts` so the engine's random fallback is never reached* — written for switching one of ours, and
-exactly as true for dragging one of theirs. `scoreAction` already does it for `SWITCH_SELF_CHOOSE`
-three lines away.
-
-**Trevor found it in play first**, and the report is the reason to trust the diagnosis rather than
-the other way round: *"Ninetales also used Lure to draw out a much more dangerous pokemon on turn
-49"* — GRABBAG, log# 04-02-53.
-
-**The demonstration is one board printed twice.** Their Bench holds a fully charged Charizard and an
-Energy-less Rattata:
-
-| | `[Charizard, Rattata]` | `[Rattata, Charizard]` |
-|---|---|---|
-| **Lure**, before | Rattata | **Charizard** |
-| **Lure**, after | Rattata | Rattata |
-| **Gust of Wind**, before *and* after | Rattata | Rattata |
-
-**Same effect, same board, two answers — and the answer changed with the order of their Bench.**
-Lure also scored a flat 14.00 either way, so nothing in the score could have told anyone.
-
-**ASSERT BOTH BENCH ORDERINGS.** The first of the two Ninetales rows was **green before the fix**, on
-this seed, by coincidence. A row a coin is winning is indistinguishable from a row a rule is winning,
-and only the pair separates them — the same reason `dragsUp()` and `strips()` execute the card and
-read the board rather than reading `a.opts` back. **A single row here would have shipped a false
-green.**
-
-**`attackVariants` deliberately does not enumerate this choice**, unlike Metronome and both
-Conversions, so there is no per-option action for `pickBest` to score and the pick has to be filled
-in from `scoreAction`. That is a decision, not an oversight — enumerating it would multiply the
-action list and the UI builds its own bench prompt in `doAttack` rather than reading variants. **If
-anyone changes that, this fill becomes redundant rather than wrong.**
-
-**Two callers, one ranking, and the Trainer's behaviour is unchanged** — 39.80 on the demonstration
-board before and after, held by two control rows written for exactly this refactor. **Do not grow a
-second ranking for attacks.** The whole finding is that there were two paths and only one of them was
-thinking.
-
-**Blast radius is four cards** — Ninetales, Victreebel, and Dark Persian twice — across three live
-sets, and Ninetales is in Trevor's own ladder decks, which is why he saw it.
-
-**Measured.** `abtest 8 HEAD`: **4.1% of 17,296 games diverge**, median first difference at action 83
-— late, which is when a Lure gets used — against a null control reading 0.0%. Win rate flat and
-symmetric, as it must be.
-
-## 30 Aug 2026 — a Switch is worth the retreat cost it nullifies, and half of that is open
-
-**`T_SWITCH_OWN`** · Job 14b · Trevor's `Wants` on Switch.
-
-**The invariant: a Switch on a Pokemon that can already walk away for nothing is worth nothing**, because
-retreating does the identical thing and keeps the card. The retreat cost was not read anywhere in
-this case. Measured before the fix: **a Switch on a free-retreat Rattata scored 24.00 and was
-played**, while one on a retreat-4 Snorlax — the card in the format it is worth most on — scored
-**-4.00** and was refused.
-
-**A GATE, NOT A WEIGHT, and only half his note deliberately.** *"Does not want to be used on a
-free-retreat cost pokemon"* is a gate with no number in it. *"Prefers heavier retreat costs to
-nullify"* is a quantity, it is **not built**, and there is an `open:` row saying why: the saving is
-only real if you wanted to move at all, so adding `cost * retreatSaveEnergy` unconditionally buys
-Switches for Snorlaxes that were perfectly happy standing there — and gating it on *"did we want to
-move"* is circular, because that is the sum the term would be part of. **Ask before building it, and
-build it once**: the retreat path already owns this quantity as `retreatSaveEnergy` and there must
-not be a second rate for it.
-
-**All three conditions on the gate are load-bearing and none is defensive.** `canRetreat` is what
-makes it safe under Paralysis and Sleep, where retreating is illegal and the card is the only way
-out. `retreated` is the once-a-turn limit, after which the card is again the only way out — there is
-a control row for exactly that board. And the cost is read **live** through `retreatCostOf` rather
-than off the printed card, so Dodrio's Retreat Aid is already in it.
-
-**`T_SWITCH_OWN` also computes its best destination and throws the value away**, which is the third
-time this session that pattern has turned up — `bestDragTarget`'s old home did it, and so did the
-Gust ranking. **When a scorer picks an index out of a loop, check whether the score that chose it
-survives.** It usually should.
-
-**Measured.** `abtest 8 HEAD`: **3.3% of 17,296 games diverge**, against a null control reading 0.0%.
-Win rate 49.1% → 48.9%, which is 23 games and symmetric; **do not read it in either direction.**
-
----
-
-**`AI-INVARIANTS.md` has passed 450 lines here — 544 by the end of Job 14b — and this is the named deferral rather than a silent
-one.** The four Job 14b entries above were written the same day as the work, and the 28 Aug precedent
-in this file's header is that archiving fresh reasoning buries it before anybody reads it. **The owner
-is Job 15c's document pass** — `AI-INVARIANTS-ARCHIVE-3.md`, split at the Job 14b boundary, which
-puts Jobs 13 through 14b in it. A deferral with a named owner is a decision; one without is a limit
-quietly becoming advisory.
-
-## 31 Aug 2026 — the off-by-one is a hedge, and the fix was in the selection
-
-**`turnsLeft`, `survivesCharge`, `evolutionRoadFor`** · Job 14b · Trevor's Charmeleon note, and his
-question about what the reusable answer should be.
-
-**The invariant: `survivesCharge`'s `+1` is a POLICY and must not be "corrected".** It reads one turn
-more than the worst case says, which looks exactly like an off-by-one — a Pokemon acts before each of
-their attacks, so the attack that kills it is not a turn it got. **It was corrected as an experiment
-and the experiment is why the `+1` is now documented instead of gone.**
-
-`incomingThreat` is a snapshot of the worst thing they can do **right now**, and `survivesCharge`
-projects it forward as a certainty — no heal, no switch, no Gust, no coin landing wrong. That
-over-projection gets less true the further out it reaches, and the `+1` is the hedge against it.
-
-**It is load-bearing on one narrow band, measured.** Removing it flips three claim rows and all three
-sit in the same place — a Pokemon that survives **exactly one more hit**, where the honest count
-halves the discount:
-
-| board | shipped | honest | outcome |
+| When | The invariant | Term | Entry |
 |---|---|---|---|
-| Zapdos, 70 HP under 80 | 1 | 0 | already discounted hard — **stays green** |
-| Charizard, 120 HP under 80 | 2 | 1 | *"firing at four is charged for"* **flips** |
-| Arcanine GP, 70 HP under 40 | 2 | 1 | *"never at exactly two Fire"* **flips** |
-
-**Trevor's own notes settle it, and they only look contradictory until the band is visible.** Zapdos
-is genuinely dying and its note says burn freely. The other two are at or near **full HP** facing one
-hit, and their notes say do not silence yourself there. **A Pokemon at full HP is not "about to die"
-in any sense a player would recognise** — it is one heal, one Gust or one bad coin from a different
-board. The hedge is what encodes that, and it had been doing it by accident since the function was
-written.
-
-**`turnsLeft(pi, slot)` is the fact, split out from the policy**, and that split is the general
-answer to *"what should the next item that needs this reach for."* It returns future turns of mine,
-unhedged, `Infinity` on the Bench. The same idea had been written **four times** — inside
-`survivesCharge`, inside `discardSilence`'s call, inside `attachBuild`'s, and as a bare boolean in
-`T_PLUSPOWER` written the day before, which **disagreed with `survivesCharge` on the same board.**
-That boolean is now a call to `turnsLeft`; the arithmetic is identical (`hp <= threat` and
-`ceil(hp/threat) - 1 === 0` are the same condition), so nothing moved and there is one expression of
-the idea instead of four.
-
-**THE RULE FOR THE NEXT CALLER: take the fact, state your own policy at your own call site.** Do not
-add a second hedge inside `survivesCharge` and do not remove the one that is there. If the hedge is
-ever revisited it is a policy change wanting its own measurement, not a bug fix.
-
----
-
-**And the Charmeleon fault was never in the magnitude.** The road was worth **101.0 to an Active on
-80 HP and 101.0 to the same Active on 10 HP**, with the safe benched twin passed over at 62.0 —
-sweeping the Active from 80 down to 10 never moved it by a point. No survival discount fixes that,
-because `evolutionRoadFor` ranks by **investment and nothing else**, and a discount to the magnitude
-leaves the road where it was.
-
-**So a copy that will not live to finish its road now steps aside, exactly as a ready one does.** That
-is the same shape as the existing release rather than a new kind of rule: a leader stops leading when
-it can no longer be the one that arrives. Trevor, 31 Aug: *"I'd say the active one is pretty safe to
-write off... switching powerup focus to the Charmeleon on the bench."*
-
-**ONLY WHEN SOMEBODY ELSE CAN TAKE IT UP.** A sole carrier keeps its road however doomed it is —
-there is no better home for the Energy and refusing would strand it. That guard is what keeps this
-from being a veto, and it is why the common single-copy case is untouched.
-
-**Hedged through `survivesCharge`'s own `+1`** rather than the raw count, so the two places that ask
-*"will you be here"* cannot drift apart. A healthy Active two turns from death with a shortfall of two
-keeps the road; a Charmeleon with zero turns left against a shortfall of two does not.
-
-**A claim about twins must go through the uid.** The first version of that row read
-`explain()`'s label, and with two Charmeleons in play *"Attach Fire Energy to Charmeleon"* is the same
-string twice — so it read the wrong slot and stayed red after the fix had landed. **`explain()` is
-for humans; anything comparing two copies of one card needs the action's `target`.**
-
-## 31 Aug 2026 — the attachment is last, and a search goes before a draw
-
-**`playFirst`, `handGrowKind`** · Job 14b · Trevor, from playing the Japan-only GBC sequel and from
-Pocket. Grab bag, not the workbook.
-
-**The invariant: some plays are ordered by INFORMATION rather than by value, and `choose` could not
-express that.** Setup actions were picked purely by score, one per call — so an attach scoring 101
-always went before a Bill scoring 10, and then the Bill drew the Charizard that would have changed
-where the Energy went. **No score can fix this, because the Bill is not worth more; it is worth
-EARLIER.**
-
-Two orderings, both his:
-
-- **Anything that grows your hand goes before the attachment**, so the attachment is made knowing
-  what arrived. His note: *"there's a general order of operations to the AI's turns, where the energy
-  attachment is always last before attacking/ending their turn, that way things are allowed to change
-  if a trainer card alters the scenario mid-turn."*
-- **A deck-NARROWING search goes before a random draw.** *"Using a Poke Ball to draw a basic pokemon
-  out of the deck would be played before a Bill that draws two cards... removing the Poke Ball's basic
-  pokemon from the pool increases the pull odds by one card."* One card of improvement, free, on every
-  draw made afterwards.
-
-**IT REORDERS, IT NEVER ADDS A PLAY.** Every candidate has to clear `threshold` on its own score,
-exactly as it would to be chosen at all. A turn where nothing else was worth doing is byte-identical.
-
-### The carve-out is the whole care, and it is four verbs rather than a category
-
-**Only cards that cost NOTHING from hand are promoted**: `T_DRAW`, `T_POKE_BALL`,
-`T_ENERGY_SEARCH`, `T_SEARCH_TO_HAND`.
-
-**Professor Oak discards your hand. Gambler shuffles it back. Computer Search pitches two.** Promoting
-any of those ahead of an attachment can eat the very Energy the turn was about to attach — the play
-would destroy its own reason. **Trevor's own Professor Oak note is this rule from the other side**:
-*"consumables like Potion or PlusPower want to be used immediately before Professor Oak even if
-they're not needed, because they get discarded otherwise."*
-
-**So the rule is: an action that can consume your hand is never promoted ahead of one that uses it.**
-A new card joins the set only if it takes nothing from hand. Do not widen this to "hand-growing
-Trainers" — that is the category, and the category is wrong.
-
-### What it does, measured on one board
-
-A Charmeleon on the evolution road with a Charizard in hand — the attach is worth ~101 and everything
-else is worth ten or less:
-
-| hand | before | now |
-|---|---|---|
-| Energy, Charizard | attach | attach — unchanged |
-| Energy, Charizard, **Bill** | attach | **Bill** |
-| Energy, Charizard, Bill, **Poké Ball** | attach | **Poké Ball**, then Bill, then attach |
-| Energy, Charizard, **Professor Oak** | attach | **attach** — the carve-out holding |
-
-**Three assertions in `powertest.js` rather than claim rows**, because these came off the grab bag and
-not out of the workbook, and because they are about *when* rather than *what*. **Two of the three go
-red against the previous commit; the third — Oak staying behind the attach — passes both ways on
-purpose**, since it guards a behaviour that was already right and must survive.
-
-### Deliberately NOT extended to benching or evolving, though the argument covers them
-
-**Printing a whole turn makes the question obvious**, which is worth doing when you touch an
-ordering. It now reads:
-
-```
-Poké Ball  ->  Bill  ->  attachEnergy  ->  evolve  ->  playBasic  ->  pass
-```
-
-**`playBasic` sits after the attachment and by the same argument it should not** — a Basic you have
-not benched yet is an attach target that does not exist when the attach is scored. `evolve` is the
-milder version of the same thing.
-
-**Left alone on purpose, twice over.** Trevor's observation was about Trainers altering the scenario,
-and the two cases are much weaker: `attachBuild` already looks ahead through `evolutionInHand` and
-`potentialAs`, so an attachment made before an evolution is not blind to it; and a Basic benched this
-turn has no Energy and is rarely the best target anyway. **Extending an ordering rule because its
-argument happens to reach is how a narrow fix becomes a turn-structure rewrite** — the carve-out above
-is the same lesson. If anyone does extend it, `playBasic` is the one with a real case and it wants its
-own measurement.
-
-### Measured, and the divergence is the point
-
-`abtest 8 HEAD`: **75.6% of 17,296 games diverge, median first difference at action 3** — by far the
-largest change of the job, and exactly what an ordering rule should look like. It fires on almost
-every turn of almost every game, because Bill is in almost every deck. Win rate 48.9% → 49.0%,
-symmetric and uninformative as always.
-
-**The stall count read 341 against a documented floor of 308 and that is NOT a regression.** The floor
-was measured on an identical tree playing the same games twice; once three quarters of the games are
-different games the count resamples, and 341 is under two standard deviations of a 1.8% rate. Checked
-properly rather than reasoned about — same instrument on both trees gives **20 actions in the longest
-single turn on each, one cap hit on each, six null choices on each**, with games 0.7% longer. No loop,
-no pathology. *[What a stall actually is, and the check to run →](MISREADINGS.md)*
-
-### And the promoted action keeps its own score
-
-An earlier version copied the attachment's score onto it, which would have written a Bill into the
-match log at **101.00** — a number true of nothing. The log is the one instrument that shows what the
-bot weighed, so a promotion has to read as a promotion. `__why` says so instead.
-
-## 31 Aug 2026 — the printed number is not what the card does, and the Bench read it anyway
-
-**`slotPrintedDamage`, `spareEnergyDamage` — Job 14b, from the Over-Attach notes in Jungle and
-Fossil, the first claims ever written against either set.**
-*[The pattern, its ten notes and the four controls →](Playbook/OVER-ATTACH.md)*
-
-**THE INVARIANT. Printed damage is a currency, not a constant.** For sixteen printings in the live
-pool the printed string is a *function of the Energy attached to the slot* — Water Gun prints "10+"
-and a Lapras on three Water deals 30, Big Eggsplosion prints "20×" and an Exeggutor on four Energy
-averages 40. **Anywhere `ai.js` asks "how hard does this slot hit" in printed-damage units, it must
-go through `slotPrintedDamage`.** There are three such places and all three were wrong:
-`potentialOf`'s non-Active branch, `scoreAttackHypothetical`'s two fallbacks, and
-`bestAffordableDamage`. `aiParseDamage` stays for the one honest case — ranking a card **in the
-deck**, which has no slot and no Energy to read.
-
-**Derived from the verb and only from the two verbs an attachment can move.**
-`DMG_PER_SPARE_ENERGY` and `DMG_PER_ENERGY_HEADS`. The other scaling verbs read the bench, the damage
-counters or a coin, and no attachment changes any of them — pricing them here would charge a decision
-for something it cannot affect. Every other attack in the game returns `aiParseDamage` unchanged, so
-the blast radius is those sixteen printings by construction rather than by care.
-
-### What it cost, and it was hiding in the slot the notes talk about most
-
-`potentialOf` prices a benched Pokemon at printed damage, so an attachment that grew Water Gun by 10
-moved `best` from 10 to 10 — `noProgress` — and the surplus rule refused it at `attachSurplus`.
-
-| Lapras, one Water attached, one Water in hand | before | after |
-|---|---|---|
-| **Active** | 23.04 | 23.04 — this slot always worked |
-| **benched** | **−2.00** | **+18.50** |
-| benched, already at its printed cap | −2.00 | **−2.00** — unchanged, now for a reason |
-
-**Do not read this as AI.md's open item 1.** That one is the Active/Bench *unit* split — a benched
-Pokemon having no way to say "I could take a Prize" — and it is untouched and still open. This was
-the raw-damage currency being wrong **about itself**, which is a fact rather than a unit, and fixing
-a wrong fact needed no refactor of `scoreAttack`. The two were tangled together in one paragraph for
-weeks because the same test named both.
-
-### `maxSpare` had been in the engine and not in the scorer since Job 6
-
-`rawOutcomes` kept its own copy of the spare-Energy arithmetic and never learned the cap, so the bot
-valued a Lapras on five Water at **50** where the card, the printed text and the engine all say 30.
-**Eleven weeks, invisible to everything.** That is #28's *one verb, two implementations, in two
-modules, with nothing asserting they agree* — for the fifth time.
-
-**`spareEnergyDamage` is now the single implementation** and both halves of `ai.js` call it. Do not
-re-inline it; that is precisely how it drifted.
-
-### The guard #28 said it did not have — and why there are TWO of them
-
-#28 wrote that it had no guard for this shape and was not sure a cheap one existed. **For a verb
-whose damage is a pure function of the attacker's own board, one is cheap**: make the engine resolve
-the attack and compare the two numbers.
-
-- **`every spare-Energy attack scores exactly what the engine resolves`** sweeps every
-  `DMG_PER_SPARE_ENERGY` printing at five Energy counts each and names the card on a mismatch.
-  Watched failing on Poliwrath before being trusted.
-- **`a printed cap on a spare-Energy attack reaches the effect script`** exists because **agreement
-  is not correctness and the first guard cannot tell the difference.** Two halves wrong the same way
-  pass it — which is what was happening: **Blastoise, Poliwrath and Poliwag print a cap and neither
-  half had it.** Written in Job 4b, before Job 6 added `maxSpare` for the cards that needed it, so
-  the three oldest cards carrying the verb were the three the engine over-paid. The second guard
-  reads the **printed text** rather than either implementation.
-
-**Generalise the pair, not the verb.** Where two modules implement one rule, an agreement test is
-cheap and catches drift; it can never catch a shared mistake, and only the printed card can. Reach
-for both or know which one you are skipping.
-
-### And it took three green tests down with it, which is the finding worth the most
-
-**Three `powertest.js` assertions swept the barrier curve by piling Water onto a Lapras, "whose Water
-Gun grows with its Energy".** It does not grow past 30. The engine has always capped it; the
-**scorer** had not, so `incomingThreat` reported 70 off a Lapras that deals 30 — and the barrier
-curve had been calibrated against damage no attack in the game could land. One of the three asserted
-its board was lethal, and it never was.
-
-**That is the 13 Aug invariant arriving from the side nobody watches:** *the AI can never predict a
-number the engine would not produce.* It was asserted about `bestAffordableDamage`, and the reverse
-case was sitting inside the suite that asserts it. **A test fixture is AI output too.**
-
-The three assertions are unchanged; only the generator is, and it is now two cards because no single
-live card sweeps a threat from 10 to 80 — Poliwag caps at 30, Exeggutor is uncapped. A fourth test
-was added to license that: **the barrier must be a function of the threat and not of the card making
-it**, asserted where a Poliwag on two Water and an Exeggutor on one both threaten 20.
-
-**If you are about to sweep a quantity by attaching Energy to a card, check the card can actually go
-that far.** Nothing in the project checks this and the fixture reads perfectly.
-
-### Measured — 41.3% divergence, and the win rate says nothing as usual
-
-`abtest 8 HEAD --card base3-10`, restricted to the **9 of 47** ladder decks holding a Lapras:
-
-| | |
-|---|---|
-| games per side | 2,736 |
-| **diverged** | **1,131 — 41.3%** |
-| median first difference | action 49 |
-| subject-deck wins, HEAD → working | 55.1% → 55.5% |
-
-**Four games in ten come out differently, and the win rate moves 0.4 points.** That is the expected
-shape and not a disappointment: half of this change is a **rules** fix — the three missing caps — which
-both seats play under, so `abtest` is the right instrument and a win rate is the wrong one. The
-median first difference at action 49 rather than action 3 is also right: this changes where Energy
-goes over a game, not what the opening play is.
-
-**`--card` is why the number means anything.** On the unrestricted pool it would be diluted by the
-majority of decks that hold none of the sixteen printings, and a small figure there would have read
-as "small effect" when it actually meant "small exposure" — the seventh lie in this project's own
-list, which is why the flag exists.
-
-**Stalls: 29 of 2,736, a rate of 1.06%**, inside the 1.1–1.8% band the two entries in
-[MISREADINGS.md](MISREADINGS.md) record. Read as a rate rather than instrumented, and stated plainly
-so the next session knows which check was skipped: with 41% of games diverging, the identical-tree
-floor is the wrong baseline by that file's own argument, so the instrumented loop would have had
-nothing to compare against.
-
-### The control, run after committing — 0.0%, and the stall floor for that exact command
-
-`abtest 8 HEAD --card base3-10` with `src/` identical to the baseline: **0.0% divergence over the
-same 2,736 games, and 28 stalls.** The measured run read 29. So the stall line resolves properly
-rather than by appeal to a band — **one above the floor for this command**, which is the check
-[MISREADINGS.md](MISREADINGS.md) says costs one run and settles it. The 41.3% is the change.
-
-**Run the control AFTER committing, not before.** The working tree is the baseline at that moment,
-so the control is free and requires no stash — and stashing a session's uncommitted work to obtain a
-control is how you lose it. *(Nearly done here: a `git checkout --` reflex during a different
-experiment reverted the whole of `src/ai.js`, and it was recovered only because a scratch copy
-happened to exist. Use a targeted edit-and-revert for a control, never a checkout.)*
-
-## 1 Sep 2026 — a Water that pays a Colorless is still a Water that was used
-
-**`spareEnergyFor` — #32, Job 14b, out of the Poliwrath claim row written the day before.**
-*[The ruling →](Rulings/SPARE-ENERGY-PAYS-COLORLESS.md)*
-
-**THE INVARIANT, and it is about where the function lives as much as what it does.**
-`DMG_PER_SPARE_ENERGY` counted only the cost's **typed** symbols, so a Water paying a **Colorless**
-symbol was never marked as used. **`spareEnergyFor` in `engine.js` is now the whole clause, and
-`ai.js` calls it rather than keeping a copy. Do not re-inline it.**
-
-Instance methods resolve at call time, so the concatenation order that forces `aiParseDamage` and
-`aiEnergyIsType` to be local copies does not apply — `potentialOf` has been asking `E.slotSymbols`
-for the same reason since 18 August.
-
-### Why one implementation and not a third assertion that two agree
-
-**This arithmetic has drifted twice, in opposite directions, and only one of the two was catchable
-by an agreement test:**
-
-| | shape | caught by |
-|---|---|---|
-| `maxSpare`, Job 6 → 31 Aug | two copies, **disagreeing** | the engine-resolves-it sweep, added 31 Aug |
-| the Colorless clause | two copies, **agreeing on a number the card forbids** | **nothing** — only the printed card |
-
-**That is the general lesson and it is worth more than either bug.** An agreement guard is cheap and
-real, and it is structurally blind to a shared mistake. When you find yourself writing one, ask what
-the *card* says as well — and prefer deleting one of the two copies to asserting they match.
-
-### The measurement, and it is a pair rather than a table
-
-| board | before | card says |
-|---|---|---|
-| Poliwrath, 4 Water | **50** | 40 |
-| Poliwrath, 3 Water + 1 Fighting | 40 | 40 |
-
-Same three symbols paid. **Paying the Colorless with a worse Energy dealt ten more damage.** Every
-count on Poliwrath, Omastar, Lapras and Blastoise now matches the printed rule, including two Double
-Colorless boards where the DCE pays the Colorless and frees a Water to be spare. Lapras and Blastoise
-are the controls — costs typed all the way through, unchanged at every count.
-
-Six live printings moved: Poliwrath, both Vaporeons, Omastar, Seadra, Psyduck.
-
-### It exposed a second thing, and that one is NOT fixed
-
-**Omastar takes one of its two spares and refuses the other**, and the cause is Spike Cannon rather
-than Water Gun. `potentialOf` prices a benched slot at printed damage and takes the best attack;
-Spike Cannon prints "30×", which `aiParseDamage` reads as 30. At two Water, Water Gun deals 20 and
-the slot's `best` is already 30, so the third Water brings Water Gun **level** rather than past it,
-`best` does not move, and the surplus rule refuses. The fourth Water is taken normally.
-
-**A guaranteed 30 and a coin-flip 30 are equal in the printed-damage currency, and they are not
-equal.** That is [AI.md](AI.md)'s open item 1 arriving as a card-sized case, and it is the cheapest
-statement of that item anybody has written down — it needs no tail analysis and no duel to see.
-**Left open deliberately**: the Over-Attach work corrected a wrong *fact* and this is a *unit*, which
-is the distinction that whole job turned on. It is a red claim row in `tools/claims/base3.js` with the
-diagnosis attached.
-
-## 1 Sep 2026 — the destination is not always the cheapest attack, and it is asked in three places
-
-**`attackThreatens`, `destShort` — #32, Job 14b, from Trevor's general rule rather than from a card.**
-*[The eight notes that confirm it, and the curve →](Playbook/EVOLUTION-TIMING.md)*
-
-**THE INVARIANT. An evolution road is measured to the cheapest attack the evolution is trying to
-REACH, not the cheapest one it owns.** `potentialOf` returns both — `short` and `destShort` — and the
-evolution road reads the second. A Kadabra owns Recover at two Energy and does nothing with it; it is
-trying to reach Super Psy at three, which is what Trevor's note means by *"a pokemon that wants to
-stay at 3 energies at all times."*
-
-**Only the evolution road switches.** A card fighting now keeps `short`, because a utility attack it
-can use *this turn* is a real destination. That is the control and it is asserted: an Abra with no
-Kadabra in hand is fed one Psychic and refuses the second, unchanged.
-
-### IT IS ASKED IN THREE PLACES AND THE THIRD ONE RETURNS FIRST
-
-**The transferable half, and it cost a wrong reading of a claim row.** One idea — *how far is this
-card from being worth having* — has three call sites:
-
-| Site | Decides |
-|---|---|
-| `readiness` in `case 'evolve'` | when to pull the trigger |
-| `beforeShort`/`afterShort` in `attachBuild` | how long the road is |
-| **`evolving` in the surplus rule** | **whether an attachment is considered at all** |
-
-The first two were changed and the behaviour did not move an inch — the Abra board still scored −2.00,
-because the surplus rule returns `attachSurplus` before either is reached. **Find every call site
-before you measure**, or a correct change reads as a null and gets reverted.
-
-### `attackThreatens` reads the SCRIPT, and that is not fussiness
-
-Six attacks print no damage number and deal damage anyway — Stretch Kick, Dig Under, Stare, Flitter,
-Coin Hurl and Telekinesis snipe the Bench, Super Fang halves the defender, Miraculous Comeback counts
-heads. **Trusting `aiParseDamage` here would have been the exact fault the Over-Attach entry above
-had just finished fixing**, one day later and in a new place.
-
-The defensive verbs deliberately do not qualify — `DAMAGE_REDUCTION_SELF`, `DAMAGE_HALVE_SELF`,
-`DAMAGE_REDUCTION_FROM` — nor `RECOIL`, which is damage pointed the wrong way. **A card with no
-threatening attack at all falls back to the cheapest of any**, because then the utility attack
-genuinely is the destination.
-
-**Guarded, in the one direction that can regress**: `powertest.js` asserts that nothing the predicate
-calls harmless actually produces damage or a bench-splash flag in `rawOutcomes`. Watched failing —
-dropping `BENCH_SNIPE` names all nine attacks it should.
-
-### Why "offensive" alone is wrong, and why the walls are safe anyway
-
-Trevor's own wording was *"cheapest offensive (or otherwise specified) attack"*, and the parenthetical
-is where the real rule was. **Chansey's Scrunch and Ninetales' Lure are both zero-damage cheapest
-attacks and they are opposite cases.** What separates them is not the attack: **a wall is a terminal
-Basic and is never an evolution target**, so the wall case cannot reach this predicate. `WALLS.md`'s
-derivation protects it from one file away, and that is why the predicate can be blunt.
-
-### Eight of Trevor's notes confirm it and none contradicts it
-
-22 evolution printings of 151 change target. Eight of them have a `Wants` note written **before this
-rule existed**, naming no code, and every one names the damaging attack the derivation independently
-picked — Ninetales, Wigglytuff, Nidorina, Hypno, Kadabra, Wartortle, Parasect, Victreebel. **Three
-use nearly the same sentence**, *"doesn't want to be in a situation where it has to use it"*, which is
-the readiness discount in English before anybody wrote it in code.
-
-**That is the strongest argument in this tree for deriving over tagging**, and it is worth more than
-the feature: the derived rule reproduced eight hand-written judgements without any of those cards
-being named anywhere in `ai.js`.
-
-### Measured: a null, and it shipped — `aiduel 8 HEAD --gbc`
-
-**49.9% ±0.5 over 34,564 ladder games. No significant difference at this sample size.**
-
-**Do not inherit "this helped" from the fact that it shipped**, and do not inherit "this failed" from
-the null either. Every evolution-timing change in this file has read null on a duel — the 28 Aug
-readiness work shipped on one too, and its entry says the same thing. The grounds are elsewhere:
-
-- **the claim rows**, which are behavioural and specific — Kadabra's went red against the old rule
-  and green against the new one, and Wartortle's control passed both ways
-- **eight of Trevor's own notes**, written before the rule existed, naming the attack the derivation
-  independently picked
-- **the direct before/after**, which is what actually proves the two trees differ: an Abra on two
-  Psychic scored the next attachment at **−2.00 before and +15.00 after**
-
-**The separate `--control` run was NOT done, and the reason is stated rather than skipped quietly.**
-`aiduel --control` exists to catch a harness lie that *inflates a difference* — the unmirrored-seat
-bug that once faked six points. It guards false positives, and this is a null, so it would have had
-nothing to say. The failure it could not have ruled out is the opposite one — a harness that never
-swapped `ai.js` at all, which would produce a null no matter what — and **a control cannot see that
-either, because it is baseline-versus-baseline by construction.** What rules that out is the
-before/after pair above, measured on a built board: the two trees demonstrably disagree.
-
-**If you are shipping a POSITIVE duel result, run the control.** This entry is not a precedent for
-skipping it.
-
-## 1 Sep 2026 — the plan is the whole line, and the evolve goes before the attach
-
-**`evolutionPlan`, `roadWant`, and the evolve promotion in `playFirst` — #32, from Trevor's account of
-the GBC game and Pocket.** *[His words, the three numbers and the deck-arm framing →](Playbook/EVOLUTION-TIMING.md)*
-
-**THE INVARIANT. A card on an evolution road wants its destination's cost MINUS one Energy per
-remaining evolution step**, because each step is a turn and each turn brings an attachment. The line
-finances itself.
-
-```
-roadWant = destShort(deepest form the hand can reach) − steps
-```
-
-**The rule three entries above is this one truncated to depth 1**, and `readiness > 1` is
-`roadWant > 0` when `steps` is 1 — so nothing about the one-step case changed. **`roadWant` is the
-single quantity all three call sites now read**, which is what stops them drifting apart again.
-
-**Only cards in HAND count.** The plan must be a certainty; the deck arm is open item 9 and its
-framing changed today — see that item, and do not inherit its old scope estimate.
-
-### The same card wants a different amount depending on the depth
-
-That is the thing no per-card target could ever express, and it is why this had to be derived:
-
-| Abra, with… | destination | steps | target |
-|---|---|---|---|
-| Kadabra **and Alakazam** in hand | Confuse Ray `PPP` = 3 | 2 | **1** |
-| Kadabra alone | Super Psy `PPC` = 3 | 1 | **2** |
-
-Both are claim rows and **both are needed** — a single row is green under a rule that ignores depth
-entirely, which is what shipped hours earlier. The Kadabra row that already existed **had to be
-rewritten**: it asserted a third Psychic, was built on the depth-1 truncation, and went red the moment
-this landed. **The bot was right and the claim was wrong**, for the second time in this file's history.
-
-### The evolve promotion, and the guard that is the whole safety of it
-
-`playFirst` now promotes an evolve ahead of the attachment. #31 named this case and declined it,
-reasoning that `attachBuild` already looks ahead through `evolutionInHand`. **True of the attachment's
-value; not true of the BODY** — after the evolve the card competes for the Energy as the evolved form,
-so `survivesCharge` prices a Kadabra at 60 HP rather than an Abra at 30.
-
-**ONLY A READY EVOLVE IS PROMOTED (`roadWant === 0`).** An evolve the readiness rule is deliberately
-holding back must never be promoted, or an ordering rule silently overrules a scoring rule two
-functions away. Both directions are pinned, and the control was watched: removing the promotion turns
-the ready test red and leaves the unready one green.
-
-**`playBasic` remains deliberately unextended** — #31 flags it as the one with a real case of its own.
-Trevor's observation was about evolving; extending an ordering rule because its argument happens to
-reach is how a narrow fix becomes a turn-structure rewrite.
-
-### Measured — 63.8% divergence, the second-largest change on record here
-
-`abtest 8 HEAD`, full ladder pool:
-
-| | |
-|---|---|
-| games per side | 17,296 |
-| **diverged** | **11,042 — 63.8%** |
-| median first difference | **action 24** |
-| subject-deck wins, HEAD → working | 48.6% → 48.5% |
-
-**Second only to #31's turn-ordering change at 75.6%**, and for the same reason: evolution roads run
-in most decks in the format, so a rule about how long one is fires on most turns of most games. The
-median at action 24 rather than action 3 is right — this changes the middle of a turn sequence, not
-the opening play.
-
-**`abtest` rather than `aiduel`, and the win rate is the uninformative half as always.** Both seats
-play under the same rule; divergence is the question a symmetric change can answer.
-
-**Stalls: 334 of 17,296, a rate of 1.93%.** The documented identical-tree floor is 308 on this exact
-command and #31's comparably-diverging run read 341, so this sits between them. Per the two entries in
-[MISREADINGS.md](MISREADINGS.md), **a diverging run is not playing the floor's games any more** and
-the floor is the wrong baseline — the rate against the 1.8% band, and the neighbouring diverging run,
-are what say this is the sample moving rather than a pathology.
+| 28 Aug 2026 | **ammunition is only ammunition if you have nothing else to shoot with** | `ammoSymbols` | [AMMO-SYMBOLS](AI-INVARIANTS/AMMO-SYMBOLS.md) |
+| 28 Aug 2026 | **a Pokemon about to become something else is not paid up** | `evolutionInHand`, `potentialAs`, `evolveEarly` | [EVOLUTION-READINESS](AI-INVARIANTS/EVOLUTION-READINESS.md) |
+| 28 Aug 2026 | **one of the twins gets fed** | `evolutionRoadFor`, `benchDuplicate` | [EVOLUTION-ROAD-TWINS](AI-INVARIANTS/EVOLUTION-ROAD-TWINS.md) |
+| 28 Aug 2026 | **a shield is a shield whichever direction the damage comes from** | `T_DEFENDER` | [DEFENDER-SELF-HARM](AI-INVARIANTS/DEFENDER-SELF-HARM.md) |
+| 30 Aug 2026 | **a strip is not a payment, and the AI was never choosing at all** | `energyStripOrder`, `energyUids` | [ENERGY-STRIP-ORDER](AI-INVARIANTS/ENERGY-STRIP-ORDER.md) |
+| 30 Aug 2026 | **PlusPower is worth the turn it takes off the kill, not only the last one** | `turnsWith`, `T_PLUSPOWER` | [PLUSPOWER-TURNS-WITH](AI-INVARIANTS/PLUSPOWER-TURNS-WITH.md) |
+| 30 Aug 2026 | **one drag, one rule, and the attack half was rolling dice** | `bestDragTarget`, `dragScore` | [DRAG-TARGET](AI-INVARIANTS/DRAG-TARGET.md) |
+| 30 Aug 2026 | **a Switch is worth the retreat cost it nullifies, and half of that is open** | `T_SWITCH_OWN` | [SWITCH-NULLIFIES-RETREAT](AI-INVARIANTS/SWITCH-NULLIFIES-RETREAT.md) |
+| 31 Aug 2026 | **the off-by-one is a hedge, and the fix was in the selection** | `turnsLeft`, `survivesCharge` | [SURVIVES-CHARGE-HEDGE](AI-INVARIANTS/SURVIVES-CHARGE-HEDGE.md) |
+| 31 Aug 2026 | **the attachment is last, and a search goes before a draw** | `playFirst`, `handGrowKind` | [PLAY-ORDER](AI-INVARIANTS/PLAY-ORDER.md) |
+| 31 Aug 2026 | **the printed number is not what the card does, and the Bench read it anyway** | `slotPrintedDamage`, `spareEnergyDamage` | [SLOT-PRINTED-DAMAGE](AI-INVARIANTS/SLOT-PRINTED-DAMAGE.md) |
+| 1 Sep 2026 | **a Water that pays a Colorless is still a Water that was used** | `spareEnergyFor` | [SPARE-ENERGY-FOR](AI-INVARIANTS/SPARE-ENERGY-FOR.md) |
+| 1 Sep 2026 | **the destination is not always the cheapest attack, and it is asked in three places** | `attackThreatens`, `destShort` | [EVOLUTION-DESTINATION](AI-INVARIANTS/EVOLUTION-DESTINATION.md) |
+| 1 Sep 2026 | **the plan is the whole line, and the evolve goes before the attach** | `evolutionPlan`, `roadWant` | [EVOLUTION-PLAN](AI-INVARIANTS/EVOLUTION-PLAN.md) |

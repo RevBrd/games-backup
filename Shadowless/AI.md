@@ -14,10 +14,13 @@ The one-line summary: **the AI is an expected-value scorer over enumerated coin-
 its one structural weakness is that a verb it cannot score costs nothing at runtime and is misplayed
 forever.**
 
-**This file is the model. Every shipped invariant is in [AI-INVARIANTS.md](AI-INVARIANTS.md)** and
-its [two](AI-INVARIANTS-ARCHIVE-1.md) [archives](AI-INVARIANTS-ARCHIVE-2.md) — one entry per change,
-each stating what must stay true. The index to them is below, so you can find the one you need
-without opening any of the three.
+**This file is the model. Every shipped invariant is its own file in
+[`AI-INVARIANTS/`](AI-INVARIANTS/)**, indexed by [AI-INVARIANTS.md](AI-INVARIANTS.md), with everything
+before Job 13 in its [two](AI-INVARIANTS-ARCHIVE-1.md) [archives](AI-INVARIANTS-ARCHIVE-2.md) — one
+entry per change, each stating what must stay true. **It became a directory on 2 Sep 2026**, when the
+entry had grown to 41–129 lines against the 8–20 that had twice been the argument against one; the
+measurement is in that file's header. The index below covers the folder and both archives, so you can
+find the one you need without opening any of them.
 **Deliberately not counted**: this sentence said *twenty-three* for four days after it stopped being
 true, in two files at once, while the index table below silently kept telling the truth. The table
 is the count.
@@ -48,10 +51,14 @@ in `effects.js`, and assert `ai.js` either scores it or it sits on `UNSCORED_ON_
 damage to its own bench invisible. None of the eleven appears in a theme deck, so 480 full games ran
 byte-identical before and after the fix; nothing but this check could see them.
 
-**The opt-out list is the point, and it is deliberately almost empty.** Four verbs are on it, and
-they are two kinds rather than four decisions: three are legality gates the engine refuses outright
-(`REQUIRE_DEF_STATUS`, `REQUIRE_SELF_ENERGY`, `REQUIRE_OPP_BENCH`), so an illegal attack never reaches
-the AI to be scored at all. The fourth is `SHUFFLE_OPP_DECK` — this bot has no memory of deck order,
+**The opt-out list is the point, and it is deliberately almost empty.** It holds **two kinds**
+rather than a list of decisions: the legality gates the engine refuses outright — `REQUIRE_DEF_STATUS`,
+`REQUIRE_SELF_ENERGY`, `REQUIRE_OPP_BENCH`, `REQUIRE_EQUAL_ENERGY` — so an illegal attack never
+reaches the AI to be scored at all.
+*(This paragraph said **four verbs**, and named three gates, until 2 Sep 2026; the live set is five
+and the gates are four. `REQUIRE_EQUAL_ENERGY` joined them and nothing re-read the sentence.
+**Read the Set, do not quote its size** — `MAINTENANCE.md` names this file's own symbol as the worked
+example of a doc you are supposed to go and check.)* The fourth is `SHUFFLE_OPP_DECK` — this bot has no memory of deck order,
 so it cannot be hurt by a shuffle or value inflicting one, and zero is the honest number. **Its entry
 names the condition that would make it wrong** (the day anything in `ai.js` tracks known deck order)
 rather than leaving that to be rediscovered, which is the shape any future entry should copy. Putting
@@ -189,12 +196,17 @@ boundary each time — 25 Aug 2026 at 471 lines and 28 Aug 2026 at 476. An archi
 exactly as hard as a recent one; the rows below say which file each lives in.
 
 **† is [archive 1](AI-INVARIANTS-ARCHIVE-1.md) (Jobs 9–10.5), ‡ is
-[archive 2](AI-INVARIANTS-ARCHIVE-2.md) (Jobs 11–12c), and an unmarked row is in the live
-[AI-INVARIANTS.md](AI-INVARIANTS.md).** **Read the entry before you touch the term.** Every row below
-is a rule somebody paid for with a wrong version first, and several of them look like arbitrary
-constants until you know what they are holding up. **The `Term` column is the index**: grep it in
-`ai.js`, then read its entry — **this table is the only place all three files are indexed together**,
-which is what keeps a split from costing anybody a search.
+[archive 2](AI-INVARIANTS-ARCHIVE-2.md) (Jobs 11–12c), and an unmarked row is a file in
+[`AI-INVARIANTS/`](AI-INVARIANTS/)** — [its directory page](AI-INVARIANTS.md) maps the same terms to
+filenames, so an unmarked row is one hop rather than a search. **Read the entry before you touch the
+term.** Every row below is a rule somebody paid for with a wrong version first, and several of them
+look like arbitrary constants until you know what they are holding up. **The `Term` column is the
+index**: grep it in `ai.js`, then read its entry — **this table is the only place the folder and both
+archives are indexed together**, which is what keeps a split from costing anybody a search.
+
+**Some entries produced more than one row here and that is deliberate** — `evolutionRoadFor` earned
+two on different days, and `slotPrintedDamage` and `spareEnergyDamage` shipped as one entry with two
+rules in it. The table indexes *terms*; the folder indexes *entries*, and they are not the same unit.
 
 | When | The invariant | Term |
 |---|---|---|
@@ -240,7 +252,7 @@ which is what keeps a split from costing anybody a search.
 | 31 Aug | **One verb, ONE implementation.** `maxSpare` sat in the engine and not in the scorer for eleven weeks; the arithmetic is shared now. **Two guards, because agreement is not correctness** — one runs the engine, one reads the printed card, and three Base Set cards needed the second | `spareEnergyDamage` |
 | 1 Sep | **A Water that pays a Colorless is still a Water that was used.** The clause lives in `engine.js` and `ai.js` calls it — **prefer deleting one of two copies to asserting they match**, because this one drifted twice and only one drift was catchable by agreement | `spareEnergyFor` |
 | 1 Sep | **An evolution road is measured to the attack the evolution is trying to REACH**, not the cheapest one it owns — 22 printings move, eight of Trevor's own notes confirm it. **Asked in THREE places, and the third returns before the other two**: fixing two of them changed nothing at all | `attackThreatens`, `destShort` |
-| 1 Sep | **The plan is the whole LINE and each step pays for itself** — the target is the deepest in-hand form's cost less one Energy per step, so an Abra wants two with a Kadabra coming and **one** with an Alakazam behind it. The entry above is this truncated to depth 1 | `evolutionPlan`, `roadWant` |
+| 1 Sep | **The plan is the whole LINE and each step pays for itself** — the target is the deepest in-hand form's cost less one Energy per step, so an Abra wants two with a Kadabra coming and **one** with an Alakazam behind it. The `attackThreatens` / `destShort` row is this truncated to depth 1 | `evolutionPlan`, `roadWant` |
 | 1 Sep | **A READY evolution goes before the attachment** — the card should compete for the Energy as the body that will hold it. **Only ready ones**, or an ordering rule overrules a scoring rule two functions away | `playFirst`, `roadWant` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor

@@ -246,7 +246,7 @@ the AI improving.
 `scorePower`'s PROVISIONAL cases (`SEARCH_EVOLUTION_TO_HAND`, `STATUS_COIN_EITHER_POWER`,
 `DISCARD_THEN_DRAW`) crashed the instant the AI tried to use them — each referenced a `me` the function
 never defines. No roster before this one had fielded enough of these three Powers for the AI to ever
-reach the code path, so it had simply never run. See [AI-INVARIANTS.md](AI-INVARIANTS.md) for the fix;
+reach the code path, so it had simply never run. See [AI-INVARIANTS-ARCHIVE-2.md](AI-INVARIANTS-ARCHIVE-2.md) for the fix;
 the weights themselves are untouched and still provisional — this cleared the crash, not the pricing.
 
 **Not yet measured against the other three rosters in a merged field**, unlike Jungle's run against

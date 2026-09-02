@@ -83,7 +83,7 @@ reach is a capability the bot does not have, and the standing invariant is that 
 a new one. It carries a known limit written into its entry rather than left to be found: **a Defender
 can unlock an attack the bot has already ruled out**, because `bestAttackScore` runs before the
 Trainer is played, so the term goes quiet exactly where the play is most interesting.
-*[The entry →](AI-INVARIANTS.md)*
+*[The entry →](AI-INVARIANTS/DEFENDER-SELF-HARM.md)*
 
 ---
 

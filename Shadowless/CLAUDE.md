@@ -52,7 +52,7 @@ the tree and not orientation.
 | File | Read it when |
 |---|---|
 | [ENGINE.md](ENGINE.md) | Adding or changing cards. The machinery built for the awkward ones — `runAttack`, `lastAttackResult`, the four owed choices, `playsAs`, the `baseCard`/`topCard` split, `takeEnergy` and `selfDamage`. Also: why full games never test any of it. **The Pokémon Powers are three more and are in its sibling `POWERS.md`** — interactive, triggered and passive, which are three mechanisms rather than three flavours |
-| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, the cliff sniff test, and an `Open` list at the bottom that is the current one. **Its sibling `AI-INVARIANTS.md` is the register**, now with two archives behind it: one entry per shipped change saying what must stay true. `AI.md`'s own table indexes all three by the term each one governs, which is the only place they are indexed together |
+| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, the cliff sniff test, and an `Open` list at the bottom that is the current one. **The register is a directory — one file per shipped change in `AI-INVARIANTS/`**, indexed by `AI-INVARIANTS.md`, with two archives behind it. `AI.md`'s own table indexes the folder and both archives by the term each one governs, and is the only place they meet |
 | [MEASUREMENT.md](MEASUREMENT.md) | **Before you believe any number.** Every instrument in the project that is not pass/fail, how to read a saved match log, and the standing figures. Reached from four directions and none of them wants scoring weights on the way. **Its sibling `MISREADINGS.md` is every way one of them has lied** — read it before you believe a null result |
 | [LAYOUT.md](LAYOUT.md) | Touching **the board**, the mat, the hand or anything **sized** on it. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap, and the rules that look wrong until you know what they protect. If you have trouble with the layout, re-read it — and check you can still see the top of the file, because a compacted read of it has cost a session before. **Its sibling `SCREENS.md` is every other sized screen** — the pack reveal, deck select, the title screen — which share a problem the board does not have: a centred box whose content arrives over time |
 | [INTERACTION.md](INTERACTION.md) | Any moment the board stops and **talks to the player**. The coin toss and why it lands on the centre line, the Energy picker and the opponent's Trainer sharing its strip, the opening flip, the opening-setup screen, the action bar and the retreat gate, and the rail's hover peek that must never call `render()` |
@@ -365,9 +365,11 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   **one** with an Alakazam behind it, which is the thing no per-card target could express. And a
   **ready** evolve now goes before the attachment, so the card competes for the Energy as the body
   that will hold it.
-  **Two things this job owes on the way out**: `AI-INVARIANTS.md` is past its own archive threshold
-  and its header names *whoever closes Job 14b* as the owner; and `node tools/wants.js --coverage` is
-  the live backlog rather than a number here.
+  **CLOSED 2 Sep 2026** (Trevor), and both debts it left were settled in Job 15c: the invariants
+  register became the `AI-INVARIANTS/` directory rather than being archived again, because the entry
+  had outgrown the shape twice refused for it. The AI validation work is **not** finished and is not
+  meant to be — it is sprinkled through later jobs rather than blocking on one. The live backlog is
+  `node tools/wants.js --coverage`, never a number here.
 - **Job 15a is done.** The **Challenge 1 bracket** is live — seven of Trevor's mono-type decks, one
   per Energy type, sitting between Fossil and Team Rocket. **It is the first ladder bracket that
   belongs to no set and the first pack type that is not a set's**, which is the whole of the job:

@@ -358,5 +358,5 @@ card sweeps a threat from 10 to 80 — which is itself worth knowing before desi
 fourth assertion was added to license the pair: **the barrier must be a function of the threat, not
 of the card making it**, checked where two different cards threaten exactly 20.
 
-*[The scorer half, and the two guards it left →](AI-INVARIANTS.md)* ·
+*[The scorer half, and the two guards it left →](AI-INVARIANTS/SLOT-PRINTED-DAMAGE.md)* ·
 *[the pattern the fix came out of →](Playbook/OVER-ATTACH.md)*

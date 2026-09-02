@@ -107,4 +107,4 @@ applies here exactly. Without a scoring change the bot owns a capability it can 
 which is the silent-failure surface arriving in the Trainer path. `scoreTrainer`'s `T_DEFENDER` case
 now prices the prevented self-harm **as the barrier it is**, reusing `shieldSelf`'s own curve rather
 than inventing a second notion: linear in the damage stopped, squared in the share of remaining HP,
-off `selfKO`. See [AI-INVARIANTS.md](../AI-INVARIANTS.md) for the entry and its known limit.
+off `selfKO`. See [DEFENDER-SELF-HARM.md](../AI-INVARIANTS/DEFENDER-SELF-HARM.md) for the entry and its known limit.

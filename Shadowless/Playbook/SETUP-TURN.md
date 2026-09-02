@@ -35,7 +35,7 @@ looked at. Neither note mentions scoring and neither is about the other's card.
 
 **The 22 Aug rule was *a rider is worth nothing on a Pokémon the attack REMOVES*. This is the same
 sentence ending *...that already HAS it*.** `statusNovelty` is the term.
-*[The invariant, and why it is not one rule for all four statuses →](../AI-INVARIANTS.md)*
+*[The invariant, and why it is not one rule for all four statuses →](../AI-INVARIANTS-ARCHIVE-2.md)*
 
 **It is derived from what the engine does, not from a table of opinions**, which is the part worth
 copying. Poison, Sleep and Confusion persist until cured, so re-applying is worthless. **Paralysis is

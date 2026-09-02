@@ -133,7 +133,7 @@ is a better rate than the Pokemon notes were returning by then.
 **The rate held on the next two, and the fault they found was bigger than either card — 30 Aug 2026.**
 Energy Removal and Super Energy Removal between them produced **five red rows out of five written**,
 one fault, and one fix: the AI had never chosen which Energy to strip at all, because it was writing a
-key the engine stopped reading when the human got a picker. *[The invariant →](AI-INVARIANTS.md)*
+key the engine stopped reading when the human got a picker. *[The invariant →](AI-INVARIANTS/ENERGY-STRIP-ORDER.md)*
 
 **Two things about the Trainer pile are now worth knowing before you pick one.**
 

@@ -117,7 +117,7 @@ drawn after it by one card, for free. Both are built.
 **The carve-out was the actual work.** Professor Oak discards your hand, so promoting it ahead of an
 attachment can destroy the very Energy the turn was about to attach — the play would eat its own
 reason. Only cards costing nothing from hand are promoted, which is four verbs rather than a
-category. *[The invariant, and why the category is wrong →](AI-INVARIANTS.md)*
+category. *[The invariant, and why the category is wrong →](AI-INVARIANTS/PLAY-ORDER.md)*
 
 **Worth noticing as a method rather than a fix.** Two of the strongest AI findings this job came from
 Trevor watching a *different implementation* rather than from watching ours — this one, and the
@@ -147,4 +147,4 @@ independent routes to one bug is the strongest signal this project gets** — th
 card *should* do, the log said what it *did*, and neither on its own would have located it in
 `attackVariants`.
 
-*[The invariant, and why both Bench orderings have to be asserted →](AI-INVARIANTS.md)*
+*[The invariant, and why both Bench orderings have to be asserted →](AI-INVARIANTS/DRAG-TARGET.md)*

@@ -71,7 +71,7 @@ copies would only have caught one of them.
 - The Colorless clause was missing from **both** copies, which agreed perfectly on a number the card
   forbids. **No agreement test can ever catch that**; only the printed card can.
 
-*[Both guards, and why you want both →](../AI-INVARIANTS.md)* ·
+*[Both guards, and why you want both →](../AI-INVARIANTS/SLOT-PRINTED-DAMAGE.md)* ·
 *[the pattern this came out of →](../Playbook/OVER-ATTACH.md)*
 
 ## Six printings moved, and the rest are the control

@@ -92,7 +92,7 @@ an Agility barrier being one bought turn, which cracked [Attack choice](ATTACK-C
 **`discardSilence` measures turns you cannot attack**, being symbols short of the *cheapest* attack
 once the discard has happened, since you may attach one Energy a turn. Squared, because silence is a
 cost and costs are squared here. Discounted by `survivesCharge`, which already existed for the other
-half of exactly this question. *[The invariant →](../AI-INVARIANTS.md)*
+half of exactly this question. *[The invariant →](../AI-INVARIANTS/AMMO-SYMBOLS.md)*
 
 | | before | after |
 |---|---|---|
@@ -381,7 +381,7 @@ attachment per slot, and the honest version reads that rather than adding a weig
 `survivesCharge(pi, slot, 1)` returns **1** even at `turnsLeft` zero, because the `+1` hedge exactly
 cancels a one-symbol discard. That hedge is what keeps three other claim rows green — including this
 file's own Arcanine GP row — so this is two of his rules pulling opposite ways rather than a bug.
-*[The hedge, and the experiment that found it →](../AI-INVARIANTS.md)* ·
+*[The hedge, and the experiment that found it →](../AI-INVARIANTS/SURVIVES-CHARGE-HEDGE.md)* ·
 *[How to tell a bug from a policy →](../MEASUREMENT.md)*
 
 **Raise it with him before touching either.** The clean resolution may be that the dying clause wants

@@ -196,7 +196,7 @@ as a figure to quote. Run the suite for the real number.
   sweep over the live pool rather than a card list, so a new set is covered the day it goes live.
   **There are two guards and you want both: agreement is not correctness**, and three Base Set cards
   were caught only by the one that reads the printed card text.
-  *[Both, and what they found →](AI-INVARIANTS.md)*
+  *[Both, and what they found →](AI-INVARIANTS/SLOT-PRINTED-DAMAGE.md)*
 - **`smoke.js`** is the original Chat-era harness, driving the **built** HTML through a
   stubbed DOM and a controllable fake clock. Covers the UI, the Trainer pickers, the coin-flip
   presentation and freeze, the deck-select flow, the collection screens, the ladder and the card

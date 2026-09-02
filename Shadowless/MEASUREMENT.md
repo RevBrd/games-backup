@@ -150,7 +150,7 @@ that kills it is not a turn it got. Corrected as an experiment, **three rows fli
 in the same narrow band**: a Pokemon surviving *exactly one more hit*. That is the middle row of the
 table. The `+1` is a hedge against `incomingThreat` being a snapshot projected forward as a
 certainty, it had been doing that job by accident since the function was written, and correcting it
-would have deleted a policy nobody knew we had. *[The invariant, and the three rows →](AI-INVARIANTS.md)*
+would have deleted a policy nobody knew we had. *[The invariant, and the three rows →](AI-INVARIANTS/SURVIVES-CHARGE-HEDGE.md)*
 
 **What makes this work is that the rows are not ours.** A regression suite written alongside the code
 agrees with the code by construction. The claim rows come from somebody who has never read it, which
