@@ -73,6 +73,26 @@ Not always on a schedule. The triggers that actually mean something:
   who-holds-what. **The prose was wrong and the game was right the whole time**, which is the usual
   shape: nobody notices, because nothing breaks.
 
+- **A CLOSED item sitting inside a LIVE one.** Added on the eleventh pass, which had already swept
+  the tree for struck-out Open items and still missed two — because they were sub-paragraphs three
+  levels down inside items that are genuinely open. **A struck-out heading is easy to spot; a
+  finished paragraph under a live heading is not.** `AI.md`'s Open list was 176 lines of 448 that
+  way, and a list nobody can scan stops being read. Grep for `~~`, `RESOLVED`, `BUILT`, `DONE`,
+  `ANSWERED` and `MEASURED` **inside** items, not only at their heads.
+- **A REGISTER hiding inside a rule file, which is now three for three.** `AI-INVARIANTS` came out of
+  `AI.md`, `ROSTERS` out of `OPPONENTS.md`, and on the eleventh pass the `Playbook/` pattern files
+  turned out to be a rule plus a chronological log of every session that touched them — 449 and 493
+  lines, against 82 for a built pattern nobody had revisited. **The tell is dated `##` headings
+  accumulating in a file whose subject is not chronological.** The fix each time was the same: split
+  the log out, leave the rule, and state the threshold before anyone needs it.
+- **A SHAPE decision has an expiry date, and nothing in this tree re-checks one.** The sixth pass
+  refused `AI.md` a directory on the grounds that "twenty-three files of eight lines each is worse
+  navigation than the section was", and it was right. By the eleventh pass its entries averaged 65
+  lines and the register became a directory. **Neither pass was wrong; the premise moved.** So when
+  you re-open a shape question, **go and measure the thing the old argument was about** rather than
+  re-reading the argument — and write the measurement into the file, not just the conclusion, so the
+  next reader can tell whether it has expired again.
+
 ## The rules that did the work
 
 **One fact, one home, pointers at the other end.** This is the whole method. Everything else is
@@ -281,6 +301,14 @@ general fix: **a constraint stated only in the thing being constrained is read t
 ```bash
 grep -oh "](\([A-Za-z0-9_./#-]*\.md\)[^)]*)" *.md | sed 's/](\([^):#]*\).*/\1/' | sort -u | while read f; do [ -f "$f" ] || echo "MISSING: $f"; done
 ```
+
+   **A correction that leaves a human instruction behind has a half-life; one that removes the thing
+   needing maintenance does not.** `OPPONENTS.md` went stale on "four rosters", was fixed, and the fix
+   ended *"if you add a roster, grep this file for 'four'."* The next job added one, nobody grepped,
+   and seven sentences were wrong again with that file's own new section sixty lines below them.
+   **The moment a warning needs to be read is usually inside a different job than the one that wrote
+   it.** Where you can, delete the count and point at the data instead — `data/ladder.json` cannot go
+   stale, and no instruction has to be obeyed for it to stay right.
 
    **Before any split, grep the file you are splitting for positional references** — "the entry
    above", "two above this one", "the last row", "below". A split silently re-points them at
