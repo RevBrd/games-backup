@@ -7,18 +7,19 @@ what goes *in* a rung, you want this one.
 
 Read it when adding a set's roster or hand-building an opponent deck. **It was written for the
 auto-builder, which was deferred indefinitely on 29 Aug 2026** — so its intended consumer is gone and
-its actual one is a person with a spreadsheet, which is who has built all four live brackets anyway.
+its actual one is a person with a spreadsheet, which is who has built every live bracket anyway.
 *[Why, and what the deferral cost this file →](HISTORY.md)*
 
-**All four live brackets are built to this spec and it survived.** Base Set's eleven rungs went in on
-19 Aug 2026, Jungle's seven and Fossil's ten on 21 Aug, Team Rocket's ten on 25 Aug — every one of
-them from decks Trevor hand-made or authentic WotC theme decks. Job 8 wrote the spec on 15 Aug 2026;
-this file has been past tense since the fourth roster landed. **Build the next one against the four
-that exist**, not against the tables below, and expect the tables to move as more brackets do.
+**Every live bracket is built to this spec and it survived.** Base Set's eleven rungs went in on
+19 Aug 2026, Jungle's seven and Fossil's ten on 21 Aug, Team Rocket's ten on 25 Aug, Challenge 1's
+seven on 1 Sep — every one of them from decks Trevor hand-made or authentic WotC theme decks. Job 8
+wrote the spec on 15 Aug 2026; this file has been past tense since the fourth roster landed.
+**Build the next one against the ones that exist**, not against the tables below, and expect the
+tables to move as more brackets do. **`data/ladder.json` is the roll**; do not count them here.
 
 **The unbuilt half moved out on 25 Aug 2026 — [CHALLENGES.md](CHALLENGES.md)**: entry conditions,
 the pressure vocabulary and its no-repeat rule, the Challenge brackets that replaced the rival, and
-the open questions those three carry. Not one of them is built, and keeping them beside four shipped
+the open questions those three carry. Not one of them is built, and keeping them beside the shipped
 rosters was making a reader walk through a hundred lines of speculation to reach the part that works.
 **Names, dialogue, gimmick rules and story are an explicit non-goal here** and are deferred to a
 detailing pass; the reasoning is over there.
@@ -92,16 +93,19 @@ question is not *does the centrepiece need an engine* but *can this deck reliabl
 
 ### What the rosters measured, and where they disagree
 
-Four rosters have been built to this spec and **all four have now been played by `tools/decksim.js`
-from both seats**; three of them have also met each other in a merged field. **The standings, the
-assembly rates and every number behind the claims below are in [ROSTERS.md](ROSTERS.md), one section
-per roster** — that file is the evidence and this one is the spec, and the numbers deliberately live
-in exactly one of them.
+**Every roster built to this spec has been played by `tools/decksim.js` from both seats**, and
+several have also met each other in a merged field. **The standings, the assembly rates and every
+number behind the claims below are in [ROSTERS.md](ROSTERS.md), one section per roster** — that file
+is the evidence and this one is the spec, and the numbers deliberately live in exactly one of them.
 
-*(This sentence said all four had been measured while Fossil never had — true of three rosters when
-it was written, and nothing re-read it when the fourth arrived. Closed 29 Aug 2026 by running Fossil
-rather than by softening the claim. **A sentence quantifying over a growing set is a claim that
-expires silently**, and this file makes several; if you add a roster, grep this file for "four".)*
+*(**This paragraph has now gone stale twice in the same way and the second time is the instructive
+one.** It first said all four rosters had been measured while Fossil never had, closed 29 Aug 2026 by
+running Fossil rather than by softening the claim — and the fix ended with the instruction* "if you
+add a roster, grep this file for 'four'". *Job 15a then added Challenge 1, and nobody grepped:
+**seven sentences here still said "four" on 2 Sep 2026, with this file's own Challenge 1 section
+sixty lines below them.** A warning aimed at a future reader is only as good as the moment it is
+read, and the moment it needed to be read was inside a different job. **So the counts are gone rather
+than corrected** — the roll is `data/ladder.json` and `ROSTERS.md`, both checkable, neither prose.)*
 
 What the spec learned:
 
@@ -125,7 +129,7 @@ What the spec learned:
 - **T4 decks are the best in the field at ASSEMBLING and the worst at CONVERTING** — mean assembly
   73% against T3's 50% and T2's 40%, for a mean win rate of 48.7% against T3's 57.6%. The bosses
   arrive, reliably and on time, and then do not win. **That is an AI question, not a deck question**,
-  and it is the most concrete thing four rosters have produced.
+  and it is the most concrete thing this spec's rosters have produced.
   *(Stated as a level difference between tiers on purpose. The first version of this bullet said
   assembly and winning were **anti-correlated**, off the three bosses alone; across all fourteen decks
   that have a centrepiece the correlation is **+0.31**, and it is +0.60 within T2 and +0.76 within T3.
@@ -303,7 +307,7 @@ demands all of them.** Nobody has played it end to end yet.
 1. **The player-facing Prize selector is going away** on the ladder, keeping the tier dial from being
    opt-out. It survives in free play, which is a relic of the early build rather than a design.
    Trevor's call, 15 Aug 2026.
-2. **Four brackets read intro → body → gate → boss and nobody has walked one end to end.** That is
+2. **Every set bracket reads intro → body → gate → boss and nobody has walked one end to end.** That is
    still the cheapest remaining test of this whole document, and it is the one nothing here can do
    for itself: `decksim.js` plays the rosters against each other and cannot tell you how the ladder
    *feels* from the seat of somebody climbing it. Report where the spec does not survive contact.

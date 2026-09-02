@@ -154,8 +154,13 @@ The reasoning for both is in `RULINGS.md` under Clefairy Doll.
 ### `baseCard` / `topCard`
 
 Added in Job 6f for Ditto, and the system to reach for whenever a card changes **what another card
-is** rather than what it does. 47 references in `engine.js`; the ruling it implements is in
-`RULINGS.md`.
+is** rather than what it does. It is threaded through `engine.js` densely enough that grepping either
+name is the honest way to see its reach; the ruling it implements is in
+[Ditto](Rulings/DITTO.md). *(This said "47 references" until 2 Sep 2026, by which point it was well
+past that. **No replacement number is given on purpose** — and the pass that removed it immediately
+wrote a wrong one, because `grep -c` counts matching LINES and the claim was about occurrences. A
+count in prose about a growing codebase is what this tree corrects most often; cite the symbol and
+let the reader grep.)*
 
 | | |
 |---|---|

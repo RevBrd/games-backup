@@ -144,41 +144,25 @@ identity and the rest are honest beatdown, which is the right outcome. The tags 
 seed for the detailing pass — an opponent whose deck strips your Energy writes their own personality —
 which is a bonus, not a reason.
 
-
 ## Open
 
-1. ~~**A set needs a flag saying whether it is ladder content, pack content, or both.**~~ **CLOSED —
-   both halves, and by two different jobs neither of which was aimed at this item.** The
-   *pack-not-ladder* half was Job 13's `booster: false` in `SET_INFO`, which is why `basep` never
-   promoted itself to a bracket. The *ladder-not-set* half — the one this item called "the second and
-   harder case" — was Job 15a's `standalone: true`. **Neither is a flag ON A SET**, which is why the
-   item as phrased could not be closed: a Challenge is not a set with a flag saying it is not one, it
-   is a bracket that never had a set. *[Both →](PROGRESSION.md)*
-2. ~~**The rival problem is solved, and the answer is CHALLENGES 1–3.**~~ **CHALLENGE 1 IS BUILT**,
-   1 Sep 2026, Job 15a — seven mono-type decks between Fossil and Team Rocket. The whole entry moved
-   to [OPPONENTS.md](OPPONENTS.md) in the past tense, per this file's own rule at the top, and the
-   ideas it discarded on the way went to [HISTORY.md](HISTORY.md) first.
+**One item, and the pressure tags are it.** Items 1 to 3 closed and their bodies are in
+[HISTORY-ARCHIVE-2.md](HISTORY-ARCHIVE-2.md) — kept because item 1 closed without ever getting the
+thing it asked for, which is a shape worth recognising.
 
-   **What is left is Challenges 2 and 3, and they need no design.** Challenge 2 sits after Gym
-   Challenge and Challenge 3 after Neo; both are a workbook of decks plus one `standalone` entry in
-   `data/ladder.json` — no code. Two things to carry across rather than rediscover:
+| Closed | Outcome |
+|---|---|
+| A set needs a ladder/pack flag | **Never got one.** `booster: false` and `standalone: true` solved its two halves from two different jobs. A Challenge is not a flagged set; it is a bracket that never had a set |
+| The rival problem | **Challenge 1 shipped**, Job 15a. Challenges 2 and 3 need no design — a workbook of decks plus one `standalone` entry, no code. *[What they need →](OPPONENTS.md)* |
+| What makes a Challenge LEADER tough | **Answered structurally** — seventh of seven, on a bracket that demands all six others. Nobody has played it end to end, so it is a claim rather than a result |
 
-   - **Order the rungs by ascending featureWeight and then CHECK the pressure spacing.** Challenge 1's
-     weight order happened to satisfy the no-consecutive-pressure rule as well. That was luck.
-   - **`challenge2` is already a live promo gate** (`basep-21`, `-22`, `-23` — the three legendary
-     birds), so building that bracket turns them on with no other change, exactly as `challenge1`
-     turned four on.
+**Two things to carry into Challenge 2 rather than rediscover.** Order the rungs by ascending
+featureWeight and then **check the pressure spacing** — Challenge 1's weight order happened to satisfy
+the no-consecutive-pressure rule and that was luck. And `challenge2` is already a live promo gate
+(`basep-21`, `-22`, `-23`, the three legendary birds), so building it turns them on with no other
+change, exactly as `challenge1` turned four on.
 
-   **Challenge 3 scales itself**: Neo prints Darkness and Metal, so it is bigger than Challenge 1
-   without anyone tuning a number. Same property that makes the brackets derived.
-3. ~~**What still has to be answered about a Challenge's leader.**~~ **Answered structurally, and the
-   alternative is dead.** The old exit was "a leader's pool is every set you have unlocked at once"
-   while everyone else is set-flavoured — which is what Challenge 1's whole *bracket* turned out to be,
-   so it stopped being a way to distinguish the leader from the rungs beside them. What separates a
-   leader now is position: seventh of seven, on a bracket that demands all six others first. **Nobody
-   has played it end to end**, so this is a claim rather than a result. The "mostly Colorless" version
-   is rejected and its reasoning is in [HISTORY.md](HISTORY.md).
-4. **Pressure tags exist as data and are read by nothing.** Trevor's workbooks carry a per-card
+1. **Pressure tags exist as data and are read by nothing.** Trevor's workbooks carry a per-card
    Pressure column, the extraction derives a deck-level tag from it by copy count, and a minority of
    decks earn one — the rest are honest beatdown, which is the right outcome. **Trevor's key extends
    the vocabulary above with two more: HD (High Damage) and BG (Bench Growth).**

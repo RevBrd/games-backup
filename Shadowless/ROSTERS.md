@@ -21,9 +21,13 @@ read the other. See [MAINTENANCE.md](MAINTENANCE.md).
 measurement somebody took on a date, and condensing one deletes the only record of it. Correct an
 entry; never shorten one. **When this file passes ~450, start the next archive at a set boundary
 rather than growing it.** Stated here, at the top, before the decision — four rosters was already 395
-lines and there are fourteen sets, so this file was on course to be the longest thing in the tree and
-was the one register with no threshold written down. Added 29 Aug 2026 by #30, after finding a roster
-that had never been measured at all.
+lines and there are fourteen sets, so this file was on course to be the longest thing in the tree.
+Added 29 Aug 2026 by #30, after finding a roster that had never been measured at all.
+*(That sentence used to end "and was **the** one register with no threshold written down". It was one
+of two: [MISREADINGS.md](MISREADINGS.md) had none either and did not get one until 2 Sep 2026.
+Corrected rather than deleted, because the near-miss is the point — a claim that a set has exactly
+one member is the same species of quantifier this tree keeps being caught by, and it was written by
+the pass that went looking for missing thresholds.)*
 
 **The threshold fired on 1 Sep 2026 and the rule worked exactly as written**, which is worth one line
 because a threshold nobody trips is a threshold nobody knows is real. Adding Challenge 1 took the file

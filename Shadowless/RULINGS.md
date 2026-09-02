@@ -104,6 +104,19 @@ card by *shape* means scanning every ruling at once, which is the one job that g
 entries moved behind their own doors. This table is that scan, compressed: read it, then open the one
 that matches.
 
+**A principle that is in an entry's prose but NOT in this table reads as a new question, and that has
+cost a real re-litigation.** Rainbow Energy's Prize half sat open for weeks because
+[Buzzap](Rulings/BUZZAP.md) had already answered it — *a Knock Out is a Knock Out whoever caused it* —
+in that entry's body, with no row here. Somebody hit the identical question and could not see that it
+was identical. **When you write a ruling, ask whether it generalises, and add the row in the same
+edit.** The table is not documentation of the folder; it is the only thing that makes step 2 work.
+
+**And rulings arrive from Trevor's workbook at least as often as from the cards.** Both of the promo
+calls — [promo evolution](Rulings/PROMO-EVOLUTION.md) and
+[variable attack damage](Rulings/VARIABLE-ATTACK-DAMAGE.md) — came out of the Index legend rather
+than out of the corpus. **Read the workbook's Index legend before the corpus on any set job.** A
+ruling that lives only in a spreadsheet gets re-derived by whoever opens the card next.
+
 | Principle | From |
 |---|---|
 | When two continuous effects would each disable the other, **whichever is already in play wins** — the question is asked at the moment of the attempt | [Aerodactyl vs. Muk](Rulings/AERODACTYL-MUK.md) |
@@ -153,22 +166,15 @@ the person the mark names.
 
 Calls we already know are coming, so nobody is surprised by them.
 
-- **~~The arbiter runs out at Fossil~~ — settled 15 Aug 2026**, before the first Team Rocket card
-  rather than during it. The replacement is the four-step order above, and the short version is that
-  there is no single arbiter and there does not need to be one. Left here so nobody re-opens it as an
-  unknown.
 - **Baby Pokémon (Neo era, 10 cards)** — the Baby Rule is a coin flip that can negate an attack
-  entirely. Not a Base Set problem, but it is a whole rule, not a card effect.
-- **~~The promos are Job 12~~ — they were Job 13 and they SHIPPED**, 26–28 Aug 2026, with both of
-  their calls already in the folder: [promo evolution](Rulings/PROMO-EVOLUTION.md) and
-  [variable attack damage](Rulings/VARIABLE-ATTACK-DAMAGE.md). Left here rather than deleted for the
-  observation underneath it, which is still live and still pays: **both came out of Trevor's workbook
-  rather than out of the cards.** His spreadsheets accumulate rulings, and a ruling that lives only in
-  a spreadsheet gets re-derived by whoever opens the card next. **Read the workbook's Index legend
-  before the corpus** on any set job — that instruction was written for a job that has been and gone,
-  and it is the general rule that survives it. The other 25 promos are a much later job.
-- **~~Rainbow Energy's 10 damage on attachment~~ — settled**, and it was never as open as this list
-  said: the damage half was decided with Trevor on 19 Aug 2026 and written into `engine.js`, and the
-  Prize half had been answered by [Buzzap](Rulings/BUZZAP.md) two weeks earlier. It sat here because
-  Buzzap's principle was in that entry's prose and **not in the index above**, so the identical
-  question read as new. *[The entry, and the lesson about the register →](Rulings/RAINBOW-ATTACH-DAMAGE.md)*
+  entirely. Not a Base Set problem, but it is a whole rule, not a card effect. **The only genuinely
+  pending call.**
+
+**Three items left this list and each is one line, because the reason each mattered has been promoted
+into the method above rather than left inside a struck-out bullet.**
+
+| Was pending | Settled | What survived it |
+|---|---|---|
+| The arbiter runs out at Fossil | 15 Aug 2026 | The four-step order above. **Named here so nobody re-opens it as an unknown** |
+| The promos | Job 13, 26–28 Aug 2026 | *Read the workbook's Index legend before the corpus* — now a rule beside the principles table. The other 25 promos are a much later job |
+| Rainbow's 10 damage on attachment | 19 Aug 2026 | *A principle in an entry's prose but not in the index reads as a new question* — also promoted above. [The entry](Rulings/RAINBOW-ATTACH-DAMAGE.md) |

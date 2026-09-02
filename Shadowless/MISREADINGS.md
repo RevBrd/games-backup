@@ -15,6 +15,19 @@ Correct one that turns out wrong; never shorten one, because the condensed versi
 loses the shape — and the shape is the transferable part. Same category as
 [AI-INVARIANTS.md](AI-INVARIANTS.md) and [GRABHIST.md](GRABHIST.md).
 
+**When this file passes ~450, start `MISREADINGS-ARCHIVE-1.md` at a job boundary** rather than
+growing it. Stated here, at the top, before the decision — because a limit written only where it
+would be read afterwards is not a limit, which is a lesson three registers in this tree have each
+paid for separately.
+
+*(**This file had no threshold at all until 2 Sep 2026**, and that is worth the two lines rather than
+a silent fix. `MAINTENANCE.md` asserts that every register here carries one — it says so while
+telling you to go and check each register's own number, which is the cheapest finding available and
+the one nobody runs. `ROSTERS.md`'s header, written 29 Aug, says it **was** "the one register with no
+threshold written down". It was not the one; it was one of two, and this was the other. **A file that
+nobody has ever had to archive is exactly the file whose limit nobody notices is missing** — it was
+at 362 and would have crossed unremarked.)*
+
 **Deliberately not counted, and this is load-bearing rather than fussy.** The heading said "seven"
 for a week and was wrong the moment somebody found an eighth — the same failure the list itself is
 about. Then the parent file's own one-line summary went on promising *"all seven"* for another week

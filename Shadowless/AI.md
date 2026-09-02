@@ -313,23 +313,13 @@ on it.**
    but nothing has duelled it either. It cannot go on `selftest.js`'s `PROVISIONAL` list, which holds
    effect verbs, so it is recorded here instead.
 4. ~~**`evolve` cannot see readiness, and fixing that ALONE would make the bot worse.**~~ **BUILT
-   28 Aug 2026, both halves in one commit, from Trevor's account of how the GBC game does it.** Evolve
-   scored a flat **31.0** whether the target held one Energy or three; on the Vileplume case it now
-   reads 15 / 23 / 31 / 31 as the Gloom is fed, and the bot evolves at **one Energy short of the
-   evolution's cheapest attack** rather than as soon as it legally may.
-
-   **The coupling this item warned about was real and the blocker was one level higher than predicted.**
-   It named `attachValue` as the thing to fix; the actual refusal came from the **surplus rule** above
-   it, which returns `attachSurplus` before `attachValue` is called at all. A Gloom on two Grass can
-   pay for Foul Odor, so `noProgress` was true and the third Grass was refused at −2 no matter what
-   `attachValue` thought. It took a fourth exception — *a Pokemon about to become something else is not
-   paid up* — bounded by the evolution's own cost.
-
-   **It reads as a NULL on win rate and it shipped anyway.** `aiduel 8 --gbc` against HEAD: no
-   significant difference, `--control` likewise, so the null is real rather than a broken harness. The
-   change does fire — 228,832 attachments became 229,737 over 17,672 ladder games. **Do not inherit
-   "this helped" from the fact that it shipped.** *[The three grounds, and the two clauses of Trevor's
-   note left unbuilt →](Playbook/EVOLUTION-TIMING.md)*
+   28 Aug 2026**, both halves in one commit, from Trevor's account of how the GBC game does it — the
+   bot now evolves at one Energy short of the evolution's cheapest attack rather than as soon as it
+   legally may. **The coupling it warned about was real and it named the wrong function**: the
+   refusal came from the surplus rule above `attachValue`, not from `attachValue`. **It shipped on a
+   measured null and that is recorded rather than explained away.**
+   *[The entry →](AI-INVARIANTS/EVOLUTION-READINESS.md)* · *[the original item, and the two clauses
+   of Trevor's note still unbuilt →](HISTORY-ARCHIVE-2.md)*
 
 5. **Sleep against Paralysis: two methods disagree and the weight was left alone.** Reading `endTurn`
    says a Sleep costs **0.67** of a turn — the wake flip runs on both Actives every turn end, so the
@@ -449,30 +439,10 @@ on it.**
    above had measured that clause near-inert hours earlier. **Raise the deck arm with Trevor rather
    than assuming it follows.**
 
-10. ~~**The evolution road cannot see whether its carrier will live to travel it.**~~ **BUILT 31 Aug
-    2026, and not where this item said to look.** Kept because the wrong turning is the useful part:
-    the item pointed at the survival DISCOUNT, and no discount could have fixed it — `evolutionRoadFor`
-    ranks by investment alone, so a cheaper road is still the same road. The fix was in the
-    SELECTION. And the "off-by-one" it named turned out to be a deliberate hedge whose removal flips
-    three claim rows. *[Both, and the experiment →](AI-INVARIANTS.md)*
-
-    The original text, for the reasoning that led there: **MEASURED 30 Aug
-    2026, NOT BUILT, and the safe fix is not the obvious one.** Two Charmeleons on two Fire each, one
-    Charizard in hand, a threat of 30: the road is worth **101.0 on an Active at 80 HP and 101.0 on
-    the same Active at 10 HP**, while the healthy benched twin is passed over at 62.0. Sweeping the
-    Active's HP from 80 to 10 never moves the number.
-
-    Trevor's clause, 30 Aug: *"If a new Charmander is gained while it's fighting, the AI might shift
-    its future evolution focus to that instead, if that one seems more realistic to get to its full
-    evolution at full power."*
-
-    **`survivesCharge` is already in that branch and returns 1**, because `turnsLeft =
-    ceil(hp/threat)` counts the attack that **kills** you as a turn you survived — `ceil(10/30) = 1`
-    against a shortfall of 1. The honest quantity is future turns of *mine*, `ceil(hp/threat) - 1`.
-    **Do not just fix that line.** It is shared with `discardSilence`, where the same off-by-one is
-    baked into the 23 Aug measurements, so correcting it re-tunes a shipped invariant. The local
-    alternative is a filter in `evolutionRoadFor` beside its existing *"a ready copy steps aside"*
-    rule — which touches nothing else but is a selection predicate on a quantity, in a function whose
-    own comment warns in capitals that a flip-flopping leader is worse than no rule.
-    **The two readings differ by two cards against every discard in the game; ask before picking.**
-    *[The board, red on purpose →](tools/claims/base1.js)*
+10. ~~**The evolution road cannot see whether its carrier will live to travel it.**~~ **BUILT
+    31 Aug 2026, and not where this item said to look.** It pointed at the survival DISCOUNT, and no
+    discount could have fixed it — `evolutionRoadFor` ranked by investment alone, so a cheaper road is
+    still the same road. **The fix was in the SELECTION.** And the "off-by-one" it named turned out to
+    be a deliberate hedge whose removal flips three claim rows.
+    *[The entry →](AI-INVARIANTS/SURVIVES-CHARGE-HEDGE.md)* · *[the original item and the board it
+    was measured on →](HISTORY-ARCHIVE-2.md)*

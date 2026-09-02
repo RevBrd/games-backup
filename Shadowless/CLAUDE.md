@@ -86,8 +86,10 @@ collection, packs, dex, save file and deck builder, and the ladder with its name
 a row in the table above naming the file that owns it. *[How each job got there →](HISTORY.md)*
 
 **Four sets are live and complete: Base, Jungle, Fossil and Team Rocket — 311 of 311 printings**, and
-all four brackets are built from Trevor's own hand-made decks or authentic theme decks rather than
-from placeholders. Run `node tools/selftest.js` for the live figures rather than trusting a number in
+**every bracket on the ladder** — five of them, over those four sets — is built from Trevor's own
+hand-made decks or authentic theme decks rather than from placeholders. *(This said "all four
+brackets" three lines above its own "five brackets over four sets" until 2 Sep 2026. Sets and
+brackets stopped being the same count on 1 Sep and one sentence did not hear.)* Run `node tools/selftest.js` for the live figures rather than trusting a number in
 prose; it prints coverage per set. **There is one unit now and there used to be two**, so an older
 figure — Base Set as 95, the three sets as 221 — is measuring the smaller one rather than disagreeing
 with this one. `selftest.js` counts printings; it used to exclude Energy, which was a hole in the
@@ -97,7 +99,8 @@ set-gating rule that Team Rocket's three special Energy would have been the firs
 **The promos are collectible without being a set, and the distinction is load-bearing.** 28 of the 53
 Wizards Black Star Promos are playable and each carries its own gate — a bracket that must be open
 before that card can turn up, rather than a set going live all at once. They arrive only through the
-pack **intrusion** roll, as a bonus ninth card, and 17 of the 28 are reachable today. A promo is
+pack **intrusion** roll, as a bonus ninth card, and 21 of the 28 are reachable today — `node -e` the
+gate table rather than trusting that number, because Job 15a moved it and two files did not notice. A promo is
 never a ladder bracket, never a pack of its own, and never in a **generated** deck. So there are now
 two pools where there used to be one: `LIVE_DB` is the *set* pool and `collectibleDb(save)` is what
 you may *own*. *[Which promos, and why the gate is per card →](PACKS.md)* · *[What the split changes

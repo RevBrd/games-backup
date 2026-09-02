@@ -60,7 +60,8 @@ file has lied at least once and the two that had a control got caught fastest.
 
 ### Every way this measurement has lied — [MISREADINGS.md](MISREADINGS.md)
 
-**Twelve of them, each paid for by somebody, and the list is deliberately not counted.** They moved
+**Each one paid for by somebody, and the list is deliberately not counted — including here.** They
+moved
 into their own file on 22 Aug 2026: the section had become an append-only register and this file had
 reached 388 lines around it. **Read it before you believe a result, and especially before you
 believe a null one.**

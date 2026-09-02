@@ -217,23 +217,49 @@ and its source being two lists that cannot see each other.
 promos are reachable from the very first pack. He is reconsidering the gate *order* against a
 cleared-based reading; that would change the values in that table and nothing else.
 
-**TREVOR WANTS THE GATES REMOVED, and it is queued rather than done** — 1 Sep 2026, raised after
-Challenge 1 shipped: *"I actually didn't realize the promo cards were gated until they were in a CPU
-deck. We're going to have to remove that gate for them at some point, though it doesn't have to be
-now."* The trigger is the asymmetry the Challenge decks created — **an authored opponent deck may name
-a promo freely and four of the seven do**, so the player now meets Pikachu GP and Eevee CH across the
-table while the gate says they cannot own one yet. Being shown a card you are barred from is a worse
-feeling than a drip you never noticed.
+### The queued gate removal, and why the thing it was answering does not happen
 
-**Do not act on this without asking what "remove" means**, because the paragraph admits two readings
-and they are different jobs: drop `PROMO_GATES` entirely so all 28 scripted promos are pullable from
-the first pack, or keep the mechanism and open only the gates for promos an opponent actually fields.
-**The mechanism itself is worth keeping either way** — `gym1`/`gym2` gate eleven promos against sets
-that do not exist, and that half is not the complaint.
+**Trevor asked for the gates to be removed on 1 Sep 2026**, after Challenge 1 shipped: *"I actually
+didn't realize the promo cards were gated until they were in a CPU deck. We're going to have to
+remove that gate for them at some point, though it doesn't have to be now."*
 
-**Twenty-eight of the fifty-three promos carry a gate and seventeen resolve today.** The other
-eleven name `challenge1`, `challenge2`, `gym1` or `gym2` — brackets that do not exist — and they
-**fail closed**, which is the safe direction. Each turns on with no code change the day a ladder
+**The stated trigger was an asymmetry, and the asymmetry does not exist. Measured 2 Sep 2026.** The
+worry was that an authored deck may name a promo freely, so the player meets a card across the table
+that the gate says they cannot own. Only **five** promos are named by any authored deck, all five in
+Challenge 1 — and every one of them is gated on a bracket that opens *before* Challenge 1 does:
+
+| Promo | Gate | Fielded by | Ownable when you meet it? |
+|---|---|---|---|
+| `basep-1` Pikachu | `base1` | Challenge 1, Lightning | **yes** |
+| `basep-12` Mewtwo | `base2` | Challenge 1, Psychic | **yes** |
+| `basep-11` Eevee | `base3` | Challenge 1, Lightning | **yes** |
+| `basep-14` Mewtwo | `base3` | Challenge 1, Psychic | **yes** |
+| `basep-26` Pikachu | `base3` | Challenge 1, Lightning | **yes** |
+
+Challenge 1 sits after Fossil, so `base1`, `base2` and `base3` are all open before you can sit down
+against any of these decks. **Nobody is shown a card they are barred from.** That is the gate order
+working rather than a coincidence, and it is worth knowing before anyone reopens this.
+
+**So it is not queued work any more; it is a decision waiting on a different reason.** The gates may
+still be wrong for reasons of their own — a drip nobody notices is arguably not worth the mechanism —
+but the argument recorded here for removing them was refuted by its own data. **Ask before acting**,
+because the request admits two readings and they are different jobs: drop `PROMO_GATES` entirely so
+all 28 scripted promos are pullable from the first pack, or keep the mechanism and open only specific
+gates. **The mechanism is worth keeping either way** — seven promos are gated against `challenge2`,
+`gym1` and `gym2`, brackets that do not exist, and that half was never the complaint.
+
+**And the observation underneath the request was true**: Trevor had opened 164 packs and pulled no
+promo. That is not the gates and not luck. **Job 13b, which made the intrusion roll fire at all,
+landed on 27 Aug 2026 — the same day his newest export was written.** Nearly every pack in that save
+was opened while the roll was dead code. *[The roll that had never fired →](HISTORY-ARCHIVE-2.md)*
+
+**Twenty-eight of the fifty-three promos carry a gate and twenty-one resolve today.** The other
+seven name `challenge2`, `gym1` or `gym2` — brackets that do not exist — and they **fail closed**,
+which is the safe direction.
+*(This read "seventeen" and "the other eleven" until 2 Sep 2026, and `CLAUDE.md` agreed with it. Both
+were correct until Challenge 1 opened on 1 Sep and turned four on, which `PROGRESSION.md` recorded
+and neither of the other two heard about. **The gate table is derived and checkable in one command;
+the three prose copies of its answer were not.**)* Each turns on with no code change the day a ladder
 bracket carries that key. The twenty-five promos with no gate at all are the unscripted half of
 `basep`, and a second test keeps them out independently: the eligible pool is filtered by *has an
 effect script* as well as by gate, so CLAUDE.md's "no collecting a card you cannot play" holds for a
@@ -419,86 +445,29 @@ wildly different experiences of the same economy.
 
 ## Still open
 
+**One item, and it is small.** Everything else this list held has shipped; the bodies moved to
+[HISTORY-ARCHIVE-2.md](HISTORY-ARCHIVE-2.md) on 2 Sep 2026 rather than being deleted, because each
+records what a prediction got right and wrong and one of them caught a latent bug.
+
 1. **Southern Islands' fixed distribution vs. our intrusion model.** SI was a real boxed set with
    guaranteed contents, not a randomised pack, so folding 18 fixed cards into a probabilistic
    intrusion chance is itself an invented mechanic wearing a real set's name. Flagged rather than
    let ride on the promo idea by association.
-2. ~~**Progression-gating the intrusion pool.**~~ **BUILT, Job 13b, 27 Aug 2026.** It went further
-   than this item asked. The item wanted the pool to track the unlocked *era*; Trevor had already
-   authored a gate per *card*, so it is gated per card instead — see "Which promos can actually
-   intrude" above. The rest of the prediction held exactly: it needed nothing added to the save,
-   because `unlockedSets` was already derived from `save.progress.beaten`.
-   **The part nobody had noticed is that the intrusion had never fired at all.** `openPack` took an
-   `opts.promos` pool, defaulted it to empty, and no caller ever passed one — so the 1-in-100 roll
-   built in Job 5b was dead code in the shipped game for three weeks, in a suite-green tree. The
-   guard that would have caught it is the one that now exists: `packtest.js` asserted the mechanism
-   worked *when given a pool* and never asked whether anything gave it one. **A default that makes a
-   feature inert is invisible to a test that supplies the argument.**
-3. ~~**The Challenge pack — a pool of every card up to that point.**~~ **BUILT, Job 15a, 1 Sep 2026** —
-   the pack exists, is earned, and opens. **The ODDS half is deliberately still open and is item 6.**
-   The full description is in "The Challenge pack" above; what this item got right and wrong is worth
-   keeping, because one of the two was a latent bug.
 
-   **Right:** most of the machinery was already here. `buildPools` needed to learn an array, `openPack`
-   already took `opts.pools`, and the save already keyed packs by an arbitrary string. It was a small
-   job in `packs.js` and a smaller one in `ui.js`; the size of Job 15a was all in the *ladder*.
+**And one consequence that is not a decision.** A Challenge pack has no Energy floor and draws at the
+union's 8.6% against Base Set's 15.8%, so most contain no Energy at all. Defensible for a reward pack
+rather than a faucet, and recorded here so nobody rediscovers it as a fault.
 
-   **Right, and load-bearing:** a pack TYPE is not a set. A set code entering `liveSets` would give
-   itself a ladder bracket, a dex section and a completion percentage. `challenge1` is not in
-   `SET_INFO` and gets none of them, and its cards count toward their own sets' dexes, which is
-   exactly the behaviour that makes it a good reward.
+### What closed, and where the reasoning went
 
-   **Wrong, and it would have shipped:** this item said the pool should be built from the sets *the
-   player has unlocked*. That reads the save at the moment a pack is **opened**, so a Challenge 1 pack
-   won before Team Rocket and opened after it would have quietly contained Team Rocket cards, and two
-   packs of the same name would have held different things. **Trevor caught it before a line was
-   written**, from the player's side rather than the code's — his framing was that a C1 pack should
-   *already know* it holds Base, Jungle and Fossil. The fix keeps the derivation the tree prefers and
-   changes only what it derives from: **ladder position, not save state.**
-   *[The field it became →](PROGRESSION.md)*
+| Item | Outcome | Reasoning |
+|---|---|---|
+| Progression-gating the intrusion pool | **Built**, Job 13b — and gated per *card*, further than the item asked. It also turned up that **the intrusion roll had never fired in the shipped game** | [archive](HISTORY-ARCHIVE-2.md) |
+| The Challenge pack | **Built**, Job 15a. Its spec was **wrong in a way that would have shipped** — the pool was specified as save state read at open time | [archive](HISTORY-ARCHIVE-2.md) · [PROGRESSION.md](PROGRESSION.md) |
+| Restoring the four cosmetic axes' pacing | **Done**, Job 15b. The deferral reasoning was right and cost nothing | [archive](HISTORY-ARCHIVE-2.md) |
+| Base Set's bonus-Rare-tier near-tie | **Dissolved** rather than fixed — the comparison moved and the residual is 0.2 points | [archive](HISTORY-ARCHIVE-2.md) |
+| What "richer" means for a Challenge pack | **Answered**, Job 15b: 4x the rarity jump, the one lever with no cosmetic spillover | [archive](HISTORY-ARCHIVE-2.md) |
 
-   **The dilution question was answered on 21 Aug and the answer still holds.** A player chasing one
-   specific card **re-battles the bracket that card's set belongs to** — the ladder already provides
-   targeted chasing, because `winReward` pays in the bracket's own set and repeat wins pay full. So a
-   Challenge pack is not competing with that. Its job is *better cards, any set*: slightly richer
-   rarity odds, less chance of a specific card, higher chance of a good one. Nothing built yet delivers
-   the "richer" half — see item 6.
-4. ~~**Restoring the pre-shrink pacing on the four per-slot cosmetic axes.**~~ **DONE, 1 Sep 2026,
-   Job 15b** — see the axes table above for the new values, the measurement and the three-column
-   comparison. The old text is kept below because its *reasoning about the deferral* was right and is
-   worth reusing: the reason to wait was to avoid tangling the retune with the jump mechanic that
-   shipped the same day, and that is a good instinct that cost nothing and made this pass readable.
-
-   ~~**Restoring the pre-shrink pacing on the four per-slot cosmetic axes.**~~ Reverse Holo, Shiny,
-   Shadowless and Misprint each roll once per SLOT, so the 25 Aug 2026 shrink from 11 cards to 8
-   thinned all four without anyone touching a value in `PACK_ODDS` — the before-and-after figures are
-   in the verification paragraph above. **Deferred deliberately, Trevor, same day**: retuning them on
-   top of the rarity-jump mechanic that shipped the same day would lose track of which change did
-   what, so it waits until the new pack shape has actually been played. **Run `packtest.js` before
-   trusting anything here** — its per-axis targets are DERIVED from `PACK_ODDS` + `PACK_SHAPE` now, so
-   a wrong number means the derivation needs revisiting rather than the odds.
-5. ~~**Base Set alone does not clear Reverse Holo with its bonus-Rare-tier rate.**~~ **DISSOLVED
-   rather than fixed, 1 Sep 2026.** The comparison it was asking about is retired: restoring Reverse
-   Holo puts it above the bonus-rare rate in *every* set, so Base Set stopped being the exception by
-   the rest of the field joining it. **The underlying asymmetry is real and is small** — Base Set's
-   floor removes 2 of its 5 Common slots from jump eligibility, so it runs 6.7% against everyone
-   else's 6.9-7.0%, a gap of about 0.2 points. It was only ever alarming because it was being read
-   against a moving target. `packtest.js` still prints it, now framed as base1-against-the-others
-   rather than against Reverse Holo. **No nudge applied.** The original text follows.
-
-   ~~**Base Set alone does not clear Reverse Holo with its bonus-Rare-tier rate**,~~ because the Energy
-   floor removes 2 of its 5 Common slots from jump eligibility — mechanism and measurement both under
-   "Bonus rare-tier jumps" above. Whether that is an acceptable Base-Set-is-already-the-exception
-   outcome or wants its own nudge is Trevor's call. **It is a consequence of item 4 and should be
-   decided in the same pass**, since any nudge to the four axes moves the comparison it is measured
-   against.
-6. ~~**What "richer" means for a Challenge pack.**~~ **ANSWERED, 1 Sep 2026: 4x the rarity jump and
-   nothing else** — Trevor's proposal, taken as written. See "The Challenge pack" above for the
-   measurement and for why this lever, alone among the candidates, produces no cosmetic spillover.
-   **One thing was flagged in the same breath and NOT resolved**: the union's Energy share is 8.6%
-   against Base Set's 15.8%, so a Challenge pack has no floor and most contain no Energy at all. That
-   is defensible for a reward pack rather than a faucet, and it is still a consequence rather than a
-   decision. It is the only open question left about this pack and it is small.
 
 ## Sources
 
