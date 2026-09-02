@@ -295,16 +295,28 @@ if (median !== null) console.log(`  median first difference   action ${median}`)
 // and only rarely the 8000-action cap. That rate is a property of the bot and
 // the pool, not of the change under test.
 //
-// The band is deliberately wide. A run that diverges is not replaying the same
-// games, so its stalls are a fresh sample and comparing them against an
-// identical-tree floor is the wrong baseline — the 31 Aug entry again.
-const STALL_BAND = [0.5, 3.5];   // percent of games; see above
+// AND THEN THE FLOOR MOVED, because the cause was fixed the same afternoon.
+// Null control, 2400 games per side, identical tree, before and after adding
+// pendingAsk to the dispatch:
+//
+//   before   34 stalls   1.4%
+//   after     3 stalls   0.1%
+//
+// So the 1.1-1.8% written down in MISREADINGS.md is now a historical figure
+// rather than a floor. THE THRESHOLD IS ONE-SIDED ON PURPOSE: zero is the
+// healthy reading, and a lower bound would have made "no stalls at all" look
+// like a fault — which is exactly the mistake this whole line was making in the
+// other direction an hour ago.
+//
+// A run that diverges is not replaying the same games, so its stalls are a fresh
+// sample; treat a small movement as sample noise rather than as a regression.
+// The 3 that remain are unexplained and are few enough that nobody has needed
+// to. If you want to know, tools/lib/owed.js has the method.
+const STALL_WARN = 1.0;   // percent of games; measured floor is ~0.1
 const stallPct = 100 * stalls / (games || 1);
 if (stalls) {
-  const hot = stallPct > STALL_BAND[1];
-  const cold = stallPct < STALL_BAND[0];
   console.log(`  stalled (either side)     ${stalls}  (${stallPct.toFixed(1)}%)`
-    + (hot || cold ? '   <- OUTSIDE the known band, worth reading' : `   normal: ${STALL_BAND[0]}-${STALL_BAND[1]}%`));
+    + (stallPct > STALL_WARN ? '   <- above the measured ~0.1% floor, worth reading' : '   (floor is ~0.1%)'));
 }
 console.log('');
 console.log(`  subject-deck wins, ${REF.padEnd(10)} ${pct(winOld)}  (${winOld}/${games})`);

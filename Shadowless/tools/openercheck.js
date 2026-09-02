@@ -14,6 +14,26 @@
 // stranded sat in the same hand. That is the case HP alone cannot see.
 //
 // NOT pass/fail. It is a measurement, like aitest.js. See AI.md.
+//
+// --control IS THE REASON TO BELIEVE THE 0.0%, and this tool went without one
+// for a fortnight. Added Job 15d, 2 Sep 2026.
+//
+// Every deck reports 0.0% stranded, which is either "the rule is working" or
+// "this metric has been dead since it was written" — and MISREADINGS.md opens
+// with exactly that shape. A counter sitting at its ideal value is the one
+// reading nobody questions, so it is the one that needs a control most.
+//
+// The control answers the counterfactual on the SAME hands: if the opening
+// Active were picked at random from the legal Basics instead of by the rule, how
+// often would it strand a line-starter while a safe option sat beside it? That
+// is the ceiling the rule is beating. It needs no second engine and no mirrored
+// rule — which matters, because mirroring the rule is the exact mistake this
+// tool's first version made and the header above is about.
+//
+//   node tools/openercheck.js --control
+//
+// IF THE CONTROL ALSO READS 0.0%, the measurement is broken and the headline
+// figure means nothing. Nothing else here can tell you that.
 // ============================================================================
 const fs = require('fs');
 const path = require('path');
@@ -21,8 +41,10 @@ const { CARD_DB } = require('../src/cards.js');
 const { Engine } = require('../src/engine.js');
 const { EFFECTS } = require('../src/effects.js');
 
-const file = process.argv[2] || 'data/base1_decks.json';
-const N = parseInt(process.argv[3], 10) || 4000;
+const CONTROL = process.argv.includes('--control');
+const positional = process.argv.slice(2).filter(a => !a.startsWith('--'));
+const file = positional[0] || 'data/base1_decks.json';
+const N = parseInt(positional[1], 10) || 4000;
 const decks = JSON.parse(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'));
 
 const evolvesInto = {};
@@ -38,8 +60,11 @@ function strandedIn(card, hand) {
 }
 
 let gBad = 0, gTot = 0;
-console.log(`opening-Active check — ${file}, ${N} games per deck, via the live engine
-`);
+console.log(`opening-Active check — ${file}, ${N} games per deck, via the live engine`);
+if (CONTROL) console.log(`CONTROL: the opening Active is picked at RANDOM from the legal Basics.
+  This is the ceiling the real rule is beating. If it reads 0.0% too, the
+  measurement is dead and the headline figure means nothing.`);
+console.log('');
 console.log('deck                          stranded   (of hands with a real choice)');
 for (const key of Object.keys(decks)) {
   if (key === '_meta') continue;
@@ -53,6 +78,15 @@ for (const key of Object.keys(decks)) {
     if (bas.length < 2) continue;                     // forced, not chosen
     // was there any non-stranded option at all?
     const anySafe = bas.some(x => !strandedIn(CARD_DB[x.id], hand));
+    if (CONTROL) {
+      // The counterfactual, computed on the same hand. No second engine and no
+      // mirrored rule — mirroring the rule is the mistake the header is about.
+      // Deterministic pick from the seed so two control runs agree.
+      const chosen = CARD_DB[bas[(1000 + g) % bas.length].id];
+      tot++;
+      if (anySafe && strandedIn(chosen, hand)) bad++;
+      continue;
+    }
     E.setupAuto(0);
     const act = E.state.players[0].active;
     if (!act) continue;

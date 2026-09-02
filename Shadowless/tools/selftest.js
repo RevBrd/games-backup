@@ -657,6 +657,53 @@ console.log('\nAI verb coverage');
   if (PROVISIONAL.size) console.log(`  PROVISIONAL (unmeasured weights, a worklist): ${[...PROVISIONAL].sort().join(', ')}`);
 }
 
+// --- 2g. every harness asks the same question about who is owed an action ---
+//
+// The ratchet behind tools/lib/owed.js. On 2 Sep 2026 six tools held fourteen
+// copies of the "who is the engine waiting for" expression in three different
+// versions, and the worst of them aborted 8.8% of ladder games early — silently,
+// because a loop that asks the wrong player and gets nothing back looks exactly
+// like a game that ended.
+//
+// WHY A GUARD AND NOT A NOTE. The correct version of that expression already
+// existed, in smoke.js, under a comment stating the rule in full. It never
+// reached the seven other loops in its own file. #34's argument from the
+// eleventh documentation pass applies exactly: a correction that leaves a human
+// instruction behind has a half-life, and one that removes the thing needing
+// maintenance does not.
+//
+// WHAT IT LOOKS FOR: a harness reading `pending*` to decide WHO to ask. Reading
+// or writing those fields for any other purpose is ordinary and common — smoke
+// sets `s.pendingPromote = null` when building a board, powertest asserts on it
+// — so the pattern is deliberately narrow: an assignment whose right-hand side
+// tests a pending field AND falls through to `.active`. That is the dispatch and
+// nothing else looks like it.
+//
+// KNOWN LIMIT, stated rather than hidden: someone who writes the dispatch across
+// two statements defeats this. It is a ratchet against the copy-paste that
+// actually happened, not a proof.
+{
+  const fs = require('fs');
+  const dir = require('path').join(__dirname);
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.js') && f !== 'test.js');
+  const offenders = [];
+  for (const f of files) {
+    const src = fs.readFileSync(require('path').join(dir, f), 'utf8');
+    // Join continuation lines: the expression is habitually written over two or
+    // three of them, which is why it was so easy to clone and so hard to see.
+    const flat = src.replace(/\r?\n\s*/g, ' ');
+    const re = /const\s+\w+\s*=\s*[^;]*\bpending(?:Ask|Switch|Promote|Prize)\b[^;]*\.active\b[^;]*;/g;
+    let m;
+    while ((m = re.exec(flat))) {
+      if (/owedBy\s*\(/.test(m[0])) continue;
+      offenders.push(`${f}: ${m[0].slice(0, 70).replace(/\s+/g, ' ')}…`);
+    }
+  }
+  check(offenders.length === 0,
+    `every game loop in tools/ dispatches through owedBy (${files.length} files scanned)`,
+    offenders.join(' | '));
+}
+
 // --- 3. games finish, without throwing and without stalling --------------
 console.log('\nFull games');
 const rec = {}; let games = 0, turns = 0, stalls = 0, threw = [];
