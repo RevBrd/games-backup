@@ -328,11 +328,6 @@ it** — that is the point of the tree, and the links here go to the owner rathe
 - **Job 15e** - AI validation, grab bag.
 - **Job 16** - Card additions and logic for gym1.
 - **Job 17+** - Additional packs.
-- **Job 15c** - Document pass, AI validation, grab bag.
-- **Job 15d** - Test suite revamp.
-- **Job 15e** - AI validation, grab bag.
-- **Job 16** - Card additions and logic for gym1.
-- **Job 17+** - Additional packs.
 
 
 - **Base Set 2 and Legendary Collection are canceled except for cards that exist nowhere else, and the reason is that they are cheap
