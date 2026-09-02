@@ -319,6 +319,36 @@ them. Three ideas, each with the reason it lost.
   rungs beside them. A good idea that a later structural decision made redundant, which is a different
   death from a bad one and is worth recording as such.
 
+## The powertest fixtures were left alone twice, and the second time it was measured
+
+**`TOOLING.md` decided in Aug 2026 not to migrate `powertest.js`'s twenty-nine bespoke fixtures onto
+`board.js`** once `claimtest.js` existed to do that job properly: *"a large diff across a green suite
+to buy nothing."* Trevor asked for that decision to be re-examined in Job 15d, which is the right
+instinct — #34's eleventh pass had just found a shape decision whose premise had quietly expired.
+
+**It was upheld, and this time on evidence rather than on the same argument.** Three measurements,
+none of which existed when the original call was made:
+
+- **The framing that motivated the re-examination is wrong.** 6,572 lines against `smoke.js`'s 2,171
+  is 446 assertions against 161 — 14.7 lines each against 13.5. The density is the same. `powertest`
+  is bigger because it has more tests, and building a board by hand costs those lines honestly.
+- **The AI wing reaches what `board.js` cannot.** It asserts `scoreAction`, `rawOutcomes`,
+  `threatAgainst` and `incomingThreat`; `board.js` offers `prefers`, `threat`, `lethal` and
+  `explain`. Migrating would trade resolution for tidiness — a claim can say the bot picked the wrong
+  attack, and only the fixture can say the score was 31.5 when it should have been negative.
+- **It is not rotting the way the original worry implied.** Zero dead declarations across fifteen
+  tools. Five scorer assertions pinned to a numeric literal, four of them *fixture-sanity* pins that
+  should be pinned — the `sane` idea `claimtest.js` later formalised, already applied here.
+
+**So `PLAYBOOK.md`'s "say what should happen, not what the number is" had already been learned inside
+the file that paid for it.** The fixture count in `TOOLING.md` had rotted — twenty-nine is
+forty-seven now — which is the ordinary kind of drift and not the kind that invalidates a decision.
+
+**The general point, and it is the counterweight to #34's:** a shape decision has an expiry date and
+nothing re-checks it, so re-examining one is always worth the hour. It does not follow that
+re-examination overturns it. This one was confirmed, and it is worth as much written down as a
+reversal would have been — otherwise the next session re-opens it from the same framing.
+
 ## Ideas raised and shelved, with the reason
 
 - **Opponent cards getting variant treatment** — wanted, and started deliberately small. Agreed

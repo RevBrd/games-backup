@@ -68,6 +68,7 @@ again for a day. No blank lines, and check every row ends in `|`.
  |
 | **Opus 5** #33 | 1 Sep 2026 | **Job 15b: the pack odds** — four cosmetic axes restored, and a Challenge pack rolls the rarity jump at 4x. Trevor then found **24 Fighting Energy behind an all-Fire roster**: a legal deck that could not attack. [Logbook](LOGBOOK.md) |
 | **Opus 5** #34 | 2 Sep 2026 | **Job 15c: the eleventh documentation pass.** Three registers archived and `AI-INVARIANTS` made a directory, on a measurement rather than an instinct — the entry had outgrown the shape twice refused for it. Six defects verified against the code, including a promo count that disagreed across three files one day after it moved. [Logbook](LOGBOOK.md) |
+| **Opus 5** #35 | 2 Sep 2026 | **Job 15d: the suite audit.** The framing did not survive the first hour — the suites were not bloated and hold no dead code. What was wrong was duplication that had **diverged**: fourteen copies of the owed-choice dispatch in three versions, the worst aborting 8.8% of games silently. That closed `abtest`'s stall floor, open in `MISREADINGS` since 29 Aug, and exposed a suite that was **not deterministic**. Built the gate, gave `openercheck` its first control. [Logbook](LOGBOOK.md) |
 
 Trevor's own contributions are not a row here because they are not a model's — but they are load
 bearing and they are named where they were made: the four authentic theme deck lists in

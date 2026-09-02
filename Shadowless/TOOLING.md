@@ -336,12 +336,18 @@ double-clickable file was not worth it. `tools/wants.js` reports the inbox and t
 `tools/lib/board.js` builds a position out of card **names** and hands you probes written from player
 0's seat — `prefers('Ice Beam')`, `threat()`, `lethal('Take Down')`, `explain()`.
 
-**It exists because twenty-nine bespoke fixture functions in `powertest.js` were the bottleneck.**
-`zardBoard`, `dyingWall`, `weezingBoard`, `duel2`, `arbokBoard` — most of them the same eight lines,
-and with 148 plain-English notes waiting to become several claims each, that boilerplate was the tax
-on the whole method. **The existing fixtures were left alone.** Migrating them wholesale would be a
-large diff across a green 421-case suite to buy nothing; new work goes here, and `powertest.js` keeps
-what it has.
+**It exists because the bespoke fixture functions in `powertest.js` were the bottleneck** — there
+were twenty-nine when this was written and there are forty-seven now. `zardBoard`, `dyingWall`,
+`weezingBoard`, `duel2`, `arbokBoard` — most of them the same eight lines, and with 148 plain-English
+notes waiting to become several claims each, that boilerplate was the tax on the whole method.
+**The existing fixtures were left alone.** Migrating them wholesale would be a large diff across a
+green suite to buy nothing; new work goes here, and `powertest.js` keeps what it has.
+
+**THAT DECISION WAS RE-EXAMINED IN JOB 15D AND UPHELD ON EVIDENCE**, which is worth knowing before
+anybody re-opens it a third time: the AI wing asserts `scoreAction`, `rawOutcomes` and
+`threatAgainst`, and `board.js`'s probes cannot reach any of them. A claim can say the bot picked the
+wrong attack; only a fixture can say the score was 31.5 when it should have been negative.
+*[The three measurements, including the one that killed the framing →](HISTORY.md)*
 
 **NO CLAIM BOARD COULD TEST AN EVOLUTION UNTIL 30 Aug 2026, and nothing anywhere said so.**
 `canEvolve` refuses while `turnsTaken <= 1` under `noEvolveFirstTurn`, and `setup()` set

@@ -348,8 +348,9 @@ it** — that is the point of the tree, and the links here go to the owner rathe
   **What was actually wrong was duplication that had DIVERGED, and instruments with no control.**
   Fourteen copies of the owed-choice dispatch in three versions; a suite that was not deterministic;
   a gate that could pass against a stale build; two tools reporting a perfect number nobody could
-  check. *[Every finding →](HISTORY.md)* · *[the gate →](TOOLING.md)* · *[the controls
-  →](MEASUREMENT.md)* · *[what lied →](MISREADINGS.md)*
+  check. *[The gate, and `owed.js` →](TOOLING.md)* · *[which of `abtest` and `aiduel`, and the new
+  controls →](MEASUREMENT.md)* · *[the four things that lied →](MISREADINGS.md)* · *[why the fixtures
+  were left alone a second time →](HISTORY.md)*
 - **Job 15e** - AI validation, grab bag.
 - **Job 16** - Card additions and logic for gym1.
 - **Job 17+** - Additional packs.
