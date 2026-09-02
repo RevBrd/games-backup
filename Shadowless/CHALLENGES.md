@@ -1,23 +1,30 @@
 # Shadowless — what a bracket ASKS of you, and who is waiting at the end
 
-**The unbuilt half of the ladder's design.** Three things live here and they belong together because
-each one exists to serve the next: **entry conditions** (what your deck must contain to sit down),
-**pressure tags** (what stops eight opponents being one opponent getting bigger), and the **Challenge
-brackets** — the round of mono-type opponents that replaced the rival, and the only place either of
-the other two has a real reason to exist yet.
+**The unbuilt half of the ladder's design.** Two things live here: **entry conditions** (what your
+deck must contain to sit down) and **pressure tags** (what stops eight opponents being one opponent
+getting bigger). A third used to — the **Challenge brackets** — and it **shipped on 1 Sep 2026**.
 
 [OPPONENTS.md](OPPONENTS.md) is the parent and is the **built** half: the four tiers, the rung
-pattern, and what four live rosters measured against them. Split out of it on 25 Aug 2026 because
-every one of those sections now describes something that shipped, and a reader coming for *how a deck
-is built* was walking through a hundred lines of speculation to reach it.
+pattern, what five live rosters measured against them, and now the Challenge brackets. Split out of
+it on 25 Aug 2026 because every one of those sections describes something that shipped, and a reader
+coming for *how a deck is built* was walking through a hundred lines of speculation to reach it.
 [PROGRESSION.md](PROGRESSION.md) is the machinery.
 
-**Status: none of this is built.** The pressure vocabulary exists as data and is read by nothing;
-entry conditions are specified and no rung carries one; the Challenge brackets cannot exist as the
-code stands, and the reason why is written into their own section. **When a section here ships,
-rewrite it in the past tense, move it to `OPPONENTS.md`, and say where it lives** — a planning
-document that outlives its plan is the nastiest thing in this tree, and this file is the whole
-outstanding stock of it. See [MAINTENANCE.md](MAINTENANCE.md).
+**Status: neither of the two remaining things is built.** The pressure vocabulary exists as data and
+is read by nothing; entry conditions are specified and no rung carries one.
+
+**Challenge 1 is built and its section has gone.** Seven mono-type decks between Fossil and Team
+Rocket, paying in a Challenge pack. *[What it became →](OPPONENTS.md)* ·
+*[the machinery →](PROGRESSION.md)* · *[the pack →](PACKS.md)* ·
+*[what it measured →](ROSTERS.md)*. **Challenges 2 and 3 are still unbuilt** and what they need is
+one paragraph rather than a section, because the first one settled every structural question — see
+the Open list.
+
+**When a section here ships, rewrite it in the past tense, move it to `OPPONENTS.md`, and say where
+it lives** — a planning document that outlives its plan is the nastiest thing in this tree, and this
+file is the whole outstanding stock of it. That is what happened to the Challenge section on
+1 Sep 2026, and it is the first time this instruction has been followed rather than written. See
+[MAINTENANCE.md](MAINTENANCE.md).
 
 **And when you rewrite a section, move its rejections to [HISTORY.md](HISTORY.md) first.** Several
 ideas below were proposed and dropped *with the reason each one lost*, which is the only thing
@@ -140,56 +147,55 @@ which is a bonus, not a reason.
 
 ## Open
 
-1. **A set needs a flag saying whether it is ladder content, pack content, or both.**
-   `buildLadder()` currently derives exactly one bracket per live set, and Southern Islands and the
-   promos are to be *sprinkled into packs* rather than laddered — See [PACKS.md](PACKS.md) Cheap now,
-   irritating once eleven sets are in.
-2. **The rival problem is solved, and the answer is CHALLENGES 1–3.** Trevor's proposal, 21 Aug 2026,
-   arrived while he was building the Fossil decks. Three special brackets — **after Fossil, after Gym
-   Challenge, and after Neo** — each one **an opponent per Energy type, with the strongest of them as
-   its overall boss.** Names, personalities and any story are deferred to the detailing pass as usual.
+1. ~~**A set needs a flag saying whether it is ladder content, pack content, or both.**~~ **CLOSED —
+   both halves, and by two different jobs neither of which was aimed at this item.** The
+   *pack-not-ladder* half was Job 13's `booster: false` in `SET_INFO`, which is why `basep` never
+   promoted itself to a bracket. The *ladder-not-set* half — the one this item called "the second and
+   harder case" — was Job 15a's `standalone: true`. **Neither is a flag ON A SET**, which is why the
+   item as phrased could not be closed: a Challenge is not a set with a flag saying it is not one, it
+   is a bracket that never had a set. *[Both →](PROGRESSION.md)*
+2. ~~**The rival problem is solved, and the answer is CHALLENGES 1–3.**~~ **CHALLENGE 1 IS BUILT**,
+   1 Sep 2026, Job 15a — seven mono-type decks between Fossil and Team Rocket. The whole entry moved
+   to [OPPONENTS.md](OPPONENTS.md) in the past tense, per this file's own rule at the top, and the
+   ideas it discarded on the way went to [HISTORY.md](HISTORY.md) first.
 
-   **Take it.** It does four things at once and none of them is a compromise:
+   **What is left is Challenges 2 and 3, and they need no design.** Challenge 2 sits after Gym
+   Challenge and Challenge 3 after Neo; both are a workbook of decks plus one `standalone` entry in
+   `data/ladder.json` — no code. Two things to carry across rather than rediscover:
 
-   - **It makes the rival a ROUND rather than a person**, which is what the entry below had been
-     circling for two revisions without landing. A boss you beat is a wall; seven you must beat is a
-     campaign, and it is the natural home for the combined-pack reward.
-   - **It is the only mono-type situation on the whole ladder**, and in this era Weakness is ×2. So a
-     Challenge is the one place where "build a counter-type deck" is dramatically right — and the
-     player has to decide whether to build ONE deck that survives all seven or rebuild between them.
-     No other rung asks that, and it is a decision rather than a difficulty.
-   - **It scales itself.** Challenge 3 sits after Neo, which prints Darkness and Metal, so it is bigger
-     than Challenge 1 without anyone tuning a number. Same property that makes the brackets derived.
-   - **It is where entry conditions finally have a reason to exist.** The mechanism above is specified
-     and unbuilt because nothing needed it yet. "Beat the Fire challenger with no Water in your deck"
-     is exactly the optional-challenge shape, and it fits a Challenge better than it fits a T4.
+   - **Order the rungs by ascending featureWeight and then CHECK the pressure spacing.** Challenge 1's
+     weight order happened to satisfy the no-consecutive-pressure rule as well. That was luck.
+   - **`challenge2` is already a live promo gate** (`basep-21`, `-22`, `-23` — the three legendary
+     birds), so building that bracket turns them on with no other change, exactly as `challenge1`
+     turned four on.
 
-   **Two things to watch, neither fatal.**
-
-   **A Challenge bracket belongs to NO SET, and the ladder is set-indexed.** `buildLadder()` derives
-   exactly one bracket per live set and `winReward()` pays in the bracket's own set — so as the code
-   stands today a Challenge bracket cannot exist and could not pay if it did. That is the second and
-   harder case of open item 1 above. **The consequence is worth stating because it validates the
-   design**: combined packs are not flavour on top of the idea, they are *forced* by the structure —
-   there is no single set for a Challenge to pay in. See [PACKS.md](PACKS.md); a differently-composed
-   pack is a new pack **type**, not a tuning change.
-
-   **"One per type" may need to mean "one LED by each type."** A mono-Lightning deck before Neo is
-   thin, and a strict reading would produce one weak rung per Challenge for reasons that have nothing
-   to do with design. Trevor will feel this while building; the fix is to loosen the rule rather than
-   to force the deck.
-
-3. **What still has to be answered about a Challenge's leader**, carried over from the rival entry
-   this replaced: what makes them *tougher than a T4* without leaning on "mostly Colorless", which is a
-   deck constraint fighting a difficulty requirement. The exit recorded before fits the new shape better
-   than the old one — **a leader's pool is every set you have unlocked at once** while everyone else is
-   set-flavoured. Under Challenges that is nearly free, because a Challenge already sits outside the
-   set-per-bracket structure. Ronald is the placeholder until this exists, and he currently stands as
-   the post-boss `extra` in all four live brackets.
-
+   **Challenge 3 scales itself**: Neo prints Darkness and Metal, so it is bigger than Challenge 1
+   without anyone tuning a number. Same property that makes the brackets derived.
+3. ~~**What still has to be answered about a Challenge's leader.**~~ **Answered structurally, and the
+   alternative is dead.** The old exit was "a leader's pool is every set you have unlocked at once"
+   while everyone else is set-flavoured — which is what Challenge 1's whole *bracket* turned out to be,
+   so it stopped being a way to distinguish the leader from the rungs beside them. What separates a
+   leader now is position: seventh of seven, on a bracket that demands all six others first. **Nobody
+   has played it end to end**, so this is a claim rather than a result. The "mostly Colorless" version
+   is rejected and its reasoning is in [HISTORY.md](HISTORY.md).
 4. **Pressure tags exist as data and are read by nothing.** Trevor's workbooks carry a per-card
-   Pressure column, `gen_cards.js` derives a deck-level tag from it by copy count, and a minority of
+   Pressure column, the extraction derives a deck-level tag from it by copy count, and a minority of
    decks earn one — the rest are honest beatdown, which is the right outcome. **Trevor's key extends
-   the vocabulary above with two more: HD (High Damage) and BG (Bench Growth).** The no-repeat rule has
-   never been checked against a real bracket, and as of 25 Aug 2026 there are **four** to check it
-   with.
+   the vocabulary above with two more: HD (High Damage) and BG (Bench Growth).**
+
+   **The no-repeat rule has now been checked against one bracket and it passes** — Challenge 1,
+   1 Sep 2026, and it is the first time. Ordered by ascending featureWeight the seven read
+   **SL · WP · AP · BD · SL · WP · HD**: no two in a row share one, and the boss (HD) shares with
+   nobody. **That was luck, not construction.** The order was chosen for difficulty and the pressure
+   spacing fell out of it; a future bracket that orders the same way may well collide, and the fix
+   would be to reorder rather than to relax the rule. Nothing enforces any of this — the tags are
+   still read by nothing.
+
+   **Two collisions inside the bracket, reported rather than fudged**, the same way Fossil's were:
+   SL appears on Grass and Water, WP on Psychic and Fighting. Neither pair is adjacent, so the rule as
+   written is satisfied — but a seven-rung bracket against a nine-code vocabulary is close to the
+   arithmetic limit the rule's first draft failed on, and Challenges 2 and 3 are bigger.
+
+   **One derivation detail worth knowing before you read a tag.** Fire's tally ties WP and AP at 3
+   copies each, and the tie is broken alphabetically so the extraction is reproducible. A tag that
+   came out of a tie is not a fact about the deck's identity, and Fire's is the only one so far.

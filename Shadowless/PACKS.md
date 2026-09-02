@@ -219,6 +219,43 @@ the table. **The pre-shrink numbers were holo 1-in-3.0, 1st Edition 1-in-20.1, R
 Shiny 1-in-39.3, Shadowless 1-in-200.2, Misprint 1-in-897** — every per-slot axis is rarer now, purely
 because there are fewer slots for the same odds to roll against. See "Still open".
 
+### The Challenge pack
+
+**A pack that is not a set — built 1 Sep 2026, Job 15a**, as the reward for the Challenge 1 bracket.
+It is the first thing in the game to make "pack type" and "set" different words, and everything
+awkward about it comes from that one fact.
+
+| | |
+|---|---|
+| Save key | `challenge1` — the bracket's own key, not a set code |
+| Pool | the union of every booster set **before** the bracket: Base, Jungle, Fossil |
+| Shape | identical — 1 Rare + 2 Uncommon + 5 Common, same intrusion roll, same cosmetics |
+| Odds | **identical for now.** See "Still open" item 6 |
+| Energy | no floor; drawn at the union's own share of **8.6%**, against Base Set's 15.8% |
+| Called | "Challenge 1" — which is not what the *bracket* is called |
+
+**The pool is derived from ladder position, not from the save**, which is the one design decision in
+here worth arguing about and it was settled the right way. A C1 pack holds Base, Jungle and Fossil on
+a brand-new save and on a completed one; you can know what is in it before you open it. The
+alternative — build the union from the sets the player has currently unlocked — is what this file
+proposed for three weeks and it is subtly broken: it would make a pack's contents depend on *when you
+got round to opening it*. *[The field, and the four questions `bracket.set` was answering
+→](PROGRESSION.md)*
+
+**It costs nothing when there is no Challenge bracket.** `buildPools(db, [...])` is the only new
+capability in `packs.js`; an ordinary booster still calls `buildPools(db, 'base1')` down exactly the
+path it always did, and the memo keys the two forms apart so a union and a single set can never be
+served each other's pool.
+
+**A promo can still intrude into one**, on the same 1-in-100 as anywhere else, drawn from the same
+gate-filtered pool. Nothing about a Challenge pack changes the intrusion, and the union deliberately
+excludes `NON_BOOSTER_SETS` so a promo can never arrive through the *pool* — which would have made it
+a Common rather than a bonus ninth card.
+
+**Four promos turned on with the bracket and not with the pack.** `basep-13`, `-15`, `-25` and `-28`
+are gated `challenge1`, so they became intrudable into *every* pack the moment the bracket opened.
+That is the per-card gate doing its job and it needed no code. *[The gates →](PROGRESSION.md)*
+
 ### Bonus rare-tier jumps
 
 **Since 25 Aug 2026, "exactly one Rare per pack" is the norm rather than a promise.** Each Uncommon
@@ -319,40 +356,35 @@ wildly different experiences of the same economy.
    guard that would have caught it is the one that now exists: `packtest.js` asserted the mechanism
    worked *when given a pool* and never asked whether anything gave it one. **A default that makes a
    feature inert is invisible to a test that supplies the argument.**
-3. **The Challenge pack — a pool of every card up to that point.** Trevor's proposal, 21 Aug 2026, as
-   the reward for the Challenge brackets in [CHALLENGES.md](CHALLENGES.md). **It works, and most of the
-   machinery is already here**, which is worth knowing before anyone plans it as a large job:
-   `buildPools(db, null)` already returns a union of every booster set — 65 rare-holo, 64 rare, 88
-   uncommon, 88 common — and `openPack` already accepts a pre-built pool through `opts.pools`. Two
-   things are missing and neither is big. The pool has to be built from the sets **the player has
-   unlocked** rather than every set that exists, or a Challenge 1 pack could hand out Neo cards. And
-   the save keys packs by set code, so a Challenge pack needs its own key.
+3. ~~**The Challenge pack — a pool of every card up to that point.**~~ **BUILT, Job 15a, 1 Sep 2026** —
+   the pack exists, is earned, and opens. **The ODDS half is deliberately still open and is item 6.**
+   The full description is in "The Challenge pack" above; what this item got right and wrong is worth
+   keeping, because one of the two was a latent bug.
 
-   **It is a pack TYPE, not a set, and the distinction is load-bearing.** A set code entering
-   `liveSets` would give itself a ladder bracket, a dex section and a completion percentage. Nothing
-   about a Challenge pack wants any of those — its cards already belong to their own sets and already
-   count toward those dexes, which is exactly the behaviour that makes it a good reward.
+   **Right:** most of the machinery was already here. `buildPools` needed to learn an array, `openPack`
+   already took `opts.pools`, and the save already keyed packs by an arbitrary string. It was a small
+   job in `packs.js` and a smaller one in `ui.js`; the size of Job 15a was all in the *ladder*.
 
-   **The design risk is dilution and it is worth deciding before building.** After Neo, "every card
-   up to this point" is around a thousand cards, so any specific chase card is vanishingly rare — and
-   a pack that is *conceptually* the biggest reward on the ladder could feel worse to open than an
-   ordinary one. That cuts both ways: for a player filling a dex it is the only way back to the rares
-   they missed four brackets ago, which is the whole point. The suggestion is to keep the union pool
-   and make the pack read as a prize some other way — **more cards, or richer rarity odds**, rather
-   than a narrower pool. Note that richer odds make it a new pack type anyway, so the two changes are
-   one change.
+   **Right, and load-bearing:** a pack TYPE is not a set. A set code entering `liveSets` would give
+   itself a ladder bracket, a dex section and a completion percentage. `challenge1` is not in
+   `SET_INFO` and gets none of them, and its cards count toward their own sets' dexes, which is
+   exactly the behaviour that makes it a good reward.
 
-   **Trevor answered the dilution question the same day and the answer dissolves it.** A player chasing
-   one specific card **re-battles the bracket that card's set belongs to** — the ladder already provides
+   **Wrong, and it would have shipped:** this item said the pool should be built from the sets *the
+   player has unlocked*. That reads the save at the moment a pack is **opened**, so a Challenge 1 pack
+   won before Team Rocket and opened after it would have quietly contained Team Rocket cards, and two
+   packs of the same name would have held different things. **Trevor caught it before a line was
+   written**, from the player's side rather than the code's — his framing was that a C1 pack should
+   *already know* it holds Base, Jungle and Fossil. The fix keeps the derivation the tree prefers and
+   changes only what it derives from: **ladder position, not save state.**
+   *[The field it became →](PROGRESSION.md)*
+
+   **The dilution question was answered on 21 Aug and the answer still holds.** A player chasing one
+   specific card **re-battles the bracket that card's set belongs to** — the ladder already provides
    targeted chasing, because `winReward` pays in the bracket's own set and repeat wins pay full. So a
-   Challenge pack is not competing with that and does not need to. Its job is *better cards, any set*,
-   which is complementary rather than diluted: **slightly richer rarity odds, less chance of a specific
-   card, higher chance of a good one.** His words, offered as a thought rather than a commitment.
-
-   **One thing to decide rather than let happen.** Richer rarity odds compound with the cosmetic variant
-   rolls, so a Challenge pack would also become the best place in the game to pull a Shadowless or a 1st
-   Edition. That is probably wanted — it is the biggest reward on the ladder — but it should be a
-   decision, because nobody would have chosen it and it would arrive anyway.
+   Challenge pack is not competing with that. Its job is *better cards, any set*: slightly richer
+   rarity odds, less chance of a specific card, higher chance of a good one. Nothing built yet delivers
+   the "richer" half — see item 6.
 4. **Restoring the pre-shrink pacing on the four per-slot cosmetic axes.** Reverse Holo, Shiny,
    Shadowless and Misprint each roll once per SLOT, so the 25 Aug 2026 shrink from 11 cards to 8
    thinned all four without anyone touching a value in `PACK_ODDS` — the before-and-after figures are
@@ -367,6 +399,19 @@ wildly different experiences of the same economy.
    outcome or wants its own nudge is Trevor's call. **It is a consequence of item 4 and should be
    decided in the same pass**, since any nudge to the four axes moves the comparison it is measured
    against.
+6. **What "richer" means for a Challenge pack.** The pack shipped in Job 15a with **exactly the
+   standard odds** — `PACK_ODDS_BY_KIND.challenge1` is an empty object, the hook is wired and inert,
+   and `packtest.js` asserts both that the row exists and that it is empty, so nobody can mistake
+   "not tuned yet" for "tuned to the same values on purpose". **Deferred to Job 15b with items 4 and 5
+   and for the same reason**: 15b reopens the whole per-slot table, and picking a number now would mean
+   measuring the Challenge pack against a table about to move underneath it. Trevor agreed, 1 Sep 2026.
+   **Two things to bring into that decision.** Richer rarity odds compound with the cosmetic rolls, so a
+   Challenge pack also becomes the best place in the game to pull a Shadowless or a 1st Edition — probably
+   wanted, since it is the biggest reward on the ladder, but it should be *chosen* rather than allowed to
+   arrive. And the union's own Energy share is **8.6%** against Base Set's 15.8%, because six Energy are
+   diluted across three sets' Commons; a Challenge pack has no floor and most contain no Energy at all.
+   That is defensible for a reward pack rather than a faucet, but it was a consequence rather than a
+   decision, and 15b is where it becomes one.
 
 ## Sources
 

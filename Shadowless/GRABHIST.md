@@ -30,8 +30,18 @@ limit written only inside the thing being limited is read after the decision it 
 inform — which is how this file reached **649** the first time and **526** the second, both with a
 ~450 rule sitting in its own header.
 
+**IT IS OVER THE LINE AGAIN — 498 before this session's entry, ~545 after, and the owner is whoever
+takes Job 15c**, which
+is the next scheduled document pass. Said here with a name attached rather than left as a number,
+because the two previous overruns both happened while this paragraph was already sitting at the top
+of the file being read by people who then did not act on it. #33 added one entry and did not archive:
+Job 15a had already rolled `ROSTERS.md` over, and a job that reorganises three registers on its way
+past is doing a document pass without saying so. **Archive at a job boundary — Job 14a is the natural
+cut**, which would leave this file holding 14b onward.
+
 | When | Instance | Items |
 |---|---|---|
+| 1 Sep 2026 | #33, Job 15a | Ronald removed from the ladder — the half of a two-part note that was free, and the mechanism that was kept because removing its only user would have removed its only tests |
 | 29 Aug 2026 | #30, Job 14a | Defender blunts an attack's own self-harm — a question that dissolved on timing, a scope line two existing files generated between them, and a fourth self-damage site nobody had enumerated |
 | 26 Aug 2026 | #27, Job 12d | The pack reveal, where the tier jump had been rendering a second hero card wherever it landed — and three reservations that were guessed |
 | 26 Aug 2026 | *retired by Trevor* | Two AI items taken off the list as out of date, preserved here because neither diagnosis existed anywhere else |
@@ -40,6 +50,45 @@ inform — which is how this file reached **649** the first time and **526** the
 | 23 Aug 2026 | #25, Job 12b | The centre line, which turned out to be the mat's shock absorber; the setup Active that was a bar because its bottom half was empty; the booster reveal climbing 61px as you turned cards over |
 | *19–21 Aug* | *#20, #21* | *[Archive 2](GRABHIST-ARCHIVE-2.md) — Jobs 10.5 and 11, its own index at the top* |
 | *13–17 Aug* | *#12, #16, #17* | *[Archive 1](GRABHIST-ARCHIVE-1.md) — five passes, its own index at the top* |
+
+---
+
+### 1 Sep 2026 — Opus 5 #33 (Ronald, and the mechanism under him)
+
+> *"Remove the Grand Masters from the Fossil bracket and replace them with the Fossil theme decks. If
+> we don't have them I can find some. We should also remove Ronald entirely for now due to our own
+> boss waves having taken shape conceptually."*
+
+**One note, two items, and only one of them was takeable.** The Ronald half was free — Job 15a was
+already inside `ladder.json` building the Challenge bracket, and the reasoning had just been proved
+right by the thing that replaced him. The Grand Masters half is **still open and is blocked on
+material rather than on work**: Fossil's own theme decks are not in `data/` and never have been, so
+there is nothing to swap them for. Trevor's offer to go and find some is the whole unblocker, and the
+item stays on `GRABBAG.md` with that half intact.
+
+**Removing him was four `extra` arrays. Then five assertions went red**, and that is the part worth
+writing down. `progresstest.js` had a whole group called *"the extra opponent waits for the boss"* —
+six assertions covering a real mechanism — and every one of them was driven off Ronald, because he
+was the only content `extra` had ever held.
+
+**The tempting move was to delete the group, and it was wrong.** `extra` is a working mechanism the
+detailing pass is expected to hang a post-boss encounter on. **A mechanism with no users and no tests
+is one that quietly stops working and nobody finds out until somebody tries to use it** — and the
+gap between now and the detailing pass is measured in months. The group now builds its own fixture
+bracket and asserts against that, so the coverage survives the slot being empty, and one new
+assertion says the live ladder has **no** extras — an absence stated on purpose, so a reappearing one
+is a decision rather than a surprise.
+
+**Two other assertions in the same file named Ronald by id** for a generic lookup test, and both were
+rewritten to name whoever the *data* puts in that slot. That is the third time an assertion in
+`progresstest.js` has expired because it was written against whoever happened to be standing
+somewhere. **Do not name a placeholder in a test** — name the position and read the occupant.
+
+**And the placeholder accounting moved**, which nobody would have checked: twelve of the sixteen GBC
+decks are now unassigned, up from eight. The suite asserted "eight are still assigned" and now asserts
+four — but the more useful half is the assertion beside it, that **every hand-built source is fully
+assigned**. Placeholders being partly unused is correct; a deck Trevor made sitting in a file nothing
+reads is how data goes unwired for a week.
 
 ---
 

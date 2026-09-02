@@ -61,7 +61,7 @@ the tree and not orientation.
 | [RULINGS.md](RULINGS.md) | A card's printed text usually settles how it behaves, but there can be exceptions. The four-step order that replaced the arbiter, and the principles index you match a new card against by *shape*. **It is a directory: each ruling is its own file in `Rulings/`**, one per judgement call, with its reasoning and source |
 | [DATA.md](DATA.md) | Generating a set, trusting a set code, or adopting one of the deck spreadsheets. The corpus, the two set codes that read backwards, and what is reference-only |
 | [PROGRESSION.md](PROGRESSION.md) | Touching the ladder, an opponent, or anything that grants a pack. How brackets are derived from the live sets rather than declared, the tunables, why free play pays nothing, and the four layout defects only a screenshot caught |
-| [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck or adding a set's roster. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, and the intro→body→gate→boss rung pattern. **All four live brackets are built to it.** Two siblings: `ROSTERS.md` is the report card — what `decksim.js` said when each roster met the spec, all four measured as of 29 Aug 2026, and append-only like every other register here — and **`CHALLENGES.md` is everything still unbuilt**, which is what a bracket *demands* rather than how a deck is *constructed*: entry conditions, the pressure vocabulary and its no-repeat rule, and the Challenge brackets that replaced the rival |
+| [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck or adding a bracket's roster. The **content** of the ladder against `PROGRESSION.md`'s machinery: the four silent tiers, why the Prize count is an archetype selector rather than a difficulty dial, the intro→body→gate→boss rung pattern — and **the Challenge brackets, which deliberately ignore it**, because a Challenge is a boss round end to end. All five live brackets are built to it. Two siblings: `ROSTERS.md` is the report card — what `decksim.js` said when each roster met the spec, append-only, and now with an archive behind it — and **`CHALLENGES.md` is what is still unbuilt**, which is what a bracket *demands* rather than how a deck is *constructed*: entry conditions, and the pressure vocabulary whose no-repeat rule has now been checked against exactly one bracket |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what each test suite actually covers. Everything in it returns **pass or fail**. **Its sibling `INSPECTION.md` is how you LOOK at it** — `shot.js`, `probe.js`, the DEV tab, and the four classes of bug a green suite cannot see. Read that one before any UI change, not after |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Rejected ideas and superseded reasoning, each with the reason it lost, plus how this doc tree got its shape. **The build era — the whole job history for Jobs 1–10 — is in `HISTORY-ARCHIVE-1.md`** |
 | [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md` and its three archives, where each instance's own account of its work is kept verbatim |
@@ -74,7 +74,13 @@ the tree and not orientation.
 
 **The game is playable end to end.** You pick a starter deck, work down a roster of named
 challengers, beat a bracket's boss to open the next set, earn packs of whatever set you are on, open
-them, browse what you own, and build decks from it — and all of it persists. **Done and shipped,
+them, browse what you own, and build decks from it — and all of it persists.
+
+**A bracket is no longer always a set, as of 1 Sep 2026.** Challenge 1 sits between Fossil and Team
+Rocket, belongs to no set, and pays in a pack drawn from every booster set before it. So there are
+now **five brackets over four sets**, and `bracket.set` is an identity rather than a pool — anything
+reaching for it to answer a question about *cards* wants `bracket.packSets`.
+*[The split, and the four questions it was answering →](PROGRESSION.md)* **Done and shipped,
 none of it a stub:** the rules engine and every card in the live sets, the four-tier AI, the
 collection, packs, dex, save file and deck builder, and the ladder with its named opponents. Each has
 a row in the table above naming the file that owns it. *[How each job got there →](HISTORY.md)*
@@ -113,9 +119,10 @@ src/  engine.js   the whole ruleset. Pure logic, no DOM
                   cards, and before concluding the DSL cannot express something
       collection.js  what the player owns + the save file. Pure data
       packs.js    booster generation. PACK_ODDS is the whole rarity table
-      progress.js the opponent ladder. Brackets DERIVED from the live sets, and
-                  what a win is worth, and PROMO_GATES — which promo each
-                  bracket unlocks. Pure data
+      progress.js the opponent ladder. Brackets DERIVED from the live sets —
+                  plus any `standalone` bracket that belongs to no set, anchored
+                  after one. What a win is worth, and PROMO_GATES: which promo
+                  each bracket unlocks. Pure data
       eventlog.js the match recorder. Pure data
       deckgen.js  builds a legal 60-card deck from a pool
       art.js      deterministic sigils. Petals = attack count, rings = retreat
@@ -361,8 +368,21 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
   **Two things this job owes on the way out**: `AI-INVARIANTS.md` is past its own archive threshold
   and its header names *whoever closes Job 14b* as the owner; and `node tools/wants.js --coverage` is
   the live backlog rather than a number here.
-- **Job 15a** - Adding the Challenge 1 bracket.
-- **Job 15b** - Rebalancing variant odds to match new pack sizes.
+- **Job 15a is done.** The **Challenge 1 bracket** is live — seven of Trevor's mono-type decks, one
+  per Energy type, sitting between Fossil and Team Rocket. **It is the first ladder bracket that
+  belongs to no set and the first pack type that is not a set's**, which is the whole of the job:
+  the decks were free, the surgery was `bracket.set` turning out to answer four different questions
+  with only two of them right. `packSets` split the pool question off, derived from **ladder
+  position** rather than from the save — Trevor's correction, and it closed a latent bug this tree had
+  specified for three weeks, where a Challenge pack's contents would have depended on when you got
+  round to opening it. **Ronald is gone from the ladder** (his grab-bag ask) and the `extra` mechanism
+  he occupied was kept and re-tested against a fixture. Four `challenge1`-gated promos turned on with
+  no code at all. *[The bracket →](OPPONENTS.md)* · *[the machinery and `bossAfter: 'all'`
+  →](PROGRESSION.md)* · *[the pack →](PACKS.md)* · *[what it measured →](ROSTERS.md)*
+- **Job 15b** - Rebalancing variant odds to match new pack sizes. **Three items, not one, and they are
+  bundled on purpose** — the four per-slot cosmetic axes the 8-card shrink thinned, Base Set's
+  bonus-Rare-tier near-tie, and what "richer" means for a Challenge pack. All three in
+  [PACKS.md](PACKS.md)'s Still open. The Challenge hook is wired and inert: `PACK_ODDS_BY_KIND`.
 - **Job 15c** - Document pass, AI validation, grab bag.
 - **Job 15d** - AI validation, grab bag.
 - **Job 16** - Card additions and logic for gym1.

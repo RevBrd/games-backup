@@ -573,6 +573,90 @@ head('Borrowed Energy and the cap');
 }
 
 
+// ---------------------------------------------------------------------------
+head('The Challenge pack — a pack TYPE, not a set');
+{
+  // Job 15a. A Challenge bracket belongs to no set, so its pack draws from a
+  // UNION handed in by the caller. Everything here is about the union behaving
+  // like a pool rather than like a set, and about the key not accidentally
+  // becoming one.
+  const SETS = ['base1', 'base2', 'base3'];
+  const pools = P.buildPools(CARD_DB, SETS);
+  const b1 = P.buildPools(CARD_DB, 'base1');
+
+  check(pools !== b1, 'an array of one-plus sets is memoised separately from a bare set code');
+  eq(P.buildPools(CARD_DB, SETS), pools, '...and the union itself is memoised');
+  eq(P.buildPools(CARD_DB, ['base3', 'base1', 'base2']), pools,
+    '...by CONTENT, so argument order cannot produce two pools of the same thing');
+
+  const all = pools.rareHolo.concat(pools.rare, pools.uncommon, pools.common);
+  check(all.every(id => SETS.indexOf(CARD_DB[id].set) >= 0),
+    'the union holds nothing from outside the sets it was given');
+  check(!all.some(id => CARD_DB[id].set === 'base5'),
+    '...and specifically nothing from a set past the bracket');
+  check(!all.some(id => P.NON_BOOSTER_SETS[CARD_DB[id].set]),
+    'and no promo leaks in through the pool — an intrusion is the only way one arrives');
+  check(pools.rareHolo.length > b1.rareHolo.length && pools.rare.length > b1.rare.length,
+    'it is genuinely bigger than any one set in it',
+    `${pools.rareHolo.length} holo / ${pools.rare.length} rare vs base1's ${b1.rareHolo.length} / ${b1.rare.length}`);
+
+  // ENERGY. The union contains base1, so nothing is borrowed and the share is
+  // the union's own — six Energy diluted across three sets' Commons rather than
+  // one set's. Lower than Base Set's on purpose: a Challenge pack is a reward,
+  // not the deck-building faucet the base1 floor exists to be.
+  eq(P.ENERGY_FLOOR.challenge1, undefined, 'a Challenge pack has no Energy floor');
+  check(pools.energyShare > 0 && pools.energyShare < b1.energyShare,
+    'and draws Energy at the union rate, below Base Set’s own',
+    `${(pools.energyShare * 100).toFixed(1)}% vs ${(b1.energyShare * 100).toFixed(1)}%`);
+
+  // The pack itself, opened the way ui.js opens one.
+  let wrongSize = 0, outside = 0, energyOver = 0, kinds = {};
+  const n = Math.min(N, 40000);
+  for (let i = 0; i < n; i++) {
+    const pk = P.openPack(CARD_DB, 'challenge1', mulberry32(9000 + i), { pools });
+    if (pk.cards.length !== P.PACK_SIZE + (pk.intrusion ? 1 : 0)) wrongSize++;
+    for (const c of pk.cards) {
+      if (c.slot === 'promo') continue;
+      if (SETS.indexOf(CARD_DB[c.id].set) < 0) outside++;
+      kinds[c.slot] = (kinds[c.slot] || 0) + 1;
+    }
+    // BASIC Energy, which is what ENERGY_CAP means. Written as `kind ===
+    // 'energy'` first and it went red at 59 in 40,000 — every one of them a
+    // Double Colorless, which is an Uncommon that happens to be an Energy card
+    // and has never been under the cap. packs.js says so in the pools comment;
+    // the test was measuring a superset of the thing the cap is about.
+    if (pk.cards.filter(c => CARD_DB[c.id].kind === 'energy' && CARD_DB[c.id].cls === 'Basic')
+        .length > P.ENERGY_CAP) energyOver++;
+  }
+  eq(wrongSize, 0, 'a Challenge pack is the same shape as any other');
+  eq(outside, 0, 'and every card in it comes from a set the bracket actually covers');
+  eq(energyOver, 0, 'the Energy cap still holds without a floor to meet');
+  check(kinds.rare > 0 && kinds.uncommon > 0 && kinds.common > 0,
+    'all three tiers fill from the union', JSON.stringify(kinds));
+
+  // THE ODDS HOOK. Wired and inert as of Job 15a — see PACK_ODDS_BY_KIND. This
+  // asserts BOTH halves: that the table exists with a challenge1 row (so 15b has
+  // somewhere to put its numbers and cannot quietly not find it), and that the
+  // row is currently empty (so nobody thinks the tuning already happened).
+  check(!!P.PACK_ODDS_BY_KIND.challenge1, 'the per-kind odds table carries a challenge1 row');
+  eq(Object.keys(P.PACK_ODDS_BY_KIND.challenge1).length, 0,
+    '...which is EMPTY — the Challenge pack’s richer odds are Job 15b’s, not shipped');
+  {
+    // ...and that a row, once filled, actually reaches openPack. Proved against a
+    // temporary override rather than trusting the Object.assign by eye: an odds
+    // table that is merged in the wrong order is exactly the silent failure this
+    // whole file exists for.
+    const saved = P.PACK_ODDS_BY_KIND.challenge1;
+    P.PACK_ODDS_BY_KIND.challenge1 = { holo: 1 };
+    const forced = P.openPack(CARD_DB, 'challenge1', mulberry32(11), { pools });
+    P.PACK_ODDS_BY_KIND.challenge1 = saved;
+    check(forced.cards[0].holo === true, 'a per-kind odds row does reach the pack when it is filled');
+    const normal = P.openPack(CARD_DB, 'base1', mulberry32(11));
+    check(P.PACK_ODDS_BY_KIND.base1 === undefined && normal.set === 'base1',
+      '...and a set with no row is untouched by the mechanism');
+  }
+}
+
 // ===========================================================================
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail ? 1 : 0);

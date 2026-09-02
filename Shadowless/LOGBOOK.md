@@ -41,7 +41,7 @@ of these files.
 | [LOGBOOK-ARCHIVE-3.md](LOGBOOK-ARCHIVE-3.md) | #16–#17 | 16 Aug 2026 | Job 9's first AI batch and the sixth documentation pass |
 | [LOGBOOK-ARCHIVE-4.md](LOGBOOK-ARCHIVE-4.md) | #19 | 18–19 Aug 2026 | Job 10 — the trigger points, `enterPlay`, and Team Rocket going live |
 | [LOGBOOK-ARCHIVE-5.md](LOGBOOK-ARCHIVE-5.md) | #20–#26 | 19–25 Aug 2026 | Jobs 10.5 to 12c — two documentation passes, the Jungle and Fossil brackets, the claims harness, the 8-card pack |
-| **this file** | #28–#30, #32 | 26 Aug – 1 Sep 2026 | Job 13 and Job 14a — the promos, and the tenth documentation pass. Then Job 14b's Over-Attach pattern |
+| **this file** | #28–#30, #32, #33 | 26 Aug – 1 Sep 2026 | Job 13 and Job 14a — the promos, and the tenth documentation pass. Then Job 14b's Over-Attach pattern, and Job 15a's Challenge bracket |
 
 **#15, #18 and #27 wrote no logbook entry and are not missing** — writing here is optional and a
 `CREDITS.md` row alone is a complete record. Said explicitly because the Instances column above skips
@@ -461,3 +461,88 @@ session produced came from executing a card on a board and comparing the result 
 actually says. Two implementations that agree can both be wrong, and only the card can tell you.
 
 — #32
+
+---
+
+## #33 — Job 15a, the Challenge 1 bracket (1 Sep 2026)
+
+Trevor asked whether Job 15a might be cheap enough to leave room for 15b. My first read was that it
+would not be, and that read was right for the wrong reason. I thought the cost would be spread across
+the ladder, the pack and the tests. Almost all of it was in **one field**.
+
+`bracket.set` is a string that four different consumers read, and I only noticed because I sat down to
+write the pack code and could not answer "which set is this pack of" without saying *it depends what
+you mean by "of"*. Unlock and the promo gates want an **identity**. The save wants a **key**. The pool
+wants **cards**. The screen wants **words**. For every bracket that had ever existed those are the same
+string, so nothing had ever pulled them apart and nothing was wrong. A Challenge bracket makes two of
+the four answers *empty* — `challenge1` names no cards and is not a phrase anybody would print — and
+the failure mode of an empty pool is a pack that generates nothing, which throws, which I would have
+found. The failure mode of the label was a screen quietly saying `challenge1` to a player.
+
+This tree already has the general form of that written down, about a completely different thing: the
+week every bonus-jumped Rare rendered hero-sized because `slot: 'rare'` correctly named *which pool
+the card came from* and one screen read it as *what role this card plays*. **A field naming ORIGIN is
+not a field naming ROLE.** I did not go looking for that sentence; I wrote most of a comment
+explaining my new field and then realised I was paraphrasing it. That is the doc tree working, and it
+worked by being *read for something else six hours earlier*, which is not a mechanism you can plan.
+
+**The thing I would most want the next session to know is that Trevor corrected the design and he was
+right about a bug none of us had seen.** `PACKS.md` had specified the Challenge pool for three weeks
+as "built from the sets **the player has unlocked**". That is save state, read at the moment a pack is
+opened. He suggested instead that a C1 pack should just *already know* it holds Base, Jungle and
+Fossil — which sounds like a simplification and is actually a fix: under the specified version, a pack
+won before Team Rocket and opened after it would have contained Team Rocket cards. **Two packs with
+the same name would have held different things depending on when you got round to them.** Nobody would
+have filed that as a bug. They would have filed it as "packs feel inconsistent" eight months later.
+
+What made it land cleanly is that his answer is still *derived* — a Challenge's pool is every booster
+set before it on the ladder — so it kept the property the tree cares about and dropped the one that
+was hurting. He said "I'm not a coder or anything like that" on the way in. The correction was
+architectural.
+
+Some smaller things, in descending order of how much I would want to know them:
+
+**A green test can go red on correct behaviour, and mine did, inside ten minutes of writing it.** I
+asserted no Challenge pack exceeds `ENERGY_CAP` and got 59 violations in 40,000. All 59 were Double
+Colorless Energy. `ENERGY_CAP` has never been about special Energy and `packs.js` says so plainly in
+a comment I had read that morning. The test was measuring a superset of the thing the cap is about.
+I mention it because the shape is `MISREADINGS.md`'s and the reflex it wants is *check the instrument
+before the subject* — I did, but only because 59-in-40,000 is too clean a number to be a real bug.
+Had it been 3, I might have gone looking in `openPack`.
+
+**Removing Ronald removed the only user of a mechanism, and the tests went with him.** Six assertions
+covering `extra` — a working thing the detailing pass expects to use — were all driven off the one
+placeholder occupying it. Deleting them was the obvious move and it was wrong: the gap between now and
+the detailing pass is months, and a mechanism with no tests and no users does not survive that. They
+run against a fixture now. **This is the third time an assertion in `progresstest.js` has expired
+because it named whoever happened to be standing in a slot.** Name the position; read the occupant.
+
+**`decksim` is the wrong instrument for this bracket and I nearly quoted it as though it were the
+right one.** It says Challenge 1 averages 50.3% against Fossil's 49.5% — a bracket you reach *after*
+Fossil, no harder than Fossil. That reads as a damning result and it mostly is not. Seven mono-type
+decks in a round-robin measure the type wheel; and more fundamentally, **these seven never fight each
+other** — the player brings one deck against all seven. The tool has no player, so it cannot ask the
+only question the bracket poses. What it *can* do is spot outliers, and there are two: `c1_fire` at
+20.2% is the weakest deck ever measured in this repo, and `c1_water` at 79.0% the strongest. Those are
+worth Trevor's eye. The middle four are not a ranking.
+
+**The intended boss came second.** Colorless leads on featureWeight at 21 and Trevor picked it on that
+basis, flagging it provisional; Water is 23 points clear of it in play. I did not change it, and I
+would push back on anyone who changes it off one run — but the disagreement between the two
+instruments is exactly what the second instrument is for, and it should not be allowed to go quiet.
+
+Two housekeeping notes for whoever is next. **`ROSTERS.md` crossed its own ~450 archive threshold and
+I did the archive**, at a set boundary as its header asks; the rule worked exactly as written, which
+is worth knowing because a threshold nobody has ever tripped is a threshold nobody knows is real.
+**`GRABHIST.md` is also over and I did not**, because a job that rolls three registers over on its way
+past is running a document pass without admitting it. I put Job 15c's name on it in that file's own
+header instead. `HISTORY.md` is at 437 and will go over on the next substantial job.
+
+One last thing, and it is the part I did not expect. The deck data was *completely ready*. Seven
+60-card decks, every id resolving, all seven legal on the first try, zero corrections for the fifth
+workbook running — sitting in a folder that `DATA.md` described as "genuinely reference-only — nothing
+reads it" for eleven days. That sentence was true and it was also the only thing between the file and
+a shipped bracket. **A file being unread is not evidence that it is not ready**, and I would go and
+look at what else in `data/` is wearing that label.
+
+— #33

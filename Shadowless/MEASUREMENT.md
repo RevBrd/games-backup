@@ -293,9 +293,25 @@ reported a 6-point edge for a change that did not exist.
 lands in 45% of games at a median of turn 17, in a game decided by turn 20, is not a centrepiece.
 
 **A tier boundary is real when the tier bands do not overlap**, and as of 29 Aug 2026 two of the four
-rosters clear that and two do not. **The standings, the assembly rates and what to do about them are
-in [ROSTERS.md](ROSTERS.md)**, and the spec they are judged against is [OPPONENTS.md](OPPONENTS.md).
-Do not quote a roster verdict from here — this file owns the instrument, that one owns the results.
+set rosters clear that and two do not. **The standings, the assembly rates and what to do about them
+are in [ROSTERS.md](ROSTERS.md)** and its archive, and the spec they are judged against is
+[OPPONENTS.md](OPPONENTS.md). Do not quote a roster verdict from here — this file owns the
+instrument, that one owns the results.
+
+**THIS TOOL IS THE WRONG SHAPE FOR A MONO-TYPE BRACKET, and Challenge 1 is the first one.** Two
+reasons, both structural rather than a matter of sample size:
+
+- **A round-robin of mono-type decks measures the type wheel.** Every previous field averaged
+  Weakness out across multi-type decks; in a bracket where each deck has exactly one Weakness and one
+  thing it doubles against, a standing is partly a fact about *who else is in the field*.
+- **The field is not the situation.** These seven never fight each other. The player brings **one**
+  deck against all seven in an order they do not choose, and the design question is whether that deck
+  survives the spread. `decksim` has no player, so it cannot ask.
+
+**Use it on a Challenge as an outlier screen, not as a ranking.** Challenge 1's spread was 58.8
+points — 20.2% to 79.0% — which is wide enough that the two ends are worth looking at whatever the
+wheel is doing, and the four decks in the middle are not usefully ordered. **The instrument a
+Challenge actually wants is a fixed player deck against all seven, and it does not exist.**
 
 ### The benchmark deck — the only ground truth this project has for AI quality
 

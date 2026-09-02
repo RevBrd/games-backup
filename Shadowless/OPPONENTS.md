@@ -223,6 +223,68 @@ known shape rather than proving the shape. That is also the reason to be suspici
 proposal to restructure it: the burden is on the new idea.
 
 
+## The Challenge brackets, and the one that is built
+
+**Challenge 1 shipped on 1 Sep 2026, Job 15a** — seven mono-type decks between Fossil and Team
+Rocket, one per Energy type, all Trevor's. It is the rival, solved: not a person you beat but a
+**round** you clear, which is what two revisions of the rival entry had been circling without
+landing. This section is the past-tense half; [CHALLENGES.md](CHALLENGES.md) keeps Challenges 2 and 3
+and the two mechanisms still unbuilt.
+
+**Where it sits and what it pays.** After Fossil, before Team Rocket — so beating Fossil's boss no
+longer opens Team Rocket, it opens the Gauntlet, and the Gauntlet's boss opens Team Rocket. It
+belongs to no set and pays in a **Challenge pack**, drawn from every booster set before it.
+*[The machinery →](PROGRESSION.md)* · *[the pack →](PACKS.md)*
+
+**It breaks the rung pattern on purpose, and that is the finding.** No intro, no body, no gate: all
+seven rungs are T4 and every one of them is a boss-tier deck. Trevor, 1 Sep 2026, on why — *"it would
+really make the round feel like a boss round overall"*. So `intro → body → gate → boss` is a **set
+bracket's** shape rather than the ladder's, and this is the first evidence that the distinction is
+real rather than pedantic. A Challenge is a different kind of object and gets a different shape.
+
+**`bossAfter` is `'all'` here**, so every one of the six falls before the seventh appears. Trevor
+wants that to become the default at every tier; it is per bracket for now because flipping it re-gates
+four shipped brackets against a live save.
+
+**Mono-type is the whole design and it is the only place on the ladder that is.** Weakness is ×2 in
+this era, so a Challenge is the one round where *build a counter-type deck* is dramatically right —
+and the player has to decide whether to build ONE deck that survives all seven or rebuild between
+them. No other rung asks that, and it is a decision rather than a difficulty.
+
+**It scales itself.** Challenge 3 sits after Neo, which prints Darkness and Metal, so it is bigger
+than Challenge 1 without anyone tuning a number — the same property that makes the brackets derived.
+
+**Two things that were flagged as risks and how they actually came out.**
+
+*"One per type may need to mean one LED by each type."* Trevor's worry was that a strict mono-Lightning
+deck before Neo would be thin, producing one weak rung for reasons that have nothing to do with design.
+**It did not happen.** Every one of the seven is a genuine 60-card build and the Lightning deck is
+*fourth* of seven on featureWeight. What the worry pointed at was real but landed elsewhere — the
+weakest deck by weight is Grass at 16.5 and the weakest by play is Fire at 20.2%, neither of them the
+type anybody predicted. *[The measurement →](ROSTERS.md)*
+
+*"A Challenge bracket cannot exist as the code stands."* True when written, and the fix was one branch.
+The consequence that mattered was the one this predicted for the right reason: **combined packs are not
+flavour on top of the idea, they are forced by the structure** — there is no single set for a Challenge
+to pay in.
+
+**The rung ORDER is derived rather than chosen**, which is worth copying for Challenges 2 and 3:
+ascending featureWeight, which for these seven *also* satisfies the no-consecutive-pressure rule —
+SL, WP, AP, BD, SL, WP, and the boss alone on HD. Two constraints, one ordering, no compromise.
+Do not assume that luck repeats; check it.
+
+**The boss is Colorless (Wigglytuff), on featureWeight 21, the highest of the seven.** Trevor's call,
+and he flagged it as provisional: *"putting together a really good deck that doesn't significantly
+repeat a previous one was a challenge."* **Play disagrees with the weight**, and that is the live
+question this bracket leaves behind — see [ROSTERS.md](ROSTERS.md).
+
+**What still has no answer, carried over from the rival entry this replaced:** what makes a Challenge
+*leader* tougher than an ordinary T4. The old exit was "mostly Colorless", which was a deck constraint
+pretending to be a difficulty requirement and is now dead — Wigglytuff leads a Colorless deck because
+it is the strongest of seven, not because Colorless is what a leader plays. The current answer is
+structural and may be enough: **a leader is seventh of seven, behind six T4 decks, on a bracket that
+demands all of them.** Nobody has played it end to end yet.
+
 ## Open
 
 1. **The player-facing Prize selector is going away** on the ladder, keeping the tier dial from being

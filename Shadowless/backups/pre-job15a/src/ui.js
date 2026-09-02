@@ -188,50 +188,10 @@ const IMPLEMENTED_COUNT = Object.keys(CARD_DB)
 // keeps the printed one, every actionable surface uses this.
 const retreatCost = (slot, card) =>
   (UI.E && slot) ? UI.E.retreatCostOf(slot) : (card ? card.retreat : 0);
-// WHAT TO CALL A PACK THAT IS NOT A SET — Job 15a. A standalone ladder bracket
-// (Challenge 1) pays in a pack keyed by the bracket, and eight call sites already
-// asked `setName()` for a label. Rather than teach eight sites the difference,
-// the resolver learns it: SET_INFO first, then the standalone brackets' own
-// packName/packShort.
-//
-// Derived from the RAW ladder data rather than from LADDER_VIEW, because
-// `setName` is itself an argument to buildLadder and the two would otherwise be
-// circular. It is a fact about the data, not about which sets are live.
-//
-// The pack name and the BRACKET name are deliberately different strings. "The
-// Gauntlet" is flavour and is a placeholder the detailing pass will replace;
-// "Challenge 1" is structural and must not move when the flavour does.
-const PACK_INFO = (() => {
-  const out = {};
-  const src = (LADDER && LADDER.brackets) || {};
-  for (const key in src) {
-    if (!src[key] || !src[key].standalone) continue;
-    out[key] = { name: src[key].packName || key, short: src[key].packShort || key };
-  }
-  return out;
-})();
-const setName = code => (SET_INFO[code] || PACK_INFO[code] || {}).name || code;
-const setShort = code => (SET_INFO[code] || PACK_INFO[code] || {}).short || code;
+const setName = code => (SET_INFO[code] || {}).name || code;
+const setShort = code => (SET_INFO[code] || {}).short || code;
 const homeSet = () => Object.keys(SET_INFO).find(setIsLive) || Object.keys(SET_INFO)[0];
-
-// WHICH KINDS OF PACK THIS SAVE IS HOLDING, in ladder order.
-//
-// Was `Object.keys(SET_INFO).filter(setIsLive)`, which could therefore never see
-// a pack that is not a set — a Challenge pack would have been earned, stored and
-// then simply never offered anywhere. Driven off the ladder now, which is the
-// list of everything that can PAY, and which still excludes a set that is not
-// live because a non-live set has no bracket.
-//
-// Named for what it returns. It used to be `packSets`, and `bracket.packSets` now
-// means something adjacent and different — the real sets a pack DRAWS from.
-const heldPackKinds = save => LADDER_VIEW.map(b => b.set).filter(k => packsHeld(save, k) > 0);
-
-// What a BRACKET is called, as against what its packs are called. Falls back to
-// the pack/set label for anything not on the ladder, so it is never blank.
-const bracketName = key => {
-  const b = LADDER_VIEW.find(x => x.set === key);
-  return (b && b.name) || setName(key);
-};
+const packSets = save => Object.keys(SET_INFO).filter(s => setIsLive(s) && packsHeld(save, s) > 0);
 
 // ------------------------------------------------------------ the ladder ---
 // Job 7b. The live sets IN ORDER are the brackets, and progress.js turns them
@@ -2806,7 +2766,7 @@ function vribbon(flags) {
 // Closing the tab halfway through a reveal must not cost you the pack.
 function openNextPack(setCode) {
   // Told which set, or the first one the player is actually holding, or home.
-  const set = setCode || (UI.save ? heldPackKinds(UI.save)[0] : null) || homeSet();
+  const set = setCode || (UI.save ? packSets(UI.save)[0] : null) || homeSet();
   if (!UI.save || !takePack(UI.save, set)) return false;
   const seed = (Math.random() * 2147483647) | 0;
   // THE INTRUSION POOL, and this argument is the whole of Job 13b at the point of
@@ -2819,23 +2779,7 @@ function openNextPack(setCode) {
   // it simply never rolls an intrusion, which is what a brand-new save gets for the
   // few minutes before it beats anybody. (Not zero, in fact: four promos are gated
   // on the base1 bracket, which is open from the first second.)
-  // WHICH CARDS ARE IN IT. An ordinary booster asks its own set and openPack
-  // builds the pool itself; a Challenge pack belongs to no set, so the pool is a
-  // UNION handed in — every booster set before that bracket on the ladder.
-  //
-  // DERIVED FROM LADDER POSITION, NOT FROM THE SAVE, and that is Trevor's shape
-  // rather than the one PACKS.md sketched. The sketch said "built from the sets
-  // the player has unlocked", which reads the save at the moment the pack is
-  // OPENED — so a Challenge 1 pack won before Team Rocket and opened after it
-  // would quietly contain Team Rocket cards, and two packs of the same name would
-  // hold different things. Position is fixed the moment the bracket exists: a C1
-  // pack is Base, Jungle and Fossil, today and in a year, and you can know that
-  // before you open it. Same reason unlock is derived and not stored — one source
-  // of truth — arriving at the answer from the other direction.
-  const bracket = LADDER_VIEW.find(b => b.set === set);
-  const pools = (bracket && bracket.standalone) ? buildPools(CARD_DB, bracket.packSets) : null;
-  const pk = openPack(CARD_DB, set, mulberry32(seed),
-    { promos: unlockedPromoIds(UI.save), pools: pools || undefined });
+  const pk = openPack(CARD_DB, set, mulberry32(seed), { promos: unlockedPromoIds(UI.save) });
   // The guaranteed Rare comes out of packs.js first; it is shown LAST, because
   // a reveal that opens on the best card has nowhere to go.
   const order = pk.cards.slice(1).concat([pk.cards[0]]);
@@ -3177,7 +3121,7 @@ function renderPackScreen() {
     more.onclick = () => { openNextPack(p.set); render(); };
     bar.appendChild(more);
   }
-  for (const s of heldPackKinds(UI.save)) {
+  for (const s of packSets(UI.save)) {
     if (s === p.set) continue;
     const other = el('button', 'btn', `${setShort(s)} (${packsHeld(UI.save, s)})`);
     other.onclick = () => { openNextPack(s); render(); };
@@ -4206,7 +4150,7 @@ function renderLadder() {
 
   LADDER_VIEW.forEach((b, i) => {
     const open = bracketOpen(UI.save, LADDER_VIEW, i);
-    const sec = el('div', 'ladbracket' + (open ? '' : ' shut') + (b.standalone ? ' ladchallenge' : ''));
+    const sec = el('div', 'ladbracket' + (open ? '' : ' shut'));
 
     // A LOCKED bracket is one line, not a grid of tiles you cannot click.
     // Drawn as a full roster first, and it was wrong twice over: six greyed
@@ -4804,12 +4748,7 @@ function renderOver() {
       // than a clause on the end of the pack sentence.
       if (rw.unlocks) {
         const u = el('p', 'unlocknote');
-        // THE BRACKET'S NAME, NOT ITS PACK'S. They are the same string for a set
-        // — "Jungle is open... pays in Jungle packs" — and they diverge the moment
-        // a bracket is not a set: "The Gauntlet is open... pays in Challenge 1
-        // packs" is both sentences saying the true thing, and `setName` twice
-        // would have said "Challenge 1 is open" about a bracket nothing calls that.
-        u.appendChild(el('b', null, `${bracketName(rw.unlocks)} is open.`));
+        u.appendChild(el('b', null, `${setName(rw.unlocks)} is open.`));
         u.appendChild(el('span', null, ` Its challengers are on the deck screen, and wins there pay in ${setName(rw.unlocks)} packs.`));
         box.appendChild(u);
       }
@@ -4967,17 +4906,6 @@ function renderDev() {
     // would test a code path nobody ships.
     give.onclick = () => { addPacks(UI.save, homeSet(), 5); persist(); render(); };
     packRow.appendChild(give);
-    // ...AND ONE OF EVERY OTHER KIND, which is the same argument one step on. The
-    // +5 above pays in homeSet(), so every pack this hatch has ever produced has
-    // been a Base Set pack — fine while a pack was a set, useless the moment one
-    // is not. A Challenge pack is behind a whole bracket, and nobody is clearing
-    // seven T4 decks to look at a pool union.
-    for (const b of LADDER_VIEW) {
-      if (b.set === homeSet()) continue;
-      const one = el('button', 'btn tiny', '+1 ' + setShort(b.set));
-      one.onclick = () => { addPacks(UI.save, b.set, 1); persist(); render(); };
-      packRow.appendChild(one);
-    }
     const openb = el('button', 'btn tiny', 'open');
     openb.onclick = () => { if (openNextPack()) render(); };
     packRow.appendChild(openb);

@@ -26,17 +26,7 @@
 // ============================================================================
 
 const PROGRESS_DEFAULTS = {
-  // DISTINCT roster opponents beaten before the boss appears. The number is a
-  // floor as well as a gate — see the backfill below.
-  //
-  // 'all' MEANS EVERY ROSTER OPPONENT, resolved against the roster's real length
-  // after backfill rather than written as a number. Job 15a, and Trevor wants it
-  // eventually to be the default everywhere: "make the boss battle completely
-  // earned at every tier". It is per bracket for now and `challenge1` is the only
-  // one carrying it, because flipping the DEFAULT re-gates four shipped brackets
-  // in a live save and that is its own decision rather than a side effect of this
-  // one. When that decision comes, it is this line and nothing else.
-  bossAfter: 5,
+  bossAfter: 5,           // distinct roster opponents beaten before the boss appears
   packsPerWin: 2,         // PACKS.md's yardstick, unchanged
   bossFirstWinBonus: 1,   // an extra pack the FIRST time you beat a boss, and only a boss
   ai: 'expert',
@@ -45,11 +35,6 @@ const PROGRESS_DEFAULTS = {
 // A generated bracket needs enough opponents for its boss to be reachable at
 // all, so it is never shorter than bossAfter. Authored brackets are backfilled
 // to the same floor if a deck reference goes missing under a narrow --sets.
-//
-// 'all' BACKFILLS TO NOTHING, deliberately. "Everyone" is a shape rather than a
-// count, so there is no floor to pad to — and padding one would be actively
-// wrong, since a generated challenger would then be standing between the player
-// and a boss on a bracket whose whole point is that you cleared the real roster.
 const GENERATED_SUFFIX = ['Challenger', 'Challenger', 'Challenger', 'Challenger',
                           'Challenger', 'Challenger', 'Challenger', 'Challenger'];
 
@@ -147,78 +132,25 @@ function liveSets(cardDb, effects, setInfo) {
 //           put a bracket titled "base5" on the screen beside three called "The
 //           Clubs", "The Jungle" and "The Dome". Kept as a callback rather than an
 //           import because this module is pure and SET_INFO lives in cards.js.
-//
-// A BRACKET NEED NOT BE A SET — Job 15a, and this is the one structural change to
-// this function since Job 7. A bracket entry carrying `standalone: true` belongs
-// to no set at all: it is anchored after one with `after`, guarded by `requires`,
-// and it takes its own KEY as its `set`. `challenge1` is the first, and the promo
-// gates were already written against that key.
-//
-// WHAT `bracket.set` MEANS, because four different consumers read it and they are
-// asking four different questions. Today they still all take the same answer for a
-// set bracket, and a Challenge is where they stop agreeing:
-//
-//   IDENTITY   `unlockedSets()` and PROMO_GATES want the bracket's key. Correct.
-//   PAYMENT    the save keys held packs by it. Correct — a Challenge pack is a
-//              pack TYPE with its own key, which is exactly what this gives it.
-//   POOL       what a pack of it CONTAINS, and what a generated challenger in it
-//              draws from. NOT correct for a standalone, whose key names no cards
-//              at all. That question now has its own field, `packSets`.
-//   LABEL      what to print. Also not correct — see ui.js's setName.
-//
-// So the split is `set` for identity and payment, `packSets` for content. Anything
-// that reaches for `.set` to answer a question about CARDS is the bug this field
-// exists to stop, and it is the same shape as the one PACKS.md records about a
-// pulled card's `slot`: a field naming ORIGIN is not a field naming ROLE.
 function buildLadder(liveSets, data, opts = {}) {
   const cfg = Object.assign({}, PROGRESS_DEFAULTS, (data && data.defaults) || {});
   const brackets = (data && data.brackets) || {};
   const hasDeck = opts.hasDeck || (() => true);
   const setName = opts.setName || (code => code);
   const usable = o => o.deck === 'generate' || hasDeck(o.deck);
-  const live = {};
-  liveSets.forEach(s => { live[s] = 1; });
 
-  // THE ORDER, and it is still derived rather than declared. Walk the live sets;
-  // after each one, drop in any standalone bracket anchored to it whose `requires`
-  // are all live. A standalone whose anchor set is not live never appears, exactly
-  // like a set bracket, and nothing anywhere names a position.
-  const anchored = {};
-  for (const key of Object.keys(brackets)) {
-    const b = brackets[key];
-    if (!b || !b.standalone) continue;
-    (anchored[b.after] = anchored[b.after] || []).push(key);
-  }
-  const slots = [];
-  for (const setCode of liveSets) {
-    slots.push({ key: setCode, src: brackets[setCode], standalone: false });
-    for (const key of (anchored[setCode] || [])) {
-      const req = brackets[key].requires || [];
-      if (req.every(s => live[s])) slots.push({ key, src: brackets[key], standalone: true });
-    }
-  }
-
-  return slots.map((slot, i) => {
-    const setCode = slot.key;
-    const src = slot.src;
+  return liveSets.map((setCode, i) => {
+    const src = brackets[setCode];
     const bcfg = Object.assign({}, cfg, (src && src.cfg) || {});
-    const everyone = bcfg.bossAfter === 'all';
 
     let roster = ((src && src.roster) || [])
       .map((o, n) => normaliseOpponent(o, setCode, bcfg, n))
       .filter(usable);
 
     // Backfill to the floor. Covers both an unauthored set and an authored one
-    // whose decks are not all present in this build. `bossAfter: 'all'` has no
-    // floor — see PROGRESS_DEFAULTS.
-    if (!everyone) {
-      for (let n = roster.length; n < bcfg.bossAfter; n++) roster.push(generatedOpponent(setCode, n, bcfg));
-    }
+    // whose decks are not all present in this build.
+    for (let n = roster.length; n < bcfg.bossAfter; n++) roster.push(generatedOpponent(setCode, n, bcfg));
     roster.forEach((o, n) => { o.index = n; });
-    // Resolved here, after the roster is final, so 'all' is a real number
-    // everywhere downstream and no other function has to know the word exists.
-    // Never below 1: a bracket with an empty roster must not hand you its boss.
-    if (everyone) bcfg.bossAfter = Math.max(1, roster.length);
 
     let boss = src && src.boss ? normaliseOpponent(src.boss, setCode, bcfg, -1) : null;
     if (!boss || !usable(boss)) {
@@ -235,16 +167,6 @@ function buildLadder(liveSets, data, opts = {}) {
     return {
       set: setCode,
       index: i,
-      standalone: !!slot.standalone,
-      // WHICH REAL SETS THIS BRACKET IS MADE OF. A set bracket is its own set. A
-      // standalone is every booster set BEFORE it on the ladder, which is where
-      // Trevor's "the C1 pack already knows it holds base1-3" lands: derived from
-      // ladder position, so it is fixed the moment the bracket exists and cannot
-      // drift with the save. A pack sitting in your inventory does not change its
-      // contents because you went and beat somebody.
-      packSets: slot.standalone
-        ? slots.slice(0, i).filter(s => !s.standalone).map(s => s.key)
-        : [setCode],
       name: (src && src.name) || setName(setCode),
       blurb: (src && src.blurb) || '',
       generated: !src,
@@ -471,14 +393,8 @@ function resolveOpponentDeck(opp, sources, opts = {}) {
 
 // The pool a generated opponent in this bracket should draw from: every live
 // set up to and including its own.
-//
-// STANDALONE BRACKETS ARE SKIPPED because their `set` is a bracket key and names
-// no cards — `challenge1` in a pool spec would silently contribute nothing, which
-// is the harmless half of the same confusion `packSets` exists to stop. A
-// generated challenger inside a Challenge still gets everything before it, since
-// those entries are the real sets.
 const poolSetsFor = (ladder, bracket) =>
-  ladder.slice(0, bracket.index + 1).filter(b => !b.standalone).map(b => b.set);
+  ladder.slice(0, bracket.index + 1).map(b => b.set);
 
 // ---------------------------------------------------------------- reporting
 

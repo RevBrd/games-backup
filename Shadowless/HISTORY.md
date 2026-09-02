@@ -281,6 +281,33 @@ one, stay under that one — instead of picking a rate. A target expressed as an
 pack size changing; a target expressed as 1-in-20 does not, which the 25 Aug shrink then proved on
 four other axes.
 
+## What the Challenge brackets discarded on the way in
+
+Moved out of `CHALLENGES.md` on 1 Sep 2026 by #33 when Challenge 1 shipped, per that file's own rule:
+**move a section's rejections here before you rewrite it**, or they die with the paragraph around
+them. Three ideas, each with the reason it lost.
+
+- **A rival who is a PERSON.** Ronald, and before him a nameless recurring challenger, held a slot on
+  every bracket. Rejected 21 Aug 2026 in favour of a *round*: a boss you beat is a wall, seven you
+  must beat is a campaign, and one person cannot be the natural home for a combined-pack reward. The
+  entry that replaced it had been circling this for two revisions without landing on it. **Ronald was
+  removed from the ladder entirely on 1 Sep 2026** — Trevor's grab-bag note — and his four decks stay
+  on file under the placeholder rule. **The `extra` mechanism he occupied was kept and is still
+  tested**, against a fixture, because the detailing pass is expected to want a post-boss encounter.
+- **"Mostly Colorless" as what makes a Challenge LEADER tougher than an ordinary T4.** Rejected as a
+  deck constraint pretending to be a difficulty requirement — it says what the leader must *play*, not
+  why they are *hard*, and the two have no connection. Note what actually happened when the bracket was
+  built: the leader **is** a Colorless deck (Wigglytuff), chosen because it scored highest of the seven
+  on featureWeight. **That is not this idea arriving by the back door**, and the distinction matters if
+  anybody ever re-reads the roster and thinks the rule was quietly adopted. The replacement answer is
+  structural: a leader is seventh of seven on a bracket that demands all six others first.
+- **"A leader's pool is every set you have unlocked at once", while everyone else is set-flavoured.**
+  This was the surviving exit from the rival entry and it was the closest thing to an answer the file
+  had. It died by being *absorbed*: under Challenges, the whole bracket already draws from every set
+  the player has unlocked, so drawing from every set stopped distinguishing the leader from the six
+  rungs beside them. A good idea that a later structural decision made redundant, which is a different
+  death from a bad one and is worth recording as such.
+
 ## Ideas raised and shelved, with the reason
 
 - **Opponent cards getting variant treatment** — wanted, and started deliberately small. Agreed
@@ -385,3 +412,26 @@ orientation file — three said "what is left is X" about things that had since 
   Shiny, Shadowless, Misprint) to restore the pre-shrink pacing is deliberately deferred**, tracked as
   its own open item in [PACKS.md](PACKS.md).
 
+- **Job 13** - Wizards Black Star Promos. **Done, both halves** — the cards in 13a, reachability in
+  13b. See [PACKS.md](PACKS.md) and [COLLECTION.md](COLLECTION.md).
+- **Job 14a / 14b** - Document pass, grab bag, and the AI validation work. **14b is still open** and
+  its live items are named in `CLAUDE.md`.
+- **Job 15a** - The Challenge 1 bracket. **Done, 1 Sep 2026.** Seven mono-type decks between Fossil
+  and Team Rocket, the first ladder bracket that belongs to no set, and the first pack type that is
+  not a set's. What it left behind, beyond the feature:
+  - **`bracket.set` was answering four questions and only two of them correctly**, which nothing had
+    noticed because a set bracket gives the same answer to all four. `packSets` split the *pool*
+    question off. Same shape as the `slot`-means-hero misreading in [PACKS.md](PACKS.md).
+  - **Trevor's own correction to this file tree's plan.** `PACKS.md` had specified the Challenge pool
+    as "the sets the player has unlocked", which reads the save at OPEN time — so a pack's contents
+    would have depended on when you got round to opening it. He caught it from the player's side
+    before any code existed. The built version derives from ladder position instead.
+  - **A green suite went red on correct behaviour**, briefly and in the new tests themselves: an
+    Energy-cap assertion written as `kind === 'energy'` caught 59 Double Colorless in 40,000 packs.
+    `ENERGY_CAP` has only ever been about *basic* Energy. Kept as a comment at the assertion.
+  - **`ROSTERS.md` crossed its own archive threshold** and the rule fired as written: Base Set and
+    Jungle moved whole into `ROSTERS-ARCHIVE-1.md` at a set boundary.
+- **Job 15b** - Rebalancing variant odds to match new pack sizes. **Now three items rather than one**
+  — the four per-slot cosmetic axes, Base Set's bonus-Rare-tier near-tie, and what "richer" means for
+  a Challenge pack. All three are in [PACKS.md](PACKS.md)'s Still open, deliberately bundled: they are
+  measured against each other and tuning one alone loses track of which change did what.

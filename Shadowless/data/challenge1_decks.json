@@ -1,0 +1,846 @@
+{
+ "c1_grass": {
+  "name": "C1 Grass",
+  "sheet": "Grass",
+  "set": "challenge1",
+  "type": "Grass",
+  "tier": 4,
+  "featureWeight": 16.5,
+  "coverCard": "Vileplume",
+  "pressure": [
+   "SL"
+  ],
+  "list": [
+   [
+    24,
+    "base1-99",
+    "Grass Energy"
+   ],
+   [
+    3,
+    "base1-51",
+    "Koffing"
+   ],
+   [
+    2,
+    "base3-45",
+    "Weezing"
+   ],
+   [
+    2,
+    "base2-5",
+    "Kangaskhan"
+   ],
+   [
+    1,
+    "base1-3",
+    "Chansey"
+   ],
+   [
+    4,
+    "base2-58",
+    "Oddish"
+   ],
+   [
+    3,
+    "base2-37",
+    "Gloom"
+   ],
+   [
+    2,
+    "base2-15",
+    "Vileplume"
+   ],
+   [
+    2,
+    "base2-9",
+    "Pinsir"
+   ],
+   [
+    1,
+    "base2-38",
+    "Lickitung"
+   ],
+   [
+    3,
+    "base1-91",
+    "Bill"
+   ],
+   [
+    2,
+    "base1-88",
+    "Professor Oak"
+   ],
+   [
+    2,
+    "base1-94",
+    "Potion"
+   ],
+   [
+    2,
+    "base1-90",
+    "Super Potion"
+   ],
+   [
+    1,
+    "base1-80",
+    "Defender"
+   ],
+   [
+    1,
+    "base1-95",
+    "Switch"
+   ],
+   [
+    1,
+    "base1-73",
+    "Impostor Professor Oak"
+   ],
+   [
+    1,
+    "base1-75",
+    "Lass"
+   ],
+   [
+    2,
+    "base2-64",
+    "Poké Ball"
+   ],
+   [
+    1,
+    "base1-82",
+    "Full Heal"
+   ]
+  ]
+ },
+ "c1_fire": {
+  "name": "C1 Fire",
+  "sheet": "Fire",
+  "set": "challenge1",
+  "type": "Fire",
+  "tier": 4,
+  "featureWeight": 17.5,
+  "coverCard": "Moltres",
+  "pressure": [
+   "AP"
+  ],
+  "list": [
+   [
+    24,
+    "base1-97",
+    "Fighting Energy"
+   ],
+   [
+    3,
+    "base3-39",
+    "Magmar"
+   ],
+   [
+    1,
+    "base3-12",
+    "Moltres"
+   ],
+   [
+    3,
+    "base2-51",
+    "Eevee"
+   ],
+   [
+    2,
+    "base2-3",
+    "Flareon"
+   ],
+   [
+    1,
+    "base2-5",
+    "Kangaskhan"
+   ],
+   [
+    3,
+    "base1-28",
+    "Growlithe"
+   ],
+   [
+    2,
+    "base1-23",
+    "Arcanine"
+   ],
+   [
+    3,
+    "base1-68",
+    "Vulpix"
+   ],
+   [
+    2,
+    "base1-12",
+    "Ninetales"
+   ],
+   [
+    1,
+    "base2-38",
+    "Lickitung"
+   ],
+   [
+    3,
+    "base1-91",
+    "Bill"
+   ],
+   [
+    2,
+    "base1-88",
+    "Professor Oak"
+   ],
+   [
+    1,
+    "base3-60",
+    "Gambler"
+   ],
+   [
+    1,
+    "base1-78",
+    "Scoop Up"
+   ],
+   [
+    2,
+    "base1-81",
+    "Energy Retrieval"
+   ],
+   [
+    1,
+    "base1-94",
+    "Potion"
+   ],
+   [
+    1,
+    "base1-95",
+    "Switch"
+   ],
+   [
+    2,
+    "base1-93",
+    "Gust of Wind"
+   ],
+   [
+    1,
+    "base1-77",
+    "Pokémon Trader"
+   ],
+   [
+    1,
+    "base1-80",
+    "Defender"
+   ]
+  ]
+ },
+ "c1_water": {
+  "name": "C1 Water",
+  "sheet": "Water",
+  "set": "challenge1",
+  "type": "Water",
+  "tier": 4,
+  "featureWeight": 20,
+  "coverCard": "Articuno",
+  "pressure": [
+   "SL"
+  ],
+  "list": [
+   [
+    24,
+    "base1-102",
+    "Water Energy"
+   ],
+   [
+    3,
+    "base3-10",
+    "Lapras"
+   ],
+   [
+    3,
+    "base1-41",
+    "Seel"
+   ],
+   [
+    2,
+    "base1-25",
+    "Dewgong"
+   ],
+   [
+    3,
+    "base2-51",
+    "Eevee"
+   ],
+   [
+    2,
+    "base2-12",
+    "Vaporeon"
+   ],
+   [
+    2,
+    "base3-2",
+    "Articuno"
+   ],
+   [
+    3,
+    "base1-35",
+    "Magikarp"
+   ],
+   [
+    2,
+    "base1-6",
+    "Gyarados"
+   ],
+   [
+    1,
+    "base1-77",
+    "Pokémon Trader"
+   ],
+   [
+    1,
+    "base1-71",
+    "Computer Search"
+   ],
+   [
+    1,
+    "base1-95",
+    "Switch"
+   ],
+   [
+    2,
+    "base1-93",
+    "Gust of Wind"
+   ],
+   [
+    3,
+    "base1-91",
+    "Bill"
+   ],
+   [
+    2,
+    "base1-88",
+    "Professor Oak"
+   ],
+   [
+    2,
+    "base1-80",
+    "Defender"
+   ],
+   [
+    1,
+    "base1-82",
+    "Full Heal"
+   ],
+   [
+    2,
+    "base1-92",
+    "Energy Removal"
+   ],
+   [
+    1,
+    "base2-64",
+    "Poké Ball"
+   ]
+  ]
+ },
+ "c1_lightning": {
+  "name": "C1 Lightning",
+  "sheet": "Lightning",
+  "set": "challenge1",
+  "type": "Lightning",
+  "tier": 4,
+  "featureWeight": 19.5,
+  "coverCard": "Zapdos",
+  "pressure": [
+   "BD"
+  ],
+  "list": [
+   [
+    24,
+    "base1-100",
+    "Lightning Energy"
+   ],
+   [
+    1,
+    "base1-58",
+    "Pikachu"
+   ],
+   [
+    1,
+    "base2-60",
+    "Pikachu"
+   ],
+   [
+    1,
+    "basep-1",
+    "Pikachu"
+   ],
+   [
+    1,
+    "basep-26",
+    "Pikachu"
+   ],
+   [
+    1,
+    "base1-14",
+    "Raichu"
+   ],
+   [
+    2,
+    "base3-14",
+    "Raichu"
+   ],
+   [
+    3,
+    "base1-53",
+    "Magnemite"
+   ],
+   [
+    1,
+    "base1-9",
+    "Magneton"
+   ],
+   [
+    1,
+    "base3-11",
+    "Magneton"
+   ],
+   [
+    2,
+    "base3-15",
+    "Zapdos"
+   ],
+   [
+    1,
+    "basep-11",
+    "Eevee"
+   ],
+   [
+    2,
+    "base2-4",
+    "Jolteon"
+   ],
+   [
+    1,
+    "base1-20",
+    "Electabuzz"
+   ],
+   [
+    3,
+    "base1-91",
+    "Bill"
+   ],
+   [
+    1,
+    "base1-88",
+    "Professor Oak"
+   ],
+   [
+    2,
+    "base3-60",
+    "Gambler"
+   ],
+   [
+    2,
+    "base2-64",
+    "Poké Ball"
+   ],
+   [
+    1,
+    "base1-94",
+    "Potion"
+   ],
+   [
+    2,
+    "base1-93",
+    "Gust of Wind"
+   ],
+   [
+    1,
+    "base1-79",
+    "Super Energy Removal"
+   ],
+   [
+    2,
+    "base1-84",
+    "PlusPower"
+   ],
+   [
+    1,
+    "base1-80",
+    "Defender"
+   ],
+   [
+    1,
+    "base1-74",
+    "Item Finder"
+   ],
+   [
+    2,
+    "base2-51",
+    "Eevee"
+   ]
+  ]
+ },
+ "c1_psychic": {
+  "name": "C1 Psychic",
+  "sheet": "Psychic",
+  "set": "challenge1",
+  "type": "Psychic",
+  "tier": 4,
+  "featureWeight": 20,
+  "coverCard": "Gengar",
+  "pressure": [
+   "WP"
+  ],
+  "list": [
+   [
+    24,
+    "base1-101",
+    "Psychic Energy"
+   ],
+   [
+    4,
+    "base3-33",
+    "Gastly"
+   ],
+   [
+    3,
+    "base3-6",
+    "Haunter"
+   ],
+   [
+    2,
+    "base3-5",
+    "Gengar"
+   ],
+   [
+    3,
+    "base1-43",
+    "Abra"
+   ],
+   [
+    2,
+    "base1-32",
+    "Kadabra"
+   ],
+   [
+    1,
+    "base1-1",
+    "Alakazam"
+   ],
+   [
+    1,
+    "base1-3",
+    "Chansey"
+   ],
+   [
+    2,
+    "base2-5",
+    "Kangaskhan"
+   ],
+   [
+    1,
+    "base2-11",
+    "Snorlax"
+   ],
+   [
+    1,
+    "basep-12",
+    "Mewtwo"
+   ],
+   [
+    1,
+    "basep-14",
+    "Mewtwo"
+   ],
+   [
+    3,
+    "base1-91",
+    "Bill"
+   ],
+   [
+    2,
+    "base1-88",
+    "Professor Oak"
+   ],
+   [
+    1,
+    "base1-76",
+    "Pokémon Breeder"
+   ],
+   [
+    1,
+    "base1-77",
+    "Pokémon Trader"
+   ],
+   [
+    1,
+    "base1-89",
+    "Revive"
+   ],
+   [
+    2,
+    "base1-90",
+    "Super Potion"
+   ],
+   [
+    1,
+    "base1-95",
+    "Switch"
+   ],
+   [
+    2,
+    "base1-78",
+    "Scoop Up"
+   ],
+   [
+    1,
+    "base2-64",
+    "Poké Ball"
+   ],
+   [
+    1,
+    "base1-94",
+    "Potion"
+   ]
+  ]
+ },
+ "c1_fighting": {
+  "name": "C1 Fighting",
+  "sheet": "Fighting",
+  "set": "challenge1",
+  "type": "Fighting",
+  "tier": 4,
+  "featureWeight": 17.5,
+  "coverCard": "Aerodactyl",
+  "pressure": [
+   "WP"
+  ],
+  "list": [
+   [
+    24,
+    "base1-97",
+    "Fighting Energy"
+   ],
+   [
+    2,
+    "base3-7",
+    "Hitmonlee"
+   ],
+   [
+    2,
+    "base1-7",
+    "Hitmonchan"
+   ],
+   [
+    3,
+    "base3-62",
+    "Mysterious Fossil"
+   ],
+   [
+    2,
+    "base3-1",
+    "Aerodactyl"
+   ],
+   [
+    2,
+    "base1-56",
+    "Onix"
+   ],
+   [
+    3,
+    "base2-61",
+    "Rhyhorn"
+   ],
+   [
+    2,
+    "base2-45",
+    "Rhydon"
+   ],
+   [
+    3,
+    "base1-47",
+    "Diglett"
+   ],
+   [
+    2,
+    "base1-19",
+    "Dugtrio"
+   ],
+   [
+    1,
+    "base2-38",
+    "Lickitung"
+   ],
+   [
+    3,
+    "base1-91",
+    "Bill"
+   ],
+   [
+    2,
+    "base1-88",
+    "Professor Oak"
+   ],
+   [
+    1,
+    "base1-95",
+    "Switch"
+   ],
+   [
+    2,
+    "base1-93",
+    "Gust of Wind"
+   ],
+   [
+    1,
+    "base1-94",
+    "Potion"
+   ],
+   [
+    1,
+    "base1-78",
+    "Scoop Up"
+   ],
+   [
+    1,
+    "base1-77",
+    "Pokémon Trader"
+   ],
+   [
+    1,
+    "base1-80",
+    "Defender"
+   ],
+   [
+    2,
+    "base1-90",
+    "Super Potion"
+   ]
+  ]
+ },
+ "c1_colorless": {
+  "name": "C1 Colorless",
+  "sheet": "Colorless",
+  "set": "challenge1",
+  "type": "Colorless",
+  "tier": 4,
+  "featureWeight": 21,
+  "coverCard": "Wigglytuff",
+  "pressure": [
+   "HD"
+  ],
+  "list": [
+   [
+    4,
+    "base1-96",
+    "Double Colorless Energy"
+   ],
+   [
+    18,
+    "base1-98",
+    "Fire Energy"
+   ],
+   [
+    4,
+    "base1-26",
+    "Dratini"
+   ],
+   [
+    3,
+    "base1-18",
+    "Dragonair"
+   ],
+   [
+    2,
+    "base3-4",
+    "Dragonite"
+   ],
+   [
+    3,
+    "base1-57",
+    "Pidgey"
+   ],
+   [
+    2,
+    "base1-22",
+    "Pidgeotto"
+   ],
+   [
+    1,
+    "base2-8",
+    "Pidgeot"
+   ],
+   [
+    2,
+    "base2-5",
+    "Kangaskhan"
+   ],
+   [
+    3,
+    "base2-54",
+    "Jigglypuff"
+   ],
+   [
+    2,
+    "base2-16",
+    "Wigglytuff"
+   ],
+   [
+    1,
+    "base1-76",
+    "Pokémon Breeder"
+   ],
+   [
+    1,
+    "base1-74",
+    "Item Finder"
+   ],
+   [
+    2,
+    "base1-77",
+    "Pokémon Trader"
+   ],
+   [
+    3,
+    "base1-91",
+    "Bill"
+   ],
+   [
+    2,
+    "base1-88",
+    "Professor Oak"
+   ],
+   [
+    3,
+    "base1-93",
+    "Gust of Wind"
+   ],
+   [
+    1,
+    "base1-92",
+    "Energy Removal"
+   ],
+   [
+    1,
+    "base1-80",
+    "Defender"
+   ],
+   [
+    2,
+    "base1-82",
+    "Full Heal"
+   ]
+  ]
+ },
+ "_meta": {
+  "source": "data/v1 Opp Decks/Challenge 1 Opponent Decks v1.xlsx — Trevor's workbook, the fifth hand-built roster and the first that is not a set. Sheets 'Grass' through 'Colorless', one per Energy type.",
+  "retrieved": "2026-09-01, Job 15a, read through tools/lib/xlsx.js.",
+  "scope": "The Challenge 1 bracket: seven mono-type decks drawn from Base Set, Jungle and Fossil plus the promos those brackets open. NOT a set — see CHALLENGES.md on why a Challenge bracket belongs to none.",
+  "status": "All seven validate clean against Engine.prototype.validateDeck: 60 cards, no errors, no warnings, 4-copy limit respected, every card implemented. ZERO id corrections needed, for the fifth workbook running.",
+  "tier": "ALL SEVEN ARE TIER 4 and that is deliberate rather than a shortcut. Trevor, 1 Sep 2026: a Challenge is a boss round end to end, so there is no intro/body/gate shape here and no T1 faucet rung. See OPPONENTS.md.",
+  "weights": "featureWeight is Trevor's own scoring, totalled. Comparable WITHIN this workbook only — the seven run 16.5 to 21, and Colorless at 21 is why Wigglytuff leads. Do not compare against Fossil's 11.5/16/19. See ROSTERS.md.",
+  "pressure": "Derived from this workbook's Index tab by copy count, first code where a card lists several. Reported, not enforced — OPPONENTS.md's no-repeat rule is still unbuilt.",
+  "coverCard": "The sheet's own Cover Card field. Grass's cell is blank in the workbook; Trevor named Vileplume on 1 Sep 2026.",
+  "promos": "Four of the seven name promo cards. That is legal for an AUTHORED opponent deck and illegal for a GENERATED one — see opponentDeckFor() in ui.js."
+ }
+}

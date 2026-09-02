@@ -1,19 +1,16 @@
 {
   "_meta": {
-    "what": "Job 7's opponent ladder, one BRACKET per set -- plus, since Job 15a, brackets that belong to NO set. Nothing in here names what it unlocks or its own position: buildLadder() in src/progress.js derives both from the live-set order, so a bracket for a set that is not live simply does not appear, and a live set with no bracket here gets a generated one automatically.",
+    "what": "Job 7's opponent ladder. One BRACKET per set. Nothing in here names the set it unlocks or its own position — buildLadder() in src/progress.js derives both from the live-set order, so a bracket for a set that is not live simply does not appear, and a live set with no bracket here gets a generated one automatically. Adding Team Rocket is adding a key, or adding nothing at all.",
     "authored": "2026-08-12, Job 7a.",
-    "deck refs": "'theme:NAME' is DECKS in cards.js (data/decks.json). 'gbc:KEY', 'jungle:NAME', 'b1:KEY', 'b2:KEY', 'b3:KEY', 'tr:KEY', 'b5:KEY' and 'c1:KEY' are OPPONENT_DECKS; the full list of sources is OPPONENT_SOURCES in tools/gen_cards.js. 'generate' is a pool spec handed to deckgen at match time, seeded off the opponent id so the same challenger always brings the same deck.",
+    "deck refs": "'theme:NAME' is DECKS in cards.js (data/decks.json). 'gbc:KEY', 'jungle:NAME', 'b1:KEY', 'b2:KEY' and 'b3:KEY' are OPPONENT_DECKS. 'generate' is a pool spec handed to deckgen at match time, seeded off the opponent id so the same challenger always brings the same deck.",
     "names": "Anything marked placeholder:true is an identity of ours rather than a deck of ours — Trevor's note, 12 Aug 2026: the names are easily reshapable, the structure is what has to be right. The GBC characters keep their real names because they ARE the placeholder; see 'placeholders' below.",
-    "ronald": "RONALD IS GONE, 1 Sep 2026, Job 15a -- Trevor's call from the grab bag: 'remove Ronald entirely for now, due to our own boss waves having taken shape conceptually.' He was the post-boss 'extra' in all four brackets and is now in none of them. THE MECHANISM STAYED: 'extra' still works, is still tested (progresstest builds its own fixture bracket rather than leaning on him), and is what the detailing pass will hang a real post-boss encounter on. His four decks stay on file in data/gbc_decks.json under the placeholder rule, same as the eight club masters. The rival design he was standing in for is not gone either -- it became the Challenge brackets.",
-    "unassigned": "TWELVE of the sixteen GBC decks are unused as of 1 Sep 2026, and that is the placeholder rule working rather than a gap: the eight club masters retired when base5 got its own roster, and the four Ronalds retired with him. Only the four grand masters are still assigned, holding base3's empty T1 intro. None is ever deleted -- data/gbc_decks.json keeps all sixteen. (This note used to assert all 16 were in play and had to be rewritten twice; it is a COUNT of a moving thing, so re-derive it rather than trusting it.)",
+    "ronald": "Ronald is a placeholder too, and as of 21 Aug 2026 he is no longer a boss anywhere. EVERY BRACKET ENDS IN ITS T4. He is the post-boss `extra` in base1 and base2, and still the placeholder boss of base3 only because Fossil has no authored T4 yet. The long-term shape Trevor wants is different and is NOT one rival per bracket: roughly four encounters across the whole ladder, a small group with a leader, decks drawn from every previous set and paying combined packs. Design open — see OPPONENTS.md.",
+    "unassigned": "No GBC deck is unused. All 16 appear exactly once: the 4 grand masters in base3, the 8 club masters in base5, Ronald 1 and 2 as the base1 and base2 `extra`, Ronald 3 as base3's `extra`, and Ronald 4 as base5's placeholder boss.",
     "base1 roster": "2026-08-19, Job 10.5. Trevor's eight Base Set decks (data/base1_decks.json) replaced the GBC placeholders: four theme decks as the T1 intro, five T2, two T3 gate, and the T4 as the boss. Built to OPPONENTS.md's tier spec — see ROSTERS.md for what decksim measured. NAMES AND TITLES ARE STILL OURS and marked placeholder:true; the decks are not. Ronald's first deck moved to base1's `extra`, so he is now the post-boss challenger rather than the boss, and the four club masters he shared a bracket with joined the other four in base2.",
     "placeholders": "RULE, Trevor 21 Aug 2026: anybody not holding a hand-built deck or an authentic theme deck is a placeholder filling the gap between a set going live and its own decks being authored. That is what the 16 GBC decks are for. They are never deleted — data/gbc_decks.json keeps every one on file — they just move to whichever bracket has not been authored yet.",
     "base2 roster": "2026-08-21, Job 11. Trevor's five Jungle decks (data/base2_decks.json) joined the two Jungle theme decks: intro (2 theme, T1) -> body (3x T2) -> gate (1x T3) -> boss (T4 'Deep Bloom'). Ronald's second deck moved to `extra`, matching base1. The eight club masters he shared the bracket with moved DOWN to base3, which is the last bracket where they are set-appropriate — every GBC deck plays only Base, Jungle and Fossil cards, so putting them in a Team Rocket bracket would be worse than the generated decks already there. base3's two `generate` placeholders were dropped in the same move; base5 stays entirely generated.",
     "base3 roster": "2026-08-21, Job 11. Trevor's six Fossil decks (data/base3_decks.json) took the body, gate and boss. THE FOUR GRAND MASTERS STAYED, which is the one place the placeholder rule bends and it bends for a reason: Fossil's own theme decks are not in data/, so the T1 intro slot is genuinely empty, and the grand masters' legendary birds are Fossil cards — the least wrong stand-in available. Getting the real Fossil theme decks in is the fix. The eight club masters moved on to base5.",
-    "base5 roster": "base5 roster (2026-08-25, Job 12c): Trevor's eight Team Rocket decks (data/base5_decks.json) took the body, gate and boss, and the two authentic Team Rocket theme decks (data/team_rocket_decks.json, Devastation and Trouble) took the T1 intro -- the first time a bracket has BOTH its own theme decks and a full hand-built roster on day one. The eight displaced GBC club masters retire rather than move on, since no unauthored live bracket remains for them to fill -- data/gbc_decks.json keeps every one on file per the placeholder rule. Ronald 4 moved from boss to extra, matching base1/base2/base3.",
-    "standalone": "A BRACKET NEED NOT BE A SET -- Job 15a. An entry carrying standalone:true is anchored after a live set with 'after', guarded by 'requires' (every named set must be live or it does not appear), and takes its own KEY as its bracket.set. 'challenge1' is the first and the promo gates in src/progress.js were already written against that key. Its packs draw from bracket.packSets -- every booster set BEFORE it on the ladder -- rather than from its own key, which names no cards at all. See CHALLENGES.md and PACKS.md.",
-    "challenge1 roster": "2026-09-01, Job 15a. Trevor's seven mono-type decks (data/challenge1_decks.json, from 'Challenge 1 Opponent Decks v1.xlsx'), one per Energy type, all Tier 4. THE RUNG ORDER IS DERIVED, not arbitrary: ascending featureWeight (16.5 -> 21), which also happens to satisfy OPPONENTS.md's no-consecutive-pressure rule -- SL, WP, AP, BD, SL, WP, and the boss alone on HD. Colorless leads at 21 and is the only rung whose pressure nothing else in the bracket shares. cfg.bossAfter is 'all': every one of the six has to fall before Ilma appears. NAMES AND TITLES ARE OURS and marked placeholder:true; the decks are Trevor's.",
-    "pack names": "packName/packShort are what a PACK of a standalone bracket is called, and they are separate from the bracket's own name on purpose. The bracket is 'The Gauntlet', which is flavour and is a placeholder the detailing pass will replace; the pack is 'Challenge 1', which is structural and should not move when the flavour does. ui.js's setName()/setShort() read this table for any key SET_INFO does not hold."
+    "base5 roster": "base5 roster (2026-08-25, Job 12c): Trevor's eight Team Rocket decks (data/base5_decks.json) took the body, gate and boss, and the two authentic Team Rocket theme decks (data/team_rocket_decks.json, Devastation and Trouble) took the T1 intro -- the first time a bracket has BOTH its own theme decks and a full hand-built roster on day one. The eight displaced GBC club masters retire rather than move on, since no unauthored live bracket remains for them to fill -- data/gbc_decks.json keeps every one on file per the placeholder rule. Ronald 4 moved from boss to extra, matching base1/base2/base3."
   },
   "defaults": {
     "bossAfter": 5,
@@ -24,7 +21,7 @@
   "brackets": {
     "base1": {
       "name": "The Clubs",
-      "blurb": "Four theme decks, and seven more built out of Base Set itself.",
+      "blurb": "Four theme decks, seven built from Base Set, and a rival waiting past the end.",
       "roster": [
         {
           "id": "base1-brushfire",
@@ -114,7 +111,15 @@
         "title": "Ashfall",
         "deck": "b1:b1_t4_fire",
         "placeholder": true
-      }
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-1",
+          "name": "Ronald",
+          "title": "I'm Ronald!",
+          "deck": "gbc:ronald_im_ronald"
+        }
+      ]
     },
     "base2": {
       "name": "The Jungle",
@@ -171,7 +176,15 @@
         "title": "Deep Bloom",
         "deck": "b2:b2_t4_grass",
         "placeholder": true
-      }
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-2",
+          "name": "Ronald",
+          "title": "Invincible Ronald",
+          "deck": "gbc:ronald_invincible"
+        }
+      ]
     },
     "base3": {
       "name": "The Dome",
@@ -243,78 +256,19 @@
         "title": "Nightshade",
         "deck": "b3:b3_t4_psychic",
         "placeholder": true
-      }
-    },
-    "challenge1": {
-      "standalone": true,
-      "after": "base3",
-      "requires": [
-        "base1",
-        "base2",
-        "base3"
-      ],
-      "name": "The Gauntlet",
-      "packName": "Challenge 1",
-      "packShort": "C1",
-      "blurb": "One deck of every Energy type, drawn from everything printed so far. Weakness is doubled here and nowhere else on the ladder cares.",
-      "cfg": {
-        "bossAfter": "all"
       },
-      "roster": [
+      "extra": [
         {
-          "id": "c1-grass",
-          "name": "Iven",
-          "title": "Pollenfall",
-          "deck": "c1:c1_grass",
-          "placeholder": true
-        },
-        {
-          "id": "c1-fighting",
-          "name": "Garrick",
-          "title": "Fault Line",
-          "deck": "c1:c1_fighting",
-          "placeholder": true
-        },
-        {
-          "id": "c1-fire",
-          "name": "Sena",
-          "title": "Emberwake",
-          "deck": "c1:c1_fire",
-          "placeholder": true
-        },
-        {
-          "id": "c1-lightning",
-          "name": "Roan",
-          "title": "Stormhead",
-          "deck": "c1:c1_lightning",
-          "placeholder": true
-        },
-        {
-          "id": "c1-water",
-          "name": "Isla",
-          "title": "Coldsnap",
-          "deck": "c1:c1_water",
-          "placeholder": true
-        },
-        {
-          "id": "c1-psychic",
-          "name": "Osric",
-          "title": "Gloaming",
-          "deck": "c1:c1_psychic",
-          "placeholder": true
+          "id": "gbc-ronald-3",
+          "name": "Ronald",
+          "title": "Powerful Ronald",
+          "deck": "gbc:ronald_powerful"
         }
-      ],
-      "boss": {
-        "id": "c1-colorless",
-        "name": "Ilma",
-        "title": "Plainsong",
-        "deck": "c1:c1_colorless",
-        "placeholder": true
-      }
+      ]
     },
     "base5": {
       "name": "The Syndicate",
-      "blurb": "Two authentic Team Rocket boosters to open on, and seven built from the set itself.",
+      "blurb": "Two authentic Team Rocket boosters to open on, seven built from the set itself, and a rival who has been waiting since the Clubs.",
       "roster": [
         {
           "id": "base5-devastation",
@@ -388,7 +342,15 @@
         "title": "Undertow",
         "deck": "b5:b5_t4_blastoise",
         "placeholder": true
-      }
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-4",
+          "name": "Ronald",
+          "title": "Legendary Ronald",
+          "deck": "gbc:ronald_legendary"
+        }
+      ]
     }
   }
 }

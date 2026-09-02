@@ -149,6 +149,7 @@ wrong facts, and one directly above the data that refutes it is the cheapest pos
 | `base3_decks.json` | `OPPONENT_DECKS`, `b3:` prefix | the Fossil bracket's body, gate and boss — Trevor's six |
 | `team_rocket_decks.json` | `OPPONENT_DECKS`, `tr:` prefix | the Team Rocket bracket's T1 intro — the two authentic theme decks, Devastation and Trouble |
 | `base5_decks.json` | `OPPONENT_DECKS`, `b5:` prefix | the Team Rocket bracket's body, gate and boss — Trevor's eight |
+| `challenge1_decks.json` | `OPPONENT_DECKS`, `c1:` prefix | **the whole Challenge 1 bracket** — Trevor's seven mono-type decks, one per Energy type. The first deck file that belongs to no set |
 | `ladder.json` | `LADDER` | `buildLadder()`. See [PROGRESSION.md](PROGRESSION.md) |
 
 **The opponent files fail soft where `decks.json` fails hard.** An opponent deck naming a card outside
@@ -213,6 +214,26 @@ reader `tools/wants.js` uses. Zero id corrections needed, for the fourth workboo
 named from each deck's own cover card (`b5_t2_charizard`, not a tier-number slug) for readability,
 which the earlier three files did not do consistently — worth normalising if anyone revisits them.
 
+**`challenge1_decks.json` is Trevor's seven Challenge 1 decks, live the day it was written**,
+1 Sep 2026 — one per Energy type, all Tier 4, drawn from Base, Jungle, Fossil and the promos those
+brackets open. Converted from `Challenge 1 Opponent Decks v1.xlsx` (sheets `Grass` through
+`Colorless`) directly via `tools/lib/xlsx.js`. **Zero id corrections needed, for the fifth workbook
+running**, and all seven validate clean first time.
+
+Three things about this file that the four before it do not have:
+
+- **`set` is `challenge1`, which is not a set code.** It is the bracket's key. Nothing in `data/`
+  resolves cards through it; the field records which bracket the deck belongs to and no more.
+- **Four of the seven name promo cards** (`basep-1`, `-11`, `-26`, and two in Psychic). That is legal
+  for an *authored* opponent deck and illegal for a *generated* one, which is a line drawn in
+  `opponentDeckFor()` rather than here — a challenger walking on holding a promo you have not earned
+  spoils the chase only if nobody chose to put it there.
+- **`coverCard` needed the printing suffix stripped.** The sheet writes "Zapdos B3"; `gen_cards.js`
+  matches a cover against the card *names* in the deck's own list, so the suffix has to come off or
+  the cover drops to a warning and the tile silently falls back to `heroOfList()`. Grass's cover cell
+  is empty in the workbook — **Trevor named Vileplume on 1 Sep 2026**, which is also what the deck's
+  own featureWeight column would have picked.
+
 **One stale cell, and the guard caught it rather than the eye — resolved 22 Aug 2026.** `F T2-1`
 named Omastar as its cover card and contained no Omastar; the sheet's Cover Card cell predated
 Trevor rebuilding the deck. `gen_cards.js` refuses a cover that is not in its own deck's list and
@@ -240,12 +261,18 @@ the balance figures all move.
 **Two folders hold the spreadsheets and they were renamed on 21 Aug 2026** — this section said
 `data/Deck Lists/` until then. `data/Old Deck Lists/` holds the theme-deck workbooks: `Base1
 Decks.xlsx` is the source of `decks.json` (above) and `Jungle Decks.xlsx` is the source of
-`jungle_decks.json`. **`data/v1 Opp Decks/` holds Trevor's own opponent workbooks**, five of them now
-— `Base1`, `Jungle`, `Fossil` and `Team Rocket Opponent Decks v1.xlsx` are the sources of
-`base1_decks.json`, `base2_decks.json`, `base3_decks.json` and `base5_decks.json` respectively, **all
-four live upstream**, and the JSON is the thing to read. `Challenge 1 Opponent Decks v1.xlsx` is the
-fifth and is still genuinely reference-only — nothing reads it, since the Challenge bracket concept in
-[CHALLENGES.md](CHALLENGES.md) is unbuilt.
+`jungle_decks.json`. **`data/v1 Opp Decks/` holds Trevor's own opponent workbooks, and as of 1 Sep 2026 ALL FIVE are live
+upstream** — `Base1`, `Jungle`, `Fossil`, `Team Rocket` and `Challenge 1 Opponent Decks v1.xlsx` are
+the sources of `base1_decks.json`, `base2_decks.json`, `base3_decks.json`, `base5_decks.json` and
+`challenge1_decks.json` respectively. **The JSON is the thing to read**; the workbook is the thing
+Trevor edits.
+
+**`Challenge 1` was the last one described here as reference-only and it is the reason to distrust
+that label generally.** It sat in this folder from 21 Aug and this section called it "genuinely
+reference-only — nothing reads it" for eleven days, which was true and was also the *only* thing
+standing between the file and a shipped bracket: the decks were complete, legal and correct the whole
+time, and Job 15a's deck half was a scripted extraction that took minutes. **A file being unread is
+not evidence that it is not ready.**
 
 **As of 23 Aug 2026 `data/v1 Opp Decks/` is not reference-only at all, and the `Wants` column is the
 part that matters.** `tools/lib/xlsx.js` reads an `.xlsx` with no dependencies and `tools/wants.js`

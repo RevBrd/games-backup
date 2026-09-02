@@ -68,7 +68,10 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
 - Attaching an energy or applying an item to a pokemon needs to not be canceled by the item clicked underneath it.
 - In the deck building screen, we need a way to zoom in on a card to read the move or view the scan.
 - I found another source of screen wobble! It's when the player's active card's moves disappear during the opponent's turn, the size of the active card shrinks. See the screenshots in the new screenshots folder.
-- Remove the Grand Masters from the Fossil bracket and replace them with the Fossil theme decks. If we don't have them I can find some. We should also remove Ronald entirely for now due to our own boss waves having taken shape conceptually.
+- Remove the Grand Masters from the Fossil bracket and replace them with the Fossil theme decks. If we don't have them I can find some.
+  *(The Ronald half of this note is DONE — 1 Sep 2026, Job 15a. The Grand Masters half is still open
+  and is waiting on deck lists nobody has: Fossil's own theme decks are not in `data/`, and Trevor's
+  offer to find some is the unblocker. See [GRABHIST.md](GRABHIST.md).)*
 
 
 ### Parked and kept

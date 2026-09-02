@@ -217,7 +217,10 @@ as a figure to quote. Run the suite for the real number.
   **derived** — passing an unlive set code into the live list must produce a working generated
   bracket — and it asserts every authored opponent fields a **legal 60-card deck** through the real
   `validateDeck`, which is what stops a roster entry rotting silently when a set is regenerated.
-  See [PROGRESSION.md](PROGRESSION.md).
+  **Since 1 Sep 2026 it also drives the brackets that are NOT sets** — that a standalone appears only
+  when everything it is made of is live, that its `packSets` is derived from ladder position and is
+  therefore identical on a fresh save and a finished one, and that `bossAfter: 'all'` resolves to a
+  number before anything downstream sees it. See [PROGRESSION.md](PROGRESSION.md).
 - **`packtest.js`** opens 200,000 packs against a fixed seed and checks every row of the
   odds table in [PACKS.md](PACKS.md). Deterministic, so it cannot flake; the tolerances are sized to
   catch a wrong denominator, not to absorb noise. It sweeps every live set and the fresh-RNG-per-pack

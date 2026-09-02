@@ -1483,167 +1483,6 @@ const OPPONENT_DECKS = {
     [1, "base1-82"],  // Full Heal
     [1, "base1-94"],  // Potion
   ]},
-  "c1:c1_grass": { name: "C1 Grass", cover: "base2-15", list: [
-    [24, "base1-99"],  // Grass Energy
-    [3, "base1-51"],  // Koffing
-    [2, "base3-45"],  // Weezing
-    [2, "base2-5"],  // Kangaskhan
-    [1, "base1-3"],  // Chansey
-    [4, "base2-58"],  // Oddish
-    [3, "base2-37"],  // Gloom
-    [2, "base2-15"],  // Vileplume
-    [2, "base2-9"],  // Pinsir
-    [1, "base2-38"],  // Lickitung
-    [3, "base1-91"],  // Bill
-    [2, "base1-88"],  // Professor Oak
-    [2, "base1-94"],  // Potion
-    [2, "base1-90"],  // Super Potion
-    [1, "base1-80"],  // Defender
-    [1, "base1-95"],  // Switch
-    [1, "base1-73"],  // Impostor Professor Oak
-    [1, "base1-75"],  // Lass
-    [2, "base2-64"],  // Poké Ball
-    [1, "base1-82"],  // Full Heal
-  ]},
-  "c1:c1_fire": { name: "C1 Fire", cover: "base3-12", list: [
-    [24, "base1-97"],  // Fighting Energy
-    [3, "base3-39"],  // Magmar
-    [1, "base3-12"],  // Moltres
-    [3, "base2-51"],  // Eevee
-    [2, "base2-3"],  // Flareon
-    [1, "base2-5"],  // Kangaskhan
-    [3, "base1-28"],  // Growlithe
-    [2, "base1-23"],  // Arcanine
-    [3, "base1-68"],  // Vulpix
-    [2, "base1-12"],  // Ninetales
-    [1, "base2-38"],  // Lickitung
-    [3, "base1-91"],  // Bill
-    [2, "base1-88"],  // Professor Oak
-    [1, "base3-60"],  // Gambler
-    [1, "base1-78"],  // Scoop Up
-    [2, "base1-81"],  // Energy Retrieval
-    [1, "base1-94"],  // Potion
-    [1, "base1-95"],  // Switch
-    [2, "base1-93"],  // Gust of Wind
-    [1, "base1-77"],  // Pokémon Trader
-    [1, "base1-80"],  // Defender
-  ]},
-  "c1:c1_water": { name: "C1 Water", cover: "base3-2", list: [
-    [24, "base1-102"],  // Water Energy
-    [3, "base3-10"],  // Lapras
-    [3, "base1-41"],  // Seel
-    [2, "base1-25"],  // Dewgong
-    [3, "base2-51"],  // Eevee
-    [2, "base2-12"],  // Vaporeon
-    [2, "base3-2"],  // Articuno
-    [3, "base1-35"],  // Magikarp
-    [2, "base1-6"],  // Gyarados
-    [1, "base1-77"],  // Pokémon Trader
-    [1, "base1-71"],  // Computer Search
-    [1, "base1-95"],  // Switch
-    [2, "base1-93"],  // Gust of Wind
-    [3, "base1-91"],  // Bill
-    [2, "base1-88"],  // Professor Oak
-    [2, "base1-80"],  // Defender
-    [1, "base1-82"],  // Full Heal
-    [2, "base1-92"],  // Energy Removal
-    [1, "base2-64"],  // Poké Ball
-  ]},
-  "c1:c1_lightning": { name: "C1 Lightning", cover: "base3-15", list: [
-    [24, "base1-100"],  // Lightning Energy
-    [1, "base1-58"],  // Pikachu
-    [1, "base2-60"],  // Pikachu
-    [1, "basep-1"],  // Pikachu
-    [1, "basep-26"],  // Pikachu
-    [1, "base1-14"],  // Raichu
-    [2, "base3-14"],  // Raichu
-    [3, "base1-53"],  // Magnemite
-    [1, "base1-9"],  // Magneton
-    [1, "base3-11"],  // Magneton
-    [2, "base3-15"],  // Zapdos
-    [1, "basep-11"],  // Eevee
-    [2, "base2-4"],  // Jolteon
-    [1, "base1-20"],  // Electabuzz
-    [3, "base1-91"],  // Bill
-    [1, "base1-88"],  // Professor Oak
-    [2, "base3-60"],  // Gambler
-    [2, "base2-64"],  // Poké Ball
-    [1, "base1-94"],  // Potion
-    [2, "base1-93"],  // Gust of Wind
-    [1, "base1-79"],  // Super Energy Removal
-    [2, "base1-84"],  // PlusPower
-    [1, "base1-80"],  // Defender
-    [1, "base1-74"],  // Item Finder
-    [2, "base2-51"],  // Eevee
-  ]},
-  "c1:c1_psychic": { name: "C1 Psychic", cover: "base3-5", list: [
-    [24, "base1-101"],  // Psychic Energy
-    [4, "base3-33"],  // Gastly
-    [3, "base3-6"],  // Haunter
-    [2, "base3-5"],  // Gengar
-    [3, "base1-43"],  // Abra
-    [2, "base1-32"],  // Kadabra
-    [1, "base1-1"],  // Alakazam
-    [1, "base1-3"],  // Chansey
-    [2, "base2-5"],  // Kangaskhan
-    [1, "base2-11"],  // Snorlax
-    [1, "basep-12"],  // Mewtwo
-    [1, "basep-14"],  // Mewtwo
-    [3, "base1-91"],  // Bill
-    [2, "base1-88"],  // Professor Oak
-    [1, "base1-76"],  // Pokémon Breeder
-    [1, "base1-77"],  // Pokémon Trader
-    [1, "base1-89"],  // Revive
-    [2, "base1-90"],  // Super Potion
-    [1, "base1-95"],  // Switch
-    [2, "base1-78"],  // Scoop Up
-    [1, "base2-64"],  // Poké Ball
-    [1, "base1-94"],  // Potion
-  ]},
-  "c1:c1_fighting": { name: "C1 Fighting", cover: "base3-1", list: [
-    [24, "base1-97"],  // Fighting Energy
-    [2, "base3-7"],  // Hitmonlee
-    [2, "base1-7"],  // Hitmonchan
-    [3, "base3-62"],  // Mysterious Fossil
-    [2, "base3-1"],  // Aerodactyl
-    [2, "base1-56"],  // Onix
-    [3, "base2-61"],  // Rhyhorn
-    [2, "base2-45"],  // Rhydon
-    [3, "base1-47"],  // Diglett
-    [2, "base1-19"],  // Dugtrio
-    [1, "base2-38"],  // Lickitung
-    [3, "base1-91"],  // Bill
-    [2, "base1-88"],  // Professor Oak
-    [1, "base1-95"],  // Switch
-    [2, "base1-93"],  // Gust of Wind
-    [1, "base1-94"],  // Potion
-    [1, "base1-78"],  // Scoop Up
-    [1, "base1-77"],  // Pokémon Trader
-    [1, "base1-80"],  // Defender
-    [2, "base1-90"],  // Super Potion
-  ]},
-  "c1:c1_colorless": { name: "C1 Colorless", cover: "base2-16", list: [
-    [4, "base1-96"],  // Double Colorless Energy
-    [18, "base1-98"],  // Fire Energy
-    [4, "base1-26"],  // Dratini
-    [3, "base1-18"],  // Dragonair
-    [2, "base3-4"],  // Dragonite
-    [3, "base1-57"],  // Pidgey
-    [2, "base1-22"],  // Pidgeotto
-    [1, "base2-8"],  // Pidgeot
-    [2, "base2-5"],  // Kangaskhan
-    [3, "base2-54"],  // Jigglypuff
-    [2, "base2-16"],  // Wigglytuff
-    [1, "base1-76"],  // Pokémon Breeder
-    [1, "base1-74"],  // Item Finder
-    [2, "base1-77"],  // Pokémon Trader
-    [3, "base1-91"],  // Bill
-    [2, "base1-88"],  // Professor Oak
-    [3, "base1-93"],  // Gust of Wind
-    [1, "base1-92"],  // Energy Removal
-    [1, "base1-80"],  // Defender
-    [2, "base1-82"],  // Full Heal
-  ]},
 };
 
 const LADDER = {
@@ -1656,7 +1495,7 @@ const LADDER = {
   "brackets": {
     "base1": {
       "name": "The Clubs",
-      "blurb": "Four theme decks, and seven more built out of Base Set itself.",
+      "blurb": "Four theme decks, seven built from Base Set, and a rival waiting past the end.",
       "roster": [
         {
           "id": "base1-brushfire",
@@ -1746,7 +1585,15 @@ const LADDER = {
         "title": "Ashfall",
         "deck": "b1:b1_t4_fire",
         "placeholder": true
-      }
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-1",
+          "name": "Ronald",
+          "title": "I'm Ronald!",
+          "deck": "gbc:ronald_im_ronald"
+        }
+      ]
     },
     "base2": {
       "name": "The Jungle",
@@ -1803,7 +1650,15 @@ const LADDER = {
         "title": "Deep Bloom",
         "deck": "b2:b2_t4_grass",
         "placeholder": true
-      }
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-2",
+          "name": "Ronald",
+          "title": "Invincible Ronald",
+          "deck": "gbc:ronald_invincible"
+        }
+      ]
     },
     "base3": {
       "name": "The Dome",
@@ -1875,78 +1730,19 @@ const LADDER = {
         "title": "Nightshade",
         "deck": "b3:b3_t4_psychic",
         "placeholder": true
-      }
-    },
-    "challenge1": {
-      "standalone": true,
-      "after": "base3",
-      "requires": [
-        "base1",
-        "base2",
-        "base3"
-      ],
-      "name": "The Gauntlet",
-      "packName": "Challenge 1",
-      "packShort": "C1",
-      "blurb": "One deck of every Energy type, drawn from everything printed so far. Weakness is doubled here and nowhere else on the ladder cares.",
-      "cfg": {
-        "bossAfter": "all"
       },
-      "roster": [
+      "extra": [
         {
-          "id": "c1-grass",
-          "name": "Iven",
-          "title": "Pollenfall",
-          "deck": "c1:c1_grass",
-          "placeholder": true
-        },
-        {
-          "id": "c1-fighting",
-          "name": "Garrick",
-          "title": "Fault Line",
-          "deck": "c1:c1_fighting",
-          "placeholder": true
-        },
-        {
-          "id": "c1-fire",
-          "name": "Sena",
-          "title": "Emberwake",
-          "deck": "c1:c1_fire",
-          "placeholder": true
-        },
-        {
-          "id": "c1-lightning",
-          "name": "Roan",
-          "title": "Stormhead",
-          "deck": "c1:c1_lightning",
-          "placeholder": true
-        },
-        {
-          "id": "c1-water",
-          "name": "Isla",
-          "title": "Coldsnap",
-          "deck": "c1:c1_water",
-          "placeholder": true
-        },
-        {
-          "id": "c1-psychic",
-          "name": "Osric",
-          "title": "Gloaming",
-          "deck": "c1:c1_psychic",
-          "placeholder": true
+          "id": "gbc-ronald-3",
+          "name": "Ronald",
+          "title": "Powerful Ronald",
+          "deck": "gbc:ronald_powerful"
         }
-      ],
-      "boss": {
-        "id": "c1-colorless",
-        "name": "Ilma",
-        "title": "Plainsong",
-        "deck": "c1:c1_colorless",
-        "placeholder": true
-      }
+      ]
     },
     "base5": {
       "name": "The Syndicate",
-      "blurb": "Two authentic Team Rocket boosters to open on, and seven built from the set itself.",
+      "blurb": "Two authentic Team Rocket boosters to open on, seven built from the set itself, and a rival who has been waiting since the Clubs.",
       "roster": [
         {
           "id": "base5-devastation",
@@ -2020,7 +1816,15 @@ const LADDER = {
         "title": "Undertow",
         "deck": "b5:b5_t4_blastoise",
         "placeholder": true
-      }
+      },
+      "extra": [
+        {
+          "id": "gbc-ronald-4",
+          "name": "Ronald",
+          "title": "Legendary Ronald",
+          "deck": "gbc:ronald_legendary"
+        }
+      ]
     }
   }
 };

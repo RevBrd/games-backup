@@ -49,8 +49,34 @@ const clear = (save, bracket, n) => bracket.roster.slice(0, n).forEach(o => P.re
 group('the ladder is derived from the live sets');
 
 const L = build();
-eq(L.length, LIVE.length, 'one bracket per live set');
-eq(L.map(b => b.set).join(','), LIVE.join(','), 'brackets follow the live-set order');
+// A BRACKET IS NO LONGER ALWAYS A SET — Job 15a. So the invariant is not
+// "one bracket per live set" any more; it is "every live set has exactly one
+// bracket, in order, and anything extra is standalone and anchored". Written as
+// the stronger pair rather than relaxed to a count, because a count would have
+// gone green on a challenge bracket landing in the wrong place.
+eq(L.filter(b => !b.standalone).length, LIVE.length, 'one SET bracket per live set');
+eq(L.filter(b => !b.standalone).map(b => b.set).join(','), LIVE.join(','),
+  'the set brackets follow the live-set order');
+{
+  const names = L.map(b => b.set);
+  for (const b of L.filter(x => x.standalone)) {
+    const src = LADDER.brackets[b.set];
+    eq(names[b.index - 1], src.after, `${b.set} sits immediately after ${src.after}`);
+    ok(b.index > 0, '...and never first, since it is anchored to something');
+  }
+  console.log(`    ${L.length} brackets: ${L.filter(x => !x.standalone).length} sets, ${L.filter(x => x.standalone).length} standalone`);
+}
+// A STANDALONE APPEARS ONLY WHEN EVERYTHING IT IS MADE OF IS LIVE. Challenge 1's
+// decks are drawn from Base, Jungle and Fossil, so a build generated without one
+// of them must not offer a bracket whose whole roster would backfill to generated
+// challengers — which is what would happen, silently, without `requires`.
+{
+  const early = build(['base1', 'base2']);
+  ok(early.every(b => !b.standalone), 'a standalone whose `requires` are not all live never appears');
+  const ready = build(['base1', 'base2', 'base3']);
+  ok(ready.some(b => b.set === 'challenge1'), '...and appears the moment they are');
+  eq(ready[ready.length - 1].set, 'challenge1', 'as the last bracket, if nothing follows its anchor');
+}
 // AUTHORED vs GENERATED, counted rather than assumed. This said "all three live
 // sets have an authored bracket" and went red the moment Team Rocket went live —
 // correctly, and for a reason that is not a bug: base5 has no roster in
@@ -81,7 +107,7 @@ eq(L[0].name, 'The Clubs', 'the first bracket is named from the data');
 const noRocket = JSON.parse(JSON.stringify(LADDER));
 delete noRocket.brackets.base5;
 const withRocket = build(LIVE, noRocket);
-eq(withRocket.length, LIVE.length, 'a set with no bracket in the data still gets one');
+eq(withRocket.filter(b => !b.standalone).length, LIVE.length, 'a set with no bracket in the data still gets one');
 const rocket = withRocket[withRocket.length - 1];
 eq(rocket.set, 'base5', 'and it is the one whose bracket was removed');
 ok(rocket.generated, 'the unauthored bracket is flagged as generated');
@@ -136,8 +162,8 @@ for (const b of L) {
     if (!r.ok) illegal.push(`${o.id}: ${r.errors.join('; ')}`);
   }
 }
-eq(authored, 43, 'the four brackets name 43 authored opponents — 8 GBC (4 Grand Masters + 4 Ronald extras), ' +
-  '6 theme (4 Base + 2 Jungle + 2 Team Rocket), and Trevor 8 + 5 + 6 + 8');
+eq(authored, 46, 'the five brackets name 46 authored opponents — 4 GBC Grand Masters, ' +
+  '8 theme (4 Base + 2 Jungle + 2 Team Rocket), and Trevor 8 + 5 + 6 + 8 + 7');
 ok(illegal.length === 0, `every authored opponent fields a legal 60-card deck${illegal.length ? '\n        ' + illegal.join('\n        ') : ''}`);
 
 // Nothing in a deck FILE is stranded. A deck that resolves but that no rung fields is
@@ -150,15 +176,22 @@ const usedFrom = prefix => {
   }));
   return used;
 };
-// Eight of the sixteen retired on 25 Aug 2026 when Team Rocket got its own
-// roster — the placeholder rule says they are never deleted, and gbc_decks.json
-// still carries all sixteen, but only the four Grand Masters (base3's stand-in
-// intro) and the four Ronalds (one per bracket's `extra`) are still ASSIGNED.
-eq(usedFrom('gbc').size, 8, 'eight GBC decks are still assigned — 4 Grand Masters, 4 Ronalds');
+// TWELVE of the sixteen are now unassigned and that is the placeholder rule
+// working, not a leak: eight club masters retired on 25 Aug 2026 when Team Rocket
+// got its own roster, and the four Ronalds retired on 1 Sep 2026 when Job 15a
+// removed him. They are never deleted — gbc_decks.json still carries all sixteen.
+// Only the four Grand Masters are assigned, holding base3's stand-in intro.
+//
+// NOTE THE ASYMMETRY, because it is the point of this whole block: `gbc` is a
+// PLACEHOLDER source and being partly unused is correct for it, while every
+// hand-built source below must be fully assigned or a deck Trevor made is sitting
+// in a file that nothing reads.
+eq(usedFrom('gbc').size, 4, 'four GBC decks are still assigned — the Grand Masters, and nobody else');
 eq(usedFrom('b1').size, 8, "all eight of Trevor's Base Set decks are assigned to an opponent");
 eq(usedFrom('b2').size, 5, "all five of Trevor's Jungle decks are assigned to an opponent");
 eq(usedFrom('b3').size, 6, "all six of Trevor's Fossil decks are assigned to an opponent");
 eq(usedFrom('b5').size, 8, "all eight of Trevor's Team Rocket decks are assigned to an opponent");
+eq(usedFrom('c1').size, 7, "all seven of Trevor's Challenge 1 decks are assigned to an opponent");
 eq(usedFrom('jungle').size, 2, 'both Jungle theme decks are assigned to an opponent');
 eq(usedFrom('tr').size, 2, 'both Team Rocket theme decks are assigned to an opponent');
 
@@ -234,18 +267,43 @@ eq(plain.set, 'base2', 'and pays in the second bracket\'s set');
 
 group('the extra opponent waits for the boss');
 
-const s2 = fresh();
-const third = L[2];
-ok(third.extra.length === 1, 'the third bracket has one post-boss challenger');
-ok(!P.canFight(s2, L, third.extra[0].id), 'who is not fightable on a fresh save');
-// open bracket 3 the long way: clear and beat both earlier bosses
-[0, 1].forEach(i => { clear(s2, L[i], L[i].cfg.bossAfter); P.recordWin(s2, L, L[i].boss.id); });
-ok(P.bracketOpen(s2, L, 2), 'the third bracket opens after two bosses');
-ok(!P.canFight(s2, L, third.extra[0].id), 'the extra is still shut behind its own boss');
-clear(s2, L[2], L[2].cfg.bossAfter);
-P.recordWin(s2, L, third.boss.id);
-ok(P.canFight(s2, L, third.extra[0].id), 'and opens once that boss falls');
-eq(P.winReward(s2, L, third.extra[0].id).packs, 2, 'the extra pays a normal 2 packs');
+// DRIVEN OFF A FIXTURE, NOT OFF THE LIVE LADDER, since 1 Sep 2026 — and the
+// reason is worth the paragraph. Ronald was the only content `extra` had ever
+// held, one per bracket, and Job 15a removed him from all four at Trevor's ask.
+// These assertions went red instantly, which put a real choice in front of
+// whoever was standing there: delete them, or re-point them.
+//
+// Deleting them was wrong. `extra` is a working mechanism that the detailing pass
+// is expected to hang a real post-boss encounter on, and a mechanism with no
+// tests and no users is a mechanism that quietly stops working and nobody finds
+// out until somebody tries to use it. A fixture keeps the coverage alive across
+// however long the slot stays empty. **If a real `extra` ever lands on the live
+// ladder, this can point back at it** — but it does not have to.
+{
+  const fixture = JSON.parse(JSON.stringify(LADDER));
+  fixture.brackets.base3.extra = [
+    { id: 'fixture-extra', name: 'Fixture', title: 'post-boss', deck: 'gbc:ronald_powerful' },
+  ];
+  const F = build(LIVE, fixture);
+  const s2 = fresh();
+  const third = F[2];
+  eq(third.set, 'base3', 'the fixture bracket is the one we think it is');
+  ok(third.extra.length === 1, 'it has one post-boss challenger');
+  ok(!P.canFight(s2, F, third.extra[0].id), 'who is not fightable on a fresh save');
+  // open bracket 3 the long way: clear and beat both earlier bosses
+  [0, 1].forEach(i => { clear(s2, F[i], F[i].cfg.bossAfter); P.recordWin(s2, F, F[i].boss.id); });
+  ok(P.bracketOpen(s2, F, 2), 'the third bracket opens after two bosses');
+  ok(!P.canFight(s2, F, third.extra[0].id), 'the extra is still shut behind its own boss');
+  clear(s2, F[2], F[2].cfg.bossAfter);
+  P.recordWin(s2, F, third.boss.id);
+  ok(P.canFight(s2, F, third.extra[0].id), 'and opens once that boss falls');
+  eq(P.winReward(s2, F, third.extra[0].id).packs, 2, 'the extra pays a normal 2 packs');
+}
+
+// ...and the live ladder has none, which is a fact worth asserting rather than
+// leaving as an absence. If one reappears it should be a decision.
+ok(L.every(b => b.extra.length === 0),
+  'no bracket on the LIVE ladder carries an extra — Ronald was removed 1 Sep 2026');
 
 group('the save, and what it does not store');
 
@@ -360,14 +418,74 @@ const GATE_KEY = {
   const everything = { progress: { beaten: {} } };
   L.forEach(b => { everything.progress.beaten[b.boss.id] = 1; });
   const all = P.unlockedPromos(everything, L);
-  eq(all.length, 17, 'clearing every live bracket still opens only 17 of the 28');
+  // 21 SINCE 1 SEP 2026, up from 17. Job 15a built the `challenge1` bracket and
+  // four promos gated on it turned on with no change to PROMO_GATES and no code —
+  // Venusaur CH, Cool Porygon, Flying Pikachu and Surfing Pikachu. That is the
+  // per-card gate paying off exactly as designed, and it is the reason this
+  // number is allowed to move: what must NOT move is the line below it.
+  eq(all.length, 21, 'clearing every live bracket opens 21 of the 28');
   const locked = Object.keys(P.PROMO_GATES).filter(id => all.indexOf(id) < 0);
-  ok(locked.every(id => ['challenge1', 'challenge2', 'gym1', 'gym2'].indexOf(P.PROMO_GATES[id]) >= 0),
+  ok(locked.every(id => ['challenge2', 'gym1', 'gym2'].indexOf(P.PROMO_GATES[id]) >= 0),
     'and every one still locked is waiting on a bracket that does not exist yet');
+  ok(all.indexOf('basep-15') >= 0, 'Cool Porygon arrived with the bracket its gate names');
 
   // The playability callback, proved rather than assumed.
   eq(P.unlockedPromos(everything, L, () => false).length, 0,
     'an isPlayable that refuses everything yields nothing, however far you have got');
+}
+
+group('a bracket that is not a set');
+
+// Job 15a. Challenge 1 is the first bracket on the ladder that belongs to no set,
+// and almost everything here is asserting that `bracket.set` is being read as an
+// IDENTITY by the things that should and never as a POOL by the things that
+// should not. See buildLadder's header on why those are four different questions.
+{
+  const c = L.find(b => b.standalone);
+  ok(c, 'the ladder carries a standalone bracket');
+  eq(c.set, 'challenge1', 'whose `set` is its own key, which is what PROMO_GATES matches');
+  ok(!SET_INFO[c.set], '...and which is deliberately NOT a set — no dex section, no completion %');
+  eq(c.roster.length, 7 - 1, 'six rungs and a boss, from seven authored decks');
+  ok(c.roster.concat([c.boss]).every(o => o.deck.startsWith('c1:')),
+    'every one of the seven fields one of Trevor’s Challenge decks');
+
+  // WHAT IT IS MADE OF, which is the question `set` cannot answer.
+  eq(c.packSets.join(','), 'base1,base2,base3',
+    'its packs draw from every booster set BEFORE it, derived from ladder position');
+  ok(c.packSets.indexOf('challenge1') < 0, 'and never from its own key, which names no cards');
+  ok(c.packSets.indexOf('base5') < 0, 'nor from anything after it, however far the player has got');
+  // The property that makes it stable: it is a fact about the LADDER, so a pack
+  // sitting in the save cannot change contents because the player beat somebody.
+  // Asserted by beating everybody and asking again.
+  {
+    const done = { progress: { beaten: {} } };
+    L.forEach(b => { done.progress.beaten[b.boss.id] = 1; });
+    eq(build().find(b => b.standalone).packSets.join(','), 'base1,base2,base3',
+      '...and it is the same list on a finished save as on a fresh one');
+  }
+  eq(P.poolSetsFor(L, c).join(','), 'base1,base2,base3',
+    'a generated challenger inside it draws from real sets only');
+
+  // bossAfter: 'all' — the word never escapes buildLadder.
+  eq(c.cfg.bossAfter, c.roster.length, "cfg.bossAfter 'all' resolves to the roster's real length");
+  eq(typeof c.cfg.bossAfter, 'number', '...as a number, so nothing downstream has to know the word exists');
+  {
+    const s = fresh();
+    L.slice(0, c.index).forEach(b => { clear(s, b, b.cfg.bossAfter); P.recordWin(s, L, b.boss.id); });
+    ok(P.bracketOpen(s, L, c.index), 'the Challenge opens once Fossil’s boss is down');
+    clear(s, c, c.roster.length - 1);
+    ok(!P.bossAvailable(s, c), 'and beating all but ONE of its roster is not enough');
+    P.recordWin(s, L, c.roster[c.roster.length - 1].id);
+    ok(P.bossAvailable(s, c), '...the last one summons the boss');
+
+    // IT PAYS IN ITS OWN KEY, which is the whole reason a Challenge pack can exist.
+    const rw = P.winReward(s, L, c.boss.id);
+    eq(rw.set, 'challenge1', 'a Challenge win pays in a pack keyed by the bracket');
+    eq(rw.packs, 3, '...3 for a first boss win, same as any other bracket');
+    // AND IT RE-GATES WHAT FOLLOWS. Team Rocket used to open off Fossil's boss.
+    eq(rw.unlocks, 'base5', 'clearing it is what opens Team Rocket now');
+    ok(!P.bracketOpen(s, L, c.index + 1), '...which is shut until that happens');
+  }
 }
 
 group('reporting');
@@ -379,9 +497,19 @@ eq(st.bossTotal, L.filter(b => b.boss).length, 'one boss per bracket that has on
 eq(st.bossTotal, L.length, '...which is every bracket, generated ones included');
 eq(st.bosses, 1, 'one of them beaten');
 eq(st.total, L.reduce((a, b) => a + b.roster.length, 0), 'the roster total counts every bracket');
-ok(P.findOpponent(L, 'gbc-ronald-1') !== null, 'an opponent can be looked up by id');
-ok(P.findOpponent(L, 'nobody') === null, 'and an unknown id returns null rather than throwing');
-eq(P.bracketOf(L, 'gbc-ronald-2').set, 'base2', 'and the bracket it belongs to is findable');
+// Named from the DATA rather than typed, so this pair stops expiring. It named
+// two Ronalds and both vanished on 1 Sep 2026 — the third time an assertion in
+// this file has been written against whoever happened to be standing in a slot.
+{
+  const someone = L[1].roster[0].id;
+  ok(P.findOpponent(L, someone) !== null, 'an opponent can be looked up by id');
+  ok(P.findOpponent(L, 'nobody') === null, 'and an unknown id returns null rather than throwing');
+  eq(P.bracketOf(L, someone).set, L[1].set, 'and the bracket it belongs to is findable');
+  // ...including inside a bracket that is not a set, which is the lookup path a
+  // Challenge win takes on its way to being paid.
+  const chal = L.find(b => b.standalone);
+  eq(P.bracketOf(L, chal.boss.id).set, chal.set, 'a standalone bracket is findable from its boss');
+}
 
 // ---------------------------------------------------------------------------
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);

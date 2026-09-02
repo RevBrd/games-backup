@@ -61,23 +61,6 @@ const PACK_ODDS = {
   jumpCommonToRare: 0.001,
 };
 
-// A PACK TYPE MAY CARRY ITS OWN ODDS, keyed by the same pack key the save uses.
-// The Challenge pack is supposed to — PACKS.md: "slightly richer rarity odds,
-// less chance of a specific card, higher chance of a good one."
-//
-// EMPTY ON PURPOSE, Job 15a. Trevor deferred every odds decision to Job 15b,
-// which is reopening the whole per-slot table anyway: the 25 Aug 2026 shrink from
-// eleven cards to eight thinned four cosmetic axes without anyone touching a
-// value, and nobody has retuned them. Picking a fifth number now would mean
-// measuring the Challenge pack against a table that is about to move underneath
-// it. So the hook is wired, tested and inert, and 15b fills in one object.
-//
-// NOTE WHAT RICHER ODDS DRAG WITH THEM, because nobody would choose it and it
-// arrives anyway: the cosmetic rolls compound with the rarity ones, so a Challenge
-// pack also becomes the best place in the game to pull a Shadowless or a 1st
-// Edition. PACKS.md flags that as a decision rather than a side effect.
-const PACK_ODDS_BY_KIND = { challenge1: {} };
-
 // PACKS.md wants 2-3 glitch flavours so a Misprint sighting reads as a fresh
 // joke rather than "oh, the misprint effect again". They are separate variant
 // keys, so two differently-broken cards are different collectibles.
@@ -165,29 +148,16 @@ const HOLO_RARITIES = { 'Rare Holo': 1, 'Rare Shining': 1, 'Rare Secret': 1 };
 // mutate one, build it fully before opening a pack against it.
 const POOL_CACHE = new WeakMap();
 
-// `sets` is one set code, an ARRAY of them, or null for every booster set.
-//
-// THE ARRAY FORM IS THE CHALLENGE PACK — Job 15a. A Challenge bracket belongs to
-// no set, so its pack is a pack TYPE drawing from several: `buildPools(db,
-// ['base1','base2','base3'])`. It is a real union rather than a set that borrows,
-// so the Energy share below comes out at the union's own natural rate and there
-// is no floor — `ENERGY_FLOOR` is keyed by pack key and a Challenge has no row.
-function buildPools(db, sets) {
+function buildPools(db, setCode) {
   let perSet = POOL_CACHE.get(db);
   if (!perSet) { perSet = {}; POOL_CACHE.set(db, perSet); }
-  const many = Array.isArray(sets);
-  const wanted = many ? sets.slice().sort() : null;
-  const setCode = many ? null : sets;
-  const inScope = many
-    ? (code => wanted.indexOf(code) >= 0)
-    : (setCode ? (code => code === setCode) : (() => true));
-  const key = many ? '+' + wanted.join('+') : (setCode || '*');
+  const key = setCode || '*';
   if (perSet[key]) return perSet[key];
 
   const pools = { rareHolo: [], rare: [], uncommon: [], common: [], commonNoEnergy: [], energy: [] };
   for (const id in db) {
     const c = db[id];
-    if (!inScope(c.set)) continue;
+    if (setCode && c.set !== setCode) continue;
     if (NON_BOOSTER_SETS[c.set]) continue;
     const isBasicEnergy = c.kind === 'energy' && c.cls === 'Basic';
     if (isBasicEnergy) { pools.energy.push(id); pools.common.push(id); continue; }
@@ -219,12 +189,9 @@ function buildPools(db, sets) {
   // as a twelfth and thirteenth card. It keeps its base1 number, so it is never
   // part of the set it fell out of — Trevor's call, and the reason the dex and
   // the set-completion counters need no special case for it.
-  // A UNION BORROWS TOO, on the same rule. Challenge 1's union contains base1 so
-  // it never fires there, but a later Challenge anchored past a run of sets that
-  // print none would otherwise hand out a pack with no Energy in it at all.
-  if (sets && !pools.energy.length) {
+  if (setCode && !pools.energy.length) {
     const src = energySource(db);
-    if (src && !inScope(src)) {
+    if (src && src !== setCode) {
       const from = buildPools(db, src);
       for (const id of from.energy) { pools.energy.push(id); pools.common.push(id); }
       pools.energyShare = from.energyShare;
@@ -316,7 +283,7 @@ function drawRareCard(pools, rand, odds, isEnergy, taken) {
 // `slot` is 'rare' | 'uncommon' | 'common' | 'promo'. `holo` is only meaningful
 // on the Rare slot and records which side of the 2:1 the roll landed.
 function openPack(db, setCode, rand, opts = {}) {
-  const odds = Object.assign({}, PACK_ODDS, PACK_ODDS_BY_KIND[setCode], opts.odds);
+  const odds = Object.assign({}, PACK_ODDS, opts.odds);
   const pools = opts.pools || buildPools(db, setCode);
   const promos = opts.promos || [];
 
@@ -450,4 +417,4 @@ function openPack(db, setCode, rand, opts = {}) {
   return { set: setCode, firstEd, intrusion, cards };
 }
 
-if (typeof module !== 'undefined') module.exports = { PACK_SHAPE, PACK_SIZE, PACK_ODDS, PACK_ODDS_BY_KIND, MISPRINT_FLAVOURS, ENERGY_FLOOR, ENERGY_CAP, NON_BOOSTER_SETS, HOLO_RARITIES, buildPools, promoPool, energySource, openPack };
+if (typeof module !== 'undefined') module.exports = { PACK_SHAPE, PACK_SIZE, PACK_ODDS, MISPRINT_FLAVOURS, ENERGY_FLOOR, ENERGY_CAP, NON_BOOSTER_SETS, HOLO_RARITIES, buildPools, promoPool, energySource, openPack };
