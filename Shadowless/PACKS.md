@@ -137,10 +137,11 @@ three **by 11/8**, rounded to a clean denominator.
 **Do not eyeball a per-slot odd against a per-pack rate.** They look alike written down, and that is
 exactly how this drifted unnoticed for a week — the table above carries both columns for that reason.
 
-Measured at 200,000 packs after the retune: **Reverse Holo 1-in-10.0, Shiny 1-in-40.5, Shadowless
-1-in-194, Misprint 1-in-952**, against design targets of 10.4 / 40.4 / 200 / 1000. The ~5x ladder came
-out *tighter* than before — 4.03x / 4.80x / 4.90x against the old 3.89 / 4.76 / 4.48 — which is a side
-effect of choosing round denominators rather than the goal. Extend at 5x if a fifth tier is wanted.
+Design targets are **10.4 / 40.4 / 200 / 1000**, and the ~5x ladder came out *tighter* than before as
+a side effect of choosing round denominators rather than as the goal. Extend at 5x if a fifth tier is
+wanted. **The measured figures are in one place only** — the three-column table under *Which promos
+can actually intrude* — because three copies of four numbers in one file is three things to update
+and two of them will be forgotten.
 
 **Set-completion pacing did not move**, because not one of these four is a rarity: still a median 156
 packs and ~78 wins for all of Base Set.
@@ -240,18 +241,17 @@ Challenge 1 sits after Fossil, so `base1`, `base2` and `base3` are all open befo
 against any of these decks. **Nobody is shown a card they are barred from.** That is the gate order
 working rather than a coincidence, and it is worth knowing before anyone reopens this.
 
-**So it is not queued work any more; it is a decision waiting on a different reason.** The gates may
-still be wrong for reasons of their own — a drip nobody notices is arguably not worth the mechanism —
-but the argument recorded here for removing them was refuted by its own data. **Ask before acting**,
-because the request admits two readings and they are different jobs: drop `PROMO_GATES` entirely so
-all 28 scripted promos are pullable from the first pack, or keep the mechanism and open only specific
-gates. **The mechanism is worth keeping either way** — seven promos are gated against `challenge2`,
-`gym1` and `gym2`, brackets that do not exist, and that half was never the complaint.
+**So it is a decision waiting on a different reason, not queued work.** The gates may still be wrong
+on their own merits — a drip nobody notices is arguably not worth the mechanism — but **ask before
+acting**, because the request admits two readings and they are different jobs: drop `PROMO_GATES`
+entirely, or keep it and open specific gates. **The mechanism is worth keeping either way**, since
+seven promos are gated against brackets that do not exist and that half was never the complaint.
 
-**And the observation underneath the request was true**: Trevor had opened 164 packs and pulled no
-promo. That is not the gates and not luck. **Job 13b, which made the intrusion roll fire at all,
-landed on 27 Aug 2026 — the same day his newest export was written.** Nearly every pack in that save
-was opened while the roll was dead code. *[The roll that had never fired →](HISTORY-ARCHIVE-2.md)*
+**The observation underneath the request was true and had a different cause.** Trevor had opened 164
+packs and pulled no promo — not the gates, and not luck. **Job 13b, which made the intrusion roll
+fire at all, landed 27 Aug 2026, the same day his newest export was written**, so nearly every pack
+in that save was opened while the roll was dead code.
+*[The roll that had never fired →](HISTORY-ARCHIVE-2.md)*
 
 **Twenty-eight of the fifty-three promos carry a gate and twenty-one resolve today.** The other
 seven name `challenge2`, `gym1` or `gym2` — brackets that do not exist — and they **fail closed**,
@@ -265,10 +265,9 @@ bracket carries that key. The twenty-five promos with no gate at all are the uns
 effect script* as well as by gate, so CLAUDE.md's "no collecting a card you cannot play" holds for a
 set that is deliberately half-built.
 
-Verified at 200,000 packs after the 1 Sep 2026 retune: **holo 1-in-3.0, 1st Edition 1-in-20.1, Reverse
-Holo 1-in-10.0, Shiny 1-in-40.5, Shadowless 1-in-194, Misprint 1-in-952**, with the ~5x ladder at
-4.03x / 4.80x / 4.90x. **Three sets of numbers now exist for this pack and confusing them is easy**,
-so all three are here:
+**Verified at 200,000 packs after the 1 Sep 2026 retune, and this table is the only copy in the
+file.** The ~5x ladder sits at 4.03x / 4.80x / 4.90x. **Three sets of numbers exist for this pack and
+confusing them is easy**, so all three are here rather than one being quoted loose:
 
 | | 11-card pack | 8-card pack, pre-retune | 8-card pack, now |
 |---|---|---|---|

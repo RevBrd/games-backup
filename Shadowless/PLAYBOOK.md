@@ -41,20 +41,12 @@ you ever suspect a stale read: **every live set now runs to full paragraphs.** `
 register per set and the medians are Base Set 208, Jungle 229, **Fossil 251** — the longest of the
 four — and Team Rocket 242.
 
-**The overhaul is DONE and this paragraph told everybody otherwise for six days.** It read *"Jungle
-and Fossil are still one-liners awaiting the same overhaul — do not work a Jungle or Fossil claim
-from the current text"*, which was true of the workbook on 23 Aug and false of the one `wants.js`
-actually opens. Trevor's method, in his own account: the one-line `Wants` were the first thing he
-wrote, Team Rocket got the full-paragraph treatment, and when that came back useful he **went back
-through the earlier sets in the same style.** Jungle and Fossil are in that pass, and the tell is
-that they use the controlled vocabulary — Clefable's names *Copy Effects* and *Setup Turn* in one
-sentence, Lapras's names *Over-Attach* and says explicitly that it is **not** a wall and why.
-
-**The general lesson is the one this file already teaches about stale workbooks, arriving from the
-other side.** A hold written on a dated observation goes stale silently, and nothing in the project
-checks a sentence like that — `wants.js` re-reads the workbook every run and had been printing the
-refutation in its own output the whole time. **A claim about the SHAPE of the inbox is as
-perishable as a claim about its size**, so state it as a command rather than a fact: run the tool.
+**All four live sets are one pool.** A hold once fenced Jungle and Fossil off as "still one-liners
+awaiting the same overhaul", and it was true of the workbook on 23 Aug and false of the one
+`wants.js` actually opens — Trevor went back through the earlier sets in the same style once Team
+Rocket's came back useful. It stood for six days while the tool printed the refutation on every run.
+**A claim about the SHAPE of the inbox is as perishable as a claim about its size**, so state it as a
+command rather than a fact: run the tool.
 
 **Its promos are not in the game yet**, which is why `Gated Until` exists. A `Wants` on a card that no
 set has made live is a note filed early, not a gap — do not treat one as unfiled work, and if you
@@ -305,6 +297,10 @@ pattern. They link, they do not overlap.
 
 
 ## Possible patterns
+
+*(**Seventeen are listed below**; Energy Funnel was added on 23 Aug 2026 and this sentence was
+not re-read. Left in Trevor's own words with the correction beside it rather than edited — the list
+is the count, which is what the rest of this file says.)*
 
 #22 Tentatively identified 16 behavior patterns so far that could eventually be built into this, and some already have been. There are expected to be more added as we go. The ones not listed as documents here still need to be verified and built into the game. These patterns are used as references in the Wants and behaviors column in the v1 Opponent Deck file index page. More will be added as identified.
 

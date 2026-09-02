@@ -304,14 +304,17 @@ on it.**
    for a fortnight.
    *(The promotion half of this entry is closed — a wall is preferred when promoting now, on survival
    rather than on stickiness.)*
+
 2. **Nothing has re-tuned the weights as a set.** Every AI change since 13 Aug has been one term at a
    time, each with a reason and a measurement. A sweep over `AI_WEIGHTS` as a whole has never been
    done and there is no measured reason to think it would pay — recorded so nobody proposes it as a
    known-good job. It is a speculative one.
+
 3. **`prizeIndex` is unmeasured.** It fires only while Prizes are face up, which is rare, and it
    inherits `cardKeepValue`'s weights rather than adding its own — so there is nothing new to tune,
    but nothing has duelled it either. It cannot go on `selftest.js`'s `PROVISIONAL` list, which holds
    effect verbs, so it is recorded here instead.
+
 4. ~~**`evolve` cannot see readiness, and fixing that ALONE would make the bot worse.**~~ **BUILT
    28 Aug 2026**, both halves in one commit, from Trevor's account of how the GBC game does it — the
    bot now evolves at one Energy short of the evolution's cheapest attack rather than as soon as it
@@ -330,6 +333,7 @@ on it.**
    What settles it is an instrument that counts turns lost per *application* rather than sampling the
    board — the crude one cannot separate a re-application from a persistence — run wide enough to
    carry an interval. *[The rest of that thread →](Playbook/ATTACK-CHOICE.md)*
+
 6. **A status is a free cure away, and the bot does not know — measured at 6.2%, so it was not
    built.** `engine.js` clears status on evolution, so any afflicted Pokemon whose evolution is in
    hand escapes for nothing. Half of all Active observations can evolve, but the evolution is
@@ -337,10 +341,12 @@ on it.**
    because **the reasoning generalises even though the number does not**: it is public knowledge
    whether a card has an evolution, so this could be priced without ever reading their hand, and
    `namesWithAnEvolution` already exists. Revisit if a set arrives with far denser evolution lines.
+
 7. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
    Every opponent plays at the tier deck select hands them. Whether a named rival should play better
    than a Club Master is an unasked design question — see [PROGRESSION.md](PROGRESSION.md) and
    [OPPONENTS.md](OPPONENTS.md), which argues the AI probably should *not* be the dial.
+
 8. **The failing rows in `tools/claims/` are open AI faults, and they are not listed here on
    purpose.** From 23 Aug 2026 a claim out of Trevor's workbook is a row the bot is held to, and a red
    one is a fault report rather than a broken build. **`node tools/claimtest.js` is the live list**
@@ -360,26 +366,13 @@ on it.**
    about. The row was rewritten to assert the correct behaviour rather than deleted.
    *[The rule that came out of it →](AI-INVARIANTS.md)*
 
-   ~~**One clause survives and it is worth naming, because three cards ask for it rather than one.**~~
-   **RESOLVED 30 Aug 2026, and there was never a family.** The clause was *nothing prices holding an
-   attack in reserve*, and it named Arcanine, Ninetales and Charmeleon. **Asked, and all three left by
-   different doors:**
-
-   - **Ninetales was never a reserve case.** *"Never be required to choose between Lure and nothing"*
-     is about not being **Active** without Fire Blast — entry, not holding. Trevor, 30 Aug. Its Lure
-     half is separately closed by `bestDragTarget`.
-   - **Charmeleon is lookahead**, open item 9(c) above, and has been all along.
-   - **Arcanine is a SLOT question, and the row was asking for the opposite of what he wants.**
-     Trevor, 30 Aug: *"An Arcanine in the active spot with 3 energies should probably attack anyway,
-     if pausing for a turn to gather energies would result in a net negative... But on the bench, the
-     AI shouldn't want to stop powering it up at Flamethrower, and always continue on to Takedown."*
-     **Both halves measured as already correct** and are now claim rows.
-
-   **The transferable part: the item was written about a CARD and the answer was about a SLOT.**
-   Standing still to bank an Energy is a thing a Bench does; an Active that declines to swing pays a
-   turn of damage for it. A note that does not say which slot it is about can be true in one place
-   and wrong in the other, and this one was.
+   ~~**One clause survived: nothing prices holding an attack in reserve.**~~ **RESOLVED 30 Aug 2026,
+   and there was never a family.** It named Arcanine, Ninetales and Charmeleon; asked, all three left
+   by different doors. **The transferable part is that the item was written about a CARD and the
+   answer was about a SLOT** — banking an Energy is a thing a Bench does, and an Active that declines
+   to swing pays a turn of damage for it. *[All three, and Trevor's answers →](HISTORY-ARCHIVE-2.md)*
    *[How a note becomes a row →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*
+
 9. **"Energy is a resource with somewhere else to be" — and half of what it was waiting for landed on
    31 Aug 2026 without anybody aiming at it.** The forward-looking arm below has always needed two
    things: *who else wants this Energy*, and *what is it worth to them*. `evolutionRoadFor` now
@@ -391,39 +384,19 @@ on it.**
    burned Fire is one the Bench does not get. Measured as a flat 13-point gap on every board.
    *[The decomposition, and the tension underneath it →](Playbook/AMMO.md)*
 
-   The original entry, still accurate: **MEASURED 28 Aug 2026. Two of its three halves
-   are done or would do nothing, and this item exists mainly to stop it being re-scoped as one large
-   job.** It is the capability [Ammo](Playbook/AMMO.md)'s Charmeleon and Arcanine notes and
-   [Evolution timing](Playbook/EVOLUTION-TIMING.md) all name as their blocker. Trevor's sentence
-   decomposes into three and they are in very different states.
+   **MEASURED 28 Aug 2026, and the item exists mainly to stop it being re-scoped as one large job.**
+   Trevor's sentence decomposes into three arms in very different states:
 
-   **(a) Misrouting — putting the card on the wrong slot. Effectively solved: 0.26%.** `aitest.js 8
-   --gbc`, **17,672 games and 228,832 attachments**: 605 misdirected, one attachment in 380. The
-   per-slot competition through `attachValue` already routes correctly. **Read that null carefully,
-   because it is partly tautological** — the bot picks the highest-scoring action, so this counter can
-   only fire where the *score* disagrees with a `short`-based notion of need. It says the scoring is
-   internally consistent. It cannot say the routing is *strategically* right, and no local counter can;
-   that is only answerable by outcome, so any change here needs `aiduel`/`decksim` rather than a
-   counter going down. *[Why the small probe that found it read zero →](MISREADINGS.md)*
+   | Arm | State |
+   |---|---|
+   | **(a)** putting the card on the wrong slot | **Effectively solved — 0.26%.** Read that null carefully; it is partly tautological, and no local counter can say the routing is *strategically* right |
+   | **(b)** holding the card when Energy is scarce | **Real and near-inert**, ~0.1% of attachments. Build it for correctness; do not expect it to move a win rate |
+   | **(c)** attaching toward a card not yet in play | **Half built.** `evolutionInHand` + `potentialAs` give one card of lookahead, and only while the evolution is *in hand* |
 
-   **And the neighbouring quantity is 27x larger.** 7% of attachments go onto an Active that dies
-   before spending them and 1% onto one that could not attack anyway — 15,117 and 2,462 against
-   misdirection's 605. `survivesCharge` already discounts for this and 7% still get through. Whether
-   that is waste or simply what attaching under pressure looks like is **unmeasured**, and if anyone
-   goes hunting for waste in the attach decision, that is where it is.
-
-   **(b) Holding the card when Energy is scarce — real, and near-inert at ~0.1% of attachments.** Only
-   1.4% of attachments score under 6 at all, and 2 of 1,540 were made with six or fewer Energy left in
-   hand and deck. Scarcity is real at the tail — 8.4% of attachments happen with ≤6 left, a tenth of
-   games end with one or none — but when Energy is scarce the bot is nearly always attaching it
-   somewhere that matters. **Build it for correctness if you like; do not expect it to move a win
-   rate, and do not read a null from `aiduel` as evidence it failed.**
-
-   **(c) Attaching toward a card not yet in play — HALF BUILT.** *"This Charmeleon is worth four Fire
-   because a Charizard is coming"* is expressible now, but **only while the Charizard is in hand**:
-   `evolutionInHand` plus `potentialAs` give the scorer one card of lookahead, and only where the plan
-   is a certainty rather than a probability — which is the arm Trevor's GBC account weights much
-   higher anyway. *[Both halves, the null they shipped on, and why →](Playbook/EVOLUTION-TIMING.md)*
+   **And the neighbouring quantity is 27x larger than any of them**: 7% of attachments go onto an
+   Active that dies before spending them. Whether that is waste or simply what attaching under
+   pressure looks like is **unmeasured**, and it is where to look if you go hunting.
+   *[The full measurements, and why the small probe that found (a) read zero →](HISTORY-ARCHIVE-2.md)*
 
    **Two clauses of his note are still open and neither follows automatically from (c) landing.**
    **Evolutions in the DECK** need probability rather than fact, which is a different kind of reasoning

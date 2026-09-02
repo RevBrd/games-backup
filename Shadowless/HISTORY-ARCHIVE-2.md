@@ -394,3 +394,81 @@ job actually is.
   **One ordering rule was retired rather than preserved** and the reasoning is in `PACK_ODDS`; say so
   if you disagree, because it is one line. *[Everything, with the three-column comparison
   →](PACKS.md)*
+
+## Two closed sub-items out of AI.md's Open list
+
+*Moved out of [AI.md](AI.md) on 2 Sep 2026 by Shadowless 34, verbatim. Both sat INSIDE items that are
+still open, which is why they survived the earlier sweep — a struck-out heading is easy to spot, a
+closed paragraph three levels down inside a live item is not. **`AI.md`'s Open list was 176 lines of
+448**, and a list nobody can scan is a list that stops being read.*
+
+### The reserve clause, out of item 8
+
+**The most reusable thing in it: the item was written about a CARD and the answer was about a SLOT.**
+Three cards were named as asking for "something prices holding an attack in reserve" and all three
+left by different doors when Trevor was actually asked. Standing still to bank an Energy is a thing a
+**Bench** does; an Active that declines to swing pays a turn of damage for it. A note that does not
+say which slot it is about can be true in one place and wrong in the other.
+
+   ~~**One clause survives and it is worth naming, because three cards ask for it rather than one.**~~
+   **RESOLVED 30 Aug 2026, and there was never a family.** The clause was *nothing prices holding an
+   attack in reserve*, and it named Arcanine, Ninetales and Charmeleon. **Asked, and all three left by
+   different doors:**
+
+   - **Ninetales was never a reserve case.** *"Never be required to choose between Lure and nothing"*
+     is about not being **Active** without Fire Blast — entry, not holding. Trevor, 30 Aug. Its Lure
+     half is separately closed by `bestDragTarget`.
+   - **Charmeleon is lookahead**, open item 9(c) above, and has been all along.
+   - **Arcanine is a SLOT question, and the row was asking for the opposite of what he wants.**
+     Trevor, 30 Aug: *"An Arcanine in the active spot with 3 energies should probably attack anyway,
+     if pausing for a turn to gather energies would result in a net negative... But on the bench, the
+     AI shouldn't want to stop powering it up at Flamethrower, and always continue on to Takedown."*
+     **Both halves measured as already correct** and are now claim rows.
+
+   **The transferable part: the item was written about a CARD and the answer was about a SLOT.**
+   Standing still to bank an Energy is a thing a Bench does; an Active that declines to swing pays a
+   turn of damage for it. A note that does not say which slot it is about can be true in one place
+   and wrong in the other, and this one was.
+   *[How a note becomes a row →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*
+
+### The three measured arms, out of item 9
+
+**Kept because the measurements are the reason the item is scoped the way it is**, and re-deriving
+them costs a 17,672-game run. The short version that stayed live: misrouting is effectively solved at
+0.26%, the scarcity arm is real and near-inert, and the lookahead arm is half built. **The neighbouring
+quantity is 27x larger than the one that was measured** — 7% of attachments go onto an Active that
+dies before spending them — and that is where anyone hunting waste in the attach decision should look.
+
+   The original entry, still accurate: **MEASURED 28 Aug 2026. Two of its three halves
+   are done or would do nothing, and this item exists mainly to stop it being re-scoped as one large
+   job.** It is the capability [Ammo](Playbook/AMMO.md)'s Charmeleon and Arcanine notes and
+   [Evolution timing](Playbook/EVOLUTION-TIMING.md) all name as their blocker. Trevor's sentence
+   decomposes into three and they are in very different states.
+
+   **(a) Misrouting — putting the card on the wrong slot. Effectively solved: 0.26%.** `aitest.js 8
+   --gbc`, **17,672 games and 228,832 attachments**: 605 misdirected, one attachment in 380. The
+   per-slot competition through `attachValue` already routes correctly. **Read that null carefully,
+   because it is partly tautological** — the bot picks the highest-scoring action, so this counter can
+   only fire where the *score* disagrees with a `short`-based notion of need. It says the scoring is
+   internally consistent. It cannot say the routing is *strategically* right, and no local counter can;
+   that is only answerable by outcome, so any change here needs `aiduel`/`decksim` rather than a
+   counter going down. *[Why the small probe that found it read zero →](MISREADINGS.md)*
+
+   **And the neighbouring quantity is 27x larger.** 7% of attachments go onto an Active that dies
+   before spending them and 1% onto one that could not attack anyway — 15,117 and 2,462 against
+   misdirection's 605. `survivesCharge` already discounts for this and 7% still get through. Whether
+   that is waste or simply what attaching under pressure looks like is **unmeasured**, and if anyone
+   goes hunting for waste in the attach decision, that is where it is.
+
+   **(b) Holding the card when Energy is scarce — real, and near-inert at ~0.1% of attachments.** Only
+   1.4% of attachments score under 6 at all, and 2 of 1,540 were made with six or fewer Energy left in
+   hand and deck. Scarcity is real at the tail — 8.4% of attachments happen with ≤6 left, a tenth of
+   games end with one or none — but when Energy is scarce the bot is nearly always attaching it
+   somewhere that matters. **Build it for correctness if you like; do not expect it to move a win
+   rate, and do not read a null from `aiduel` as evidence it failed.**
+
+   **(c) Attaching toward a card not yet in play — HALF BUILT.** *"This Charmeleon is worth four Fire
+   because a Charizard is coming"* is expressible now, but **only while the Charizard is in hand**:
+   `evolutionInHand` plus `potentialAs` give the scorer one card of lookahead, and only where the plan
+   is a certainty rather than a probability — which is the arm Trevor's GBC account weights much
+   higher anyway. *[Both halves, the null they shipped on, and why →](Playbook/EVOLUTION-TIMING.md)*
