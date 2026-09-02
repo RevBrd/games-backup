@@ -78,7 +78,7 @@ player will ever pull was turned over.
 now builds the **actual** ribbon it will carry and sets `visibility:hidden` on it, so the space
 reserved is exactly the space needed for any chip count, any label and any viewport, with nothing to
 re-derive. That is the always-appended status row on the Active card, taken one step further.
-*[All three numbers, and what each cost →](GRABHIST-ARCHIVE-3.md)*
+*[All three numbers, and what each cost →](GRABHIST.md)*
 
 `node tools/probe.js --pack` walks the reveal and is what found all of it. **Its states are counted
 from `UI.pack.revealed.length`** since 26 Aug 2026: they were written as `reveal-5` / `reveal-10` for

@@ -22,27 +22,15 @@ material trimmed out of the live files — see [MAINTENANCE.md](MAINTENANCE.md).
 **Here is what is in it.** Grep a heading to jump. Index added 16 Aug 2026; no entry was touched to
 make it.
 
-**Two archives sit behind this file and they were split on different criteria**, which is worth one
-table because the second one is not what the rule anticipated.
+**The build era is in [HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md)** — the whole job history for
+Jobs 1–10, the pack research, the rarity table's three passes and the tooling provenance. Split out
+22 Aug 2026 at 461 lines, by era, as the rule below asks. **When this file passes ~450 again, start
+`HISTORY-ARCHIVE-2.md` rather than growing either one**, and put the era boundary at a job. The rule
+is repeated here rather than left in the archive alone, because a limit stated only inside the thing
+being limited is read after the decision it was meant to inform.
 
-| File | Holds | Split on |
-|---|---|---|
-| [HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md) | Jobs 1–10 — the build era, the pack research, the rarity table's three passes, the tooling provenance | **era**, 22 Aug 2026 at 461 lines |
-| [HISTORY-ARCHIVE-2.md](HISTORY-ARCHIVE-2.md) | the job plans as they read mid-job, and Open-list items after they closed | **state**, 2 Sep 2026 |
-
-**The second split is by state and the rule above asked for an era, so say why rather than leaving it
-looking like a slip.** What was left after archive 1 is not chronological — it is a pile of
-rejections that are still live and a job-plan section that is finished by construction, and an era
-boundary drawn through that would have cut the rejections in half by date while leaving the finished
-material in place. The honest seam was the one [MAINTENANCE.md](MAINTENANCE.md) already names as its
-highest-value target: **a planning document outliving its plan.** That is the same criterion the
-ninth pass used to take `CHALLENGES.md` out of `OPPONENTS.md` — split by state, not by topic — and it
-is the second time it has been the right answer here.
-
-**So what stays is what is still argued about**: a rejection whose idea can come back, and the shape
-of the doc tree, which is under active revision. What leaves is anything written in the present tense
-about work that is now done. **When this file passes ~450 again, start `HISTORY-ARCHIVE-3.md`** and
-ask which of the two criteria fits before reaching for the era one by default.
+What stayed is what is still *argued about*: a rejection whose idea can come back, and the shape of
+the doc tree, which is under active revision. What moved is the account of work that is finished.
 
 | Section | What it settles |
 |---|---|
@@ -54,6 +42,7 @@ ask which of the two criteria fits before reaching for the era one by default.
 | How the documentation tree got its shape | The two splits reached by the wrong criterion first, the directory that was refused, the count-to-boundary change, and why the playbook's unit is the pattern rather than the card |
 | A fresh Arcanine used to prefer Take Down | The only assertion here overturned by a later one, and what to do when a test fails because a decision changed |
 | Ideas raised and shelved | Opponent collections, Mirror Move reading the log, reviving chat-era, deleting `greedy` |
+| The job plan for Jobs 10.5 to 12c | Five plan entries as they read while the work was open, moved out of `CLAUDE.md` when they were collapsed |
 
 ## Shiny was a sheen twice before it was a palette shift
 
@@ -388,3 +377,61 @@ them. Three ideas, each with the reason it lost.
   someone's ellipsis rather than as damage; a deleted paragraph would have been obvious.
   **Append-only protects against editing, not against a missing newline** — and the same shape has
   now cost this tree a preserved log, a broken anchor, and this.)*
+
+## The job plan for Jobs 10.5 to 12c, as it stood while they were open
+
+*Moved out of `CLAUDE.md` on 26 Aug 2026 by #27, verbatim, when those five entries were collapsed to
+two lines. Every one of them was written in the present tense by a session in the middle of the work,
+which is exactly what makes them worth keeping and exactly what made them wrong to leave in an
+orientation file — three said "what is left is X" about things that had since shipped.*
+
+- **Job 10.5** - Scheduled post-new set maintenance. **The docs pass and the Base Set wiring are
+  done** — Trevor's eight decks went live as the whole base1 bracket, the first built to
+  [OPPONENTS.md](OPPONENTS.md). **What is left is the layout-related grab bag items.**
+- **Job 11** - Major grab bag pass, AI and UI focused, add Trevor's new Jungle decks. **The Jungle
+  and Fossil decks are in and live** — eleven hand-built decks across two brackets, body, gate and
+  boss each, with the GBC placeholders pushed on to Team Rocket. Measured; neither new roster orders
+  by tier and the report is in [ROSTERS.md](ROSTERS.md). **The AI half is well under way**: ten faults
+  closed across three sessions, every one of them found by Trevor describing how a card is meant to be
+  played rather than by any instrument — see [PLAYBOOK.md](PLAYBOOK.md), which is the method that
+  produced them. **The UI half is untouched.** **The GBC placeholders left on Team Rocket are now gone
+  too** — 25 Aug 2026, Job 12c/#26: Trevor's eight Team Rocket decks plus the two authentic Team Rocket
+  theme decks replaced them, and this is the first roster measured where the tiers actually order
+  cleanly. See [ROSTERS.md](ROSTERS.md#team-rocket--trevors-eight-decks-25-aug-2026).
+- **Job 11.5** - Continued maintenance passes. We need to make the structure more load-bearing before we continue. *Job Closed*
+- **Job 12a** - Continuing the AI pattern overhaul and testing behaviors. **It did need its own
+  infrastructure and that half is built** — `tools/wants.js` reads Trevor's workbook, `tools/lib/board.js`
+  makes a position out of card names, and `tools/claims/` holds the notes as rows. Proved by a control
+  that goes red against the pre-fix commit. **The remaining work is claims**, and the backlog is a
+  command rather than a number here: `node tools/wants.js --coverage`. Base Set first, and **Jungle and
+  Fossil are on hold** — their notes are one-liners awaiting the same overhaul base1 and base5 got.
+- **Job 12b** - Layout pass and then UI updates from GRABBAG.md. 
+- **Job 12c** - Pack and rarity drop overhaul. **The pack shape and the bonus rare-tier jump mechanic
+  landed 25 Aug 2026** — pack shrank from 11 cards to 8, and a lesser slot can now jump to a better
+  tier at a small independent chance. **Rebalancing the four per-slot cosmetic axes (Reverse Holo,
+  Shiny, Shadowless, Misprint) to restore the pre-shrink pacing is deliberately deferred**, tracked as
+  its own open item in [PACKS.md](PACKS.md).
+
+- **Job 13** - Wizards Black Star Promos. **Done, both halves** — the cards in 13a, reachability in
+  13b. See [PACKS.md](PACKS.md) and [COLLECTION.md](COLLECTION.md).
+- **Job 14a / 14b** - Document pass, grab bag, and the AI validation work. **14b is still open** and
+  its live items are named in `CLAUDE.md`.
+- **Job 15a** - The Challenge 1 bracket. **Done, 1 Sep 2026.** Seven mono-type decks between Fossil
+  and Team Rocket, the first ladder bracket that belongs to no set, and the first pack type that is
+  not a set's. What it left behind, beyond the feature:
+  - **`bracket.set` was answering four questions and only two of them correctly**, which nothing had
+    noticed because a set bracket gives the same answer to all four. `packSets` split the *pool*
+    question off. Same shape as the `slot`-means-hero misreading in [PACKS.md](PACKS.md).
+  - **Trevor's own correction to this file tree's plan.** `PACKS.md` had specified the Challenge pool
+    as "the sets the player has unlocked", which reads the save at OPEN time — so a pack's contents
+    would have depended on when you got round to opening it. He caught it from the player's side
+    before any code existed. The built version derives from ladder position instead.
+  - **A green suite went red on correct behaviour**, briefly and in the new tests themselves: an
+    Energy-cap assertion written as `kind === 'energy'` caught 59 Double Colorless in 40,000 packs.
+    `ENERGY_CAP` has only ever been about *basic* Energy. Kept as a comment at the assertion.
+  - **`ROSTERS.md` crossed its own archive threshold** and the rule fired as written: Base Set and
+    Jungle moved whole into `ROSTERS-ARCHIVE-1.md` at a set boundary.
+- **Job 15b** - Rebalancing variant odds to match new pack sizes. **Now three items rather than one**
+  — the four per-slot cosmetic axes, Base Set's bonus-Rare-tier near-tie, and what "richer" means for
+  a Challenge pack. All three are in [PACKS.md](PACKS.md)'s Still open, deliberately bundled: they are
+  measured against each other and tuning one alone loses track of which change did what.

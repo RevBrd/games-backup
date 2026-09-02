@@ -330,7 +330,7 @@ under them; `Special:Export` for raw wikitext resolved all sixteen official deck
 with zero hand corrections. And **a categorical scan is not a lookup** — checking whether a card name
 starts with a known-bad prefix passed a deck that runs 4x Bill's Teleporter, a Neo Genesis card with
 no prefix at all. Only a resolver against `data/raw/*.json` caught it. *[Both accounts, in the words
-of the instance that hit them →](LOGBOOK-ARCHIVE-2.md)*
+of the instance that hit them →](LOGBOOK.md)*
 
 **`data/DECK_RESEARCH_NOTES.md` is the first draft of all of that and is superseded.** It holds the
 same card lists in prose, un-ID-mapped and with its own counts flagged unverified — so it is now the
