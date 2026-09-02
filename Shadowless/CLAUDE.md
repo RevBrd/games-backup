@@ -364,6 +364,7 @@ The current ordering, decided collaboratively. Trevor is explicit that it is you
 - **Job 15a** - Adding the Challenge 1 bracket.
 - **Job 15b** - Rebalancing variant odds to match new pack sizes.
 - **Job 15c** - Document pass, AI validation, grab bag.
+- **Job 15d** - AI validation, grab bag.
 - **Job 16** - Card additions and logic for gym1.
 - **Job 17+** - Additional packs.
 
