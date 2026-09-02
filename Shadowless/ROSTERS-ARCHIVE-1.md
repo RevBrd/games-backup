@@ -216,7 +216,7 @@ badly-piloted good deck looks like. Three AI changes the same day moved it to **
 retreat repricings worth a rank between them, and then the pair of Charizard fixes worth **+5.3 points
 on their own**. Every figure on this page predates all three.
 
-*[The benchmark, what it is for, and why its rank is an AI metric →](MEASUREMENT.md)*
+*[The benchmark, what it is for, and why its rank is an AI metric →](YARDSTICKS.md)*
 
 ### How to read a run of this
 

@@ -199,11 +199,11 @@ centrepiece sit mostly at the bottom of the table, so dropping them is selection
 tier means above are `decksim`'s own, over all nineteen decks.** Take a tier average from the tool,
 never from a filtered subset of its rows.
 
-### The benchmark reading from this run, and why it is NOT in `MEASUREMENT.md`'s table
+### The benchmark reading from this run, and why it is NOT in `YARDSTICKS.md`'s table
 
 `b1_t4_fire` came **9th of 19 at 49.9%**, Charizard landing 53% at median turn 13.
 
-**Do not read that against the 5th-of-13 standing in [MEASUREMENT.md](MEASUREMENT.md) — it is a
+**Do not read that against the 5th-of-13 standing in [YARDSTICKS.md](YARDSTICKS.md) — it is a
 different field and a different seed count, so it is not a lower reading, it is an unrelated one.**
 Six decks joined the field and three of them finished above it; the seed count is 20 rather than 30.
 That file's benchmark table is deliberately all one field for exactly this reason, and appending a

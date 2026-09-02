@@ -166,7 +166,7 @@ was correct in the DOM and wrong in the layout. See [INSPECTION.md](INSPECTION.m
 roster puts cards in front of the frozen AI baseline that did not exist when it was pinned, which is
 the only thing that has ever broken it — and it broke silently for three days in Aug 2026 because
 nobody runs a duel unless they are changing the AI. Seconds, and it prints PIN OK or names the
-matchup that crashed. *[The pin table, and what moving one costs →](MEASUREMENT.md)*
+matchup that crashed. *[The pin table, and what moving one costs →](YARDSTICKS.md)*
 
 ## The six test suites
 

@@ -80,11 +80,11 @@ and it changed every retreat in the game. It goes here, loose, and gets filed li
 | Pattern | The claim | State |
 |---|---|---|
 | [Walls](Playbook/WALLS.md) | Some cards go in to be spent. Standing there *is* the job, and low damage is not a deficiency | **Built** |
-| [Ammo](Playbook/AMMO.md) | An attack that discards its own Energy turns spare Energy into rounds, so surplus is not surplus | **Built**, one half open |
+| [Ammo](Playbook/AMMO.md) | An attack that discards its own Energy turns spare Energy into rounds, so surplus is not surplus | **Built**, one half open. [Archive 1](Playbook/AMMO-ARCHIVE-1.md) |
 | [Over-Attach](Playbook/OVER-ATTACH.md) | An attack that *reads* its Energy rather than spending it. The printed number is not what the card does, and the Bench could not see that | **Built** 31 Aug 2026; two clauses open |
 | [Attack choice](Playbook/ATTACK-CHOICE.md) | The small utility attack is usually right; the big one is conditional on lethal — and on there being something to fear | **Built.** 11 of 11 cards measured; 2 questions open |
 | [Setup turn](Playbook/SETUP-TURN.md) | One attack sets up the next. A rider is worth nothing on a target that already has it | **Half built.** Cashing-in is general; setting-up needs lookahead |
-| [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Built** 28 Aug 2026; two clauses of the note open |
+| [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Built** 28 Aug 2026; two clauses open. [Archive 1](Playbook/EVOLUTION-TIMING-ARCHIVE-1.md) |
 | [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns. Parked for the autobuilder | **Parked** — no scheduled job; the autobuilder was deferred 29 Aug 2026 |
 
 **The rest are named and defined at the bottom of this file, under *Possible patterns*, and that
@@ -176,6 +176,39 @@ derivation**, and say that it does.
 **A card that fits no pattern does not get a file.** Per the standing rule, if a note can only be
 satisfied by special-casing the card, that is a finding about the DSL or the scorer — it goes to
 [AI.md](AI.md)'s Open list, not here.
+
+### A pattern file is two things, and only one of them grows
+
+**Measured 2 Sep 2026, and this is the convention to inherit rather than rediscover.** A worked
+pattern file turns out to be **the rule** — what the cards want, what shipped, what is still open —
+plus **a chronological log of every session that touched it**, one dated `##` section each. The
+second grows every AI pass; the first does not. `AMMO.md` had reached **449 lines across eight dated
+episodes** and `EVOLUTION-TIMING.md` **493 across six**, while `WALLS.md`, a built pattern nobody has
+had to revisit, sits at 82.
+
+**That is a register hiding inside a rule file, and this tree has diagnosed it twice before** — it is
+what produced [AI-INVARIANTS.md](AI-INVARIANTS.md) out of `AI.md` and [ROSTERS.md](ROSTERS.md) out of
+`OPPONENTS.md`. Same shape, same fix.
+
+> **When a pattern file passes ~350, move its CLOSED episodes into `<PATTERN>-ARCHIVE-1.md`** beside
+> it, verbatim, and leave a short section saying what that episode settled and what stayed live.
+
+**~350 rather than the ~450 a register gets, and the difference is the reader.** A register is
+**grepped** — you arrive knowing the term you want and length costs you nothing. A pattern file is
+**read whole**, by somebody about to change a scoring term who needs the rule, the notes and the open
+half together. Length is a direct hazard there, and the compaction trigger bites around 300.
+
+**An episode is closed when its finding has landed and its rule is stated in the live file.** If
+archiving an episode would take the rule with it, the rule was never written down — **write it first,
+then archive.** That is the whole risk of this convention and it is the thing to check.
+
+**Trevor's notes move with their episode**, and they are append-only twice over: his words, inside a
+closed archive. **One note, one home** still holds — a note does not get split from the analysis
+around it. The live file's own notes section is what a reader hits first either way.
+
+**Nothing is created until a file trips**, which is why this is a threshold and not a restructure.
+`WALLS.md` will very likely never need one. **Two exist as of 2 Sep 2026** and both are named in
+their parent's header, per the rule one section up.
 
 **One note, one home.** A note touching two patterns is filed whole in its primary one and the other
 gets a pointer row. Chansey's second half — the DCE kamikaze — is a pointer out of `WALLS.md`, not a
