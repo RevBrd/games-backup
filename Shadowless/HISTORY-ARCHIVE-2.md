@@ -16,8 +16,16 @@ own header and `CLAUDE.md`'s job plan had reached 105 lines of which 90 describe
 
 **Append-only. Correct an entry; never shorten one.** The 200-line target does not apply. **When this
 file passes ~450, start `HISTORY-ARCHIVE-3.md`** — stated here, at the top, before the decision,
-because three registers in this tree have now been found past a limit written only where it would be
+because three registers in this tree have been found past a limit written only where it would be
 read too late.
+
+**IT IS ALREADY OVER, at 474, on the day it was created — and saying so is the point.** The whole of
+Job 15c's collapsed material landed here in one pass, which is the one situation where an
+immediate re-split is the wrong move: two archives created the same morning, cut at an arbitrary
+line, is worse navigation than one that is 5% long. **The next pass owns it**, and the natural cut
+is by kind — the job plans are one thing and the Open-list bodies are another. Recorded rather than
+quietly tolerated, because a limit nobody acknowledges breaking is a limit that stops being one, and
+this tree has watched that happen three times.
 
 **Nothing here is needed to work on the game.** Read it when you want to know what somebody expected
 before they found out.
