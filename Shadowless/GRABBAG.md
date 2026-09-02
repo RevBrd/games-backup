@@ -72,6 +72,7 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
   *(The Ronald half of this note is DONE — 1 Sep 2026, Job 15a. The Grand Masters half is still open
   and is waiting on deck lists nobody has: Fossil's own theme decks are not in `data/`, and Trevor's
   offer to find some is the unblocker. See [GRABHIST.md](GRABHIST.md).)*
+- When using Gengar's pokemon power, I was able to select the power and get the prompt to select an opponent pokemon, but was not able to select any of the injured bench pokemon to move damage from. 
 
 
 ### Parked and kept
