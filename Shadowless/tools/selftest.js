@@ -198,7 +198,7 @@ const finished = Object.keys(REMAINING).filter(s => !bySet[s]);
 if (finished.length) console.log(`  ${finished.join(', ')} now complete `
   + '— remove from REMAINING to make the live-set assertion cover it');
 
-// --- 2c. identical printed text means an identical script ----------------
+// --- 2a. identical printed text means an identical script ----------------
 // If two cards print the SAME rules text, they do the same thing, and their
 // verb lists must match. Across 136 distinct attack texts this holds without a
 // single exception, which makes it a cheap and very broad correctness net: it
@@ -286,7 +286,7 @@ if (finished.length) console.log(`  ${finished.join(', ')} now complete `
   console.log(`  ${verbs.size} verbs, all documented`);
 }
 
-// --- 2a. the alias table is justified, and complete -----------------------
+// --- 2c. the alias table is justified, and complete -----------------------
 // 31 of Jungle and Fossil's cards are exact mechanical duplicates of another
 // card in their own set, and share one effect script rather than a copy of it.
 // Proved in BOTH directions: no alias may flatten a real difference, and no
@@ -339,7 +339,7 @@ const brokenDeckCards = [...inDecks].filter(id => !EFFECTS[id]);   // energy inc
 check(brokenDeckCards.length === 0, 'every card in a playable deck is implemented',
   brokenDeckCards.join(', '));
 
-// --- 2b. AI verb coverage ------------------------------------------------
+// --- 2d. AI verb coverage ------------------------------------------------
 // The card check above exists because an unimplemented card must never silently
 // do nothing. This is the same failure one level up: ai.js scores attacks with a
 // switch over verb names, and a verb it has no case for is valued as PLAIN BASE
@@ -450,7 +450,7 @@ const PROVISIONAL = new Set([
   'T_CHALLENGE', 'T_LOOK_AND_SHUFFLE_BACK',
 ]);
 
-// ---- no switch dispatches the same case twice -------------------------------
+// --- 2e. no switch dispatches the same case twice -------------------------
 //
 // Found 19 Aug 2026: doTrainer contained a COMPLETE SECOND COPY of
 // trainerPlayable's legality switch — 21 case labels, every one of them already
@@ -490,7 +490,7 @@ const PROVISIONAL = new Set([
   }
 }
 
-// ---- every doorway into play goes through enterPlay --------------------------
+// --- 2f. every doorway into play goes through enterPlay --------------------
 //
 // THE GUARD BEHIND Rulings/PLAYED-FROM-HAND.md, and the reason that ruling is
 // enforceable rather than merely written down.

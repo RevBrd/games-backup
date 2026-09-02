@@ -1,7 +1,20 @@
 // Integration smoke test for the BUILT artifact.
-// Usage: node smoke.js [path-to-html]   (default ./out.html)
+// Usage: node tools/smoke.js [path-to-html]   (default: the built shadowless.html)
+//
+// THE DEFAULT USED TO BE `out.html`, WHICH HAS NEVER EXISTED — a bare
+// `node tools/smoke.js` died in `readFileSync` with a raw ENOENT trace, so the
+// usage line above was advertising an argument-free form that could not run.
+// Every doc in the tree passes the path explicitly, which is why nobody hit it.
+// Job 15d, 2 Sep 2026. An explicit path still resolves against the cwd, so the
+// documented form is unchanged.
 const fs = require('fs');
-const path = process.argv[2] || __dirname + '/out.html';
+const nodePath = require('path');
+const path = process.argv[2] || nodePath.join(__dirname, '..', 'shadowless.html');
+if (!fs.existsSync(path)) {
+  console.error(`\n  No built artifact at ${path}`);
+  console.error(`  This suite tests the BUILT file, not src/. Run \`node tools/build.js\` first.\n`);
+  process.exit(1);
+}
 const html = fs.readFileSync(path, 'utf8');
 const js = html.match(/<script>([\s\S]*)<\/script>/)[1];
 
