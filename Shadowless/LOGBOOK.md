@@ -229,8 +229,11 @@ every assertion downstream of that pack exposed.
 **The gate has a step nobody had.** `node tools/test.js` runs both generator `--check`s before the
 suites, because `smoke.js` tests the built artifact and an unrebuilt `src/` meant it happily tested
 code you had already replaced. Demonstrated rather than argued. If you change `src/`, the gate now
-notices you did not rebuild; it also notices `core.autocrlf` handing you a CRLF file after a
-`git checkout`, which git itself calls clean.
+notices you did not rebuild; it also noticed `core.autocrlf` handing you a CRLF file after a
+`git checkout`, which git itself calls clean — **and that turned out to be a live defect rather than a
+nuisance.** The shipped artifact was a patchwork of 6,255 Windows line ends and 17,572 Unix ones, and
+a fresh clone could not have rebuilt it. Trevor took the call; `.gitattributes` closes it, and both
+directions are verified by cloning the repo rather than by reasoning about git.
 
 **And I made this file's own mistake inside one hour.** `abtest`'s stall line shouted on every clean
 tree. I fixed it with a band of `[0.5, 3.5]` taken from the recorded floor — then fixed the cause,

@@ -197,11 +197,25 @@ nothing in the tree could see it. Both `--check`s already existed and were in no
 *Demonstrated rather than argued: a comment appended to `src/engine.js` without a rebuild leaves the
 old six green and stops the gate dead at step two.*
 
-**One thing it will catch that is not your fault.** `core.autocrlf` is `true` on this machine and
-Shadowless has no `.gitattributes`, so `git checkout -- src/anything.js` hands the file back with
-CRLF, the build then differs from the committed HTML — and `git status` reports the tree **clean**,
-because git normalises line endings on read and the build does not. The gate is more sensitive than
-git here. Convert the file back to LF; do not rebuild and commit the difference.
+**The first thing it caught was a defect in the repository itself, and `.gitattributes` now holds it
+shut.** `core.autocrlf` is `true` here, so git **stores LF and writes CRLF** — nothing is wrong until
+git writes a source file, after which the build copies that file's CRLFs into the artifact and it
+stops matching what is committed. **`git status` reports the tree clean throughout**, because git
+normalises line endings when it hashes a working file and the build does not.
+
+Measured before the fix: `shadowless.html` held **6,255 CRLF line ends and 17,572 LF ones**. A
+patchwork — three of the eleven `src/` modules had been checked out by git at some point and the rest
+had not, so the deliverable's exact bytes were an accident of which files git had most recently
+touched on one machine. It ran perfectly, which is why nobody found it.
+
+**The bill was going to land on a fresh clone**, where every source file arrives CRLF: `build --check`
+fails on the first run and rebuilding rewrites all 1.4 MB. Verified both ways by actually cloning the
+repo — at the commit before the fix the gate fails on arrival, and at the fix it passes.
+
+`Shadowless/.gitattributes` forces LF for every text format, marks the workbooks and PNGs binary, and
+**exempts `backups/`**, which keep their bytes: a snapshot edited to match a later convention is a
+worse snapshot, and two of them are the last copies of `build.js` from when it contained a literal NUL
+— a file whose defect *is* a byte, which a line-ending filter would have quietly tidied away.
 
 ### The six suites
 
