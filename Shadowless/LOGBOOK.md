@@ -239,4 +239,38 @@ symmetric-risk pricing evaporated on one `grep`. Do that `grep` first.
 both live in `tools/claims/base1.js` and went in together under a message describing only the first.
 Not worth rewriting history over; worth saying out loud rather than leaving for someone to find.
 
+
+### Second round — the two questions Trevor sent back
+
+**Both of his answers turned the question around, and in the same direction: check whether the thing
+you are about to add is already there.**
+
+**The Switch row had been asking the wrong question for four days.** It asked addend-or-scale for the
+nullified retreat cost. Trevor said he was not sure we need to price cost at all — and measuring
+first showed the preference the note asks for was **already in the arithmetic**, because a Switch does
+not pay `retreatSaveEnergy` and a retreat does. What was actually broken was sitting in the same
+five-row table I built to check him: **the Switch scored a flat -4.00 on every board that was not an
+emergency**, five different Actives, five different Bench upgrades. The loop that picks the target
+computed the gain and threw it away.
+
+**I would not have found that by reading the code.** I built the table to test his claim about cost,
+and the answer to his question was in one column while the actual defect was in the one beside it.
+**Build the measurement his question asks for even when you think you know the answer** — the column
+you were not looking at is free.
+
+**The Rhyhorn question had a satisfying shape and a disappointing size, and both are worth reporting.**
+`scoreAttack` prices Leer at half a paralysis; `STALL_VERBS` did not list it. Two lists, one idea,
+drifted — this project's most-diagnosed failure, and the fix is a guard rather than an entry. But
+adding the verb **changes nothing**, because `wallScore` gates on terminal Basics first and Rhyhorn
+evolves. I measured before claiming a fix: 34 non-terminal Basics invisible to the derivation, and
+**exactly one** of them would score as a real wall. Saying "it is one card today" is more useful than
+shipping a carve-out and calling the note closed.
+
+**And the recorded reason for that gate does not justify it.** It says terminal-only stops Charizard
+being called a wall — but `stage === 'Basic'` already does that. What the second condition really
+buys is that a Squirtle you mean to evolve is not disposable, **which is a fact about the board**, and
+`wallScore` is memoised per card. That is the same mechanism Trevor's Charmeleon clause needs. **When
+a documented reason does not actually reach the code it justifies, the rule may still be right and
+the reason is a different question** — I left the gate alone and wrote down both.
+
 — #36
