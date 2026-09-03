@@ -794,131 +794,13 @@ const CLAIMS = [
     id: 'base1-94', card: 'Potion', pattern: 'Heal & attrition',
     note: 'To not be used to heal only 10 damage unless that has the immediate potential to be life saving (and the pokemon is worth saving)',
     claim: '...unless it is life-saving, which is the clause the note turns on',
-    // THIS ROW WAS GREEN AGAINST A BOARD WHERE THE POTION SAVED NOTHING — 2 Sep
-    // 2026, and it is the first case in this file of a passing row protecting a
-    // fault rather than a rule.
-    //
-    // It used to stand a Pikachu on 10 remaining HP in front of a Hitmonchan.
-    // Pikachu is weak to Fighting, so Special Punch reads 80, and a Potion takes
-    // it from 10 to 30 against an incoming 80. The bot played it, the row went
-    // green, and the claim said "life-saving" about a heal that could not save.
-    // It passed BECAUSE of the fault below: the rescue bonus fires on
-    // `threat >= remaining` and never asks whether the heal crosses the line.
-    //
-    // This is PLAYBOOK.md's "pick the opponent on purpose" hazard arriving from
-    // the other side. That file warns a fully charged Hitmonchan turns a claim
-    // into "...against something about to kill you" and makes rows fail; here it
-    // made one PASS, which is the harder direction to notice. **A row asserting
-    // an exception has to be built on a board where the exception is actually true** —
-    // check the arithmetic of the clause, not just the verb the bot chose.
-    //
-    // The board is now Chansey at 70 remaining under an incoming 80, where a
-    // Potion genuinely does buy the turn. Its pair is the row below.
     board: {
-      me:   { card: 'Chansey', energy: '2 Fighting', dmg: 50 },
+      me:   { card: 'base1:Pikachu', energy: '2 Lightning', dmg: 30 },
       them: { card: 'Hitmonchan', energy: '3 Fighting' },
       myHand: ['Potion'],
     },
-    sane: b => b.playable('Potion') && b.threat() >= b.hp() && b.hp() + 20 > b.threat(),
+    sane: b => b.playable('Potion') && b.hp() === 10 && b.threat() >= b.hp(),
     expect: b => b.wouldPlay('Potion'),
-  },
-  // The Potion goes where it does the most good, and "most damage counters" is
-  // not that. Trevor, from the GBC sequel: "Potions applied to the active pokemon
-  // seem to be purposefully timed for when they would prevent the opponent from
-  // killing it on the next turn, rather than as soon as it would be useful."
-  //
-  // THE PAIR IS THE POINT. Both boards put MORE damage on the Bench than on the
-  // Active, so a target chosen by damage alone answers "the Bench" to both. What
-  // separates them is whether the heal actually buys the Active a turn.
-  {
-    id: 'base1-94', card: 'Potion', pattern: 'Heal & attrition',
-    note: 'To not be used to heal only 10 damage unless that has the immediate potential to be life saving (and the pokemon is worth saving)',
-    claim: 'the Potion goes to the Active it SAVES, even though the Bench carries more damage',
-    board: {
-      me:      { card: 'Chansey', energy: '2 Fighting', dmg: 50 },   // 70 left under 80
-      them:    { card: 'Hitmonchan', energy: '3 Fighting' },
-      myBench: [{ card: 'base2:Snorlax', dmg: 60 }],                 // more damage, no threat
-      myHand:  ['Potion'],
-    },
-    sane: b => b.playable('Potion') && b.threat() >= b.hp() && b.hp() + 20 > b.threat()
-               && b.me.bench[0].dmg > b.me.active.dmg,
-    expect: b => b.healsWho('Potion').join() === 'Chansey',
-  },
-  {
-    id: 'base1-94', card: 'Potion', pattern: 'Heal & attrition',
-    note: 'To not be used to heal only 10 damage unless that has the immediate potential to be life saving (and the pokemon is worth saving)',
-    claim: 'THE CONTROL — ...but not when the heal cannot save it, where the Bench is the better home',
-    board: {
-      me:      { card: 'Chansey', energy: '2 Fighting', dmg: 70 },   // 50 left under 80
-      them:    { card: 'Hitmonchan', energy: '3 Fighting' },
-      myBench: [{ card: 'base2:Snorlax', dmg: 80 }],
-      myHand:  ['Potion'],
-    },
-    sane: b => b.playable('Potion') && b.threat() >= b.hp() && b.hp() + 20 <= b.threat()
-               && b.me.bench[0].dmg > b.me.active.dmg,
-    expect: b => b.healsWho('Potion').join() === 'Snorlax',
-  },
-  {
-    id: 'base1-94', card: 'Potion', pattern: 'Heal & attrition',
-    note: 'To not be used to heal only 10 damage unless that has the immediate potential to be life saving (and the pokemon is worth saving)',
-    claim: 'THE CONTROL — and an Active in no danger does not take the card off a more damaged Bench',
-    board: {
-      me:      { card: 'Chansey', energy: '2 Fighting', dmg: 50 },
-      them:    { card: 'Hitmonchan', energy: '1 Fighting' },         // Jab, 40 doubled
-      myBench: [{ card: 'base2:Snorlax', dmg: 60 }],
-      myHand:  ['Potion'],
-    },
-    sane: b => b.playable('Potion') && b.threat() < b.hp()
-               && b.me.bench[0].dmg > b.me.active.dmg,
-    expect: b => b.healsWho('Potion').join() === 'Snorlax',
-  },
-  // ============================================================= Super Potion
-  // THE DISARM WAS CHARGED TO THE CARD, AFTER THE WORST SLOT HAD BEEN PICKED.
-  // Target selection ran on damage counters alone, then the penalty for
-  // discarding an Energy the target needed was applied to whatever that had
-  // chosen — so the only thing the rule could do was refuse the play. Measured
-  // on the board below against the pre-fix source: **-15.00, which is under
-  // `threshold`**, so the card sat in hand unplayable while a benched Pokemon
-  // with spare Energy stood there wanting exactly this heal.
-  //
-  // Trevor's note is what this is: "Should not be used to save a pokemon that it
-  // would prevent from powering up enough to attack, as that would just be
-  // stalling for no benefit." He wrote should-not-be-used-on, and the fix is to
-  // let it be used SOMEWHERE ELSE.
-  //
-  // THE BOARD HAS TO REMOVE THE ATTACK ENTIRELY. `potential().short` pins at
-  // zero while any attack is still payable, so a Hitmonchan downgraded from
-  // Special Punch to Jab reads as no disarm at all — the first board tried here
-  // and it looked like a passing control. Chansey on two Energy loses Scrunch
-  // and has nothing else. That limit is WALLS.md's, where it is correct; this is
-  // the place it bites.
-  {
-    id: 'base1-90', card: 'Super Potion', pattern: 'Heal & attrition',
-    note: 'To heal a moderate amount of damage at the cost of 1 tempo of energy. Should not be used to save a pokemon that it would prevent from powering up enough to attack, as that would just be stalling for no benefit',
-    claim: 'goes to the slot whose Energy is SPARE, not the one it would disarm — even with less damage on it',
-    board: {
-      me:      { card: 'Chansey', energy: '2 Psychic', dmg: 50 },     // Scrunch is CC: the discard silences it
-      them:    { card: 'base1:Charmander', energy: '1 Fire' },
-      myBench: [{ card: 'base1:Machop', energy: '2 Fighting', dmg: 40 }],  // Low Kick is F: one is spare
-      myHand:  ['Super Potion'],
-    },
-    sane: b => b.playable('Super Potion') && b.me.active.dmg > b.me.bench[0].dmg
-               && b.threat() < b.hp(),
-    expect: b => b.healsWho('Super Potion').join() === 'Machop',
-  },
-  {
-    id: 'base1-90', card: 'Super Potion', pattern: 'Heal & attrition',
-    note: 'To heal a moderate amount of damage at the cost of 1 tempo of energy. Should not be used to save a pokemon that it would prevent from powering up enough to attack, as that would just be stalling for no benefit',
-    claim: 'THE CONTROL — with the Energy spare on BOTH, it goes to the one carrying more damage',
-    board: {
-      me:      { card: 'Chansey', energy: '3 Psychic', dmg: 50 },     // a spare above Scrunch's CC
-      them:    { card: 'base1:Charmander', energy: '1 Fire' },
-      myBench: [{ card: 'base1:Machop', energy: '2 Fighting', dmg: 40 }],
-      myHand:  ['Super Potion'],
-    },
-    sane: b => b.playable('Super Potion') && b.me.active.dmg > b.me.bench[0].dmg
-               && b.threat() < b.hp(),
-    expect: b => b.healsWho('Super Potion').join() === 'Chansey',
   },
   // ============================================================ Energy Removal
   // THE AI HAS NEVER CHOSEN WHICH ENERGY TO STRIP, and the line that looks like
@@ -1300,7 +1182,7 @@ const CLAIMS = [
   // shared function carrying two shipped invariants.
   {
     id: 'base1-24', card: 'Charmeleon', pattern: 'Evolution timing',
-    note: "Does decent damage but does not want to fight. Prefers to sit on the bench and pre-Over-Attach energies for an evolution to Charizard, even when Charizard isn't in the hand. Flamethrower does good damage but requires an energy funnel on the card that you want to evolve into the biggest energy funnel of all, so it's best avoided unless necessary. A Charmeleon that ends up fighting and having to use Flamethrower should almost be written off for evolution and used only as a fodder attacker.",
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
     claim: 'the evolution road goes to the twin that will live to reach the evolution',
     board: {
       me:   { card: 'base1:Charmeleon', energy: '2 Fire', dmg: 70 },   // 10 left under a threat of 30
@@ -1321,47 +1203,28 @@ const CLAIMS = [
       return at(b.me.bench[0].uid) > at(b.me.active.uid);
     },
   },
-  // ANSWERED AND CLOSED — Trevor, 31 Aug 2026, and this row used to be the
-  // question. It asked whether a doomed carrier should have its road DISCOUNTED
-  // (one line, inside `survivesCharge`, re-tuning every discard attack in the
-  // game) or whether the doomed copy should simply STEP ASIDE (a selection
-  // predicate in `evolutionRoadFor`, touching two cards). It ended in capitals:
-  // ASK TREVOR WHICH.
-  //
-  // He answered the same day — "I'd say the active one is pretty safe to write
-  // off... switching powerup focus to the Charmeleon on the bench" — the
-  // selection route shipped, and the row above now asserts it. Nothing updated
-  // this one, so `claimtest --open` went on printing a settled question as
-  // outstanding work for two days. **An `open:` row is a worklist entry, and a
-  // worklist entry that has been done is worse than one that was never written.**
-  //
-  // WHAT IT BECOMES IS THE GUARD, WHICH NOTHING ASSERTED. The invariant says in
-  // capitals that a doomed copy steps aside ONLY WHEN SOMEBODY ELSE CAN TAKE THE
-  // ROAD UP — a sole carrier keeps it however doomed it is, because there is no
-  // better home for the Energy and refusing would strand it. That is what stops
-  // the rule being a veto, it is the common single-copy case, and the twin row
-  // above cannot see it: remove the guard and that row stays green while every
-  // lone Charmeleon in the game quietly stops being fed.
-  //
-  // A CONTROL RATHER THAN A FAULT REPORT, said plainly. It passes today and is
-  // here to go red on somebody's future change.
   {
     id: 'base1-24', card: 'Charmeleon', pattern: 'Evolution timing',
-    note: "Does decent damage but does not want to fight. Prefers to sit on the bench and pre-Over-Attach energies for an evolution to Charizard, even when Charizard isn't in the hand. Flamethrower does good damage but requires an energy funnel on the card that you want to evolve into the biggest energy funnel of all, so it's best avoided unless necessary. A Charmeleon that ends up fighting and having to use Flamethrower should almost be written off for evolution and used only as a fodder attacker.",
-    claim: 'THE GUARD — a SOLE carrier keeps its road however doomed, because nobody else can take it up',
-    board: {
-      me:      { card: 'base1:Charmeleon', energy: '2 Fire', dmg: 70 },  // 10 left under 30
-      myBench: [{ card: 'base1:Vulpix', energy: '1 Fire' }],             // wants Fire, but is not on the road
-      them:    { card: 'base2:Snorlax', energy: '4 Fighting' },
-      myHand:  ['Fire Energy', 'Charizard'],
-    },
-    sane: b => b.threat() >= b.hp() && b.me.bench.length === 1
-            && b.me.bench.every(x => b.E.db[x.stack[x.stack.length - 1].id].name !== 'Charmeleon'),
-    expect: b => {
-      const acts = b.E.legalActions(0).filter(a => a.t === 'attachEnergy');
-      const at = u => { const a = acts.find(x => x.target === u); return a ? b.ai.scoreAction(0, a) : -Infinity; };
-      return at(b.me.active.uid) > at(b.me.bench[0].uid);
-    },
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
+    claim: 'and the same road is worth LESS on a carrier that will not reach the end of it',
+    open: "MEASURED AND NOT BUILT, deliberately. `survivesCharge` is already in the amortise " +
+          "branch of `attachBuild` and returns 1 here, because `turnsLeft = ceil(hp/threat)` " +
+          "counts the attack that KILLS you as a turn you survived. At 10 HP under a threat of " +
+          "30 that is ceil(10/30) = 1, against a shortfall of 1, so min(1, 1/1) = full credit. " +
+          "The honest quantity is future turns of MINE, which is ceil(hp/threat) - 1 = 0. " +
+          "\n\nTHE ONE-LINE FIX IS THE DANGEROUS ONE. `survivesCharge` is shared with " +
+          "`discardSilence`, where the same off-by-one makes Zapdos's Thunderbolt look more " +
+          "expensive than it is - so correcting it re-tunes a shipped invariant (23 Aug, " +
+          "\"a discard costs turns of silence\") that was measured on the current arithmetic. " +
+          "AI.md already records two sessions reasoning wrong about a cap in this area." +
+          "\n\nTHE LOCAL ALTERNATIVE is a filter in `evolutionRoadFor` beside the existing " +
+          "\"a ready copy steps aside\" rule: a copy that will not live to finish its road " +
+          "steps aside too, when another contender can take it up. That touches nothing else, " +
+          "but it is a selection predicate on a quantity, and that file warns in capitals that " +
+          "a leader which flip-flops is worse than no rule at all." +
+          "\n\nASK TREVOR WHICH. His own sentence is hedged (\"might shift... if that one " +
+          "seems more realistic\"), and the two readings have very different blast radii - one " +
+          "is two cards, the other is every discard in the game.",
   },
   // ------------------------------------------- Charmeleon, the attack half --
   // Trevor, 31 Aug 2026, asked why Slash rather than Flamethrower when it does
@@ -1401,7 +1264,7 @@ const CLAIMS = [
   //     own rules rather than something to go and fix. RAISE IT, do not tune it.
   {
     id: 'base1-24', card: 'Charmeleon', pattern: 'Attack choice',
-    note: "Does decent damage but does not want to fight. Prefers to sit on the bench and pre-Over-Attach energies for an evolution to Charizard, even when Charizard isn't in the hand. Flamethrower does good damage but requires an energy funnel on the card that you want to evolve into the biggest energy funnel of all, so it's best avoided unless necessary. A Charmeleon that ends up fighting and having to use Flamethrower should almost be written off for evolution and used only as a fodder attacker.",
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
     claim: 'Slash while it expects to live - the extra 20 is not worth an attachment the Bench needs',
     board: {
       me:   { card: 'base1:Charmeleon', energy: '3 Fire' },
@@ -1423,7 +1286,7 @@ const CLAIMS = [
     // measuring the fault rather than the rule. It only starts meaning anything
     // once its twin goes green. Same shape as the Lure ordering pair: a row a
     // fault is winning looks exactly like a row a rule is winning.
-    note: "Does decent damage but does not want to fight. Prefers to sit on the bench and pre-Over-Attach energies for an evolution to Charizard, even when Charizard isn't in the hand. Flamethrower does good damage but requires an energy funnel on the card that you want to evolve into the biggest energy funnel of all, so it's best avoided unless necessary. A Charmeleon that ends up fighting and having to use Flamethrower should almost be written off for evolution and used only as a fodder attacker.",
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
     claim: '...but Flamethrower once it will not see another turn, where the burn costs nothing',
     board: {
       me:   { card: 'base1:Charmeleon', energy: '3 Fire', dmg: 60 },
@@ -1435,29 +1298,15 @@ const CLAIMS = [
             && b.lethal('Flamethrower') === 0 && b.ai.turnsLeft(0, b.me.active) === 0,
     expect: b => b.prefers('Flamethrower'),
   },
-  // WRITTEN AS A REAL ROW — 2 Sep 2026. This was `open:` with the instruction
-  // "write it as the control the moment either row above goes green", because a
-  // green row here proves nothing on its own: a kill is already worth far more
-  // than the 13-point gap the Slash rows are about, so this passes today and
-  // would have passed before any of that work started.
-  //
-  // ITS VALUE IS ENTIRELY IN THE DIRECTION IT FAILS. The Slash row above is
-  // still red, and whoever fixes it is going to make the bot prefer the smaller
-  // attack. **A fix that made it prefer Slash into a lethal Flamethrower would
-  // be worse than the fault it was closing** — and nothing else in this file
-  // would have noticed. That is what a control is for, and it is needed MORE
-  // while its neighbour is red, not less.
   {
     id: 'base1-24', card: 'Charmeleon', pattern: 'Attack choice',
-    note: "Does decent damage but does not want to fight. Prefers to sit on the bench and pre-Over-Attach energies for an evolution to Charizard, even when Charizard isn't in the hand. Flamethrower does good damage but requires an energy funnel on the card that you want to evolve into the biggest energy funnel of all, so it's best avoided unless necessary. A Charmeleon that ends up fighting and having to use Flamethrower should almost be written off for evolution and used only as a fodder attacker.",
-    claim: 'THE CONTROL — and Flamethrower whenever the extra 20 converts, which is the exception he names',
-    board: {
-      me:      { card: 'base1:Charmeleon', energy: '3 Fire' },
-      them:    { card: 'base1:Squirtle' },        // 40 HP: Slash leaves 10, Flamethrower kills
-      myBench: [{ card: 'base1:Charmander' }],    // a Bench that wants the Energy, so the trade is live
-    },
-    sane: b => b.lethal('Flamethrower') === 1 && b.lethal('Slash') === 0,
-    expect: b => b.prefers('Flamethrower'),
+    claim: 'and Flamethrower whenever the extra 20 converts, which is the exception he names',
+    note: "To be pre-loaded on the bench with energy in anticipation of Charizard, even with no Charizard in hand yet. Does not want to fight.",
+    open: "THE CHEAP HALF, and it is only open because the two rows above are. A kill is already " +
+          "worth far more than 13 points, so this clause almost certainly holds today and asserting " +
+          "it now would just bank a green row that proves nothing about the rule. Write it as the " +
+          "control the moment either row above goes green - a fix that made the bot prefer Slash " +
+          "even into a lethal Flamethrower would be worse than the fault.",
   },
 
   // ===========================================================================

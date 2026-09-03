@@ -254,6 +254,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 1 Sep | **An evolution road is measured to the attack the evolution is trying to REACH**, not the cheapest one it owns — 22 printings move, eight of Trevor's own notes confirm it. **Asked in THREE places, and the third returns before the other two**: fixing two of them changed nothing at all | `attackThreatens`, `destShort` |
 | 1 Sep | **The plan is the whole LINE and each step pays for itself** — the target is the deepest in-hand form's cost less one Energy per step, so an Abra wants two with a Kadabra coming and **one** with an Alakazam behind it. The `attackThreatens` / `destShort` row is this truncated to depth 1 | `evolutionPlan`, `roadWant` |
 | 1 Sep | **A READY evolution goes before the attachment** — the card should compete for the Energy as the body that will hold it. **Only ready ones**, or an ordering rule overrules a scoring rule two functions away | `playFirst`, `roadWant` |
+| 2 Sep | **A heal buys a rescue only if it CROSSES the line**, and the target is chosen by what the heal is worth rather than by damage counters — the bonus was flat across the boundary where the card stops working, and the selection could suppress its own correction | `healRescues`, `T_HEAL` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn

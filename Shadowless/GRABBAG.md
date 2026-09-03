@@ -99,9 +99,19 @@ mean what it said.
 
 I found an emulator version of the GBC game's sequel that was only released in Japan, and so I have never played it before. The reason being to see what kinds of mechanics their AI uses so we can steal them for ourselves. Right away a first item was found, so I made a new section here to track them as I go.  
 
+**This section works exactly like the rest of the list — Trevor, 2 Sep 2026, answering a question
+#31 raised and left open.** A worked item comes off, optionally written up in
+[GRABHIST.md](GRABHIST.md) like any other. It is a work surface, not a permanent log of what was
+taken. Two are gone already: the order-of-operations item (31 Aug) and Potion timing (2 Sep).
+
+**One warning that is specific to this section and cost an hour.** These notes describe cards in a
+*different game*, with a card pool ours does not share. The Drowzee bullet below names *Long Distance
+Hypnosis*, which is not in our corpus at all, and the reasoning attached to it does not transfer to
+the card we actually have. **Check the card exists here, and reads the way the note assumes, before
+building anything off one.**
+
 - When energies were abundant but pokemon to attach them to were not, the AI started pre-planning evolutions that weren't in hand. A Machop in the active spot and an Eevee on the bench were both powered up to their own desired levels, and when nothing else arrived, the AI attached all of Machamp's required energies to the active Machop in preparation. Unknown if there was a Machamp in its hand and all it was missing was Machoke or if both were missing. 
 - The AI knows exactly when it needs to stall, which cards it can stall with, and which cheap moves from those cards it can hide behind while it powers up the bench instead of that card's more powerful attack moves. Rhyhorn is the example here, being brought in just to use Leer as long as it can and be thrown away, on purpose, because the AI needed to buy time for the bench, never powering up Horn Attack.
-- Potions applied to the active pokemon seem to be purposefully timed for when they would prevent the opponent from killing it on the next turn, rather than as soon as it would be useful, though not exclusively so.
 - They might use a pre-tagged target energy level per card, so each card knows where to stop energizing or over-attach to. Like the previous example, a stalling Rhyhorn might attach one energy and spam Leer (though when the bench doesn't hold much attach value or when trying to evolve, it might power up Horn Attack), but a Machop in the active spot usually over-attaches a single energy regardless of what's in hand so it's ready to evolve immediately when a Machoke is drawn.
 - This might be something our bot already does but it's worth checking. An opponent's Scyther with one G energy used Swords Dance, a Setup Turn move for something that requires GCC, so three energies. This means it wouldn't be able to attack next turn, so I figured that was just the GBC 2 bot using it because there's nothing else available rather than ending the turn without attacking. I was wrong. The next turn attached a *DCE* and used Slash right away, meaning the DCE in hand had been priced into the Swords Dance's setup on the previous turn. Update, it's now done it twice. It definitely wasn't a fluke.
 - GBC 2 uses (base5) Drowzee's Long Distance Hypnosis like a wrecking ball, triggering it almost every turn even though it's a 50/50 gamble more likely to disadvantage its own pokemon rather than mine (50/50 chance his pokemon will miss an attack, 25% chance mine will due to a waking coin flip if it were to fall asleep). I think our bot should price this differently, and maybe only use it on turns where its own active pokemon can't attack anyway. Same with the Sleep! trainer card, though I think my "wants" note might say otherwise for that.

@@ -335,26 +335,6 @@ class Board {
     return before.filter(e => !left.has(e.uid)).map(e => e.n);
   }
 
-  // ...and the same question for a HEAL: which of your own slots did it land on.
-  // Returns the card names whose damage actually went down, in slot order.
-  //
-  // IT EXECUTES, for the reason `strips()` does and then one more. `a.opts` was
-  // not lying here — `targetUid` is genuinely written and genuinely read — but
-  // the choice behind it was made on raw damage counters alone, so the key looks
-  // correct on every board and is right only on the ones where "most hurt" and
-  // "most worth healing" happen to coincide. Reading the key back would have
-  // reported a considered pick. Watching the board is what showed a Potion
-  // walking past an Active it would have saved outright.
-  healsWho(name) {
-    const before = this.E.allSlots(0).map(s => ({ s, dmg: s.dmg }));
-    const a = this.trainerAction(name);
-    if (!a) throw new Error(`${name} is not a legal play on this board`);
-    this.ai.scoreTrainer(0, a);
-    this.E.act(0, a);
-    return before.filter(x => x.s.dmg < x.dmg)
-                 .map(x => this.E.db[x.s.stack[x.s.stack.length - 1].id].name);
-  }
-
 
   // Would the bot actually play it this turn, against everything else it could do?
   wouldPlay(name) {

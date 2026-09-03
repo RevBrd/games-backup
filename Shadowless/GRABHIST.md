@@ -56,6 +56,44 @@ confused is presumably how this happened.
 
 ---
 
+### The GBC sequel's Potion timing — 2 Sep 2026 (#36)
+
+> Potions applied to the active pokemon seem to be purposefully timed for when they would prevent the
+> opponent from killing it on the next turn, rather than as soon as it would be useful, though not
+> exclusively so.
+
+**Half of it was already built and the other half had never been asked.** *"Rather than as soon as it
+would be useful"* is `healWaste`, which shipped a while back and closed 34% of premature heals. *"When
+they would prevent the opponent from killing it"* was not a term anywhere.
+
+**Two faults, and the first one was hiding the second.** The rescue bonus asked whether the Active was
+dying and never whether the heal changed that, so it paid full price on every doomed Active — hardest
+on the boards where the Potion was most useless, because more damage is what makes a Pokemon doomed.
+And the *target* was picked by damage counters before anything was scored, with the rescue bonus then
+requiring the winner to be the Active — so on the board where a Potion saved the Active outright, the
+card went to a benched Snorlax and the bonus never ran. **Both fixed, `abtest` says 9.4% ± 1.0 of
+games diverge, and the win rate is flat at 49.6% either way, which is what a symmetric change looks
+like.** *[The invariant →](AI-INVARIANTS/HEAL-RESCUE.md)* · *[the pattern →](Playbook/HEAL-ATTRITION.md)*
+
+**The thing worth keeping is what the probe found on the way.** `tools/claims/base1.js` had a green
+row named *"...unless it is life-saving, which is the clause the note turns on"*, standing a Pikachu
+on 10 remaining HP in front of a Hitmonchan. Pikachu is weak to Fighting, so that reads 80, and the
+Potion took it to 30. **The row was green because of the fault, and the word "life-saving" was doing
+no work at all** — the first case in this project of a passing claim protecting a fault rather than a
+rule. PLAYBOOK.md warns that a charged Hitmonchan turns a claim into *"...against something about to
+kill you"* and makes rows **fail**; this is the same hazard making one **pass**, which nobody
+re-reads. **Check the arithmetic of an exception clause, not just the verb the bot chose.**
+
+**And the item's neighbours in that section are not all what they look like.** Trevor's Drowzee
+bullet describes *Long Distance Hypnosis* as a 50/50 that can put your own Pokemon to sleep. **That
+card is not in the corpus at all** — it is a GBC2-exclusive — and our `base5` Drowzee's attack is
+*Nightmare*, `PC` for 10, which sleeps the defender unconditionally with no self-risk. Our `Sleep!`
+is one-sided too, per `data/raw/base5.json`, with no cross-check available in the CSVs. So the
+reasoning in that bullet is about a card we do not have, and what survives of it collapses into
+[AI.md](AI.md)'s open item 5, where the sleep weight is already contested three ways and explicitly
+must not be retuned off any of them. **Raised with Trevor rather than acted on.**
+
+
 ### 1 Sep 2026 — Opus 5 #33 (Ronald, and the mechanism under him)
 
 > *"Remove the Grand Masters from the Fossil bracket and replace them with the Fossil theme decks. If

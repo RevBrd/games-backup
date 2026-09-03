@@ -6553,12 +6553,6 @@ const AI_WEIGHTS = {
   deckLoss: 150,        // running yourself out of cards is not an expensive
                         // draw, it is losing. Same shape as lastPrize
   healPer10: 3.5,
-  healRescue: 12,       // a heal that actually buys the Active another turn.
-                        // Was a bare `12` at two call sites that fired on
-                        // `threat >= remaining` alone — i.e. on every doomed
-                        // Active, including the ones the heal could not save.
-                        // Named rather than retuned: the VALUE is unchanged and
-                        // the CONDITION is what moved. See `healRescues`
   stripEnergy: 11,      // per Energy removed from the opponent
   threshold: 0.5,       // don't bother with actions scoring below this
 };
@@ -8803,33 +8797,6 @@ class AI {
   // here, in `discardSilence`, in `attachBuild`, and as a bare boolean in
   // `T_PLUSPOWER` that DISAGREED with this function on the same board.
   //
-  // DOES THIS HEAL ACTUALLY BUY A TURN — the fact, not what it is worth.
-  //
-  // Two call sites priced a heal's rescue value off `threat >= remaining` alone,
-  // which asks whether the Active is dying and never whether the heal changes
-  // that. A Potion on a Chansey with 50 HP left under an incoming 80 scored the
-  // full rescue bonus for lifting it to 70, and it still dies to the same
-  // attack. The bonus fired hardest on exactly the boards where the card was
-  // wasted, because more damage on the Active is what makes it doomed.
-  //
-  // Trevor, from the GBC sequel: "Potions applied to the active pokemon seem to
-  // be purposefully timed for when they would prevent the opponent from killing
-  // it on the next turn, rather than as soon as it would be useful."
-  //
-  // THE SPLIT IS `turnsLeft`/`survivesCharge`'S, DELIBERATELY. This returns the
-  // fact and each call site states its own policy about it, because a third
-  // heal site — `HEAL_ON_FLIP` — asks a genuinely different question
-  // (`threat >= remaining - heal`, a near-miss band) and is left alone rather
-  // than quietly folded in. Do not add a weight in here.
-  //
-  // Only the Active has a horizon: nothing on the Bench is being attacked, so
-  // there is no turn to buy.
-  healRescues(pi, slot, heal) {
-    if (!slot || slot !== this.E.state.players[pi].active) return false;
-    const threat = this.incomingThreat(pi), rem = this.remainingHP(slot);
-    return threat >= rem && rem + heal > threat;
-  }
-
   // A Pokemon acts BEFORE each of their attacks, so the attack that kills it is
   // not a turn it got: at 10 HP under a threat of 30 the answer is zero, not one.
   // Nothing on the Bench is being attacked, so it has no horizon at all.
@@ -10354,85 +10321,49 @@ class AI {
           break;
         }
 
-        // THE TARGET IS CHOSEN BY WHAT THE HEAL IS WORTH, not by which slot
-        // carries the most damage counters — 2 Sep 2026, from Trevor's GBC 2
-        // note. The two agree on almost every board and diverge on the one his
-        // note is about: an Active a Potion would save outright, standing beside
-        // a benched Pokemon that is merely more hurt. The card went to the Bench
-        // and the rescue bonus, which requires the target to BE the Active, then
-        // suppressed itself. Two faults, and the first one hid the second.
-        //
-        // WITHOUT THE RESCUE TERM THIS IS THE OLD SELECTION EXACTLY, which is
-        // why it is safe. `healValue` is non-decreasing in `dmg` — rising while
-        // the heal is still being wasted, flat once the damage exceeds it — so
-        // argmax value and argmax damage are the same slot, and the `dmg`
-        // tiebreak below reproduces the old "most hurt wins" among the ties.
-        // The only board where behaviour moves is one with a rescue on it.
         case 'T_HEAL': {
           const cands = E.allSlots(pi).filter(x => x.dmg > 0);
           if (!cands.length) return -Infinity;
-          const value = c => {
-            const heal = Math.min(v.n * 10, c.dmg);
-            // Healing poured past the damage is thrown away, and nothing charged
-            // for it: a Potion on a Pokemon with 10 damage still scored 3.5 and
-            // cleared the action threshold, so 34% of heals were premature.
-            // Super Potion never had this problem, purely by accident — its
-            // Energy cost happens to cancel the value at exactly 20 damage. This
-            // is that brake, made deliberate and applied to the card that lacked it.
-            return heal / 10 * W.healPer10
-                 - Math.max(0, v.n * 10 - c.dmg) / 10 * W.healWaste
-                 // ...and a heal that actually buys the Active another turn is
-                 // worth more than the damage it removes. It has to BUY one:
-                 // see `healRescues`.
-                 + (this.healRescues(pi, c, heal) ? W.healRescue : 0);
-          };
-          let best = null, bestV = -Infinity;
-          for (const c of cands) {
-            const x = value(c);
-            if (x > bestV || (x === bestV && best && c.dmg > best.dmg)) { best = c; bestV = x; }
-          }
+          let best = cands[0];
+          for (const c of cands) if (c.dmg > best.dmg) best = c;
           a.opts.targetUid = best.uid;
-          s += bestV;
+          s += Math.min(v.n * 10, best.dmg) / 10 * W.healPer10;
+          // Healing poured past the damage is thrown away, and nothing charged
+          // for it: a Potion on a Pokemon with 10 damage still scored 3.5 and
+          // cleared the action threshold, so 34% of heals were premature.
+          // Super Potion never had this problem, purely by accident — its Energy
+          // cost happens to cancel the value at exactly 20 damage. This is that
+          // brake, made deliberate and applied to the card that lacked it.
+          s -= Math.max(0, v.n * 10 - best.dmg) / 10 * W.healWaste;
+          // ...unless it is about to die, where topping off a scratch is still
+          // the difference between surviving the turn and not.
+          if (best === me.active && this.incomingThreat(pi) >= this.remainingHP(best)) s += 12;
           break;
         }
 
-        // SAME SELECTION, SAME REASON — and the disarm moves INTO it rather than
-        // being computed after the target is already picked. Trevor's Super
-        // Potion note is the one that asks for that: "Should not be used to save
-        // a pokemon that it would prevent from powering up enough to attack, as
-        // that would just be stalling for no benefit." Charging the disarm to
-        // the whole card, after choosing the worst slot to pay it on, can only
-        // ever refuse the play; charging it per candidate lets the card go
-        // somewhere the Energy is spare instead.
         case 'T_DISCARD_ENERGY_THEN_HEAL': {
           const cands = E.allSlots(pi).filter(x => x.dmg > 0 && x.energy.length);
           if (!cands.length) return -Infinity;
-          const value = c => {
-            const heal = Math.min(v.n * 10, c.dmg);
-            let x = heal / 10 * W.healPer10 - W.energyDiscard
-                  - Math.max(0, v.n * 10 - c.dmg) / 10 * W.healWaste
-                  + (this.healRescues(pi, c, heal) ? W.healRescue : 0);
-            // The Energy it discards can switch the target's OWN attack off,
-            // which turns a heal into a disarm. This is the first half of a
-            // compound Trevor caught: Super Potion healed a lethal Beedrill and
-            // stripped the Energy it needed to swing, and the retreat logic then
-            // correctly observed that the Active could no longer attack and
-            // swapped it out. Two defensible decisions, one disastrous turn —
-            // and the fault is here, in the one that created the situation.
-            const held = c.energy.pop();
-            const shortAfter = this.potential(pi, c, null).short;
-            c.energy.push(held);
-            const shortBefore = this.potential(pi, c, null).short;
-            if (shortAfter > shortBefore) x -= (c === me.active) ? W.healDisarm : W.healDisarm * 0.3;
-            return x;
-          };
-          let best = null, bestV = -Infinity;
-          for (const c of cands) {
-            const x = value(c);
-            if (x > bestV || (x === bestV && best && c.dmg > best.dmg)) { best = c; bestV = x; }
-          }
+          let best = cands[0];
+          for (const c of cands) if (c.dmg > best.dmg) best = c;
           a.opts.targetUid = best.uid;
-          s += bestV;
+          s += Math.min(v.n * 10, best.dmg) / 10 * W.healPer10 - W.energyDiscard;
+          s -= Math.max(0, v.n * 10 - best.dmg) / 10 * W.healWaste;
+
+          // The Energy it discards can switch the target's OWN attack off, which
+          // turns a heal into a disarm. This is the first half of a compound
+          // Trevor caught: Super Potion healed a lethal Beedrill and stripped
+          // the Energy it needed to swing, and the retreat logic then correctly
+          // observed that the Active could no longer attack and swapped it out.
+          // Two defensible decisions, one disastrous turn — and the fault is
+          // here, in the one that created the situation.
+          const held = best.energy.pop();
+          const shortAfter = this.potential(pi, best, null).short;
+          best.energy.push(held);
+          const shortBefore = this.potential(pi, best, null).short;
+          if (shortAfter > shortBefore) s -= (best === me.active) ? W.healDisarm : W.healDisarm * 0.3;
+
+          if (best === me.active && this.incomingThreat(pi) >= this.remainingHP(best)) s += 12;
           break;
         }
 

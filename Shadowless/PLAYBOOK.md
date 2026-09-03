@@ -77,6 +77,7 @@ and it changed every retreat in the game. It goes here, loose, and gets filed li
 | [Attack choice](Playbook/ATTACK-CHOICE.md) | The small utility attack is usually right; the big one is conditional on lethal — and on there being something to fear | **Built.** 11 of 11 cards measured; 2 questions open |
 | [Setup turn](Playbook/SETUP-TURN.md) | One attack sets up the next. A rider is worth nothing on a target that already has it | **Half built.** Cashing-in is general; setting-up needs lookahead |
 | [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Built** 28 Aug 2026; two clauses open. [Archive 1](Playbook/EVOLUTION-TIMING-ARCHIVE-1.md) |
+| [Heal & attrition](Playbook/HEAL-ATTRITION.md) | A heal is not worth the damage it erases, it is worth what erasing it lets you keep doing — and on the Active that is a turn | **Built** 2 Sep 2026; three clauses open |
 | [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns. Parked for the autobuilder | **Parked** — no scheduled job; the autobuilder was deferred 29 Aug 2026 |
 
 **The rest are named and defined at the bottom of this file, under *Possible patterns*, and that
@@ -290,6 +291,7 @@ you are about to touch:**
 | `attachBuild`, `potential`, the surplus rule | [Ammo](Playbook/AMMO.md), [Over-Attach](Playbook/OVER-ATTACH.md), [Evolution timing](Playbook/EVOLUTION-TIMING.md) |
 | `slotPrintedDamage`, or any printed-damage fallback | [Over-Attach](Playbook/OVER-ATTACH.md) |
 | `promoteValue` / `bestSelfSwitch` | [Walls](Playbook/WALLS.md) |
+| any `scoreTrainer` case that removes damage counters | [Heal & attrition](Playbook/HEAL-ATTRITION.md) |
 
 **What the scorer already does about each of these is in [AI.md](AI.md), and it is not repeated here.**
 That file is the shipped invariants, read by decision; this one is what the cards want, read by

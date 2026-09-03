@@ -115,3 +115,4 @@ open the entry.
 | 1 Sep 2026 | **a Water that pays a Colorless is still a Water that was used** | `spareEnergyFor` | [SPARE-ENERGY-FOR](AI-INVARIANTS/SPARE-ENERGY-FOR.md) |
 | 1 Sep 2026 | **the destination is not always the cheapest attack, and it is asked in three places** | `attackThreatens`, `destShort` | [EVOLUTION-DESTINATION](AI-INVARIANTS/EVOLUTION-DESTINATION.md) |
 | 1 Sep 2026 | **the plan is the whole line, and the evolve goes before the attach** | `evolutionPlan`, `roadWant` | [EVOLUTION-PLAN](AI-INVARIANTS/EVOLUTION-PLAN.md) |
+| 2 Sep 2026 | **a heal is worth a rescue only if it actually rescues, and the target is chosen by value** | `healRescues`, `T_HEAL`, `T_DISCARD_ENERGY_THEN_HEAL` | [HEAL-RESCUE](AI-INVARIANTS/HEAL-RESCUE.md) |
