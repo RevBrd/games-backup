@@ -60,8 +60,8 @@ of these files.
 | [LOGBOOK-ARCHIVE-4.md](LOGBOOK-ARCHIVE-4.md) | #19 | 18–19 Aug 2026 | Job 10 — the trigger points, `enterPlay`, and Team Rocket going live |
 | [LOGBOOK-ARCHIVE-5.md](LOGBOOK-ARCHIVE-5.md) | #20–#26 | 19–25 Aug 2026 | Jobs 10.5 to 12c — two documentation passes, the Jungle and Fossil brackets, the claims harness, the 8-card pack |
 | [LOGBOOK-ARCHIVE-6.md](LOGBOOK-ARCHIVE-6.md) | #28–#32 | 26 Aug – 1 Sep 2026 | Jobs 13 to 14b — the promos and their reachability, the tenth documentation pass, the Over-Attach pattern |
-| [LOGBOOK-ARCHIVE-7.md](LOGBOOK-ARCHIVE-7.md) | #33 | 1 Sep 2026 | Job 15a's Challenge bracket and Job 15b's pack odds — including the legal deck that could not attack |
-| **this file** | #34, #35 | 2 Sep 2026 – | The eleventh documentation pass, and Job 15d's suite audit |
+| [LOGBOOK-ARCHIVE-7.md](LOGBOOK-ARCHIVE-7.md) | #33, #34 | 1–2 Sep 2026 | Job 15a's Challenge bracket and Job 15b's pack odds — including the legal deck that could not attack — and the eleventh documentation pass |
+| **this file** | #35, #36 | 2 Sep 2026 – | Job 15d's suite audit, and Job 15e's first AI pass |
 
 **#15, #18 and #27 wrote no logbook entry and are not missing** — writing here is optional and a
 `CREDITS.md` row alone is a complete record. Said explicitly because the Instances column above skips
@@ -82,81 +82,6 @@ words. It spent one pass unreachable — intact, indexed nowhere, cited by a sen
 deleted. A pointer is not optional decoration on a preserved artifact; it is the half that rots.
 
 ---
-
-
----
-
-## #34 — Job 15c, the eleventh documentation pass (2 Sep 2026)
-
-**The thing I would most want the next session to know is that the highest-yield finding in this pass
-came from a warning somebody had already written, aimed at exactly the situation that then happened,
-and it did not work.**
-
-`OPPONENTS.md` went stale on "four rosters" once, was corrected on 29 Aug, and the correction ended
-with an instruction to the future: *"if you add a roster, grep this file for 'four'."* Job 15a added
-one. Nobody grepped. Seven sentences still said four, with that file's own Challenge 1 section sixty
-lines underneath them. **A warning is only as good as the moment it is read, and the moment this one
-needed to be read was inside a different job than the one that wrote it.** So I deleted the counts
-rather than correcting them again. `data/ladder.json` is the roll and it cannot go stale.
-
-That generalises past this file and it is the argument for every derived count in this tree. A
-correction that leaves a human instruction behind has a half-life. A correction that removes the
-thing needing maintenance does not.
-
-### The directory conversion was a measurement, and it should have been one twice before
-
-Trevor asked whether `AI-INVARIANTS.md` wanted to be a directory. The tree had already refused that
-exact proposal on the sixth pass and answered it a different way on the eighth, and both refusals
-were **right on the evidence they had** — "twenty-three files of eight lines each is worse navigation
-than the section was."
-
-I nearly repeated the refusal from memory of the reasoning. What stopped me was going and measuring
-the entries: 41–129 lines each, averaging 65, against `Rulings/` at 21–133. The premise had expired
-about a fortnight earlier and nothing anywhere re-checks a premise. **A shape decision has an expiry
-date and the tree had no mechanism for noticing.** So the measurement went into the header rather
-than only the conclusion, which is the only way the next person can tell whether it has expired
-again.
-
-**The archives were deliberately not converted**, and holding that line mattered more than it looks:
-their entries genuinely are 8–20 lines, so converting them would have recreated the exact shape the
-sixth pass correctly refused. The right answer was different for two halves of the same register.
-
-### Three positional references, and one had been wrong since it was written
-
-`MAINTENANCE.md` says to grep for these before a split, and it is right, but the reason it gives
-undersells it. Two of the three were ordinary — "the entry above is its other half" — and broke
-predictably. The third said *"`T_PLUSPOWER`'s own pattern three lines above it"* and **PlusPower was
-below it**. That had been false since the day it was typed and nobody had noticed, because a
-positional reference does not look wrong; it looks like a detail you skim. A link that points at the
-wrong file is visibly broken. A phrase that points in the wrong direction is invisible.
-
-### I wrote a wrong count into the sentence banning wrong counts
-
-`ENGINE.md` claimed "47 references in `engine.js`". I checked with `grep -c`, got 53, and wrote that
-into a parenthetical about how counts in prose rot — and `grep -c` counts matching **lines**. The
-occurrence count is 55. I caught it one command later.
-
-I have left that in the file rather than quietly fixing it, because it is a better argument than the
-rule it sits under: **the pass actively removing a stale count produced a fresh one inside sixty
-seconds**, using the obvious tool, for a claim whose unit it had not checked. There is now no number
-there at all.
-
-### Two things I would tell whoever takes 15d
-
-**The suite audit is real and `powertest.js` is where it lives.** 6,572 lines against `smoke.js`'s
-2,171 and `selftest.js`'s 727, for 446 assertions — roughly fifteen lines each. Its section headers
-show why: it grew an AI-behaviour wing during Job 11, on bespoke fixtures, *before* `claimtest.js`
-and `board.js` existed to do that job properly. `TOOLING.md` records the decision to leave those
-alone as "a large diff across a green suite to buy nothing", which was correct then and is the exact
-thing Trevor has now asked to have re-examined. **Do not start by migrating.** Start by asking which
-of those sections still assert something no other suite does.
-
-**And do the audit outside a documentation pass.** The property that makes a docs pass trustworthy is
-that `git status` shows nothing under `src/`, `tools/` or `data/` at the end of it. I checked that
-after every commit here, and it is the cheapest possible proof that a doc change did not quietly
-become a behaviour change.
-
-— #34
 
 
 ---
@@ -243,3 +168,75 @@ value cannot improve.** It is worth checking any other "normal range" in this tr
 because I do not think mine was the only one.
 
 — #35
+
+---
+
+## #36 — Job 15e, the GBC 2 seam (2 Sep 2026)
+
+**I picked the "stolen from GBC 2" section over the 179-note backlog, and the argument for it is one
+sentence #31 left in `GRABHIST.md` rather than anything I worked out myself:**
+
+> A reference implementation is an oracle we do not otherwise have, and it answers a question the
+> claim rows structurally cannot: not *"is this play right"* but *"is there a decision here we are
+> not making at all."*
+
+That is the whole case. The claims harness audits decisions the bot already makes. It is blind by
+construction to decisions it does not know exist, and five of Trevor's six GBC 2 notes had never been
+touched.
+
+### What the Potion note actually contained
+
+Half of it was already built, which I did not expect and should have. *"Rather than as soon as it
+would be useful"* is `healWaste`, shipped a while back. **Reading the note against the code before
+probing anything is what stopped me rebuilding it.**
+
+The other half was two faults, and the first was hiding the second. That pairing is worth more than
+either fix: **the rescue bonus required the target to BE the Active, and the target was chosen before
+anything was scored — so the wrong selection suppressed its own correction.** On the demonstration
+board a Potion saves the Active outright and goes to a benched Snorlax instead, and the score falls
+from 19.00 to 7.00 because the branch that would have objected never ran. Neither fault is visible
+from the other end.
+
+**And the flat term is the AI.md sniff test in mirror image.** That test hunts *a quantity that should
+fall away with distance from an edge, written flat with a cliff at the end*. This was a cliff at the
+**start** and flat forever after, straight through the boundary where the card stops working — and
+anti-correlated with its own usefulness, because more damage on the Active is exactly what makes the
+heal unable to save it. **If the sniff test is worth generalising, this is the direction it does not
+currently cover: look at where a flat band ENDS, not only where it begins.**
+
+### The row that was green because of the fault
+
+`base1-94` had a claim named *"...unless it is life-saving, which is the clause the note turns on"*,
+standing a Pikachu on 10 remaining HP in front of a Hitmonchan. Pikachu is weak to Fighting, so that
+reads 80, and the Potion took it to 30. **The word "life-saving" was doing no work at all, and the row
+was green because of the very term I was there to fix.**
+
+`PLAYBOOK.md` already warns that a charged Hitmonchan quietly turns a claim into *"...against
+something about to kill you"* and makes rows **fail**. This is the same hazard making one **pass**,
+which is the harder direction: a red row gets read, a green one does not. **Check the arithmetic of an
+exception clause, not just the verb the bot chose.** I only looked because the note and the row
+disagreed about what board the clause needed.
+
+### What I would tell whoever takes the rest of 15e
+
+**Two of the three `--open` clauses were already answered and nobody closed them.** Trevor asked me to
+check, and he was right: the `survivesCharge` question was answered on 31 Aug, the selection route
+shipped that day, and the row went on printing ASK TREVOR for two days. The third — Switch,
+addend-or-scale — is genuinely open and is now the only one. **An `open:` row is a worklist entry, and
+a done one is worse than one never written**, because the next AI job is picked off that list.
+
+The `survivesCharge` row became the guard nothing asserted: *a sole carrier keeps its road however
+doomed it is.* That guard is called load-bearing in its own invariant, it is the common single-copy
+case, and the twin row above it cannot see it — remove the guard and that row stays green while every
+lone Charmeleon in the game quietly stops being fed.
+
+**Check the card exists before building off a GBC 2 note.** The Drowzee bullet describes *Long
+Distance Hypnosis*, a 50/50 that can sleep your own Pokémon. It is not in our corpus at all, and our
+`base5` Drowzee has *Nightmare* — unconditional sleep, no self-risk. An hour of reasoning about
+symmetric-risk pricing evaporated on one `grep`. Do that `grep` first.
+
+**And I bundled two things into one commit message.** The heal fix and the Charmeleon claim hygiene
+both live in `tools/claims/base1.js` and went in together under a message describing only the first.
+Not worth rewriting history over; worth saying out loud rather than leaving for someone to find.
+
+— #36
