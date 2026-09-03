@@ -17934,7 +17934,8 @@ function openPack(db, setCode, rand, opts = {}) {
   // drawn like anything else. So a pack is PACK_SIZE cards -- plus the promo, on
   // the 1-in-100 that intrudes, which is the ONLY thing that makes it longer.
   return { set: setCode, firstEd, intrusion, cards };
-}
+}
+
 
 // Match recorder — the log the in-game LOG tab cannot show you.
 //
@@ -18561,7 +18562,8 @@ function progressStats(save, ladder) {
     bossTotal++; if (bracketCleared(save, b)) bosses++;
   }
   return { beaten, total, bosses, bossTotal, sets: unlockedSets(save, ladder) };
-}
+}
+
 
 // ============================================================================
 // UI LAYER — deliberately instrument-like. Job 1 is about reading the rules

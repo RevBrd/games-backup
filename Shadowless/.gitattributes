@@ -1,0 +1,70 @@
+# Shadowless line endings — LF everywhere, on every platform.
+#
+# WHY THIS FILE EXISTS. This game BUILDS its deliverable: `tools/build.js`
+# concatenates `src/*.js` and `src/style.css` into `shadowless.html`, copying
+# whatever line endings each source file happens to have. And `tools/test.js`
+# gates on `build --check`, which compares a fresh build against the committed
+# artifact byte for byte.
+#
+# `core.autocrlf` is true on this machine, so git STORES LF and WRITES CRLF.
+# Nothing here is wrong until git writes a source file — a `git checkout`, a
+# merge, a fresh clone — after which that file is CRLF on disk, the build copies
+# the CRLF into the artifact, and the artifact stops matching what is committed.
+#
+# GIT REPORTS THE TREE CLEAN THROUGHOUT, because it normalises line endings when
+# it hashes a working file and the build does not. The gate is more sensitive
+# than `git status` here, which is a genuinely confusing place to be. Found in
+# Job 15d, 2 Sep 2026, by doing exactly one `git checkout -- src/engine.js`.
+#
+# MEASURED BEFORE THE FIX: `shadowless.html` held 6,255 CRLF line ends and
+# 17,572 LF ones — a patchwork, because `src/ui.js`, `src/packs.js` and
+# `src/progress.js` had been checked out by git at some point and the other eight
+# had not. It ran perfectly. The deliverable's exact bytes were an accident of
+# which files git had most recently touched on one machine.
+#
+# THE COST OF NOT HAVING THIS IS PAID BY A FRESH CLONE, which is the case that
+# matters: `CLAUDE.md` says local history is the only real copy, and the
+# collection is meant to go up as a deliberate release. On a fresh clone every
+# source file arrives CRLF, `build --check` fails on the first run, and
+# rebuilding rewrites all 1.4 MB of the artifact.
+#
+# Scoped to this folder deliberately. Attributes apply to the directory they sit
+# in and below, so no other game is affected. Asterism has its own for a related
+# reason — a pre-commit hash lock that needs byte-stable checkouts — and the two
+# do not interact.
+
+*.js    text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.txt   text eol=lf
+*.csv   text eol=lf
+*.py    text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Never translated, never diffed as text. Trevor's deck workbooks are the inbox
+# `tools/wants.js` reads, and a mangled one is not recoverable from a diff.
+*.xlsx  binary
+*.png   binary
+*.gsheet binary
+
+# BACKUPS ARE SNAPSHOTS AND KEEP THEIR BYTES. `-text` means git neither converts
+# them on checkout nor diffs them as text, so a copy taken before a job stays
+# exactly the file that was copied.
+#
+# This is a judgement rather than a technicality, and it went the other way
+# first. Normalising them is *consistent* — but it rewrites six 1.4 MB HTML
+# snapshots for 35,000 lines of diff that change nothing you could see, and a
+# backup whose bytes have been edited to match a later convention is a slightly
+# worse backup. The live tree is the thing that has to be uniform, because the
+# live tree is what gets built.
+#
+# It also settles a case where the bytes ARE the content. Until 12 Aug 2026
+# `tools/build.js` searched for a LITERAL NUL, making it the very thing its own
+# guard warns about — grep called it binary and refused to search it.
+# `backups/pre-job6` and `pre-job7` hold the last copies of that file in that
+# state. Running a line-ending filter over a file whose defect is a stray byte is
+# how the evidence of a bug gets tidied away.
+backups/** -text
