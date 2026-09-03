@@ -71,6 +71,43 @@ Verified 21 Aug 2026 by running `wallScore` over the pool. **This is the one cle
 column found in a system that was already built**, and it generalises: any card whose job is done by
 a passive rather than by an attack is currently unreadable to this derivation.
 
+**A non-terminal Basic cannot be a wall, and the GBC sequel says that is wrong — 3 Sep 2026.**
+Trevor, watching it: *"Rhyhorn is the example here, being brought in just to use Leer as long as it
+can and be thrown away, on purpose, because the AI needed to buy time for the bench, never powering
+up Horn Attack."*
+
+**Half of that was a drift between two lists and is fixed.** `scoreAttack` prices `CANT_ATTACK_ON_FLIP`
+at half a paralysis through `flags.lockAttack`, while `STALL_VERBS` did not list it at all — so the
+bot knew Leer denies a turn and `wallScore` said Leer was not a stalling move. The verb is in the list
+now, and **`selftest.js` asserts the two cannot drift apart again**: every verb the scorer prices
+through a denial-or-protection flag must be in `STALL_VERBS` or on `NOT_A_JOB` with a reason. Both
+checks were watched going red before being trusted.
+
+**The other half is unbuilt, and on its own the fix above changes nothing.** `wallScore` gates on
+**terminal** Basics before it ever consults the verb list, and Rhyhorn evolves into Rhydon — so it
+still scores 0. Measured across the whole live pool:
+
+- **34 non-terminal Basics carry a stall attack** and are invisible to the derivation, against 17
+  terminal ones that are scored.
+- **Exactly one of them would score as a meaningful wall**: Rhyhorn at 0.70, which is Onix's and
+  Lapras's score. The next best is Jigglypuff at 0.40, and the rest are 30–50 HP Basics that would
+  land near 0.30 whatever happened.
+
+**So the question is worth one card today, and it is not a one-card question.** The recorded reason
+for the terminal gate is *"'cannot evolve further' would call Charizard a wall and a Stage 2 is three
+cards you badly want to rescue"* — but `stage === 'Basic'` already excludes Charizard. What the second
+condition actually buys is that a Squirtle you intend to evolve is not treated as disposable, **and
+that is a fact about the board rather than about the card.** `wallScore` is memoised per card by
+design, so it cannot express it.
+
+**It is the same mechanism Trevor's Charmeleon clause wants** — *"a Charmeleon that ends up fighting
+and having to use Flamethrower should almost be written off for evolution and used only as a fodder
+attacker"* — and he has already said that one should be a **discount rather than a hard stop**, to
+keep it tunable. Two notes, one build: *a card's wall-ness rises as its evolution stops being live.*
+The machinery that knows whether a road is live already exists in `evolutionRoadFor`. **Build it once
+for both, or not at all** — a wall carve-out for one Rhyhorn would be the special-casing
+[PLAYBOOK.md](../PLAYBOOK.md) warns about.
+
 **Chansey scores 0.800, below Snorlax, Kangaskhan and Lickitung at 0.900**, because its retreat cost
 is 1. That is defensible — a cheap retreat genuinely does make a card easier to walk away from — but
 the archetypal wall ranking fourth is worth knowing before you tune the weights.

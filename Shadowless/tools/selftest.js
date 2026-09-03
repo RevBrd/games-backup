@@ -643,6 +643,46 @@ console.log('\nAI verb coverage');
   check(stale.length === 0, 'nothing on UNSCORED_ON_PURPOSE has left effects.js',
     stale.join(', '));
 
+  // STALL_VERBS AGAINST THE SCORER — 3 Sep 2026.
+  //
+  // `wallScore` decides what a card is FOR from a hand-written list of verbs,
+  // and `scoreAttack` decides what an effect is WORTH from a switch. Both encode
+  // "this denies them a turn or protects me", and they had drifted:
+  // `CANT_ATTACK_ON_FLIP` was priced at half a paralysis by the scorer and was
+  // not a stalling move according to the list. Nothing could see that, because
+  // a verb missing from `STALL_VERBS` is the silent-failure surface one level
+  // up — no error, no red suite, and a wall that is simply never recognised.
+  //
+  // WHAT MAKES THIS ASSERTABLE IS THE FLAG NAMES, NOT THE VERBS. Verbs grow with
+  // every set (159 and climbing); the handful of flags below is stable. So a new
+  // set adding a verb that maps to `lockAttack` is caught automatically, which
+  // is the whole reason this is a derivation and not a third list.
+  //
+  // `softShield` is the one that carries both a member and an exclusion, which
+  // is exactly why the exclusion has to be written down rather than implied.
+  const STALL_FLAGS = ['lockAttack', 'softShield'];
+  //
+  // NOT A JOB — deliberately excluded, with the reason. `wallScore` asks what a
+  // card exists to DO, and blunting one named attacker for one turn is a trick
+  // somebody plays, not a role somebody fills. Leer is not on this list because
+  // it negates the attack rather than reducing it; see the note in `ai.js`.
+  const NOT_A_JOB = new Set(['DAMAGE_REDUCTION_FROM']);
+
+  const stallList = new Set([...aiSrc.matchAll(/^\s*([A-Z_0-9]+):\s*1,/gm)]
+    .map(m => m[1]));
+  const denial = [...aiSrc.matchAll(/case\s*'([A-Z_0-9]+)':\s*flags\.([A-Za-z]+)/g)]
+    .filter(m => STALL_FLAGS.includes(m[2])).map(m => m[1]);
+  const drifted = denial
+    .filter(v => used.has(v) && !stallList.has(v) && !NOT_A_JOB.has(v)).sort();
+  const staleNotJob = [...NOT_A_JOB].filter(v => !denial.includes(v)).sort();
+
+  check(drifted.length === 0,
+    'every denial/protection verb the scorer prices is in STALL_VERBS or NOT_A_JOB',
+    drifted.join(', '));
+  check(staleNotJob.length === 0,
+    'nothing on NOT_A_JOB has stopped being a denial verb in ai.js',
+    staleNotJob.join(', '));
+
   // PROVISIONAL means "scored, but on a guess". All three claims below would be
   // contradictions rather than opinions, which is what makes them assertable.
   const notScored = [...PROVISIONAL].filter(v => !handled.has(v) && !kinds.has(v)).sort();

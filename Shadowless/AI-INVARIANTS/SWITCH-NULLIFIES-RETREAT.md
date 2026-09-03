@@ -1,5 +1,11 @@
 # 30 Aug 2026 — a Switch is worth the retreat cost it nullifies, and half of that is open
 
+> **THE OPEN HALF IS CLOSED — 3 Sep 2026.** Trevor was asked and answered that the cost should not be
+> priced at all; it was then measured and found to be in the arithmetic already, because a Switch does
+> not pay `retreatSaveEnergy` and a retreat does. What was actually broken was the OTHER half of his
+> note. Nothing below is wrong — the title is just no longer the whole story.
+> *[The entry →](SWITCH-DESIRE-TO-RUN.md)*
+
 One invariant out of [AI-INVARIANTS.md](../AI-INVARIANTS.md) — the directory, the table saying where
 each fault's fuller account lives, and the index of every entry are all there. [AI.md](../AI.md) is
 the model, and its own table indexes this folder alongside the two archives. **Append-only: correct

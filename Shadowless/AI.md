@@ -255,6 +255,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 1 Sep | **The plan is the whole LINE and each step pays for itself** — the target is the deepest in-hand form's cost less one Energy per step, so an Abra wants two with a Kadabra coming and **one** with an Alakazam behind it. The `attackThreatens` / `destShort` row is this truncated to depth 1 | `evolutionPlan`, `roadWant` |
 | 1 Sep | **A READY evolution goes before the attachment** — the card should compete for the Energy as the body that will hold it. **Only ready ones**, or an ordering rule overrules a scoring rule two functions away | `playFirst`, `roadWant` |
 | 2 Sep | **A heal buys a rescue only if it CROSSES the line**, and the target is chosen by what the heal is worth rather than by damage counters — the bonus was flat across the boundary where the card stops working, and the selection could suppress its own correction | `healRescues`, `T_HEAL` |
+| 3 Sep | **A Switch is worth how much you WANT to move.** The gain was computed to pick a target and thrown away, so the card scored a flat -4.00 on every board that was not an emergency. The retreat cost it nullifies is deliberately NOT priced — it is already in the comparison against retreating, and a second rate is what this project keeps diagnosing | `T_SWITCH_OWN`, `bestSelfSwitch` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn

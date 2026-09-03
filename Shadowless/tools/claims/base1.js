@@ -1260,18 +1260,79 @@ const CLAIMS = [
     sane: b => b.playable('Switch') && b.me.retreated === true,
     expect: b => b.wouldPlay('Switch'),
   },
+  // ANSWERED AND BUILT — Trevor, 3 Sep 2026, and the answer was that the
+  // question was the wrong one. This row asked whether the nullified retreat
+  // cost should be an ADDEND or a SCALE, and it ended in capitals: ASK TREVOR.
+  //
+  // His answer: "I'm not sure we need to price cost at all... it would be almost
+  // entirely situational without the exact retreat cost it was saving getting
+  // much consideration beyond the fact that it's being saved. If you really
+  // think we should price it, I'd say we should price it lower than the spot's
+  // desire to run."
+  //
+  // MEASURED FIRST, AND IT IS ALREADY IN THE ARITHMETIC. A Switch does not pay
+  // `retreatSaveEnergy` and a retreat does, so the Switch's advantage over
+  // retreating rises with the cost with no term for it at all — 16.50 on a
+  // Machop, 42.05 on an Onix, 55.35 on a Kangaskhan, same board otherwise. So
+  // the note's own words, "prefers heavier retreat costs to nullify", were
+  // already true and nobody had checked.
+  //
+  // WHAT WAS ACTUALLY BROKEN WAS THE OTHER HALF OF HIS SENTENCE. The Switch
+  // scored a **flat -4.00 on every board that was not an emergency** — five
+  // different Actives with five different Bench upgrades behind them, all
+  // -4.00 — because `T_SWITCH_OWN` computed the gain and threw it away. "The
+  // spot's desire to run" was not in the score, so the only Switch the bot ever
+  // played was one escaping a Knock Out. The three rows below are that fix, and
+  // two of them are controls because a term that makes the card playable is one
+  // that can make it played for nothing.
   {
     id: 'base1-95', card: 'Switch', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
     note: "To retreat a high value pokemon without paying the retreat cost, or launch a sudden switch for a quick attack that the opponent wasn't expecting. Does not want to be used on a free-retreat cost pokemon and prefers heavier retreat costs to nullify. Should not be played just because it exists in the bot's hand",
-    claim: 'prefers a heavy retreat cost to a light one, which is what the card is FOR',
-    open: "Nothing prices the retreat cost a Switch nullifies, and the half-fix is worse than " +
-          "nothing. The saving is only real if you wanted to move at all, so adding " +
-          "`cost * retreatSaveEnergy` unconditionally buys Switches for Snorlaxes that were " +
-          "perfectly happy standing there - and gating it on \"did we want to move\" is " +
-          "circular, since that is the sum this term is part of. It also wants `bestSelfSwitch`'s " +
-          "gain, which `T_SWITCH_OWN` already computes and throws away. ASK TREVOR whether the " +
-          "saving is an addend or a scale on the move, then build it once - the retreat path " +
-          "already owns this quantity as `retreatSaveEnergy` and there should not be a second rate.",
+    claim: 'played to bring up a much better Pokemon, which is the "sudden switch" half of the note',
+    board: {
+      me:      { card: 'base1:Machop' },                              // nothing attached, cost 1
+      them:    { card: 'base1:Charmander', energy: '1 Fire' },        // no emergency
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],        // charged and waiting
+      myHand:  ['Switch'],
+    },
+    sane: b => b.playable('Switch') && b.E.retreatCostOf(b.me.active) > 0
+            && b.threat() < b.hp()
+            && b.ai.promoteValue(0, b.me.bench[0]) > b.ai.promoteValue(0, b.me.active),
+    expect: b => b.wouldPlay('Switch'),
+  },
+  {
+    id: 'base1-95', card: 'Switch', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "To retreat a high value pokemon without paying the retreat cost, or launch a sudden switch for a quick attack that the opponent wasn't expecting. Does not want to be used on a free-retreat cost pokemon and prefers heavier retreat costs to nullify. Should not be played just because it exists in the bot's hand",
+    // The wall rule reaching a card it was never written for. `promoteValue`
+    // already knows Chansey is worth more standing in the Active spot than the
+    // charged Hitmonchan behind it, so the gain goes NEGATIVE and the Switch
+    // refuses itself. Nothing here is about Switch — this is WALLS.md holding
+    // through a term added a fortnight later, and it is the row that would go
+    // red if somebody "fixed" the gain by taking its absolute value.
+    claim: 'THE CONTROL — but a wall does not run, even with a charged attacker behind it',
+    board: {
+      me:      { card: 'Chansey', energy: '2 Psychic' },
+      them:    { card: 'base1:Charmander', energy: '1 Fire' },
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],
+      myHand:  ['Switch'],
+    },
+    sane: b => b.playable('Switch') && b.E.retreatCostOf(b.me.active) > 0
+            && b.threat() < b.hp(),
+    expect: b => !b.wouldPlay('Switch'),
+  },
+  {
+    id: 'base1-95', card: 'Switch', pattern: "Trainer (pattern unnamed - see PLAYBOOK.md)",
+    note: "To retreat a high value pokemon without paying the retreat cost, or launch a sudden switch for a quick attack that the opponent wasn't expecting. Does not want to be used on a free-retreat cost pokemon and prefers heavier retreat costs to nullify. Should not be played just because it exists in the bot's hand",
+    claim: 'THE CONTROL — and never to swap DOWN, which is the "not just because it exists in hand" half',
+    board: {
+      me:      { card: 'Hitmonchan', energy: '3 Fighting' },
+      them:    { card: 'base1:Charmander', energy: '1 Fire' },
+      myBench: [{ card: 'base1:Rattata' }],
+      myHand:  ['Switch'],
+    },
+    sane: b => b.playable('Switch') && b.E.retreatCostOf(b.me.active) > 0
+            && b.ai.promoteValue(0, b.me.bench[0]) < b.ai.promoteValue(0, b.me.active),
+    expect: b => !b.wouldPlay('Switch'),
   },
   // =============================================================== Charmeleon
   // THE EVOLUTION ROAD CANNOT SEE WHETHER ITS CARRIER WILL LIVE TO TRAVEL IT.

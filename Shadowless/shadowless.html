@@ -6641,10 +6641,35 @@ const STALL_VERBS = {
   DAMAGE_REDUCTION_SELF: 1,
   HEAL_SELF: 1, HEAL_SELF_ALL: 1, HEAL_SELF_IF_DAMAGED: 1, HEAL_SELF_ON_FLIP: 1,
   HEAL_SELF_EQUAL_DAMAGE: 1,
+  // Rhyhorn's Leer — 3 Sep 2026, from Trevor watching the GBC sequel bring one
+  // in "just to use Leer as long as it can and be thrown away, on purpose,
+  // because the AI needed to buy time for the bench".
+  //
+  // IT IS HERE BECAUSE THE SCORER ALREADY AGREED AND THIS LIST DID NOT.
+  // `scoreAttack` prices this verb through `flags.lockAttack` at half a
+  // paralysis — the same currency `DENIES_A_TURN` is measured in — so the bot
+  // knew Leer denies a turn while `wallScore` said Leer was not a stalling move
+  // at all. Two lists, one idea, disagreeing.
+  //
+  // AND IT SITS WITH SCRUNCH, NOT WITH THE DAMAGE REDUCTIONS. The exclusion
+  // below is for effects that blunt one attacker for one turn. Leer negates the
+  // attack outright, which is what `PREVENT_ALL_DMG_SELF_ON_FLIP` does — both
+  // are coin-gated, one-turn and self-only, and against the Pokemon actually
+  // standing opposite they are the same thing.
+  //
+  // ON ITS OWN IT CHANGES NOTHING, and that is worth knowing before reading it
+  // as a fix. Both printings carrying this verb are Basics that EVOLVE, and
+  // `wallScore` gates on terminal Basics first — so Rhyhorn still scores 0.
+  // See the Open section of Playbook/WALLS.md for the half that is not built.
+  CANT_ATTACK_ON_FLIP: 1,
 };
 // STATUS_SELF and STATUS_SELF_ON_TAILS are POINTEDLY absent. So is
 // DAMAGE_REDUCTION_FROM, which shields against one attacker for one turn —
 // a trick, not a job.
+//
+// `selftest.js` asserts this list against the verbs `scoreAttack` actually
+// prices as denial-or-protection, so the two cannot drift apart again silently.
+// A verb belongs in one place or the other and the suite says which are missing.
 
 const EVOLVED_NAMES = new WeakMap();   // db -> Set of names something evolves FROM
 function namesWithAnEvolution(db) {
@@ -10462,12 +10487,40 @@ class AI {
           // Same yardstick as promoting, deliberately. When these were two
           // formulas they picked different Pokemon, and the visible symptom was
           // the bot promoting one and then spending a Switch to undo it.
-          let bestI = -1, bestV = -Infinity;
-          me.bench.forEach((b, i) => {
-            const v2 = this.promoteValue(pi, b);
-            if (v2 > bestV) { bestV = v2; bestI = i; }
-          });
-          a.opts.bench = bestI;
+          //
+          // THE GAIN WAS COMPUTED AND THROWN AWAY — 3 Sep 2026, and it is why
+          // this card scored a flat -4.00 on every board that was not an
+          // emergency: measured across Machop, Charmander, Chansey, Onix and
+          // Kangaskhan, five different Actives with five different Bench
+          // upgrades behind them, all -4.00. **How much you want to move was not
+          // in the score at all**, so the only Switch the bot ever played was one
+          // escaping a Knock Out.
+          //
+          // `bestSelfSwitch` is the same loop with the answer kept, and
+          // `selfSwitchGain` is the rate Teleport already prices it at. This is
+          // one expression of the idea replacing two, not a new weight.
+          const sw = this.bestSelfSwitch(pi);
+          if (!sw) return -Infinity;
+          a.opts.bench = sw.bench;
+          s += sw.gain * W.selfSwitchGain;
+          // THE RETREAT COST IS DELIBERATELY NOT PRICED, and this closes the
+          // `open:` row that has been asking about it since 30 Aug 2026.
+          //
+          // Trevor, 3 Sep: "I'm not sure we need to price cost at all... it would
+          // be almost entirely situational without the exact retreat cost it was
+          // saving getting much consideration beyond the fact that it's being
+          // saved. If you really think we should price it, I'd say we should
+          // price it lower than the spot's desire to run."
+          //
+          // IT IS ALREADY IN THE ARITHMETIC, which is the part worth checking
+          // before adding a term. A Switch does not pay `retreatSaveEnergy` and a
+          // retreat does, so the Switch's advantage over retreating rises with
+          // the cost on its own — measured on one board at 16.50 for a Machop,
+          // 42.05 for an Onix, 55.35 for a Kangaskhan. Adding `cost *
+          // retreatSaveEnergy` here would be a SECOND rate for a commodity the
+          // retreat path already owns, and it would buy Switches for Snorlaxes
+          // that were perfectly happy standing there. Same shape as the Chansey
+          // caveat in WALLS.md: it falls out rather than being special-cased.
           const danger = this.incomingThreat(pi);
           s += (danger >= this.remainingHP(me.active)) ? 24 : -4;
           const st = me.active.status;
