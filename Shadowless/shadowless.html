@@ -6531,6 +6531,11 @@ const AI_WEIGHTS = {
   retreatSaveEvolved: 9,// ...plus this if it is not a Basic
   retreatNoCause: -14,  // retreating when nothing actually threatens the Active
   retreatIntoDeath: 24, // ...and swapping a survivor for one that dies on arrival
+  wallRoadInDeck: 0.5,  // a Basic whose evolution is in the DECK rather than the
+                        // hand is half a wall: the road is a hope and the card is
+                        // standing there now. UNMEASURED first guess, and the only
+                        // guess in `roadLive` - in-hand and nowhere are both facts.
+                        // See AI.md, which records it as untuned rather than derived
   wallStick: 1.0,       // how much a Pokemon's "stickiness" cancels the value of
                         // rescuing it. 1.0 = a perfect wall is never worth
                         // saving for its own sake; the Prize term still applies
@@ -6682,18 +6687,22 @@ function namesWithAnEvolution(db) {
   return s;
 }
 
-// 0 for everything that is not a wall, up to 1 for the most immovable thing in
-// the format. Memoised per db: the answer is a property of the card, and the
-// evolution scan is over the whole pool.
-const WALL_SCORES = new WeakMap();
-function wallScore(db, effects, card) {
+// THE SHAPE OF A WALL, with no question asked about evolutions — 3 Sep 2026.
+//
+// Split out of `wallScore` so the same three signals can be read for a Basic
+// that HAS an evolution. It is still Basics only: a Stage 2 is three cards of
+// investment and calling one a wall is the mistake the terminal rule was
+// written to prevent, which is structural here rather than a condition anybody
+// can relax. See `AI.wallHere`.
+const WALL_SHAPES = new WeakMap();
+function wallShape(db, effects, card) {
   if (!card || card.kind !== 'pokemon') return 0;
-  let m = WALL_SCORES.get(db);
-  if (!m) { m = new Map(); WALL_SCORES.set(db, m); }
+  let m = WALL_SHAPES.get(db);
+  if (!m) { m = new Map(); WALL_SHAPES.set(db, m); }
   if (m.has(card.id)) return m.get(card.id);
 
   let v = 0;
-  if (card.stage === 'Basic' && !namesWithAnEvolution(db).has(card.name)) {
+  if (card.stage === 'Basic') {
     const hp = Math.min(1, Math.max(0, ((card.hp || 0) - 50) / 50));
     const ret = Math.min(1, (card.retreat || 0) / 3);
     const scripts = (effects[card.id] && effects[card.id].a) || [];
@@ -6702,6 +6711,21 @@ function wallScore(db, effects, card) {
   }
   m.set(card.id, v);
   return v;
+}
+
+// 0 for everything that is not a wall, up to 1 for the most immovable thing in
+// the format. Memoised per db: the answer is a property of the card, and the
+// evolution scan is over the whole pool.
+//
+// STILL THE CARD PROPERTY, AND DELIBERATELY UNCHANGED. `AI.wallHere` is the
+// board-aware one and is what the scorer calls now; this is what a card is
+// worth knowing nothing about the position, and `powertest.js` pins its
+// terminal-only meaning. Do not merge the two — they answer different questions
+// and one of them has to stay answerable without a game in progress.
+function wallScore(db, effects, card) {
+  if (!card || card.kind !== 'pokemon') return 0;
+  if (namesWithAnEvolution(db).has(card.name)) return 0;
+  return wallShape(db, effects, card);
 }
 
 class AI {
@@ -8304,6 +8328,61 @@ class AI {
   // `evolvesFrom` the way the engine matches it, and it deliberately does NOT ask
   // whether the evolution is legal THIS turn — a Pokemon played this turn cannot
   // evolve yet, and that is exactly when you want to start feeding it.
+  // ==========================================================================
+  // A CARD'S WALL-NESS RISES AS ITS EVOLUTION STOPS BEING LIVE — 3 Sep 2026
+  // ==========================================================================
+  //
+  // Trevor, watching the GBC sequel: Rhyhorn "brought in just to use Leer as
+  // long as it can and be thrown away, on purpose, because the AI needed to buy
+  // time for the bench, never powering up Horn Attack."
+  //
+  // `wallScore` could never say that. It refuses every Basic that has an
+  // evolution, and Rhyhorn evolves — so the archetypal example of the behaviour
+  // Trevor was describing scored zero.
+  //
+  // THE OLD GATE IS NOT REMOVED, IT IS DERIVED. A terminal Basic is simply a
+  // card whose road is permanently dead: nothing evolves from it, so `roadLive`
+  // is 0 and `wallHere` returns exactly `wallScore`. **That equivalence is
+  // asserted in `powertest.js`** — it is what makes this a generalisation rather
+  // than a replacement, and if it ever stops holding, this went wrong.
+  //
+  // AND THE STAGE-2 PROTECTION IS STRUCTURAL RATHER THAN INHERITED. The reason
+  // written down for terminal-only was that "cannot evolve further" would call
+  // Charizard a wall — but `stage === 'Basic'` already excludes Charizard, and
+  // that condition lives in `wallShape` where nothing here can relax it. What
+  // the evolution half was ACTUALLY buying is that a Squirtle you mean to evolve
+  // is not treated as disposable, and that is a fact about the board rather than
+  // about the card. This is that fact, asked properly.
+  //
+  // Trevor, 3 Sep: a DISCOUNT rather than a hard stop, to keep it tunable.
+  //
+  // THREE STATES, AND ONLY THE MIDDLE ONE IS A GUESS:
+  //   in hand   the road is a certainty THIS TURN         -> 1, no wall-ness
+  //   in deck   it is a hope, and the card is standing
+  //             there now                                 -> W.wallRoadInDeck
+  //   nowhere   discarded, in play or prized: the road is
+  //             over and the card has no future           -> 0, full wall-ness
+  //
+  // Reading our own deck is legitimate and already done in five places — a
+  // player knows their own decklist. It is not `prizeIndex`'s problem.
+  roadLive(pi, slot) {
+    const card = this.top(slot);
+    // The common case short-circuits before any scan: most cards in most decks
+    // have no evolution at all, and this runs inside the retreat scoring.
+    if (!namesWithAnEvolution(this.db).has(card.name)) return 0;
+    if (this.evolutionInHand(pi, slot)) return 1;
+    const me = this.E.state.players[pi];
+    const inDeck = me.deck.some(x => {
+      const c = this.db[x.id];
+      return c && c.kind === 'pokemon' && c.evolvesFrom === card.name;
+    });
+    return inDeck ? this.W.wallRoadInDeck : 0;
+  }
+
+  wallHere(pi, slot) {
+    return wallShape(this.db, this.eff, this.top(slot)) * (1 - this.roadLive(pi, slot));
+  }
+
   evolutionInHand(pi, slot) {
     const me = this.E.state.players[pi];
     const from = this.top(slot).name;
@@ -9745,7 +9824,7 @@ class AI {
         // gives up by staying was never damage. Reusing `wallScore` rather than
         // adding a second notion of what a wall is — see AI.md.
         if (delta > 0) {
-          const wall = wallScore(E.db, this.eff, this.top(me.active));
+          const wall = this.wallHere(pi, me.active);
           delta *= (1 - wall * W.wallStick);
         }
         s += delta * W.retreatTempo;
@@ -9828,7 +9907,7 @@ class AI {
           // opponent has 1 prize". At one Prize the squared divisor puts `prize`
           // at 60 and no amount of stickiness touches it, so the exception falls
           // out of the two terms rather than needing to be written.
-          const stick = wallScore(E.db, this.eff, this.top(me.active));
+          const stick = this.wallHere(pi, me.active);
           s += Math.min(W.dangerSwap, invested) * (1 - stick * W.wallStick) + prize;
         } else if (delta <= 0) {
           // Nothing threatens the Active AND the replacement hits no harder, so

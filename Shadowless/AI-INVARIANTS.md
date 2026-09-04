@@ -117,3 +117,4 @@ open the entry.
 | 1 Sep 2026 | **the plan is the whole line, and the evolve goes before the attach** | `evolutionPlan`, `roadWant` | [EVOLUTION-PLAN](AI-INVARIANTS/EVOLUTION-PLAN.md) |
 | 2 Sep 2026 | **a heal is worth a rescue only if it actually rescues, and the target is chosen by value** | `healRescues`, `T_HEAL`, `T_DISCARD_ENERGY_THEN_HEAL` | [HEAL-RESCUE](AI-INVARIANTS/HEAL-RESCUE.md) |
 | 3 Sep 2026 | **a Switch is worth how much you want to move, and the cost is already priced** | `T_SWITCH_OWN`, `bestSelfSwitch` | [SWITCH-DESIRE-TO-RUN](AI-INVARIANTS/SWITCH-DESIRE-TO-RUN.md) |
+| 3 Sep 2026 | **a card's wall-ness rises as its evolution stops being live** | `roadLive`, `wallHere`, `wallShape` | [WALL-ROAD-LIVE](AI-INVARIANTS/WALL-ROAD-LIVE.md) |

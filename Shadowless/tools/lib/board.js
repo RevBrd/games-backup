@@ -427,6 +427,20 @@ function setup(spec = {}) {
   if (spec.discard) me.discard = toHand(spec.discard);
   if (spec.theirDiscard) them.discard = toHand(spec.theirDiscard);
 
+  // THE DECK IS A BOARD FEATURE TOO — 3 Sep 2026, and for the same reason the
+  // discard became one. `roadLive` reads three states: the evolution is in hand,
+  // in the deck, or nowhere — and the middle one is the whole of the rule. Until
+  // now the deck was whatever `DECKS.Brushfire` happened to be, so a claim about
+  // it could only ever land on "nowhere" and would have passed while measuring
+  // the wrong state entirely.
+  //
+  // PREPENDED, NOT REPLACED. The deck's LENGTH is read by `deckRisk`, `deckBurn`
+  // and the Gambler and Oak cases, so emptying it to place two cards would
+  // quietly turn every board into a bot about to deck out. This puts the named
+  // cards on top of a full deck and leaves the count alone.
+  if (spec.myDeck) me.deck = toHand(spec.myDeck).concat(me.deck);
+  if (spec.theirDeck) them.deck = toHand(spec.theirDeck).concat(them.deck);
+
   // Prizes must exist or the engine reads an empty pile as somebody having won.
   const pr = () => ({ id: 'base1-99', uid: E.uid++ });
   const pz = spec.prizes == null ? 6 : spec.prizes;

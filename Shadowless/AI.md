@@ -256,6 +256,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 1 Sep | **A READY evolution goes before the attachment** — the card should compete for the Energy as the body that will hold it. **Only ready ones**, or an ordering rule overrules a scoring rule two functions away | `playFirst`, `roadWant` |
 | 2 Sep | **A heal buys a rescue only if it CROSSES the line**, and the target is chosen by what the heal is worth rather than by damage counters — the bonus was flat across the boundary where the card stops working, and the selection could suppress its own correction | `healRescues`, `T_HEAL` |
 | 3 Sep | **A Switch is worth how much you WANT to move.** The gain was computed to pick a target and thrown away, so the card scored a flat -4.00 on every board that was not an emergency. The retreat cost it nullifies is deliberately NOT priced — it is already in the comparison against retreating, and a second rate is what this project keeps diagnosing | `T_SWITCH_OWN`, `bestSelfSwitch` |
+| 3 Sep | **What a card is FOR is partly a question about the board.** Wall-ness scales with `1 - roadLive`, and the old terminal-Basic gate is DERIVED rather than removed — a terminal Basic is a card whose road is permanently dead, and the equivalence is asserted over the whole pool | `roadLive`, `wallHere`, `wallShape` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -421,3 +422,18 @@ on it.**
     be a deliberate hedge whose removal flips three claim rows.
     *[The entry →](AI-INVARIANTS/SURVIVES-CHARGE-HEDGE.md)* · *[the original item and the board it
     was measured on →](HISTORY-ARCHIVE-2.md)*
+
+11. **`wallRoadInDeck` is a guess, and it is the only one in `roadLive` — 3 Sep 2026.** In-hand and
+    nowhere are facts about the board; **0.5** for an evolution still in the deck is a first stab at
+    what a hope is worth against a certainty, and nothing has measured it. It cannot go on
+    `selftest.js`'s `PROVISIONAL` list, which holds effect verbs, so it is recorded here beside
+    `prizeIndex` for the same reason. **The Rhyhorn claim rows assert the ORDERING of the three
+    states rather than the value**, so a retune does not break them — which is the thing to preserve
+    if anybody does measure it. *[The mechanism →](AI-INVARIANTS/WALL-ROAD-LIVE.md)*
+
+    **And this list is APPEND-ONLY, which nothing said until somebody nearly broke it.** These
+    numbers are cited from outside — `CLAUDE.md`'s own Open index, `GRABBAG.md`'s AI section and two
+    invariant entries all say things like *"AI.md open item 4"*. Inserting an item in the middle and
+    renumbering the rest silently repoints every one of them at the wrong entry. **New items go at
+    the bottom; a closed one is struck through in place and keeps its number**, which is what items 4
+    and 10 already do.

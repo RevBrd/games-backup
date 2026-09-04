@@ -101,6 +101,74 @@ const CLAIMS = [
     sane: b => b.affordable().includes('Big Eggsplosion') && b.affordable().includes('Teleport'),
     expect: b => b.prefers('Big Eggsplosion'),
   },
+  // =============================================================== Rhyhorn ==
+  // TWO INDEPENDENT SOURCES, ONE CARD, AND NEITHER KNEW ABOUT THE OTHER.
+  // Trevor's workbook note was written well before he loaded the GBC sequel, and
+  // the sequel's bot then did the thing the note describes:
+  //
+  //   workbook — "Leer is the primary as it turns Rhyhorn into a very good
+  //   staller. Horn Attack should only be powered up IF IT'S PLANNING TO EVOLVE"
+  //
+  //   GRABBAG, from GBC 2 — "brought in just to use Leer as long as it can and
+  //   be thrown away, on purpose, because the AI needed to buy time for the
+  //   bench, never powering up Horn Attack"
+  //
+  // The conditional in the workbook note is the whole rule: *if it's planning to
+  // evolve*. Rhyhorn is a wall exactly when Rhydon is not coming — a fact about
+  // the board, and unaskable while `wallScore` was a property of the card.
+  // `roadLive` asks it. *[The entry →](../../AI-INVARIANTS/WALL-ROAD-LIVE.md)*
+  //
+  // ASSERTED AS AN ORDERING, NOT AS A NUMBER, per PLAYBOOK.md — so these survive
+  // a retune of `wallRoadInDeck`, which is the one guessed value in the
+  // mechanism. The middle row mutates its own board rather than declaring a
+  // second one, which is what `strips()` does and for the same reason: the claim
+  // is about the DIFFERENCE between two states and only one can be declared.
+  {
+    id: 'base2-61', card: 'Rhyhorn', pattern: 'Walls',
+    note: "Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack should only be powered up if it's planning to evolve, but takes over the primary position once powered. 3 energy on Rhyhorn usually translates into an evolution though, so this doesn't happen much",
+    claim: 'a Rhyhorn with no Rhydon left anywhere is a wall — the thing wallScore could never say',
+    board: {
+      me:      { card: 'base2:Rhyhorn', energy: '3 Fighting' },
+      them:    { card: 'base1:Charmander', energy: '1 Fire' },
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],
+      myHand:  [],
+    },
+    sane: b => b.ai.roadLive(0, b.me.active) === 0 && b.me.hand.length === 0,
+    expect: b => b.ai.wallHere(0, b.me.active) > 0.5,
+  },
+  {
+    id: 'base2-61', card: 'Rhyhorn', pattern: 'Walls',
+    note: "Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack should only be powered up if it's planning to evolve, but takes over the primary position once powered. 3 energy on Rhyhorn usually translates into an evolution though, so this doesn't happen much",
+    claim: 'THE CONTROL — ...and with Rhydon IN HAND it is not a wall at all, which is his "planning to evolve" clause',
+    board: {
+      me:      { card: 'base2:Rhyhorn', energy: '3 Fighting' },
+      them:    { card: 'base1:Charmander', energy: '1 Fire' },
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],
+      myHand:  ['base2:Rhydon'],
+    },
+    sane: b => b.ai.roadLive(0, b.me.active) === 1,
+    expect: b => b.ai.wallHere(0, b.me.active) === 0,
+  },
+  {
+    id: 'base2-61', card: 'Rhyhorn', pattern: 'Walls',
+    note: "Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack should only be powered up if it's planning to evolve, but takes over the primary position once powered. 3 energy on Rhyhorn usually translates into an evolution though, so this doesn't happen much",
+    claim: 'THE MIDDLE STATE — a Rhydon still in the DECK is a hope, so it is part of a wall, not none and not all',
+    board: {
+      me:      { card: 'base2:Rhyhorn', energy: '3 Fighting' },
+      them:    { card: 'base1:Charmander', energy: '1 Fire' },
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],
+      myDeck:  ['base2:Rhydon'],
+      myHand:  [],
+    },
+    sane: b => { const r = b.ai.roadLive(0, b.me.active); return r > 0 && r < 1; },
+    expect: b => {
+      const hope = b.ai.wallHere(0, b.me.active);
+      // Take the Rhydon out of the deck and ask again. Same board, one variable.
+      b.me.deck = b.me.deck.filter(x => b.E.db[x.id].name !== 'Rhydon');
+      const dead = b.ai.wallHere(0, b.me.active);
+      return hope > 0 && hope < dead;
+    },
+  },
 ];
 
 module.exports = { CLAIMS };

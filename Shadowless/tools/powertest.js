@@ -2584,6 +2584,32 @@ T('TERMINAL BASICS ONLY — a Stage 2 is investment, not a wall', () => {
   return eq(stick('Pikachu'), 0, 'a Basic that evolves is not terminal');
 });
 
+// THE BOARD-AWARE WALL REDUCES TO THE CARD ONE — 3 Sep 2026, and this is the
+// assertion that makes `wallHere` a generalisation of `wallScore` rather than a
+// replacement for it. A terminal Basic is a card whose evolution road is
+// permanently dead, so `roadLive` is 0 and the two must agree exactly, on every
+// card in the pool, with no exceptions and no tolerance.
+//
+// If this ever goes red, the new rule has started saying something different
+// about cards it was never supposed to touch.
+T('wallHere reduces to wallScore for every terminal Basic in the pool', () => {
+  const E = board('base1-3', ['base1-61'], 'base1-16');    // any legal game will do
+  const ai = new AI(E);
+  const bad = [];
+  for (const c of Object.values(CARD_DB)) {
+    if (c.kind !== 'pokemon') continue;
+    const card = wallScore(CARD_DB, EFFECTS, c);
+    if (card === 0) continue;                              // not a wall by the card rule
+    // Stand it in the Active spot of a board whose deck and hand hold nothing
+    // that evolves from it, which is what "terminal" means for `roadLive`.
+    E.state.players[0].active = { id: c.id, uid: 9000, stack: [{ id: c.id, uid: 9000 }], energy: [], dmg: 0, status: {} };
+    const here = ai.wallHere(0, E.state.players[0].active);
+    if (Math.abs(here - card) > 1e-9) bad.push(`${c.name} ${card} != ${here}`);
+  }
+  if (bad.length) throw new Error(bad.slice(0, 4).join('; '));
+  return true;
+});
+
 T('Tauros is not a wall, and the verb list is why', () => {
   // Tauros carries STATUS_SELF_ON_TAILS — it confuses ITSELF. Matching card
   // text for "Confused" would have promoted it; STALL_VERBS does not list it.

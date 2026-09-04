@@ -4,7 +4,8 @@
 exist to stand in the Active spot and soak until they die. Standing there *is* the job, so their low
 damage is not a deficiency and their staying put is not a failure to act.
 
-**State: built.** The derivation and the two retreat fixes shipped 13 and 21 Aug 2026.
+**State: built.** The derivation and the two retreat fixes shipped 13 and 21 Aug 2026; a wall stopped
+having to be a terminal Basic on 3 Sep 2026.
 *[What the scorer does about it, and the invariants →](../AI.md)*
 
 ## Trevor's notes
@@ -39,11 +40,15 @@ reaching the attack path the way it reaches the retreat path.
 
 ## How the family is detected
 
-**`wallScore` in `ai.js`, and it is derived rather than tagged** — everything that makes a card a wall
-is already in the card data, so a tag would be a fact re-typed 1,251 times. Three signals over
-**terminal Basics only**: HP above 50, retreat cost, and a utility attack matched by verb through
-`STALL_VERBS`. The full reasoning, including why *terminal* and not *cannot evolve further*, is the
-comment block above the function — read that, not this paragraph, before changing it.
+**Derived rather than tagged** — everything that makes a card a wall is already in the card data, so
+a tag would be a fact re-typed 1,251 times. Three signals over Basics: HP above 50, retreat cost, and
+a utility attack matched by verb through `STALL_VERBS`.
+
+**It is asked in two places and they are not interchangeable.** `wallShape` is the three signals
+alone. `wallScore` is the CARD property — `wallShape` for a terminal Basic, zero for anything else —
+and it is what `powertest.js` pins. **`AI.wallHere(pi, slot)` is what the scorer calls**, and it is
+`wallShape` scaled by how dead this slot's evolution road is. Read the comment blocks above all three
+before changing any of them; the reasoning for each is there and not in this paragraph.
 
 **37 of 257 printings score above zero** as of 21 Aug 2026. Run it rather than quoting that.
 
@@ -61,56 +66,47 @@ attach one Energy per turn, so an Energy is a turn.*
 Measured together on the ladder decks: retreats **7.1 → 6.0 per 100 turns**, Energy burned on retreat
 **8.2 → 6.1**. *[The invariants both left →](../AI.md)*
 
+**A non-terminal Basic CAN be a wall now — built 3 Sep 2026.** `wallScore` refused every Basic with
+an evolution, so Rhyhorn — the archetypal example of the behaviour — scored zero. `AI.wallHere` scales
+the shape by `1 - roadLive`, where the road is live if the evolution is in hand (certain), half-live
+if it is in the deck (a hope) and dead otherwise. **The old terminal gate is derived rather than
+removed**: a terminal Basic is a card whose road is permanently dead, and `powertest.js` asserts the
+two agree exactly across the whole pool.
+*[The entry, including what is a guess →](../AI-INVARIANTS/WALL-ROAD-LIVE.md)*
+
+**Two sources asked for it and neither knew about the other.** Trevor's workbook note predates his
+first GBC 2 session: *"Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack
+should only be powered up **if it's planning to evolve**."* The conditional is the rule.
+
+**Read the size honestly: 26.5% of games diverge, and it is a broad nudge rather than one card.**
+Every non-terminal Basic without its evolution in hand gains a little wall-ness — Squirtle 0.15,
+Machop 0.10 — against Rhyhorn's 0.70. **And on Rhyhorn the decision does not flip**, because its
+retreat cost of 3 is a −21 penalty consulted first; wall-ness moved the price (−13.50 in hand,
+−15.43 in deck, −17.35 nowhere) and not the choice.
+
 ## Open
 
-**A wall whose wall-ness is a POWER is invisible to the derivation.** `wallScore` reads attack verbs
-only, so **Mr. Mime scores 0.100** — the lowest of every card Trevor has named as a wall, and below
-Jynx — because Invisible Wall is a Pokémon Power and nothing in `STALL_VERBS` can see it. Trevor's
-note describes it doing exactly the wall job, against exactly the opponents the Power is good against.
-Verified 21 Aug 2026 by running `wallScore` over the pool. **This is the one clean miss the `Wants`
-column found in a system that was already built**, and it generalises: any card whose job is done by
-a passive rather than by an attack is currently unreadable to this derivation.
+**A wall does not prefer its stalling attack, and this is the other half of both Rhyhorn notes.**
+Measured 3 Sep 2026 on a board where wall-ness is 0.70: **Leer scores 11.70 and Horn Attack 30.00**,
+and the bot takes Horn Attack — identically whether the road is dead or a Rhydon is sitting in hand.
+`scoreAttack` never consults wall-ness at all.
 
-**A non-terminal Basic cannot be a wall, and the GBC sequel says that is wrong — 3 Sep 2026.**
-Trevor, watching it: *"Rhyhorn is the example here, being brought in just to use Leer as long as it
-can and be thrown away, on purpose, because the AI needed to buy time for the bench, never powering
-up Horn Attack."*
+That is Trevor's *"Leer is the primary"*, and the GBC 2 bullet's *"which cheap moves from those cards
+it can hide behind… never powering up Horn Attack"* — **one clause, two sources, and it now has the
+term it was missing.** `wallHere` exists; nothing in the attack path reads it. Note the second half is
+a different decision again: not *which attack* but *whether to attach toward the big one*, which is
+`attachBuild`'s question rather than `scoreAttack`'s.
 
-**Half of that was a drift between two lists and is fixed.** `scoreAttack` prices `CANT_ATTACK_ON_FLIP`
-at half a paralysis through `flags.lockAttack`, while `STALL_VERBS` did not list it at all — so the
-bot knew Leer denies a turn and `wallScore` said Leer was not a stalling move. The verb is in the list
-now, and **`selftest.js` asserts the two cannot drift apart again**: every verb the scorer prices
-through a denial-or-protection flag must be in `STALL_VERBS` or on `NOT_A_JOB` with a reason. Both
-checks were watched going red before being trusted.
-
-**The other half is unbuilt, and on its own the fix above changes nothing.** `wallScore` gates on
-**terminal** Basics before it ever consults the verb list, and Rhyhorn evolves into Rhydon — so it
-still scores 0. Measured across the whole live pool:
-
-- **34 non-terminal Basics carry a stall attack** and are invisible to the derivation, against 17
-  terminal ones that are scored.
-- **Exactly one of them would score as a meaningful wall**: Rhyhorn at 0.70, which is Onix's and
-  Lapras's score. The next best is Jigglypuff at 0.40, and the rest are 30–50 HP Basics that would
-  land near 0.30 whatever happened.
-
-**So the question is worth one card today, and it is not a one-card question.** The recorded reason
-for the terminal gate is *"'cannot evolve further' would call Charizard a wall and a Stage 2 is three
-cards you badly want to rescue"* — but `stage === 'Basic'` already excludes Charizard. What the second
-condition actually buys is that a Squirtle you intend to evolve is not treated as disposable, **and
-that is a fact about the board rather than about the card.** `wallScore` is memoised per card by
-design, so it cannot express it.
-
-**It is the same mechanism Trevor's Charmeleon clause wants** — *"a Charmeleon that ends up fighting
-and having to use Flamethrower should almost be written off for evolution and used only as a fodder
-attacker"* — and he has already said that one should be a **discount rather than a hard stop**, to
-keep it tunable. Two notes, one build: *a card's wall-ness rises as its evolution stops being live.*
-The machinery that knows whether a road is live already exists in `evolutionRoadFor`. **Build it once
-for both, or not at all** — a wall carve-out for one Rhyhorn would be the special-casing
-[PLAYBOOK.md](../PLAYBOOK.md) warns about.
+**A wall whose wall-ness is a POWER is still invisible to the derivation.** `wallShape` reads attack
+verbs only, so **Mr. Mime scores 0.100** — the lowest of every card Trevor has named as a wall, and
+below Jynx — because Invisible Wall is a Pokémon Power and nothing in `STALL_VERBS` can see it.
+Trevor's note describes it doing exactly the wall job, against exactly the opponents the Power is good
+against. Verified 21 Aug 2026 by running the derivation over the pool. **This is the one clean miss
+the `Wants` column found in a system that was already built**, and it generalises: any card whose job
+is done by a passive rather than by an attack is unreadable here.
 
 **Chansey scores 0.800, below Snorlax, Kangaskhan and Lickitung at 0.900**, because its retreat cost
-is 1. That is defensible — a cheap retreat genuinely does make a card easier to walk away from — but
-the archetypal wall ranking fourth is worth knowing before you tune the weights.
+is 1.
 
 **The kamikaze half of the Chansey note is not here.** *"Double Edge unless a DCE finishes it in one
 turn"* is kamikaze timing, which is its own pattern and is not yet written. Filed as a pointer rather
