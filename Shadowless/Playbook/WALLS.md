@@ -155,11 +155,12 @@ one short of Special Punch:
 | 3 | **42.59** | 28.50 | Kangaskhan |
 
 **Two of three rows are his rule already**, and `wallHere` is not what produces them — the wall simply
-has nothing worth charging until one Energy from Comet Punch. **The third row is the only live
-question on this page**: at three, `attachBuild` sees the payoff of completing a 4-cost attack and the
-wall outbids a Bench that wants the card. Whether that is wrong turns on how it reached three, and
-*"unless there's absolutely nowhere else to go with the energy"* is exactly the condition under which
-reaching three was correct in the first place. **Narrow, arguable, unweighted, and Trevor's call.**
+has nothing worth charging until one Energy from Comet Punch. **And the third row was put to Trevor and KEPT — 4 Sep 2026.** At three, `attachBuild` sees the
+payoff of completing a 4-cost attack and the wall outbids a Bench that wants the card. Whether that
+is wrong turns on how it reached three, and *"unless there's absolutely nowhere else to go with the
+energy"* is exactly the condition under which reaching three was correct in the first place. Trevor:
+*"I'm honestly not sure what GBC does but I like it for us. If you agree, let's keep it."* **Agreed and
+settled — the whole Kangaskhan thread is closed, and the card is no longer a live check on anything.**
 
 **The pattern in both of my false findings is the same and worth naming.** I measured the decision
 that was easy to reach — which attack — when the note was about the decision upstream of it: what gets

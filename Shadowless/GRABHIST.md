@@ -56,7 +56,7 @@ confused is presumably how this happened.
 
 ---
 
-### Evolving before it is ready — the funnel, and why the veto was refused — 3 Sep 2026 (#36)
+### Evolving before it is ready — the funnel, the veto, and a premise Trevor corrected — 3 Sep 2026 (#36)
 
 > The AI evolves as soon as it CAN rather than as soon as it is READY — Vileplume arrives unable to
 > attack.
@@ -99,6 +99,75 @@ the attachment that follows in the same turn — which is [PLAY-ORDER](AI-INVARI
 rule, shipped 31 Aug, doing exactly what it was built to do. Measuring before it runs makes the
 scorer look worse than it is. **The readiness rule and the play-order rule are designed to work
 together**, and either measured alone reads as a fault.
+
+
+#### "Cost zero" on the Bench was WRONG — Trevor, 3 Sep 2026, and the correction is measured
+
+**The funnel above reduces 73 to 18 on the line *"55 on the Bench, cost zero — a benched Pokemon is
+not attacking anyway"*. That premise is false and Trevor said so:**
+
+> It does matter in terms of bench energy even though they don't need to fight at the moment, because
+> if the active pokemon is knocked out something needs to replace it. A bench is very easy to pile up
+> with unpowered evolved pokemon that all now have increased energy demands for their minimum attacks.
+> Two evolved but fully powered bench pokemon beat four evolved but mostly unpowered pokemon.
+
+**He is right about the mechanism. The cost is deferred, not absent, and it lands on promotion —
+which is the worst moment, because you do not choose when it happens.** Measured over 60 ladder
+games, 438 promotions:
+
+| | |
+|---|---|
+| promotions where the arrival could not attack | 57 of 198 sampled — **28.8%** |
+| ...of which were **evolved** cards | **19 of 438 (4.3%)** |
+| ...which would have been dark as the pre-evolution anyway | 11 |
+| **attributable to having evolved** | **8 — 1.8% of promotions, 0.13/game** |
+
+**That last row is the honest size of his argument**, and it is the same order as the Active-silencing
+number in the funnel above (0.13/game). So the total exposure is roughly **0.26 events per game**
+rather than the 0.13 I reported, and the Bench half of the funnel should be read as *deferred* rather
+than as *free*.
+
+**The middle row is the one that keeps the verdict where it was.** Eleven of the nineteen would have
+been unable to attack in their un-evolved form too — a Starmie promoted on zero Energy is a Staryu
+that could not have attacked either. **Evolving did not cause those and no evolve rule can fix them.**
+
+#### The pile-up is real and evolution is not what causes it
+
+Trevor's *"bench very easy to pile up with unpowered pokemon"* is measured and worse than he put it:
+**48.4% of sampled bench slots cannot afford their own cheapest attack.** But only **11.0% of bench
+slots are evolved AND unable** — so evolved cards are **23% of the pile**, and the other 77% is plain
+Basics benched with nothing on them. **A veto on evolutions addresses at most a quarter of the thing
+it is aimed at**, and only the 1.8% of it that is attributable.
+
+#### And the weight does not steer it
+
+Swept `evolveEarly` over 60 games at each value, measuring the attributable debt:
+
+| `evolveEarly` | attributable | per game |
+|---|---|---|
+| **8** (current) | 8 | 0.13 |
+| 16 | 8 | 0.13 |
+| 24 | **10** | **0.17** |
+| 40 | 4 | 0.07 |
+
+**Non-monotone — 24 is worse than 8 — which at eight events on a Poisson count is noise rather than a
+curve.** Even a 5x weight only halves it, and cannot be distinguished from the 24 reading going the
+wrong way. **The exposure is too small to tune against with this instrument**, which is the Paras
+situation again: recorded because the reasoning generalises, not because the number does.
+
+#### Where that leaves the veto, stated as a disagreement rather than a conclusion
+
+**Trevor's argument is for a GUARANTEE and mine is about a RATE, and those do not settle each other.**
+His: *"its bot is never in a situation where it's forced to pay off a deep evolution debt while in the
+active spot."* A veto delivers that; no weight can.
+
+**What the guarantee costs is the two exceptions the penalty exists to permit** — evolving to wipe a
+status (worth 14) and evolving to survive a hit (a real HP jump). A plain veto forbids both.
+
+**The synthesis nobody has built: a veto WITH those two exceptions.** That is buildable, it gives the
+guarantee in the ordinary case, and it keeps the escapes. It was not built here because the measured
+benefit is ~0.26 events per game and the change is structural — **but it is the shape to reach for if
+the guarantee is what is wanted**, rather than a heavier weight, which the sweep says will not work.
 
 #### The Kangaskhan half, which came out the same way
 
