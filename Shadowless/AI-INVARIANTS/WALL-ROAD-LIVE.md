@@ -93,3 +93,19 @@ not have: **the card has spent something it cannot get back.** `roadLive` asks w
 exists, not whether this carrier is still worth sending. `evolutionRoadFor`'s survival predicate is
 the nearest existing machinery. Trevor has already said that one should be a **discount rather than a
 hard stop**, so the shape is settled and the trigger is not.
+
+## The session-level number, which is a null
+
+**Job 15e's three AI changes together — this one, the heal rescue and the Switch gain — measured
+`aiduel.js 2 75ed53f --gbc`: 50.2% ±0.9, no significant difference** against the commit the session
+opened on. 11,655 games.
+
+**Say it plainly rather than around it: this did not make the bot measurably stronger.** It shipped
+on correctness, which is the same ground `statusNovelty` shipped on and for the same stated reason —
+a bot that treats a Rhyhorn it can never evolve as a card worth rescuing is doing something a person
+watching would recognise as wrong, and that is the class of error a win rate is worst at seeing.
+
+**The null is also evidence in the direction nobody quotes.** The interval is [49.3, 51.1], which
+rules out the large regression a broad nudge across every non-terminal Basic could plausibly have
+caused. That was the real risk here, and it is the half of a null worth reporting.
+*[Both numbers, and the pin that did move →](../YARDSTICKS.md)*

@@ -165,8 +165,27 @@ anyone has written down against the old one.
 | Pin | Set | Retired | Why it was retired | Last reading against it |
 |---|---|---|---|---|
 | `e23c747` | 21 Aug 2026 | **28 Aug 2026** | Predates the 25 Aug fix for three PROVISIONAL Power crashes. The Team Rocket roster then fielded one and `--baseline --gbc` began dying inside the baseline | **51.4% ±0.5**, 23 Aug 2026 |
-| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified with `--checkpin` against the live ladder before the pin was moved | **50.1% ±0.5**, 28 Aug 2026 |
+| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified with `--checkpin` against the live ladder before the pin was moved | **51.5% ±0.9**, 3 Sep 2026 (was 50.1% ±0.5 on 28 Aug) |
 
+**The pin moved +1.4 points between 28 Aug and 3 Sep 2026, and the yardstick is doing its job.**
+50.1% ±0.5 to **51.5% ±0.9**, `--checkpin` clean, 11,656 games. That is the accumulated work of
+several sessions — the Over-Attach pattern, the evolution road and plan, the play ordering, the
+Trainer fixes — and **it is not attributable to any one of them**, which is the whole point of a
+figure that accumulates. Read the second number's wider interval as the smaller sample it is (2
+seeds a matchup rather than the 28 Aug run's); it is not a precision regression.
+
+**AND THE SAME DAY'S OWN WORK READ NULL AGAINST ITS OWN START.** Job 15e's three AI changes together
+— the heal rescue, the Switch gain and the board-aware wall — measured **50.2% ±0.9 against
+`75ed53f`**, the commit the session opened on: *no significant difference*. All three shipped on
+correctness, and all three moved `abtest` substantially (9.4%, 34.5%, 26.5% of games diverged), so
+they are neither inert nor unexposed.
+
+**That pairing is the clearest demonstration this file has of why both numbers exist.** A day of
+real change reads null against its own morning and contributes to a pin that has moved. **Do not
+conclude from a null against HEAD that a session did nothing** — and do not conclude from a moving
+pin that any particular session is why. The interval on the null is [49.3, 51.1], which also rules
+out the large *regression* that a broad change like the wall nudge could plausibly have caused; a
+null is evidence about size in both directions, and that half is usually the one left unsaid.
 **Readings against different pins are not comparable**, so the 21–25 Aug accumulation now sits
 *behind* the current pin and is no longer measured by it. The last reading taken against a retired pin
 is kept in its row for exactly that reason. **A retired pin's row never gets deleted.**
