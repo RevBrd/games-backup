@@ -388,5 +388,5 @@ each player twice. Fixed. Do not compare against an older number; the full accou
 ## Marquee billing
 
 <!-- marquee: billing=feature -->
-Headlined in Marquee. Complete and playable end to end per the catalog. Editorial only — it changes which shelf the launcher puts this
+Headlined in Marquee. Editorial only — it changes which shelf the launcher puts this
 on and nothing else. Change the comment above when the game's state changes.
