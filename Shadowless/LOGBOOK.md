@@ -27,12 +27,28 @@ it was holding six at 295 lines. **The most recent closed entry stays behind on 
 visibly write better entries when there is one in front of them, so the live file always opens with
 an example rather than a blank.
 
-**The live file's limit is ~250 and an archive's is ~450, and they are different numbers because
-they are guarding different things** — Trevor's call, 2 Sep 2026. The live limit exists because
-instances *append* here, and an entry once landed in the middle of another's when the end of the
-file scrolled out of view; that is a hazard of writing, and it scales with length. An archive is
-closed and never appended to, so it cannot happen there. What a longer archive costs is a longer
-read; what it buys is fewer files for the table below to carry.
+**Both limits are ~450 — Trevor's call, 3 Sep 2026**, raising the live file from ~250 to match the
+archives. **What it buys is more entries live at once**, which is the point: an arriving instance
+reads this file and not the archives, so recent history being here is most of its value.
+
+**The old split was ~250 live against ~450 archived, and the reason given for it does not survive
+contact with how appending actually works.** It was that instances *append* here and an entry once
+landed in the middle of another's when the end of the file scrolled out of view — a hazard that
+"scales with length". **It does not scale with length; it scales with technique.** An append done by
+`>>`, or by anchoring on the previous entry's signature line, lands correctly in a file of any size.
+An append done by reading the whole file and writing it back is unsafe at 250 lines just as much as
+at 450. So the number was guarding the wrong variable, and the mitigation belongs in the instruction
+rather than in the cap:
+
+> **Append by anchoring on the end, never by rewriting the file.** `>>` is safest. A targeted
+> insertion after the last entry's `— #NN` line is fine. **Reading the file and writing back a
+> version you assembled is the thing that has gone wrong**, and it goes wrong silently.
+
+**~450 is deliberately inside the truncation zone and that is accepted.** Trevor's framing: mildly
+truncated but still workable, and worth it for holding more entries. If you arrive with this file
+compacted and need an entry in full, it is in git.
+
+**Roughly four entries fit**, at the 75–105 lines these have been running.
 
 **Assume this file is over its limit and go and look — it was at 609 on 2 Sep 2026**, holding five
 entries against a rule sitting at the top of its own header. That is the third register in this tree
@@ -272,5 +288,49 @@ buys is that a Squirtle you mean to evolve is not disposable, **which is a fact 
 `wallScore` is memoised per card. That is the same mechanism Trevor's Charmeleon clause needs. **When
 a documented reason does not actually reach the code it justifies, the rule may still be right and
 the reason is a different question** — I left the gate alone and wrote down both.
+
+
+### Third round — wall-ness, and a list I nearly broke
+
+**The build went the way the last two did: the mechanism was smaller than the finding around it.**
+
+Rhyhorn's workbook note and Trevor's GBC 2 bullet are the same sentence written months apart, and
+neither knew about the other. The workbook version carries the conditional the GBC one leaves
+implicit — *"Horn Attack should only be powered up **if it's planning to evolve**"* — and that
+conditional is the entire rule. **Two independent statements of a thing is the strongest signal this
+project produces**, and both were sitting unclaimed.
+
+**The satisfying part was that the old gate did not need removing, it needed deriving.** A terminal
+Basic is just a card whose evolution road is permanently dead. Saying it that way turns a special
+case into an instance of the general rule, and it made the equivalence assertable — `wallHere` must
+equal `wallScore` for every terminal Basic in the pool, to machine precision. That test is worth more
+than the feature: it is what stops a future pass "simplifying" the two back together.
+
+**And the reason written down for the old gate did not justify it.** It said terminal-only stops
+Charizard being called a wall — but `stage === 'Basic'` already did. The rule was right and the
+reason was about something else. **A documented reason can rot independently of the rule it is
+attached to**, and it rots invisibly, because anybody checking finds the rule sound and stops there.
+
+### The honest size
+
+I nearly reported this as a one-card fix. `abtest` said **26.5% of games diverge**, which is not what
+a one-card fix looks like, and the reason is that `wallHere` gives a small wall-ness to *every*
+non-terminal Basic whose evolution is not in hand. **And on the one card the story is about, the
+decision does not flip at all** — Rhyhorn's retreat cost of 3 is consulted first and dominates, so
+wall-ness moved the price and not the choice.
+
+Both of those are in the entry. **Neither would have been found by anybody who trusted the framing
+they were handed**, including the framing I wrote myself last turn.
+
+### The thing I nearly broke
+
+I inserted a new item into the middle of `AI.md`'s Open list and renumbered the rest. Those numbers
+are **cited from outside** — `CLAUDE.md`, `GRABBAG.md` and two invariant entries all say things like
+*"AI.md open item 4"* — so renumbering silently repoints every one of them. I caught it on the diff,
+reverted, and appended at the bottom instead, and the list now says it is append-only.
+
+**Nothing had said so.** The convention was visible only in the fact that items 4 and 10 are struck
+through in place rather than removed, which reads as tidiness rather than as a rule. **A convention
+that exists only as a pattern in the data is one nobody can follow on purpose.**
 
 — #36
