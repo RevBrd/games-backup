@@ -132,26 +132,41 @@ decision as a broken one** — [PLAYBOOK.md](../PLAYBOOK.md)'s "pick the opponen
 aimed at my own board instead of at the opponent. The stalling Trevor describes is *"spamming Leer at
 1 energy"*, which is a claim about what gets ATTACHED, not about which attack is chosen.
 
-**The real version of the item is Kangaskhan, it reproduces, and WALLS.md predicted it above.** That
-paragraph has said since 22 Aug that Kangaskhan is *"a live check on the wall work"* — if the bot
-still reaches for Comet Punch, wall-ness is not reaching the attack path the way it reaches the
-retreat path. Measured at four Energy, wall-ness **0.90**:
+**~~The real version of the item is Kangaskhan.~~ RETIRED THE SAME DAY — 3 Sep 2026, and it is the
+second false finding of mine on this page.** I reported that Comet Punch beating Fetch 40.00 to 4.91
+against a Chansey it cannot kill was the fault this file had been predicting since 22 Aug. Trevor's
+answer retired it in a sentence:
 
-| opponent | Fetch | Comet Punch | bot takes |
+> *"Fetch should almost always ever be the only move even powered up unless there's absolutely
+> nowhere else to go with the energy. However if for whatever reason Comet Punch **is** able to be
+> used, it should be."*
+
+**The second clause says the attack choice was right.** The gate is the **attach** — a wall should not
+be built to four Energy while anything else wants them — and that is a different function from the
+one I was measuring.
+
+**And the attach is mostly already right.** Kangaskhan Active against a Chansey, a Hitmonchan benched
+one short of Special Punch:
+
+| Kangaskhan's Energy | attach to it | attach to the Bench | bot feeds |
 |---|---|---|---|
-| Charmander, 50 HP — killable | 4.91 | 110.63 | Comet Punch — **correct, it is lethal** |
-| Chansey, 120 HP — not killable | 4.91 | **40.00** | Comet Punch |
+| 1 | 4.40 | **28.50** | the Bench |
+| 2 | 4.40 | **28.50** | the Bench |
+| 3 | **42.59** | 28.50 | Kangaskhan |
 
-Trevor's note is *"a tank that should only really use Fetch until it dies"*. **`scoreAttack` never
-consults wall-ness at all**, so the second row is the fault the earlier paragraph was waiting for,
-on the card it named, and not on the card I went looking at.
+**Two of three rows are his rule already**, and `wallHere` is not what produces them — the wall simply
+has nothing worth charging until one Energy from Comet Punch. **The third row is the only live
+question on this page**: at three, `attachBuild` sees the payoff of completing a 4-cost attack and the
+wall outbids a Bench that wants the card. Whether that is wrong turns on how it reached three, and
+*"unless there's absolutely nowhere else to go with the energy"* is exactly the condition under which
+reaching three was correct in the first place. **Narrow, arguable, unweighted, and Trevor's call.**
 
-**It is a scoring disagreement rather than a plumbing one, which makes it the harder kind.** Comet
-Punch does not stop Kangaskhan standing there — it attacks *and* stays — so the question is genuinely
-whether one card off Fetch beats an average 40 damage while a wall does its job. That is a claim about
-what `drawCard` is worth to a stalling deck, and **it should be raised with Trevor before anything is
-weighted**, per this file's own note that his second Kangaskhan sentence was a wall note rather than
-an attack-choice one.
+**The pattern in both of my false findings is the same and worth naming.** I measured the decision
+that was easy to reach — which attack — when the note was about the decision upstream of it: what gets
+attached. [AI.md](../AI.md) records the same shape from 28 Aug, when Arcanine's row was red for two
+days while two sessions looked for a missing term in attack choice and the fault was one decision
+earlier. **A red row localises a fault to a card, not to a verb**, and a *note* localises it even less
+than that.
 
 **A wall whose wall-ness is a POWER is still invisible to the derivation.** `wallShape` reads attack
 verbs only, so **Mr. Mime scores 0.100** — the lowest of every card Trevor has named as a wall, and

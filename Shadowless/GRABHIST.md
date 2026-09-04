@@ -56,6 +56,73 @@ confused is presumably how this happened.
 
 ---
 
+### Evolving before it is ready — the funnel, and why the veto was refused — 3 Sep 2026 (#36)
+
+> The AI evolves as soon as it CAN rather than as soon as it is READY — Vileplume arrives unable to
+> attack.
+
+**Off the list. The rule shipped 28 Aug 2026** as `roadWant` against `evolveEarly`, both halves in one
+commit, and this entry is the *residual* measured afterwards — because Trevor asked a good follow-up:
+weighting it still seems to allow zero-Energy evolves, so would a **veto** be better?
+
+**No, and the funnel is the argument.** 30 ladder games, every evolve instrumented:
+
+| | count | |
+|---|---|---|
+| evolves | 98 | |
+| **below readiness** (`roadWant > 0`) | **73** | 74.5% — Trevor's observation is correct |
+| ...on the **Bench** | 55 | **cost zero.** A benched Pokemon is not attacking anyway |
+| ...silencing the **Active** | 10 | could attack before, cannot after |
+| ...**un-silenced by the same turn's attachment** | 6 | you evolve *and* attach in one turn |
+| ...**genuinely dark afterwards** | **4** | ~0.13 per game |
+
+**A veto would block 73 plays to fix 4**, and one of the four is `Magikarp(1E) -> Gyarados`, +70 HP
+for one dark turn, which is one of the best plays in the format. The other three are
+Squirtle→Wartortle (+30, dark 1), Staryu→Starmie (+20, dark 1) and Machop→Machoke (+30, dark 2).
+**At least one of the four is correct play and the rest are arguable**, so the true fault rate is
+below the 6.2% Paras finding that was measured and deliberately not built.
+
+**The penalty is also right to be a penalty.** Its comment says so and names the cases: a status wipe
+is 14, a big HP jump is real, and an ON_PLAY Power is priced on its own. A veto forbids evolving to
+escape a Sleep or to survive, which is Trevor's own *"usually"* being overruled by a later reading of
+the same rule.
+
+#### Two measurements that were wrong on the way, both mine, both worth the correction
+
+**An evolve does not compete with an attack or an attach.** My first probe counted "did a better
+action exist" and found 64 of 73 — meaningless, because you evolve *and* attach *and* attack in the
+same turn. Nothing was being given up. **When a probe reports a suspiciously high fault rate, check
+that the two things are actually exclusive.**
+
+**And `canAct` at evolve time is the wrong moment.** Six of the ten Active silences are un-silenced by
+the attachment that follows in the same turn — which is [PLAY-ORDER](AI-INVARIANTS/PLAY-ORDER.md)'s
+rule, shipped 31 Aug, doing exactly what it was built to do. Measuring before it runs makes the
+scorer look worse than it is. **The readiness rule and the play-order rule are designed to work
+together**, and either measured alone reads as a fault.
+
+#### The Kangaskhan half, which came out the same way
+
+Trevor, 3 Sep: *"Fetch should almost always ever be the only move even powered up unless there's
+absolutely nowhere else to go with the energy. However if for whatever reason Comet Punch **is** able
+to be used, it should be."* **So the gate is the ATTACH, not the attack** — and the second sentence
+says the bot's Comet Punch choice was right all along, which retires the "fault" recorded in
+[Playbook/WALLS.md](Playbook/WALLS.md) earlier the same day.
+
+Measured, Kangaskhan Active against a Chansey, a Hitmonchan on the Bench one short of Special Punch:
+
+| Kangaskhan's Energy | attach to it | attach to the Bench | bot feeds |
+|---|---|---|---|
+| 1 | 4.40 | **28.50** | the Bench — correct |
+| 2 | 4.40 | **28.50** | the Bench — correct |
+| 3 | **42.59** | 28.50 | Kangaskhan |
+
+**Two of the three rows are already his rule.** The third is the one live question: at three Energy
+one more completes Comet Punch, `attachBuild` sees the payoff, and the wall outbids a Bench that
+wants the card. Whether that is wrong depends on how it reached three — *"unless there's absolutely
+nowhere else to go with the energy"* is exactly the condition under which reaching three was correct.
+**Narrow, arguable, and left for Trevor rather than weighted.**
+
+
 ### The GBC sequel's Potion timing — 2 Sep 2026 (#36)
 
 > Potions applied to the active pokemon seem to be purposefully timed for when they would prevent the
