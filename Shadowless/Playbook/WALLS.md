@@ -84,18 +84,74 @@ Machop 0.10 — against Rhyhorn's 0.70. **And on Rhyhorn the decision does not f
 retreat cost of 3 is a −21 penalty consulted first; wall-ness moved the price (−13.50 in hand,
 −15.43 in deck, −17.35 nowhere) and not the choice.
 
+**AND THE STALLING BEHAVIOUR ALREADY WORKS — verified 3 Sep 2026, so do not build a veto for it.**
+Trevor proposed one: *"the rule that makes the bot only evolve when the minimum useful attack can be
+powered up to on the same turn. That right there would provide the Rhyhorn evolution gate we need."*
+
+**That rule exists and it is firing.** It shipped 28 Aug as `roadWant` against `evolveEarly`, and it
+is Trevor's own earlier sentence — *"one energy away from being able to use the evolution's cheapest
+attack"* — which is the same rule, since you attach one Energy a turn. Evolving Rhyhorn with a Rhydon
+in hand scores **19.50 at zero Energy, 27.50 at one, 35.50 at two and above**, the penalty falling
+away exactly at `destShort - 1`. It is a **penalty rather than a veto** on purpose, citing his word
+*"usually"*.
+
+**A veto would not have produced the behaviour he described anyway, and that is the part worth
+keeping.** *"Spamming Leer at 1 energy"* is a claim about what gets ATTACHED. The evolve gate does not
+decide that; the road does. Measured on one board, a 1-Energy Rhyhorn beside a Hitmonchan one short of
+Special Punch:
+
+| | attach to Rhyhorn | attach to the Bench | bot feeds |
+|---|---|---|---|
+| Rhydon **in hand** | **38.00** | 28.50 | Rhyhorn — correct, it is about to evolve |
+| Rhydon **not in hand** | 8.40 | **28.50** | **the Bench** — which is the note |
+
+**The second row is exactly what Trevor is asking for, and it has been there since `roadWant`
+landed.** With no Rhydon in hand there is no road, so nothing bids the Energy toward Rhyhorn, and it
+stands at one Energy using Leer — its only legal attack below three — while the Bench powers up. With
+a Rhydon in hand, feeding it is right, and his own *"if a Rhydon just happens to show up in its hand
+the next turn, the bot should be willing to evolve it"* is satisfied by the same term rather than
+despite it.
+
+**The general lesson is the one this session kept re-learning: measure the behaviour before building
+the mechanism.** Two rules were proposed here, both reasonable, and the board already did the thing.
+
 ## Open
 
-**A wall does not prefer its stalling attack, and this is the other half of both Rhyhorn notes.**
-Measured 3 Sep 2026 on a board where wall-ness is 0.70: **Leer scores 11.70 and Horn Attack 30.00**,
-and the bot takes Horn Attack — identically whether the road is dead or a Rhydon is sitting in hand.
-`scoreAttack` never consults wall-ness at all.
+**~~A wall does not prefer its stalling attack.~~ THAT ITEM WAS WRONG AND IT WAS MINE — corrected
+3 Sep 2026, same day it was written.** It said Rhyhorn takes Horn Attack over Leer at wall-ness 0.70
+and called that a fault. **There is no board on which it is one:**
 
-That is Trevor's *"Leer is the primary"*, and the GBC 2 bullet's *"which cheap moves from those cards
-it can hide behind… never powering up Horn Attack"* — **one clause, two sources, and it now has the
-term it was missing.** `wallHere` exists; nothing in the attack path reads it. Note the second half is
-a different decision again: not *which attack* but *whether to attach toward the big one*, which is
-`attachBuild`'s question rather than `scoreAttack`'s.
+| Rhyhorn's Energy | legal attacks | bot |
+|---|---|---|
+| 1–2 | **Leer only** — Horn Attack is `FCC` | Leer |
+| 3+ | Leer, Horn Attack | Horn Attack |
+
+Trevor, 3 Sep: *"if both attacks are available at the same time, then the bot is correct."* Below 3
+there is no choice to make, and at 3 there is no fault. **I measured at 3 Energy and read a correct
+decision as a broken one** — [PLAYBOOK.md](../PLAYBOOK.md)'s "pick the opponent on purpose" hazard
+aimed at my own board instead of at the opponent. The stalling Trevor describes is *"spamming Leer at
+1 energy"*, which is a claim about what gets ATTACHED, not about which attack is chosen.
+
+**The real version of the item is Kangaskhan, it reproduces, and WALLS.md predicted it above.** That
+paragraph has said since 22 Aug that Kangaskhan is *"a live check on the wall work"* — if the bot
+still reaches for Comet Punch, wall-ness is not reaching the attack path the way it reaches the
+retreat path. Measured at four Energy, wall-ness **0.90**:
+
+| opponent | Fetch | Comet Punch | bot takes |
+|---|---|---|---|
+| Charmander, 50 HP — killable | 4.91 | 110.63 | Comet Punch — **correct, it is lethal** |
+| Chansey, 120 HP — not killable | 4.91 | **40.00** | Comet Punch |
+
+Trevor's note is *"a tank that should only really use Fetch until it dies"*. **`scoreAttack` never
+consults wall-ness at all**, so the second row is the fault the earlier paragraph was waiting for,
+on the card it named, and not on the card I went looking at.
+
+**It is a scoring disagreement rather than a plumbing one, which makes it the harder kind.** Comet
+Punch does not stop Kangaskhan standing there — it attacks *and* stays — so the question is genuinely
+whether one card off Fetch beats an average 40 damage while a wall does its job. That is a claim about
+what `drawCard` is worth to a stalling deck, and **it should be raised with Trevor before anything is
+weighted**, per this file's own note that his second Kangaskhan sentence was a wall note rather than
+an attack-choice one.
 
 **A wall whose wall-ness is a POWER is still invisible to the derivation.** `wallShape` reads attack
 verbs only, so **Mr. Mime scores 0.100** — the lowest of every card Trevor has named as a wall, and
