@@ -1,7 +1,6 @@
 /* validate.js — headless harness for "blocks, i guess"
  *
  * Run:  & "C:\Program Files\nodejs\node.exe" validate.js
- * (node is installed on this machine but is NOT on PATH)
  *
  * Two jobs, and the second one is the unusual half:
  *

@@ -97,7 +97,7 @@ input tests covering all of this.
 
 - `snek.html` — the whole game, self-contained, runs by double-clicking.
 - `validate.js` — headless Node harness, 125 checks. Run before delivering:
-  `& "C:\Program Files\nodejs\node.exe" validate.js` (node is installed but **not on PATH**).
+  `node validate.js`
 - `backups/` — pre-job safety copies, per the collection convention.
 - `snake.html` — the untouched original from a Claude Chat session, kept as a reference for what
   the mechanics were before the reskin. Nothing loads it. Worth preserving.

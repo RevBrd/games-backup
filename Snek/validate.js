@@ -1,7 +1,6 @@
 /* SNEK — headless validation harness.
  *
- * Run:  & "C:\Program Files\nodejs\node.exe" validate.js
- * (node is installed on this machine but is NOT on PATH)
+ * Run:  node validate.js
  *
  * Three layers, per the house conventions:
  *   1. syntax  — the inline <script> parses

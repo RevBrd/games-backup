@@ -21,7 +21,7 @@ itself. No parody, no fourth wall. Nostalgic for the real *BattleBots* without e
 
 - `combat-circuit.html` — the whole game, self-contained.
 - `validate.js` — headless Node harness. Run before delivering:
-  `& "C:\Program Files\nodejs\node.exe" validate.js` (node is installed but **not on PATH**).
+  `node validate.js`
 
 ## Architecture
 
