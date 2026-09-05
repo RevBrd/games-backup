@@ -25,7 +25,7 @@ still open, so it stays with its reason and with what evidence would revive it.
 
 Faults and behaviour, from Trevor's play. [AI.md](AI.md) has what the scorer already does, and a note here is a symptom rather than a diagnosis.
 
-- Alakazam moves damage from a weaker pokemon to a tank (Chansey). Except that Chansey was in the active spot and got killed because of it (but not by it) - log# 02-18-48.
+- Alakazam moves damage from a weaker pokemon to a tank (Chansey), which would normally be correct. Except that Chansey was in the active spot and got killed because of it (but not by it) - log# 02-18-48.
 - base5 Charmander uses its pokemon power to strip an energy from the active pokemon that it depended on. Then on the next turn attaches an energy that it couldn't use - log# 03-56-31
 - AI retreats Rattata instead of scoring a kill - log# 04-58-05
 - base5 diglett's Dig Under attacking should be able to target the opponent's active pokemon as well, and I don't think it does. This is a maybe but there is a log - #03-50-54
