@@ -29,6 +29,38 @@
 #
 #     git remote set-url --push origin no_push
 #
+# ---------------------------------------------------------------------------
+# BACKUP EXCEPTION -- added 5 Sep 2026, Trevor's call.
+#
+# The lock above conflated two different things, and they came apart: pushing
+# is not publishing. `browser-games` has been PRIVATE since it was created on
+# 4 Aug, so no push to it ever published anything. The event that actually
+# publishes is flipping a repo's visibility to public, which no push performs
+# and no hook can guard.
+#
+# Meanwhile the collection had no off-machine backup at all -- Drive turned out
+# to hold a one-time copy from 9 Aug, not a live sync -- so this lock was
+# quietly protecting a release date at the cost of the only copy of 374 commits.
+#
+# So: `games-backup` (private, and only ever a mirror) is allowed through. The
+# release repo is not. The release decision is untouched and still Trevor's.
+#
+# The test is the destination URL, not the remote's local name, so relabelling
+# a remote or pushing to a bare URL cannot slip past it.
+# ---------------------------------------------------------------------------
+
+remote_url="$2"
+
+case "$remote_url" in
+  *RevBrd/games-backup*)
+    echo ''
+    echo '  → games-backup (private mirror). Allowed: this is the backup, not the release.'
+    echo ''
+    exit 0
+    ;;
+esac
+
+# ---------------------------------------------------------------------------
 # To publish, deliberately, when the time comes:
 #
 #     git remote set-url --push origin https://github.com/RevBrd/browser-games.git
@@ -37,6 +69,10 @@
 # Please put the URL back to no_push afterwards unless the decision was to
 # start publishing continuously -- and if it was, delete this hook and say so
 # in Games/CLAUDE.md rather than leaving a lock everyone routinely bypasses.
+#
+# Note that publishing now takes a THIRD step that this hook cannot perform and
+# deliberately does not mention above: the repo must be made public. Until
+# someone does that, a push to origin is still only a push.
 # ---------------------------------------------------------------------------
 
 echo ''
@@ -46,8 +82,14 @@ echo '  Nothing here is published yet. Trevor wants the collection to go up as'
 echo '  a deliberate release once several games are finished together, not as'
 echo '  a side effect of a session that happened to be committing.'
 echo ''
-echo '  A push from here would publish EVERY game in its current state,'
-echo '  including the unfinished ones and all of the design documentation.'
+echo '  A push to origin would put EVERY game in its current state into the'
+echo '  release repo, including the unfinished ones and all of the design'
+echo '  documentation. That repo is private, so it would not become visible to'
+echo '  anyone -- but it is the release target and is meant to stay clean.'
+echo ''
+echo '  Looking for the BACKUP? That is a different remote and it is allowed:'
+echo ''
+echo '      git push backup master'
 echo ''
 echo '  If you are reading this because you were asked to publish, the steps'
 echo '  are in .githooks/pre-push and in Games/CLAUDE.md under "Git".'

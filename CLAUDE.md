@@ -129,8 +129,27 @@ committing. Two locks are armed, and both were tested when they went in:
 Unblocking is a decision, and it is **Trevor's**, not a passing session's. The steps are written at
 the top of `.githooks/pre-push`. Fetching still works normally.
 
-**Local history is still the only real copy.** The remote is 140+ commits stale, so treat this
-machine as the sole backup — that part of the old warning stands.
+**There is now a second remote, and it is the one you want: `backup`.**
+`github.com/RevBrd/games-backup`, private, a mirror and nothing else. `git push backup master` is
+allowed and the hook says so when it lets you through. **`master` tracks `backup`**, so a bare
+`git push` goes to the mirror — the safe action is the default one.
+
+That means `git status` no longer shows how far ahead of the *release* repo you are, which used to
+be the visible signal that a release was pending. Ask for it directly when you want it:
+
+```bash
+git rev-list --count origin/master..master   # commits not yet in the release repo
+```
+
+**Backup and release were separated on 5 Sep 2026 because the original lock conflated them.**
+Pushing is not publishing: `browser-games` has been private since 4 Aug, so no push to it ever
+published anything, and the event that actually publishes — flipping visibility to public — is
+something no push performs and no hook can guard. The lock as written was protecting a release date
+at the cost of the only copy of 374 commits, which was the wrong trade in the wrong direction.
+Google Drive turned out to hold a **one-time copy from 9 Aug**, not a live sync, so this machine
+genuinely was the sole copy for most of a month.
+
+The release lock itself is unchanged and still Trevor's call. Only the backup was carved out.
 
 **A game folder should not contain its own `.git`.**
 
