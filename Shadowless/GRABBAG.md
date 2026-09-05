@@ -30,7 +30,7 @@ Faults and behaviour, from Trevor's play. [AI.md](AI.md) has what the scorer alr
 - AI retreats Rattata instead of scoring a kill - log# 04-58-05
 - base5 diglett's Dig Under attacking should be able to target the opponent's active pokemon as well, and I don't think it does. This is a maybe but there is a log - #03-50-54
 - Best value would have been for the AI to attach its opening water energy to Lickitung, its starter, a very solid tank that can paralyze - log# 04-00-06
-- Zapdos gets a fire energy even though it doesn't want those - log# 04-16-31
+- Zapdos gets a fire energy even though it doesn't want those - log# 04-16-41
 - Gengar had no reason to retreat - log# 03-08-27
 - Chansey ended the turn without attacking instead of using Scrunch, possibly because it priced its resistance to take no damage from Alakazam's attack. But it should still do it anyway because it would protect from any attack on my turn, even if I switched pokemon. Also, Charizard came in wayyyyy too early. It had more than enough time to pile up energies while Chansey stalled, especially since I couldn't even damage Chansey. It then retreated Charizard for no reason, costing it all of its energy when it needs to 4 to attack and to Over-Attack as many as possible before then. I can see why this deck loses matches in the sims. Also used Bill when dangerously low on cards and much lower than me. - log# 04-02-53
 - AI attaches an energy to Lapras that it did not want - log# 04-21-18
