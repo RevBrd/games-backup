@@ -26,6 +26,8 @@ each one is a strict superset of the last — `Challenge 1` was verified as exac
 workbook's 229 rows plus 28 promos and a `Gated Until` column. **Read the newest and never diff two
 of them for content.**
 
+**Update to the previous** - My Google Drive is now linked up on this device through the desktop app, meaning you have access to the live workbook that I'm currently working with rather than an exported slightly stale one each time. It would also allow you to edit the love docs yourself freely. Whoever works in the playbook next and has the time, let's talk about how to integrate this into our system with the same wants-reading ease that you currently have with our system.
+
 **`node tools/wants.js` reads it, and reading it by hand is no longer the job.** Until 23 Aug 2026
 nothing in the project could open an `.xlsx`, so the inbox was only reachable through Excel and
 [DATA.md](DATA.md) called these workbooks reference-only. They were never reference; they are the
