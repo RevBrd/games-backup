@@ -6536,6 +6536,13 @@ const AI_WEIGHTS = {
                         // standing there now. UNMEASURED first guess, and the only
                         // guess in `roadLive` - in-hand and nowhere are both facts.
                         // See AI.md, which records it as untuned rather than derived
+  wallPlanFloor: 0.5,   // above this much wall-ness, the CHEAP attack is the plan
+                        // and the card is not charged toward a bigger one. Chansey
+                        // (0.80) and Kangaskhan (0.90) are the two cards in the live
+                        // pool this holds back, and both are named as walls in
+                        // Trevor's own workbook; Moltres (0.40) and Hitmonchan (0.40)
+                        // are the nearest cards on the other side. Derived from that
+                        // split rather than tuned - see Playbook/WALLS.md
   wallStick: 1.0,       // how much a Pokemon's "stickiness" cancels the value of
                         // rescuing it. 1.0 = a perfect wall is never worth
                         // saving for its own sake; the Prize term still applies
@@ -8201,6 +8208,13 @@ class AI {
     // `attackThreatens`. Computed in this loop rather than in a second one, so
     // it can never disagree with `short` about what a cost solves to.
     let destShort = 99;
+    // `destGoal` is to `destShort` what `goal` is to `short`, and it exists
+    // because the two roads can lead to DIFFERENT attacks — 5 Sep 2026. A Fossil
+    // Moltres holding one Fire has `short` 0 and `goal` 0, because Wildfire costs
+    // R and deals nothing; `destShort` is 3, to an 80-damage Dive Bomb. Anything
+    // amortising a step along the `destShort` road against `goal` divides the
+    // wrong number by the wrong distance.
+    let destGoal = 0;
     (c.attacks || []).forEach((a, i) => {
       const need = a.cost.split('').filter(x => x !== 'C');
       const generic = a.cost.length - need.length;
@@ -8246,13 +8260,15 @@ class AI {
       if (short < bestShort) { bestShort = short; goal = dmg; }
       else if (short === bestShort && dmg > goal) goal = dmg;
       if (val > best) best = val;
-      if (this.attackThreatens(slot, c, i) && short < destShort) destShort = short;
+      if (this.attackThreatens(slot, c, i) && short < destShort) { destShort = short; destGoal = dmg; }
+      else if (this.attackThreatens(slot, c, i) && short === destShort && dmg > destGoal) destGoal = dmg;
     });
     // NO THREATENING ATTACK AT ALL falls back to the cheapest of any, because
     // then the utility attack genuinely IS the destination — a card with nothing
     // but Scrunch is not "never ready", it is ready when Scrunch is affordable.
     return { best: best === -Infinity ? 0 : best, short: bestShort, goal,
-             destShort: destShort === 99 ? bestShort : destShort };
+             destShort: destShort === 99 ? bestShort : destShort,
+             destGoal: destShort === 99 ? goal : destGoal };
   }
 
   // ==========================================================================
@@ -8668,6 +8684,24 @@ class AI {
       beforeShort = Math.max(0, this.potentialAs(pi, slot, plan.cardId, null).destShort - plan.steps);
       afterShort = Math.max(0, this.potentialAs(pi, slot, plan.cardId, energyId).destShort - plan.steps);
     }
+    // ...AND A CARD WITH NO EVOLUTION STILL HAS A ROAD: to its own bigger attack.
+    // 5 Sep 2026, the value half of the fifth surplus exception in `attachBuild`.
+    //
+    // `short` pins at zero the moment any attack is payable, so a Moltres holding
+    // one Fire reads as finished and every branch below floors it at 0.4. The card
+    // is three Energy from an 80. `destShort` is the honest distance and `destGoal`
+    // is what is waiting at the end of it — without the second one this amortises a
+    // step toward Dive Bomb against Wildfire's zero.
+    //
+    // ONLY WHEN THE ORDINARY ROAD IS PINNED AND THERE IS NO EVOLUTION, so every
+    // path the evolution road already covers is untouched and this can only add
+    // value where the old code had none to give.
+    let roadGoal = beforeR.goal;
+    if (!evo && beforeShort === 0 && afterR.destShort < beforeR.destShort) {
+      beforeShort = beforeR.destShort;
+      afterShort = afterR.destShort;
+      roadGoal = beforeR.destGoal;
+    }
     let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
     s += this.energyOnAttachValue(pi, slot, energyId);
 
@@ -8712,7 +8746,7 @@ class AI {
       s += W.attachBuild * beforeShort * 2;
     } else if (afterShort < beforeShort) {
       const steps = beforeShort - afterShort;
-      s += Math.max(10, beforeR.goal) * (steps / beforeShort)
+      s += Math.max(10, roadGoal) * (steps / beforeShort)
          * W.attachAmortise * this.survivesCharge(pi, slot, afterShort);
     } else if (after.best > before.best) s += W.attachBuild;
     else s += 0.4;
@@ -9649,7 +9683,34 @@ class AI {
         const evoId = this.evolutionRoadFor(pi, slot);
         const evolving = !!evoId && this.roadWant(pi, slot, evoId) > 0;
 
-        if (noProgress && !needsEscape && !stocking && !evolving) return W.attachSurplus;
+        // A CARD HAS A ROAD TO ITS OWN BIGGER ATTACK, exactly as it has one to its
+        // evolution — the fifth exception, 5 Sep 2026, from Trevor's note that a
+        // Fire went to a Zapdos that could not use it while a Moltres sat unfed.
+        //
+        // `noProgress` reads `short`, which counts to the cheapest attack the card
+        // can ALREADY pay for — so the moment any attack is affordable it pins at
+        // zero and this rule declares the card finished forever. A Fossil Moltres
+        // holding one Fire can pay Wildfire (R, no damage) and is therefore never
+        // given a second Fire, so Dive Bomb (RRRR, 80) is unreachable in every game
+        // that has ever been played. `destShort` is the fact that was missing and it
+        // already existed: 3 on that Moltres, falling to 2 with the Fire on.
+        //
+        // MEASURED BEFORE BUILDING: 35 terminal cards in the four live sets have a
+        // road closed this way — Magneton, Kabutops, Rhydon, Dugtrio, Raichu, both
+        // Moltres. It is not the rare tail it looks like.
+        //
+        // WHY THE WALL GATE. `attackThreatens` did not need one where it is already
+        // used, and its comment says why: a wall is a terminal Basic and is never an
+        // evolution target, so the wall case could not reach that predicate. Here it
+        // can. Standing there IS Chansey's job and Scrunch IS the plan — charging it
+        // to Double-edge would be the bot picking up the kamikaze pattern by
+        // accident, which is a decision nobody has made. `wallPlanFloor` holds back
+        // exactly Chansey and Kangaskhan, which are the two cards Trevor's workbook
+        // names as walls.
+        const charging = after.destShort < before.destShort
+                      && this.wallHere(pi, slot) <= W.wallPlanFloor;
+
+        if (noProgress && !needsEscape && !stocking && !evolving && !charging) return W.attachSurplus;
 
         // The surplus rule above is deliberately NOT in attachValue: it is about
         // whether to spend the once-per-turn attachment, and Rain Dance does not

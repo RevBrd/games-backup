@@ -47,12 +47,60 @@ confused is presumably how this happened.
 
 | When | Instance | Items |
 |---|---|---|
+| 5 Sep 2026 | #37, Job 15e | The Fire on Zapdos — the report named the wrong slot, and the fault was that the card that *did* want it could not be fed |
 | 1 Sep 2026 | #33, Job 15a | Ronald removed from the ladder — the half of a two-part note that was free, and the mechanism that was kept because removing its only user would have removed its only tests |
 | 31 Aug 2026 | #31, Job 14b | The GBC sequel's order of operations — a structural fault found by Trevor watching another game's AI, confirmed in one read of `choose()` |
 | 30 Aug 2026 | #31, Job 14b | Ninetales' Lure, reached from two directions at once — the bot was not mis-valuing the drag, it was not choosing a target at all |
 | *23–29 Aug* | *#25, #27, #30* | *[Archive 3](GRABHIST-ARCHIVE-3.md) — Jobs 12b through 14a, its own index at the top* |
 | *19–21 Aug* | *#20, #21* | *[Archive 2](GRABHIST-ARCHIVE-2.md) — Jobs 10.5 and 11, its own index at the top* |
 | *13–17 Aug* | *#12, #16, #17* | *[Archive 1](GRABHIST-ARCHIVE-1.md) — five passes, its own index at the top* |
+
+---
+
+### The Fire on Zapdos — the report named the wrong slot — 5 Sep 2026 (#37)
+
+> Zapdos gets a fire energy even though it doesn't want those — log# 04-16-41
+
+**Off the list. True as written, and it was not the fault** — which is [PLAYTEST.md](PLAYTEST.md)'s
+whole thesis arriving again, in the direction that is hardest to catch, because the accused decision
+really did look wrong.
+
+The board reproduces exactly from the log. Ronald: **Fossil Zapdos** Active on nothing, bench
+**Fossil Moltres** holding one Fire, Jolteon, Dratini; two Fire in hand.
+
+```
+  4.40 attach Fire to Zapdos      <- chosen, twice
+  0.00 pass
+ -2.00 attach Fire to Moltres
+ -2.00 attach Fire to Jolteon
+ -2.00 attach Fire to Dratini
+```
+
+**Fossil Zapdos' only attack is Thunderstorm at `LLLL`, so a Fire pays nothing toward it — Trevor is
+right.** But it is Active with a retreat cost of 2 and no Energy at all, so the surplus rule's
+**escape-route exception** waves it through, and a Fire *can* pay a Colorless retreat. Two turns
+later the bot retreated Zapdos, which is the play those two Fire bought. **That decision is
+defensible on its own terms.**
+
+**The fault is that Moltres scored `attachValue` 5.40 — HIGHER than Zapdos' 4.40 — and was vetoed to
+-2.00.** The bot never preferred Zapdos. It was the only thing left standing.
+
+**Why Moltres was refused:** Wildfire costs `R` and deals nothing. Moltres was holding one Fire, so
+an attack was payable, so `potential().short` pinned at **0** and the surplus rule declared the card
+finished. Dive Bomb — `RRRR` for 80 — was unreachable in every game ever played.
+*[The mechanism and the fix →](AI-INVARIANTS/ATTACK-ROAD.md)*
+
+**Two things worth carrying forward.**
+
+**A defensible decision can be the symptom of an indefensible one somewhere else on the board.** The
+escape-route exception was working correctly. It only looked wrong because everything that should
+have outbid it had been silently disqualified. **When a choice looks bad, price what it was chosen
+*over* before you price the choice** — the passed-over column in a match log is where this lives, and
+it is printed on every AI line.
+
+**Two other notes in the same GRABBAG section are the same sentence** — the Lapras one and the base5
+Charmander one. Both are pointed at the attack road now rather than left to be re-diagnosed. Whether
+they are the same fault is untested; the note on the Lapras item says so.
 
 ---
 

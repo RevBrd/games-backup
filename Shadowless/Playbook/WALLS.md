@@ -185,3 +185,20 @@ turn"* is kamikaze timing, which is its own pattern and is not yet written. File
 than a copy, per [PLAYBOOK.md](../PLAYBOOK.md). The related finding — that `potential`'s `short` pins
 at zero once any attack is payable, so the bot can never walk a Chansey up to Double-edge — is
 **correct behaviour here and wrong elsewhere**; it belongs to over-attaching, also unwritten.
+
+**THE "ELSEWHERE" WAS FOUND AND FIXED — 5 Sep 2026 — and this paragraph is why the fix has a wall
+gate.** The pin closes the road to a bigger attack for **35 terminal cards in the four live sets**,
+of which a Fossil Moltres is the plainest: Wildfire costs `R` and deals nothing, so one Fire makes it
+look finished and Dive Bomb's 80 was unreachable in every game ever played. The attach rule now reads
+`destShort` — distance to an attack *worth arriving for* — rather than `short`.
+
+**Read literally, that rule would charge Chansey to Double-edge**, which is this pattern's own note
+(*"power up Scrunch and then tank"*) being overridden by a general fix, and it would be the unbuilt
+Kamikaze Timing pattern getting picked up by accident. `W.wallPlanFloor` at 0.5 is the gate, and the
+split lands exactly where this file already put it: **Chansey 0.80 and Kangaskhan 0.90 are held; the
+nearest cards on the other side are Moltres and Hitmonchan at 0.40.** Both held cards are named as
+walls in Trevor's own workbook, which is the corroboration rather than a tuned threshold.
+
+**So the sentence above is now load-bearing in a way it was not when written**: it is the reason a
+general rule about feeding Pokémon has an exception shaped like this file.
+*[The invariant →](../AI-INVARIANTS/ATTACK-ROAD.md)*

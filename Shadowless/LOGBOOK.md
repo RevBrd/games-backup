@@ -77,7 +77,7 @@ of these files.
 | [LOGBOOK-ARCHIVE-5.md](LOGBOOK-ARCHIVE-5.md) | #20–#26 | 19–25 Aug 2026 | Jobs 10.5 to 12c — two documentation passes, the Jungle and Fossil brackets, the claims harness, the 8-card pack |
 | [LOGBOOK-ARCHIVE-6.md](LOGBOOK-ARCHIVE-6.md) | #28–#32 | 26 Aug – 1 Sep 2026 | Jobs 13 to 14b — the promos and their reachability, the tenth documentation pass, the Over-Attach pattern |
 | [LOGBOOK-ARCHIVE-7.md](LOGBOOK-ARCHIVE-7.md) | #33, #34 | 1–2 Sep 2026 | Job 15a's Challenge bracket and Job 15b's pack odds — including the legal deck that could not attack — and the eleventh documentation pass |
-| **this file** | #35, #36 | 2 Sep 2026 – | Job 15d's suite audit, and Job 15e's first AI pass |
+| **this file** | #35, #36, #37 | 2 Sep 2026 – | Job 15d's suite audit, and Job 15e's AI passes |
 
 **#15, #18 and #27 wrote no logbook entry and are not missing** — writing here is optional and a
 `CREDITS.md` row alone is a complete record. Said explicitly because the Instances column above skips
@@ -334,3 +334,92 @@ through in place rather than removed, which reads as tidiness rather than as a r
 that exists only as a pattern in the data is one nobody can follow on purpose.**
 
 — #36
+
+## #37 — Job 15e, the attack road
+
+I took one grab bag note and it went somewhere I did not expect three times.
+
+### The accused decision was innocent and the fault was sitting next to it
+
+The note: *"Zapdos gets a fire energy even though it doesn't want those."* True — Fossil Zapdos'
+only attack is Thunderstorm at `LLLL` and a Fire pays nothing toward it. I reproduced the board from
+the log and got the scores byte-for-byte, which felt like a good start and was actually the moment I
+nearly wrote the wrong fix.
+
+**The Zapdos attach is defensible.** It was Active on zero Energy with a retreat cost of 2, a Fire
+pays a Colorless retreat, and the bot retreated it two turns later. That is the escape-route
+exception doing its job.
+
+**What was wrong is that Moltres scored 5.40 — higher — and the surplus rule vetoed it to -2.00.**
+The bot never chose Zapdos over Moltres. Moltres was disqualified and Zapdos was the only positive
+action left on the board.
+
+**If I had taken the note at face value I would have gone hunting in the escape-route exception**,
+found a rule that works, and either broken it or concluded there was nothing there. What saved me was
+printing every option's score rather than the chosen one — the thing a match log already does on
+every AI line, in the `passed over:` column, which I had read past twice.
+
+**Price what a decision was chosen OVER before you price the decision.**
+
+### The fact I needed already existed and had been there for four days
+
+`potential().short` counts to the cheapest attack a card can *already pay for*, so it pins at zero
+the moment anything is affordable. Moltres holds one Fire, Wildfire costs `R` and deals nothing, so
+Moltres reads as finished forever and Dive Bomb's 80 has been unreachable in every game ever played.
+
+`destShort` — distance to an attack *worth arriving for* — was built on 1 Sep for the evolution road.
+Its own comment in `ai.js` ends with *"When a rule is asked in three places, find all three before
+you measure."* **There was a fourth, and it is the surplus rule.** Nothing prompted anybody to look:
+it lives in a different function, behind four exceptions, and reads `short` for what looks like an
+unrelated question.
+
+So the fix was small. What I would tell the next session is the search habit rather than the fix:
+**when a fact gets a corrected twin, the old name is a grep and the grep is not done when your story
+ends.**
+
+### I nearly reported it as one card, again
+
+`#36`'s entry says the same sentence about Rhyhorn and I still had to be talked out of it by my own
+measurement. Benching every terminal card in the four live sets with exactly its cheap attack's cost
+and offering one more Energy: **35 of them had a closed road.** Magneton, Kabutops, Rhydon, Dugtrio,
+Raichu, both Moltres. `abtest` then said **37.8%** of games diverge, which is the largest number in
+`AI-INVARIANTS/` and is honest rather than flattering — most of it is a changed *unit*, not 35 cards.
+Prices moved everywhere; choices moved in far fewer places.
+
+### The guard I wrote first was worthless and I only found out by trying it
+
+I added `destGoal` beside `destShort` and asserted the obvious invariant: *the two agree wherever
+the roads coincide*. Then I merged them — `destGoal = goal`, the exact regression the guard exists to
+prevent — and the suite stayed **green**. Of course it did. Merging them makes them agree everywhere.
+
+**An equivalence assertion pins one direction only.** If what you are guarding against is *collapse*,
+you have to assert that the two things still genuinely differ somewhere, or the strongest-looking
+line in the file is the one a regression walks straight through. The second version asserts the
+disagreement count (135 of 1,275 states) and pins the Moltres case by number, and both go red on a
+merge. I would not have known if I had not bothered to break it on purpose, and I nearly did not.
+
+### Where I stopped, and it is a design question rather than a limit
+
+The rule only reaches cards whose cheap attack does **zero** damage. `destShort` pins the same way
+the moment any *threatening* attack is payable, so Hitmonchan (Jab/20 → Special Punch/40) and Raichu
+(Agility/20 → Thunder/60) are untouched.
+
+**That is a defensible line and not obviously the right one**, and widening it is not mine to do — it
+pushes the bot toward over-attaching generally, and Magneton would start charging toward a
+Selfdestruct that belongs to the unbuilt Kamikaze Timing pattern. Filed as open item 12 with an
+explicit *do not widen the rule to close this item*.
+
+### Two smaller things
+
+**I told Trevor his `CLAUDE.md` had duplicate rows and it does not.** Sixteen rows, all distinct, no
+duplicated line anywhere in the file. He said "yes please" to a fix, and had I done it on my own
+say-so I would have deleted a real row. **I checked before editing only because the edit tool wanted
+an exact string** — that is luck, not method. Verify before you fix, including when the person whose
+repo it is has agreed with you.
+
+**And I annotated a closed grab bag item instead of removing it**, which both `GRABBAG.md` and
+`PLAYTEST.md` explicitly tell you not to do, in bold, in files I had read that hour. Caught it on
+re-read and moved the useful half — a pointer to two open notes that look like the same sentence —
+onto one of those open items, where guidance belongs.
+
+— #37

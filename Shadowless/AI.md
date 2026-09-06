@@ -437,3 +437,20 @@ on it.**
     renumbering the rest silently repoints every one of them at the wrong entry. **New items go at
     the bottom; a closed one is struck through in place and keeps its number**, which is what items 4
     and 10 already do.
+
+12. **Should a card that ALREADY threatens be charged toward a bigger attack? — 5 Sep 2026, and this
+    is the deliberate boundary of the attack road.** The fifth surplus exception reads `destShort`,
+    which pins at zero the moment any *threatening* attack is payable — so it frees a Fossil Moltres
+    (Wildfire `R`, no damage) and does nothing at all for **Hitmonchan** (Jab `F`/20 → Special Punch
+    `FFC`/40) or **Raichu** (Agility/20 → Thunder/60).
+
+    **The boundary is defensible and it is not obviously right.** A Moltres holding one Fire is doing
+    literally nothing; a Hitmonchan holding one Fighting is doing real work, and
+    [ATTACK-CHOICE](Playbook/ATTACK-CHOICE.md)'s whole finding is that the small utility attack is
+    usually the correct one. Widening this would push the bot toward over-attaching generally.
+
+    **What settles it is Trevor, not a duel** — it is a question about what these cards are *for*,
+    which is [PLAYBOOK.md](PLAYBOOK.md)'s inbox and not a measurement. **Do not widen the rule to
+    close this item**: the wall gate would then be carrying weight it was never sized for, and
+    Magneton would start charging toward a Selfdestruct that belongs to the unbuilt Kamikaze Timing
+    pattern. *[The entry, and the 35 cards it did reach →](AI-INVARIANTS/ATTACK-ROAD.md)*

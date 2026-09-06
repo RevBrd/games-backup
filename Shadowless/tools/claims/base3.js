@@ -160,6 +160,112 @@ const CLAIMS = [
             && b.lethal('Water Gun') === 1,
     expect: b => b.prefers('Water Gun'),
   },
+
+  // ----------------------------------------------------------------- Moltres --
+  // NOT FROM THE WORKBOOK, AND SAYING SO IS THE POINT. Moltres has no `Wants`
+  // cell; the sentence behind these rows is a GRABBAG note — *"Zapdos gets a fire
+  // energy even though it doesn't want those"* — plus Trevor's answer when asked
+  // which slot should have had it: *"Moltres would have been the right move imo"*,
+  // 5 Sep 2026. `PLAYBOOK.md` keeps an inbox for notes with no card to sit on and
+  // this is one; the row is written the same way either inbox's are.
+  //
+  // AND THE REPORT NAMED THE WRONG SLOT, which is `PLAYTEST.md`'s whole thesis
+  // arriving again. The Fire on Zapdos scored 4.40 and was not the fault: Fossil
+  // Zapdos was Active on nothing with a retreat cost of 2, so the escape-route
+  // exception paid for it and the bot did retreat two turns later. The fault is
+  // that Moltres — which scored 5.40, HIGHER — was vetoed to -2.00 by the surplus
+  // rule, leaving the escape route as the only positive action on the board. The
+  // bot never preferred Zapdos. It was the last thing standing.
+  {
+    id: 'base3-12', card: 'Moltres', pattern: 'Over-Attach',
+    note: "GRABBAG + Trevor 5 Sep 2026: 'Zapdos gets a fire energy even though it doesn't want those' / 'Moltres would have been the right move imo'",
+    claim: 'a Moltres holding one Fire is fed a second, because Wildfire is not what it is FOR',
+    board: {
+      me:   { card: 'base3:Zapdos', energy: '' },
+      myBench: [{ card: 'base3:Moltres', energy: '1 Fire' }],
+      them: { card: 'Lickitung', energy: '1 Lightning' },
+      myHand: ['Fire Energy'],
+      turn: 9,
+    },
+    sane: b => b.me.bench[0].energy.length === 1
+            && b.ai.potential(0, b.me.bench[0], null).short === 0,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Moltres') && e.score > 0),
+  },
+  {
+    id: 'base3-12', card: 'Moltres', pattern: 'Over-Attach',
+    note: "GRABBAG + Trevor 5 Sep 2026: 'Zapdos gets a fire energy even though it doesn't want those' / 'Moltres would have been the right move imo'",
+    claim: '...and it OUTSCORES the Fire on a Zapdos that can never spend one — the board from the log',
+    board: {
+      me:   { card: 'base3:Zapdos', energy: '' },
+      myBench: [
+        { card: 'base3:Moltres', energy: '1 Fire' },
+        { card: 'Jolteon', energy: '1 Double Colorless Energy' },
+        { card: 'base1:Dratini', energy: '1 Fire' },
+      ],
+      them: { card: 'Lickitung', energy: '1 Lightning' },
+      myHand: ['Fire Energy', 'Fire Energy', 'Scoop Up'],
+      turn: 9,
+    },
+    // Fossil Zapdos' only attack is Thunderstorm at LLLL, so a Fire pays nothing
+    // toward it — the premise of the note, asserted rather than assumed.
+    sane: b => b.ai.potential(0, b.me.active, null).short === 4
+            && b.ai.potential(0, b.me.active, b.me.hand[0].id).short === 4,
+    expect: b => {
+      const rows = b.explain().filter(e => e.label === 'attach');
+      const mol = rows.find(e => (e.detail || '').includes('Moltres'));
+      const zap = rows.find(e => (e.detail || '').includes('Zapdos'));
+      return !!mol && !!zap && mol.score > zap.score;
+    },
+  },
+  {
+    id: 'base3-12', card: 'Moltres', pattern: 'Over-Attach',
+    note: "GRABBAG + Trevor 5 Sep 2026: 'Zapdos gets a fire energy even though it doesn't want those' / 'Moltres would have been the right move imo'",
+    claim: 'THE CONTROL — a Moltres already holding Dive Bomb\'s four Fire is finished, and the fifth is refused',
+    board: {
+      me:   { card: 'base1:Machop', energy: '' },
+      myBench: [{ card: 'base3:Moltres', energy: '4 Fire' }],
+      them: { card: 'Lickitung', energy: '1 Lightning' },
+      myHand: ['Fire Energy'],
+      turn: 9,
+    },
+    sane: b => b.me.bench[0].energy.length === 4,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Moltres') && e.score <= 0),
+  },
+
+  // ----------------------------------------------------------------- Chansey --
+  // THE BOUNDARY OF THE RULE ABOVE, and the reason it has a wall gate at all.
+  // Trevor's own workbook: *"Chansey — power up Scrunch and then tank."* Scrunch
+  // deals nothing, so the Moltres rule read literally would charge Chansey to
+  // Double-edge — which is the unbuilt Kamikaze Timing pattern being picked up by
+  // accident. `wallPlanFloor` is what stops it, and this row is what stops anyone
+  // removing that gate quietly. Magneton B3's note names the same pattern for the
+  // same reason: *"Kamikaze Timing pattern in the same shape as others with
+  // self-destruct."*
+  {
+    id: 'base1-3', card: 'Chansey', pattern: 'Walls',
+    note: "Power up Scrunch and then tank",
+    claim: 'a Chansey holding Scrunch is NOT charged toward Double-edge — standing there is the plan',
+    board: {
+      me:   { card: 'base1:Machop', energy: '' },
+      myBench: [{ card: 'Chansey', energy: '2 Psychic' }],
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      myHand: ['Psychic Energy'],
+      turn: 9,
+    },
+    // 0.5 SPELLED OUT RATHER THAN READ FROM `W.wallPlanFloor`, on purpose. A
+    // precondition that names a weight introduced by the same change the row is
+    // testing cannot run against the bot before it — `--baseline` reported this
+    // row UNUSABLE, which is the harness being honest and the row being useless.
+    // Chansey is 0.80 and the nearest card below the line is 0.40, so the literal
+    // is not fragile; if somebody retunes the floor past Chansey, `expect` is what
+    // goes red, which is the correct place for that to show up.
+    sane: b => b.ai.wallHere(0, b.me.bench[0]) > 0.5
+            && b.ai.potential(0, b.me.bench[0], null).short === 0,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Chansey') && e.score <= 0),
+  },
 ];
 
 module.exports = { CLAIMS };

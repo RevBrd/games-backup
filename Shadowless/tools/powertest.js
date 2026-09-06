@@ -2610,6 +2610,87 @@ T('wallHere reduces to wallScore for every terminal Basic in the pool', () => {
   return true;
 });
 
+// THE TWO ROADS AGREE WHERE THEY OVERLAP — 5 Sep 2026, the same shape of guard as
+// the one above and written for the same reason. `destGoal` was added beside
+// `destShort` because a card can be building toward an attack that is NOT the
+// cheapest one it owns: a Fossil Moltres holding one Fire has `short` 0 and `goal`
+// 0, because Wildfire costs R and deals nothing, while `destShort` is 3 to an
+// 80-damage Dive Bomb. Amortising a step along one road against the other road's
+// prize divides the wrong number by the wrong distance.
+//
+// Where the two roads lead to the same place they must say the same thing, and
+// `destShort` can never be SHORTER than `short` — a threatening attack is one of
+// the attacks `short` already minimises over. Both hold across the whole live pool
+// at five Energy counts, which is what earns them as assertions rather than hopes.
+//
+// THE AGREEMENT HALF IS NOT ENOUGH ON ITS OWN, and the first version of this test
+// was exactly that and was worthless. `destGoal = goal` satisfies "they agree
+// where they coincide" everywhere, trivially — the merge this guard exists to
+// prevent leaves it GREEN. Watched happening before the second half was written.
+// So the count of states where they legitimately DISAGREE is asserted too, which
+// is the half a merge cannot survive.
+T('destGoal agrees with goal wherever the two roads coincide, across the pool', () => {
+  const E = board('base1-3', ['base1-61'], 'base1-16');
+  const ai = new AI(E);
+  const bad = [];
+  for (const c of Object.values(CARD_DB)) {
+    if (c.kind !== 'pokemon' || !(c.attacks || []).length) continue;
+    for (let n = 0; n <= 4; n++) {
+      // `E.mkSlot`, not a hand-built object: `slotSymbols` reads fields a literal
+      // does not carry, and the first version of this test threw on every card.
+      const slot = E.mkSlot({ id: c.id, uid: E.uid++ });
+      attach(E, slot, 'base1-101', n);                     // Psychic, an ordinary type
+      E.state.players[0].bench = [slot];
+      const p = ai.potential(0, slot, null);
+      if (p.destShort < p.short) bad.push(`${c.name} n=${n}: destShort ${p.destShort} < short ${p.short}`);
+      else if (p.destShort === p.short && p.destGoal !== p.goal)
+        bad.push(`${c.name} n=${n}: goal ${p.goal} != destGoal ${p.destGoal} at equal distance`);
+    }
+  }
+  if (bad.length) throw new Error(bad.slice(0, 4).join('; '));
+  return true;
+});
+
+T('...and they genuinely DISAGREE where the roads part, which a merge cannot fake', () => {
+  const E = board('base1-3', ['base1-61'], 'base1-16');
+  const ai = new AI(E);
+  let differ = 0, lower = 0;
+  for (const c of Object.values(CARD_DB)) {
+    if (c.kind !== 'pokemon' || !(c.attacks || []).length) continue;
+    for (let n = 0; n <= 4; n++) {
+      const slot = E.mkSlot({ id: c.id, uid: E.uid++ });
+      attach(E, slot, 'base1-101', n);
+      E.state.players[0].bench = [slot];
+      const p = ai.potential(0, slot, null);
+      if (p.destGoal !== p.goal) differ++;
+      if (p.destGoal < p.goal) lower++;
+    }
+  }
+  // A road toward an attack that THREATENS can never end somewhere worth less
+  // than the cheapest road's prize: the threatening attacks are a subset of the
+  // ones `goal` ties break over, and ties break by size in both.
+  if (lower) throw new Error(`${lower} states where destGoal < goal`);
+  if (differ < 50) throw new Error(`only ${differ} states where the two roads differ — they have been merged`);
+  return true;
+});
+
+// THE CARD THE RULE WAS BUILT FROM, pinned by number so the mechanism cannot be
+// quietly reverted. Wildfire costs R and deals nothing; Dive Bomb costs RRRR and
+// deals 80. One Fire makes Moltres look finished to `short` and three Energy from
+// an 80 to `destShort`.
+T('a Fossil Moltres on one Fire reads finished to `short` and three from an 80 to `destShort`', () => {
+  const E = board('base1-52', ['base3-12'], 'base1-16');
+  const ai = new AI(E);
+  const mol = E.state.players[0].bench[0];
+  attach(E, mol, 'base1-98', 1);                           // one Fire
+  const p = ai.potential(0, mol, null);
+  eq(p.short, 0, 'short — Wildfire is already payable');
+  eq(p.goal, 0, 'goal — and it deals nothing');
+  eq(p.destShort, 3, 'destShort — three more Fire to Dive Bomb');
+  eq(p.destGoal, 80, 'destGoal — which is what is waiting there');
+  return true;
+});
+
 T('Tauros is not a wall, and the verb list is why', () => {
   // Tauros carries STATUS_SELF_ON_TAILS — it confuses ITSELF. Matching card
   // text for "Confused" would have promoted it; STALL_VERBS does not list it.

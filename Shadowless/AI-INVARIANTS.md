@@ -84,6 +84,7 @@ they named `GRABHIST.md` for material that had since moved into its archives.
 | 28–29 Aug — **this folder** | [`Playbook/`](Playbook/) | Ammo and Evolution timing hold the measurements |
 | 30–31 Aug — **this folder** | [`Playbook/`](Playbook/), [GRABHIST.md](GRABHIST.md), [LOGBOOK-ARCHIVE-6.md](LOGBOOK-ARCHIVE-6.md) | the Trainer sweep and the Over-Attach work; Ninetales and the GBC-sequel ordering are grab bag entries |
 | 1 Sep — **this folder** | [Playbook/EVOLUTION-TIMING.md](Playbook/EVOLUTION-TIMING.md) | all three came out of Trevor's account of the GBC turn order |
+| 5 Sep — **this folder** | [GRABHIST.md](GRABHIST.md) and [Playbook/WALLS.md](Playbook/WALLS.md) | the attack road came out of a grab bag note, and its wall gate is the boundary WALLS.md had already described |
 
 **The opening placement fix, the Energy-pool fix, the whole triggered-Powers section and the 25 Aug
 Power-scoring crash are the only copy that exists.** Condense one of those and the reasoning is gone.
@@ -118,3 +119,4 @@ open the entry.
 | 2 Sep 2026 | **a heal is worth a rescue only if it actually rescues, and the target is chosen by value** | `healRescues`, `T_HEAL`, `T_DISCARD_ENERGY_THEN_HEAL` | [HEAL-RESCUE](AI-INVARIANTS/HEAL-RESCUE.md) |
 | 3 Sep 2026 | **a Switch is worth how much you want to move, and the cost is already priced** | `T_SWITCH_OWN`, `bestSelfSwitch` | [SWITCH-DESIRE-TO-RUN](AI-INVARIANTS/SWITCH-DESIRE-TO-RUN.md) |
 | 3 Sep 2026 | **a card's wall-ness rises as its evolution stops being live** | `roadLive`, `wallHere`, `wallShape` | [WALL-ROAD-LIVE](AI-INVARIANTS/WALL-ROAD-LIVE.md) |
+| 5 Sep 2026 | **a card has a road to its own bigger attack, and `short` pins at zero so nobody could see it** | `destGoal`, `wallPlanFloor`, `attachValue` | [ATTACK-ROAD](AI-INVARIANTS/ATTACK-ROAD.md) |
