@@ -108,17 +108,45 @@ taken. Two are gone already: the order-of-operations item (31 Aug) and Potion ti
 
 **One warning that is specific to this section and cost an hour.** These notes describe cards in a
 *different game*, and **GBC 2 introduced a whole batch of cards that exist nowhere in our corpus —
-Trevor, 3 Sep 2026, and they appear to be original to that game.** The Drowzee bullet below names
+Trevor, 3 Sep 2026, and they appear to be original to that game.** ~~The Drowzee bullet below names
 *Long Distance Hypnosis*, a 50/50 that can sleep its own user; our `base5` Drowzee has **Nightmare**,
 `PC` for 10, which sleeps the defender unconditionally with no self-risk. The reasoning in that
-bullet is sound and is about a card we do not have.
+bullet is sound and is about a card we do not have.~~
 
-**So `grep` the corpus before building off one of these**, and note that the note may name a real set
-in good faith — that bullet says "(base5)" and the card is not in base5 or anywhere else. It costs
-ten seconds:
+**THE DROWZEE HALF OF THAT WARNING IS WRONG, and the command printed below is why — verified
+6 Sep 2026 by #37 after Trevor caught it.** `base5-54` Drowzee **does** have *Long-Distance
+Hypnosis*, and it is **in the game already**:
+
+```
+base5-54 Drowzee HP50 P
+   POWER: Long-Distance Hypnosis | Once during your turn (before your attack), you may flip a
+          coin. If heads, the Defending Pokemon is now Asleep; if tails, your Active Pokemon is...
+   atk: Nightmare PC 10 | The Defending Pokemon is now Asleep.
+```
+
+**It is a Pokémon Power, and the "it costs ten seconds" command below prints `c.attacks` only.** So
+the check written into this file as the fix for trusting a note is the exact thing that produced the
+wrong answer — it is blind to any card whose interesting half is a Power, and that is a large
+fraction of the live pool rather than a handful of oddities. Nightmare is real and was found; the
+Power sat one field away and was invisible.
+
+**The general lesson is worth more than the correction.** A verification snippet pasted into a doc
+gets trusted precisely *because* it is written down, and nobody re-derives what it looks at. **When a
+grep says a thing does not exist, check what the grep was reading before you believe it.** The fixed
+command is below and prints Powers as well.
+
+**The item is back open at Trevor's request** — the bot needs to price Long-Distance Hypnosis
+correctly alongside Sleep!, which is what the bullet was about in the first place.
+
+Update to the previous section - It's correct that GBC 2 has a number of custom cards, but the claim here about Drowzee that triggered the warning is **incorrect**. Drowzee base5-54 does have Pokémon Power: Long-Distance Hypnosis and it's **already in our game**. This item is back open. We need to ensure the bot prices it correctly in accordance with Sleep! which is what created this item in the first place. Whoever handles, please clean this item in the notation when done.
+
+**So `grep` the corpus before building off one of these** — the note may name a real set in good
+faith, and it may also be right when a previous check said it was not. **Read the POWER as well as
+the attacks**; the old version of this command omitted `c.power` and is the reason the paragraph
+above had to be struck through. It still costs ten seconds:
 
 ```bash
-node -e "const{CARD_DB}=require('./src/cards.js');for(const[i,c]of Object.entries(CARD_DB))if(/Drowzee/.test(c.name))console.log(i,c.name,JSON.stringify(c.attacks))"
+node -e "const{CARD_DB}=require('./src/cards.js');for(const[i,c]of Object.entries(CARD_DB))if(/Drowzee/.test(c.name))console.log(i,c.name,c.power?('POWER '+c.power.name):'(no power)',JSON.stringify(c.attacks))"
 ```
 
 - When energies were abundant but pokemon to attach them to were not, the AI started pre-planning evolutions that weren't in hand. A Machop in the active spot and an Eevee on the bench were both powered up to their own desired levels, and when nothing else arrived, the AI attached all of Machamp's required energies to the active Machop in preparation. Unknown if there was a Machamp in its hand and all it was missing was Machoke or if both were missing. 
