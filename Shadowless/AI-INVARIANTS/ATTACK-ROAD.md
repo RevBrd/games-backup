@@ -139,7 +139,16 @@ cards, it is 35 cards plus a changed unit.** Every card in the game whose cheap 
 attacks differ now amortises against `destGoal` where it amortised against `goal`, which moves prices
 far more widely than it moves choices.
 
-*(The strength check against the same commit is below.)*
+**The strength check is RUNNING and is not in this entry yet — 5 Sep 2026.** `aiduel.js 4 HEAD
+--gbc` was started and had not returned when this was committed. **A divergence is not a
+verdict**: 37.8% says the bot behaves differently, and says nothing at all about whether it behaves
+better. Anyone reading this before that number lands should treat the change as *shipped on
+correctness and unmeasured for strength*, which is the same footing
+[WALL-ROAD-LIVE](WALL-ROAD-LIVE.md) shipped on and stated plainly.
+
+**Fill this in rather than deleting it.** A missing measurement that says it is missing is worth more
+than a section that quietly never existed — and the number, when it arrives, belongs here and in
+[YARDSTICKS.md](../YARDSTICKS.md) if it moves the pin.
 
 ## What is a guess
 
