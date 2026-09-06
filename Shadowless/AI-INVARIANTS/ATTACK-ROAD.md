@@ -139,16 +139,38 @@ cards, it is 35 cards plus a changed unit.** Every card in the game whose cheap 
 attacks differ now amortises against `destGoal` where it amortised against `goal`, which moves prices
 far more widely than it moves choices.
 
-**The strength check is RUNNING and is not in this entry yet — 5 Sep 2026.** `aiduel.js 4 HEAD
---gbc` was started and had not returned when this was committed. **A divergence is not a
-verdict**: 37.8% says the bot behaves differently, and says nothing at all about whether it behaves
-better. Anyone reading this before that number lands should treat the change as *shipped on
-correctness and unmeasured for strength*, which is the same footing
-[WALL-ROAD-LIVE](WALL-ROAD-LIVE.md) shipped on and stated plainly.
+## And it is BETTER, which is the uncommon outcome here
 
-**Fill this in rather than deleting it.** A missing measurement that says it is missing is worth more
-than a section that quietly never existed — and the number, when it arrives, belongs here and in
-[YARDSTICKS.md](../YARDSTICKS.md) if it moves the pin.
+**`aiduel.js 4 HEAD~2 --gbc` — 23,320 games: 51.6% ± 0.6 (95%), significant.** The interval is
+[51.0, 52.2] and excludes 50. The baseline is this job's own backup commit, whose `ai.js` predates
+the change and whose only other content is `backups/`, so the result is cleanly attributable to this
+change and nothing else.
+
+**Say plainly why that is worth flagging rather than celebrating.** Most entries in this folder
+shipped on a measured *null* and said so — [WALL-ROAD-LIVE](WALL-ROAD-LIVE.md) is the immediately
+preceding one. The standing doctrine is that correctness ships regardless, and a result that comes
+back significant is the less common case, so it is the one to check hardest.
+
+**What was checked.** `aiduel` swaps `ai.js` only and alternates seats; this change is entirely in
+`ai.js`; the `--gbc` pool is the 54 ladder decks, which contain the affected cards — Courtney's
+Legendary Moltres deck is in it by name. **The per-deck column is not evidence about this change** and
+should not be read as such: both sides play the same pool, so a deck's rate there is that deck's
+strength, which is why Ronald's Powerful reads 71% and Rick's Wonders of Science reads 25%.
+
+**Both numbers are needed and they answer different questions.** `abtest`'s 37.8% is *did this change
+anything*, with the change on both seats as it ships. `aiduel`'s 51.6% is *is the new bot stronger*,
+with the asymmetry manufactured on purpose. Quoting either alone would be a partial answer.
+*[Which tool for which question →](../MEASUREMENT.md)*
+
+**One honest limit: this does not tell you WHICH half won the 1.6 points.** The change is a fifth
+surplus exception plus a changed amortisation unit, shipped together, and nothing separates them.
+If anyone retunes `wallPlanFloor` or narrows the exception, this number stops applying and a fresh
+duel is owed.
+
+*(This section was committed as a stated gap first — the run had not returned — and filled in
+afterwards. **The headline was lost once to a `tail -20` in the calling command**, which kept the
+per-deck breakdown and cut the only line that mattered; the re-run cost forty minutes. Pipe an
+instrument's output through nothing until you know where its headline sits.)*
 
 ## What is a guess
 
