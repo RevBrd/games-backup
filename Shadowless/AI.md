@@ -454,3 +454,39 @@ on it.**
     close this item**: the wall gate would then be carrying weight it was never sized for, and
     Magneton would start charging toward a Selfdestruct that belongs to the unbuilt Kamikaze Timing
     pattern. *[The entry, and the 35 cards it did reach →](AI-INVARIANTS/ATTACK-ROAD.md)*
+
+13. **Multi-turn lookahead: comparing two SEQUENCES rather than two attachments — Trevor,
+    6 Sep 2026.** Deferred deliberately, and recorded here rather than in a file of its own because
+    [MAINTENANCE.md](MAINTENANCE.md) calls a planning document for an unbuilt system the
+    highest-value cleanup target in the tree. **When it is built, it earns a file. Not before.**
+
+    His worked example, kept in his own words because the arithmetic is the proposal:
+
+    > If there's a Seel on bench with 0 energy, a Dewgong in hand (Aurora Beam WWC cheapest attack),
+    > and a Lapras in active with 2 energy and 2 turns remaining before death…
+    >
+    > **Scenario 1:** T1 Energy to Lapras → +10 dmg over baseline; T2 Energy to Seel, Lapras still
+    > at 3 → +20; T3 Lapras dies, Seel isn't ready to evolve, something has to stall for an extra
+    > turn and take damage, Seel gets its 2nd energy → +20 given, +[x] taken; T4 Seel is promoted,
+    > evolves, gets its third energy, attacks → **+70 over 4 turns = 17.5 DPT.** If we assume we took
+    > a minimum of 10 damage on that blank turn, net becomes **15 DPT**.
+    >
+    > **Scenario 2:** T1 Energy to Seel → +0; T2 second energy to Seel, Lapras still at 2 → +0;
+    > T3 Lapras dies, Seel is promoted, evolves, gets its third energy, uses Aurora Beam →
+    > **+50 over 3 turns = 16.7 DPT**, no extra damage taken.
+
+    **This is a PLANNER, not a weight, and that is the whole reason it is deferred.** The bot has one
+    card of lookahead — `evolutionInHand` plus `potentialAs` — and everything else in `scoreAction`
+    prices a single action against the board in front of it. What is described above enumerates turn
+    *sequences* and compares cumulative damage across them, including damage **taken** during a turn
+    nobody attacks. That is a different architecture, not a new term.
+
+    **And his own numbers are the argument for building it carefully or not at all: 15 against 16.7.**
+    The decision is close, which means a model would have to be genuinely accurate to beat a decent
+    heuristic — and an inaccurate one picks the wrong branch with confidence. **A close margin is a
+    reason for more rigour, not less**, which is the opposite of how a small gap usually gets read.
+
+    **What already exists and should be reused rather than rebuilt:** `turnsLeft` is the honest "how
+    many more turns does this slot get"; `evolutionPlan` and `roadWant` already reason about a line
+    rather than a card; `survivesCharge` already discounts an investment by whether the carrier lives
+    to spend it. The missing piece is the *comparison across branches*, not the per-branch facts.

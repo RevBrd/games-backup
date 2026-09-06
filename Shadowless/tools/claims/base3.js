@@ -119,6 +119,26 @@ const CLAIMS = [
     // 30 have the same expected damage and are not the same card, and nothing in
     // the printed-damage currency can say so. A fix for this one belongs with
     // AI.md open item 1, not here.
+    //
+    // **A TWO-STEP LOOKAHEAD WOULD FIX IT AND IS NOT WORTH BUILDING — measured
+    // 6 Sep 2026, from Trevor's proposal to price the eventual damage from the
+    // FOURTH Water so the third is taken as part of the road to it.** The idea is
+    // sound and the trace confirms the shape exactly:
+    //
+    //   2 Water  best 30   next attach -2.00   <- refused
+    //   3 Water  best 30   next attach 18.50   <- taken, because 3->4 raises best
+    //   4 Water  best 40   next attach -2.00   <- the cap, correctly
+    //
+    // One step of lookahead cannot cross the 30->30 plateau; two can. **But the
+    // whole live pool was swept for that shape and Omastar is the ONLY card with
+    // it** — one printing, against a `k`-loop inside `potential()`, which is on
+    // the hottest path in the scorer. Not worth it for one card.
+    //
+    // **And the plateau is a SYMPTOM of the variance fault above, not a separate
+    // thing.** If a guaranteed 30 outranked a two-coin 30, `best` would rise at
+    // 2->3 Water on its own and the plateau would not exist. Fixing the cause
+    // fixes this card for free; fixing this card leaves the cause. **Do not build
+    // the lookahead for Omastar.**
     board: {
       me:   { card: 'Hitmonchan', energy: '3 Fighting' },
       myBench: [{ card: 'Omastar', energy: '2 Water' }],
