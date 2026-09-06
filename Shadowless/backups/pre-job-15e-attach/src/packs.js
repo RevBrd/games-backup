@@ -1,0 +1,507 @@
+// ============================================================================
+// BOOSTER PACKS — the rarity table from PACKS.md, as logic.
+//
+// Job 5b. Pure and dependency-free: takes a card database and a random
+// function, returns what a pack contained. No DOM, no engine, no collection —
+// which is what lets tools/packtest.js open a few hundred thousand of them and
+// check the odds actually land where PACKS.md claims before anyone tunes a
+// number by feel.
+//
+// Variants come out as FLAG ARRAYS, not canonical keys: collection.js's
+// grant(save, id, flags) canonicalises on the way in, so this module never has
+// to know how a key is spelled. It also means packs.js has no dependencies.
+//
+// EVERY NUMBER IN PACK_ODDS IS A PLACEHOLDER. PACKS.md is explicit that the
+// table is a pacing schedule rather than tuned values. It lives in one object
+// for exactly that reason.
+// ============================================================================
+
+// 1 Rare + 2 Uncommon + 5 Common = 8. Shrunk from 11 on 25 Aug 2026 — Trevor,
+// from play: Commons and Uncommons were filling up too fast. See PACKS.md for
+// the pacing reasoning and what the shrink did to the variant-cosmetic odds
+// below, which nobody touched but which move anyway because they roll per
+// slot and there are fewer slots now.
+const PACK_SHAPE = { rare: 1, uncommon: 2, common: 5 };
+const PACK_SIZE = PACK_SHAPE.rare + PACK_SHAPE.uncommon + PACK_SHAPE.common;
+
+const PACK_ODDS = {
+  // Flat 2:1 non-holo:holo on the Rare slot for every set. Deliberately not
+  // each set's real pool ratio, which drifts 45-55% and isn't worth chasing.
+  holo: 1 / 3,
+
+  // Whole-pack rolls. Unaffected by PACK_SHAPE — these fire once per pack,
+  // not once per slot, so shrinking the pack does not move them.
+  firstEd: 1 / 20,
+  intrusion: 1 / 100,      // a promo or Southern Islands card, ADDED to the pack
+
+  // Per-card rolls. reverseHolo is offered only on non-Rare slots — the Rare
+  // slot already has its own holo axis. The other three roll against every slot.
+  //
+  // RETUNED 1 SEP 2026, JOB 15b, TO RESTORE THE PRE-SHRINK PACING. These four
+  // roll per SLOT, so the 25 Aug shrink from eleven cards to eight thinned all
+  // four without anybody touching a value — Reverse Holo from 1-in-9.9 packs to
+  // 1-in-14.3, Shiny 39.3 to 55.5, Shadowless 200 to 264, Misprint 897 to 1183.
+  // The retune was deferred on the day so that it would not be tangled up with
+  // the rarity-jump mechanic that shipped alongside the shrink.
+  //
+  // Each is scaled by the slots it LOST: Reverse Holo by 10/7 (it rolls on the
+  // non-Rare slots, 10 before and 7 now) and the other three by 11/8, then
+  // rounded to a clean denominator. Do not eyeball these against the old ones —
+  // a per-slot odd is not a per-pack rate, and the whole reason this drifted is
+  // that the two look alike written down.
+  //
+  //   reverseHolo  1/100 -> 1/70      ~1 pack in 10.5, was 10.5 before the shrink
+  //   shiny        1/440 -> 1/320     ~1 in 40.5
+  //   shadowless   1/2200 -> 1/1600   ~1 in 200
+  //   misprint     1/11000 -> 1/8000  ~1 in 1000
+  //
+  // The ~5x ladder between the per-card tiers comes out TIGHTER than it was
+  // (4.57x / 5.0x / 5.0x against the old 3.89 / 4.76 / 4.48), which is a bonus
+  // rather than the goal — extend the table with the same 5x if a fifth is ever
+  // wanted. packtest.js DERIVES its targets from these, so it follows.
+  reverseHolo: 1 / 70,
+  shiny: 1 / 320,
+  shadowless: 1 / 1600,
+  misprint: 1 / 8000,
+
+  // BONUS RARE-TIER JUMP — 25 Aug 2026, Trevor's third tuning pass. A small
+  // independent chance for a lesser slot to resolve as something better
+  // instead, so "exactly one Rare per pack" stops being an absolute. Tuned so
+  // a bonus Rare-tier card (of either kind) beats Reverse Holo's own per-pack
+  // frequency, and the two-tier jump stays clearly under it — see PACKS.md
+  // for the measured rates, since RH's own frequency is a function of how
+  // many eligible slots exist and that moved when the pack shrank.
+  // Nudged from Trevor's original 0.03 to 0.033 — measured, his v3 numbers
+  // landed the bonus-rare pack rate (6.38%) just under Reverse Holo's own
+  // (6.79%), missing the explicit goal by a hair. This clears it with a
+  // little room (~6.96%). Flagged rather than left quiet; revert to 0.03 if
+  // the near-tie was actually fine.
+  //
+  // THAT GOAL IS RETIRED AS OF 1 SEP 2026 AND THE VALUES ARE KEPT ANYWAY.
+  // Restoring Reverse Holo above moves it from ~6.8% of packs to ~9.5%, which
+  // puts it ABOVE the bonus-rare-tier rate and inverts an ordering PACKS.md said
+  // to preserve. The inversion is the right way round and the rule was the thing
+  // that was wrong: it was written while Reverse Holo was 44% below its own
+  // design intent, so it was anchored to a number that was itself broken. And a
+  // Reverse Holo is cosmetic while a bonus Rare is real value — the more valuable
+  // surprise being the rarer one is what you would choose if you were choosing.
+  //
+  // The alternative was to raise these to chase the restored Reverse Holo, which
+  // needs jumpUncommonToRare at ~0.054 and makes Rares about 55% more common from
+  // jumps alone. That accelerates set completion, which PACKS.md's pacing section
+  // says is already at a good length. **Not a tuning detail — say so if you
+  // disagree**, because it is one line either way.
+  jumpUncommonToRare: 0.033,
+  jumpCommonToUncommon: 0.024,
+  jumpCommonToRare: 0.001,
+};
+
+// A PACK TYPE MAY CARRY ITS OWN ODDS, keyed by the same pack key the save uses.
+// The Challenge pack is supposed to — PACKS.md: "slightly richer rarity odds,
+// less chance of a specific card, higher chance of a good one."
+//
+// FILLED IN BY JOB 15b, 1 Sep 2026 — Trevor's proposal: "maybe we can increase
+// the jump rate by 3-4x or something". Taken at 4x, and taken as the ONLY lever.
+//
+// WHY THE JUMP AND NOTHING ELSE. PACKS.md's brief for this pack is "slightly
+// richer rarity odds, less chance of a specific card, higher chance of a good
+// one", and the jump is the mechanism that already means *sometimes you just get
+// more* — so a Challenge pack is an ordinary pack with the existing surprise
+// turned up, rather than a second system nobody has to learn. One number to
+// revisit, and the pack keeps the standard shape, the standard holo split on its
+// guaranteed Rare, and every cosmetic axis unchanged.
+//
+// AT 4x: a bonus Rare-tier card in 26% of Challenge packs against 7% of ordinary
+// ones, and 1.28 Rare-tier cards per pack against 1.04. Roughly one Challenge
+// pack in four has a second Rare in it.
+//
+// AND IT SIDESTEPS THE THING PACKS.md WARNED ABOUT, which is worth knowing before
+// anybody swaps the lever. That file flags that richer rarity odds compound with
+// the cosmetic rolls, so a Challenge pack would become the best place in the game
+// to pull a Shadowless — arriving as a side effect nobody chose. **The jump does
+// not do that.** Shiny, Shadowless and Misprint roll per slot regardless of what
+// tier the card resolved to, so they are untouched; and a jumped card is Rare-tier,
+// which makes it INELIGIBLE for Reverse Holo, so a Challenge pack is very slightly
+// *worse* for Reverse Holo than an ordinary one. Trevor's instinct picked the one
+// lever with no cosmetic spillover. A holo-rate bump would not have that property.
+const PACK_ODDS_BY_KIND = {
+  challenge1: {
+    jumpUncommonToRare: 0.132,      // 4x
+    jumpCommonToUncommon: 0.096,    // 4x
+    jumpCommonToRare: 0.004,        // 4x
+  },
+};
+
+// PACKS.md wants 2-3 glitch flavours so a Misprint sighting reads as a fresh
+// joke rather than "oh, the misprint effect again". They are separate variant
+// keys, so two differently-broken cards are different collectibles.
+const MISPRINT_FLAVOURS = ['mp1', 'mp2', 'mp3'];
+
+// HOW MUCH BASIC ENERGY A PACK CAN CONTAIN, AND HOW LITTLE — 16 Aug 2026, and
+// this replaced the stipend outright. Trevor, from play, in two notes:
+//
+//   "There are just way too many and it ends up feeling to the player like
+//    they're being robbed of other cards when too many energies come in."
+//
+//   "...just including energies in the common pool for every set, and do that by
+//    pretty much just throwing them right into each set but with their original
+//    base1 card codes, and not tracking them as part of the number in the new
+//    set."
+//
+// WHAT WENT. Jungle and Fossil print no basic Energy at all, so Job 6a handed
+// their packs two Energy BESIDE the eleven cards. That made a Jungle booster a
+// 13-card pack with two mandatory Energy in it, which is the thing being
+// complained about. base1's Energy now sits in every set's Common pool instead,
+// under its own base1 ids, so it is drawn rather than granted and it never
+// counts toward the set it turns up in.
+//
+// TWO NUMBERS, AND THEY MEAN DIFFERENT THINGS.
+//
+//   ENERGY_FLOOR   a guarantee, per set. Only base1 has one, and it is the same
+//                  early-game pacing the floor always was: the first packs a
+//                  player opens have to be able to build a deck. A set that is
+//                  not listed gets Energy at the pool's own natural rate, which
+//                  is what "include them in the common pool" means.
+//   ENERGY_CAP     a ceiling, everywhere, and the actual fix. base1's remaining
+//                  five Common slots drew from a pool CONTAINING Energy, so a
+//                  Base Set pack could and did run well past two.
+//
+// Set the floor to 0 to make base1 behave like every other set; that is the one
+// line, and it is the only thing separating the two readings of the note above.
+const ENERGY_FLOOR = { base1: 2 };
+const ENERGY_CAP = 2;
+
+// Which set's basic Energy stands in for a set that prints none. Resolved from
+// the database rather than hardcoded, so a build generated without base1 still
+// works instead of silently borrowing nothing.
+function energySource(db) {
+  let best = null;
+  for (const id in db) {
+    const c = db[id];
+    if (c.kind !== 'energy' || c.cls !== 'Basic') continue;
+    if (best === null || c.set < best) best = c.set;
+  }
+  return best;
+}
+
+// Not boosters. Southern Islands was a fixed boxed set and promos came from
+// magazines, tins and events, so neither belongs in a normal pack's pools —
+// they are only reachable through the intrusion roll.
+const NON_BOOSTER_SETS = { basep: 1, si1: 1 };
+
+// The Rare slot's foil half. Rare Shining and Rare Secret are real printed
+// rarities that sit in the Rare slot, and both are foil treatments, so they
+// pool with Rare Holo.
+//
+// FLAG FOR JOB 8: this makes an RS as likely as any other holo Rare. Neo
+// Destiny prints 8 RS against ~40 holos, which would land them at ~20% of
+// holo pulls — nothing like their real scarcity. PACKS.md says RS needs no RNG
+// layer of its own, and at Base Set that is true because there are none. It
+// stops being true the moment neo3/neo4 load.
+const HOLO_RARITIES = { 'Rare Holo': 1, 'Rare Shining': 1, 'Rare Secret': 1 };
+
+// --------------------------------------------------------------- pools -----
+// Partition a set into the buckets a pack draws from.
+//
+// Basic Energy carries a blank `rarity` in the corpus (see PACKS.md Part 1 —
+// it is a quirk of the data, not evidence of an unnumbered pool). It is a
+// Common-tier card, so it goes in `common` AND is tracked separately in
+// `energy` for the floor. Double Colorless is Uncommon and is not Energy for
+// the floor's purposes — the floor is about basic Energy for a first deck.
+//
+// Memoised per (database, set). openPack() calls this once per pack, and the
+// scan is O(whole database) — invisible when a player opens one, and the
+// dominant cost when packtest.js opens 200,000. It was already 3x worse the
+// moment Jungle and Fossil generated, and would be 12x worse at fourteen sets.
+//
+// Safe because pools are READ-ONLY downstream (pickFrom and drawSlots only
+// read) and a card database is built once and not mutated. If you ever do
+// mutate one, build it fully before opening a pack against it.
+const POOL_CACHE = new WeakMap();
+
+// `sets` is one set code, an ARRAY of them, or null for every booster set.
+//
+// THE ARRAY FORM IS THE CHALLENGE PACK — Job 15a. A Challenge bracket belongs to
+// no set, so its pack is a pack TYPE drawing from several: `buildPools(db,
+// ['base1','base2','base3'])`. It is a real union rather than a set that borrows,
+// so the Energy share below comes out at the union's own natural rate and there
+// is no floor — `ENERGY_FLOOR` is keyed by pack key and a Challenge has no row.
+function buildPools(db, sets) {
+  let perSet = POOL_CACHE.get(db);
+  if (!perSet) { perSet = {}; POOL_CACHE.set(db, perSet); }
+  const many = Array.isArray(sets);
+  const wanted = many ? sets.slice().sort() : null;
+  const setCode = many ? null : sets;
+  const inScope = many
+    ? (code => wanted.indexOf(code) >= 0)
+    : (setCode ? (code => code === setCode) : (() => true));
+  const key = many ? '+' + wanted.join('+') : (setCode || '*');
+  if (perSet[key]) return perSet[key];
+
+  const pools = { rareHolo: [], rare: [], uncommon: [], common: [], commonNoEnergy: [], energy: [] };
+  for (const id in db) {
+    const c = db[id];
+    if (!inScope(c.set)) continue;
+    if (NON_BOOSTER_SETS[c.set]) continue;
+    const isBasicEnergy = c.kind === 'energy' && c.cls === 'Basic';
+    if (isBasicEnergy) { pools.energy.push(id); pools.common.push(id); continue; }
+    if (HOLO_RARITIES[c.rarity]) pools.rareHolo.push(id);
+    else if (c.rarity === 'Rare') pools.rare.push(id);
+    else if (c.rarity === 'Uncommon') pools.uncommon.push(id);
+    else if (c.rarity === 'Common') { pools.common.push(id); pools.commonNoEnergy.push(id); }
+    // Anything else (Promo, or a rarity we have not met) is deliberately
+    // dropped rather than guessed into a bucket.
+  }
+
+  // HOW OFTEN A COMMON SLOT IS ENERGY, as a share rather than as a side effect
+  // of how long an array is.
+  //
+  // Drawing uniformly from `common` looks like it means "at the set's natural
+  // rate" and does not, the moment a set borrows: base1's six Energy are six of
+  // its own 38 Commons (16%), but dropped into Jungle's 16 they become six of 22
+  // (27%). Jungle would get more Energy than Base Set for no reason other than
+  // having fewer Commons to dilute it. So a borrowing set inherits the SOURCE's
+  // share, and the roll is explicit.
+  //
+  // For a set that prints its own this is exactly what uniform drawing already
+  // did, so nothing about Base Set changes.
+  pools.energyShare = pools.common.length ? pools.energy.length / pools.common.length : 0;
+
+  // A set that prints no basic Energy of its own borrows base1's, ids and all.
+  // This is what replaced the stipend: the Energy is IN the Common pool and is
+  // drawn like anything else, rather than handed over beside an eleven-card pack
+  // as a twelfth and thirteenth card. It keeps its base1 number, so it is never
+  // part of the set it fell out of — Trevor's call, and the reason the dex and
+  // the set-completion counters need no special case for it.
+  // A UNION BORROWS TOO, on the same rule. Challenge 1's union contains base1 so
+  // it never fires there, but a later Challenge anchored past a run of sets that
+  // print none would otherwise hand out a pack with no Energy in it at all.
+  if (sets && !pools.energy.length) {
+    const src = energySource(db);
+    if (src && !inScope(src)) {
+      const from = buildPools(db, src);
+      for (const id of from.energy) { pools.energy.push(id); pools.common.push(id); }
+      pools.energyShare = from.energyShare;
+    }
+  }
+
+  const share = pools.energyShare;
+  for (const k in pools) if (Array.isArray(pools[k])) pools[k].sort();   // deterministic given a seed
+  pools.energyShare = share;
+  perSet[key] = pools;
+  return pools;
+}
+
+// The pool a promo intrusion may draw from. Progression-gated in principle —
+// PACKS.md is clear that a promo from an era the player hasn't reached would
+// read as broken rather than delightful — but Job 7 doesn't exist, so the
+// caller passes the eligible pool and the default is none.
+function promoPool(db, allowedSets) {
+  const out = [];
+  for (const id in db) {
+    const c = db[id];
+    if (!NON_BOOSTER_SETS[c.set]) continue;
+    if (allowedSets && allowedSets.indexOf(c.set) < 0) continue;
+    out.push(id);
+  }
+  return out.sort();
+}
+
+// ---------------------------------------------------------------- draws ----
+const pickFrom = (arr, rand) => arr[Math.floor(rand() * arr.length)];
+
+// Draw n cards, refusing a repeat WITHIN THIS PACK unless the card is basic
+// Energy.
+//
+// Two different rules on purpose. Three identical Rattata in one pack is
+// annoying and reads as a bug; two of the same Energy is normal and is exactly
+// what you want when you are building a deck around one type. Real packs could
+// repeat a Common, so this is a feel decision over a fidelity one — noted here
+// because it is the kind of thing a later session would otherwise "fix".
+//
+// The retry is bounded: a pool smaller than the slot count would otherwise
+// spin forever, so it gives up and allows the duplicate rather than hanging.
+function drawSlots(pool, n, rand, isEnergy, taken) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    let id = null;
+    for (let tries = 0; tries < 40; tries++) {
+      const cand = pickFrom(pool, rand);
+      if (isEnergy[cand] || !taken[cand]) { id = cand; break; }
+    }
+    if (id === null) id = pickFrom(pool, rand);
+    if (!isEnergy[id]) taken[id] = 1;
+    out.push(id);
+  }
+  return out;
+}
+
+// Per-card cosmetic rolls. `slot` decides whether Reverse Holo is on the table.
+function rollVariants(rand, slot, odds, firstEd) {
+  const flags = [];
+  if (firstEd) flags.push('fe');
+  if (slot !== 'rare' && rand() < odds.reverseHolo) flags.push('rh');
+  if (rand() < odds.shiny) flags.push('sh');
+  if (rand() < odds.shadowless) flags.push('sl');
+  if (rand() < odds.misprint) flags.push(MISPRINT_FLAVOURS[Math.floor(rand() * MISPRINT_FLAVOURS.length)]);
+  return flags;
+}
+
+// The Rare slot's draw: roll holo-vs-not, then pick within that tier. Used
+// for the guaranteed Rare slot AND for a bonus jump, so both get literally
+// the same treatment — Trevor's framing, 25 Aug 2026: "it does the same 1:2
+// holo/non-holo roll that it normally would."
+function drawRareCard(pools, rand, odds, isEnergy, taken) {
+  let holo = rand() < odds.holo;
+  if (holo && !pools.rareHolo.length) holo = false;
+  if (!holo && !pools.rare.length) holo = true;
+  const pool = holo ? pools.rareHolo : pools.rare;
+  const [id] = drawSlots(pool, 1, rand, isEnergy, taken);
+  return { id, holo };
+}
+
+// --------------------------------------------------------------- a pack ----
+// Returns:
+//   {
+//     set, firstEd, intrusion,
+//     cards: [ { id, slot, flags, holo }, ... ]   // 11 of them, Rare first
+//   }
+//
+// `slot` is 'rare' | 'uncommon' | 'common' | 'promo'. `holo` is only meaningful
+// on the Rare slot and records which side of the 2:1 the roll landed.
+function openPack(db, setCode, rand, opts = {}) {
+  const odds = Object.assign({}, PACK_ODDS, PACK_ODDS_BY_KIND[setCode], opts.odds);
+  const pools = opts.pools || buildPools(db, setCode);
+  const promos = opts.promos || [];
+
+  if (!pools.common.length || !pools.uncommon.length ||
+      (!pools.rare.length && !pools.rareHolo.length)) {
+    throw new Error(`set "${setCode}" cannot fill a pack — pools are empty`);
+  }
+
+  const firstEd = rand() < odds.firstEd;
+  const wantIntrusion = promos.length > 0 && rand() < odds.intrusion;
+
+  const isEnergy = {};
+  pools.energy.forEach(id => { isEnergy[id] = 1; });
+  const taken = {};
+  const cards = [];
+
+  // --- the guaranteed Rare slot. If a set has only one side (nothing does
+  // today, but Job 8 might), drawRareCard falls back rather than throwing.
+  const guaranteed = drawRareCard(pools, rand, odds, isEnergy, taken);
+  cards.push({ id: guaranteed.id, slot: 'rare', holo: guaranteed.holo, jump: null,
+    flags: rollVariants(rand, 'rare', odds, firstEd) });
+
+  // --- 2 Uncommon, each with a small independent chance to jump straight to
+  // Rare instead. A jumped card is pushed with slot: 'rare' and gets exactly
+  // the guaranteed slot's treatment downstream — same holo split, and Reverse
+  // Holo excluded for the same reason it is excluded from the guaranteed slot.
+  // `jump` records which rule fired, for measurement and for a reveal that
+  // wants to know a card is a surprise rather than the norm.
+  for (let i = 0; i < PACK_SHAPE.uncommon; i++) {
+    if (rand() < odds.jumpUncommonToRare) {
+      const r = drawRareCard(pools, rand, odds, isEnergy, taken);
+      cards.push({ id: r.id, slot: 'rare', holo: r.holo, jump: 'u2r',
+        flags: rollVariants(rand, 'rare', odds, firstEd) });
+    } else {
+      const [id] = drawSlots(pools.uncommon, 1, rand, isEnergy, taken);
+      cards.push({ id, slot: 'uncommon', holo: false, jump: null,
+        flags: rollVariants(rand, 'uncommon', odds, firstEd) });
+    }
+  }
+
+  // --- 5 Common-tier: the floor first, then the rest against the cap, each
+  // non-floor slot also carrying the two Common jump chances.
+  //
+  // The floor is deliberately NOT eligible to jump — it draws straight from
+  // `energy` before this loop even starts, never touching the roll below. A
+  // set's Energy guarantee has to stay a guarantee; letting it occasionally
+  // jump away would make "the floor and the cap meet at two" a claim that
+  // isn't always true.
+  //
+  // The rest draw from `common`, which CONTAINS Energy, so it can still turn
+  // up at its natural share — and that is exactly what used to let a base1
+  // pack run to five or six of them. The draw is one slot at a time so it can
+  // switch to `commonNoEnergy` the moment the cap is reached. `taken` is
+  // threaded through, so no-repeats still holds.
+  const cap = Math.max(0, opts.energyCap === undefined ? ENERGY_CAP : opts.energyCap);
+  const floor = Math.min(ENERGY_FLOOR[setCode] || 0, cap, pools.energy.length ? PACK_SHAPE.common : 0);
+  const commonCards = [];
+  let energyCount = 0;
+  if (floor > 0) {
+    const got = drawSlots(pools.energy, floor, rand, isEnergy, taken);
+    energyCount += got.length;
+    for (const id of got) {
+      commonCards.push({ id, slot: 'common', holo: false, jump: null,
+        flags: rollVariants(rand, 'common', odds, firstEd) });
+    }
+  }
+  while (commonCards.length < PACK_SHAPE.common) {
+    const roll = rand();
+    if (roll < odds.jumpCommonToRare) {
+      const r = drawRareCard(pools, rand, odds, isEnergy, taken);
+      commonCards.push({ id: r.id, slot: 'rare', holo: r.holo, jump: 'c2r',
+        flags: rollVariants(rand, 'rare', odds, firstEd) });
+      continue;
+    }
+    if (roll < odds.jumpCommonToRare + odds.jumpCommonToUncommon) {
+      const [id] = drawSlots(pools.uncommon, 1, rand, isEnergy, taken);
+      commonCards.push({ id, slot: 'uncommon', holo: false, jump: 'c2u',
+        flags: rollVariants(rand, 'uncommon', odds, firstEd) });
+      continue;
+    }
+    const roomLeft = energyCount < cap && pools.energy.length;
+    const wantEnergy = roomLeft && rand() < pools.energyShare;
+    const from = wantEnergy ? pools.energy
+      : (pools.commonNoEnergy.length ? pools.commonNoEnergy : pools.common);
+    const [id] = drawSlots(from, 1, rand, isEnergy, taken);
+    if (isEnergy[id]) energyCount++;
+    commonCards.push({ id, slot: 'common', holo: false, jump: null,
+      flags: rollVariants(rand, 'common', odds, firstEd) });
+  }
+  cards.push(...commonCards);
+
+  // --- intrusion is an EXTRA card, and never touches the Rare. PACKS.md: the
+  // Rare slot stays the pack's emotional centre, and an intrusion is a bonus
+  // surprise rather than competition for the headline pull.
+  //
+  // IT USED TO REPLACE A COMMON, and Trevor reversed that on 27 Aug 2026. The
+  // replacement rule was priced against an ELEVEN-card pack, where one slot was
+  // ~9% of what you opened; the 25 Aug shrink to eight silently repriced it to
+  // 12.5%, and PACKS.md already carries a paragraph about four cosmetic axes
+  // that moved the same way without anyone touching them. This was the fifth,
+  // and the only one whose movement ran against the player at the exact moment
+  // something rare happened.
+  //
+  // The Common slot is not nothing, which is the part the old rule missed. It
+  // carries its own Reverse Holo chase and it is the currency of set completion,
+  // so the principle that protects the Rare protects it too — just more quietly.
+  // The precedent was three days old either way: the bonus rare-tier jump had
+  // already turned "exactly one Rare per pack" from a promise into a norm, so
+  // the pack already had a mechanism for sometimes just getting more.
+  //
+  // SO A PACK IS PACK_SIZE CARDS *OR PACK_SIZE + 1*, and PACK_SIZE stops being
+  // an invariant. That is deliberate and it is asserted rather than assumed —
+  // packtest.js checks the size against the intrusion flag, not against a
+  // constant. The ninth face-down slot is also the reveal: you sit down to a
+  // pack that is visibly one card too long without knowing which one it is, so
+  // the header reports the REAL count rather than PACK_SIZE — a header insisting
+  // on eight while nine slots sit face-down reads as a bug, not as a secret, and
+  // WHICH card it is stays hidden either way. See renderPackScreen.
+  let intrusion = null;
+  if (wantIntrusion) {
+    intrusion = pickFrom(promos, rand);
+    cards.push({ id: intrusion, slot: 'promo', holo: false, jump: null,
+      flags: rollVariants(rand, 'promo', odds, firstEd) });
+  }
+
+  // The STIPEND is gone — 16 Aug 2026. It hung two extra Energy off the side of
+  // a pack for any set printing none, which made a Jungle booster thirteen cards
+  // with two of them mandatory. Borrowed Energy is in the Common pool now and is
+  // drawn like anything else. So a pack is PACK_SIZE cards -- plus the promo, on
+  // the 1-in-100 that intrudes, which is the ONLY thing that makes it longer.
+  return { set: setCode, firstEd, intrusion, cards };
+}
+
+if (typeof module !== 'undefined') module.exports = { PACK_SHAPE, PACK_SIZE, PACK_ODDS, PACK_ODDS_BY_KIND, MISPRINT_FLAVOURS, ENERGY_FLOOR, ENERGY_CAP, NON_BOOSTER_SETS, HOLO_RARITIES, buildPools, promoPool, energySource, openPack };
