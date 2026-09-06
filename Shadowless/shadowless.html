@@ -7507,9 +7507,71 @@ class AI {
     // until 23 Aug 2026, which charged Charizard the same rate for ammunition it
     // would replace as it charged Zapdos for emptying itself to nothing.
     // *[Both halves of the rule, and whose they are →](discardSilence)*
+    // SILENCE IS COUNTED IN ENERGY AND WAS BILLED AS TURNS — 6 Sep 2026, from
+    // Trevor's account of Charmeleon. `discardSilence` returns how many ENERGY
+    // short the card is after the burn, and this line spent that number as though
+    // it were turns. Those are the same only when an Energy is guaranteed to
+    // arrive:
+    //
+    //   *"If the hand is genuinely empty, then there's no guarantee the next card
+    //   will be a R energy to top it back up, meaning even Slash becomes unusable
+    //   if it doesn't."*
+    //
+    // He is exactly right and the arithmetic is worse than it sounds. Charmeleon
+    // at three Fire can pay Slash (`CCC`) or Flamethrower (`RRC`, burn one).
+    // Flamethrower leaves TWO Fire, at which point it can pay **neither** — not a
+    // weaker turn, silent, until an Energy turns up from somewhere.
+    //
+    // TWO THINGS WERE WRONG AND THE SECOND HID BEHIND THE FIRST.
+    //
+    // `survivesCharge` was doing NOTHING here, and could not. It returns
+    // `min(1, (left + 1) / turnsNeeded)`, so at the `silence === 1` that almost
+    // every card produces it is `min(1, (left+1)/1)` — exactly 1 for every value
+    // of `left`, including zero. **The discount meant to price "it is dying
+    // anyway, burn it" was unreachable on the boards it was written for.** Both
+    // Charmeleon claim rows scored an identical 30.00/43.00 whether the card was
+    // untouched or one hit from death, and the twin row's own comment already
+    // called itself a false green.
+    //
+    // The `+1` is not a bug — it is the deliberate hedge in `turnsLeft`, and it
+    // is load-bearing for CHARGING decisions, where three claim rows flip without
+    // it. **It is the wrong question here.** Charging asks "is it worth starting";
+    // billing asks "will this cost ever be paid". One function, two questions —
+    // so this reads `turnsLeft` directly and leaves `survivesCharge` alone.
     if (f.energyCost > 0) {
       const silence = this.discardSilence(pi, atkSlot, f);
-      s -= W.energyDiscard * silence * silence * this.survivesCharge(pi, atkSlot, silence);
+      if (silence > 0) {
+        // Each missing Energy costs however long it takes to replace one.
+        const turnsSilent = silence * this.energyRefillTurns(pi);
+        // ...discounted by whether it lives to feel any of it.
+        //
+        // YOU ONLY PAY FOR THE SILENCE YOU ARE ALIVE TO SIT THROUGH, and the
+        // discount therefore has to scale with HOW LONG the silence is. Two wrong
+        // versions were built first and both are worth knowing about.
+        //
+        //   `min(silence, turnsLeft)` — a CLIFF, the exact shape AI.md's sniff
+        //   test hunts, written by the session that had just documented it. It
+        //   zeroes outright at `turnsLeft === 0`, and `turnsLeft` is an UNHEDGED
+        //   projection of a snapshot threat, which is why `survivesCharge` carries
+        //   a `+1` in the first place.
+        //
+        //   A discount that ignores `silence` — graded, no cliff, and it passed
+        //   the four rows it was fitted against. **A fifth row broke it**: Zapdos
+        //   emptying itself with Thunderbolt is four turns of silence, not one,
+        //   and a term that cannot tell those apart charges the same for both.
+        //   **When a fifth case breaks a fit, the SHAPE is wrong, not the
+        //   constant** — that is the whole value of having rows to fit against.
+        //
+        // So: the silence is capped by the turns actually remaining, plus a
+        // fractional hedge so it never reaches zero. `0.75` is that hedge — the
+        // same idea as `survivesCharge`'s `+1`, sized down because a whole turn of
+        // optimism swallows the entire penalty at the `silence === 1` that most
+        // cards produce, which is precisely how the old discount came to be
+        // unreachable on every board it was written for.
+        const left = this.turnsLeft(pi, atkSlot);
+        const felt = left === Infinity ? turnsSilent : Math.min(turnsSilent, left + 0.75);
+        s -= W.energyDiscard * felt * felt;
+      }
     }
 
     // bench splash cuts both ways
@@ -8100,6 +8162,30 @@ class AI {
       }
     });
     return target;
+  }
+
+  // HOW MANY TURNS ONE MISSING ENERGY ACTUALLY COSTS — 6 Sep 2026, and it is the
+  // unit conversion the discard penalty was missing. "One Energy short" is one
+  // turn of silence only if an Energy is guaranteed to arrive; with an empty hand
+  // it is however long the deck takes to produce one.
+  //
+  // A FACT WITH NO POLICY IN IT, in the shape `turnsLeft` and `owed.js` already
+  // use — what it is WORTH is the caller's business. Reading our own deck is
+  // legitimate and `ai.js` already does it in several places: a player knows
+  // their own decklist. This counts cards, not order, so it is not `prizeIndex`'s
+  // problem and the comparison should not be made.
+  //
+  // CAPPED AT FOUR rather than left unbounded. A deck with one Energy in fifty
+  // gives 50, which would swamp every other term in whatever formula reads this,
+  // and the difference between "four turns away" and "fifty turns away" is not a
+  // difference the rest of the scorer can act on — both mean *not coming*.
+  energyRefillTurns(pi) {
+    const me = this.E.state.players[pi];
+    const isE = x => (this.db[x.id] || {}).kind === 'energy';
+    if (me.hand.some(isE)) return 1;          // it arrives next turn
+    const n = me.deck.filter(isE).length;
+    if (!n) return 4;                          // none left anywhere
+    return Math.max(1, Math.min(4, me.deck.length / n));
   }
 
   bestSelfSwitch(pi) {
