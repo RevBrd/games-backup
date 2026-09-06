@@ -106,15 +106,47 @@ the deck and the field is keeping pace.
 **And `aiduel.js --baseline` pins the comparison.** Against `HEAD` the duel answers "did the last commit
 help", resets every commit, and therefore reads ~50% forever no matter how far the AI has come — which
 is the same confound in the other instrument, and it is why this file's duel figures have all been
-nulls. `BASELINE` in `tools/aiduel.js` is a fixed commit (`e23c747`, the state of `ai.js` before Job
-11's AI work), so a run against it **accumulates**. Move the pin only deliberately and record it here
-when you do; resetting it silently throws away every comparison anyone wrote down.
+nulls. `BASELINE` in `tools/aiduel.js` is a fixed commit, so a run against it **accumulates**. Move
+the pin only deliberately and record it here when you do; resetting it silently throws away every
+comparison anyone wrote down.
+
+*(**This sentence named `e23c747` until 5 Sep 2026 and the live value had been `582761b` since 28
+Aug** — the pin table at the bottom of this file recorded the move correctly on the day, and the
+prose above it did not hear. Same failure as `CLAUDE.md`'s bracket count and `AI.md`'s verb count: a
+sentence carrying a value that lives somewhere checkable. **The table is the pin**; the prose does not
+name a commit any more, which is the only version that cannot go stale.)*
 
 **It worked the first time it was run.** Against `HEAD`, every AI change of 21 Aug 2026 read as a null —
 50.4% ±0.8, 49.9% control, exactly as this file predicts for symmetric perception fixes. Against the
 pin, the same day's work together reads **51.5% ±0.9**, outside the interval. Nothing about the AI
 changed between those two numbers; only the yardstick did. **A tool that resets its own baseline every
 commit cannot show progress, and this one had been doing that since it was written.**
+
+**And the HEAD form is not GUARANTEED to read ~50% — 5 Sep 2026, the first counter-example.** The
+attack road measured **51.6% ±0.6 over 23,320 games against its own pre-change commit**, which is
+significant on the very form this section calls a reliable null.
+*[The change →](AI-INVARIANTS/ATTACK-ROAD.md)*
+
+**That is not a contradiction and reading it as one would be the wrong lesson.** The HEAD form cannot
+show *cumulative* progress, because it resets — that claim stands untouched. What it can show is a
+**single commit large enough to register alone**, and until now nothing had been. So the sentence to
+carry forward is narrower than the one this file has been using: *the HEAD form reads ~50% for
+anything the size of a normal AI change*, not *the HEAD form always reads ~50%*.
+
+**The practical consequence is worth more than the correction.** A non-null on the HEAD form is a
+signal that a change is unusually broad, and it should make you check the instrument rather than
+celebrate — which is what [MISREADINGS.md](MISREADINGS.md) is for. Here the checks were that
+`aiduel` swaps `ai.js` only and this change is entirely in `ai.js`, the baseline commit's only other
+content is `backups/`, and the affected cards are in the `--gbc` pool by name.
+
+**And the two forms AGREE, which is the check that actually settles it.** The HEAD form attributed
+**+1.6** to this change alone; the pin moved **51.5% → 53.2%**, which is **+1.7**. Those are
+independent runs against different baselines and they land on the same number.
+
+**That agreement is the thing to reach for whenever a single result looks too good.** Neither figure
+on its own rules out a broken harness — a duel that is accidentally seating the same bot on both
+sides, or a pool that cannot reach the situation, has produced a confident wrong answer here before.
+Two baselines agreeing to a tenth of a point is far harder to fake than either number is to get.
 
 ## The pin, how it rotted, and the check that catches it
 
@@ -165,7 +197,7 @@ anyone has written down against the old one.
 | Pin | Set | Retired | Why it was retired | Last reading against it |
 |---|---|---|---|---|
 | `e23c747` | 21 Aug 2026 | **28 Aug 2026** | Predates the 25 Aug fix for three PROVISIONAL Power crashes. The Team Rocket roster then fielded one and `--baseline --gbc` began dying inside the baseline | **51.4% ±0.5**, 23 Aug 2026 |
-| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified with `--checkpin` against the live ladder before the pin was moved | **51.5% ±0.9**, 3 Sep 2026 (was 50.1% ±0.5 on 28 Aug) |
+| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified with `--checkpin` against the live ladder before the pin was moved | **53.2% ±0.9**, 5 Sep 2026 (51.5% ±0.9 on 3 Sep; 50.1% ±0.5 on 28 Aug) |
 
 **The pin moved +1.4 points between 28 Aug and 3 Sep 2026, and the yardstick is doing its job.**
 50.1% ±0.5 to **51.5% ±0.9**, `--checkpin` clean, 11,656 games. That is the accumulated work of

@@ -162,6 +162,12 @@ anything*, with the change on both seats as it ships. `aiduel`'s 51.6% is *is th
 with the asymmetry manufactured on purpose. Quoting either alone would be a partial answer.
 *[Which tool for which question →](../MEASUREMENT.md)*
 
+**The pin agrees, and that is the check worth more than either number.** `aiduel.js 2 --baseline
+--gbc` against `582761b` reads **53.2% ±0.9**, against 51.5% ±0.9 on 3 Sep — **+1.7**, where the HEAD
+form attributed **+1.6** to this change alone. Two independent runs against different baselines
+landing a tenth of a point apart is much harder to fake than either result is to get on its own.
+*[The pin table →](../YARDSTICKS.md)*
+
 **One honest limit: this does not tell you WHICH half won the 1.6 points.** The change is a fifth
 surplus exception plus a changed amortisation unit, shipped together, and nothing separates them.
 If anyone retunes `wallPlanFloor` or narrows the exception, this number stops applying and a fresh
