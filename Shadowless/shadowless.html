@@ -8215,6 +8215,9 @@ class AI {
     // amortising a step along the `destShort` road against `goal` divides the
     // wrong number by the wrong distance.
     let destGoal = 0;
+    // (short, damage) per attack, for the upgrade road below. Collected in this
+    // loop rather than recomputed, so it can never disagree with `short`.
+    const rows = [];
     (c.attacks || []).forEach((a, i) => {
       const need = a.cost.split('').filter(x => x !== 'C');
       const generic = a.cost.length - need.length;
@@ -8262,13 +8265,48 @@ class AI {
       if (val > best) best = val;
       if (this.attackThreatens(slot, c, i) && short < destShort) { destShort = short; destGoal = dmg; }
       else if (this.attackThreatens(slot, c, i) && short === destShort && dmg > destGoal) destGoal = dmg;
+      rows.push({ short, dmg });
     });
+
+    // THE UPGRADE ROAD — 6 Sep 2026, Trevor's damage-per-turn rule. THE THIRD
+    // ROAD, and the three answer three different questions on purpose:
+    //
+    //   short     -> the cheapest attack this card owns. "Can it act at all"
+    //   destShort -> the cheapest attack WORTH ARRIVING FOR. "Is the evolved form
+    //                functional" — the evolution destination, 1 Sep
+    //   upShort   -> the nearest attack BETTER THAN WHAT IS AFFORDABLE NOW.
+    //                "Is there a reason to keep feeding this card"
+    //
+    // **Do not merge them and do not add a fourth without reading this list.**
+    // Two lists holding one idea and drifting apart is this project's most
+    // frequently diagnosed failure; three roads holding three questions is the
+    // thing that stops it, and each is named for the question rather than the
+    // mechanism.
+    //
+    // Trevor's rule: *"a pokemon like Hitmonchan or Raichu should be powered up
+    // toward their bigger attack... but this only applies to USEFUL more
+    // expensive attacks."* Useful is measured against what the card can already
+    // do — Jab at 20 is affordable, Special Punch at 40 is two Energy away and
+    // strictly better, so the road is live. An attack that is not an improvement
+    // on what you can already pay for is not a destination.
+    //
+    // MEASURED AGAINST WHAT IS AFFORDABLE, NOT AGAINST THE CHEAPEST. Those differ
+    // the moment a card owns three attacks, and the affordable one is the honest
+    // baseline: what you would lose by stopping here.
+    let upShort = 99, upGoal = 0, affordable = 0;
+    for (const r of rows) if (r.short === 0 && r.dmg > affordable) affordable = r.dmg;
+    for (const r of rows) {
+      if (r.dmg <= affordable || r.short <= 0) continue;
+      if (r.short < upShort || (r.short === upShort && r.dmg > upGoal)) { upShort = r.short; upGoal = r.dmg; }
+    }
+    if (upShort === 99) { upShort = 0; upGoal = 0; }
     // NO THREATENING ATTACK AT ALL falls back to the cheapest of any, because
     // then the utility attack genuinely IS the destination — a card with nothing
     // but Scrunch is not "never ready", it is ready when Scrunch is affordable.
     return { best: best === -Infinity ? 0 : best, short: bestShort, goal,
              destShort: destShort === 99 ? bestShort : destShort,
-             destGoal: destShort === 99 ? goal : destGoal };
+             destGoal: destShort === 99 ? goal : destGoal,
+             upShort, upGoal };
   }
 
   // ==========================================================================
@@ -8697,10 +8735,10 @@ class AI {
     // path the evolution road already covers is untouched and this can only add
     // value where the old code had none to give.
     let roadGoal = beforeR.goal;
-    if (!evo && beforeShort === 0 && afterR.destShort < beforeR.destShort) {
-      beforeShort = beforeR.destShort;
-      afterShort = afterR.destShort;
-      roadGoal = beforeR.destGoal;
+    if (!evo && beforeShort === 0 && afterR.upShort < beforeR.upShort) {
+      beforeShort = beforeR.upShort;
+      afterShort = afterR.upShort;
+      roadGoal = beforeR.upGoal;
     }
     let s = Math.max(0, after.best - Math.max(0, before.best)) * W.attachEnable;
     s += this.energyOnAttachValue(pi, slot, energyId);
@@ -9707,7 +9745,24 @@ class AI {
         // accident, which is a decision nobody has made. `wallPlanFloor` holds back
         // exactly Chansey and Kangaskhan, which are the two cards Trevor's workbook
         // names as walls.
-        const charging = after.destShort < before.destShort
+        // WIDENED TO `upShort` — 6 Sep 2026, Trevor. `destShort` pins the same way
+        // `short` does the moment any *threatening* attack is payable, so the first
+        // version of this rule freed a Moltres (Wildfire deals nothing) and did
+        // nothing at all for a Hitmonchan on one Fighting, whose Jab does 20 and
+        // whose Special Punch does 40 two Energy away. His answer: *"Hitmonchan in
+        // particular is a very good opener because Jab comes at a single energy cost
+        // and Special Punch can be powered up in just a couple turns."*
+        //
+        // AND SELF-DAMAGE IS NOT EXCLUDED, which was the shape I proposed and he
+        // corrected. A Magneton that stopped charging at Sonicboom can never press
+        // the button: *"it wants to be used at a specific time, but in order to do
+        // that it needs to be ready to be used at any given moment... It serves no
+        // one if its owner had stopped powering it up at Sonicboom."* **Charging and
+        // firing are different decisions.** Kamikaze Timing is about WHEN to fire and
+        // belongs in `scoreAttack`; this road only says the card is worth feeding.
+        // Chansey is held by the wall gate below rather than by its Double-edge, and
+        // that is the correct discriminator: Chansey's job is standing there.
+        const charging = after.upShort < before.upShort
                       && this.wallHere(pi, slot) <= W.wallPlanFloor;
 
         if (noProgress && !needsEscape && !stocking && !evolving && !charging) return W.attachSurplus;

@@ -104,6 +104,21 @@ const CLAIMS = [
     // problem exactly where it was.
     //
     // Do not "fix" this by weakening the row or by special-casing Omastar.
+    //
+    // **THE UPGRADE ROAD DOES NOT TOUCH THIS, AND CHECKING WHY IS WORTH THIRTY
+    // SECONDS — 6 Sep 2026.** `upShort` was built to feed a card toward a better
+    // attack it cannot yet afford, which sounds like exactly this row. It reads 0
+    // here, correctly: **both** of Omastar's attacks cost two symbols, so at two
+    // Water there is no unaffordable attack at all. Water Gun `WC` deals 20 and
+    // Spike Cannon `WW` deals 30, and the third Water takes Water Gun to 30 —
+    // level, not past.
+    //
+    // So the two faults are genuinely different axes and neither is a version of
+    // the other. **The upgrade road is about DISTANCE** — an attack you cannot
+    // reach yet. **This row is about VARIANCE** — a guaranteed 30 and a two-coin
+    // 30 have the same expected damage and are not the same card, and nothing in
+    // the printed-damage currency can say so. A fix for this one belongs with
+    // AI.md open item 1, not here.
     board: {
       me:   { card: 'Hitmonchan', energy: '3 Fighting' },
       myBench: [{ card: 'Omastar', energy: '2 Water' }],
@@ -232,6 +247,45 @@ const CLAIMS = [
     sane: b => b.me.bench[0].energy.length === 4,
     expect: b => b.explain().some(e => e.label === 'attach'
             && (e.detail || '').includes('Moltres') && e.score <= 0),
+  },
+
+  // ---------------------------------------------------------------- Magneton --
+  // **THE ROW THAT CORRECTED THE DESIGN, and it is worth reading before touching
+  // the upgrade road.** I proposed excluding self-damaging attacks from it —
+  // Selfdestruct looks like the opposite of a card being "worth feeding", and
+  // Magneton's own workbook note says *Kamikaze Timing*, a pattern nobody has
+  // built. Trevor, 6 Sep 2026:
+  //
+  //   *"Selfdestruct should actually still be considered the attack worth powering
+  //   up to. It wants to be used at a specific time (right before death as a
+  //   kamikaze), but in order to do that it needs to be ready to be used at any
+  //   given moment... It should be a button that its user can press at any time
+  //   when threatened to just have the bomb go off. It serves no one if its owner
+  //   had stopped powering it up at Sonicboom."*
+  //
+  // **Charging and firing are different decisions**, and the exclusion I wanted
+  // would have welded them together — a card that can never be charged can never
+  // fire, so Kamikaze Timing would have been unbuildable before it was started.
+  // The road says the card is worth feeding; `scoreAttack` decides when to press
+  // the button. Chansey is held by wall-ness instead, which is the honest
+  // discriminator: standing there is Chansey's job, and it is not Magneton's.
+  {
+    id: 'base3-11', card: 'Magneton', pattern: 'Kamikaze Timing',
+    note: "Kamikaze Timing pattern in the same shape as others with self-destruct. Like those, potential bench self-kills and opponent kills should be factored into the weight. / Trevor 6 Sep 2026: 'It serves no one if its owner had stopped powering it up at Sonicboom'",
+    claim: 'fed past Sonicboom toward Selfdestruct — the bomb has to be ready before it can be timed',
+    board: {
+      me:   { card: 'base1:Machop', energy: '' },
+      myBench: [{ card: 'base3:Magneton', energy: '1 Lightning, 1 Fire' }],
+      them: { card: 'Lickitung', energy: '1 Water' },
+      myHand: ['Lightning Energy'],
+      turn: 9,
+    },
+    // Sonicboom is affordable and does 20, so the card reads as finished to
+    // `short` and as a working attacker to `destShort`. Only `upShort` sees it.
+    sane: b => b.ai.potential(0, b.me.bench[0], null).short === 0
+            && b.me.bench[0].energy.length === 2,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Magneton') && e.score > 0),
   },
 
   // ----------------------------------------------------------------- Chansey --

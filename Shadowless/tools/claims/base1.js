@@ -17,6 +17,18 @@
 // being able to distinguish the two answers it was asserting between. A claim
 // that cannot fail is worse than no claim.
 //
+// A `sane` MUST NOT NAME ANYTHING THE CHANGE INTRODUCED, and this has now cost
+// two sessions in two days. A precondition reading a field, weight or method that
+// arrived with the same commit as the row makes `--baseline` report the row
+// **UNUSABLE** rather than **RED** — the harness being honest, and the row proving
+// nothing at all. The control is the whole reason to write the row.
+//
+// It is easy to miss because the row is green in both readings and the failure is
+// a *third* status you have to go looking for. **Write preconditions out of things
+// that were always there** — an Energy count, `short`, `threat()`, HP — and put the
+// new field in `expect`, where a difference is supposed to show up. Both times the
+// fix was to spell a literal or count cards instead.
+//
 // SAY WHAT SHOULD HAPPEN, NOT WHAT THE NUMBER IS. `PLAYBOOK.md`'s rule, and
 // `powertest.js` paid for it once: a test pinned a barrier at exactly 16 and had
 // to be rewritten the next day by the person changing the constant, who is the
@@ -1712,6 +1724,83 @@ const CLAIMS = [
     sane: b => b.me.bench[0].energy.length === 5 && b.me.hand.length === 1,
     expect: b => b.explain().filter(e => e.label === 'attach'
             && (e.detail || '').includes('Blastoise')).every(e => e.score <= 0),
+  },
+
+  // -------------------------------------------------------------- Hitmonchan --
+  // NOT FROM THE WORKBOOK — Hitmonchan has no `Wants` cell. Trevor, 6 Sep 2026,
+  // answering AI.md open item 12 directly: *"a pokemon like Hitmonchan or Raichu
+  // should be powered up toward their bigger attack. Hitmonchan in particular is a
+  // very good opener because Jab comes at a single energy cost and Special Punch
+  // can be powered up in just a couple turns without having to evolve anything,
+  // with Jab being used every turn that it spends powering up."*
+  //
+  // THIS IS THE CARD THE FIRST VERSION OF THE ATTACK ROAD COULD NOT REACH.
+  // `destShort` pins at zero the moment any *threatening* attack is payable, and
+  // Jab threatens — so the 5 Sep rule freed a Moltres and did nothing here.
+  {
+    id: 'base1-7', card: 'Hitmonchan', pattern: 'Over-Attach',
+    note: "Trevor 6 Sep 2026: 'Hitmonchan in particular is a very good opener because Jab comes at a single energy cost and Special Punch can be powered up in just a couple turns without having to evolve anything, with Jab being used every turn that it spends powering up'",
+    claim: 'fed past Jab toward Special Punch — the cheap attack is a placeholder, not the plan',
+    board: {
+      me:   { card: 'base1:Machop', energy: '' },
+      myBench: [{ card: 'Hitmonchan', energy: '1 Fighting' }],
+      them: { card: 'Lickitung', energy: '1 Water' },
+      myHand: ['Fighting Energy'],
+      turn: 9,
+    },
+    // Jab IS affordable, which is the whole difficulty: the card looks finished.
+    // `short` and the Energy count only — NOT `upShort`, which this change
+    // introduced. A precondition naming a new field makes the row UNUSABLE against
+    // the bot before it rather than RED, which is the harness being honest and the
+    // row proving nothing. Second time in two days; see this file's header.
+    sane: b => b.ai.potential(0, b.me.bench[0], null).short === 0
+            && b.me.bench[0].energy.length === 1,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Hitmonchan') && e.score > 0),
+  },
+  {
+    id: 'base1-7', card: 'Hitmonchan', pattern: 'Over-Attach',
+    note: "Trevor 6 Sep 2026: 'Hitmonchan in particular is a very good opener because Jab comes at a single energy cost and Special Punch can be powered up in just a couple turns without having to evolve anything, with Jab being used every turn that it spends powering up'",
+    claim: 'THE CONTROL — and it STOPS at Special Punch, because nothing on the card is better',
+    board: {
+      me:   { card: 'base1:Machop', energy: '' },
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],
+      them: { card: 'Lickitung', energy: '1 Water' },
+      myHand: ['Fighting Energy'],
+      turn: 9,
+    },
+    sane: b => b.ai.potential(0, b.me.bench[0], null).short === 0
+            && b.me.bench[0].energy.length === 3,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Hitmonchan') && e.score <= 0),
+  },
+
+  // ------------------------------------------------------------------ Raichu --
+  // The workbook note is about ATTACK CHOICE and already has its own rows. This
+  // is the other half, from Trevor 6 Sep 2026: *"Raichu prefers to use Agility
+  // when Thunder won't kill... but it likes to have both attacks available so it
+  // can choose between them at any given time depending on the situation."*
+  //
+  // **Having the choice is the thing being asserted, not taking it.** The two
+  // existing Raichu rows assert it still picks Agility when Thunder cannot kill;
+  // this one asserts it gets fed far enough for that choice to exist. A card that
+  // correctly prefers the cheap attack and is therefore never charged has been
+  // reasoned about twice and helped once.
+  {
+    id: 'base1-14', card: 'Raichu', pattern: 'Over-Attach',
+    note: "To use Agility when Thunder wouldn't kill, or when Thunder risks a self-kill that isn't worthwhile. Does need some degree of Kamakaze Timing. / Trevor 6 Sep 2026: 'it likes to have both attacks available so it can choose between them at any given time depending on the situation'",
+    claim: 'fed past Agility toward Thunder, so the choice its note turns on actually exists',
+    board: {
+      me:   { card: 'base1:Machop', energy: '' },
+      myBench: [{ card: 'base1:Raichu', energy: '1 Lightning, 2 Fire' }],
+      them: { card: 'Lickitung', energy: '1 Water' },
+      myHand: ['Lightning Energy'],
+      turn: 9,
+    },
+    sane: b => b.ai.potential(0, b.me.bench[0], null).short === 0
+            && b.me.bench[0].energy.length === 3,
+    expect: b => b.explain().some(e => e.label === 'attach'
+            && (e.detail || '').includes('Raichu') && e.score > 0),
   },
 ];
 

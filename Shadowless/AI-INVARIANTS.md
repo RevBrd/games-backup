@@ -120,3 +120,4 @@ open the entry.
 | 3 Sep 2026 | **a Switch is worth how much you want to move, and the cost is already priced** | `T_SWITCH_OWN`, `bestSelfSwitch` | [SWITCH-DESIRE-TO-RUN](AI-INVARIANTS/SWITCH-DESIRE-TO-RUN.md) |
 | 3 Sep 2026 | **a card's wall-ness rises as its evolution stops being live** | `roadLive`, `wallHere`, `wallShape` | [WALL-ROAD-LIVE](AI-INVARIANTS/WALL-ROAD-LIVE.md) |
 | 5 Sep 2026 | **a card has a road to its own bigger attack, and `short` pins at zero so nobody could see it** | `destGoal`, `wallPlanFloor`, `attachValue` | [ATTACK-ROAD](AI-INVARIANTS/ATTACK-ROAD.md) |
+| 6 Sep 2026 | **...and the road runs to the nearest attack BETTER than what is affordable, self-destruct included** | `upShort`, `upGoal` | [ATTACK-ROAD](AI-INVARIANTS/ATTACK-ROAD.md) (same entry, widened) |

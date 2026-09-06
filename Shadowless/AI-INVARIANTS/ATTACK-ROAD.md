@@ -96,7 +96,87 @@ B3's workbook note names that pattern explicitly for the same card shape.
 **Both held cards are the two Trevor's workbook names as walls, and nothing sits between 0.40 and
 0.80.** That is corroboration, not a threshold somebody tuned until the tests went green.
 
-## Where the rule deliberately stops
+## WIDENED 6 Sep 2026 — `upShort`, and the boundary below was Trevor's to remove
+
+**The section below described the rule's limit and asked him. He removed it**, and the answer came
+with a correction that changed the design:
+
+> *"a pokemon like Hitmonchan or Raichu should be powered up toward their bigger attack. Hitmonchan
+> in particular is a very good opener because Jab comes at a single energy cost and Special Punch can
+> be powered up in just a couple turns without having to evolve anything, with Jab being used every
+> turn that it spends powering up... But the key thing there is that this only applies to **useful**
+> more expensive attacks."*
+
+So there is now a **third road**, and the three answer three different questions:
+
+| | asks | added |
+|---|---|---|
+| `short` | can this card act at all — the cheapest attack it owns | original |
+| `destShort` | is the evolved form functional — the cheapest attack worth arriving for | 1 Sep |
+| `upShort` | is there a reason to keep feeding this card — the nearest attack **better than what is affordable now** | 6 Sep |
+
+**Do not merge them and do not add a fourth without reading that table.** Two lists holding one idea
+and drifting apart is this project's most-diagnosed failure; three roads holding three *questions* is
+what stops it, which is why each is named for its question.
+
+`upShort` is measured against the best **affordable** damage rather than the cheapest attack's,
+because those differ the moment a card owns three attacks and the affordable one is the honest
+baseline: what you would give up by stopping here.
+
+### Self-damage is NOT excluded, and that was Trevor's correction
+
+**I proposed excluding self-damaging attacks and he refused it.** Selfdestruct looks like the
+opposite of "worth feeding", and Magneton B3's own workbook note says *Kamikaze Timing*, a pattern
+nobody has built:
+
+> *"Selfdestruct should actually still be considered the attack worth powering up to. It wants to be
+> used at a specific time (right before death as a kamikaze), but in order to do that it needs to be
+> ready to be used at any given moment... It should be a button that its user can press at any time
+> when threatened to just have the bomb go off. It serves no one if its owner had stopped powering it
+> up at Sonicboom."*
+
+**Charging and firing are different decisions**, and the exclusion would have welded them together —
+a card that can never be charged can never fire, so **Kamikaze Timing would have been unbuildable
+before anybody started it.** The road says the card is worth feeding; `scoreAttack` decides when to
+press the button.
+
+**Chansey is therefore held by wall-ness alone, and that is the correct discriminator.** Standing
+there is Chansey's job and it is not Magneton's. The wall gate was doing this work already; the
+self-damage rule would have been a second, worse answer to a question already settled.
+
+### What it measured — a NULL, and the exposure was checked first
+
+**`aiduel.js 4 HEAD --gbc` — 23,322 games: 50.4% ±0.6, interval [49.8, 51.0], which includes 50.**
+No significant difference.
+
+**The exposure was checked before the null was believed**, because a blind harness reports ~50% for
+anything and fails in the safe direction. Two checks, and they agree:
+
+- **16 of the 54 ladder decks contain a widened card** — Hitmonchan in 5, Magneton in 4, Dugtrio,
+  Rhydon and Pinsir in 3 each, Raichu in 2. Roughly a third of the pool.
+- **`abtest.js 8 HEAD --pairs 400`: 39.7% ± 1.7 of games diverged**, median first difference at
+  action 50, with the subject-deck win rate flat at 48.3% → 48.9%.
+
+**Those two numbers together are what makes this a real null rather than an absent measurement.**
+The change alters what the bot does in four games out of ten and wins none of them. A ~50% with a
+*low* divergence would have meant the pool could not see the change; a ~50% with 39.7% divergence
+means it saw it and did not care.
+
+**And the contrast with the 5 Sep half is the finding.** Freeing cards whose cheap attack deals
+**nothing** was worth +1.6 points; widening to cards that already deal 20 a turn is worth zero. Read
+plainly: **a Moltres holding one Fire is pure waste, and a Hitmonchan holding one Fighting is
+already working** — so what the bench loses roughly cancels what the card gains.
+
+**That does not make Trevor's rule wrong and it should not be read that way.** It is a correct
+description of how the cards play; the measurement says it is worth about nothing *against this
+bot's alternative uses of the same Energy*. Both are true, and the second is the kind of thing only a
+duel can tell you.
+
+**It ships on correctness**, which is the same ground `statusNovelty` and the board-aware wall
+shipped on: a bot that can never reach Special Punch is doing something a person watching would call
+wrong, and a win rate is worst at seeing exactly that.
+
+## Where the rule deliberately stopped, until 6 Sep 2026
 
 **It only reaches cards whose cheap attack does ZERO damage.** `destShort` pins the same way `short`
 does the moment any *threatening* attack is payable — so Hitmonchan (Jab `F`/20 → Special Punch
@@ -107,6 +187,14 @@ one Fire is doing literally nothing; a Hitmonchan holding one Fighting is doing 
 card that already threatens should be charged toward a bigger attack is
 [Over-Attach](../Playbook/OVER-ATTACH.md)'s open territory and a design question, **not something to
 settle by widening this fix.** Raised with Trevor rather than decided here.
+
+*(**Superseded by the section above, one day later, and kept exactly as written.** He removed the
+boundary — and the reasoning here turned out to be right about the mechanism and wrong about the
+conclusion. "A Hitmonchan holding one Fighting is doing real work" is precisely why the widening
+measures as a null. **The paragraph correctly predicted the size of the effect and drew the wrong
+inference from it**, which is a better failure to have on record than a deleted one: a small measured
+effect is an argument about priority, never an argument against correctness. Left in place per this
+folder's append-only rule.)*
 
 ## The guards, and the first one was worthless
 
