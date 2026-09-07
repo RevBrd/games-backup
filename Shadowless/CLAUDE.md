@@ -350,6 +350,7 @@ it** — that is the point of the tree, and the links here go to the owner rathe
   controls →](MEASUREMENT.md)* · *[the four things that lied →](MISREADINGS.md)* · *[why the fixtures
   were left alone a second time →](HISTORY.md)*
 - **Job 15e** - AI validation, grab bag.
+- **Job 15f** - Integrating the live Google Drive index sheets into the current process, AI.md open items.
 - **Job 16** - Card additions and logic for gym1.
 - **Job 17+** - Additional packs.
 
