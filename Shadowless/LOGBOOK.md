@@ -487,9 +487,40 @@ report a delta, make sure both halves came from the same window.**
 remaining caller. It is the fallback if the publish is ever revoked, and keeping it wired to a flag
 somebody might actually run beats leaving 200 lines to rot unnoticed.
 
-**Left for whoever is next:** the five `? UNQUOTED` rows are real work — Hitmonchan, Moltres and
-three Drowzee claims cite Trevor from elsewhere while their cells now carry proper notes nobody has
-read against them. And Chansey's rewrite is a genuine re-read. All six are `PLAYBOOK.md` jobs, not
-tooling ones.
+**Then I worked two of the six rows the tool had just surfaced**, which is the point of building it.
+
+**Chansey's note had tripled and the one claim covered a third of it.** *"Power up Scrunch and then
+tank"* became *"To work as a tank or staller, hiding behind Scrunch and rarely ever retreating or
+using Double-Edge"* — three clauses. The retreat one passes: a hurt Chansey with a fresh Hitmonchan
+benched and the retreat affordable stands anyway.
+
+**The attack clause is a pair, and my first draft of it was the trap `PLAYBOOK.md` names out loud.**
+I wrote it against a 70 HP Hitmonchan, it went red, and the bot was right — Double-edge deals exactly
+80, so it was a guaranteed Prize. **Trevor's word is "rarely", not "never", and lethal is the whole
+of the exception.** Re-cut against a 90 HP Kangaskhan it scores −15.11 and Scrunch wins. Both boards
+are asserted now, because one row can only ever say *"Chansey attacked"* and the board decides what
+that means. I had read that warning twice this session before walking into it.
+
+**Raichu's `+ EXTENDED` line found a real gap, and it is the best argument for the grading I built
+an hour earlier.** Under the old binary check it would have been one `!!` among nine and I would
+almost certainly have skimmed it. Trevor had added *"Agility buys turns through damage **and status**
+denial on a coin flip."* The status half is worth **zero**, by construction rather than by a bad
+weight: `denied = Math.min(incomingThreat, hpLeft)`, so a barrier against something that would
+paralyse prices identically to one against something that would only hit. Exactly, not
+approximately — Electabuzz and Machop at threat 40 both score Agility 35.75.
+
+**`ai.js` says it itself without noticing:** *"TWO TERMS BECAUSE THERE ARE TWO THINGS BEING
+PREVENTED"*, and both of them are damage.
+
+**I did not build it, and the restraint is the finding.** The barrier already denies their whole turn
+when the flip lands, so the damage term collects most of the value by accident and the true increment
+is only the status that would have *outlived* that turn. Pricing that means reaching for the status
+weights — and open item 5 says Sleep is currently valued by three methods that disagree. **Adding a
+second consumer of a number three methods disagree about is how a wrong weight becomes load-bearing.**
+So it is an `open:` row with the measurement attached and AI.md item 14, appended without renumbering.
+
+**Left for whoever is next:** the five `? UNQUOTED` rows — Hitmonchan, Moltres and three Drowzee
+claims that cite Trevor from elsewhere while their cells now carry proper notes nobody has read
+against them. `PLAYBOOK.md` jobs, not tooling ones.
 
 — #38
