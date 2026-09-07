@@ -266,6 +266,21 @@ general fix: **a constraint stated only in the thing being constrained is read t
     navigation than the section was. **One sibling with an index in the parent is the middle option**,
     and it is what `LOGBOOK.md` has always been. So: *how many entries, how long is each, and how many
     copies already exist* — three questions, three different right answers.
+  - **A FOURTH question, found when the same proposal was made about `AI.md`'s Open list — 7 Sep
+    2026: is the list cited by NUMBER from outside?** That one was proposed as a directory on the
+    grounds that the file was long. Measured, it is the refused case almost exactly — thirteen items,
+    median ten lines, five of them eight or fewer — so the three questions above already said no. But
+    it also carries something the register never did: `CLAUDE.md`, `GRABBAG.md` and four invariant
+    files cite it as *"AI.md open item 9(b)"*, and the list's own text warns that renumbering
+    silently repoints every one of them. **A structure that invites renaming is a structure that
+    invites repointing.** Prefer deleting down to the rule; it took ~23 lines of already-told
+    narrative out of three items and touched no number.
+  - **And the compaction bought six net lines, which is the honest figure and worth recording.** The
+    first draft spent fourteen lines *at the top of the list* explaining why it was not a directory —
+    an explanation about where things live, filed in the thing it was about, which is how this file
+    ends up being the last place anyone looks. It belongs here. **When a pass produces a rule about
+    organisation, the rule goes in `MAINTENANCE.md` and a one-line marker goes where the work
+    happened** — otherwise the saving is spent on the note describing the saving.
   - **When one file holds a spec's SHIPPED half and its UNBUILT half, split by state, not by topic.**
     The ninth pass took `CHALLENGES.md` out of `OPPONENTS.md` on that criterion and it is a genuinely
     new one here — every earlier split in this tree was by subject. The argument is the planning-doc

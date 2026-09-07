@@ -276,6 +276,13 @@ on it.**
 
 ## Open
 
+**This list is NOT becoming a directory, it was compacted instead, and both halves were decided
+rather than skipped — 7 Sep 2026.** Items 1, 8 and 9 carried long accounts already told in
+[`Playbook/`](Playbook/) and [HISTORY-ARCHIVE-2.md](HISTORY-ARCHIVE-2.md) and now carry the live claim
+and a pointer. **Item 13 was left at full length on purpose** — Trevor's worked arithmetic is the
+proposal rather than a story about it, and this is its only copy in the tree. **Do not "finish the
+job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.md)*
+
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
    damage while an Active gets full expected value; the measured size is in *The Active and the Bench
    are scored in different units* above. Closing it means making expected value computable for a slot
@@ -283,28 +290,18 @@ on it.**
    against a measured prize of one in six comparisons in a direction that is partly correct already.
    **If you take it on, duel it, and read the tail rather than the mean.**
 
-   **There is now a card-sized case, and it is the cheapest statement of this item anybody has
-   written down — 1 Sep 2026.** A benched **Omastar** takes one of the two Over-Attaches its note
-   asks for and refuses the other. The cause is *Spike Cannon*: it prints "30×", which
-   `aiParseDamage` reads as 30, so at two Water the slot's `best` is already 30 and the third Water
-   brings Water Gun **level** with it rather than past it. `noProgress`, and the surplus rule refuses.
-   **A guaranteed 30 and a coin-flip 30 are equal in the printed-damage currency and they are not
-   equal.** No tail analysis and no duel are needed to see it — it is a red row in
-   `tools/claims/base3.js` with the diagnosis attached, and it will go green when this item does.
+   **The cheapest statement of it is a card, not a measurement — 1 Sep 2026.** A benched **Omastar**
+   takes one of the two Over-Attaches its note asks for and refuses the other, because *Spike Cannon*
+   prints "30×" and `aiParseDamage` reads 30, so a third Water brings Water Gun **level** with it
+   rather than past it and the surplus rule refuses. **A guaranteed 30 and a coin-flip 30 are equal in
+   the printed-damage currency and they are not equal.** It is a red row in `tools/claims/base3.js`
+   with the diagnosis attached, and it goes green when this item does.
 
-   **The named case that used to be attached to this item was NOT this item, and separating them is
-   worth thirty seconds — 31 Aug 2026.** `powertest.js` asserted that a benched Poliwag was refused a
-   second Water because `aiParseDamage` reads "10+" as 10, and this entry claimed it as its own
-   waiting test case. It was a different fault sharing a symptom: **printed damage being wrong about
-   itself**, which is a *fact* and needed no unit change, against **printed damage and expected value
-   being different scales**, which is this item and is a refactor. The first shipped in an afternoon;
-   the second is exactly as open as it was. The test now asserts the Bench *can* see spare-Energy
-   scaling. *[The distinction, and what it cost →](Playbook/OVER-ATTACH.md)*
-
-   **The lesson generalises past this pair.** Two faults that produce the same wrong number on the
-   same board are not one fault, and filing the cheap one under the expensive one is how it stays
-   unfixed — this one sat behind a "real refactor of `scoreAttack`'s relationship with engine state"
-   for a fortnight.
+   **Do not re-absorb the Poliwag case.** It shared this symptom and was a different fault — printed
+   damage being wrong *about itself*, a fact that shipped in an afternoon — and it sat filed under
+   this refactor for a fortnight because of the shared number. **Two faults producing the same wrong
+   number on the same board are not one fault.**
+   *[Both, and what the conflation cost →](Playbook/OVER-ATTACH.md)*
    *(The promotion half of this entry is closed — a wall is preferred when promoting now, on survival
    rather than on stickiness.)*
 
@@ -356,35 +353,26 @@ on it.**
    and `--open` is the sub-list of clauses with no term to assert against at all.
 
    Copying them into this file would create exactly the duplication claim that has gone stale three
-   times at the top of it. **What belongs here is the shape.** The first eleven rows produced one on
-   the day the harness was built — *an attack's cost to its own future is underpriced against its
-   damage* — and it shipped the same day, so the entry that would have described it is an invariant
-   rather than an open item. See `discardSilence` in [AI-INVARIANTS.md](AI-INVARIANTS.md).
+   times at the top of it. **What belongs here is the shape**, and there are two rules worth knowing
+   before you read a red row.
 
-   **And a red row can mean the CLAIM is wrong — 28 Aug 2026, and it had not happened before.**
-   Arcanine GP's row asserted Quick Attack at four Fire and was red for two days while two sessions
-   looked for a missing term in attack choice. Trevor's answer was that the bot was right and the
-   fault was one decision upstream, in what it ATTACHED. **A red row localises a fault to a card, not
-   to a verb** — check which decision is actually wrong before pricing the one the row is written
-   about. The row was rewritten to assert the correct behaviour rather than deleted.
-   *[The rule that came out of it →](AI-INVARIANTS.md)*
+   **A red row can mean the CLAIM is wrong.** Arcanine GP's asserted Quick Attack at four Fire and was
+   red for two days while two sessions hunted a missing term in attack choice; the bot was right and
+   the fault was one decision upstream, in what it ATTACHED. **A red row localises a fault to a card,
+   not to a verb** — check which decision is actually wrong before pricing the one the row is written
+   about. *[The rule that came out of it →](AI-INVARIANTS.md)*
 
-   ~~**One clause survived: nothing prices holding an attack in reserve.**~~ **RESOLVED 30 Aug 2026,
-   and there was never a family.** It named Arcanine, Ninetales and Charmeleon; asked, all three left
-   by different doors. **The transferable part is that the item was written about a CARD and the
-   answer was about a SLOT** — banking an Energy is a thing a Bench does, and an Active that declines
-   to swing pays a turn of damage for it. *[All three, and Trevor's answers →](HISTORY-ARCHIVE-2.md)*
-   *[How a note becomes a row →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*
+   **And an item written about a CARD often has an answer about a SLOT.** The reserve-attack clause
+   here named Arcanine, Ninetales and Charmeleon as a family; asked, all three left by different doors
+   and there was no family. Banking an Energy is a thing a Bench does.
+   *[All three, and Trevor's answers →](HISTORY-ARCHIVE-2.md)* · *[how a note becomes a row
+   →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*
 
-9. **"Energy is a resource with somewhere else to be" — and half of what it was waiting for landed on
-   31 Aug 2026 without anybody aiming at it.** The forward-looking arm below has always needed two
-   things: *who else wants this Energy*, and *what is it worth to them*. `evolutionRoadFor` now
-   answers the first — it names the copy that will actually arrive — so what remains is a rate, and
-   `attachValue` already prices an attachment per slot rather than needing a new weight.
-
-   **The first card-sized test case is Trevor's Charmeleon rule**, filed as two rows in
-   `tools/claims/base1.js`: Slash while it expects to live, because the attachment that replaces a
-   burned Fire is one the Bench does not get. Measured as a flat 13-point gap on every board.
+9. **"Energy is a resource with somewhere else to be."** The forward-looking arm needs two things:
+   *who else wants this Energy*, and *what is it worth to them*. `evolutionRoadFor` answered the first
+   on 31 Aug 2026 — it names the copy that will actually arrive — so what remains is a rate, and
+   `attachValue` already prices an attachment per slot rather than needing a new weight. The
+   card-sized test case is Trevor's Charmeleon rule, two rows in `tools/claims/base1.js`.
    *[The decomposition, and the tension underneath it →](Playbook/AMMO.md)*
 
    **MEASURED 28 Aug 2026, and the item exists mainly to stop it being re-scoped as one large job.**
@@ -401,19 +389,17 @@ on it.**
    pressure looks like is **unmeasured**, and it is where to look if you go hunting.
    *[The full measurements, and why the small probe that found (a) read zero →](HISTORY-ARCHIVE-2.md)*
 
-   **Two clauses of his note are still open and neither follows automatically from (c) landing.**
-   **Evolutions in the DECK** need probability rather than fact, which is a different kind of reasoning
-   from anything in the scorer. **— AND TREVOR'S OWN ACCOUNT OF WHAT HE WANTS IS NOT A PROBABILITY
-   MODEL, 1 Sep 2026.** *"Price 'in hand' and 'in deck' both as green lights… but with 'in hand'
-   weighted much higher, whereas 'in deck' might result in Machop's second energy being added after
-   some bench pokemon have had their available move powered up or been prepped for a more impending
-   evolution themselves."* **That is a priority ordering, not a likelihood** — an in-deck road is a
-   real claim on Energy that yields to every more concrete one, and takes the surplus rather than a
-   share. Still not small, and the "favorable conditions" clause is unspecified — but **do not inherit
-   the scope estimate from the sentence above it.** *[The framing in full →](Playbook/EVOLUTION-TIMING.md)* **The duplicates rule** was built on 28 Aug — but on a release
-   condition the board already knows rather than on the scarcity clause he first wrote, because (b)
-   above had measured that clause near-inert hours earlier. **Raise the deck arm with Trevor rather
-   than assuming it follows.**
+   **Two clauses are still open and neither follows automatically from (c) landing.** **Evolutions in
+   the DECK** look like they need probability rather than fact — **and Trevor's own account of what he
+   wants is not a probability model, 1 Sep 2026.** He described *"in hand"* and *"in deck"* as both
+   green lights with the first weighted much higher, the second yielding to bench slots already being
+   powered up or prepped for a nearer evolution. **That is a priority ordering, not a likelihood** —
+   an in-deck road is a real claim on Energy that takes the surplus rather than a share. Still not
+   small, and his "favorable conditions" clause is unspecified, but **do not inherit the scope
+   estimate from the word "probability".** **The duplicates rule** shipped on 28 Aug on a release
+   condition the board already knows rather than on the scarcity clause, because (b) had measured that
+   clause near-inert hours earlier. **Raise the deck arm with Trevor rather than assuming it follows.**
+   *[His words in full, and the framing →](Playbook/EVOLUTION-TIMING.md)*
 
 10. ~~**The evolution road cannot see whether its carrier will live to travel it.**~~ **BUILT
     31 Aug 2026, and not where this item said to look.** It pointed at the survival DISCOUNT, and no

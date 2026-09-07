@@ -265,6 +265,15 @@ bracket carries that key. The twenty-five promos with no gate at all are the uns
 effect script* as well as by gate, so CLAUDE.md's "no collecting a card you cannot play" holds for a
 set that is deliberately half-built.
 
+**Ancient Mew was pulled out of the workbook entirely on 4 Sep 2026, and it is the one promo whose
+absence is a decision rather than a gap.** It is unnumbered, the corpus does not carry it, and it was
+the sole reason `progresstest.js` needed a not-in-corpus escape hatch at all. Trevor's reasoning, when
+the gate caught the removal on 7 Sep: **a card that may never be in the game clutters the field being
+worked in**, and if it does arrive it arrives much later, behind *a mechanic for unnumbered cards*
+that does not exist yet. **He does want it eventually — "as a minimum" — so this is deferred, not
+rejected.** The escape hatch is kept for the same reason: filing a note ahead of its card is a normal
+thing for him to do again.
+
 **Verified at 200,000 packs after the 1 Sep 2026 retune, and this table is the only copy in the
 file.** The ~5x ladder sits at 4.03x / 4.80x / 4.90x. **Three sets of numbers exist for this pack and
 confusing them is easy**, so all three are here rather than one being quoted loose:
