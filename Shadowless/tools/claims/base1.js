@@ -433,6 +433,44 @@ const CLAIMS = [
     expect: b => b.prefers('Agility'),
   },
 
+  // THE HALF OF THAT SENTENCE NOTHING CAN ASSERT — 7 Sep 2026, and it arrived as
+  // an `EXTENDED` line out of `wants.js` rather than as a bug report. Trevor added
+  // *"Agility buys turns through damage **and status** denial on a coin flip"* to a
+  // note whose three rows above only ever tested the damage half.
+  //
+  // THE STATUS HALF IS WORTH EXACTLY ZERO TO THE BOT, and it is worth zero by
+  // construction rather than by a wrong weight. In `scoreAttack`:
+  //
+  //     const danger  = this.incomingThreat(pi);
+  //     const denied  = Math.min(danger, hpLeft);
+  //     if (f.flags.shield) s += f.flags.shield * (1.4 * shieldFrac * W.shieldSelf
+  //                                              + shieldFrac**2 * W.selfKO);
+  //
+  // `denied` is damage and nothing else, so a barrier against a Pokemon whose
+  // attack would PARALYSE prices identically to one against a Pokemon that would
+  // only hit. Measured, and the equality is exact rather than approximate:
+  //
+  //     base1:Electabuzz 2L (Thunderpunch, paralysis line)  threat 40  Agility 35.75
+  //     base1:Machop     2F (Low Kick, plain damage)        threat 40  Agility 35.75
+  //
+  // The file's own comment says so without noticing: *"TWO TERMS BECAUSE THERE ARE
+  // TWO THINGS BEING PREVENTED"* — and both of them are damage.
+  //
+  // WHY IT IS NOT BEING FIXED HERE. Agility already denies the opponent's whole
+  // turn when the flip lands, so some of this is priced through `denied` by
+  // accident; the increment is only the status that would have OUTLIVED that turn.
+  // Pricing it means reaching for the status weights, and `AI.md` open item 5 says
+  // Sleep is currently valued by three methods that disagree with each other. A new
+  // consumer of those numbers is the wrong thing to add while that is true.
+  {
+    id: 'base1-14', card: 'base1:Raichu', pattern: 'Attack choice',
+    note: "To use Agility when Thunder wouldn't kill, or when Thunder risks a self-kill that isn't worthwhile. Does need some degree of Kamakaze Timing. Agility buys turns through damage *and status* denial on a coin flip, while Thunder risks 30 self-dmg on a coin flip.",
+    claim: 'Agility is worth MORE against an opponent whose attack also applies a status',
+    open: "`denied` is damage only, so the shield term cannot see a status it prevents. "
+        + "Needs a term for the status that would outlive the barrier's own turn — and "
+        + "AI.md open item 5 (three disagreeing Sleep prices) should settle first.",
+  },
+
   // --------------------------------------------------------------- Nidoking --
   {
     id: 'base1-11', card: 'Nidoking', pattern: 'Setup turn',
@@ -1788,7 +1826,7 @@ const CLAIMS = [
   // reasoned about twice and helped once.
   {
     id: 'base1-14', card: 'Raichu', pattern: 'Over-Attach',
-    note: "To use Agility when Thunder wouldn't kill, or when Thunder risks a self-kill that isn't worthwhile. Does need some degree of Kamakaze Timing. / Trevor 6 Sep 2026: 'it likes to have both attacks available so it can choose between them at any given time depending on the situation'",
+    note: "To use Agility when Thunder wouldn't kill, or when Thunder risks a self-kill that isn't worthwhile. Does need some degree of Kamakaze Timing. Agility buys turns through damage *and status* denial on a coin flip, while Thunder risks 30 self-dmg on a coin flip. / Trevor 6 Sep 2026: 'it likes to have both attacks available so it can choose between them at any given time depending on the situation'",
     claim: 'fed past Agility toward Thunder, so the choice its note turns on actually exists',
     board: {
       me:   { card: 'base1:Machop', energy: '' },

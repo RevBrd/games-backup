@@ -476,3 +476,28 @@ job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.m
     many more turns does this slot get"; `evolutionPlan` and `roadWant` already reason about a line
     rather than a card; `survivesCharge` already discounts an investment by whether the carrier lives
     to spend it. The missing piece is the *comparison across branches*, not the per-branch facts.
+
+14. **A barrier denies a status as well as damage, and the shield term cannot see it — 7 Sep 2026.**
+    `denied` is `Math.min(incomingThreat, hpLeft)`, so `f.flags.shield` is a pure function of damage
+    prevented. An Agility against a Pokemon whose attack would **paralyse** prices identically to one
+    against a Pokemon that would only hit, and the equality is exact rather than close:
+    `base1:Electabuzz` at threat 40 and `base1:Machop` at threat 40 both score Agility **35.75**.
+
+    **The file says so itself without noticing.** The comment above that term reads *"TWO TERMS
+    BECAUSE THERE ARE TWO THINGS BEING PREVENTED"* — damage, linear, and the Knock Out, squared.
+    Both of them are damage. The same block quotes Trevor calling Agility *"the same shape as Ice
+    Beam… instead of inflicting paralysis it has a coin flip that prevents all damage"*, which was
+    the right model in August and is the half-model his own note has now outgrown: **"Agility buys
+    turns through damage *and status* denial on a coin flip."**
+
+    **It is smaller than it looks and that is the reason to size it before building it.** The barrier
+    already denies their whole turn when the flip lands, so the damage term is picking up most of the
+    value by accident. The genuine increment is only the status that would have **outlived** that
+    turn — a Sleep or Paralysis still on you the turn after. That is not nothing, and it is not the
+    whole of a status weight either.
+
+    **Do not build this before item 5.** Pricing it means reaching for `paralyze`/`sleep`/`confuse`,
+    and item 5 records that Sleep is currently valued by three methods that disagree — 0.67, 1.20 and
+    a shipped 0.85. Adding a second consumer of a number three methods disagree about is how a wrong
+    weight gets load-bearing. *[The row, with the measurement attached →](PLAYBOOK.md)* —
+    `tools/claimtest.js --open`.
