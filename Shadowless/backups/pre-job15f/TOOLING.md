@@ -334,38 +334,19 @@ node tools/claimtest.js Arcanine --explore   # what the bot ACTUALLY does, score
 node tools/claimtest.js --open               # clauses with no term to assert against
 node tools/claimtest.js --baseline 96c53fd   # the control — see below
 node tools/wants.js base1 --todo             # which notes have no claim yet
-node tools/wants.js --sync                   # re-fetch the live sheet into the snapshot
-node tools/wants.js --xlsx                   # ...or read the old hand-made exports
 ```
 
 **`wants.js` checks for DRIFT on every run, and that is the check worth copying.** A claim quotes
 Trevor's note verbatim so a reader can hold the row against the sentence it came from — and the moment
 he revises that sentence, the row is silently testing something he no longer says, **while still
-passing**. Nothing else in the project can see it. Added 24 Aug 2026 when a workbook update took the
+passing**. Nothing else in the project can see it. The tool re-reads the workbook every run and prints
+`!! REWRITTEN` or `!! ORPHANED` with both texts. Added 24 Aug 2026 when a workbook update took the
 live notes from 148 to 219; nothing had drifted that time, and it was verified by deliberately
 corrupting a claim and watching it fire.
 
-**The drift check is GRADED, and it had to become graded the moment it was pointed at live data.**
-Against the stale export it printed nine undifferentiated `!!` lines; only one was a rewrite. **Nine
-alarms of which one matters is worse than three of which three do** — a detector nobody trusts is a
-detector nobody reads, and Chansey's note going from six words to a full paragraph arrives invisible
-in the middle of the noise. So it now prints five outcomes rather than two: `!! REWRITTEN` (he
-replaced the sentence — read the row again), `!! ORPHANED` (the cell lost its note), `+ EXTENDED`
-(he *added* a clause, so the claim is still true and there is simply more to cover), `? UNQUOTED`
-(the claim cites a playtest or a remark rather than the cell, and the cell now has a note nobody has
-checked it against), and a quiet `· touched` for punctuation.
-
-**The cause was the FIELD, not the comparison, and measuring it first is why the fix is nine lines
-rather than a threshold.** Across all 142 claims the `note` field holds four different things: 127
-verbatim cell quotes, 4 marked `(...)` to say there is no cell note, 9 opening with a source label,
-and 2 that are the cell text with a later remark appended after a ` / `. Reading that convention
-sorts them exactly; guessing at a similarity cutoff would have sorted them approximately forever.
-
-**Three parts, and the split matters.** `tools/lib/sheet.js` reads Trevor's **live** sheet — published
-to the web as CSV, cached, freshness-checked against the Drive mtime. `tools/lib/xlsx.js` reads the
-old hand-made exports with no dependencies, because an `.xlsx` is a zip of XML and adding a package to
-a project whose deliverable is one double-clickable file was not worth it; it is now the fallback path
-behind `--xlsx` rather than the main one. `tools/wants.js` reports the inbox and the backlog.
+**Three parts, and the split matters.** `tools/lib/xlsx.js` reads Trevor's workbook with no
+dependencies, because it is a zip of XML and adding a package to a project whose deliverable is one
+double-clickable file was not worth it. `tools/wants.js` reports the inbox and the backlog.
 `tools/lib/board.js` builds a position out of card **names** and hands you probes written from player
 0's seat — `prefers('Ice Beam')`, `threat()`, `lethal('Take Down')`, `explain()`.
 

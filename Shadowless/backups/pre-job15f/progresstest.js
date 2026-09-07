@@ -413,23 +413,15 @@ const GATE_KEY = {
 // cleared-based reading. Regenerate the table from the workbook rather than
 // editing the one line that differs, and do not "fix" it by loosening this.
 //
-// A row for a card that is not in CARD_DB is SKIPPED rather than failed. That
-// escape hatch existed for exactly one row — `basep-54` Ancient Mew, an unnumbered
-// movie promo the corpus does not carry, filed ahead of the card existing.
-//
-// TREVOR REMOVED THAT ROW, and this guard is how we found out — 7 Sep 2026, the
-// first run against the live sheet rather than a hand-made export. The Index went
-// from 29 gated promos to 28 and Ancient Mew is simply gone, so the count is now
-// zero and the assertion below says zero. The hatch is KEPT rather than deleted:
-// it costs one branch, and a note filed ahead of its card is a normal thing for
-// him to do again. If this ever reads non-zero, read the skipped id before
-// assuming it is Ancient Mew coming back.
+// A row for a card that is not in CARD_DB is SKIPPED rather than failed —
+// `basep-54` Ancient Mew is an unnumbered movie promo that the corpus does not
+// carry, so Trevor's note for it is filed ahead of the card existing. That is the
+// documented state, not a gap. See DATA.md.
 {
-  // Reads the COMMITTED SNAPSHOT of the live sheet, never the network — a suite
-  // that fetches is a suite that fails on a train, and this one is in the gate.
-  // `node tools/wants.js --sync` is what moves the snapshot forward.
-  const { readIndex } = require('./lib/sheet.js');
-  const { rows } = readIndex();
+  const { openWorkbook, tabulate, newestWorkbook } = require('./lib/xlsx.js');
+  const path = require('path');
+  const picked = newestWorkbook(path.join(__dirname, '..', 'data', 'v1 Opp Decks'));
+  const rows = tabulate(openWorkbook(picked.file).sheet('Index'));
 
   const fromBook = {};
   let skipped = 0, unmapped = 0;
@@ -444,7 +436,7 @@ const GATE_KEY = {
   }
 
   eq(unmapped, 0, 'every gate Trevor wrote maps to a bracket key this suite knows');
-  eq(skipped, 0, 'every gated promo in the sheet has a card in the corpus (Ancient Mew removed 4 Sep)');
+  eq(skipped, 1, 'exactly one gated promo has no card in the corpus (basep-54, Ancient Mew)');
 
   const a = Object.keys(fromBook).sort().join(',');
   const b = Object.keys(P.PROMO_GATES).sort().join(',');

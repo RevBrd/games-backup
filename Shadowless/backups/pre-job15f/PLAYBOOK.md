@@ -22,43 +22,11 @@ clustered into sixteen patterns** — that clustering is what produced the direc
 
 **The newest workbook is always the live one, and it is the whole history.** Trevor's method: copy the
 previous workbook, add the next set's cards, fill in the judgement-call cells, build the decks. So
-each one is a strict superset of the last — verified again on 7 Sep 2026, when Gym Heroes came out as
-exactly Team Rocket's 339 rows plus 126 `gym1` ones. **Read the newest and never diff two of them for
-content.**
+each one is a strict superset of the last — `Challenge 1` was verified as exactly the Fossil
+workbook's 229 rows plus 28 promos and a `Gated Until` column. **Read the newest and never diff two
+of them for content.**
 
-**The `Wants` chain is younger than the row chain, and Trevor said so rather than anyone deducing it
-— 7 Sep 2026.** Team Rocket was the first workbook written with full paragraphs; Base Set through
-Fossil were **gone back over retroactively** in that style afterwards. So *"each workbook is a strict
-superset"* is true of the card rows throughout and true of the notes only **from Team Rocket
-onward**. It changes nothing about how to read the inbox — the newest is still the only one to
-read, and it is the one holding the retrofits — but it does mean an older export's notes are not
-simply "fewer", they are a different generation of the same cells.
-
-### It is read from the LIVE sheet now, not from an export — Job 15f, 7 Sep 2026
-
-**The workbook lives on Google Drive and is published to the web as CSV**, so `wants.js` fetches the
-real thing instead of whatever `.xlsx` Trevor last exported by hand. `tools/lib/sheet.js` owns the
-mechanism and the reasoning; the summary is that the sheet is cached at `data/wants-index.csv`, the
-cache is committed because `progresstest.js` reads it inside the gate, and **`node tools/wants.js
---sync` is the one command that moves it forward.**
-
-**The change was not a convenience, it was a correctness fix, and the tool had been wrong for eleven
-days without being able to notice.** On 7 Sep the newest local export was Team Rocket at **24 Aug**.
-The live Team Rocket sheet had been edited on **4 Sep**, and a whole Gym Heroes workbook existed only
-on Drive. `wants.js` reported the file it opened perfectly honestly, exactly as designed, and that
-file had quietly stopped being the newest thing in the world. **A guard against staleness that only
-watches one folder is a guard against staleness in that folder.** The corrected read added **19 live
-notes** and turned up 122 `gym1` notes waiting for Job 16.
-
-**So it now reports freshness as well as identity, and it can do that offline.** Drive for Desktop
-mounts the sheet at `G:\` as a stub that cannot be read but whose mtime tracks the live document
-exactly, so every run compares the snapshot against it for free and says `!! STALE` when Trevor has
-edited since. **Google sends no `Last-Modified` and no `ETag`**, so the obvious HTTP answer does not
-exist and this one is not a workaround for laziness.
-
-**`node tools/wants.js --xlsx` still reads the old exports.** It is the fallback if the publish is
-ever revoked, and it is `xlsx.js`'s only remaining caller — kept live on purpose rather than left to
-rot as two hundred lines nobody runs.
+**Update to the previous** - My Google Drive is now linked up on this device through the desktop app, meaning you have access to the live workbook that I'm currently working with rather than an exported slightly stale one each time. It would also allow you to edit the love docs yourself freely. Whoever works in the playbook next and has the time, let's talk about how to integrate this into our system with the same wants-reading ease that you currently have with our system. It's in the Shadowless Data folder of the Drive, check the new .claude/reference/machine.md before diving in because Codeville 5 thought that important. You might be happy to see a new Gym Heroes file while you're there.
 
 **`node tools/wants.js` reads it, and reading it by hand is no longer the job.** Until 23 Aug 2026
 nothing in the project could open an `.xlsx`, so the inbox was only reachable through Excel and
@@ -69,14 +37,11 @@ prints which notes have no claim yet.
 **Being pointed at a stale workbook is the failure this tool exists to prevent, and it is not
 hypothetical.** A session read `Challenge 1` believing it was current, found Team Rocket absent,
 concluded the newest live set had no annotation at all, and sized the job at a third of its real
-weight. `wants.js` **prints which sheet it opened, when the snapshot was taken, and whether Trevor
-has edited since — every single run.** The note register changed shape at the same time and that is
-the tell if you ever suspect a stale read: **every live set now runs to full paragraphs.**
-
-**The per-set medians are printed, not written down here, and that is the second time this paragraph
-has had to learn it.** It used to name four of them; every one had rotted by 7 Sep, Fossil by more
-than thirty characters, because Trevor's retroactive pass moved them all. **Run the tool.** A figure
-about the inbox is as perishable as the inbox.
+weight. `wants.js` picks by modification date and **prints which file it opened and how many it
+ignored, every single run.** The note register changed shape at the same time and that is the tell if
+you ever suspect a stale read: **every live set now runs to full paragraphs.** `wants.js` prints the
+register per set and the medians are Base Set 208, Jungle 229, **Fossil 251** — the longest of the
+four — and Team Rocket 242.
 
 **All four live sets are one pool.** A hold once fenced Jungle and Fossil off as "still one-liners
 awaiting the same overhaul", and it was true of the workbook on 23 Aug and false of the one

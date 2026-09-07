@@ -187,14 +187,12 @@ fallback and it disagrees more often than it looks like it would, since the bigg
 is frequently not its point. The pressure tags are derived from the workbook's Index tab by copy count
 and are documentation until [CHALLENGES.md](CHALLENGES.md)'s no-repeat rule is built.
 
-**The workbook's Index tab is the interesting part of this file's source, and two things read it
-now** — `wants.js` for the notes and `progresstest.js` for the promo gates. *(It said "nothing reads
-it" from 21 to 23 Aug 2026 and the sentence outlived that by a fortnight.)* It carries a per-card
-**Feature Tier**, **Opener Archetype**, **Trainer Function**, **Pressure**, and a free-text **Wants**
-column in plain English — "To stall, not attack or retreat", "Vulnerable opponent bench pokemon".
-Trevor's note in the sheet says the last three were added at #15's advice and are not retroactively
-complete. It is the closest thing this project has to a stated specification of how the AI ought to
-play individual cards.
+**The workbook's Index tab is the interesting part of this file's source and nothing reads it.** It
+carries a per-card **Feature Tier**, **Opener Archetype**, **Trainer Function**, **Pressure**, and a
+free-text **Wants** column in plain English — "To stall, not attack or retreat", "Vulnerable opponent
+bench pokemon". Trevor's note in the sheet says the last three were added at #15's advice and are not
+retroactively complete. It is the closest thing this project has to a stated specification of how the
+AI ought to play individual cards.
 
 **`base3_decks.json` is Trevor's six Fossil decks, live the day it was written**, 21 Aug 2026 — three
 T2, two T3 and the T4 that is Fossil's boss. **Zero id corrections for the third workbook running.**
@@ -295,30 +293,11 @@ time, and Job 15a's deck half was a scripted extraction that took minutes. **A f
 not evidence that it is not ready.**
 
 **As of 23 Aug 2026 `data/v1 Opp Decks/` is not reference-only at all, and the `Wants` column is the
-part that matters.** *[What the column is for, and how a note becomes a claim →](PLAYBOOK.md)*
-
-**As of 7 Sep 2026 the `.xlsx` files there are no longer the source, and this is the important half.**
-Trevor's workbook lives on Google Drive; the Index tab is published to the web as CSV, and
-`tools/lib/sheet.js` fetches it. **The read path for everything is the committed snapshot at
-`data/wants-index.csv`**, with `data/wants-index.meta.json` beside it recording which sheet it came
-from, when, and the source's own modification time.
-
-- **`node tools/wants.js --sync` is the only thing that moves the snapshot**, and the only thing in
-  the project that opens a socket. Commit the result; `progresstest.js` reads it inside the gate as a
-  drift guard on `PROMO_GATES`, so a fresh clone with no snapshot cannot run `node tools/test.js`.
-- **Staleness is checked offline, on every run.** Drive for Desktop mounts the sheet at `G:\` as a
-  177-byte stub that **cannot be read** — `EISDIR` in Node, `Incorrect function` in both shells — but
-  whose mtime tracks the live document exactly. That is the freshness signal. Google sends no
-  `Last-Modified` and no `ETag`, so there is no HTTP answer to fall back on.
-- **The `.xlsx` files stay as provenance and as the fallback.** `node tools/wants.js --xlsx` reads
-  them the old way if the publish is ever revoked, and that flag is `tools/lib/xlsx.js`'s only
-  remaining caller.
-
-**The export pool was eleven days stale when this changed, and nothing could see it.** Newest local
-file 24 Aug; live sheet edited 4 Sep; a whole Gym Heroes workbook on Drive with no local copy at all.
-`wants.js` had been reporting the file it opened perfectly honestly the entire time. **Being honest
-about the wrong file is still being wrong** — the old rule ("newest by modification date") was sound
-and simply stopped describing where the newest thing lived.
+part that matters.** `tools/lib/xlsx.js` reads an `.xlsx` with no dependencies and `tools/wants.js`
+reports it. **The newest workbook is the live one and nothing else should be read** — it picks by
+modification date and prints which file it opened, because a session once worked from a stale one and
+mis-sized a job by a factor of three. *[What the column is for, and how a note becomes a claim
+→](PLAYBOOK.md)*
 
 **`Base4 Decks.xlsx`** is Base
 Set 2 theme decks, incomplete, kept and not converted — and note it is named for the set code, so it
