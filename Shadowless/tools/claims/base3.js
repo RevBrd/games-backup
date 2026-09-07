@@ -319,7 +319,10 @@ const CLAIMS = [
   // self-destruct."*
   {
     id: 'base1-3', card: 'Chansey', pattern: 'Walls',
-    note: "Power up Scrunch and then tank",
+    // Note updated 7 Sep 2026 from "Power up Scrunch and then tank". Trevor's
+    // rewrite says more, not something else, and this clause survives it intact —
+    // "hiding behind Scrunch" is what not-charging-toward-Double-edge buys.
+    note: "To work as a tank or staller, hiding behind Scrunch and rarely ever retreating or using Double-Edge",
     claim: 'a Chansey holding Scrunch is NOT charged toward Double-edge — standing there is the plan',
     board: {
       me:   { card: 'base1:Machop', energy: '' },
@@ -339,6 +342,73 @@ const CLAIMS = [
             && b.ai.potential(0, b.me.bench[0], null).short === 0,
     expect: b => b.explain().some(e => e.label === 'attach'
             && (e.detail || '').includes('Chansey') && e.score <= 0),
+  },
+
+  // CHANSEY'S NOTE WAS REWRITTEN AND THE ROW ABOVE ONLY EVER COVERED A THIRD OF
+  // IT — 7 Sep 2026, found the first time `wants.js` read the live sheet instead
+  // of a hand-made export. It had said *"Power up Scrunch and then tank"* for as
+  // long as anybody had looked; it now says:
+  //
+  //   "To work as a tank or staller, hiding behind Scrunch and rarely ever
+  //    retreating or using Double-Edge"
+  //
+  // Three clauses, not one. The charging clause is above. These two are the
+  // retreat and the attack choice, and they are separate rows because they are
+  // separate decisions in separate functions — the whole point of PLAYBOOK.md's
+  // "one note is several claims".
+  //
+  // THEY LIVE HERE RATHER THAN IN `base1.js` to keep the card's rows together and
+  // beside the wall-gate commentary they depend on. base1-3 is a Base Set card in
+  // the Fossil file for that reason and no other.
+  //
+  // "RARELY", NOT "NEVER" — so the board is chosen to make retreating tempting
+  // and still wrong: Chansey is hurt, a fresh attacker is on the bench, and the
+  // retreat is affordable. Standing there is the job.
+  {
+    id: 'base1-3', card: 'Chansey', pattern: 'Walls',
+    note: "To work as a tank or staller, hiding behind Scrunch and rarely ever retreating or using Double-Edge",
+    claim: 'a hurt Chansey does not retreat to a fresh attacker — standing there is the job',
+    board: {
+      me:   { card: 'Chansey', energy: '2 Psychic', dmg: 70 },
+      myBench: [{ card: 'Hitmonchan', energy: '3 Fighting' }],
+      them: { card: 'base1:Machop', energy: '2 Fighting' },
+      turn: 9,
+    },
+    sane: b => b.hp() === 50 && b.affordable().includes('Scrunch'),
+    expect: b => !b.does('retreat'),
+  },
+  // THE ATTACK CLAUSE IS A PAIR, AND THE FIRST DRAFT OF IT WAS THE TRAP PLAYBOOK.md
+  // NAMES OUT LOUD. Written against a 70 HP Hitmonchan, the row went red and the
+  // bot was right: Double-edge deals exactly 80, so it was a guaranteed Prize
+  // (`pKO 1.00`, scored 214.89 against Scrunch's 24.89). Trevor's word is
+  // "rarely", not "never", and lethal is the whole of the exception.
+  //
+  // So both sides are asserted. One row can only ever say "Chansey attacked",
+  // and which of these two boards it was written on decides what that means.
+  {
+    id: 'base1-3', card: 'Chansey', pattern: 'Attack choice',
+    note: "To work as a tank or staller, hiding behind Scrunch and rarely ever retreating or using Double-Edge",
+    claim: 'Scrunch over Double-edge when it cannot kill — the 80 it deals is 80 it takes',
+    board: {
+      me:   { card: 'Chansey', energy: '4 Psychic' },
+      them: { card: 'Kangaskhan', energy: '2 Psychic' },
+      turn: 9,
+    },
+    sane: b => b.affordable().includes('Scrunch') && b.affordable().includes('Double-edge')
+            && !b.lethal('Double-edge'),
+    expect: b => b.prefers('Scrunch'),
+  },
+  {
+    id: 'base1-3', card: 'Chansey', pattern: 'Attack choice',
+    note: "To work as a tank or staller, hiding behind Scrunch and rarely ever retreating or using Double-Edge",
+    claim: '...but Double-edge WHEN IT KILLS — "rarely" is not "never", and a Prize is the exception',
+    board: {
+      me:   { card: 'Chansey', energy: '4 Psychic' },
+      them: { card: 'Hitmonchan', energy: '3 Fighting' },
+      turn: 9,
+    },
+    sane: b => b.affordable().includes('Scrunch') && b.lethal('Double-edge'),
+    expect: b => b.prefers('Double-edge'),
   },
 ];
 
