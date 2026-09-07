@@ -7407,8 +7407,10 @@ class AI {
       if (!f.statusProof) for (const st in f.statuses) {
         const key = STATUS_VALUE[st];
         if (!key) continue;
-        s += f.statuses[st] * W[key] * survives * (DENIES_A_TURN[st] ? turnScale : 1)
-             * this.statusNovelty(st, you.active);
+        // `statusWorthAgainst` is the shared home; `survives` is this path's own
+        // answer to "will they still be there", which is better than the board's
+        // because the forecast knows whether THIS attack kills them.
+        s += f.statuses[st] * this.statusWorthAgainst(pi, st, survives, atkSlot);
       }
       // Jam is Confusion by another name, so it reads the same board.
       if (f.flags.jam) s += W.confuse * survives * 0.5 * turnScale;
@@ -8981,6 +8983,42 @@ class AI {
     return 1;
   }
 
+  // WHAT A STATUS ON THEIR ACTIVE IS ACTUALLY WORTH — 6 Sep 2026, and it is ONE
+  // HOME for an idea that had three, in three different versions.
+  //
+  //   `scoreAttack`   W[key] * survives * turnScale * novelty      three riders
+  //   `scoreTrainer`  W[key] * (1-pKill) * turnScale * novelty     three riders
+  //   `scorePower`    0.5 * W[key]                                 NONE
+  //
+  // **The Sleep! block predicted this in writing and named the wrong number of
+  // places.** Its comment says *"a rule proven in `scoreAttack` does not reach
+  // `scoreTrainer`, and nothing was going to tell us"* — correct, and there was a
+  // third path it did not know about. `STATUS_COIN_EITHER_POWER` scored an
+  // identical 11.00 whether their Active was fresh, ALREADY ASLEEP, holding no
+  // Energy at all, or about to be Knocked Out. Sleep! prices three of those four
+  // at nothing, and has since 2 Sep.
+  //
+  // THE THREE PATHS GENUINELY DIFFER IN ONE PLACE ONLY, which is why this can be
+  // shared without flattening anything real: **how likely the defender is to
+  // still be standing.** An attack knows its own forecast (`survives`); a Trainer
+  // and a Power have to ask the board (`1 - pLethalThisTurn`). That factor is the
+  // parameter; everything else was supposed to be identical and only accidentally
+  // was not.
+  //
+  // `ourSlot` is passed rather than read, because `turnScale` measures the attack
+  // WE would lose and `scoreAttackHypothetical` asks this about a bench slot that
+  // is not the Active. Reading `me.active` here would have silently changed the
+  // attack path on exactly the boards nobody looks at.
+  statusWorthAgainst(pi, st, aliveFactor, ourSlot) {
+    const key = STATUS_VALUE[st];
+    const me = this.E.state.players[pi], you = this.E.state.players[1 - pi];
+    if (!key || !you.active) return 0;
+    const slot = ourSlot || me.active;
+    const denied = Math.min(this.incomingThreat(pi), this.remainingHP(slot) || Infinity);
+    const turnScale = DENIES_A_TURN[st] ? denied / AVG_ATTACK : 1;
+    return this.W[key] * turnScale * this.statusNovelty(st, you.active) * aliveFactor;
+  }
+
   // HOW MANY TURNS OF SILENCE A DISCARD BUYS — the cost of an attack that eats
   // its own Energy, measured in the thing you actually lose.
   //
@@ -10464,17 +10502,12 @@ class AI {
           const key = STATUS_VALUE[v.s];
           if (!key || !you.active) return -Infinity;
           const certain = v.v === 'T_STATUS' ? 1 : 0.5;
-          // Already has it? Worth nothing — and Paralysis is exempt because it
-          // refreshes its own timer. Same derivation as the attack path.
-          const novel = this.statusNovelty(v.s, you.active);
-          // About to die anyway? A status on a corpse buys nothing, and the
-          // Pokemon that replaces it comes up clean.
-          const pKill = this.pLethalThisTurn(pi);
-          // And a bought turn is worth the attack it denies.
-          const scale = DENIES_A_TURN[v.s]
-            ? Math.min(this.incomingThreat(pi), this.remainingHP(me.active) || Infinity) / AVG_ATTACK
-            : 1;
-          s += certain * W[key] * novel * (1 - pKill) * scale;
+          // All three riders — already has it, about to die anyway, and a bought
+          // turn is worth the attack it denies — now live in one place that the
+          // attack and Power paths call too. `1 - pLethalThisTurn` is this path's
+          // answer to "will they still be there": a Trainer has no forecast of
+          // its own, so it asks the board.
+          s += certain * this.statusWorthAgainst(pi, v.s, 1 - this.pLethalThisTurn(pi));
           break;
         }
         case 'T_SEARCH_TO_HAND': {
