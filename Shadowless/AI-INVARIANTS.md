@@ -86,6 +86,7 @@ they named `GRABHIST.md` for material that had since moved into its archives.
 | 1 Sep — **this folder** | [Playbook/EVOLUTION-TIMING.md](Playbook/EVOLUTION-TIMING.md) | all three came out of Trevor's account of the GBC turn order |
 | 5 Sep — **this folder** | [GRABHIST.md](GRABHIST.md) and [Playbook/WALLS.md](Playbook/WALLS.md) | the attack road came out of a grab bag note, and its wall gate is the boundary WALLS.md had already described |
 | 6 Sep — **this folder** | [Playbook/AMMO.md](Playbook/AMMO.md) and `tools/claims/` | the discard billing came out of Trevor's Charmeleon rule; the five rows that pin it ARE the fuller account |
+| 6 Sep — **this folder** | [GRABHIST.md](GRABHIST.md) | the status paths came out of Trevor's reopened GBC 2 item, and why it was half done belongs with the grab bag |
 
 **The opening placement fix, the Energy-pool fix, the whole triggered-Powers section and the 25 Aug
 Power-scoring crash are the only copy that exists.** Condense one of those and the reasoning is gone.
@@ -123,3 +124,4 @@ open the entry.
 | 5 Sep 2026 | **a card has a road to its own bigger attack, and `short` pins at zero so nobody could see it** | `destGoal`, `wallPlanFloor`, `attachValue` | [ATTACK-ROAD](AI-INVARIANTS/ATTACK-ROAD.md) |
 | 6 Sep 2026 | **...and the road runs to the nearest attack BETTER than what is affordable, self-destruct included** | `upShort`, `upGoal` | [ATTACK-ROAD](AI-INVARIANTS/ATTACK-ROAD.md) (same entry, widened) |
 | 6 Sep 2026 | **silence is counted in Energy and was billed as turns, and the discount for dying was unreachable** | `energyRefillTurns`, `turnsLeft` | [SILENCE-IN-TURNS](AI-INVARIANTS/SILENCE-IN-TURNS.md) |
+| 6 Sep 2026 | **one home for what a status on their Active is worth, and the Power path had none of the rules** | `statusWorthAgainst` | [STATUS-ONE-HOME](AI-INVARIANTS/STATUS-ONE-HOME.md) |

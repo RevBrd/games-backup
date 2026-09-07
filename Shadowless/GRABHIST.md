@@ -47,6 +47,7 @@ confused is presumably how this happened.
 
 | When | Instance | Items |
 |---|---|---|
+| 6 Sep 2026 | #37, Job 15e | Long-Distance Hypnosis vs Sleep! — a job that halved itself because the tool sent to verify the card printed the wrong field |
 | 5 Sep 2026 | #37, Job 15e | The Fire on Zapdos — the report named the wrong slot, and the fault was that the card that *did* want it could not be fed |
 | 1 Sep 2026 | #33, Job 15a | Ronald removed from the ladder — the half of a two-part note that was free, and the mechanism that was kept because removing its only user would have removed its only tests |
 | 31 Aug 2026 | #31, Job 14b | The GBC sequel's order of operations — a structural fault found by Trevor watching another game's AI, confirmed in one read of `choose()` |
@@ -54,6 +55,62 @@ confused is presumably how this happened.
 | *23–29 Aug* | *#25, #27, #30* | *[Archive 3](GRABHIST-ARCHIVE-3.md) — Jobs 12b through 14a, its own index at the top* |
 | *19–21 Aug* | *#20, #21* | *[Archive 2](GRABHIST-ARCHIVE-2.md) — Jobs 10.5 and 11, its own index at the top* |
 | *13–17 Aug* | *#12, #16, #17* | *[Archive 1](GRABHIST-ARCHIVE-1.md) — five passes, its own index at the top* |
+
+---
+
+### Long-Distance Hypnosis — the job that halved itself — 6 Sep 2026 (#37)
+
+> GBC 2 uses (base5) Drowzee's Long Distance Hypnosis like a wrecking ball… I think our bot should
+> price this differently, and maybe only use it on turns where its own active pokemon can't attack
+> anyway. **Same with the Sleep! trainer card.**
+
+**Off the list, and the interesting part is why it was only half done in the first place.**
+
+Trevor: *"the original job for that one was to tune them together but due to the pokemon power search
+issue you found, only Sleep! ended up getting tuned."* The corpus check written into `GRABBAG.md` as
+the ten-second way to confirm a GBC 2 card exists prints `c.attacks`. Long-Distance Hypnosis is a
+**Pokémon Power**. So the card came back "not in our corpus", the Drowzee half was struck as
+describing a card we do not have, and Sleep! was tuned alone.
+
+**A broken verification tool does not just give one wrong answer. It silently cancels the work that
+depended on it** — and it leaves behind a *confident written record* saying the work was unnecessary,
+which is much harder to notice than a gap.
+
+### What the bot was actually doing
+
+Flat **11.00**, identically, on all of these:
+
+| board | Power | Sleep! |
+|---|---|---|
+| their Active fresh and charged | 11.00 | prices it |
+| their Active **already asleep** | 11.00 | **~0** |
+| their Active with **no Energy** | 11.00 | **~0** |
+| their Active **about to be Knocked Out** | 11.00 | **~0** |
+
+Trevor's own clause — *only fire when our Active cannot attack anyway* — **was already built and
+worked.** The missing half was the three riders that had been shipped for Sleep! on 2 Sep.
+
+### The third code path
+
+`scoreAttack`, `scoreTrainer` and `scorePower` each held "what is a status on their Active worth", in
+three different versions, and the newest had none of the rules. **The Sleep! block predicted this in
+writing and named the wrong number of places:** *"a rule proven in `scoreAttack` does not reach
+`scoreTrainer`, and nothing was going to tell us."*
+
+`statusWorthAgainst` is one home now. The extraction was committed separately and **proven a no-op
+first — `abtest` diverged 0 of 3,200 games a side** — so the behaviour change that followed was
+attributable to itself.
+*[The invariant →](AI-INVARIANTS/STATUS-ONE-HOME.md)*
+
+### The measurement, and a correction to my own reading of it
+
+Restricted to the two ladder decks that field the card: **66.1% ± 1.9 diverged**, first difference at
+action 15. The card did **not** go inert — it fires on 16.4% of its chances against 25.5% before.
+
+**An 8-seed run read the subject decks losing 2.2 points and I reported that as a possible
+regression. At 3× the sample the gap halved to 1.1 against a ±2.3 interval**, which is what noise
+regressing toward zero looks like. Recorded because the smaller number was said out loud first, and
+because the temptation with a shrinking effect is to quietly stop mentioning it.
 
 ---
 

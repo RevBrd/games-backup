@@ -104,7 +104,10 @@ I found an emulator version of the GBC game's sequel that was only released in J
 **This section works exactly like the rest of the list — Trevor, 2 Sep 2026, answering a question
 #31 raised and left open.** A worked item comes off, optionally written up in
 [GRABHIST.md](GRABHIST.md) like any other. It is a work surface, not a permanent log of what was
-taken. Two are gone already: the order-of-operations item (31 Aug) and Potion timing (2 Sep).
+taken. Gone already: the order-of-operations item (31 Aug), Potion timing (2 Sep), and
+Long-Distance Hypnosis (6 Sep). **Not counted** — this sentence said *"two are gone already"* and a
+third was worked the next day; the list of names is the count, exactly as everywhere else in this
+tree.
 
 **One warning that is specific to this section and cost an hour.** These notes describe cards in a
 *different game*, and **GBC 2 introduced a whole batch of cards that exist nowhere in our corpus —
@@ -138,8 +141,6 @@ command is below and prints Powers as well.
 **The item is back open at Trevor's request** — the bot needs to price Long-Distance Hypnosis
 correctly alongside Sleep!, which is what the bullet was about in the first place.
 
-Update to the previous section - It's correct that GBC 2 has a number of custom cards, but the claim here about Drowzee that triggered the warning is **incorrect**. Drowzee base5-54 does have Pokémon Power: Long-Distance Hypnosis and it's **already in our game**. This item is back open. We need to ensure the bot prices it correctly in accordance with Sleep! which is what created this item in the first place. Whoever handles, please clean this item in the notation when done.
-
 **So `grep` the corpus before building off one of these** — the note may name a real set in good
 faith, and it may also be right when a previous check said it was not. **Read the POWER as well as
 the attacks**; the old version of this command omitted `c.power` and is the reason the paragraph
@@ -153,4 +154,3 @@ node -e "const{CARD_DB}=require('./src/cards.js');for(const[i,c]of Object.entrie
 - The AI knows exactly when it needs to stall, which cards it can stall with, and which cheap moves from those cards it can hide behind while it powers up the bench instead of that card's more powerful attack moves. Rhyhorn is the example here, being brought in just to use Leer as long as it can and be thrown away, on purpose, because the AI needed to buy time for the bench, never powering up Horn Attack.
 - They might use a pre-tagged target energy level per card, so each card knows where to stop energizing or over-attach to. Like the previous example, a stalling Rhyhorn might attach one energy and spam Leer (though when the bench doesn't hold much attach value or when trying to evolve, it might power up Horn Attack), but a Machop in the active spot usually over-attaches a single energy regardless of what's in hand so it's ready to evolve immediately when a Machoke is drawn.
 - This might be something our bot already does but it's worth checking. An opponent's Scyther with one G energy used Swords Dance, a Setup Turn move for something that requires GCC, so three energies. This means it wouldn't be able to attack next turn, so I figured that was just the GBC 2 bot using it because there's nothing else available rather than ending the turn without attacking. I was wrong. The next turn attached a *DCE* and used Slash right away, meaning the DCE in hand had been priced into the Swords Dance's setup on the previous turn. Update, it's now done it twice. It definitely wasn't a fluke.
-- GBC 2 uses (base5) Drowzee's Long Distance Hypnosis like a wrecking ball, triggering it almost every turn even though it's a 50/50 gamble more likely to disadvantage its own pokemon rather than mine (50/50 chance his pokemon will miss an attack, 25% chance mine will due to a waking coin flip if it were to fall asleep). I think our bot should price this differently, and maybe only use it on turns where its own active pokemon can't attack anyway. Same with the Sleep! trainer card, though I think my "wants" note might say otherwise for that.
