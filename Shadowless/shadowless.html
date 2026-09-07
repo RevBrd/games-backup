@@ -9439,14 +9439,41 @@ class AI {
         if (!key) return -Infinity;
         const me = E.state.players[pi], them = E.state.players[1 - pi];
         if (!me.active || !them.active) return -Infinity;
-        let sc = 0.5 * W[key];
+        // THE THREE RIDERS REACH THIS PATH NOW — 6 Sep 2026, Trevor's reopened
+        // GBC 2 item, whose whole point was to tune this and Sleep! together.
+        // Only Sleep! got tuned, because the corpus check that was supposed to
+        // confirm the card existed printed `c.attacks` and this is a Power.
+        //
+        // It scored a flat 11.00 whether their Active was fresh, ALREADY ASLEEP,
+        // holding no Energy at all, or about to be Knocked Out. Sleep! prices
+        // three of those four at nothing and has since 2 Sep.
+        let sc = 0.5 * this.statusWorthAgainst(pi, pw.status, 1 - this.pLethalThisTurn(pi));
         // Confusing or sleeping our OWN Active costs what it costs us: the
         // attack we were going to make with it.
-        sc -= 0.5 * W[key];
-        // ...so the whole value is in the asymmetry. A spent or worthless Active
-        // has nothing to lose, and one about to attack has everything.
+        //
+        // **BOTH HALVES ARE THE SAME RULE — "a turn taken away is worth the
+        // attack it denies" — one measured against THEIR attack and one against
+        // OURS.** Saying it that way is what fixes the cliff: this was
+        // `mineWorth <= 0 ? full refund : nothing`, so an Active that could swing
+        // for 10 and one that could swing for 100 were priced identically.
+        //
+        // **AND ONCE THE ENEMY HALF SCALES WITH THE BOARD, A FLAT SELF HALF IS
+        // NOT MERELY CRUDE, IT IS WRONG.** Measured while making that change: the
+        // two halves fell into different units, and the Power went from 0.00 to
+        // 5.92 on a board where our Active was fully charged — over the action
+        // threshold, so it would have fired exactly where Trevor's rule says it
+        // must not. The old code was at least self-consistent in being flat on
+        // both sides. So this is required by the change above rather than polish
+        // on top of it.
+        //
+        // Divided by `AVG_ATTACK` for the same reason the enemy half is: every
+        // old value is reproduced at an average board and only the two ends move.
+        // A spent or worthless Active still costs nothing, which is the clause
+        // Trevor asked for — *"only use it on turns where its own active pokemon
+        // can't attack anyway"* — now arrived at rather than special-cased.
         const mineWorth = this.bestAttackScore(pi).score;
-        if (mineWorth <= 0) sc += 0.5 * W[key];
+        const mine = mineWorth === -Infinity ? 0 : Math.max(0, mineWorth);
+        sc -= 0.5 * W[key] * (mine / AVG_ATTACK);
         return sc;
       }
       case 'DISCARD_THEN_DRAW': {

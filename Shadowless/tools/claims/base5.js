@@ -68,6 +68,69 @@ const CLAIMS = [
     sane: b => b.playable('Sleep!') && b.threat() === 0 && !b.them.active.status.asleep,
     expect: b => !b.wouldPlay('Sleep!'),
   },
+
+  // ------------------------------------------- Drowzee, Long-Distance Hypnosis --
+  // **THE OTHER HALF OF THE SLEEP! JOB, AND IT WAS MISSED FOR A REASON WORTH
+  // KEEPING.** Trevor, 6 Sep 2026: *"the original job for that one was to tune
+  // them together but due to the pokemon power search issue you found, only
+  // Sleep! ended up getting tuned."* The corpus check that was supposed to
+  // confirm the card existed printed `c.attacks`, and Long-Distance Hypnosis is
+  // a Pokemon Power — so the card was reported absent and the job halved itself.
+  //
+  // The Power scored a flat **11.00** on all four boards below. Sleep! prices
+  // three of them at nothing and has since 2 Sep. Same rules, three code paths,
+  // and `statusWorthAgainst` is now the one home.
+  //
+  // ASSERT THE PAIR ON BOTH HALVES. This Power is the only card in the pool whose
+  // downside lands on YOU — tails puts your own Active to sleep — so "should
+  // fire" and "should not fire" are genuinely different rules rather than one
+  // threshold, and a row for either alone would pass against a bot that always
+  // says yes or always says no.
+  {
+    id: 'base5-54', card: 'Drowzee', pattern: 'Coin Luck',
+    note: "GBC 2 / Trevor: 'I think our bot should price this differently, and maybe only use it on turns where its own active pokemon can't attack anyway. Same with the Sleep! trainer card'",
+    claim: 'fired when our own Active has nothing to lose and theirs has a turn worth taking',
+    board: {
+      me:   { card: 'base5:Drowzee', energy: '' },
+      them: { card: 'base1:Hitmonchan', energy: '3 Fighting' },
+    },
+    sane: b => b.threat() > 0 && !b.them.active.status.asleep,
+    expect: b => b.explain().some(e => /Hypnosis/i.test(e.detail || '') && e.score > 0),
+  },
+  {
+    id: 'base5-54', card: 'Drowzee', pattern: 'Coin Luck',
+    note: "GBC 2 / Trevor: 'maybe only use it on turns where its own active pokemon can't attack anyway'",
+    claim: "THE CONTROL — refused while our own Active can attack, which is Trevor's whole clause",
+    board: {
+      me:   { card: 'base5:Drowzee', energy: '2 Psychic' },
+      myBench: [{ card: 'Chansey', energy: '4 Psychic' }],
+      them: { card: 'base1:Hitmonchan', energy: '3 Fighting' },
+    },
+    sane: b => b.affordable().length > 0 && b.threat() > 0,
+    expect: b => b.explain().every(e => !/Hypnosis/i.test(e.detail || '') || e.score <= 0),
+  },
+  {
+    id: 'base5-54', card: 'Drowzee', pattern: 'Coin Luck',
+    note: "matched to Sleep!, whose note carries the same three riders",
+    claim: '...and never on something already asleep, exactly as Sleep! is not',
+    board: {
+      me:   { card: 'base5:Drowzee', energy: '' },
+      them: { card: 'base1:Hitmonchan', energy: '3 Fighting', status: 'asleep' },
+    },
+    sane: b => b.them.active.status.asleep && b.threat() > 0,
+    expect: b => b.explain().every(e => !/Hypnosis/i.test(e.detail || '') || e.score <= 0),
+  },
+  {
+    id: 'base5-54', card: 'Drowzee', pattern: 'Coin Luck',
+    note: "matched to Sleep!, whose note carries the same three riders",
+    claim: '...and worth nothing against something with no Energy, which has no turn to lose',
+    board: {
+      me:   { card: 'base5:Drowzee', energy: '' },
+      them: { card: 'base1:Hitmonchan', energy: '' },
+    },
+    sane: b => b.threat() === 0 && !b.them.active.status.asleep,
+    expect: b => b.explain().every(e => !/Hypnosis/i.test(e.detail || '') || e.score <= 0),
+  },
 ];
 
 module.exports = { CLAIMS };
