@@ -125,7 +125,7 @@ const CLAIMS = [
   // is about the DIFFERENCE between two states and only one can be declared.
   {
     id: 'base2-61', card: 'Rhyhorn', pattern: 'Walls',
-    note: "Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack should only be powered up if it's planning to evolve, but takes over the primary position once powered. 3 energy on Rhyhorn usually translates into an evolution though, so this doesn't happen much",
+    note: "Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack should only be powered up if it's planning to evolve, but takes over the primary position once powered. 3 energy on Rhyhorn usually translates into an evolution though, so this doesn't happen much.",
     claim: 'a Rhyhorn with no Rhydon left anywhere is a wall — the thing wallScore could never say',
     board: {
       me:      { card: 'base2:Rhyhorn', energy: '3 Fighting' },
@@ -138,7 +138,7 @@ const CLAIMS = [
   },
   {
     id: 'base2-61', card: 'Rhyhorn', pattern: 'Walls',
-    note: "Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack should only be powered up if it's planning to evolve, but takes over the primary position once powered. 3 energy on Rhyhorn usually translates into an evolution though, so this doesn't happen much",
+    note: "Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack should only be powered up if it's planning to evolve, but takes over the primary position once powered. 3 energy on Rhyhorn usually translates into an evolution though, so this doesn't happen much.",
     claim: 'THE CONTROL — ...and with Rhydon IN HAND it is not a wall at all, which is his "planning to evolve" clause',
     board: {
       me:      { card: 'base2:Rhyhorn', energy: '3 Fighting' },
@@ -151,7 +151,7 @@ const CLAIMS = [
   },
   {
     id: 'base2-61', card: 'Rhyhorn', pattern: 'Walls',
-    note: "Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack should only be powered up if it's planning to evolve, but takes over the primary position once powered. 3 energy on Rhyhorn usually translates into an evolution though, so this doesn't happen much",
+    note: "Leer is the primary as it turns Rhyhorn into a very good staller. Horn Attack should only be powered up if it's planning to evolve, but takes over the primary position once powered. 3 energy on Rhyhorn usually translates into an evolution though, so this doesn't happen much.",
     claim: 'THE MIDDLE STATE — a Rhydon still in the DECK is a hope, so it is part of a wall, not none and not all',
     board: {
       me:      { card: 'base2:Rhyhorn', energy: '3 Fighting' },

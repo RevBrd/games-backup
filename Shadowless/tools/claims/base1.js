@@ -1777,7 +1777,7 @@ const CLAIMS = [
   // Jab threatens — so the 5 Sep rule freed a Moltres and did nothing here.
   {
     id: 'base1-7', card: 'Hitmonchan', pattern: 'Over-Attach',
-    note: "Trevor 6 Sep 2026: 'Hitmonchan in particular is a very good opener because Jab comes at a single energy cost and Special Punch can be powered up in just a couple turns without having to evolve anything, with Jab being used every turn that it spends powering up'",
+    note: "A stalling or opening role. Jab is the main one to power up. Special Punch is expensive and should only be powered up if the bench doesn't have better options. / Trevor 6 Sep 2026: 'Hitmonchan in particular is a very good opener because Jab comes at a single energy cost and Special Punch can be powered up in just a couple turns without having to evolve anything, with Jab being used every turn that it spends powering up'",
     claim: 'fed past Jab toward Special Punch — the cheap attack is a placeholder, not the plan',
     board: {
       me:   { card: 'base1:Machop', energy: '' },
@@ -1798,7 +1798,7 @@ const CLAIMS = [
   },
   {
     id: 'base1-7', card: 'Hitmonchan', pattern: 'Over-Attach',
-    note: "Trevor 6 Sep 2026: 'Hitmonchan in particular is a very good opener because Jab comes at a single energy cost and Special Punch can be powered up in just a couple turns without having to evolve anything, with Jab being used every turn that it spends powering up'",
+    note: "A stalling or opening role. Jab is the main one to power up. Special Punch is expensive and should only be powered up if the bench doesn't have better options. / Trevor 6 Sep 2026: 'Hitmonchan in particular is a very good opener because Jab comes at a single energy cost and Special Punch can be powered up in just a couple turns without having to evolve anything, with Jab being used every turn that it spends powering up'",
     claim: 'THE CONTROL — and it STOPS at Special Punch, because nothing on the card is better',
     board: {
       me:   { card: 'base1:Machop', energy: '' },
@@ -1811,6 +1811,50 @@ const CLAIMS = [
             && b.me.bench[0].energy.length === 3,
     expect: b => b.explain().some(e => e.label === 'attach'
             && (e.detail || '').includes('Hitmonchan') && e.score <= 0),
+  },
+
+  // THE CONDITION THE CELL NOTE ADDED, AND IT WAS ALREADY SATISFIED — 7 Sep 2026.
+  // The two rows above were written from a remark of Trevor's on 6 Sep. The
+  // workbook cell says something narrower: *"Special Punch is expensive and should
+  // only be powered up if the bench doesn't have better options."*
+  //
+  // That reads like a gate and it is not one. There is no rule to add, because the
+  // bot ALREADY ranks attach targets against each other and the clause is exactly
+  // what that ranking says. Measured on the two boards, one Fighting in hand:
+  //
+  //     Hitmonchan at 1F alone on the bench      -> 25.00   (fed)
+  //     ...plus a Machamp two short of Seismic Toss:
+  //         Machamp                              -> 35.00   (preferred)
+  //         Hitmonchan                           -> 25.00   (unchanged, outranked)
+  //
+  // **"Only if the bench doesn't have better options" is a comparison, not a
+  // condition**, and a scorer that ranks is already the mechanism for it. Writing
+  // it as a gate would have been strictly worse — it would fire on a bench that had
+  // a better option the bot could not afford to use this turn.
+  //
+  // THIS BEARS ON AI.md OPEN ITEM 12, which asks whether a card that already
+  // threatens should be charged toward a bigger attack and names Hitmonchan as the
+  // case the attack-road exception deliberately does not reach. It does not need to:
+  // Special Punch is two Energy away at 1F, so `attachAmortise` carries the slot and
+  // the surplus rule never bites. The exception is for a slot that needs NOTHING.
+  {
+    id: 'base1-7', card: 'Hitmonchan', pattern: 'Over-Attach',
+    note: "A stalling or opening role. Jab is the main one to power up. Special Punch is expensive and should only be powered up if the bench doesn't have better options.",
+    claim: 'a better bench option outranks charging Special Punch — the clause is a comparison, not a gate',
+    board: {
+      me:   { card: 'base1:Machop', energy: '2 Fighting' },
+      myBench: [{ card: 'Hitmonchan', energy: '1 Fighting' },
+                { card: 'base1:Machamp', energy: '2 Fighting' }],
+      them: { card: 'Lickitung', energy: '1 Psychic' },
+      myHand: ['Fighting Energy'],
+      turn: 9,
+    },
+    sane: b => b.me.bench[0].energy.length === 1 && b.me.hand.length === 1,
+    expect: b => {
+      const at = n => (b.explain().find(e => e.label === 'attach'
+                    && (e.detail || '').includes(n)) || {}).score;
+      return at('Machamp') > at('Hitmonchan') && at('Hitmonchan') > 0;
+    },
   },
 
   // ------------------------------------------------------------------ Raichu --

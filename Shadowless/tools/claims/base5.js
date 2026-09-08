@@ -88,7 +88,7 @@ const CLAIMS = [
   // says yes or always says no.
   {
     id: 'base5-54', card: 'Drowzee', pattern: 'Coin Luck',
-    note: "GBC 2 / Trevor: 'I think our bot should price this differently, and maybe only use it on turns where its own active pokemon can't attack anyway. Same with the Sleep! trainer card'",
+    note: "Its Pokemon Power is a gamble so it doesn't want to be used as a default. If the player won't be able to attack this turn anyway, that might be a very good time to take the chance. Worth keeping on the bench for that reason. Nightmare along with its 50 HP doesn't make it a bad opener either, but sitting on the bench is where it's most valuable. The card text does not state a limit, so a valid strategy would be to have multiple of these on the bench for multiple chances and putting an opponent to sleep on a turn where you already couldn't attack / GBC 2 / Trevor: 'I think our bot should price this differently, and maybe only use it on turns where its own active pokemon can't attack anyway. Same with the Sleep! trainer card'",
     claim: 'fired when our own Active has nothing to lose and theirs has a turn worth taking',
     board: {
       me:   { card: 'base5:Drowzee', energy: '' },
@@ -99,7 +99,7 @@ const CLAIMS = [
   },
   {
     id: 'base5-54', card: 'Drowzee', pattern: 'Coin Luck',
-    note: "GBC 2 / Trevor: 'maybe only use it on turns where its own active pokemon can't attack anyway'",
+    note: "Its Pokemon Power is a gamble so it doesn't want to be used as a default. If the player won't be able to attack this turn anyway, that might be a very good time to take the chance. Worth keeping on the bench for that reason. Nightmare along with its 50 HP doesn't make it a bad opener either, but sitting on the bench is where it's most valuable. The card text does not state a limit, so a valid strategy would be to have multiple of these on the bench for multiple chances and putting an opponent to sleep on a turn where you already couldn't attack / GBC 2 / Trevor: 'maybe only use it on turns where its own active pokemon can't attack anyway'",
     claim: "THE CONTROL — refused while our own Active can attack, which is Trevor's whole clause",
     board: {
       me:   { card: 'base5:Drowzee', energy: '2 Psychic' },
@@ -111,7 +111,7 @@ const CLAIMS = [
   },
   {
     id: 'base5-54', card: 'Drowzee', pattern: 'Coin Luck',
-    note: "matched to Sleep!, whose note carries the same three riders",
+    note: "Its Pokemon Power is a gamble so it doesn't want to be used as a default. If the player won't be able to attack this turn anyway, that might be a very good time to take the chance. Worth keeping on the bench for that reason. Nightmare along with its 50 HP doesn't make it a bad opener either, but sitting on the bench is where it's most valuable. The card text does not state a limit, so a valid strategy would be to have multiple of these on the bench for multiple chances and putting an opponent to sleep on a turn where you already couldn't attack / matched to Sleep!, whose note carries the same three riders",
     claim: '...and never on something already asleep, exactly as Sleep! is not',
     board: {
       me:   { card: 'base5:Drowzee', energy: '' },
@@ -122,7 +122,7 @@ const CLAIMS = [
   },
   {
     id: 'base5-54', card: 'Drowzee', pattern: 'Coin Luck',
-    note: "matched to Sleep!, whose note carries the same three riders",
+    note: "Its Pokemon Power is a gamble so it doesn't want to be used as a default. If the player won't be able to attack this turn anyway, that might be a very good time to take the chance. Worth keeping on the bench for that reason. Nightmare along with its 50 HP doesn't make it a bad opener either, but sitting on the bench is where it's most valuable. The card text does not state a limit, so a valid strategy would be to have multiple of these on the bench for multiple chances and putting an opponent to sleep on a turn where you already couldn't attack / matched to Sleep!, whose note carries the same three riders",
     claim: '...and worth nothing against something with no Energy, which has no turn to lose',
     board: {
       me:   { card: 'base5:Drowzee', energy: '' },
@@ -130,6 +130,37 @@ const CLAIMS = [
     },
     sane: b => b.threat() === 0 && !b.them.active.status.asleep,
     expect: b => b.explain().every(e => !/Hypnosis/i.test(e.detail || '') || e.score <= 0),
+  },
+
+  // THE MULTI-COPY CLAUSE, AND IT IS A CONFIRMATION RATHER THAN A FAULT — 7 Sep
+  // 2026, from the rewritten cell note. Trevor reasoned it out from the card text
+  // rather than from the code: *"The card text does not state a limit, so a valid
+  // strategy would be to have multiple of these on the bench for multiple chances
+  // and putting an opponent to sleep on a turn where you already couldn't attack."*
+  //
+  // He is right, and the engine already agrees: `powerSpent` is tracked PER SLOT,
+  // not per player or per card name, so two Drowzees are two flips. Measured — two
+  // legal `power` actions, both scored 8.46, on a board where the Active can still
+  // attack for 20 and therefore correctly does neither.
+  //
+  // THE ROW EXISTS BECAUSE THE BEHAVIOUR IS EASY TO BREAK AND NOTHING ELSE WATCHES
+  // IT. Any future "don't offer the same Power twice" de-duplication — by kind, by
+  // card id, by name — would silently halve this and every suite would stay green.
+  // Per PLAYBOOK.md: mark a satisfied claim, do not delete it; the next person to
+  // touch power enumeration needs to know what it was protecting.
+  {
+    id: 'base5-54', card: 'base5:Drowzee', pattern: 'Coin Luck',
+    note: "Its Pokemon Power is a gamble so it doesn't want to be used as a default. If the player won't be able to attack this turn anyway, that might be a very good time to take the chance. Worth keeping on the bench for that reason. Nightmare along with its 50 HP doesn't make it a bad opener either, but sitting on the bench is where it's most valuable. The card text does not state a limit, so a valid strategy would be to have multiple of these on the bench for multiple chances and putting an opponent to sleep on a turn where you already couldn't attack",
+    claim: 'two Drowzees on the bench offer TWO flips — the card states no limit and neither does the engine',
+    board: {
+      me:   { card: 'base1:Machop', energy: '1 Fighting' },
+      myBench: [{ card: 'base5:Drowzee', energy: '' }, { card: 'base5:Drowzee', energy: '' }],
+      them: { card: 'base1:Hitmonchan', energy: '3 Fighting' },
+      turn: 9,
+    },
+    sane: b => b.me.bench.length === 2,
+    expect: b => b.E.legalActions(0).filter(a => a.t === 'power').length === 2
+            && b.explain().filter(e => /Hypnosis/i.test(e.detail || '')).length === 2,
   },
 ];
 

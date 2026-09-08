@@ -213,7 +213,7 @@ const CLAIMS = [
   // bot never preferred Zapdos. It was the last thing standing.
   {
     id: 'base3-12', card: 'Moltres', pattern: 'Over-Attach',
-    note: "GRABBAG + Trevor 5 Sep 2026: 'Zapdos gets a fire energy even though it doesn't want those' / 'Moltres would have been the right move imo'",
+    note: "To only use Dive Bomb since Wildfire asks for an Energy Funnel just to discard the opponent's next card(s) in the deck, and is nowhere near a good tradeoff unless the opponent's deck is close to empty (then it suddenly gains a lot of value). This will be excedingly rare though and might be a waste of time to tune. Its main attack is expensive and is a 50/50 chance of landing, making this card nearly useless. If the autobuilder wants a Moltres, it should take a different variant. / GRABBAG + Trevor 5 Sep 2026: 'Zapdos gets a fire energy even though it doesn't want those' / 'Moltres would have been the right move imo'",
     claim: 'a Moltres holding one Fire is fed a second, because Wildfire is not what it is FOR',
     board: {
       me:   { card: 'base3:Zapdos', energy: '' },
@@ -229,7 +229,7 @@ const CLAIMS = [
   },
   {
     id: 'base3-12', card: 'Moltres', pattern: 'Over-Attach',
-    note: "GRABBAG + Trevor 5 Sep 2026: 'Zapdos gets a fire energy even though it doesn't want those' / 'Moltres would have been the right move imo'",
+    note: "To only use Dive Bomb since Wildfire asks for an Energy Funnel just to discard the opponent's next card(s) in the deck, and is nowhere near a good tradeoff unless the opponent's deck is close to empty (then it suddenly gains a lot of value). This will be excedingly rare though and might be a waste of time to tune. Its main attack is expensive and is a 50/50 chance of landing, making this card nearly useless. If the autobuilder wants a Moltres, it should take a different variant. / GRABBAG + Trevor 5 Sep 2026: 'Zapdos gets a fire energy even though it doesn't want those' / 'Moltres would have been the right move imo'",
     claim: '...and it OUTSCORES the Fire on a Zapdos that can never spend one — the board from the log',
     board: {
       me:   { card: 'base3:Zapdos', energy: '' },
@@ -255,7 +255,7 @@ const CLAIMS = [
   },
   {
     id: 'base3-12', card: 'Moltres', pattern: 'Over-Attach',
-    note: "GRABBAG + Trevor 5 Sep 2026: 'Zapdos gets a fire energy even though it doesn't want those' / 'Moltres would have been the right move imo'",
+    note: "To only use Dive Bomb since Wildfire asks for an Energy Funnel just to discard the opponent's next card(s) in the deck, and is nowhere near a good tradeoff unless the opponent's deck is close to empty (then it suddenly gains a lot of value). This will be excedingly rare though and might be a waste of time to tune. Its main attack is expensive and is a 50/50 chance of landing, making this card nearly useless. If the autobuilder wants a Moltres, it should take a different variant. / GRABBAG + Trevor 5 Sep 2026: 'Zapdos gets a fire energy even though it doesn't want those' / 'Moltres would have been the right move imo'",
     claim: 'THE CONTROL — a Moltres already holding Dive Bomb\'s four Fire is finished, and the fifth is refused',
     board: {
       me:   { card: 'base1:Machop', energy: '' },

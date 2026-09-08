@@ -501,3 +501,24 @@ job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.m
     a shipped 0.85. Adding a second consumer of a number three methods disagree about is how a wrong
     weight gets load-bearing. *[The row, with the measurement attached →](PLAYBOOK.md)* —
     `tools/claimtest.js --open`.
+
+15. **The bot cannot see the opponent's deck, so decking them out is not a plan it can have —
+    7 Sep 2026.** `deckRisk(pi, burn)` reads `players[pi].deck.length`, its own, and `deckLoss: 150`
+    correctly prices running *itself* out as a loss rather than an expensive draw. **Nothing in
+    `ai.js` reads `players[1 - pi].deck` at all.** So every mill effect in the era is valued purely
+    as a cost it does not pay, and the win condition on the other side of it is invisible.
+
+    **Trevor found this from a card and had already priced the fix as not worth it.** Fossil Moltres:
+    *"Wildfire asks for an Energy Funnel just to discard the opponent's next card(s)… nowhere near a
+    good tradeoff **unless the opponent's deck is close to empty (then it suddenly gains a lot of
+    value)**. This will be exceedingly rare though and might be a waste of time to tune."* He is
+    right about Moltres and the three claim rows already assert the behaviour he wants — Dive Bomb,
+    never Wildfire.
+
+    **It is recorded because the card was the symptom and not the item.** Wildfire is one of several
+    printings that move cards off the opponent's deck, and a bot that never reads that number is
+    equally blind in all of them — including the defensive direction, where it cannot notice its
+    *opponent* is three cards from decking out and simply stall. **Do not open this by tuning
+    Wildfire**, which is the expensive way in and the one Trevor has already declined. If it is ever
+    opened, the cheap half is the defensive read: one number, no new verb, and it makes the bot
+    better at a game it can already lose this way.

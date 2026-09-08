@@ -204,7 +204,7 @@ function main() {
   // the portion that does, with any appended remark stripped off the end.
   const cellPart = n => {
     if (n.startsWith('(') || SOURCE_LABEL.test(n)) return null;
-    return n.replace(/\s+\/\s+(Trevor|GBC|GRABBAG|GRABHIST|PLAYTEST)\b[\s\S]*$/i, '').trim();
+    return n.replace(/\s+\/\s+(Trevor|GBC|GRABBAG|GRABHIST|PLAYTEST|matched)\b[\s\S]*$/i, '').trim();
   };
 
   const noteById = {};
