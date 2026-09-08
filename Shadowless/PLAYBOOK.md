@@ -115,7 +115,7 @@ and it changed every retreat in the game. It goes here, loose, and gets filed li
 | [Setup turn](Playbook/SETUP-TURN.md) | One attack sets up the next. A rider is worth nothing on a target that already has it | **Half built.** Cashing-in is general; setting-up needs lookahead |
 | [Evolution timing](Playbook/EVOLUTION-TIMING.md) | Evolve when the line is *ready*, not when it is legal — and readiness is read off your hand | **Built** 28 Aug 2026; two clauses open. [Archive 1](Playbook/EVOLUTION-TIMING-ARCHIVE-1.md) |
 | [Heal & attrition](Playbook/HEAL-ATTRITION.md) | A heal is not worth the damage it erases, it is worth what erasing it lets you keep doing — and on the Active that is a turn | **Built** 2 Sep 2026; three clauses open |
-| [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns. Parked for the autobuilder | **Parked** — no scheduled job; the autobuilder was deferred 29 Aug 2026 |
+| [Deckbuild wants](Playbook/DECKBUILD-WANTS.md) | Not AI patterns, **and not claims either** — Trevor's own caveat, 7 Sep 2026: he has not seen how the autobuilder reasons, so these are *to be revisited*, not statements to hold anything to | **Parked** — no scheduled job; the autobuilder was deferred 29 Aug 2026 |
 
 **The rest are named and defined at the bottom of this file, under *Possible patterns*, and that
 list is the authority.** The clustering is #22's, out of the 65 `Wants`; the one-line definitions are

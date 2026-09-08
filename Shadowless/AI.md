@@ -424,7 +424,9 @@ job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.m
     the bottom; a closed one is struck through in place and keeps its number**, which is what items 4
     and 10 already do.
 
-12. **Should a card that ALREADY threatens be charged toward a bigger attack? — 5 Sep 2026, and this
+12. ~~**Should a card that ALREADY threatens be charged toward a bigger attack?**~~ **CLOSED
+    7 Sep 2026 — Trevor, and the answer was that the question was built on his own wording rather
+    than on his intent. Read the strike-through, then the entry below it.** — 5 Sep 2026, and this
     is the deliberate boundary of the attack road.** The fifth surplus exception reads `destShort`,
     which pins at zero the moment any *threatening* attack is payable — so it frees a Fossil Moltres
     (Wildfire `R`, no damage) and does nothing at all for **Hitmonchan** (Jab `F`/20 → Special Punch
@@ -440,6 +442,27 @@ job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.m
     close this item**: the wall gate would then be carrying weight it was never sized for, and
     Magneton would start charging toward a Selfdestruct that belongs to the unbuilt Kamikaze Timing
     pattern. *[The entry, and the 35 cards it did reach →](AI-INVARIANTS/ATTACK-ROAD.md)*
+
+    **HOW IT CLOSED, 7 Sep 2026.** The two cards this item named as the exception's misses are both
+    **already charged**, by a different term. At one Fighting a Hitmonchan's Special Punch is two
+    Energy away and at two Lightning a Raichu's Thunder is two away, so `attachAmortise` carries both
+    slots and the surplus rule never bites — the exception is for a slot that needs **nothing**, and
+    neither of these is one. Measured, one Energy in hand: benched Hitmonchan **25.00**, benched
+    Raichu **32.00**.
+
+    **And the sentence that made this look open was wrong at the source.** The Hitmonchan cell read
+    *"Special Punch… should only be powered up if the bench doesn't have better options"*, which is
+    phrased as a gate. **Trevor's own verdict on it:** *"It read as a gate because it was written as
+    one when I originally wrote it… I think the current form is the correct one and my original claim
+    was wrong."* The bot already ranks attach targets against each other, and a ranking is what
+    "only if nothing is better" means. A literal gate would have been worse — it would fire on a
+    better option the bot could not afford to use that turn.
+
+    **So the boundary stands exactly where `destShort` put it**, and this is now a decided boundary
+    rather than an open one. **The warning above still holds and is the reason not to reopen it
+    casually**: widening the rule would hand the wall gate weight it was never sized for and start
+    Magneton charging toward a Selfdestruct that belongs to the unbuilt Kamikaze Timing pattern.
+    *[The rows →](tools/claims/base1.js)*
 
 13. **Multi-turn lookahead: comparing two SEQUENCES rather than two attachments — Trevor,
     6 Sep 2026.** Deferred deliberately, and recorded here rather than in a file of its own because

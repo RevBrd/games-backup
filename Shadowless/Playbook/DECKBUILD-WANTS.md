@@ -16,6 +16,29 @@ the list, and `ai.js` cannot act on it at any weight. **Filing one as the other 
 instruction to a component that cannot obey it** — which is worse than not filing it, because it then
 reads as satisfied.
 
+## THESE ARE NOT CLAIMS, AND TREVOR IS THE ONE SAYING SO — 7 Sep 2026
+
+**Take every note in this file with a grain of salt.** His words, when the Moltres entry below was
+filed: *"my notes to that regard should all be taken with a grain of salt since I don't really know
+how the autobuilder thinks yet… Let's see all of those as 'to be revisited' when the autobuilder work
+comes up rather than claims in the same way that the purely AI logic ones are claims."*
+
+**That is a status, not a hedge, and it is the difference between this file and the rest of
+[`Playbook/`](.).** An in-play note is a statement about a decision Trevor has watched the bot make,
+so it can be turned into a row and held to. A deckbuild note is a statement about a component that
+**does not exist yet**, made by someone who has not seen how it will reason — so its confidence is
+bounded by that, and no amount of care in transcription raises it.
+
+**The practical consequence for whoever revives the builder: read these as INPUT, not as
+requirements**, which is what the closing section already says and what this section now explains the
+reason for. Expect to re-derive them with him rather than to implement them. **A note here being
+wrong is an expected outcome, not a defect** — and one of them is already known to have been: the
+Hitmonchan cell was phrased as a gate, Trevor concluded on 7 Sep that *"my original claim was
+wrong"*, and the version the bot already implemented was the correct one.
+
+**Do not promote a row out of this file into a claim without asking him.** The one property this file
+guarantees is that nothing in it has been held to a board.
+
 ## The notes
 
 Verbatim and append-only. From the workbook's `Wants` column.
