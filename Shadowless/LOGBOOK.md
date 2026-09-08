@@ -523,4 +523,33 @@ So it is an `open:` row with the measurement attached and AI.md item 14, appende
 claims that cite Trevor from elsewhere while their cells now carry proper notes nobody has read
 against them. `PLAYBOOK.md` jobs, not tooling ones.
 
+**Postscript: I worked those five too, and none of them was what the warning implied.** Hitmonchan's
+clause was *already satisfied* — "only power up Special Punch if the bench has nothing better" reads
+like a gate and is a comparison, and the bot has always ranked attach targets against each other.
+Trevor's own verdict was that his sentence was wrong, not the bot: *"It read as a gate because it was
+written as one when I originally wrote it… my original claim was wrong."* Drowzee's multi-copy clause
+was correct and already worked — `powerSpent` is per SLOT, so two Drowzees are two flips. Moltres's
+claims were fine and its cell simply had two more consumers in it.
+
+**Which means the detector's real yield here was not faults.** Five rows, zero bugs, and two things
+worth more than a bug: a doc item closed (open item 12, which rested on that same mis-phrased
+sentence) and a structural gap nobody was looking for.
+
+**The gap: `ai.js` had never read the opponent's deck.** `deckRisk` reads ours and `deckLoss` prices
+running ourselves out; the mirror image — they draw every turn, and if we are standing when they
+cannot, we win — was invisible. **The reason it was invisible is the transferable part: a turn passing
+is progress toward that win and it is not an action.** An action scorer has nothing to attach it to.
+Any win or loss condition that ticks on its own is invisible here by construction rather than by
+oversight, and I have not seen that shape named anywhere else in this folder.
+
+Built as a floor on what a turn is worth, measured at 3.4% divergence with the win rate unmoved, and
+the larger half — risk aversion while the clock runs — deliberately left out so a first unmeasured
+weight could be judged alone.
+
+**What I would tell the next session.** The grading I added to the drift check paid for itself twice
+in one evening, and neither time by finding a bug. Under the old binary output all nine lines looked
+identical; the two that mattered were an `EXTENDED` and a set of `UNQUOTED`s, both of which I would
+have skimmed. **The value of a detector is not how much it catches, it is whether you still read it
+on the ninth alarm.**
+
 — #38
