@@ -555,12 +555,53 @@ job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.m
     49.4% → 49.3% as a symmetric change should be.
     *[The entry →](AI-INVARIANTS/DECK-OUT-CLOCK.md)*
 
-    **WHAT IS STILL OPEN IS THE LARGER HALF: risk aversion.** If we win by outliving their deck we
-    should also take fewer risks while it runs — decline the recoil attack, refuse the trade that
-    might cost the Active. That lives in `selfKO` and the recoil pricing, and scaling it is a change
-    to the bot's whole posture rather than a floor on one term. **Left out deliberately so the first,
-    unmeasured weight could be judged on its own**, which is the same discipline item 9 records for
-    its three arms.
+    **WHAT IS STILL OPEN IS THE LARGER HALF: risk aversion — and the instruction this item first
+    carried for it was WRONG. Corrected 8 Sep 2026 before anybody acted on it.**
+
+    It said to scale `selfKO`. **Do not.** `selfKO` is not a weight, it is a **unit** — the price of
+    losing a Pokémon — and ten call sites denominate three different curves in it: recoil as
+    `selfKO · frac²`, a barrier preventing that death as `shieldFrac² · selfKO`, bench splash as flat
+    fractions. One of them carries a comment saying *"those two curves disagree on purpose"*. A
+    multiplier on the unit rescales all three uniformly and flattens a distinction that was authored.
+
+    **And every one of the ten is about losing a POKEMON, not about losing the GAME**, which is the
+    reason the scale was the wrong hook rather than merely a blunt one. This file already separates
+    them and says so outright, in the comment above the worst-case branch: *"priced at `lastPrize`
+    rather than `selfKO` whenever that death is the one that ends the match. **Losing is not a big
+    Knock Out; it is a different kind of thing**, and `selfKO` at 70 could never outweigh a Knock Out
+    worth 55 plus the damage."* The clock's argument is about the game ending. It has no business in
+    the unit that prices a Pokémon.
+
+    **What the clock actually changes is RISK PREFERENCE, and that is a sharper claim than a weight.**
+    `ai.js` is an expected-value scorer — this file's own one-line summary says so — and it folds every
+    coin into a mean. A risk-neutral agent that is **ahead on a clock** should stop being risk-neutral:
+    when you win by simply not losing, a coin-flip line and a certain line of equal expected value are
+    not equal, and the safe one is correct. **Nothing in the scorer can currently express that**, which
+    makes this closer in kind to item 13's planner than to a term.
+
+    **The precedent is already built and it is the thing to generalise.** `rawOutcomes` carries
+    `selfWorst` and `pSelfWorst` beside the mean precisely because *"an average hid it"* — a branch
+    that ends the game is invisible the moment it is folded into a mean — and `scoreAttack` reads them
+    only when that worst case **ends the match**. Being ahead on the deck clock is the second condition
+    that should reach for the same pair. **Widen the existing worst-case read; do not add a second
+    notion of self-risk.**
+
+    | | |
+    |---|---|
+    | **Wrong hook** | `W.selfKO` — ten sites, three authored curves, all about a Pokemon |
+    | **Right hook** | the `selfWorst` / `pSelfWorst` branch that already exists at the `lastPrize` carve-out |
+    | **The claim** | ahead on the clock, prefer the certain line to the coin of equal mean |
+    | **Measurement** | `aiduel` against the pinned commit, NOT `abtest` — the question is *is the bot better*, and `--control` first |
+
+    **The measurement is a different KIND from the floor's and that is most of why this wants its own
+    session.** `abtest` answered "did anything change" in minutes. This asks whether the bot got
+    *better*, which is `aiduel` against the pinned commit — the project's one accumulating measurement,
+    which [YARDSTICKS.md](YARDSTICKS.md) records as rotting by the world moving. Run
+    `aiduel --checkpin --baseline --gbc` before trusting it; a set or roster change is what breaks the
+    pin, and two have landed since it was set.
+
+    **Left out of Job 15f deliberately so the first, unmeasured weight could be judged on its own**,
+    which is the same discipline item 9 records for its three arms.
 
     **And `W.deckOutRange: 15` is a guess** — nothing has measured where a deck becomes short enough
     to plan around. It cannot go on `selftest.js`'s `PROVISIONAL` list, which holds effect verbs, so it
