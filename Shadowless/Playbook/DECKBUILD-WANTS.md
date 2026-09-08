@@ -25,7 +25,7 @@ Verbatim and append-only. From the workbook's `Wants` column.
 > **Vaporeon** — Two extra W energy attached
 > **Lapras** — 2 extra W energy attached, and to use Confuse Ray when smart
 > **Nidoqueen** — Many Nidokings on the bench
-> **Psyduck** — To play in a Psychic deck if Golduck (from this set) is there too
+> **Psyduck (Team Rocket)** — To play in a Psychic deck if Golduck (from this set) is there too
 > **Golduck** — A combined P/W deck, but doesn't need one
 > **Surfing Pikachu** — To play in a Water type deck instead of Lightning type
 > **Wigglytuff** — Many bench pokemon
