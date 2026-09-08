@@ -525,8 +525,8 @@ job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.m
     weight gets load-bearing. *[The row, with the measurement attached →](PLAYBOOK.md)* —
     `tools/claimtest.js --open`.
 
-15. **The bot cannot see the opponent's deck, so decking them out is not a plan it can have —
-    7 Sep 2026.** `deckRisk(pi, burn)` reads `players[pi].deck.length`, its own, and `deckLoss: 150`
+15. **The bot could not see the opponent's deck at all — 7 Sep 2026. HALF BUILT the same day; the
+    stalling half shipped, the risk half did not.** `deckRisk(pi, burn)` reads `players[pi].deck.length`, its own, and `deckLoss: 150`
     correctly prices running *itself* out as a loss rather than an expensive draw. **Nothing in
     `ai.js` reads `players[1 - pi].deck` at all.** So every mill effect in the era is valued purely
     as a cost it does not pay, and the win condition on the other side of it is invisible.
@@ -545,3 +545,26 @@ job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.m
     Wildfire**, which is the expensive way in and the one Trevor has already declined. If it is ever
     opened, the cheap half is the defensive read: one number, no new verb, and it makes the bot
     better at a game it can already lose this way.
+
+    **BUILT, 7 Sep 2026, at Trevor's ask — the defensive read, not the Wildfire one.** `deckOutClock`
+    reads `players[1 - pi].deck` and ramps from 0 at `W.deckOutRange` cards to 1 at empty. It floors
+    both copies of `turnScale`, so a turn bought off a *harmless* opponent — worth exactly zero before,
+    because `denied` is damage — is worth having while their clock runs. **A `max`, not a sum**: where
+    real damage is denied, the damage reading is already larger and nothing changes.
+    **3.4% ± 1.0 of ladder games diverge, median first difference at action 139**, win rate unmoved at
+    49.4% → 49.3% as a symmetric change should be.
+    *[The entry →](AI-INVARIANTS/DECK-OUT-CLOCK.md)*
+
+    **WHAT IS STILL OPEN IS THE LARGER HALF: risk aversion.** If we win by outliving their deck we
+    should also take fewer risks while it runs — decline the recoil attack, refuse the trade that
+    might cost the Active. That lives in `selfKO` and the recoil pricing, and scaling it is a change
+    to the bot's whole posture rather than a floor on one term. **Left out deliberately so the first,
+    unmeasured weight could be judged on its own**, which is the same discipline item 9 records for
+    its three arms.
+
+    **And `W.deckOutRange: 15` is a guess** — nothing has measured where a deck becomes short enough
+    to plan around. It cannot go on `selftest.js`'s `PROVISIONAL` list, which holds effect verbs, so it
+    is recorded here beside `prizeIndex` (item 3) and `wallRoadInDeck` (item 11) for the same reason.
+
+    **The offensive half — mill effects gaining value as their deck shrinks — is still NOT built and
+    should not be opened by tuning Wildfire**, which Trevor has declined and is right to.

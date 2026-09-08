@@ -102,6 +102,10 @@ const AI_WEIGHTS = {
   deckRecycle: 0.15,    // Gambler's credit for handing cards BACK, as a fraction
                         // of deckBurn. Not symmetric on purpose: at the full
                         // weight a recycle would pay more than a Knock Out
+  deckOutRange: 15,     // cards left in THEIR deck at which their clock starts to
+                        // matter to us. Below it, a bought turn is worth having
+                        // even against a harmless opponent — see `deckOutClock`.
+                        // PROVISIONAL: a first guess, never measured. AI.md item 15
   deckLoss: 150,        // running yourself out of cards is not an expensive
                         // draw, it is losing. Same shape as lastPrize
   healPer10: 3.5,
@@ -941,7 +945,13 @@ class AI {
     // turn each takes away, priced when they were written. A second table would
     // have applied that ratio twice. So this scales all three by the same board
     // factor and the relative pricing between them is untouched.
-    const turnScale = denied / AVG_ATTACK;
+    // THE FLOOR IS THEIR DECK RUNNING OUT — Job 15f. A turn is normally worth the
+    // damage it denies, which reads ZERO against something that threatens nothing.
+    // That is right until their deck is nearly empty, at which point a turn bought
+    // off a harmless opponent is still a turn closer to them decking out. The floor
+    // is a `max` rather than a sum on purpose: where real damage is being denied,
+    // the damage reading is already the larger number and nothing changes.
+    const turnScale = Math.max(denied / AVG_ATTACK, this.deckOutClock(pi));
 
     if (!f.blocked) {
       if (!f.statusProof) for (const st in f.statuses) {
@@ -2549,13 +2559,40 @@ class AI {
   // WE would lose and `scoreAttackHypothetical` asks this about a bench slot that
   // is not the Active. Reading `me.active` here would have silently changed the
   // attack path on exactly the boards nobody looks at.
+  // HOW CLOSE ARE THEY TO LOSING BY DECK-OUT — 0 when it is remote, approaching 1
+  // when their next draw is their last. Job 15f, from a Moltres note of Trevor's
+  // whose subject turned out to be the whole bot rather than the card.
+  //
+  // Until now `deckRisk` read `players[pi].deck` — OURS — and `deckLoss` correctly
+  // priced running ourselves out as a loss. **Nothing in this file had ever read
+  // the opponent's deck**, so the mirror image of that loss was invisible: they
+  // draw every turn whether we do anything or not, and if we are still alive when
+  // they cannot, we win. A turn survived is progress toward that with no action
+  // required, which is exactly why nothing scored it — the scorer prices actions.
+  //
+  // LINEAR AND NOT A STEP, deliberately. This is a quantity about proximity, and
+  // `CLAUDE.md` names "written flat with a cliff at the end" as the sniff test this
+  // project keeps failing. At `deckOutRange` it is 0 and it ramps from there.
+  deckOutClock(pi) {
+    const left = this.E.state.players[1 - pi].deck.length;
+    const range = this.W.deckOutRange;
+    if (left >= range) return 0;
+    return (range - left) / range;
+  }
+
   statusWorthAgainst(pi, st, aliveFactor, ourSlot) {
     const key = STATUS_VALUE[st];
     const me = this.E.state.players[pi], you = this.E.state.players[1 - pi];
     if (!key || !you.active) return 0;
     const slot = ourSlot || me.active;
     const denied = Math.min(this.incomingThreat(pi), this.remainingHP(slot) || Infinity);
-    const turnScale = DENIES_A_TURN[st] ? denied / AVG_ATTACK : 1;
+    // Same deck-out floor as `scoreAttack`'s copy. THE TWO COPIES ARE THE HAZARD:
+    // this function and the block in `scoreAttack` both answer "what is a turn
+    // worth" and neither reads the other, which is the shape MISREADINGS.md keeps
+    // finding. Change one, change both.
+    const turnScale = DENIES_A_TURN[st]
+      ? Math.max(denied / AVG_ATTACK, this.deckOutClock(pi))
+      : 1;
     return this.W[key] * turnScale * this.statusNovelty(st, you.active) * aliveFactor;
   }
 

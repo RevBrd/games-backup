@@ -125,3 +125,4 @@ open the entry.
 | 6 Sep 2026 | **...and the road runs to the nearest attack BETTER than what is affordable, self-destruct included** | `upShort`, `upGoal` | [ATTACK-ROAD](AI-INVARIANTS/ATTACK-ROAD.md) (same entry, widened) |
 | 6 Sep 2026 | **silence is counted in Energy and was billed as turns, and the discount for dying was unreachable** | `energyRefillTurns`, `turnsLeft` | [SILENCE-IN-TURNS](AI-INVARIANTS/SILENCE-IN-TURNS.md) |
 | 6 Sep 2026 | **one home for what a status on their Active is worth, and the Power path had none of the rules** | `statusWorthAgainst` | [STATUS-ONE-HOME](AI-INVARIANTS/STATUS-ONE-HOME.md) |
+| 7 Sep 2026 | **the opponent's deck is a clock, and a bought turn is worth more while it runs** | `deckOutClock`, both copies of `turnScale` | [DECK-OUT-CLOCK](AI-INVARIANTS/DECK-OUT-CLOCK.md) |
