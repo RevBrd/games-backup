@@ -98,7 +98,7 @@ const REMAINING = {
   // and which cannot be substituted — any stat we DO model is derivable from the
   // card name the quiz itself reveals, so a bot guesses right every time and the
   // card becomes strictly bad. The mechanism for omitting it is not chosen yet.
-  gym1: 125,
+  gym1: 123,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -436,6 +436,11 @@ const PROVISIONAL = new Set([
   // question in particular (a Stadium is paid many times, every other Trainer
   // once) is reasoned about in a comment and priced by a constant.
   'T_STADIUM',
+  // The two Gym Heroes coin Trainers. T_DUEL's redraw value is a linear guess at
+  // "a hand is worth most to whoever holds least"; T_TICKLE prices losing a turn
+  // in bestAffordableDamage, which is the wrong unit for a turn and is the
+  // weaker of the two guesses by some distance.
+  'T_DUEL', 'T_TICKLE',
   // Job 10c, the five triggered-Power verbs. Every weight behind these is a
   // first guess priced off an existing weight — benching, drawing, sniping —
   // rather than off a measurement. The two that most want measuring are

@@ -4741,6 +4741,28 @@ class AI {
           break;
         }
 
+        case 'T_DUEL': {
+          // PROVISIONAL. A coin decides who gets a fresh five, so the honest
+          // value is half the difference between what a redraw is worth to us
+          // and what it is worth to them — and a redraw is worth most to whoever
+          // is holding least. Playing it on a full hand is throwing away cards.
+          const mine = me.hand.length - 1;          // this card is already spoken for
+          const theirs = you.hand.length;
+          s += ((5 - mine) - (5 - theirs)) * 1.5;
+          if (!me.deck.length) s -= 20;             // we cannot redraw at all
+          break;
+        }
+        case 'T_TICKLE': {
+          // PROVISIONAL. Heads takes their whole hand away for a turn, which is
+          // worth what the hand is worth; tails costs us our attack, which is
+          // worth what attacking is worth. Both halves are priced crudely and
+          // the second one is the weaker guess — `bestAffordableDamage` is the
+          // wrong unit for "a turn", but it is the unit this function can see.
+          const gain = Math.min(you.hand.length, 7) * 2.5;
+          const lose = me.active ? this.bestAffordableDamage(pi, me.active) * 0.5 : 0;
+          s += (gain - lose) / 2;                   // it is a coin, so halve both
+          break;
+        }
         case 'T_FULL_HEAL': {
           if (!me.active) return -Infinity;
           const st = me.active.status;

@@ -115,3 +115,31 @@ unclickable ~150px tiles** — they are one line each now and sit *outside* the 
 ahead never scrolls away. **Why this screen and no other** — the ladder gains a bracket every time a
 set goes live — is [PROGRESSION.md](PROGRESSION.md); the instrument that found all four is
 [INSPECTION.md](INSPECTION.md).
+
+## A screen that does not exist yet: Misty's Duel
+
+**Deferred on purpose, 8 Sep 2026, Job 16, and this is the entry that stops it being lost.** It is
+recorded here rather than in [HISTORY.md](HISTORY.md) because it was **not rejected** — that file is
+for ideas with a reason they lost, and this one has a reason it *waited*.
+
+Misty's Duel (`gym1-123`) reads *"You and your opponent play a game of Rock-Paper-Scissors"*, and
+**the card prints its own substitution**: *"(If you don't know how to play Rock-Paper-Scissors, flip
+a coin to decide who's the winner.)"* The coin is shipped and the card is complete.
+
+**The panel is safe to defer because it cannot change an outcome, and that is a fact rather than an
+expectation.** RPS against an opponent choosing uniformly at random is exactly a fair coin: 1/3 win,
+1/3 lose, 1/3 tie whatever you throw, and conditioned on a non-tie that is 50/50. There is no
+strategy in it to lose by deferring it, and no balance question to answer when it lands.
+
+**So it is pure flavour over a coin that is already correct**, which makes it a UI job with no rules
+half — and the cheapest possible thing to add later, since nothing downstream depends on when it
+arrives. Trevor's ask, and his own suggestion that it keep a **"skip" that takes the coin directly**,
+which should be the default rather than a hidden alternative: the panel is a flourish and a player
+who does not want it should not have to play it every time the card is drawn.
+
+**If you build it, it belongs to this file's shared problem** — a centred box whose content arrives
+over time, since a tie re-throws and the box gains a round each time. Reserve the finished state from
+the first render, per the rule above, or a second round will shove the first one. The coin toss panel
+in [INTERACTION.md](INTERACTION.md) is the closer model for the moment-in-play half; that file owns
+every point at which the board stops and talks to the player, which is what this would be.
+

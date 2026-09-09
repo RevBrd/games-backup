@@ -253,6 +253,16 @@ class Engine {
       active: null, bench: [],
       turnsTaken: 0, energyAttached: false, retreated: false, trainersPlayed: 0,
       mulligans: 0,
+      // TICKLING MACHINE. A fourth zone, and the first one that is neither
+      // public nor the owner's to look at: "your opponent sets aside all the
+      // cards in his or her hand face down. NOBODY may look at those cards."
+      //
+      // A real zone rather than a flag on the hand, because the cards genuinely
+      // leave it — the owner draws into an empty hand next turn, which is the
+      // whole point of the card and falls out for free this way. Every reader of
+      // `hand` (the AI, the UI, Lass, Imposter Oak) is correct without knowing
+      // this exists, which is what a zone buys over a marker.
+      setAside: [], setAsideUntil: 0,
     });
     this.state = {
       cfg: this.cfg, turn: 0, active: 0, phase: 'setup',
@@ -921,6 +931,21 @@ class Engine {
         return true;
       });
     });
+
+    // TICKLING MACHINE: "At the end of your opponent's next turn, your opponent
+    // puts those cards back into his or her hand." Swept here beside the effect
+    // expiry above and keyed the same way — on the turn NUMBER rather than on
+    // whose turn just ended. The two coincide, and the number is the one that
+    // cannot be got wrong by a turn changing hands for some other reason.
+    for (let i = 0; i < 2; i++) {
+      const pl = s.players[i];
+      if (pl.setAside.length && s.turn >= pl.setAsideUntil) {
+        const n = pl.setAside.length;
+        while (pl.setAside.length) pl.hand.push(pl.setAside.shift());
+        pl.setAsideUntil = 0;
+        this.log(`${pl.name} takes back ${n} set-aside card(s).`, 'eff');
+      }
+    }
 
     // Trevor's, from the grab bag. A turn that ends with no attack had no line
     // at all, so you were left inferring it from the ABSENCE of one — which is
@@ -2550,6 +2575,14 @@ class Engine {
           break;
         case 'T_COIN_PINGPONG': if (!p.active || !o.active) return false; break;
         case 'T_CHALLENGE': break;      // always legal: declining still draws 2
+        // Misty's Duel refreshes SOMEBODY's hand, so the only board where it can
+        // do nothing at all is one where neither player has a deck to draw from.
+        case 'T_DUEL': if (!p.deck.length && !o.deck.length) return false; break;
+        // Tickling Machine against an EMPTY hand is all downside: heads sets
+        // aside nothing and tails costs you your attack. Refused on the standing
+        // "would do nothing" gate, which is the same reason a Potion is refused
+        // with nothing damaged — the tails branch is a cost, not an effect.
+        case 'T_TICKLE': if (!o.hand.length) return false; break;
         case 'T_PRIZES_FACE_UP': if (this.state.prizesFaceUp) return false; break;
         case 'T_LOOK_AND_SHUFFLE_BACK':
           // "Look at your opponent's hand. IF he or she has any Trainer cards..."
@@ -3503,6 +3536,50 @@ class Engine {
           });
           this.log(`PlusPower attached to ${this.nameOf(p.active)} (+10 this turn).`, 'eff');
           toDiscard = false;   // discarded when the effect expires
+          break;
+        }
+        case 'T_DUEL': {
+          // MISTY'S DUEL. "You and your opponent play a game of
+          // Rock-Paper-Scissors. The winner shuffles his or her hand into his or
+          // her deck and draws a new hand of 5 cards. (IF YOU DON'T KNOW HOW TO
+          // PLAY ROCK-PAPER-SCISSORS, FLIP A COIN TO DECIDE WHO'S THE WINNER.)"
+          //
+          // WotC printed the substitution themselves, so this is step 1 of
+          // RULINGS.md and not a judgement call. It is also exactly right: RPS
+          // against an opponent choosing uniformly at random is a fair coin —
+          // 1/3 win, 1/3 lose, 1/3 tie, and conditioned on a non-tie that is
+          // 50/50 whatever you throw. A panel would be flavour over this coin
+          // and could not change an outcome, which is why it is DEFERRED rather
+          // than rejected. See SCREENS.md.
+          //
+          // THE WINNER REDRAWS, which is the part that reads backwards: this is
+          // not a card you point at somebody. Half the time you are refreshing
+          // your own hand and half the time you are refreshing theirs.
+          const iWin = this.flip("Misty's Duel");
+          const who = iWin ? p : o;
+          const n = who.hand.length;
+          while (who.hand.length) who.deck.push(who.hand.pop());
+          this.shuffle(who.deck);
+          let drew = 0;
+          for (let i = 0; i < 5 && who.deck.length; i++) { who.hand.push(who.deck.shift()); drew++; }
+          this.log(`Misty's Duel: ${who.name} wins, shuffles ${n} card(s) away and draws ${drew}.`, 'eff');
+          break;
+        }
+        case 'T_TICKLE': {
+          // TICKLING MACHINE. Heads sets their hand aside until the end of their
+          // next turn; tails ends your own turn with no attack.
+          if (this.flip('Tickling Machine')) {
+            const n = o.hand.length;
+            while (o.hand.length) o.setAside.push(o.hand.shift());
+            o.setAsideUntil = this.state.turn + 1;
+            this.log(`Tickling Machine: heads. ${o.name} sets ${n} card(s) aside face down.`, 'eff');
+          } else {
+            this.log('Tickling Machine: tails.', 'eff');
+            // BREAK, NOT RETURN — the same note Computer Error carries. The tail
+            // below discards the Trainer and counts it against the per-turn
+            // limit, and an early return leaves it in the hand it came from.
+            endsTurn = true;
+          }
           break;
         }
         case 'T_FULL_HEAL': {

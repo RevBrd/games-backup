@@ -6930,5 +6930,88 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- MISTY'S DUEL AND TICKLING MACHINE -------------------------------------
+// The two Gym Heroes Trainers whose outcome is a coin, and the only two that
+// needed something outside the existing verb set: a fourth zone, and a turn that
+// ends without an attack.
+{
+  const { setup } = require('./lib/board.js');
+  const playIt = (b, name, heads) => {
+    const E = b.E, me = E.state.players[0];
+    const i = me.hand.findIndex(x => E.db[x.id].name === name);
+    if (i < 0) throw new Error('not in hand: ' + name);
+    E.flip = () => heads;
+    const r = E.act(0, { t: 'playTrainer', hand: i, opts: {} });
+    if (!r.ok) throw new Error('refused: ' + (r.why || r.error));
+    return E;
+  };
+  const filler = n => Array.from({ length: n }, () => 'base1:Bill');
+
+  T("Misty's Duel: the WINNER redraws, and on heads that is us", () => {
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Gastly' },
+      myHand: ["Misty's Duel"].concat(filler(3)), theirHand: filler(4) });
+    const E = playIt(b, "Misty's Duel", true);
+    // The card itself was already out of hand when the script ran, so it goes to
+    // the discard rather than being shuffled back into the deck.
+    eq(E.state.players[0].hand.length, 5, 'we redrew to five');
+    return eq(E.state.players[1].hand.length, 4, 'they were untouched');
+  });
+
+  T("...and on tails it is THEM, which is the half that reads backwards", () => {
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Gastly' },
+      myHand: ["Misty's Duel"].concat(filler(3)), theirHand: filler(2) });
+    const E = playIt(b, "Misty's Duel", false);
+    eq(E.state.players[1].hand.length, 5, 'they redrew to five');
+    // Three fillers left; the Duel is in the discard, not the deck.
+    eq(E.state.players[0].hand.length, 3, 'our hand is unchanged');
+    return eq(E.state.players[0].discard.some(x => E.db[x.id].name === "Misty's Duel"),
+      true, 'the Duel is discarded');
+  });
+
+  T('Tickling Machine heads: their whole hand leaves, and comes back', () => {
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Gastly' },
+      myHand: ['Tickling Machine'], theirHand: filler(4) });
+    const E = playIt(b, 'Tickling Machine', true);
+    const them = E.state.players[1];
+    eq(them.hand.length, 0, 'their hand emptied');
+    eq(them.setAside.length, 4, 'into the set-aside zone');
+    // The cards genuinely LEFT the hand, so they draw into an empty one next
+    // turn. That is the card, and it falls out of using a zone rather than a flag.
+    E.act(0, { t: 'pass' });                       // our turn ends
+    eq(them.setAside.length, 4, 'still set aside during their turn');
+    E.act(1, { t: 'pass' });                       // their next turn ends
+    eq(them.setAside.length, 0, 'returned at the end of THEIR next turn');
+    return eq(them.hand.length >= 4, true, 'back in hand (plus whatever they drew)');
+  });
+
+  T('Tickling Machine tails: our turn ends and we do not attack', () => {
+    const b = setup({ me: { card: 'base1:Machop', energy: '1 Fighting' },
+      them: { card: 'base1:Gastly' }, myHand: ['Tickling Machine'], theirHand: filler(3) });
+    const before = b.E.state.active;
+    const E = playIt(b, 'Tickling Machine', false);
+    // NOT a hand-count assertion: ending our turn starts theirs, and they draw.
+    // The claim is that nothing was TAKEN, so count what we put there rather
+    // than the total — the first version of this row read 4 against 3 and the
+    // card was innocent.
+    eq(E.state.players[1].hand.filter(x => E.db[x.id].name === 'Bill').length >= 3,
+      true, 'none of their cards were taken');
+    eq(E.state.players[1].setAside.length, 0, 'nothing set aside');
+    return eq(E.state.active === before, false, 'the turn changed hands');
+  });
+
+  T('...and it is refused outright against an empty hand', () => {
+    // Heads sets aside nothing and tails costs the attack, so every branch is a
+    // loss. The standing "would do nothing" gate, same as a Potion with nothing
+    // damaged — the tails branch is a cost, not an effect.
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Gastly' },
+      myHand: ['Tickling Machine'], theirHand: [] });
+    const E = b.E;
+    const offered = E.legalActions(0).filter(a => a.t === 'playTrainer'
+      && E.db[E.state.players[0].hand[a.hand].id].name === 'Tickling Machine');
+    return eq(offered.length, 0, 'offered');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
