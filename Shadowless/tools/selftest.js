@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 99,
+  gym1: 94,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -664,6 +664,10 @@ console.log('\nAI verb coverage');
   // they belong on the opt-out list by their nature rather than by choice.
   const PASSIVE_POWERS = new Set([
     'RETALIATE', 'PREVENT_AT_LEAST', 'DAMAGE_HALVE', 'FLIP_TO_NEGATE',
+    // Shell Armor. Consulted inside computeDamage's W/R block and never offered
+    // as an action — the card says "you MAY reduce", but there is no board where
+    // taking less damage is worse, so there is nothing for scorePower to weigh.
+    'DAMAGE_REDUCE',
     'STATUS_IMMUNE', 'NO_EVOLUTION', 'TOXIC_GAS', 'RETREAT_DISCOUNT',
     'REVEAL_OPP_HAND',
     // Transform fires from settleTransforms after every action rather than being

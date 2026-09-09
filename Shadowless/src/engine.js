@@ -1923,11 +1923,17 @@ class Engine {
         case 'HEAL_ON_FLIP':
           // Vileplume. The coin is flipped when it resolves, not now — the
           // player is choosing a target, not a gamble.
+          //
+          // Blaine's Vulpix's Natural Healing is the same mechanism with two
+          // settings off: `selfOnly` (it only ever heals itself) and `sure` (no
+          // coin at all). Settings rather than a second heal kind, which is the
+          // choice MOVE_DAMAGE and MOVE_ENERGY both already made.
           if (this.powerSpent(slot)) break;
-          for (const to of this.allSlots(pi)) {
+          for (const to of (p.selfOnly ? [slot] : this.allSlots(pi))) {
             if (to.dmg < 10) continue;
             acts.push({ t: 'power', uid: slot.uid, kind: p.kind, to: to.uid,
-                        label: `${p.name}: flip to heal ${this.nameOf(to)}` });
+                        label: p.sure ? `${p.name}: heal ${this.nameOf(to)}`
+                                      : `${p.name}: flip to heal ${this.nameOf(to)}` });
           }
           break;
         case 'CHANGE_OWN_TYPE':
@@ -2058,6 +2064,11 @@ class Engine {
           // Behavior. A third shape was not needed and would have been a second
           // way to say the same thing.
           if (p.once && this.powerSpent(slot)) break;
+          // Lt. Surge's Magneton's Energy Charge is the THIRD setting on this same
+          // mechanism: "if Lt. Surge's Magneton is your ACTIVE Pokemon". Energy
+          // Trans and Gather Fire work from the Bench; this one does not. A
+          // setting rather than a fourth kind, exactly as `once` and `toSelf` were.
+          if (p.activeOnly && me.active !== slot) break;
           const froms = this.allSlots(pi).filter(x => p.toSelf ? x !== slot : true);
           const tos = p.toSelf ? [slot] : this.allSlots(pi);
           for (const from of froms) {
@@ -2150,8 +2161,9 @@ class Engine {
         const to = this.findSlot(pi, a.to);
         if (!to) return this.fail('No such Pokemon');
         if (to.dmg < 10) return this.fail(`${this.nameOf(to)} has no damage counters`);
+        if (p.selfOnly && to !== slot) return this.fail(`${p.name} only heals itself`);
         this.markPower(slot);
-        if (this.flip(`${p.name}?`)) {
+        if (p.sure || this.flip(`${p.name}?`)) {
           const h = Math.min((p.n || 1) * 10, to.dmg);
           to.dmg -= h;
           this.log(`${p.name}: ${h} damage removed from ${this.nameOf(to)}.`, 'eff');
@@ -5996,6 +6008,24 @@ class Engine {
         dmg = Math.floor(dmg / 2 / 10) * 10;                 // "rounded DOWN to the nearest 10"
         steps.push(`${halve.name || halve.label}: halved to ${dmg}.`);
       }
+      // MISTY'S CLOYSTER, Shell Armor: "reduce all damage done by attacks to
+      // Misty's Cloyster by 10 (after applying Weakness and Resistance)". Sits
+      // here, inside the W/R block, because that parenthesis is the card telling
+      // us which band it belongs to — the same sentence Defender prints and the
+      // reason DEFENDER-BLUNTS-SELF-HARM scopes the way it does.
+      //
+      // "You MAY reduce" is resolved as always, and that is not a shortcut:
+      // there is no board on which taking less damage is worse, so an option
+      // nobody would ever decline is a prompt with one sensible answer. If a
+      // later card makes reduction genuinely costly, this becomes a choice then.
+      //
+      // A REDUCTION, NOT A BARRIER — "(Any other effects of attacks still
+      // happen)" — so statuses, discards and switches all land untouched.
+      const soft = this.activePower(defSlot, 'DAMAGE_REDUCE');
+      if (soft && dmg > 0) {
+        dmg = Math.max(0, dmg - (soft.n || 10));
+        steps.push(`${soft.name}: -${soft.n || 10} -> ${dmg}.`);
+      }
     }
     let prevented = false;
     const absolute = defSlot.effects.find(e => e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS');
@@ -6086,6 +6116,13 @@ class Engine {
     if (opts.noRetaliate || !atkSlot || atkSlot === defSlot) return;
     const p = this.powerOf(defSlot);
     if (!p || p.kind !== 'RETALIATE' || !this.powerUsable(defSlot)) return;
+    // ROCKET'S SNORLAX, Restless Sleep: "if ... Rocket's Snorlax is ALREADY
+    // ASLEEP". It is the Dark Primeape situation exactly — a Power whose only
+    // effect is conditional on a status that would otherwise switch it off — so
+    // the card carries `always: true` AND this condition, and neither alone is
+    // right. Read Rulings/FRENZY-SELF-DAMAGE.md's neighbour in ENGINE.md before
+    // touching this pair.
+    if (p.requireSelfAsleep && !defSlot.status.asleep) return;
     this.log(`${p.name}: ${this.nameOf(defSlot)} strikes back at `
       + `${this.nameOf(atkSlot)} for ${p.dmg}.`, 'eff');
     this.dealDamage(defSlot, atkSlot, p.dmg, { noWR: true, noRetaliate: true, notAttack: true });

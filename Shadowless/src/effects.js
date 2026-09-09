@@ -821,6 +821,12 @@
 //   their own yet and are placed only by Trainers.
 //     DAMAGE_BONUS      {amount, label}     added AFTER W/R          (PlusPower)
 //     DAMAGE_REDUCTION  {amount, label}     subtracted AFTER W/R     (Defender)
+//   ...and its POWER-side twin, which is a Power kind rather than an effect:
+//     DAMAGE_REDUCE     {n, name}           a passive flat reduction AFTER W/R,
+//                                           read from the defender's own Power
+//                                           (Shell Armor). Resolved as always-on:
+//                                           "you may reduce" has one sensible
+//                                           answer on every board there is
 //     PREVENT_UP_TO     {threshold, label}  prevent if <= threshold  (Harden)
 //     PREVENT_ALL_DAMAGE                    damage only, effects land
 //     PREVENT_ALL_EFFECTS                   damage AND effects; also switches the
@@ -2195,6 +2201,23 @@ const EFFECTS = {
   'gym1-120': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_ATTACK_BONUS_NAMED', n: 10, who: 'Lt. Surge' }] },
   'gym1-99':  { t: [{ v: 'T_CHARITY' }] },
   'gym1-117': { t: [{ v: 'T_ESP' }] },
+  // ── GYM HEROES: the Pokemon Powers ─────────────────────────────────────────
+  // Four of these five are SETTINGS on mechanisms that already existed, which is
+  // the pattern POWERS.md asks for: a new kind is the last resort, not the first.
+  'gym1-47': { p: { kind: 'ENERGY_AS', name: 'Photosynthesis', type: 'G', always: true },
+    a: [[{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }], []] },   // Erika's Oddish: Poisonpowder; Sprout (plain)
+  'gym1-65': { p: { kind: 'HEAL_ON_FLIP', n: 1, name: 'Natural Healing', once: true,
+                    selfOnly: true, sure: true },
+    a: [[{ v: 'STATUS_ON_FLIP', s: 'Confused' }]] },       // Blaine's Vulpix: Tail Fan
+  'gym1-8':  { p: { kind: 'MOVE_ENERGY', name: 'Energy Charge', energy: 'L',
+                    toSelf: true, activeOnly: true },
+    a: [[{ v: 'RECOIL_ON_FLIP', n: 20, label: 'Mega Shock' }]] },   // Lt. Surge's Magneton: Mega Shock
+  'gym1-29': { p: { kind: 'DAMAGE_REDUCE', n: 10, name: 'Shell Armor' },
+    a: [[{ v: 'DMG_PER_HEAD', coins: 3, per: 20 }]] },     // Misty's Cloyster: Triple Cannon
+  'gym1-33': { p: { kind: 'RETALIATE', name: 'Restless Sleep', dmg: 20,
+                    always: true, requireSelfAsleep: true },
+    a: [[{ v: 'STATUS_SELF', s: 'Asleep' }]] },            // Rocket's Snorlax: Collapse
+
   // Sabrina's Drowzee — the first Gym Heroes Pokemon, and it needed no new verb.
   // Suggestion is Leer's shape exactly; Headbutt is plain damage.
 

@@ -7215,5 +7215,103 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- GYM HEROES POKEMON POWERS, pass one -----------------------------------
+// Four of these five are settings on a mechanism that already existed. The tests
+// are here to prove the setting actually changes what it claims and nothing else.
+{
+  const { setup } = require('./lib/board.js');
+
+  T('Photosynthesis makes every Energy on Erika\'s Oddish count as Grass', () => {
+    // Charizard's Energy Burn, one card later. A Fire Energy has to pay a Grass
+    // cost, which is the whole card.
+    const b = setup({ me: { card: 'gym1-47', energy: '1 Fire' }, them: { card: 'base1:Machop' } });
+    const E = b.E, slot = E.state.players[0].active;
+    eq(E.costSatisfied(slot, 'G'), true, 'a Fire pays a Grass cost');
+    // "This power works EVEN WHILE Erika's Oddish is Asleep, Confused, or
+    // Paralyzed" — so it carries `always`, and the blanket status gate must not
+    // reach it.
+    slot.status.asleep = true;
+    return eq(E.costSatisfied(slot, 'G'), true, 'and still does while Asleep');
+  });
+
+  T('...unlike a Power without `always`, which the status gate switches off', () => {
+    // The control for the row above. Energy Burn prints no such clause, so a
+    // sleeping Charizard is not burning anything.
+    const b = setup({ me: { card: 'base1:Charizard', energy: '1 Grass' },
+      them: { card: 'base1:Machop' } });
+    const E = b.E, slot = E.state.players[0].active;
+    eq(E.costSatisfied(slot, 'R'), true, 'awake, a Grass pays a Fire cost');
+    slot.status.asleep = true;
+    return eq(E.costSatisfied(slot, 'R'), false, 'asleep, it does not');
+  });
+
+  T('Natural Healing removes a counter from itself, once, with no coin', () => {
+    const b = setup({ me: { card: 'gym1-65' }, them: { card: 'base1:Machop' },
+      myBench: [{ card: 'base1:Machop' }] });
+    const E = b.E, vulpix = E.state.players[0].active;
+    vulpix.dmg = 30;
+    E.state.players[0].bench[0].dmg = 30;
+    const offers = E.legalActions(0).filter(a => a.t === 'power');
+    // selfOnly: the damaged Machop on the Bench is not a target.
+    eq(offers.length, 1, 'one target only');
+    E.act(0, offers[0]);
+    eq(vulpix.dmg, 20, 'healed 10 with no flip');
+    return eq(E.legalActions(0).filter(a => a.t === 'power').length, 0, 'and only once a turn');
+  });
+
+  T('Energy Charge pulls Lightning onto Magneton, but only while it is Active', () => {
+    const b = setup({ me: { card: 'gym1-8' }, them: { card: 'base1:Machop' },
+      myBench: [{ card: 'base1:Machop', energy: '1 Lightning' }] });
+    const E = b.E;
+    const offers = E.legalActions(0).filter(a => a.t === 'power');
+    eq(offers.length, 1, 'offered from the Bench onto Magneton');
+    E.act(0, offers[0]);
+    eq(E.state.players[0].active.energy.length, 1, 'Magneton gained it');
+    eq(E.state.players[0].bench[0].energy.length, 0, 'the Machop lost it');
+    // "As often as you like" — no `once`, so it is still on offer if there is
+    // more to move. Nothing left here, so the check is that it did not mark.
+    return eq(E.state.players[0].active.powerTurn, -1, 'not marked as once-per-turn');
+  });
+
+  T('...and it is silent when Magneton is on the Bench', () => {
+    // The `activeOnly` setting, which is the only thing separating this from
+    // Gather Fire. Energy Trans and Gather Fire both work from the Bench.
+    const b = setup({ me: { card: 'base1:Machop', energy: '1 Lightning' },
+      them: { card: 'base1:Machop' }, myBench: [{ card: 'gym1-8' }] });
+    const E = b.E;
+    return eq(E.legalActions(0).filter(a => a.t === 'power').length, 0, 'offered');
+  });
+
+  T('Shell Armor takes 10 off, after Weakness rather than before', () => {
+    const b = setup({ me: { card: 'base1:Machop', energy: '3 Fighting' },
+      them: { card: 'gym1-29' } });
+    const E = b.E;
+    const atk = E.state.players[0].active, def = E.state.players[1].active;
+    // Misty's Cloyster is Water and takes double from Lightning, not Fighting,
+    // so this pair is a clean read of the flat subtraction.
+    const d = E.computeDamage(atk, def, 30, {});
+    eq(d.dmg, 20, '30 -> 20');
+    // "(Any other effects of attacks still happen)" — a reduction, never a
+    // Barrier, so nothing is marked prevented.
+    return eq(d.prevented, false, 'not prevented');
+  });
+
+  T('Restless Sleep hits back for 20, but ONLY while Snorlax is Asleep', () => {
+    const b = setup({ me: { card: 'base1:Machop', energy: '3 Fighting' },
+      them: { card: 'gym1-33' } });
+    const E = b.E;
+    const atk = E.state.players[0].active, snorlax = E.state.players[1].active;
+    E.dealDamage(atk, snorlax, 20, {});
+    eq(atk.dmg, 0, 'awake, nothing comes back');
+    snorlax.status.asleep = true;
+    E.dealDamage(atk, snorlax, 20, {});
+    // `always: true` AND requireSelfAsleep. Neither alone is right: without
+    // `always` the status gate switches the Power off in the one state it keys
+    // on, which is the Dark Primeape trap.
+    return eq(atk.dmg, 20, 'asleep, 20 comes back');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
