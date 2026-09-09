@@ -3840,9 +3840,46 @@ class AI {
       }
 
       case 'playTrainer': return this.scoreTrainer(pi, a);
+      case 'stadiumAction': return this.scoreStadiumAction(pi, a);
       case 'pass': return 0;
       default: return -Infinity;
     }
+  }
+
+  // CELADON CITY GYM, and any interactive Gym after it. PROVISIONAL.
+  //
+  // AN ACTION TYPE IS A THIRD SILENT-FAILURE SURFACE, and this is the one the
+  // guards did not cover. `scoreAction` ends in `default: return -Infinity`, so a
+  // new `a.t` nobody scores is not misplayed — it is NEVER PLAYED, and no suite
+  // sees it because the card works perfectly for the human. That fails closed
+  // rather than open, which is the better of the two, but a Gym the bot cannot
+  // reach for is still a Gym it does not own. AI.md's Open list.
+  //
+  // Priced off T_FULL_HEAL's numbers deliberately: it is the same effect on the
+  // same target, so an unmeasured guess that MATCHES a shipped one is at least
+  // consistent, and the two move together when somebody finally measures either.
+  // The difference is the cost — Full Heal spends a card from hand, this spends an
+  // Energy off the board, which is a turn of build rather than a draw.
+  scoreStadiumAction(pi, a) {
+    const E = this.E, W = this.W;
+    const slot = E.allSlots(pi).find(s => s.uid === a.uid);
+    if (!slot) return -Infinity;
+    const st = slot.status;
+    let s = 0;
+    if (st.paralyzed || st.asleep) s += 24;
+    if (st.confused) s += 16;
+    if (st.poisoned) s += (slot.poisonDamage || 10);
+    // THE ENERGY IS THE PRICE AND IT IS NOT A CARD. Discarding one off a slot
+    // costs turns of build, which is what `attachBuild` denominates, so it is
+    // charged here rather than left implicit — otherwise the bot strips a fully
+    // charged attacker to shake off a Confusion it could simply attack through.
+    s -= W.energyDiscard;
+    // ...and it is much worse if it breaks an attack we could otherwise make.
+    // Reading the cost through the SLOT rather than the card is the same lesson
+    // energyPayOrder had to be taught under Energy Burn.
+    const before = this.bestAffordableDamage(pi, slot);
+    if (before > 0 && slot.energy.length === 1) s -= 10;
+    return s;
   }
 
   // ----------------------------------------------------------- trainer score

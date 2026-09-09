@@ -1084,6 +1084,13 @@ class Engine {
     // era says "before your attack", and attacking ends the turn anyway.
     this.powerActions(pi).forEach(a => acts.push(a));
 
+    // Celadon City Gym sits here rather than with the Trainers, because by the
+    // time it can be used it is not a card in anybody's hand — it is a board
+    // action, and the closest existing thing is an interactive Power.
+    for (const sl of this.celadonTargets(pi))
+      acts.push({ t: 'stadiumAction', uid: sl.uid,
+        label: `Celadon City Gym: discard Energy to heal ${this.nameOf(sl)}` });
+
     if (p.active && this.canAttackAtAll(pi)) {
       const c = topCard(this.db, p.active);
       (c.attacks || []).forEach((atkDef, i) => {
@@ -1099,6 +1106,56 @@ class Engine {
     }
     acts.push({ t: 'pass', label: 'End turn' });
     return acts;
+  }
+
+  // The one action a Stadium currently offers. Kept general rather than named
+  // for Celadon: a second interactive Gym adds a branch here instead of a second
+  // action type, exactly as doPower serves every interactive Power.
+  doStadiumAction(pi, a) {
+    const slot = this.celadonTargets(pi).find(s => s.uid === a.uid);
+    if (!slot) return this.fail('That is not a legal Gym target');
+    // takeEnergy, never splice: which Energy leaves is one decision point with a
+    // deterministic fallback, and a Gym does not get its own answer to it.
+    const e = this.takeEnergy(slot, 1, null, a.opts && a.opts.energyUids)[0];
+    if (!e) return this.fail('No Energy to discard');
+    this.state.players[pi].discard.push(e);
+    clearStatus(slot);
+    this.log(`${this.state.stadium.name}: ${this.nameOf(slot)} discards `
+      + `${this.db[e.id].name} and is healed of all Special Conditions.`, 'eff');
+    return { ok: true };
+  }
+
+  // VERMILION CITY GYM: "Whenever a player attacks with a Pokemon with Lt. Surge
+  // in its name, HE OR SHE MAY flip a coin." Optional, so it is a choice made up
+  // front and enumerated as one action per answer — the same shape Metronome and
+  // the Conversions already use, which is why the AI needs no new machinery to
+  // weigh it and the UI needs no new control.
+  //
+  // COMPOSED ONTO whatever the card already offered rather than replacing it: a
+  // Lt. Surge's Pokemon with its own up-front choice would otherwise lose that
+  // choice the moment this Gym hit the board. Nothing in Gym Heroes does both
+  // today, and building it the other way would have been invisible until
+  // something did.
+  // `idx` is not optional decoration: the fallback label for a plain attack is
+  // the ATTACK's name, and building it from the Pokemon's name instead made every
+  // attack on a Lt. Surge card read identically in the action list — two
+  // indistinguishable rows where the player is being asked to choose between
+  // them. Caught by a test that could not find "Charge" in its own board's
+  // options, which is the cheapest possible way to find a label bug.
+  gymFlipVariants(pi, idx, variants) {
+    const gym = this.stadium('STADIUM_ATTACK_BONUS_NAMED');
+    const atk = this.state.players[pi].active;
+    if (!gym || !this.stadiumNameMatch(atk, gym.who)) return variants;
+    const atkDef = (topCard(this.db, atk).attacks || [])[idx] || {};
+    const out = [];
+    for (const v of variants) {
+      const base = v || { opts: {}, label: null };
+      const name = base.label || `Attack: ${atkDef.name}`;
+      out.push({ opts: Object.assign({}, base.opts, { gymFlip: false }), label: name });
+      out.push({ opts: Object.assign({}, base.opts, { gymFlip: true }),
+        label: `${name} + ${gym.name} flip` });
+    }
+    return out;
   }
 
   allSlots(pi) {
@@ -1375,6 +1432,28 @@ class Engine {
     // spoken for and cannot pay its own toll.
     const payable = this.state.players[pi].hand.filter(x => x !== inst);
     return { name: gym.name, n, payable, blocked: payable.length < n };
+  }
+
+  // CELADON CITY GYM: "During each player's turn, that player may choose to
+  // discard an Energy card attached to 1 of his or her Pokemon with Erika in its
+  // name. If that player does so, that Pokemon is no longer Asleep, Confused,
+  // Paralyzed, or Poisoned."
+  //
+  // Returns the slots this player may use it on RIGHT NOW. One reader, so
+  // legalActions(), the act() case and ai.js cannot drift apart on what "may
+  // choose to" means — the same reason energyChoices() exists.
+  //
+  // NOT once per turn: the card prints no limit, and the cost is a real Energy
+  // each time. What actually bounds it is this filter — only the Active can carry
+  // a Special Condition in this era, so "1 of his or her Pokemon" collapses to at
+  // most one legal target without needing a rule that says so.
+  celadonTargets(pi) {
+    const gym = this.stadium('STADIUM_HEAL_STATUS_NAMED');
+    if (!gym) return [];
+    return this.allSlots(pi).filter(sl =>
+      this.stadiumNameMatch(sl, gym.who)
+      && sl.energy.length
+      && (sl.status.asleep || sl.status.confused || sl.status.paralyzed || sl.status.poisoned));
   }
 
   // Narrow Gym. The bench limit is a RULE, and a Stadium rewrites rules, so it
@@ -2603,6 +2682,7 @@ class Engine {
       case 'answer':       return this.doAnswer(pi, a);
       case 'attack':       return this.doAttack(pi, a);
       case 'power':        return this.doPower(pi, a);
+      case 'stadiumAction': return this.doStadiumAction(pi, a);
       case 'promote':      return this.doPromote(pi, a);
       case 'takePrize':    return this.doTakePrize(pi, a);
       case 'switchIn':     return this.doSwitchIn(pi, a);
@@ -4440,6 +4520,39 @@ class Engine {
       this.selfDamage(pi, atk, pendingRecoil, card.name);
     }
 
+    // VERMILION CITY GYM. Placed here because the heads branch is conditional on
+    // damage that has ALREADY been through Weakness and Resistance — "if that
+    // Pokemon's attack does damage to the Defending Pokemon (after applying
+    // Weakness and Resistance)" — so it cannot be folded into computeDamage.
+    {
+      const vg = this.stadium('STADIUM_ATTACK_BONUS_NAMED');
+      if (vg && a && a.opts && a.opts.gymFlip && this.stadiumNameMatch(atk, vg.who)) {
+        if (this.flip(`${vg.name}`)) {
+          if ((res.dealt || 0) > 0) {
+            // noWR because a flat bonus lands AFTER Weakness — the convention
+            // PlusPower already rests on. noRetaliate and noMirror because this
+            // is MORE DAMAGE FROM THE SAME ATTACK, not a second hit: Strikes Back
+            // and Mirror Shell already answered it a few lines above, and letting
+            // them answer twice would price one attack as two.
+            this.dealDamage(atk, def, vg.n, { noWR: true, noRetaliate: true, noMirror: true });
+            this.log(`${vg.name}: heads, ${vg.n} more damage.`, 'eff');
+          } else {
+            // Heads on an attack that dealt nothing. The card's condition simply
+            // is not met; the flip was still spent and that is the gamble.
+            this.log(`${vg.name}: heads, but the attack did no damage.`, 'eff');
+          }
+        } else {
+          // "the attacking Pokemon does 10 damage to itself in addition to
+          // whatever its attack usually does" — unconditional, and NOT waived by
+          // the defender preventing the hit. It is the attacker's own coin, the
+          // same reasoning that keeps Tauros confusing itself on a stopped attack.
+          // Through selfDamage, so a Defender blunts it per that ruling.
+          this.selfDamage(pi, atk, vg.n, vg.name);
+          this.log(`${vg.name}: tails, ${vg.n} to ${card.name}.`, 'eff');
+        }
+      }
+    }
+
     // post-damage verbs
     const blocked = negated || this.effectsBlocked(def);
     for (const st of pendingStatus) {
@@ -5487,9 +5600,10 @@ class Engine {
     }
     if (hasWk) {
       if (!def || !this.weaknessOf(def)) return [];            // "if it HAS a Weakness"
-      return types.map(t => ({ opts: { type: t }, label: `Conversion 1: Weakness to ${t}` }));
+      return this.gymFlipVariants(pi, idx,
+        types.map(t => ({ opts: { type: t }, label: `Conversion 1: Weakness to ${t}` })));
     }
-    return [null];
+    return this.gymFlipVariants(pi, idx, [null]);
   }
 
   // Weakness and Resistance are normally the card's, but Porygon's Conversion

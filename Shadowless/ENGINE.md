@@ -281,6 +281,18 @@ rides `pendingAsk` with a single new `resolveAsk` case. `legalActions()` and `ai
 already generic over the options list, so no fifth owed choice was created and the four-branch rule
 above is untouched. That is the payoff of the existing design, and it is the shape to copy.
 
+**Two of the seven carry a decision and they arrive by different doors.** Celadon City Gym is an
+*action* — offered in `legalActions` beside the interactive Powers, because by the time it can be
+used it is not a card in anybody's hand. Vermilion City Gym rides an *attack*, composed onto
+`attackVariants` so a Lt. Surge Pokémon with its own up-front choice keeps it; its heads branch is
+resolved after `res.dealt` is known, because the card conditions it on damage that has already been
+through Weakness and Resistance.
+
+**Celadon's action type found the one silent-failure surface nothing guards.** `scoreAction` ends in
+`default: return -Infinity`, so an `a.t` nobody scores is never played by anything, ever — and no
+suite covers action types the way they cover verbs, Power kinds and Stadium kinds.
+*[The item, and what a guard would cost →](AI.md)*
+
 *[The four rulings that came with building it →](Rulings/STADIUM-ZONE.md)*
 
 ## A question this raised, and the answer

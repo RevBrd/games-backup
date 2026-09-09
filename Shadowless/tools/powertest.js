@@ -6811,5 +6811,124 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- THE TWO GYMS WITH A DECISION IN THEM ----------------------------------
+// Celadon offers an ACTION; Vermilion rides an attack. Everything above this is
+// a rule read back through the method that owns it, and these two are the only
+// Gyms where something happens because somebody chose it.
+{
+  const { setup } = require('./lib/board.js');
+  const gym = (b, name) => {
+    const E = b.E, me = E.state.players[0];
+    const i = me.hand.findIndex(x => E.db[x.id].name === name);
+    if (i < 0) throw new Error('not in hand: ' + name);
+    const r = E.act(0, { t: 'playTrainer', hand: i, opts: {} });
+    if (!r.ok) throw new Error('refused: ' + (r.why || r.error));
+    return E;
+  };
+  const gymActs = (E) => E.legalActions(0).filter(a => a.t === 'stadiumAction');
+  const atkActs = (E) => E.legalActions(0).filter(a => a.t === 'attack');
+
+  T('Celadon City Gym discards an Energy and clears EVERY Special Condition', () => {
+    const b = setup({ me: { card: 'gym1-77', energy: '2 Grass' },
+      them: { card: 'base1:Gastly' }, myHand: ['Celadon City Gym'] });
+    const E = gym(b, 'Celadon City Gym');
+    const slot = E.state.players[0].active;
+    slot.status.asleep = true; slot.status.poisoned = true;
+    eq(gymActs(E).length, 1, 'offered');
+    E.act(0, gymActs(E)[0]);
+    eq(slot.energy.length, 1, 'one Energy gone');
+    eq(E.state.players[0].discard.length, 1, 'it reached the discard');
+    // "no longer Asleep, Confused, Paralyzed, OR Poisoned" — all of them, on one
+    // Energy. Clearing only the condition somebody happened to name would be a
+    // cheaper card than the one printed.
+    eq(slot.status.asleep || slot.status.poisoned, false, 'all conditions cleared');
+    return eq(gymActs(E).length, 0, 'not offered again with nothing left to cure');
+  });
+
+  T('...and it is scoped by NAME, so a Brock gets nothing from it', () => {
+    const b = setup({ me: { card: 'gym1-21', energy: '2 Fighting' },
+      them: { card: 'base1:Gastly' }, myHand: ['Celadon City Gym'] });
+    const E = gym(b, 'Celadon City Gym');
+    E.state.players[0].active.status.asleep = true;
+    return eq(gymActs(E).length, 0, 'offered');
+  });
+
+  T('...and with no Energy attached there is nothing to pay with', () => {
+    const b = setup({ me: { card: 'gym1-77' }, them: { card: 'base1:Gastly' },
+      myHand: ['Celadon City Gym'] });
+    const E = gym(b, 'Celadon City Gym');
+    E.state.players[0].active.status.asleep = true;
+    return eq(gymActs(E).length, 0, 'offered');
+  });
+
+  T('Vermilion City Gym turns each Lt. Surge attack into flip / no-flip', () => {
+    // gym1-52 is Lt. Surge's Spearow: one attack, Drill Peck for 20, no text.
+    const b = setup({ me: { card: 'gym1-52', energy: '1 Lightning' },
+      them: { card: 'base1:Machop' }, myHand: ['Vermilion City Gym'] });
+    const before = atkActs(b.E).length;
+    const E = gym(b, 'Vermilion City Gym');
+    eq(atkActs(E).length, before * 2, 'variants');
+    // DECLINING MUST STILL BE OFFERED. The card says "may flip", and a tails is a
+    // real cost — an enumeration that only offered the flip would be a different
+    // card and the bot would never get to refuse it.
+    eq(atkActs(E).some(a => a.opts.gymFlip === true), true, 'flip offered');
+    return eq(atkActs(E).some(a => a.opts.gymFlip === false), true, 'declining offered');
+  });
+
+  T('...and a Pokemon without the name is offered no flip at all', () => {
+    const b = setup({ me: { card: 'gym1-21', energy: '4 Fighting' },
+      them: { card: 'base1:Machop' }, myHand: ['Vermilion City Gym'] });
+    const before = atkActs(b.E).length;
+    const E = gym(b, 'Vermilion City Gym');
+    return eq(atkActs(E).length, before, 'unchanged');
+  });
+
+  T('Vermilion heads: 10 more damage to the Defending Pokemon', () => {
+    const mk = () => {
+      const b = setup({ me: { card: 'gym1-52', energy: '1 Lightning' },
+        them: { card: 'base1:Machop' }, myHand: ['Vermilion City Gym'] });
+      return gym(b, 'Vermilion City Gym');
+    };
+    const Ep = mk();
+    Ep.act(0, atkActs(Ep).find(a => a.opts.gymFlip === false));
+    const base = Ep.state.players[1].active.dmg;
+    eq(base, 20, 'Drill Peck alone');
+    const Eh = mk();
+    Eh.flip = () => true;
+    Eh.act(0, atkActs(Eh).find(a => a.opts.gymFlip === true));
+    return eq(Eh.state.players[1].active.dmg, base + 10, 'with a heads');
+  });
+
+  T('Vermilion tails: 10 to the attacker, and the attack still lands', () => {
+    const b = setup({ me: { card: 'gym1-52', energy: '1 Lightning' },
+      them: { card: 'base1:Machop' }, myHand: ['Vermilion City Gym'] });
+    const E = gym(b, 'Vermilion City Gym');
+    E.flip = () => false;
+    E.act(0, atkActs(E).find(a => a.opts.gymFlip === true));
+    eq(E.state.players[0].active.dmg, 10, 'the attacker took it');
+    // "in addition to whatever its attack usually does" — the hit is not replaced.
+    return eq(E.state.players[1].active.dmg, 20, 'the defender still took the hit');
+  });
+
+  T('Vermilion heads adds NOTHING to an attack that deals no damage', () => {
+    // gym1-6 is Lt. Surge's Electabuzz, whose first attack is Charge — a setup
+    // move for 0. The card's condition is "if that Pokemon's attack DOES damage
+    // to the Defending Pokemon (after applying Weakness and Resistance)", so a
+    // heads here buys nothing and the flip is spent anyway.
+    //
+    // Found by accident: a scratch test picked this card without noticing and
+    // read as a failure. It is the clause working, and it is here on purpose now.
+    const b = setup({ me: { card: 'gym1-6', energy: '1 Lightning' },
+      them: { card: 'base1:Machop' }, myHand: ['Vermilion City Gym'] });
+    const E = gym(b, 'Vermilion City Gym');
+    E.flip = () => true;
+    const charge = atkActs(E).find(a => a.opts.gymFlip === true && /Charge/.test(a.label));
+    if (!charge) throw new Error('Charge was not offered: ' + atkActs(E).map(a => a.label));
+    E.act(0, charge);
+    return eq(E.state.players[1].active.dmg, 0, 'defender damage');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

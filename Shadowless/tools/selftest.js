@@ -98,7 +98,7 @@ const REMAINING = {
   // and which cannot be substituted — any stat we DO model is derivable from the
   // card name the quiz itself reveals, so a bot guesses right every time and the
   // card becomes strictly bad. The mechanism for omitting it is not chosen yet.
-  gym1: 127,
+  gym1: 125,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the

@@ -539,3 +539,32 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     `wallRoadInDeck` (item 11) because it is not an effect verb and cannot go on `PROVISIONAL`.
     **The offensive half — mill effects gaining value as their deck shrinks — is not built and should
     not be opened by tuning Wildfire**, which Trevor has declined and is right to.
+
+16. **An ACTION TYPE is a third silent-failure surface, and it is the one nothing guards — 8 Sep
+    2026, Job 16.** This file's opening line is about a *verb* the scorer cannot price, and
+    `selftest.js` covers that, plus Power kinds, plus (since Gym Heroes) Stadium kinds. **None of
+    them sees a new `a.t`.**
+
+    `scoreAction` ends in `default: return -Infinity`. So an action type nobody scored is not
+    misplayed — it is **never played at all**, by anything, forever. The Stadium zone added
+    `stadiumAction` for Celadon City Gym, and until it was scored the bot owned a card it could not
+    reach for, with every suite green and the card working perfectly for the human.
+
+    **It fails CLOSED, which is why it has survived unnoticed and why it is item 16 rather than a
+    bug.** An unscored verb is played badly and shows up in a log; an unscored action type is absent
+    from every log there has ever been. That is strictly harder to find and strictly less harmful,
+    and the two properties are the same property.
+
+    **What it would cost:** `legalActions()` can emit an `a.t` and `scoreAction`'s switch can be
+    read for its cases, both statically, so this is the same shape as the three guards that already
+    exist — walk one list, assert the other covers it, with an opt-out set for anything deliberately
+    priced at `-Infinity`. The existing action types are few and all scored, so it goes in green;
+    **write it before the next one is added, not after**, since a guard added after the fact cannot
+    tell you what it would have caught.
+
+    **`scoreStadiumAction`'s weights are a first guess** and are deliberately priced off
+    `T_FULL_HEAL`'s shipped numbers rather than off a fresh invention — same effect, same target, so
+    two unmeasured guesses that agree are at least consistent and will move together when either is
+    measured. It cannot go on `PROVISIONAL`, which holds effect verbs; it is recorded here beside
+    `prizeIndex` (item 3), `wallRoadInDeck` (item 11) and `W.deckOutRange` (item 15) for the same
+    reason.

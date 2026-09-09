@@ -2175,6 +2175,8 @@ const EFFECTS = {
   // onPlay: replaying Narrow Gym really does force another Bench return, so it is
   // exempt from the "a Stadium that changes nothing is unplayable" gate.
   'gym1-124': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_BENCH_CAP', n: 4, onPlay: true }] },
+  'gym1-107': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_HEAL_STATUS_NAMED', who: 'Erika' }] },
+  'gym1-120': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_ATTACK_BONUS_NAMED', n: 10, who: 'Lt. Surge' }] },
 
 };
 
