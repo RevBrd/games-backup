@@ -581,6 +581,14 @@ class AI {
         case 'HEAL_SELF_ALL': flags.healAll = true; break;
         case 'HEAL_SELF': flags.heal = v.n; break;
         case 'HEAL_SELF_IF_DAMAGED': flags.heal = v.n; break;
+        // Mega Drain. The heal is HALF THE DAMAGE THIS ATTACK LANDS rather than a
+        // printed number, so it cannot be read off the script the way `heal` is —
+        // it is derived from the damage the forecast is already computing.
+        // Rounded up to the nearest 10, exactly as the engine does it, and capped
+        // at the damage actually on us: healing counters we do not have is worth
+        // nothing and pricing it as if it were is how a wall over-values a drain.
+        case 'DRAIN_HALF':
+          flags.drainHalf = true; break;
         case 'ONCE_WHILE_IN_PLAY': flags.oncePerStay = true; break;
 
         // Everything below scored as plain base damage until 10 Aug 2026. See
@@ -1210,6 +1218,21 @@ class AI {
     if (f.flags.destinyBond) s += frail ? W.destinyBond * 1.8 : W.destinyBond * 0.3;
     if (f.flags.healAll) s += Math.min(atkSlot.dmg, this.top(atkSlot).hp) / 10 * W.healPer10;
     if (f.flags.heal) s += Math.min(f.flags.heal * 10, atkSlot.dmg) / 10 * W.healPer10;
+    // Mega Drain. Priced off the damage this attack is FORECAST to do rather than
+    // off a printed number, and capped at the damage actually sitting on us —
+    // healing counters we do not have is worth nothing, and a wall that prices it
+    // as if it were will drain on a full-health board for free.
+    if (f.flags.drainHalf) {
+      // expDmg, NOT `f.dmg` — the forecast has no such field, and `|| 0` would
+      // have made this term silently zero forever. Exactly the shape AI.md warns
+      // about: free at runtime, wrong for good, invisible to every suite.
+      // `expDmg` is damage DONE after W/R, which is what the card measures —
+      // `expUseful` caps at remaining HP and would under-heal against anything
+      // nearly dead.
+      const landed = Math.max(0, f.expDmg || 0);
+      const back = Math.min(Math.ceil(landed / 2 / 10) * 10, atkSlot.dmg);
+      s += back / 10 * W.healPer10;
+    }
     // Leech Life and friends heal from the damage actually dealt, so it is worth
     // nothing on an undamaged attacker and nothing against a Barrier.
     if (f.flags.leech) s += Math.min(f.expDmg * f.flags.leech, atkSlot.dmg) / 10 * W.healPer10;
@@ -2861,6 +2884,23 @@ class AI {
     if (!slot) return -Infinity;
 
     switch (a.kind) {
+      case 'GUST_ON_FLIP': {
+        // PROVISIONAL. Fragrance Trap is Gust of Wind on a coin, so it is priced
+        // off the same answer the Trainer uses — `bestDragTarget` and
+        // `dragScore` — rather than a second opinion about which Benched Pokemon
+        // is worth dragging. Halved for the flip.
+        //
+        // The action already carries its own target from powerActions, so unlike
+        // T_SWITCH_OPPONENT this does NOT get to pick: each candidate is a
+        // separate action and the scorer ranks them against each other.
+        const you = E.state.players[1 - pi];
+        const b = you.bench[a.bench];
+        if (!b) return -Infinity;
+        const d = this.bestDragTarget(pi);
+        // Score THIS candidate, not the best one — the enumeration already split
+        // them, and reporting the best for every option would flatten the choice.
+        return (d.bench === a.bench ? this.dragScore(d) : this.dragScore(d) * 0.4) / 2;
+      }
       // ENERGY_AS is passive as of 16 Aug 2026 — Charizard's Energy Burn is
       // simply always on, so there is no action to score and no flag to flip.
       // `bestAttackScore` already sees Fire symbols wherever the engine does.

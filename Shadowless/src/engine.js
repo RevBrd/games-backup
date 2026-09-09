@@ -1936,6 +1936,19 @@ class Engine {
                                       : `${p.name}: flip to heal ${this.nameOf(to)}` });
           }
           break;
+        case 'GUST_ON_FLIP': {
+          // Erika's Victreebel. Gust of Wind on a coin, once a turn. The TARGET is
+          // chosen now and the coin is thrown on resolve — HEAL_ON_FLIP's shape,
+          // and the same reasoning: the player is picking who, not whether.
+          if (this.powerSpent(slot)) break;
+          const theirs = this.state.players[1 - pi];
+          if (!theirs.active || !theirs.bench.length) break;
+          theirs.bench.forEach((b, bi) => {
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, bench: bi,
+                        label: `${p.name}: flip to drag up ${this.nameOf(b)}` });
+          });
+          break;
+        }
         case 'CHANGE_OWN_TYPE':
           if (this.powerSpent(slot)) break;
           for (const t of this.typesInPlay(slot)) {
@@ -2170,6 +2183,19 @@ class Engine {
         } else {
           this.log(`${p.name}: tails, nothing healed.`, 'eff');
         }
+        return { ok: true };
+      }
+      case 'GUST_ON_FLIP': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const theirs = this.state.players[1 - pi];
+        const bi = a.bench;
+        if (!theirs.active || !theirs.bench[bi]) return this.fail('No such Benched Pokemon');
+        this.markPower(slot);
+        if (!this.flip(p.name)) { this.log(`${p.name}: tails, nothing moves.`, 'eff'); return { ok: true }; }
+        const b = theirs.bench[bi], old = theirs.active;
+        clearStatus(old);
+        theirs.active = b; theirs.bench.splice(bi, 1); theirs.bench.push(old);
+        this.log(`${p.name}: ${this.nameOf(b)} is dragged into the Active spot.`, 'eff');
         return { ok: true };
       }
       case 'CHANGE_OWN_TYPE': {
@@ -5456,10 +5482,36 @@ class Engine {
           break;
         }
         case 'MIRROR_SHELL':
+          // THE DELAYED-COUNTER FAMILY, widened in Job 16. shapecount reports six
+          // distinct texts across five sets for "during your opponent's next turn
+          // (even if...)", so this is machinery rather than a special case — and
+          // one of the six was already built, which is what made the other two
+          // settings instead of code.
+          //
+          //   Mirror Shell   equal damage, no flip          (base5 Dark Wartortle)
+          //   Crosscounter   double, on a coin              (gym1 Rocket's Hitmonchan)
+          //   Fire Wall      a flat 10, and W/R APPLIES     (gym1 Rocket's Moltres)
+          //
+          // Neo's Wobbuffet and Shining Mewtwo are the remaining two and should
+          // land here as settings too.
           atk.effects.push({ kind: 'MIRROR_SHELL', label: v.label || 'Mirror Shell',
+            fixed: v.fixed, mult: v.mult, flip: !!v.flip, wr: !!v.wr,
             expireAtStartOfTurn: s.turn + 2 });
-          this.log(`${card.name} raises its shell.`, 'eff');
+          this.log(`${card.name} braces for the next hit.`, 'eff');
           break;
+        case 'DRAIN_HALF': {
+          // Erika's Vileplume's Mega Drain. "...equal to HALF THE DAMAGE DONE to
+          // the Defending Pokemon (rounded UP to the nearest 10)". Reads what
+          // actually landed, so a prevented hit heals nothing, and it rounds the
+          // opposite way from Kabuto Armor — which halves and rounds DOWN.
+          const got = res.dealt || 0;
+          if (got > 0 && atk.dmg > 0) {
+            const heal = Math.min(Math.ceil(got / 2 / 10) * 10, atk.dmg);
+            atk.dmg -= heal;
+            this.log(`${card.name} drains ${heal}.`, 'eff');
+          }
+          break;
+        }
         case 'SCATTER_OWN_ENERGY': {
           // Dark Electrode's Energy Bomb. Everything on the attacker moves to
           // our OWN Bench, distributed however we like — and is DISCARDED
@@ -6026,6 +6078,23 @@ class Engine {
         dmg = Math.max(0, dmg - (soft.n || 10));
         steps.push(`${soft.name}: -${soft.n || 10} -> ${dmg}.`);
       }
+      // ERIKA'S DRATINI, Strange Barrier: "whenever an attack by a BASIC Pokemon
+      // (INCLUDING YOUR OWN) does 20 or more damage ... reduce that damage to 10."
+      //
+      // The only passive in the game that reads the ATTACKER's card rather than
+      // the defender's, so it is the one that would break if `atkSlot` were ever
+      // allowed to be null here. It reads topCard, so a Ditto transformed into a
+      // Basic counts as one — which is what "is a Basic Pokemon" has to mean once
+      // baseCard and topCard disagree.
+      //
+      // "(including your own)" is the card telling us NOT to scope this by side,
+      // and a bench splash from our own Selfdestruct is exactly the case it names.
+      const bar = this.activePower(defSlot, 'REDUCE_FROM_BASIC');
+      if (bar && atkSlot && dmg >= (bar.atLeast || 20)
+          && topCard(this.db, atkSlot).stage === 'Basic') {
+        dmg = bar.to === undefined ? 10 : bar.to;
+        steps.push(`${bar.name}: a Basic's hit is cut to ${dmg}.`);
+      }
     }
     let prevented = false;
     const absolute = defSlot.effects.find(e => e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS');
@@ -6073,6 +6142,7 @@ class Engine {
       // player is already looking at.
       this.log(`${D.name} takes ${r.dmg}. (${Math.max(0, D.hp - defSlot.dmg)}/${D.hp} left)`, 'dmg');
       this.retaliate(atkSlot, defSlot, opts);
+      this.damagedStatus(atkSlot, defSlot, opts);
       // Beside retaliate on purpose: both fire on damage that LANDED, and both
       // must fire before anything is Knocked Out. `noMirror` stops two Mirror
       // Shells answering each other forever.
@@ -6108,8 +6178,42 @@ class Engine {
     if (side === null) return;
     const target = this.state.players[1 - side].active;
     if (!target) return;
-    this.log(`Mirror Shell: ${this.nameOf(defSlot)} answers for ${dealt}.`, 'eff');
-    this.dealDamage(defSlot, target, dealt, { noWR: true, noRetaliate: true, noMirror: true, notAttack: true });
+    // Crosscounter alone flips, and it flips AT THE MOMENT IT ANSWERS rather than
+    // when it was set up — the card reads "if an attack does damage ... flip a
+    // coin", so a turn in which nothing hits costs no coin.
+    if (shell.flip && !this.flip(shell.label)) {
+      this.log(`${shell.label}: tails, no answer.`, 'eff');
+      return;
+    }
+    const amount = shell.fixed !== undefined && shell.fixed !== null
+      ? shell.fixed : dealt * (shell.mult || 1);
+    this.log(`${shell.label}: ${this.nameOf(defSlot)} answers for ${amount}.`, 'eff');
+    // NOT AN ATTACK, all three of them, even though each says "attacks" — settled
+    // for Mirror Shell in Rulings/POWER-IS-NOT-AN-ATTACK.md and inherited here
+    // rather than re-argued. `wr` is the one thing that varies, and only because
+    // Fire Wall prints "(Apply Weakness and Resistance.)" in so many words.
+    this.dealDamage(defSlot, target, amount,
+      { noWR: !shell.wr, noRetaliate: true, noMirror: true, notAttack: true });
+  }
+
+  // POLLEN DEFENSE. Fires at the same moment retaliate does — damage has landed,
+  // nothing is Knocked Out yet — which is what "(even if it's Knocked Out)" needs.
+  // A sibling rather than a branch inside retaliate(): that one answers with
+  // damage and this one with a status, and folding them would make the shared
+  // half smaller than the differences.
+  damagedStatus(atkSlot, defSlot, opts) {
+    if (opts.noRetaliate || !atkSlot || atkSlot === defSlot) return;
+    const p = this.powerOf(defSlot);
+    if (!p || p.kind !== 'DAMAGED_STATUS' || !this.powerUsable(defSlot)) return;
+    // "while it's your ACTIVE Pokemon"
+    const side = this.sideOf(defSlot);
+    if (side === null || this.state.players[side].active !== defSlot) return;
+    if (p.flip && !this.flip(p.name)) { this.log(`${p.name}: tails.`, 'eff'); return; }
+    const target = this.state.players[1 - side].active;
+    if (!target) return;
+    if (this.effectsBlocked(target)) { this.log(`${p.name}: ${this.nameOf(target)} is protected.`, 'eff'); return; }
+    this.applyStatus(target, p.status);
+    this.log(`${p.name}: ${this.nameOf(target)} is now ${p.status}.`, 'eff');
   }
 
   retaliate(atkSlot, defSlot, opts) {
@@ -6160,9 +6264,35 @@ class Engine {
               this.log(`Destiny Bond: ${this.nameOf(killer)} is dragged down with ${c.name}!`, 'ko');
             }
           }
+          // ROCKET'S MOLTRES, Rebirth: "you may return it to your hand AFTER
+          // discarding it." Read before the slot is emptied, because powerOf and
+          // powerUsable both need the card still to be there.
+          //
+          // Resolved as always-taken. "You may" has one sensible answer: the
+          // Prize is handed over either way, so declining is strictly worse. Same
+          // reasoning as Shell Armor's "you may reduce".
+          const reb = this.powerOf(slot);
+          // topInst, NOT baseCard: baseCard returns the card DEFINITION out of the
+          // db and the discard pile holds INSTANCES. `rebirth.uid` was undefined,
+          // the findIndex never matched, and the card quietly stayed in the pile —
+          // a Power that looked implemented and did nothing, which is the failure
+          // this whole pass exists to stamp out.
+          const rebirth = reb && reb.kind === 'REBIRTH' && this.powerUsable(slot)
+            ? topInst(slot) : null;
           slot.stack.forEach(x => p.discard.push(x));
           slot.energy.forEach(x => p.discard.push(x));
           slot.effects.forEach(e => { if (e.card) p.discard.push(e.card); });
+          if (rebirth) {
+            // Literally "after discarding it": everything goes to the pile, then
+            // the card itself comes back out. Attached Energy STAYS discarded,
+            // which is what "return IT" means and what the discard-then-retrieve
+            // order makes true without a second rule.
+            const at = p.discard.findIndex(x => x.uid === rebirth.uid);
+            if (at >= 0) {
+              p.hand.push(p.discard.splice(at, 1)[0]);
+              this.log(`${reb.name}: ${this.db[rebirth.id].name} returns to ${p.name}'s hand.`, 'eff');
+            }
+          }
           if (fromBench) p.bench.splice(idx, 1); else p.active = null;
           // "If Clefairy Doll is Knocked Out, it doesn't count as a Knocked Out
           // Pokemon" — no Prize. The no-Pokemon-left loss below still applies,

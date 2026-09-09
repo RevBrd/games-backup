@@ -4187,7 +4187,13 @@ const SET_INFO = {
 //     BENCH_SPLASH_PER_FLIP {dmg}  a coin per opposing Benched Pokemon; heads hits
 //                                  it, and every tail comes back at you (Thunderstorm)
 //     BENCH_SPLASH_FLIP_SIDE {n}   ONE coin decides whose Bench takes it (Blizzard)
-//     MIRROR_SHELL                 anything that damages SELF during the
+//     DRAIN_HALF                   heal SELF by half the damage this attack landed,
+//                                  rounded UP to the nearest 10 (Mega Drain). Reads
+//                                  what actually landed, so a prevented hit heals
+//                                  nothing — and it rounds the OPPOSITE way from
+//                                  Kabuto Armor, which halves and rounds down
+//     MIRROR_SHELL {label, fixed, mult, flip, wr}
+//                                  anything that damages SELF during the
 //                                  opponent's next turn is answered for the same
 //                                  amount, aimed at whoever is Active opposite —
 //                                  and it fires even if self was Knocked Out by
@@ -4836,6 +4842,21 @@ const SET_INFO = {
 //     DAMAGE_BONUS      {amount, label}     added AFTER W/R          (PlusPower)
 //     DAMAGE_REDUCTION  {amount, label}     subtracted AFTER W/R     (Defender)
 //   ...and its POWER-side twin, which is a Power kind rather than an effect:
+//     REDUCE_FROM_BASIC {atLeast, to, name} passive. An attack BY A BASIC doing
+//                                           `atLeast` or more is cut to `to`
+//                                           (Strange Barrier). The only passive
+//                                           that reads the ATTACKER's card
+//     DAMAGED_STATUS    {status, flip, name} triggered. Fires where RETALIATE does
+//                                           — damage landed, nothing dead yet — and
+//                                           answers with a status on their Active
+//                                           instead of damage (Pollen Defense)
+//     REBIRTH           {name}              triggered. On being Knocked Out, the
+//                                           card itself returns to hand after the
+//                                           discard (Rebirth). Attached cards stay
+//                                           in the pile
+//     GUST_ON_FLIP      {name}              INTERACTIVE, once a turn. Pick one of
+//                                           their Benched Pokemon, then flip; heads
+//                                           drags it up (Fragrance Trap)
 //     DAMAGE_REDUCE     {n, name}           a passive flat reduction AFTER W/R,
 //                                           read from the defender's own Power
 //                                           (Shell Armor). Resolved as always-on:
@@ -6232,6 +6253,19 @@ const EFFECTS = {
                     always: true, requireSelfAsleep: true },
     a: [[{ v: 'STATUS_SELF', s: 'Asleep' }]] },            // Rocket's Snorlax: Collapse
 
+  // The delayed-counter family, and the two Powers that come with these cards.
+  'gym1-11': { a: [[{ v: 'MIRROR_SHELL', label: 'Crosscounter', mult: 2, flip: true }],
+                   []] },                                   // Rocket's Hitmonchan: Crosscounter; Magnum Punch (plain)
+  'gym1-12': { p: { kind: 'REBIRTH', name: 'Rebirth' },
+    a: [[{ v: 'MIRROR_SHELL', label: 'Fire Wall', fixed: 10, wr: true }]] },   // Rocket's Moltres: Fire Wall
+  'gym1-5':  { p: { kind: 'DAMAGED_STATUS', name: 'Pollen Defense', status: 'Confused',
+                    flip: true, always: true },
+    a: [[{ v: 'DRAIN_HALF' }]] },                           // Erika's Vileplume: Mega Drain
+  'gym1-26': { p: { kind: 'GUST_ON_FLIP', name: 'Fragrance Trap' },
+    a: [[]] },                                              // Erika's Victreebel: Razor Leaf (plain)
+  'gym1-42': { p: { kind: 'REDUCE_FROM_BASIC', name: 'Strange Barrier', atLeast: 20, to: 10 },
+    a: [[{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Tail Strike' }]] },   // Erika's Dratini: Tail Strike
+
   // Sabrina's Drowzee — the first Gym Heroes Pokemon, and it needed no new verb.
   // Suggestion is Leer's shape exactly; Headbutt is plain damage.
 
@@ -7312,6 +7346,14 @@ class AI {
         case 'HEAL_SELF_ALL': flags.healAll = true; break;
         case 'HEAL_SELF': flags.heal = v.n; break;
         case 'HEAL_SELF_IF_DAMAGED': flags.heal = v.n; break;
+        // Mega Drain. The heal is HALF THE DAMAGE THIS ATTACK LANDS rather than a
+        // printed number, so it cannot be read off the script the way `heal` is —
+        // it is derived from the damage the forecast is already computing.
+        // Rounded up to the nearest 10, exactly as the engine does it, and capped
+        // at the damage actually on us: healing counters we do not have is worth
+        // nothing and pricing it as if it were is how a wall over-values a drain.
+        case 'DRAIN_HALF':
+          flags.drainHalf = true; break;
         case 'ONCE_WHILE_IN_PLAY': flags.oncePerStay = true; break;
 
         // Everything below scored as plain base damage until 10 Aug 2026. See
@@ -7941,6 +7983,21 @@ class AI {
     if (f.flags.destinyBond) s += frail ? W.destinyBond * 1.8 : W.destinyBond * 0.3;
     if (f.flags.healAll) s += Math.min(atkSlot.dmg, this.top(atkSlot).hp) / 10 * W.healPer10;
     if (f.flags.heal) s += Math.min(f.flags.heal * 10, atkSlot.dmg) / 10 * W.healPer10;
+    // Mega Drain. Priced off the damage this attack is FORECAST to do rather than
+    // off a printed number, and capped at the damage actually sitting on us —
+    // healing counters we do not have is worth nothing, and a wall that prices it
+    // as if it were will drain on a full-health board for free.
+    if (f.flags.drainHalf) {
+      // expDmg, NOT `f.dmg` — the forecast has no such field, and `|| 0` would
+      // have made this term silently zero forever. Exactly the shape AI.md warns
+      // about: free at runtime, wrong for good, invisible to every suite.
+      // `expDmg` is damage DONE after W/R, which is what the card measures —
+      // `expUseful` caps at remaining HP and would under-heal against anything
+      // nearly dead.
+      const landed = Math.max(0, f.expDmg || 0);
+      const back = Math.min(Math.ceil(landed / 2 / 10) * 10, atkSlot.dmg);
+      s += back / 10 * W.healPer10;
+    }
     // Leech Life and friends heal from the damage actually dealt, so it is worth
     // nothing on an undamaged attacker and nothing against a Barrier.
     if (f.flags.leech) s += Math.min(f.expDmg * f.flags.leech, atkSlot.dmg) / 10 * W.healPer10;
@@ -9592,6 +9649,23 @@ class AI {
     if (!slot) return -Infinity;
 
     switch (a.kind) {
+      case 'GUST_ON_FLIP': {
+        // PROVISIONAL. Fragrance Trap is Gust of Wind on a coin, so it is priced
+        // off the same answer the Trainer uses — `bestDragTarget` and
+        // `dragScore` — rather than a second opinion about which Benched Pokemon
+        // is worth dragging. Halved for the flip.
+        //
+        // The action already carries its own target from powerActions, so unlike
+        // T_SWITCH_OPPONENT this does NOT get to pick: each candidate is a
+        // separate action and the scorer ranks them against each other.
+        const you = E.state.players[1 - pi];
+        const b = you.bench[a.bench];
+        if (!b) return -Infinity;
+        const d = this.bestDragTarget(pi);
+        // Score THIS candidate, not the best one — the enumeration already split
+        // them, and reporting the best for every option would flatten the choice.
+        return (d.bench === a.bench ? this.dragScore(d) : this.dragScore(d) * 0.4) / 2;
+      }
       // ENERGY_AS is passive as of 16 Aug 2026 — Charizard's Energy Burn is
       // simply always on, so there is no action to score and no flag to flip.
       // `bestAttackScore` already sees Fire symbols wherever the engine does.
@@ -13968,6 +14042,19 @@ class Engine {
                                       : `${p.name}: flip to heal ${this.nameOf(to)}` });
           }
           break;
+        case 'GUST_ON_FLIP': {
+          // Erika's Victreebel. Gust of Wind on a coin, once a turn. The TARGET is
+          // chosen now and the coin is thrown on resolve — HEAL_ON_FLIP's shape,
+          // and the same reasoning: the player is picking who, not whether.
+          if (this.powerSpent(slot)) break;
+          const theirs = this.state.players[1 - pi];
+          if (!theirs.active || !theirs.bench.length) break;
+          theirs.bench.forEach((b, bi) => {
+            acts.push({ t: 'power', uid: slot.uid, kind: p.kind, bench: bi,
+                        label: `${p.name}: flip to drag up ${this.nameOf(b)}` });
+          });
+          break;
+        }
         case 'CHANGE_OWN_TYPE':
           if (this.powerSpent(slot)) break;
           for (const t of this.typesInPlay(slot)) {
@@ -14202,6 +14289,19 @@ class Engine {
         } else {
           this.log(`${p.name}: tails, nothing healed.`, 'eff');
         }
+        return { ok: true };
+      }
+      case 'GUST_ON_FLIP': {
+        if (this.powerSpent(slot)) return this.fail(`${p.name} has already been used this turn`);
+        const theirs = this.state.players[1 - pi];
+        const bi = a.bench;
+        if (!theirs.active || !theirs.bench[bi]) return this.fail('No such Benched Pokemon');
+        this.markPower(slot);
+        if (!this.flip(p.name)) { this.log(`${p.name}: tails, nothing moves.`, 'eff'); return { ok: true }; }
+        const b = theirs.bench[bi], old = theirs.active;
+        clearStatus(old);
+        theirs.active = b; theirs.bench.splice(bi, 1); theirs.bench.push(old);
+        this.log(`${p.name}: ${this.nameOf(b)} is dragged into the Active spot.`, 'eff');
         return { ok: true };
       }
       case 'CHANGE_OWN_TYPE': {
@@ -17488,10 +17588,36 @@ class Engine {
           break;
         }
         case 'MIRROR_SHELL':
+          // THE DELAYED-COUNTER FAMILY, widened in Job 16. shapecount reports six
+          // distinct texts across five sets for "during your opponent's next turn
+          // (even if...)", so this is machinery rather than a special case — and
+          // one of the six was already built, which is what made the other two
+          // settings instead of code.
+          //
+          //   Mirror Shell   equal damage, no flip          (base5 Dark Wartortle)
+          //   Crosscounter   double, on a coin              (gym1 Rocket's Hitmonchan)
+          //   Fire Wall      a flat 10, and W/R APPLIES     (gym1 Rocket's Moltres)
+          //
+          // Neo's Wobbuffet and Shining Mewtwo are the remaining two and should
+          // land here as settings too.
           atk.effects.push({ kind: 'MIRROR_SHELL', label: v.label || 'Mirror Shell',
+            fixed: v.fixed, mult: v.mult, flip: !!v.flip, wr: !!v.wr,
             expireAtStartOfTurn: s.turn + 2 });
-          this.log(`${card.name} raises its shell.`, 'eff');
+          this.log(`${card.name} braces for the next hit.`, 'eff');
           break;
+        case 'DRAIN_HALF': {
+          // Erika's Vileplume's Mega Drain. "...equal to HALF THE DAMAGE DONE to
+          // the Defending Pokemon (rounded UP to the nearest 10)". Reads what
+          // actually landed, so a prevented hit heals nothing, and it rounds the
+          // opposite way from Kabuto Armor — which halves and rounds DOWN.
+          const got = res.dealt || 0;
+          if (got > 0 && atk.dmg > 0) {
+            const heal = Math.min(Math.ceil(got / 2 / 10) * 10, atk.dmg);
+            atk.dmg -= heal;
+            this.log(`${card.name} drains ${heal}.`, 'eff');
+          }
+          break;
+        }
         case 'SCATTER_OWN_ENERGY': {
           // Dark Electrode's Energy Bomb. Everything on the attacker moves to
           // our OWN Bench, distributed however we like — and is DISCARDED
@@ -18058,6 +18184,23 @@ class Engine {
         dmg = Math.max(0, dmg - (soft.n || 10));
         steps.push(`${soft.name}: -${soft.n || 10} -> ${dmg}.`);
       }
+      // ERIKA'S DRATINI, Strange Barrier: "whenever an attack by a BASIC Pokemon
+      // (INCLUDING YOUR OWN) does 20 or more damage ... reduce that damage to 10."
+      //
+      // The only passive in the game that reads the ATTACKER's card rather than
+      // the defender's, so it is the one that would break if `atkSlot` were ever
+      // allowed to be null here. It reads topCard, so a Ditto transformed into a
+      // Basic counts as one — which is what "is a Basic Pokemon" has to mean once
+      // baseCard and topCard disagree.
+      //
+      // "(including your own)" is the card telling us NOT to scope this by side,
+      // and a bench splash from our own Selfdestruct is exactly the case it names.
+      const bar = this.activePower(defSlot, 'REDUCE_FROM_BASIC');
+      if (bar && atkSlot && dmg >= (bar.atLeast || 20)
+          && topCard(this.db, atkSlot).stage === 'Basic') {
+        dmg = bar.to === undefined ? 10 : bar.to;
+        steps.push(`${bar.name}: a Basic's hit is cut to ${dmg}.`);
+      }
     }
     let prevented = false;
     const absolute = defSlot.effects.find(e => e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS');
@@ -18105,6 +18248,7 @@ class Engine {
       // player is already looking at.
       this.log(`${D.name} takes ${r.dmg}. (${Math.max(0, D.hp - defSlot.dmg)}/${D.hp} left)`, 'dmg');
       this.retaliate(atkSlot, defSlot, opts);
+      this.damagedStatus(atkSlot, defSlot, opts);
       // Beside retaliate on purpose: both fire on damage that LANDED, and both
       // must fire before anything is Knocked Out. `noMirror` stops two Mirror
       // Shells answering each other forever.
@@ -18140,8 +18284,42 @@ class Engine {
     if (side === null) return;
     const target = this.state.players[1 - side].active;
     if (!target) return;
-    this.log(`Mirror Shell: ${this.nameOf(defSlot)} answers for ${dealt}.`, 'eff');
-    this.dealDamage(defSlot, target, dealt, { noWR: true, noRetaliate: true, noMirror: true, notAttack: true });
+    // Crosscounter alone flips, and it flips AT THE MOMENT IT ANSWERS rather than
+    // when it was set up — the card reads "if an attack does damage ... flip a
+    // coin", so a turn in which nothing hits costs no coin.
+    if (shell.flip && !this.flip(shell.label)) {
+      this.log(`${shell.label}: tails, no answer.`, 'eff');
+      return;
+    }
+    const amount = shell.fixed !== undefined && shell.fixed !== null
+      ? shell.fixed : dealt * (shell.mult || 1);
+    this.log(`${shell.label}: ${this.nameOf(defSlot)} answers for ${amount}.`, 'eff');
+    // NOT AN ATTACK, all three of them, even though each says "attacks" — settled
+    // for Mirror Shell in Rulings/POWER-IS-NOT-AN-ATTACK.md and inherited here
+    // rather than re-argued. `wr` is the one thing that varies, and only because
+    // Fire Wall prints "(Apply Weakness and Resistance.)" in so many words.
+    this.dealDamage(defSlot, target, amount,
+      { noWR: !shell.wr, noRetaliate: true, noMirror: true, notAttack: true });
+  }
+
+  // POLLEN DEFENSE. Fires at the same moment retaliate does — damage has landed,
+  // nothing is Knocked Out yet — which is what "(even if it's Knocked Out)" needs.
+  // A sibling rather than a branch inside retaliate(): that one answers with
+  // damage and this one with a status, and folding them would make the shared
+  // half smaller than the differences.
+  damagedStatus(atkSlot, defSlot, opts) {
+    if (opts.noRetaliate || !atkSlot || atkSlot === defSlot) return;
+    const p = this.powerOf(defSlot);
+    if (!p || p.kind !== 'DAMAGED_STATUS' || !this.powerUsable(defSlot)) return;
+    // "while it's your ACTIVE Pokemon"
+    const side = this.sideOf(defSlot);
+    if (side === null || this.state.players[side].active !== defSlot) return;
+    if (p.flip && !this.flip(p.name)) { this.log(`${p.name}: tails.`, 'eff'); return; }
+    const target = this.state.players[1 - side].active;
+    if (!target) return;
+    if (this.effectsBlocked(target)) { this.log(`${p.name}: ${this.nameOf(target)} is protected.`, 'eff'); return; }
+    this.applyStatus(target, p.status);
+    this.log(`${p.name}: ${this.nameOf(target)} is now ${p.status}.`, 'eff');
   }
 
   retaliate(atkSlot, defSlot, opts) {
@@ -18192,9 +18370,35 @@ class Engine {
               this.log(`Destiny Bond: ${this.nameOf(killer)} is dragged down with ${c.name}!`, 'ko');
             }
           }
+          // ROCKET'S MOLTRES, Rebirth: "you may return it to your hand AFTER
+          // discarding it." Read before the slot is emptied, because powerOf and
+          // powerUsable both need the card still to be there.
+          //
+          // Resolved as always-taken. "You may" has one sensible answer: the
+          // Prize is handed over either way, so declining is strictly worse. Same
+          // reasoning as Shell Armor's "you may reduce".
+          const reb = this.powerOf(slot);
+          // topInst, NOT baseCard: baseCard returns the card DEFINITION out of the
+          // db and the discard pile holds INSTANCES. `rebirth.uid` was undefined,
+          // the findIndex never matched, and the card quietly stayed in the pile —
+          // a Power that looked implemented and did nothing, which is the failure
+          // this whole pass exists to stamp out.
+          const rebirth = reb && reb.kind === 'REBIRTH' && this.powerUsable(slot)
+            ? topInst(slot) : null;
           slot.stack.forEach(x => p.discard.push(x));
           slot.energy.forEach(x => p.discard.push(x));
           slot.effects.forEach(e => { if (e.card) p.discard.push(e.card); });
+          if (rebirth) {
+            // Literally "after discarding it": everything goes to the pile, then
+            // the card itself comes back out. Attached Energy STAYS discarded,
+            // which is what "return IT" means and what the discard-then-retrieve
+            // order makes true without a second rule.
+            const at = p.discard.findIndex(x => x.uid === rebirth.uid);
+            if (at >= 0) {
+              p.hand.push(p.discard.splice(at, 1)[0]);
+              this.log(`${reb.name}: ${this.db[rebirth.id].name} returns to ${p.name}'s hand.`, 'eff');
+            }
+          }
           if (fromBench) p.bench.splice(idx, 1); else p.active = null;
           // "If Clefairy Doll is Knocked Out, it doesn't count as a Knocked Out
           // Pokemon" — no Prize. The no-Pokemon-left loss below still applies,

@@ -173,7 +173,13 @@
 //     BENCH_SPLASH_PER_FLIP {dmg}  a coin per opposing Benched Pokemon; heads hits
 //                                  it, and every tail comes back at you (Thunderstorm)
 //     BENCH_SPLASH_FLIP_SIDE {n}   ONE coin decides whose Bench takes it (Blizzard)
-//     MIRROR_SHELL                 anything that damages SELF during the
+//     DRAIN_HALF                   heal SELF by half the damage this attack landed,
+//                                  rounded UP to the nearest 10 (Mega Drain). Reads
+//                                  what actually landed, so a prevented hit heals
+//                                  nothing — and it rounds the OPPOSITE way from
+//                                  Kabuto Armor, which halves and rounds down
+//     MIRROR_SHELL {label, fixed, mult, flip, wr}
+//                                  anything that damages SELF during the
 //                                  opponent's next turn is answered for the same
 //                                  amount, aimed at whoever is Active opposite —
 //                                  and it fires even if self was Knocked Out by
@@ -822,6 +828,21 @@
 //     DAMAGE_BONUS      {amount, label}     added AFTER W/R          (PlusPower)
 //     DAMAGE_REDUCTION  {amount, label}     subtracted AFTER W/R     (Defender)
 //   ...and its POWER-side twin, which is a Power kind rather than an effect:
+//     REDUCE_FROM_BASIC {atLeast, to, name} passive. An attack BY A BASIC doing
+//                                           `atLeast` or more is cut to `to`
+//                                           (Strange Barrier). The only passive
+//                                           that reads the ATTACKER's card
+//     DAMAGED_STATUS    {status, flip, name} triggered. Fires where RETALIATE does
+//                                           — damage landed, nothing dead yet — and
+//                                           answers with a status on their Active
+//                                           instead of damage (Pollen Defense)
+//     REBIRTH           {name}              triggered. On being Knocked Out, the
+//                                           card itself returns to hand after the
+//                                           discard (Rebirth). Attached cards stay
+//                                           in the pile
+//     GUST_ON_FLIP      {name}              INTERACTIVE, once a turn. Pick one of
+//                                           their Benched Pokemon, then flip; heads
+//                                           drags it up (Fragrance Trap)
 //     DAMAGE_REDUCE     {n, name}           a passive flat reduction AFTER W/R,
 //                                           read from the defender's own Power
 //                                           (Shell Armor). Resolved as always-on:
@@ -2217,6 +2238,19 @@ const EFFECTS = {
   'gym1-33': { p: { kind: 'RETALIATE', name: 'Restless Sleep', dmg: 20,
                     always: true, requireSelfAsleep: true },
     a: [[{ v: 'STATUS_SELF', s: 'Asleep' }]] },            // Rocket's Snorlax: Collapse
+
+  // The delayed-counter family, and the two Powers that come with these cards.
+  'gym1-11': { a: [[{ v: 'MIRROR_SHELL', label: 'Crosscounter', mult: 2, flip: true }],
+                   []] },                                   // Rocket's Hitmonchan: Crosscounter; Magnum Punch (plain)
+  'gym1-12': { p: { kind: 'REBIRTH', name: 'Rebirth' },
+    a: [[{ v: 'MIRROR_SHELL', label: 'Fire Wall', fixed: 10, wr: true }]] },   // Rocket's Moltres: Fire Wall
+  'gym1-5':  { p: { kind: 'DAMAGED_STATUS', name: 'Pollen Defense', status: 'Confused',
+                    flip: true, always: true },
+    a: [[{ v: 'DRAIN_HALF' }]] },                           // Erika's Vileplume: Mega Drain
+  'gym1-26': { p: { kind: 'GUST_ON_FLIP', name: 'Fragrance Trap' },
+    a: [[]] },                                              // Erika's Victreebel: Razor Leaf (plain)
+  'gym1-42': { p: { kind: 'REDUCE_FROM_BASIC', name: 'Strange Barrier', atLeast: 20, to: 10 },
+    a: [[{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 20, recoil: 0, label: 'Tail Strike' }]] },   // Erika's Dratini: Tail Strike
 
   // Sabrina's Drowzee — the first Gym Heroes Pokemon, and it needed no new verb.
   // Suggestion is Leer's shape exactly; Headbutt is plain damage.

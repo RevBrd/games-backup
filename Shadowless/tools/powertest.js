@@ -7313,5 +7313,120 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- GYM HEROES POWERS, pass two, and the delayed-counter family -----------
+{
+  const { setup } = require('./lib/board.js');
+  const attackWith = (E) => E.act(0, E.legalActions(0).find(a => a.t === 'attack'));
+
+  T('Crosscounter answers for DOUBLE, and only on heads', () => {
+    const mk = () => setup({ me: { card: 'gym1-11', energy: '1 Fighting' },
+      them: { card: 'base1:Machop' } }).E;
+    const E = mk();
+    attackWith(E);
+    E.dev.forceFlip = 'H';
+    const mine = E.state.players[0].active, theirs = E.state.players[1].active;
+    E.dealDamage(theirs, mine, 20, {});
+    eq(theirs.dmg, 40, 'heads: 20 taken, 40 given back');
+    const F = mk();
+    attackWith(F);
+    F.dev.forceFlip = 'T';
+    F.dealDamage(F.state.players[1].active, F.state.players[0].active, 20, {});
+    return eq(F.state.players[1].active.dmg, 0, 'tails: nothing');
+  });
+
+  T('Fire Wall answers for a flat 10 and DOES apply Weakness', () => {
+    // The one setting that varies across the family, and only because Fire Wall
+    // prints "(Apply Weakness and Resistance.)" in so many words. Rocket's Moltres
+    // is Fire and base1:Bulbasaur is Weak to Fire, so 10 doubles to 20 — which no
+    // other member of the family would do.
+    // base1:Venusaur has 100 HP and is Weak to Fire, which is the only pairing
+    // that survives Fire Wall's own 40 (doubled to 80) and is still standing to
+    // take the counter. A Bulbasaur died to the attack and the counter had
+    // nothing to answer.
+    const b = setup({ me: { card: 'gym1-12', energy: '3 Fire' },
+      them: { card: 'base1:Venusaur' } });
+    const E = b.E;
+    attackWith(E);
+    eq(E.state.players[1].active.dmg, 80, 'the attack itself: 40 doubled');
+    E.dealDamage(E.state.players[1].active, E.state.players[0].active, 20, {});
+    // The counter is a flat 10 and it DOUBLES. Every other member of the family
+    // passes noWR, so 100 here is the whole difference between them.
+    return eq(E.state.players[1].active.dmg, 100, 'plus a doubled 10 from Fire Wall');
+  });
+
+  T('Rebirth returns the card to hand and leaves its Energy in the discard', () => {
+    const b = setup({ me: { card: 'gym1-12', energy: '3 Fire' }, them: { card: 'base1:Machop' },
+      myBench: [{ card: 'base1:Machop' }] });
+    const E = b.E, me = E.state.players[0];
+    me.active.dmg = 999;
+    E.checkKOs();
+    eq(me.hand.some(x => E.db[x.id].name === "Rocket's Moltres"), true, 'the card came back');
+    eq(me.discard.some(x => E.db[x.id].name === "Rocket's Moltres"), false, 'and is not in the pile');
+    // "return IT to your hand" — the Pokemon, not what was on it. The
+    // discard-then-retrieve order makes that true without a second rule.
+    return eq(me.discard.filter(x => E.db[x.id].kind === 'energy').length, 3, 'Energy stayed discarded');
+  });
+
+  T('Pollen Defense confuses their Active when Vileplume is hit', () => {
+    const b = setup({ me: { card: 'gym1-5', energy: '3 Grass' }, them: { card: 'base1:Machop' } });
+    const E = b.E;
+    E.dev.forceFlip = 'H';
+    E.dealDamage(E.state.players[1].active, E.state.players[0].active, 20, {});
+    eq(E.state.players[1].active.status.confused, true, 'heads: confused');
+    const F = setup({ me: { card: 'gym1-5', energy: '3 Grass' }, them: { card: 'base1:Machop' } }).E;
+    F.dev.forceFlip = 'T';
+    F.dealDamage(F.state.players[1].active, F.state.players[0].active, 20, {});
+    return eq(F.state.players[1].active.status.confused, false, 'tails: not');
+  });
+
+  T('...and it does nothing from the Bench, because the card says Active', () => {
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myBench: [{ card: 'gym1-5' }] });
+    const E = b.E;
+    E.dev.forceFlip = 'H';
+    E.dealDamage(E.state.players[1].active, E.state.players[0].bench[0], 20, {});
+    return eq(E.state.players[1].active.status.confused, false, 'confused');
+  });
+
+  T('Fragrance Trap drags a Benched Pokemon up on heads, once a turn', () => {
+    const b = setup({ me: { card: 'gym1-26', energy: '3 Grass' }, them: { card: 'base1:Machop' },
+      theirBench: [{ card: 'base1:Onix' }] });
+    const E = b.E;
+    E.dev.forceFlip = 'H';
+    const offers = E.legalActions(0).filter(a => a.t === 'power');
+    eq(offers.length, 1, 'one Benched candidate, one action');
+    E.act(0, offers[0]);
+    eq(E.nameOf(E.state.players[1].active), 'Onix', 'Onix was dragged up');
+    return eq(E.legalActions(0).filter(a => a.t === 'power').length, 0, 'and only once a turn');
+  });
+
+  T('Strange Barrier cuts a BASIC\'s big hit to 10, and ignores a Stage 1\'s', () => {
+    const basic = setup({ me: { card: 'base1:Machop', energy: '3 Fighting' },
+      them: { card: 'gym1-42' } }).E;
+    // Machop is Basic. 30 is over the threshold, so it lands as 10.
+    eq(basic.computeDamage(basic.state.players[0].active, basic.state.players[1].active, 30, {}).dmg,
+      10, 'a Basic doing 30');
+    // ...and under it, nothing happens: the card says "20 OR MORE".
+    eq(basic.computeDamage(basic.state.players[0].active, basic.state.players[1].active, 10, {}).dmg,
+      10, 'a Basic doing 10 is untouched');
+    const stage1 = setup({ me: { card: 'base1:Machoke', energy: '4 Fighting' },
+      them: { card: 'gym1-42' } }).E;
+    return eq(stage1.computeDamage(stage1.state.players[0].active, stage1.state.players[1].active, 30, {}).dmg,
+      30, 'a Stage 1 doing 30 is untouched');
+  });
+
+  T('Mega Drain heals half of what LANDED, rounded up', () => {
+    const b = setup({ me: { card: 'gym1-5', energy: '3 Grass' }, them: { card: 'base1:Machop' } });
+    const E = b.E;
+    E.state.players[0].active.dmg = 40;
+    attackWith(E);
+    eq(E.state.players[1].active.dmg, 30, 'Mega Drain landed 30');
+    // 30 / 2 = 15, rounded UP to the nearest 10 = 20. Kabuto Armor rounds the
+    // other way; these are different sentences and must not share an arithmetic.
+    return eq(E.state.players[0].active.dmg, 20, 'and drained 20 back');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

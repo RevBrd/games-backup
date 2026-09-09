@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 94,
+  gym1: 89,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -664,6 +664,10 @@ console.log('\nAI verb coverage');
   // they belong on the opt-out list by their nature rather than by choice.
   const PASSIVE_POWERS = new Set([
     'RETALIATE', 'PREVENT_AT_LEAST', 'DAMAGE_HALVE', 'FLIP_TO_NEGATE',
+    // Strange Barrier. Consulted in the same block as Shell Armor, and the only
+    // passive in the game that reads the ATTACKER's card rather than the
+    // defender's. Still no decision to make.
+    'REDUCE_FROM_BASIC',
     // Shell Armor. Consulted inside computeDamage's W/R block and never offered
     // as an action — the card says "you MAY reduce", but there is no board where
     // taking less damage is worse, so there is nothing for scorePower to weigh.
@@ -715,6 +719,16 @@ console.log('\nAI verb coverage');
     // not know that evolving something ALSO evolves its Eevee, so it undervalues
     // that evolve by a whole Stage 1. AI.md, when somebody plays a deck with one.
     'CHAIN_REACTION',
+    // Job 16. Pollen Defense fires where RETALIATE does and Rebirth fires inside
+    // kill(); nobody chooses either, so scorePower never sees them. They are
+    // TRIGGERED rather than PASSIVE because there IS a moment — filing them as
+    // passive would assert that no decision depends on them, which is the
+    // distinction this list exists to keep.
+    //
+    // Both are honest gaps in the same direction as ON_KO's: the bot does not
+    // fear attacking into a Pollen Defense, and does not know a Rocket's Moltres
+    // is cheaper to lose than it looks. AI.md.
+    'DAMAGED_STATUS', 'REBIRTH',
   ]);
   const kinds = new Set([...effSrc.matchAll(/\bkind:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
   const blindKinds = [...kinds].filter(k => !handled.has(k)
