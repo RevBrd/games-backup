@@ -99,7 +99,7 @@ const REMAINING = {
   // card reveals the Pokemon's NAME and any stat we DO model is then derivable.
   // Dropped at generation via OMITTED in gen_cards.js rather than left as a hole
   // here, so the set is complete at 131 rather than 131 of 132. Trevor, 8 Sep 2026.
-  gym1: 119,
+  gym1: 97,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the

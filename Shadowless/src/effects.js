@@ -2197,6 +2197,42 @@ const EFFECTS = {
   'gym1-117': { t: [{ v: 'T_ESP' }] },
   // Sabrina's Drowzee — the first Gym Heroes Pokemon, and it needed no new verb.
   // Suggestion is Leer's shape exactly; Headbutt is plain damage.
+
+  // ── GYM HEROES: the cards that needed no new logic ─────────────────────────
+  // Every attack here is either plain damage or TEXT-IDENTICAL to one already
+  // scripted, so each verb list is a copy rather than a judgement. That is safe
+  // for a reason worth stating: every parameter these scripts carry is a number
+  // printed in the text itself — "Flip 3 coins... 20 damage times the number of
+  // heads" IS {coins:3, per:20} — so identical text cannot hide a different
+  // number. The exception is `label`, which is the coin-flip reason shown in the
+  // log and belongs to the card rather than the effect; two were corrected by
+  // hand, and copying them would have printed the wrong attack name at the table.
+  //
+  // Written as full entries rather than EFFECT_ALIASES on purpose: an alias is for
+  // two printings of the SAME card, and these are different Pokemon that happen to
+  // share an attack.
+  'gym1-2': { a: [[{"v": "FLIP_OR_NOTHING"}]] },   // Brock's Rhydon: Lariat = Nidoran ♂ — Horn Hazard
+  'gym1-26': { a: [[]] },   // Erika's Victreebel: Razor Leaf (plain)
+  'gym1-29': { a: [[{"v": "DMG_PER_HEAD", "coins": 3, "per": 20}]] },   // Misty's Cloyster: Triple Cannon = Sandslash — Fury Swipes
+  'gym1-30': { a: [[{"v": "FLIP_OR_NOTHING"}]] },   // Misty's Goldeen: Horn Hazard = Nidoran ♂ — Horn Hazard
+  'gym1-40': { a: [[{"v": "DMG_PER_HEAD", "coins": 3, "per": 20}]] },   // Brock's Graveler: Rock Toss = Sandslash — Fury Swipes
+  'gym1-41': { a: [[], [{"v": "DMG_PER_HEAD", "coins": 2, "per": 30}]] },   // Brock's Lickitung: Tongue Slap (plain); Slam = Beedrill — Twineedle
+  'gym1-42': { a: [[{"v": "FLIP_BONUS_OR_RECOIL", "base": 10, "bonus": 20, "recoil": 0, "label": "Tail Strike"}]] },   // Erika's Dratini: Tail Strike = Flareon — Quick Attack
+  'gym1-47': { a: [[{"v": "STATUS_ON_FLIP", "s": "Poisoned"}]] },   // Erika's Oddish: Poisonpowder = Weedle — Poison Sting
+  'gym1-51': { a: [[{"v": "DMG_HALF_REMAINING"}]] },   // Lt. Surge's Raticate: Super Fang = Raticate — Super Fang
+  'gym1-52': { a: [[]] },   // Lt. Surge's Spearow: Drill Peck (plain)
+  'gym1-65': { a: [[{"v": "STATUS_ON_FLIP", "s": "Confused"}]] },   // Blaine's Vulpix: Tail Fan = Vulpix — Confuse Ray
+  'gym1-69': { a: [[{"v": "STATUS_ON_FLIP", "s": "Paralyzed"}], []] },   // Brock's Onix: Bellow = Tangela — Bind; Rock Throw (plain)
+  'gym1-73': { a: [[], [{"v": "FLIP_BONUS_OR_RECOIL", "base": 10, "bonus": 20, "recoil": 0, "label": "Quick Attack"}]] },   // Brock's Vulpix: Flame (plain); Quick Attack = Flareon — Quick Attack
+  'gym1-74': { a: [[], [{"v": "STATUS_ON_FLIP", "s": "Poisoned"}]] },   // Brock's Zubat: Wing Attack (plain); Poison Fang = Weedle — Poison Sting
+  'gym1-75': { a: [[{"v": "STATUS_ON_FLIP", "s": "Poisoned"}], []] },   // Erika's Bellsprout: Poison Vine = Weedle — Poison Sting; Vine Whip (plain)
+  'gym1-79': { a: [[], [{"v": "BENCH_SNIPE", "n": 1, "dmg": 20}]] },   // Erika's Tangela: Vine Slap (plain); Stretch Vine = Hitmonlee — Stretch Kick
+  'gym1-80': { a: [[{"v": "STATUS_ON_FLIP", "s": "Paralyzed"}], []] },   // Lt. Surge's Magnemite: Thundershock = Tangela — Bind; Tackle (plain)
+  'gym1-83': { a: [[{"v": "WHIRLWIND"}], [{"v": "FLIP_OR_NOTHING"}]] },   // Lt. Surge's Spearow: Whirlwind = Pidgey — Whirlwind; Razor Wind = Nidoran ♂ — Horn Hazard
+  'gym1-85': { a: [[{"v": "DMG_PER_HEAD", "coins": 2, "per": 10}], [{"v": "STATUS_ON_FLIP", "s": "Confused"}]] },   // Misty's Goldeen: Fury Attack = Jynx — Doubleslap; Supersonic = Vulpix — Confuse Ray
+  'gym1-86': { a: [[], [{"v": "JAM_DEFENDER", "label": "Smokescreen"}]] },   // Misty's Horsea: Tackle (plain); Smokescreen = Sandshrew — Sand-attack
+  'gym1-88': { a: [[]] },   // Misty's Seel: Aurora Beam (plain)
+  'gym1-89': { a: [[], [{"v": "FLIP_OR_NOTHING"}, {"v": "STATUS", "s": "Paralyzed"}]] },   // Misty's Shellder: Tackle (plain); Clamp = Cloyster — Clamp
   'gym1-92': { a: [
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],

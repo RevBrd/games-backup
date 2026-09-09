@@ -293,3 +293,35 @@ arrives over time, where anything that grows the box moves what is already on sc
 are sized with `clamp()` against the viewport and **must not gain a JS fitter**. The board has one
 because the mat has a shape to preserve and a zoom to apply; these have neither, and adding a second
 fitter would give the project two answers to "how big is the page".
+
+## Deferred: showing a set-aside hand face down
+
+**Trevor's idea, deferred with his agreement, 9 Sep 2026, Job 16.** Recorded here rather than in
+[SCREENS.md](SCREENS.md) — which holds the other deferred Job 16 UI item — because **this one is the
+hand fan, and the fan is this file's**. Same job, two owners; that is the split working rather than a
+mistake.
+
+**Tickling Machine** sets the opponent's whole hand aside face down until the end of their next turn.
+The rules half is built and correct: the cards move to a real zone, so the owner draws into an empty
+hand next turn and every existing reader of `hand` — Imposter Oak, Lass, Blaine's Last Resort, Good
+Manners, the AI — stays right without knowing the zone exists.
+
+**What is missing is that the cards vanish from the screen entirely.** Trevor's suggestion is better
+than that and should be built: show them **in the hand, face down and unclickable**, so a player can
+see four cards being held hostage rather than inferring it from an empty hand.
+
+**Why it is not a ten-line change**, which is the part worth writing down since it looks like one:
+
+- **`.cardback` exists but only at deck and Prize sizes** (`.sm`, `.pz`). A hand-sized back is a new
+  variant, and the hand card's dimensions are the ones the fan measures.
+- **`layoutHand()` takes its card width and count from the DOM.** Face-down cards appended as
+  something other than the element the fan's selector matches would be laid out but not counted —
+  the fan would space `n` cards into a row holding `n + 4`, and the overflow lands off the right
+  edge. **That is the specific failure to test for**, and it is invisible until a hand is large.
+- The board's design is locked (Trevor, 8 Aug 2026) and **the hand face is named in that lock**.
+  This has his agreement and is not a licence to restyle anything else while in there.
+
+**Nothing is blocked by it.** The card is complete, the zone is tested, and this is legibility rather
+than correctness — which is exactly why it waits for a session with this file open instead of riding
+along on a card job.
+
