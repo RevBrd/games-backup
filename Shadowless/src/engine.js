@@ -924,7 +924,21 @@ class Engine {
     this.eachSlot((slot, pi) => {
       slot.effects = slot.effects.filter(e => {
         if (e.expireAtEndOfTurn !== undefined && e.expireAtEndOfTurn <= s.turn) {
-          if (e.card) { s.players[pi].discard.push(e.card); this.log(`${this.db[e.card.id].name} is discarded.`, 'eff'); }
+          // CHARITY IS THE FIRST ATTACHMENT THAT COMES BACK. "Unless that Pokemon
+          // gets Knocked Out, return Charity to your hand at the end of your
+          // turn" — so the destination is a property of the CARD rather than of
+          // expiry, exactly as `e.card` already separates a Defender that is
+          // consumed from a Minimize that is not.
+          //
+          // The Knock Out half needs no branch here: a Knocked Out slot is
+          // gathered and discarded whole before this sweep ever sees it, so the
+          // card is already gone. That is the doorway doing the work rather than
+          // a condition somebody has to remember to write.
+          if (e.card && e.toHandOnExpire) {
+            s.players[pi].hand.push(e.card);
+            this.log(`${this.db[e.card.id].name} returns to ${s.players[pi].name}'s hand.`, 'eff');
+          }
+          else if (e.card) { s.players[pi].discard.push(e.card); this.log(`${this.db[e.card.id].name} is discarded.`, 'eff'); }
           else this.log(`${this.nameOf(slot)}: ${e.kind} ends.`, 'eff');
           return false;
         }
@@ -1148,6 +1162,42 @@ class Engine {
     this.log(`${this.state.stadium.name}: ${this.nameOf(slot)} discards `
       + `${this.db[e.id].name} and is healed of all Special Conditions.`, 'eff');
     return { ok: true };
+  }
+
+  // CHARITY: "If that Pokemon attacks and does damage to the Defending Pokemon,
+  // you MAY REDUCE THAT DAMAGE BY ANY AMOUNT (rounded to the nearest 10)."
+  //
+  // A choice with a QUANTITY rather than a target, which is new here — so it is
+  // enumerated one action per 10-step, the same shape Metronome and the
+  // Conversions already use. Bounded by the attack's own printed damage, because
+  // reducing past zero and reducing to zero are the same board.
+  //
+  // WHY ANYONE WOULD: to stop short of a Knock Out. Leaving their damaged Active
+  // in front of you denies the Prize and denies them a free promotion, and it is
+  // the only reason this card is not simply bad.
+  //
+  // Composed BEFORE the Vermilion expansion at both call sites, so a Lt. Surge
+  // Pokemon holding a Charity offers every combination rather than losing one to
+  // the other. That is a lot of rows on one very rare board, and it is the honest
+  // enumeration — the alternative is deciding for the player which reductions are
+  // worth offering, which is a judgement this engine does not make anywhere else.
+  charityVariants(pi, idx, variants) {
+    const atk = this.state.players[pi].active;
+    if (!atk || !atk.effects.some(e => e.kind === 'DAMAGE_REDUCE_OPTIONAL')) return variants;
+    const atkDef = (topCard(this.db, atk).attacks || [])[idx] || {};
+    const printed = parseInt(String(atkDef.dmg || '0').replace(/\D/g, ''), 10) || 0;
+    if (printed <= 0) return variants;             // nothing to reduce
+    const out = [];
+    for (const v of variants) {
+      const base = v || { opts: {}, label: null };
+      const name = base.label || `Attack: ${atkDef.name}`;
+      out.push(Object.assign({}, base, { opts: Object.assign({}, base.opts), label: name }));
+      for (let r = 10; r <= printed; r += 10) {
+        out.push({ opts: Object.assign({}, base.opts, { charityReduce: r }),
+          label: `${name} - ${r} (Charity)` });
+      }
+    }
+    return out;
   }
 
   // VERMILION CITY GYM: "Whenever a player attacks with a Pokemon with Lt. Surge
@@ -2542,6 +2592,7 @@ class Engine {
         case 'T_PLUSPOWER': if (!p.active) return false; break;
         case 'T_PROFESSOR_OAK': if (p.deck.length === 0) return false; break;
         case 'T_DEFENDER': if (!this.allSlots(pi).length) return false; break;
+        case 'T_CHARITY': if (!p.active) return false; break;
         case 'T_FULL_HEAL': {
           if (!p.active) return false;
           const st = p.active.status;
@@ -3406,6 +3457,18 @@ class Engine {
           const heal = Math.min(v.n * 10, tgt.dmg);
           tgt.dmg -= heal;
           this.log(`${this.nameOf(tgt)} discards Energy and heals ${heal}.`); break;
+        }
+        case 'T_CHARITY': {
+          // "Attach Charity to your ACTIVE Pokemon" — no name test, unlike the
+          // three Gyms; any Active will do.
+          if (!p.active) return this.fail('No Active Pokemon');
+          p.active.effects.push({
+            kind: 'DAMAGE_REDUCE_OPTIONAL', label: 'Charity',
+            expireAtEndOfTurn: this.state.turn, card: inst, toHandOnExpire: true,
+          });
+          this.log(`Charity attached to ${this.nameOf(p.active)}.`, 'eff');
+          toDiscard = false;   // it returns to hand at the end of the turn
+          break;
         }
         case 'T_DEFENDER': {
           const slots = this.allSlots(pi);
@@ -4565,8 +4628,19 @@ class Engine {
     // attack" — everything AFTER W/R (PlusPower, Defender, Kabuto Armor) still
     // applies, which is exactly what dealDamage's existing noWR already means.
     const flat = script.some(v => v.v === 'NO_WR');
+    // CHARITY reaches computeDamage from the ACTION rather than from the slot,
+    // even though the effect that authorises it lives on the slot. The effect
+    // says the reduction is available; only the action carries how much, and it
+    // is the player's answer rather than a property of the board — the same
+    // separation `costUids` and `energyUids` are named for.
+    //
+    // Guarded by the effect being present, so a hand-written action cannot
+    // reduce damage on a Pokemon that is not holding a Charity.
+    const charity = (a && a.opts && a.opts.charityReduce > 0
+      && atk.effects.some(e => e.kind === 'DAMAGE_REDUCE_OPTIONAL'))
+      ? a.opts.charityReduce : 0;
     const res = negated ? { dealt: 0, prevented: true }
-      : this.dealDamage(atk, def, base, { noWR: flat });
+      : this.dealDamage(atk, def, base, { noWR: flat, charityReduce: charity });
 
     // RECOIL DOES NOT APPLY WHEN THE DEFENDER STOPPED THE DAMAGE — 16 Aug 2026,
     // settled with Trevor. Take Down into Chansey's Scrunch was hurting Arcanine
@@ -5677,10 +5751,10 @@ class Engine {
     }
     if (hasWk) {
       if (!def || !this.weaknessOf(def)) return [];            // "if it HAS a Weakness"
-      return this.gymFlipVariants(pi, idx,
-        types.map(t => ({ opts: { type: t }, label: `Conversion 1: Weakness to ${t}` })));
+      return this.gymFlipVariants(pi, idx, this.charityVariants(pi, idx,
+        types.map(t => ({ opts: { type: t }, label: `Conversion 1: Weakness to ${t}` }))));
     }
-    return this.gymFlipVariants(pi, idx, [null]);
+    return this.gymFlipVariants(pi, idx, this.charityVariants(pi, idx, [null]));
   }
 
   // Weakness and Resistance are normally the card's, but Porygon's Conversion
@@ -5775,6 +5849,15 @@ class Engine {
       // clause. Read the card, every time.
       const fren = atkSlot.status.confused ? this.activePower(atkSlot, 'CONFUSED_BONUS') : null;
       if (fren) { dmg += (fren.n || 0); steps.push(`${fren.name}: +${fren.n} while Confused -> ${dmg}.`); }
+    }
+    // CHARITY. Applied after Weakness, Resistance and every flat bonus, because
+    // the card reduces "that damage" — the number the attack was about to do —
+    // and PlusPower's own convention already puts flat adjustments here. Clamped
+    // at zero: "any amount" is bounded by there being damage to reduce.
+    if (dmg > 0 && opts.charityReduce > 0) {
+      const cut = Math.min(opts.charityReduce, dmg);
+      dmg -= cut;
+      steps.push(`Charity: -${cut} -> ${dmg}.`);
     }
     if (dmg > 0) {
       for (const e of defSlot.effects) {

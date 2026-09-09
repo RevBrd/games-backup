@@ -98,7 +98,7 @@ const REMAINING = {
   // and which cannot be substituted — any stat we DO model is derivable from the
   // card name the quiz itself reveals, so a bot guesses right every time and the
   // card becomes strictly bad. The mechanism for omitting it is not chosen yet.
-  gym1: 123,
+  gym1: 122,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -441,6 +441,9 @@ const PROVISIONAL = new Set([
   // in bestAffordableDamage, which is the wrong unit for a turn and is the
   // weaker of the two guesses by some distance.
   'T_DUEL', 'T_TICKLE',
+  // Charity is priced at almost nothing because the reason to play it — stopping
+  // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
+  'T_CHARITY',
   // Job 10c, the five triggered-Power verbs. Every weight behind these is a
   // first guess priced off an existing weight — benching, drawing, sniping —
   // rather than off a measurement. The two that most want measuring are

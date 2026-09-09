@@ -7013,5 +7013,92 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- CHARITY ---------------------------------------------------------------
+// The first attachment in the game that comes BACK, and the first choice with a
+// quantity rather than a target.
+{
+  const { setup } = require('./lib/board.js');
+  const attach = (b) => {
+    const E = b.E, me = E.state.players[0];
+    const i = me.hand.findIndex(x => E.db[x.id].name === 'Charity');
+    if (i < 0) throw new Error('Charity not in hand');
+    const r = E.act(0, { t: 'playTrainer', hand: i, opts: {} });
+    if (!r.ok) throw new Error('refused: ' + (r.why || r.error));
+    return E;
+  };
+  // base1:Onix is neutral to Fighting and has 90 HP, so Low Kick's 20 lands
+  // whole and nothing is Knocked Out mid-test. THE FIRST VERSION USED RATTATA,
+  // which is WEAK to Fighting — the 20 doubled to 40, killed it, and ended the
+  // game, so three rows failed reading `active.dmg` off a null. Pick the target
+  // on purpose; the obvious one is rarely neutral.
+  const mk = () => setup({ me: { card: 'base1:Machop', energy: '3 Fighting' },
+    them: { card: 'base1:Onix' }, myHand: ['Charity'] });
+
+  T('Charity enumerates one attack option per 10 of printed damage', () => {
+    const E = attach(mk());
+    const acts = E.legalActions(0).filter(a => a.t === 'attack');
+    // Low Kick is 20, so: full, -10, -20. Reducing past zero is the same board
+    // as reducing to zero, which is why the list stops at the printed number.
+    eq(acts.length, 3, 'options');
+    return eq(acts.filter(a => a.opts.charityReduce).length, 2, 'reductions offered');
+  });
+
+  T('...and choosing one really does reduce the damage', () => {
+    const plain = attach(mk());
+    plain.act(0, plain.legalActions(0).find(a => a.t === 'attack' && !a.opts.charityReduce));
+    eq(plain.state.players[1].active.dmg, 20, 'Low Kick alone');
+    const cut = attach(mk());
+    cut.act(0, cut.legalActions(0).find(a => a.t === 'attack' && a.opts.charityReduce === 10));
+    return eq(cut.state.players[1].active.dmg, 10, 'reduced by 10');
+  });
+
+  T('...and it can be taken all the way to nothing', () => {
+    const E = attach(mk());
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.opts.charityReduce === 20));
+    return eq(E.state.players[1].active.dmg, 0, 'reduced to zero');
+  });
+
+  T('...and the reduction lands AFTER Weakness, as every flat adjustment does', () => {
+    // base1:Rattata is Weak to Fighting, so Low Kick's 20 doubles to 40 first and
+    // Charity takes its 10 off THAT. The alternative reading — reduce the printed
+    // damage, then double — would give 20, and it disagrees with the convention
+    // PlusPower has rested on since Base Set. See ENGINE.md.
+    const b = setup({ me: { card: 'base1:Machop', energy: '3 Fighting' },
+      them: { card: 'base1:Rattata' }, myHand: ['Charity'] });
+    const E = attach(b);
+    E.state.players[1].active.dmg = 0;
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.opts.charityReduce === 10));
+    // 30 is lethal on a 30 HP Rattata, so read the damage off the log's own
+    // arithmetic rather than off a slot that is no longer there.
+    const line = E.state.log.map(l => l.text || l).find(t => /Charity: -10/.test(t));
+    if (!line) throw new Error('no Charity line in the log');
+    return eq(/-> 30\./.test(line), true, 'doubled to 40, then reduced to 30: ' + line);
+  });
+
+  T('Charity returns to HAND at the end of the turn, not to the discard', () => {
+    const E = attach(mk());
+    const me = E.state.players[0];
+    eq(me.hand.some(x => E.db[x.id].name === 'Charity'), false, 'it left the hand to attach');
+    E.act(0, { t: 'pass' });
+    eq(me.hand.some(x => E.db[x.id].name === 'Charity'), true, 'back in hand');
+    return eq(me.discard.some(x => E.db[x.id].name === 'Charity'), false, 'not discarded');
+  });
+
+  T('...unless that Pokemon gets Knocked Out, and that needs no branch', () => {
+    // "Unless that Pokemon gets Knocked Out, return Charity to your hand." The
+    // Knock Out path gathers the slot whole and discards everything on it before
+    // the end-of-turn sweep ever sees the effect, so the exception falls out of
+    // the existing doorway rather than being written twice.
+    const E = attach(mk());
+    const me = E.state.players[0];
+    me.active.dmg = 999;
+    E.checkKOs();
+    E.act(0, { t: 'pass' });
+    eq(me.hand.some(x => E.db[x.id].name === 'Charity'), false, 'did NOT come back');
+    return eq(me.discard.some(x => E.db[x.id].name === 'Charity'), true, 'discarded with its Pokemon');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

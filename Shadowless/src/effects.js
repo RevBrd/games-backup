@@ -426,6 +426,10 @@
 //     T_POKEMON_TRADER             T_POKEMON_BREEDER         T_POKE_BALL
 //     T_ENERGY_SEARCH              T_GAMBLER                 T_MR_FUJI
 //     T_RECYCLE
+//     T_CHARITY                    attach to your Active; it returns to HAND at the
+//                                  end of your turn rather than being discarded, and
+//                                  while attached the attacker may REDUCE its own
+//                                  damage by any multiple of 10 (opts.charityReduce)
 //     T_DUEL                       Misty's Duel. A coin decides the winner, and the
 //                                  WINNER shuffles their hand away and draws 5. The
 //                                  card prints the coin substitution itself
@@ -2183,6 +2187,7 @@ const EFFECTS = {
   'gym1-124': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_BENCH_CAP', n: 4, onPlay: true }] },
   'gym1-107': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_HEAL_STATUS_NAMED', who: 'Erika' }] },
   'gym1-120': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_ATTACK_BONUS_NAMED', n: 10, who: 'Lt. Surge' }] },
+  'gym1-99':  { t: [{ v: 'T_CHARITY' }] },
   'gym1-123': { t: [{ v: 'T_DUEL' }] },
   'gym1-119': { t: [{ v: 'T_TICKLE' }] },
 

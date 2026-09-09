@@ -4741,6 +4741,16 @@ class AI {
           break;
         }
 
+        case 'T_CHARITY': {
+          // PROVISIONAL, and honestly close to zero. Charity is only worth
+          // anything when the bot can already see a reason to stop short of a
+          // Knock Out, and `scoreAttack` has no term for "leaving them alive is
+          // better" — that is the same missing idea as AI.md item 1. Priced low
+          // and positive so it is not thrown away, rather than guessed high.
+          if (!me.active) return -Infinity;
+          s += 1;
+          break;
+        }
         case 'T_DUEL': {
           // PROVISIONAL. A coin decides who gets a fresh five, so the honest
           // value is half the difference between what a redraw is worth to us
