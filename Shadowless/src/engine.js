@@ -6119,6 +6119,10 @@ class Engine {
     const D = topCard(this.db, defSlot);
     const r = this.computeDamage(atkSlot, defSlot, base, opts);
     r.steps.forEach(t => this.log(t, t.indexOf('prevented') >= 0 || t.indexOf('Hardened') >= 0 ? 'eff' : 'dmg'));
+    // Bench Guard moves part of the hit BEFORE any of it lands. Doing it after
+    // would mean taking counters back off a Pokemon those counters had already
+    // Knocked Out.
+    if (r.dmg > 0) r.dmg = this.benchGuard(defSlot, r.dmg);
     if (r.dmg > 0) {
       defSlot.dmg += r.dmg;
       // `byAttack` is what lets Final Beam answer an attack and nothing else.
@@ -6170,6 +6174,44 @@ class Engine {
   // board is whoever is Active opposite it — not necessarily the slot that dealt
   // the damage, since a Bench splash can hurt it from a Pokemon that is not
   // Active. The card names the Defending Pokemon and that is what it gets.
+  // BROCK'S RHYDON, Bench Guard: "As long as Brock's Rhydon is BENCHED, whenever
+  // 1 of your BENCHED Pokemon is damaged, you may do 10 of that damage to Brock's
+  // Rhydon instead. (If more than 1 of your Benched Pokemon is damaged at the same
+  // time, you may use this power once for each of them.)"
+  //
+  // The only Power in the game that moves damage to a DIFFERENT SLOT as it lands.
+  // Every other damage-shaping passive answers "how much does this Pokemon take";
+  // this one answers "and who takes the rest".
+  //
+  // Scoped exactly as printed and all three clauses matter: the guard must be
+  // Benched, the victim must be Benched, and it cannot guard itself. The
+  // parenthesis is free here — this is consulted once per dealDamage call, and a
+  // splash that hits three Benched Pokemon is three calls.
+  //
+  // "YOU MAY", RESOLVED AS A RULE. Redirecting is right on every board except
+  // one, and that one is detectable: taking the 10 would Knock the guard out.
+  // Everywhere else a Rhydon with 80 HP soaking 10 off something frailer is
+  // simply what the card is for. Declining in some subtler spot — hoarding
+  // Rhydon's HP for later — is a real preference, and if it turns out to matter
+  // this becomes a prompt. See Rulings/BENCH-GUARD.md.
+  benchGuard(defSlot, dmg) {
+    const side = this.sideOf(defSlot);
+    if (side === null) return dmg;
+    const p = this.state.players[side];
+    if (p.bench.indexOf(defSlot) < 0) return dmg;        // the victim must be Benched
+    for (const g of p.bench) {
+      if (g === defSlot) continue;                       // and it cannot guard itself
+      const pw = this.powerOf(g);
+      if (!pw || pw.kind !== 'BENCH_GUARD' || !this.powerUsable(g)) continue;
+      const take = Math.min(pw.n || 10, dmg);
+      if (g.dmg + take >= topCard(this.db, g).hp) continue;   // it would die doing it
+      g.dmg += take;
+      this.log(`${pw.name}: ${this.nameOf(g)} takes ${take} of that damage instead.`, 'eff');
+      return dmg - take;
+    }
+    return dmg;
+  }
+
   mirrorShell(defSlot, dealt) {
     if (!defSlot || dealt <= 0) return;
     const shell = defSlot.effects.find(e => e.kind === 'MIRROR_SHELL');

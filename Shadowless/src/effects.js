@@ -843,6 +843,10 @@
 //     GUST_ON_FLIP      {name}              INTERACTIVE, once a turn. Pick one of
 //                                           their Benched Pokemon, then flip; heads
 //                                           drags it up (Fragrance Trap)
+//     BENCH_GUARD       {n, name}           passive. While BENCHED, takes n of any
+//                                           damage dealt to another of YOUR Benched
+//                                           Pokemon (Bench Guard). The only Power
+//                                           that moves damage to a different slot
 //     DAMAGE_REDUCE     {n, name}           a passive flat reduction AFTER W/R,
 //                                           read from the defender's own Power
 //                                           (Shell Armor). Resolved as always-on:
@@ -2238,6 +2242,9 @@ const EFFECTS = {
   'gym1-33': { p: { kind: 'RETALIATE', name: 'Restless Sleep', dmg: 20,
                     always: true, requireSelfAsleep: true },
     a: [[{ v: 'STATUS_SELF', s: 'Asleep' }]] },            // Rocket's Snorlax: Collapse
+
+  'gym1-2':  { p: { kind: 'BENCH_GUARD', name: 'Bench Guard', n: 10 },
+    a: [[{ v: 'FLIP_OR_NOTHING' }]] },                    // Brock's Rhydon: Lariat
 
   // The delayed-counter family, and the two Powers that come with these cards.
   'gym1-11': { a: [[{ v: 'MIRROR_SHELL', label: 'Crosscounter', mult: 2, flip: true }],

@@ -7428,5 +7428,50 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- BENCH GUARD -----------------------------------------------------------
+// The only Power in the game that moves damage to a DIFFERENT slot. Every other
+// damage-shaping passive answers "how much does this Pokemon take"; this one
+// answers "and who takes the rest".
+{
+  const { setup } = require('./lib/board.js');
+  const board = () => setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+    myBench: [{ card: 'gym1-2' }, { card: 'base1:Machop' }] }).E;
+
+  T('Bench Guard takes 10 of a hit aimed at another Benched Pokemon', () => {
+    const E = board();
+    const rhy = E.state.players[0].bench[0], mach = E.state.players[0].bench[1];
+    E.dealDamage(E.state.players[1].active, mach, 30, { noWR: true });
+    eq(mach.dmg, 20, 'the victim took the rest');
+    return eq(rhy.dmg, 10, 'Rhydon took 10');
+  });
+
+  T('...but never guards ITSELF', () => {
+    const E = board();
+    const rhy = E.state.players[0].bench[0];
+    E.dealDamage(E.state.players[1].active, rhy, 30, { noWR: true });
+    return eq(rhy.dmg, 30, 'the whole hit landed');
+  });
+
+  T('...and does nothing for the ACTIVE, which the card does not cover', () => {
+    const E = board();
+    const rhy = E.state.players[0].bench[0], act = E.state.players[0].active;
+    E.dealDamage(E.state.players[1].active, act, 30, { noWR: true });
+    eq(act.dmg, 30, 'the Active took it all');
+    return eq(rhy.dmg, 0, 'Rhydon untouched');
+  });
+
+  T('...and declines the one time declining is right: when it would die', () => {
+    // "You may" resolved as a rule rather than a prompt. Redirecting is correct on
+    // every board but this one, and this one is detectable. Rulings/BENCH-GUARD.md.
+    const E = board();
+    const rhy = E.state.players[0].bench[0], mach = E.state.players[0].bench[1];
+    rhy.dmg = 75;                                   // 80 HP; taking 10 would kill it
+    E.dealDamage(E.state.players[1].active, mach, 30, { noWR: true });
+    eq(rhy.dmg, 75, 'Rhydon stayed out of it');
+    return eq(mach.dmg, 30, 'so the victim took the whole hit');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
