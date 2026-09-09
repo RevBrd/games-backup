@@ -26,13 +26,24 @@ const CONFIG_DEFAULTS = {
 };
 
 // ---------------------------------------------------------------- RNG -------
+// THE GENERATOR EXPOSES ITS STATE, and that is the whole of what makes an attack
+// replayable. Misty's Tentacruel's Flee has to re-run an attack and get THE SAME
+// DAMAGE — only the aftermath differs — where Sabrina's ESP re-runs one wanting
+// fresh coins. Restoring the seed state is the difference between those two.
+//
+// The function itself is untouched: same arithmetic, same sequence. `get`/`set`
+// are a window onto `a`, not a change to it, so every existing seeded replay is
+// bit-identical to before.
 function mulberry32(a) {
-  return function () {
+  const f = function () {
     a |= 0; a = (a + 0x6D2B79F5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+  f.get = () => a;
+  f.set = (v) => { a = v | 0; };
+  return f;
 }
 
 // ------------------------------------------------------------- helpers ------
@@ -3280,7 +3291,11 @@ class Engine {
         const act = q.ctx.action, who = q.ctx.pi;
         if (value !== 'yes' || !this.espSnapshot) {
           this.espSnapshot = null;
-          this.finishAttack();
+          // NOT finishAttack: the defender may still have a Flee to answer, and
+          // declining a re-flip is not the end of the attack. `espSkip` stops the
+          // chain offering the same question again on the way past.
+          this.espSkip = true;
+          this.afterAttack(who, act, null);
           break;
         }
         // THE LOG IS KEPT ACROSS THE RESTORE, deliberately. Everything else goes
@@ -3288,7 +3303,10 @@ class Engine {
         // that they landed and were thrown away — a silent rewind reads as the
         // first result never having happened.
         const kept = this.state.log.slice();
-        this.espRestore();
+        // withRng FALSE: ESP wants NEW coins, so the generator is left where the
+        // first attempt pushed it. Flee restores it, which is the whole
+        // difference between the two — see snapState.
+        this.restoreState(this.espSnapshot, false);
         this.state.log = kept;
         this.log('Sabrina\'s ESP: the coins are thrown again.', 'eff');
         // Mark it spent in the RESTORED board — the snapshot has it unspent, so
@@ -3300,6 +3318,34 @@ class Engine {
         // `attacked` is restored to false by the snapshot, so the re-run passes
         // canAttackAtAll exactly as the first attempt did.
         this.dispatchAction(who, act);
+        break;
+      }
+      // MISTY'S TENTACRUEL, Flee. The second customer for the rewind, and it wants
+      // the opposite of what ESP wants: the attack must come out IDENTICAL, with
+      // only the escape different. That is why the generator's state is restored
+      // here and deliberately not there.
+      case 'FLEE': {
+        const act = q.ctx.action, who = q.ctx.pi;
+        if (value === 'no' || !this.fleeSnapshot) {
+          this.fleeSnapshot = null;
+          this.finishAttack();
+          break;
+        }
+        const kept = this.state.log.slice();
+        this.restoreState(this.fleeSnapshot, true);
+        this.state.log = kept;
+        this.log('Flee: the moment is taken back.', 'eff');
+        // The plan is read at the damage site on the re-run. Keyed by uid because
+        // the restore rebuilt every slot object from JSON — a captured reference
+        // would point at the board that no longer exists.
+        this.fleePlan = { uid: q.ctx.uid, bench: parseInt(value, 10) };
+        this.fleeSnapshot = null;
+        // ESP has already had its turn on this attack, so it must not be offered
+        // again during the replay.
+        this.espSkip = true;
+        this.dispatchAction(who, act);
+        this.espSkip = false;
+        this.fleePlan = null;
         break;
       }
       // NARROW GYM. The asked player returns one of their own Benched Pokemon and
@@ -4198,16 +4244,33 @@ class Engine {
   // does, the honest fix is to refuse the re-flip rather than to restore a board
   // that was never written down.
   flipsThisAttack = 0;
+  attackDealt = 0;
   espSnapshot = null;
+  fleeSnapshot = null;
+  fleePlan = null;
+  espSkip = false;
 
   // Restore IN PLACE rather than reassigning this.state. Callers up the stack
   // hold `const s = this.state` across the gap — doAnswer does — and swapping the
   // object would leave them writing pendingAsk onto a board nobody is looking at.
   // Object identity is the contract here; the contents are not.
-  espRestore() {
-    const fresh = JSON.parse(this.espSnapshot);
+  // Two customers now, and they want opposite things from the same mechanism.
+  // `rng` is captured so a restore can put the generator back where it was:
+  //   ESP  re-runs wanting NEW coins   -> restore state, leave the generator alone
+  //   Flee re-runs wanting THE SAME    -> restore both, and the attack is identical
+  snapState() {
+    return { json: JSON.stringify(this.state), rng: this.rand.get() };
+  }
+
+  // Restore IN PLACE rather than reassigning this.state. Callers up the stack
+  // hold `const s = this.state` across the gap — doAnswer does — and swapping the
+  // object would leave them writing pendingAsk onto a board nobody is looking at.
+  // Object identity is the contract here; the contents are not.
+  restoreState(snap, withRng) {
+    const fresh = JSON.parse(snap.json);
     for (const k of Object.keys(this.state)) delete this.state[k];
     Object.assign(this.state, fresh);
+    if (withRng) this.rand.set(snap.rng);
   }
 
   pick(n) { return n <= 0 ? 0 : Math.floor(this.rand() * n); }
@@ -4303,28 +4366,55 @@ class Engine {
     // Same reason the counter resets here: "an attack that involves flipping
     // coins" means the attack's coins.
     const esp = atk.effects.find(e => e.kind === 'REFLIP' && !e.spent);
+    const fleer = this.fleeCandidate(pi);
     this.flipsThisAttack = 0;
-    this.espSnapshot = esp ? JSON.stringify(s) : null;
+    this.attackDealt = 0;
+    // ONE SNAPSHOT, TWO CUSTOMERS, and they want opposite things from it. Taken
+    // here rather than at the top of doAttack so the Confusion gate and the
+    // once-per-play mark are already resolved and are never re-run.
+    const snap = (esp || fleer) ? this.snapState() : null;
+    this.espSnapshot = esp ? snap : null;
+    this.fleeSnapshot = fleer ? snap : null;
 
     const r = this.runAttack(pi, atk, def, card, attack, script, a);
     if (!r.ok) return r;
+    return this.afterAttack(pi, a, esp);
+  }
 
-    // "If that Pokemon uses an attack that involves flipping coins, Sabrina's ESP
-    // lets you RE-FLIP THOSE COINS ONCE. If you do, re-flip ALL the coins."
-    //
-    // A decision made after seeing the result, which is why this is the one card
-    // in the project that needs to be able to un-happen. Asked BEFORE
-    // finishAttack: endTurn defers on a pendingAsk, but only after betweenTurns
-    // has already run, so asking later would mean undoing poison and sleep
-    // checks too.
-    if (esp && this.flipsThisAttack > 0 && this.espSnapshot) {
+  // WHO GETS ASKED, AND IN WHAT ORDER, once an attack has landed.
+  //
+  // Two cards stop the game here and they belong to opposite players: Sabrina's
+  // ESP is the ATTACKER re-throwing their own coins, Misty's Tentacruel's Flee is
+  // the DEFENDER escaping what just happened. ESP goes first because a re-flip
+  // changes the damage Flee would be answering — asking the defender about a
+  // result that is about to be thrown away would be asking twice.
+  //
+  // Both are asked BEFORE finishAttack: endTurn defers on a pendingAsk, but only
+  // after betweenTurns has already run, so asking any later would mean undoing
+  // poison and sleep checks too.
+  afterAttack(pi, a, esp) {
+    if (esp && !this.espSkip && this.flipsThisAttack > 0 && this.espSnapshot) {
       this.ask(pi, 'ESP_REFLIP',
         `${this.db[esp.card.id].name}: re-flip all ${this.flipsThisAttack} coin(s)?`,
         [{ value: 'yes', label: 'Re-flip them all' }, { value: 'no', label: 'Keep this result' }],
         { action: a, pi }, true);
       return { ok: true };
     }
-    this.espSnapshot = null;
+    this.espSkip = false;
+    // "If an attack DOES DAMAGE to Misty's Tentacruel WHILE IT'S YOUR ACTIVE
+    // POKEMON" — all three clauses, and the candidate is re-derived rather than
+    // captured because a Knock Out may have emptied the spot since.
+    const fleer = this.fleeCandidate(pi);
+    if (fleer && this.attackDealt > 0 && this.fleeSnapshot && !this.fleePlan) {
+      const you = this.state.players[1 - pi];
+      const opts = you.bench.map((b, i) => ({ value: String(i), label: `Switch to ${this.nameOf(b)}` }));
+      opts.push({ value: 'no', label: 'Stay in' });
+      this.ask(pi, 'FLEE',
+        `Flee: switch ${this.nameOf(fleer)} out and prevent the rest of that attack?`,
+        opts, { action: a, pi, uid: fleer.uid });
+      return { ok: true };
+    }
+    this.espSnapshot = null; this.fleeSnapshot = null;
     return this.finishAttack();
   }
 
@@ -4785,6 +4875,10 @@ class Engine {
       ? a.opts.charityReduce : 0;
     const res = negated ? { dealt: 0, prevented: true }
       : this.dealDamage(atk, def, base, { noWR: flat, charityReduce: charity });
+    // "If an attack DOES DAMAGE to Misty's Tentacruel" — read from what landed
+    // rather than from the attack's printed number, so a prevented hit offers
+    // nothing and a Barrier is not an escape hatch.
+    this.attackDealt = res.dealt || 0;
 
     // RECOIL DOES NOT APPLY WHEN THE DEFENDER STOPPED THE DAMAGE — 16 Aug 2026,
     // settled with Trevor. Take Down into Chansey's Scrunch was hurting Arcanine
@@ -6147,6 +6241,7 @@ class Engine {
       this.log(`${D.name} takes ${r.dmg}. (${Math.max(0, D.hp - defSlot.dmg)}/${D.hp} left)`, 'dmg');
       this.retaliate(atkSlot, defSlot, opts);
       this.damagedStatus(atkSlot, defSlot, opts);
+      this.applyFleePlan(defSlot);
       // Beside retaliate on purpose: both fire on damage that LANDED, and both
       // must fire before anything is Knocked Out. `noMirror` stops two Mirror
       // Shells answering each other forever.
@@ -6210,6 +6305,44 @@ class Engine {
       return dmg - take;
     }
     return dmg;
+  }
+
+  // MISTY'S TENTACRUEL, Flee: "If an attack does damage to Misty's Tentacruel
+  // while it's your Active Pokemon, you may switch it with 1 of your Benched
+  // Pokemon, WHICH PREVENTS ALL OTHER EFFECTS OF THAT ATTACK on Misty's
+  // Tentacruel."
+  //
+  // Applied here — as the damage lands, on the re-run — because the prevention
+  // has to be in place before the post-damage phase reads `effectsBlocked(def)`.
+  // That phase is a thousand lines of verb handling and is NOT hoisted; marking
+  // the slot is what lets every one of those verbs do the right thing without
+  // knowing this card exists.
+  //
+  // The switch happens too, so `def` is on the Bench by the time the tail runs.
+  // The mark is what keeps the tail honest; the switch is what the player wanted.
+  applyFleePlan(defSlot) {
+    const plan = this.fleePlan;
+    if (!plan || !defSlot || defSlot.uid !== plan.uid) return;
+    this.fleePlan = null;
+    const side = this.sideOf(defSlot);
+    if (side === null) return;
+    const p = this.state.players[side];
+    const b = p.bench[plan.bench];
+    if (!b || p.active !== defSlot) return;
+    defSlot.effects.push({ kind: 'PREVENT_ALL_EFFECTS', fleeMark: true, expireAtEndOfTurn: this.state.turn });
+    clearStatus(defSlot);
+    p.active = b; p.bench.splice(plan.bench, 1); p.bench.push(defSlot);
+    this.log(`Flee: ${this.nameOf(defSlot)} slips away and ${this.nameOf(b)} comes up.`, 'eff');
+  }
+
+  // Is Flee on offer right now, and who would answer? Returns the slot or null.
+  fleeCandidate(pi) {
+    const you = this.state.players[1 - pi];
+    const slot = you.active;
+    if (!slot || !you.bench.length) return null;
+    const p = this.powerOf(slot);
+    if (!p || p.kind !== 'FLEE' || !this.powerUsable(slot)) return null;
+    return slot;
   }
 
   mirrorShell(defSlot, dealt) {

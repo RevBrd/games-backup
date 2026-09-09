@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 88,
+  gym1: 87,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -494,6 +494,10 @@ const PROVISIONAL = new Set([
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',
+  // Flee's ANSWER weights, which are not an effect verb and are listed here
+  // because there is nowhere better: staying in is worth a flat 6, and fleeing is
+  // priced off selfKO. Neither is measured.
+  'T_ESP',
   // Sabrina's ESP prices the standing OPTION rather than the instance: whether
   // this turn's attack flips at all is decided inside runAttack, which the
   // scorer cannot see. Same weakness attachBuild has.
@@ -732,6 +736,10 @@ console.log('\nAI verb coverage');
     // fear attacking into a Pollen Defense, and does not know a Rocket's Moltres
     // is cheaper to lose than it looks. AI.md.
     'DAMAGED_STATUS', 'REBIRTH',
+    // Flee is triggered too, but unlike those two it stops and ASKS — and the
+    // question goes to the player who is not taking the turn. scorePower still
+    // never sees it; ai.js answers it through the pendingAsk branch in choose().
+    'FLEE',
   ]);
   const kinds = new Set([...effSrc.matchAll(/\bkind:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
   const blindKinds = [...kinds].filter(k => !handled.has(k)

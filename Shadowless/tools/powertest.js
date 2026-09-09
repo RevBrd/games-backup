@@ -7473,5 +7473,90 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- FLEE ------------------------------------------------------------------
+// The only Power that stops the game and ASKS, and the question goes to the
+// player who is not taking the turn. It is also the second customer for the
+// rewind, and it wants the opposite of what Sabrina's ESP wants: the attack must
+// come out IDENTICAL, with only the escape different.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  // base1:Tangela's SECOND attack is Poisonpowder: 20 damage and an unconditional
+  // Poison. The damage proves the replay is identical; the Poison proves "which
+  // prevents all other effects of that attack" actually prevents something.
+  const board = () => setup({ me: { card: 'base1:Tangela', energy: '3 Grass' },
+    them: { card: 'gym1-10' }, theirBench: [{ card: 'base1:Onix' }] }).E;
+  const poisonpowder = (E) => E.legalActions(0).find(a => a.t === 'attack' && a.idx === 1);
+
+  T('Flee asks the DEFENDER, and only after the attack has landed', () => {
+    const E = board();
+    E.act(0, poisonpowder(E));
+    const q = E.state.pendingAsk;
+    eq(!!q && q.kind, 'FLEE', 'the kind');
+    // The attacker is taking the turn; the question belongs to the other player.
+    eq(q.player, 1, 'asked of the defender');
+    eq(E.state.players[1].active.dmg, 20, 'and the damage has already landed');
+    return eq(q.options.some(o => o.value === 'no'), true, 'declining is offered');
+  });
+
+  T('...and declining leaves the attack exactly as it was', () => {
+    const E = board();
+    E.act(0, poisonpowder(E));
+    E.act(1, { t: 'answer', value: 'no' });
+    eq(E.state.players[1].active.status.poisoned, true, 'the Poison landed');
+    eq(E.nameOf(E.state.players[1].active), "Misty's Tentacruel", 'still Active');
+    return eq(E.state.active, 1, 'the turn handed over');
+  });
+
+  T('...and accepting switches it out and prevents the rest of that attack', () => {
+    const E = board();
+    E.act(0, poisonpowder(E));
+    E.act(1, { t: 'answer', value: '0' });
+    const p1 = E.state.players[1];
+    const tent = p1.bench.find(s => E.nameOf(s) === "Misty's Tentacruel");
+    eq(E.nameOf(p1.active), 'Onix', 'the Bench Pokemon came up');
+    eq(!!tent, true, 'Tentacruel is on the Bench');
+    return eq(tent.status.poisoned, false, 'and the Poison never landed');
+  });
+
+  T('THE DAMAGE IS IDENTICAL ACROSS THE REWIND, which ESP deliberately is not', () => {
+    // The whole reason mulberry32 exposes its state. Flee replays the attack with
+    // the generator put back where it was, so the hit cannot change; ESP replays
+    // it leaving the generator alone, because new coins are the entire point.
+    const a = board();
+    a.act(0, poisonpowder(a));
+    const before = a.state.players[1].active.dmg;
+    a.act(1, { t: 'answer', value: '0' });
+    const tent = a.state.players[1].bench.find(s => a.nameOf(s) === "Misty's Tentacruel");
+    return eq(tent.dmg, before, 'same damage after the replay');
+  });
+
+  T('the log keeps the moment it took back', () => {
+    const E = board();
+    E.act(0, poisonpowder(E));
+    E.act(1, { t: 'answer', value: '0' });
+    const log = E.state.log.map(l => l.text || l);
+    eq(log.some(t => /is now Poisoned/.test(t)), true, 'the Poison that was undone is still shown');
+    eq(log.some(t => /taken back/.test(t)), true, 'and so is the rewind');
+    return eq(log.some(t => /protected - no Poisoned/.test(t)), true, 'and the prevention on the replay');
+  });
+
+  T('the bot stays in when healthy and flees when it is about to die', () => {
+    // WITHOUT A SCORING CASE IT ALWAYS FLED — every option came back 0 and the
+    // switch simply came first in the list. The same positional tiebreak Cat
+    // Punch was written to kill, arriving one card later.
+    const run = (dmg) => {
+      const E = board();
+      if (dmg) E.state.players[1].active.dmg = dmg;
+      E.act(0, poisonpowder(E));
+      const mv = new AI(E, {}).choose(1);
+      return (mv && (mv.action || mv)).value;
+    };
+    eq(run(0), 'no', 'healthy: stays in');
+    return eq(run(50), '0', 'nearly dead: takes the escape');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

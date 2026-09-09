@@ -3325,6 +3325,35 @@ class AI {
         // of these; the mechanism is general and this switch grows per card.
         const q = this.E.state.pendingAsk;
         if (!q) return -Infinity;
+        if (q.kind === 'FLEE') {
+          // PROVISIONAL. Misty's Tentacruel has just been hit and may switch out,
+          // preventing the rest of that attack on it.
+          //
+          // WITHOUT THIS CASE IT ALWAYS FLED, and not because fleeing was scored
+          // well — every option came back 0 and the bot took the first one in the
+          // list, which happens to be a Bench slot. The same positional tiebreak
+          // Cat Punch was written to kill, arriving one card later.
+          const tent = E.allSlots(pi).find(x => x.uid === (q.ctx && q.ctx.uid));
+          if (!tent) return a.value === 'no' ? 0 : -Infinity;
+          const threat = this.incomingThreat(pi);
+          const dying = this.remainingHP(tent) <= threat;
+          if (a.value === 'no') {
+            // Staying in is right while it can still act — the switch costs a
+            // turn of position, and the prevention only matters if something is
+            // still coming. Priced against dying, which is the case the card is
+            // an escape hatch for.
+            return dying ? -W.selfKO * 0.5 : 6;
+          }
+          const b = me.bench[parseInt(a.value, 10)];
+          if (!b) return -Infinity;
+          // Fleeing is worth what it saves, minus what we promote into. The
+          // replacement's own survival is the term that stops it swapping a hurt
+          // Tentacruel for something that dies faster.
+          let sc = dying ? W.selfKO * 0.5 : 0;
+          sc -= this.remainingHP(b) <= threat ? W.selfKO * 0.5 : 0;
+          sc += this.bestAffordableDamage(pi, b) * 0.2;
+          return sc;
+        }
         if (q.kind === 'CAT_PUNCH') {
           // The bot is the DEFENDER here, naming which of its own Benched Pokemon
           // eats 20. Without this case the switch below returns 0 for every option

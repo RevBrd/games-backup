@@ -75,3 +75,28 @@ made exactly that mistake and reported `pendingAsk: null` as a bug in the card.
 | **A snapshot cannot live inside the thing it snapshots**, and the state it cannot survive must be named rather than discovered | A mid-attack save would lose it; the answer is to refuse, not to improvise |
 | **Rewind the board, keep the record.** An undone event that leaves no trace is indistinguishable from one that never happened | The player watched the coin land |
 | **Ask what the code DID, not what it declares** — a conditional flip makes "does this attack flip coins" unanswerable from the script | Removal Pulse flips only against Energy |
+
+## A second customer, and it wants the opposite — 9 Sep 2026
+
+**Misty's Tentacruel's Flee also re-runs an attack, and it must come out IDENTICAL.** Only the escape
+differs; the damage must not move. That is the exact inverse of what ESP wants, and building the
+second one is what turned this card's bespoke pair of fields into a shared mechanism.
+
+**`mulberry32` now exposes its state**, and restoring it is the whole difference:
+
+| | restores state | restores the generator |
+|---|---|---|
+| **ESP** | yes | **no** — new coins are the entire point |
+| **Flee** | yes | **yes** — the hit must be the same hit |
+
+The function's arithmetic is untouched, so every existing seeded replay is bit-identical to before;
+`get`/`set` are a window onto the seed rather than a change to it.
+
+**Order matters and is fixed: ESP is asked first.** A re-flip changes the damage Flee would be
+answering, so asking the defender about a result that is about to be thrown away would be asking
+twice. `afterAttack` is the one place that decides this, and `espSkip` is what stops the chain
+re-offering a question already declined.
+
+**The snapshot is no longer ESP's private field**, so the caution in this entry now covers both: a
+game saved between an attack and either answer loses it, and the honest fix remains refusing the
+option rather than restoring a board that was never written down.

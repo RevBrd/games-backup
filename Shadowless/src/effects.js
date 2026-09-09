@@ -843,6 +843,11 @@
 //     GUST_ON_FLIP      {name}              INTERACTIVE, once a turn. Pick one of
 //                                           their Benched Pokemon, then flip; heads
 //                                           drags it up (Fragrance Trap)
+//     FLEE              {name}              triggered, and the only one that ASKS.
+//                                           If an attack damages it while Active,
+//                                           its controller may switch it out and
+//                                           prevent the rest of that attack on it.
+//                                           Answered on the FLEE pendingAsk kind
 //     BENCH_GUARD       {n, name}           passive. While BENCHED, takes n of any
 //                                           damage dealt to another of YOUR Benched
 //                                           Pokemon (Bench Guard). The only Power
@@ -2243,6 +2248,8 @@ const EFFECTS = {
                     always: true, requireSelfAsleep: true },
     a: [[{ v: 'STATUS_SELF', s: 'Asleep' }]] },            // Rocket's Snorlax: Collapse
 
+  'gym1-10': { p: { kind: 'FLEE', name: 'Flee' },
+    a: [[{ v: 'STATUS_COIN_EITHER', heads: 'Poisoned', tails: 'Confused' }]] },   // Misty's Tentacruel: Jellyfish Poison
   'gym1-2':  { p: { kind: 'BENCH_GUARD', name: 'Bench Guard', n: 10 },
     a: [[{ v: 'FLIP_OR_NOTHING' }]] },                    // Brock's Rhydon: Lariat
 
