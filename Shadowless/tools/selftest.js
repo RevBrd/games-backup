@@ -99,7 +99,15 @@ const REMAINING = {
   // card reveals the Pokemon's NAME and any stat we DO model is then derivable.
   // Dropped at generation via OMITTED in gen_cards.js rather than left as a hole
   // here, so the set is complete at 131 rather than 131 of 132. Trevor, 8 Sep 2026.
-  gym1: 97,
+  // RAISED ONCE, ON PURPOSE, 9 Sep 2026 — 97 -> 99. The ratchet caught it going
+  // backwards and was right to: six cards had been counted as implemented while
+  // carrying an unimplemented Pokemon Power, and backing them out is a real
+  // increase in work remaining. A ratchet that can never be raised would have
+  // forced the wrong repair, which is to leave six broken cards in.
+  //
+  // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
+  // has to say what it is correcting. This is the only one so far.
+  gym1: 99,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -134,6 +142,23 @@ for (const s of sets) {
   console.log(`  ${s.padEnd(6)} ${String(total - left).padStart(3)}/${total}`
     + (left ? `   ${left} to go` : '   LIVE'));
 }
+
+// A CARD IS NOT IMPLEMENTED JUST BECAUSE IT HAS AN ENTRY. Everything above asks
+// whether EFFECTS[id] exists, which is the right question for an attack and a
+// blind one for a Pokemon Power: a card carrying a Power and an `a:` but no `p:`
+// passes the deck validator, goes into a deck, and the Power silently does
+// nothing. That is the exact failure the validator exists to prevent, one level
+// in — and it is worse than an unscored verb, because the HUMAN loses the card
+// too.
+//
+// Written 9 Sep 2026 after a Job 16 batch shipped SIX of them in one commit. The
+// batch derived scripts from attack text and never looked at the Power line; no
+// suite could see it, and the cards read as done in every count.
+const powerless = Object.keys(CARD_DB)
+  .filter(id => CARD_DB[id].power && EFFECTS[id] && !EFFECTS[id].p)
+  .sort();
+check(powerless.length === 0, 'every card with a Pokemon Power has a p: script',
+  powerless.map(id => `${id} ${CARD_DB[id].name} (${CARD_DB[id].power.name})`).join(', '));
 
 const liveGaps = sets.filter(s => REMAINING[s] === undefined && bySet[s]);
 check(liveGaps.length === 0, 'no live set contains an unimplemented card',
