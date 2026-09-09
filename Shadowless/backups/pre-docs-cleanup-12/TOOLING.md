@@ -311,30 +311,6 @@ three got here. Gym brings sixteen more cards that stop to ask the opponent some
 
 *[The abtest stall floor this explains, and the 91% drop →](MISREADINGS.md)*
 
-## `doccheck.js` — the doc lint, and it is not in the gate either
-
-**`node tools/doccheck.js`.** Everything [MAINTENANCE.md](MAINTENANCE.md) calls a cheap sweep, executed
-rather than remembered: every live register against the threshold written in **its own header**, the
-link check (with the anchor fix, so it cannot cry wolf on a working link), trailing newlines, the
-quantifier grep, closed markers inside live files, a roll of somebody else's archives, duplicate
-designations in `CREDITS.md`, and a table row that silently ends its table.
-
-**Why it is not in `tools/test.js`, which is the same argument as `claimtest.js` one section down.**
-A stale doc is not a broken game. A doc lint that can redden the gate teaches everybody to read red as
-*"you broke something"*, and the whole value of the gate is that red means exactly that. It exits 0
-always; it reports.
-
-**FAIL is wrong and fixable. FLAG is "go and look."** The quantifier and closed-marker sections print
-candidates a human has to check and will always print some — **zero hits there is evidence the grep is
-broken, not that the tree is clean**, and the tool says so itself.
-
-**Run it against the pass's own backup before trusting it**, `node tools/doccheck.js
-backups/pre-docs-cleanup-N`. The first version went **green** on a tree holding a register 105 lines
-over its own limit, because two of its own rules were wrong — it matched the word "closed" in a
-sentence about *work* being closed, and it required a verb before the threshold number that one header
-does not use. Only the control found that. Same doctrine as `claimtest.js`: **a verifier that has only
-ever been green proves nothing about itself.**
-
 ## `claimtest.js` — pass/fail, but a red row is not a broken build
 
 **Deliberately not one of the six, and this is the whole point of the section.** It is pass/fail, so

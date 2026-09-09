@@ -283,17 +283,6 @@ and a pointer. **Item 13 was left at full length on purpose** — Trevor's worke
 proposal rather than a story about it, and this is its only copy in the tree. **Do not "finish the
 job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.md)*
 
-**That decision's own measurement expired the same day it was written, which is worth more than the
-decision — 8 Sep 2026.** It refused the directory on *"thirteen items, median ten lines, five of them
-eight or fewer"*, and items 14 and 15 landed hours later at 25 and 83 lines, taking the list to 334
-of this file's 611. `MAINTENANCE.md` says a shape decision has an expiry date and nothing re-checks
-one; this is the shortest expiry on record here. **The answer is still no** — the list is cited by
-number from `CLAUDE.md`, `GRABBAG.md` and four invariant files, so a structure inviting renaming
-invites repointing — but the grounds are now *"renumbering is the cost"* rather than *"the items are
-short"*, because the items are not short any more. **The remedy stays the same and it is the one this
-list keeps needing: when an item ships, its account belongs in `AI-INVARIANTS/`, and what stays here
-is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 lines down to 36.
-
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
    damage while an Active gets full expected value; the measured size is in *The Active and the Bench
    are scored in different units* above. Closing it means making expected value computable for a slot
@@ -436,17 +425,44 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     and 10 already do.
 
 12. ~~**Should a card that ALREADY threatens be charged toward a bigger attack?**~~ **CLOSED
-    7 Sep 2026 by Trevor — and the question turned out to be built on his own wording rather than on
-    his intent.** The attack road's fifth surplus exception reads `destShort`, which pins the moment
-    any *threatening* attack is payable, so it frees a Fossil Moltres (Wildfire `R`, no damage) and
-    does nothing for **Hitmonchan** or **Raichu**. Both of those are **already charged by
-    `attachAmortise`**, measured; and the cell that made the item look open — *"only if the bench
-    doesn't have better options"* — was written as a gate and meant as a comparison, which the bot
-    has always done.
-    **The boundary stands where `destShort` put it. The live part is the reason not to reopen it
-    casually:** widening the rule hands the wall gate weight it was never sized for, and starts
+    7 Sep 2026 — Trevor, and the answer was that the question was built on his own wording rather
+    than on his intent. Read the strike-through, then the entry below it.** — 5 Sep 2026, and this
+    is the deliberate boundary of the attack road.** The fifth surplus exception reads `destShort`,
+    which pins at zero the moment any *threatening* attack is payable — so it frees a Fossil Moltres
+    (Wildfire `R`, no damage) and does nothing at all for **Hitmonchan** (Jab `F`/20 → Special Punch
+    `FFC`/40) or **Raichu** (Agility/20 → Thunder/60).
+
+    **The boundary is defensible and it is not obviously right.** A Moltres holding one Fire is doing
+    literally nothing; a Hitmonchan holding one Fighting is doing real work, and
+    [ATTACK-CHOICE](Playbook/ATTACK-CHOICE.md)'s whole finding is that the small utility attack is
+    usually the correct one. Widening this would push the bot toward over-attaching generally.
+
+    **What settles it is Trevor, not a duel** — it is a question about what these cards are *for*,
+    which is [PLAYBOOK.md](PLAYBOOK.md)'s inbox and not a measurement. **Do not widen the rule to
+    close this item**: the wall gate would then be carrying weight it was never sized for, and
+    Magneton would start charging toward a Selfdestruct that belongs to the unbuilt Kamikaze Timing
+    pattern. *[The entry, and the 35 cards it did reach →](AI-INVARIANTS/ATTACK-ROAD.md)*
+
+    **HOW IT CLOSED, 7 Sep 2026.** The two cards this item named as the exception's misses are both
+    **already charged**, by a different term. At one Fighting a Hitmonchan's Special Punch is two
+    Energy away and at two Lightning a Raichu's Thunder is two away, so `attachAmortise` carries both
+    slots and the surplus rule never bites — the exception is for a slot that needs **nothing**, and
+    neither of these is one. Measured, one Energy in hand: benched Hitmonchan **25.00**, benched
+    Raichu **32.00**.
+
+    **And the sentence that made this look open was wrong at the source.** The Hitmonchan cell read
+    *"Special Punch… should only be powered up if the bench doesn't have better options"*, which is
+    phrased as a gate. **Trevor's own verdict on it:** *"It read as a gate because it was written as
+    one when I originally wrote it… I think the current form is the correct one and my original claim
+    was wrong."* The bot already ranks attach targets against each other, and a ranking is what
+    "only if nothing is better" means. A literal gate would have been worse — it would fire on a
+    better option the bot could not afford to use that turn.
+
+    **So the boundary stands exactly where `destShort` put it**, and this is now a decided boundary
+    rather than an open one. **The warning above still holds and is the reason not to reopen it
+    casually**: widening the rule would hand the wall gate weight it was never sized for and start
     Magneton charging toward a Selfdestruct that belongs to the unbuilt Kamikaze Timing pattern.
-    *[How it closed, verbatim, and the 35 cards the road did reach →](AI-INVARIANTS/ATTACK-ROAD.md)*
+    *[The rows →](tools/claims/base1.js)*
 
 13. **Multi-turn lookahead: comparing two SEQUENCES rather than two attachments — Trevor,
     6 Sep 2026.** Deferred deliberately, and recorded here rather than in a file of its own because
@@ -509,33 +525,87 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     weight gets load-bearing. *[The row, with the measurement attached →](PLAYBOOK.md)* —
     `tools/claimtest.js --open`.
 
-15. **The bot could not see the opponent's deck at all — 7 Sep 2026. HALF BUILT the same day.**
-    `deckRisk` read `players[pi].deck`, ours, and priced running *itself* out as a loss; nothing in
-    `ai.js` had ever read `players[1 - pi].deck`. **The stalling half shipped**: `deckOutClock` floors
-    both copies of `turnScale`, so a turn bought off a *harmless* opponent — worth exactly zero
-    before, because `denied` is damage — is worth having while their clock runs. 3.4% of ladder games
-    diverge; win rate unmoved, as a symmetric change should be.
-    **The transferable part is why nothing had ever scored it: a turn passing is progress toward that
-    win, and it is not an action.** Any win or loss condition that ticks on its own is invisible to an
-    action scorer by construction rather than by oversight.
-    *[The entry, the measurement, and the two copies of `turnScale` →](AI-INVARIANTS/DECK-OUT-CLOCK.md)*
+15. **The bot could not see the opponent's deck at all — 7 Sep 2026. HALF BUILT the same day; the
+    stalling half shipped, the risk half did not.** `deckRisk(pi, burn)` reads `players[pi].deck.length`, its own, and `deckLoss: 150`
+    correctly prices running *itself* out as a loss rather than an expensive draw. **Nothing in
+    `ai.js` reads `players[1 - pi].deck` at all.** So every mill effect in the era is valued purely
+    as a cost it does not pay, and the win condition on the other side of it is invisible.
 
-    **STILL OPEN: risk aversion, the larger half — and read the entry before you start, because the
-    instruction this item first carried was WRONG and the correction lives there.** The short version:
-    **the hook is not `W.selfKO`.** That is a *unit*, the price of losing a Pokémon, and ten call
-    sites denominate three deliberately different curves in it — one of them carrying a comment saying
-    they disagree on purpose. All ten are about losing a Pokémon rather than losing the **game**, and
-    this file already separates those: *"losing is not a big Knock Out; it is a different kind of
-    thing."* **The right hook is the `selfWorst` / `pSelfWorst` pair `scoreAttack` already reads at the
-    `lastPrize` carve-out.** Widen the existing worst-case read; do not add a second notion of
-    self-risk.
-    **And the claim is about risk PREFERENCE rather than a weight**, which is sharper: ahead on the
-    clock, a coin-flip line and a certain line of equal expected value are not equal and the safe one
-    is correct. An expected-value scorer folds every coin into a mean and cannot currently say that,
-    which puts this closer to item 13's planner than to a term.
-    **Measure with `aiduel` against the pinned commit, not `abtest`** — the question is whether the bot
-    got *better* — and run `aiduel --checkpin --baseline --gbc` first; two sets have landed since the
-    pin was set. **`W.deckOutRange: 15` is a guess**, recorded here beside `prizeIndex` (item 3) and
-    `wallRoadInDeck` (item 11) because it is not an effect verb and cannot go on `PROVISIONAL`.
-    **The offensive half — mill effects gaining value as their deck shrinks — is not built and should
-    not be opened by tuning Wildfire**, which Trevor has declined and is right to.
+    **Trevor found this from a card and had already priced the fix as not worth it.** Fossil Moltres:
+    *"Wildfire asks for an Energy Funnel just to discard the opponent's next card(s)… nowhere near a
+    good tradeoff **unless the opponent's deck is close to empty (then it suddenly gains a lot of
+    value)**. This will be exceedingly rare though and might be a waste of time to tune."* He is
+    right about Moltres and the three claim rows already assert the behaviour he wants — Dive Bomb,
+    never Wildfire.
+
+    **It is recorded because the card was the symptom and not the item.** Wildfire is one of several
+    printings that move cards off the opponent's deck, and a bot that never reads that number is
+    equally blind in all of them — including the defensive direction, where it cannot notice its
+    *opponent* is three cards from decking out and simply stall. **Do not open this by tuning
+    Wildfire**, which is the expensive way in and the one Trevor has already declined. If it is ever
+    opened, the cheap half is the defensive read: one number, no new verb, and it makes the bot
+    better at a game it can already lose this way.
+
+    **BUILT, 7 Sep 2026, at Trevor's ask — the defensive read, not the Wildfire one.** `deckOutClock`
+    reads `players[1 - pi].deck` and ramps from 0 at `W.deckOutRange` cards to 1 at empty. It floors
+    both copies of `turnScale`, so a turn bought off a *harmless* opponent — worth exactly zero before,
+    because `denied` is damage — is worth having while their clock runs. **A `max`, not a sum**: where
+    real damage is denied, the damage reading is already larger and nothing changes.
+    **3.4% ± 1.0 of ladder games diverge, median first difference at action 139**, win rate unmoved at
+    49.4% → 49.3% as a symmetric change should be.
+    *[The entry →](AI-INVARIANTS/DECK-OUT-CLOCK.md)*
+
+    **WHAT IS STILL OPEN IS THE LARGER HALF: risk aversion — and the instruction this item first
+    carried for it was WRONG. Corrected 8 Sep 2026 before anybody acted on it.**
+
+    It said to scale `selfKO`. **Do not.** `selfKO` is not a weight, it is a **unit** — the price of
+    losing a Pokémon — and ten call sites denominate three different curves in it: recoil as
+    `selfKO · frac²`, a barrier preventing that death as `shieldFrac² · selfKO`, bench splash as flat
+    fractions. One of them carries a comment saying *"those two curves disagree on purpose"*. A
+    multiplier on the unit rescales all three uniformly and flattens a distinction that was authored.
+
+    **And every one of the ten is about losing a POKEMON, not about losing the GAME**, which is the
+    reason the scale was the wrong hook rather than merely a blunt one. This file already separates
+    them and says so outright, in the comment above the worst-case branch: *"priced at `lastPrize`
+    rather than `selfKO` whenever that death is the one that ends the match. **Losing is not a big
+    Knock Out; it is a different kind of thing**, and `selfKO` at 70 could never outweigh a Knock Out
+    worth 55 plus the damage."* The clock's argument is about the game ending. It has no business in
+    the unit that prices a Pokémon.
+
+    **What the clock actually changes is RISK PREFERENCE, and that is a sharper claim than a weight.**
+    `ai.js` is an expected-value scorer — this file's own one-line summary says so — and it folds every
+    coin into a mean. A risk-neutral agent that is **ahead on a clock** should stop being risk-neutral:
+    when you win by simply not losing, a coin-flip line and a certain line of equal expected value are
+    not equal, and the safe one is correct. **Nothing in the scorer can currently express that**, which
+    makes this closer in kind to item 13's planner than to a term.
+
+    **The precedent is already built and it is the thing to generalise.** `rawOutcomes` carries
+    `selfWorst` and `pSelfWorst` beside the mean precisely because *"an average hid it"* — a branch
+    that ends the game is invisible the moment it is folded into a mean — and `scoreAttack` reads them
+    only when that worst case **ends the match**. Being ahead on the deck clock is the second condition
+    that should reach for the same pair. **Widen the existing worst-case read; do not add a second
+    notion of self-risk.**
+
+    | | |
+    |---|---|
+    | **Wrong hook** | `W.selfKO` — ten sites, three authored curves, all about a Pokemon |
+    | **Right hook** | the `selfWorst` / `pSelfWorst` branch that already exists at the `lastPrize` carve-out |
+    | **The claim** | ahead on the clock, prefer the certain line to the coin of equal mean |
+    | **Measurement** | `aiduel` against the pinned commit, NOT `abtest` — the question is *is the bot better*, and `--control` first |
+
+    **The measurement is a different KIND from the floor's and that is most of why this wants its own
+    session.** `abtest` answered "did anything change" in minutes. This asks whether the bot got
+    *better*, which is `aiduel` against the pinned commit — the project's one accumulating measurement,
+    which [YARDSTICKS.md](YARDSTICKS.md) records as rotting by the world moving. Run
+    `aiduel --checkpin --baseline --gbc` before trusting it; a set or roster change is what breaks the
+    pin, and two have landed since it was set.
+
+    **Left out of Job 15f deliberately so the first, unmeasured weight could be judged on its own**,
+    which is the same discipline item 9 records for its three arms.
+
+    **And `W.deckOutRange: 15` is a guess** — nothing has measured where a deck becomes short enough
+    to plan around. It cannot go on `selftest.js`'s `PROVISIONAL` list, which holds effect verbs, so it
+    is recorded here beside `prizeIndex` (item 3) and `wallRoadInDeck` (item 11) for the same reason.
+
+    **The offensive half — mill effects gaining value as their deck shrinks — is still NOT built and
+    should not be opened by tuning Wildfire**, which Trevor has declined and is right to.

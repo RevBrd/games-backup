@@ -274,31 +274,3 @@ stronger footing than `wallRoadInDeck` had. **`destGoal` is not** — it is a pr
 **What is unmeasured is the boundary**, in the sense that nobody has checked whether the 35 cards
 freed here are *better off* fed. The claim rows assert that they *can* be, which is a different thing,
 and the win rate below does not separate them.
-
-## The boundary is now DECIDED rather than open — 7 Sep 2026
-
-**Moved here verbatim from `AI.md` open item 12 on 8 Sep 2026, when that item was closed.** It is the
-only account of how the question was settled, and an item struck out in a live list is read as
-finished rather than as evidence — so it moves rather than being summarised. The section above,
-written while the boundary was still open, stands unedited beside it.
-
-**HOW IT CLOSED, 7 Sep 2026.** The two cards this item named as the exception's misses are both
-**already charged**, by a different term. At one Fighting a Hitmonchan's Special Punch is two
-Energy away and at two Lightning a Raichu's Thunder is two away, so `attachAmortise` carries both
-slots and the surplus rule never bites — the exception is for a slot that needs **nothing**, and
-neither of these is one. Measured, one Energy in hand: benched Hitmonchan **25.00**, benched
-Raichu **32.00**.
-
-**And the sentence that made this look open was wrong at the source.** The Hitmonchan cell read
-*"Special Punch… should only be powered up if the bench doesn't have better options"*, which is
-phrased as a gate. **Trevor's own verdict on it:** *"It read as a gate because it was written as
-one when I originally wrote it… I think the current form is the correct one and my original claim
-was wrong."* The bot already ranks attach targets against each other, and a ranking is what
-"only if nothing is better" means. A literal gate would have been worse — it would fire on a
-better option the bot could not afford to use that turn.
-
-**So the boundary stands exactly where `destShort` put it**, and this is now a decided boundary
-rather than an open one. **The warning above still holds and is the reason not to reopen it
-casually**: widening the rule would hand the wall gate weight it was never sized for and start
-Magneton charging toward a Selfdestruct that belongs to the unbuilt Kamikaze Timing pattern.
-*[The rows →](../tools/claims/base1.js)*

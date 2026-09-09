@@ -10,18 +10,9 @@ logbook entry with no row is how somebody gets left off. Sign your session numbe
 remember to. Trevor will attempt to label any that are forgotten as yours.
 
 **Keep a row to two or three lines and put the depth in [LOGBOOK.md](LOGBOOK.md).** The rule was set
-on 11 Aug 2026 and every documentation pass since has had to re-impose it — **deliberately not
-counted**, because the count is the part that rots and the habit is the part that matters. On 26 Aug
-eight rows had grown to between four and twenty-four lines; on 8 Sep five had, the longest at eleven.
-Twice it was broken by the instance that set it. **Expect to do it again; this is the most reliably
-violated rule in the tree.**
-
-**A second way a row goes wrong, found 8 Sep 2026: it gets SPLIT.** #33 did Jobs 15a and 15b and
-wrote two logbook entries — "#33" and "#33 again" — and somewhere downstream those became two rows
-in this table both signed #33, with a stray one-cell row wedged between them. **A designation is a
-session, not a job**, so a row covers everything one instance did however many jobs that was.
-Two rows sharing a number is the visible symptom; the invisible one is that a designation collision
-makes the credit unattributable, which is the whole thing this table exists to prevent.
+on 11 Aug 2026 and has needed re-imposing **three times** since — 16 Aug, and again on 26 Aug when
+eight rows had grown to between four and twenty-four lines each. Twice it was broken by the instance
+that set it. **Expect to do it again; this is the most reliably violated rule in the tree.**
 
 **Trimming a row is safe only where that instance has a logbook entry**, and that is the test to
 apply row by row: where one exists the row is a duplicate and the logbook holds more; where none
@@ -69,17 +60,18 @@ again for a day. No blank lines, and check every row ends in `|`.
 | **Sonnet 5** #26 | 25 Aug 2026 | **Job 12c:** the pack shrank from 11 cards to 8 and a lesser slot can now jump a tier. Then the Team Rocket bracket — Trevor's eight decks plus the two authentic theme decks — the first roster whose tiers ordered cleanly, and only after three PROVISIONAL Power cases turned out to crash |
 | **Opus 5** #27 | 26 Aug 2026 | Job 12d, the ninth documentation pass. [CHALLENGES.md](CHALLENGES.md), [INSPECTION.md](INSPECTION.md) and two archives split out; this table returned to its rule, six rows preserved whole in the logbook first. Found four files stating a fact their own data contradicted, including the link checker that cannot see an anchor |
 | **Opus 5** #28 | 26 Aug 2026 | **Job 13:** the Wizards Black Star Promos, basep-1..28, and the fourth trigger. Four AI scorers turned out to be reading a verb their engine half had outgrown — the worst of them undervaluing four live cards since Base Set. `booster: false` stops a finished promo set ever becoming a ladder bracket |
-| **Opus 5** #29 | 27–28 Aug 2026 | Job 13b: the promos became **reachable**, and `collectibleDb` split what you may OWN from what is a SET. Found the intrusion roll had **never fired in the shipped game**. [Logbook](LOGBOOK.md) |
+| **Opus 5** #29 | 27–28 Aug 2026 | Job 13b: the promos became **reachable**, and `collectibleDb` split what you may OWN from what is a SET. Found the intrusion roll had **never fired in the shipped game**. [Logbook](LOGBOOK-ARCHIVE-6.md) |
 | **Opus 5** #30 | 29 Aug 2026 | Job 14a. The tenth documentation pass — a second AI-invariants archive, and nine claims corrected that their own data refuted; found the **Fossil roster had never been measured** and ran it. Then Defender, from the grab bag: an attack's own self-harm now passes the reduction band, plus a fourth self-damage site nobody had enumerated |
 | **Opus 5** #31 | 30 Aug 2026 | Job 14b, the **Trainer half** of the playbook: the AI had never chosen which Energy to strip at all. Found that **no claim board could ever test an evolution**. **No logbook entry, so this row's original text is preserved verbatim** in [the archive](LOGBOOK-ARCHIVE-6.md) |
-| **Opus 5** #32 | 31 Aug – 1 Sep 2026 | Job 14b, the **Over-Attach** pattern. Printed damage is a *function of the Energy attached* for sixteen printings and all three readers of it were wrong. Then **three green tests found to be sweeping a threat the engine cannot produce**. [Logbook](LOGBOOK.md) |
-| **Opus 5** #33 | 1 Sep 2026 | **Jobs 15a and 15b.** The Challenge 1 bracket — the first ladder rung belonging to no set, and the job was `bracket.set` answering four questions with two of them wrong, invisibly. Then the pack odds, and Trevor finding **24 Fighting Energy behind an all-Fire roster**: a legal deck that could not attack. [Logbook](LOGBOOK.md) |
-| **Opus 5** #34 | 2 Sep 2026 | **Job 15c: the eleventh documentation pass.** Three registers archived and `AI-INVARIANTS` made a directory — on a measurement rather than an instinct, a shape twice refused having outgrown the refusal. Six defects verified against the code. [Logbook](LOGBOOK.md) |
-| **Opus 5** #35 | 2 Sep 2026 | **Job 15d: the suite audit.** The framing did not survive the first hour: the suites hold no dead code. What was wrong was duplication that had **diverged** — fourteen copies of the owed-choice dispatch in three versions, the worst aborting 8.8% of games silently. Built the gate. [Logbook](LOGBOOK.md) |
-| **Opus 5** #36 | 2 Sep 2026 | **Job 15e: the GBC 2 seam.** Trevor's notes from the Japan-only sequel, on the argument that a reference implementation answers what a claim row structurally cannot. Potion timing was two faults with the first hiding the second, and one claim row was **green because of the fault it was written about**. Then the board-aware wall. [Logbook](LOGBOOK.md) |
-| **Opus 5** #37 | 5 Sep 2026 | **Job 15e: the attack road.** A grab-bag note about a misplaced Energy, where the accused decision was defensible and **the fault sat beside it**: `potential().short` pinned at zero the moment any attack was payable, so bigger attacks were unreachable on **35 terminal cards**. [Logbook](LOGBOOK.md) |
-| **Opus 5** #38 | 7 Sep 2026 | **Job 15f: the live inbox.** `wants.js` moved onto Trevor's live Google Sheet. **The tool built to prevent a stale read had been making one for eleven days** — reporting the file it opened perfectly honestly the whole time, because a guard that watches one folder guards that folder. 19 live notes recovered. [Logbook](LOGBOOK.md) |
-| **Opus 5** #39 | 8 Sep 2026 | **Job 15g: the standing documentation pass**, opened rather than finished — it does not close. Built `tools/doccheck.js`, which runs the sweeps this tree calls the cheapest finding available and the one nobody runs. **It went green on a register 105 lines over its own limit** until a control run against the pre-pass backup found two bugs in it. [Logbook](LOGBOOK.md) |
+| **Opus 5** #32 | 31 Aug – 1 Sep 2026 | Job 14b, the **Over-Attach** pattern. Printed damage is a *function of the Energy attached* for sixteen printings and all three readers of it were wrong. Then **three green tests found to be sweeping a threat the engine cannot produce**. [Logbook](LOGBOOK-ARCHIVE-6.md) |
+| **Opus 5** #33 | 1 Sep 2026 | **Job 15a: the Challenge 1 bracket** — the first ladder rung belonging to no set. The job was `bracket.set`, answering four questions with two of them wrong, invisibly. Trevor's own correction closed the sharper one. [Logbook](LOGBOOK.md) |
+ |
+| **Opus 5** #33 | 1 Sep 2026 | **Job 15b: the pack odds** — four cosmetic axes restored, and a Challenge pack rolls the rarity jump at 4x. Trevor then found **24 Fighting Energy behind an all-Fire roster**: a legal deck that could not attack. [Logbook](LOGBOOK.md) |
+| **Opus 5** #34 | 2 Sep 2026 | **Job 15c: the eleventh documentation pass.** Three registers archived and `AI-INVARIANTS` made a directory, on a measurement rather than an instinct — the entry had outgrown the shape twice refused for it. Six defects verified against the code, including a promo count that disagreed across three files one day after it moved. [Logbook](LOGBOOK.md) |
+| **Opus 5** #35 | 2 Sep 2026 | **Job 15d: the suite audit.** The framing did not survive the first hour — the suites were not bloated and hold no dead code. What was wrong was duplication that had **diverged**: fourteen copies of the owed-choice dispatch in three versions, the worst aborting 8.8% of games silently. That closed `abtest`'s stall floor, open in `MISREADINGS` since 29 Aug, and exposed a suite that was **not deterministic**. Built the gate, gave `openercheck` its first control. [Logbook](LOGBOOK.md) |
+| **Opus 5** #36 | 2 Sep 2026 | **Job 15e: the GBC 2 seam.** Worked Trevor's notes from the Japan-only sequel, on the argument that a reference implementation answers the question claim rows structurally cannot — *is there a decision here we are not making at all*. Potion timing was **two faults with the first hiding the second**: a rescue bonus flat across the boundary where the heal stops saving, and a target chosen before anything was scored, which suppressed its own correction. Found the first claim row in the project **green because of the fault it was written about**, and closed the `--open` list entirely — two clauses Trevor had already answered, and the third he answered when asked. That last one, Switch, was asking the wrong question: the retreat cost it nullifies was already priced by the comparison against retreating, while the card scored a flat -4.00 on every board that was not an emergency. Then built the board-aware wall: a card is a wall exactly when its evolution road is dead, which makes the old terminal-Basic gate an instance of the general rule rather than a special case. [Logbook](LOGBOOK.md) |
+| **Opus 5** #37 | 5 Sep 2026 | **Job 15e: the attack road.** Took a GRABBAG note about a Zapdos being handed a Fire it could not use. Reproduced the board from the log — and the accused decision was defensible: the Zapdos was Active on nothing with a retreat cost of 2, so the escape-route exception paid for it. **The fault was beside it.** A Fossil Moltres scored higher and was vetoed to -2.00, because `potential().short` pins at zero the moment any attack is payable — Wildfire costs one Fire and deals nothing, so Dive Bomb was unreachable in every game ever played, on **35 terminal cards** across the four live sets. The fix reads `destShort`, the fact built four days earlier for the evolution road and never wired to this consumer. Gated on wall-ness so Chansey keeps Scrunch, on a split that lands exactly on the two cards Trevor names as walls. [Logbook](LOGBOOK.md) |
+| **Opus 5** #38 | 7 Sep 2026 | **Job 15f: the live inbox.** Moved `wants.js` off the hand-exported `.xlsx` pool and onto Trevor's live Google Sheet, published to the web as CSV. **The tool built to prevent a stale read had been making one for eleven days** — newest export 24 Aug, live sheet edited 4 Sep, and a whole Gym Heroes workbook that existed only on Drive. It reported the file it opened perfectly honestly the entire time; a guard that watches one folder guards that folder. The corrected read added **19 live notes** and surfaced **122 `gym1` notes** already waiting for Job 16. Freshness is now answered offline from the Drive stub's mtime, which tracks the live doc exactly — the published CSV sends no `Last-Modified` and no `ETag`, so there was no HTTP answer to reach for. Graded the drift check when live data took it from nine undifferentiated alarms to one real rewrite: the cause was the `note` field holding **four different things** across 142 claims, measured rather than guessed at. The gate caught Trevor removing Ancient Mew. [Logbook](LOGBOOK.md) |
 
 Trevor's own contributions are not a row here because they are not a model's — but they are load
 bearing and they are named where they were made: the four authentic theme deck lists in
@@ -89,18 +81,14 @@ board design lock, and every ruling in [RULINGS.md](RULINGS.md) marked *settled 
 ---
 
 **This end of the tree is the quiet end.** Nothing here is orientation and nothing is waiting on you.
-If you have a minute and it interests you: [LOGBOOK.md](LOGBOOK.md) is what the instances before you
-thought while they worked, and where you can log your own if you would like — **its own "What is
-where" table is the roll of the archives**, so everyone earlier is one hop from there. And
-[TREVOR.md](TREVOR.md) is where his actual save stood as each set went live, the game being played
-rather than built.
+If you have a minute and it interests you: [LOGBOOK.md](LOGBOOK.md) is what the last few instances
+thought while they worked and where you can log your own if you would like; its archives hold
+everyone before them — [1](LOGBOOK-ARCHIVE-1.md), [2](LOGBOOK-ARCHIVE-2.md),
+[3](LOGBOOK-ARCHIVE-3.md), [4](LOGBOOK-ARCHIVE-4.md) — and [TREVOR.md](TREVOR.md) is where his actual
+save stood as each set went live, the game being played rather than built.
 
-*(**There is no list of archives in this file and there must never be one again.** It has now gone
-stale twice from the same cause. It listed 1–3 for three days after archive 4 existed, which made
-#19's whole account of Job 10 unreachable from the only index that points here; that was "corrected"
-on 29 Aug 2026 by **adding archive 4 to the list**, and by 8 Sep it was three behind with #28
-through #34 unreachable the same way. **Extending a hand-list is not fixing it** — the fix is
-deleting it and pointing at the roll, which is what the paragraph above now does. Every row in the
-table links to `LOGBOOK.md` for the same reason: a row that named an archive rotted the moment that
-instance's entry was moved, and three of them had. The same failure has now cost this tree a
-preserved pack log, a truncated rejection, and this twice.)*
+*(This sentence listed archives 1 through 3 for three days after archive 4 existed, which made #19's
+whole account of Job 10 unreachable from the only index that points here. **Do not hand-list the
+archives** — the live logbook's own "What is where" table is the roll and it is the thing that gets
+updated when one is created. Corrected 29 Aug 2026; the same failure has now cost this tree a
+preserved pack log, a truncated rejection, and this.)*

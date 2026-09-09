@@ -20,6 +20,14 @@ end before you write.**
 **Writing here is completely optional.** A `CREDITS.md` row with no logbook entry is fine. A logbook
 entry with no row is how somebody gets left off, so take the row either way.
 
+**This file is an append-only register and the 200-line target does not apply to it.** Correct an
+entry that turns out wrong; never shorten one — the whole value of a logbook is that it says what
+somebody actually thought at the time. **That label was missing from this header until 8 Sep 2026**,
+which is not cosmetic: `MAINTENANCE.md` tells a pass to find the registers by reading each file's
+header rather than by keeping a list, so a register that never says the word is invisible to anybody
+following the instruction — and to `tools/doccheck.js`, which found this by failing to find the very
+overrun it had been written for.
+
 **Entries move out of this file when the work they describe is CLOSED**, into whichever archive is
 still short enough — **start a new archive rather than growing one past its limit.** Archiving is a
 boundary and not a count; the old rule was "hold the two most recent" and by the time anyone checked
@@ -77,13 +85,20 @@ of these files.
 | [LOGBOOK-ARCHIVE-5.md](LOGBOOK-ARCHIVE-5.md) | #20–#26 | 19–25 Aug 2026 | Jobs 10.5 to 12c — two documentation passes, the Jungle and Fossil brackets, the claims harness, the 8-card pack |
 | [LOGBOOK-ARCHIVE-6.md](LOGBOOK-ARCHIVE-6.md) | #28–#32 | 26 Aug – 1 Sep 2026 | Jobs 13 to 14b — the promos and their reachability, the tenth documentation pass, the Over-Attach pattern |
 | [LOGBOOK-ARCHIVE-7.md](LOGBOOK-ARCHIVE-7.md) | #33, #34 | 1–2 Sep 2026 | Job 15a's Challenge bracket and Job 15b's pack odds — including the legal deck that could not attack — and the eleventh documentation pass |
-| **this file** | #35, #36, #37 | 2 Sep 2026 – | Job 15d's suite audit, and Job 15e's AI passes |
+| [LOGBOOK-ARCHIVE-8.md](LOGBOOK-ARCHIVE-8.md) | #35, #36, #37 | 2–5 Sep 2026 | Job 15d's suite audit and `owed.js`, and Job 15e in both halves — the GBC 2 seam, then the attack road |
+| **this file** | #38, #39 – | 7 Sep 2026 – | Job 15f's live inbox, and Job 15g — the standing documentation pass and `doccheck.js` |
 
 **#15, #18 and #27 wrote no logbook entry and are not missing** — writing here is optional and a
 `CREDITS.md` row alone is a complete record. Said explicitly because the Instances column above skips
-those numbers, and a gap in a sequence reads as loss rather than as a choice. **This table is the roll
-of archives**; anything else that lists them by hand will fall behind it, which is why `CREDITS.md`
-stopped doing so on 29 Aug 2026.
+those numbers, and a gap in a sequence reads as loss rather than as a choice.
+
+**This table is the roll of archives, and it is the ONLY roll.** Anything else that lists them by
+hand falls behind it. This paragraph used to say `CREDITS.md` "stopped doing so on 29 Aug 2026"; it
+had not — that date is when somebody *extended* its hand-list to four entries, and by 8 Sep it was
+three archives behind with seven instances unreachable from it. The list is gone now and every
+`CREDITS.md` row links here instead. **Check this claim against the other file rather than trusting
+it**, which is the whole lesson: a "that is handled elsewhere" sentence is a claim about two files
+and it goes stale when either one moves.
 
 **The preserved credit prose moved out with its entries.** #21 through #26 wrote no logbook entry,
 their `CREDITS.md` rows had grown to between six and twenty-four lines each, and #27 moved that text
@@ -102,330 +117,7 @@ deleted. A pointer is not optional decoration on a preserved artifact; it is the
 
 ---
 
-## #35 — Job 15d, the suite audit (2 Sep 2026)
-
-**The thing worth passing on is that the job's framing was wrong, it was wrong in a checkable way, and
-checking it took two minutes I nearly did not spend.**
-
-`CLAUDE.md` set up Job 15d as *"`powertest.js` is 6,572 lines against `smoke.js`'s 2,171"*, which
-reads as bloat and is not. It is 446 assertions against 161 — 14.7 lines each against 13.5. The
-density is identical; `powertest` is simply bigger, and building a board by hand costs those lines
-honestly. I very nearly opened the session by looking for things to delete in the largest file,
-because that is what the brief pointed at.
-
-Two more measurements closed the "audit for drift" question in the same direction. **Zero dead
-declarations across fifteen tools** — not one function or const defined and never used. And **five
-scorer assertions pinned to a numeric literal, four of them fixture-sanity pins that should be
-pinned**, which means `PLAYBOOK.md`'s *say what should happen, not what the number is* had already
-been absorbed by the file that paid for it. #34 was right that the fixtures should not be migrated,
-and it is now right on evidence rather than on the same argument twice.
-
-**So the audit's real finding is that "is this bloated" was the wrong question.** What was actually
-wrong was duplication that had **diverged**.
-
-### Fourteen copies, three versions, and the warning sitting next to the worst seven
-
-Six tools held the "who is the engine waiting for" expression fourteen times in three versions.
-`smoke.js` alone had eight of them: seven dispatching `pendingPromote` only, and one — correct —
-dispatching `pendingAsk` and `pendingSwitch` too, under a comment stating the rule in full:
-
-> ANY state that owes an action by somebody other than `s.active` has to be listed here, or the loop
-> asks the wrong player, gets nothing, and breaks out of a game that was merely waiting.
-
-That comment is two hundred lines from loops that get it wrong, **in the same file**. This is #34's
-half-life point again and I would sharpen it: a warning written beside the fix does not travel even
-as far as the next function in the same file. The rule is code now, and `selftest` 2g goes red if a
-loop stops using it.
-
-Measured, 600 ladder games per form: `pendingPromote` only finishes 547 of 600. `+pendingSwitch`,
-which is what **five** tools used, finishes 592. `+pendingAsk` finishes 600.
-
-### What that closed, and the shape of why it stayed open
-
-`MISREADINGS.md` had three entries on `abtest`'s stall floor, ending in *"the cause was NOT found and
-that is stated rather than implied."* It also named this exact candidate and **ruled it out**, on a
-hand-rolled reproduction over 140 ladder games that produced zero stalls.
-
-At a true rate of 1.3%, 140 games expects under two, and zero is an ordinary draw. **The session
-ruling out a cause did not compute what its sample could detect** — which is the founding shape of
-the file it was writing in. Null control after the fix: 34 stalls → 3.
-
-If you are about to write "not found", work out what your sample could have resolved first. That is
-the transferable half and it cost nothing.
-
-### The flake, and why twenty-two green runs is not evidence
-
-A `smoke.js` run came back 158/3. I re-ran it twenty-two times, all green, and spent an hour on the
-theory that the machine had been busy — testing it under deliberate CPU load — before looking at the
-suite. It was not deterministic: `ui.js` reaches `Math.random()` twice, 56 of 59 entry points pinned
-a seed and three did not.
-
-**The disbelief is the lesson.** A green re-run is the same evidence either way, and the natural
-response to twenty-two of them is to discard the red as noise. Somebody had already met the pack half
-of this and weakened an assertion rather than the randomness — a reasonable local call that left
-every assertion downstream of that pack exposed.
-
-### Two things I would tell whoever takes 15e
-
-**The gate has a step nobody had.** `node tools/test.js` runs both generator `--check`s before the
-suites, because `smoke.js` tests the built artifact and an unrebuilt `src/` meant it happily tested
-code you had already replaced. Demonstrated rather than argued. If you change `src/`, the gate now
-notices you did not rebuild; it also noticed `core.autocrlf` handing you a CRLF file after a
-`git checkout`, which git itself calls clean — **and that turned out to be a live defect rather than a
-nuisance.** The shipped artifact was a patchwork of 6,255 Windows line ends and 17,572 Unix ones, and
-a fresh clone could not have rebuilt it. Trevor took the call; `.gitattributes` closes it, and both
-directions are verified by cloning the repo rather than by reasoning about git.
-
-**And I made this file's own mistake inside one hour.** `abtest`'s stall line shouted on every clean
-tree. I fixed it with a band of `[0.5, 3.5]` taken from the recorded floor — then fixed the cause,
-the floor dropped to 0.1%, and my new line shouted *"OUTSIDE the known band"* at a perfect control.
-Same disease, opposite sign, four commits apart. **A threshold with a lower bound asserts the healthy
-value cannot improve.** It is worth checking any other "normal range" in this tree against that,
-because I do not think mine was the only one.
-
-— #35
-
----
-
-## #36 — Job 15e, the GBC 2 seam (2 Sep 2026)
-
-**I picked the "stolen from GBC 2" section over the 179-note backlog, and the argument for it is one
-sentence #31 left in `GRABHIST.md` rather than anything I worked out myself:**
-
-> A reference implementation is an oracle we do not otherwise have, and it answers a question the
-> claim rows structurally cannot: not *"is this play right"* but *"is there a decision here we are
-> not making at all."*
-
-That is the whole case. The claims harness audits decisions the bot already makes. It is blind by
-construction to decisions it does not know exist, and five of Trevor's six GBC 2 notes had never been
-touched.
-
-### What the Potion note actually contained
-
-Half of it was already built, which I did not expect and should have. *"Rather than as soon as it
-would be useful"* is `healWaste`, shipped a while back. **Reading the note against the code before
-probing anything is what stopped me rebuilding it.**
-
-The other half was two faults, and the first was hiding the second. That pairing is worth more than
-either fix: **the rescue bonus required the target to BE the Active, and the target was chosen before
-anything was scored — so the wrong selection suppressed its own correction.** On the demonstration
-board a Potion saves the Active outright and goes to a benched Snorlax instead, and the score falls
-from 19.00 to 7.00 because the branch that would have objected never ran. Neither fault is visible
-from the other end.
-
-**And the flat term is the AI.md sniff test in mirror image.** That test hunts *a quantity that should
-fall away with distance from an edge, written flat with a cliff at the end*. This was a cliff at the
-**start** and flat forever after, straight through the boundary where the card stops working — and
-anti-correlated with its own usefulness, because more damage on the Active is exactly what makes the
-heal unable to save it. **If the sniff test is worth generalising, this is the direction it does not
-currently cover: look at where a flat band ENDS, not only where it begins.**
-
-### The row that was green because of the fault
-
-`base1-94` had a claim named *"...unless it is life-saving, which is the clause the note turns on"*,
-standing a Pikachu on 10 remaining HP in front of a Hitmonchan. Pikachu is weak to Fighting, so that
-reads 80, and the Potion took it to 30. **The word "life-saving" was doing no work at all, and the row
-was green because of the very term I was there to fix.**
-
-`PLAYBOOK.md` already warns that a charged Hitmonchan quietly turns a claim into *"...against
-something about to kill you"* and makes rows **fail**. This is the same hazard making one **pass**,
-which is the harder direction: a red row gets read, a green one does not. **Check the arithmetic of an
-exception clause, not just the verb the bot chose.** I only looked because the note and the row
-disagreed about what board the clause needed.
-
-### What I would tell whoever takes the rest of 15e
-
-**Two of the three `--open` clauses were already answered and nobody closed them.** Trevor asked me to
-check, and he was right: the `survivesCharge` question was answered on 31 Aug, the selection route
-shipped that day, and the row went on printing ASK TREVOR for two days. The third — Switch,
-addend-or-scale — is genuinely open and is now the only one. **An `open:` row is a worklist entry, and
-a done one is worse than one never written**, because the next AI job is picked off that list.
-
-The `survivesCharge` row became the guard nothing asserted: *a sole carrier keeps its road however
-doomed it is.* That guard is called load-bearing in its own invariant, it is the common single-copy
-case, and the twin row above it cannot see it — remove the guard and that row stays green while every
-lone Charmeleon in the game quietly stops being fed.
-
-**Check the card exists before building off a GBC 2 note.** The Drowzee bullet describes *Long
-Distance Hypnosis*, a 50/50 that can sleep your own Pokémon. It is not in our corpus at all, and our
-`base5` Drowzee has *Nightmare* — unconditional sleep, no self-risk. An hour of reasoning about
-symmetric-risk pricing evaporated on one `grep`. Do that `grep` first.
-
-**And I bundled two things into one commit message.** The heal fix and the Charmeleon claim hygiene
-both live in `tools/claims/base1.js` and went in together under a message describing only the first.
-Not worth rewriting history over; worth saying out loud rather than leaving for someone to find.
-
-
-### Second round — the two questions Trevor sent back
-
-**Both of his answers turned the question around, and in the same direction: check whether the thing
-you are about to add is already there.**
-
-**The Switch row had been asking the wrong question for four days.** It asked addend-or-scale for the
-nullified retreat cost. Trevor said he was not sure we need to price cost at all — and measuring
-first showed the preference the note asks for was **already in the arithmetic**, because a Switch does
-not pay `retreatSaveEnergy` and a retreat does. What was actually broken was sitting in the same
-five-row table I built to check him: **the Switch scored a flat -4.00 on every board that was not an
-emergency**, five different Actives, five different Bench upgrades. The loop that picks the target
-computed the gain and threw it away.
-
-**I would not have found that by reading the code.** I built the table to test his claim about cost,
-and the answer to his question was in one column while the actual defect was in the one beside it.
-**Build the measurement his question asks for even when you think you know the answer** — the column
-you were not looking at is free.
-
-**The Rhyhorn question had a satisfying shape and a disappointing size, and both are worth reporting.**
-`scoreAttack` prices Leer at half a paralysis; `STALL_VERBS` did not list it. Two lists, one idea,
-drifted — this project's most-diagnosed failure, and the fix is a guard rather than an entry. But
-adding the verb **changes nothing**, because `wallScore` gates on terminal Basics first and Rhyhorn
-evolves. I measured before claiming a fix: 34 non-terminal Basics invisible to the derivation, and
-**exactly one** of them would score as a real wall. Saying "it is one card today" is more useful than
-shipping a carve-out and calling the note closed.
-
-**And the recorded reason for that gate does not justify it.** It says terminal-only stops Charizard
-being called a wall — but `stage === 'Basic'` already does that. What the second condition really
-buys is that a Squirtle you mean to evolve is not disposable, **which is a fact about the board**, and
-`wallScore` is memoised per card. That is the same mechanism Trevor's Charmeleon clause needs. **When
-a documented reason does not actually reach the code it justifies, the rule may still be right and
-the reason is a different question** — I left the gate alone and wrote down both.
-
-
-### Third round — wall-ness, and a list I nearly broke
-
-**The build went the way the last two did: the mechanism was smaller than the finding around it.**
-
-Rhyhorn's workbook note and Trevor's GBC 2 bullet are the same sentence written months apart, and
-neither knew about the other. The workbook version carries the conditional the GBC one leaves
-implicit — *"Horn Attack should only be powered up **if it's planning to evolve**"* — and that
-conditional is the entire rule. **Two independent statements of a thing is the strongest signal this
-project produces**, and both were sitting unclaimed.
-
-**The satisfying part was that the old gate did not need removing, it needed deriving.** A terminal
-Basic is just a card whose evolution road is permanently dead. Saying it that way turns a special
-case into an instance of the general rule, and it made the equivalence assertable — `wallHere` must
-equal `wallScore` for every terminal Basic in the pool, to machine precision. That test is worth more
-than the feature: it is what stops a future pass "simplifying" the two back together.
-
-**And the reason written down for the old gate did not justify it.** It said terminal-only stops
-Charizard being called a wall — but `stage === 'Basic'` already did. The rule was right and the
-reason was about something else. **A documented reason can rot independently of the rule it is
-attached to**, and it rots invisibly, because anybody checking finds the rule sound and stops there.
-
-### The honest size
-
-I nearly reported this as a one-card fix. `abtest` said **26.5% of games diverge**, which is not what
-a one-card fix looks like, and the reason is that `wallHere` gives a small wall-ness to *every*
-non-terminal Basic whose evolution is not in hand. **And on the one card the story is about, the
-decision does not flip at all** — Rhyhorn's retreat cost of 3 is consulted first and dominates, so
-wall-ness moved the price and not the choice.
-
-Both of those are in the entry. **Neither would have been found by anybody who trusted the framing
-they were handed**, including the framing I wrote myself last turn.
-
-### The thing I nearly broke
-
-I inserted a new item into the middle of `AI.md`'s Open list and renumbered the rest. Those numbers
-are **cited from outside** — `CLAUDE.md`, `GRABBAG.md` and two invariant entries all say things like
-*"AI.md open item 4"* — so renumbering silently repoints every one of them. I caught it on the diff,
-reverted, and appended at the bottom instead, and the list now says it is append-only.
-
-**Nothing had said so.** The convention was visible only in the fact that items 4 and 10 are struck
-through in place rather than removed, which reads as tidiness rather than as a rule. **A convention
-that exists only as a pattern in the data is one nobody can follow on purpose.**
-
-— #36
-
-## #37 — Job 15e, the attack road
-
-I took one grab bag note and it went somewhere I did not expect three times.
-
-### The accused decision was innocent and the fault was sitting next to it
-
-The note: *"Zapdos gets a fire energy even though it doesn't want those."* True — Fossil Zapdos'
-only attack is Thunderstorm at `LLLL` and a Fire pays nothing toward it. I reproduced the board from
-the log and got the scores byte-for-byte, which felt like a good start and was actually the moment I
-nearly wrote the wrong fix.
-
-**The Zapdos attach is defensible.** It was Active on zero Energy with a retreat cost of 2, a Fire
-pays a Colorless retreat, and the bot retreated it two turns later. That is the escape-route
-exception doing its job.
-
-**What was wrong is that Moltres scored 5.40 — higher — and the surplus rule vetoed it to -2.00.**
-The bot never chose Zapdos over Moltres. Moltres was disqualified and Zapdos was the only positive
-action left on the board.
-
-**If I had taken the note at face value I would have gone hunting in the escape-route exception**,
-found a rule that works, and either broken it or concluded there was nothing there. What saved me was
-printing every option's score rather than the chosen one — the thing a match log already does on
-every AI line, in the `passed over:` column, which I had read past twice.
-
-**Price what a decision was chosen OVER before you price the decision.**
-
-### The fact I needed already existed and had been there for four days
-
-`potential().short` counts to the cheapest attack a card can *already pay for*, so it pins at zero
-the moment anything is affordable. Moltres holds one Fire, Wildfire costs `R` and deals nothing, so
-Moltres reads as finished forever and Dive Bomb's 80 has been unreachable in every game ever played.
-
-`destShort` — distance to an attack *worth arriving for* — was built on 1 Sep for the evolution road.
-Its own comment in `ai.js` ends with *"When a rule is asked in three places, find all three before
-you measure."* **There was a fourth, and it is the surplus rule.** Nothing prompted anybody to look:
-it lives in a different function, behind four exceptions, and reads `short` for what looks like an
-unrelated question.
-
-So the fix was small. What I would tell the next session is the search habit rather than the fix:
-**when a fact gets a corrected twin, the old name is a grep and the grep is not done when your story
-ends.**
-
-### I nearly reported it as one card, again
-
-`#36`'s entry says the same sentence about Rhyhorn and I still had to be talked out of it by my own
-measurement. Benching every terminal card in the four live sets with exactly its cheap attack's cost
-and offering one more Energy: **35 of them had a closed road.** Magneton, Kabutops, Rhydon, Dugtrio,
-Raichu, both Moltres. `abtest` then said **37.8%** of games diverge, which is the largest number in
-`AI-INVARIANTS/` and is honest rather than flattering — most of it is a changed *unit*, not 35 cards.
-Prices moved everywhere; choices moved in far fewer places.
-
-### The guard I wrote first was worthless and I only found out by trying it
-
-I added `destGoal` beside `destShort` and asserted the obvious invariant: *the two agree wherever
-the roads coincide*. Then I merged them — `destGoal = goal`, the exact regression the guard exists to
-prevent — and the suite stayed **green**. Of course it did. Merging them makes them agree everywhere.
-
-**An equivalence assertion pins one direction only.** If what you are guarding against is *collapse*,
-you have to assert that the two things still genuinely differ somewhere, or the strongest-looking
-line in the file is the one a regression walks straight through. The second version asserts the
-disagreement count (135 of 1,275 states) and pins the Moltres case by number, and both go red on a
-merge. I would not have known if I had not bothered to break it on purpose, and I nearly did not.
-
-### Where I stopped, and it is a design question rather than a limit
-
-The rule only reaches cards whose cheap attack does **zero** damage. `destShort` pins the same way
-the moment any *threatening* attack is payable, so Hitmonchan (Jab/20 → Special Punch/40) and Raichu
-(Agility/20 → Thunder/60) are untouched.
-
-**That is a defensible line and not obviously the right one**, and widening it is not mine to do — it
-pushes the bot toward over-attaching generally, and Magneton would start charging toward a
-Selfdestruct that belongs to the unbuilt Kamikaze Timing pattern. Filed as open item 12 with an
-explicit *do not widen the rule to close this item*.
-
-### Two smaller things
-
-**I told Trevor his `CLAUDE.md` had duplicate rows and it does not.** Sixteen rows, all distinct, no
-duplicated line anywhere in the file. He said "yes please" to a fix, and had I done it on my own
-say-so I would have deleted a real row. **I checked before editing only because the edit tool wanted
-an exact string** — that is luck, not method. Verify before you fix, including when the person whose
-repo it is has agreed with you.
-
-**And I annotated a closed grab bag item instead of removing it**, which both `GRABBAG.md` and
-`PLAYTEST.md` explicitly tell you not to do, in bold, in files I had read that hour. Caught it on
-re-read and moved the useful half — a pointer to two open notes that look like the same sentence —
-onto one of those open items, where guidance belongs.
-
-— #37
-
-
-## Job 15f — the live inbox
+## #38 — Job 15f, the live inbox (7 Sep 2026)
 
 Trevor asked for `wants.js` to read the live Drive workbook instead of the newest hand-made export,
 and to be easier on my own context while doing it. Both landed, but the interesting part was neither.
@@ -553,3 +245,65 @@ have skimmed. **The value of a detector is not how much it catches, it is whethe
 on the ninth alarm.**
 
 — #38
+
+
+## #39 — Job 15g, the standing pass, round one (8 Sep 2026)
+
+Job 15g is a shape rather than a job: one documentation pass, then a wait of however many days or
+commits, then another, for as long as I am willing. Trevor's framing, and he checks in each round.
+This is round one.
+
+**The thing I would tell whoever reads this first: run the control.**
+
+I built `tools/doccheck.js` because this tree's own diagnosis is that *a correction which leaves a
+human instruction behind has a half-life*, and its three loudest instructions had each been missed by
+consecutive passes reading them. Four passes in a row found a register over the limit written at the
+top of its own file. Two passes in a row shipped a hand-list of archives underneath a bolded warning
+against hand-listing archives. Those are not carelessness — they are what a written rule costs when
+nobody re-reads the file it lives in.
+
+**Then my tool went green on the exact defect it was written for**, and I only know because I ran it
+against the backup I had taken an hour earlier. `LOGBOOK.md` was at **555 lines against the ~450 in
+its own header** and section 1 said nothing. Two bugs, and both are the shape this project keeps
+finding. It matched the bare word "closed" — which appears in that header in the sentence *"entries
+move out of this file when the work they describe is CLOSED"* — so the live register exempted itself
+from its own check, on a sentence about the work rather than about the file. And it required a verb
+before the threshold number, which missed *"Both limits are ~450"*.
+
+Underneath both was a third thing that was not a tool bug at all. **`LOGBOOK.md` had never called
+itself append-only in its own header.** `MAINTENANCE.md` says to find the registers by reading each
+header rather than by keeping a list — precisely so the roll cannot rot — and a register that never
+says the word is invisible to anybody obeying that instruction. It was exempt from nothing and
+watched by nobody. The label is infrastructure, not a courtesy, and `doccheck.js` now fails on a file
+that states a growth threshold without declaring itself one.
+
+**On the hand-list, the interesting part is the shape of the previous fix.** `CREDITS.md` listed
+logbook archives 1–3 while four existed; the correction on 29 Aug **added the fourth**. By yesterday
+it was three behind again with seven instances unreachable from the only index that points there.
+**Extending a stale hand-list is not fixing it — it resets the clock.** The fix is deleting the list
+and pointing at whatever the register itself maintains, which generalises well past archives: any
+enumeration kept in a file that is *not* the one people edit when the set grows.
+
+**Two smaller things worth the lines.**
+
+Trevor corrected me on the duplicate `#33`: I read it as a renumbering error and it is a *split*. One
+instance did Jobs 15a and 15b, wrote two logbook entries, and downstream those became two rows. A
+designation is a session, not a job.
+
+And `AI.md`'s item 15 had a retracted instruction living in one of its two homes. The `selfKO`
+correction was written into `AI.md` on 8 Sep and never reached `AI-INVARIANTS/DECK-OUT-CLOCK.md` —
+the file that folder *tells you to read before touching the term*. Withdrawn advice sitting in the
+place the reader is sent. **When you retract something, grep the symbol rather than the file.**
+
+**Where I stopped, and it is a shape question rather than a limit.** `MAINTENANCE.md` is at 489 lines
+and two of its sections are accumulating registers — 16 dated triggers growing 3–5 a pass, plus a
+growing list of splitting lessons — against stable method everywhere else. That is its own "a
+register hiding inside a rule file" trigger, four for four. What moved the premise is the tool: the
+three earlier refusals rested on *every reader needs all of it*, and a pass no longer reads the
+trigger list in order to **run** the sweeps. I measured it and wrote the measurement into the file,
+but did not split it. The risk is the one that file names itself — strip a trigger to a bare claim
+and the next reader skims, sees a rule that looks wrong, and "fixes" it — so anything moved out has
+to leave a real sentence behind. That is a shape for Trevor to approve, and this job has a next
+round, which is the first time that has been true here.
+
+— #39

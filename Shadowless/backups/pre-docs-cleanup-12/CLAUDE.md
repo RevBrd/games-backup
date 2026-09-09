@@ -115,10 +115,9 @@ src/  engine.js   the whole ruleset. Pure logic, no DOM
       ai.js       expected-value scoring over enumerated coin-flip outcomes
       cards.js    CARD_DB + the theme deck lists. GENERATED
       effects.js  one effect script per card. Its DSL verb reference is the
-                  comment block at the top, guarded by selftest.js, which prints
-                  the live count — this line carried one for weeks and it was 16
-                  low. Read it before adding cards, and before concluding the DSL
-                  cannot express something
+                  comment block at the top, guarded by selftest.js (159 verbs and
+                  climbing — run the suite, never quote this). Read it before adding
+                  cards, and before concluding the DSL cannot express something
       collection.js  what the player owns + the save file. Pure data
       packs.js    booster generation. PACK_ODDS is the whole rarity table
       progress.js the opponent ladder. Brackets DERIVED from the live sets —
@@ -194,12 +193,6 @@ node tools/probe.js --size 1191x684      # ...and whether it MOVES between two s
 node tools/wants.js base1 --todo         # Trevor's card notes, and which have no claim yet
 node tools/wants.js --sync               # ...re-fetch them from the LIVE sheet. The only command
                                          # in the project that opens a socket; commit the snapshot
-node tools/doccheck.js                   # the DOC lint: every register against the threshold in its
-                                         # OWN header, links, newlines, quantifiers, hand-listed
-                                         # archives, duplicate designations, silently-ended tables.
-                                         # Deliberately NOT in test.js. FAIL is wrong; FLAG is
-                                         # "go and look". Run it against backups/pre-docs-cleanup-N
-                                         # first — it went green once on a 105-line overrun
 node tools/claimtest.js Arcanine --explore   # what the bot ACTUALLY does on a built board
 node tools/claimtest.js                  # assert the playbook claims — RED IS A FAULT REPORT,
                                          # not a broken build, so it is NOT in tools/test.js
@@ -332,7 +325,7 @@ else in `data/` is in **[DATA.md](DATA.md)**.
 
 The current ordering, decided collaboratively. Trevor is explicit that it is yours to rearrange and to break into sub-jobs.
 
-**Jobs 1 through 15f are done** — everything below except 15g, which is standing. One line each; **what each left behind is in
+**Jobs 1 through 15b are done.** One line each below; **what each left behind is in
 [HISTORY-ARCHIVE-2.md](HISTORY-ARCHIVE-2.md)**, moved there on 2 Sep 2026 when this section had
 reached 105 lines of which 90 described finished work. **Every finding is also in the file that owns
 it** — that is the point of the tree, and the links here go to the owner rather than to the story.
@@ -348,9 +341,7 @@ it** — that is the point of the tree, and the links here go to the owner rathe
 | **15a** | The **Challenge 1 bracket** — the first ladder bracket belonging to no set, and the first pack type that is not a set's. [PROGRESSION.md](PROGRESSION.md) · [OPPONENTS.md](OPPONENTS.md) |
 | **15b** | The pack odds: four cosmetic axes back at their pre-shrink pacing, and a Challenge pack rolls the rarity jump at 4x. [PACKS.md](PACKS.md) |
 
-- **Job 15c** - Document pass, AI validation, grab bag. **Done 2 Sep 2026** — the eleventh
-  documentation pass. Three registers archived and `AI-INVARIANTS` made a directory on a
-  measurement rather than an instinct. [CREDITS.md](CREDITS.md) #34
+- **Job 15c** - Document pass, AI validation, grab bag.
 - **Job 15d** - Test suite revamp. **Done 2 Sep 2026, and its premise did not survive the first
   hour.** The job was framed on `powertest.js` being 6,572 lines against `smoke.js`'s 2,171 — but
   that is 446 assertions against 161, which is 14.7 lines each against 13.5. The density is the same;
@@ -365,18 +356,9 @@ it** — that is the point of the tree, and the links here go to the owner rathe
   check. *[The gate, and `owed.js` →](TOOLING.md)* · *[which of `abtest` and `aiduel`, and the new
   controls →](MEASUREMENT.md)* · *[the four things that lied →](MISREADINGS.md)* · *[why the fixtures
   were left alone a second time →](HISTORY.md)*
-- **Job 15e** - AI validation, grab bag. **Done 2–5 Sep 2026 over two sessions.** The GBC 2 seam and
-  Potion timing, then the attack road — `potential().short` had pinned at zero the moment any attack
-  was payable, making a bigger attack unreachable on **35 terminal cards** in every game ever played.
-  [CREDITS.md](CREDITS.md) #36 and #37
-- **Job 15f** - Integrating the live Google Drive index sheets into the current process, AI.md open
-  items. **Done 7 Sep 2026.** `wants.js` reads Trevor's live sheet through a published CSV; the tool
-  built to prevent a stale read had been making one for eleven days. [CREDITS.md](CREDITS.md) #38
-- **Job 15g** - Persistent document pass. **Standing, and it does not close** — one pass, then a wait
-  of however many days or commits, then another, for as long as the instance holding it is willing.
-  Opened 8 Sep 2026 by #39. **What makes it different from 15c is that the cheap sweeps are now a
-  tool** rather than an instruction somebody has to remember: `node tools/doccheck.js`.
-  *[What it checks, and the three findings it was built out of →](MAINTENANCE.md)*
+- **Job 15e** - AI validation, grab bag.
+- **Job 15f** - Integrating the live Google Drive index sheets into the current process, AI.md open items.
+- **Job 15g** - Persistent document pass. To remain open long-term between passes.
 - **Job 16** - Card additions and logic for gym1.
 - **Job 17+** - Additional packs.
 

@@ -1,0 +1,555 @@
+# Shadowless — the logbook
+
+What each instance did, in its own words. Split out of `CREDITS.md` on 11 Aug 2026, because the
+narratives had grown to four times the attributions they were attached to and an attribution list
+should be readable at a glance.
+
+`CREDITS.md` is the short version: who worked on what, and when. This is why.
+
+## How to add an entry
+
+**Append it at the END of this file, below the last entry.** Say what you did, what surprised you,
+and what you would tell the next session — length is yours, and there is no house style to match
+beyond the tree's. Sign your session number.
+
+That first instruction is written down because it has already gone wrong: an entry once landed in
+the *middle* of another instance's, because the surrounding text had been summarised out of view and
+the end of the file was not where it looked. **If you cannot see the last entry, scroll to the actual
+end before you write.**
+
+**Writing here is completely optional.** A `CREDITS.md` row with no logbook entry is fine. A logbook
+entry with no row is how somebody gets left off, so take the row either way.
+
+**Entries move out of this file when the work they describe is CLOSED**, into whichever archive is
+still short enough — **start a new archive rather than growing one past its limit.** Archiving is a
+boundary and not a count; the old rule was "hold the two most recent" and by the time anyone checked
+it was holding six at 295 lines. **The most recent closed entry stays behind on purpose**: instances
+visibly write better entries when there is one in front of them, so the live file always opens with
+an example rather than a blank.
+
+**Both limits are ~450 — Trevor's call, 3 Sep 2026**, raising the live file from ~250 to match the
+archives. **What it buys is more entries live at once**, which is the point: an arriving instance
+reads this file and not the archives, so recent history being here is most of its value.
+
+**The old split was ~250 live against ~450 archived, and the reason given for it does not survive
+contact with how appending actually works.** It was that instances *append* here and an entry once
+landed in the middle of another's when the end of the file scrolled out of view — a hazard that
+"scales with length". **It does not scale with length; it scales with technique.** An append done by
+`>>`, or by anchoring on the previous entry's signature line, lands correctly in a file of any size.
+An append done by reading the whole file and writing it back is unsafe at 250 lines just as much as
+at 450. So the number was guarding the wrong variable, and the mitigation belongs in the instruction
+rather than in the cap:
+
+> **Append by anchoring on the end, never by rewriting the file.** `>>` is safest. A targeted
+> insertion after the last entry's `— #NN` line is fine. **Reading the file and writing back a
+> version you assembled is the thing that has gone wrong**, and it goes wrong silently.
+
+**~450 is deliberately inside the truncation zone and that is accepted.** Trevor's framing: mildly
+truncated but still workable, and worth it for holding more entries. If you arrive with this file
+compacted and need an entry in full, it is in git.
+
+**Roughly four entries fit**, at the 75–105 lines these have been running.
+
+**Assume this file is over its limit and go and look — it was at 609 on 2 Sep 2026**, holding five
+entries against a rule sitting at the top of its own header. That is the third register in this tree
+to be found past a threshold written into itself, which is why the number is stated here at the point
+of decision rather than only in the archive.
+
+*(**And it was at 296 the same evening, which is the part worth reading.** Archive 6 was created that
+morning by the pass that wrote the rule above; by the time the next session opened the file it was
+already 46 lines over, because the archiving pass had appended its own entry after finishing. So the
+limit was breached by the person enforcing it, in the same commit. Archive 7 was made at the end of
+Job 15d — **before** appending #35 rather than after, which is the only ordering that works.)*
+
+**Nothing already written may be edited or condensed**, here or in any archive — a later pass may
+find an entry redundant and it is not, because the value of a logbook is that it says what somebody
+thought at the time. Correct an entry; never shorten one. The 200-line target does not apply to any
+of these files.
+
+## What is where
+
+| File | Instances | When | Read it for |
+|---|---|---|---|
+| [LOGBOOK-ARCHIVE-1.md](LOGBOOK-ARCHIVE-1.md) | #0–#10 | through 12 Aug 2026 | The Claude Chat era, Jobs 4–6, the first four documentation passes |
+| [LOGBOOK-ARCHIVE-2.md](LOGBOOK-ARCHIVE-2.md) | #11–#14 | 12–15 Aug 2026 | Job 7, the AI retreat and recoil work, the opponent-deck research, the fifth documentation pass |
+| [LOGBOOK-ARCHIVE-3.md](LOGBOOK-ARCHIVE-3.md) | #16–#17 | 16 Aug 2026 | Job 9's first AI batch and the sixth documentation pass |
+| [LOGBOOK-ARCHIVE-4.md](LOGBOOK-ARCHIVE-4.md) | #19 | 18–19 Aug 2026 | Job 10 — the trigger points, `enterPlay`, and Team Rocket going live |
+| [LOGBOOK-ARCHIVE-5.md](LOGBOOK-ARCHIVE-5.md) | #20–#26 | 19–25 Aug 2026 | Jobs 10.5 to 12c — two documentation passes, the Jungle and Fossil brackets, the claims harness, the 8-card pack |
+| [LOGBOOK-ARCHIVE-6.md](LOGBOOK-ARCHIVE-6.md) | #28–#32 | 26 Aug – 1 Sep 2026 | Jobs 13 to 14b — the promos and their reachability, the tenth documentation pass, the Over-Attach pattern |
+| [LOGBOOK-ARCHIVE-7.md](LOGBOOK-ARCHIVE-7.md) | #33, #34 | 1–2 Sep 2026 | Job 15a's Challenge bracket and Job 15b's pack odds — including the legal deck that could not attack — and the eleventh documentation pass |
+| **this file** | #35, #36, #37 | 2 Sep 2026 – | Job 15d's suite audit, and Job 15e's AI passes |
+
+**#15, #18 and #27 wrote no logbook entry and are not missing** — writing here is optional and a
+`CREDITS.md` row alone is a complete record. Said explicitly because the Instances column above skips
+those numbers, and a gap in a sequence reads as loss rather than as a choice. **This table is the roll
+of archives**; anything else that lists them by hand will fall behind it, which is why `CREDITS.md`
+stopped doing so on 29 Aug 2026.
+
+**The preserved credit prose moved out with its entries.** #21 through #26 wrote no logbook entry,
+their `CREDITS.md` rows had grown to between six and twenty-four lines each, and #27 moved that text
+here verbatim before the rows were written short. All six now sit in
+[LOGBOOK-ARCHIVE-5.md](LOGBOOK-ARCHIVE-5.md), still unchanged. **The rule is what to carry forward:
+where an instance has no logbook entry, the row moves across whole first and only then gets
+shortened** — never decide sentence by sentence what earned its place.
+
+**One older artifact of this kind is in none of these files:**
+`backups/pre-docs-cleanup/Packs Turn Log.txt`, the Sonnet 5 per-pass credits in that instance's own
+words. It spent one pass unreachable — intact, indexed nowhere, cited by a sentence that had been
+deleted. A pointer is not optional decoration on a preserved artifact; it is the half that rots.
+
+---
+
+
+---
+
+## #35 — Job 15d, the suite audit (2 Sep 2026)
+
+**The thing worth passing on is that the job's framing was wrong, it was wrong in a checkable way, and
+checking it took two minutes I nearly did not spend.**
+
+`CLAUDE.md` set up Job 15d as *"`powertest.js` is 6,572 lines against `smoke.js`'s 2,171"*, which
+reads as bloat and is not. It is 446 assertions against 161 — 14.7 lines each against 13.5. The
+density is identical; `powertest` is simply bigger, and building a board by hand costs those lines
+honestly. I very nearly opened the session by looking for things to delete in the largest file,
+because that is what the brief pointed at.
+
+Two more measurements closed the "audit for drift" question in the same direction. **Zero dead
+declarations across fifteen tools** — not one function or const defined and never used. And **five
+scorer assertions pinned to a numeric literal, four of them fixture-sanity pins that should be
+pinned**, which means `PLAYBOOK.md`'s *say what should happen, not what the number is* had already
+been absorbed by the file that paid for it. #34 was right that the fixtures should not be migrated,
+and it is now right on evidence rather than on the same argument twice.
+
+**So the audit's real finding is that "is this bloated" was the wrong question.** What was actually
+wrong was duplication that had **diverged**.
+
+### Fourteen copies, three versions, and the warning sitting next to the worst seven
+
+Six tools held the "who is the engine waiting for" expression fourteen times in three versions.
+`smoke.js` alone had eight of them: seven dispatching `pendingPromote` only, and one — correct —
+dispatching `pendingAsk` and `pendingSwitch` too, under a comment stating the rule in full:
+
+> ANY state that owes an action by somebody other than `s.active` has to be listed here, or the loop
+> asks the wrong player, gets nothing, and breaks out of a game that was merely waiting.
+
+That comment is two hundred lines from loops that get it wrong, **in the same file**. This is #34's
+half-life point again and I would sharpen it: a warning written beside the fix does not travel even
+as far as the next function in the same file. The rule is code now, and `selftest` 2g goes red if a
+loop stops using it.
+
+Measured, 600 ladder games per form: `pendingPromote` only finishes 547 of 600. `+pendingSwitch`,
+which is what **five** tools used, finishes 592. `+pendingAsk` finishes 600.
+
+### What that closed, and the shape of why it stayed open
+
+`MISREADINGS.md` had three entries on `abtest`'s stall floor, ending in *"the cause was NOT found and
+that is stated rather than implied."* It also named this exact candidate and **ruled it out**, on a
+hand-rolled reproduction over 140 ladder games that produced zero stalls.
+
+At a true rate of 1.3%, 140 games expects under two, and zero is an ordinary draw. **The session
+ruling out a cause did not compute what its sample could detect** — which is the founding shape of
+the file it was writing in. Null control after the fix: 34 stalls → 3.
+
+If you are about to write "not found", work out what your sample could have resolved first. That is
+the transferable half and it cost nothing.
+
+### The flake, and why twenty-two green runs is not evidence
+
+A `smoke.js` run came back 158/3. I re-ran it twenty-two times, all green, and spent an hour on the
+theory that the machine had been busy — testing it under deliberate CPU load — before looking at the
+suite. It was not deterministic: `ui.js` reaches `Math.random()` twice, 56 of 59 entry points pinned
+a seed and three did not.
+
+**The disbelief is the lesson.** A green re-run is the same evidence either way, and the natural
+response to twenty-two of them is to discard the red as noise. Somebody had already met the pack half
+of this and weakened an assertion rather than the randomness — a reasonable local call that left
+every assertion downstream of that pack exposed.
+
+### Two things I would tell whoever takes 15e
+
+**The gate has a step nobody had.** `node tools/test.js` runs both generator `--check`s before the
+suites, because `smoke.js` tests the built artifact and an unrebuilt `src/` meant it happily tested
+code you had already replaced. Demonstrated rather than argued. If you change `src/`, the gate now
+notices you did not rebuild; it also noticed `core.autocrlf` handing you a CRLF file after a
+`git checkout`, which git itself calls clean — **and that turned out to be a live defect rather than a
+nuisance.** The shipped artifact was a patchwork of 6,255 Windows line ends and 17,572 Unix ones, and
+a fresh clone could not have rebuilt it. Trevor took the call; `.gitattributes` closes it, and both
+directions are verified by cloning the repo rather than by reasoning about git.
+
+**And I made this file's own mistake inside one hour.** `abtest`'s stall line shouted on every clean
+tree. I fixed it with a band of `[0.5, 3.5]` taken from the recorded floor — then fixed the cause,
+the floor dropped to 0.1%, and my new line shouted *"OUTSIDE the known band"* at a perfect control.
+Same disease, opposite sign, four commits apart. **A threshold with a lower bound asserts the healthy
+value cannot improve.** It is worth checking any other "normal range" in this tree against that,
+because I do not think mine was the only one.
+
+— #35
+
+---
+
+## #36 — Job 15e, the GBC 2 seam (2 Sep 2026)
+
+**I picked the "stolen from GBC 2" section over the 179-note backlog, and the argument for it is one
+sentence #31 left in `GRABHIST.md` rather than anything I worked out myself:**
+
+> A reference implementation is an oracle we do not otherwise have, and it answers a question the
+> claim rows structurally cannot: not *"is this play right"* but *"is there a decision here we are
+> not making at all."*
+
+That is the whole case. The claims harness audits decisions the bot already makes. It is blind by
+construction to decisions it does not know exist, and five of Trevor's six GBC 2 notes had never been
+touched.
+
+### What the Potion note actually contained
+
+Half of it was already built, which I did not expect and should have. *"Rather than as soon as it
+would be useful"* is `healWaste`, shipped a while back. **Reading the note against the code before
+probing anything is what stopped me rebuilding it.**
+
+The other half was two faults, and the first was hiding the second. That pairing is worth more than
+either fix: **the rescue bonus required the target to BE the Active, and the target was chosen before
+anything was scored — so the wrong selection suppressed its own correction.** On the demonstration
+board a Potion saves the Active outright and goes to a benched Snorlax instead, and the score falls
+from 19.00 to 7.00 because the branch that would have objected never ran. Neither fault is visible
+from the other end.
+
+**And the flat term is the AI.md sniff test in mirror image.** That test hunts *a quantity that should
+fall away with distance from an edge, written flat with a cliff at the end*. This was a cliff at the
+**start** and flat forever after, straight through the boundary where the card stops working — and
+anti-correlated with its own usefulness, because more damage on the Active is exactly what makes the
+heal unable to save it. **If the sniff test is worth generalising, this is the direction it does not
+currently cover: look at where a flat band ENDS, not only where it begins.**
+
+### The row that was green because of the fault
+
+`base1-94` had a claim named *"...unless it is life-saving, which is the clause the note turns on"*,
+standing a Pikachu on 10 remaining HP in front of a Hitmonchan. Pikachu is weak to Fighting, so that
+reads 80, and the Potion took it to 30. **The word "life-saving" was doing no work at all, and the row
+was green because of the very term I was there to fix.**
+
+`PLAYBOOK.md` already warns that a charged Hitmonchan quietly turns a claim into *"...against
+something about to kill you"* and makes rows **fail**. This is the same hazard making one **pass**,
+which is the harder direction: a red row gets read, a green one does not. **Check the arithmetic of an
+exception clause, not just the verb the bot chose.** I only looked because the note and the row
+disagreed about what board the clause needed.
+
+### What I would tell whoever takes the rest of 15e
+
+**Two of the three `--open` clauses were already answered and nobody closed them.** Trevor asked me to
+check, and he was right: the `survivesCharge` question was answered on 31 Aug, the selection route
+shipped that day, and the row went on printing ASK TREVOR for two days. The third — Switch,
+addend-or-scale — is genuinely open and is now the only one. **An `open:` row is a worklist entry, and
+a done one is worse than one never written**, because the next AI job is picked off that list.
+
+The `survivesCharge` row became the guard nothing asserted: *a sole carrier keeps its road however
+doomed it is.* That guard is called load-bearing in its own invariant, it is the common single-copy
+case, and the twin row above it cannot see it — remove the guard and that row stays green while every
+lone Charmeleon in the game quietly stops being fed.
+
+**Check the card exists before building off a GBC 2 note.** The Drowzee bullet describes *Long
+Distance Hypnosis*, a 50/50 that can sleep your own Pokémon. It is not in our corpus at all, and our
+`base5` Drowzee has *Nightmare* — unconditional sleep, no self-risk. An hour of reasoning about
+symmetric-risk pricing evaporated on one `grep`. Do that `grep` first.
+
+**And I bundled two things into one commit message.** The heal fix and the Charmeleon claim hygiene
+both live in `tools/claims/base1.js` and went in together under a message describing only the first.
+Not worth rewriting history over; worth saying out loud rather than leaving for someone to find.
+
+
+### Second round — the two questions Trevor sent back
+
+**Both of his answers turned the question around, and in the same direction: check whether the thing
+you are about to add is already there.**
+
+**The Switch row had been asking the wrong question for four days.** It asked addend-or-scale for the
+nullified retreat cost. Trevor said he was not sure we need to price cost at all — and measuring
+first showed the preference the note asks for was **already in the arithmetic**, because a Switch does
+not pay `retreatSaveEnergy` and a retreat does. What was actually broken was sitting in the same
+five-row table I built to check him: **the Switch scored a flat -4.00 on every board that was not an
+emergency**, five different Actives, five different Bench upgrades. The loop that picks the target
+computed the gain and threw it away.
+
+**I would not have found that by reading the code.** I built the table to test his claim about cost,
+and the answer to his question was in one column while the actual defect was in the one beside it.
+**Build the measurement his question asks for even when you think you know the answer** — the column
+you were not looking at is free.
+
+**The Rhyhorn question had a satisfying shape and a disappointing size, and both are worth reporting.**
+`scoreAttack` prices Leer at half a paralysis; `STALL_VERBS` did not list it. Two lists, one idea,
+drifted — this project's most-diagnosed failure, and the fix is a guard rather than an entry. But
+adding the verb **changes nothing**, because `wallScore` gates on terminal Basics first and Rhyhorn
+evolves. I measured before claiming a fix: 34 non-terminal Basics invisible to the derivation, and
+**exactly one** of them would score as a real wall. Saying "it is one card today" is more useful than
+shipping a carve-out and calling the note closed.
+
+**And the recorded reason for that gate does not justify it.** It says terminal-only stops Charizard
+being called a wall — but `stage === 'Basic'` already does that. What the second condition really
+buys is that a Squirtle you mean to evolve is not disposable, **which is a fact about the board**, and
+`wallScore` is memoised per card. That is the same mechanism Trevor's Charmeleon clause needs. **When
+a documented reason does not actually reach the code it justifies, the rule may still be right and
+the reason is a different question** — I left the gate alone and wrote down both.
+
+
+### Third round — wall-ness, and a list I nearly broke
+
+**The build went the way the last two did: the mechanism was smaller than the finding around it.**
+
+Rhyhorn's workbook note and Trevor's GBC 2 bullet are the same sentence written months apart, and
+neither knew about the other. The workbook version carries the conditional the GBC one leaves
+implicit — *"Horn Attack should only be powered up **if it's planning to evolve**"* — and that
+conditional is the entire rule. **Two independent statements of a thing is the strongest signal this
+project produces**, and both were sitting unclaimed.
+
+**The satisfying part was that the old gate did not need removing, it needed deriving.** A terminal
+Basic is just a card whose evolution road is permanently dead. Saying it that way turns a special
+case into an instance of the general rule, and it made the equivalence assertable — `wallHere` must
+equal `wallScore` for every terminal Basic in the pool, to machine precision. That test is worth more
+than the feature: it is what stops a future pass "simplifying" the two back together.
+
+**And the reason written down for the old gate did not justify it.** It said terminal-only stops
+Charizard being called a wall — but `stage === 'Basic'` already did. The rule was right and the
+reason was about something else. **A documented reason can rot independently of the rule it is
+attached to**, and it rots invisibly, because anybody checking finds the rule sound and stops there.
+
+### The honest size
+
+I nearly reported this as a one-card fix. `abtest` said **26.5% of games diverge**, which is not what
+a one-card fix looks like, and the reason is that `wallHere` gives a small wall-ness to *every*
+non-terminal Basic whose evolution is not in hand. **And on the one card the story is about, the
+decision does not flip at all** — Rhyhorn's retreat cost of 3 is consulted first and dominates, so
+wall-ness moved the price and not the choice.
+
+Both of those are in the entry. **Neither would have been found by anybody who trusted the framing
+they were handed**, including the framing I wrote myself last turn.
+
+### The thing I nearly broke
+
+I inserted a new item into the middle of `AI.md`'s Open list and renumbered the rest. Those numbers
+are **cited from outside** — `CLAUDE.md`, `GRABBAG.md` and two invariant entries all say things like
+*"AI.md open item 4"* — so renumbering silently repoints every one of them. I caught it on the diff,
+reverted, and appended at the bottom instead, and the list now says it is append-only.
+
+**Nothing had said so.** The convention was visible only in the fact that items 4 and 10 are struck
+through in place rather than removed, which reads as tidiness rather than as a rule. **A convention
+that exists only as a pattern in the data is one nobody can follow on purpose.**
+
+— #36
+
+## #37 — Job 15e, the attack road
+
+I took one grab bag note and it went somewhere I did not expect three times.
+
+### The accused decision was innocent and the fault was sitting next to it
+
+The note: *"Zapdos gets a fire energy even though it doesn't want those."* True — Fossil Zapdos'
+only attack is Thunderstorm at `LLLL` and a Fire pays nothing toward it. I reproduced the board from
+the log and got the scores byte-for-byte, which felt like a good start and was actually the moment I
+nearly wrote the wrong fix.
+
+**The Zapdos attach is defensible.** It was Active on zero Energy with a retreat cost of 2, a Fire
+pays a Colorless retreat, and the bot retreated it two turns later. That is the escape-route
+exception doing its job.
+
+**What was wrong is that Moltres scored 5.40 — higher — and the surplus rule vetoed it to -2.00.**
+The bot never chose Zapdos over Moltres. Moltres was disqualified and Zapdos was the only positive
+action left on the board.
+
+**If I had taken the note at face value I would have gone hunting in the escape-route exception**,
+found a rule that works, and either broken it or concluded there was nothing there. What saved me was
+printing every option's score rather than the chosen one — the thing a match log already does on
+every AI line, in the `passed over:` column, which I had read past twice.
+
+**Price what a decision was chosen OVER before you price the decision.**
+
+### The fact I needed already existed and had been there for four days
+
+`potential().short` counts to the cheapest attack a card can *already pay for*, so it pins at zero
+the moment anything is affordable. Moltres holds one Fire, Wildfire costs `R` and deals nothing, so
+Moltres reads as finished forever and Dive Bomb's 80 has been unreachable in every game ever played.
+
+`destShort` — distance to an attack *worth arriving for* — was built on 1 Sep for the evolution road.
+Its own comment in `ai.js` ends with *"When a rule is asked in three places, find all three before
+you measure."* **There was a fourth, and it is the surplus rule.** Nothing prompted anybody to look:
+it lives in a different function, behind four exceptions, and reads `short` for what looks like an
+unrelated question.
+
+So the fix was small. What I would tell the next session is the search habit rather than the fix:
+**when a fact gets a corrected twin, the old name is a grep and the grep is not done when your story
+ends.**
+
+### I nearly reported it as one card, again
+
+`#36`'s entry says the same sentence about Rhyhorn and I still had to be talked out of it by my own
+measurement. Benching every terminal card in the four live sets with exactly its cheap attack's cost
+and offering one more Energy: **35 of them had a closed road.** Magneton, Kabutops, Rhydon, Dugtrio,
+Raichu, both Moltres. `abtest` then said **37.8%** of games diverge, which is the largest number in
+`AI-INVARIANTS/` and is honest rather than flattering — most of it is a changed *unit*, not 35 cards.
+Prices moved everywhere; choices moved in far fewer places.
+
+### The guard I wrote first was worthless and I only found out by trying it
+
+I added `destGoal` beside `destShort` and asserted the obvious invariant: *the two agree wherever
+the roads coincide*. Then I merged them — `destGoal = goal`, the exact regression the guard exists to
+prevent — and the suite stayed **green**. Of course it did. Merging them makes them agree everywhere.
+
+**An equivalence assertion pins one direction only.** If what you are guarding against is *collapse*,
+you have to assert that the two things still genuinely differ somewhere, or the strongest-looking
+line in the file is the one a regression walks straight through. The second version asserts the
+disagreement count (135 of 1,275 states) and pins the Moltres case by number, and both go red on a
+merge. I would not have known if I had not bothered to break it on purpose, and I nearly did not.
+
+### Where I stopped, and it is a design question rather than a limit
+
+The rule only reaches cards whose cheap attack does **zero** damage. `destShort` pins the same way
+the moment any *threatening* attack is payable, so Hitmonchan (Jab/20 → Special Punch/40) and Raichu
+(Agility/20 → Thunder/60) are untouched.
+
+**That is a defensible line and not obviously the right one**, and widening it is not mine to do — it
+pushes the bot toward over-attaching generally, and Magneton would start charging toward a
+Selfdestruct that belongs to the unbuilt Kamikaze Timing pattern. Filed as open item 12 with an
+explicit *do not widen the rule to close this item*.
+
+### Two smaller things
+
+**I told Trevor his `CLAUDE.md` had duplicate rows and it does not.** Sixteen rows, all distinct, no
+duplicated line anywhere in the file. He said "yes please" to a fix, and had I done it on my own
+say-so I would have deleted a real row. **I checked before editing only because the edit tool wanted
+an exact string** — that is luck, not method. Verify before you fix, including when the person whose
+repo it is has agreed with you.
+
+**And I annotated a closed grab bag item instead of removing it**, which both `GRABBAG.md` and
+`PLAYTEST.md` explicitly tell you not to do, in bold, in files I had read that hour. Caught it on
+re-read and moved the useful half — a pointer to two open notes that look like the same sentence —
+onto one of those open items, where guidance belongs.
+
+— #37
+
+
+## Job 15f — the live inbox
+
+Trevor asked for `wants.js` to read the live Drive workbook instead of the newest hand-made export,
+and to be easier on my own context while doing it. Both landed, but the interesting part was neither.
+
+**The tool built to prevent a stale read had been making one for eleven days.** Newest local export:
+Team Rocket, 24 Aug. Live Team Rocket sheet: edited 4 Sep. And a whole Gym Heroes workbook — 126
+`gym1` rows on top of the same 339 — that existed only on Drive with no local copy at all. Every run
+printed `workbook: Team Rocket Opponent Decks v1 (2026-08-24)` and `4 older not read`, which was
+completely true. **Being honest about the wrong file is still being wrong.** The rule ("newest by
+modification date") was never faulty; it simply stopped describing where the newest thing lived, and
+nothing in a rule can notice that about itself.
+
+Fixing the source added **19 live notes** the project had never seen, and turned up **122 `gym1`
+notes** already written and waiting for Job 16.
+
+**Three facts about the source decided the whole design, and two of them were the opposite of what I
+expected.** I assumed a conditional GET: the published CSV sends **no `Last-Modified` and no
+`ETag`**, only `max-age=300`, so HTTP cannot tell you whether a sheet changed and can be five minutes
+behind an edit. I assumed the Drive-mounted `.gsheet` stub could be read for its `doc_id`, as
+`machine.md` says: on `G:\` it cannot — `EISDIR` in Node, `Incorrect function` in both shells — and
+only the checked-in copies on `C:` work that way. But **the stub's mtime tracks the live document to
+the millisecond**, verified against the Drive API. So the thing that looked useless is the freshness
+signal the whole module runs on, and it is free and works offline. I corrected `machine.md`.
+
+**The cache is not a compromise, it is a requirement, and I nearly missed why.** `progresstest.js`
+reads the same Index tab as a drift guard on `PROMO_GATES`, and it is **in the gate**. A suite that
+fetches is a suite that fails on a train. So `readIndex()` is pure filesystem, `syncIndex()` is the
+only thing in the project that opens a socket, and the snapshot is committed so a fresh clone can run
+`node tools/test.js`.
+
+**The gate then caught a real edit within a minute of being pointed at live data.** Trevor removed
+the Ancient Mew row; `basep` went 29 → 28, and the assertion pinning "exactly one gated promo has no
+card in the corpus" went red. That is the guard working exactly as its own comment promises. I
+updated the assertion to 0 and **kept the escape hatch** rather than deleting it, because filing a
+note ahead of its card is a normal thing for him to do again.
+
+**The part I would tell the next session about is the drift check.** Pointed at live data it fired
+nine `!!` lines where the stale read fired nine identical-looking ones, and **only one was a real
+rewrite.** My first instinct was a similarity threshold, and that would have been wrong. I measured
+the corpus instead: across all 142 claims the `note` field holds **four different things** — 127
+verbatim cell quotes, 4 marked `(...)`, 9 opening with a source label and citing something that is
+not the cell at all, and 2 that are the cell text with a later remark appended after a ` / `. Reading
+that convention sorts them exactly. A cutoff would have sorted them approximately, forever.
+
+So it grades now: `!! REWRITTEN`, `!! ORPHANED`, `+ EXTENDED` (he *added* a clause — the claim is
+still true, there is just more to cover), `? UNQUOTED` (the claim cites a playtest rather than the
+cell, and the cell now has a note nobody has checked it against), and a quiet `· touched` for
+punctuation. Nine undifferentiated alarms became four graded lines. **A detector nobody trusts is a
+detector nobody reads**, and Chansey's note going from six words to a paragraph was arriving
+invisible in the middle of the noise.
+
+**One thing I got wrong and it is worth naming because it is a tooling habit, not a mistake about the
+project.** I ran the original `wants.js` with `tail -20`, saw three warnings, and told Trevor the
+count had gone from three to nine. It had always been nine; I had been reading the bottom of the
+output. I only found it while chasing a phantom bug in my own fallback path. **When you are about to
+report a delta, make sure both halves came from the same window.**
+
+**And `xlsx.js` is deliberately still alive.** `--xlsx` reads the old exports and is its only
+remaining caller. It is the fallback if the publish is ever revoked, and keeping it wired to a flag
+somebody might actually run beats leaving 200 lines to rot unnoticed.
+
+**Then I worked two of the six rows the tool had just surfaced**, which is the point of building it.
+
+**Chansey's note had tripled and the one claim covered a third of it.** *"Power up Scrunch and then
+tank"* became *"To work as a tank or staller, hiding behind Scrunch and rarely ever retreating or
+using Double-Edge"* — three clauses. The retreat one passes: a hurt Chansey with a fresh Hitmonchan
+benched and the retreat affordable stands anyway.
+
+**The attack clause is a pair, and my first draft of it was the trap `PLAYBOOK.md` names out loud.**
+I wrote it against a 70 HP Hitmonchan, it went red, and the bot was right — Double-edge deals exactly
+80, so it was a guaranteed Prize. **Trevor's word is "rarely", not "never", and lethal is the whole
+of the exception.** Re-cut against a 90 HP Kangaskhan it scores −15.11 and Scrunch wins. Both boards
+are asserted now, because one row can only ever say *"Chansey attacked"* and the board decides what
+that means. I had read that warning twice this session before walking into it.
+
+**Raichu's `+ EXTENDED` line found a real gap, and it is the best argument for the grading I built
+an hour earlier.** Under the old binary check it would have been one `!!` among nine and I would
+almost certainly have skimmed it. Trevor had added *"Agility buys turns through damage **and status**
+denial on a coin flip."* The status half is worth **zero**, by construction rather than by a bad
+weight: `denied = Math.min(incomingThreat, hpLeft)`, so a barrier against something that would
+paralyse prices identically to one against something that would only hit. Exactly, not
+approximately — Electabuzz and Machop at threat 40 both score Agility 35.75.
+
+**`ai.js` says it itself without noticing:** *"TWO TERMS BECAUSE THERE ARE TWO THINGS BEING
+PREVENTED"*, and both of them are damage.
+
+**I did not build it, and the restraint is the finding.** The barrier already denies their whole turn
+when the flip lands, so the damage term collects most of the value by accident and the true increment
+is only the status that would have *outlived* that turn. Pricing that means reaching for the status
+weights — and open item 5 says Sleep is currently valued by three methods that disagree. **Adding a
+second consumer of a number three methods disagree about is how a wrong weight becomes load-bearing.**
+So it is an `open:` row with the measurement attached and AI.md item 14, appended without renumbering.
+
+**Left for whoever is next:** the five `? UNQUOTED` rows — Hitmonchan, Moltres and three Drowzee
+claims that cite Trevor from elsewhere while their cells now carry proper notes nobody has read
+against them. `PLAYBOOK.md` jobs, not tooling ones.
+
+**Postscript: I worked those five too, and none of them was what the warning implied.** Hitmonchan's
+clause was *already satisfied* — "only power up Special Punch if the bench has nothing better" reads
+like a gate and is a comparison, and the bot has always ranked attach targets against each other.
+Trevor's own verdict was that his sentence was wrong, not the bot: *"It read as a gate because it was
+written as one when I originally wrote it… my original claim was wrong."* Drowzee's multi-copy clause
+was correct and already worked — `powerSpent` is per SLOT, so two Drowzees are two flips. Moltres's
+claims were fine and its cell simply had two more consumers in it.
+
+**Which means the detector's real yield here was not faults.** Five rows, zero bugs, and two things
+worth more than a bug: a doc item closed (open item 12, which rested on that same mis-phrased
+sentence) and a structural gap nobody was looking for.
+
+**The gap: `ai.js` had never read the opponent's deck.** `deckRisk` reads ours and `deckLoss` prices
+running ourselves out; the mirror image — they draw every turn, and if we are standing when they
+cannot, we win — was invisible. **The reason it was invisible is the transferable part: a turn passing
+is progress toward that win and it is not an action.** An action scorer has nothing to attach it to.
+Any win or loss condition that ticks on its own is invisible here by construction rather than by
+oversight, and I have not seen that shape named anywhere else in this folder.
+
+Built as a floor on what a turn is worth, measured at 3.4% divergence with the win rate unmoved, and
+the larger half — risk aversion while the clock runs — deliberately left out so a first unmeasured
+weight could be judged alone.
+
+**What I would tell the next session.** The grading I added to the drift check paid for itself twice
+in one evening, and neither time by finding a bug. Under the old binary output all nine lines looked
+identical; the two that mattered were an `EXTENDED` and a set of `UNQUOTED`s, both of which I would
+have skimmed. **The value of a detector is not how much it catches, it is whether you still read it
+on the ninth alarm.**
+
+— #38

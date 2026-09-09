@@ -13,58 +13,6 @@ it.** Its only reader is a session about to do a docs pass, who needs all of it 
 below returns *no*, and every paragraph is a rule somebody paid for. **Don't spend a pass shortening
 it; spend the pass on the tree.** Trim it only where a paragraph has genuinely become a duplicate.
 
-**The fourth pass to ask has MEASURED it rather than re-argued it, and the answer has started to
-move — 8 Sep 2026, Job 15g.** At 466 lines, two sections are accumulating registers and the rest is
-stable method:
-
-| | Lines | Shape |
-|---|---|---|
-| *When a pass is worth doing* | 107 | **16 dated triggers, +3–5 per pass** |
-| *What not to touch* | 120 | exemption rules **plus a growing list of splitting lessons** |
-| everything else | 239 | method: the tool, the rules, the procedure, house style |
-
-**That is this file's own "a REGISTER hiding inside a rule file" trigger, which would make it four
-for four**, and the tell is dated entries accumulating in a file whose subject is not chronological.
-**What changed the premise is `doccheck.js`**: the three earlier refusals rested on *every reader
-needs all of it*, and a pass no longer reads the trigger list in order to **run** the sweeps — the
-tool runs them. The triggers become the *why*, read when a finding needs interpreting.
-
-**Not split, deliberately, and this is a proposal rather than a deferral.** The risk is the one this
-file names in *The one-line why, plus the link*: strip a trigger to a bare claim and the next reader
-skims, sees a rule that looks wrong, and "fixes" it. Anything moved out has to leave a real sentence
-behind, not a stub — which is a shape for Trevor to approve, not a tidy-up to slip into the pass that
-grew the file. **The measurement is written here so the next reader can tell whether it has expired
-again**, which is the rule two paragraphs down.
-
-## Run the tool first — `node tools/doccheck.js`
-
-**Added 8 Sep 2026 by Job 15g, and it is the first thing to do in a pass.** Every sweep below that
-this file calls *"the cheapest finding available and the one nobody runs"* is now executed rather than
-remembered: each live register against the threshold in **its own header**, the link check with the
-anchor fix, trailing newlines, the quantifier grep, closed markers inside live files, a second roll of
-somebody else's archives, duplicate designations in `CREDITS.md`, and table rows that silently end a
-table. **FAIL means wrong; FLAG means go and look.**
-
-**Why a tool and not another paragraph here.** This file's own diagnosis is that *a correction which
-leaves a human instruction behind has a half-life* — and its three most-repeated instructions had each
-been missed by consecutive passes reading them. Four passes in a row found a register over the limit
-in its own header. Two passes in a row shipped a hand-list of archives under a warning against
-hand-listing archives. **A rule nobody can forget to run is a different kind of object from a rule
-written down well.**
-
-**The tool was watched going red before it was trusted, and that is not ceremony.** Run it against the
-backup taken at the start of your pass — `node tools/doccheck.js backups/pre-docs-cleanup-N` — which
-holds the defects you are about to fix. The first version of it went green on a tree containing a
-register **105 lines over its own limit**, because two of its own rules were wrong; only the control
-said so. `claimtest.js` has this doctrine one folder over and the reason is identical: **a verifier
-that has only ever been green proves nothing about itself.**
-
-**What it cannot do, so nobody trusts it further than it goes.** It cannot tell you whether a sentence
-is true — the quantifier and closed-marker sections print candidates and will always print some, and a
-zero there means the grep broke. It is **deliberately not in `tools/test.js`**: a stale doc is not a
-broken game, and a doc lint that can redden the build teaches everybody to read red as "you broke
-something", which is the argument `TOOLING.md` already makes for keeping `claimtest.js` out.
-
 ## When a pass is worth doing
 
 Not always on a schedule. The triggers that actually mean something:
@@ -144,33 +92,6 @@ Not always on a schedule. The triggers that actually mean something:
   you re-open a shape question, **go and measure the thing the old argument was about** rather than
   re-reading the argument — and write the measurement into the file, not just the conclusion, so the
   next reader can tell whether it has expired again.
-
-- **A "fix" that EXTENDS a stale hand-list instead of deleting it — 8 Sep 2026, and it is a
-  correction shape rather than a content one.** `CREDITS.md` hand-listed logbook archives 1–3 while
-  four existed; the fix on 29 Aug added the fourth. By 8 Sep it was three behind again, with seven
-  instances unreachable from the only index pointing at them — sitting directly under a paragraph
-  reading *"**Do not hand-list the archives**"*, which the same pass had written. **A list that went
-  stale once will go stale again; extending it resets the clock and changes nothing.** The fix is to
-  delete the list and point at whatever the register itself maintains. Generalises past archives:
-  **any enumeration maintained in a file that is not the one people edit when the set grows.**
-- **A register that never says "append-only" in its own header is invisible to the instruction above
-  it — 8 Sep 2026.** This file says to find the registers by *reading each header*, precisely so
-  nobody keeps a list that rots. `LOGBOOK.md` had never carried the label; it was therefore exempt
-  from nothing, watched by nobody, and reached **555 against the ~450 in its own header**. The label
-  is load-bearing infrastructure and not a courtesy. **When you find a register, check that it says
-  what it is** — `doccheck.js` now fails on a file that states a growth threshold without declaring
-  itself one, which is exactly the pair those two facts make.
-- **A correction that reaches one twin and not the other.** The retraction of `AI.md` item 15's
-  `selfKO` instruction was written on 8 Sep and did not reach `AI-INVARIANTS/DECK-OUT-CLOCK.md`, so an
-  instance following the pointer — which that folder *tells you to do before touching the term* —
-  would have read the withdrawn advice as current. This is the "duplicated elsewhere" trigger below,
-  arriving from the correction side rather than the drift side. **When you retract something, grep the
-  symbol, not the file.**
-- **A DESIGNATION can be split, and it reads as two instances — 8 Sep 2026.** #33 did Jobs 15a and
-  15b and wrote two logbook entries, "#33" and "#33 again"; downstream those became two `CREDITS.md`
-  rows both signed #33. **A designation is a session, not a job.** One row per instance, however many
-  jobs it did — a collision makes the credit unattributable, which is the one thing that table exists
-  to prevent.
 
 ## The rules that did the work
 

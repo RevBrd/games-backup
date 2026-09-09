@@ -39,11 +39,6 @@ end state is still one continuous logbook.
 be edited or condensed** — the value of a logbook is that it says what somebody thought at the time.
 The 200-line target does not apply.
 
-**This file is append-only and closed.** New entries go in the live file, not here. Correct an entry
-if it turns out wrong; never shorten one. *(The label was added 8 Sep 2026 — this archive predates
-the convention and was the only one without it, which made it the one archive a header-reading sweep
-could not see.)*
-
 **It is closed at #10, and that is deliberate.** The next block out of `LOGBOOK.md` went into
 `LOGBOOK-ARCHIVE-2.md` rather than onto the end of this one, because appending here would have taken
 a file that already reads truncated and made it worse. **Start a new archive rather than growing one
