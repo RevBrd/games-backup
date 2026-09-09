@@ -7100,5 +7100,120 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- SABRINA'S ESP ---------------------------------------------------------
+// The only card in fourteen sets that re-flips, and the only place in this
+// engine where the board goes back. Sabrina's Drowzee is the fixture: Suggestion
+// flips one coin, Headbutt flips none, and neither needed a new verb.
+//
+// USE dev.forceFlip, NEVER a stubbed E.flip. Replacing the method removes the
+// coin counter that lives inside it, so ESP stops being offered and the test
+// silently measures nothing. The first version of these rows did exactly that.
+{
+  const { setup } = require('./lib/board.js');
+  const armed = (energy) => {
+    const b = setup({ me: { card: 'gym1-92', energy: energy || '1 Psychic' },
+      them: { card: 'base1:Machop' }, myHand: ["Sabrina's ESP"] });
+    const E = b.E;
+    const i = E.state.players[0].hand.findIndex(x => E.db[x.id].name === "Sabrina's ESP");
+    const r = E.act(0, { t: 'playTrainer', hand: i, opts: {} });
+    if (!r.ok) throw new Error('attach refused: ' + (r.why || r.error));
+    return E;
+  };
+  const suggestion = (E) => E.legalActions(0).find(a => a.t === 'attack' && /Suggestion/.test(a.label));
+  const theirEffects = (E) => E.state.players[1].active.effects.map(x => x.kind);
+
+  T("Sabrina's ESP attaches only to a Pokemon with Sabrina in its name", () => {
+    const E = armed();
+    eq(E.state.players[0].active.effects.some(e => e.kind === 'REFLIP'), true, 'attached');
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Gastly' },
+      myHand: ["Sabrina's ESP"] });
+    const offered = b.E.legalActions(0).filter(a => a.t === 'playTrainer'
+      && b.E.db[b.E.state.players[0].hand[a.hand].id].name === "Sabrina's ESP");
+    return eq(offered.length, 0, 'offered on a board with no Sabrina');
+  });
+
+  T('...and it offers the re-flip only when the attack actually flipped', () => {
+    const E = armed();
+    E.dev.forceFlip = 'T';
+    E.act(0, suggestion(E));
+    eq(E.state.pendingAsk && E.state.pendingAsk.kind, 'ESP_REFLIP', 'asked after a coin');
+    // Headbutt flips nothing. "An attack that involves flipping coins" is read
+    // from the coins the attack ACTUALLY threw rather than from its script,
+    // because a card can flip conditionally — Removal Pulse only flips if the
+    // defender is holding Energy.
+    const F = armed('2 Psychic');
+    F.act(0, F.legalActions(0).find(a => a.t === 'attack' && /Headbutt/.test(a.label)));
+    return eq(F.state.pendingAsk, null, 'asked after a coinless attack');
+  });
+
+  T('a re-flip UNDOES the first result, not merely adds to it', () => {
+    // The sharp version. Heads lands the effect; re-flipping into tails has to
+    // take it back off the board, which nothing else in this engine does.
+    const E = armed();
+    E.dev.forceFlip = 'H';
+    E.act(0, suggestion(E));
+    eq(theirEffects(E).indexOf('CANT_ATTACK') >= 0, true, 'landed on the first flip');
+    E.dev.forceFlip = 'T';
+    E.act(0, { t: 'answer', value: 'yes' });
+    return eq(theirEffects(E).indexOf('CANT_ATTACK') >= 0, false, 'gone after re-flipping into tails');
+  });
+
+  T('...and turns a miss into a hit the other way round', () => {
+    const E = armed();
+    E.dev.forceFlip = 'T';
+    E.act(0, suggestion(E));
+    eq(theirEffects(E).indexOf('CANT_ATTACK') >= 0, false, 'missed first');
+    E.dev.forceFlip = 'H';
+    E.act(0, { t: 'answer', value: 'yes' });
+    return eq(theirEffects(E).indexOf('CANT_ATTACK') >= 0, true, 'landed on the re-flip');
+  });
+
+  T('declining keeps the result and ends the turn normally', () => {
+    const E = armed();
+    E.dev.forceFlip = 'H';
+    E.act(0, suggestion(E));
+    E.act(0, { t: 'answer', value: 'no' });
+    eq(theirEffects(E).indexOf('CANT_ATTACK') >= 0, true, 'result kept');
+    return eq(E.state.active, 1, 'turn handed over');
+  });
+
+  T('it is used ONCE — the re-run does not ask again', () => {
+    // The `spent` mark is set on the RESTORED board, because the snapshot has the
+    // effect unspent. Without it the re-run offers the re-flip again and the card
+    // becomes an infinite reroll.
+    const E = armed();
+    E.dev.forceFlip = 'T';
+    E.act(0, suggestion(E));
+    E.act(0, { t: 'answer', value: 'yes' });
+    eq(E.state.pendingAsk, null, 'not asked a second time');
+    return eq(E.state.active, 1, 'the turn completed');
+  });
+
+  T('the log KEEPS the thrown-away result across the rewind', () => {
+    // Everything else goes back. A silent rewind reads as the first result never
+    // having happened, which is exactly what a player who watched a coin land
+    // will not believe.
+    const E = armed();
+    E.dev.forceFlip = 'T';
+    E.act(0, suggestion(E));
+    E.dev.forceFlip = 'H';
+    E.act(0, { t: 'answer', value: 'yes' });
+    const log = E.state.log.map(l => l.text || l);
+    eq(log.some(t => /TAILS/.test(t)), true, 'the discarded flip is still shown');
+    eq(log.some(t => /thrown again/.test(t)), true, 'and the rewind is announced');
+    return eq(log.some(t => /HEADS/.test(t)), true, 'and so is the new one');
+  });
+
+  T('...and the ESP card is discarded, not returned to hand', () => {
+    const E = armed();
+    E.dev.forceFlip = 'H';
+    E.act(0, suggestion(E));
+    E.act(0, { t: 'answer', value: 'no' });
+    eq(E.state.players[0].discard.some(x => E.db[x.id].name === "Sabrina's ESP"), true, 'discarded');
+    return eq(E.state.players[0].hand.some(x => E.db[x.id].name === "Sabrina's ESP"), false, 'not in hand');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

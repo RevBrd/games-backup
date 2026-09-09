@@ -426,6 +426,12 @@
 //     T_POKEMON_TRADER             T_POKEMON_BREEDER         T_POKE_BALL
 //     T_ENERGY_SEARCH              T_GAMBLER                 T_MR_FUJI
 //     T_RECYCLE
+//     T_ESP                        Sabrina's ESP. Attach to a Sabrina Pokemon; if its
+//                                  attack flips any coins, you may re-flip ALL of them
+//                                  once. The one card in the era that needs the board
+//                                  to go back — see Rulings/SABRINAS-ESP.md.
+//                                  ESP_REFLIP is its pendingAsk kind: keep or throw
+//                                  again, asked of the attacker after the coins land
 //     T_CHARITY                    attach to your Active; it returns to HAND at the
 //                                  end of your turn rather than being discarded, and
 //                                  while attached the attacker may REDUCE its own
@@ -2188,6 +2194,13 @@ const EFFECTS = {
   'gym1-107': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_HEAL_STATUS_NAMED', who: 'Erika' }] },
   'gym1-120': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_ATTACK_BONUS_NAMED', n: 10, who: 'Lt. Surge' }] },
   'gym1-99':  { t: [{ v: 'T_CHARITY' }] },
+  'gym1-117': { t: [{ v: 'T_ESP' }] },
+  // Sabrina's Drowzee — the first Gym Heroes Pokemon, and it needed no new verb.
+  // Suggestion is Leer's shape exactly; Headbutt is plain damage.
+  'gym1-92': { a: [
+    [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
+    [],
+  ] },
   'gym1-123': { t: [{ v: 'T_DUEL' }] },
   'gym1-119': { t: [{ v: 'T_TICKLE' }] },
 

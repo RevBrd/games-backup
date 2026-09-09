@@ -99,7 +99,7 @@ const REMAINING = {
   // card reveals the Pokemon's NAME and any stat we DO model is then derivable.
   // Dropped at generation via OMITTED in gen_cards.js rather than left as a hole
   // here, so the set is complete at 131 rather than 131 of 132. Trevor, 8 Sep 2026.
-  gym1: 121,
+  gym1: 119,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -445,6 +445,10 @@ const PROVISIONAL = new Set([
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',
+  // Sabrina's ESP prices the standing OPTION rather than the instance: whether
+  // this turn's attack flips at all is decided inside runAttack, which the
+  // scorer cannot see. Same weakness attachBuild has.
+  'T_ESP',
   // Job 10c, the five triggered-Power verbs. Every weight behind these is a
   // first guess priced off an existing weight — benching, drawing, sniping —
   // rather than off a measurement. The two that most want measuring are

@@ -295,6 +295,29 @@ suite covers action types the way they cover verbs, Power kinds and Stadium kind
 
 *[The four rulings that came with building it →](Rulings/STADIUM-ZONE.md)*
 
+### The one place the board goes back — Sabrina's ESP
+
+Added 9 Sep 2026, Job 16, and it is the only state restore in the engine.
+**`shapecount` is what authorised it**: one printing, one set, one distinct text across all fourteen
+sets, so this is a special case by measurement rather than by instinct.
+
+A re-flip is a decision taken *after* seeing the result, so the attack has to be able to un-happen.
+`doAttack` snapshots state before the attack body, offers the re-flip as a `pendingAsk`, and on
+acceptance restores and re-dispatches the same action.
+
+**Three properties, and each is the one that would be got wrong.** The snapshot is taken *after* the
+Confusion gate and the once-per-play mark, so neither is re-rolled. The restore is **in place** —
+callers up the stack hold `const s = this.state` across the gap and swapping the object would leave
+them writing to a board nobody reads. And the **log survives** the restore while everything else goes
+back, because a silent rewind reads as the first result never having happened.
+
+**Whether an attack "involves flipping coins" is counted, not declared** — `flipsThisAttack`
+increments inside `flip()` — because a card can flip conditionally and its script says *may* where
+the rule needs *did*. The corollary for tests: **stub `dev.forceFlip`, never `flip` itself**, or the
+counter disappears with the method and the card silently stops working.
+
+*[The five decisions, and the state a snapshot cannot survive →](Rulings/SABRINAS-ESP.md)*
+
 ## A question this raised, and the answer
 
 **A flat damage bonus lands AFTER Weakness, and that is correct.** `computeDamage` applies Weakness

@@ -155,6 +155,11 @@ class Engine {
   }
 
   flip(reason = '') {
+    // SABRINA'S ESP needs to know whether the attack "involves flipping coins",
+    // and the only honest answer is how many it actually flipped — a card can
+    // flip conditionally (Removal Pulse only flips if the defender has Energy)
+    // so reading the script would answer a different question.
+    this.flipsThisAttack++;
     let heads;
     if (this.dev.forceFlip === 'H') heads = true;
     else if (this.dev.forceFlip === 'T') heads = false;
@@ -2593,6 +2598,9 @@ class Engine {
         case 'T_PROFESSOR_OAK': if (p.deck.length === 0) return false; break;
         case 'T_DEFENDER': if (!this.allSlots(pi).length) return false; break;
         case 'T_CHARITY': if (!p.active) return false; break;
+        case 'T_ESP':
+          if (!this.allSlots(pi).some(sl => this.stadiumNameMatch(sl, 'Sabrina'))) return false;
+          break;
         case 'T_FULL_HEAL': {
           if (!p.active) return false;
           const st = p.active.status;
@@ -3224,6 +3232,38 @@ class Engine {
       // Out, retreated or evolved before the answer arrives. Nothing here can
       // assume the board stood still, and an absent target is a legal outcome
       // rather than an error.
+      // SABRINA'S ESP. The only place in this engine where the board goes back.
+      //
+      // NOTE WHAT IS NOT RE-RUN: the snapshot was taken after the Confusion gate
+      // and the once-per-play mark, so a re-flip cannot re-roll a Confusion or
+      // un-spend a once-per-stay attack. It re-runs the attack body and nothing
+      // else, which is what the card says.
+      case 'ESP_REFLIP': {
+        const act = q.ctx.action, who = q.ctx.pi;
+        if (value !== 'yes' || !this.espSnapshot) {
+          this.espSnapshot = null;
+          this.finishAttack();
+          break;
+        }
+        // THE LOG IS KEPT ACROSS THE RESTORE, deliberately. Everything else goes
+        // back, but a player who has just watched three coins land needs to see
+        // that they landed and were thrown away — a silent rewind reads as the
+        // first result never having happened.
+        const kept = this.state.log.slice();
+        this.espRestore();
+        this.state.log = kept;
+        this.log('Sabrina\'s ESP: the coins are thrown again.', 'eff');
+        // Mark it spent in the RESTORED board — the snapshot has it unspent, so
+        // without this the re-run would offer the re-flip again, forever.
+        const slot = this.state.players[who].active;
+        const e = slot && slot.effects.find(x => x.kind === 'REFLIP');
+        if (e) e.spent = true;
+        this.espSnapshot = null;
+        // `attacked` is restored to false by the snapshot, so the re-run passes
+        // canAttackAtAll exactly as the first attempt did.
+        this.dispatchAction(who, act);
+        break;
+      }
       // NARROW GYM. The asked player returns one of their own Benched Pokemon and
       // everything attached to it. gatherSlot is the doorway for "the lot" —
       // Hurricane and Mr. Fuji already use it, so a Gym cannot invent a different
@@ -3457,6 +3497,22 @@ class Engine {
           const heal = Math.min(v.n * 10, tgt.dmg);
           tgt.dmg -= heal;
           this.log(`${this.nameOf(tgt)} discards Energy and heals ${heal}.`); break;
+        }
+        case 'T_ESP': {
+          // "Attach Sabrina's ESP to 1 of your Pokemon with SABRINA in its name."
+          // A name test, so it reuses the Stadium matcher rather than a second
+          // copy of what "in its name" means.
+          const slots = this.allSlots(pi).filter(sl => this.stadiumNameMatch(sl, 'Sabrina'));
+          const tgt = (a.opts && a.opts.targetUid)
+            ? slots.find(x => x.uid === a.opts.targetUid) : slots[0];
+          if (!tgt) return this.fail('No Sabrina Pokemon to attach to');
+          tgt.effects.push({
+            kind: 'REFLIP', label: "Sabrina's ESP",
+            expireAtEndOfTurn: this.state.turn, card: inst,
+          });
+          this.log(`Sabrina's ESP attached to ${this.nameOf(tgt)}.`, 'eff');
+          toDiscard = false;   // "At the end of your turn, discard Sabrina's ESP"
+          break;
         }
         case 'T_CHARITY': {
           // "Attach Charity to your ACTIVE Pokemon" — no name test, unlike the
@@ -4094,6 +4150,28 @@ class Engine {
     return { ok: true };
   }
 
+  // SABRINA'S ESP — the only card in all fourteen sets that re-flips, confirmed
+  // with shapecount. Both of these are engine fields rather than state fields on
+  // purpose: `espSnapshot` is a serialised copy of state, and storing it inside
+  // state would nest a copy of the board inside the board.
+  //
+  // The consequence to know: a game saved BETWEEN the attack and the answer
+  // loses the snapshot. Nothing saves mid-attack today, and if anything ever
+  // does, the honest fix is to refuse the re-flip rather than to restore a board
+  // that was never written down.
+  flipsThisAttack = 0;
+  espSnapshot = null;
+
+  // Restore IN PLACE rather than reassigning this.state. Callers up the stack
+  // hold `const s = this.state` across the gap — doAnswer does — and swapping the
+  // object would leave them writing pendingAsk onto a board nobody is looking at.
+  // Object identity is the contract here; the contents are not.
+  espRestore() {
+    const fresh = JSON.parse(this.espSnapshot);
+    for (const k of Object.keys(this.state)) delete this.state[k];
+    Object.assign(this.state, fresh);
+  }
+
   pick(n) { return n <= 0 ? 0 : Math.floor(this.rand() * n); }
 
   // name -> what it evolves from, for walking evolution chains backwards
@@ -4179,8 +4257,36 @@ class Engine {
     }
     if (script.some(v => v.v === 'ONCE_WHILE_IN_PLAY')) atk.usedAttacks[a.idx] = true;
 
+    // SABRINA'S ESP. The snapshot is taken here rather than at the top of this
+    // method so the Confusion gate and Sand-attack interference are already
+    // resolved and are NOT re-run — neither is the attack's own coin, and
+    // re-flipping them would be a different and much stronger card.
+    //
+    // Same reason the counter resets here: "an attack that involves flipping
+    // coins" means the attack's coins.
+    const esp = atk.effects.find(e => e.kind === 'REFLIP' && !e.spent);
+    this.flipsThisAttack = 0;
+    this.espSnapshot = esp ? JSON.stringify(s) : null;
+
     const r = this.runAttack(pi, atk, def, card, attack, script, a);
     if (!r.ok) return r;
+
+    // "If that Pokemon uses an attack that involves flipping coins, Sabrina's ESP
+    // lets you RE-FLIP THOSE COINS ONCE. If you do, re-flip ALL the coins."
+    //
+    // A decision made after seeing the result, which is why this is the one card
+    // in the project that needs to be able to un-happen. Asked BEFORE
+    // finishAttack: endTurn defers on a pendingAsk, but only after betweenTurns
+    // has already run, so asking later would mean undoing poison and sleep
+    // checks too.
+    if (esp && this.flipsThisAttack > 0 && this.espSnapshot) {
+      this.ask(pi, 'ESP_REFLIP',
+        `${this.db[esp.card.id].name}: re-flip all ${this.flipsThisAttack} coin(s)?`,
+        [{ value: 'yes', label: 'Re-flip them all' }, { value: 'no', label: 'Keep this result' }],
+        { action: a, pi }, true);
+      return { ok: true };
+    }
+    this.espSnapshot = null;
     return this.finishAttack();
   }
 

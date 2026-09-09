@@ -80,11 +80,33 @@ for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.json'))) {
   }
 }
 
+// NAME THE SCOPE IN THE ZERO, and this is not tidiness. The old message read "no
+// matches in any set" followed by "unique in the era" — a claim about the whole
+// corpus, printed after searching, by default, ONLY ability text.
+//
+// Job 16 acted on one. Two queries about ATTACK text came back zero, were
+// reported as settled across all fourteen sets, and had never looked at an
+// attack. The conclusion survived a re-run, which is luck rather than process.
+//
+// A zero is the one result nobody re-checks, because there is nothing to read.
+// So it has to carry what it looked at.
+const scopes = [want.powers && 'Powers', want.attacks && 'attacks', want.trainers && 'Trainers']
+  .filter(Boolean);
+const notSearched = [!want.powers && '--powers', !want.attacks && '--attacks',
+  !want.trainers && '--trainers'].filter(Boolean);
+
 if (!hits.length) {
-  console.log(`\n  /${pattern}/  no matches in any set.\n`);
-  console.log('  A zero here is worth as much as a large number: it means the shape');
-  console.log('  in front of you is unique in the era, so a special case is correct');
-  console.log('  and machinery would be built for one card.\n');
+  console.log(`\n  /${pattern}/  no matches in ${scopes.join(' + ')} text, in any set.`);
+  if (notSearched.length) {
+    console.log(`  NOT SEARCHED: ${notSearched.join(' ')}`);
+    console.log('  Re-run with those before concluding anything about the era.');
+  }
+  console.log('');
+  console.log('  A zero across EVERY scope is worth as much as a large number: the shape');
+  console.log('  is unique in the era, so a special case is correct and machinery would');
+  console.log('  be built for one card. A zero in one scope is not that answer — it is');
+  console.log('  the question not yet asked.');
+  console.log('');
   process.exit(0);
 }
 

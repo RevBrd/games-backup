@@ -4741,6 +4741,19 @@ class AI {
           break;
         }
 
+        case 'T_ESP': {
+          // PROVISIONAL. Worth roughly "one bad coin turned into a fresh one",
+          // and only on a Sabrina Pokemon whose attack actually flips. The bot
+          // cannot see whether THIS turn's attack will flip — that is decided
+          // inside runAttack — so this prices the standing option rather than the
+          // instance, which is the same weakness attachBuild has.
+          const holder = E.allSlots(pi).filter(sl => E.stadiumNameMatch(sl, 'Sabrina'));
+          if (!holder.length) return -Infinity;
+          a.opts.targetUid = (me.active && E.stadiumNameMatch(me.active, 'Sabrina')
+            ? me.active : holder[0]).uid;
+          s += 6;
+          break;
+        }
         case 'T_CHARITY': {
           // PROVISIONAL, and honestly close to zero. Charity is only worth
           // anything when the bot can already see a reason to stop short of a
