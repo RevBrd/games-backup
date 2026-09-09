@@ -4060,33 +4060,6 @@ class AI {
     return W.drag + d.value * 0.3 + (!d.kills && d.swings ? W.dragNoKill : 0);
   }
 
-  // How many Pokemon on this side carry the Gym leader's name. Reads the engine's
-  // own matcher rather than a second copy of it, so a change to what "with Misty
-  // in its name" means cannot leave the scorer disagreeing with the rules.
-  gymNamed(pi, who) {
-    if (!who) return 0;
-    return this.E.allSlots(pi).filter(sl => this.E.stadiumNameMatch(sl, who)).length;
-  }
-
-  // PROVISIONAL, and the crudest thing in this function. "How much does this side
-  // want to move its Active" — which is what a retreat tax or discount is really
-  // priced against. Two reasons to want out, each worth one: the Active is past
-  // half its HP, and the Bench holds something that hits harder than it does.
-  //
-  // Named rather than inlined because BOTH retreat Gyms need it and a second
-  // inline copy is how two call sites start disagreeing. Deliberately not using
-  // bestSelfSwitch: that answers "who would I move to", which is a more expensive
-  // question than "would I want to".
-  retreatAppetite(pi) {
-    const E = this.E, p = E.state.players[pi];
-    if (!p.active || !p.bench.length) return 0;
-    let n = 0;
-    if (p.active.dmg * 2 >= this.top(p.active).hp) n++;
-    const cur = this.bestAffordableDamage(pi, p.active);
-    if (p.bench.some(b => this.bestAffordableDamage(pi, b) > cur)) n++;
-    return n;
-  }
-
   scoreTrainer(pi, a) {
     const E = this.E, W = this.W;
     const me = E.state.players[pi], you = E.state.players[1 - pi];
@@ -4597,50 +4570,6 @@ class AI {
           break;
         }
 
-        case 'T_STADIUM': {
-          // GYM HEROES, Job 16. PROVISIONAL — every number below is a first
-          // guess and is declared as one in selftest.js's PROVISIONAL set.
-          //
-          // A Stadium is unlike every other Trainer this function scores: it is
-          // SYMMETRIC and it is DURABLE. Both matter and they pull opposite ways.
-          //  - symmetric: the opponent gets the same rule, so the honest value is
-          //    the DIFFERENCE it makes to us minus the difference to them, which
-          //    is why each descriptor is priced by whose board it actually helps
-          //    rather than by a flat "playing a card is good".
-          //  - durable: it persists until replaced, so a small edge is paid many
-          //    times. That is what stops this being scored as a one-shot.
-          //
-          // Deliberately NOT modelled yet, and named so the next pass can find
-          // them: denying the opponent THEIR Gym, and the tempo cost of spending
-          // a Trainer play on a rule rather than on a board change.
-          const gymKind = v.gym;
-          const mine  = this.gymNamed(pi, v.who);
-          const yours = this.gymNamed(1 - pi, v.who);
-          if (gymKind === 'STADIUM_RETREAT_DISCOUNT_NAMED'
-           || gymKind === 'STADIUM_NO_RESISTANCE_NAMED') {
-            // Name-scoped, so it is worth the margin of our matching Pokemon over
-            // theirs. A Gym that helps them more than us is correctly negative.
-            s += (mine - yours) * 4;
-          } else if (gymKind === 'STADIUM_RETREAT_TAX') {
-            // Symmetric tax. Worth having when we are the side that does not want
-            // to move — a heavier retreat hurts whoever needs to retreat, and the
-            // wall doctrine says that is usually not the player holding the wall.
-            s += (this.retreatAppetite(1 - pi) - this.retreatAppetite(pi)) * 3;
-          } else if (gymKind === 'STADIUM_TRAINER_TOLL') {
-            // No Removal Gym taxes a card WE might also want. Priced off how much
-            // Energy we have standing to lose rather than off the card names.
-            const exposed = E.allSlots(pi).reduce((n, sl) => n + sl.energy.length, 0);
-            s += Math.min(exposed, 6) * 2;
-          } else if (gymKind === 'STADIUM_BENCH_CAP') {
-            // Narrow Gym helps the side with the smaller board.
-            s += (you.bench.length - me.bench.length) * 5;
-          }
-          // Replacing a Gym that is currently helping THEM is worth doing on its
-          // own, and this is the only term here that is not about our own card.
-          const cur = E.state.stadium;
-          if (cur && cur.who && this.gymNamed(1 - pi, cur.who) > this.gymNamed(pi, cur.who)) s += 6;
-          break;
-        }
         case 'T_DEFENDER': {
           const danger = this.incomingThreat(pi);
           if (!me.active) return -Infinity;

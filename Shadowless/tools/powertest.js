@@ -6675,5 +6675,141 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   return true;
 });
 
+
+// --- THE STADIUM ZONE (Gym Heroes, Job 16) ---------------------------------
+// A Stadium rewrites a rule for BOTH players and is consulted rather than
+// materialised, so nothing about it shows up in a slot, an effect list or a log
+// line you could assert on. The only honest test is to read the rule back
+// through the engine method that owns it — retreatCostOf, computeDamage,
+// benchCap, legalActions — which is what every case below does.
+//
+// These lived in a scratch file first and are here because of this repo's own
+// lesson: a measurement in a throwaway script cannot be re-run, and ATTACK-CHOICE
+// lost eleven of them exactly that way.
+{
+  const { setup } = require('./lib/board.js');
+  const gym = (b, name) => {
+    const E = b.E, me = E.state.players[0];
+    const i = me.hand.findIndex(x => E.db[x.id].name === name);
+    if (i < 0) throw new Error('not in hand: ' + name);
+    const r = E.act(0, { t: 'playTrainer', hand: i, opts: {} });
+    if (!r.ok) throw new Error('refused: ' + (r.why || r.error));
+    return E;
+  };
+
+  T("The Rocket's Training Gym taxes BOTH players' retreat", () => {
+    const b = setup({ me: { card: "Misty's Seadra" }, them: { card: 'base1:Gastly' },
+      myHand: ["The Rocket's Training Gym"] });
+    const before = b.E.retreatCostOf(b.E.state.players[0].active);
+    const E = gym(b, "The Rocket's Training Gym");
+    eq(E.retreatCostOf(E.state.players[0].active), before + 1, 'my retreat');
+    // Gastly retreats for 0 and the tax still reaches it, which is the whole
+    // point of the effect sitting OUTSIDE retreatCostOf's owner guard.
+    return eq(E.retreatCostOf(E.state.players[1].active), 1, 'their retreat');
+  });
+
+  T('a Stadium stays on the board instead of being discarded', () => {
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Gastly' },
+      myHand: ["The Rocket's Training Gym"] });
+    const E = gym(b, "The Rocket's Training Gym");
+    eq(E.state.stadium.owner, 0, 'owner');
+    return eq(E.state.players[0].discard.length, 0, 'discard');
+  });
+
+  T('Cerulean City Gym discounts a Misty on EITHER side, because it is a name test', () => {
+    const b = setup({ me: { card: "Misty's Cloyster" }, them: { card: "Misty's Seadra" },
+      myHand: ['Cerulean City Gym'] });
+    const before = b.E.retreatCostOf(b.E.state.players[0].active);
+    const E = gym(b, 'Cerulean City Gym');
+    eq(E.retreatCostOf(E.state.players[0].active), before - 1, 'mine');
+    // THEIR Misty gets the discount too. The card scopes by NAME, not by who laid
+    // the Gym down, and that asymmetry is the card working rather than a bug.
+    return eq(E.retreatCostOf(E.state.players[1].active), 0, 'theirs');
+  });
+
+  T('...and leaves a Pokemon without the name alone', () => {
+    const b = setup({ me: { card: 'gym1-22' }, them: { card: 'base1:Gastly' },
+      myHand: ['Cerulean City Gym'] });
+    const before = b.E.retreatCostOf(b.E.state.players[0].active);
+    const E = gym(b, 'Cerulean City Gym');
+    return eq(E.retreatCostOf(E.state.players[0].active), before, 'unchanged');
+  });
+
+  T('Pewter City Gym lets Brock through Resistance', () => {
+    const mk = hand => setup({ me: { card: 'gym1-21', energy: '4 Fighting' },
+      them: { card: 'base1:Gastly' }, myHand: hand });
+    const a = mk([]);
+    eq(a.E.computeDamage(a.E.state.players[0].active, a.E.state.players[1].active, 30, {}).dmg,
+      0, 'Gastly resists Fighting');
+    const b = mk(['Pewter City Gym']);
+    const E = gym(b, 'Pewter City Gym');
+    return eq(E.computeDamage(E.state.players[0].active, E.state.players[1].active, 30, {}).dmg,
+      30, 'Resistance suppressed');
+  });
+
+  T('No Removal Gym charges 2 cards to play Energy Removal', () => {
+    const b = setup({ me: { card: 'base1:Machop' },
+      them: { card: 'base1:Gastly', energy: '2 Psychic' },
+      myHand: ['No Removal Gym', 'Energy Removal', 'base1:Bill', 'base1:Bill'] });
+    const E = gym(b, 'No Removal Gym');
+    const me = E.state.players[0], before = me.hand.length;
+    gym(b, 'Energy Removal');
+    eq(me.hand.length, before - 3, 'the card plus its 2-card toll');
+    return eq(me.discard.filter(x => E.db[x.id].name === 'Bill').length, 2, 'toll discarded');
+  });
+
+  T('...and a toll you cannot pay means the action is never OFFERED', () => {
+    // Not merely refused when taken. An unpayable toll has to be invisible, or
+    // the AI enumerates a move it can never make and scores it forever.
+    const b = setup({ me: { card: 'base1:Machop' },
+      them: { card: 'base1:Gastly', energy: '2 Psychic' },
+      myHand: ['No Removal Gym', 'Energy Removal', 'base1:Bill'] });
+    const E = gym(b, 'No Removal Gym');
+    const offered = E.legalActions(0).filter(a => a.t === 'playTrainer'
+      && E.db[E.state.players[0].hand[a.hand].id].name === 'Energy Removal');
+    return eq(offered.length, 0, 'offered');
+  });
+
+  T('a second Stadium replaces the first, which goes to its OWNER discard pile', () => {
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Gastly' },
+      myHand: ['Pewter City Gym', 'Narrow Gym'] });
+    gym(b, 'Pewter City Gym');
+    eq(b.E.state.stadium.name, 'Pewter City Gym', 'first installed');
+    const E = gym(b, 'Narrow Gym');
+    eq(E.state.stadium.name, 'Narrow Gym', 'replaced');
+    return eq(E.state.players[0].discard.some(x => E.db[x.id].name === 'Pewter City Gym'),
+      true, 'old Gym reached the discard');
+  });
+
+  T('Narrow Gym caps the Bench at 4 and makes the OPPONENT return one first', () => {
+    const five = Array.from({ length: 5 }, () => ({ card: 'base1:Machop' }));
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Gastly' },
+      theirBench: five, myHand: ['Narrow Gym'] });
+    eq(b.E.benchCap(), 5, 'cap before');
+    const E = gym(b, 'Narrow Gym');
+    eq(E.benchCap(), 4, 'cap after');
+    // "If both players have to return a Pokemon, your opponent returns first."
+    eq(E.state.pendingAsk && E.state.pendingAsk.player, 1, 'who is asked');
+    E.act(1, { t: 'answer', value: E.state.pendingAsk.options[0].value });
+    eq(E.state.players[1].bench.length, 4, 'their bench');
+    eq(E.state.players[1].hand.some(x => E.db[x.id].name === 'Machop'), true, 'returned to hand');
+    return eq(E.state.pendingAsk, null, 'nothing further owed');
+  });
+
+  T('...and the return is CHAINED when both players are over the cap', () => {
+    const five = Array.from({ length: 5 }, () => ({ card: 'base1:Machop' }));
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Gastly' },
+      myBench: five, theirBench: five, myHand: ['Narrow Gym'] });
+    const E = gym(b, 'Narrow Gym');
+    eq(E.state.pendingAsk.player, 1, 'opponent asked first');
+    E.act(1, { t: 'answer', value: E.state.pendingAsk.options[0].value });
+    // The chain: their answer poses OUR question rather than ending resolution.
+    eq(E.state.pendingAsk && E.state.pendingAsk.player, 0, 'then us');
+    E.act(0, { t: 'answer', value: E.state.pendingAsk.options[0].value });
+    eq(E.state.players[0].bench.length, 4, 'my bench');
+    return eq(E.state.players[1].bench.length, 4, 'their bench');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

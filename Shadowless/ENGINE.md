@@ -246,6 +246,43 @@ that gets discarded from a Minimize that runs to its own expiry, and it was alre
 engine still add directly and both are correct — Confusion's penalty, and Thunderstorm's log line
 before it defers. Grep `selfDamage` for the live set rather than trusting a count here.
 
+### The Stadium zone — a rule that lives on the board
+
+Added 8 Sep 2026, Job 16, for Gym Heroes' seven Gyms. **One board-wide slot, `state.stadium`, not a
+per-player one** — a Gym is in play for everybody regardless of who laid it down, and the only thing
+that remembers whose it was is the pile it is discarded to.
+
+**It is the passive-Power doctrine applied one level up: CONSULTED, never materialised.** All seven
+Gyms are continuous rules rather than scheduled events, so nothing is pushed onto a slot when one
+arrives. `stadium(kind)` is asked at the moment the rule it rewrites is read, and it deliberately
+mirrors `activePower(slot, kind)` — same call shape, same null-or-descriptor return — so a card
+author who has read [POWERS.md](POWERS.md) already knows how to read this. The argument is the same
+one Muk settled: the switch flips constantly, and a materialised copy would have to be
+resynchronised on every replacement.
+
+**`gym:` is a THIRD verb namespace and is not called `kind:` on purpose.** Power kinds and Stadium
+kinds are different rule surfaces; sharing the field name made `selftest.js` ask `ai.js` to score a
+Gym as though it were a Pokémon Power, which it caught within a minute of the first card landing.
+
+**The bench limit stopped being a constant.** `benchMax` was read from eleven places and Narrow Gym
+rewrites it, so every read now goes through `benchCap()` — one doorway, the same technique as
+`enterPlay` and `takeEnergy`.
+
+**The silent failure this system introduces has its own guard.** A Gym declares a `gym:` string and
+the engine consults it by that string; get either end wrong and the card plays, installs, shows on
+the board and does nothing — no throw, no red suite. `selftest.js` asserts the two ends match in
+**both** directions, because they fail differently: a declared kind nobody reads is a dead card, and
+a consulted kind nobody declares is a rule waiting for a card that will never come. It was watched
+going red before being trusted.
+
+**One clause needed a choice and it needed nobody's permission.** Narrow Gym's on-play Bench return
+belongs to the player whose Bench it is — half the time the person who did not play the card — and it
+rides `pendingAsk` with a single new `resolveAsk` case. `legalActions()` and `ai.js`'s `choose()` are
+already generic over the options list, so no fifth owed choice was created and the four-branch rule
+above is untouched. That is the payoff of the existing design, and it is the shape to copy.
+
+*[The four rulings that came with building it →](Rulings/STADIUM-ZONE.md)*
+
 ## A question this raised, and the answer
 
 **A flat damage bonus lands AFTER Weakness, and that is correct.** `computeDamage` applies Weakness

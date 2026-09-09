@@ -98,7 +98,16 @@ function resolve(spec) {
     for (const i of ids) if (!seen.has(fingerprint(i))) seen.set(fingerprint(i), i);
     const distinct = [...seen.values()];
     if (distinct.length > 1) {
-      const opts = distinct.map(i => `${CARD_DB[i].set}:${CARD_DB[i].name} (${i})`).join(', ');
+      // SUGGEST WHAT ACTUALLY WORKS. Until Gym Heroes every genuine ambiguity was
+      // across two sets, so `set:Name` always resolved it and that is what this
+      // message offered. gym1 is the first set to print SEVENTEEN same-name pairs
+      // that play differently WITHIN one set — two Brock's Rhyhorn, two Erika's
+      // Gloom — and for those the set prefix names both candidates equally. The
+      // bare id is the only spec that separates them, so offer that instead of a
+      // suggestion the reader would paste back and get the same error from.
+      const sameSet = new Set(distinct.map(i => CARD_DB[i].set)).size === 1;
+      const opts = distinct.map(i => sameSet ? i
+        : `${CARD_DB[i].set}:${CARD_DB[i].name} (${i})`).join(', ');
       throw new Error(`"${spec}" is ambiguous — say which: ${opts}`);
     }
     return distinct[0];

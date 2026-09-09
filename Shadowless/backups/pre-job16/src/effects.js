@@ -426,21 +426,6 @@
 //     T_POKEMON_TRADER             T_POKEMON_BREEDER         T_POKE_BALL
 //     T_ENERGY_SEARCH              T_GAMBLER                 T_MR_FUJI
 //     T_RECYCLE
-//     T_STADIUM {gym, n, who, names, onPlay}
-//                                  GYM HEROES. Installs this card in the board-wide
-//                                  Stadium zone instead of discarding it; whatever
-//                                  was there is discarded to ITS OWNER's pile. The
-//                                  card's own text says the newcomer wins. `gym` is
-//                                  A SECOND NAMESPACE, deliberately not called `kind`:
-//                                  Power kinds and Stadium kinds are different rule
-//                                  surfaces and a shared field name made selftest ask
-//                                  ai.js to score a Gym as though it were a Power.
-//                                  NARROW_GYM is its one pendingAsk kind: the on-play
-//                                  Bench return, asked of whoever is over the cap,
-//                                  opponent first, chained rather than looped.
-//                                  Read back by engine.js's stadium(gym) at the
-//                                  moment the rule it rewrites is consulted — never
-//                                  materialised onto slots. See Rulings/STADIUM-ZONE.md
 //     T_COMPUTER_ERROR             you draw up to 5, THEN your opponent draws up
 //                                  to 5, and your turn ends without an attack.
 //                                  The only Trainer in the era that ends your own
@@ -2162,20 +2147,6 @@ const EFFECTS = {
     ],
   },
   'basep-16': { t: [{ v: 'T_COMPUTER_ERROR' }] },      // Computer Error
-
-  // ── GYM HEROES ─────────────────────────────────────────────────────────────
-  // THE STADIUM ZONE. All seven Gyms are continuous rules rather than scheduled
-  // events, so each one is a single T_STADIUM descriptor and the engine consults
-  // it where the rule lives. Nothing here runs again after the card is played.
-  'gym1-103': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_TRAINER_TOLL', n: 2,
-                      names: ['Energy Removal', 'Super Energy Removal'] }] },
-  'gym1-104': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_RETREAT_TAX', n: 1 }] },
-  'gym1-108': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_RETREAT_DISCOUNT_NAMED', n: 1, who: 'Misty' }] },
-  'gym1-115': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_NO_RESISTANCE_NAMED', who: 'Brock' }] },
-  // onPlay: replaying Narrow Gym really does force another Bench return, so it is
-  // exempt from the "a Stadium that changes nothing is unplayable" gate.
-  'gym1-124': { t: [{ v: 'T_STADIUM', gym: 'STADIUM_BENCH_CAP', n: 4, onPlay: true }] },
-
 };
 
 // ---------------------------------------------------------------- ALIASES --
@@ -2262,14 +2233,6 @@ const EFFECT_ALIASES = {
   // would have complained about a second copy of the script; it is aliased because
   // two identical cards running two scripts is how they drift apart later.
   'basep-20': 'base3-53',     // Psyduck
-
-  // GYM HEROES prints its four Gym Leader Trainers twice each, at two different
-  // numbers. Aliased before either side is written — the loop below is a no-op
-  // while the source is missing, and both halves land together when it is.
-  'gym1-98':  'gym1-15',      // Brock
-  'gym1-100': 'gym1-16',      // Erika
-  'gym1-101': 'gym1-17',      // Lt. Surge
-  'gym1-102': 'gym1-18',      // Misty
 };
 
 // Applied by reference on purpose: the two ids resolve to the SAME object, so

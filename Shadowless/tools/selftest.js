@@ -90,6 +90,16 @@ for (const name of DECK_NAMES) {
 // Put a set back in here the moment work starts on it, with the count it starts
 // at. The ratchet only ever goes down.
 const REMAINING = {
+  // Job 16 opened gym1 on 8 Sep 2026 at 128 unscripted of 132 printings — the
+  // four already down are the Stadium zone's first tenants, written before any
+  // Pokemon because the zone is a rule change and the cards are tenants of it.
+  // EXPECTED TO LAND AT 1 RATHER THAN 0, pending Trevor: Blaine's Quiz #1 asks the
+  // opponent to guess a Pokemon's printed LENGTH, which this game does not model
+  // and which cannot be substituted — any stat we DO model is derivable from the
+  // card name the quiz itself reveals, so a bot guesses right every time and the
+  // card becomes strictly bad. The mechanism for omitting it is not chosen yet.
+  gym1: 127,
+
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
   // remaining 25 are Neo-era promos nobody has written logic for. A 25 that never
@@ -268,6 +278,27 @@ if (finished.length) console.log(`  ${finished.join(', ')} now complete `
   const header = effLines.slice(0, cut).join('\n');
   const body = effLines.slice(cut).join('\n');
 
+  // THE STADIUM ZONE'S OWN SILENT FAILURE, Job 16. A Gym declares a `gym:` kind
+  // in effects.js and the engine consults it by that string at the point the rule
+  // it rewrites is read. Get the string wrong in either file and the card plays,
+  // installs, shows on the board, and DOES NOTHING — no throw, no red suite, and
+  // the player has no way to tell. It is the unscored-verb surface arriving in a
+  // third namespace, so it gets the same treatment: assert the two ends match.
+  //
+  // Both directions, because they fail differently. A declared kind nobody reads
+  // is a dead card; a consulted kind nobody declares is a rule waiting for a card
+  // that will never arrive, which is how a typo survives being "used".
+  {
+    const declared = new Set([...effSrc.matchAll(/\bgym:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
+    const consulted = new Set([...engSrc.matchAll(/\bstadium\('([A-Z_0-9]+)'\)/g)].map(m => m[1]));
+    const dead = [...declared].filter(k => !consulted.has(k)).sort();
+    const orphan = [...consulted].filter(k => !declared.has(k)).sort();
+    check(dead.length === 0, 'every Stadium kind declared in effects.js is consulted in engine.js',
+      dead.join(', '));
+    check(orphan.length === 0, 'every Stadium kind consulted in engine.js is declared by a card',
+      orphan.join(', '));
+  }
+
   // Two sources, deliberately. What the ENGINE dispatches catches a verb built
   // ahead of the cards that need it — which is the Job 6b pattern and exactly
   // the kind most likely to go unwritten. What a CARD uses catches one added
@@ -400,6 +431,11 @@ const UNSCORED_ON_PURPOSE = new Set([
 // Trevor's ask, 18 Aug 2026, and #18 had already been doing this informally on
 // the Team Rocket run without a place to write it down.
 const PROVISIONAL = new Set([
+  // JOB 16, the Stadium zone. Every weight in scoreTrainer's T_STADIUM case is a
+  // first guess and none of it has been measured — the durable-vs-one-shot
+  // question in particular (a Stadium is paid many times, every other Trainer
+  // once) is reasoned about in a comment and priced by a constant.
+  'T_STADIUM',
   // Job 10c, the five triggered-Power verbs. Every weight behind these is a
   // first guess priced off an existing weight — benching, drawing, sniping —
   // rather than off a measurement. The two that most want measuring are

@@ -48,6 +48,8 @@ enough to settle a call in plain English, so ask him — he can be a resource on
 | Chain Reaction answers YOUR evolutions, not the opponent's | [CHAIN-REACTION-ALLIED-ONLY.md](Rulings/CHAIN-REACTION-ALLIED-ONLY.md) |
 | Defender blunts an attack's self-harm, and is used up if it spends its whole 20 | [DEFENDER-BLUNTS-SELF-HARM.md](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
 | A Colorless symbol consumes an Energy too, and the engine pays it as well as it can | [SPARE-ENERGY-PAYS-COLORLESS.md](Rulings/SPARE-ENERGY-PAYS-COLORLESS.md) |
+| The Stadium zone — the newcomer wins, and it is the card that says so | [STADIUM-ZONE.md](Rulings/STADIUM-ZONE.md) |
+| Owner's Pokémon are their own evolution line, and it costs nothing | [OWNERS-POKEMON.md](Rulings/OWNERS-POKEMON.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -145,6 +147,9 @@ ruling that lives only in a spreadsheet gets re-derived by whoever opens the car
 | **A card reading state the game does not model gets a declared constant** — not a new system, and not a deletion of the card's point | [`_____`'s Pikachu](Rulings/VARIABLE-ATTACK-DAMAGE.md) |
 | **An unqualified trigger is owner-scoped unless the card says otherwise** — every other trigger in the engine is, and the one exception says "opponent" in its own name | [Chain Reaction](Rulings/CHAIN-REACTION-ALLIED-ONLY.md) |
 | **A card's printed qualifier defines its whole scope** — Defender says *after applying Weakness and Resistance*, so the band IS the W/R band and anything skipping W/R skips it. Confusion, Poison and an attachment cost all fall outside for free | [Defender, self-harm](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
+| **A principle matched by SHAPE is only reached when the printed text has already failed** — the Stadium boilerplate answers the very question Aerodactyl/Muk exists for, in the opposite direction, and a recognised shape is what stops people reading the card | [the Stadium zone](Rulings/STADIUM-ZONE.md) |
+| **A rule-shaped exemption beats a card-shaped one**, and **implement the sentence rather than the sample** — "in its name" is a substring test even in a set where every card would pass a prefix test | [the Stadium zone](Rulings/STADIUM-ZONE.md) |
+| **Record a rule that needed no code, and say what would break it** — the absence of an implementation cannot be told apart from nobody having thought about it | [owner's Pokémon](Rulings/OWNERS-POKEMON.md) |
 | **A question that DISSOLVES beats a question answered** — two readings that differ only where the timing cannot reach are one reading, and the implementation takes the one with fewer conditions | [Defender, consumption](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
 
 ## What *settled with Trevor* means

@@ -284,18 +284,6 @@ class Engine {
       // expiry turn — stored here rather than on any slot because it is not
       // about a Pokemon, exactly as noTrainersUntil is a player-level fact.
       powersOffUntil: 0,
-      // THE STADIUM ZONE. One board-wide slot, not per player — a Gym is in play
-      // for everybody regardless of who laid it down, and only the discard
-      // destination remembers whose it was.
-      //
-      // CONSULTED, never materialised, for exactly the reason toxicGasActive is:
-      // a Stadium rewrites a rule for both sides continuously and is replaced by
-      // the next one at an arbitrary moment. Pushing its effect onto slots would
-      // mean resynchronising every slot on replacement, on a Knock Out, and on
-      // any Pokemon entering play. `stadium(kind)` asks instead.
-      //
-      // Shape: { inst, id, owner, kind, ...params } or null.
-      stadium: null,
     };
     this.log(`New game. Seed ${this.seed}.`, 'sys');
 
@@ -338,7 +326,7 @@ class Engine {
       this.enterPlay(pi, p.active, { source: 'setup' });
     } else {
       if (!p.active) return this.fail('Set your Active first');
-      if (p.bench.length >= this.benchCap()) return this.fail('Bench is full');
+      if (p.bench.length >= this.cfg.benchMax) return this.fail('Bench is full');
       p.hand.splice(handIdx, 1); p.bench.push(this.mkSlot(inst));
       this.enterPlay(pi, p.bench[p.bench.length - 1], { source: 'setup' });
     }
@@ -427,7 +415,7 @@ class Engine {
     b.sort((x, y) => (stranded(x[1]) - stranded(y[1])) || (y[1].hp - x[1].hp));
 
     this.setupPlace(pi, b[0][0], 'active');
-    while (p.bench.length < this.benchCap()) {
+    while (p.bench.length < this.cfg.benchMax) {
       b = basics(); if (!b.length) break;
       b.sort((x, y) => y[1].hp - x[1].hp);   // the Bench does not care; biggest first
       this.setupPlace(pi, b[0][0], 'bench');
@@ -589,7 +577,7 @@ class Engine {
         case 'P_SEARCH_BENCH': {
           // Summon Minions. "Up to n", so an empty result and a full Bench are
           // both fine rather than failures.
-          const room = this.benchCap() - me.bench.length;
+          const room = this.cfg.benchMax - me.bench.length;
           const want = Math.min(v.n || 1, room);
           if (want <= 0) { this.log('The Bench is full.', 'eff'); break; }
           const wants = c => c && c.kind === 'pokemon' && c.stage === (v.stage || 'Basic');
@@ -1053,7 +1041,7 @@ class Engine {
 
     p.hand.forEach((inst, i) => {
       const c = this.db[inst.id];
-      if (this.playableAsBasic(c) && p.bench.length < this.benchCap())
+      if (this.playableAsBasic(c) && p.bench.length < this.cfg.benchMax)
         acts.push({ t: 'playBasic', hand: i, label: `Bench ${c.name}` });
       if (c.kind === 'pokemon' && c.evolvesFrom) {
         this.allSlots(pi).forEach(sl => {
@@ -1301,90 +1289,6 @@ class Engine {
     return (p && p.kind === kind && this.powerUsable(slot)) ? p : null;
   }
 
-  // THE ONE WAY anything asks "is Gym X in play". Mirrors activePower(slot,kind)
-  // deliberately: same call shape, same null-or-descriptor return, so a card
-  // author who has read the Powers doctrine already knows how to read this.
-  //
-  // Board-wide, so it takes no player. Where a Stadium's effect is scoped to one
-  // side — Cerulean and Vermilion both key off a name, not an owner — the SCOPE
-  // IS IN THE DESCRIPTOR, never in the caller. That is what stops six call sites
-  // each inventing their own reading of "his or her".
-  stadium(kind) {
-    const st = this.state.stadium;
-    return (st && st.kind === kind) ? st : null;
-  }
-
-  // Does this slot's name carry the Gym leader's name? Cerulean, Pewter and
-  // Vermilion are all "Pokemon with <Leader> in its name", which is a NAME test
-  // and not an owner test — a Misty's Seadra on either side of the board gets
-  // Cerulean's discount, because the card says so and says nothing about whose
-  // it is. Reads topCard: a Ditto transformed into a Misty's Seadra IS one.
-  stadiumNameMatch(slot, who) {
-    if (!slot || !who) return false;
-    // SUBSTRING, not prefix. The card says "with Misty in its name", so the test
-    // is the one the card prints — every Gym Heroes owner's card happens to lead
-    // with the name, and writing a prefix test would have been right today and
-    // wrong at the first card that does not.
-    return topCard(this.db, slot).name.indexOf(who) >= 0;
-  }
-
-  // NARROW GYM's on-play clause. "When this card is played, if a player has 5
-  // Pokemon on his or her Bench, that player chooses 1 of them and returns it and
-  // all cards attached to it to his or her hand. (If both players have to return
-  // a Pokemon, your opponent returns a Pokemon first.)"
-  //
-  // THE CHOICE BELONGS TO THE PLAYER WHOSE BENCH IT IS, which is why this cannot
-  // be resolved inline: half the time that is the person who did not play the
-  // card. It rides the existing pendingAsk machinery — a new kind needs only a
-  // resolveAsk case, because legalActions() and ai.js's choose() are already
-  // generic over the options list.
-  //
-  // The printed ordering is a CHAIN, not a loop: ask the opponent, and when their
-  // answer lands, ask ourselves if we are also over. Returns true if a question
-  // was posed, so the caller knows the card has not finished resolving.
-  narrowGymAsk(pi) {
-    const cap = this.benchCap();
-    for (const who of [1 - pi, pi]) {          // opponent first, exactly as printed
-      const p = this.state.players[who];
-      if (p.bench.length <= cap) continue;
-      this.ask(pi, 'NARROW_GYM', `${p.name}: choose a Benched Pokemon to return to your hand.`,
-        p.bench.map(b => ({ value: b.uid, label: this.nameOf(b) })),
-        { side: who }, who === pi);
-      return true;
-    }
-    return false;
-  }
-
-  // No Removal Gym: "A player must discard 2 cards from his or her hand in order
-  // to play an Energy Removal or Super Energy Removal card."
-  //
-  // A TOLL CHARGED ON ANOTHER CARD, which is a shape nothing else in this engine
-  // had. It is deliberately NOT implemented inside the two cards it names: the
-  // Gym is the thing that knows about the toll, the removals know nothing, and a
-  // second Stadium that taxes a different card later adds a descriptor rather
-  // than editing more cards. Matched on card NAME, per Do the Wave's ruling.
-  //
-  // Returns null when no toll applies, so `if (toll)` reads as "is one owed".
-  stadiumToll(pi, inst) {
-    const gym = this.stadium('STADIUM_TRAINER_TOLL');
-    if (!gym || !inst) return null;
-    const c = this.db[inst.id];
-    if (!c || (gym.names || []).indexOf(c.name) < 0) return null;
-    const n = gym.n || 2;
-    // "the OTHER cards in his or her hand" — the card being played is already
-    // spoken for and cannot pay its own toll.
-    const payable = this.state.players[pi].hand.filter(x => x !== inst);
-    return { name: gym.name, n, payable, blocked: payable.length < n };
-  }
-
-  // Narrow Gym. The bench limit is a RULE, and a Stadium rewrites rules, so it
-  // cannot stay a config constant read from eleven places. One doorway; a
-  // selftest assertion keeps the twelfth caller from reading cfg directly.
-  benchCap() {
-    const nar = this.stadium('STADIUM_BENCH_CAP');
-    return nar ? Math.min(this.cfg.benchMax, nar.n) : this.cfg.benchMax;
-  }
-
   // Every card physically on a slot — the evolution stack, the Energy, and any
   // Trainer still attached to it. Hurricane sends the lot to hand and Mr. Fuji
   // shuffles the lot into the deck, so both need it whole rather than scrapped.
@@ -1447,21 +1351,6 @@ class Engine {
       const tax = foe ? this.activePower(foe, 'RETREAT_TAX') : null;
       if (tax) off -= (tax.n || 1);
     }
-    // THE TWO GYMS SIT OUTSIDE THE OWNER GUARD ON PURPOSE. Everything above is
-    // scoped to a side — your own Bench discounts you, their Active taxes you.
-    // A Stadium is scoped to the BOARD, so it must not inherit a guard that
-    // exists to answer "whose Bench".
-    //
-    // The Rocket's Training Gym: "Each player pays C more to retreat his or her
-    // Active Pokemon." Symmetric, and it stacks with Dark Muk rather than
-    // replacing it — two different cards each adding a symbol.
-    const gymTax = this.stadium('STADIUM_RETREAT_TAX');
-    if (gymTax) off -= (gymTax.n || 1);
-    // Cerulean City Gym: "...if it has Misty in its name." A NAME test, so it
-    // discounts whoever is holding a Misty's card — including the opponent of
-    // the player who laid the Gym down. That is the card, not a bug.
-    const gymOff = this.stadium('STADIUM_RETREAT_DISCOUNT_NAMED');
-    if (gymOff && this.stadiumNameMatch(slot, gymOff.who)) off += (gymOff.n || 1);
     return Math.max(0, base - off);
   }
 
@@ -2359,7 +2248,7 @@ class Engine {
         if (p.active.dmg <= 0) return { ok: false, why: 'No damage counters to remove' };
       }
       if (v.v === 'SEARCH_BASIC_TO_BENCH') {
-        if (p.bench.length >= this.benchCap()) return { ok: false, why: 'Bench is full' };
+        if (p.bench.length >= this.cfg.benchMax) return { ok: false, why: 'Bench is full' };
       }
       if (v.v === 'REQUIRE_EQUAL_ENERGY') {
         // Sabrina's Abra, Synchronize. "can't be used unless Sabrina's Abra and
@@ -2411,20 +2300,6 @@ class Engine {
   trainerPlayable(pi, inst) {
     const p = this.state.players[pi], o = this.state.players[1 - pi];
     const script = (this.effects[inst.id] && this.effects[inst.id].t) || [];
-    // A toll you cannot pay makes the card unplayable, and it is checked here so
-    // the action is never OFFERED rather than failing when taken.
-    const toll = this.stadiumToll(pi, inst);
-    if (toll && toll.blocked) return false;
-    // Replaying the Stadium already in play is legal in this era — WotC only
-    // banned same-name Stadiums later — but for six of the seven Gyms it
-    // changes nothing, and "would do nothing" is exactly what this gate is for.
-    // A Stadium with an ON-PLAY effect declares `onPlay` and is exempt: replaying
-    // Narrow Gym really does force another Bench return.
-    const cur = this.state.stadium;
-    if (cur && !cur.onPlay) {
-      const sd = script.find(v => v.v === 'T_STADIUM');
-      if (sd && this.db[inst.id].name === cur.name) return false;
-    }
     for (const v of script) {
       switch (v.v) {
         case 'T_DRAW': if (p.deck.length === 0) return false; break;
@@ -2483,11 +2358,11 @@ class Engine {
         case 'T_MAINTENANCE': if (p.hand.length < 3 || !p.deck.length) return false; break;
         case 'T_POKEMON_CENTER': if (!this.allSlots(pi).some(x => x.dmg > 0)) return false; break;
         case 'T_REVIVE':
-          if (p.bench.length >= this.benchCap()) return false;
+          if (p.bench.length >= this.cfg.benchMax) return false;
           if (!this.basicsIn(p.discard).length) return false;
           break;
         case 'T_POKEMON_FLUTE':
-          if (o.bench.length >= this.benchCap()) return false;
+          if (o.bench.length >= this.cfg.benchMax) return false;
           if (!this.basicsIn(o.discard).length) return false;
           break;
         case 'T_SCOOP_UP':
@@ -2617,7 +2492,7 @@ class Engine {
     const inst = p.hand[a.hand]; if (!inst) return this.fail('No such card');
     const c = this.db[inst.id];
     if (!this.playableAsBasic(c)) return this.fail('Not a Basic Pokemon');
-    if (p.bench.length >= this.benchCap()) return this.fail('Bench is full');
+    if (p.bench.length >= this.cfg.benchMax) return this.fail('Bench is full');
     p.hand.splice(a.hand, 1);
     const sl = this.mkSlot(inst);
     p.bench.push(sl);
@@ -3060,30 +2935,6 @@ class Engine {
       // Out, retreated or evolved before the answer arrives. Nothing here can
       // assume the board stood still, and an absent target is a legal outcome
       // rather than an error.
-      // NARROW GYM. The asked player returns one of their own Benched Pokemon and
-      // everything attached to it. gatherSlot is the doorway for "the lot" —
-      // Hurricane and Mr. Fuji already use it, so a Gym cannot invent a different
-      // answer to what a Pokemon carries with it.
-      //
-      // Re-found by uid rather than captured, for the same reason every other case
-      // here does: nothing may assume the board stood still across the gap.
-      case 'NARROW_GYM': {
-        const side = q.ctx.side;
-        const p = this.state.players[side];
-        const i = p.bench.findIndex(b => b.uid === value);
-        if (i >= 0) {
-          const slot = p.bench[i];
-          const name = this.nameOf(slot);
-          p.bench.splice(i, 1);
-          for (const card of this.gatherSlot(slot)) p.hand.push(card);
-          this.log(`${name} and everything attached return to ${p.name}'s hand.`, 'eff');
-        }
-        // THE CHAIN. If the other player is also over the cap they are asked next;
-        // re-asking from q.asker keeps "opponent first" meaningful on the second
-        // pass, because that side is now under the cap and is simply skipped.
-        this.narrowGymAsk(q.asker);
-        break;
-      }
       // Cat Punch's tails branch — the defending player naming which of their own
       // Benched Pokemon takes the hit. `q.player` is that player, `q.asker` is
       // Meowth's controller, and unlike CONVERT_WEAKNESS above they are genuinely
@@ -3134,7 +2985,7 @@ class Engine {
         // rather than a formality — it is frequently good for both at once.
         for (const [pl, picks] of [[asker, q.ctx.askerPicks], [asked, q.ctx.askedPicks]]) {
           const i = this.state.players.indexOf(pl);
-          const room = this.benchCap() - pl.bench.length;
+          const room = this.cfg.benchMax - pl.bench.length;
           const wants = x => { const c = this.db[x.id]; return c && c.kind === 'pokemon' && c.stage === 'Basic'; };
           const chosen = [];
           if (Array.isArray(picks)) {
@@ -3198,25 +3049,6 @@ class Engine {
     if (!script) return this.fail(`${c.name} is not implemented`);
     if (!this.trainerPlayable(pi, inst)) return this.fail(`${c.name} would do nothing`);
 
-    // CHARGE THE TOLL BEFORE THE CARD RESOLVES. Order matters: No Removal Gym
-    // says "in order to play", so the discard is a cost and is paid whether or
-    // not the removal then finds a target.
-    const toll = this.stadiumToll(pi, inst);
-    if (toll) {
-      if (toll.blocked) return this.fail(`${toll.name}: not enough other cards to discard`);
-      const chosen = (a.opts && a.opts.tollUids) || [];
-      const pay = [];
-      for (const uid of chosen) {
-        const x = toll.payable.find(y => y.uid === uid);
-        if (x && pay.indexOf(x) < 0) pay.push(x);
-      }
-      // Deterministic fallback, exactly as takeEnergy has one: anything that
-      // supplies no choice — the AI, an older call site, a test — still plays.
-      for (const x of toll.payable) { if (pay.length >= toll.n) break; if (pay.indexOf(x) < 0) pay.push(x); }
-      for (const x of pay) { p.hand.splice(p.hand.indexOf(x), 1); p.discard.push(x); }
-      this.log(`${toll.name}: ${p.name} discards ${toll.n} to play ${c.name}.`, 'eff');
-    }
-
     p.hand.splice(a.hand, 1);
     this.log(`${p.name} plays ${c.name}.`, 'trainer', { card: inst.id, v: inst.v || null });
     let toDiscard = true;
@@ -3225,27 +3057,6 @@ class Engine {
 
     for (const v of script) {
       switch (v.v) {
-        case 'T_STADIUM': {
-          // Printed on every one of them: "Discard this card if another Stadium
-          // card comes into play." THE NEWCOMER WINS, and it is the card's own
-          // text that says so — step 1 of RULINGS.md, not the Aerodactyl/Muk
-          // rule it superficially resembles. See Rulings/STADIUM-ZONE.md.
-          const prev = this.state.stadium;
-          if (prev) {
-            this.state.players[prev.owner].discard.push(prev.inst);
-            this.log(`${prev.name} is discarded.`, 'eff');
-          }
-          this.state.stadium = {
-            inst, id: inst.id, owner: pi, name: c.name,
-            kind: v.gym, n: v.n, who: v.who, names: v.names, onPlay: !!v.onPlay,
-          };
-          this.log(`${c.name} is in play.`, 'eff');
-          toDiscard = false;   // it stays on the board until something replaces it
-          // AFTER the install, never before: Narrow Gym's clause reads the cap it
-          // has just imposed, so the descriptor must be in place to be consulted.
-          if (v.gym === 'STADIUM_BENCH_CAP') this.narrowGymAsk(pi);
-          break;
-        }
         case 'T_DRAW': {
           for (let i = 0; i < v.n && p.deck.length; i++) p.hand.push(p.deck.shift());
           this.log(`${p.name} draws ${v.n}.`); break;
@@ -3737,8 +3548,8 @@ class Engine {
           // The parenthetical is resolved BEFORE anybody is asked, because there
           // is nothing to accept — asking a question whose only answer changes
           // nothing is worse than not asking it.
-          const bothFull = p.bench.length >= this.benchCap()
-                        && o.bench.length >= this.benchCap();
+          const bothFull = p.bench.length >= this.cfg.benchMax
+                        && o.bench.length >= this.cfg.benchMax;
           if (bothFull) {
             let drew = 0;
             for (let i = 0; i < 2 && p.deck.length; i++) { p.hand.push(p.deck.shift()); drew++; }
@@ -5554,16 +5365,7 @@ class Engine {
         dmg *= this.cfg.weaknessMultiplier;
         steps.push(`Weakness: ${D.name} takes double -> ${dmg}.`);
       }
-      // Pewter City Gym: "Don't apply Resistance to any attacks made by Pokemon
-      // with Brock in their names." It reads the ATTACKER's name — the Gym lets
-      // Brock punch through Resistance, and does nothing about Resistance Brock
-      // himself enjoys. Inside the noWR guard, so anything already skipping
-      // Weakness and Resistance is unaffected and needs no second exemption.
-      const pew = this.stadium('STADIUM_NO_RESISTANCE_NAMED');
-      const rsOff = !!(pew && this.stadiumNameMatch(atkSlot, pew.who));
-      if (rs && rs === at && rsOff) {
-        steps.push(`${pew.name}: Resistance does not apply.`);
-      } else if (rs && rs === at) {
+      if (rs && rs === at) {
         dmg -= this.cfg.resistanceFlat;
         steps.push(`Resistance: -${this.cfg.resistanceFlat} -> ${Math.max(0, dmg)}.`);
       }
