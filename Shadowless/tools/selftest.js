@@ -160,6 +160,30 @@ const powerless = Object.keys(CARD_DB)
 check(powerless.length === 0, 'every card with a Pokemon Power has a p: script',
   powerless.map(id => `${id} ${CARD_DB[id].name} (${CARD_DB[id].power.name})`).join(', '));
 
+// ...AND THE HALF THE CHECK ABOVE CANNOT SEE. It asks whether a card with a Power
+// has a script; it cannot ask about a Power that never reached CARD_DB at all.
+// `gen_cards --check` does not cover this either — it compares generated output
+// against committed output, so a generator that dropped every ability would agree
+// with itself and pass.
+//
+// So this one reads the corpus directly. It is the only place in the suite that
+// does, and it is here because Trevor asked whether the Power guard might have
+// gone red on older cards. It did not; the interesting answer was that it could
+// not have, for a whole class of Power.
+{
+  const fs = require('fs'), path = require('path');
+  const RAW = path.join(__dirname, '..', 'data', 'raw');
+  const lost = [];
+  for (const f of fs.readdirSync(RAW).filter(x => x.endsWith('.json'))) {
+    for (const c of JSON.parse(fs.readFileSync(path.join(RAW, f), 'utf8'))) {
+      const db = CARD_DB[c.id];
+      if (db && (c.abilities || []).length && !db.power)
+        lost.push(`${c.id} ${c.name} (${c.abilities.map(a => a.name).join(', ')})`);
+    }
+  }
+  check(lost.length === 0, 'every ability in the corpus reaches CARD_DB.power', lost.join(', '));
+}
+
 const liveGaps = sets.filter(s => REMAINING[s] === undefined && bySet[s]);
 check(liveGaps.length === 0, 'no live set contains an unimplemented card',
   liveGaps.map(s => `${s}: ${unscripted.filter(id => CARD_DB[id].set === s)
