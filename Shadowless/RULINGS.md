@@ -50,6 +50,7 @@ enough to settle a call in plain English, so ask him — he can be a resource on
 | A Colorless symbol consumes an Energy too, and the engine pays it as well as it can | [SPARE-ENERGY-PAYS-COLORLESS.md](Rulings/SPARE-ENERGY-PAYS-COLORLESS.md) |
 | The Stadium zone — the newcomer wins, and it is the card that says so | [STADIUM-ZONE.md](Rulings/STADIUM-ZONE.md) |
 | Owner's Pokémon are their own evolution line, and it costs nothing | [OWNERS-POKEMON.md](Rulings/OWNERS-POKEMON.md) |
+| Blaine's Quiz #1 — a card this game does not print, and the slot kept vacant | [BLAINES-QUIZ.md](Rulings/BLAINES-QUIZ.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -149,6 +150,8 @@ ruling that lives only in a spreadsheet gets re-derived by whoever opens the car
 | **A card's printed qualifier defines its whole scope** — Defender says *after applying Weakness and Resistance*, so the band IS the W/R band and anything skipping W/R skips it. Confusion, Poison and an attachment cost all fall outside for free | [Defender, self-harm](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
 | **A principle matched by SHAPE is only reached when the printed text has already failed** — the Stadium boilerplate answers the very question Aerodactyl/Muk exists for, in the opposite direction, and a recognised shape is what stops people reading the card | [the Stadium zone](Rulings/STADIUM-ZONE.md) |
 | **A rule-shaped exemption beats a card-shaped one**, and **implement the sentence rather than the sample** — "in its name" is a substring test even in a set where every card would pass a prefix test | [the Stadium zone](Rulings/STADIUM-ZONE.md) |
+| **A substitution needs the substituted value to carry the same INFORMATION, not merely the same type** — a stat is only a quiz answer while it is unknown to the guesser, so a declared constant cannot stand in for a hidden one | [Blaine's Quiz #1](Rulings/BLAINES-QUIZ.md) |
+| **Omitting a card is the STRICT reading of the set-gating rule, not an exception to it** — the rule exists so nobody collects an unplayable card, and a card that does not exist cannot be collected. An absence must announce itself | [Blaine's Quiz #1](Rulings/BLAINES-QUIZ.md) |
 | **Record a rule that needed no code, and say what would break it** — the absence of an implementation cannot be told apart from nobody having thought about it | [owner's Pokémon](Rulings/OWNERS-POKEMON.md) |
 | **A question that DISSOLVES beats a question answered** — two readings that differ only where the timing cannot reach are one reading, and the implementation takes the one with fewer conditions | [Defender, consumption](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
 

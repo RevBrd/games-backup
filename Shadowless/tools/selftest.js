@@ -93,12 +93,13 @@ const REMAINING = {
   // Job 16 opened gym1 on 8 Sep 2026 at 128 unscripted of 132 printings — the
   // four already down are the Stadium zone's first tenants, written before any
   // Pokemon because the zone is a rule change and the cards are tenants of it.
-  // EXPECTED TO LAND AT 1 RATHER THAN 0, pending Trevor: Blaine's Quiz #1 asks the
-  // opponent to guess a Pokemon's printed LENGTH, which this game does not model
-  // and which cannot be substituted — any stat we DO model is derivable from the
-  // card name the quiz itself reveals, so a bot guesses right every time and the
-  // card becomes strictly bad. The mechanism for omitting it is not chosen yet.
-  gym1: 122,
+  // LANDS AT 0, because Blaine's Quiz #1 is no longer a card in this game at all.
+  // It asked the opponent to guess a Pokemon's printed LENGTH, which is not
+  // modelled and — the part that settles it — cannot be substituted, since the
+  // card reveals the Pokemon's NAME and any stat we DO model is then derivable.
+  // Dropped at generation via OMITTED in gen_cards.js rather than left as a hole
+  // here, so the set is complete at 131 rather than 131 of 132. Trevor, 8 Sep 2026.
+  gym1: 121,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the

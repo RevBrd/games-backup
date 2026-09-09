@@ -229,6 +229,43 @@ const CORRECTIONS = [
   },
 ];
 
+// --- OMITTED --------------------------------------------------------------
+// A card that this game does not print AT ALL. Beside CORRECTIONS because it is
+// the same idea one step further: that map fixes a card the corpus gets wrong,
+// this one drops a card the corpus gets right and we cannot implement.
+//
+// USE THIS ALMOST NEVER. The standing rule is that a set goes live only when
+// every card in it is playable, and the whole point of that rule is that a
+// player never collects a card no deck can contain. Omitting a card honours the
+// rule rather than bending it — the set is then complete at its own size, with no
+// hole — but it is still a card the player will never see, so the bar is that
+// the card CANNOT be implemented rather than that it is awkward.
+//
+// It asserts the card is still present upstream before dropping it, exactly as a
+// correction asserts the text it is replacing. An entry that has stopped matching
+// anything is a silent no-op otherwise, and a silent no-op here means quietly
+// shipping the card you meant to omit.
+const OMITTED = [
+  {
+    id: 'gym1-97',
+    name: "Blaine's Quiz #1",
+    why: 'The card asks the opponent to guess a Pokemon LENGTH — the flavour stat '
+       + 'printed under the art, which this game does not model. It cannot be '
+       + 'substituted either, and that is the part that settles it: the card tells '
+       + 'the opponent the Pokemon NAME, so any stat we DO model is derivable from '
+       + 'CARD_DB and a bot guesses right every time, which turns the card into a '
+       + 'strictly-worse Trainer that hands the opponent two cards. That is why the '
+       + 'declared-constant answer used for _____\'s Pikachu does not work here: a '
+       + 'constant is public, and this card needs the value hidden from the guesser. '
+       + 'Trevor, 8 Sep 2026 — "my opinion is toss it". The number is left VACANT on '
+       + 'purpose and is reserved for a future Shadowless original Trainer. '
+       + 'See Rulings/BLAINES-QUIZ.md.',
+  },
+];
+
+let omittedApplied = 0;
+const omittedIds = new Set(OMITTED.map(o => o.id));
+
 let correctionsApplied = 0;
 function applyCorrections(c) {
   for (const fix of CORRECTIONS) {
@@ -264,6 +301,16 @@ for (const set of SETS) {
   }
   for (const c of JSON.parse(fs.readFileSync(file, 'utf8'))) {
     c.set = set;                                   // upstream omits it; the id carries it
+    if (omittedIds.has(c.id)) {
+      const o = OMITTED.find(x => x.id === c.id);
+      if (c.name !== o.name) {
+        console.error(`ERROR: omission for ${o.id} expected "${o.name}" and the corpus now says `
+          + `"${c.name}" — the id has moved. Check before trusting this entry.`);
+        process.exit(1);
+      }
+      omittedApplied++;
+      continue;
+    }
     applyCorrections(c);
     if (c.supertype === 'Pokémon') cards.push(pokemonEntry(c));
     else if (c.supertype === 'Trainer') cards.push(trainerEntry(c));
@@ -395,6 +442,13 @@ console.log(`  ${cards.length} cards from ${SETS.join(', ')}: `
   + ['pokemon', 'trainer', 'energy'].map(k => `${cards.filter(c => c.kind === k).length} ${k}`).join(', '));
 const powers = cards.filter(c => c.power);
 console.log(`  ${powers.length} with a Pokemon Power`);
+// SAY IT OUT LOUD, EVERY RUN. An omission is invisible in the output otherwise —
+// the set simply comes out one smaller than the corpus and nothing says why, which
+// is exactly the kind of silent absence this project keeps having to re-derive.
+for (const o of OMITTED) {
+  if (SETS.includes(o.id.split('-')[0]))
+    console.log(`  OMITTED ${o.id} ${o.name} — not printed in this game. See gen_cards.js`);
+}
 if (unresolvedEnergy.length)
   console.log(`  ${unresolvedEnergy.length} Special Energy needing a hand-authored effect: `
     + unresolvedEnergy.join(', '));
