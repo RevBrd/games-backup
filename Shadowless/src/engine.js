@@ -5041,11 +5041,25 @@ class Engine {
         // `t` narrows the count to one type — Continuous Fireball flips per FIRE
         // Energy rather than per Energy — and `discardPerHead` then burns that
         // many of them. Both default off, so Big Eggsplosion is untouched.
+        // `base` makes it "30 damage PLUS 10 for each heads" rather than pure
+        // multiplication - Misty's Water Punch against Big Eggsplosion. The same
+        // split DMG_PER_COUNTER_SELF already draws between Flail and Rage.
+        //
+        // `discardAll` is Discharge: "discard all Lightning Energy attached IN
+        // ORDER TO USE THIS ATTACK, flip a number of coins equal to the number
+        // you discarded." The count has to be taken BEFORE the discard, which is
+        // why it cannot be written as COST_DISCARD_ALL_ENERGY plus a coin verb -
+        // that pays the cost first and then finds nothing left to count.
         const pool6 = atk.energy.filter(e => energyIsType(this.db, e, v.t));
         const n6 = pool6.length;
         let h3 = 0;
         for (let i = 0; i < n6; i++) if (this.flip(`coin ${i + 1}/${n6}`)) h3++;
-        base = v.per * h3;
+        base = (v.base || 0) + v.per * h3;
+        if (v.discardAll && n6 > 0) {
+          const spent = this.takeEnergy(atk, n6, v.t || null, null);
+          spent.forEach(e => me.discard.push(e));
+          this.log(`${card.name} discards ${spent.length} Energy to fire.`, 'eff');
+        }
         if (v.discardPerHead && h3 > 0) {
           const gone = this.takeEnergy(atk, h3, v.t || null, (a && a.opts && a.opts.costUids) || null);
           gone.forEach(e => me.discard.push(e));
@@ -5075,8 +5089,20 @@ class Engine {
           : v.where === 'bench' ? this.state.players[pi].bench.filter(sl => want4.indexOf(topCard(this.db, sl).name) >= 0)
           : this.allSlots(pi).filter(sl => want4.indexOf(topCard(this.db, sl).name) >= 0);
         const n4 = pool4.length;
-        base = v.base + v.per * n4;
-        this.log(`${v.base} plus ${v.per} per ${v.name} in play (${n4}) -> ${base} damage.`);
+        if (v.flip) {
+          // Night Spirits. The count sets how many COINS are thrown rather than
+          // the damage directly - "flip a number of coins equal to the total
+          // number of Sabrina's Gastlys, Haunters and Gengars you have in play".
+          // Same counter, different consumer, which is why it is a flag here and
+          // not a fifth DMG_PER_*_HEADS verb.
+          let h4 = 0;
+          for (let i = 0; i < n4; i++) if (this.flip(`coin ${i + 1}/${n4}`)) h4++;
+          base = (v.base || 0) + v.per * h4;
+          this.log(`${n4} in play -> ${n4} coin(s), ${h4} head(s) -> ${base} damage.`);
+        } else {
+          base = v.base + v.per * n4;
+          this.log(`${v.base} plus ${v.per} per ${v.name} in play (${n4}) -> ${base} damage.`);
+        }
       }
     }
 
@@ -6084,6 +6110,35 @@ class Engine {
             `Cat Punch: ${you.name} chooses which Benched Pokemon takes ${v.dmg}.`,
             you.bench.map((b, i) => ({ value: i, label: this.nameOf(b) })),
             { atkUid: atk.uid, dmg: v.dmg });
+          break;
+        }
+        case 'SELF_ENERGY_TO_BENCH': {
+          // Lt. Surge's Electric Current, and Flaaffy's in neo1. The mirror of
+          // MOVE_DEF_ENERGY_TO_BENCH below: OUR Energy, off the attacker, onto
+          // one of our own Bench.
+          //
+          // "If you have no Benched Pokemon, DISCARD that Energy card" is the
+          // half worth reading twice - the attack is a real cost against an
+          // empty Bench rather than a quiet no-op, which is the opposite of how
+          // most conditional halves in this file resolve.
+          const movable = atk.energy.filter(e => energyIsType(this.db, e, v.t));
+          if (!movable.length) { this.log('No Energy to move.', 'eff'); break; }
+          const wantU = a && a.opts && a.opts.energyUids && a.opts.energyUids[0];
+          const moving = movable.find(e => e.uid === wantU) || movable[0];
+          atk.energy.splice(atk.energy.indexOf(moving), 1);
+          if (!me.bench.length) {
+            if (v.discardIfNoBench) {
+              me.discard.push(moving);
+              this.log(`No Bench - ${this.db[moving.id].name} is discarded.`, 'eff');
+            } else {
+              atk.energy.push(moving);
+            }
+            break;
+          }
+          const bIdx = (a && a.opts && a.opts.bench !== undefined && me.bench[a.opts.bench])
+            ? a.opts.bench : this.pick(me.bench.length);
+          me.bench[bIdx].energy.push(moving);
+          this.log(`${this.db[moving.id].name} moves to ${this.nameOf(me.bench[bIdx])}.`, 'eff');
           break;
         }
         case 'MOVE_DEF_ENERGY_TO_BENCH': {

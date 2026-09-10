@@ -285,6 +285,9 @@
 //                                  does nothing, and the Active is never the
 //                                  tails target. Rides engine.ask(), so the
 //                                  damage lands in resolveAsk and not here
+//     SELF_ENERGY_TO_BENCH {t, discardIfNoBench}   move one of OUR Energy off the
+//                                  attacker onto our own Bench. With no Bench it is
+//                                  DISCARDED, not kept (Electric Current)
 //     MOVE_DEF_ENERGY_TO_BENCH     take one BASIC Energy off the defender and put
 //                                  it on one of THEIR Benched. Basic by CLASS, so
 //                                  Rainbow does not qualify — the card says
@@ -2370,6 +2373,30 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES POKEMON, pass four: THE DYNAMIC-COIN FAMILY ---------------
+  // "Flip a number of coins equal to <something you have to count>" - 21 distinct
+  // texts across 12 sets, so this is machinery rather than four special cases.
+  // Both existing verbs already did the counting; what they could not do was
+  // vary WHAT the count feeds.
+  //
+  // Water Punch adds `base`, Discharge adds `discardAll`, Night Spirits makes
+  // the named count feed COINS instead of damage. Eggsplosion needed nothing at
+  // all - it is Big Eggsplosion with a smaller number.
+  'gym1-53': { a: [[{ v: 'DISCARD_DEF_ENERGY', flip: true, label: 'Rapids' }],
+                   [{ v: 'DMG_PER_ENERGY_HEADS', base: 30, per: 10, t: 'W' }]] },
+  'gym1-77': { a: [[{ v: 'DMG_PER_ENERGY_HEADS', per: 10 }],
+                   [{ v: 'DMG_PER_DEF_ENERGY', base: 10, per: 10 }]] },
+  // Discard-then-count is written as ONE verb because the order cannot be
+  // expressed as two: a cost verb pays first and leaves nothing to count.
+  'gym1-6':  { a: [[{ v: 'ENERGY_FROM_DISCARD_TO_SELF', n: 2, t: 'L' }],
+                   [{ v: 'DMG_PER_ENERGY_HEADS', per: 30, t: 'L', discardAll: true }]] },
+  'gym1-58': { a: [[{ v: 'DMG_PER_NAMED_IN_PLAY', flip: true, per: 30,
+                      names: ["Sabrina's Gastly", "Sabrina's Haunter", "Sabrina's Gengar"] }]] },
+  // Charge is the same attack as Lt. Surge's Pikachu's, for two Energy instead
+  // of one. Electric Current moves one of ours to the Bench, which is the
+  // MOVE_ENERGY Power's shape written as an attack.
+  'gym1-27': { a: [[{ v: 'ENERGY_FROM_DISCARD_TO_SELF', n: 2, t: 'L' }],
+                   [{ v: 'SELF_ENERGY_TO_BENCH', t: 'L', discardIfNoBench: true }]] },
   // ---- GYM HEROES POKEMON, pass three: EXISTING MACHINERY ONLY ---------------
   // Seventeen cards whose every attack maps onto a verb that already existed,
   // plus three additive flags (`sure`, `flip`, `t`). Nothing new was invented

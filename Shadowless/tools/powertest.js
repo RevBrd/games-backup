@@ -7966,5 +7966,130 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- THE DYNAMIC-COIN FAMILY ------------------------------------------------
+// "Flip a number of coins equal to <something you have to count>" — 21 distinct
+// texts across 12 sets. What is worth asserting is never the arithmetic; it is
+// WHAT GOT COUNTED, because every one of these cards is a correct multiplication
+// over the wrong pool if the counter is off.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  const dce = Object.keys(CARD_DB).find(k => CARD_DB[k].name === 'Double Colorless Energy');
+
+  T('THE AI COUNTED EVERY ENERGY WHERE THE CARD COUNTS ONE TYPE', () => {
+    // Dark Charizard's Continuous Fireball flips one coin per FIRE Energy. Both
+    // coin-count sites in ai.js used the untyped total, so on 2 Fire plus 2
+    // Double Colorless it enumerated four coins against the two the card throws
+    // and forecast 100 damage where the truth is 50 — for the life of that set.
+    // Gyarados rather than Venusaur: this attacker is FIRE, and Venusaur is
+    // Weak to it, which would double the forecast and hide the thing being
+    // measured behind an unrelated correct doubling.
+    const E = setup({ me: { card: 'base5-4', energy: '2 Fire' },
+      them: { card: 'base1:Gyarados' } }).E;
+    const act = E.state.players[0].active;
+    act.energy.push({ id: dce, uid: 90001 }, { id: dce, uid: 90002 });
+    const fire = act.energy.filter(e => CARD_DB[e.id].provides === 'R').length;
+    eq(fire, 2, 'two Fire attached');
+    // Half of 2 coins at 50 a head. Four coins would say 100.
+    return eq(new AI(E, {}).forecast(0, 1).expDmg, 50, 'the forecast counts Fire only');
+  });
+
+  T('Water Punch is 30 PLUS 10 a head, not 10 times heads', () => {
+    // `base` on DMG_PER_ENERGY_HEADS. Without it the card reads as a much worse
+    // one that happens to score the same on an average roll.
+    const h = setup({ me: { card: 'gym1-53', energy: '3 Water' },
+      them: { card: 'base1:Venusaur' } }).E;
+    h.dev.forceFlip = 'H';
+    h.act(0, h.legalActions(0).find(a => a.t === 'attack' && a.idx === 1));
+    eq(h.state.players[1].active.dmg, 60, 'three heads: 30 + 30');
+    const t = setup({ me: { card: 'gym1-53', energy: '3 Water' },
+      them: { card: 'base1:Venusaur' } }).E;
+    t.dev.forceFlip = 'T';
+    t.act(0, t.legalActions(0).find(a => a.t === 'attack' && a.idx === 1));
+    // ALL TAILS STILL DOES 30. That is the whole difference the flag makes.
+    return eq(t.state.players[1].active.dmg, 30, 'all tails: still 30');
+  });
+
+  T('...and Water Punch counts WATER, not everything attached', () => {
+    const E = setup({ me: { card: 'gym1-53', energy: '1 Water' },
+      them: { card: 'base1:Venusaur' } }).E;
+    const act = E.state.players[0].active;
+    act.energy.push({ id: dce, uid: 90003 }, { id: dce, uid: 90004 });
+    E.dev.forceFlip = 'H';
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === 1));
+    // One Water = one coin = 30 + 10. Three coins would be 60.
+    return eq(E.state.players[1].active.dmg, 40, 'one Water, one coin');
+  });
+
+  T('Discharge counts BEFORE it discards, which two verbs could not do', () => {
+    // "Discard all Lightning Energy attached IN ORDER TO USE THIS ATTACK. Flip a
+    // number of coins equal to the number you discarded." Written as a cost verb
+    // plus a coin verb, the cost pays first and leaves nothing to count — the
+    // attack would flip zero coins and always do nothing.
+    const E = setup({ me: { card: 'gym1-6', energy: '3 Lightning' },
+      them: { card: 'base1:Venusaur' } }).E;
+    E.dev.forceFlip = 'H';
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === 1));
+    eq(E.state.players[1].active.dmg, 90, 'three coins at 30');
+    return eq(E.state.players[0].active.energy.length, 0, 'and all three are gone');
+  });
+
+  T('Night Spirits counts a FAMILY, across the whole board, as coins', () => {
+    // The first card to use the `names` LIST. ai.js read only `v.name`, so a
+    // names-based card would have counted zero and been forecast at base damage
+    // forever — latent since Magnetism, and this is the card that would have
+    // found it.
+    const E = setup({ me: { card: 'gym1-58', energy: '2 Psychic' },
+      them: { card: 'base1:Venusaur' },
+      myBench: [{ card: 'gym1-93' }, { card: 'base1:Machop' }] }).E;
+    E.dev.forceFlip = 'H';
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack'));
+    // Haunter itself plus one Gastly = 2 coins at 30. The Machop is not family.
+    return eq(E.state.players[1].active.dmg, 60, 'two of the family, two coins');
+  });
+
+  T('...and the AI forecasts that family too, rather than zero', () => {
+    const E = setup({ me: { card: 'gym1-58', energy: '2 Psychic' },
+      them: { card: 'base1:Venusaur' }, myBench: [{ card: 'gym1-93' }] }).E;
+    // Two coins at 30 = 30 expected. Reading only `v.name` would give 0.
+    return eq(new AI(E, {}).forecast(0, 0).expDmg > 0, true, 'not forecast as nothing');
+  });
+
+  T('Electric Current DISCARDS the Energy when there is no Bench', () => {
+    // The half worth reading twice. Most conditional halves in effects.js
+    // resolve to a quiet no-op; this one is a real cost against an empty Bench,
+    // because the card says so.
+    const E = setup({ me: { card: 'gym1-27', energy: '2 Lightning' },
+      them: { card: 'base1:Venusaur' } }).E;
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === 1));
+    eq(E.state.players[0].active.energy.length, 1, 'one left attached');
+    return eq(E.state.players[0].discard.length, 1, 'and the other is discarded, not kept');
+  });
+
+  T('...and moves it to the Bench the SCORER chose, never a random one', () => {
+    const E = setup({ me: { card: 'gym1-27', energy: '2 Lightning' },
+      them: { card: 'base1:Venusaur' },
+      myBench: [{ card: 'base1:Machop' }, { card: 'base1:Pikachu' }] }).E;
+    const a = E.legalActions(0).find(x => x.t === 'attack' && x.idx === 1);
+    new AI(E, {}).scoreAction(0, a);
+    // The standing invariant since 21 Aug: the scorer fills a.opts so the
+    // engine's seeded random pick is never reached. Ninetales' Lure is the card
+    // that was found violating it.
+    eq(a.opts && a.opts.bench !== undefined, true, 'the scorer picked a Bench slot');
+    E.act(0, a);
+    const seeded = E.state.players[0].bench.filter(b => b.energy.length);
+    return eq(seeded.length, 1, 'and exactly one Bench slot got it');
+  });
+
+  T('Eggsplosion needed nothing new — it is Big Eggsplosion, smaller', () => {
+    const E = setup({ me: { card: 'gym1-77', energy: '2 Grass' },
+      them: { card: 'base1:Venusaur' } }).E;
+    E.dev.forceFlip = 'H';
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === 0));
+    return eq(E.state.players[1].active.dmg, 20, 'two coins at 10');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

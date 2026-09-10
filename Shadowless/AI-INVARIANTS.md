@@ -126,3 +126,4 @@ open the entry.
 | 6 Sep 2026 | **silence is counted in Energy and was billed as turns, and the discount for dying was unreachable** | `energyRefillTurns`, `turnsLeft` | [SILENCE-IN-TURNS](AI-INVARIANTS/SILENCE-IN-TURNS.md) |
 | 6 Sep 2026 | **one home for what a status on their Active is worth, and the Power path had none of the rules** | `statusWorthAgainst` | [STATUS-ONE-HOME](AI-INVARIANTS/STATUS-ONE-HOME.md) |
 | 7 Sep 2026 | **the opponent's deck is a clock, and a bought turn is worth more while it runs** | `deckOutClock`, both copies of `turnScale` | [DECK-OUT-CLOCK](AI-INVARIANTS/DECK-OUT-CLOCK.md) |
+| 10 Sep 2026 | **a coin-scaling attack is a correct multiplication over the wrong pool, and the pool is the only thing that can be wrong** | `rawOutcomes` (`DMG_PER_ENERGY_HEADS`, `DMG_PER_NAMED_IN_PLAY`), `slotPrintedDamage` | [DYNAMIC-COIN-COUNT](AI-INVARIANTS/DYNAMIC-COIN-COUNT.md) |

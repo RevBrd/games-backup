@@ -338,7 +338,13 @@ class AI {
       if (v.v === 'DMG_PER_SPARE_ENERGY') base = this.spareEnergyDamage(slot, atk, v);
       // Big Eggsplosion and Continuous Fireball: a coin per Energy attached, so
       // the honest printed-currency number is the mean rather than the print.
-      else if (v.v === 'DMG_PER_ENERGY_HEADS') base = v.per * slot.energy.length / 2;
+      // THE TYPE FILTER, which both coin-count sites in this file used to skip.
+      // Dark Charizard's Continuous Fireball flips one coin per FIRE Energy, and
+      // this counted every Energy attached — so on 2 Fire plus 2 Double Colorless
+      // it enumerated four coins against the two the card throws and expected 100
+      // damage where the truth is 50. Measured, not reasoned about.
+      else if (v.v === 'DMG_PER_ENERGY_HEADS')
+        base = v.per * slot.energy.filter(e => aiEnergyIsType(this.db, e, v.t)).length / 2;
     }
     return base;
   }
@@ -715,10 +721,32 @@ class AI {
           break;
         }
         case 'DMG_PER_NAMED_IN_PLAY': {
+          // THREE SCOPES AND A LIST, matching the engine. This read only `v.name`
+          // and only the attacker's own slots, so a card written with `names` -
+          // which the engine has supported since Magnetism - would count zero and
+          // be forecast at its base damage forever. Nothing shipped used `names`,
+          // so it was latent rather than live; Night Spirits is the first card
+          // that would have found it.
           const side2 = this.E.sideOf(atkSlot);
-          let n5 = 0;
-          if (side2 !== null) for (const sl of this.E.allSlots(side2)) if (this.top(sl).name === v.name) n5++;
-          split(() => [[1, v.base + v.per * n5]]);
+          const want5 = v.names || [v.name];
+          let pool5 = [];
+          if (side2 !== null) {
+            pool5 = v.where === 'all'
+              ? this.E.allSlots(0).concat(this.E.allSlots(1))
+              : v.where === 'bench' ? this.E.state.players[side2].bench.slice()
+              : this.E.allSlots(side2);
+          }
+          const n5 = pool5.filter(sl => want5.indexOf(this.top(sl).name) >= 0).length;
+          if (!v.flip) { split(() => [[1, (v.base || 0) + v.per * n5]]); break; }
+          // Night Spirits: the count is COINS, not damage. Same binomial the
+          // Energy-coin case builds, over a different counter.
+          const dist5 = [];
+          for (let h = 0; h <= n5; h++) {
+            let ways = 1;
+            for (let k = 0; k < h; k++) ways = ways * (n5 - k) / (k + 1);
+            dist5.push([ways / Math.pow(2, n5), (v.base || 0) + v.per * h]);
+          }
+          split(() => (n5 ? dist5 : [[1, v.base || 0]]));
           break;
         }
         case 'HEAL_SELF_EQUAL_DAMAGE': flags.leech = v.half ? 0.5 : 1; break;
@@ -751,13 +779,17 @@ class AI {
           break;
         }
         case 'DMG_PER_ENERGY_HEADS': {
-          const n = atkSlot.energy.length, dist = [];
+          // Typed, for the reason spelled out at slotPrintedDamage above: the
+          // card flips per Energy OF THAT TYPE, and enumerating the untyped
+          // count doubled Dark Charizard's forecast for the life of that set.
+          const n = atkSlot.energy.filter(e => aiEnergyIsType(this.db, e, v.t)).length;
+          const dist = [];
           for (let h = 0; h <= n; h++) {
             let ways = 1;
             for (let k = 0; k < h; k++) ways = ways * (n - k) / (k + 1);
-            dist.push([ways / Math.pow(2, n), v.per * h]);
+            dist.push([ways / Math.pow(2, n), (v.base || 0) + v.per * h]);
           }
-          split(() => (n ? dist : [[1, 0]]));
+          split(() => (n ? dist : [[1, v.base || 0]]));
           break;
         }
         case 'WHIRLWIND_ON_FLIP': flags.dragWeak = 0.5; break;
@@ -794,6 +826,9 @@ class AI {
         case 'MIRROR_SHELL': flags.mirror = true; break;
         case 'SWITCH_DEFENDER_FIRST': flags.dragFirst = true; break;
         case 'SCATTER_OWN_ENERGY': flags.scatter = true; break;
+        case 'SELF_ENERGY_TO_BENCH':
+          flags.seedBench = { t: v.t, burns: !!v.discardIfNoBench };
+          break;
         case 'MOVE_DEF_ENERGY_TO_BENCH': flags.stripToBench = true; break;
         // ---- Job 13, the coin batch ----
         // Miraculous Comeback. Both halves come off ONE roll of N coins, so the
@@ -1500,6 +1535,33 @@ class AI {
     // wants it, an outright loss when there is no Bench and it all burns.
     if (f.flags.scatter && me.active) {
       s += me.bench.length ? me.active.energy.length * 2 : -me.active.energy.length * W.retreatSaveEnergy;
+    }
+
+    // Electric Current moves ONE of ours to the Bench. Scatter's little sibling
+    // and priced off it, with the same two-sided rule: worth something when
+    // there is a Bench that wants it, a real cost when there is not and the card
+    // says the Energy is DISCARDED rather than kept.
+    //
+    // PROVISIONAL, and the guess it rests on is that a Bench slot which can
+    // already reach an attack is worth seeding and one that cannot is not.
+    // `attachValue` is the existing answer to exactly that question, so this
+    // reaches for it rather than inventing a second opinion — the mistake AI.md
+    // item 17 was written about, one turn earlier.
+    if (f.flags.seedBench && me.active) {
+      if (!me.bench.length) {
+        s -= f.flags.seedBench.burns ? W.retreatSaveEnergy : 0;
+      } else {
+        const moving = me.active.energy.find(e => aiEnergyIsType(this.db, e, f.flags.seedBench.t));
+        let best = { v: -Infinity, i: 0 };
+        if (moving) me.bench.forEach((b, i) => {
+          const val = this.attachValue(pi, b, moving.id);
+          if (val > best.v) best = { v: val, i };
+        });
+        // The VALUE only. Filling the choice is scoreAction's job and happens
+        // there - `scoreAttack` has no action object in scope, and writing to
+        // one here threw the moment the first card reached it.
+        if (moving && best.v > -Infinity) s += Math.max(0, best.v) * 0.5;
+      }
     }
 
     if (f.flags.shuffleAway === 'defender' && you.active) {
@@ -3315,6 +3377,26 @@ class AI {
           if (scr.some(v => v.v === 'SWITCH_DEFENDER_CHOOSE' || v.v === 'SWITCH_DEFENDER_CHOOSE_ON_FLIP')) {
             a.opts = a.opts || {};
             a.opts.bench = this.bestDragTarget(pi).bench;
+          }
+        }
+        // Electric Current: which of OUR Bench gets the Energy. Same rule as the
+        // drag above - the engine's fallback is a seeded random pick, so a
+        // choice nobody makes is a choice made badly.
+        if (me.active && me.bench.length) {
+          const scr = this.script(me.active, a.idx);
+          const sb = scr.find(v => v.v === 'SELF_ENERGY_TO_BENCH');
+          if (sb) {
+            const moving = me.active.energy.find(e => aiEnergyIsType(this.db, e, sb.t));
+            if (moving) {
+              let best = { v: -Infinity, i: 0 };
+              me.bench.forEach((b, i) => {
+                const val = this.attachValue(pi, b, moving.id);
+                if (val > best.v) best = { v: val, i };
+              });
+              a.opts = a.opts || {};
+              a.opts.bench = best.i;
+              a.opts.energyUids = [moving.uid];
+            }
           }
         }
         if (me.active) {

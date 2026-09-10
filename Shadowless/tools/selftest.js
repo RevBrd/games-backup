@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 52,
+  gym1: 47,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -540,6 +540,12 @@ const PROVISIONAL = new Set([
   // T_ENERGY_RETURN is the weakest of the four and says so in its own comment —
   // it plays the rescue it can see and not the slow value play it cannot.
   'T_PEEK_CYCLE', 'T_GAMBLE_DISCARD', 'T_ENERGY_RETURN', 'T_TRADE_FOR_NAMED',
+  // Electric Current, 10 Sep 2026. The one new verb in the dynamic-coin pass,
+  // and its weight rests on a guess: that a Bench slot which can already reach
+  // an attack is worth seeding and one that cannot is not. It reaches for
+  // attachValue rather than inventing a second opinion about the same question,
+  // which is the mistake AI.md item 17 was written about one turn earlier.
+  'SELF_ENERGY_TO_BENCH',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',
