@@ -2685,6 +2685,18 @@ class Engine {
         case 'T_CHALLENGE': break;      // always legal: declining still draws 2
         // Misty's Duel refreshes SOMEBODY's hand, so the only board where it can
         // do nothing at all is one where neither player has a deck to draw from.
+        case 'T_HEAL_EACH': if (!this.allSlots(pi).some(sl => sl.dmg > 0)) return false; break;
+        case 'T_DRAW_BOTH': if (!p.deck.length && !o.deck.length) return false; break;
+        case 'T_DIG': if (!p.deck.length) return false; break;
+        case 'T_GAZE': if (!p.hand.length && !o.hand.length) return false; break;
+        case 'T_TRASH_EXCHANGE': if (!p.discard.length) return false; break;
+        // Blaine's Last Resort: "You CAN'T PLAY THIS CARD if you have any cards in
+        // your hand other than Blaine's Last Resort." The card being played is
+        // still in hand at this point, so the test is a hand of exactly one.
+        case 'T_SHOW_AND_DRAW':
+          if (p.hand.length !== 1 || p.hand[0] !== inst) return false;
+          if (!p.deck.length) return false;
+          break;
         case 'T_DUEL': if (!p.deck.length && !o.deck.length) return false; break;
         // Tickling Machine against an EMPTY hand is all downside: heads sets
         // aside nothing and tails costs you your attack. Refused on the standing
@@ -3739,6 +3751,96 @@ class Engine {
           });
           this.log(`PlusPower attached to ${this.nameOf(p.active)} (+10 this turn).`, 'eff');
           toDiscard = false;   // discarded when the effect expires
+          break;
+        }
+        case 'T_HEAL_EACH': {
+          // Brock. "Remove 1 damage counter from EACH of your Pokemon that has any
+          // damage counters on it." No target and no choice — it is the only heal
+          // in the era that touches the whole board.
+          let touched = 0;
+          for (const sl of this.allSlots(pi)) {
+            if (sl.dmg <= 0) continue;
+            sl.dmg = Math.max(0, sl.dmg - (v.n || 1) * 10);
+            touched++;
+          }
+          this.log(`${c.name}: ${touched} Pokemon heal ${(v.n || 1) * 10}.`, 'eff');
+          break;
+        }
+        case 'T_DRAW_BOTH': {
+          // Erika. "You may draw up to 3 cards, THEN YOUR OPPONENT may draw up to
+          // 3 cards." Resolved as both taking the maximum, which is the sensible
+          // answer on every board with a deck to draw from — and the opponent's
+          // half is the card's cost rather than a generosity we could decline for
+          // them. `deckRisk` is the AI's business, not the engine's.
+          for (const who of [p, o]) {
+            let drew = 0;
+            for (let i = 0; i < (v.n || 3) && who.deck.length; i++) { who.hand.push(who.deck.shift()); drew++; }
+            this.log(`${who.name} draws ${drew}.`, 'eff');
+          }
+          break;
+        }
+        case 'T_SHOW_AND_DRAW': {
+          // Blaine's Last Resort. The showing is free; the whole card is its
+          // legality gate, which lives in trainerPlayable.
+          this.state.revealedHand = p.hand.map(x => ({ id: x.id, uid: x.uid }));
+          let drew = 0;
+          for (let i = 0; i < (v.n || 5) && p.deck.length; i++) { p.hand.push(p.deck.shift()); drew++; }
+          this.log(`${p.name} shows an empty hand and draws ${drew}.`, 'eff');
+          break;
+        }
+        case 'T_DIG': {
+          // Misty's Wrath. "Look at the top 7 cards of your deck. Choose 2 of
+          // those cards and put them into your hand. DISCARD THE REST."
+          //
+          // The discard is the cost and it is large — this is not a search, it is
+          // a trade of five cards for the pick of seven.
+          const look = p.deck.splice(0, Math.min(v.look || 7, p.deck.length));
+          const want = Math.min(v.keep || 2, look.length);
+          const chosen = [];
+          for (const uid of ((a.opts && a.opts.pickUids) || [])) {
+            const x = look.find(y => y.uid === uid);
+            if (x && chosen.indexOf(x) < 0 && chosen.length < want) chosen.push(x);
+          }
+          // Deterministic fallback, as everywhere: anything supplying no choice
+          // still plays. Takes them in order rather than judging, which is the
+          // AI's gap to close rather than the engine's to guess at.
+          for (const x of look) { if (chosen.length >= want) break; if (chosen.indexOf(x) < 0) chosen.push(x); }
+          for (const x of chosen) p.hand.push(x);
+          for (const x of look) if (chosen.indexOf(x) < 0) p.discard.push(x);
+          this.log(`${p.name} digs ${look.length}, keeps ${chosen.length}, discards ${look.length - chosen.length}.`, 'eff');
+          break;
+        }
+        case 'T_GAZE': {
+          // Sabrina's Gaze. "Each player shuffles his or her hand into his or her
+          // deck and draws a new hand of THE SAME NUMBER of cards."
+          //
+          // The count is taken BEFORE anything moves and separately per player —
+          // this card is a refresh, not a leveller, and a player holding two cards
+          // still ends holding two. The Gaze itself is already out of hand and so
+          // is not counted, which is what makes it cost a card.
+          for (const who of [p, o]) {
+            const n = who.hand.length;
+            while (who.hand.length) who.deck.push(who.hand.pop());
+            this.shuffle(who.deck);
+            let drew = 0;
+            for (let i = 0; i < n && who.deck.length; i++) { who.hand.push(who.deck.shift()); drew++; }
+            this.log(`${who.name} shuffles ${n} away and draws ${drew}.`, 'eff');
+          }
+          break;
+        }
+        case 'T_TRASH_EXCHANGE': {
+          // Trash Exchange. "Count the number of cards in your discard pile and
+          // shuffle them into your deck. Then discard that many cards from the top
+          // of your deck."
+          //
+          // The count is taken FIRST and does not change: a 12-card discard goes
+          // in and 12 come off the top, which is a recycle rather than a gain.
+          const n = p.discard.length;
+          while (p.discard.length) p.deck.push(p.discard.pop());
+          this.shuffle(p.deck);
+          let put = 0;
+          for (let i = 0; i < n && p.deck.length; i++) { p.discard.push(p.deck.shift()); put++; }
+          this.log(`${p.name} recycles ${n} and mills ${put}.`, 'eff');
           break;
         }
         case 'T_DUEL': {

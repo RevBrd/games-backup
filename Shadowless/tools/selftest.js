@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 87,
+  gym1: 73,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -491,6 +491,10 @@ const PROVISIONAL = new Set([
   // in bestAffordableDamage, which is the wrong unit for a turn and is the
   // weaker of the two guesses by some distance.
   'T_DUEL', 'T_TICKLE',
+  // The six Gym Heroes Trainers landed 9 Sep 2026. T_GAZE is the weakest guess of
+  // the set and knows it: the card is worth most when our hand is bad and theirs
+  // is good, and the bot has no notion of hand quality at all.
+  'T_HEAL_EACH', 'T_DRAW_BOTH', 'T_SHOW_AND_DRAW', 'T_DIG', 'T_GAZE', 'T_TRASH_EXCHANGE',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',

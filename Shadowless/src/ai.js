@@ -4411,6 +4411,60 @@ class AI {
         }
         case 'T_DRAW': s += v.n * W.drawCard + this.deckRisk(pi, v.n); break;
 
+        // ---- GYM HEROES Trainers, all PROVISIONAL ----------------------------
+        case 'T_HEAL_EACH': {
+          // Brock heals the WHOLE board by one counter, so it is worth what it
+          // removes rather than a flat number — and it is at its best on a board
+          // that has been chipped everywhere, which is exactly when a per-target
+          // heal is at its worst.
+          let counters = 0;
+          for (const sl of E.allSlots(pi)) counters += Math.min((v.n || 1) * 10, sl.dmg);
+          if (counters <= 0) return -Infinity;
+          s += counters / 10 * W.healPer10;
+          break;
+        }
+        case 'T_DRAW_BOTH': {
+          // Erika hands the opponent the same three cards. Priced as OUR draw
+          // minus theirs, discounted because a card in our hand this turn is worth
+          // more than a card in theirs on a turn they have not reached yet.
+          const mineNeed = Math.max(0, 6 - (me.hand.length - 1));
+          s += Math.min(v.n, mineNeed) * W.drawCard;
+          s -= v.n * W.drawCard * 0.6;
+          s += this.deckRisk(pi, v.n);
+          break;
+        }
+        case 'T_SHOW_AND_DRAW':
+          // Blaine's Last Resort can only be played from a hand holding nothing
+          // else, so it is always five cards into an empty hand. The showing costs
+          // nothing against a bot that reads full state anyway — see
+          // Rulings/PEEK-CLAIRVOYANCE.md for why that is not scored as a downside.
+          s += (v.n || 5) * W.drawCard + this.deckRisk(pi, v.n || 5);
+          break;
+        case 'T_DIG': {
+          // Misty's Wrath keeps 2 and DISCARDS 5. The discard is the cost and it
+          // is the biggest single bite in this set, so it is priced off deckBurn's
+          // scale rather than as a draw with a footnote.
+          const look = Math.min(v.look || 7, me.deck.length);
+          if (!look) return -Infinity;
+          const keep = Math.min(v.keep || 2, look);
+          s += keep * W.drawCard;
+          s += this.deckRisk(pi, look);
+          break;
+        }
+        case 'T_GAZE':
+          // Sabrina's Gaze refreshes both hands at their current size. Worth most
+          // when our hand is bad and theirs is good, and THE BOT CANNOT JUDGE
+          // EITHER — it has no notion of hand quality. Priced near zero on
+          // purpose rather than guessed at, and named in AI.md as the gap.
+          s += (you.hand.length - (me.hand.length - 1)) * 1.5;
+          break;
+        case 'T_TRASH_EXCHANGE':
+          // A recycle rather than a gain: the same number comes straight back off
+          // the top. Its real use is refusing to deck out, which is the one term
+          // deckOutClock already understands.
+          s += Math.min(me.discard.length, 12) * W.deckRecycle;
+          break;
+
         case 'T_PROFESSOR_OAK': {
           // Discards the hand — gone, not shuffled back — and draws seven. So it
           // burns exactly seven every time, which is the largest single bite any

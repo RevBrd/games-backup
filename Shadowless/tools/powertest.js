@@ -7558,5 +7558,90 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- GYM HEROES TRAINERS, the determinate six ------------------------------
+// Every one of these resolves with no choice in it, which is why they went first.
+// The four that ask "discard any number" are a separate shape and are not here.
+{
+  const { setup } = require('./lib/board.js');
+  const play = (E, name, opts) => {
+    const me = E.state.players[0];
+    const i = me.hand.findIndex(x => E.db[x.id].name === name);
+    if (i < 0) throw new Error('not in hand: ' + name);
+    const r = E.act(0, { t: 'playTrainer', hand: i, opts: opts || {} });
+    if (!r.ok) throw new Error('refused: ' + (r.why || r.error));
+    return E;
+  };
+
+  T('Brock heals the WHOLE board by one counter each', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myBench: [{ card: 'base1:Onix' }, { card: 'base1:Machop' }], myHand: ['gym1-15'] }).E;
+    const p = E.state.players[0];
+    p.active.dmg = 30; p.bench[0].dmg = 10; p.bench[1].dmg = 0;
+    play(E, 'Brock');
+    eq(p.active.dmg, 20, 'the Active');
+    eq(p.bench[0].dmg, 0, 'a Benched one');
+    // "each of your Pokemon THAT HAS ANY damage counters on it" — an undamaged
+    // one is untouched, which matters only in that it cannot go negative.
+    return eq(p.bench[1].dmg, 0, 'and the undamaged one is unchanged');
+  });
+
+  T('Erika draws three for BOTH players — the opponent half is the cost', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-16'], theirHand: [] }).E;
+    play(E, 'Erika');
+    eq(E.state.players[0].hand.length, 3, 'ours');
+    return eq(E.state.players[1].hand.length, 3, 'and theirs');
+  });
+
+  T("Blaine's Last Resort is refused unless it is the only card in hand", () => {
+    const withSpare = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-105', 'base1:Bill'] }).E;
+    const offered = withSpare.legalActions(0).some(a => a.t === 'playTrainer'
+      && withSpare.db[withSpare.state.players[0].hand[a.hand].id].name === "Blaine's Last Resort");
+    eq(offered, false, 'offered with a spare card');
+    // The card being played is STILL IN HAND at the legality check, so the test
+    // is a hand of exactly one — not an empty one.
+    const alone = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-105'] }).E;
+    play(alone, "Blaine's Last Resort");
+    return eq(alone.state.players[0].hand.length, 5, 'and draws five when alone');
+  });
+
+  T("Misty's Wrath keeps 2 of 7 and DISCARDS the other five", () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-114'] }).E;
+    const deck = E.state.players[0].deck.length;
+    play(E, "Misty's Wrath");
+    const p = E.state.players[0];
+    eq(deck - p.deck.length, 7, 'seven left the deck');
+    eq(p.hand.length, 2, 'two were kept');
+    // Five discarded plus the Wrath itself. It is a trade, not a search.
+    return eq(p.discard.length, 6, 'five discarded, plus the card');
+  });
+
+  T("Sabrina's Gaze refreshes each hand at ITS OWN size", () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-125', 'base1:Bill', 'base1:Bill'], theirHand: ['base1:Bill'] }).E;
+    play(E, "Sabrina's Gaze");
+    // Not a leveller: two stays two and one stays one. The Gaze is already out of
+    // hand when the count is taken, which is what makes it cost a card.
+    eq(E.state.players[0].hand.length, 2, 'ours');
+    return eq(E.state.players[1].hand.length, 1, 'and theirs, separately');
+  });
+
+  T('Trash Exchange is a recycle, not a gain', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-126'], discard: ['base1:Bill', 'base1:Bill', 'base1:Bill'] }).E;
+    const deck = E.state.players[0].deck.length;
+    play(E, 'Trash Exchange');
+    const p = E.state.players[0];
+    // Three go in and three come straight back off the top, so the deck is the
+    // same size it was. The discard holds those three plus the card just played.
+    eq(p.deck.length, deck, 'the deck is unchanged in size');
+    return eq(p.discard.length, 4, 'three milled, plus the card');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

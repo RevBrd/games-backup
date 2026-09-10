@@ -442,6 +442,18 @@
 //                                  end of your turn rather than being discarded, and
 //                                  while attached the attacker may REDUCE its own
 //                                  damage by any multiple of 10 (opts.charityReduce)
+//     T_HEAL_EACH {n}              remove n counters from EVERY one of your damaged
+//                                  Pokemon. No target, no choice (Brock)
+//     T_DRAW_BOTH {n}              you draw up to n, then your opponent does. The
+//                                  opponent's half is the COST, not a kindness (Erika)
+//     T_SHOW_AND_DRAW {n}          show your hand and draw n. The whole card is its
+//                                  legality gate (Blaine's Last Resort)
+//     T_DIG {look, keep}           look at the top `look`, keep `keep`, DISCARD THE
+//                                  REST — a trade, not a search (Misty's Wrath)
+//     T_GAZE                       each player shuffles their hand away and redraws
+//                                  THE SAME NUMBER, counted per player (Sabrina's Gaze)
+//     T_TRASH_EXCHANGE             shuffle your discard into your deck, then mill
+//                                  that many. A recycle, not a gain (Trash Exchange)
 //     T_DUEL                       Misty's Duel. A coin decides the winner, and the
 //                                  WINNER shuffles their hand away and draws 5. The
 //                                  card prints the coin substitution itself
@@ -2248,6 +2260,18 @@ const EFFECTS = {
                     always: true, requireSelfAsleep: true },
     a: [[{ v: 'STATUS_SELF', s: 'Asleep' }]] },            // Rocket's Snorlax: Collapse
 
+  // The six basic Energy reprints. An EMPTY script rather than no entry at all:
+  // a card with no entry is unimplemented and the deck validator refuses it, and
+  // "does nothing" is not the same fact as "nobody wrote it". base1's read the
+  // same way, and Team Rocket's three SPECIAL Energy are why selftest counts
+  // Energy at all.
+  'gym1-127': { t: [] },   // Fighting Energy
+  'gym1-128': { t: [] },   // Fire Energy
+  'gym1-129': { t: [] },   // Grass Energy
+  'gym1-130': { t: [] },   // Lightning Energy
+  'gym1-131': { t: [] },   // Psychic Energy
+  'gym1-132': { t: [] },   // Water Energy
+
   'gym1-10': { p: { kind: 'FLEE', name: 'Flee' },
     a: [[{ v: 'STATUS_COIN_EITHER', heads: 'Poisoned', tails: 'Confused' }]] },   // Misty's Tentacruel: Jellyfish Poison
   'gym1-2':  { p: { kind: 'BENCH_GUARD', name: 'Bench Guard', n: 10 },
@@ -2324,6 +2348,12 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  'gym1-15':  { t: [{ v: 'T_HEAL_EACH', n: 1 }] },        // Brock
+  'gym1-16':  { t: [{ v: 'T_DRAW_BOTH', n: 3 }] },        // Erika
+  'gym1-105': { t: [{ v: 'T_SHOW_AND_DRAW', n: 5 }] },    // Blaine's Last Resort
+  'gym1-114': { t: [{ v: 'T_DIG', look: 7, keep: 2 }] },  // Misty's Wrath
+  'gym1-125': { t: [{ v: 'T_GAZE' }] },                   // Sabrina's Gaze
+  'gym1-126': { t: [{ v: 'T_TRASH_EXCHANGE' }] },         // Trash Exchange
   'gym1-123': { t: [{ v: 'T_DUEL' }] },
   'gym1-119': { t: [{ v: 'T_TICKLE' }] },
 
