@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 69,
+  gym1: 52,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the

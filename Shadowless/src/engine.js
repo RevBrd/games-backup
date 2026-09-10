@@ -5260,6 +5260,20 @@ class Engine {
         case 'DISCARD_DEF_ENERGY': {
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def || !def.energy.length) { this.log('No Energy to discard.', 'eff'); break; }
+          // `flip` is Removal Pulse's shape: "IF the Defending Pokemon has any
+          // Energy cards attached to it, flip a coin." The order is the whole
+          // point and it is asserted - the coin is thrown only AFTER the Energy
+          // check, so a defender holding nothing costs no flip at all.
+          //
+          // That is not cosmetic. Sabrina's ESP decides whether an attack
+          // "involves flipping coins" by COUNTING the coins it actually threw,
+          // so a flip made here against an empty board would make ESP re-offerable
+          // on an attack that never flipped. See Rulings/SABRINAS-ESP.md, which
+          // names this card as the reason that rule is written the way it is.
+          if (v.flip && !this.flip(v.label || 'discard their Energy?')) {
+            this.log(`${this.nameOf(def)} keeps its Energy.`, 'eff');
+            break;
+          }
           const e2 = this.takeEnergy(def, 1, null, a.opts && a.opts.energyUids)[0];
           if (!e2) { this.log('No Energy to discard.', 'eff'); break; }
           you.discard.push(e2);
@@ -5581,7 +5595,11 @@ class Engine {
         case 'CANT_RETREAT_ON_FLIP':
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def) break;
-          if (this.flip(v.label || 'stop them retreating?')) {
+          // `sure` is the UNCONDITIONAL printing of the same effect, and it is not
+          // a Gym Heroes special case: 10 printings across 4 sets, 4 distinct
+          // texts, recurring in gym2, neo3 and neo4. A flag rather than a second
+          // verb because the effect pushed is identical - only the coin differs.
+          if (v.sure || this.flip(v.label || 'stop them retreating?')) {
             def.effects.push({ kind: 'CANT_RETREAT', label: v.label || 'Acid',
                                expireAtStartOfTurn: s.turn + 2 });
             this.log(`${this.nameOf(def)} can't retreat during the opponent's next turn.`, 'eff');
@@ -5932,17 +5950,25 @@ class Engine {
           //
           // "UP TO 2", so an empty discard is a legal, quiet no-op.
           const wantE = (a && a.opts && a.opts.uids) || null;
+          // `t` narrows it to one basic type. Lt. Surge's Charge is the first
+          // card to need it - "take up to 2 LIGHTNING Energy cards" - where
+          // Mewtwo's Energy Absorption takes anything. Absent means anything,
+          // so every existing caller is unchanged.
+          const okE = (x) => {
+            const cc = this.db[x.id];
+            return cc && cc.kind === 'energy' && (!v.t || cc.provides === v.t);
+          };
           const gotE = [];
           if (wantE) {
             for (const u of wantE.slice(0, v.n)) {
               const k = me.discard.findIndex(x => x.uid === u);
-              if (k >= 0 && this.db[me.discard[k].id].kind === 'energy') gotE.push(me.discard.splice(k, 1)[0]);
+              if (k >= 0 && okE(me.discard[k])) gotE.push(me.discard.splice(k, 1)[0]);
             }
           } else {
             // Unattended fallback: most recently discarded first, so a seeded game
             // stays reproducible. Same rule as ENERGY_FROM_DISCARD.
             for (let i = me.discard.length - 1; i >= 0 && gotE.length < v.n; i--) {
-              if (this.db[me.discard[i].id].kind === 'energy') gotE.push(me.discard.splice(i, 1)[0]);
+              if (okE(me.discard[i])) gotE.push(me.discard.splice(i, 1)[0]);
             }
           }
           gotE.forEach(x => atk.energy.push(x));

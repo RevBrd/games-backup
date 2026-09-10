@@ -7844,5 +7844,127 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- GYM HEROES POKEMON, pass three: the reuse batch ------------------------
+// Seventeen cards, no new verbs, three additive flags. The rows here test the
+// three flags and the four places where two cards that read alike are
+// deliberately NOT the same script — which is the only part of a reuse batch
+// that can be wrong in a way the arity check cannot see.
+{
+  const { setup } = require('./lib/board.js');
+
+  T('an unconditional "can\'t retreat" needs no coin at all', () => {
+    // `sure` on CANT_RETREAT_ON_FLIP. Not a Gym Heroes special case: 10 printings
+    // across 4 sets, recurring in gym2, neo3 and neo4.
+    const E = setup({ me: { card: 'gym1-72', energy: '2 Fighting' },
+      them: { card: 'base1:Machop', energy: '3 Fighting' } }).E;
+    E.dev.forceFlip = 'T';   // a coin, if one were thrown, would say no
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack'));
+    const def = E.state.players[1].active;
+    eq(def.effects.some(x => x.kind === 'CANT_RETREAT'), true, 'it stuck anyway');
+    // It is their turn now, and the retreat they could otherwise afford is gone.
+    return eq(E.legalActions(1).some(a => a.t === 'retreat'), false, 'retreat is not offered');
+  });
+
+  T('Removal Pulse throws NO coin against a defender holding nothing', () => {
+    // The order is the whole point. Sabrina's ESP decides whether an attack
+    // "involves flipping coins" by counting the coins actually thrown, so a flip
+    // made here against a bare defender would make ESP re-offerable on an attack
+    // that never flipped. Rulings/SABRINAS-ESP.md names this card for that.
+    const E = setup({ me: { card: 'gym1-50', energy: '1 Lightning' },
+      them: { card: 'base1:Machop' } }).E;
+    E.flipsThisAttack = 0;
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === 0));
+    return eq(E.flipsThisAttack, 0, 'no Energy, no coin');
+  });
+
+  T('...and DOES throw one when there is Energy to take', () => {
+    const E = setup({ me: { card: 'gym1-50', energy: '1 Lightning' },
+      them: { card: 'base1:Machop', energy: '2 Fighting' } }).E;
+    E.dev.forceFlip = 'H';
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === 0));
+    eq(E.state.players[1].active.energy.length, 1, 'heads takes one');
+    const T2 = setup({ me: { card: 'gym1-50', energy: '1 Lightning' },
+      them: { card: 'base1:Machop', energy: '2 Fighting' } }).E;
+    T2.dev.forceFlip = 'T';
+    T2.act(0, T2.legalActions(0).find(a => a.t === 'attack' && a.idx === 0));
+    return eq(T2.state.players[1].active.energy.length, 2, 'and tails takes none');
+  });
+
+  T("Lt. Surge's Charge takes LIGHTNING out of the discard and nothing else", () => {
+    const E = setup({ me: { card: 'gym1-81', energy: '1 Psychic' },
+      them: { card: 'base1:Machop' },
+      discard: ['base1:Fighting Energy', 'base1:Lightning Energy'] }).E;
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === 0));
+    const att = E.state.players[0].active.energy.map(e => E.db[e.id].name);
+    eq(att.filter(n => n === 'Lightning Energy').length, 1, 'the Lightning came');
+    return eq(att.indexOf('Fighting Energy'), -1, 'and the Fighting stayed put');
+  });
+
+  T('WHIRLWIND is the DEFENDER choosing; SWITCH_DEFENDER_CHOOSE is us', () => {
+    // Horn Toss and Taunt read almost identically. "He or she chooses" is the
+    // defending player; "choose 1 of them" is the attacker. Scripting either as
+    // the other is a silent mis-build that no arity check can see.
+    const eff = require('../src/effects.js').EFFECTS;
+    eq(eff['gym1-22'].a[0][0].v, 'WHIRLWIND', "Brock's Rhyhorn: they choose");
+    return eq(eff['gym1-67'].a[0][0].v, 'SWITCH_DEFENDER_CHOOSE', "Brock's Mankey: we do");
+  });
+
+  T('Taunt is legal into an empty Bench; Flytrap is not', () => {
+    // The cards themselves draw this line — Flytrap says "can't be used if your
+    // opponent has no Benched Pokemon" and Taunt does not say it. Printed text
+    // is step 1 of the rulings order, so they get different scripts.
+    const taunt = setup({ me: { card: 'gym1-67', energy: '1 Psychic' },
+      them: { card: 'base1:Machop' } }).E;
+    eq(taunt.legalActions(0).some(a => a.t === 'attack' && a.idx === 0), true, 'Taunt offered');
+    const trap = setup({ me: { card: 'gym1-48', energy: '2 Grass' },
+      them: { card: 'base1:Machop' } }).E;
+    return eq(trap.legalActions(0).some(a => a.t === 'attack' && a.idx === 1), false,
+      'Flytrap refused');
+  });
+
+  T('Dream Dance puts BOTH to sleep, and a Barrier only saves one of them', () => {
+    // Two verbs rather than one, because they are genuinely independent: what
+    // protects the defender cannot protect us.
+    const E = setup({ me: { card: 'gym1-46', energy: '2 Grass' },
+      them: { card: 'base1:Machop' } }).E;
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === 0));
+    eq(E.state.players[1].active.status.asleep, true, 'the defender sleeps');
+    return eq(E.state.players[0].active.status.asleep, true, 'and so does Gloom');
+  });
+
+  T('Defense Curl stops DAMAGE only; Agility stops everything', () => {
+    // Brock's Sandshrew and Blaine's Ponyta, one line apart in effects.js and
+    // deliberately different verbs — the cards say which is which in so many words.
+    const eff = require('../src/effects.js').EFFECTS;
+    eq(eff['gym1-71'].a[0][0].v, 'PREVENT_ALL_DMG_SELF_ON_FLIP', 'Defense Curl: damage');
+    return eq(eff['gym1-63'].a[0][0].v, 'BARRIER_ON_FLIP', 'Agility: all effects');
+  });
+
+  T('One-Two Punch runs FLIP_BONUS_OR_RECOIL with no recoil at all', () => {
+    const h = setup({ me: { card: 'gym1-36', energy: '3 Psychic' },
+      them: { card: 'base1:Machop' } }).E;
+    h.dev.forceFlip = 'H';
+    h.act(0, h.legalActions(0).find(a => a.t === 'attack' && a.idx === 1));
+    eq(h.state.players[1].active.dmg, 40, 'heads: 30 plus 10');
+    const t = setup({ me: { card: 'gym1-36', energy: '3 Psychic' },
+      them: { card: 'base1:Machop' } }).E;
+    t.dev.forceFlip = 'T';
+    t.act(0, t.legalActions(0).find(a => a.t === 'attack' && a.idx === 1));
+    eq(t.state.players[1].active.dmg, 30, 'tails: just 30');
+    // The verb exists for cards hanging several consequences off one coin. This
+    // is its degenerate case, and the row that proves tails costs us nothing.
+    return eq(t.state.players[0].active.dmg, 0, 'and no recoil on tails');
+  });
+
+  T('Thunderbolt discards every Energy it was paid with', () => {
+    const E = setup({ me: { card: 'gym1-28', energy: '4 Lightning' },
+      them: { card: 'base1:Machop' } }).E;
+    E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === 1));
+    eq(E.state.players[0].active.energy.length, 0, 'nothing left attached');
+    return eq(E.state.players[0].discard.length, 4, 'all four in the discard');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

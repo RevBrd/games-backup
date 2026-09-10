@@ -4260,7 +4260,8 @@ const SET_INFO = {
 //                                  nothing" — an attack that can do nothing should
 //                                  be refused rather than waste the turn
 //                                  (Hyper Flame)
-//     ENERGY_FROM_DISCARD_TO_SELF {n}
+//     ENERGY_FROM_DISCARD_TO_SELF {n, t}   `t` narrows to one basic type (Lt.
+//                                  Surge's Charge). Absent means any Energy
 //                                  take UP TO n Energy cards out of your discard
 //                                  pile and ATTACH them to the attacker. The
 //                                  sibling above puts them in HAND and that is a
@@ -4347,7 +4348,9 @@ const SET_INFO = {
 //                                  your next turn (Swords Dance)
 //     CANT_ATTACK_ON_FLIP {label}  flip; heads => the defender cannot attack THIS
 //                                  Pokemon during the opponent's next turn (Tail Wag)
-//     CANT_RETREAT_ON_FLIP {label} flip; heads => the defender cannot retreat
+//     CANT_RETREAT_ON_FLIP {label, sure}  flip; heads => the defender cannot retreat
+//                                  during your opponent's next turn. `sure` is the
+//                                  UNCONDITIONAL printing - 10 across 4 sets
 //                                  during the opponent's next turn (Acid)
 //     NO_TRAINERS_NEXT_TURN        the opponent may play no Trainer during their
 //                                  next turn. Sets `noTrainersUntil` rather than
@@ -4370,7 +4373,10 @@ const SET_INFO = {
 //                                  player chooses, and mill one card off the
 //                                  opponent's deck for each. The COUNT is the
 //                                  player's, capped at what is attached
-//     DISCARD_DEF_ENERGY           discard 1 Energy card from the defender
+//     DISCARD_DEF_ENERGY {flip}    discard 1 Energy card from the defender. `flip`
+//                                  is Removal Pulse: the coin is thrown ONLY if the
+//                                  defender is holding Energy, which Sabrina's ESP
+//                                  depends on - it counts coins actually thrown
 //     ATTACK_LOCK                  disable ONE of the defender's attacks (by index)
 //                                  during the opponent's next turn (Amnesia)
 //     JAM_DEFENDER {label}         defender must flip to attack next turn or it fails
@@ -6378,6 +6384,55 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES POKEMON, pass three: EXISTING MACHINERY ONLY ---------------
+  // Seventeen cards whose every attack maps onto a verb that already existed,
+  // plus three additive flags (`sure`, `flip`, `t`). Nothing new was invented
+  // for this batch, which is the criterion it was selected on.
+  //
+  // AND EVERY ONE OF THEM WAS CHECKED FOR A POKEMON POWER before it went in.
+  // The last batch derived scripts from attack text and shipped six cards whose
+  // Power line nobody read; selftest now guards that, but the guard is the
+  // backstop and reading the card is the method.
+  'gym1-7':  { a: [[{ v: 'DMG_PER_HEAD', coins: 5, per: 10 }],
+                   [{ v: 'CANT_RETREAT_ON_FLIP', sure: true, label: 'Clutch' }]] },
+  'gym1-72': { a: [[{ v: 'CANT_RETREAT_ON_FLIP', sure: true, label: 'Sand Pit' }]] },
+  'gym1-93': { a: [[{ v: 'CANT_RETREAT_ON_FLIP', sure: true, label: 'Spook' }]] },
+  'gym1-50': { a: [[{ v: 'DISCARD_DEF_ENERGY', flip: true, label: 'Removal Pulse' }],
+                   [{ v: 'STATUS_ON_FLIP', s: 'Confused' }]] },
+  'gym1-96': { a: [[{ v: 'STATUS', s: 'Poisoned' }],
+                   [{ v: 'DISCARD_DEF_ENERGY', flip: true, label: 'Removal Beam' }]] },
+  // Horn Toss and Shake are the same attack on two cards, and both are WHIRLWIND
+  // with damage: the printed "he or she chooses" is the defending player's
+  // choice, which is what separates this from SWITCH_DEFENDER_CHOOSE one line
+  // below. "(Do the damage before switching)" is the engine's order already.
+  'gym1-22': { a: [[{ v: 'WHIRLWIND' }], [{ v: 'RECOIL', n: 10 }]] },
+  'gym1-35': { a: [[{ v: 'WHIRLWIND' }], [{ v: 'RECOIL', n: 10 }]] },
+  'gym1-28': { a: [[], [{ v: 'COST_DISCARD_ALL_ENERGY' }]] },
+  // One-Two Punch has NO recoil, so the verb runs with `recoil` absent — one
+  // coin, one consequence, which is the degenerate case of a verb built for
+  // cards that hang several off the same flip.
+  'gym1-36': { a: [[{ v: 'FLIP_OR_NOTHING' }],
+                   [{ v: 'FLIP_BONUS_OR_RECOIL', base: 30, bonus: 10 }]] },
+  // "Both ... are now Asleep (after doing damage)" is two verbs rather than one
+  // because they are genuinely independent: a Barrier stops the defender's half
+  // and cannot stop ours. The parenthetical is the engine's ordering already.
+  'gym1-46': { a: [[{ v: 'STATUS', s: 'Asleep' }, { v: 'STATUS_SELF', s: 'Asleep' }],
+                   [{ v: 'STATUS', s: 'Confused' }, { v: 'STATUS_SELF', s: 'Confused' }]] },
+  'gym1-48': { a: [[], [{ v: 'REQUIRE_OPP_BENCH' }, { v: 'SWITCH_DEFENDER_FIRST' }]] },
+  // Taunt does NOT say "can't be used" where Flytrap above does, so it is legal
+  // into an empty Bench and quietly does nothing. The cards draw that
+  // distinction themselves and printed text is step 1 of the rulings order.
+  'gym1-67': { a: [[{ v: 'SWITCH_DEFENDER_CHOOSE' }], []] },
+  'gym1-84': { a: [[{ v: 'DMG_PER_HEAD', coins: 1, per: 20 }],
+                   [{ v: 'DMG_PER_HEAD', coins: 2, per: 20 }]] },
+  // Defense Curl prevents DAMAGE only; Agility prevents all effects. Two verbs,
+  // and the cards say which is which in so many words.
+  'gym1-71': { a: [[{ v: 'PREVENT_ALL_DMG_SELF_ON_FLIP' }], []] },
+  'gym1-63': { a: [[{ v: 'BARRIER_ON_FLIP', label: 'Agility' }]] },
+  'gym1-81': { a: [[{ v: 'ENERGY_FROM_DISCARD_TO_SELF', n: 1, t: 'L' }],
+                   [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }]] },
+  'gym1-78': { a: [[{ v: 'HEAL_SELF_IF_DAMAGED', n: 1 }],
+                   [{ v: 'HEAL_SELF_ON_FLIP', n: 1, label: 'Sporadic Sponging' }]] },
   'gym1-109': { t: [{ v: 'T_TRADE_FOR_NAMED', cost: 2, n: 2, who: 'Erika' }] },  // Erika's Maids
   'gym1-118': { t: [{ v: 'T_PEEK_CYCLE' }] },             // Secret Mission
   'gym1-121': { t: [{ v: 'T_GAMBLE_DISCARD' }] },         // Blaine's Gamble
@@ -17655,6 +17710,20 @@ class Engine {
         case 'DISCARD_DEF_ENERGY': {
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def || !def.energy.length) { this.log('No Energy to discard.', 'eff'); break; }
+          // `flip` is Removal Pulse's shape: "IF the Defending Pokemon has any
+          // Energy cards attached to it, flip a coin." The order is the whole
+          // point and it is asserted - the coin is thrown only AFTER the Energy
+          // check, so a defender holding nothing costs no flip at all.
+          //
+          // That is not cosmetic. Sabrina's ESP decides whether an attack
+          // "involves flipping coins" by COUNTING the coins it actually threw,
+          // so a flip made here against an empty board would make ESP re-offerable
+          // on an attack that never flipped. See Rulings/SABRINAS-ESP.md, which
+          // names this card as the reason that rule is written the way it is.
+          if (v.flip && !this.flip(v.label || 'discard their Energy?')) {
+            this.log(`${this.nameOf(def)} keeps its Energy.`, 'eff');
+            break;
+          }
           const e2 = this.takeEnergy(def, 1, null, a.opts && a.opts.energyUids)[0];
           if (!e2) { this.log('No Energy to discard.', 'eff'); break; }
           you.discard.push(e2);
@@ -17976,7 +18045,11 @@ class Engine {
         case 'CANT_RETREAT_ON_FLIP':
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def) break;
-          if (this.flip(v.label || 'stop them retreating?')) {
+          // `sure` is the UNCONDITIONAL printing of the same effect, and it is not
+          // a Gym Heroes special case: 10 printings across 4 sets, 4 distinct
+          // texts, recurring in gym2, neo3 and neo4. A flag rather than a second
+          // verb because the effect pushed is identical - only the coin differs.
+          if (v.sure || this.flip(v.label || 'stop them retreating?')) {
             def.effects.push({ kind: 'CANT_RETREAT', label: v.label || 'Acid',
                                expireAtStartOfTurn: s.turn + 2 });
             this.log(`${this.nameOf(def)} can't retreat during the opponent's next turn.`, 'eff');
@@ -18327,17 +18400,25 @@ class Engine {
           //
           // "UP TO 2", so an empty discard is a legal, quiet no-op.
           const wantE = (a && a.opts && a.opts.uids) || null;
+          // `t` narrows it to one basic type. Lt. Surge's Charge is the first
+          // card to need it - "take up to 2 LIGHTNING Energy cards" - where
+          // Mewtwo's Energy Absorption takes anything. Absent means anything,
+          // so every existing caller is unchanged.
+          const okE = (x) => {
+            const cc = this.db[x.id];
+            return cc && cc.kind === 'energy' && (!v.t || cc.provides === v.t);
+          };
           const gotE = [];
           if (wantE) {
             for (const u of wantE.slice(0, v.n)) {
               const k = me.discard.findIndex(x => x.uid === u);
-              if (k >= 0 && this.db[me.discard[k].id].kind === 'energy') gotE.push(me.discard.splice(k, 1)[0]);
+              if (k >= 0 && okE(me.discard[k])) gotE.push(me.discard.splice(k, 1)[0]);
             }
           } else {
             // Unattended fallback: most recently discarded first, so a seeded game
             // stays reproducible. Same rule as ENERGY_FROM_DISCARD.
             for (let i = me.discard.length - 1; i >= 0 && gotE.length < v.n; i--) {
-              if (this.db[me.discard[i].id].kind === 'energy') gotE.push(me.discard.splice(i, 1)[0]);
+              if (okE(me.discard[i])) gotE.push(me.discard.splice(i, 1)[0]);
             }
           }
           gotE.forEach(x => atk.energy.push(x));
