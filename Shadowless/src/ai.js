@@ -449,6 +449,75 @@ class AI {
     return v;
   }
 
+  // WHAT A CARD OFF THE TOP IS WORTH. The break-even line for every card that
+  // trades a known card for an unknown one, and the reason the "any number"
+  // cluster needed one answer rather than four.
+  //
+  // This reads our own deck's CONTENTS and not its ORDER, which is the line
+  // between knowing your decklist - which every real player does - and looking
+  // at the top card, which none of them may. A sum over the whole pile is
+  // order-independent by construction, so the distinction is structural here
+  // rather than a promise in a comment.
+  deckDrawValue(pi) {
+    const E = this.E, me = E.state.players[pi];
+    if (!me.deck.length) return 0;
+    const inPlay = E.allSlots(pi);
+    let v = 0;
+    for (const inst of me.deck) v += this.cardKeepValue(pi, inst, inPlay);
+    return v / me.deck.length;
+  }
+
+  // WHICH CARDS TO PITCH when a card says "as many as you want". Everything in
+  // hand worth less than a fresh one, which is the whole rule.
+  //
+  // Note what this is NOT: it is not `rankHandJunk`, which orders a hand for the
+  // cards that discard a fixed 1 or 2, and it disagrees with it - most sharply
+  // on Energy, which rankHandJunk rates near-junk unconditionally while
+  // cardKeepValue rates it the most valuable thing in hand when we are short of
+  // it. That is now FOUR hand-quality opinions in this file and they do not
+  // agree. See AI.md item 17; consolidating them is a job with a measurement,
+  // not a tidy-up to smuggle into a set addition.
+  handCycleChoice(pi, excludeUid) {
+    const E = this.E, me = E.state.players[pi];
+    const inPlay = E.allSlots(pi);
+    const bar = this.deckDrawValue(pi);
+    const uids = [];
+    let given = 0;
+    for (const inst of me.hand) {
+      if (inst.uid === excludeUid) continue;
+      const keep = this.cardKeepValue(pi, inst, inPlay);
+      if (keep < bar) { uids.push(inst.uid); given += keep; }
+    }
+    // The gain is what the replacements are worth minus what we handed over.
+    // Positive by construction whenever the list is non-empty, which is exactly
+    // the property that lets scoreTrainer refuse an empty one.
+    return { uids, given, bar, gain: uids.length * bar - given };
+  }
+
+  // WHICH ATTACHED ENERGY IS DOING NOTHING, for Energy Flow - the only card in
+  // the era that pulls Energy back to hand.
+  //
+  // Deliberately narrow, and the narrowness is the honest part. The card's
+  // strongest real use is a slow one: peeling Energy off a Pokemon you have
+  // given up on so it can go somewhere else two turns from now. That needs a
+  // notion of abandoning a slot, which this bot does not have. What it CAN see
+  // is an Active that is about to be Knocked Out with no attack worth making -
+  // so that is what it plays, and the rest is named rather than guessed.
+  energyRescue(pi) {
+    const E = this.E, me = E.state.players[pi];
+    const uids = [];
+    const act = me.active;
+    if (act && act.energy.length) {
+      const doomed = this.threatAgainst(pi, act) >= this.remainingHP(act);
+      // Stripping an Active that could still swing is how you trade the board
+      // for two cards. Energy Flow is played on OUR turn, so the attack we give
+      // up is this turn's, not a hypothetical one.
+      const canSwing = this.bestAttackScore(pi).score > 0;
+      if (doomed && !canSwing) for (const e of act.energy) uids.push(e.uid);
+    }
+    return { uids, saved: uids.length };
+  }
+
   // Am I starved of the things a turn is actually made of? Drives the
   // desperation boost on Oak and Gambler.
   handStarved(pi) {
@@ -4410,6 +4479,79 @@ class AI {
           break;
         }
         case 'T_DRAW': s += v.n * W.drawCard + this.deckRisk(pi, v.n); break;
+
+        // ---- THE SUBSET FOUR, all PROVISIONAL --------------------------------
+        // Every one of these FILLS a.opts. That is not a nicety here: the engine
+        // resolves an unanswered "any number" to zero, so a scorer that forgets
+        // produces a card which is legal, playable and inert. The -Infinity on
+        // an empty set is the guard, and it is arithmetic rather than a lint
+        // because it has to hold for a card nobody has written a test for yet.
+        case 'T_PEEK_CYCLE': {
+          const pick = this.handCycleChoice(pi, inst.uid);
+          a.opts = Object.assign({}, a.opts, { discardUids: pick.uids });
+          // The look is free and real, but it is worth nothing to a bot that
+          // already reads full state - the same reasoning Rulings/
+          // PEEK-CLAIRVOYANCE.md settled for Peek. So the card is priced on its
+          // second half only, and against a HUMAN opponent it is underrated by
+          // exactly the amount that information is worth.
+          if (!pick.uids.length) return -Infinity;
+          s += pick.gain * W.drawCard * 0.5;
+          s += this.deckRisk(pi, pick.uids.length);
+          break;
+        }
+        case 'T_GAMBLE_DISCARD': {
+          const pick = this.handCycleChoice(pi, inst.uid);
+          a.opts = Object.assign({}, a.opts, { discardUids: pick.uids });
+          if (!pick.uids.length) return -Infinity;
+          // IDENTICAL EXPECTATION to Secret Mission - half of twice as many is
+          // as many - so the same threshold decides what to pitch and the whole
+          // difference between the two cards is variance. Priced as the same EV
+          // less a risk discount that SHRINKS as we starve, because a hand with
+          // nothing in it wants the coin and a hand doing fine does not.
+          const ev = pick.gain * W.drawCard * 0.5;
+          s += ev - ev * 0.35 / (1 + this.handStarved(pi));
+          s += this.deckRisk(pi, pick.uids.length * 2) * 0.5;
+          break;
+        }
+        case 'T_ENERGY_RETURN': {
+          const r = this.energyRescue(pi);
+          a.opts = Object.assign({}, a.opts, { energyUids: r.uids });
+          if (!r.saved) return -Infinity;
+          // Each Energy saved is one we do not have to draw again, so it is
+          // priced as a card - not as an attachment, which is what it will
+          // become a turn later and is already counted by whatever attaches it.
+          s += r.saved * W.drawCard * 0.7;
+          break;
+        }
+        case 'T_TRADE_FOR_NAMED': {
+          // A fixed cost, so this one CAN fall back safely - but the engine's
+          // fallback takes the first two cards in hand, which is the positional
+          // tiebreak Cat Punch exists to kill. Fill it anyway.
+          const inPlay = E.allSlots(pi);
+          const ranked = me.hand.filter(x => x.uid !== inst.uid)
+            .map(x => ({ uid: x.uid, keep: this.cardKeepValue(pi, x, inPlay) }))
+            .sort((x, y) => x.keep - y.keep);
+          const cost = v.cost || 2;
+          if (ranked.length < cost) return -Infinity;
+          const pay = ranked.slice(0, cost);
+          const want = me.deck.filter(x => {
+            const cc = this.db[x.id];
+            return cc && cc.kind === 'pokemon' && cc.name.indexOf(v.who) >= 0;
+          });
+          if (!want.length) return -Infinity;
+          const take = want.map(x => ({ uid: x.uid, keep: this.cardKeepValue(pi, x, inPlay) }))
+            .sort((x, y) => y.keep - x.keep).slice(0, v.n || 2);
+          a.opts = Object.assign({}, a.opts, {
+            discardUids: pay.map(x => x.uid), pickUids: take.map(x => x.uid) });
+          // A tutor that costs two cards. Worth what it fetches, less what it
+          // eats - and `cardKeepValue` already knows an Evolution whose base is
+          // on the board is worth far more than one whose base is nowhere,
+          // which is the entire difference between this card in an Erika deck
+          // and this card in a deck with two Erika Pokemon in it.
+          for (const t of take) s += t.keep * 1.4;
+          for (const x of pay) s -= x.keep * 1.1;
+          break;
+        }
 
         // ---- GYM HEROES Trainers, all PROVISIONAL ----------------------------
         case 'T_HEAL_EACH': {

@@ -116,6 +116,31 @@ ahead never scrolls away. **Why this screen and no other** — the ladder gains 
 set goes live — is [PROGRESSION.md](PROGRESSION.md); the instrument that found all four is
 [INSPECTION.md](INSPECTION.md).
 
+## Four pickers that exist and CANNOT BE LOOKED AT YET — 9 Sep 2026, Job 16
+
+**Secret Mission, Blaine's Gamble, Energy Flow and Erika's Maids each open a picker**, and none of
+them is reachable by `shot.js`, `probe.js`, or a human, because **gym1 is not live**: the deck
+validator refuses any deck holding an unimplemented card, so no gym1 card can be put on a board at
+all until the set's last card is scripted. The code is written, the gate is green, and the panels
+have never been rendered once.
+
+**This is not the usual "a green suite proves nothing visual" — it is one step worse.** The usual
+case is an instrument that could look and did not. Here no instrument *can* look, so the normal
+discipline in this file silently does not apply, and the gap reads as covered.
+
+Three specific things to check the day gym1 goes live, chosen because each is a way these differ
+from every picker shipped before them:
+
+- **`min: 0` renders sanely.** `pickerReady` is a range test, so a zero floor makes the confirm
+  button live with nothing chosen — which is correct ("decline entirely" is a legal play) and looks
+  like a bug if the prompt does not say so.
+- **Energy Flow's picker chooses off the BOARD**, not out of a hidden zone — the first one in the
+  file that does. Its tiles are Energy instances; six identical Fighting Energy in a row with no
+  attachment shown is the failure to look for.
+- **Secret Mission opens a reveal and THEN a picker.** `openReveal` grew a continuation for it. If
+  the continuation is dropped the card still works and simply asks in the wrong order, which no
+  assertion can see.
+
 ## A screen that does not exist yet: Misty's Duel
 
 **Deferred on purpose, 8 Sep 2026, Job 16, and this is the entry that stops it being lost.** It is

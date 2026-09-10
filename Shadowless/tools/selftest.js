@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 73,
+  gym1: 69,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -349,6 +349,38 @@ if (finished.length) console.log(`  ${finished.join(', ')} now complete `
       orphan.join(', '));
   }
 
+  // --------------------------------------------------------------------------
+  // SILENT-FAILURE SURFACE #5: a subset verb whose scorer forgets to fill opts.
+  //
+  // The other four surfaces are a verb the AI cannot score, a Power kind with no
+  // script, a Stadium kind nobody consults, and an action type with no scoring
+  // case. This one is narrower and nastier than any of them, because the card
+  // WORKS - it is legal, it is offered, the bot plays it, and it resolves to
+  // nothing at all. The engine's rule for an unanswered "as many as you want" is
+  // ZERO, deliberately, so the failure is invisible from every direction: no
+  // exception, no refusal, no log line saying anything is wrong.
+  //
+  // Every scorer case for one of these must be able to say NO. Structurally that
+  // is a `return -Infinity` guarding the empty set, which is what this checks -
+  // by source text, like the Stadium pair, because the alternative is building a
+  // board per verb and the thing being guarded is somebody adding a fifth verb
+  // to this family in a hurry.
+  {
+    const SUBSET = ['T_PEEK_CYCLE', 'T_GAMBLE_DISCARD', 'T_ENERGY_RETURN'];
+    const aiSrc = fs.readFileSync(path.join(__dirname, '../src/ai.js'), 'utf8');
+    const unguarded = SUBSET.filter(v => {
+      const i = aiSrc.indexOf(`case '${v}'`);
+      if (i < 0) return true;
+      // The case body, to the next case label. Long enough to hold the guard and
+      // short enough that a neighbour's guard cannot stand in for a missing one.
+      const j = aiSrc.indexOf("\n        case '", i + 5);
+      return !/return -Infinity/.test(aiSrc.slice(i, j < 0 ? i + 4000 : j));
+    });
+    check(unguarded.length === 0,
+      'every "as many as you want" verb can refuse to do nothing',
+      unguarded.length ? `${unguarded.join(', ')} would play a card for no effect` : '');
+  }
+
   // Two sources, deliberately. What the ENGINE dispatches catches a verb built
   // ahead of the cards that need it — which is the Job 6b pattern and exactly
   // the kind most likely to go unwritten. What a CARD uses catches one added
@@ -492,9 +524,22 @@ const PROVISIONAL = new Set([
   // weaker of the two guesses by some distance.
   'T_DUEL', 'T_TICKLE',
   // The six Gym Heroes Trainers landed 9 Sep 2026. T_GAZE is the weakest guess of
-  // the set and knows it: the card is worth most when our hand is bad and theirs
-  // is good, and the bot has no notion of hand quality at all.
+  // the set: the card is worth most when our hand is bad and theirs is good, and
+  // it prices neither.
+  //
+  // THAT COMMENT SAID "the bot has no notion of hand quality at all" and it was
+  // wrong — `cardKeepValue` is exactly that notion and predates this by three
+  // weeks. What T_GAZE cannot read is the OPPONENT's hand quality, which is a
+  // much narrower gap and a much easier one to close. Corrected the same day,
+  // before it could be quoted a third time.
   'T_HEAL_EACH', 'T_DRAW_BOTH', 'T_SHOW_AND_DRAW', 'T_DIG', 'T_GAZE', 'T_TRASH_EXCHANGE',
+  // The subset four, 9 Sep 2026. Marked together because they were BUILT
+  // together, and the thing most likely to be wrong about them is shared: the
+  // break-even bar in `handCycleChoice` is one number standing in for a read of
+  // hand quality, and it is the same number for both cycle cards.
+  // T_ENERGY_RETURN is the weakest of the four and says so in its own comment —
+  // it plays the rescue it can see and not the slow value play it cannot.
+  'T_PEEK_CYCLE', 'T_GAMBLE_DISCARD', 'T_ENERGY_RETURN', 'T_TRADE_FOR_NAMED',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',

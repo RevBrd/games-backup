@@ -2685,6 +2685,20 @@ class Engine {
         case 'T_CHALLENGE': break;      // always legal: declining still draws 2
         // Misty's Duel refreshes SOMEBODY's hand, so the only board where it can
         // do nothing at all is one where neither player has a deck to draw from.
+        // The subset four. Each refuses the board on which its choice is empty,
+        // which is the same rule as T_TRASH_EXCHANGE needing a discard pile: an
+        // action offered when it cannot do anything is worse than one missing.
+        // Secret Mission is the exception and is deliberately absent - the look
+        // is unconditional, so it is playable holding nothing.
+        // OTHER cards: the Trainer being played is still in hand here, which is
+        // the same off-by-one Blaine's Last Resort turns on two cases below.
+        case 'T_GAMBLE_DISCARD': if (p.hand.length < 2 || !p.deck.length) return false; break;
+        case 'T_ENERGY_RETURN': if (!this.allSlots(pi).some(sl => sl.energy.length)) return false; break;
+        case 'T_TRADE_FOR_NAMED':
+          if (p.hand.length < (v.cost || 2) + 1) return false;
+          if (!p.deck.some(x => { const cc = this.db[x.id];
+            return cc && cc.kind === 'pokemon' && cc.name.indexOf(v.who) >= 0; })) return false;
+          break;
         case 'T_HEAL_EACH': if (!this.allSlots(pi).some(sl => sl.dmg > 0)) return false; break;
         case 'T_DRAW_BOTH': if (!p.deck.length && !o.deck.length) return false; break;
         case 'T_DIG': if (!p.deck.length) return false; break;
@@ -3057,6 +3071,25 @@ class Engine {
 
   // Takes n CARDS and returns them, already removed from the slot. The caller
   // decides which discard pile they land in, because that differs by effect.
+  // Discard exactly the cards named, and no others. Returns how many actually
+  // went, which is what every caller wants to know - "discard any number and
+  // draw that many" is only correct if the two numbers come from one count.
+  //
+  // Silently skips a uid that is not in hand rather than failing the play. The
+  // Trainer being played has already LEFT hand by the time doTrainer runs, so a
+  // scorer or a UI that includes it in its own list is making an ordinary
+  // off-by-one, not cheating - and the printed text says "other cards" anyway.
+  discardChosen(p, uids) {
+    let n = 0;
+    for (const uid of uids) {
+      const k = p.hand.findIndex(x => x.uid === uid);
+      if (k === -1) continue;
+      p.discard.push(p.hand.splice(k, 1)[0]);
+      n++;
+    }
+    return n;
+  }
+
   takeEnergy(slot, n, filter, chosen) {
     const out = [];
     const queue = (chosen || []).slice();
@@ -3782,7 +3815,15 @@ class Engine {
         case 'T_SHOW_AND_DRAW': {
           // Blaine's Last Resort. The showing is free; the whole card is its
           // legality gate, which lives in trainerPlayable.
-          this.state.revealedHand = p.hand.map(x => ({ id: x.id, uid: x.uid }));
+          // The showing resolves to NOTHING and that is the card working, not a
+          // shortcut: its own legality gate is a hand holding only itself, and
+          // doTrainer runs after that card has left hand. So the hand is empty
+          // every time, and there is no panel to open.
+          //
+          // The first draft wrote `state.revealedHand` here. That field has a
+          // shape - { side, ids } - and an array is not it, so `renderRevealedHand`
+          // read `r.ids.length` off undefined and took the whole board down on the
+          // next frame. No suite could see it because no suite renders.
           let drew = 0;
           for (let i = 0; i < (v.n || 5) && p.deck.length; i++) { p.hand.push(p.deck.shift()); drew++; }
           this.log(`${p.name} shows an empty hand and draws ${drew}.`, 'eff');
@@ -3808,6 +3849,109 @@ class Engine {
           for (const x of chosen) p.hand.push(x);
           for (const x of look) if (chosen.indexOf(x) < 0) p.discard.push(x);
           this.log(`${p.name} digs ${look.length}, keeps ${chosen.length}, discards ${look.length - chosen.length}.`, 'eff');
+          break;
+        }
+        // ---- THE SUBSET FAMILY -------------------------------------------
+        // Four Gym Heroes Trainers hand the player a choice this engine had no
+        // convention for: "as many as you want". They were built together on
+        // purpose. Solving it four times is how four different answers ship.
+        //
+        // THE RULE, and it is the whole design: an "any number" choice with no
+        // `opts` supplied resolves to ZERO. The engine never throws a player's
+        // cards away on their behalf. Every other fallback in this file picks
+        // something for you - takeEnergy pays with what your attacks don't want,
+        // T_DIG keeps the first two - because in those the choice is WHICH, and
+        // something must happen. Here the choice is WHETHER, and the safe answer
+        // to a question nobody answered is "you declined".
+        //
+        // The cost of that rule is that a scorer which forgets to fill `opts`
+        // produces a card that is legal, playable, and inert. That is silent
+        // failure surface #5, and unlike the other four it is guarded by
+        // arithmetic rather than by a lint: scoreTrainer returns -Infinity for a
+        // subset verb whose chosen set is empty, so the bot cannot play a card
+        // it has decided to do nothing with.
+        case 'T_PEEK_CYCLE': {
+          // Secret Mission. "Look at your opponent's hand. Then, you may discard
+          // as many other cards as you want from your hand and draw that many."
+          //
+          // The look is unconditional and free, so this is legal against an
+          // empty hand on both sides - it still does its first half.
+          this.state.revealedHand = { side: 1 - pi, ids: o.hand.map(x => x.id) };
+          this.log(`${c.name}: ${p.name} looks at ${o.name}'s hand.`);
+          const n = this.discardChosen(p, (a.opts && a.opts.discardUids) || []);
+          let drew = 0;
+          for (let i = 0; i < n && p.deck.length; i++) { p.hand.push(p.deck.shift()); drew++; }
+          this.log(`${p.name} cycles ${n} card(s) and draws ${drew}.`, 'eff');
+          break;
+        }
+        case 'T_GAMBLE_DISCARD': {
+          // Blaine's Gamble. "Discard any number of other cards from your hand,
+          // then flip a coin. If heads, draw twice that many cards."
+          //
+          // Identical EXPECTATION to Secret Mission - half of double is one - and
+          // the difference is entirely variance. The scorer prices that; the
+          // engine just resolves it.
+          const n = this.discardChosen(p, (a.opts && a.opts.discardUids) || []);
+          const heads = this.flip(`${c.name}`);
+          let drew = 0;
+          if (heads) for (let i = 0; i < n * 2 && p.deck.length; i++) { p.hand.push(p.deck.shift()); drew++; }
+          this.log(heads ? `${p.name} gambles ${n} and draws ${drew}.`
+                         : `${p.name} gambles ${n} and draws nothing.`, 'eff');
+          break;
+        }
+        case 'T_ENERGY_RETURN': {
+          // Energy Flow. "For each of your Pokemon, you may return any number of
+          // Energy cards attached to it to your hand."
+          //
+          // A subset of the BOARD rather than of the hand, which is why it takes
+          // energyUids and not discardUids - and the reason this card is not just
+          // a worse Energy Removal is that the Energy comes back to YOUR hand.
+          // Its real use is rescuing Energy off something about to be Knocked Out.
+          const want = new Set((a.opts && a.opts.energyUids) || []);
+          let moved = 0;
+          for (const sl of this.allSlots(pi)) {
+            for (let i = sl.energy.length - 1; i >= 0; i--) {
+              if (!want.has(sl.energy[i].uid)) continue;
+              p.hand.push(sl.energy.splice(i, 1)[0]);
+              moved++;
+            }
+          }
+          this.log(`${c.name}: ${moved} Energy return to ${p.name}'s hand.`, 'eff');
+          break;
+        }
+        case 'T_TRADE_FOR_NAMED': {
+          // Erika's Maids. "Trade 2 of the other cards in your hand for up to 2
+          // Basic Pokemon and/or Evolution cards with Erika in their names."
+          //
+          // NOT an "any number" card - the cost is a fixed 2, which makes it
+          // Computer Search with a name filter. It is in this family because it
+          // was deferred with them, and it is worth saying so out loud: three of
+          // the four turned out to share a shape and the fourth only looked like
+          // it did.
+          let uids = (a.opts && a.opts.discardUids) || null;
+          if (!uids || uids.length !== (v.cost || 2)) {
+            // No choice supplied. Unlike the subset verbs above, WHICH is the
+            // only open question here - the 2 is going whatever happens - so a
+            // deterministic fallback is correct and refusing would be wrong.
+            uids = p.hand.slice(0, v.cost || 2).map(x => x.uid);
+          }
+          if (uids.length !== (v.cost || 2)) return this.fail('Must trade exactly 2 other cards');
+          this.discardChosen(p, uids);
+          const match = (x) => {
+            const cc = this.db[x.id];
+            return cc && cc.kind === 'pokemon' && cc.name.indexOf(v.who) >= 0;
+          };
+          const picked = [];
+          for (const uid of ((a.opts && a.opts.pickUids) || [])) {
+            const k = p.deck.findIndex(x => x.uid === uid && match(x));
+            if (k >= 0 && picked.length < (v.n || 2)) picked.push(p.deck.splice(k, 1)[0]);
+          }
+          for (let k = 0; picked.length < (v.n || 2) && k < p.deck.length; k++) {
+            if (match(p.deck[k])) picked.push(p.deck.splice(k--, 1)[0]);
+          }
+          for (const x of picked) p.hand.push(x);
+          this.shuffle(p.deck);
+          this.log(`${c.name}: ${p.name} trades 2 and takes ${picked.length} ${v.who} Pokemon.`, 'eff');
           break;
         }
         case 'T_GAZE': {

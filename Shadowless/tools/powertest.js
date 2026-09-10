@@ -7643,5 +7643,206 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- THE SUBSET FOUR --------------------------------------------------------
+// "As many as you want", solved once for the three cards that share it — plus
+// Erika's Maids, which was deferred with them and turned out not to.
+//
+// The property under test in every row here is the same one: an unanswered
+// choice resolves to ZERO and the SCORER is what stops the bot playing a card
+// it has decided to do nothing with. Both halves are asserted, because either
+// alone is a card that looks fine and is inert.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  const play = (E, name, opts) => {
+    const me = E.state.players[0];
+    const i = me.hand.findIndex(x => E.db[x.id].name === name);
+    if (i < 0) throw new Error('not in hand: ' + name);
+    const r = E.act(0, { t: 'playTrainer', hand: i, opts: opts || {} });
+    if (!r.ok) throw new Error('refused: ' + (r.why || r.error));
+    return E;
+  };
+  const score = (E, name) => {
+    const me = E.state.players[0];
+    const i = me.hand.findIndex(x => E.db[x.id].name === name);
+    const a = { t: 'playTrainer', hand: i, opts: {} };
+    const s = new AI(E, {}).scoreTrainer(0, a);
+    return { s, opts: a.opts };
+  };
+
+  T('an unanswered "any number" discards NOTHING - the engine never pitches for you', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-118', 'base1:Bill', 'base1:Bill'] }).E;
+    play(E, 'Secret Mission');
+    const p = E.state.players[0];
+    eq(p.hand.length, 2, 'the two Bills are untouched');
+    // Only the Secret Mission itself is in the discard. Every OTHER fallback in
+    // the engine picks something for you; this family goes the other way.
+    return eq(p.discard.length, 1, 'and only the card played was discarded');
+  });
+
+  T('Secret Mission shows their hand in the shape the UI actually reads', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-118'], theirHand: ['base1:Bill', 'base1:Potion'] }).E;
+    play(E, 'Secret Mission');
+    const r = E.state.revealedHand;
+    // renderRevealedHand reads r.ids.length. An array here instead of { side, ids }
+    // took the whole board down for a frame, and no suite could see it because no
+    // suite renders - so the SHAPE is what this asserts, not the contents.
+    eq(!!r && Array.isArray(r.ids), true, 'revealedHand.ids is an array');
+    eq(r.ids.length, 2, 'both their cards');
+    return eq(r.side, 1, 'and it names whose hand it is');
+  });
+
+  T("Blaine's Last Resort leaves NO malformed reveal behind", () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-105'] }).E;
+    play(E, "Blaine's Last Resort");
+    // The showing resolves to nothing because the hand is empty by the card's
+    // own legality gate. What must NOT happen is a revealedHand the UI cannot read.
+    const r = E.state.revealedHand;
+    return eq(r === null || Array.isArray(r.ids), true, 'null, or a shape the UI can read');
+  });
+
+  T('a cycle discards what is worth less than a fresh card, and only that', () => {
+    // A Charmeleon with no Charmander anywhere is dead weight; a Machoke with its
+    // Machop on the board is the most valuable thing in hand. cardKeepValue rates
+    // them 1.5 and 9, and the deck average sits between.
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-118', 'base1:Charmeleon', 'base1:Machoke'] }).E;
+    const { opts } = score(E, 'Secret Mission');
+    const uid = (n) => E.state.players[0].hand.find(x => E.db[x.id].name === n).uid;
+    eq(opts.discardUids.indexOf(uid('Charmeleon')) >= 0, true, 'the dead evolution goes');
+    return eq(opts.discardUids.indexOf(uid('Machoke')) >= 0, false, 'the live one stays');
+  });
+
+  T('...and the bot REFUSES a cycle it has decided to do nothing with', () => {
+    // Nothing in hand is below the bar, so the chosen set is empty - and an empty
+    // set means playing the card throws it away for no effect. -Infinity is the
+    // guard, and it is arithmetic rather than a lint because it has to hold for
+    // cards nobody has written a test for.
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-118', 'base1:Machoke', 'base1:Machoke'] }).E;
+    return eq(score(E, 'Secret Mission').s, -Infinity, 'refused outright');
+  });
+
+  T("Blaine's Gamble draws TWICE on heads and nothing on tails", () => {
+    const mk = () => setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-121', 'base1:Charmeleon', 'base1:Charmeleon'] }).E;
+    const uids = (E) => E.state.players[0].hand
+      .filter(x => E.db[x.id].name === 'Charmeleon').map(x => x.uid);
+    const h = mk(); h.dev.forceFlip = 'H';
+    play(h, "Blaine's Gamble", { discardUids: uids(h) });
+    eq(h.state.players[0].hand.length, 4, 'heads: two pitched, four drawn');
+    const t = mk(); t.dev.forceFlip = 'T';
+    play(t, "Blaine's Gamble", { discardUids: uids(t) });
+    return eq(t.state.players[0].hand.length, 0, 'tails: two pitched, nothing back');
+  });
+
+  T('the Gamble and the Mission agree on WHAT to pitch - same EV, same bar', () => {
+    // Half of twice as many is as many, so the break-even line is identical and
+    // the entire difference between the two cards is variance. If these two ever
+    // disagree about the contents of the hand, one of them has grown a second
+    // opinion.
+    const hand = ['base1:Charmeleon', 'base1:Machoke', 'base1:Potion'];
+    const a = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-118'].concat(hand) }).E;
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-121'].concat(hand) }).E;
+    const names = (E, o) => o.discardUids
+      .map(u => E.db[E.state.players[0].hand.find(x => x.uid === u).id].name).sort().join(',');
+    return eq(names(a, score(a, 'Secret Mission').opts),
+              names(b, score(b, "Blaine's Gamble").opts), 'the same cards');
+  });
+
+  T('...but the Gamble scores LOWER, because the coin can eat them', () => {
+    const hand = ['base1:Charmeleon', 'base1:Charmeleon', 'base1:Potion'];
+    const a = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-118'].concat(hand) }).E;
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-121'].concat(hand) }).E;
+    return eq(score(b, "Blaine's Gamble").s < score(a, 'Secret Mission').s, true,
+      'variance is priced as a discount');
+  });
+
+  T('Energy Flow returns the Energy named and leaves the rest attached', () => {
+    const E = setup({ me: { card: 'base1:Machop', energy: '3 Fighting' },
+      them: { card: 'base1:Machop' }, myHand: ['gym1-122'] }).E;
+    const act = E.state.players[0].active;
+    play(E, 'Energy Flow', { energyUids: [act.energy[0].uid, act.energy[2].uid] });
+    eq(act.energy.length, 1, 'one Energy still attached');
+    // TO HAND, not to the discard - that is the whole card, and the reason it is
+    // not simply a worse Energy Removal aimed at yourself.
+    return eq(E.state.players[0].hand.length, 2, 'and two came back to hand');
+  });
+
+  T('...and Energy Flow is not offered with nothing attached anywhere', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-122'] }).E;
+    const offered = E.legalActions(0).some(a => a.t === 'playTrainer'
+      && E.db[E.state.players[0].hand[a.hand].id].name === 'Energy Flow');
+    return eq(offered, false, 'no Energy on the board, no card');
+  });
+
+  T('...and the bot leaves an Active that can still swing alone', () => {
+    // Machop with Fighting attached can attack, so its Energy stays even though
+    // the Onix opposite will kill it. Trading the board for two cards is the
+    // failure this guards.
+    const E = setup({ me: { card: 'base1:Machop', energy: '2 Fighting' },
+      them: { card: 'base1:Onix', energy: '4 Fighting' }, myHand: ['gym1-122'] }).E;
+    E.state.players[0].active.dmg = 40;   // 50 HP, one Rock Throw from gone
+    return eq(score(E, 'Energy Flow').s, -Infinity, 'the attack outranks the rescue');
+  });
+
+  T('...and DOES strip one that is doomed with no attack to make', () => {
+    // Grass on a Machop pays for nothing it owns, so there is no swing to give
+    // up and the two cards are pure profit. Without this row the guard above
+    // would pass just as well against a rescue that never fires at all.
+    const E = setup({ me: { card: 'base1:Machop', energy: '2 Grass' },
+      them: { card: 'base1:Onix', energy: '4 Fighting' }, myHand: ['gym1-122'] }).E;
+    E.state.players[0].active.dmg = 40;
+    const r = score(E, 'Energy Flow');
+    eq(r.s > 0, true, 'worth playing');
+    return eq(r.opts.energyUids.length, 2, 'and both Energy come home');
+  });
+
+  T("Erika's Maids is a FIXED cost - two out, up to two named in", () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-109', 'base1:Bill', 'base1:Bill'],
+      myDeck: ['gym1-47', 'gym1-75', 'base1:Bill'] }).E;
+    const p = E.state.players[0];
+    const pay = p.hand.filter(x => E.db[x.id].name === 'Bill').map(x => x.uid);
+    play(E, "Erika's Maids", { discardUids: pay });
+    const erikas = p.hand.filter(x => E.db[x.id].name.indexOf('Erika') >= 0);
+    eq(erikas.length, 2, 'two Erika Pokemon came to hand');
+    // Two Bills plus the Maids itself. A trade, and the deck is two lighter.
+    return eq(p.discard.length, 3, 'and two cards paid for them');
+  });
+
+  T('...and is not offered when the deck holds nothing it could fetch', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-109', 'base1:Bill', 'base1:Bill'],
+      myDeck: ['base1:Bill', 'base1:Bill', 'base1:Bill'] }).E;
+    const offered = E.legalActions(0).some(a => a.t === 'playTrainer'
+      && E.db[E.state.players[0].hand[a.hand].id].name === "Erika's Maids");
+    return eq(offered, false, 'paying two cards for nothing is not an option');
+  });
+
+  T('the scorer fills opts for the FIXED-cost one too, so nothing is positional', () => {
+    // The engine's fallback here takes the first two cards in hand, which is the
+    // positional tiebreak Cat Punch was written to kill. It is correct as a
+    // fallback and wrong as a choice, so the scorer overrides it.
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['gym1-109', 'base1:Machoke', 'base1:Charmeleon', 'base1:Charmeleon'],
+      myDeck: ['gym1-47', 'base1:Bill'] }).E;
+    const { opts } = score(E, "Erika's Maids");
+    const nm = (u) => E.db[E.state.players[0].hand.find(x => x.uid === u).id].name;
+    eq(opts.discardUids.length, 2, 'exactly two');
+    return eq(opts.discardUids.map(nm).indexOf('Machoke'), -1,
+      'and the live evolution is not one of them');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

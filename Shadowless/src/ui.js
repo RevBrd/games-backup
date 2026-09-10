@@ -4292,8 +4292,13 @@ function pickerReady() {
 // most useful thing the card does and the easiest half to forget to build.
 // See RULINGS.md.
 // ---------------------------------------------------------------------------
-function openReveal(title, sub, cards) {
-  UI.reveal = { title, sub, cards };
+function openReveal(title, sub, cards, then) {
+  // `then` runs when the panel is closed. Secret Mission is the reason it
+  // exists: its text is "look at your opponent's hand, THEN discard", and
+  // without a continuation the UI could only show the hand after the choice
+  // was already made - which is a materially weaker card for the human than
+  // the one printed.
+  UI.reveal = { title, sub, cards, then };
 }
 
 function renderReveal() {
@@ -4315,7 +4320,7 @@ function renderReveal() {
 
   const bar = el('div', 'actionbar');
   const done = el('button', 'btn end', 'Close');
-  done.onclick = () => { UI.reveal = null; render(); };
+  done.onclick = () => { const k = r.then; UI.reveal = null; if (k) k(); render(); };
   bar.appendChild(done);
   box.appendChild(bar);
   ov.appendChild(box);
@@ -4505,6 +4510,52 @@ function pickerFlow(handIdx, inst, card) {
   const basicsIn = (list) => list.filter(x => CARD_DB[x.id].kind === 'pokemon' && CARD_DB[x.id].stage === 'Basic');
 
   switch (card.id) {
+    // ---- THE GYM HEROES SUBSET FOUR --------------------------------------
+    // `min: 0` is what "as many as you want" looks like in this picker, and it
+    // already worked - pickerReady is a range test, so a zero floor makes the
+    // confirm button live from the start with nothing chosen. That is the
+    // correct reading of the card: declining entirely is a legal play.
+    case 'gym1-118':   // Secret Mission
+      openReveal("Your opponent's hand", 'Look first — then decide what to throw away.',
+        foe0.hand.slice(), () => openPicker({
+          title: 'Secret Mission', prompt: 'Discard as many cards as you like, and draw that many',
+          items: others, min: 0, max: Math.max(1, others.length), confirm: 'Cycle them',
+          onDone: (discardUids) => send({ discardUids }) }));
+      return true;
+
+    case 'gym1-121':   // Blaine's Gamble
+      openPicker({ title: "Blaine's Gamble",
+        prompt: 'Discard as many as you like — on heads you draw TWICE that many, on tails nothing',
+        items: others, min: 0, max: Math.max(1, others.length), confirm: 'Flip for it',
+        onDone: (discardUids) => send({ discardUids }) });
+      return true;
+
+    case 'gym1-122': {  // Energy Flow
+      // The only picker in this file that chooses off the BOARD rather than out
+      // of a hidden zone. The tiles are Energy instances, which carry the same
+      // { uid, id } shape every other item here does, so nothing else changes.
+      const attached = [];
+      UI.E.allSlots(0).forEach(sl => sl.energy.forEach(e => attached.push(e)));
+      openPicker({ title: 'Energy Flow', prompt: 'Return any of your attached Energy to your hand',
+        items: attached, min: 0, max: Math.max(1, attached.length), confirm: 'Bring them back',
+        onDone: (energyUids) => send({ energyUids }) });
+      return true;
+    }
+
+    case 'gym1-109': {  // Erika's Maids
+      // A FIXED cost, so this one is Computer Search's two-step shape rather
+      // than the three above - min and max are both 2 on the way out.
+      const maids = me0.deck.filter(x => CARD_DB[x.id].kind === 'pokemon'
+        && CARD_DB[x.id].name.indexOf('Erika') >= 0);
+      openPicker({ title: "Erika's Maids", prompt: 'Trade 2 cards from your hand',
+        items: others, min: 2, max: 2, confirm: 'Send for them',
+        onDone: (discardUids) => openPicker({
+          title: 'The maids arrive', prompt: 'Take up to 2 Erika Pokemon from your deck',
+          items: maids, min: 0, max: Math.min(2, maids.length), confirm: 'Take them',
+          onDone: (pickUids) => send({ discardUids, pickUids }) }) });
+      return true;
+    }
+
     case 'base1-71':   // Computer Search
       openPicker({ title: 'Computer Search', prompt: 'Discard 2 cards from your hand',
         items: others, min: 2, max: 2, confirm: 'Search deck',
@@ -4634,10 +4685,15 @@ function renderRevealedHand() {
   if (!r) return null;
   const ov = el('div', 'overlay');
   const box = el('div', 'sheet');
-  box.appendChild(el('h2', null, "Your opponent's hand"));
-  box.appendChild(el('p', 'dimtxt', r.ids.length
-    ? 'Everything they are holding right now.'
-    : 'They are holding nothing.'));
+  // `side` says WHOSE hand this is and was carried unused, so a bot playing
+  // Rocket's Sneak Attack showed the human their own hand under the title
+  // "Your opponent's hand". The field was already right; only the words were wrong.
+  const mine = r.side === 0;
+  box.appendChild(el('h2', null, mine ? 'Your hand was looked at' : "Your opponent's hand"));
+  box.appendChild(el('p', 'dimtxt', !r.ids.length
+    ? (mine ? 'You were holding nothing.' : 'They are holding nothing.')
+    : mine ? 'Your opponent has seen all of this.'
+           : 'Everything they are holding right now.'));
   const row = el('div', 'pickgrid' + (r.ids.length > 8 ? ' many' : ''));
   r.ids.forEach(id => {
     const c = CARD_DB[id];

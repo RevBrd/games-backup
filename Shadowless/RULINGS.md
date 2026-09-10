@@ -53,6 +53,7 @@ enough to settle a call in plain English, so ask him — he can be a resource on
 | Blaine's Quiz #1 — a card this game does not print, and the slot kept vacant | [BLAINES-QUIZ.md](Rulings/BLAINES-QUIZ.md) |
 | Sabrina's ESP — the one card that makes the board go back | [SABRINAS-ESP.md](Rulings/SABRINAS-ESP.md) |
 | "You may" resolved as a rule, and the one case where declining is right | [BENCH-GUARD.md](Rulings/BENCH-GUARD.md) |
+| "As many as you want" — the choice the engine answers with NOTHING, and why that one fallback goes the other way | [SUBSET-CHOICES.md](Rulings/SUBSET-CHOICES.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -152,6 +153,9 @@ ruling that lives only in a spreadsheet gets re-derived by whoever opens the car
 | **A card's printed qualifier defines its whole scope** — Defender says *after applying Weakness and Resistance*, so the band IS the W/R band and anything skipping W/R skips it. Confusion, Poison and an attachment cost all fall outside for free | [Defender, self-harm](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
 | **A principle matched by SHAPE is only reached when the printed text has already failed** — the Stadium boilerplate answers the very question Aerodactyl/Muk exists for, in the opposite direction, and a recognised shape is what stops people reading the card | [the Stadium zone](Rulings/STADIUM-ZONE.md) |
 | **A rule-shaped exemption beats a card-shaped one**, and **implement the sentence rather than the sample** — "in its name" is a substring test even in a set where every card would pass a prefix test | [the Stadium zone](Rulings/STADIUM-ZONE.md) |
+| **Where the open question is WHICH, pick for them; where it is WHETHER, do nothing** — one rule tells apart two fallbacks that look identical and go opposite ways | ["as many as you want"](Rulings/SUBSET-CHOICES.md) |
+| **A card that is legal, played and INERT is worse than one that crashes** — price the empty choice at -Infinity so the scorer cannot reach it | ["as many as you want"](Rulings/SUBSET-CHOICES.md) |
+| **Defer a cluster even if it turns out not to be one.** Building four together is what showed that three shared a shape and the fourth shared only a surface | ["as many as you want"](Rulings/SUBSET-CHOICES.md) |
 | **"You may" can be resolved as a RULE when no board makes declining sensible — and where one does, encode that case rather than the preference around it. Say what the rule does not model** | ["you may" as a rule](Rulings/BENCH-GUARD.md) |
 | **Restore IN PLACE when anything up the stack holds a reference to what you are replacing** — object identity is the contract, the contents are not. And **rewind the board, keep the record**: an undone event that leaves no trace is indistinguishable from one that never happened | [Sabrina's ESP](Rulings/SABRINAS-ESP.md) |
 | **Ask what the code DID, not what it declares** — a conditionally-flipping attack makes "does this attack flip coins" unanswerable from its script | [Sabrina's ESP](Rulings/SABRINAS-ESP.md) |

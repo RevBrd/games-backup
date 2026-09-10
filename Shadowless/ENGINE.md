@@ -318,6 +318,28 @@ counter disappears with the method and the card silently stops working.
 
 *[The five decisions, and the state a snapshot cannot survive →](Rulings/SABRINAS-ESP.md)*
 
+## The subset family — an unanswered choice resolves to NOTHING
+
+**Four Gym Heroes Trainers say "as many as you want", and `discardChosen(p, uids)` is the whole
+mechanism** — it discards exactly the cards named, skips a uid that is not in hand rather than
+failing the play, and returns how many actually went. "Discard any number and draw that many" is only
+correct if both numbers come from one count, which is why it returns one.
+
+**The rule that matters is the fallback, and it runs the opposite way to every other fallback in this
+file.** `takeEnergy` pays with the Energy your attacks do not want; `T_DIG` keeps the first two.
+Those choices are *which*, and something has to happen. A subset choice is *whether*, and an
+unanswered "whether" resolves to **zero** — the engine never throws a player's cards away on their
+behalf.
+
+The price of that is a card which is legal, offered, played, and does nothing, if a scorer forgets to
+fill `a.opts`. That is guarded twice: `-Infinity` on an empty set in every subset scorer, and a
+source-text check in `selftest.js`. *[The full ruling, and what it generalises to
+→](Rulings/SUBSET-CHOICES.md)*
+
+**`T_TRADE_FOR_NAMED` is in the family and does not follow the rule**, deliberately: Erika's Maids
+costs exactly two cards, so *which* is the only open question and a deterministic fallback is right.
+It was deferred with the other three and turned out to be Computer Search with a name filter.
+
 ## A question this raised, and the answer
 
 **A flat damage bonus lands AFTER Weakness, and that is correct.** `computeDamage` applies Weakness

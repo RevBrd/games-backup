@@ -442,6 +442,22 @@
 //                                  end of your turn rather than being discarded, and
 //                                  while attached the attacker may REDUCE its own
 //                                  damage by any multiple of 10 (opts.charityReduce)
+//   -- THE SUBSET FAMILY. "As many as you want", and an unanswered choice
+//      resolves to ZERO rather than to the engine picking for you. See the
+//      block comment on T_PEEK_CYCLE in engine.js for why this one fallback
+//      goes the other way from every other fallback in the file.
+//     T_PEEK_CYCLE                 look at their hand, then discard any number
+//                                  and draw that many (Secret Mission)
+//     T_GAMBLE_DISCARD             discard any number, flip, heads draws TWICE
+//                                  that many. Same EV as T_PEEK_CYCLE, all
+//                                  variance (Blaine's Gamble)
+//     T_ENERGY_RETURN              return any number of your ATTACHED Energy to
+//                                  hand. Subset of the board, so energyUids
+//                                  rather than discardUids (Energy Flow)
+//     T_TRADE_FOR_NAMED {cost,n,who}  discard exactly `cost`, then take up to n
+//                                  Pokemon with `who` in the name out of your
+//                                  deck. A FIXED cost - it only looked like the
+//                                  three above (Erika's Maids)
 //     T_HEAL_EACH {n}              remove n counters from EVERY one of your damaged
 //                                  Pokemon. No target, no choice (Brock)
 //     T_DRAW_BOTH {n}              you draw up to n, then your opponent does. The
@@ -2348,6 +2364,10 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  'gym1-109': { t: [{ v: 'T_TRADE_FOR_NAMED', cost: 2, n: 2, who: 'Erika' }] },  // Erika's Maids
+  'gym1-118': { t: [{ v: 'T_PEEK_CYCLE' }] },             // Secret Mission
+  'gym1-121': { t: [{ v: 'T_GAMBLE_DISCARD' }] },         // Blaine's Gamble
+  'gym1-122': { t: [{ v: 'T_ENERGY_RETURN' }] },          // Energy Flow
   'gym1-15':  { t: [{ v: 'T_HEAL_EACH', n: 1 }] },        // Brock
   'gym1-16':  { t: [{ v: 'T_DRAW_BOTH', n: 3 }] },        // Erika
   'gym1-105': { t: [{ v: 'T_SHOW_AND_DRAW', n: 5 }] },    // Blaine's Last Resort
