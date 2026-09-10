@@ -62,3 +62,31 @@ What is written down instead is the habit — **when adding a flag to a damage-s
 `rawOutcomes` in the same edit.** Both flags added this pass (`base` on the Energy count, `flip` on
 the named count) were carried into the scorer in the same commit, which is the only reason they are
 not two more entries in this file.
+
+## The measurement — 10 Sep 2026
+
+`abtest 8 HEAD~1`, which is the right instrument because **the change is symmetric**: it lands on
+both seats, so `aiduel` would cancel it exactly.
+
+```
+games per side            22896
+DIVERGED                  536  (2.3% ± 0.2)
+median first difference   action 52
+subject-deck wins, before 50.1%
+subject-deck wins, after  50.1%
+```
+
+**Read the divergence, not the win rate.** A flat 50.1% either side is what a symmetric change is
+*supposed* to produce — both seats got the better forecast, and across 2,862 deck pairs both hold
+Dark Charizard equally often. Reporting "no effect" off that column would be the exact misreading
+`MEASUREMENT.md` exists to prevent.
+
+**536 games played out differently, and the shape of that number checks out.** 13 of the 76 decks in
+`data/` run Dark Charizard, so the change can only fire in a minority of pairs — and only once that
+card is evolved to Stage 2 *and* carrying a mixed Energy load. The median first difference at
+**action 52** is that requirement showing up in the data: this is a late-game card, and the fix
+cannot bite until it is on the board and loaded.
+
+**A narrow, deep, symmetric change is exactly what this fix should look like.** Had the divergence
+come in at 20%, or at action 6, the fix would have been touching something other than what it
+claimed to.
