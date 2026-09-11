@@ -110,3 +110,36 @@ about what a Sleep is worth — which is the fault
 will read zero when asked about *removing* it, whenever the value is computed from a board the thing
 is already changing. It is not a wrong number so much as a wrong question, and it will look perfectly
 reasonable in the debugger.
+
+### ...and a correction to how that third one was reported — 10 Sep 2026
+
+**"The bot woke a sleeping attacker" was reported as a fault without its condition, and Trevor pushed
+back on it correctly.** His argument: Sleep is a coin between turns, so preserving one buys a *chance*
+at a denied turn rather than a denied turn; and the Sleep is **renewable** — if it wakes on its own,
+you can apply it again next turn. So 10 extra damage now can genuinely beat what the Sleep was
+holding.
+
+**He is right, and the model agrees with him — on most boards.** `W.sleep` is 22 and its own comment
+already says *"~50% they stay down"*, so the coin is inside the weight; `turnScale` then scales it by
+what that turn would have cost us against an `AVG_ATTACK` of 26. The crossover therefore sits near
+**one average attack**, and measured on Jynx it lands between a threat of 20 and 50:
+
+| the sleeper threatens | Good Night | Good Morning | the bot |
+|---|---|---|---|
+| nothing (no Energy) | 10.0 | 20.0 | **wakes them** |
+| 20 (Low Kick) | 20.0 | 23.1 | **wakes them** |
+| 50 (Gyarados) | 10.0 | −22.3 | leaves it asleep |
+| 60 into a 60 HP Jynx | 10.0 | −30.8 | leaves it asleep |
+
+**So the fault was never "waking them is wrong". It was that waking them was UNCONDITIONAL** — priced
+at zero cost, the bot woke a Venusaur sitting on four Grass with a lethal attack. Everything above
+the crossover changed; everything below it, which is most boards, plays exactly as it did and exactly
+as Trevor described.
+
+**One correction to his numbers, which does not change his conclusion.** `betweenTurns` flips both
+Actives after *every* turn, so a Sleep standing on our turn faces **one** flip before their turn:
+**50%**, not 25%. 25% is the chance of missing a *second* turn, which is what he was describing. The
+decision in front of the bot is the one-turn version.
+
+Written up as three rows in `tools/claims/gym1.js` — the first claims file for this set, and the
+first in the project sourced from a conversation rather than from the workbook.
