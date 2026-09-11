@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 47,
+  gym1: 42,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -546,6 +546,10 @@ const PROVISIONAL = new Set([
   // attachValue rather than inventing a second opinion about the same question,
   // which is the mistake AI.md item 17 was written about one turn earlier.
   'SELF_ENERGY_TO_BENCH',
+  // Good Morning, 10 Sep 2026. The value is the negative of statusWorthAgainst
+  // asked COUNTERFACTUALLY - the status comes off for the measurement - which is
+  // exact machinery around an unmeasured weight, not a measured one.
+  'CLEAR_DEF_STATUS',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',

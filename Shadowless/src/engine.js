@@ -4929,7 +4929,16 @@ class Engine {
           // FLIP_OR_NOTHING's outcome reached by THIS verb's coin rather than by a
           // second one. Stacking the two would flip twice and could raise the
           // Barrier on an attack that did nothing.
+          //
+          // ERIKA'S EXEGGCUTE READS THE OTHER WAY and is why the recoil rides
+          // along here: "if tails, this attack does nothing TO THE DEFENDING
+          // POKEMON and Erika's Exeggcute does 20 damage to itself." Fly's
+          // parenthetical says "not even damage to itself" and Egg Bomb's says
+          // the opposite in so many words, so "nothing" is scoped to the
+          // defender and the self-damage is a separate clause. Fly carries no
+          // `recoil`, so it is untouched.
           nothing = true;
+          pendingRecoil += v.recoil || 0;
           this.log(`${paid ? 'Heads' : 'Tails'} -> the attack does nothing.`);
         } else {
           base = v.base;
@@ -5106,7 +5115,13 @@ class Engine {
       }
     }
 
-    if (nothing) { this.log('The attack does nothing.', 'eff'); return { ok: true }; }
+    if (nothing) {
+      this.log('The attack does nothing.', 'eff');
+      // ...to THEM. A recoil clause that survives the miss still lands, and the
+      // early return used to skip it.
+      if (pendingRecoil > 0) this.selfDamage(pi, atk, pendingRecoil, card.name);
+      return { ok: true };
+    }
 
     // Snapshot the defender's conditions so the post-damage loop's additions can
     // be diffed out afterwards. This is what Mirror Move replays: an EVENT
@@ -5134,6 +5149,16 @@ class Engine {
     // attack" — everything AFTER W/R (PlusPower, Defender, Kabuto Armor) still
     // applies, which is exactly what dealDamage's existing noWR already means.
     const flat = script.some(v => v.v === 'NO_WR');
+    // SWIFT. "This attack's damage isn't affected by Weakness, Resistance,
+    // Pokemon Powers, or any other effects on the Defending Pokemon." Eight
+    // printings across five sets - gym1, gym2, neo1, neo2, neo4 - so machinery.
+    //
+    // It is STRICTLY MORE than NO_WR, which is the thing to get right: NO_WR
+    // skips one band and every reduction below it still applies, because they
+    // sit in a separate block. Reading the two as the same flag would leave
+    // Swift halved by Kabuto Armor and stopped dead by a Barrier, which is the
+    // opposite of what it prints.
+    const raw = script.some(v => v.v === 'NO_DEFENSES');
     // CHARITY reaches computeDamage from the ACTION rather than from the slot,
     // even though the effect that authorises it lives on the slot. The effect
     // says the reduction is available; only the action carries how much, and it
@@ -5146,7 +5171,7 @@ class Engine {
       && atk.effects.some(e => e.kind === 'DAMAGE_REDUCE_OPTIONAL'))
       ? a.opts.charityReduce : 0;
     const res = negated ? { dealt: 0, prevented: true }
-      : this.dealDamage(atk, def, base, { noWR: flat, charityReduce: charity });
+      : this.dealDamage(atk, def, base, { noWR: flat || raw, raw, charityReduce: charity });
     // "If an attack DOES DAMAGE to Misty's Tentacruel" — read from what landed
     // rather than from the attack's printed number, so a prevented hit offers
     // nothing and a Barrier is not an escape hatch.
@@ -5283,6 +5308,29 @@ class Engine {
           def.poisonDamage = v.n;
           this.log(`${this.nameOf(def)} now takes ${v.n} Poison damage between turns.`, 'status');
           break;
+        case 'CLEAR_DEF_STATUS': {
+          // Good Morning, and Dark Wigglytuff's Slap Awake in neo4. An attack
+          // whose whole effect is to REMOVE a Special Condition from the
+          // defender, which is a drawback rather than a benefit - and on Jynx it
+          // is the price of 20 damage over Good Night's 10.
+          //
+          // `only` narrows it to named conditions; absent clears them all.
+          if (!def) break;
+          // NOT gated on `blocked`. A Barrier protects a Pokemon from what an
+          // attack does TO it, and removing its own Sleep is not that - there is
+          // no board on which a player wants their Barrier to keep them asleep.
+          const only = v.only ? [].concat(v.only) : null;
+          const cleared = [];
+          for (const st of ['Asleep', 'Confused', 'Paralyzed', 'Poisoned']) {
+            const key = st.toLowerCase();
+            if (only && only.indexOf(st) < 0) continue;
+            if (def.status[key]) { def.status[key] = false; cleared.push(st); }
+          }
+          this.log(cleared.length
+            ? `${this.nameOf(def)} is no longer ${cleared.join(' or ')}.`
+            : `${this.nameOf(def)} had nothing to shake off.`, 'eff');
+          break;
+        }
         case 'DISCARD_DEF_ENERGY': {
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def || !def.energy.length) { this.log('No Energy to discard.', 'eff'); break; }
@@ -5709,8 +5757,19 @@ class Engine {
           this.log(`${you.name} can't play Trainer cards during their next turn.`, 'eff');
           break;
         case 'BUFF_OWN_ATTACK':
+          // +3, NOT +2, AND THAT IS THE WHOLE CARD. Every other lasting effect
+          // in this file runs through the OPPONENT's next turn — a Barrier, a
+          // retreat lock, Light Screen — and for those `s.turn + 2` is exactly
+          // right. This one runs through OUR next turn, which is one further on.
+          //
+          // It shipped with +2 and Jungle Scyther's Swords Dance therefore did
+          // NOTHING, for every game ever played with that card: the buff expired
+          // at the start of the very turn it existed to arm. Found 10 Sep 2026
+          // while building Lt. Surge's Rattata, whose Focus Energy is the same
+          // effect, and caught because the new card's test asserted the damage
+          // rather than the effect being present.
           atk.effects.push({ kind: 'ATTACK_BUFF', name: v.attack, base: v.base,
-                             label: v.label || 'Swords Dance', expireAtStartOfTurn: s.turn + 2 });
+                             label: v.label || 'Swords Dance', expireAtStartOfTurn: s.turn + 3 });
           this.log(`${card.name}'s ${v.attack} does ${v.base} during your next turn.`, 'eff');
           break;
         case 'HEAL_SELF_EQUAL_DAMAGE': {
@@ -6475,7 +6534,12 @@ class Engine {
       // is a one-turn effect an attack leaves behind. Applied ONCE if either is
       // present rather than compounding — no card in the era can carry both, and
       // halving twice would be a rule nothing prints.
-      const halve = this.activePower(defSlot, 'DAMAGE_HALVE')
+      // `raw` is Swift, and it stops at the DEFENDER's own defences. Bench
+      // Guard is deliberately NOT skipped: it lives on a different Pokemon and
+      // moves the hit rather than reducing it, so it is not "an effect on the
+      // Defending Pokemon" in the sense this sentence means.
+      const halve = opts.raw ? null
+                 : this.activePower(defSlot, 'DAMAGE_HALVE')
                  || defSlot.effects.find(e => e.kind === 'DAMAGE_HALVE');
       if (halve) {
         dmg = Math.floor(dmg / 2 / 10) * 10;                 // "rounded DOWN to the nearest 10"
@@ -6494,7 +6558,7 @@ class Engine {
       //
       // A REDUCTION, NOT A BARRIER — "(Any other effects of attacks still
       // happen)" — so statuses, discards and switches all land untouched.
-      const soft = this.activePower(defSlot, 'DAMAGE_REDUCE');
+      const soft = opts.raw ? null : this.activePower(defSlot, 'DAMAGE_REDUCE');
       if (soft && dmg > 0) {
         dmg = Math.max(0, dmg - (soft.n || 10));
         steps.push(`${soft.name}: -${soft.n || 10} -> ${dmg}.`);
@@ -6510,7 +6574,7 @@ class Engine {
       //
       // "(including your own)" is the card telling us NOT to scope this by side,
       // and a bench splash from our own Selfdestruct is exactly the case it names.
-      const bar = this.activePower(defSlot, 'REDUCE_FROM_BASIC');
+      const bar = opts.raw ? null : this.activePower(defSlot, 'REDUCE_FROM_BASIC');
       if (bar && atkSlot && dmg >= (bar.atLeast || 20)
           && topCard(this.db, atkSlot).stage === 'Basic') {
         dmg = bar.to === undefined ? 10 : bar.to;
@@ -6518,10 +6582,10 @@ class Engine {
       }
     }
     let prevented = false;
-    const absolute = defSlot.effects.find(e => e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS');
-    const threshold = defSlot.effects.find(e => e.kind === 'PREVENT_UP_TO');
+    const absolute = opts.raw ? null : defSlot.effects.find(e => e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS');
+    const threshold = opts.raw ? null : defSlot.effects.find(e => e.kind === 'PREVENT_UP_TO');
     // Mr. Mime. The inverse of Harden: big hits bounce, small ones land.
-    const wall = this.activePower(defSlot, 'PREVENT_AT_LEAST');
+    const wall = opts.raw ? null : this.activePower(defSlot, 'PREVENT_AT_LEAST');
     if (absolute) {
       if (dmg > 0) { steps.push(`All damage to ${D.name} is prevented.`); prevented = true; }
       dmg = 0;

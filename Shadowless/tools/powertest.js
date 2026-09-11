@@ -8091,5 +8091,155 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- EFFECTS THAT OUTLIVE THE TURN ------------------------------------------
+// Most of this family already existed — JAM_DEFENDER is Sandstorm exactly and
+// DAMAGE_HALVE_SELF is Deflector — so the rows here are about the two new
+// verbs and the two places one coin has to carry two consequences.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  const atk = (E, i) => E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === i));
+
+  T('Needles lands BOTH conditions off ONE coin, or neither', () => {
+    // STATUS_ON_FLIP already took a list. Two verbs would flip twice and could
+    // land Paralyzed without Poisoned, which is a card that was never printed.
+    const h = setup({ me: { card: 'gym1-23', energy: '2 Fighting' },
+      them: { card: 'base1:Venusaur' } }).E;
+    h.dev.forceFlip = 'H'; h.flipsThisAttack = 0;
+    atk(h, 0);
+    const st = h.state.players[1].active.status;
+    eq(st.paralyzed && st.poisoned, true, 'heads: both');
+    eq(h.flipsThisAttack, 1, 'and it cost exactly one coin');
+    const t = setup({ me: { card: 'gym1-23', energy: '2 Fighting' },
+      them: { card: 'base1:Venusaur' } }).E;
+    t.dev.forceFlip = 'T';
+    atk(t, 0);
+    const st2 = t.state.players[1].active.status;
+    return eq(st2.paralyzed || st2.poisoned, false, 'tails: neither');
+  });
+
+  T('Egg Bomb does nothing AND hurts us on the same tails', () => {
+    // nothingOnTails plus recoil on one verb. FLIP_OR_NOTHING stacked with
+    // RECOIL_ON_FLIP would flip twice and could land the damage and the recoil
+    // together, which no face of this card can do.
+    const t = setup({ me: { card: 'gym1-43', energy: '2 Grass' },
+      them: { card: 'base1:Venusaur' } }).E;
+    t.dev.forceFlip = 'T'; t.flipsThisAttack = 0;
+    atk(t, 1);
+    eq(t.state.players[1].active.dmg, 0, 'tails: nothing to them');
+    eq(t.state.players[0].active.dmg, 20, 'and 20 to us');
+    return eq(t.flipsThisAttack, 1, 'off one coin');
+  });
+
+  T('SWIFT IS STRICTLY MORE THAN "ignore Weakness and Resistance"', () => {
+    // The reductions do NOT live inside the noWR block — they are a separate
+    // one — so reading the two as the same flag would leave Swift halved by
+    // Kabuto Armor and stopped dead by a Barrier, which is the opposite of what
+    // the card prints.
+    const E = setup({ me: { card: 'gym1-90', energy: '2 Water' },
+      them: { card: 'base1:Venusaur' } }).E;
+    const def = E.state.players[1].active;
+    def.effects.push({ kind: 'DAMAGE_HALVE', label: 'Light Screen' });
+    atk(E, 0);
+    return eq(def.dmg, 20, 'the halving does not apply');
+  });
+
+  T('...and a Barrier does not stop it either', () => {
+    const E = setup({ me: { card: 'gym1-90', energy: '2 Water' },
+      them: { card: 'base1:Venusaur' } }).E;
+    const def = E.state.players[1].active;
+    def.effects.push({ kind: 'PREVENT_ALL_DAMAGE', label: 'Barrier' });
+    atk(E, 0);
+    return eq(def.dmg, 20, 'straight through');
+  });
+
+  T('...and the FORECAST knows it, because it calls the engine', () => {
+    // Nothing in ai.js reimplements the rule — the flag rides into the engine's
+    // own computeDamage, so the scorer cannot drift from it.
+    const E = setup({ me: { card: 'gym1-90', energy: '2 Water' },
+      them: { card: 'base1:Venusaur' } }).E;
+    E.state.players[1].active.effects.push({ kind: 'DAMAGE_HALVE', label: 'Light Screen' });
+    return eq(new AI(E, {}).forecast(0, 0).expDmg, 20, 'forecast past the halving');
+  });
+
+  T('Good Morning WAKES them, which is the cost of its extra damage', () => {
+    const E = setup({ me: { card: 'gym1-59', energy: '2 Psychic' },
+      them: { card: 'base1:Venusaur' } }).E;
+    E.state.players[1].active.status.asleep = true;
+    atk(E, 1);
+    eq(E.state.players[1].active.status.asleep, false, 'awake again');
+    return eq(E.state.players[1].active.dmg, 20, 'and it did 20');
+  });
+
+  T('THE BOT WOKE A SLEEPING ATTACKER FOR 10 EXTRA DAMAGE', () => {
+    // statusWorthAgainst measures what a status DENIES, so asked about one
+    // already on the board it answers zero — the threat it would deny is
+    // suppressed by the very status being valued. Priced that way, waking them
+    // looked free. The fix asks the counterfactual: the status comes off for the
+    // measurement and goes straight back.
+    const mk = (asleep) => {
+      const E = setup({ me: { card: 'gym1-59', energy: '2 Psychic' },
+        them: { card: 'base1:Venusaur', energy: '4 Grass' } }).E;
+      if (asleep) E.state.players[1].active.status.asleep = true;
+      return E;
+    };
+    const sleeping = new AI(mk(true), {});
+    eq(sleeping.scoreAttack(0, 1) < sleeping.scoreAttack(0, 0), true,
+      'asleep: Good Night beats waking them');
+    const awake = new AI(mk(false), {});
+    return eq(awake.scoreAttack(0, 0) > awake.scoreAttack(0, 1), true,
+      'awake: land the Sleep rather than take the 20');
+  });
+
+  T('...but Good Morning IS the better attack against something harmless', () => {
+    // A Sleep that denies nothing is worth nothing, so 20 beats 10. The penalty
+    // must be conditional on the threat, not a flat dislike of the verb.
+    const E = setup({ me: { card: 'gym1-59', energy: '2 Psychic' },
+      them: { card: 'base1:Venusaur' } }).E;
+    const ai = new AI(E, {});
+    return eq(ai.scoreAttack(0, 1) > ai.scoreAttack(0, 0), true, 'take the damage');
+  });
+
+  T("SWORDS DANCE HAD NEVER WORKED, and it is a Jungle card", () => {
+    // Every other lasting effect in engine.js runs through the OPPONENT's next
+    // turn, and turn+2 is exactly right for those. This one runs through
+    // OURS, which is one further on — so the buff expired at the start of the
+    // very turn it existed to arm, and Scyther's Swords Dance did nothing for
+    // every game ever played with that card.
+    //
+    // Found while building Lt. Surge's Rattata, whose Focus Energy is the same
+    // effect. Caught only because the new card's test asserted the DAMAGE
+    // rather than the effect being present on the slot.
+    const E = setup({ me: { card: 'base2-10', energy: '3 Grass' },
+      them: { card: 'base1:Venusaur' } }).E;
+    atk(E, 0);                       // Swords Dance
+    E.act(1, { t: 'pass' });
+    atk(E, 1);                       // Slash, printed 30
+    eq(E.state.players[1].active.dmg, 60, 'buffed Slash does 60');
+    // And it must not leak PAST our next turn either, which +3 also has to get
+    // right — a lifetime bug can be wrong in both directions.
+    E.act(1, { t: 'pass' });
+    return eq(E.state.players[0].active.effects.length, 0, 'and it is gone afterwards');
+  });
+
+  T('Focus Energy doubles Gnaw NEXT turn, and Gnaw alone does 20', () => {
+    // A buff that arms a later turn, so it is only testable across one — which
+    // is why the plain-damage half is measured on its own board rather than
+    // inferred from the buffed one.
+    const plain = setup({ me: { card: 'gym1-82', energy: '2 Psychic' },
+      them: { card: 'base1:Venusaur' } }).E;
+    atk(plain, 1);
+    eq(plain.state.players[1].active.dmg, 20, 'unbuffed Gnaw does 20');
+
+    const E = setup({ me: { card: 'gym1-82', energy: '2 Psychic' },
+      them: { card: 'base1:Venusaur' } }).E;
+    atk(E, 0);                       // Focus Energy ends our turn
+    E.act(1, { t: 'pass' });         // theirs
+    atk(E, 1);                       // and now Gnaw
+    return eq(E.state.players[1].active.dmg, 40, 'buffed Gnaw does 40');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

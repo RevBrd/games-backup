@@ -90,3 +90,23 @@ cannot bite until it is on the board and loaded.
 **A narrow, deep, symmetric change is exactly what this fix should look like.** Had the divergence
 come in at 20%, or at action 6, the fix would have been touching something other than what it
 claimed to.
+
+## A third one, same pass, same shape — 10 Sep 2026
+
+**`statusWorthAgainst` measures what a status DENIES, so asked about one already on the board it
+answers zero.** The threat it would deny is suppressed by the very status being valued.
+
+That is correct for the question it was written for — *should I apply this?* — and wrong for the one
+Sabrina's Jynx asks: *what does removing this cost me?* Priced the first way, waking a sleeping
+attacker looked **free**, and the bot took Good Morning's 20 over Good Night's 10 while the thing it
+was waking had four Energy on it.
+
+**The fix asks the counterfactual**: the status comes off for the measurement and goes straight back.
+Cheap, exact, and it keeps `statusWorthAgainst` as the one home rather than growing a second opinion
+about what a Sleep is worth — which is the fault
+[STATUS-ONE-HOME](STATUS-ONE-HOME.md) already records.
+
+**What generalises past this card:** a "what is this worth?" function written for *adding* a thing
+will read zero when asked about *removing* it, whenever the value is computed from a board the thing
+is already changing. It is not a wrong number so much as a wrong question, and it will look perfectly
+reasonable in the debugger.

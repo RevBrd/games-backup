@@ -714,6 +714,12 @@ class AI {
 
         // ---- Job 6d ----
         case 'NO_WR': flags.flat = true; break;      // forecast past W/R, as the card says
+        // Swift. STRICTLY MORE than NO_WR — it also walks past every reduction
+        // and every prevention on the defender. Nothing else is needed here
+        // because the forecast calls the ENGINE's own computeDamage, so the flag
+        // carries the whole rule rather than a second copy of it.
+        case 'NO_DEFENSES': flags.raw = true; break;
+        case 'CLEAR_DEF_STATUS': flags.wakeThem = v.only ? [].concat(v.only) : null; break;
         case 'DMG_PER_OWN_BENCH': {
           const side = this.E.sideOf(atkSlot);
           const nb = side === null ? 0 : this.E.state.players[side].bench.length;
@@ -917,7 +923,8 @@ class AI {
     // one that is true.
     let expDmg = 0, expUseful = 0, pLethal = 0, pStopped = 0;
     for (const o of raw.outcomes) {
-      const r = E.computeDamage(atkSlot, defSlot, o.dmg, { noWR: !!raw.flags.flat });
+      const r = E.computeDamage(atkSlot, defSlot, o.dmg,
+        { noWR: !!(raw.flags.flat || raw.flags.raw), raw: !!raw.flags.raw });
       expDmg += o.p * r.dmg;
       expUseful += o.p * Math.min(r.dmg, hpLeft);
       if (r.dmg >= hpLeft) pLethal += o.p;
@@ -1561,6 +1568,40 @@ class AI {
         // there - `scoreAttack` has no action object in scope, and writing to
         // one here threw the moment the first card reached it.
         if (moving && best.v > -Infinity) s += Math.max(0, best.v) * 0.5;
+      }
+    }
+
+    // Good Morning REMOVES a condition from the defender, which is a cost and
+    // not a benefit — the only attack in the era whose effect the attacker would
+    // rather not have. Priced as the negative of what that status was worth,
+    // through `statusWorthAgainst` rather than a fresh constant: that function is
+    // the ONE HOME for this question (AI-INVARIANTS/STATUS-ONE-HOME.md), and the
+    // fault that entry records is a second path growing its own opinion.
+    //
+    // It costs nothing when they are not in that condition, which is most of the
+    // time — so Jynx's 20 beats its own 10 on a clean board and loses to it once
+    // the Sleep it just landed is worth keeping.
+    if (f.flags.wakeThem !== undefined && you.active) {
+      const only = f.flags.wakeThem;
+      const alive = 1 - this.pLethalThisTurn(pi);
+      for (const st of ['Asleep', 'Confused', 'Paralyzed', 'Poisoned']) {
+        if (only && only.indexOf(st) < 0) continue;
+        const key = st.toLowerCase();
+        if (!you.active.status[key]) continue;
+        // ASK THE COUNTERFACTUAL, and this is the whole subtlety of the card.
+        // `statusWorthAgainst` measures what a status DENIES, so asked about one
+        // that is already on the board it answers zero — the threat it would
+        // deny is already suppressed by the very status being valued. Priced
+        // that way, waking them looked free and the bot woke a sleeping
+        // attacker for 10 extra damage.
+        //
+        // So the status comes OFF for the measurement and goes straight back.
+        // Cheap, exact, and it keeps the one home rather than growing a second
+        // opinion about what a Sleep is worth.
+        you.active.status[key] = false;
+        const worth = this.statusWorthAgainst(pi, st, alive);
+        you.active.status[key] = true;
+        s -= worth;
       }
     }
 

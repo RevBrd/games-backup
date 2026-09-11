@@ -123,6 +123,12 @@
 //                                  Capped at 20 flips so a seed cannot hang a
 //                                  turn, far beyond anything reachable (Stone Barrage)
 //     NO_WR                        this attack ignores Weakness and Resistance.
+//     NO_DEFENSES                  SWIFT. Strictly MORE than NO_WR - also walks
+//                                  past every reduction and prevention on the
+//                                  defender (halving, Shell Armor, Barriers,
+//                                  Mr. Mime). 8 printings across 5 sets
+//     CLEAR_DEF_STATUS {only}      REMOVE Special Conditions from the defender.
+//                                  A drawback, not a benefit (Good Morning)
 //                                  Not damage-shaping strictly — it is read when
 //                                  the damage is DEALT — but it belongs beside
 //                                  them because it changes the number that lands
@@ -2373,6 +2379,33 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES POKEMON, pass five: EFFECTS THAT OUTLIVE THE TURN ---------
+  // Cards whose attack leaves something behind on the opponent's turn. Most of
+  // the family already existed - JAM_DEFENDER is Sandstorm exactly, and
+  // DAMAGE_HALVE_SELF is Deflector - which is the whole reason this batch is
+  // one new verb rather than six.
+  //
+  // STATUS_ON_FLIP already took a LIST (`[].concat(v.s)`), so Needles' "Paralyzed
+  // AND Poisoned" on one coin needed nothing at all. Two verbs would flip twice
+  // and could land one status without the other, which is a different card.
+  'gym1-23': { a: [[{ v: 'STATUS_ON_FLIP', s: ['Paralyzed', 'Poisoned'] }],
+                   [{ v: 'JAM_DEFENDER', label: 'Sandstorm' }]] },
+  // Egg Bomb: ONE coin decides both halves - tails does nothing AND hurts us.
+  // `nothingOnTails` and `recoil` on the same verb, which is what that verb was
+  // built for; FLIP_OR_NOTHING plus RECOIL_ON_FLIP would flip twice and could
+  // land the damage and the recoil together.
+  'gym1-43': { a: [[{ v: 'DAMAGE_HALVE_SELF', label: 'Deflector' }],
+                   [{ v: 'FLIP_BONUS_OR_RECOIL', base: 40, bonus: 0,
+                      nothingOnTails: true, recoil: 20, label: 'Egg Bomb' }]] },
+  'gym1-90': { a: [[{ v: 'NO_DEFENSES' }]] },             // Swift
+  'gym1-82': { a: [[{ v: 'BUFF_OWN_ATTACK', attack: 'Gnaw', base: 40, label: 'Focus Energy' }],
+                   []] },
+  // Good Morning WAKES the defender, which is the only attack in the era whose
+  // whole purpose is to remove a status rather than inflict one - and it pairs
+  // with Good Night on the same card, so Jynx puts them to sleep and then
+  // chooses whether to wake them for the extra damage.
+  'gym1-59': { a: [[{ v: 'STATUS', s: 'Asleep' }],
+                   [{ v: 'CLEAR_DEF_STATUS', only: ['Asleep'] }]] },
   // ---- GYM HEROES POKEMON, pass four: THE DYNAMIC-COIN FAMILY ---------------
   // "Flip a number of coins equal to <something you have to count>" - 21 distinct
   // texts across 12 sets, so this is machinery rather than four special cases.

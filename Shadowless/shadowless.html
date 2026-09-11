@@ -4137,6 +4137,12 @@ const SET_INFO = {
 //                                  Capped at 20 flips so a seed cannot hang a
 //                                  turn, far beyond anything reachable (Stone Barrage)
 //     NO_WR                        this attack ignores Weakness and Resistance.
+//     NO_DEFENSES                  SWIFT. Strictly MORE than NO_WR - also walks
+//                                  past every reduction and prevention on the
+//                                  defender (halving, Shell Armor, Barriers,
+//                                  Mr. Mime). 8 printings across 5 sets
+//     CLEAR_DEF_STATUS {only}      REMOVE Special Conditions from the defender.
+//                                  A drawback, not a benefit (Good Morning)
 //                                  Not damage-shaping strictly — it is read when
 //                                  the damage is DEALT — but it belongs beside
 //                                  them because it changes the number that lands
@@ -6387,6 +6393,33 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES POKEMON, pass five: EFFECTS THAT OUTLIVE THE TURN ---------
+  // Cards whose attack leaves something behind on the opponent's turn. Most of
+  // the family already existed - JAM_DEFENDER is Sandstorm exactly, and
+  // DAMAGE_HALVE_SELF is Deflector - which is the whole reason this batch is
+  // one new verb rather than six.
+  //
+  // STATUS_ON_FLIP already took a LIST (`[].concat(v.s)`), so Needles' "Paralyzed
+  // AND Poisoned" on one coin needed nothing at all. Two verbs would flip twice
+  // and could land one status without the other, which is a different card.
+  'gym1-23': { a: [[{ v: 'STATUS_ON_FLIP', s: ['Paralyzed', 'Poisoned'] }],
+                   [{ v: 'JAM_DEFENDER', label: 'Sandstorm' }]] },
+  // Egg Bomb: ONE coin decides both halves - tails does nothing AND hurts us.
+  // `nothingOnTails` and `recoil` on the same verb, which is what that verb was
+  // built for; FLIP_OR_NOTHING plus RECOIL_ON_FLIP would flip twice and could
+  // land the damage and the recoil together.
+  'gym1-43': { a: [[{ v: 'DAMAGE_HALVE_SELF', label: 'Deflector' }],
+                   [{ v: 'FLIP_BONUS_OR_RECOIL', base: 40, bonus: 0,
+                      nothingOnTails: true, recoil: 20, label: 'Egg Bomb' }]] },
+  'gym1-90': { a: [[{ v: 'NO_DEFENSES' }]] },             // Swift
+  'gym1-82': { a: [[{ v: 'BUFF_OWN_ATTACK', attack: 'Gnaw', base: 40, label: 'Focus Energy' }],
+                   []] },
+  // Good Morning WAKES the defender, which is the only attack in the era whose
+  // whole purpose is to remove a status rather than inflict one - and it pairs
+  // with Good Night on the same card, so Jynx puts them to sleep and then
+  // chooses whether to wake them for the extra damage.
+  'gym1-59': { a: [[{ v: 'STATUS', s: 'Asleep' }],
+                   [{ v: 'CLEAR_DEF_STATUS', only: ['Asleep'] }]] },
   // ---- GYM HEROES POKEMON, pass four: THE DYNAMIC-COIN FAMILY ---------------
   // "Flip a number of coins equal to <something you have to count>" - 21 distinct
   // texts across 12 sets, so this is machinery rather than four special cases.
@@ -7625,6 +7658,12 @@ class AI {
 
         // ---- Job 6d ----
         case 'NO_WR': flags.flat = true; break;      // forecast past W/R, as the card says
+        // Swift. STRICTLY MORE than NO_WR — it also walks past every reduction
+        // and every prevention on the defender. Nothing else is needed here
+        // because the forecast calls the ENGINE's own computeDamage, so the flag
+        // carries the whole rule rather than a second copy of it.
+        case 'NO_DEFENSES': flags.raw = true; break;
+        case 'CLEAR_DEF_STATUS': flags.wakeThem = v.only ? [].concat(v.only) : null; break;
         case 'DMG_PER_OWN_BENCH': {
           const side = this.E.sideOf(atkSlot);
           const nb = side === null ? 0 : this.E.state.players[side].bench.length;
@@ -7828,7 +7867,8 @@ class AI {
     // one that is true.
     let expDmg = 0, expUseful = 0, pLethal = 0, pStopped = 0;
     for (const o of raw.outcomes) {
-      const r = E.computeDamage(atkSlot, defSlot, o.dmg, { noWR: !!raw.flags.flat });
+      const r = E.computeDamage(atkSlot, defSlot, o.dmg,
+        { noWR: !!(raw.flags.flat || raw.flags.raw), raw: !!raw.flags.raw });
       expDmg += o.p * r.dmg;
       expUseful += o.p * Math.min(r.dmg, hpLeft);
       if (r.dmg >= hpLeft) pLethal += o.p;
@@ -8472,6 +8512,40 @@ class AI {
         // there - `scoreAttack` has no action object in scope, and writing to
         // one here threw the moment the first card reached it.
         if (moving && best.v > -Infinity) s += Math.max(0, best.v) * 0.5;
+      }
+    }
+
+    // Good Morning REMOVES a condition from the defender, which is a cost and
+    // not a benefit — the only attack in the era whose effect the attacker would
+    // rather not have. Priced as the negative of what that status was worth,
+    // through `statusWorthAgainst` rather than a fresh constant: that function is
+    // the ONE HOME for this question (AI-INVARIANTS/STATUS-ONE-HOME.md), and the
+    // fault that entry records is a second path growing its own opinion.
+    //
+    // It costs nothing when they are not in that condition, which is most of the
+    // time — so Jynx's 20 beats its own 10 on a clean board and loses to it once
+    // the Sleep it just landed is worth keeping.
+    if (f.flags.wakeThem !== undefined && you.active) {
+      const only = f.flags.wakeThem;
+      const alive = 1 - this.pLethalThisTurn(pi);
+      for (const st of ['Asleep', 'Confused', 'Paralyzed', 'Poisoned']) {
+        if (only && only.indexOf(st) < 0) continue;
+        const key = st.toLowerCase();
+        if (!you.active.status[key]) continue;
+        // ASK THE COUNTERFACTUAL, and this is the whole subtlety of the card.
+        // `statusWorthAgainst` measures what a status DENIES, so asked about one
+        // that is already on the board it answers zero — the threat it would
+        // deny is already suppressed by the very status being valued. Priced
+        // that way, waking them looked free and the bot woke a sleeping
+        // attacker for 10 extra damage.
+        //
+        // So the status comes OFF for the measurement and goes straight back.
+        // Cheap, exact, and it keeps the one home rather than growing a second
+        // opinion about what a Sleep is worth.
+        you.active.status[key] = false;
+        const worth = this.statusWorthAgainst(pi, st, alive);
+        you.active.status[key] = true;
+        s -= worth;
       }
     }
 
@@ -17488,7 +17562,16 @@ class Engine {
           // FLIP_OR_NOTHING's outcome reached by THIS verb's coin rather than by a
           // second one. Stacking the two would flip twice and could raise the
           // Barrier on an attack that did nothing.
+          //
+          // ERIKA'S EXEGGCUTE READS THE OTHER WAY and is why the recoil rides
+          // along here: "if tails, this attack does nothing TO THE DEFENDING
+          // POKEMON and Erika's Exeggcute does 20 damage to itself." Fly's
+          // parenthetical says "not even damage to itself" and Egg Bomb's says
+          // the opposite in so many words, so "nothing" is scoped to the
+          // defender and the self-damage is a separate clause. Fly carries no
+          // `recoil`, so it is untouched.
           nothing = true;
+          pendingRecoil += v.recoil || 0;
           this.log(`${paid ? 'Heads' : 'Tails'} -> the attack does nothing.`);
         } else {
           base = v.base;
@@ -17665,7 +17748,13 @@ class Engine {
       }
     }
 
-    if (nothing) { this.log('The attack does nothing.', 'eff'); return { ok: true }; }
+    if (nothing) {
+      this.log('The attack does nothing.', 'eff');
+      // ...to THEM. A recoil clause that survives the miss still lands, and the
+      // early return used to skip it.
+      if (pendingRecoil > 0) this.selfDamage(pi, atk, pendingRecoil, card.name);
+      return { ok: true };
+    }
 
     // Snapshot the defender's conditions so the post-damage loop's additions can
     // be diffed out afterwards. This is what Mirror Move replays: an EVENT
@@ -17693,6 +17782,16 @@ class Engine {
     // attack" — everything AFTER W/R (PlusPower, Defender, Kabuto Armor) still
     // applies, which is exactly what dealDamage's existing noWR already means.
     const flat = script.some(v => v.v === 'NO_WR');
+    // SWIFT. "This attack's damage isn't affected by Weakness, Resistance,
+    // Pokemon Powers, or any other effects on the Defending Pokemon." Eight
+    // printings across five sets - gym1, gym2, neo1, neo2, neo4 - so machinery.
+    //
+    // It is STRICTLY MORE than NO_WR, which is the thing to get right: NO_WR
+    // skips one band and every reduction below it still applies, because they
+    // sit in a separate block. Reading the two as the same flag would leave
+    // Swift halved by Kabuto Armor and stopped dead by a Barrier, which is the
+    // opposite of what it prints.
+    const raw = script.some(v => v.v === 'NO_DEFENSES');
     // CHARITY reaches computeDamage from the ACTION rather than from the slot,
     // even though the effect that authorises it lives on the slot. The effect
     // says the reduction is available; only the action carries how much, and it
@@ -17705,7 +17804,7 @@ class Engine {
       && atk.effects.some(e => e.kind === 'DAMAGE_REDUCE_OPTIONAL'))
       ? a.opts.charityReduce : 0;
     const res = negated ? { dealt: 0, prevented: true }
-      : this.dealDamage(atk, def, base, { noWR: flat, charityReduce: charity });
+      : this.dealDamage(atk, def, base, { noWR: flat || raw, raw, charityReduce: charity });
     // "If an attack DOES DAMAGE to Misty's Tentacruel" — read from what landed
     // rather than from the attack's printed number, so a prevented hit offers
     // nothing and a Barrier is not an escape hatch.
@@ -17842,6 +17941,29 @@ class Engine {
           def.poisonDamage = v.n;
           this.log(`${this.nameOf(def)} now takes ${v.n} Poison damage between turns.`, 'status');
           break;
+        case 'CLEAR_DEF_STATUS': {
+          // Good Morning, and Dark Wigglytuff's Slap Awake in neo4. An attack
+          // whose whole effect is to REMOVE a Special Condition from the
+          // defender, which is a drawback rather than a benefit - and on Jynx it
+          // is the price of 20 damage over Good Night's 10.
+          //
+          // `only` narrows it to named conditions; absent clears them all.
+          if (!def) break;
+          // NOT gated on `blocked`. A Barrier protects a Pokemon from what an
+          // attack does TO it, and removing its own Sleep is not that - there is
+          // no board on which a player wants their Barrier to keep them asleep.
+          const only = v.only ? [].concat(v.only) : null;
+          const cleared = [];
+          for (const st of ['Asleep', 'Confused', 'Paralyzed', 'Poisoned']) {
+            const key = st.toLowerCase();
+            if (only && only.indexOf(st) < 0) continue;
+            if (def.status[key]) { def.status[key] = false; cleared.push(st); }
+          }
+          this.log(cleared.length
+            ? `${this.nameOf(def)} is no longer ${cleared.join(' or ')}.`
+            : `${this.nameOf(def)} had nothing to shake off.`, 'eff');
+          break;
+        }
         case 'DISCARD_DEF_ENERGY': {
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def || !def.energy.length) { this.log('No Energy to discard.', 'eff'); break; }
@@ -18268,8 +18390,19 @@ class Engine {
           this.log(`${you.name} can't play Trainer cards during their next turn.`, 'eff');
           break;
         case 'BUFF_OWN_ATTACK':
+          // +3, NOT +2, AND THAT IS THE WHOLE CARD. Every other lasting effect
+          // in this file runs through the OPPONENT's next turn — a Barrier, a
+          // retreat lock, Light Screen — and for those `s.turn + 2` is exactly
+          // right. This one runs through OUR next turn, which is one further on.
+          //
+          // It shipped with +2 and Jungle Scyther's Swords Dance therefore did
+          // NOTHING, for every game ever played with that card: the buff expired
+          // at the start of the very turn it existed to arm. Found 10 Sep 2026
+          // while building Lt. Surge's Rattata, whose Focus Energy is the same
+          // effect, and caught because the new card's test asserted the damage
+          // rather than the effect being present.
           atk.effects.push({ kind: 'ATTACK_BUFF', name: v.attack, base: v.base,
-                             label: v.label || 'Swords Dance', expireAtStartOfTurn: s.turn + 2 });
+                             label: v.label || 'Swords Dance', expireAtStartOfTurn: s.turn + 3 });
           this.log(`${card.name}'s ${v.attack} does ${v.base} during your next turn.`, 'eff');
           break;
         case 'HEAL_SELF_EQUAL_DAMAGE': {
@@ -19034,7 +19167,12 @@ class Engine {
       // is a one-turn effect an attack leaves behind. Applied ONCE if either is
       // present rather than compounding — no card in the era can carry both, and
       // halving twice would be a rule nothing prints.
-      const halve = this.activePower(defSlot, 'DAMAGE_HALVE')
+      // `raw` is Swift, and it stops at the DEFENDER's own defences. Bench
+      // Guard is deliberately NOT skipped: it lives on a different Pokemon and
+      // moves the hit rather than reducing it, so it is not "an effect on the
+      // Defending Pokemon" in the sense this sentence means.
+      const halve = opts.raw ? null
+                 : this.activePower(defSlot, 'DAMAGE_HALVE')
                  || defSlot.effects.find(e => e.kind === 'DAMAGE_HALVE');
       if (halve) {
         dmg = Math.floor(dmg / 2 / 10) * 10;                 // "rounded DOWN to the nearest 10"
@@ -19053,7 +19191,7 @@ class Engine {
       //
       // A REDUCTION, NOT A BARRIER — "(Any other effects of attacks still
       // happen)" — so statuses, discards and switches all land untouched.
-      const soft = this.activePower(defSlot, 'DAMAGE_REDUCE');
+      const soft = opts.raw ? null : this.activePower(defSlot, 'DAMAGE_REDUCE');
       if (soft && dmg > 0) {
         dmg = Math.max(0, dmg - (soft.n || 10));
         steps.push(`${soft.name}: -${soft.n || 10} -> ${dmg}.`);
@@ -19069,7 +19207,7 @@ class Engine {
       //
       // "(including your own)" is the card telling us NOT to scope this by side,
       // and a bench splash from our own Selfdestruct is exactly the case it names.
-      const bar = this.activePower(defSlot, 'REDUCE_FROM_BASIC');
+      const bar = opts.raw ? null : this.activePower(defSlot, 'REDUCE_FROM_BASIC');
       if (bar && atkSlot && dmg >= (bar.atLeast || 20)
           && topCard(this.db, atkSlot).stage === 'Basic') {
         dmg = bar.to === undefined ? 10 : bar.to;
@@ -19077,10 +19215,10 @@ class Engine {
       }
     }
     let prevented = false;
-    const absolute = defSlot.effects.find(e => e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS');
-    const threshold = defSlot.effects.find(e => e.kind === 'PREVENT_UP_TO');
+    const absolute = opts.raw ? null : defSlot.effects.find(e => e.kind === 'PREVENT_ALL_DAMAGE' || e.kind === 'PREVENT_ALL_EFFECTS');
+    const threshold = opts.raw ? null : defSlot.effects.find(e => e.kind === 'PREVENT_UP_TO');
     // Mr. Mime. The inverse of Harden: big hits bounce, small ones land.
-    const wall = this.activePower(defSlot, 'PREVENT_AT_LEAST');
+    const wall = opts.raw ? null : this.activePower(defSlot, 'PREVENT_AT_LEAST');
     if (absolute) {
       if (dmg > 0) { steps.push(`All damage to ${D.name} is prevented.`); prevented = true; }
       dmg = 0;
