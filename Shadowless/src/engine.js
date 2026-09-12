@@ -2561,6 +2561,13 @@ class Engine {
       if (v.v === 'COST_DISCARD_ALL_ENERGY') {
         if (p.active.energy.length === 0) return { ok: false, why: 'No Energy to discard' };
       }
+      if (v.v === 'REQUIRE_OWN_BENCH') {
+        // Brock's Zubat's Alert: "You can't use this attack if your Bench is
+        // empty." The mirror of the check below, and needed for the same reason
+        // - SWITCH_SELF_CHOOSE degrades quietly to a no-op with nowhere to go,
+        // so without this the card is offered and does half of what it says.
+        if (!this.state.players[pi].bench.length) return { ok: false, why: 'Your Bench is empty' };
+      }
       if (v.v === 'REQUIRE_OPP_BENCH') {
         // `opp()` reads state.active and takes no argument, so it is the wrong
         // call here — a legality check must answer for the pi it was ASKED about.
@@ -5025,6 +5032,16 @@ class Engine {
         // Deferred to the post-damage phase like every other self-status: the
         // card says "after doing damage", and STATUS_SELF deliberately ignores
         // the defender's Barrier for the same reason.
+        // Full Speed Charge. The SAME roll pays both ways - heads hurt them,
+        // tails hurt us - so it cannot be two verbs: two rolls could come back
+        // all heads on one and all tails on the other, which no coin can do.
+        if (v.recoilPerTails) {
+          const tails = v.coins - h;
+          if (tails > 0) {
+            pendingRecoil += tails * v.recoilPerTails;
+            this.log(`${tails} tail(s) -> ${card.name} will take ${tails * v.recoilPerTails}.`);
+          }
+        }
         if (v.selfStatusAtHeads && h >= v.selfStatusAtHeads.n) {
           selfStatus.push(v.selfStatusAtHeads.s);
           this.log(`${h} heads -> ${card.name} will be ${v.selfStatusAtHeads.s}.`, 'status');
@@ -5230,6 +5247,19 @@ class Engine {
         for (let i = 0; i < n7; i++) if (!this.flip(`their coin ${i + 1}/${n7}`)) tails7++;
         base = v.per * tails7;
         this.log(`${tails7} of ${n7} tails -> ${base} damage.`);
+      } else if (v.v === 'MILL_FOR_DAMAGE') {
+        // Shaped rather than applied: the mill happens HERE so its result can
+        // set the base damage, and the effect-phase case above is only reached
+        // by scripts that mill without scaling off it.
+        const milled2 = me.deck.splice(0, Math.min(v.n || 5, me.deck.length));
+        let hits2 = 0;
+        for (const x of milled2) {
+          const cc = this.db[x.id];
+          if (cc && cc.kind === 'energy' && energyIsType(this.db, x, v.t)) hits2++;
+          me.discard.push(x);
+        }
+        base = (v.per || 20) * hits2;
+        this.log(`${milled2.length} discarded, ${hits2} ${v.t || ''} Energy -> ${base} damage.`);
       } else if (v.v === 'DMG_PER_ENERGY_HEADS') {
         // Big Eggsplosion: one coin per Energy ATTACHED, not per Energy paid.
         //
@@ -5736,6 +5766,27 @@ class Engine {
           this.log(`${heads7} head(s) -> ${per} off each of ${healed} Pokemon.`, 'eff');
           break;
         }
+        case 'SHUFFLE_HAND_DRAW': {
+          // Erika's Exeggutor's Psychic Exchange. Sabrina's Gaze's shape as an
+          // attack, and a FIXED redraw rather than a matched one - this one is a
+          // leveller where the Gaze deliberately is not.
+          const n8 = me.hand.length;
+          while (me.hand.length) me.deck.push(me.hand.pop());
+          this.shuffle(me.deck);
+          let drew8 = 0;
+          for (let i = 0; i < (v.n || 5) && me.deck.length; i++) { me.hand.push(me.deck.shift()); drew8++; }
+          this.log(`${card.name}: ${n8} away, ${drew8} drawn.`, 'eff');
+          break;
+        }
+        case 'SHUFFLE_OWN_DECK':
+          // Brock's Mankey's Fidget. It really is the whole attack, and it
+          // really does almost nothing - but a deck order is not nothing in a
+          // game with a Peek and a Pokedex in it, so it is scripted rather than
+          // left empty. An empty script here would be indistinguishable from a
+          // card nobody had written.
+          this.shuffle(me.deck);
+          this.log(`${card.name}: the deck is shuffled.`, 'eff');
+          break;
         case 'SEARCH_TO_HAND': {
           // The attack-side tutor, and it delegates to `searchMatches` - the same
           // predicate T_SEARCH_TO_HAND uses - so "does this card match this
@@ -6006,7 +6057,11 @@ class Engine {
             dt = topCard(this.db, def).type;
             if (!dt || dt === 'C') { this.log('The Defending Pokemon is Colorless - Chain Lightning stops there.', 'eff'); break; }
           }
-          for (let pi2 = 0; pi2 < 2; pi2++) {
+          // `side` narrows the walk. Water Ring says "on each player's Bench" and
+          // Blaze says "on your opponent's Bench" - the same sentence with one
+          // clause different, so it is a parameter rather than a second verb.
+          const sides = v.side === 'foe' ? [1 - pi] : v.side === 'mine' ? [pi] : [0, 1];
+          for (const pi2 of sides) {
             for (const b of s.players[pi2].bench) {
               const isType = topCard(this.db, b).type === dt;
               if (v.not ? !isType : isType) this.dealDamage(atk, b, v.n, { noWR: true });
@@ -6538,6 +6593,15 @@ class Engine {
           //
           // Fling therefore RECYCLES their Energy and Vanish BURNS yours, which
           // is a real difference in card power and not a detail to smooth over.
+          // `onTails` is Phoenix Flame: "flip a coin. IF TAILS, shuffle Blaine's
+          // Moltres and all cards attached to it into your deck (AFTER DOING
+          // DAMAGE)." The parenthetical is why this is an effect verb rather
+          // than a cost - the 90 lands either way and only the exit is at risk.
+          if (v.onTails !== undefined || v.flip) {
+            const face = this.flip(v.label || 'stay in?');
+            const goes = v.onTails ? !face : face;
+            if (!goes) { this.log(`${card.name} holds its ground.`, 'eff'); break; }
+          }
           const self = v.target === 'self';
           const sl = self ? atk : def;
           if (!sl) break;

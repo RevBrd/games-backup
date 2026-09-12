@@ -125,6 +125,15 @@
 //     NO_RESISTANCE                ignore RESISTANCE only. NO_WR's narrower
 //                                  sibling - Weakness still doubles and every
 //                                  reduction below still applies (Hook Shot)
+//     REQUIRE_OWN_BENCH            illegal with an empty Bench of your own.
+//                                  The mirror of REQUIRE_OPP_BENCH (Alert)
+//     SHUFFLE_HAND_DRAW {n}        shuffle your hand away and draw a FIXED n.
+//                                  A leveller, where Sabrina's Gaze is not
+//     MILL_FOR_DAMAGE {n, t, per}  discard the top n; damage scales off how many
+//                                  were Energy of type t. The cards go whether
+//                                  any of them counted (Lava Burst)
+//     SHUFFLE_OWN_DECK             shuffle your own deck. It really is the whole
+//                                  attack (Fidget)
 //     SEARCH_TO_HAND {n, ...filter}   the attack-side tutor. Filter keys are
 //                                  searchMatches' own - kind, basic, evolution,
 //                                  nameHas, names, energyBasic, provides. A big
@@ -2404,6 +2413,35 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES POKEMON, pass eight: the last of the tractable ones -------
+  // Two of these needed NOTHING NEW at all, which is worth noting after seven
+  // passes of widening: Misty's Starmie is DMG_PER_SPARE_ENERGY with the cap
+  // Lapras already established, and Blaine's Charmander is a cost verb plus an
+  // effect verb that have both been in the file since Base Set.
+  'gym1-56': { a: [[{ v: 'DMG_PER_SPARE_ENERGY', base: 10, per: 10, t: 'W', maxSpare: 2 }],
+                   [{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }]] },
+  'gym1-61': { a: [[{ v: 'COST_DISCARD_ENERGY', n: 1 }, { v: 'DISCARD_DEF_ENERGY' }], []] },
+  // Phoenix Flame damages FIRST and risks the exit second - "(after doing
+  // damage)" is the card telling us which phase it belongs in.
+  'gym1-1':  { a: [[{ v: 'SHUFFLE_INTO_DECK', target: 'self', attached: 'deck',
+                      onTails: true, label: 'Phoenix Flame' }]] },
+  'gym1-44': { a: [[{ v: 'SHUFFLE_HAND_DRAW', n: 5 }],
+                   [{ v: 'FLIP_BONUS_OR_RECOIL', base: 30, bonus: 10 }]] },
+  // `recoil: 0` IS NOT REDUNDANT HERE. Team Rocket's Rattata prints
+  // Firebreathing's sentence verbatim and spells the zero out, and the
+  // identical-text guard compares the scripts literally rather than for
+  // equivalence - deliberately, because literal sameness is checkable and
+  // equivalence is something somebody has to reason about. Matching it.
+  'gym1-37': { a: [[{ v: 'FLIP_BONUS_OR_RECOIL', base: 10, bonus: 10, recoil: 0 }],
+                   [{ v: 'MILL_FOR_DAMAGE', n: 5, t: 'R', per: 20 }]] },
+  'gym1-62': { a: [[{ v: 'BENCH_SPLASH_TYPED', n: 10, t: 'G', side: 'foe' }]] },  // Blaze
+  // Full Speed Charge pays BOTH ways off one roll of four. Two verbs could come
+  // back all heads on one and all tails on the other, which no coin can do.
+  'gym1-64': { a: [[{ v: 'DMG_PER_HEAD', coins: 3, per: 10 }],
+                   [{ v: 'DMG_PER_HEAD', coins: 4, per: 20, recoilPerTails: 20 }]] },
+  'gym1-68': { a: [[{ v: 'SHUFFLE_OWN_DECK' }],
+                   [{ v: 'DMG_MINUS_PER_COUNTER_SELF', base: 40, per: 10 }]] },
+  'gym1-24': { a: [[{ v: 'REQUIRE_OWN_BENCH' }, { v: 'DRAW', n: 1 }, { v: 'SWITCH_SELF_CHOOSE' }], []] },
   // ---- GYM HEROES POKEMON, pass seven: SEARCHES AND COIN THRESHOLDS ---------
   // Two families at once because both are the same kind of widening: a verb that
   // did one thing learning to do it N times or under a condition.

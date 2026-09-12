@@ -726,6 +726,17 @@ class AI {
         // A tutor. Worth a card plus what it fetches, which cardKeepValue
         // already prices — reaching for it rather than inventing a number.
         case 'SEARCH_TO_HAND': flags.tutor = { n: v.n || 1, filter: v }; break;
+        // A fixed redraw. Worth the difference between what we would hold
+        // after and what we hold now, which is the same arithmetic T_GAZE
+        // does and is priced the same way.
+        case 'SHUFFLE_HAND_DRAW': flags.redraw = v.n || 5; break;
+        // Lava Burst mills five whatever happens, so the damage is already
+        // in the forecast and what is left to price is the DECK COST.
+        case 'MILL_FOR_DAMAGE': flags.mill = v.n || 5; break;
+        // Fidget genuinely does almost nothing. Scored at nothing rather
+        // than left out, so the coverage guard can tell 'priced at zero'
+        // from 'nobody looked at it'.
+        case 'SHUFFLE_OWN_DECK': break;
         case 'HEAL_EACH_PER_HEAD': flags.healEach = { coins: v.coins || 3, n: v.n || 1 }; break;
         case 'CLEAR_DEF_STATUS': flags.wakeThem = v.only ? [].concat(v.only) : null; break;
         case 'DMG_PER_OWN_BENCH': {
@@ -1619,6 +1630,9 @@ class AI {
         s -= worth;
       }
     }
+
+    if (f.flags.redraw) s += (f.flags.redraw - me.hand.length) * W.drawCard * 0.5;
+    if (f.flags.mill) s += this.deckRisk(pi, f.flags.mill);
 
     // A tutor on an attack, priced FLAT and deliberately so.
     //

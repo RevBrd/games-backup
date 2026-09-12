@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 18,
+  gym1: 9,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -475,6 +475,7 @@ const UNSCORED_ON_PURPOSE = new Set([
   'REQUIRE_DEF_STATUS',
   'REQUIRE_SELF_ENERGY',
   'REQUIRE_OPP_BENCH',
+  'REQUIRE_OWN_BENCH',
   'REQUIRE_EQUAL_ENERGY',
 
 
@@ -563,6 +564,10 @@ const PROVISIONAL = new Set([
   // price is cardKeepValue and scoreAttack cannot reach it - see AI.md item 19.
   // It is a flat multiple of a draw instead.
   'SEARCH_TO_HAND', 'HEAL_EACH_PER_HEAD',
+  // Pass eight, 12 Sep 2026. SHUFFLE_OWN_DECK is scored at literal zero rather
+  // than omitted, so the coverage guard can tell "priced at nothing" from
+  // "nobody looked at it" - the distinction that whole guard exists for.
+  'SHUFFLE_HAND_DRAW', 'MILL_FOR_DAMAGE',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',

@@ -8705,5 +8705,128 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- THE LAST OF THE TRACTABLE ONES -----------------------------------------
+// Two of these nine needed nothing new at all, which is the point worth testing
+// after seven passes of widening: the file had already grown the shapes.
+{
+  const { setup } = require('./lib/board.js');
+  const atk = (E, i) => E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === i));
+
+  T('Phoenix Flame lands its 90 either way, and only risks the exit', () => {
+    // "(after doing damage)" is the card naming its own phase. A cost-side coin
+    // would let a tails cancel the attack, which is a different and much worse card.
+    const stay = setup({ me: { card: 'gym1-1', energy: '5 Fire' },
+      them: { card: 'base1:Chansey' } }).E;
+    stay.dev.forceFlip = 'H';
+    atk(stay, 0);
+    eq(stay.state.players[1].active.dmg, 90, 'heads: 90 and it stays');
+    eq(!!stay.state.players[0].active, true, 'Moltres is still out');
+
+    const go = setup({ me: { card: 'gym1-1', energy: '5 Fire' },
+      them: { card: 'base1:Chansey' } }).E;
+    go.dev.forceFlip = 'T';
+    const d0 = go.state.players[0].deck.length;
+    atk(go, 0);
+    eq(go.state.players[1].active.dmg, 90, 'tails: STILL 90');
+    eq(go.state.players[0].active, null, 'but Moltres left');
+    // Into the DECK with its Energy, not the discard — it can come back.
+    return eq(go.state.players[0].deck.length > d0, true, 'shuffled away, not burned');
+  });
+
+  T('Full Speed Charge pays BOTH ways off one roll of four', () => {
+    // Two verbs could come back all heads on one and all tails on the other,
+    // which no coin can do. One roll, read twice.
+    const h = setup({ me: { card: 'gym1-64', energy: '3 Psychic' },
+      them: { card: 'base1:Chansey' } }).E;
+    h.dev.forceFlip = 'H'; h.flipsThisAttack = 0;
+    atk(h, 1);
+    eq(h.state.players[1].active.dmg, 80, 'four heads: 80 to them');
+    eq(h.state.players[0].active.dmg, 0, 'and nothing to us');
+    eq(h.flipsThisAttack, 4, 'off four coins, not eight');
+
+    const t = setup({ me: { card: 'gym1-64', energy: '3 Psychic' },
+      them: { card: 'base1:Chansey' }, myBench: [{ card: 'base1:Machop' }] }).E;
+    t.dev.forceFlip = 'T';
+    atk(t, 1);
+    eq(t.state.players[1].active.dmg, 0, 'four tails: nothing to them');
+    // 80 into a 70 HP Tauros. The card really can kill itself outright and the
+    // Bench is what stops the game ending there.
+    return eq(t.state.players[0].active, null, 'and it knocks ITSELF out');
+  });
+
+  T('Blaze hits THEIR Grass Bench and neither of the other two groups', () => {
+    // `side: 'foe'` — Water Ring says "each player's Bench" and Blaze says "your
+    // opponent's", which is one clause apart and therefore a parameter.
+    const E = setup({ me: { card: 'gym1-62', energy: '2 Fire' },
+      them: { card: 'base1:Chansey' },
+      theirBench: [{ card: 'base1:Bulbasaur' }, { card: 'base1:Machop' }],
+      myBench: [{ card: 'base1:Bulbasaur' }] }).E;
+    atk(E, 0);
+    eq(E.state.players[1].bench[0].dmg, 10, 'their Grass took it');
+    eq(E.state.players[1].bench[1].dmg, 0, 'their non-Grass did not');
+    return eq(E.state.players[0].bench[0].dmg, 0, 'and OUR Grass is untouched');
+  });
+
+  T('Lava Burst mills five ONCE and scales off what it turned up', () => {
+    // The verb sits in the damage-shaping phase because the mill decides the
+    // damage. The first draft ALSO had it in the effect phase — both loops walk
+    // the same script, so it milled ten.
+    const E = setup({ me: { card: 'gym1-37', energy: '3 Fire' },
+      them: { card: 'base1:Chansey' } }).E;
+    const d = E.state.players[0].deck.length;
+    atk(E, 1);
+    eq(d - E.state.players[0].deck.length, 5, 'exactly five left the deck');
+    return eq(E.state.players[0].discard.length >= 5, true, 'and all of them are in the discard');
+  });
+
+  T('Karate Chop shrinks as Mankey takes damage', () => {
+    // Blastoise: neither WEAK nor RESISTANT to Fighting, picked by querying
+    // wkType and rsType rather than by eye. Chansey doubled the 40 into 80 and
+    // Gyarados resisted it down to 10 — two wrong defenders in a row, both
+    // caught by the assertion rather than by the choosing.
+    const fresh = setup({ me: { card: 'gym1-68', energy: '2 Fighting' },
+      them: { card: 'base1:Blastoise' } }).E;
+    atk(fresh, 1);
+    eq(fresh.state.players[1].active.dmg, 40, 'undamaged: the full 40');
+    const hurt = setup({ me: { card: 'gym1-68', energy: '2 Fighting' },
+      them: { card: 'base1:Blastoise' } }).E;
+    hurt.state.players[0].active.dmg = 20;
+    atk(hurt, 1);
+    return eq(hurt.state.players[1].active.dmg, 20, 'two counters on: 20');
+  });
+
+  T('TWO OF THIS BATCH NEEDED NOTHING NEW', () => {
+    // Worth asserting as a fact about the file rather than a fact about the
+    // cards: after seven passes of widening, Misty's Starmie is the cap Lapras
+    // established and Blaine's Charmander is a cost verb plus an effect verb
+    // that have both been here since Base Set.
+    const starmie = setup({ me: { card: 'gym1-56', energy: '3 Water' },
+      them: { card: 'base1:Chansey' } }).E;
+    atk(starmie, 0);
+    // One Water pays the cost, two spare, capped at +20.
+    eq(starmie.state.players[1].active.dmg, 30, 'Water Gun caps its bonus at 20');
+
+    const kindle = setup({ me: { card: 'gym1-61', energy: '2 Fire' },
+      them: { card: 'base1:Chansey', energy: '2 Psychic' } }).E;
+    atk(kindle, 0);
+    eq(kindle.state.players[0].active.energy.length, 1, 'Kindle paid one of ours');
+    return eq(kindle.state.players[1].active.energy.length, 1, 'and took one of theirs');
+  });
+
+  T('Alert draws, then switches, and is refused with an empty Bench', () => {
+    const E = setup({ me: { card: 'gym1-24', energy: '1 Psychic' },
+      them: { card: 'base1:Chansey' }, myBench: [{ card: 'base1:Machop' }] }).E;
+    const before = E.state.players[0].hand.length;
+    atk(E, 0);
+    eq(E.state.players[0].hand.length - before, 1, 'one card drawn');
+    eq(E.nameOf(E.state.players[0].active), 'Machop', 'and the Bench one came up');
+    const alone = setup({ me: { card: 'gym1-24', energy: '1 Psychic' },
+      them: { card: 'base1:Chansey' } }).E;
+    return eq(alone.legalActions(0).some(a => a.t === 'attack' && a.idx === 0), false,
+      'no Bench, no Alert');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
