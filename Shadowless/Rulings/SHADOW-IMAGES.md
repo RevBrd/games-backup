@@ -84,3 +84,33 @@ Swap.** Two reasons, and they are not equally strong:
 | **A defender's coin thrown during someone else's attack is not that attack's coin** | ESP re-flips the attack's coins; Transparency and Shadow Images both throw one |
 | **An effect with an end condition is a promise; check the promise, don't guard every route** | Benched and evolved are found by the settle, not by fifteen call sites |
 | **Read a counter where its consumer reads it** | The ESP counter looked wrong only because it was read after the turn had moved on |
+
+## Poison DOES end it — Trevor, 12 Sep 2026
+
+**The call above is overturned, and the reason it was wrong is worth more than the call.**
+
+Trevor, the same day: *"if we go strictly by the wording on the card, I think poisoning should end it,
+as should any theoretical trainer card or pokemon power that (somehow) does damage to it before the
+main attack."* Printed text is **step 1** of the rulings order. The case for "no" was a playability
+argument — **step 4** — and it was being used to overrule step 1, which is backwards. His playability
+point also ran the other way from mine: *"It's a strong move but making it beatable with limited
+creative counters keeps things kinda interesting."*
+
+**It turns Poison from a loophole into a counter, because of the card's own clause.** An attack that
+misses on tails still poisons — *"any other effects of the attack still happen"* — and the tick
+between turns then strips Shadow Images. So a poisoning attack is a real answer to the card even on
+the coin it loses. The first version of this entry saw only the loophole.
+
+**How it is built now.** A counter that lands is damage taken, whatever put it there:
+
+- **Immediately**, at every site known to land one — `tookDamage` is now called from the Poison tick
+  and Damage Swap as well, so the log says so at the moment it happens.
+- **As a guarantee**, in `settleLapses`: the effect records the damage total when it goes up, and the
+  settle after every action ends it on any increase. A site nobody hooked — Pain Amplifier, landing
+  in the same batch, or a verb not written yet — cannot slip past. **A heal lowers the mark**, so
+  damage is measured from the lowest point since it went up.
+
+**What the bot does and does not know.** It will not put Shadow Images up while Poisoned, since the tick
+would end it before anyone could attack into it. It does **not** yet go looking for Poison as the
+counter to an opponent's Shadow Images — a real strategy this ruling creates, named here rather than
+guessed at.

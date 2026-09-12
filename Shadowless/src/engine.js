@@ -1017,7 +1017,7 @@ class Engine {
       const a = s.players[i].active;
       if (a && a.status.poisoned) {
         const pd = a.poisonDamage || 10;
-        a.dmg += pd;
+        a.dmg += pd; this.tookDamage(a);
         this.log(`${this.nameOf(a)} takes ${pd} from Poison. (${a.dmg} total)`, 'status');
       }
     }
@@ -1410,8 +1410,16 @@ class Engine {
       for (const sl of this.allSlots(i)) {
         const k = sl.effects.findIndex(e => e.kind === 'SHADOW_IMAGES');
         if (k < 0) continue;
+        const e = sl.effects[k];
+        // THE CATCH-ALL for "takes damage". tookDamage removes it the moment a
+        // known site lands a counter; this watches the total, so any site that is
+        // not hooked still ends it. A HEAL LOWERS THE MARK: damage is measured from
+        // the lowest point since it went up, so healing 30 to 10 and taking 10 is
+        // damage taken even though 20 is below where it started.
+        if (e.dmgMark === undefined || sl.dmg < e.dmgMark) e.dmgMark = sl.dmg;
         const why = me.active !== sl ? 'is Benched'
-          : sl.stack.length !== sl.effects[k].stackMark ? 'evolves' : null;
+          : sl.stack.length !== e.stackMark ? 'evolves'
+          : sl.dmg > e.dmgMark ? 'takes damage' : null;
         if (!why) continue;
         sl.effects.splice(k, 1);
         this.log(`${this.nameOf(sl)} ${why} - its Shadow Images are gone.`, 'eff');
@@ -2198,7 +2206,7 @@ class Engine {
         if (from.dmg < 10) return this.fail(`${this.nameOf(from)} has no damage counters`);
         const tc = topCard(this.db, to);
         if (!p.allowKO && to.dmg + 10 >= tc.hp) return this.fail(`That would Knock Out ${tc.name}`);
-        from.dmg -= 10; to.dmg += 10;
+        from.dmg -= 10; to.dmg += 10; this.tookDamage(to);
         if (p.once) this.markPower(slot);
         this.log(`${p.name}: 1 damage counter moved from ${this.nameOf(from)} `
           + `to ${this.nameOf(to)}. (${Math.max(0, tc.hp - to.dmg)}/${tc.hp} left)`, 'eff');
@@ -4903,10 +4911,14 @@ class Engine {
   // lingering effect with no card behind it and runs to its own expiry. `e.card`
   // is what tells them apart and it was already in the data.
   // "This effect lasts until Rocket's Scyther TAKES DAMAGE." Called from every
-  // place something DOES damage - an attack, recoil, Rainbow Energy, Digger,
-  // Bench Guard - and deliberately NOT from Poison or Damage Swap, which PLACE or
-  // MOVE damage counters. That line is a ruling this repo had never settled; see
-  // Rulings/SHADOW-IMAGES.md for why it falls here and what flipping it costs.
+  // place a damage counter is KNOWN to land - an attack, recoil, Rainbow Energy,
+  // Digger, Bench Guard, Poison between turns, Damage Swap - so the log says so
+  // at the moment it happens. Trevor's ruling, 12 Sep 2026, strictly by the
+  // wording: a counter that lands is damage taken, whatever put it there.
+  //
+  // This is the IMMEDIATE half. settleLapses is the guarantee: it watches the
+  // damage total itself, so a site nobody hooked - a verb not written yet - still
+  // ends it. See Rulings/SHADOW-IMAGES.md.
   tookDamage(slot) {
     const k = slot.effects.findIndex(e => e.kind === 'SHADOW_IMAGES');
     if (k < 0) return;
@@ -5620,7 +5632,7 @@ class Engine {
             break;
           }
           atk.effects.push({ kind: 'SHADOW_IMAGES', label: v.label || 'Shadow Images',
-                             stackMark: atk.stack.length });
+                             stackMark: atk.stack.length, dmgMark: atk.dmg });
           this.log(`${card.name} blurs into Shadow Images.`, 'eff');
           break;
         }

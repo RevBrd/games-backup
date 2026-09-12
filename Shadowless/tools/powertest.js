@@ -8839,7 +8839,7 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   const { AI } = require('../src/ai.js');
   const atkP = (E, pi, i) => E.act(pi, E.legalActions(pi).find(a => a.t === 'attack' && a.idx === i));
   const shade = (sl) => sl.effects.find(e => e.kind === 'SHADOW_IMAGES');
-  const put = (sl) => sl.effects.push({ kind: 'SHADOW_IMAGES', label: 'Shadow Images', stackMark: sl.stack.length });
+  const put = (sl) => sl.effects.push({ kind: 'SHADOW_IMAGES', label: 'Shadow Images', stackMark: sl.stack.length, dmgMark: sl.dmg });
   const said = (E, from) => E.state.log.slice(from || 0).map(l => l.text || l).join(' | ');
   const shadowCoins = (E, from) => E.state.log.slice(from || 0).map(l => l.text || l)
     .filter(t => /Coin flip/.test(t) && /Shadow Images/.test(t)).length;
@@ -8922,15 +8922,42 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
     return eq(sc.dmg > 0 && !shade(sc), true, 'the damage lands and ends it');
   });
 
-  T('POISON does not end it — a counter placed is not damage taken', () => {
-    // The one call in this pair the repo had no ruling for. See
-    // Rulings/SHADOW-IMAGES.md; flipping it is one line in betweenTurns.
+  T('POISON ENDS IT - a counter that lands is damage taken, whatever put it there', () => {
+    // Trevor's ruling, 12 Sep 2026, strictly by the wording. The first build said
+    // the opposite on a playability argument that was outranking the printed
+    // text, which is the wrong way round in this project's rulings order. It also
+    // makes Poison a real COUNTER: an attack that misses on tails still poisons,
+    // because its other effects still happen, and the tick then strips it.
     const E = setup({ me: { card: 'gym1-13', energy: '1 Grass' }, them: { card: 'base1:Venusaur' } }).E;
     const sc = E.state.players[0].active;
     put(sc); sc.status.poisoned = true;
     E.act(0, { t: 'pass' });
     eq(sc.dmg, 10, 'the Poison ticked');
-    return eq(!!shade(sc), true, 'and Shadow Images is still up');
+    return eq(!!shade(sc), false, 'and Shadow Images is gone');
+  });
+
+  T('...and a counter from a site nobody hooked still ends it', () => {
+    // tookDamage is called where damage is known to land; the settle after every
+    // action is the guarantee for everywhere else, including verbs not written
+    // yet. Simulated as a bare counter nobody announced.
+    const E = setup({ me: { card: 'gym1-13', energy: '1 Grass' }, them: { card: 'base1:Venusaur' } }).E;
+    const sc = E.state.players[0].active;
+    put(sc);
+    sc.dmg += 10;
+    E.act(0, { t: 'pass' });
+    return eq(!!shade(sc), false, 'the settle caught it');
+  });
+
+  T('...but a HEAL lowers the mark, so damage counts from the lowest point', () => {
+    // Put up on 30, healed to 10, then back up to 20. 20 is below where it
+    // started and is still damage taken, because it is above where it had got to.
+    const E = setup({ me: { card: 'gym1-13', energy: '3 Grass' }, them: { card: 'base1:Venusaur' } }).E;
+    const sc = E.state.players[0].active;
+    sc.dmg = 30; put(sc);
+    sc.dmg = 10; E.act(0, { t: 'pass' }); E.act(1, { t: 'pass' });
+    eq(!!shade(sc), true, 'a heal alone does not end it');
+    sc.dmg = 20; E.act(0, { t: 'pass' });
+    return eq(!!shade(sc), false, 'the rise after the heal does');
   });
 
   T('Going to the Bench ends it, found by the settle rather than the retreat', () => {

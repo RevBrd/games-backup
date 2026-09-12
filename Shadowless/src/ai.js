@@ -730,7 +730,13 @@ class AI {
         // and because the opponent can simply not attack into it - Swift ignores
         // it outright. Worth nothing while it is already standing.
         case 'SHADOW_IMAGES':
-          flags.shield = atkSlot.effects.some(e => e.kind === 'SHADOW_IMAGES') ? 0 : 0.75;
+          // And worth nothing while POISONED: the tick between turns lands a
+          // counter, which ends it before the opponent can ever attack into it -
+          // Trevor's ruling, 12 Sep. The bot does not yet go LOOKING for Poison as
+          // the counter to someone else's Shadow Images; that is named in
+          // Rulings/SHADOW-IMAGES.md rather than guessed at.
+          flags.shield = (atkSlot.effects.some(e => e.kind === 'SHADOW_IMAGES')
+            || atkSlot.status.poisoned) ? 0 : 0.75;
           break;
         case 'RETURN_OWN_TO_HAND': flags.returnOwn = true; break;
         // A tutor. Worth a card plus what it fetches, which cardKeepValue
