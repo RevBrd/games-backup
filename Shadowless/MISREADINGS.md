@@ -300,3 +300,25 @@ apart.
 **A threshold with a lower bound asserts that the healthy value cannot improve.** Where zero is the
 good reading, the bound belongs on one side only. Worth checking any other "normal range" in this
 tree against that.
+
+## The break-test that silently did not break — 11 Sep 2026
+
+**The discipline in this repo is to revert a fix and watch the assertion go red.** It has caught a
+guard matching two empty sets, a regex holding a literal backspace, and a test that measured nothing
+because `E.flip` had been stubbed out from under it.
+
+**This is the failure mode of that discipline itself.** The edit that was supposed to break the code
+was a scripted multi-line replace with the wrong indentation, so it matched nothing and wrote the
+file back unchanged. The suite then ran against the **working** code and came back green — and green
+is what "this test cannot fail" looks like. One more step and a perfectly good regression row would
+have been rewritten or deleted for being untestable.
+
+**Every scripted edit in this project asserts its match count, and the break-test is the one place
+that had been skipped** — because it is throwaway, and throwaway edits feel like they do not need
+the ceremony. They need it more: a no-op edit to real source fails loudly at the next test run, while
+a no-op *break* produces a **false reassurance** and no symptom at all.
+
+**The rule.** Assert the match, or print the count, on the breaking edit too. And when a
+break-test comes back green, suspect the edit before suspecting the test — the second run here
+printed `sites with +3: 2` and turned three rows red immediately, including two on other cards that
+shared the constant and would have gone unexamined.

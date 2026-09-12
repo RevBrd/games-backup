@@ -765,7 +765,14 @@ class AI {
         // main damage could not, and it ignores Weakness, Resistance and any
         // reduction. Passed through rather than folded in, because the scorer
         // that reads `snipe` needs to know which targets were available.
-        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg, any: v.target === 'any' }; break;
+        // `flip` halves it — the target is still chosen, but the hit is a coin.
+        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.flip ? v.dmg * 0.5 : v.dmg,
+          any: v.target === 'any' }; break;
+        // Tunneling costs us NEXT turn's attack, which is the largest
+        // self-imposed cost in the set. Priced off what an attack is worth
+        // right now, since that is the closest available stand-in for what
+        // the turn we are giving up would have been worth.
+        case 'SELF_CANT_ATTACK_NEXT_TURN': flags.loseNextAttack = true; break;
         // Slowpoke's Afternoon Nap. An attack that does no damage at all and
         // fetches an Energy onto the attacker instead — so if this is not scored
         // it is an attack worth literally nothing and the bot will never use it,
@@ -1603,6 +1610,19 @@ class AI {
         you.active.status[key] = true;
         s -= worth;
       }
+    }
+
+    if (f.flags.loseNextAttack) {
+      // PROVISIONAL, and NOT `bestAttackScore` — that calls `scoreAttack` for
+      // every attack, and we are inside `scoreAttack`. The first draft did, and
+      // the gate came back with "Maximum call stack size exceeded" from a
+      // Stadium test three files away.
+      //
+      // `bestAffordableDamage` answers the same question one level lower, in
+      // printed damage rather than in score, and reads the board without
+      // re-entering the scorer. The unit differs, so the multiplier absorbs it.
+      const lose = this.bestAffordableDamage(pi, me.active);
+      if (lose > 0) s -= lose * this.W.damage * 0.8;
     }
 
     if (f.flags.shuffleAway === 'defender' && you.active) {

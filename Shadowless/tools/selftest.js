@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 33,
+  gym1: 26,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -555,6 +555,9 @@ const PROVISIONAL = new Set([
   // branches are not - an empty Prize pile is a win, so those return +/-1e6 and
   // are exact rather than tuned.
   'T_SWAP_IN_BASIC', 'T_SHUFFLE_OPP_HAND_RANDOM', 'T_TREATY', 'T_MINION',
+  // Tunneling's self-lock, 11 Sep 2026. Priced at 0.8 of THIS turn's best attack
+  // as a stand-in for next turn's, which the bot cannot forecast.
+  'SELF_CANT_ATTACK_NEXT_TURN',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',

@@ -8405,5 +8405,135 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- THE BENCH-DAMAGE FAMILY ------------------------------------------------
+// Seven cards, two small flags on verbs that already chose targets, deduped
+// them, and asked each one separately whether it was protected. What they could
+// not do was throw a coin, or match the OPPOSITE of a type.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  const atk = (E, i) => E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === i));
+  const foes = (n) => { const b = []; for (let i = 0; i < n; i++) b.push({ card: 'base1:Chansey' }); return b; };
+
+  T('Rock Slide hits three DIFFERENT Benched Pokemon', () => {
+    const E = setup({ me: { card: 'gym1-20', energy: '3 Fighting' },
+      them: { card: 'base1:Venusaur' }, theirBench: foes(4) }).E;
+    atk(E, 0);
+    const hit = E.state.players[1].bench.filter(b => b.dmg === 10).length;
+    eq(hit, 3, 'three took 10 each');
+    // The dedupe is the load-bearing part and it predates this card — a supplied
+    // list of [2,2,2] once put 30 on one Pokemon.
+    return eq(E.state.players[1].bench.some(b => b.dmg > 10), false, 'and none took it twice');
+  });
+
+  T('Spiral Dive reaches the ACTIVE too, which is what "each" means here', () => {
+    // target:'any' with n large enough for a full board. No new verb — the two
+    // scopes were already there because Team Rocket needed them.
+    const E = setup({ me: { card: 'gym1-39', energy: '3 Psychic' },
+      them: { card: 'base1:Venusaur' }, theirBench: foes(3) }).E;
+    atk(E, 1);
+    eq(E.state.players[1].active.dmg, 10, 'the Active took 10');
+    return eq(E.state.players[1].bench.every(b => b.dmg === 10), true, 'and so did all three Bench');
+  });
+
+  T('Lucky Shot chooses its target BEFORE the coin decides', () => {
+    // The printed order, and the one that matters: a coin thrown first would let
+    // tails skip the choosing, and the scorer fills that choice in.
+    const h = setup({ me: { card: 'gym1-38', energy: '2 Fighting' },
+      them: { card: 'base1:Venusaur' }, theirBench: foes(2) }).E;
+    h.dev.forceFlip = 'H';
+    atk(h, 1);
+    eq(h.state.players[1].bench.filter(b => b.dmg === 30).length, 1, 'heads: one takes 30');
+    const t = setup({ me: { card: 'gym1-38', energy: '2 Fighting' },
+      them: { card: 'base1:Venusaur' }, theirBench: foes(2) }).E;
+    t.dev.forceFlip = 'T';
+    atk(t, 1);
+    return eq(t.state.players[1].bench.every(b => b.dmg === 0), true, 'tails: nothing at all');
+  });
+
+  T('...and Lucky Shot is refused with no Bench to shoot at', () => {
+    const E = setup({ me: { card: 'gym1-38', energy: '2 Fighting' },
+      them: { card: 'base1:Venusaur' } }).E;
+    return eq(E.legalActions(0).some(a => a.t === 'attack' && a.idx === 1), false,
+      "the card's own clause");
+  });
+
+  T('Water Ring hits everything that ISN\'T Water, on BOTH benches', () => {
+    // The inverted predicate, and the both-sides walk that was already there.
+    // Squirtle is Water and must be untouched on either side.
+    const E = setup({ me: { card: 'gym1-31', energy: '4 Water' },
+      them: { card: 'base1:Venusaur' },
+      myBench: [{ card: 'base1:Squirtle' }, { card: 'base1:Machop' }],
+      theirBench: [{ card: 'base1:Squirtle' }, { card: 'base1:Machop' }] }).E;
+    atk(E, 0);
+    const mine = E.state.players[0].bench, theirs = E.state.players[1].bench;
+    eq(mine.find(b => E.nameOf(b) === 'Machop').dmg, 10, 'our own non-Water takes it');
+    eq(theirs.find(b => E.nameOf(b) === 'Machop').dmg, 10, 'and so does theirs');
+    eq(mine.find(b => E.nameOf(b) === 'Squirtle').dmg, 0, 'our Water is spared');
+    return eq(theirs.find(b => E.nameOf(b) === 'Squirtle').dmg, 0, 'and so is theirs');
+  });
+
+  T('TUNNELING LOCKS ITSELF, and the lock survives to the right turn', () => {
+    // The second verb in the engine whose effect runs through OUR next turn
+    // rather than the opponent's, so it expires at turn+3. Swords Dance shipped
+    // with +2 and therefore never worked at all — this row is that lesson
+    // applied before the fact rather than after.
+    const E = setup({ me: { card: 'gym1-21', energy: '3 Fighting' },
+      them: { card: 'base1:Venusaur' }, theirBench: foes(2) }).E;
+    atk(E, 1);
+    eq(E.state.players[1].bench.filter(b => b.dmg === 20).length, 2, 'two Bench took 20');
+    E.act(1, { t: 'pass' });
+    // Our next turn: no attack is legal at all, and it is not about the target.
+    eq(E.legalActions(0).some(a => a.t === 'attack'), false, 'we cannot attack this turn');
+    E.act(0, { t: 'pass' });
+    E.act(1, { t: 'pass' });
+    return eq(E.legalActions(0).some(a => a.t === 'attack'), true, 'but we can the turn after');
+  });
+
+  T('...and an unconditional lock names nobody, unlike Tail Wag\'s', () => {
+    // CANT_ATTACK was built scoped to one opponent by uid. An absent fromUid is
+    // the new case and it has to block outright — if it fell through to the uid
+    // comparison it would match nothing and the lock would do nothing.
+    const E = setup({ me: { card: 'gym1-21', energy: '3 Fighting' },
+      them: { card: 'base1:Venusaur' }, theirBench: foes(1) }).E;
+    atk(E, 1);
+    const eff = E.state.players[0].active.effects.find(e => e.kind === 'CANT_ATTACK');
+    eq(!!eff, true, 'the lock is there');
+    return eq(eff.fromUid, undefined, 'and it names no opponent');
+  });
+
+  T('Blizzard is one coin deciding WHOSE Bench, not two', () => {
+    const h = setup({ me: { card: 'gym1-4', energy: '3 Psychic' },
+      them: { card: 'base1:Venusaur' }, theirBench: foes(2), myBench: foes(2) }).E;
+    h.dev.forceFlip = 'H'; h.flipsThisAttack = 0;
+    atk(h, 0);
+    eq(h.flipsThisAttack, 1, 'exactly one coin');
+    const theirs = h.state.players[1].bench.filter(b => b.dmg === 10).length;
+    const ours = h.state.players[0].bench.filter(b => b.dmg === 10).length;
+    // One side or the other, never both and never neither.
+    return eq((theirs === 2 && ours === 0) || (ours === 2 && theirs === 0), true,
+      'one Bench took it, not both');
+  });
+
+  T('TAKE AWAY IS NOT VANILLA, and an empty script would have hidden that', () => {
+    // The trap this row exists for: Take Away does no damage, so an empty script
+    // makes it a legal attack that does literally nothing — the same shape as a
+    // Power with no p:, one level over. Both Pokemon leave play and both piles
+    // go to their owners' decks.
+    const E = setup({ me: { card: 'gym1-4', energy: '4 Psychic' },
+      them: { card: 'base1:Venusaur', energy: '2 Grass' },
+      myBench: [{ card: 'base1:Machop' }], theirBench: [{ card: 'base1:Machop' }] }).E;
+    const d0 = E.state.players[0].deck.length, d1 = E.state.players[1].deck.length;
+    atk(E, 1);
+    eq(E.state.players[0].active, null, 'ours left play');
+    eq(E.state.players[1].active, null, 'and so did theirs');
+    eq(E.state.players[0].deck.length > d0, true, 'our pile went to our deck');
+    // Their Energy RECYCLES rather than burning — attached:'deck', which is the
+    // real difference between this and Abra's Vanish.
+    return eq(E.state.players[1].deck.length - d1, 3, 'Venusaur plus both Energy');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

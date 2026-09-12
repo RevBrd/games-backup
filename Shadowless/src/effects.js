@@ -341,6 +341,10 @@
 //     BUFF_OWN_ATTACK {attack, base, label}
 //                                  one named attack of self does `base` during
 //                                  your next turn (Swords Dance)
+//     SELF_CANT_ATTACK_NEXT_TURN {label}   the ATTACKER cannot attack during our
+//                                  next turn. Carries no fromUid, so it blocks
+//                                  outright rather than naming one opponent, and
+//                                  its lifetime is +3 (ours) not +2 (theirs)
 //     CANT_ATTACK_ON_FLIP {label}  flip; heads => the defender cannot attack THIS
 //                                  Pokemon during the opponent's next turn (Tail Wag)
 //     CANT_RETREAT_ON_FLIP {label, sure}  flip; heads => the defender cannot retreat
@@ -2391,6 +2395,33 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES POKEMON, pass six: THE BENCH-DAMAGE FAMILY ----------------
+  // Six cards, two small flags. BENCH_SNIPE already chose targets, deduped them
+  // and asked each one for protection separately; all it could not do was throw
+  // a coin. BENCH_SPLASH_TYPED already walked both benches matching a type; all
+  // it could not do was match the OPPOSITE of one.
+  'gym1-20': { a: [[{ v: 'BENCH_SNIPE', n: 3, dmg: 10 }], []] },        // Rock Slide
+  // Tunneling hits two and then costs us the next turn - one of only three
+  // printings in the era where the attacker locks ITSELF.
+  'gym1-21': { a: [[{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],
+                   [{ v: 'BENCH_SNIPE', n: 2, dmg: 20 },
+                    { v: 'SELF_CANT_ATTACK_NEXT_TURN', label: 'Tunneling' }]] },
+  'gym1-38': { a: [[], [{ v: 'REQUIRE_OPP_BENCH' },
+                        { v: 'BENCH_SNIPE', n: 1, dmg: 30, flip: true, label: 'Lucky Shot' }]] },
+  'gym1-55': { a: [[], [{ v: 'BENCH_SNIPE', n: 1, dmg: 10, flip: true, label: 'Mud Splash' }]] },
+  // Spiral Dive is "each of your opponent's Pokemon" - Active included - which
+  // is target:'any' with n large enough to cover a full board. No new verb.
+  'gym1-39': { a: [[], [{ v: 'BENCH_SNIPE', n: 6, dmg: 10, target: 'any' }]] },
+  'gym1-31': { a: [[{ v: 'BENCH_SPLASH_TYPED', n: 10, t: 'W', not: true }]] },  // Water Ring
+  // Blizzard is BENCH_SPLASH_FLIP_SIDE exactly - one coin decides whose Bench
+  // takes it - and that verb was built for the Articuno of the same name.
+  // Take Away is TWO shuffles in the order the card prints them - ours first,
+  // then theirs. It is not vanilla and an empty script here would have been a
+  // card that looks implemented and does nothing, which is the exact shape the
+  // Powers guard was written for one level down.
+  'gym1-4':  { a: [[{ v: 'BENCH_SPLASH_FLIP_SIDE', n: 10, label: 'Blizzard' }],
+                   [{ v: 'SHUFFLE_INTO_DECK', target: 'self', attached: 'deck' },
+                    { v: 'SHUFFLE_INTO_DECK', target: 'defender', attached: 'deck' }]] },
   // ---- GYM HEROES TRAINERS, pass two -----------------------------------------
   'gym1-17':  { t: [{ v: 'T_SWAP_IN_BASIC' }] },                        // Lt. Surge
   'gym1-18':  { t: [{ v: 'T_PLUSPOWER', n: 20, who: 'Misty', cost: 2 }] },  // Misty

@@ -4355,6 +4355,10 @@ const SET_INFO = {
 //     BUFF_OWN_ATTACK {attack, base, label}
 //                                  one named attack of self does `base` during
 //                                  your next turn (Swords Dance)
+//     SELF_CANT_ATTACK_NEXT_TURN {label}   the ATTACKER cannot attack during our
+//                                  next turn. Carries no fromUid, so it blocks
+//                                  outright rather than naming one opponent, and
+//                                  its lifetime is +3 (ours) not +2 (theirs)
 //     CANT_ATTACK_ON_FLIP {label}  flip; heads => the defender cannot attack THIS
 //                                  Pokemon during the opponent's next turn (Tail Wag)
 //     CANT_RETREAT_ON_FLIP {label, sure}  flip; heads => the defender cannot retreat
@@ -6405,6 +6409,33 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES POKEMON, pass six: THE BENCH-DAMAGE FAMILY ----------------
+  // Six cards, two small flags. BENCH_SNIPE already chose targets, deduped them
+  // and asked each one for protection separately; all it could not do was throw
+  // a coin. BENCH_SPLASH_TYPED already walked both benches matching a type; all
+  // it could not do was match the OPPOSITE of one.
+  'gym1-20': { a: [[{ v: 'BENCH_SNIPE', n: 3, dmg: 10 }], []] },        // Rock Slide
+  // Tunneling hits two and then costs us the next turn - one of only three
+  // printings in the era where the attacker locks ITSELF.
+  'gym1-21': { a: [[{ v: 'STATUS_ON_FLIP', s: 'Paralyzed' }],
+                   [{ v: 'BENCH_SNIPE', n: 2, dmg: 20 },
+                    { v: 'SELF_CANT_ATTACK_NEXT_TURN', label: 'Tunneling' }]] },
+  'gym1-38': { a: [[], [{ v: 'REQUIRE_OPP_BENCH' },
+                        { v: 'BENCH_SNIPE', n: 1, dmg: 30, flip: true, label: 'Lucky Shot' }]] },
+  'gym1-55': { a: [[], [{ v: 'BENCH_SNIPE', n: 1, dmg: 10, flip: true, label: 'Mud Splash' }]] },
+  // Spiral Dive is "each of your opponent's Pokemon" - Active included - which
+  // is target:'any' with n large enough to cover a full board. No new verb.
+  'gym1-39': { a: [[], [{ v: 'BENCH_SNIPE', n: 6, dmg: 10, target: 'any' }]] },
+  'gym1-31': { a: [[{ v: 'BENCH_SPLASH_TYPED', n: 10, t: 'W', not: true }]] },  // Water Ring
+  // Blizzard is BENCH_SPLASH_FLIP_SIDE exactly - one coin decides whose Bench
+  // takes it - and that verb was built for the Articuno of the same name.
+  // Take Away is TWO shuffles in the order the card prints them - ours first,
+  // then theirs. It is not vanilla and an empty script here would have been a
+  // card that looks implemented and does nothing, which is the exact shape the
+  // Powers guard was written for one level down.
+  'gym1-4':  { a: [[{ v: 'BENCH_SPLASH_FLIP_SIDE', n: 10, label: 'Blizzard' }],
+                   [{ v: 'SHUFFLE_INTO_DECK', target: 'self', attached: 'deck' },
+                    { v: 'SHUFFLE_INTO_DECK', target: 'defender', attached: 'deck' }]] },
   // ---- GYM HEROES TRAINERS, pass two -----------------------------------------
   'gym1-17':  { t: [{ v: 'T_SWAP_IN_BASIC' }] },                        // Lt. Surge
   'gym1-18':  { t: [{ v: 'T_PLUSPOWER', n: 20, who: 'Misty', cost: 2 }] },  // Misty
@@ -7730,7 +7761,14 @@ class AI {
         // main damage could not, and it ignores Weakness, Resistance and any
         // reduction. Passed through rather than folded in, because the scorer
         // that reads `snipe` needs to know which targets were available.
-        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.dmg, any: v.target === 'any' }; break;
+        // `flip` halves it — the target is still chosen, but the hit is a coin.
+        case 'BENCH_SNIPE': flags.snipe = { n: v.n || 1, dmg: v.flip ? v.dmg * 0.5 : v.dmg,
+          any: v.target === 'any' }; break;
+        // Tunneling costs us NEXT turn's attack, which is the largest
+        // self-imposed cost in the set. Priced off what an attack is worth
+        // right now, since that is the closest available stand-in for what
+        // the turn we are giving up would have been worth.
+        case 'SELF_CANT_ATTACK_NEXT_TURN': flags.loseNextAttack = true; break;
         // Slowpoke's Afternoon Nap. An attack that does no damage at all and
         // fetches an Energy onto the attacker instead — so if this is not scored
         // it is an attack worth literally nothing and the bot will never use it,
@@ -8568,6 +8606,19 @@ class AI {
         you.active.status[key] = true;
         s -= worth;
       }
+    }
+
+    if (f.flags.loseNextAttack) {
+      // PROVISIONAL, and NOT `bestAttackScore` — that calls `scoreAttack` for
+      // every attack, and we are inside `scoreAttack`. The first draft did, and
+      // the gate came back with "Maximum call stack size exceeded" from a
+      // Stadium test three files away.
+      //
+      // `bestAffordableDamage` answers the same question one level lower, in
+      // printed damage rather than in score, and reads the board without
+      // re-entering the scorer. The unit differs, so the multiplier absorbs it.
+      const lose = this.bestAffordableDamage(pi, me.active);
+      if (lose > 0) s -= lose * this.W.damage * 0.8;
     }
 
     if (f.flags.shuffleAway === 'defender' && you.active) {
@@ -15291,6 +15342,10 @@ class Engine {
     // the uid no longer being the Active one.
     const cant = p.active.effects.find(e => e.kind === 'CANT_ATTACK');
     if (cant) {
+      // NO `fromUid` MEANS NOBODY - an unconditional lock rather than one aimed
+      // at a particular opponent. Brock's Onix's Tunneling is the first of
+      // those: it is the attacker locking ITSELF, so there is no foe to name.
+      if (cant.fromUid === undefined) return { ok: false, why: `${this.nameOf(p.active)} can't attack this turn` };
       const foe = this.state.players[1 - pi].active;
       if (foe && foe.uid === cant.fromUid) return { ok: false, why: `Can't attack ${this.nameOf(foe)} this turn` };
     }
@@ -18574,6 +18629,18 @@ class Engine {
             this.log(`${this.nameOf(def)} can't attack ${card.name} during the opponent's next turn.`, 'eff');
           }
           break;
+        case 'SELF_CANT_ATTACK_NEXT_TURN':
+          // Brock's Onix's Tunneling, and Dark Dragonite's in neo4. The attacker
+          // locks ITSELF, so the effect carries no `fromUid` and blocks outright.
+          //
+          // +3, NOT +2, and this is the second verb in the file to need that: an
+          // effect running through OUR next turn is one turn further out than one
+          // running through the OPPONENT's. Swords Dance shipped with +2 and
+          // therefore never worked at all — see BUFF_OWN_ATTACK above.
+          atk.effects.push({ kind: 'CANT_ATTACK', label: v.label || card.name,
+                             expireAtStartOfTurn: s.turn + 3 });
+          this.log(`${card.name} can't attack during your next turn.`, 'eff');
+          break;
         case 'CANT_RETREAT_ON_FLIP':
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def) break;
@@ -18620,15 +18687,24 @@ class Engine {
         case 'BENCH_SPLASH_TYPED': {
           // Electrode's Chain Lightning. Nothing happens at all against a
           // Colorless defender, which is the card's own clause and not a guard.
-          if (!def) break;
-          const dt = topCard(this.db, def).type;
-          if (!dt || dt === 'C') { this.log('The Defending Pokemon is Colorless - Chain Lightning stops there.', 'eff'); break; }
+          //
+          // `t` NAMES THE TYPE INSTEAD OF READING THE DEFENDER, and `not` inverts
+          // the match - together they are Misty's Poliwrath's Water Ring, "each
+          // Pokemon that ISN'T Water on each player's Bench". Same walk, same
+          // noWR, opposite predicate; absent, both default to Chain Lightning.
+          let dt = v.t || null;
+          if (!dt) {
+            if (!def) break;
+            dt = topCard(this.db, def).type;
+            if (!dt || dt === 'C') { this.log('The Defending Pokemon is Colorless - Chain Lightning stops there.', 'eff'); break; }
+          }
           for (let pi2 = 0; pi2 < 2; pi2++) {
             for (const b of s.players[pi2].bench) {
-              if (topCard(this.db, b).type === dt) this.dealDamage(atk, b, v.n, { noWR: true });
+              const isType = topCard(this.db, b).type === dt;
+              if (v.not ? !isType : isType) this.dealDamage(atk, b, v.n, { noWR: true });
             }
           }
-          this.log(`${v.n} to every Benched ${dt} Pokemon on both sides.`, 'eff');
+          this.log(`${v.n} to every Benched ${v.not ? 'non-' : ''}${dt} Pokemon on both sides.`, 'eff');
           break;
         }
         case 'SWITCH_SELF_CHOOSE': {
@@ -18724,6 +18800,15 @@ class Engine {
             ? (you.active ? [you.active].concat(you.bench) : you.bench.slice())
             : you.bench;
           if (!pool.length) { this.log('No Pokemon to hit.', 'eff'); break; }
+          // `flip` is Lucky Shot and Mud Splash: "choose 1 of your opponent's
+          // Benched Pokemon AND FLIP A COIN." The target is chosen first and the
+          // coin decides whether it is hit, which is the printed order and also
+          // the one that matters - a coin thrown before the choice would let a
+          // tails skip the choosing, and the AI fills that choice in `a.opts`.
+          if (v.flip && !this.flip(v.label || 'hit the Bench?')) {
+            this.log(`${card.name} misses.`, 'eff');
+            break;
+          }
           const want = Math.min(v.n || 1, pool.length);
           let picks = (a && a.opts && a.opts.bench) || [];
           if (!Array.isArray(picks)) picks = [picks];

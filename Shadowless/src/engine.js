@@ -2544,6 +2544,10 @@ class Engine {
     // the uid no longer being the Active one.
     const cant = p.active.effects.find(e => e.kind === 'CANT_ATTACK');
     if (cant) {
+      // NO `fromUid` MEANS NOBODY - an unconditional lock rather than one aimed
+      // at a particular opponent. Brock's Onix's Tunneling is the first of
+      // those: it is the attacker locking ITSELF, so there is no foe to name.
+      if (cant.fromUid === undefined) return { ok: false, why: `${this.nameOf(p.active)} can't attack this turn` };
       const foe = this.state.players[1 - pi].active;
       if (foe && foe.uid === cant.fromUid) return { ok: false, why: `Can't attack ${this.nameOf(foe)} this turn` };
     }
@@ -5827,6 +5831,18 @@ class Engine {
             this.log(`${this.nameOf(def)} can't attack ${card.name} during the opponent's next turn.`, 'eff');
           }
           break;
+        case 'SELF_CANT_ATTACK_NEXT_TURN':
+          // Brock's Onix's Tunneling, and Dark Dragonite's in neo4. The attacker
+          // locks ITSELF, so the effect carries no `fromUid` and blocks outright.
+          //
+          // +3, NOT +2, and this is the second verb in the file to need that: an
+          // effect running through OUR next turn is one turn further out than one
+          // running through the OPPONENT's. Swords Dance shipped with +2 and
+          // therefore never worked at all — see BUFF_OWN_ATTACK above.
+          atk.effects.push({ kind: 'CANT_ATTACK', label: v.label || card.name,
+                             expireAtStartOfTurn: s.turn + 3 });
+          this.log(`${card.name} can't attack during your next turn.`, 'eff');
+          break;
         case 'CANT_RETREAT_ON_FLIP':
           if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
           if (!def) break;
@@ -5873,15 +5889,24 @@ class Engine {
         case 'BENCH_SPLASH_TYPED': {
           // Electrode's Chain Lightning. Nothing happens at all against a
           // Colorless defender, which is the card's own clause and not a guard.
-          if (!def) break;
-          const dt = topCard(this.db, def).type;
-          if (!dt || dt === 'C') { this.log('The Defending Pokemon is Colorless - Chain Lightning stops there.', 'eff'); break; }
+          //
+          // `t` NAMES THE TYPE INSTEAD OF READING THE DEFENDER, and `not` inverts
+          // the match - together they are Misty's Poliwrath's Water Ring, "each
+          // Pokemon that ISN'T Water on each player's Bench". Same walk, same
+          // noWR, opposite predicate; absent, both default to Chain Lightning.
+          let dt = v.t || null;
+          if (!dt) {
+            if (!def) break;
+            dt = topCard(this.db, def).type;
+            if (!dt || dt === 'C') { this.log('The Defending Pokemon is Colorless - Chain Lightning stops there.', 'eff'); break; }
+          }
           for (let pi2 = 0; pi2 < 2; pi2++) {
             for (const b of s.players[pi2].bench) {
-              if (topCard(this.db, b).type === dt) this.dealDamage(atk, b, v.n, { noWR: true });
+              const isType = topCard(this.db, b).type === dt;
+              if (v.not ? !isType : isType) this.dealDamage(atk, b, v.n, { noWR: true });
             }
           }
-          this.log(`${v.n} to every Benched ${dt} Pokemon on both sides.`, 'eff');
+          this.log(`${v.n} to every Benched ${v.not ? 'non-' : ''}${dt} Pokemon on both sides.`, 'eff');
           break;
         }
         case 'SWITCH_SELF_CHOOSE': {
@@ -5977,6 +6002,15 @@ class Engine {
             ? (you.active ? [you.active].concat(you.bench) : you.bench.slice())
             : you.bench;
           if (!pool.length) { this.log('No Pokemon to hit.', 'eff'); break; }
+          // `flip` is Lucky Shot and Mud Splash: "choose 1 of your opponent's
+          // Benched Pokemon AND FLIP A COIN." The target is chosen first and the
+          // coin decides whether it is hit, which is the printed order and also
+          // the one that matters - a coin thrown before the choice would let a
+          // tails skip the choosing, and the AI fills that choice in `a.opts`.
+          if (v.flip && !this.flip(v.label || 'hit the Bench?')) {
+            this.log(`${card.name} misses.`, 'eff');
+            break;
+          }
           const want = Math.min(v.n || 1, pool.length);
           let picks = (a && a.opts && a.opts.bench) || [];
           if (!Array.isArray(picks)) picks = [picks];
