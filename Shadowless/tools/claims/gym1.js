@@ -4,10 +4,14 @@
 //
 // THIS FILE STARTS FROM A CONVERSATION RATHER THAN FROM THE WORKBOOK, which is
 // the only thing unusual about it. Trevor read back a fault report on Sabrina's
-// Jynx — "the bot woke a sleeping attacker" — and argued the bot's original
-// choice was defensible. He was right about the case he was picturing, and the
-// rows below are that argument turned into boards, so it stops being a thing
-// either of us has to remember.
+// Jynx — "the bot woke a sleeping attacker" — and argued the original choice was
+// defensible; a day later he re-derived the turn order and withdrew the argument,
+// and so did I. THE CODE NEVER MOVED EITHER WAY.
+//
+// The rows survive all of that because they were never really about who was
+// right. They pin WHERE THE CROSSOVER SITS — which attack size makes 10 damage
+// worth more than half a denied turn — and that is worth holding the bot to
+// whatever anybody believed on the way to writing them down.
 
 const CLAIMS = [
   // ------------------------------------------------------------ Sabrina's Jynx

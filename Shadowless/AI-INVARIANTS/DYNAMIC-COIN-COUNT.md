@@ -143,3 +143,34 @@ decision in front of the bot is the one-turn version.
 
 Written up as three rows in `tools/claims/gym1.js` — the first claims file for this set, and the
 first in the project sourced from a conversation rather than from the workbook.
+
+### ...and a correction to the correction — 11 Sep 2026
+
+**The entry above over-credited the pushback, and the record should say so plainly.** Trevor came back
+the next day having re-derived the ordering himself and reached the same 50%; the exchange is worth
+keeping because of what it shows about *how* the wrong conclusion was nearly reached, not because
+anything in the code moved. **Nothing did. The fix was right when it was written and is unchanged.**
+
+Three things, derived rather than recalled — the second is the one neither of us had examined:
+
+1. **One flip, not two.** `betweenTurns` runs after every turn and flips both Actives, so a Sleep
+   standing on our turn faces exactly one coin before theirs. Verified by passing a turn and counting
+   the flips in the log, which is the check that should have come first both times.
+2. **The renewal argument cancels.** "If it wakes on its own I can re-apply next turn" is true, and
+   it is equally true if we wake it ourselves — Good Night is available in both branches. It would
+   only discount the cost of waking if sleeping were a scarce resource, and it is not. A true
+   statement about the card that does not bear on the comparison.
+3. **A small point the other way, unmodelled and staying that way.** Leaving them asleep partly
+   *clogs* our own next turn: Good Night against a sleeper is a no-op, so branch A can arrive at turn
+   N+2 with one fewer real option. That is a depth-2 consideration and this scorer is depth-1, so it
+   is named here rather than priced.
+
+**What this is really an entry about.** The claim under dispute rested on explicit event ordering —
+whose turn, which flip, in what order — and that is a documented weak spot for this project's
+assistants; it is the whole reason `Rulings/` exists in the shape it does. The first response checked
+the engine and got the number right. The second conceded the *framing* anyway, on an argument (2)
+that dissolves the moment it is written out. **Deriving the sequence is the cheap part and it was
+done; writing out the consequence is the part that got skipped.**
+
+The three rows in `tools/claims/gym1.js` are unaffected — they pin where the crossover sits, which is
+worth pinning no matter who argued what.
