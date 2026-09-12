@@ -461,6 +461,18 @@
 //      resolves to ZERO rather than to the engine picking for you. See the
 //      block comment on T_PEEK_CYCLE in engine.js for why this one fallback
 //      goes the other way from every other fallback in the file.
+//     T_SWAP_IN_BASIC              put a Basic from hand straight into the ACTIVE
+//                                  slot; the incumbent is demoted to the Bench,
+//                                  not discarded (Lt. Surge)
+//     T_SHUFFLE_OPP_HAND_RANDOM {n}  flip; heads shuffles n cards chosen AT RANDOM
+//                                  out of their hand. No opts because there is no
+//                                  choice to make (The Rocket's Trap)
+//     T_TREATY                     TREATY is its pendingAsk kind - the OPPONENT
+//                                  chooses: both take a Prize into
+//                                  hand, or you draw one. Can win or DRAW the
+//                                  game, since an empty pile is a win
+//     T_MINION                     two coins; both heads bounces one of their
+//                                  Benched to hand, anything else ENDS YOUR TURN
 //     T_PEEK_CYCLE                 look at their hand, then discard any number
 //                                  and draw that many (Secret Mission)
 //     T_GAMBLE_DISCARD             discard any number, flip, heads draws TWICE
@@ -2379,6 +2391,15 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES TRAINERS, pass two -----------------------------------------
+  'gym1-17':  { t: [{ v: 'T_SWAP_IN_BASIC' }] },                        // Lt. Surge
+  'gym1-18':  { t: [{ v: 'T_PLUSPOWER', n: 20, who: 'Misty', cost: 2 }] },  // Misty
+  'gym1-19':  { t: [{ v: 'T_SHUFFLE_OPP_HAND_RANDOM', n: 3 }] },        // The Rocket's Trap
+  'gym1-106': { t: [{ v: 'T_SEARCH_TO_HAND', kind: 'pokemon', nameHas: 'Brock' }] },
+  'gym1-111': { t: [{ v: 'T_SEARCH_TO_HAND', kind: 'pokemon', basic: true,
+                      requireNoBasicInHand: true }] },                  // Good Manners
+  'gym1-112': { t: [{ v: 'T_TREATY' }] },                               // Lt. Surge's Treaty
+  'gym1-113': { t: [{ v: 'T_MINION' }] },                               // Minion of Team Rocket
   // ---- GYM HEROES POKEMON, pass five: EFFECTS THAT OUTLIVE THE TURN ---------
   // Cards whose attack leaves something behind on the opponent's turn. Most of
   // the family already existed - JAM_DEFENDER is Sandstorm exactly, and

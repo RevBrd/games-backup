@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 42,
+  gym1: 33,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -550,6 +550,11 @@ const PROVISIONAL = new Set([
   // asked COUNTERFACTUALLY - the status comes off for the measurement - which is
   // exact machinery around an unmeasured weight, not a measured one.
   'CLEAR_DEF_STATUS',
+  // The Gym Heroes Trainers, pass two. T_TREATY is the weakest of the four and
+  // the most consequential: the branch weights are guesses, but the two ENDGAME
+  // branches are not - an empty Prize pile is a win, so those return +/-1e6 and
+  // are exact rather than tuned.
+  'T_SWAP_IN_BASIC', 'T_SHUFFLE_OPP_HAND_RANDOM', 'T_TREATY', 'T_MINION',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',

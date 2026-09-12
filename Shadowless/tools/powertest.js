@@ -8241,5 +8241,169 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- GYM HEROES TRAINERS, pass two -----------------------------------------
+// Seven cards. Two are existing machinery with a new filter; the interesting
+// ones are the two that reach outside the ordinary turn — a Trainer that ENDS
+// it, and a Trainer that can WIN or DRAW the game.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  const play = (E, name, opts) => {
+    const me = E.state.players[0];
+    const i = me.hand.findIndex(x => E.db[x.id].name === name);
+    if (i < 0) throw new Error('not in hand: ' + name);
+    const r = E.act(0, { t: 'playTrainer', hand: i, opts: opts || {} });
+    if (!r.ok) throw new Error('refused: ' + (r.why || r.error));
+    return E;
+  };
+
+  T('Lt. Surge DEMOTES the Active rather than discarding it', () => {
+    const E = setup({ me: { card: 'base1:Machop', energy: '2 Fighting' },
+      them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-17', 'base1:Pikachu'] }).E;
+    play(E, 'Lt. Surge', {});
+    const p = E.state.players[0];
+    eq(E.nameOf(p.active), 'Pikachu', 'the Basic came in as Active');
+    const old = p.bench.find(b => E.nameOf(b) === 'Machop');
+    eq(!!old, true, 'and Machop is on the Bench');
+    // Not a Scoop Up: the Energy rides along with the demoted Pokemon.
+    return eq(old.energy.length, 2, 'still carrying its Energy');
+  });
+
+  T('...and is refused with a full Bench, which is its own clause', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-17', 'base1:Pikachu'],
+      myBench: [{ card: 'base1:Machop' }, { card: 'base1:Machop' },
+                { card: 'base1:Machop' }, { card: 'base1:Machop' }, { card: 'base1:Machop' }] }).E;
+    const offered = E.legalActions(0).some(a => a.t === 'playTrainer'
+      && E.db[E.state.players[0].hand[a.hand].id].name === 'Lt. Surge');
+    return eq(offered, false, 'nowhere to put the old Active');
+  });
+
+  T('Misty pays two cards and only pays off for a MISTY Pokemon', () => {
+    // The name is checked when the damage lands, not when the card is played,
+    // because the Active can change in between.
+    const yes = setup({ me: { card: "Misty's Seadra", energy: '1 Water' },
+      them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-18', 'base1:Bill', 'base1:Bill'] }).E;
+    play(yes, 'Misty', {});
+    eq(yes.state.players[0].hand.length, 0, 'two other cards discarded');
+    yes.act(0, yes.legalActions(0).find(a => a.t === 'attack' && a.idx === 0));
+    eq(yes.state.players[1].active.dmg, 40, 'Tail Snap 20 plus Misty 20');
+
+    const no = setup({ me: { card: 'base1:Squirtle', energy: '1 Water' },
+      them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-18', 'base1:Bill', 'base1:Bill'] }).E;
+    play(no, 'Misty', {});
+    no.act(0, no.legalActions(0).find(a => a.t === 'attack' && a.idx === 0));
+    // Squirtle's Bubble is 10 and it is not a Misty card, so nothing is added.
+    return eq(no.state.players[1].active.dmg, 10, 'no Misty in the name, no bonus');
+  });
+
+  T('Brock\'s Training Method and Good Manners are the same verb, two filters', () => {
+    const brock = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-106'], myDeck: ['gym1-72', 'base1:Bill'] }).E;
+    play(brock, "Brock's Training Method", {});
+    const got = brock.state.players[0].hand.filter(x => brock.db[x.id].name.indexOf('Brock') >= 0);
+    return eq(got.length, 1, 'the named card came to hand');
+  });
+
+  T('Good Manners is playable ONLY while the hand holds no Basic', () => {
+    // The gate inverts the usual one — it exists to rescue exactly the position
+    // it requires. It was first written as a SECOND T_SEARCH_TO_HAND case in
+    // trainerPlayable, where the existing case would have won and this would
+    // never have run; selftest's duplicate-case guard caught that.
+    const blocked = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-111', 'base1:Pikachu'], myDeck: ['base1:Machop', 'base1:Bill'] }).E;
+    eq(blocked.legalActions(0).some(a => a.t === 'playTrainer'
+      && blocked.db[blocked.state.players[0].hand[a.hand].id].name === 'Good Manners'),
+      false, 'refused while holding a Basic');
+    const ok = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-111', 'base1:Bill'], myDeck: ['base1:Machop', 'base1:Bill'] }).E;
+    play(ok, 'Good Manners', {});
+    const basics = ok.state.players[0].hand.filter(x => {
+      const c = ok.db[x.id]; return c.kind === 'pokemon' && c.stage === 'Basic';
+    });
+    return eq(basics.length, 1, 'and it fetches exactly the Basic it needed');
+  });
+
+  T("The Rocket's Trap takes cards nobody chose", () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-19'], theirHand: ['base1:Bill', 'base1:Bill', 'base1:Bill', 'base1:Potion'] }).E;
+    E.dev.forceFlip = 'H';
+    play(E, "The Rocket's Trap", {});
+    eq(E.state.players[1].hand.length, 1, 'three of four went back');
+    const t = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-19'], theirHand: ['base1:Bill', 'base1:Bill'] }).E;
+    t.dev.forceFlip = 'T';
+    play(t, "The Rocket's Trap", {});
+    return eq(t.state.players[1].hand.length, 2, 'tails does nothing at all');
+  });
+
+  T('Minion of Team Rocket ENDS THE TURN on anything but two heads', () => {
+    const E = setup({ me: { card: 'base1:Machop', energy: '2 Fighting' },
+      them: { card: 'base1:Venusaur' }, theirBench: [{ card: 'base1:Pikachu' }],
+      myHand: ['gym1-113'] }).E;
+    E.dev.forceFlip = 'T';
+    play(E, 'Minion of Team Rocket', {});
+    // The turn is gone — including the attack, which is the real cost.
+    return eq(E.state.active, 1, 'it is their turn now');
+  });
+
+  T('...and bounces a Benched Pokemon WITH everything on it on two heads', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+      theirBench: [{ card: 'base1:Pikachu', energy: '2 Lightning' }],
+      myHand: ['gym1-113'] }).E;
+    E.dev.forceFlip = 'H';
+    // THE DELTA, not the count. They start holding seven, so an absolute
+    // assertion here measures the opening draw rather than the card - the same
+    // confound the Tickling Machine row hit earlier in this job.
+    const before = E.state.players[1].hand.length;
+    play(E, 'Minion of Team Rocket', {});
+    const p1 = E.state.players[1];
+    eq(p1.bench.length, 0, 'the Bench is empty');
+    // Pikachu plus both Energy, all back in hand.
+    eq(p1.hand.length - before, 3, 'three cards came back');
+    return eq(E.state.active, 0, 'and the turn is still ours');
+  });
+
+  T("LT. SURGE'S TREATY CAN WIN THE GAME, and the opponent knows it", () => {
+    // An empty Prize pile is a win, and the Treaty empties BOTH by one. So the
+    // branch the opponent picks is a real decision rather than flavour, which is
+    // exactly why the card hands them the choice.
+    const mk = (mine, theirs) => {
+      const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+        myHand: ['gym1-112'] }).E;
+      E.state.players[0].prizes.length = mine;
+      E.state.players[1].prizes.length = theirs;
+      play(E, "Lt. Surge's Treaty", {});
+      return E;
+    };
+    const doomed = mk(1, 6);
+    eq(doomed.state.pendingAsk.player, 1, 'the OPPONENT is asked');
+    const mv = new AI(doomed, {}).choose(1);
+    eq((mv && (mv.action || mv)).value, 'draw', 'and refuses to hand us the win');
+
+    // The other way round: they are one Prize from winning, so they take it.
+    const winning = mk(6, 1);
+    const mv2 = new AI(winning, {}).choose(1);
+    return eq((mv2 && (mv2.action || mv2)).value, 'prizes', 'and takes it when it wins THEM the game');
+  });
+
+  T('...and the Prize goes to HAND, leaving a pile one shorter on both sides', () => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-112'] }).E;
+    const p0 = E.state.players[0].prizes.length, p1 = E.state.players[1].prizes.length;
+    play(E, "Lt. Surge's Treaty", {});
+    E.act(1, { t: 'answer', value: 'prizes' });
+    eq(E.state.players[0].prizes.length, p0 - 1, 'ours is one shorter');
+    // SPLICED, not nulled: the win check reads length, and a hole would leave a
+    // player who had taken every Prize still holding six.
+    eq(E.state.players[1].prizes.length, p1 - 1, 'and so is theirs');
+    return eq(E.state.players[0].prizes.every(x => !!x), true, 'no holes in the pile');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

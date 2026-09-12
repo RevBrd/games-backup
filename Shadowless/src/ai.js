@@ -3517,6 +3517,28 @@ class AI {
         // of these; the mechanism is general and this switch grows per card.
         const q = this.E.state.pendingAsk;
         if (!q) return -Infinity;
+        if (q.kind === 'TREATY') {
+          // PROVISIONAL. Lt. Surge's Treaty, and the asked player is us - the
+          // opponent of whoever played it. We pick the branch that is worse for
+          // THEM, which is the reverse of everything else in this switch.
+          //
+          // THE PRIZE BRANCH CAN END THE GAME. An empty pile is a win, and both
+          // players take one, so it is an instant loss while they are on their
+          // last Prize and an instant WIN while we are on ours. Both are checked
+          // before anything else is weighed, because no amount of tempo outranks
+          // the game ending.
+          const mine = this.E.state.players[pi].prizes.length;
+          const theirs = this.E.state.players[1 - pi].prizes.length;
+          if (a.value === 'prizes') {
+            if (mine <= 1 && theirs > 1) return 1e6;     // we take our last: we win
+            if (theirs <= 1) return -1e6;                // they take theirs: we lose
+            // Otherwise it advances both clocks equally, so it is worth having
+            // only if we are nearer the end of ours.
+            return (theirs - mine) * this.W.lastPrize * 0.4;
+          }
+          // The draw branch hands them one card, which is a small, safe cost.
+          return -this.W.drawCard;
+        }
         if (q.kind === 'FLEE') {
           // PROVISIONAL. Misty's Tentacruel has just been hit and may switch out,
           // preventing the rest of that attack on it.
@@ -4602,6 +4624,77 @@ class AI {
           break;
         }
         case 'T_DRAW': s += v.n * W.drawCard + this.deckRisk(pi, v.n); break;
+
+        // ---- GYM HEROES TRAINERS, pass two. All PROVISIONAL ------------------
+        case 'T_SWAP_IN_BASIC': {
+          // Lt. Surge brings a Basic out of hand STRAIGHT into the Active slot,
+          // which is a free retreat that also develops the Bench. Its value is
+          // the switch we wanted anyway, and `bestSelfSwitch` is the existing
+          // answer to "how much do we want to get out of here".
+          const want = this.bestSelfSwitch(pi);
+          const runValue = want ? Math.max(0, want.gain) : 0;
+          // The incoming Pokemon is fresh and almost certainly cannot attack, so
+          // this is priced as an ESCAPE plus a body, never as a tempo play.
+          const inPlay = E.allSlots(pi);
+          const basics = me.hand.filter(x => x.uid !== inst.uid
+            && (this.db[x.id] || {}).kind === 'pokemon' && (this.db[x.id] || {}).stage === 'Basic');
+          if (!basics.length) return -Infinity;
+          let best = { v: -Infinity, uid: null };
+          for (const x of basics) {
+            const val = this.cardKeepValue(pi, x, inPlay);
+            if (val > best.v) best = { v: val, uid: x.uid };
+          }
+          a.opts = Object.assign({}, a.opts, { pickUid: best.uid });
+          // benchMore is the existing price of one more body on the Bench; there
+          // is no benchDevelop and inventing one would be a third opinion about
+          // the same question.
+          s += runValue + W.benchMore;
+          break;
+        }
+        case 'T_SHUFFLE_OPP_HAND_RANDOM': {
+          // The Rocket's Trap. Half a chance at up to three cards out of their
+          // hand, chosen at random by nobody. Priced off what a card in their
+          // hand is worth to us, which is what `drawCard` already measures in the
+          // other direction, halved for the coin.
+          const hit = Math.min(v.n || 3, you.hand.length);
+          if (!hit) return -Infinity;
+          s += 0.5 * hit * W.drawCard * 0.8;
+          break;
+        }
+        case 'T_TREATY': {
+          // THEY choose, so we are scoring the WORSE of the two branches - the
+          // opponent will take whichever hurts us more. That is the whole card,
+          // and pricing it at the average would make the bot play a coin-flip
+          // card that is not one.
+          //
+          // Drawing one card is small and safe. Both taking a Prize is enormous
+          // when either player is close, because an empty pile WINS - so this is
+          // near-suicidal while we are ahead on Prizes and a real threat when we
+          // are behind.
+          const mine = me.prizes.length, theirs = you.prizes.length;
+          if (mine <= 1) return -Infinity;          // hands them the game
+          const drawBranch = W.drawCard;
+          // Being closer to an empty pile than they are makes the Prize branch
+          // ours to want; being further makes it theirs.
+          // lastPrize is what this file already pays for moving a Prize, and
+          // the sign comes from who is closer to an empty pile.
+          const prizeBranch = (theirs - mine) * W.lastPrize * 0.4;
+          s += Math.min(drawBranch, prizeBranch);
+          break;
+        }
+        case 'T_MINION': {
+          // Two coins for a Bench bounce, and ANYTHING ELSE ENDS THE TURN. That
+          // downside is the whole pricing problem: 75% of the time this costs
+          // every remaining action, including the attack.
+          const drag = this.bestDragTarget(pi);
+          if (you.bench.length) a.opts = Object.assign({}, a.opts, { bench: drag ? drag.bench : 0 });
+          const best = this.bestAttackScore(pi);
+          const lost = best.score > 0 ? best.score : 0;
+          // 0.25 * the bounce against 0.75 * the turn. `bestAttackScore` is the
+          // closest thing to "what this turn was worth" that exists here.
+          s += 0.25 * (W.drag + W.benchDamageFoe * 2) - 0.75 * lost;
+          break;
+        }
 
         // ---- THE SUBSET FOUR, all PROVISIONAL --------------------------------
         // Every one of these FILLS a.opts. That is not a nicety here: the engine

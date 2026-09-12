@@ -306,6 +306,9 @@ class Engine {
       // What Rocket's Sneak Attack just showed. Cleared per action like
       // `peeked`, which it is modelled on.
       revealedHand: null,
+      // Set by a card that cuts its own turn short (Minion of Team Rocket).
+      // Consumed in act(), after the settles. Never read anywhere else.
+      forceEndTurn: false,
       // Goop Gas Attack. A board-wide, BOTH-PLAYERS Power blackout with an
       // expiry turn — stored here rather than on any slot because it is not
       // about a Pokemon, exactly as noTrainersUntil is a player-level fact.
@@ -2603,6 +2606,7 @@ class Engine {
     if (!c) return false;
     if (v.kind && c.kind !== v.kind) return false;
     if (v.evolution && !(c.kind === 'pokemon' && c.stage && c.stage !== 'Basic')) return false;
+    if (v.basic && !(c.kind === 'pokemon' && c.stage === 'Basic')) return false;
     if (v.nameHas && String(c.name).indexOf(v.nameHas) < 0) return false;
     return true;
   }
@@ -2643,7 +2647,7 @@ class Engine {
         case 'T_HEAL': if (!this.allSlots(pi).some(s => s.dmg > 0)) return false; break;
         case 'T_DISCARD_ENERGY_THEN_HEAL':
           if (!this.allSlots(pi).some(s => s.dmg > 0 && s.energy.length)) return false; break;
-        case 'T_PLUSPOWER': if (!p.active) return false; break;
+        // (T_PLUSPOWER's legality moved below, where Misty's cost is checked too.)
         case 'T_PROFESSOR_OAK': if (p.deck.length === 0) return false; break;
         case 'T_DEFENDER': if (!this.allSlots(pi).length) return false; break;
         case 'T_CHARITY': if (!p.active) return false; break;
@@ -2663,6 +2667,12 @@ class Engine {
           // The Boss's Way. Illegal with nothing matching in the deck, like
           // every other tutor here — "would do nothing" is the house rule.
           if (!p.deck.some(x => this.searchMatches(this.db[x.id], v))) return false;
+          // Good Manners inverts the usual gate: playable only while the hand
+          // holds NO Basic, which is the position it exists to rescue. Merged
+          // into this case rather than added as a second one — the duplicate
+          // guard caught that, and the first case would simply have won.
+          if (v.requireNoBasicInHand && p.hand.some(x => { const cc = this.db[x.id];
+            return cc && cc.kind === 'pokemon' && cc.stage === 'Basic'; })) return false;
           break;
         }
         case 'T_SHUFFLE_FROM_DISCARD':
@@ -2698,6 +2708,21 @@ class Engine {
           if (p.hand.length < (v.cost || 2) + 1) return false;
           if (!p.deck.some(x => { const cc = this.db[x.id];
             return cc && cc.kind === 'pokemon' && cc.name.indexOf(v.who) >= 0; })) return false;
+          break;
+        // Lt. Surge's own clause, both halves: a Basic to bring in, and room to
+        // demote the incumbent to.
+        case 'T_SWAP_IN_BASIC':
+          if (!p.active || p.bench.length >= this.benchCap()) return false;
+          if (!p.hand.some(x => { const cc = this.db[x.id];
+            return x !== inst && cc && cc.kind === 'pokemon' && cc.stage === 'Basic'; })) return false;
+          break;
+        case 'T_SHUFFLE_OPP_HAND_RANDOM': if (!o.hand.length) return false; break;
+        case 'T_TREATY': if (!p.deck.length && !p.prizes.length) return false; break;
+        case 'T_MINION': if (!o.bench.length) return false; break;
+        // Misty pays two OTHER cards, so the hand must hold the card plus two.
+        case 'T_PLUSPOWER':
+          if (!p.active) return false;
+          if (v.cost && p.hand.length < v.cost + 1) return false;
           break;
         case 'T_HEAL_EACH': if (!this.allSlots(pi).some(sl => sl.dmg > 0)) return false; break;
         case 'T_DRAW_BOTH': if (!p.deck.length && !o.deck.length) return false; break;
@@ -2834,6 +2859,20 @@ class Engine {
     this.settleTransforms();
     this.settleConversions();
     this.settleWinConditions();
+    // Minion of Team Rocket is the only card in the era that ends your turn from
+    // inside its own resolution. Handled HERE rather than in doTrainer so it
+    // lands after the settles, and so anything that ends a turn later gets the
+    // same path - a card that cuts a turn short must not also skip the
+    // between-turns work every other turn ending does.
+    if (s.forceEndTurn && s.phase !== 'over' && s.active === pi) {
+      s.forceEndTurn = false;
+      if (!s.pendingAsk && s.pendingPromote === null && s.pendingSwitch === null && s.pendingPrize === null) {
+        this.endTurn();
+      } else {
+        // An owed choice outranks it; endTurn already knows how to wait.
+        s.pendingEndTurn = true;
+      }
+    }
     return r;
   }
 
@@ -3369,6 +3408,30 @@ class Engine {
       // the opposite of what ESP wants: the attack must come out IDENTICAL, with
       // only the escape different. That is why the generator's state is restored
       // here and deliberately not there.
+      case 'TREATY': {
+        // Lt. Surge's Treaty. The asked player is the OPPONENT of whoever played
+        // the card, and `q.by` is who played it - do not assume the asker is the
+        // active player, because a chain could make that false later.
+        const owner = this.state.players[q.by], other = this.state.players[1 - q.by];
+        if (value === 'prizes') {
+          // "EVERYONE chooses 1 of his or her own Prizes and puts it into his or
+          // her hand." Into HAND, not taken as a Prize - the win condition does
+          // not fire, but the pile shrinks for both, which is the whole reason
+          // the opponent might ever choose this.
+          // SPLICE, not a null hole: prizes is a dense array and the win check
+          // reads its length. A hole would leave a player who has taken every
+          // Prize still holding six.
+          for (const who of [owner, other]) {
+            if (!who.prizes.length) continue;
+            who.hand.push(who.prizes.splice(0, 1)[0]);
+            this.log(`${who.name} takes a Prize card into hand.`, 'eff');
+          }
+        } else {
+          if (owner.deck.length) { owner.hand.push(owner.deck.shift()); this.log(`${owner.name} draws a card.`, 'eff'); }
+          else this.log(`${owner.name} has nothing to draw.`, 'eff');
+        }
+        break;
+      }
       case 'FLEE': {
         const act = q.ctx.action, who = q.ctx.pi;
         if (value === 'no' || !this.fleeSnapshot) {
@@ -3777,12 +3840,17 @@ class Engine {
           break;
         }
         case 'T_PLUSPOWER': {
+          // PlusPower, and now MISTY - the same effect at +20, paid for with two
+          // cards and conditional on the attacker's name. `n`, `who` and `cost`
+          // all default to PlusPower's own behaviour, so that card is untouched.
           if (!p.active) return this.fail('No Active Pokemon');
+          if (v.cost) this.discardChosen(p, (a.opts && a.opts.discardUids)
+            || p.hand.slice(0, v.cost).map(x => x.uid));
           p.active.effects.push({
-            kind: 'DAMAGE_BONUS', amount: 10,
+            kind: 'DAMAGE_BONUS', amount: v.n || 10, who: v.who || null,
             expireAtEndOfTurn: this.state.turn, card: inst,
           });
-          this.log(`PlusPower attached to ${this.nameOf(p.active)} (+10 this turn).`, 'eff');
+          this.log(`${c.name} attached to ${this.nameOf(p.active)} (+${v.n || 10} this turn${v.who ? `, if a ${v.who} Pokemon attacks` : ''}).`, 'eff');
           toDiscard = false;   // discarded when the effect expires
           break;
         }
@@ -4238,6 +4306,99 @@ class Engine {
             this.applyStatus(o.active, v.s);
           } else {
             this.log(`${c.name}: tails, nothing happens.`, 'eff');
+          }
+          break;
+        }
+        case 'T_SWAP_IN_BASIC': {
+          // Lt. Surge. "Put a Basic Pokemon card from your hand into play as your
+          // Active Pokemon. Put your old Active Pokemon onto your Bench."
+          //
+          // NOT a switch and not a Scoop Up: a card comes out of hand straight
+          // into the Active slot, and the incumbent is demoted rather than
+          // discarded. The Bench-full clause is the card's own, and it is in
+          // trainerPlayable so the action is never offered when it cannot resolve.
+          const basics = p.hand.filter(x => {
+            const cc = this.db[x.id];
+            return cc && cc.kind === 'pokemon' && cc.stage === 'Basic';
+          });
+          if (!basics.length || !p.active || p.bench.length >= this.benchCap()) {
+            this.log('Nothing to bring in.', 'eff');
+            break;
+          }
+          const wantU = a.opts && a.opts.pickUid;
+          const chosen = basics.find(x => x.uid === wantU) || basics[0];
+          p.hand.splice(p.hand.indexOf(chosen), 1);
+          const old = p.active;
+          // Coming off the Active spot clears conditions, the same as a retreat.
+          clearStatus(old);
+          p.bench.push(old);
+          p.active = this.mkSlot(chosen);
+          this.log(`${c.name}: ${this.nameOf(p.active)} comes in; ${this.nameOf(old)} goes to the Bench.`, 'eff');
+          break;
+        }
+        case 'T_SHUFFLE_OPP_HAND_RANDOM': {
+          // The Rocket's Trap. "Choose up to 3 cards AT RANDOM from your
+          // opponent's hand (DON'T LOOK AT THEM)."
+          //
+          // The parenthetical is the whole reason this takes no opts: there is no
+          // choice to make and nothing for a UI to show. It is also the only
+          // hand-disruption card in the era that neither player gets to steer.
+          if (!this.flip(c.name)) { this.log(`${c.name} fails.`, 'eff'); break; }
+          let moved = 0;
+          for (let k = 0; k < (v.n || 3) && o.hand.length; k++) {
+            o.deck.push(o.hand.splice(this.pick(o.hand.length), 1)[0]);
+            moved++;
+          }
+          this.shuffle(o.deck);
+          this.log(`${c.name}: ${moved} card(s) shuffled out of ${o.name}'s hand.`, 'eff');
+          break;
+        }
+        case 'T_TREATY': {
+          // Lt. Surge's Treaty. "YOUR OPPONENT chooses 1 of the following:
+          // everyone chooses 1 of his or her own Prizes and puts it into his or
+          // her hand, or you draw a card."
+          //
+          // The second card in this set where the question goes to the player who
+          // is not taking the turn - Flee was the first - and the reason the
+          // pendingAsk machinery is generic. A new kind needs a resolveAsk case
+          // and nothing else: legalActions and ai.js's choose() already handle
+          // whoever is owed a choice.
+          //
+          // Taking a Prize into hand is NOT taking a Prize for the win condition:
+          // the pile shrinks for both players, which is why the opponent might
+          // ever pick it - it moves them closer to winning too.
+          this.state.pendingAsk = {
+            player: 1 - pi, kind: 'TREATY', by: pi,
+            prompt: `${c.name}: choose what happens.`,
+            options: [
+              { value: 'prizes', label: 'Each player takes a Prize into hand' },
+              { value: 'draw', label: `${p.name} draws a card` },
+            ],
+          };
+          break;
+        }
+        case 'T_MINION': {
+          // Minion of Team Rocket. Two coins: both heads bounces one of their
+          // Benched to hand; anything else ENDS OUR TURN ON THE SPOT.
+          //
+          // One roll, two consequences, same rule as FLIP_BONUS_OR_RECOIL - and
+          // here the downside is the harshest in the set, so scripting it as two
+          // verbs would let the turn survive a failure it is meant to cost.
+          const h1 = this.flip(`${c.name} 1/2`), h2 = this.flip(`${c.name} 2/2`);
+          if (h1 && h2) {
+            if (!o.bench.length) { this.log(`${c.name}: nothing on their Bench.`, 'eff'); break; }
+            const wantB = (a.opts && a.opts.bench !== undefined && o.bench[a.opts.bench])
+              ? a.opts.bench : this.pick(o.bench.length);
+            const gone = o.bench.splice(wantB, 1)[0];
+            const back = [];
+            gone.stack.forEach(x => back.push(x));
+            gone.energy.forEach(x => back.push(x));
+            gone.effects.forEach(e => { if (e.card) back.push(e.card); });
+            back.forEach(x => o.hand.push(x));
+            this.log(`${c.name}: ${topCard(this.db, gone).name} and everything on it go back to ${o.name}'s hand.`, 'eff');
+          } else {
+            this.log(`${c.name} backfires - the turn ends immediately.`, 'eff');
+            this.state.forceEndTurn = true;
           }
           break;
         }
@@ -6486,6 +6647,11 @@ class Engine {
     }
     if (dmg > 0) {
       for (const e of atkSlot.effects) {
+        // `who` is Misty's clause: "if the attacking Pokemon has Misty in its
+        // name". Checked HERE rather than when the card is played, because the
+        // Active can change between the two - retreat, a Gust, a Knock Out - and
+        // the card asks about whoever ends up swinging.
+        if (e.kind === 'DAMAGE_BONUS' && e.who && topCard(this.db, atkSlot).name.indexOf(e.who) < 0) continue;
         if (e.kind === 'DAMAGE_BONUS') { dmg += e.amount; steps.push(`+${e.amount} from ${e.label || 'a bonus'} -> ${dmg}.`); }
       }
       // Dark Primeape's Frenzy. Deterministic, so it lives in computeDamage and
