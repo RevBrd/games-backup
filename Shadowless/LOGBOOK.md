@@ -307,3 +307,53 @@ to leave a real sentence behind. That is a shape for Trevor to approve, and this
 round, which is the first time that has been true here.
 
 — #39
+
+---
+
+## #40 — Job 16, Gym Heroes: 130 of 131, and card 131 held for a go-live call
+
+Taken from 44 to 130 over one long session, one compaction, and a Poison ruling that went two ways.
+
+**The job's scope was the most useful sentence in it.** Trevor asked for placeholder AI weights, clearly
+marked, not validated ones. That freed every batch to spend its care on the engine rules and the
+tests, and the `PROVISIONAL` list is the honest ledger of what is still a guess — about fifty entries.
+
+**Three live-set bugs came out of building adjacent gym1 cards, none of them visible from their own
+set.** Dark Charizard's forecast counted every Energy where the card counts Fire (2x overestimate,
+measured with abtest). Jungle Scyther's Swords Dance never worked: `turn + 2` is right for effects
+through the OPPONENT's turn, and that buff runs through ours. A crash I shipped myself one commit
+earlier (a malformed `revealedHand`). If you add a set, expect the old sets to break under you —
+the new card is the first test that asserts the damage rather than the effect being present.
+
+**What I would tell the next session, in order of how much it cost me:**
+
+- **Event order is our weak spot, and I got talked out of a correct answer about it.** On Jynx I
+  derived the flip count right and then conceded the framing anyway. Trevor came back the next day
+  with the same number. His model of why is now in the global CLAUDE.md and it is better than mine:
+  we hold the whole text at once, so order has to be deconstructed, not read forward. Derive it
+  from the code, then say the consequence out loud before agreeing.
+- **Printed text outranks playability, in both directions.** I argued Poison should not end Shadow
+  Images on playability grounds; that is step 4 overruling step 1. Trevor's strict reading also made
+  Poison a real counter-strategy, which my version had missed.
+- **Every test fixture here lies once.** Defenders that were weak or resistant to the attacker, hand
+  counts across a turn draw, `forceFlip` also forcing the between-turns waking coin, an ESP counter
+  read after the turn moved on. Query `wkType`/`rsType`; assert deltas and identity, not totals; read
+  counters where their consumer reads them.
+- **A break-test that does not break looks exactly like an untestable row.** One silently no-op'd.
+  Assert the match count on the throwaway edit too — it is in `MISREADINGS.md`.
+- **`scoreAttack` cannot ask what a card is worth** (AI.md item 19): `cardKeepValue` routes back into
+  it. Two stack overflows before it had a name.
+- **Script edits: check every anchor, then write.** One duplicate anchor cost a round trip; the fix was
+  collect-all failures, a `--dry` mode, and a re-run guard. Nothing half-applied.
+
+**Where it stands.** Recall is card 131 and the set goes live the moment its entry lands, with a
+generated placeholder bracket until Trevor's roster is in `ladder.json`. I recommended building
+Recall's machinery first (tested with the card injected only inside the test run) and landing the
+one-line card entry as its own deliberate commit. Five pickers have never been rendered; `SCREENS.md`
+says what to look for on each.
+
+The best part was the rulings conversations. Trevor's plain-English reads on Shadow Images and Fairy
+Power were right on first pass, and the keep-one rule on Fairy Power is the kind of thing I would not
+have thought to add.
+
+— #40 (Shadowless 40, Opus 5)
