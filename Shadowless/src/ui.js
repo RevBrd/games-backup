@@ -2465,6 +2465,24 @@ function resolveTarget(slot, pi, where, idx) {
 function doAttack(i) {
   const c = topCard(CARD_DB, me().active);
   const script = (EFFECTS[c.id] && EFFECTS[c.id].a && EFFECTS[c.id].a[i]) || [];
+  // FAIRY POWER. Asked before the attack like every other attack question here,
+  // and that costs the player nothing: the choice only matters on heads, and
+  // nothing happens between choosing and the coin. The picker's ceiling is one
+  // short of the whole board - Trevor's rule, so returning everything and
+  // losing on the spot is never on offer. With one Pokemon in play there is
+  // nothing to choose, so it just attacks.
+  const fairy = script.find(v => v.v === 'RETURN_OWN_TO_HAND');
+  if (fairy && UI.E.allSlots(0).length > 1) {
+    const mine = UI.E.allSlots(0);
+    openPicker({
+      title: c.attacks[i].name,
+      prompt: 'If the coin is heads, these return to your hand with everything attached. At least one must stay in play',
+      items: mine.map(sl => ({ uid: sl.uid, id: topCard(CARD_DB, sl).id })),
+      min: 0, max: mine.length - 1, confirm: 'Attack',
+      onDone: (returnUids) => attackWithEnergy(i, c, script, { returnUids }),
+    });
+    return;
+  }
   const needsBench = script.some(v => v.v === 'SWITCH_DEFENDER_CHOOSE') && foe().bench.length > 0;
   if (needsBench) {
     UI.targeting = { scope: 'oppBench', prompt: 'Choose which Benched Pokemon to drag into the Active spot',

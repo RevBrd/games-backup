@@ -723,6 +723,16 @@ class AI {
         // and like NO_DEFENSES it rides into the engine's own computeDamage
         // rather than being re-derived here.
         case 'NO_RESISTANCE': flags.noRes = true; break;
+        // Putting Shadow Images up. PROVISIONAL at 0.75, and the number has a
+        // derivation: every attack into it is a coin, tails keeps it up, heads
+        // ends it, so the expected number of attacks it stops is 1/2 + 1/4 + ...
+        // = 1. Discounted from 1 because half the time it stops nothing at all,
+        // and because the opponent can simply not attack into it - Swift ignores
+        // it outright. Worth nothing while it is already standing.
+        case 'SHADOW_IMAGES':
+          flags.shield = atkSlot.effects.some(e => e.kind === 'SHADOW_IMAGES') ? 0 : 0.75;
+          break;
+        case 'RETURN_OWN_TO_HAND': flags.returnOwn = true; break;
         // A tutor. Worth a card plus what it fetches, which cardKeepValue
         // already prices — reaching for it rather than inventing a number.
         case 'SEARCH_TO_HAND': flags.tutor = { n: v.n || 1, filter: v }; break;
@@ -965,6 +975,13 @@ class AI {
     // Haunter's Transparency does, because its coin is deliberately NOT in
     // computeDamage (that function is pure). Half the time the attack does
     // nothing at all, so halve both the damage and the odds of the Knock Out.
+    // Rocket's Scyther's Shadow Images - Transparency's halving, damage only.
+    // Swift walks straight past it, and the effect coins of the attack are not
+    // touched, which is why `blocked` below does not read it.
+    if (!raw.flags.raw && defSlot.effects.some(e => e.kind === 'SHADOW_IMAGES')) {
+      expDmg *= 0.5; expUseful *= 0.5; pLethal *= 0.5;
+      pStopped += 0.5 * (1 - pStopped);
+    }
     if (E.activePower(defSlot, 'FLIP_TO_NEGATE')) {
       expDmg *= 0.5; expUseful *= 0.5; pLethal *= 0.5;
       pStopped += 0.5 * (1 - pStopped);        // the coin stops it half the time on top
@@ -1659,6 +1676,19 @@ class AI {
       let counters = 0;
       for (const sl of E.allSlots(pi)) counters += Math.min(per, sl.dmg);
       s += counters / 10 * W.healPer10;
+    }
+
+    // Fairy Power, PROVISIONAL and deliberately narrow - Trevor, 12 Sep: "we'd
+    // just have to make sure the bot doesn't over-apply since even regular Scoop
+    // Up only has limited use cases." The one use this bot can see is the escape:
+    // the Active is about to be Knocked Out, a Bench can take its place, and
+    // returning it DENIES the Prize. Half of that, for the coin. Everything else
+    // it could do - a mass reset, re-playing an evolution line - it is not asked
+    // to judge.
+    if (f.flags.returnOwn && me.active && me.bench.length) {
+      if (this.threatAgainst(pi, me.active) >= this.remainingHP(me.active)) {
+        s += 0.5 * W.knockout * 0.6;
+      }
     }
 
     if (f.flags.loseNextAttack) {
@@ -3487,6 +3517,18 @@ class AI {
           if (scr.some(v => v.v === 'SWITCH_DEFENDER_CHOOSE' || v.v === 'SWITCH_DEFENDER_CHOOSE_ON_FLIP')) {
             a.opts = a.opts || {};
             a.opts.bench = this.bestDragTarget(pi).bench;
+          }
+        }
+        // Fairy Power's choice is made before the coin, like every attack choice
+        // here. The doomed Active and nothing else - the same narrow read the
+        // score above uses, so the two cannot disagree about what is returned.
+        if (me.active) {
+          const scrR = this.script(me.active, a.idx);
+          if (scrR.some(v => v.v === 'RETURN_OWN_TO_HAND')) {
+            const doomed = me.bench.length > 0
+              && this.threatAgainst(pi, me.active) >= this.remainingHP(me.active);
+            a.opts = a.opts || {};
+            a.opts.returnUids = doomed ? [me.active.uid] : [];
           }
         }
         // Electric Current: which of OUR Bench gets the Energy. Same rule as the

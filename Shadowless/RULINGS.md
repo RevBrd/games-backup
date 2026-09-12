@@ -54,6 +54,8 @@ enough to settle a call in plain English, so ask him — he can be a resource on
 | Sabrina's ESP — the one card that makes the board go back | [SABRINAS-ESP.md](Rulings/SABRINAS-ESP.md) |
 | "You may" resolved as a rule, and the one case where declining is right | [BENCH-GUARD.md](Rulings/BENCH-GUARD.md) |
 | "As many as you want" — the choice the engine answers with NOTHING, and why that one fallback goes the other way | [SUBSET-CHOICES.md](Rulings/SUBSET-CHOICES.md) |
+| Shadow Images — an evasion the OPPONENT rolls, damage only, lasting until it fails; and whether Poison ends it | [SHADOW-IMAGES.md](Rulings/SHADOW-IMAGES.md) |
+| Fairy Power — a mass Scoop Up that must leave one Pokemon in play, chosen before its coin | [FAIRY-POWER.md](Rulings/FAIRY-POWER.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -156,6 +158,9 @@ ruling that lives only in a spreadsheet gets re-derived by whoever opens the car
 | **Where the open question is WHICH, pick for them; where it is WHETHER, do nothing** — one rule tells apart two fallbacks that look identical and go opposite ways | ["as many as you want"](Rulings/SUBSET-CHOICES.md) |
 | **A card that is legal, played and INERT is worse than one that crashes** — price the empty choice at -Infinity so the scorer cannot reach it | ["as many as you want"](Rulings/SUBSET-CHOICES.md) |
 | **Defer a cluster even if it turns out not to be one.** Building four together is what showed that three shared a shape and the fourth shared only a surface | ["as many as you want"](Rulings/SUBSET-CHOICES.md) |
+| **A defender's coin thrown during someone else's attack is not that attack's coin** — ESP re-flips the attack's coins, and Transparency had the same fault | [Shadow Images](Rulings/SHADOW-IMAGES.md) |
+| **An effect with an end condition is a promise: check the promise after each action, rather than guarding every route that could break it** | [Shadow Images](Rulings/SHADOW-IMAGES.md) |
+| **A choice can be taken before a coin when nothing happens between them** — the coin decides whether the choice is used, not what it should be | [Fairy Power](Rulings/FAIRY-POWER.md) |
 | **"You may" can be resolved as a RULE when no board makes declining sensible — and where one does, encode that case rather than the preference around it. Say what the rule does not model** | ["you may" as a rule](Rulings/BENCH-GUARD.md) |
 | **Restore IN PLACE when anything up the stack holds a reference to what you are replacing** — object identity is the contract, the contents are not. And **rewind the board, keep the record**: an undone event that leaves no trace is indistinguishable from one that never happened | [Sabrina's ESP](Rulings/SABRINAS-ESP.md) |
 | **Ask what the code DID, not what it declares** — a conditionally-flipping attack makes "does this attack flip coins" unanswerable from its script | [Sabrina's ESP](Rulings/SABRINAS-ESP.md) |

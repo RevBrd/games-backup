@@ -165,12 +165,16 @@ class Engine {
     if (this.state.log.length > 4000) this.state.log.shift();
   }
 
-  flip(reason = '') {
+  flip(reason = '', fopts = {}) {
     // SABRINA'S ESP needs to know whether the attack "involves flipping coins",
     // and the only honest answer is how many it actually flipped — a card can
     // flip conditionally (Removal Pulse only flips if the defender has Energy)
     // so reading the script would answer a different question.
-    this.flipsThisAttack++;
+    // `uncounted` is for a DEFENDER's coin thrown during somebody else's attack
+    // - Transparency, Shadow Images. ESP re-flips "those coins", meaning the
+    // attack's own, and a coin the defender's card throws is not one of them.
+    // Counted, it would make a coinless attack into either card ESP-eligible.
+    if (!fopts.uncounted) this.flipsThisAttack++;
     let heads;
     if (this.dev.forceFlip === 'H') heads = true;
     else if (this.dev.forceFlip === 'T') heads = false;
@@ -1395,6 +1399,26 @@ class Engine {
   // caller. "The effect on that Pokemon" is per-Pokemon, so the two halves expire
   // independently: Cool Porygon can be benched while the defender keeps the
   // Weakness it was given, and the reverse.
+  // "...(or is Benched or is evolved)." Checked LAZILY after every action rather
+  // than cleared at each place a Pokemon can leave the Active spot, for the reason
+  // settleConversions below gives: a clear-on-move would have to find every route
+  // off the Active spot and stay found. The effect is a promise about conditions,
+  // so this asks whether the conditions still hold.
+  settleLapses() {
+    for (let i = 0; i < 2; i++) {
+      const me = this.state.players[i];
+      for (const sl of this.allSlots(i)) {
+        const k = sl.effects.findIndex(e => e.kind === 'SHADOW_IMAGES');
+        if (k < 0) continue;
+        const why = me.active !== sl ? 'is Benched'
+          : sl.stack.length !== sl.effects[k].stackMark ? 'evolves' : null;
+        if (!why) continue;
+        sl.effects.splice(k, 1);
+        this.log(`${this.nameOf(sl)} ${why} - its Shadow Images are gone.`, 'eff');
+      }
+    }
+  }
+
   settleConversions() {
     for (let i = 0; i < 2; i++) {
       const me = this.state.players[i];
@@ -2876,6 +2900,7 @@ class Engine {
     const r = this.dispatchAction(pi, a);
     this.settleTransforms();
     this.settleConversions();
+    this.settleLapses();
     this.settleWinConditions();
     // Minion of Team Rocket is the only card in the era that ends your turn from
     // inside its own resolution. Handled HERE rather than in doTrainer so it
@@ -3009,7 +3034,7 @@ class Engine {
           // Not an attack, so no Retaliate and no Mirror Shell, and there is no
           // attacker to aim them at anyway. Applied directly rather than through
           // dealDamage because dealDamage needs an attacking slot.
-          slot.dmg += v.n || 10;
+          slot.dmg += v.n || 10; this.tookDamage(slot);
           this.log(`Rainbow Energy does ${v.n || 10} damage to ${this.nameOf(slot)}.`, 'eff');
           break;
         default:
@@ -4506,7 +4531,7 @@ class Engine {
             if (!this.flip(`${holder.name}: Digger`)) {
               const tgt = holder.active;
               if (tgt) {
-                tgt.dmg += v.n || 10;
+                tgt.dmg += v.n || 10; this.tookDamage(tgt);
                 this.log(`${c.name}: tails — ${this.nameOf(tgt)} takes ${v.n || 10}.`, 'eff');
               }
               break;
@@ -4669,6 +4694,7 @@ class Engine {
   // does, the honest fix is to refuse the re-flip rather than to restore a board
   // that was never written down.
   flipsThisAttack = 0;
+  shadowMissUid = null;
   attackDealt = 0;
   espSnapshot = null;
   fleeSnapshot = null;
@@ -4876,6 +4902,18 @@ class Engine {
   // fully spends its 20 is discarded there and then; Minimize is an attack's
   // lingering effect with no card behind it and runs to its own expiry. `e.card`
   // is what tells them apart and it was already in the data.
+  // "This effect lasts until Rocket's Scyther TAKES DAMAGE." Called from every
+  // place something DOES damage - an attack, recoil, Rainbow Energy, Digger,
+  // Bench Guard - and deliberately NOT from Poison or Damage Swap, which PLACE or
+  // MOVE damage counters. That line is a ruling this repo had never settled; see
+  // Rulings/SHADOW-IMAGES.md for why it falls here and what flipping it costs.
+  tookDamage(slot) {
+    const k = slot.effects.findIndex(e => e.kind === 'SHADOW_IMAGES');
+    if (k < 0) return;
+    slot.effects.splice(k, 1);
+    this.log(`${this.nameOf(slot)} takes damage - its Shadow Images are gone.`, 'eff');
+  }
+
   selfDamage(pi, slot, amount, label) {
     if (amount <= 0) return 0;
     let dmg = amount;
@@ -4902,7 +4940,7 @@ class Engine {
       }
     }
     if (dmg > 0) {
-      slot.dmg += dmg;
+      slot.dmg += dmg; this.tookDamage(slot);
       this.log(`${label} does ${dmg} damage to itself. (${slot.dmg} total)`, 'eff');
     } else {
       this.log(`${label}'s self-damage is fully blunted.`, 'eff');
@@ -5357,8 +5395,36 @@ class Engine {
     const veil = def ? this.activePower(def, 'FLIP_TO_NEGATE') : null;
     let negated = false;
     if (veil) {
-      negated = this.flip(`${veil.name}: prevent the attack?`);
+      negated = this.flip(`${veil.name}: prevent the attack?`, { uncounted: true });
       if (negated) this.log(`${veil.name}: everything done to ${this.nameOf(def)} is prevented.`, 'eff');
+    }
+    // ROCKET'S SCYTHER'S SHADOW IMAGES. "Whenever Rocket's Scyther is attacked,
+    // your opponent flips a coin. If tails, that attack does no damage to
+    // Rocket's Scyther. (Any other effects of the attack still happen.)"
+    //
+    // THE ORDER IS DERIVED, NOT ASSUMED. This sits in runAttack after the
+    // damage-shaping loop and its coins, after the does-nothing exit, and
+    // before the main hit - beside Transparency, which solved the same
+    // placement problem first. So: the attack's damage coins, then this coin,
+    // then the damage lands or does not, then the effect coins (a status flip)
+    // as the attack carries on. An attack that does nothing throws no coin.
+    //
+    // DAMAGE ONLY, which is the whole difference from Transparency: this feeds
+    // the hit and NOT `blocked`, so a Paralysis or a discard still lands.
+    // Swift ignores "any other effects on the Defending Pokemon", so it throws
+    // no coin at all. ONE coin per attack, which is why the result is kept by
+    // uid for the rest of the attack - a snipe that reaches the Active is the
+    // same attack and must not get a coin of its own.
+    this.shadowMissUid = null;
+    const shade = def ? def.effects.find(e => e.kind === 'SHADOW_IMAGES') : null;
+    const hitsDef = base > 0 || script.some(v => v.v === 'BENCH_SNIPE' && v.target === 'any');
+    if (shade && !negated && hitsDef && !script.some(v => v.v === 'NO_DEFENSES')) {
+      const lands = this.flip(`${me.name} vs ${this.nameOf(def)}'s Shadow Images`, { uncounted: true });
+      if (lands) this.log(`The attack finds ${this.nameOf(def)}.`, 'eff');
+      else {
+        this.shadowMissUid = def.uid;
+        this.log(`The attack strikes a shadow - no damage to ${this.nameOf(def)}.`, 'eff');
+      }
     }
 
     // Magneton's Sonicboom. "Don't apply Weakness and Resistance for this
@@ -5391,7 +5457,7 @@ class Engine {
     const charity = (a && a.opts && a.opts.charityReduce > 0
       && atk.effects.some(e => e.kind === 'DAMAGE_REDUCE_OPTIONAL'))
       ? a.opts.charityReduce : 0;
-    const res = negated ? { dealt: 0, prevented: true }
+    const res = (negated || (def && this.shadowMissUid === def.uid)) ? { dealt: 0, prevented: true }
       : this.dealDamage(atk, def, base, { noWR: flat || raw, raw, noRes, charityReduce: charity });
     // "If an attack DOES DAMAGE to Misty's Tentacruel" — read from what landed
     // rather than from the attack's printed number, so a prevented hit offers
@@ -5544,6 +5610,57 @@ class Engine {
           def.poisonDamage = v.n;
           this.log(`${this.nameOf(def)} now takes ${v.n} Poison damage between turns.`, 'status');
           break;
+        case 'SHADOW_IMAGES': {
+          // Applied to OURSELVES and not a Power, so it has to be put up with an
+          // attack and it has an end: the first damage that lands, a trip to the
+          // Bench, or an evolution. Re-using it while it stands does nothing -
+          // it does not stack and it does not reset.
+          if (atk.effects.some(e => e.kind === 'SHADOW_IMAGES')) {
+            this.log(`${card.name}'s Shadow Images are already up.`, 'eff');
+            break;
+          }
+          atk.effects.push({ kind: 'SHADOW_IMAGES', label: v.label || 'Shadow Images',
+                             stackMark: atk.stack.length });
+          this.log(`${card.name} blurs into Shadow Images.`, 'eff');
+          break;
+        }
+        case 'RETURN_OWN_TO_HAND': {
+          // Erika's Clefable's Fairy Power. "Flip a coin. If heads, you may return
+          // any number of your Pokemon in play and all cards attached to them to
+          // your hand." EVERYTHING goes to hand - the stack, the Energy, attached
+          // Trainers - which is what separates it from Scoop Up.
+          //
+          // CHOSEN BEFORE THE COIN, and that loses nothing: tails makes the choice
+          // moot, heads uses it, and nothing happens in between. It also cannot
+          // be done any other way here, because an attack resolves synchronously.
+          //
+          // AT LEAST ONE MUST STAY. Trevor's call, 12 Sep 2026, on playability:
+          // returning everything is an instant loss, and a loss nobody means to
+          // take should not be one click away. A request for all of them is
+          // trimmed rather than refused, so the attack still does what it can.
+          if (v.flip && !this.flip(v.label || 'Fairy Power')) {
+            this.log(`${card.name}: tails - nothing returns.`, 'eff');
+            break;
+          }
+          const mine = this.allSlots(pi);
+          let want = [...new Set((a && a.opts && a.opts.returnUids) || [])]
+            .filter(u => mine.some(sl => sl.uid === u));
+          if (want.length >= mine.length) {
+            want = want.slice(0, mine.length - 1);
+            this.log('At least one Pokemon has to stay in play.', 'eff');
+          }
+          if (!want.length) { this.log(`${card.name}: nothing is returned.`, 'eff'); break; }
+          let activeGone = false;
+          for (const u of want) {
+            const sl = mine.find(x => x.uid === u);
+            const nm = this.nameOf(sl);
+            if (this.removeSlot(pi, sl) === 'active') activeGone = true;
+            this.gatherSlot(sl).forEach(x => me.hand.push(x));
+            this.log(`${nm} and everything attached return to ${me.name}'s hand.`, 'eff');
+          }
+          if (activeGone && me.bench.length) this.addPromote(pi);
+          break;
+        }
         case 'CLEAR_DEF_STATUS': {
           // Good Morning, and Dark Wigglytuff's Slap Awake in neo4. An attack
           // whose whole effect is to REMOVE a Special Condition from the
@@ -6986,6 +7103,15 @@ class Engine {
 
   dealDamage(atkSlot, defSlot, base, opts = {}) {
     if (!defSlot) return { dealt: 0, prevented: false };
+    // The Shadow Images coin already came up tails for THIS attack on THIS
+    // Pokemon, so every piece of attack damage aimed at it is a shadow -
+    // including a snipe that reaches the Active. Non-attack damage (Retaliate,
+    // a Power) passes notAttack and is not covered, because the card says
+    // "whenever Rocket's Scyther is ATTACKED".
+    if (!opts.notAttack && !opts.raw && this.shadowMissUid !== null && defSlot.uid === this.shadowMissUid) {
+      this.log(`That strikes a shadow too - no damage to ${this.nameOf(defSlot)}.`, 'eff');
+      return { dealt: 0, prevented: true };
+    }
     const D = topCard(this.db, defSlot);
     const r = this.computeDamage(atkSlot, defSlot, base, opts);
     r.steps.forEach(t => this.log(t, t.indexOf('prevented') >= 0 || t.indexOf('Hardened') >= 0 ? 'eff' : 'dmg'));
@@ -6994,7 +7120,7 @@ class Engine {
     // Knocked Out.
     if (r.dmg > 0) r.dmg = this.benchGuard(defSlot, r.dmg);
     if (r.dmg > 0) {
-      defSlot.dmg += r.dmg;
+      defSlot.dmg += r.dmg; this.tookDamage(defSlot);
       // `byAttack` is what lets Final Beam answer an attack and nothing else.
       //
       // DEFAULT TRUE, AND THE DEFAULT IS THE DESIGN. Thirteen of the sixteen
@@ -7076,7 +7202,7 @@ class Engine {
       if (!pw || pw.kind !== 'BENCH_GUARD' || !this.powerUsable(g)) continue;
       const take = Math.min(pw.n || 10, dmg);
       if (g.dmg + take >= topCard(this.db, g).hp) continue;   // it would die doing it
-      g.dmg += take;
+      g.dmg += take; this.tookDamage(g);
       this.log(`${pw.name}: ${this.nameOf(g)} takes ${take} of that damage instead.`, 'eff');
       return dmg - take;
     }

@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 9,
+  gym1: 7,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -568,6 +568,12 @@ const PROVISIONAL = new Set([
   // than omitted, so the coverage guard can tell "priced at nothing" from
   // "nobody looked at it" - the distinction that whole guard exists for.
   'SHUFFLE_HAND_DRAW', 'MILL_FOR_DAMAGE',
+  // Pass nine, 12 Sep 2026 - the two Trevor weighed in on. SHADOW_IMAGES' 0.75
+  // has a derivation (expected attacks stopped is 1/2 + 1/4 + ... = 1, discounted
+  // for variance and for an opponent who simply does not attack into it);
+  // RETURN_OWN_TO_HAND is priced ONLY as the doomed-Active escape, on his
+  // instruction not to let the bot over-apply it.
+  'SHADOW_IMAGES', 'RETURN_OWN_TO_HAND',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',

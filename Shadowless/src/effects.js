@@ -125,6 +125,13 @@
 //     NO_RESISTANCE                ignore RESISTANCE only. NO_WR's narrower
 //                                  sibling - Weakness still doubles and every
 //                                  reduction below still applies (Hook Shot)
+//     SHADOW_IMAGES                put up on the ATTACKER: whenever it is attacked,
+//                                  the attacker flips; tails and that attack does
+//                                  no damage to it. Lasts until it takes damage,
+//                                  is Benched, or evolves. Not a Power
+//     RETURN_OWN_TO_HAND {flip}    return any number of YOUR Pokemon in play, and
+//                                  everything on them, to hand. At least one stays
+//                                  (Fairy Power)
 //     REQUIRE_OWN_BENCH            illegal with an empty Bench of your own.
 //                                  The mirror of REQUIRE_OPP_BENCH (Alert)
 //     SHUFFLE_HAND_DRAW {n}        shuffle your hand away and draw a FIXED n.
@@ -2413,6 +2420,10 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES POKEMON, pass nine: the two Trevor weighed in on ---------
+  // Both written up in Rulings/SHADOW-IMAGES.md and Rulings/FAIRY-POWER.md.
+  'gym1-13': { a: [[{ v: 'SHADOW_IMAGES' }], []] },                   // Rocket's Scyther
+  'gym1-3':  { a: [[{ v: 'RETURN_OWN_TO_HAND', flip: true, label: 'Fairy Power' }], []] },
   // ---- GYM HEROES POKEMON, pass eight: the last of the tractable ones -------
   // Two of these needed NOTHING NEW at all, which is worth noting after seven
   // passes of widening: Misty's Starmie is DMG_PER_SPARE_ENERGY with the cap

@@ -8828,5 +8828,178 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- SHADOW IMAGES AND FAIRY POWER ------------------------------------------
+// The two cards Trevor weighed in on. Both rulings are written up in Rulings/.
+// Every row here is built around a confound this job has already hit once:
+// the ESP counter is read WHERE ESP READS IT, statuses are read from the log
+// when a forced coin could undo them, and hand counts are deltas.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  const atkP = (E, pi, i) => E.act(pi, E.legalActions(pi).find(a => a.t === 'attack' && a.idx === i));
+  const shade = (sl) => sl.effects.find(e => e.kind === 'SHADOW_IMAGES');
+  const put = (sl) => sl.effects.push({ kind: 'SHADOW_IMAGES', label: 'Shadow Images', stackMark: sl.stack.length });
+  const said = (E, from) => E.state.log.slice(from || 0).map(l => l.text || l).join(' | ');
+  const shadowCoins = (E, from) => E.state.log.slice(from || 0).map(l => l.text || l)
+    .filter(t => /Coin flip/.test(t) && /Shadow Images/.test(t)).length;
+
+  T('Shadow Images is put up by an attack that does no damage itself, and does not stack', () => {
+    const E = setup({ me: { card: 'gym1-13', energy: '1 Grass' }, them: { card: 'base1:Venusaur' } }).E;
+    atkP(E, 0, 0);
+    const sc = E.state.players[0].active;
+    eq(!!shade(sc), true, 'it is up');
+    eq(E.state.players[1].active.dmg, 0, 'and the attack did no damage');
+    E.act(1, { t: 'pass' });
+    atkP(E, 0, 0);
+    return eq(sc.effects.filter(e => e.kind === 'SHADOW_IMAGES').length, 1, 'using it again does not stack');
+  });
+
+  T('TAILS: no damage to Scyther, but the attack\'s OTHER effects still land', () => {
+    // Dream Dance does 10 and puts both Pokemon to sleep. Tails stops the 10 and
+    // nothing else — which is the whole difference from Transparency, where heads
+    // stops every effect. Read from the log, because a forced coin also forces the
+    // waking flip between turns.
+    const E = setup({ me: { card: 'gym1-46', energy: '2 Grass' }, them: { card: 'gym1-13' },
+      theirBench: [{ card: 'base1:Machop' }] }).E;
+    put(E.state.players[1].active);
+    E.dev.forceFlip = 'T';
+    const from = E.state.log.length;
+    atkP(E, 0, 0);
+    const sc = E.state.players[1].active;
+    eq(sc.dmg, 0, 'no damage');
+    eq(/Rocket's Scyther is now Asleep/.test(said(E, from)), true, 'the Sleep landed anyway');
+    return eq(!!shade(sc), true, 'and Shadow Images is still up');
+  });
+
+  T('ONE coin per attack, and it does not count toward Sabrina\'s ESP', () => {
+    // ESP re-flips "those coins" — the ATTACK's. A coin the defender's card throws
+    // is not one of them, so the counter is read inside afterAttack, which is
+    // exactly where ESP reads it. Read after the turn ends instead and it picks up
+    // the between-turns waking coins, which is how the first draft of this row
+    // reported a bug that was not there.
+    const E = setup({ me: { card: 'base1:Machop', energy: '1 Fighting' }, them: { card: 'gym1-13' },
+      theirBench: [{ card: 'base1:Machop' }] }).E;
+    put(E.state.players[1].active);
+    let seen = null;
+    const orig = E.afterAttack.bind(E);
+    E.afterAttack = function (pi, a, esp) { seen = this.flipsThisAttack; return orig(pi, a, esp); };
+    E.dev.forceFlip = 'T';
+    const from = E.state.log.length;
+    atkP(E, 0, 0);
+    eq(shadowCoins(E, from), 1, 'exactly one Shadow Images coin');
+    return eq(seen, 0, 'and the counter ESP reads never saw it');
+  });
+
+  T('It lasts across attacks until one finally lands', () => {
+    // Trevor's sequence, asserted across REAL consecutive turns: tails, tails,
+    // still standing; heads, the damage lands and it is gone.
+    const E = setup({ me: { card: 'gym1-37', energy: '2 Fire' }, them: { card: 'gym1-13' },
+      theirBench: [{ card: 'base1:Machop' }] }).E;
+    const sc = E.state.players[1].active;
+    put(sc);
+    E.dev.forceFlip = 'T';
+    atkP(E, 0, 0); E.act(1, { t: 'pass' });
+    eq(!!shade(sc) && sc.dmg === 0, true, 'first attack: shadow, still up');
+    atkP(E, 0, 0); E.act(1, { t: 'pass' });
+    eq(!!shade(sc) && sc.dmg === 0, true, 'second attack: shadow, still up');
+    E.dev.forceFlip = 'H';
+    atkP(E, 0, 0);
+    eq(sc.dmg > 0, true, 'third attack: it lands');
+    return eq(!!shade(sc), false, 'and Shadow Images is gone');
+  });
+
+  T('Swift walks straight past it and throws no coin', () => {
+    // "Isn't affected by ... any other effects on the Defending Pokemon."
+    const E = setup({ me: { card: 'gym1-90', energy: '2 Water' }, them: { card: 'gym1-13' },
+      theirBench: [{ card: 'base1:Machop' }] }).E;
+    const sc = E.state.players[1].active;
+    put(sc);
+    E.dev.forceFlip = 'T';
+    const from = E.state.log.length;
+    atkP(E, 0, 0);
+    eq(shadowCoins(E, from), 0, 'no coin');
+    return eq(sc.dmg > 0 && !shade(sc), true, 'the damage lands and ends it');
+  });
+
+  T('POISON does not end it — a counter placed is not damage taken', () => {
+    // The one call in this pair the repo had no ruling for. See
+    // Rulings/SHADOW-IMAGES.md; flipping it is one line in betweenTurns.
+    const E = setup({ me: { card: 'gym1-13', energy: '1 Grass' }, them: { card: 'base1:Venusaur' } }).E;
+    const sc = E.state.players[0].active;
+    put(sc); sc.status.poisoned = true;
+    E.act(0, { t: 'pass' });
+    eq(sc.dmg, 10, 'the Poison ticked');
+    return eq(!!shade(sc), true, 'and Shadow Images is still up');
+  });
+
+  T('Going to the Bench ends it, found by the settle rather than the retreat', () => {
+    const E = setup({ me: { card: 'gym1-13', energy: '3 Grass' }, them: { card: 'base1:Venusaur' },
+      myBench: [{ card: 'base1:Machop' }] }).E;
+    const sc = E.state.players[0].active;
+    put(sc);
+    E.act(0, E.legalActions(0).find(a => a.t === 'retreat'));
+    eq(E.state.players[0].bench.indexOf(sc) >= 0, true, 'Scyther is on the Bench');
+    return eq(!!shade(sc), false, 'and its Shadow Images are gone');
+  });
+
+  T('The bot attacking INTO it expects half the damage', () => {
+    const E = setup({ me: { card: 'gym1-46', energy: '2 Grass' }, them: { card: 'gym1-13' } }).E;
+    put(E.state.players[1].active);
+    return eq(new AI(E, {}).forecast(0, 0).expDmg, 5, 'Dream Dance forecast at 5, not 10');
+  });
+
+  // --------------------------------------------------------------- Fairy Power
+  const fairy = (flip, opts) => {
+    const E = setup({ me: { card: 'gym1-3', energy: '1 Psychic' }, them: { card: 'base1:Venusaur' },
+      myBench: [{ card: 'base1:Machop' }, { card: 'base1:Pikachu' }] }).E;
+    E.dev.forceFlip = flip;
+    const p = E.state.players[0];
+    const all = E.allSlots(0).map(s => s.uid);
+    const a = E.legalActions(0).find(x => x.t === 'attack' && x.idx === 0);
+    const h0 = p.hand.length;
+    E.act(0, Object.assign({}, a, { opts: opts(all, p) }));
+    return { E, gained: p.hand.length - h0, inPlay: E.allSlots(0).length };
+  };
+
+  T('Fairy Power keeps ONE in play even when asked for everything', () => {
+    // Trevor's rule, on playability: returning the whole board is an instant
+    // loss, and a loss nobody means to take should not be one click away. The
+    // request is trimmed rather than refused, so the attack still does what it can.
+    const r = fairy('H', (all) => ({ returnUids: all }));
+    eq(r.inPlay, 1, 'one Pokemon stays');
+    eq(r.E.state.phase !== 'over', true, 'and the game goes on');
+    return eq(r.gained > 0, true, 'the others came back to hand with their cards');
+  });
+
+  T('...and returns nothing on tails, or when nobody answered', () => {
+    eq(fairy('T', (all) => ({ returnUids: all })).inPlay, 3, 'tails');
+    // The subset family's rule: an unanswered "any number" is zero.
+    return eq(fairy('H', () => ({})).inPlay, 3, 'unanswered');
+  });
+
+  T('...and returning the Active leaves a promotion owed', () => {
+    const r = fairy('H', (all, p) => ({ returnUids: [p.active.uid] }));
+    return eq((r.E.state.promoteQueue || []).indexOf(0) >= 0, true, 'player 0 must promote');
+  });
+
+  T('The bot uses Fairy Power only as the doomed-Active escape', () => {
+    // Trevor, 12 Sep: "make sure the bot doesn't over-apply since even regular
+    // Scoop Up only has limited use cases." Healthy, it returns nothing; one hit
+    // from a Knock Out with a Bench behind it, it returns exactly itself.
+    const mk = (dmg) => {
+      const E = setup({ me: { card: 'gym1-3', energy: '1 Psychic' },
+        them: { card: 'base1:Venusaur', energy: '4 Grass' }, myBench: [{ card: 'base1:Machop' }] }).E;
+      E.state.players[0].active.dmg = dmg;
+      const a = E.legalActions(0).find(x => x.t === 'attack' && x.idx === 0);
+      new AI(E, {}).scoreAction(0, a);
+      return { uids: a.opts.returnUids, act: E.state.players[0].active.uid };
+    };
+    eq(mk(0).uids.length, 0, 'healthy: returns nothing');
+    const d = mk(60);
+    return eq(d.uids.length === 1 && d.uids[0] === d.act, true, 'doomed: returns only itself');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
