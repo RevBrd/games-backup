@@ -125,6 +125,19 @@
 //     NO_RESISTANCE                ignore RESISTANCE only. NO_WR's narrower
 //                                  sibling - Weakness still doubles and every
 //                                  reduction below still applies (Hook Shot)
+//     COUNTERS_ON_DAMAGED {n}      n damage COUNTERS on every opposing Pokemon that
+//                                  already has any. Not damage: no W/R, no reduction
+//                                  (Pain Amplifier)
+//     NO_ATTACH_ON_FLIP {label}    flip; heads => the opponent cannot ATTACH Energy to
+//                                  the Defending Pokemon next turn. Attach, not move
+//     SELF_ATTACK_DISABLED {label} this attack cannot be used during OUR next turn.
+//                                  ATTACK_LOCK's lock, aimed at ourselves, +3
+//     COST_RETURN_ENERGY {n, t}    a cost: n Energy of type t go back to HAND, not
+//                                  the discard (Energy Loop)
+//     HAND_TO_DECK_FOR_ENERGY {max}   up to max cards from hand onto the deck, then
+//                                  that many basic Energy to hand (Sleight of Hand)
+//     T_PERFUME                    look at their hand; put any number of their
+//                                  Basics onto THEIR Bench (Erika's Perfume)
 //     SHADOW_IMAGES                put up on the ATTACKER: whenever it is attacked,
 //                                  the attacker flips; tails and that attack does
 //                                  no damage to it. Lasts until it takes damage,
@@ -324,7 +337,7 @@
 //                                  Rainbow does not qualify — the card says
 //                                  "Energy card". Nothing happens with no basic
 //                                  Energy or no Bench (Magnetic Lines)
-//     SHUFFLE_INTO_DECK {target, attached}
+//     SHUFFLE_INTO_DECK {target, attached, onTails, coins, unlessKO}
 //                                  put a Pokemon and its pile into its OWNER's
 //                                  deck and shuffle. target 'self' or 'defender';
 //                                  attached 'deck' (everything goes, Fling) or
@@ -2420,6 +2433,18 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES, pass ten: six of the last seven ------------------------
+  // Recall is the seventh, and it is held back on purpose: the 131st card turns
+  // the whole set live, and when that happens is Trevor's call as well as mine.
+  'gym1-14':  { a: [[{ v: 'COUNTERS_ON_DAMAGED', n: 1 }],
+                    [{ v: 'SHUFFLE_INTO_DECK', target: 'defender', attached: 'deck',
+                       coins: 2, unlessKO: true, label: 'Call of the Night' }]] },   // Sabrina's Gengar
+  'gym1-57':  { a: [[{ v: 'NO_ATTACH_ON_FLIP', label: 'Crystal Beam' }]] },         // Misty's Tentacool
+  'gym1-60':  { a: [[{ v: 'HEAL_SELF_ON_FLIP', n: 3, statusOnHeads: 'Asleep', label: 'Naptime' }],
+                    [{ v: 'SELF_ATTACK_DISABLED', label: 'Screaming Headbutt' }]] }, // Sabrina's Slowbro
+  'gym1-91':  { a: [[{ v: 'COST_RETURN_ENERGY', n: 1, t: 'P' }]] },                 // Sabrina's Abra
+  'gym1-94':  { a: [[{ v: 'HAND_TO_DECK_FOR_ENERGY', max: 3 }], []] },              // Sabrina's Mr. Mime
+  'gym1-110': { t: [{ v: 'T_PERFUME' }] },                                          // Erika's Perfume
   // ---- GYM HEROES POKEMON, pass nine: the two Trevor weighed in on ---------
   // Both written up in Rulings/SHADOW-IMAGES.md and Rulings/FAIRY-POWER.md.
   'gym1-13': { a: [[{ v: 'SHADOW_IMAGES' }], []] },                   // Rocket's Scyther

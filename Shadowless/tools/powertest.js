@@ -9028,5 +9028,271 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- SIX OF THE LAST SEVEN --------------------------------------------------
+// Pain Amplifier, Call of the Night, Crystal Beam, Naptime, Screaming Headbutt,
+// Energy Loop, Sleight of Hand, Erika's Perfume. Every row is built around a
+// confound this job has already hit: ESP's counter is read INSIDE afterAttack,
+// who is Active is asserted instead of deck counts across a turn boundary, and
+// every "not offered" is paired with an "is offered" so an empty board cannot
+// pass it.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  const atkA = (E, i, opts) => {
+    const a = E.legalActions(0).find(x => x.t === 'attack' && x.idx === i);
+    return E.act(0, opts ? Object.assign({}, a, { opts }) : a);
+  };
+  const said = (E, from) => E.state.log.slice(from || 0).map(l => l.text || l).join(' | ');
+  const offered = (E, pi, i) => E.legalActions(pi).some(a => a.t === 'attack' && a.idx === i);
+
+  // ------------------------------------------------------- Sabrina's Gengar
+  T('Pain Amplifier places COUNTERS: Resistance does not touch them', () => {
+    // Chansey resists Psychic by 30. Were this damage, 10 would come out as 0.
+    const E = setup({ me: { card: 'gym1-14', energy: '1 Psychic' }, them: { card: 'base1:Chansey' },
+      theirBench: [{ card: 'base1:Machop' }, { card: 'base1:Venusaur' }] }).E;
+    const o = E.state.players[1];
+    o.active.dmg = 10; o.bench[1].dmg = 30;
+    atkA(E, 0);
+    eq(o.active.dmg, 20, 'the resisting Active still took its counter');
+    eq(o.bench[0].dmg, 0, 'the undamaged one took nothing');
+    return eq(o.bench[1].dmg, 40, 'and the damaged Bench one took its counter');
+  });
+
+  T('...protection is asked per target, and a counter can Knock Out', () => {
+    const E = setup({ me: { card: 'gym1-14', energy: '1 Psychic' }, them: { card: 'base1:Venusaur' },
+      theirBench: [{ card: 'base1:Machop' }, { card: 'base1:Squirtle' }] }).E;
+    const o = E.state.players[1];
+    const machop = o.bench[0], squirtle = o.bench[1];
+    machop.dmg = 40;                                          // 50 HP, one counter from gone
+    squirtle.dmg = 10;
+    squirtle.effects.push({ kind: 'PREVENT_ALL_EFFECTS', label: 'test barrier' });
+    atkA(E, 0);
+    eq(o.bench.includes(machop), false, 'the Machop was Knocked Out');
+    return eq(squirtle.dmg, 10, 'and the protected Squirtle was skipped');
+  });
+
+  T('...and a counter from it ends Shadow Images, under Trevor\'s ruling', () => {
+    const E = setup({ me: { card: 'gym1-14', energy: '1 Psychic' }, them: { card: 'gym1-13' } }).E;
+    const sc = E.state.players[1].active;
+    sc.dmg = 10;
+    sc.effects.push({ kind: 'SHADOW_IMAGES', label: 'Shadow Images', stackMark: sc.stack.length, dmgMark: sc.dmg });
+    atkA(E, 0);
+    return eq(sc.effects.some(e => e.kind === 'SHADOW_IMAGES'), false, 'the counter landed and ended it');
+  });
+
+  T('Call of the Night throws NO coin when it Knocks Out', () => {
+    // "UNLESS this attack Knocks Out the Defending Pokemon, flip 2 coins." A coin
+    // thrown on a lethal hit would make it ESP-eligible when the card flipped none.
+    const E = setup({ me: { card: 'gym1-14', energy: '3 Psychic' }, them: { card: 'base1:Blastoise' },
+      theirBench: [{ card: 'base1:Machop' }] }).E;
+    E.state.players[1].active.dmg = 70;                       // 40 more kills a 100 HP Blastoise
+    let seen = null;
+    const orig = E.afterAttack.bind(E);
+    E.afterAttack = function (pi, a, esp) { seen = this.flipsThisAttack; return orig(pi, a, esp); };
+    E.dev.forceFlip = 'H';
+    atkA(E, 1);
+    return eq(seen, 0, 'no coin, read where ESP reads it');
+  });
+
+  T('...otherwise both heads shuffles their Active away, and tails leaves it', () => {
+    // WHO IS ACTIVE, not deck size. On tails the turn passes and they draw; on
+    // heads they owe a promotion first and have not drawn yet. A deck-count row
+    // measured the draw, which is how the smoke test for this reported -1.
+    const mk = (f) => {
+      const E = setup({ me: { card: 'gym1-14', energy: '3 Psychic' },
+        them: { card: 'base1:Blastoise', energy: '2 Water' }, theirBench: [{ card: 'base1:Machop' }] }).E;
+      const blast = E.state.players[1].active;
+      E.dev.forceFlip = f;
+      atkA(E, 1);
+      return { E, blast };
+    };
+    const h = mk('H');
+    eq(h.E.allSlots(1).includes(h.blast), false, 'heads: Blastoise has left play');
+    eq((h.E.state.promoteQueue || []).indexOf(1) >= 0, true, 'and they owe a promotion');
+    const t = mk('T');
+    return eq(t.E.state.players[1].active, t.blast, 'tails: Blastoise is still their Active');
+  });
+
+  // ------------------------------------------------------ Misty's Tentacool
+  const beam = () => {
+    const E = setup({ me: { card: 'gym1-57', energy: '2 Water' }, them: { card: 'base1:Blastoise' },
+      theirBench: [{ card: 'base1:Squirtle' }],
+      theirHand: ['base1:Water Energy', 'base1:Water Energy'] }).E;
+    E.dev.forceFlip = 'H';
+    atkA(E, 0);
+    return E;
+  };
+
+  T('Crystal Beam: their Active cannot be attached to, their Bench can', () => {
+    const E = beam();
+    const o = E.state.players[1];
+    const acts = E.legalActions(1).filter(a => a.t === 'attachEnergy');
+    eq(acts.some(a => a.target === o.bench[0].uid), true, 'the Bench IS offered');
+    eq(acts.some(a => a.target === o.active.uid), false, 'the Active is NOT');
+    const hi = o.hand.findIndex(x => E.db[x.id].kind === 'energy');
+    return eq(E.act(1, { t: 'attachEnergy', hand: hi, target: o.active.uid }).ok, false,
+      'and forcing it is refused');
+  });
+
+  T('...and Rain Dance is not OFFERED the Active either, only refused', () => {
+    // The Power lists every slot as a target in its own enumeration. A guard in
+    // resolution alone would leave the bot able to choose an action the engine
+    // then refuses — so the offer is filtered too. Paired with the Squirtle it
+    // can still reach, so a board with no Rain Dance at all cannot pass this.
+    const E = beam();
+    const o = E.state.players[1];
+    const rain = E.legalActions(1).filter(a => a.t === 'power' && a.kind === 'EXTRA_ATTACH');
+    eq(rain.some(a => a.to === o.bench[0].uid), true, 'Rain Dance to the Squirtle IS offered');
+    return eq(rain.some(a => a.to === o.active.uid), false, 'and to the locked Blastoise is NOT');
+  });
+
+  T('...the lock ends if it is Benched, and wears off after their turn', () => {
+    const E = beam();
+    const o = E.state.players[1];
+    const blast = o.active;
+    // Benched, it is no longer "the Defending Pokemon", which is what the card names.
+    const moved = o.bench.splice(0, 1)[0];
+    o.bench.push(blast); o.active = moved;
+    eq(E.canReceiveEnergy(blast), true, 'on the Bench it can take Energy');
+    o.bench.splice(o.bench.indexOf(blast), 1); o.bench.push(moved); o.active = blast;
+    eq(E.canReceiveEnergy(blast), false, 'back as the Active, it cannot');
+    // +2: their next turn only.
+    E.act(1, { t: 'pass' });
+    E.act(0, { t: 'pass' });
+    return eq(E.legalActions(1).some(a => a.t === 'attachEnergy' && a.target === blast.uid), true,
+      'and on their FOLLOWING turn the Active can be attached to again');
+  });
+
+  // ------------------------------------------------------ Sabrina's Slowbro
+  T('Naptime heals AND sleeps off one coin, or does neither', () => {
+    // The Sleep is read from the log: a forced heads also forces the waking flip.
+    const h = setup({ me: { card: 'gym1-60', energy: '1 Psychic' }, them: { card: 'base1:Venusaur' } }).E;
+    h.state.players[0].active.dmg = 40;
+    h.dev.forceFlip = 'H';
+    const fromH = h.state.log.length;
+    atkA(h, 0);
+    eq(h.state.players[0].active.dmg, 10, 'heads: 30 healed');
+    eq(/Sabrina's Slowbro is now Asleep/.test(said(h, fromH)), true, 'and it fell asleep');
+    const t = setup({ me: { card: 'gym1-60', energy: '1 Psychic' }, them: { card: 'base1:Venusaur' } }).E;
+    t.state.players[0].active.dmg = 40;
+    t.dev.forceFlip = 'T';
+    const fromT = t.state.log.length;
+    atkA(t, 0);
+    eq(t.state.players[0].active.dmg, 40, 'tails: no healing');
+    return eq(/Sabrina's Slowbro is now Asleep/.test(said(t, fromT)), false, 'and no Sleep');
+  });
+
+  T('Screaming Headbutt locks ITSELF for our next turn, and only itself', () => {
+    const E = setup({ me: { card: 'gym1-60', energy: '3 Psychic' }, them: { card: 'base1:Venusaur' } }).E;
+    atkA(E, 1);
+    E.act(1, { t: 'pass' });
+    eq(offered(E, 0, 1), false, 'next turn: Screaming Headbutt is locked');
+    eq(offered(E, 0, 0), true, 'but Naptime is still there');
+    E.act(0, { t: 'pass' }); E.act(1, { t: 'pass' });
+    return eq(offered(E, 0, 1), true, 'the turn after: it is back');
+  });
+
+  // -------------------------------------------------------- Sabrina's Abra
+  T('Energy Loop pays with a Psychic Energy that goes to HAND', () => {
+    const E = setup({ me: { card: 'gym1-91', energy: '1 Psychic' }, them: { card: 'base1:Venusaur' } }).E;
+    const me = E.state.players[0];
+    const pBefore = me.hand.filter(x => E.db[x.id].name === 'Psychic Energy').length;
+    atkA(E, 0);
+    eq(E.state.players[1].active.dmg, 20, 'the attack landed');
+    eq(me.active.energy.length, 0, 'the Energy came off');
+    return eq(me.hand.filter(x => E.db[x.id].name === 'Psychic Energy').length - pBefore, 1,
+      'and a Psychic Energy is back in hand, not the discard');
+  });
+
+  T('...and is refused with no Psychic to pay, offered with one', () => {
+    const none = setup({ me: { card: 'gym1-91', energy: '1 Water' }, them: { card: 'base1:Venusaur' } }).E;
+    const some = setup({ me: { card: 'gym1-91', energy: '1 Psychic' }, them: { card: 'base1:Venusaur' } }).E;
+    eq(offered(some, 0, 0), true, 'offered with a Psychic');
+    return eq(offered(none, 0, 0), false, 'refused without one');
+  });
+
+  // ---------------------------------------------------- Sabrina's Mr. Mime
+  T('Sleight of Hand trades the cards put back for that many basic Energy', () => {
+    const E = setup({ me: { card: 'gym1-94', energy: '1 Psychic' }, them: { card: 'base1:Venusaur' },
+      myHand: ['base1:Bill', 'base1:Potion', 'base1:Machop'],
+      myDeck: ['base1:Water Energy', 'base1:Fire Energy', 'base1:Machop', 'base1:Bill'] }).E;
+    const me = E.state.players[0];
+    const back = me.hand.filter(x => ['Bill', 'Potion'].includes(E.db[x.id].name)).map(x => x.uid);
+    const e0 = me.hand.filter(x => E.db[x.id].kind === 'energy').length;
+    atkA(E, 0, { handUids: back });
+    eq(me.hand.filter(x => E.db[x.id].kind === 'energy').length - e0, 2, 'two basic Energy came');
+    return eq(me.hand.some(x => back.includes(x.uid)), false, 'and the two chosen cards left');
+  });
+
+  T('...an unanswered choice does nothing, and the bot never pitches Energy', () => {
+    const E = setup({ me: { card: 'gym1-94', energy: '1 Psychic' }, them: { card: 'base1:Venusaur' },
+      myHand: ['base1:Bill', 'base1:Water Energy', 'base1:Charmeleon'] }).E;
+    const h0 = E.state.players[0].hand.map(x => x.uid).join(',');
+    const bot = setup({ me: { card: 'gym1-94', energy: '1 Psychic' }, them: { card: 'base1:Venusaur' },
+      myHand: ['base1:Bill', 'base1:Water Energy', 'base1:Charmeleon'] }).E;
+    const a = bot.legalActions(0).find(x => x.t === 'attack' && x.idx === 0);
+    new AI(bot, {}).scoreAction(0, a);
+    const pitched = (a.opts.handUids || []).map(u => bot.db[bot.state.players[0].hand.find(x => x.uid === u).id]);
+    eq(pitched.some(c => c.kind === 'energy'), false, 'the bot does not put Energy back');
+    atkA(E, 0, {});
+    return eq(E.state.players[0].hand.map(x => x.uid).join(','), h0, 'unanswered: the hand is untouched');
+  });
+
+  // ------------------------------------------------------- Erika's Perfume
+  const perfume = (theirHand, pickNames, bench) => {
+    const E = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Venusaur' },
+      myHand: ['gym1-110'], theirHand, theirBench: bench || [] }).E;
+    const o = E.state.players[1];
+    const picks = o.hand.filter(x => pickNames.includes(E.db[x.id].name)).map(x => x.uid);
+    const i = E.state.players[0].hand.findIndex(x => E.db[x.id].name === "Erika's Perfume");
+    E.act(0, { t: 'playTrainer', hand: i, opts: { pickUids: picks } });
+    return { E, o };
+  };
+
+  T("Erika's Perfume places only their BASICS, from their hand, onto their Bench", () => {
+    const r = perfume(['base1:Pikachu', 'base1:Ivysaur', 'base1:Bill'], ['Pikachu', 'Ivysaur', 'Bill']);
+    eq(r.o.bench.length, 1, 'one placed');
+    eq(r.E.nameOf(r.o.bench[0]), 'Pikachu', 'and it is the Basic');
+    return eq(Array.isArray((r.E.state.revealedHand || {}).ids), true, 'the reveal has the shape the UI reads');
+  });
+
+  T('...never past their Bench cap, and nothing when nobody answered', () => {
+    const full = [1, 2, 3, 4, 5].map(() => ({ card: 'base1:Machop' }));
+    const capped = perfume(['base1:Pikachu'], ['Pikachu'], full);
+    eq(capped.o.bench.length, 5, 'a full Bench stays full');
+    const quiet = perfume(['base1:Pikachu'], []);
+    return eq(quiet.o.bench.length, 0, 'unanswered: nothing placed');
+  });
+
+  T('...and the bot plays it only to pull low-HP Basics onto a Bench it can hit', () => {
+    const score = (myCard) => {
+      const E = setup({ me: { card: myCard, energy: '2 Fighting' }, them: { card: 'base1:Venusaur' },
+        myHand: ['gym1-110'], theirHand: ['base1:Pikachu', 'base1:Machop'] }).E;
+      const i = E.state.players[0].hand.findIndex(x => E.db[x.id].name === "Erika's Perfume");
+      const a = { t: 'playTrainer', hand: i, opts: {} };
+      const sc = new AI(E, {}).scoreTrainer(0, a);
+      const names = (a.opts.pickUids || []).map(u => E.db[E.state.players[1].hand.find(x => x.uid === u).id].name);
+      return { sc, names };
+    };
+    eq(score('base1:Machop').sc, -Infinity, 'no Bench damage: refused');
+    const hitter = score('gym1-38');                          // Brock's Geodude, Lucky Shot snipes
+    eq(hitter.sc > -Infinity, true, 'with a Bench snipe: played');
+    return eq(hitter.names.join(','), 'Pikachu', 'pulling the 40 HP Pikachu and not the 50 HP Machop');
+  });
+
+  // --------------------------------------------- the shuffle-away price fix
+  T('Shuffle-away is priced PER SIDE and with its coin', () => {
+    // One flag used to keep only the last shuffle verb, so Take Away — which
+    // shuffles BOTH — was never charged for its own Pokemon, and Phoenix Flame's
+    // 50% exit was priced as certain.
+    const take = setup({ me: { card: 'gym1-4', energy: '4 Psychic' }, them: { card: 'base1:Venusaur' } }).E;
+    const tf = new AI(take, {}).forecast(0, 1).flags;
+    eq(tf.shuffle_self === 1 && tf.shuffle_defender === 1, true, 'Take Away: both sides, both certain');
+    const phoenix = setup({ me: { card: 'gym1-1', energy: '5 Fire' }, them: { card: 'base1:Venusaur' } }).E;
+    return eq(new AI(phoenix, {}).forecast(0, 0).flags.shuffle_self, 0.5, 'Phoenix Flame: half');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

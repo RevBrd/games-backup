@@ -2471,6 +2471,21 @@ function doAttack(i) {
   // short of the whole board - Trevor's rule, so returning everything and
   // losing on the spot is never on offer. With one Pokemon in play there is
   // nothing to choose, so it just attacks.
+  // SLEIGHT OF HAND. Asked up front like every attack question. No order is
+  // asked for the cards going onto the deck, because the deck is shuffled at
+  // the end and every order comes out the same. Choosing nothing is allowed and
+  // makes the attack do nothing, which is the card being declined, not broken.
+  const sleight = script.find(v => v.v === 'HAND_TO_DECK_FOR_ENERGY');
+  if (sleight && me().hand.length) {
+    openPicker({
+      title: c.attacks[i].name,
+      prompt: `Put up to ${sleight.max || 3} cards on top of your deck, then take that many basic Energy`,
+      items: me().hand.slice(), min: 0, max: Math.min(sleight.max || 3, me().hand.length),
+      confirm: 'Attack',
+      onDone: (handUids) => attackWithEnergy(i, c, script, { handUids }),
+    });
+    return;
+  }
   const fairy = script.find(v => v.v === 'RETURN_OWN_TO_HAND');
   if (fairy && UI.E.allSlots(0).length > 1) {
     const mine = UI.E.allSlots(0);
@@ -4547,6 +4562,26 @@ function pickerFlow(handIdx, inst, card) {
         items: others, min: 0, max: Math.max(1, others.length), confirm: 'Flip for it',
         onDone: (discardUids) => send({ discardUids }) });
       return true;
+
+    case 'gym1-110': {  // Erika's Perfume
+      // Look first, then choose - the Secret Mission order, through the same
+      // reveal continuation. Only their Basics are offered, and never more than
+      // their Bench has room for, so the picker cannot ask for something the
+      // engine would then quietly skip.
+      const basicsP = foe0.hand.filter(x => CARD_DB[x.id].kind === 'pokemon' && CARD_DB[x.id].stage === 'Basic');
+      const roomP = UI.E.benchCap() - foe0.bench.length;
+      const canPlace = basicsP.length > 0 && roomP > 0;
+      openReveal("Your opponent's hand",
+        canPlace ? 'Look first, then choose any of their Basic Pokemon to put onto their Bench'
+                 : 'Nothing here can go onto their Bench',
+        foe0.hand.slice(), () => {
+          if (!canPlace) return send({ pickUids: [] });
+          openPicker({ title: "Erika's Perfume", prompt: 'Put any of these onto their Bench',
+            items: basicsP, min: 0, max: Math.min(basicsP.length, roomP), confirm: 'Bench them',
+            onDone: (pickUids) => send({ pickUids }) });
+        });
+      return true;
+    }
 
     case 'gym1-122': {  // Energy Flow
       // The only picker in this file that chooses off the BOARD rather than out

@@ -146,6 +146,13 @@ from every picker shipped before them:
   chosen, and the last tile must be refused rather than accepted and then trimmed. The engine DOES
   trim a request for everything, correctly - but a picker that lets a player choose all of them and
   then quietly keeps one would read as the card ignoring them.
+- **Sleight of Hand (added 12 Sep 2026) is the first attack picker over the HAND.** Choosing nothing
+  is a legal decline and makes the attack do nothing, so the confirm button must be live at zero and
+  the prompt should not read as if something is required. No order is asked for the cards going onto
+  the deck, on purpose - the deck is shuffled afterwards, so every order is the same order.
+- **Erika's Perfume (added 12 Sep 2026) reveals, then picks, with a ceiling of THEIR Bench room.** The
+  failure to look for is a picker offering more tiles than they have room for: the engine skips the
+  overflow quietly and correctly, which would read to a player as their choice being ignored.
 
 ## A screen that does not exist yet: Misty's Duel
 

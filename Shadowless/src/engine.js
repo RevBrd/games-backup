@@ -1123,7 +1123,7 @@ class Engine {
         });
       }
       if (c.kind === 'energy' && !p.energyAttached) {
-        this.allSlots(pi).forEach(sl => acts.push({ t: 'attachEnergy', hand: i, target: sl.uid, label: `Attach ${c.name} to ${this.nameOf(sl)}` }));
+        this.allSlots(pi).filter(sl => this.canReceiveEnergy(sl)).forEach(sl => acts.push({ t: 'attachEnergy', hand: i, target: sl.uid, label: `Attach ${c.name} to ${this.nameOf(sl)}` }));
       }
       if (c.kind === 'trainer' && c.playsAs !== 'pokemon'
           && !this.trainersLocked(pi)
@@ -2151,6 +2151,7 @@ class Engine {
           if (hand === -1) break;
           for (const to of this.allSlots(pi)) {
             if (p.targetType && topCard(this.db, to).type !== p.targetType) continue;
+            if (!this.canReceiveEnergy(to)) continue;
             acts.push({
               t: 'power', uid: slot.uid, kind: p.kind, hand, to: to.uid,
               label: `${p.name}: attach to ${this.nameOf(to)}`,
@@ -2162,6 +2163,7 @@ class Engine {
           // "1 of your OTHER Pokemon" — so there has to be somewhere to put it.
           for (const to of this.allSlots(pi)) {
             if (to === slot) continue;
+            if (!this.canReceiveEnergy(to)) continue;
             for (const type of this.energyTypes()) {
               acts.push({
                 t: 'power', uid: slot.uid, kind: p.kind, to: to.uid, type,
@@ -2418,6 +2420,7 @@ class Engine {
       case 'EXTRA_ATTACH': {
         const to = this.findSlot(pi, a.to);
         if (!to) return this.fail('No such Pokemon');
+        if (!this.canReceiveEnergy(to)) return this.fail(`${this.nameOf(to)} can't have Energy attached this turn`);
         if (p.targetType && topCard(this.db, to).type !== p.targetType)
           return this.fail(`${this.nameOf(to)} is not a ${p.targetType} Pokemon`);
         const me2 = this.state.players[pi];
@@ -2440,6 +2443,7 @@ class Engine {
         const me3 = this.state.players[pi], opp = this.state.players[1 - pi];
         const to = this.findSlot(pi, a.to);
         if (!to) return this.fail('No such Pokemon');
+        if (!this.canReceiveEnergy(to)) return this.fail(`${this.nameOf(to)} can't have Energy attached this turn`);
         if (to === slot) return this.fail('Buzzap needs one of your OTHER Pokemon');
         if (!a.type || !this.energyTypes().includes(a.type)) return this.fail('Choose a type of Energy');
         const name = this.nameOf(slot);
@@ -2592,6 +2596,10 @@ class Engine {
       }
       if (v.v === 'COST_DISCARD_ALL_ENERGY') {
         if (p.active.energy.length === 0) return { ok: false, why: 'No Energy to discard' };
+      }
+      if (v.v === 'COST_RETURN_ENERGY') {
+        const haveR = p.active.energy.filter(e => energyIsType(this.db, e, v.t)).length;
+        if (haveR < (v.n || 1)) return { ok: false, why: `Needs ${v.n || 1} ${v.t || ''} Energy to return`.replace('  ', ' ') };
       }
       if (v.v === 'REQUIRE_OWN_BENCH') {
         // Brock's Zubat's Alert: "You can't use this attack if your Bench is
@@ -2984,6 +2992,7 @@ class Engine {
     const c = this.db[inst.id];
     if (c.kind !== 'energy') return this.fail('Not an Energy card');
     const sl = this.findSlot(pi, a.target); if (!sl) return this.fail('No such target');
+    if (!this.canReceiveEnergy(sl)) return this.fail(`${this.nameOf(sl)} can't have Energy attached this turn`);
     p.hand.splice(a.hand, 1);
     sl.energy.push(inst); p.energyAttached = true;
     this.log(`${p.name} attaches ${c.name} to ${this.nameOf(sl)}.`);
@@ -4360,6 +4369,30 @@ class Engine {
           }
           break;
         }
+        case 'T_PERFUME': {
+          // Erika's Perfume. "Look at your opponent's hand. If he or she has any
+          // Basic Pokemon cards there, you MAY put any number of them onto your
+          // opponent's Bench (as long as there's room)."
+          //
+          // The look is unconditional, so this is always playable. The placing is
+          // the subset family: an unanswered choice places nothing. Only Basics,
+          // only from THEIR hand, and never past their Bench cap - a supplied uid
+          // that fails any of those is skipped rather than obeyed.
+          this.state.revealedHand = { side: 1 - pi, ids: o.hand.map(x => x.id) };
+          this.log(`${c.name}: ${p.name} looks at ${o.name}'s hand.`);
+          let placed = 0;
+          for (const uid of [...new Set((a.opts && a.opts.pickUids) || [])]) {
+            if (o.bench.length >= this.benchCap()) break;
+            const k = o.hand.findIndex(x => x.uid === uid);
+            if (k < 0) continue;
+            const cc = this.db[o.hand[k].id];
+            if (!cc || cc.kind !== 'pokemon' || cc.stage !== 'Basic') continue;
+            o.bench.push(this.mkSlot(o.hand.splice(k, 1)[0]));
+            placed++;
+          }
+          this.log(`${c.name}: ${placed} of ${o.name}'s Basic Pokemon put onto their Bench.`, 'eff');
+          break;
+        }
         case 'T_SWAP_IN_BASIC': {
           // Lt. Surge. "Put a Basic Pokemon card from your hand into play as your
           // Active Pokemon. Put your old Active Pokemon onto your Bench."
@@ -4919,6 +4952,18 @@ class Engine {
   // This is the IMMEDIATE half. settleLapses is the guarantee: it watches the
   // damage total itself, so a site nobody hooked - a verb not written yet - still
   // ends it. See Rulings/SHADOW-IMAGES.md.
+  // Misty's Tentacool's Crystal Beam: "your opponent can't attach Energy cards to
+  // the Defending Pokemon during his or her next turn." One question, asked at
+  // every place an Energy card is ATTACHED - from hand, from deck, from discard,
+  // by a Power - and not where one is MOVED, because the card that moves it
+  // prints a different verb. Only while it is still the Defending Pokemon: once
+  // it is benched it is no longer what the card names.
+  canReceiveEnergy(slot) {
+    if (!slot || !slot.effects.some(x => x.kind === 'NO_ATTACH')) return true;
+    const side = this.sideOf(slot);
+    return !(side !== null && side !== undefined && this.state.players[side].active === slot);
+  }
+
   tookDamage(slot) {
     const k = slot.effects.findIndex(e => e.kind === 'SHADOW_IMAGES');
     if (k < 0) return;
@@ -5014,6 +5059,18 @@ class Engine {
         this.takeEnergy(atk, v.n, v.t || null, a.opts && a.opts.costUids)
           .forEach(e => me.discard.push(e));
         this.log(`${card.name} discards ${v.n} ${v.t || ''} Energy as a cost.`.replace('  ', ' '));
+      }
+      // Sabrina's Abra's Energy Loop. "Return a Psychic Energy card attached to
+      // Sabrina's Abra to your hand IN ORDER TO USE THIS ATTACK." A cost, paid
+      // before anything else, and a separate verb from COST_DISCARD_ENERGY on
+      // purpose: the Over-Attach derivations read that verb's presence as a reason
+      // to stock spare Energy, and an Energy that comes straight back to hand is
+      // not one.
+      if (v.v === 'COST_RETURN_ENERGY') {
+        if (this.energyChoices(atk, v.t || null).length < (v.n || 1)) return this.fail('Cost could not be paid');
+        this.takeEnergy(atk, v.n || 1, v.t || null, a.opts && a.opts.costUids)
+          .forEach(e => me.hand.push(e));
+        this.log(`${card.name} returns ${v.n || 1} ${v.t || ''} Energy to hand as a cost.`.replace('  ', ' '));
       }
       // DRAG OFF SWITCHES FIRST AND THEN HITS WHAT IT DRAGGED UP. The existing
       // SWITCH_DEFENDER_CHOOSE runs after the damage, which is the Lure shape —
@@ -5622,6 +5679,67 @@ class Engine {
           def.poisonDamage = v.n;
           this.log(`${this.nameOf(def)} now takes ${v.n} Poison damage between turns.`, 'status');
           break;
+        case 'COUNTERS_ON_DAMAGED': {
+          // Sabrina's Gengar's Pain Amplifier. "Put a damage counter on each of
+          // your opponent's Pokemon that already has any damage counters on it."
+          //
+          // COUNTERS, NOT DAMAGE: no Weakness, no Resistance, no reduction, and no
+          // Shadow Images coin, since the attack's printed damage is nothing.
+          // Protection is asked PER TARGET, the way a snipe asks it. Under Trevor's
+          // ruling a counter landing ends Shadow Images, so tookDamage is called
+          // here - and the settle's catch-all would still catch it if it were not.
+          const hitP = [];
+          for (const sl of this.allSlots(1 - pi)) {
+            if (sl.dmg <= 0) continue;
+            if (this.effectsBlocked(sl)) { this.log(`${this.nameOf(sl)} is protected.`, 'eff'); continue; }
+            sl.dmg += (v.n || 1) * 10;
+            this.tookDamage(sl);
+            hitP.push(this.nameOf(sl));
+          }
+          this.log(hitP.length ? `${card.name}: a damage counter on ${hitP.join(', ')}.`
+                               : `${card.name}: none of them was damaged.`, 'eff');
+          break;
+        }
+        case 'NO_ATTACH_ON_FLIP':
+          // Misty's Tentacool's Crystal Beam. See canReceiveEnergy for what counts
+          // as attaching. +2: it runs through the OPPONENT's next turn.
+          if (blocked) { this.log(`${this.nameOf(def)} is protected.`, 'eff'); break; }
+          if (!def) break;
+          if (this.flip(v.label || 'stop them attaching?')) {
+            def.effects.push({ kind: 'NO_ATTACH', label: v.label || 'Crystal Beam',
+                               expireAtStartOfTurn: s.turn + 2 });
+            this.log(`${this.nameOf(def)} can't have Energy attached during the opponent's next turn.`, 'eff');
+          }
+          break;
+        case 'SELF_ATTACK_DISABLED':
+          // Sabrina's Slowbro's Screaming Headbutt. "You can't use this attack
+          // during your next turn." The lock ATTACK_LOCK already puts on a
+          // defender, aimed at ourselves and at this attack's own index - and +3,
+          // not +2, because it runs through OUR next turn. That constant has now
+          // been wrong once and right twice in this job.
+          atk.effects.push({ kind: 'ATTACK_DISABLED', idx: a.idx, label: attack.name,
+                             expireAtStartOfTurn: s.turn + 3 });
+          this.log(`${card.name} can't use ${attack.name} during your next turn.`, 'eff');
+          break;
+        case 'HAND_TO_DECK_FOR_ENERGY': {
+          // Sabrina's Mr. Mime's Sleight of Hand. Up to `max` cards from hand onto
+          // the deck, then that many basic Energy out of it. The ORDER they go on
+          // top is not asked, because the deck is shuffled at the end and so every
+          // order is the same order.
+          //
+          // The subset family's rule: an unanswered choice is ZERO and the attack
+          // does nothing. It never pitches a hand on the player's behalf.
+          const chosenH = [...new Set((a && a.opts && a.opts.handUids) || [])]
+            .map(u => me.hand.find(x => x.uid === u)).filter(Boolean).slice(0, v.max || 3);
+          if (!chosenH.length) { this.log(`${card.name}: nothing is put back.`, 'eff'); break; }
+          for (const x of chosenH) { me.hand.splice(me.hand.indexOf(x), 1); me.deck.unshift(x); }
+          const poolH = me.deck.filter(x => this.searchMatches(this.db[x.id], { energyBasic: true }));
+          const takeH = poolH.slice(0, chosenH.length);
+          for (const x of takeH) { me.deck.splice(me.deck.indexOf(x), 1); me.hand.push(x); }
+          this.shuffle(me.deck);
+          this.log(`${card.name}: ${chosenH.length} put back, ${takeH.length} basic Energy shown and taken.`, 'eff');
+          break;
+        }
         case 'SHADOW_IMAGES': {
           // Applied to OURSELVES and not a Power, so it has to be put up with an
           // attack and it has an end: the first damage that lands, a trip to the
@@ -5851,6 +5969,7 @@ class Engine {
         // Capped at what is actually on the Pokemon, which is the "if it has
         // fewer damage counters than that, remove all of them" clause.
         case 'SEARCH_ENERGY_TO_SELF': {
+          if (!this.canReceiveEnergy(atk)) { this.log(`${card.name} can't have Energy attached this turn.`, 'eff'); break; }
           // Slowpoke's Afternoon Nap. "Search your deck for a Psychic Energy
           // card and attach it to Slowpoke."
           //
@@ -5995,6 +6114,9 @@ class Engine {
             const h4 = Math.min((v.n || 1) * 10, atk.dmg);
             atk.dmg -= h4;
             this.log(`${card.name} removes ${h4} damage from itself.`, 'eff');
+            // Naptime: "remove 3 damage counters AND Sabrina's Slowbro is now
+            // Asleep" - both off the same coin, so both live inside its heads.
+            if (v.statusOnHeads) this.applyStatus(atk, v.statusOnHeads);
           }
           break;
         case 'ENERGY_FROM_DISCARD': {
@@ -6508,6 +6630,7 @@ class Engine {
         }
         // ---- Job 13, the promo batch ------------------------------------
         case 'ENERGY_FROM_DISCARD_TO_SELF': {
+          if (!this.canReceiveEnergy(atk)) { this.log(`${card.name} can't have Energy attached this turn.`, 'eff'); break; }
           // Mewtwo's Energy Absorption. The sibling verb puts them in HAND; this
           // ATTACHES them, which is a different card and the reason Trevor's note
           // calls it a Setup Turn — "as long as two energy exist in discard it can
@@ -6726,7 +6849,23 @@ class Engine {
           // Moltres and all cards attached to it into your deck (AFTER DOING
           // DAMAGE)." The parenthetical is why this is an effect verb rather
           // than a cost - the 90 lands either way and only the exit is at risk.
-          if (v.onTails !== undefined || v.flip) {
+          // CALL OF THE NIGHT. "UNLESS this attack Knocks Out the Defending
+          // Pokemon, flip 2 coins. If both of them are heads..." The Knock Out is
+          // checked FIRST and no coin is thrown on one - Sabrina's ESP counts the
+          // coins an attack actually threw, so a coin thrown here on a lethal hit
+          // would make the attack ESP-eligible when the card says it flipped none.
+          if (v.unlessKO && v.target !== 'self' && def && def.dmg >= topCard(this.db, def).hp) {
+            this.log('It was Knocked Out instead.', 'eff');
+            break;
+          }
+          if (v.coins) {
+            let heads = 0;
+            for (let i = 0; i < v.coins; i++) if (this.flip(`${v.label || 'shuffle'} ${i + 1}/${v.coins}`)) heads++;
+            if (heads < (v.atLeast === undefined ? v.coins : v.atLeast)) {
+              this.log(`${card.name}: not enough heads.`, 'eff');
+              break;
+            }
+          } else if (v.onTails !== undefined || v.flip) {
             const face = this.flip(v.label || 'stay in?');
             const goes = v.onTails ? !face : face;
             if (!goes) { this.log(`${card.name} holds its ground.`, 'eff'); break; }

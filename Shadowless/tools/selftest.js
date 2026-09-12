@@ -107,7 +107,7 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 7,
+  gym1: 1,
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -366,7 +366,7 @@ if (finished.length) console.log(`  ${finished.join(', ')} now complete `
   // board per verb and the thing being guarded is somebody adding a fifth verb
   // to this family in a hurry.
   {
-    const SUBSET = ['T_PEEK_CYCLE', 'T_GAMBLE_DISCARD', 'T_ENERGY_RETURN'];
+    const SUBSET = ['T_PEEK_CYCLE', 'T_GAMBLE_DISCARD', 'T_ENERGY_RETURN', 'T_PERFUME'];
     const aiSrc = fs.readFileSync(path.join(__dirname, '../src/ai.js'), 'utf8');
     const unguarded = SUBSET.filter(v => {
       const i = aiSrc.indexOf(`case '${v}'`);
@@ -574,6 +574,12 @@ const PROVISIONAL = new Set([
   // RETURN_OWN_TO_HAND is priced ONLY as the doomed-Active escape, on his
   // instruction not to let the bot over-apply it.
   'SHADOW_IMAGES', 'RETURN_OWN_TO_HAND',
+  // Pass ten, 12 Sep 2026. T_PERFUME is the narrowest guess of these and says so:
+  // the card mostly HELPS the opponent, and the one use priced is pulling low-HP
+  // Basics onto a Bench our Active can already hit. NO_ATTACH_ON_FLIP is flat
+  // because its natural price reads potential(), which scoreAttack may not reach.
+  'COUNTERS_ON_DAMAGED', 'NO_ATTACH_ON_FLIP', 'SELF_ATTACK_DISABLED',
+  'COST_RETURN_ENERGY', 'HAND_TO_DECK_FOR_ENERGY', 'T_PERFUME',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',

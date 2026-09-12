@@ -596,6 +596,9 @@ class AI {
     for (const v of script) {
       switch (v.v) {
         case 'COST_DISCARD_ENERGY': energyCost += v.n; discardTypes.push([v.n, v.t]); break;
+        // Energy Loop returns it to HAND: not lost, only delayed by one attachment.
+        // Not pushed to discardTypes, because it buys no turns of silence.
+        case 'COST_RETURN_ENERGY': energyCost += (v.n || 1) * 0.3; break;
         case 'FLIP_OR_NOTHING':
           split(() => [[0.5, 0], [0.5, base]]);
           flags.halfWhiff = true;
@@ -739,6 +742,10 @@ class AI {
             || atkSlot.status.poisoned) ? 0 : 0.75;
           break;
         case 'RETURN_OWN_TO_HAND': flags.returnOwn = true; break;
+        case 'COUNTERS_ON_DAMAGED': flags.painAmp = v.n || 1; break;
+        case 'NO_ATTACH_ON_FLIP': flags.noAttach = 0.5; break;
+        case 'SELF_ATTACK_DISABLED': flags.loseThisAttackNext = true; break;
+        case 'HAND_TO_DECK_FOR_ENERGY': flags.sleight = true; break;
         // A tutor. Worth a card plus what it fetches, which cardKeepValue
         // already prices — reaching for it rather than inventing a number.
         case 'SEARCH_TO_HAND': flags.tutor = { n: v.n || 1, filter: v }; break;
@@ -864,7 +871,17 @@ class AI {
         // is scored as a drag plus what they had invested. Vanish points the
         // same verb at ourselves and is scored as a COST for the same reason.
         // UNTUNED: the 0.7 and the self-side sign are judgement, not measurement.
-        case 'SHUFFLE_INTO_DECK': flags.shuffleAway = v.target || 'defender'; break;
+        case 'SHUFFLE_INTO_DECK': {
+          // PER SIDE, and with the coin. One `shuffleAway` flag kept only whichever
+          // verb came last, so Take Away - which shuffles BOTH - was never charged
+          // for losing its own Pokemon; and Phoenix Flame's 50% exit was priced as
+          // certain. Both are this job's cards. Unflipped Vanish and Fling are 1.
+          flags.shuffleAway = v.target || 'defender';
+          const pS = v.coins ? Math.pow(0.5, v.coins) : ((v.flip || v.onTails !== undefined) ? 0.5 : 1);
+          flags[v.target === 'self' ? 'shuffle_self' : 'shuffle_defender'] = pS;
+          if (v.unlessKO) flags.shuffleUnlessKO = true;
+          break;
+        }
         case 'DMG_PER_OPP_BENCH_TAILS': flags.benchTails = v.per; break;
         case 'BENCH_SPLASH_DOUBLE_FLIP': flags.snipe = { n: 99, dmg: (v.hi + v.lo) / 4 }; break;
         // Mirror Shell is a deterrent rather than damage — it is worth the most
@@ -925,7 +942,11 @@ class AI {
         // gap is the whole value. Computed at scoring time from what is really
         // in the deck, so it is worth nothing when neither target is there.
         case 'EVOLVE_SELF_FROM_DECK': flags.evolveFromDeck = v.names || [v.name]; break;
-        case 'HEAL_SELF_ON_FLIP': flags.heal = (flags.heal || 0) + (v.n || 1) * 0.5; break;
+        case 'HEAL_SELF_ON_FLIP':
+          flags.heal = (flags.heal || 0) + (v.n || 1) * 0.5;
+          // Naptime's Sleep rides the same coin as its heal, so it is half as likely.
+          if (v.statusOnHeads) flags.selfStatus = (flags.selfStatus || 0) + 0.5;
+          break;
         case 'ENERGY_FROM_DISCARD': flags.recover = v.n; break;
         case 'TRAINER_FROM_DISCARD': flags.recover = (flags.recover || 0) + 1; break;
         case 'RETURN_DEFENDER_TO_HAND': flags.bounce = true; break;
@@ -1697,6 +1718,35 @@ class AI {
       }
     }
 
+    // Pain Amplifier, PROVISIONAL. A counter on every damaged opposing Pokemon,
+    // past Weakness, Resistance and every reduction - and a real Knock Out on
+    // anything sitting within one counter of dead. Board reads only.
+    if (f.flags.painAmp) {
+      const perP = f.flags.painAmp * 10;
+      for (const sl of E.allSlots(1 - pi)) {
+        if (sl.dmg <= 0 || E.effectsBlocked(sl)) continue;
+        s += perP / 10 * W.benchDamageFoe;
+        if (this.top(sl).hp - sl.dmg <= perP) s += W.knockout * 0.5;
+      }
+    }
+    // Crystal Beam, PROVISIONAL and flat: half a chance at denying one
+    // attachment. The natural price reads `potential`, which scoreAttack may
+    // not reach (AI.md item 19).
+    if (f.flags.noAttach) s += f.flags.noAttach * W.attachBuild * 0.5;
+    // Screaming Headbutt locks only ITSELF next turn, so a second attack may
+    // still be there. Priced at a fraction of Tunneling's whole-turn lock.
+    if (f.flags.loseThisAttackNext) {
+      const loseH = this.bestAffordableDamage(pi, me.active);
+      if (loseH > 0) s -= loseH * W.damage * 0.3;
+    }
+    // Sleight of Hand, priced off THE CHOICE ITSELF. scoreAction fills
+    // `handUids` before it scores, so the price and the play read the same list
+    // and cannot disagree - the subset family's rule, arrived at the other way.
+    if (f.flags.sleight) {
+      const nH = (vopts && vopts.handUids) ? vopts.handUids.length : 0;
+      s += nH * W.drawCard * 0.5;
+    }
+
     if (f.flags.loseNextAttack) {
       // PROVISIONAL, and NOT `bestAttackScore` — that calls `scoreAttack` for
       // every attack, and we are inside `scoreAttack`. The first draft did, and
@@ -1710,13 +1760,18 @@ class AI {
       if (lose > 0) s -= lose * this.W.damage * 0.8;
     }
 
-    if (f.flags.shuffleAway === 'defender' && you.active) {
-      s += W.drag + you.active.energy.length * W.energyDiscard * 0.7;
-    } else if (f.flags.shuffleAway === 'self' && me.active) {
+    if (f.flags.shuffle_defender && you.active) {
+      // "Unless this attack Knocks Out the Defending Pokemon": a shuffle that
+      // only happens when the hit does not kill is worth less the likelier the kill.
+      let pD = f.flags.shuffle_defender;
+      if (f.flags.shuffleUnlessKO) pD *= (1 - (f.pLethal || 0));
+      s += pD * (W.drag + you.active.energy.length * W.energyDiscard * 0.7);
+    }
+    if (f.flags.shuffle_self && me.active) {
       // Vanish throws away our own board position and every Energy on it. It is
       // an escape, so it is worth something when the Active is doomed and a real
       // cost otherwise — priced off what we would lose, same as the retreat rule.
-      s -= me.active.energy.length * W.retreatSaveEnergy * 0.7;
+      s -= f.flags.shuffle_self * me.active.energy.length * W.retreatSaveEnergy * 0.7;
     }
     // The opponent flips, and TAILS is what hurts them, so a wide bench is worth
     // attacking into rather than away from. Already inside the damage forecast
@@ -3506,6 +3561,23 @@ class AI {
 
     switch (a.t) {
       case 'attack': {
+        // Sleight of Hand's choice is filled BEFORE the score, because the score
+        // is priced off it. Pitch only what is worth less than the Energy it buys:
+        // a card is traded for a basic Energy, and a basic Energy is worth most
+        // when something on the board is short of one. cardKeepValue is safe HERE
+        // - this is scoreAction, not scoreAttack.
+        if (me.active && this.script(me.active, a.idx).some(v => v.v === 'HAND_TO_DECK_FOR_ENERGY')) {
+          const vS = this.script(me.active, a.idx).find(v => v.v === 'HAND_TO_DECK_FOR_ENERGY');
+          const inPlayS = E.allSlots(pi);
+          const energyWorth = inPlayS.some(sl => this.potential(pi, sl).short > 0) ? 4 : 1;
+          const deckE = me.deck.filter(x => E.searchMatches(this.db[x.id], { energyBasic: true })).length;
+          const pitch = me.hand.filter(x => (this.db[x.id] || {}).kind !== 'energy')
+            .map(x => ({ uid: x.uid, keep: this.cardKeepValue(pi, x, inPlayS) }))
+            .filter(x => x.keep < energyWorth)
+            .sort((x, y) => x.keep - y.keep)
+            .slice(0, Math.min(vS.max || 3, deckE));
+          a.opts = Object.assign({}, a.opts, { handUids: pitch.map(x => x.uid) });
+        }
         let sc = this.scoreAttack(pi, a.idx, a.opts);
         // Porygon deals no damage with either Conversion, so the whole value is
         // in picking a USEFUL type. Without this the bot would choose at random
@@ -4741,6 +4813,26 @@ class AI {
           break;
         }
         case 'T_DRAW': s += v.n * W.drawCard + this.deckRisk(pi, v.n); break;
+
+        case 'T_PERFUME': {
+          // Erika's Perfume, PROVISIONAL and narrow on purpose. The look is worth
+          // nothing to a bot that reads full state. The placing helps the opponent
+          // in most games - it develops their Bench for free - so the one use this
+          // bot sees is pulling LOW-HP Basics onto a Bench our Active can already
+          // hit. No Bench damage, or nothing worth pulling, and it refuses: the
+          // subset family's -Infinity on an empty choice.
+          const scrP = me.active ? [0, 1, 2].reduce((acc, i) => acc.concat(this.script(me.active, i)), []) : [];
+          const benchHitter = scrP.some(v => /^(BENCH_SNIPE|BENCH_SPLASH|SPLASH_NAMED)/.test(v.v));
+          const roomP = E.benchCap() - you.bench.length;
+          const picksP = (benchHitter && roomP > 0)
+            ? you.hand.filter(x => { const cc = this.db[x.id];
+                return cc && cc.kind === 'pokemon' && cc.stage === 'Basic' && cc.hp <= 40; }).slice(0, roomP)
+            : [];
+          a.opts = Object.assign({}, a.opts, { pickUids: picksP.map(x => x.uid) });
+          if (!picksP.length) return -Infinity;
+          s += picksP.length * W.benchDamageFoe * 1.5;
+          break;
+        }
 
         // ---- GYM HEROES TRAINERS, pass two. All PROVISIONAL ------------------
         case 'T_SWAP_IN_BASIC': {
