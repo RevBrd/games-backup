@@ -140,6 +140,12 @@ from every picker shipped before them:
 - **Secret Mission opens a reveal and THEN a picker.** `openReveal` grew a continuation for it. If
   the continuation is dropped the card still works and simply asks in the wrong order, which no
   assertion can see.
+- **Fairy Power (added 12 Sep 2026) chooses from the BOARD, before its coin.** Its tiles are the
+  Pokemon in play rather than cards in a zone, and the ceiling is one short of the whole board, per
+  Trevor's keep-one rule. Two things to look for: the confirm button must be live with nothing
+  chosen, and the last tile must be refused rather than accepted and then trimmed. The engine DOES
+  trim a request for everything, correctly - but a picker that lets a player choose all of them and
+  then quietly keeps one would read as the card ignoring them.
 
 ## A screen that does not exist yet: Misty's Duel
 
