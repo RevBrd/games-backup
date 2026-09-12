@@ -719,6 +719,14 @@ class AI {
         // because the forecast calls the ENGINE's own computeDamage, so the flag
         // carries the whole rule rather than a second copy of it.
         case 'NO_DEFENSES': flags.raw = true; break;
+        // Hook Shot drops Resistance only, so the forecast has to as well —
+        // and like NO_DEFENSES it rides into the engine's own computeDamage
+        // rather than being re-derived here.
+        case 'NO_RESISTANCE': flags.noRes = true; break;
+        // A tutor. Worth a card plus what it fetches, which cardKeepValue
+        // already prices — reaching for it rather than inventing a number.
+        case 'SEARCH_TO_HAND': flags.tutor = { n: v.n || 1, filter: v }; break;
+        case 'HEAL_EACH_PER_HEAD': flags.healEach = { coins: v.coins || 3, n: v.n || 1 }; break;
         case 'CLEAR_DEF_STATUS': flags.wakeThem = v.only ? [].concat(v.only) : null; break;
         case 'DMG_PER_OWN_BENCH': {
           const side = this.E.sideOf(atkSlot);
@@ -931,7 +939,7 @@ class AI {
     let expDmg = 0, expUseful = 0, pLethal = 0, pStopped = 0;
     for (const o of raw.outcomes) {
       const r = E.computeDamage(atkSlot, defSlot, o.dmg,
-        { noWR: !!(raw.flags.flat || raw.flags.raw), raw: !!raw.flags.raw });
+        { noWR: !!(raw.flags.flat || raw.flags.raw), raw: !!raw.flags.raw, noRes: !!raw.flags.noRes });
       expDmg += o.p * r.dmg;
       expUseful += o.p * Math.min(r.dmg, hpLeft);
       if (r.dmg >= hpLeft) pLethal += o.p;
@@ -1610,6 +1618,33 @@ class AI {
         you.active.status[key] = true;
         s -= worth;
       }
+    }
+
+    // A tutor on an attack, priced FLAT and deliberately so.
+    //
+    // THE NATURAL VALUATION IS UNREACHABLE FROM HERE. `cardKeepValue` is the
+    // right question — it is what the Prize picker and the cycle cards ask — but
+    // it routes through `potential` -> `potentialOf` -> `scoreAttackHypothetical`
+    // -> `scoreAttack`, and we are inside `scoreAttack`. The first draft called
+    // it and the suite came back with a stack overflow from a test three files
+    // away. See AI.md: nothing called from this function may ask what a card is
+    // worth, because that question is answered by this function.
+    //
+    // So a tutor is priced as what it structurally is: a draw you get to choose,
+    // worth somewhat more than a draw and nothing more clever than that.
+    if (f.flags.tutor) {
+      const pool = me.deck.filter(x => E.searchMatches(this.db[x.id], f.flags.tutor.filter));
+      const take = Math.min(f.flags.tutor.n, pool.length);
+      s += take ? take * W.drawCard * 1.3 : -W.drawCard;
+    }
+    // Healing EVERY damaged Pokemon by the same roll. Worth what it actually
+    // removes rather than a flat number, which is the same rule T_HEAL_EACH uses
+    // — and it is at its best on a board chipped everywhere.
+    if (f.flags.healEach) {
+      const per = f.flags.healEach.coins / 2 * f.flags.healEach.n * 10;
+      let counters = 0;
+      for (const sl of E.allSlots(pi)) counters += Math.min(per, sl.dmg);
+      s += counters / 10 * W.healPer10;
     }
 
     if (f.flags.loseNextAttack) {

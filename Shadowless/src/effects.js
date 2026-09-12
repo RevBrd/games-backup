@@ -122,6 +122,15 @@
 //     DMG_PER_HEAD_UNTIL_TAILS {per}   flip until the first tails; per * heads.
 //                                  Capped at 20 flips so a seed cannot hang a
 //                                  turn, far beyond anything reachable (Stone Barrage)
+//     NO_RESISTANCE                ignore RESISTANCE only. NO_WR's narrower
+//                                  sibling - Weakness still doubles and every
+//                                  reduction below still applies (Hook Shot)
+//     SEARCH_TO_HAND {n, ...filter}   the attack-side tutor. Filter keys are
+//                                  searchMatches' own - kind, basic, evolution,
+//                                  nameHas, names, energyBasic, provides. A big
+//                                  n is how "any number" is spelled
+//     HEAL_EACH_PER_HEAD {coins, n}   flip coins; EVERY one of your Pokemon
+//                                  loses that many counters, off ONE roll
 //     NO_WR                        this attack ignores Weakness and Resistance.
 //     NO_DEFENSES                  SWIFT. Strictly MORE than NO_WR - also walks
 //                                  past every reduction and prevention on the
@@ -2395,6 +2404,39 @@ const EFFECTS = {
     [{ v: 'CANT_ATTACK_ON_FLIP', label: 'Suggestion' }],
     [],
   ] },
+  // ---- GYM HEROES POKEMON, pass seven: SEARCHES AND COIN THRESHOLDS ---------
+  // Two families at once because both are the same kind of widening: a verb that
+  // did one thing learning to do it N times or under a condition.
+  //
+  //   SEARCH_TO_HAND            the attack-side tutor, delegating to the SAME
+  //                             searchMatches the Trainer side uses
+  //   SEARCH_BASIC_TO_BENCH {nameHas, flip}
+  //   FLIP_BONUS_OR_RECOIL {coins, atLeast}   "if BOTH are heads", and its
+  //                             inverse "if 1 or both are tails, nothing"
+  //   STATUS_ON_FLIP {coins, atLeast}         "if 1 OR BOTH are heads" - 75%
+  'gym1-25': { a: [[{ v: 'SEARCH_TO_HAND', energyBasic: true }],
+                   [{ v: 'DMG_PER_HEAD', coins: 3, per: 10 }]] },      // Erika's Clefairy
+  // Jellyfish Pod names four cards and TWO OF THEM DIFFER ONLY BY OWNER, which
+  // is why the filter is an exact list rather than a substring on "Tentacool".
+  'gym1-32': { a: [[{ v: 'STATUS_ON_FLIP', s: 'Asleep' }],
+                   [{ v: 'SEARCH_TO_HAND', n: 60,
+                      names: ['Tentacool', 'Tentacruel', "Misty's Tentacool", "Misty's Tentacruel"] }]] },
+  'gym1-54': { a: [[], [{ v: 'SEARCH_BASIC_TO_BENCH', nameHas: 'Misty', flip: true,
+                          label: 'Call for Friend' }]] },
+  'gym1-66': { a: [[{ v: 'SEARCH_BASIC_TO_BENCH', nameHas: 'Brock', flip: true,
+                      label: 'Call for Friend' }],
+                   [{ v: 'NO_RESISTANCE' }]] },
+  // Knockout Needle and Drill Tackle are THE SAME RULE from opposite ends -
+  // "if both are heads, +60" and "if 1 or both are tails, nothing". One verb,
+  // two parameter sets, and neither card needed its own code.
+  'gym1-9':  { a: [[], [{ v: 'FLIP_BONUS_OR_RECOIL', coins: 2, base: 30, bonus: 60,
+                          label: 'Knockout Needle' }]] },
+  'gym1-70': { a: [[{ v: 'FLIP_BONUS_OR_RECOIL', coins: 2, base: 70, bonus: 0,
+                      nothingOnTails: true, label: 'Drill Tackle' }]] },
+  'gym1-34': { a: [[{ v: 'HEAL_EACH_PER_HEAD', coins: 3, n: 1 }],
+                   [{ v: 'STATUS_ON_FLIP', s: 'Confused', coins: 2, atLeast: 1 }]] },
+  'gym1-45': { a: [[{ v: 'HEAL_SELF_ON_FLIP', n: 4, label: 'Healing Pollen' }],
+                   [{ v: 'STATUS_ON_FLIP', s: 'Asleep', choose: ['Asleep', 'Confused', 'Paralyzed', 'Poisoned'] }]] },
   // ---- GYM HEROES POKEMON, pass six: THE BENCH-DAMAGE FAMILY ----------------
   // Six cards, two small flags. BENCH_SNIPE already chose targets, deduped them
   // and asked each one for protection separately; all it could not do was throw

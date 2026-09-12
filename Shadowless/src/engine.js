@@ -2612,6 +2612,13 @@ class Engine {
     if (v.evolution && !(c.kind === 'pokemon' && c.stage && c.stage !== 'Basic')) return false;
     if (v.basic && !(c.kind === 'pokemon' && c.stage === 'Basic')) return false;
     if (v.nameHas && String(c.name).indexOf(v.nameHas) < 0) return false;
+    // `names` is an EXACT list rather than a substring, and the two are not the
+    // same question: Jellyfish Pod names four cards, two of which are "Misty's
+    // Tentacool" and "Tentacool" - a substring test on either would catch the
+    // other, and the card lists both because they ARE different cards.
+    if (v.names && v.names.indexOf(c.name) < 0) return false;
+    if (v.energyBasic && !(c.kind === 'energy' && c.cls === 'Basic')) return false;
+    if (v.provides && c.provides !== v.provides) return false;
     return true;
   }
 
@@ -5065,7 +5072,21 @@ class Engine {
         // "Heads -> 40 damage" on a card that says tails does that. The log is
         // what a player reads to work out what just happened to their board, and
         // it does not get to be approximately true.
-        const paid = this.flip(v.label || 'bonus damage?');
+        // `coins` + `atLeast` generalise the single coin to a threshold, which
+        // is how the era writes "flip 2 coins, if BOTH are heads" and its
+        // inverse "if 1 or both are tails, this attack does nothing". The two
+        // texts are the same rule from opposite ends and become one script.
+        //
+        // ONE ROLL, still: everything this verb hangs off the coin hangs off the
+        // same threshold, which is the property the whole verb exists to keep.
+        let paid;
+        if (v.coins) {
+          let heads = 0;
+          for (let i = 0; i < v.coins; i++) if (this.flip(`${v.label || 'coin'} ${i + 1}/${v.coins}`)) heads++;
+          paid = heads >= (v.atLeast === undefined ? v.coins : v.atLeast);
+        } else {
+          paid = this.flip(v.label || 'bonus damage?');
+        }
         if (v.onTails ? !paid : paid) {
           base = v.base + v.bonus;
           if (v.statusOnHeads) pendingStatus.push(v.statusOnHeads);
@@ -5314,6 +5335,11 @@ class Engine {
     // attack" — everything AFTER W/R (PlusPower, Defender, Kabuto Armor) still
     // applies, which is exactly what dealDamage's existing noWR already means.
     const flat = script.some(v => v.v === 'NO_WR');
+    // Hook Shot. "Don't apply Resistance for this attack. (Any other effects
+    // that would happen AFTER applying Resistance still happen.)" - which is
+    // NO_WR's narrower sibling and deliberately not the same flag: Weakness
+    // still doubles, and every reduction below still applies.
+    const noRes = script.some(v => v.v === 'NO_RESISTANCE');
     // SWIFT. "This attack's damage isn't affected by Weakness, Resistance,
     // Pokemon Powers, or any other effects on the Defending Pokemon." Eight
     // printings across five sets - gym1, gym2, neo1, neo2, neo4 - so machinery.
@@ -5336,7 +5362,7 @@ class Engine {
       && atk.effects.some(e => e.kind === 'DAMAGE_REDUCE_OPTIONAL'))
       ? a.opts.charityReduce : 0;
     const res = negated ? { dealt: 0, prevented: true }
-      : this.dealDamage(atk, def, base, { noWR: flat || raw, raw, charityReduce: charity });
+      : this.dealDamage(atk, def, base, { noWR: flat || raw, raw, noRes, charityReduce: charity });
     // "If an attack DOES DAMAGE to Misty's Tentacruel" — read from what landed
     // rather than from the attack's printed number, so a prevented hit offers
     // nothing and a Barrier is not an escape hatch.
@@ -5449,12 +5475,27 @@ class Engine {
           if (blocked) this.log(`${this.nameOf(def)} is protected - no ${v.s}.`, 'eff');
           else for (const st of [].concat(v.s)) this.applyStatus(def, st);
           break;
-        case 'STATUS_ON_FLIP':
-          if (this.flip(`${[].concat(v.s).join(' and ')}?`)) {
+        case 'STATUS_ON_FLIP': {
+          // `coins` + `atLeast` is Sonic Distortion: "flip 2 coins. If 1 OR BOTH
+          // of them are heads" - a 75% status rather than a 50% one, which is
+          // the whole difference between that card and every other one here.
+          let got = 0;
+          const need = v.coins ? (v.atLeast === undefined ? v.coins : v.atLeast) : 1;
+          for (let i = 0; i < (v.coins || 1); i++) if (this.flip(`${[].concat(v.s).join(' and ')}?`)) got++;
+          if (got >= need) {
             if (blocked) this.log(`${this.nameOf(def)} is protected - no ${v.s}.`, 'eff');
-            else for (const st of [].concat(v.s)) this.applyStatus(def, st);
+            else {
+              // The chosen status wins over the scripted default, but only if it
+              // is one the card actually offers - an opts field is caller input
+              // and gets the same treatment the deck searches give a pickUid.
+              const chosen = (a && a.opts && a.opts.status);
+              const list = (v.choose && chosen && v.choose.indexOf(chosen) >= 0)
+                ? [chosen] : [].concat(v.s);
+              for (const st of list) this.applyStatus(def, st);
+            }
           }
           break;
+        }
         case 'BARRIER_ON_FLIP':
           if (this.flip(v.label || 'prevent all effects?')) {
             atk.effects.push({ kind: 'PREVENT_ALL_EFFECTS', label: v.label || 'Agility',
@@ -5674,13 +5715,78 @@ class Engine {
           this.shuffle(me.deck);
           break;
         }
+        case 'HEAL_EACH_PER_HEAD': {
+          // Sabrina's Venomoth's Healing Pollen. "Flip 3 coins. For each heads,
+          // remove 1 damage counter from EACH of your Pokemon."
+          //
+          // ONE ROLL FEEDS EVERY TARGET - the same three coins heal the Active
+          // and every Bench slot by the same amount, which is what "for each
+          // heads ... from each" means and is not the same card as three
+          // separate rolls.
+          let heads7 = 0;
+          for (let i = 0; i < (v.coins || 3); i++) if (this.flip(`heal ${i + 1}/${v.coins || 3}`)) heads7++;
+          const per = heads7 * (v.n || 1) * 10;
+          if (!per) { this.log(`${card.name}: no heads, no healing.`, 'eff'); break; }
+          let healed = 0;
+          for (const sl of this.allSlots(pi)) {
+            if (sl.dmg <= 0) continue;
+            sl.dmg = Math.max(0, sl.dmg - per);
+            healed++;
+          }
+          this.log(`${heads7} head(s) -> ${per} off each of ${healed} Pokemon.`, 'eff');
+          break;
+        }
+        case 'SEARCH_TO_HAND': {
+          // The attack-side tutor, and it delegates to `searchMatches` - the same
+          // predicate T_SEARCH_TO_HAND uses - so "does this card match this
+          // filter" has one home rather than one per zone.
+          //
+          //   Moonwatching   { energyBasic: true }            one basic Energy
+          //   Jellyfish Pod  { names: [...], n: 60 }          ANY NUMBER of four
+          //   Sleight of Hand's second half is the same verb with a count that
+          //   comes from how many cards were put back.
+          //
+          // `n` large is how "any number" is spelled: the pool is what it is, and
+          // capping at the deck size is the same answer with fewer moving parts
+          // than a separate flag.
+          const pool7 = me.deck.filter(x => this.searchMatches(this.db[x.id], v));
+          if (!pool7.length) {
+            this.log('Nothing matching in the deck.', 'eff');
+            this.shuffle(me.deck);
+            break;
+          }
+          const cap7 = Math.min(v.n || 1, pool7.length);
+          const taken7 = [];
+          for (const uid of ((a && a.opts && a.opts.pickUids) || [])) {
+            const x = pool7.find(y => y.uid === uid);
+            if (x && taken7.indexOf(x) < 0 && taken7.length < cap7) taken7.push(x);
+          }
+          for (const x of pool7) { if (taken7.length >= cap7) break; if (taken7.indexOf(x) < 0) taken7.push(x); }
+          for (const x of taken7) {
+            me.deck.splice(me.deck.indexOf(x), 1);
+            me.hand.push(x);
+          }
+          // "Show those cards to your opponent" - named in the log, like every
+          // other tutor here.
+          this.log(`${card.name}: ${taken7.map(x => this.db[x.id].name).join(', ')} shown and taken into hand.`, 'eff');
+          this.shuffle(me.deck);
+          break;
+        }
         case 'SEARCH_BASIC_TO_BENCH': {
           // Call for Family / Call for Friend / Sprout. Named, or by type for
           // Marowak. Legality already refused a full Bench.
+          // `flip` is Call for Friend's coin. Thrown BEFORE the search, because
+          // the card says "flip a coin. If heads, you MAY search" - a tails
+          // never looks at the deck, so it must not shuffle it either.
+          if (v.flip && !this.flip(v.label || 'call for help?')) {
+            this.log(`${card.name} calls and nothing comes.`, 'eff');
+            break;
+          }
           const wants = (c2) => {
             if (c2.kind !== 'pokemon' || c2.stage !== 'Basic') return false;
             if (v.names) return v.names.indexOf(c2.name) >= 0;
             if (v.name) return c2.name === v.name;
+            if (v.nameHas) return String(c2.name).indexOf(v.nameHas) >= 0;
             if (v.type) return c2.type === v.type;
             return true;
           };
@@ -6599,6 +6705,17 @@ class Engine {
       return this.gymFlipVariants(pi, idx, this.charityVariants(pi, idx,
         types.map(t => ({ opts: { type: t }, label: `Conversion 1: Weakness to ${t}` }))));
     }
+    // Magic Pollen. "The Defending Pokemon is now Asleep, Confused, Paralyzed,
+    // or Poisoned (YOUR CHOICE)" - enumerated as four variants rather than
+    // resolved with an opts field, because that is the mechanism that already
+    // reaches BOTH the bot and the player. legalActions walks these, ai.js
+    // scores each one, and the action bar lists them; a bespoke prompt would
+    // have had to be built twice and would still have missed one of the two.
+    const pick = script.find(v => Array.isArray(v.choose) && v.choose.length);
+    if (pick) {
+      return this.gymFlipVariants(pi, idx, this.charityVariants(pi, idx,
+        pick.choose.map(st => ({ opts: { status: st }, label: `${c.attacks[idx].name}: ${st}` }))));
+    }
     return this.gymFlipVariants(pi, idx, this.charityVariants(pi, idx, [null]));
   }
 
@@ -6670,9 +6787,13 @@ class Engine {
       // himself enjoys. Inside the noWR guard, so anything already skipping
       // Weakness and Resistance is unaffected and needs no second exemption.
       const pew = this.stadium('STADIUM_NO_RESISTANCE_NAMED');
-      const rsOff = !!(pew && this.stadiumNameMatch(atkSlot, pew.who));
+      // TWO SOURCES, ONE GATE. A Gym can switch Resistance off for a named
+      // family, and Hook Shot switches it off for one attack. Folded together
+      // so "does Resistance apply" is answered in one place rather than two
+      // that could disagree.
+      const rsOff = !!(pew && this.stadiumNameMatch(atkSlot, pew.who)) || !!opts.noRes;
       if (rs && rs === at && rsOff) {
-        steps.push(`${pew.name}: Resistance does not apply.`);
+        steps.push(pew ? `${pew.name}: Resistance does not apply.` : 'Resistance does not apply.');
       } else if (rs && rs === at) {
         dmg -= this.cfg.resistanceFlat;
         steps.push(`Resistance: -${this.cfg.resistanceFlat} -> ${Math.max(0, dmg)}.`);

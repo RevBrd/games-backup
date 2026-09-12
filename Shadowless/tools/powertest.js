@@ -8535,5 +8535,175 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+
+// --- SEARCHES AND COIN THRESHOLDS -------------------------------------------
+// Two families widened at once, because both are the same kind of change: a
+// verb that did one thing learning to do it N times or under a condition.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  const atk = (E, i) => E.act(0, E.legalActions(0).find(a => a.t === 'attack' && a.idx === i));
+
+  T('"both heads" and "1 or both tails" are ONE rule from opposite ends', () => {
+    // Knockout Needle pays on two heads; Drill Tackle does nothing unless it
+    // gets two heads. Same verb, two parameter sets, neither card its own code.
+    const hh = setup({ me: { card: 'gym1-9', energy: '3 Water' },
+      them: { card: 'base1:Chansey' } }).E;
+    hh.dev.forceFlip = 'H'; hh.flipsThisAttack = 0;
+    atk(hh, 1);
+    eq(hh.state.players[1].active.dmg, 90, 'Needle on two heads: 30 + 60');
+    eq(hh.flipsThisAttack, 2, 'off exactly two coins');
+    const tt = setup({ me: { card: 'gym1-9', energy: '3 Water' },
+      them: { card: 'base1:Chansey' } }).E;
+    tt.dev.forceFlip = 'T';
+    atk(tt, 1);
+    eq(tt.state.players[1].active.dmg, 30, 'and 30 on anything else');
+
+    const drill = setup({ me: { card: 'gym1-70', energy: '2 Fighting' },
+      them: { card: 'base1:Chansey' } }).E;
+    drill.dev.forceFlip = 'T';
+    atk(drill, 0);
+    return eq(drill.state.players[1].active.dmg, 0, 'Drill Tackle: all or nothing');
+  });
+
+  T('Sonic Distortion is a 75% status, not a 50% one', () => {
+    // "If 1 OR BOTH of them are heads" — atLeast 1 of 2 coins, which is the
+    // whole difference between this card and every other status flip in the set.
+    const E = setup({ me: { card: 'gym1-34', energy: '1 Psychic' },
+      them: { card: 'base1:Chansey' } }).E;
+    E.dev.forceFlip = 'H'; E.flipsThisAttack = 0;
+    atk(E, 1);
+    eq(E.state.players[1].active.status.confused, true, 'confused on heads');
+    return eq(E.flipsThisAttack, 2, 'and it threw two coins to get there');
+  });
+
+  T('Magic Pollen offers FOUR actions, not one with a hidden default', () => {
+    // "(your choice)" is enumerated as attack variants rather than resolved from
+    // an opts field, because that mechanism already reaches both the bot and the
+    // action bar. A bespoke prompt would have been built twice and still missed
+    // one of the two.
+    const E = setup({ me: { card: 'gym1-45', energy: '3 Grass' },
+      them: { card: 'base1:Chansey' } }).E;
+    const vs = E.legalActions(0).filter(a => a.t === 'attack' && a.idx === 1);
+    eq(vs.length, 4, 'one action per condition');
+    E.dev.forceFlip = 'H';
+    E.act(0, vs.find(a => /Paralyzed/.test(a.label)));
+    // READ THE LOG, NOT THE BOARD. `forceFlip = 'H'` forces EVERY coin heads,
+    // including the between-turns waking flip — so an Asleep applied here is
+    // shaken off before the assertion runs, and a board read would report
+    // "not asleep" whether the card worked or not.
+    const said = E.state.log.map(l => l.text || l).join(' | ');
+    eq(/is now Paralyzed/.test(said), true, 'the chosen one landed');
+    return eq(/is now Asleep/.test(said), false, 'and the scripted default did not');
+  });
+
+  T('...and an unoffered status is REFUSED, not obeyed', () => {
+    // opts is caller input and gets the same treatment a deck search gives a
+    // pickUid — the card lists what it can inflict and nothing else counts.
+    const E = setup({ me: { card: 'gym1-45', energy: '3 Grass' },
+      them: { card: 'base1:Chansey' } }).E;
+    E.dev.forceFlip = 'H';
+    const a = E.legalActions(0).find(x => x.t === 'attack' && x.idx === 1);
+    E.act(0, Object.assign({}, a, { opts: { status: 'Burned' } }));
+    // Same trap as the row above: the Asleep this applies is shaken off by the
+    // forced-heads waking coin, so the log is the only honest witness.
+    const said = E.state.log.map(l => l.text || l).join(' | ');
+    eq(/is now Asleep/.test(said), true, 'the script wins over a bogus choice');
+    return eq(/Burned/.test(said), false, 'and nothing invented a condition');
+  });
+
+  T('Healing Pollen heals EVERY damaged Pokemon off ONE roll', () => {
+    // "For each heads, remove 1 damage counter from each of your Pokemon" — the
+    // same three coins feed every slot, which is not the same card as three
+    // separate rolls.
+    const E = setup({ me: { card: 'gym1-34', energy: '1 Grass' },
+      them: { card: 'base1:Chansey' },
+      myBench: [{ card: 'base1:Machop' }, { card: 'base1:Machop' }] }).E;
+    const p = E.state.players[0];
+    p.active.dmg = 30; p.bench[0].dmg = 20; p.bench[1].dmg = 0;
+    E.dev.forceFlip = 'H'; E.flipsThisAttack = 0;
+    atk(E, 0);
+    eq(E.flipsThisAttack, 3, 'three coins, once');
+    eq(p.active.dmg, 0, 'the Active lost 30');
+    // "If a Pokemon has fewer damage counters than the number of heads, remove
+    // all of them" — it floors at zero rather than going negative.
+    return eq(p.bench[0].dmg, 0, 'and the Bench one lost all it had');
+  });
+
+  T('Jellyfish Pod matches four EXACT names, two of which differ only by owner', () => {
+    // A substring test on "Tentacool" would catch "Misty's Tentacool" as well,
+    // and the card lists both precisely because they are different cards.
+    const E = setup({ me: { card: 'gym1-32', energy: '2 Water' },
+      them: { card: 'base1:Chansey' },
+      myDeck: ['gym1-32', 'gym1-10', 'base1:Machop', 'base1:Machop'] }).E;
+    atk(E, 1);
+    const got = E.state.players[0].hand.filter(x => /Tentaco|Tentacru/.test(E.db[x.id].name));
+    eq(got.length >= 2, true, 'both Tentacool family cards came');
+    return eq(E.state.players[0].hand.some(x => E.db[x.id].name === 'Machop'), false,
+      'and nothing outside the list');
+  });
+
+  T('Moonwatching takes a basic Energy and not a special one', () => {
+    const E = setup({ me: { card: 'gym1-25', energy: '1 Psychic' },
+      them: { card: 'base1:Chansey' },
+      myDeck: ['base1:Double Colorless Energy', 'base1:Water Energy', 'base1:Machop'] }).E;
+    // THE DELTA AGAIN. The opening hand already holds Energy, so an absolute
+    // count measures the draw rather than the card — third time in this job, and
+    // the rule is simply that a hand assertion is a before/after or it is noise.
+    const eBefore = E.state.players[0].hand.filter(x => E.db[x.id].kind === 'energy').length;
+    atk(E, 0);
+    const after = E.state.players[0].hand.filter(x => E.db[x.id].kind === 'energy');
+    eq(after.length - eBefore, 1, 'exactly one Energy came to hand');
+    // And say it the way that can actually FAIL: the Double Colorless sat at the
+    // top of the deck and is STILL THERE. An "every card in hand is basic" test
+    // would pass on a hand that happened to hold none of it.
+    return eq(E.state.players[0].deck.some(x => E.db[x.id].name === 'Double Colorless Energy'),
+      true, 'the special Energy was passed over and left in the deck');
+  });
+
+  T('Call for Friend flips BEFORE it looks at the deck', () => {
+    // "Flip a coin. If heads, you MAY search" — a tails never looks, so it must
+    // not shuffle either. Asserted by the deck order being untouched.
+    const E = setup({ me: { card: 'gym1-54', energy: '1 Water' },
+      them: { card: 'base1:Chansey' },
+      myDeck: ['gym1-32', 'base1:Machop', 'base1:Machop', 'base1:Bill'] }).E;
+    const before = E.state.players[0].deck.map(x => x.uid).join(',');
+    E.dev.forceFlip = 'T';
+    atk(E, 1);
+    eq(E.state.players[0].bench.length, 0, 'tails brings nothing');
+    return eq(E.state.players[0].deck.map(x => x.uid).join(','), before,
+      'and does not disturb the deck');
+  });
+
+  T('...and on heads it fetches only a MISTY Basic', () => {
+    const E = setup({ me: { card: 'gym1-54', energy: '1 Water' },
+      them: { card: 'base1:Chansey' },
+      myDeck: ['base1:Machop', 'gym1-32', 'base1:Machop'] }).E;
+    E.dev.forceFlip = 'H';
+    atk(E, 1);
+    eq(E.state.players[0].bench.length, 1, 'one came out');
+    return eq(E.nameOf(E.state.players[0].bench[0]).indexOf('Misty') >= 0, true,
+      'and it has Misty in its name');
+  });
+
+  T('Hook Shot drops RESISTANCE only, and Weakness still doubles', () => {
+    // NO_WR's narrower sibling, and deliberately not the same flag. Chansey
+    // resists Psychic by 30; Brock's Geodude is Fighting, so the 20 lands whole.
+    // Gyarados RESISTS Fighting by 30 and Brock's Geodude is Fighting, so a
+    // Hook Shot that respected Resistance would land nothing at all. Chansey was
+    // the wrong bench here — it is WEAK to Fighting, which doubled the hit and
+    // measured the opposite band.
+    const E = setup({ me: { card: 'gym1-66', energy: '2 Fighting' },
+      them: { card: 'base1:Gyarados' } }).E;
+    atk(E, 1);
+    eq(E.state.players[1].active.dmg, 20, 'full damage, no Resistance step');
+    // The control: an ordinary Fighting attack into the same board IS resisted.
+    const ctl = setup({ me: { card: 'base1:Machop', energy: '1 Fighting' },
+      them: { card: 'base1:Gyarados' } }).E;
+    ctl.act(0, ctl.legalActions(0).find(a => a.t === 'attack' && a.idx === 0));
+    return eq(ctl.state.players[1].active.dmg < 20, true, 'and Resistance does apply otherwise');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);

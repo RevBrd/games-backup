@@ -612,3 +612,37 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     `return -Infinity`, watched going red naming the offending verb. **The list is hand-maintained**,
     which is the guard's own weakness and is written here rather than discovered later: a fifth
     subset verb added without touching that array is exactly the case it cannot see.
+
+19. **`scoreAttack` cannot ask what a card is worth — 11 Sep 2026, Job 16.** A structural limit rather
+    than a missing weight, and it cost a stack overflow twice in one session before it was named.
+
+    ```
+    scoreAttack -> cardKeepValue -> potential -> potentialOf
+                -> scoreAttackHypothetical -> scoreAttack
+    ```
+
+    `cardKeepValue` is the right question for a tutor, a discard or anything that moves a card — it is
+    what the Prize picker and the cycle Trainers ask, and AI.md item 17 is an argument for using it
+    *more*. But it reads `potential()` to decide whether an Energy is wanted, `potential` evaluates
+    every attack the slot could make, and evaluating an attack is this function. **Nothing reachable
+    from inside `scoreAttack` may ask what a card is worth, because that question is answered by
+    `scoreAttack`.**
+
+    The same shape bit `bestAttackScore` an hour earlier: Tunneling's self-lock priced next turn's
+    attack by asking for this turn's best, and `bestAttackScore` scores every attack.
+
+    **The tell is that it fails LOUDLY and somewhere else.** Both times the gate reported
+    `Maximum call stack size exceeded` from a test three files away — a Stadium row, then the
+    evolution-destination row — so the stack trace, not the failing test name, is what points at the
+    cause. Read the trace before believing the test that failed is the test that is wrong.
+
+    **The two safe shapes**, both now used here:
+    - price it one level lower, in a function that reads the board but not the scorer —
+      `bestAffordableDamage` is printed damage where `bestAttackScore` is score;
+    - or price it structurally and flatly, with no board read at all. A tutor is *a draw you get to
+      choose*, so it is worth somewhat more than a draw and nothing cleverer than that.
+
+    **What it would cost to lift:** giving `cardKeepValue` a cheap mode that skips the `potential`
+    read — the Energy branch is the only one that reaches it — which would make the natural valuation
+    available everywhere. Worth doing when the second card needs it; one flat weight is not yet
+    evidence of a problem.
