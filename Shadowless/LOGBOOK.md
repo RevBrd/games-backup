@@ -312,7 +312,21 @@ round, which is the first time that has been true here.
 
 ## #40 — Job 16, Gym Heroes: 130 of 131, and card 131 held for a go-live call
 
-Taken from 44 to 130 over one long session, one compaction, and a Poison ruling that went two ways.
+Taken from 0 to 130 over one long session, two compactions, and a Poison ruling that went two ways.
+
+*Corrected 12 Sep, after the second compaction.* This entry first said "44 to 130", because 44 was where
+my memory started after the first compaction. Trevor pointed out that the whole set was this session's,
+and `git log` agrees: Job 16 opens at `99f0158` on 8 Sep with gym1 at zero. The paragraph below is
+**reconstructed from those commit messages, not remembered**, and should be read that way.
+
+**The first 44, from the record.** Generating the set and building the Stadium zone — `gym:` as a third
+verb namespace, and `benchMax` no longer a constant because Narrow Gym rewrites it. All seven Gyms,
+where Celadon exposed a failure surface nothing guarded. Blaine's Quiz #1 ruled out of the game with
+Trevor, because no stat could stand in for printed length: the card names the Pokémon, so a bot looks
+the answer up. That is why gym1 counts 131 against 132 printings. Sabrina's ESP and Flee, the rewind.
+The Powers, including the delayed-counter family and Bench Guard's "you may". **And one bug of my own
+that became a guard:** a 22-card batch scripted from attack text alone, which shipped six cards whose
+Powers silently did nothing. Those six were backed out, and selftest now refuses a Power with no `p:`.
 
 **The job's scope was the most useful sentence in it.** Trevor asked for placeholder AI weights, clearly
 marked, not validated ones. That freed every batch to spend its care on the engine rules and the
