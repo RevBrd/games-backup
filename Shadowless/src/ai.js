@@ -295,8 +295,18 @@ class AI {
     return (slot && slot.transformedId && this.db[slot.transformedId])
       || this.db[slot.stack[slot.stack.length - 1].id];
   }
-  script(slot, idx) {
-    const c = this.top(slot);
+  // The card an attack is PRINTED on: the top card, unless the action carries
+  // Recall's `from` - the uid of a card under it. A `from` that names nothing in
+  // the stack reads as NO card rather than falling back to the top one, because
+  // the fallback would forecast a different attack at the same position.
+  srcCard(slot, vopts) {
+    const from = vopts && vopts.from;
+    if (from === undefined || from === null) return this.top(slot);
+    const inst = slot.stack.find(x => x.uid === from);
+    return inst ? this.db[inst.id] : { attacks: [] };
+  }
+  script(slot, idx, vopts) {
+    const c = this.srcCard(slot, vopts);
     const e = this.eff[c.id];
     return (e && e.a && e.a[idx]) || [];
   }
@@ -545,11 +555,11 @@ class AI {
   // Enumerate coin-flip outcomes for an attack into a probability distribution.
   // Returns raw (pre-Weakness) damage outcomes plus effect probabilities.
   rawOutcomes(atkSlot, defSlot, idx, vopts) {
-    const c = this.top(atkSlot);
+    const c = this.srcCard(atkSlot, vopts);
     const empty = { outcomes: [{ p: 1, dmg: 0 }], statuses: {}, selfDmg: 0, selfWorst: 0, pSelfWorst: 0, energyCost: 0, flags: {} };
     let atk = (c.attacks || [])[idx];
     if (!atk) return { outcomes: [], statuses: {}, selfDmg: 0, selfWorst: 0, pSelfWorst: 0, energyCost: 0, flags: {} };
-    let script = this.script(atkSlot, idx);
+    let script = this.script(atkSlot, idx, vopts);
 
     // Metronome and Mirror Move resolve to something OTHER than their own
     // printed line, which is blank on both. Forecasting them literally scores
@@ -2126,13 +2136,18 @@ class AI {
   bestAttackScore(pi) {
     const E = this.E, p = E.state.players[pi];
     if (!p.active || !E.canAttackAtAll(pi)) return { score: -Infinity, idx: -1 };
-    const c = this.top(p.active);
     let best = { score: -Infinity, idx: -1 };
-    (c.attacks || []).forEach((a, i) => {
-      if (!E.canUseAttack(pi, i).ok) return;
-      const s = this.scoreAttack(pi, i);
-      if (s > best.score) best = { score: s, idx: i };
-    });
+    // Every card the Active may attack from - more than the top one only while
+    // Recall is in effect. `vopts` goes back out with the index, because an
+    // index alone names a different attack on a different card.
+    for (const src of E.attackSources(pi)) {
+      const vopts = src.uid === null ? undefined : { from: src.uid };
+      (src.card.attacks || []).forEach((a, i) => {
+        if (!E.canUseAttack(pi, i, src.uid).ok) return;
+        const s = this.scoreAttack(pi, i, vopts);
+        if (s > best.score) best = { score: s, idx: i, vopts };
+      });
+    }
     return best;
   }
 
@@ -3167,9 +3182,9 @@ class AI {
     const E = this.E, me = E.state.players[pi];
     if (!me.active || !defSlot) return 0;
     let best = 0;
-    (this.top(me.active).attacks || []).forEach((atk, i) => {
-      if (!E.canUseAttack(pi, i).ok) return;
-      const raw = this.rawOutcomes(me.active, defSlot, i);
+    for (const src of E.attackSources(pi)) (src.card.attacks || []).forEach((atk, i) => {
+      if (!E.canUseAttack(pi, i, src.uid).ok) return;
+      const raw = this.rawOutcomes(me.active, defSlot, i, src.uid === null ? undefined : { from: src.uid });
       let exp = 0;
       for (const o of raw.outcomes) exp += (o.p || 0) * E.computeDamage(me.active, defSlot, o.dmg).dmg;
       if (exp > best) best = exp;
@@ -3566,8 +3581,8 @@ class AI {
         // a card is traded for a basic Energy, and a basic Energy is worth most
         // when something on the board is short of one. cardKeepValue is safe HERE
         // - this is scoreAction, not scoreAttack.
-        if (me.active && this.script(me.active, a.idx).some(v => v.v === 'HAND_TO_DECK_FOR_ENERGY')) {
-          const vS = this.script(me.active, a.idx).find(v => v.v === 'HAND_TO_DECK_FOR_ENERGY');
+        if (me.active && this.script(me.active, a.idx, a.opts).some(v => v.v === 'HAND_TO_DECK_FOR_ENERGY')) {
+          const vS = this.script(me.active, a.idx, a.opts).find(v => v.v === 'HAND_TO_DECK_FOR_ENERGY');
           const inPlayS = E.allSlots(pi);
           const energyWorth = inPlayS.some(sl => this.potential(pi, sl).short > 0) ? 4 : 1;
           const deckE = me.deck.filter(x => E.searchMatches(this.db[x.id], { energyBasic: true })).length;
@@ -3591,7 +3606,7 @@ class AI {
         // `attackVariants` deliberately does not enumerate this one, so there is
         // no per-option action to score and the pick has to be filled in here.
         if (me.active && E.state.players[1 - pi].bench.length) {
-          const scr = this.script(me.active, a.idx);
+          const scr = this.script(me.active, a.idx, a.opts);
           if (scr.some(v => v.v === 'SWITCH_DEFENDER_CHOOSE' || v.v === 'SWITCH_DEFENDER_CHOOSE_ON_FLIP')) {
             a.opts = a.opts || {};
             a.opts.bench = this.bestDragTarget(pi).bench;
@@ -3601,7 +3616,7 @@ class AI {
         // here. The doomed Active and nothing else - the same narrow read the
         // score above uses, so the two cannot disagree about what is returned.
         if (me.active) {
-          const scrR = this.script(me.active, a.idx);
+          const scrR = this.script(me.active, a.idx, a.opts);
           if (scrR.some(v => v.v === 'RETURN_OWN_TO_HAND')) {
             const doomed = me.bench.length > 0
               && this.threatAgainst(pi, me.active) >= this.remainingHP(me.active);
@@ -3613,7 +3628,7 @@ class AI {
         // drag above - the engine's fallback is a seeded random pick, so a
         // choice nobody makes is a choice made badly.
         if (me.active && me.bench.length) {
-          const scr = this.script(me.active, a.idx);
+          const scr = this.script(me.active, a.idx, a.opts);
           const sb = scr.find(v => v.v === 'SELF_ENERGY_TO_BENCH');
           if (sb) {
             const moving = me.active.energy.find(e => aiEnergyIsType(this.db, e, sb.t));
@@ -3630,7 +3645,7 @@ class AI {
           }
         }
         if (me.active) {
-          const scr = this.script(me.active, a.idx);
+          const scr = this.script(me.active, a.idx, a.opts);
           const sv = scr.find(v => v.v === 'SWITCH_SELF_CHOOSE');
           if (sv && me.bench.length) {
             const sw = this.bestSelfSwitch(pi);
@@ -3641,7 +3656,7 @@ class AI {
           }
         }
         if (a.opts && a.opts.type && me.active) {
-          const scr = this.script(me.active, a.idx);
+          const scr = this.script(me.active, a.idx, a.opts);
           const wk = scr.some(v => v.v === 'CONVERT_DEF_WEAKNESS');
           const rs = scr.some(v => v.v === 'CONVERT_SELF_RESISTANCE');
           // TWO BONUSES THAT PULL OPPOSITE WAYS, and on Cool Porygon they were
@@ -4609,7 +4624,7 @@ class AI {
     const finisher = this.bestAttackScore(pi);
     let killingActiveNow = false;
     if (finisher.idx >= 0) {
-      const f = this.forecast(pi, finisher.idx);
+      const f = this.forecast(pi, finisher.idx, finisher.vopts);
       if (f && f.pLethal >= 0.85) killingActiveNow = true;
     }
 
@@ -5277,7 +5292,7 @@ class AI {
           // only worth it if we're actually attacking, and best if it converts a KO
           const best = this.bestAttackScore(pi);
           if (best.idx < 0) return -Infinity;
-          const f = this.forecast(pi, best.idx);
+          const f = this.forecast(pi, best.idx, best.vopts);
           if (!f || f.expDmg <= 0) return -Infinity;
           // WORTH THE TURN IT TAKES OFF THE KILL, and the old term priced only
           // the last one. It paid a flat 6 and then +34 for a single case — the
@@ -5398,7 +5413,7 @@ class AI {
           // safe one.
           const best = this.bestAttackScore(pi);
           if (best && best.idx >= 0) {
-            const f = this.forecast(pi, best.idx);
+            const f = this.forecast(pi, best.idx, best.vopts);
             if (f && f.selfDmg > 0) {
               const stopped = Math.min(20, f.selfDmg);
               const left = this.remainingHP(me.active);
@@ -5431,6 +5446,28 @@ class AI {
           break;
         }
 
+        case 'T_RECALL': {
+          // PROVISIONAL. Worth the gap between the best attack Recall would open
+          // and the best one already open, and nothing when there is no gap - the
+          // card does nothing else, so it is never played "for value".
+          // Priced on the Energy attached NOW: a recalled attack that needs this
+          // turn's attachment first is not seen, the same blind spot T_PLUSPOWER
+          // has. `hypothetical` asks the stack without Recall being in effect.
+          if (!me.active || !E.canAttackAtAll(pi) || E.recallActive(pi)) return -Infinity;
+          const nowR = Math.max(0, this.bestAttackScore(pi).score);
+          let recR = -Infinity;
+          for (const src of E.attackSources(pi, true)) {
+            if (src.uid === null) continue;
+            (src.card.attacks || []).forEach((x, i) => {
+              if (!E.canUseAttack(pi, i, src.uid, true).ok) return;
+              const sc = this.scoreAttack(pi, i, { from: src.uid });
+              if (sc > recR) recR = sc;
+            });
+          }
+          if (!(recR > nowR)) return -Infinity;
+          s += recR - nowR;
+          break;
+        }
         case 'T_ESP': {
           // PROVISIONAL. Worth roughly "one bad coin turned into a fresh one",
           // and only on a Sabrina Pokemon whose attack actually flips. The bot

@@ -90,6 +90,14 @@ attack while `atk` is still Clefairy, so the copied attack really is Colorless a
 on Clefairy. **Anything that copies or replays an attack should reuse it** rather than reimplementing
 the resolution order.
 
+### `attackSources` and `opts.from`
+
+**An attack used to be identified by its position on the top card, and Recall ended that.**
+`attackSources(pi)` is the one answer to "which cards may the Active attack from" — the top card, plus
+its stack while Recall is in effect — and a recalled attack carries `opts.from`, the uid of the card it
+is printed on. Legality, the action list, the AI's forecast, the UI and the ESP/Flee replay all read it.
+Locks record `srcId` for the same reason. *[The calls, and the bug the question found →](Rulings/RECALL.md)*
+
 ### `lastAttackResult`
 
 An event record written onto the defender when an attack resolves — `{turn, by, label, damage,

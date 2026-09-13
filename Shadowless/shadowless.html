@@ -4529,6 +4529,9 @@ const SET_INFO = {
 //                                  game, since an empty pile is a win
 //     T_MINION                     two coins; both heads bounces one of their
 //                                  Benched to hand, anything else ENDS YOUR TURN
+//     T_RECALL                     this turn's attack may come from any card in the
+//                                  Active's stack; the attack's `opts.from` names
+//                                  the card. On the PLAYER, not a Pokemon (Recall)
 //     T_PEEK_CYCLE                 look at their hand, then discard any number
 //                                  and draw that many (Secret Mission)
 //     T_GAMBLE_DISCARD             discard any number, flip, heads draws TWICE
@@ -7407,8 +7410,18 @@ class AI {
     return (slot && slot.transformedId && this.db[slot.transformedId])
       || this.db[slot.stack[slot.stack.length - 1].id];
   }
-  script(slot, idx) {
-    const c = this.top(slot);
+  // The card an attack is PRINTED on: the top card, unless the action carries
+  // Recall's `from` - the uid of a card under it. A `from` that names nothing in
+  // the stack reads as NO card rather than falling back to the top one, because
+  // the fallback would forecast a different attack at the same position.
+  srcCard(slot, vopts) {
+    const from = vopts && vopts.from;
+    if (from === undefined || from === null) return this.top(slot);
+    const inst = slot.stack.find(x => x.uid === from);
+    return inst ? this.db[inst.id] : { attacks: [] };
+  }
+  script(slot, idx, vopts) {
+    const c = this.srcCard(slot, vopts);
     const e = this.eff[c.id];
     return (e && e.a && e.a[idx]) || [];
   }
@@ -7657,11 +7670,11 @@ class AI {
   // Enumerate coin-flip outcomes for an attack into a probability distribution.
   // Returns raw (pre-Weakness) damage outcomes plus effect probabilities.
   rawOutcomes(atkSlot, defSlot, idx, vopts) {
-    const c = this.top(atkSlot);
+    const c = this.srcCard(atkSlot, vopts);
     const empty = { outcomes: [{ p: 1, dmg: 0 }], statuses: {}, selfDmg: 0, selfWorst: 0, pSelfWorst: 0, energyCost: 0, flags: {} };
     let atk = (c.attacks || [])[idx];
     if (!atk) return { outcomes: [], statuses: {}, selfDmg: 0, selfWorst: 0, pSelfWorst: 0, energyCost: 0, flags: {} };
-    let script = this.script(atkSlot, idx);
+    let script = this.script(atkSlot, idx, vopts);
 
     // Metronome and Mirror Move resolve to something OTHER than their own
     // printed line, which is blank on both. Forecasting them literally scores
@@ -9238,13 +9251,18 @@ class AI {
   bestAttackScore(pi) {
     const E = this.E, p = E.state.players[pi];
     if (!p.active || !E.canAttackAtAll(pi)) return { score: -Infinity, idx: -1 };
-    const c = this.top(p.active);
     let best = { score: -Infinity, idx: -1 };
-    (c.attacks || []).forEach((a, i) => {
-      if (!E.canUseAttack(pi, i).ok) return;
-      const s = this.scoreAttack(pi, i);
-      if (s > best.score) best = { score: s, idx: i };
-    });
+    // Every card the Active may attack from - more than the top one only while
+    // Recall is in effect. `vopts` goes back out with the index, because an
+    // index alone names a different attack on a different card.
+    for (const src of E.attackSources(pi)) {
+      const vopts = src.uid === null ? undefined : { from: src.uid };
+      (src.card.attacks || []).forEach((a, i) => {
+        if (!E.canUseAttack(pi, i, src.uid).ok) return;
+        const s = this.scoreAttack(pi, i, vopts);
+        if (s > best.score) best = { score: s, idx: i, vopts };
+      });
+    }
     return best;
   }
 
@@ -10279,9 +10297,9 @@ class AI {
     const E = this.E, me = E.state.players[pi];
     if (!me.active || !defSlot) return 0;
     let best = 0;
-    (this.top(me.active).attacks || []).forEach((atk, i) => {
-      if (!E.canUseAttack(pi, i).ok) return;
-      const raw = this.rawOutcomes(me.active, defSlot, i);
+    for (const src of E.attackSources(pi)) (src.card.attacks || []).forEach((atk, i) => {
+      if (!E.canUseAttack(pi, i, src.uid).ok) return;
+      const raw = this.rawOutcomes(me.active, defSlot, i, src.uid === null ? undefined : { from: src.uid });
       let exp = 0;
       for (const o of raw.outcomes) exp += (o.p || 0) * E.computeDamage(me.active, defSlot, o.dmg).dmg;
       if (exp > best) best = exp;
@@ -10678,8 +10696,8 @@ class AI {
         // a card is traded for a basic Energy, and a basic Energy is worth most
         // when something on the board is short of one. cardKeepValue is safe HERE
         // - this is scoreAction, not scoreAttack.
-        if (me.active && this.script(me.active, a.idx).some(v => v.v === 'HAND_TO_DECK_FOR_ENERGY')) {
-          const vS = this.script(me.active, a.idx).find(v => v.v === 'HAND_TO_DECK_FOR_ENERGY');
+        if (me.active && this.script(me.active, a.idx, a.opts).some(v => v.v === 'HAND_TO_DECK_FOR_ENERGY')) {
+          const vS = this.script(me.active, a.idx, a.opts).find(v => v.v === 'HAND_TO_DECK_FOR_ENERGY');
           const inPlayS = E.allSlots(pi);
           const energyWorth = inPlayS.some(sl => this.potential(pi, sl).short > 0) ? 4 : 1;
           const deckE = me.deck.filter(x => E.searchMatches(this.db[x.id], { energyBasic: true })).length;
@@ -10703,7 +10721,7 @@ class AI {
         // `attackVariants` deliberately does not enumerate this one, so there is
         // no per-option action to score and the pick has to be filled in here.
         if (me.active && E.state.players[1 - pi].bench.length) {
-          const scr = this.script(me.active, a.idx);
+          const scr = this.script(me.active, a.idx, a.opts);
           if (scr.some(v => v.v === 'SWITCH_DEFENDER_CHOOSE' || v.v === 'SWITCH_DEFENDER_CHOOSE_ON_FLIP')) {
             a.opts = a.opts || {};
             a.opts.bench = this.bestDragTarget(pi).bench;
@@ -10713,7 +10731,7 @@ class AI {
         // here. The doomed Active and nothing else - the same narrow read the
         // score above uses, so the two cannot disagree about what is returned.
         if (me.active) {
-          const scrR = this.script(me.active, a.idx);
+          const scrR = this.script(me.active, a.idx, a.opts);
           if (scrR.some(v => v.v === 'RETURN_OWN_TO_HAND')) {
             const doomed = me.bench.length > 0
               && this.threatAgainst(pi, me.active) >= this.remainingHP(me.active);
@@ -10725,7 +10743,7 @@ class AI {
         // drag above - the engine's fallback is a seeded random pick, so a
         // choice nobody makes is a choice made badly.
         if (me.active && me.bench.length) {
-          const scr = this.script(me.active, a.idx);
+          const scr = this.script(me.active, a.idx, a.opts);
           const sb = scr.find(v => v.v === 'SELF_ENERGY_TO_BENCH');
           if (sb) {
             const moving = me.active.energy.find(e => aiEnergyIsType(this.db, e, sb.t));
@@ -10742,7 +10760,7 @@ class AI {
           }
         }
         if (me.active) {
-          const scr = this.script(me.active, a.idx);
+          const scr = this.script(me.active, a.idx, a.opts);
           const sv = scr.find(v => v.v === 'SWITCH_SELF_CHOOSE');
           if (sv && me.bench.length) {
             const sw = this.bestSelfSwitch(pi);
@@ -10753,7 +10771,7 @@ class AI {
           }
         }
         if (a.opts && a.opts.type && me.active) {
-          const scr = this.script(me.active, a.idx);
+          const scr = this.script(me.active, a.idx, a.opts);
           const wk = scr.some(v => v.v === 'CONVERT_DEF_WEAKNESS');
           const rs = scr.some(v => v.v === 'CONVERT_SELF_RESISTANCE');
           // TWO BONUSES THAT PULL OPPOSITE WAYS, and on Cool Porygon they were
@@ -11721,7 +11739,7 @@ class AI {
     const finisher = this.bestAttackScore(pi);
     let killingActiveNow = false;
     if (finisher.idx >= 0) {
-      const f = this.forecast(pi, finisher.idx);
+      const f = this.forecast(pi, finisher.idx, finisher.vopts);
       if (f && f.pLethal >= 0.85) killingActiveNow = true;
     }
 
@@ -12389,7 +12407,7 @@ class AI {
           // only worth it if we're actually attacking, and best if it converts a KO
           const best = this.bestAttackScore(pi);
           if (best.idx < 0) return -Infinity;
-          const f = this.forecast(pi, best.idx);
+          const f = this.forecast(pi, best.idx, best.vopts);
           if (!f || f.expDmg <= 0) return -Infinity;
           // WORTH THE TURN IT TAKES OFF THE KILL, and the old term priced only
           // the last one. It paid a flat 6 and then +34 for a single case — the
@@ -12510,7 +12528,7 @@ class AI {
           // safe one.
           const best = this.bestAttackScore(pi);
           if (best && best.idx >= 0) {
-            const f = this.forecast(pi, best.idx);
+            const f = this.forecast(pi, best.idx, best.vopts);
             if (f && f.selfDmg > 0) {
               const stopped = Math.min(20, f.selfDmg);
               const left = this.remainingHP(me.active);
@@ -12543,6 +12561,28 @@ class AI {
           break;
         }
 
+        case 'T_RECALL': {
+          // PROVISIONAL. Worth the gap between the best attack Recall would open
+          // and the best one already open, and nothing when there is no gap - the
+          // card does nothing else, so it is never played "for value".
+          // Priced on the Energy attached NOW: a recalled attack that needs this
+          // turn's attachment first is not seen, the same blind spot T_PLUSPOWER
+          // has. `hypothetical` asks the stack without Recall being in effect.
+          if (!me.active || !E.canAttackAtAll(pi) || E.recallActive(pi)) return -Infinity;
+          const nowR = Math.max(0, this.bestAttackScore(pi).score);
+          let recR = -Infinity;
+          for (const src of E.attackSources(pi, true)) {
+            if (src.uid === null) continue;
+            (src.card.attacks || []).forEach((x, i) => {
+              if (!E.canUseAttack(pi, i, src.uid, true).ok) return;
+              const sc = this.scoreAttack(pi, i, { from: src.uid });
+              if (sc > recR) recR = sc;
+            });
+          }
+          if (!(recR > nowR)) return -Infinity;
+          s += recR - nowR;
+          break;
+        }
         case 'T_ESP': {
           // PROVISIONAL. Worth roughly "one bad coin turned into a fresh one",
           // and only on a Sabrina Pokemon whose attack actually flips. The bot
@@ -13375,6 +13415,9 @@ class Engine {
       hand: [], discard: [], prizes: [],
       active: null, bench: [],
       turnsTaken: 0, energyAttached: false, retreated: false, trainersPlayed: 0,
+      // RECALL. The turn a Recall was played, on the PLAYER rather than on a
+      // Pokemon - "your Active Pokemon" is whoever is Active when you attack.
+      recallTurn: -1,
       mulligans: 0,
       // TICKLING MACHINE. A fourth zone, and the first one that is neither
       // public nor the owner's to look at: "your opponent sets aside all the
@@ -14257,17 +14300,30 @@ class Engine {
         label: `Celadon City Gym: discard Energy to heal ${this.nameOf(sl)}` });
 
     if (p.active && this.canAttackAtAll(pi)) {
-      const c = topCard(this.db, p.active);
-      (c.attacks || []).forEach((atkDef, i) => {
-        if (!this.canUseAttack(pi, i).ok) return;
-        // An attack that needs a choice made up front enumerates one action per
-        // legal choice, exactly as interactive Powers do — so the AI scores each
-        // option and the UI never has to restate which are legal.
-        for (const variant of this.attackVariants(pi, i)) {
-          if (variant === null) acts.push({ t: 'attack', idx: i, label: `Attack: ${atkDef.name}` });
-          else acts.push({ t: 'attack', idx: i, opts: variant.opts, label: variant.label });
-        }
-      });
+      // RECALL widens this to the cards UNDER the Active. A recalled attack
+      // carries `opts.from`, the uid of the card it is printed on, because a
+      // position alone cannot say which card it counts on - and `opts` is the
+      // one thing that already travels everywhere an action goes: the AI's
+      // forecast, the UI's dispatch, the replay after ESP or Flee.
+      for (const src of this.attackSources(pi)) {
+        (src.card.attacks || []).forEach((atkDef, i) => {
+          if (!this.canUseAttack(pi, i, src.uid).ok) return;
+          const tag = src.uid === null ? '' : ` (Recall: ${src.card.name})`;
+          // An attack that needs a choice made up front enumerates one action per
+          // legal choice, exactly as interactive Powers do — so the AI scores each
+          // option and the UI never has to restate which are legal.
+          for (const variant of this.attackVariants(pi, i, src.uid)) {
+            const label = (variant === null ? `Attack: ${atkDef.name}` : variant.label) + tag;
+            if (src.uid === null) {
+              if (variant === null) acts.push({ t: 'attack', idx: i, label });
+              else acts.push({ t: 'attack', idx: i, opts: variant.opts, label });
+            } else {
+              const opts = Object.assign({}, variant === null ? {} : variant.opts, { from: src.uid });
+              acts.push({ t: 'attack', idx: i, opts, label });
+            }
+          }
+        });
+      }
     }
     acts.push({ t: 'pass', label: 'End turn' });
     return acts;
@@ -14307,10 +14363,11 @@ class Engine {
   // the other. That is a lot of rows on one very rare board, and it is the honest
   // enumeration — the alternative is deciding for the player which reductions are
   // worth offering, which is a judgement this engine does not make anywhere else.
-  charityVariants(pi, idx, variants) {
+  charityVariants(pi, idx, from, variants) {
     const atk = this.state.players[pi].active;
     if (!atk || !atk.effects.some(e => e.kind === 'DAMAGE_REDUCE_OPTIONAL')) return variants;
-    const atkDef = (topCard(this.db, atk).attacks || [])[idx] || {};
+    const srcC = this.attackSource(pi, from, true);
+    const atkDef = ((srcC ? srcC.card : topCard(this.db, atk)).attacks || [])[idx] || {};
     const printed = parseInt(String(atkDef.dmg || '0').replace(/\D/g, ''), 10) || 0;
     if (printed <= 0) return variants;             // nothing to reduce
     const out = [];
@@ -14343,11 +14400,12 @@ class Engine {
   // indistinguishable rows where the player is being asked to choose between
   // them. Caught by a test that could not find "Charge" in its own board's
   // options, which is the cheapest possible way to find a label bug.
-  gymFlipVariants(pi, idx, variants) {
+  gymFlipVariants(pi, idx, from, variants) {
     const gym = this.stadium('STADIUM_ATTACK_BONUS_NAMED');
     const atk = this.state.players[pi].active;
     if (!gym || !this.stadiumNameMatch(atk, gym.who)) return variants;
-    const atkDef = (topCard(this.db, atk).attacks || [])[idx] || {};
+    const srcG = this.attackSource(pi, from, true);
+    const atkDef = ((srcG ? srcG.card : topCard(this.db, atk)).attacks || [])[idx] || {};
     const out = [];
     for (const v of variants) {
       const base = v || { opts: {}, label: null };
@@ -15665,18 +15723,67 @@ class Engine {
     return pool.filter((p, i) => !used[i]).length >= generic;
   }
 
-  canUseAttack(pi, idx) {
+  // RECALL (gym1-116): "For your attack this turn, your Active Pokemon can use
+  // any attack from its Basic Pokemon card or any Evolution card attached to it.
+  // (You still have to pay for that attack's Energy cost.)"
+  //
+  // ONE QUESTION, asked by legality, the action list, the AI and the UI alike:
+  // which cards may the Active attack FROM right now. `uid: null` is the top
+  // card, always first; the rest are the cards actually in its stack, so a
+  // Stage 1 that Pokemon Breeder skipped was never attached and is not offered.
+  // Aerodactyl's Prehistoric Memory (neo3) prints the same shape as a Power -
+  // when it arrives it is a second reason here, not a second mechanism.
+  //
+  // `hypothetical` skips the "is Recall in effect" half, for the AI pricing the
+  // card before it is played. The stack half is never skipped.
+  // See Rulings/RECALL.md.
+  recallActive(pi) { return this.state.players[pi].recallTurn === this.state.turn; }
+  attackSources(pi, hypothetical) {
+    const p = this.state.players[pi];
+    if (!p.active) return [];
+    const out = [{ uid: null, card: topCard(this.db, p.active) }];
+    if (!hypothetical && !this.recallActive(pi)) return out;
+    const st = p.active.stack;
+    for (let k = 0; k < st.length - 1; k++) {
+      const c = this.db[st[k].id];
+      if (c && c.kind === 'pokemon' && (c.attacks || []).length) out.push({ uid: st[k].uid, card: c });
+    }
+    return out;
+  }
+  attackSource(pi, from, hypothetical) {
+    const want = (from === undefined) ? null : from;
+    return this.attackSources(pi, hypothetical).find(x => x.uid === want) || null;
+  }
+  // "Once while in play" is remembered per attack, and a recalled attack is a
+  // different attack from the one at the same position on top - so its key
+  // names the card. The top card keeps the bare index every save already holds.
+  attackKey(idx, from) { return (from === undefined || from === null) ? idx : `${from}:${idx}`; }
+
+  // A LOCK NAMES THE CARD IT WAS PUT ON - not a position, and not a name. Before
+  // Recall a position was enough, and it would have let Amnesia on Wartortle's
+  // Withdraw (its first attack) also lock Squirtle's Bubble (Squirtle's first).
+  // Whether a SAME-NAMED attack on the card below is locked too is a ruling:
+  // see Rulings/RECALL.md. An older lock with no `srcId` means the top card.
+  lockMatches(e, slot, card, idx) {
+    if (e.kind !== 'ATTACK_DISABLED' || e.idx !== idx) return false;
+    const id = e.srcId !== undefined ? e.srcId : topCard(this.db, slot).id;
+    return id === card.id;
+  }
+
+  canUseAttack(pi, idx, from, hypothetical) {
     const p = this.state.players[pi];
     if (!p.active) return { ok: false, why: 'No Active Pokemon' };
-    const c = topCard(this.db, p.active);
+    const src = this.attackSource(pi, from, hypothetical);
+    if (!src) return { ok: false, why: 'That attack is not available to this Pokemon' };
+    const c = src.card;
     const a = (c.attacks || [])[idx];
     if (!a) return { ok: false, why: 'No such attack' };
     if (!this.costSatisfied(p.active, a.cost)) return { ok: false, why: 'Not enough Energy' };
     const script = (this.effects[c.id] && this.effects[c.id].a && this.effects[c.id].a[idx]) || [];
-    if (p.active.usedAttacks && p.active.usedAttacks[idx]
+    if (p.active.usedAttacks && p.active.usedAttacks[this.attackKey(idx, src.uid)]
         && script.some(v => v.v === 'ONCE_WHILE_IN_PLAY'))
       return { ok: false, why: 'Already used while this Pokemon has been in play' };
-    const locked = p.active.effects.find(e => e.kind === 'ATTACK_DISABLED' && e.idx === idx);
+    const locked = p.active.effects.find(e => this.lockMatches(e, p.active, c, idx));
     if (locked) return { ok: false, why: `${a.name} is disabled this turn` };
     // Tail Wag, Leer. Blocks EVERY attack, and only against the Pokemon that
     // used it — "benching either Pokemon ends this effect", which falls out of
@@ -15880,6 +15987,9 @@ class Engine {
         case 'T_SHUFFLE_OPP_HAND_RANDOM': if (!o.hand.length) return false; break;
         case 'T_TREATY': if (!p.deck.length && !p.prizes.length) return false; break;
         case 'T_MINION': if (!o.bench.length) return false; break;
+        // A second Recall in one turn marks what is already marked. Playable with
+        // nothing under the Active yet: evolving later this turn puts a card there.
+        case 'T_RECALL': if (p.recallTurn === this.state.turn) return false; break;
         // Misty pays two OTHER cards, so the hand must hold the card plus two.
         case 'T_PLUSPOWER':
           if (!p.active) return false;
@@ -16853,6 +16963,13 @@ class Engine {
           tgt.dmg -= heal;
           this.log(`${this.nameOf(tgt)} discards Energy and heals ${heal}.`); break;
         }
+        case 'T_RECALL':
+          // A mark on the PLAYER for the turn, not on a Pokemon: whatever is
+          // Active when you attack gets it, so Recall and then Switch hands it to
+          // the new Active. Read in exactly one place - attackSources.
+          p.recallTurn = this.state.turn;
+          this.log(`${c.name}: this turn's attack may come from any card under the Active Pokemon.`, 'eff');
+          break;
         case 'T_ESP': {
           // "Attach Sabrina's ESP to 1 of your Pokemon with SABRINA in its name."
           // A name test, so it reuses the Stadium matcher rather than a second
@@ -17911,15 +18028,22 @@ class Engine {
     const s = this.state;
     const me = s.players[pi], you = s.players[1 - pi];
     if (!this.canAttackAtAll(pi)) return this.fail('Cannot attack right now');
-    const chk = this.canUseAttack(pi, a.idx);
+    const from = (a.opts && a.opts.from !== undefined) ? a.opts.from : null;
+    const chk = this.canUseAttack(pi, a.idx, from);
     if (!chk.ok) return this.fail(chk.why);
 
     const atk = me.active, def = you.active;
+    // `card` is the Pokemon ATTACKING; `attack` and `script` are what it uses.
+    // The Metronome split, and under Recall they come from different cards: a
+    // recalled Bubble is Wartortle's attack this turn, so Weakness, Resistance,
+    // self-damage and the log all belong to Wartortle.
     const card = topCard(this.db, atk);
-    const attack = card.attacks[a.idx];
-    const script = (this.effects[card.id] && this.effects[card.id].a && this.effects[card.id].a[a.idx]) || [];
+    const srcCard = this.attackSource(pi, from).card;
+    const attack = srcCard.attacks[a.idx];
+    const script = (this.effects[srcCard.id] && this.effects[srcCard.id].a && this.effects[srcCard.id].a[a.idx]) || [];
     me.attacked = true;
-    this.log(`${card.name} uses ${attack.name}.`, 'attack');
+    this.log(from === null ? `${card.name} uses ${attack.name}.`
+      : `${card.name} uses ${attack.name}, recalled from ${srcCard.name}.`, 'attack');
 
     // Confusion gate
     if (atk.status.confused) {
@@ -17947,11 +18071,11 @@ class Engine {
     if (jam) {
       if (!this.flip(jam.label || 'attack succeeds?')) {
         this.log(`${card.name}'s attack does nothing.`, 'eff');
-        if (script.some(v => v.v === 'ONCE_WHILE_IN_PLAY')) atk.usedAttacks[a.idx] = true;
+        if (script.some(v => v.v === 'ONCE_WHILE_IN_PLAY')) atk.usedAttacks[this.attackKey(a.idx, from)] = true;
         return this.finishAttack();
       }
     }
-    if (script.some(v => v.v === 'ONCE_WHILE_IN_PLAY')) atk.usedAttacks[a.idx] = true;
+    if (script.some(v => v.v === 'ONCE_WHILE_IN_PLAY')) atk.usedAttacks[this.attackKey(a.idx, from)] = true;
 
     // SABRINA'S ESP. The snapshot is taken here rather than at the top of this
     // method so the Confusion gate and Sand-attack interference are already
@@ -18821,6 +18945,8 @@ class Engine {
           // not +2, because it runs through OUR next turn. That constant has now
           // been wrong once and right twice in this job.
           atk.effects.push({ kind: 'ATTACK_DISABLED', idx: a.idx, label: attack.name,
+                             srcId: (a.opts && a.opts.from != null
+                               && (atk.stack.find(x => x.uid === a.opts.from) || {}).id) || card.id,
                              expireAtStartOfTurn: s.turn + 3 });
           this.log(`${card.name} can't use ${attack.name} during your next turn.`, 'eff');
           break;
@@ -18951,7 +19077,7 @@ class Engine {
           const dc = topCard(this.db, def);
           const which = (a.opts && a.opts.attackIdx !== undefined)
             ? a.opts.attackIdx : this.pick((dc.attacks || []).length);
-          def.effects.push({ kind: 'ATTACK_DISABLED', idx: which,
+          def.effects.push({ kind: 'ATTACK_DISABLED', idx: which, srcId: dc.id,
                              label: (dc.attacks[which] || {}).name || 'an attack',
                              expireAtStartOfTurn: s.turn + 2 });
           this.log(`${dc.name} can't use ${(dc.attacks[which] || {}).name} during the opponent's next turn.`, 'eff');
@@ -20099,10 +20225,13 @@ class Engine {
   // Some attacks need a parameter chosen before they can be used, the same way
   // interactive Powers do. One entry per legal choice; [null] means "no choice
   // to make"; an EMPTY array means the attack is unusable right now.
-  attackVariants(pi, idx) {
+  attackVariants(pi, idx, from) {
     const p = this.state.players[pi];
     if (!p.active) return [];
-    const c = topCard(this.db, p.active);
+    // The card the attack is PRINTED on - the top card, or one under it (Recall).
+    const srcV = this.attackSource(pi, from, true);
+    if (!srcV) return [];
+    const c = srcV.card;
     const script = (this.effects[c.id] && this.effects[c.id].a && this.effects[c.id].a[idx]) || [];
     const def = this.state.players[1 - pi].active;
     const types = this.energyTypes().filter(t => t !== 'C');   // "other than Colorless"
@@ -20137,7 +20266,7 @@ class Engine {
     }
     if (hasWk) {
       if (!def || !this.weaknessOf(def)) return [];            // "if it HAS a Weakness"
-      return this.gymFlipVariants(pi, idx, this.charityVariants(pi, idx,
+      return this.gymFlipVariants(pi, idx, from, this.charityVariants(pi, idx, from,
         types.map(t => ({ opts: { type: t }, label: `Conversion 1: Weakness to ${t}` }))));
     }
     // Magic Pollen. "The Defending Pokemon is now Asleep, Confused, Paralyzed,
@@ -20148,10 +20277,10 @@ class Engine {
     // have had to be built twice and would still have missed one of the two.
     const pick = script.find(v => Array.isArray(v.choose) && v.choose.length);
     if (pick) {
-      return this.gymFlipVariants(pi, idx, this.charityVariants(pi, idx,
+      return this.gymFlipVariants(pi, idx, from, this.charityVariants(pi, idx, from,
         pick.choose.map(st => ({ opts: { status: st }, label: `${c.attacks[idx].name}: ${st}` }))));
     }
-    return this.gymFlipVariants(pi, idx, this.charityVariants(pi, idx, [null]));
+    return this.gymFlipVariants(pi, idx, from, this.charityVariants(pi, idx, from, [null]));
   }
 
   // Weakness and Resistance are normally the card's, but Porygon's Conversion
@@ -20792,7 +20921,7 @@ class Engine {
     if (attacks.length) {
       let best = attacks[0], bd = -1;
       for (const a of attacks) {
-        const d = parseDamage(topCard(this.db, p.active).attacks[a.idx].dmg);
+        const d = parseDamage(this.attackSource(pi, a.opts && a.opts.from).card.attacks[a.idx].dmg);
         if (d > bd) { bd = d; best = a; }
       }
       return best;
@@ -24393,8 +24522,12 @@ function renderSlot(slot, pi, where, idx) {
 
   if (pi === 0 && where === 'active' && !presenting() && S().phase === 'main' && S().active === 0 && S().pendingPromote === null) {
     const atks = el('div', 'attacks');
-    (c.attacks || []).forEach((a, i) => {
-      const chk = UI.E.canUseAttack(0, i);
+    // Under Recall the cards beneath the Active offer their attacks too, each
+    // marked with the card it is printed on - otherwise two rows can read
+    // identically (Wartortle's Withdraw and Squirtle's).
+    for (const src of UI.E.attackSources(0)) (src.card.attacks || []).forEach((a, i) => {
+      const from = src.uid;
+      const chk = UI.E.canUseAttack(0, i, from);
       const canAtk = chk.ok && UI.E.canAttackAtAll(0);
       const b = el('button', 'atk' + (canAtk ? '' : ' off'));
       const l = el('div', 'pc-atkline');
@@ -24403,6 +24536,7 @@ function renderSlot(slot, pi, where, idx) {
       l.appendChild(el('span', 'pc-atkdmg', a.dmg || '—'));
       b.appendChild(l);
       if (a.text) b.appendChild(el('div', 'pc-text', a.text));
+      if (from !== null) b.appendChild(el('div', 'pc-text', `Recall: printed on ${src.card.name}`));
       if (!canAtk) {
         const why = !UI.E.canAttackAtAll(0)
           ? (slot.status.asleep ? 'Asleep — cannot attack' : slot.status.paralyzed ? 'Paralyzed — cannot attack' : 'Cannot attack')
@@ -24414,7 +24548,7 @@ function renderSlot(slot, pi, where, idx) {
         // turn — the retreat row sits directly under the attacks, so that is a
         // one-pixel mistake with an unrecoverable outcome.
         b.classList.add('off');
-      } else b.onclick = () => doAttack(i);
+      } else b.onclick = () => doAttack(i, from);
       atks.appendChild(b);
     });
     d.appendChild(atks);
@@ -24995,9 +25129,15 @@ function resolveTarget(slot, pi, where, idx) {
   return t.dispatch({ targetUid: slot.uid });
 }
 
-function doAttack(i) {
+function doAttack(i, from) {
+  // `c` is the Pokemon attacking and `ac` the card the attack is printed on -
+  // the same card unless Recall is in effect. Prompts name the Pokemon; the
+  // script and the attack's own name come from `ac`.
   const c = topCard(CARD_DB, me().active);
-  const script = (EFFECTS[c.id] && EFFECTS[c.id].a && EFFECTS[c.id].a[i]) || [];
+  UI.attackFrom = (from === undefined) ? null : from;
+  const acSrc = UI.E.attackSource(0, UI.attackFrom);
+  const ac = acSrc ? acSrc.card : c;
+  const script = (EFFECTS[ac.id] && EFFECTS[ac.id].a && EFFECTS[ac.id].a[i]) || [];
   // FAIRY POWER. Asked before the attack like every other attack question here,
   // and that costs the player nothing: the choice only matters on heads, and
   // nothing happens between choosing and the coin. The picker's ceiling is one
@@ -25011,7 +25151,7 @@ function doAttack(i) {
   const sleight = script.find(v => v.v === 'HAND_TO_DECK_FOR_ENERGY');
   if (sleight && me().hand.length) {
     openPicker({
-      title: c.attacks[i].name,
+      title: ac.attacks[i].name,
       prompt: `Put up to ${sleight.max || 3} cards on top of your deck, then take that many basic Energy`,
       items: me().hand.slice(), min: 0, max: Math.min(sleight.max || 3, me().hand.length),
       confirm: 'Attack',
@@ -25023,7 +25163,7 @@ function doAttack(i) {
   if (fairy && UI.E.allSlots(0).length > 1) {
     const mine = UI.E.allSlots(0);
     openPicker({
-      title: c.attacks[i].name,
+      title: ac.attacks[i].name,
       prompt: 'If the coin is heads, these return to your hand with everything attached. At least one must stay in play',
       items: mine.map(sl => ({ uid: sl.uid, id: topCard(CARD_DB, sl).id })),
       min: 0, max: mine.length - 1, confirm: 'Attack',
@@ -25073,7 +25213,13 @@ function doAttack(i) {
 // ask, which is the same constraint that produced the coin-flip replay.
 function attackWithEnergy(i, c, script, opts) {
   const o = opts || {};
-  const go = () => dispatch(0, { t: 'attack', idx: i, opts: o });
+  // Recall's `from` rides on every attack dispatched from here, whichever
+  // picker led to it - this is the one line all of them end at. Taken and
+  // cleared in one step so a stale value can never reach a later attack.
+  const go = () => {
+    const from = UI.attackFrom; UI.attackFrom = null;
+    dispatch(0, { t: 'attack', idx: i, opts: from != null ? Object.assign({}, o, { from }) : o });
+  };
 
   const cost = script.find(v => v.v === 'COST_DISCARD_ENERGY');
   const strip = script.find(v => v.v === 'DISCARD_DEF_ENERGY');

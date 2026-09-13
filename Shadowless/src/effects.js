@@ -515,6 +515,9 @@
 //                                  game, since an empty pile is a win
 //     T_MINION                     two coins; both heads bounces one of their
 //                                  Benched to hand, anything else ENDS YOUR TURN
+//     T_RECALL                     this turn's attack may come from any card in the
+//                                  Active's stack; the attack's `opts.from` names
+//                                  the card. On the PLAYER, not a Pokemon (Recall)
 //     T_PEEK_CYCLE                 look at their hand, then discard any number
 //                                  and draw that many (Secret Mission)
 //     T_GAMBLE_DISCARD             discard any number, flip, heads draws TWICE

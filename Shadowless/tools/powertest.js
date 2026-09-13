@@ -8368,6 +8368,137 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
     return eq(E.state.active, 0, 'and the turn is still ours');
   });
 
+  // ---- RECALL (gym1-116), card 131 ------------------------------------------
+  // The card's effect entry is NOT in effects.js yet: landing it turns Gym Heroes
+  // live, and that is its own deliberate commit. So these rows put the entry in
+  // for the length of one test and take it back out - and leave a REAL entry
+  // alone, so they keep passing on the day it lands.
+  const withRecall = (fn) => () => {
+    const had = EFFECTS['gym1-116'];
+    if (!had) EFFECTS['gym1-116'] = { t: [{ v: 'T_RECALL' }] };
+    try { return fn(); } finally { if (!had) delete EFFECTS['gym1-116']; }
+  };
+  const attacksOf = (E, pi) => E.legalActions(pi).filter(a => a.t === 'attack');
+  const wartortle = (energy, hand) => setup({
+    me: { card: 'base1:Squirtle > base1:Wartortle', energy },
+    them: { card: 'base1:Venusaur' }, myHand: hand || ['gym1-116'] }).E;
+
+  T("RECALL offers the Basic's attacks, paid for, and only once it is played", withRecall(() => {
+    const E = wartortle('1 Water');
+    eq(attacksOf(E, 0).length, 0, 'one Water pays for nothing Wartortle prints');
+    play(E, 'Recall', {});
+    const offered = attacksOf(E, 0);
+    eq(offered.map(a => a.label).join(' | '), 'Attack: Bubble (Recall: Squirtle)',
+      'Bubble (W) is offered and Withdraw (WC) is not - the cost is still paid');
+    return eq(offered[0].opts.from, E.state.players[0].active.stack[0].uid, 'and it names the card it is printed on');
+  }));
+
+  T("...and the recalled attack is WARTORTLE's this turn: its damage, its log line", withRecall(() => {
+    const E = wartortle('1 Water');
+    const def = E.state.players[1].active;
+    const dc = CARD_DB[def.stack[def.stack.length - 1].id];
+    eq(dc.wkType === 'W' || dc.rsType === 'W', false, 'fixture: the defender is neither weak nor resistant to Water');
+    play(E, 'Recall', {});
+    E.dev.forceFlip = 'T';
+    const from = E.state.log.length;
+    const r = E.act(0, attacksOf(E, 0)[0]);
+    eq(r.ok, true, 'the attack resolves');
+    eq(def.dmg, 10, 'Bubble does its 10');
+    const log = E.state.log.slice(from).map(l => l.text || l).join(' | ');
+    return eq(/Wartortle uses Bubble, recalled from Squirtle/.test(log), true, 'and the log says whose attack it was');
+  }));
+
+  T('...and it lasts the turn it was played, not the next one', withRecall(() => {
+    const E = wartortle('1 Water');
+    play(E, 'Recall', {});
+    eq(attacksOf(E, 0).length, 1, 'offered now');
+    E.act(0, { t: 'pass' }); E.act(1, { t: 'pass' });
+    return eq(attacksOf(E, 0).length, 0, 'gone by our next turn');
+  }));
+
+  T('A SECOND RECALL in the same turn is not playable - it would mark what is marked', withRecall(() => {
+    const E = wartortle('1 Water', ['gym1-116', 'gym1-116']);
+    const p = E.state.players[0];
+    eq(E.trainerPlayable(0, p.hand.find(x => x.id === 'gym1-116')), true, 'the first is');
+    play(E, 'Recall', {});
+    return eq(E.trainerPlayable(0, p.hand.find(x => x.id === 'gym1-116')), false, 'the second is not');
+  }));
+
+  T('RECALL IS ON THE PLAYER: play it, change Actives, and the NEW Active has it', withRecall(() => {
+    const E = setup({ me: { card: 'base1:Staryu', energy: '1 Water' },
+      myBench: [{ card: 'base1:Squirtle > base1:Wartortle', energy: '1 Water' }],
+      them: { card: 'base1:Venusaur' }, myHand: ['gym1-116'] }).E;
+    play(E, 'Recall', {});
+    const p = E.state.players[0];
+    // A Switch without the card. The rule under test is WHERE the mark lives -
+    // "your Active Pokemon" is read when you attack, not when Recall is played.
+    [p.active, p.bench[0]] = [p.bench[0], p.active];
+    return eq(attacksOf(E, 0).map(a => a.label).includes('Attack: Bubble (Recall: Squirtle)'), true,
+      'Wartortle, Active only after Recall was played, can Bubble');
+  }));
+
+  T('POKEMON BREEDER: a skipped Stage 1 was never attached, so it offers nothing', withRecall(() => {
+    const E = setup({ me: { card: 'base1:Bulbasaur > base1:Venusaur', energy: '4 Grass' },
+      them: { card: 'base1:Staryu' }, myHand: ['gym1-116'] }).E;
+    play(E, 'Recall', {});
+    return eq(E.attackSources(0).map(x => x.card.name).join(','), 'Venusaur,Bulbasaur',
+      'the top card and the Basic - no Ivysaur');
+  }));
+
+  T("AMNESIA LOCKS THE CARD IT NAMED, not a position: Squirtle's attacks stay usable", withRecall(() => {
+    const E = setup({ me: { card: 'base1:Poliwag > base1:Poliwhirl', energy: '2 Water' },
+      them: { card: 'base1:Squirtle > base1:Wartortle', energy: '2 Water' },
+      theirHand: ['gym1-116'] }).E;
+    const amn = CARD_DB['base1-38'].attacks.findIndex(x => x.name === 'Amnesia');
+    const wd = CARD_DB['base1-42'].attacks.findIndex(x => x.name === 'Withdraw');
+    const cast = E.legalActions(0).find(a => a.t === 'attack' && a.idx === amn);
+    eq(!!cast, true, 'fixture: Amnesia is offered');
+    E.act(0, Object.assign({}, cast, { opts: Object.assign({}, cast.opts, { attackIdx: wd }) }));
+    eq(E.state.active, 1, 'their turn');
+    const wart = E.state.players[1].active;
+    const lock = wart.effects.find(e => e.kind === 'ATTACK_DISABLED');
+    eq(lock && lock.srcId, 'base1-42', 'the lock records Wartortle, the card it was put on');
+    const hand = E.state.players[1].hand;
+    E.act(1, { t: 'playTrainer', hand: hand.findIndex(x => x.id === 'gym1-116'), opts: {} });
+    const labels = attacksOf(E, 1).map(a => a.label);
+    eq(labels.includes('Attack: Withdraw'), false, "Wartortle's own Withdraw is locked");
+    eq(labels.includes('Attack: Bubble (Recall: Squirtle)'), true,
+      "Squirtle's Bubble sits at the SAME position and is not - the bug a bare index had");
+    // THE RULING ROW (Rulings/RECALL.md): a same-named attack printed on the card
+    // below is a different printed attack, so the lock does not reach it.
+    return eq(labels.includes('Attack: Withdraw (Recall: Squirtle)'), true,
+      "and Squirtle's Withdraw is a different printed attack - usable");
+  }));
+
+  T("THE FORECAST READS `from`: Squirtle's Bubble, not Wartortle's first attack", withRecall(() => {
+    const E = wartortle('1 Water');
+    const me = E.state.players[0];
+    const raw = new AI(E, {}).rawOutcomes(me.active, E.state.players[1].active, 0, { from: me.active.stack[0].uid });
+    const exp = raw.outcomes.reduce((t, o) => t + o.p * o.dmg, 0);
+    return eq(exp, 10, 'Bubble prints 10; Withdraw at the same position prints nothing');
+  }));
+
+  T('THE BOT plays Recall when only the card underneath has an attack it can pay for, then uses it', withRecall(() => {
+    const E = wartortle('1 Water');
+    const ai = new AI(E, {});
+    const m1 = ai.choose(0); const a1 = m1 && (m1.action || m1);
+    eq(a1 && a1.t, 'playTrainer', 'first, Recall');
+    E.act(0, a1);
+    const m2 = ai.choose(0); const a2 = m2 && (m2.action || m2);
+    eq(a2 && a2.t, 'attack', 'then an attack');
+    return eq(a2.opts && a2.opts.from, E.state.players[0].active.stack[0].uid, "and it is Squirtle's Bubble");
+  }));
+
+  T('...and does NOT when the top card already does everything the one under it does, better', withRecall(() => {
+    // Charmeleon over Charmander: Slash beats Scratch and Flamethrower beats Ember,
+    // so Recall opens nothing worth a card.
+    const E = setup({ me: { card: 'base1:Charmander > base1:Charmeleon', energy: '3 Fire' },
+      them: { card: 'base1:Venusaur' }, myHand: ['gym1-116'] }).E;
+    const i = E.state.players[0].hand.findIndex(x => x.id === 'gym1-116');
+    return eq(new AI(E, {}).scoreTrainer(0, { t: 'playTrainer', hand: i, opts: {} }), -Infinity,
+      'nothing under it is worth playing a card for');
+  }));
+
   T("LT. SURGE'S TREATY CAN WIN THE GAME, and the opponent knows it", () => {
     // An empty Prize pile is a win, and the Treaty empties BOTH by one. So the
     // branch the opponent picks is a real decision rather than flavour, which is

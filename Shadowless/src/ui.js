@@ -1860,8 +1860,12 @@ function renderSlot(slot, pi, where, idx) {
 
   if (pi === 0 && where === 'active' && !presenting() && S().phase === 'main' && S().active === 0 && S().pendingPromote === null) {
     const atks = el('div', 'attacks');
-    (c.attacks || []).forEach((a, i) => {
-      const chk = UI.E.canUseAttack(0, i);
+    // Under Recall the cards beneath the Active offer their attacks too, each
+    // marked with the card it is printed on - otherwise two rows can read
+    // identically (Wartortle's Withdraw and Squirtle's).
+    for (const src of UI.E.attackSources(0)) (src.card.attacks || []).forEach((a, i) => {
+      const from = src.uid;
+      const chk = UI.E.canUseAttack(0, i, from);
       const canAtk = chk.ok && UI.E.canAttackAtAll(0);
       const b = el('button', 'atk' + (canAtk ? '' : ' off'));
       const l = el('div', 'pc-atkline');
@@ -1870,6 +1874,7 @@ function renderSlot(slot, pi, where, idx) {
       l.appendChild(el('span', 'pc-atkdmg', a.dmg || '—'));
       b.appendChild(l);
       if (a.text) b.appendChild(el('div', 'pc-text', a.text));
+      if (from !== null) b.appendChild(el('div', 'pc-text', `Recall: printed on ${src.card.name}`));
       if (!canAtk) {
         const why = !UI.E.canAttackAtAll(0)
           ? (slot.status.asleep ? 'Asleep — cannot attack' : slot.status.paralyzed ? 'Paralyzed — cannot attack' : 'Cannot attack')
@@ -1881,7 +1886,7 @@ function renderSlot(slot, pi, where, idx) {
         // turn — the retreat row sits directly under the attacks, so that is a
         // one-pixel mistake with an unrecoverable outcome.
         b.classList.add('off');
-      } else b.onclick = () => doAttack(i);
+      } else b.onclick = () => doAttack(i, from);
       atks.appendChild(b);
     });
     d.appendChild(atks);
@@ -2462,9 +2467,15 @@ function resolveTarget(slot, pi, where, idx) {
   return t.dispatch({ targetUid: slot.uid });
 }
 
-function doAttack(i) {
+function doAttack(i, from) {
+  // `c` is the Pokemon attacking and `ac` the card the attack is printed on -
+  // the same card unless Recall is in effect. Prompts name the Pokemon; the
+  // script and the attack's own name come from `ac`.
   const c = topCard(CARD_DB, me().active);
-  const script = (EFFECTS[c.id] && EFFECTS[c.id].a && EFFECTS[c.id].a[i]) || [];
+  UI.attackFrom = (from === undefined) ? null : from;
+  const acSrc = UI.E.attackSource(0, UI.attackFrom);
+  const ac = acSrc ? acSrc.card : c;
+  const script = (EFFECTS[ac.id] && EFFECTS[ac.id].a && EFFECTS[ac.id].a[i]) || [];
   // FAIRY POWER. Asked before the attack like every other attack question here,
   // and that costs the player nothing: the choice only matters on heads, and
   // nothing happens between choosing and the coin. The picker's ceiling is one
@@ -2478,7 +2489,7 @@ function doAttack(i) {
   const sleight = script.find(v => v.v === 'HAND_TO_DECK_FOR_ENERGY');
   if (sleight && me().hand.length) {
     openPicker({
-      title: c.attacks[i].name,
+      title: ac.attacks[i].name,
       prompt: `Put up to ${sleight.max || 3} cards on top of your deck, then take that many basic Energy`,
       items: me().hand.slice(), min: 0, max: Math.min(sleight.max || 3, me().hand.length),
       confirm: 'Attack',
@@ -2490,7 +2501,7 @@ function doAttack(i) {
   if (fairy && UI.E.allSlots(0).length > 1) {
     const mine = UI.E.allSlots(0);
     openPicker({
-      title: c.attacks[i].name,
+      title: ac.attacks[i].name,
       prompt: 'If the coin is heads, these return to your hand with everything attached. At least one must stay in play',
       items: mine.map(sl => ({ uid: sl.uid, id: topCard(CARD_DB, sl).id })),
       min: 0, max: mine.length - 1, confirm: 'Attack',
@@ -2540,7 +2551,13 @@ function doAttack(i) {
 // ask, which is the same constraint that produced the coin-flip replay.
 function attackWithEnergy(i, c, script, opts) {
   const o = opts || {};
-  const go = () => dispatch(0, { t: 'attack', idx: i, opts: o });
+  // Recall's `from` rides on every attack dispatched from here, whichever
+  // picker led to it - this is the one line all of them end at. Taken and
+  // cleared in one step so a stale value can never reach a later attack.
+  const go = () => {
+    const from = UI.attackFrom; UI.attackFrom = null;
+    dispatch(0, { t: 'attack', idx: i, opts: from != null ? Object.assign({}, o, { from }) : o });
+  };
 
   const cost = script.find(v => v.v === 'COST_DISCARD_ENERGY');
   const strip = script.find(v => v.v === 'DISCARD_DEF_ENERGY');
