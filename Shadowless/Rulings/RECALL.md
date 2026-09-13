@@ -39,10 +39,11 @@ combined to work around a lock without anything getting too strong, and the work
 card and only escapes one turn. The one line of the Compendium's Amnesia entry that surfaced in search
 points the same way — Amnesia chooses from the attacks present on the opponent's card at the time.
 
-> **Recorded 12 Sep 2026 with one open thread.** Trevor's message argued for "Allowed" and then agreed
-> with a lean toward "Locked" in its last sentence. The build follows the reasoning; the confirmation
-> was asked for in the same turn. **If this block is still here, the answer arrived and nobody updated
-> it — check the conversation or ask.** Flipping the reading is one comparison in `lockMatches`.
+**Confirmed the same day.** Trevor's first answer argued for this reading and then, in its last
+sentence, agreed with a lean toward "Locked" — he had taken "Locked" to mean the opposite of what it
+said. Asked rather than guessed, and he confirmed: Wartortle can use Squirtle's Withdraw. Worth knowing
+if a label like "Locked" ever carries a ruling again: **name the outcome in the example** ("Wartortle can
+use it") rather than in a one-word label, because the label is the part that got read backwards.
 
 **A bug came out of asking, and it is wrong under either reading.** Locks were keyed by POSITION
 (`e.idx`) alone. Amnesia on Wartortle's Withdraw — its first attack — would also have locked Squirtle's
