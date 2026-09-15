@@ -108,7 +108,12 @@ const noRocket = JSON.parse(JSON.stringify(LADDER));
 delete noRocket.brackets.base5;
 const withRocket = build(LIVE, noRocket);
 eq(withRocket.filter(b => !b.standalone).length, LIVE.length, 'a set with no bracket in the data still gets one');
-const rocket = withRocket[withRocket.length - 1];
+// FOUND BY SET, not by position. This read `withRocket[withRocket.length - 1]`
+// and expired a second time the day gym1 went live (14 Sep 2026): a live set
+// with no authored bracket of its own is also generated, so it trails too and
+// "last" stopped meaning "the one removed". Same lesson as the paragraph above,
+// one level down.
+const rocket = withRocket.find(b => b.set === 'base5');
 eq(rocket.set, 'base5', 'and it is the one whose bracket was removed');
 ok(rocket.generated, 'the unauthored bracket is flagged as generated');
 eq(rocket.roster.length, P.PROGRESS_DEFAULTS.bossAfter, 'it is backfilled to exactly bossAfter opponents');
@@ -494,9 +499,12 @@ const GATE_KEY = {
   // Venusaur CH, Cool Porygon, Flying Pikachu and Surfing Pikachu. That is the
   // per-card gate paying off exactly as designed, and it is the reason this
   // number is allowed to move: what must NOT move is the line below it.
-  eq(all.length, 21, 'clearing every live bracket opens 21 of the 28');
+  // 23 SINCE 14 SEP 2026. Gym Heroes went live and its two promos turned on the
+  // same way, with no code: Sabrina's Abra and _____'s Pikachu.
+  eq(all.length, 23, 'clearing every live bracket opens 23 of the 28');
+  ok(all.indexOf('basep-19') >= 0 && all.indexOf('basep-24') >= 0, '...including the two gated on gym1');
   const locked = Object.keys(P.PROMO_GATES).filter(id => all.indexOf(id) < 0);
-  ok(locked.every(id => ['challenge2', 'gym1', 'gym2'].indexOf(P.PROMO_GATES[id]) >= 0),
+  ok(locked.every(id => ['challenge2', 'gym2'].indexOf(P.PROMO_GATES[id]) >= 0),
     'and every one still locked is waiting on a bracket that does not exist yet');
   ok(all.indexOf('basep-15') >= 0, 'Cool Porygon arrived with the bracket its gate names');
 

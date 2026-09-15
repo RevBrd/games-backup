@@ -107,7 +107,10 @@ const REMAINING = {
   //
   // THE RULE IS UNCHANGED: it only goes down, and a raise is a correction that
   // has to say what it is correcting. This is the only one so far.
-  gym1: 1,
+  //
+  // gym1 LANDED 14 Sep 2026 and left this table: Recall was card 131, held back
+  // on purpose until Trevor's roster was in so the set did not go live onto a
+  // generated bracket. Its history stays above as the record.
 
   // Job 13 opened basep on 26 Aug 2026 at all 53 unscripted. The job scope is
   // basep-1..28, so this number is expected to land at 25 and STOP there — the
@@ -580,6 +583,9 @@ const PROVISIONAL = new Set([
   // because its natural price reads potential(), which scoreAttack may not reach.
   'COUNTERS_ON_DAMAGED', 'NO_ATTACH_ON_FLIP', 'SELF_ATTACK_DISABLED',
   'COST_RETURN_ENERGY', 'HAND_TO_DECK_FOR_ENERGY', 'T_PERFUME',
+  // Recall, 14 Sep 2026. Priced as the gap between the best recalled attack and
+  // the best open one, on the Energy attached NOW - PlusPower's blind spot.
+  'T_RECALL',
   // Charity is priced at almost nothing because the reason to play it — stopping
   // short of a Knock Out — is a term scoreAttack does not have. AI.md item 1.
   'T_CHARITY',
