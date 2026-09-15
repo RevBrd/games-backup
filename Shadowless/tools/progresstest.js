@@ -167,8 +167,8 @@ for (const b of L) {
     if (!r.ok) illegal.push(`${o.id}: ${r.errors.join('; ')}`);
   }
 }
-eq(authored, 46, 'the five brackets name 46 authored opponents — 4 GBC Grand Masters, ' +
-  '8 theme (4 Base + 2 Jungle + 2 Team Rocket), and Trevor 8 + 5 + 6 + 8 + 7');
+eq(authored, 57, 'the six brackets name 57 authored opponents — 4 GBC Grand Masters, ' +
+  '12 theme (4 Base + 2 Jungle + 2 Team Rocket + 4 Gym Heroes), and Trevor 8 + 5 + 6 + 8 + 7 + 7');
 ok(illegal.length === 0, `every authored opponent fields a legal 60-card deck${illegal.length ? '\n        ' + illegal.join('\n        ') : ''}`);
 
 // ---------------------------------------------------------------------------
@@ -262,6 +262,8 @@ eq(usedFrom('b5').size, 8, "all eight of Trevor's Team Rocket decks are assigned
 eq(usedFrom('c1').size, 7, "all seven of Trevor's Challenge 1 decks are assigned to an opponent");
 eq(usedFrom('jungle').size, 2, 'both Jungle theme decks are assigned to an opponent');
 eq(usedFrom('tr').size, 2, 'both Team Rocket theme decks are assigned to an opponent');
+eq(usedFrom('g1').size, 7, "all seven of Trevor's Gym Heroes decks are assigned to an opponent");
+eq(usedFrom('gh').size, 4, 'all four Gym Heroes theme decks are assigned to an opponent');
 
 group('a generated opponent brings a legal deck, and the same one every time');
 

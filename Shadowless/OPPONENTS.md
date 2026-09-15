@@ -135,7 +135,7 @@ What the spec learned:
   that have a centrepiece the correlation is **+0.31**, and it is +0.60 within T2 and +0.76 within T3.
   Assembling helps. **Corrected the same day it was written**, which is the only reason it is worth
   the parenthesis — a three-point correlation is not a correlation.)*
-  *[The tables, the correction, and the Stage 2 hypothesis this killed →](ROSTERS.md)*
+  *[The tables, the correction, and the Stage 2 hypothesis this killed →](ROSTERS-ARCHIVE-2.md)*
 - **One clean run is not the spec vindicated**, and the file holding the numbers says so first: it
   was measured with the same bot that was last shown playing the whole field badly, so it is one data
   point pointing the right way rather than a result that survives the AI improving.

@@ -247,6 +247,7 @@ than this table** — the snippet below prints it, and this table has been a job
 | Fossil — The Dome | the 4 Grand Masters, standing in | 3 T2 + 2 T3, **all Trevor's** | the T4, *Nightshade* | — |
 | **Challenge 1 — The Gauntlet** | **none, on purpose** | **6 T4, one per Energy type, all Trevor's** | the seventh T4, *Plainsong* | — |
 | Team Rocket — The Syndicate | 2 Team Rocket theme decks | 4 T2 + 3 T3, **all Trevor's** | the T4, *Undertow* | — |
+| Gym Heroes — The Leaders | 4 Gym Heroes theme decks | 4 T2 + 2 T3, **all Trevor's** | the T4, *Landslide* | — |
 
 **RONALD IS GONE, 1 Sep 2026** — Trevor's grab-bag note: remove him entirely now that the boss waves
 have taken shape. He was the post-boss `extra` in all four brackets and is in none of them. **The

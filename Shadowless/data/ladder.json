@@ -389,6 +389,23 @@
         "deck": "b5:b5_t4_blastoise",
         "placeholder": true
       }
+    },
+    "gym1": {
+      "name": "The Leaders",
+      "blurb": "Four Gym Leaders' own theme decks to open on, and seven built from their Pokémon.",
+      "roster": [
+        { "id": "gym1-brock", "name": "Tobin", "title": "Pewter Gym", "deck": "gh:brock", "ai": "novice", "placeholder": true },
+        { "id": "gym1-misty", "name": "Wren", "title": "Cerulean Gym", "deck": "gh:misty", "ai": "novice", "placeholder": true },
+        { "id": "gym1-lt-surge", "name": "Dash", "title": "Vermilion Gym", "deck": "gh:lt_surge", "ai": "novice", "placeholder": true },
+        { "id": "gym1-erika", "name": "Linnea", "title": "Celadon Gym", "deck": "gh:erika", "ai": "novice", "placeholder": true },
+        { "id": "gym1-t2-gengar", "name": "Corvin", "title": "Night Tide", "deck": "g1:g1_t2_gengar", "placeholder": true },
+        { "id": "gym1-t2-raichu", "name": "Bryce", "title": "Short Fuse", "deck": "g1:g1_t2_raichu", "placeholder": true },
+        { "id": "gym1-t2-rhydon", "name": "Halden", "title": "Rockslide", "deck": "g1:g1_t2_rhydon", "placeholder": true },
+        { "id": "gym1-t2-victreebel", "name": "Maren", "title": "Flytrap", "deck": "g1:g1_t2_victreebel", "placeholder": true },
+        { "id": "gym1-t3-poliwrath", "name": "Oona", "title": "Riptide", "deck": "g1:g1_t3_poliwrath", "placeholder": true },
+        { "id": "gym1-t3-vileplume", "name": "Fenwick", "title": "Pollen Count", "deck": "g1:g1_t3_vileplume", "placeholder": true }
+      ],
+      "boss": { "id": "gym1-t4", "name": "Ingram", "title": "Landslide", "deck": "g1:g1_t4_golem", "placeholder": true }
     }
   }
 }

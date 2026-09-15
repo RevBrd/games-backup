@@ -77,7 +77,7 @@ says it did not get better at the field in general, and both can be true of one 
 that way for the column to mean anything.** A reading from a *different* field is not a better or
 worse number, it is an unrelated one: the rank moves when decks join, and the win rate moves when the
 seed count does. There is now one such reading, from the 19-deck three-roster run of 29 Aug 2026
-(9th of 19 at 49.9%), and it is deliberately recorded in [ROSTERS.md](ROSTERS.md) beside the field it
+(9th of 19 at 49.9%), and it is deliberately recorded in [ROSTERS-ARCHIVE-2.md](ROSTERS-ARCHIVE-2.md) beside the field it
 came from rather than appended here. **If you run the benchmark in a wider field, do the same** —
 otherwise the next reader sees 5th become 9th and reports an AI regression that did not happen.
 

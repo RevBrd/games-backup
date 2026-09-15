@@ -365,6 +365,8 @@ const OPPONENT_SOURCES = [
   ['tr', 'team_rocket_decks.json'],
   ['b5', 'base5_decks.json'],
   ['c1', 'challenge1_decks.json'],
+  ['gh', 'gym_heroes_decks.json'],
+  ['g1', 'gym1_decks.json'],
 ];
 const opponentDecks = {}, droppedDecks = [];
 for (const [prefix, file] of OPPONENT_SOURCES) {

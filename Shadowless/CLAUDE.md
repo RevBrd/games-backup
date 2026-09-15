@@ -83,9 +83,10 @@ none of it a stub:** the rules engine and every card in the live sets, the four-
 collection, packs, dex, save file and deck builder, and the ladder with its named opponents. Each has
 a row in the table above naming the file that owns it. *[How each job got there →](HISTORY.md)*
 
-**Four sets are live and complete: Base, Jungle, Fossil and Team Rocket — 311 of 311 printings**, and
-**every bracket on the ladder** — five of them, over those four sets — is built from Trevor's own
-hand-made decks or authentic theme decks rather than from placeholders. *(This said "all four
+**Five sets are live and complete: Base, Jungle, Fossil, Team Rocket and Gym Heroes — 442 of 442
+printings** (Gym Heroes went live 14 Sep 2026, Job 16), and **every bracket on the ladder** — six of
+them, over those five sets — is built from Trevor's own hand-made decks or authentic theme decks rather
+than from placeholders. *(This said "all four
 brackets" three lines above its own "five brackets over four sets" until 2 Sep 2026. Sets and
 brackets stopped being the same count on 1 Sep and one sentence did not hear.)* Run `node tools/selftest.js` for the live figures rather than trusting a number in
 prose; it prints coverage per set. **There is one unit now and there used to be two**, so an older
@@ -377,7 +378,10 @@ it** — that is the point of the tree, and the links here go to the owner rathe
   Opened 8 Sep 2026 by #39. **What makes it different from 15c is that the cheap sweeps are now a
   tool** rather than an instruction somebody has to remember: `node tools/doccheck.js`.
   *[What it checks, and the three findings it was built out of →](MAINTENANCE.md)*
-- **Job 16** - Card additions and logic for gym1.
+- **Job 16** - Card additions and logic for gym1. **Done 14 Sep 2026** — all 131 cards (Blaine's Quiz
+  #1 omitted with Trevor, `gen_cards.js` says why), the Stadium zone, Recall's attack-source model, and
+  Trevor's roster plus the four Gym Heroes theme decks. Every new AI weight is `PROVISIONAL` by the
+  job's own scope. [CREDITS.md](CREDITS.md) #40 · [ROSTERS.md](ROSTERS.md)
 - **Job 17+** - Additional packs.
 
 

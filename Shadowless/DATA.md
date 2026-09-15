@@ -150,6 +150,8 @@ wrong facts, and one directly above the data that refutes it is the cheapest pos
 | `team_rocket_decks.json` | `OPPONENT_DECKS`, `tr:` prefix | the Team Rocket bracket's T1 intro — the two authentic theme decks, Devastation and Trouble |
 | `base5_decks.json` | `OPPONENT_DECKS`, `b5:` prefix | the Team Rocket bracket's body, gate and boss — Trevor's eight |
 | `challenge1_decks.json` | `OPPONENT_DECKS`, `c1:` prefix | **the whole Challenge 1 bracket** — Trevor's seven mono-type decks, one per Energy type. The first deck file that belongs to no set |
+| `gym_heroes_decks.json` | `OPPONENT_DECKS`, `gh:` prefix | the Gym Heroes bracket's T1 intro — the four authentic theme decks, Brock, Misty, Lt. Surge and Erika |
+| `gym1_decks.json` | `OPPONENT_DECKS`, `g1:` prefix | the Gym Heroes bracket's body, gate and boss — Trevor's seven |
 | `ladder.json` | `LADDER` | `buildLadder()`. See [PROGRESSION.md](PROGRESSION.md) |
 
 **The opponent files fail soft where `decks.json` fails hard.** An opponent deck naming a card outside
@@ -268,6 +270,27 @@ and `b3:` decks now declare their own hero instead of leaving it to `heroOfList`
 more often than it looks like it would, since the biggest Pokemon in a deck is frequently not its
 point. Trevor's picks; each was checked to resolve to exactly one printing inside its own list.
 
+**`gym1_decks.json` is Trevor's seven Gym Heroes decks, live the day it was written**, 14 Sep 2026 —
+four T2, two T3 and the T4 that is Gym Heroes' boss. Converted from `Gym Heroes Opponent Decks
+v1.xlsx` (sheets `GH T2-1` through `GH T4`), **exported from the live Drive sheet by Trevor for the
+purpose**: the local `.xlsx` pool had stopped being the source on 7 Sep and this workbook had never
+had a local copy. Every id resolved and named its card, with two more pieces of Trevor's shorthand
+to know about on Energy rows: **"E Energy" is Lightning** (Electric) and **"DC Energy" is Double
+Colorless**, alongside the F-is-Fighting, R-is-Fire convention from Challenge 1.
+
+**Converting it found a card the validator had been refusing since it was scripted.** The T3
+Vileplume deck would not validate: Erika's Oddish carried a second, empty attack script for an
+attack it does not print, and `isImplemented` wants one per printed attack — while `selftest.js`'s
+coverage count only asks whether an entry exists, and had called the set complete. Fixed, and
+selftest now asks the engine's own predicate. **A roster is the first thing that puts a set's cards
+into decks**, which makes converting one a better test of the set than any count.
+
+**`gym_heroes_decks.json` is the four authentic Gym Heroes theme decks**, moved out of the
+quarantined `gym_decks.json` when gym1 went live — the same adoption Team Rocket's theme decks went
+through. Nine generic Trainer ids were Base Set 2 printings, which is not a generated set, and are
+substituted for their identical live printings, each matched by name and rules text against the
+corpus. The map is `_meta.base4subs` in the file.
+
 **`fullpool.json` is a flat list of card ids across the unbuilt sets and is read by nothing.** It
 predates the corpus being the source of truth. Left in place rather than deleted, but do not generate
 from it and do not treat it as an inventory — `data/raw/*.json` is the only source.
@@ -336,7 +359,7 @@ what has been adopted. The JSON files below are its output, all in the same `[qt
 |---|---|
 | `fossil_decks.json` | BodyGuard, LockDown — both pass the real `validateDeck`, since Fossil is live |
 | `base4_decks.json` | Grass Chopper, Hot Water, Lightning Bug, Psych Out |
-| `gym_decks.json` | all 8 Gym Leader decks |
+| `gym_decks.json` | the four **Gym Challenge** Gym Leader decks. Gym Heroes' four went live on 14 Sep 2026 and moved to `gym_heroes_decks.json` |
 | `gbc2_flavor_decks.json` | the 8 GB2-Island flavour decks. Only `allison_psychic_battle` is clean; the other 7 carry `subs` entries needing a real substitution decision |
 
 **`team_rocket_decks.json` came out of this pool and is no longer in it** — it went live on 25 Aug
