@@ -270,7 +270,10 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
   sitting in your binder rejecting every deck *is* a card silently doing nothing, which inverts the
   whole pitch. Edge cases get handled individually rather than by loosening the rule. The practical
   consequence is that `gen_cards.js --sets` is the *last* step of adding a set, not the first.
-- **The board's design is locked for now** — Trevor, 8 Aug. Don't restyle the mat, the hand face or the
+- **The board's design is locked for now** — Trevor, 8 Aug. *His words, recovered from the session on
+  14 Sep 2026 when he asked what the rule meant: "I love the end result, and the horizontal window to the
+  sigil on the bench cards is perfect. We can lock this design in for a while." The rule below is our
+  reading of that; it constrains how the board LOOKS, not how it sizes.* Don't restyle the mat, the hand face or the
   bench tiles without asking. Every variant treatment is confined to collectible surfaces for
   exactly this reason. 
 

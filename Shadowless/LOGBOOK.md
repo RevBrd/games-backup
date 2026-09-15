@@ -380,7 +380,9 @@ selftest's coverage line called gym1 complete — two predicates for "implemente
 card. Selftest now asks the engine's. **If you land a set, convert its roster before you believe the
 set is done.**
 
-Two other things worth the next session knowing. Recall's buttons make the Active tile tall enough
-that the board zooms from 0.892 to 0.704 at Trevor's viewport for the turn it is in effect, which is
-a locked-board decision put to him rather than fixed. And ROSTERS.md crossed its archive line, so Fossil
+Two other things worth the next session knowing. Recall's buttons first made the Active tile tall
+enough that the board zoomed from 0.892 to 0.704 at Trevor's viewport for the turn; I put it to him as
+a locked-board question, he chose a switcher, and the zoom no longer moves. Asking him what "locked"
+meant turned up his actual 8 Aug words, which were looser than the rule written from them — now quoted
+beside it in `CLAUDE.md`. And ROSTERS.md crossed its archive line, so Fossil
 moved into `ROSTERS-ARCHIVE-2.md` exactly as its header says to.

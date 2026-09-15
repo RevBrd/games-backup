@@ -150,11 +150,12 @@ from every picker shipped before them:
   is a legal decline and makes the attack do nothing, so the confirm button must be live at zero and
   the prompt should not read as if something is required. No order is asked for the cards going onto
   the deck, on purpose - the deck is shuffled afterwards, so every order is the same order.
-- **Recall (added 12 Sep 2026) is not a picker — it adds attack BUTTONS to the Active tile.** While it
-  is in effect, each card under the Active offers its attacks too, marked "Recall: printed on …". That
-  makes the Active tile taller for one turn, on a board whose design is locked, so look at it at a
-  CRAMPED viewport with a Stage 2 (up to five extra rows). The failure to look for is two rows that
-  read identically — Wartortle's Withdraw and Squirtle's — which the marker line exists to prevent.
+- **Recall (added 12 Sep 2026, checked 14 Sep) is not a picker — it is a SWITCHER on the Active tile.**
+  The first version listed every card's attacks at once, and on a Stage 2 that zoomed the whole board
+  from 0.892 to 0.704 at Trevor's 1191x684 for the turn. Now a strip of tabs — top card, then down the
+  line — shows one card's attacks at a time, and the zoom did not move at 1191x684 or 1366x768. **The
+  strip sits on the card's cream stock, so it takes card ink (`--ink`), not board ink** — the first
+  pass used `--txt` and the selected tab vanished. `smoke.js` asserts one card's rows at a time.
 - **Erika's Perfume (added 12 Sep 2026) reveals, then picks, with a ceiling of THEIR Bench room.** The
   failure to look for is a picker offering more tiles than they have room for: the engine skips the
   overflow quietly and correctly, which would read to a player as their choice being ignored.

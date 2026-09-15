@@ -2036,6 +2036,33 @@ T('cancelling an armed retreat leaves the board untouched', () => {
   return true;
 });
 
+// --- Recall's switcher: one card's attacks at a time ----------------------------
+// Listing every card's attacks at once made the Active tile tall enough to zoom
+// the whole board down for the turn. The strip is the fix, and what it must keep
+// true is that the tile only ever shows ONE card's rows.
+T("RECALL shows one card's attacks at a time, switched by a tab, and only this turn", () => {
+  const s = actionBoard();
+  const p = s.players[0];
+  const act = UI.E.mkSlot({ uid: 90040, id: 'base1-63' });   // Squirtle
+  act.stack.push({ uid: 90041, id: 'base1-42' });             // Wartortle
+  act.stack.push({ uid: 90042, id: 'base1-2' });              // Blastoise
+  act.energy = [0, 1, 2, 3].map(k => ({ uid: 90043 + k, id: 'base1-102' }));
+  p.active = act; p.bench = [];
+  p.recallTurn = s.turn;
+  UI.recallView = null;
+  render();
+  const app = () => document.getElementById('app');
+  const tabs = allByClass(app(), 'rt-tab');
+  if (tabs.length !== 3) throw new Error('tabs ' + tabs.length);
+  if (allByClass(app(), 'atk').length !== 1) throw new Error('top card should show its one attack, got ' + allByClass(app(), 'atk').length);
+  const squirtle = tabs.find(t => /Squirtle/.test(t.textContent));
+  squirtle.onclick({ stopPropagation() {} });
+  if (allByClass(app(), 'atk').length !== 2) throw new Error("Squirtle's two attacks, got " + allByClass(app(), 'atk').length);
+  s.turn++; p.recallTurn = -1;
+  render();
+  if (allByClass(app(), 'rt-tab').length !== 0) throw new Error('switcher still shown after the turn');
+  return allByClass(app(), 'atk').length === 1;
+});
 
 // --- the Trainer pickers show the real cards ---------------------------------
 T('a picker renders the printed scans, not a text-carrying face', () => {

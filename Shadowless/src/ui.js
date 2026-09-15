@@ -1860,10 +1860,29 @@ function renderSlot(slot, pi, where, idx) {
 
   if (pi === 0 && where === 'active' && !presenting() && S().phase === 'main' && S().active === 0 && S().pendingPromote === null) {
     const atks = el('div', 'attacks');
-    // Under Recall the cards beneath the Active offer their attacks too, each
-    // marked with the card it is printed on - otherwise two rows can read
-    // identically (Wartortle's Withdraw and Squirtle's).
-    for (const src of UI.E.attackSources(0)) (src.card.attacks || []).forEach((a, i) => {
+    // RECALL'S SWITCHER. Under Recall the cards beneath the Active offer their
+    // attacks too, and listing them all made the tile up to six rows tall - the
+    // board zoomed from 0.892 to 0.704 at Trevor's viewport for that one turn.
+    // So one card's attacks show at a time, chosen from a strip of tabs, and the
+    // tile is never taller than one card's attacks plus the strip. Trevor, 14 Sep
+    // 2026. The tab names the card, which is also what keeps Wartortle's Withdraw
+    // and Squirtle's from reading as the same row.
+    const sources = UI.E.attackSources(0);
+    if (!UI.recallView || UI.recallView.turn !== S().turn
+        || !sources.some(x => x.uid === UI.recallView.uid)) UI.recallView = { turn: S().turn, uid: null };
+    if (sources.length > 1) {
+      const strip = el('div', 'recalltabs');
+      strip.appendChild(el('span', 'rt-lbl', 'Recall'));
+      // Top card first, then DOWN the line - Wartortle before Squirtle. The
+      // engine lists the stack bottom-up, which put the Basic in the middle.
+      for (const src of [sources[0], ...sources.slice(1).reverse()]) {
+        const t = el('button', 'rt-tab' + (src.uid === UI.recallView.uid ? ' on' : ''), src.card.name);
+        t.onclick = (ev) => { ev.stopPropagation(); UI.recallView = { turn: S().turn, uid: src.uid }; render(); };
+        strip.appendChild(t);
+      }
+      atks.appendChild(strip);
+    }
+    for (const src of sources.filter(x => x.uid === UI.recallView.uid)) (src.card.attacks || []).forEach((a, i) => {
       const from = src.uid;
       const chk = UI.E.canUseAttack(0, i, from);
       const canAtk = chk.ok && UI.E.canAttackAtAll(0);
@@ -1874,7 +1893,6 @@ function renderSlot(slot, pi, where, idx) {
       l.appendChild(el('span', 'pc-atkdmg', a.dmg || '—'));
       b.appendChild(l);
       if (a.text) b.appendChild(el('div', 'pc-text', a.text));
-      if (from !== null) b.appendChild(el('div', 'pc-text', `Recall: printed on ${src.card.name}`));
       if (!canAtk) {
         const why = !UI.E.canAttackAtAll(0)
           ? (slot.status.asleep ? 'Asleep — cannot attack' : slot.status.paralyzed ? 'Paralyzed — cannot attack' : 'Cannot attack')

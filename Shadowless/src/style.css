@@ -304,6 +304,17 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .atkdmg{color:var(--amber);font-weight:700}
 .atktext{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.35}
 .atkwhy{font-size:10px;color:var(--red);margin-top:3px}
+/* Recall's switcher: one card's attacks at a time, so the Active tile never grows
+   past one card's rows plus this strip. Compact on purpose - it is a height budget
+   on a fitted board, see LAYOUT.md. */
+.recalltabs{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow:hidden}
+.recalltabs .rt-lbl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);margin-right:2px}
+.recalltabs .rt-tab{font:inherit;font-size:9.5px;line-height:1.2;padding:1px 6px;border:1px solid var(--line);
+  border-radius:3px;background:transparent;color:var(--ink2);cursor:pointer;white-space:nowrap}
+/* CARD INK, not board ink: the strip sits on the card's cream stock, and the
+   board's light --txt vanished on it in the first screenshot. */
+.recalltabs .rt-tab:hover{color:var(--ink);border-color:var(--amber)}
+.recalltabs .rt-tab.on{color:var(--ink);font-weight:700;border-color:var(--amber);background:rgba(226,168,75,.22)}
 
 /* Retreat sits under the attacks on the Active card. Deliberately NOT an .atk:
    it is a cost you pay rather than a thing the Pokemon does, and it must not
