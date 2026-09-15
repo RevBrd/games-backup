@@ -2338,7 +2338,10 @@ const EFFECTS = {
   // Four of these five are SETTINGS on mechanisms that already existed, which is
   // the pattern POWERS.md asks for: a new kind is the last resort, not the first.
   'gym1-47': { p: { kind: 'ENERGY_AS', name: 'Photosynthesis', type: 'G', always: true },
-    a: [[{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }], []] },   // Erika's Oddish: Poisonpowder; Sprout (plain)
+    // ONE attack. This carried a second, empty entry for a "Sprout" the card does
+    // not print, so the deck validator refused it while every count called gym1
+    // complete - found 14 Sep 2026 when Trevor's T3 Vileplume deck would not load.
+    a: [[{ v: 'STATUS_ON_FLIP', s: 'Poisoned' }]] },       // Erika's Oddish: Poisonpowder
   'gym1-65': { p: { kind: 'HEAL_ON_FLIP', n: 1, name: 'Natural Healing', once: true,
                     selfOnly: true, sure: true },
     a: [[{ v: 'STATUS_ON_FLIP', s: 'Confused' }]] },       // Blaine's Vulpix: Tail Fan

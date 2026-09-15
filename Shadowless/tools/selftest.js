@@ -163,6 +163,21 @@ const powerless = Object.keys(CARD_DB)
 check(powerless.length === 0, 'every card with a Pokemon Power has a p: script',
   powerless.map(id => `${id} ${CARD_DB[id].name} (${CARD_DB[id].power.name})`).join(', '));
 
+// ...AND "HAS AN ENTRY" MUST MEAN WHAT THE DECK VALIDATOR MEANS. The coverage
+// count above asks whether EFFECTS[id] exists; validateDeck asks isImplemented,
+// which also wants one attack script per printed attack. They disagreed on
+// exactly one card, and that card made gym1 read LIVE at 131 of 131 while the
+// validator refused Erika's Oddish from every deck - it carried a second, empty
+// attack entry for an attack it does not print. Found 14 Sep 2026 converting
+// Trevor's roster, which is the first thing to put that card in a deck. Asked
+// through the engine's own predicate so the two can never drift apart again.
+{
+  const Ev = new Engine(CARD_DB, EFFECTS, { seed: 1 });
+  const refused = Object.keys(CARD_DB).filter(id => EFFECTS[id] && !Ev.isImplemented(id)).sort();
+  check(refused.length === 0, 'every scripted card is one the deck validator accepts',
+    refused.map(id => `${id} ${CARD_DB[id].name}`).join(', '));
+}
+
 // ...AND THE HALF THE CHECK ABOVE CANNOT SEE. It asks whether a card with a Power
 // has a script; it cannot ask about a Power that never reached CARD_DB at all.
 // `gen_cards --check` does not cover this either — it compares generated output
