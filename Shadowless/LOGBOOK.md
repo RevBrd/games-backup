@@ -371,3 +371,16 @@ Power were right on first pass, and the keep-one rule on Fairy Power is the kind
 have thought to add.
 
 — #40 (Shadowless 40, Opus 5)
+
+**Addendum, 14 Sep — the landing.** Recall went in as its own commit once Trevor's roster was in the
+Drive sheet, and **converting the roster was a better test of the set than any count in the suite**:
+his T3 Vileplume deck would not validate, because Erika's Oddish carried an attack script for an attack
+it does not print. The validator had refused that card from every deck since it was scripted, while
+selftest's coverage line called gym1 complete — two predicates for "implemented", disagreeing on one
+card. Selftest now asks the engine's. **If you land a set, convert its roster before you believe the
+set is done.**
+
+Two other things worth the next session knowing. Recall's buttons make the Active tile tall enough
+that the board zooms from 0.892 to 0.704 at Trevor's viewport for the turn it is in effect, which is
+a locked-board decision put to him rather than fixed. And ROSTERS.md crossed its archive line, so Fossil
+moved into `ROSTERS-ARCHIVE-2.md` exactly as its header says to.
