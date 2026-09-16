@@ -89,6 +89,20 @@ command rather than a fact: run the tool.
 set has made live is a note filed early, not a gap — do not treat one as unfiled work, and if you
 build a coverage tool, filter to the live sets.
 
+> **AND THE FILTER MUST ASK THE GAME, NOT A LIST — 15 Sep 2026, #41.** That instruction was followed
+> and then hand-written: `wants.js` held `const LIVE = ['base1','base2','base3','base5']`. gym1 went
+> live on the 14th and **all 122 of its notes stayed filed under "not live"**, so `--coverage`
+> reported a backlog of 238 when the real figure was **360** — the single largest set of notes in the
+> project, invisible to the readout built to find them, in the week it became the work.
+>
+> **The tell was already on screen and read as fine.** The summary printed a Gym Heroes row saying
+> `122 notes / 0 live`, because an earlier pass had patched `gym1` into the *display* list while
+> leaving it out of the predicate. **Half a fix is the worse outcome**: the row appears, so the set
+> looks counted, and nobody reads the second column.
+>
+> It now calls `progress.liveSets()` — the game's own answer, the one that gates the packs, the ladder
+> and the deck validator. One `require`, and it cannot fall behind a set going live.
+
 **Two kinds of note live in that column and they have different consumers.** *"To use Agility unless
 Drill Peck can kill"* is an in-play decision and belongs to `ai.js`. *"Replace 4x R energy with DCE in
 deck"* and *"5-ish extra W energy in deck"* are **deckbuild** wants and belong to the autobuilder —

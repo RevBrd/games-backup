@@ -52,9 +52,23 @@ const CLAIMS_DIR = path.join(__dirname, 'claims');
 
 // Which sets the game actually gates open. A note on a set that is not live is
 // filed early, not missing — PLAYBOOK.md is explicit about that — so it is
-// counted separately rather than shown as a gap. `gym1` is Job 16 and its 126
-// rows arrived with the Gym Heroes workbook well ahead of the set.
-const LIVE = ['base1', 'base2', 'base3', 'base5'];
+// counted separately rather than shown as a gap.
+//
+// DERIVED, NEVER DECLARED — corrected 15 Sep 2026, #41. This was a hand-written
+// array and it fell a whole set behind: gym1 went live on 14 Sep and every one of
+// its 122 notes stayed filed under "not live", so `--coverage` reported a backlog
+// of 238 when the real figure was 360. The tell was already on screen — the
+// summary printed a Gym Heroes row reading `122 notes / 0 live`, because a
+// previous pass had patched gym1 into the DISPLAY list below while leaving it out
+// of the predicate. Half the fix is the worse outcome: the row appears, so the set
+// looks counted.
+//
+// `progress.liveSets()` is the game's own answer to this question and it is what
+// gates the packs, the ladder and the deck validator. Asking it costs one require
+// and cannot fall behind a set going live.
+const { CARD_DB, SET_INFO } = require('../src/cards.js');
+const { EFFECTS } = require('../src/effects.js');
+const LIVE = require('../src/progress.js').liveSets(CARD_DB, EFFECTS, SET_INFO);
 const SET_NAME = { base1: 'Base Set', base2: 'Jungle', base3: 'Fossil',
                    base4: 'Base Set 2', base5: 'Team Rocket', basep: 'Promos',
                    gym1: 'Gym Heroes' };
@@ -313,7 +327,11 @@ function main() {
   }
 
   console.log('\nNOTES BY SET — distinct texts, NH twins collapsed\n');
-  for (const s of [...LIVE, 'basep', 'gym1']) {
+  // LIVE first in ladder order, then everything else that has notes — so a set
+  // whose workbook arrives before the set does still gets a row, which is how the
+  // 122 gym1 notes were visible for a week before they were countable.
+  const shown = [...LIVE, ...[...new Set(claimsNeeded.map(x => x.set))].filter(s2 => !LIVE.includes(s2))];
+  for (const s of shown) {
     const g = claimsNeeded.filter(x => x.set === s);
     if (!g.length) continue;
     const live = g.filter(isLive).length;
