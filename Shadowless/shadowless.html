@@ -499,6 +499,35 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .tabs{display:flex;border-bottom:1px solid var(--line);flex:0 0 auto}
 .tab{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;padding:8px 0;cursor:pointer;color:var(--dim);letter-spacing:.12em;font-size:10.5px}
 .tab.on{color:var(--amber);border-bottom-color:var(--amber)}
+
+/* ---- the Stadium strip ----
+   Sits between the tabs and the rail body, so it is visible whichever tab is up.
+   Present only while a Gym is in play, which is no games at all outside gym1.
+
+   IT TAKES BOARD INK, NOT CARD INK, and that is the opposite of Recall's attack
+   switcher one screen over. The rule is the surface underneath: Recall's tabs sit
+   on the card's cream stock so they take `--ink`, and a pass that reached for
+   `--txt` there made the selected tab vanish (SCREENS.md). This strip sits on the
+   rail's near-black, so `--txt`/`--dim`/`--amber` are correct here and `--ink`
+   would be the invisible one. Check what a thing is lying on before you colour it.
+
+   PLACEHOLDER FOR JOB 18 — this belongs on the mat and is here because the board
+   is locked until sizing is solved. ui.js's renderStadium says why. */
+.gymstrip{
+  flex:0 0 auto; padding:7px 10px 8px; cursor:default;
+  border-bottom:1px solid var(--line); background:var(--panel);
+  /* The amber edge is the same signal the turn flag and the active tab use:
+     something of yours is live. A Gym is the only board-wide rule in the game. */
+  border-left:2px solid var(--amber);
+}
+.gymhead{display:flex;align-items:baseline;gap:8px}
+.gymtag{color:var(--dim);letter-spacing:.12em;font-size:9.5px}
+.gymwho{color:var(--dim);font-size:9.5px;margin-left:auto}
+.gymname{color:var(--amber);font-size:12px;font-weight:700;margin-top:1px}
+/* Wraps rather than truncating. The rail is 324px and two of these lines do not
+   fit on one; an ellipsis on a rule the player is subject to is worse than a
+   second line, and the strip is the only thing in the column that can grow. */
+.gymeff{color:var(--txt);font-size:10.5px;line-height:1.35;margin-top:2px}
 .logbox{flex:1;overflow:auto;padding:8px 10px;font-size:11px}
 .logline{display:flex;gap:8px;padding:1px 0;border-left:2px solid transparent;padding-left:6px}
 .lt{color:#4C5661;min-width:18px;text-align:right}
@@ -11893,7 +11922,7 @@ class AI {
         case 'P_SEARCH_BENCH': {
           // Priced as benching that many Basics, which is what it is — the same
           // weights `callFamily` uses, and for the same reason.
-          const room = Math.max(0, E.cfg.benchMax - me.bench.length);
+          const room = Math.max(0, E.benchCap() - me.bench.length);
           const want = Math.min(v.n || 1, room);
           const wants = c => c && c.kind === 'pokemon' && c.stage === (v.stage || 'Basic');
           const pool = me.deck.filter(x => wants(this.db[x.id]));
@@ -11983,7 +12012,7 @@ class AI {
   // DO NOT "FIX" THIS BY LETTING IT LOOK. The restriction is the design.
   challengeGain(pi, known) {
     const E = this.E, pl = E.state.players[pi];
-    const room = E.cfg.benchMax - pl.bench.length;
+    const room = E.benchCap() - pl.bench.length;
     if (room <= 0) return 0;
     if (!known) return room;      // visible only: assume they can fill the room
     const wants = x => { const c = this.db[x.id]; return c && c.kind === 'pokemon' && c.stage === 'Basic'; };
@@ -12258,7 +12287,7 @@ class AI {
           // Declining is not a failure: it draws two, which is the floor and is
           // why the card is always legal.
           s += Math.max(2 * W.drawCard, (mine - theirs) * W.benchMore);
-          const room = E.cfg.benchMax - me.bench.length;
+          const room = E.benchCap() - me.bench.length;
           const wants = x => { const cc = this.db[x.id]; return cc && cc.kind === 'pokemon' && cc.stage === 'Basic'; };
           a.opts.myPicks = me.deck.filter(wants).slice(0, room).map(x => x.uid);
           break;
@@ -12842,6 +12871,12 @@ class AI {
           // Deliberately NOT modelled yet, and named so the next pass can find
           // them: denying the opponent THEIR Gym, and the tempo cost of spending
           // a Trainer play on a rule rather than on a board change.
+          //
+          // EVERY KIND GETS A BRANCH, and the chain below is checked against the
+          // engine by selftest — not because seven kinds is hard to hold in the
+          // head, but because two of them were missing for a day and nothing could
+          // see it. A kind with no branch is not an error anywhere: the card plays,
+          // installs, works perfectly for a human, and scores zero forever.
           const gymKind = v.gym;
           const mine  = this.gymNamed(pi, v.who);
           const yours = this.gymNamed(1 - pi, v.who);
@@ -12863,6 +12898,37 @@ class AI {
           } else if (gymKind === 'STADIUM_BENCH_CAP') {
             // Narrow Gym helps the side with the smaller board.
             s += (you.bench.length - me.bench.length) * 5;
+          } else if (gymKind === 'STADIUM_ATTACK_BONUS_NAMED') {
+            // VERMILION CITY GYM. Added 15 Sep 2026 by #41; between 14 and 15 Sep
+            // this kind and the one below fell off the end of this chain and were
+            // worth exactly nothing, so the bot would lay either one down only when
+            // the "replace a Gym helping them" term below happened to fire.
+            //
+            // Name-scoped like the two at the top, so it takes the same shape — but
+            // priced BELOW them, and the reason is in the card rather than in a
+            // feeling. "He or she MAY flip": the bonus is an option, never a cost,
+            // and its two faces are +10 to them and 10 to ourselves. A player who
+            // only takes it when the upside is live collects more than half of it,
+            // and a player who takes it every time collects zero. So it is worth a
+            // real amount per matching Pokemon and less than a retreat discount,
+            // which is unconditional. PROVISIONAL, like everything around it.
+            s += (mine - yours) * 3;
+          } else if (gymKind === 'STADIUM_HEAL_STATUS_NAMED') {
+            // CELADON CITY GYM. Its USE is scored properly in scoreStadiumAction;
+            // this branch is the decision to put the card down, which is a different
+            // question — it is worth having the outlet at all, not worth one use of
+            // it. Two things gate that and both are already on the board: matching
+            // Pokemon to use it on, and a status worth paying an Energy to clear.
+            //
+            // Scored as the margin like the other NAMED gyms, then scaled by whether
+            // anything is actually afflicted right now. A Gym that can heal nothing
+            // is not worth a Trainer play this turn, and it stays playable next turn
+            // when something is. PROVISIONAL.
+            const afflicted = E.allSlots(pi).filter(sl =>
+              E.stadiumNameMatch(sl, v.who)
+              && (sl.status.asleep || sl.status.confused || sl.status.paralyzed || sl.status.poisoned)
+            ).length;
+            s += (mine - yours) * 2 + afflicted * 6;
           }
           // Replacing a Gym that is currently helping THEM is worth doing on its
           // own, and this is the only term here that is not about our own card.
@@ -13052,7 +13118,7 @@ class AI {
           const cands = me.discard.filter(x => {
             const c = this.db[x.id]; return c.kind === 'pokemon' && c.stage === 'Basic';
           });
-          if (!cands.length || me.bench.length >= E.cfg.benchMax) return -Infinity;
+          if (!cands.length || me.bench.length >= E.benchCap()) return -Infinity;
           let best = cands[0];
           for (const c of cands) if (this.db[c.id].hp > this.db[best.id].hp) best = c;
           a.opts.pickUid = best.uid;
@@ -13064,7 +13130,7 @@ class AI {
           const cands = you.discard.filter(x => {
             const c = this.db[x.id]; return c.kind === 'pokemon' && c.stage === 'Basic';
           });
-          if (!cands.length || you.bench.length >= E.cfg.benchMax) return -Infinity;
+          if (!cands.length || you.bench.length >= E.benchCap()) return -Infinity;
           let best = cands[0];
           for (const c of cands) if (this.db[c.id].hp < this.db[best.id].hp) best = c;
           a.opts.pickUid = best.uid;
@@ -13512,6 +13578,7 @@ class AI {
     }
   }
 }
+
 
 // ============================================================================
 // RULES ENGINE  —  WOTC-era (Base Set) Pokemon TCG
@@ -24715,6 +24782,14 @@ function renderSide(pi, isFoe) {
   const bl = el('div', 'zonelabel', 'BENCH');
   benchWrap.appendChild(bl);
   const benchRow = el('div', 'bench');
+  // `cfg.benchMax` HERE ON PURPOSE, and it is the only place outside the engine
+  // that is still allowed to read it. The mat has five bench zones silk-screened
+  // onto it; Narrow Gym does not repaint the cloth, it imposes a RULE, and the
+  // engine refuses the fifth Pokemon through `benchCap()`. Drawing four zones
+  // would be a board change, which is locked until Job 18 — and the rule is
+  // stated in words in the Stadium strip, which is most of why that strip earns
+  // its place. Anything computing ROOM must use `benchCap()`; this is drawing
+  // furniture, not answering a question.
   for (let i = 0; i < UI.E.cfg.benchMax; i++) {
     if (p.bench[i]) benchRow.appendChild(renderBenchTile(p.bench[i], pi, i));
     else benchRow.appendChild(el('div', 'slot empty benchslot', ''));
@@ -27564,7 +27639,7 @@ function onPlayFlow(cardId, go) {
 
   for (const v of (p.do || [])) {
     if (v.v === 'P_SEARCH_BENCH') {
-      const room = Math.max(0, UI.E.cfg.benchMax - me0.bench.length);
+      const room = Math.max(0, UI.E.benchCap() - me0.bench.length);
       const want = Math.min(v.n || 1, room);
       const pool = me0.deck.filter(x => {
         const c = CARD_DB[x.id];
@@ -27773,7 +27848,7 @@ function answerAsk(value) {
   const s = S(), q = s.pendingAsk;
   if (!q) return;
   if (q.kind === 'CHALLENGE' && value) {
-    const room = UI.E.cfg.benchMax - me().bench.length;
+    const room = UI.E.benchCap() - me().bench.length;
     const pool = me().deck.filter(x => {
       const c = CARD_DB[x.id];
       return c.kind === 'pokemon' && c.stage === 'Basic';
@@ -28083,6 +28158,79 @@ function forfeitMatch() {
   render();
 }
 
+// ------------------------------------------------------- the Stadium strip --
+// WHAT A GYM DOES, IN ONE LINE, DERIVED FROM THE DESCRIPTOR. Not a map keyed by
+// card id: the engine already reduces seven cards to five rule kinds plus their
+// parameters, and a second hand-written table keyed by the card would be a copy
+// that falls behind the first time a Stadium is reprinted. Gym Challenge reprints
+// several of these. `n`, `who` and `names` come straight off `state.stadium`.
+//
+// The wording is the rule's EFFECT rather than the card's printed paragraph. The
+// printed text is one hover away on the card face, and a strip that quotes four
+// sentences is a strip nobody reads mid-turn.
+function gymLine(st) {
+  const who = st.who || '';
+  switch (st.kind) {
+    case 'STADIUM_TRAINER_TOLL':
+      return `${(st.names || []).join(' / ')} costs ${st.n} extra cards to play`;
+    case 'STADIUM_RETREAT_TAX':
+      return `everyone pays ${st.n} more to retreat`;
+    case 'STADIUM_RETREAT_DISCOUNT_NAMED':
+      return `${who}'s Pokemon pay ${st.n} less to retreat`;
+    case 'STADIUM_NO_RESISTANCE_NAMED':
+      return `${who}'s attacks ignore Resistance`;
+    case 'STADIUM_BENCH_CAP':
+      return `no Bench may hold more than ${st.n}`;
+    case 'STADIUM_HEAL_STATUS_NAMED':
+      return `discard an Energy to clear ${who}'s status`;
+    case 'STADIUM_ATTACK_BONUS_NAMED':
+      return `${who}'s attacks may flip: +${st.n}, or ${st.n} to self`;
+    // A kind nobody here has a sentence for. Named rather than blanked, because a
+    // strip that silently prints the card alone still tells the player a rule is
+    // running, which is the whole job — and this is the branch a new Stadium
+    // arrives through. selftest asserts the two ends of `gym:` match; it cannot
+    // assert that somebody wrote a sentence.
+    default: return 'a rule is in play — hover for the card';
+  }
+}
+
+// THE STADIUM IS BOARD STATE AND IT LIVES IN THE RAIL ANYWAY — Trevor, 15 Sep
+// 2026. It belongs on the mat: it is a card in play, face up, that both players
+// are subject to. It is here instead because putting a card-sized thing on the
+// mat is a sizing change, and sizing is Job 18's whole subject — three documents
+// exist to fight the resizing problem and the board is locked until that job
+// unlocks it. So this is a deliberate placeholder with a known successor.
+//
+//   JOB 18: move this to the mat. The strip can stay as the overflow for what
+//   a tile has no room to say.
+//
+// Between the tabs and the body ON PURPOSE. A Gym rewrites retreat cost, bench
+// size, Resistance and damage — rules you need while you are reading the LOG,
+// not rules you go to a tab for. Tab-independent means it cannot be the case
+// that a player has a bench cap of 4 and no way to see why.
+//
+// It renders NOTHING when no Stadium is out, which is every game in four of the
+// five live sets. Returning null rather than an empty node keeps the rail's
+// flex column exactly as it was before Gym Heroes for those games.
+function renderStadium() {
+  const st = S().stadium;
+  if (!st) return null;
+  const box = el('div', 'gymstrip');
+  const head = el('div', 'gymhead');
+  head.appendChild(el('span', 'gymtag', 'IN PLAY'));
+  // Whose it was still matters — it goes back to that player's discard when the
+  // next Stadium lands, and a Gym you laid down is a card you are not getting
+  // back. Player 0 is always the human; see the coordinate note in board.js.
+  head.appendChild(el('span', 'gymwho', st.owner === 0 ? 'yours' : 'theirs'));
+  box.appendChild(head);
+  box.appendChild(el('div', 'gymname', st.name));
+  box.appendChild(el('div', 'gymeff', gymLine(st)));
+  // Same contract as every other card on screen: hover peeks the real face into
+  // the rail. `peekOn` is a targeted DOM swap rather than a render() — see
+  // railPeek, and INTERACTION.md on why that distinction is load-bearing.
+  return peekOn(box, st.id);
+}
+
 // ------------------------------------------------------------------- rail --
 function renderRail() {
   const rail = el('div', 'rail');
@@ -28093,6 +28241,8 @@ function renderRail() {
     tabs.appendChild(b);
   });
   rail.appendChild(tabs);
+  const gym = renderStadium();
+  if (gym) rail.appendChild(gym);
   const body = UI.devTab === 'card' ? renderPreview()
     : UI.devTab === 'dev' ? renderDev()
     : UI.devTab === 'cards' ? renderCoverage()

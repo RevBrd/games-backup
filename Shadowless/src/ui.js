@@ -1681,6 +1681,14 @@ function renderSide(pi, isFoe) {
   const bl = el('div', 'zonelabel', 'BENCH');
   benchWrap.appendChild(bl);
   const benchRow = el('div', 'bench');
+  // `cfg.benchMax` HERE ON PURPOSE, and it is the only place outside the engine
+  // that is still allowed to read it. The mat has five bench zones silk-screened
+  // onto it; Narrow Gym does not repaint the cloth, it imposes a RULE, and the
+  // engine refuses the fifth Pokemon through `benchCap()`. Drawing four zones
+  // would be a board change, which is locked until Job 18 — and the rule is
+  // stated in words in the Stadium strip, which is most of why that strip earns
+  // its place. Anything computing ROOM must use `benchCap()`; this is drawing
+  // furniture, not answering a question.
   for (let i = 0; i < UI.E.cfg.benchMax; i++) {
     if (p.bench[i]) benchRow.appendChild(renderBenchTile(p.bench[i], pi, i));
     else benchRow.appendChild(el('div', 'slot empty benchslot', ''));
@@ -4530,7 +4538,7 @@ function onPlayFlow(cardId, go) {
 
   for (const v of (p.do || [])) {
     if (v.v === 'P_SEARCH_BENCH') {
-      const room = Math.max(0, UI.E.cfg.benchMax - me0.bench.length);
+      const room = Math.max(0, UI.E.benchCap() - me0.bench.length);
       const want = Math.min(v.n || 1, room);
       const pool = me0.deck.filter(x => {
         const c = CARD_DB[x.id];
@@ -4739,7 +4747,7 @@ function answerAsk(value) {
   const s = S(), q = s.pendingAsk;
   if (!q) return;
   if (q.kind === 'CHALLENGE' && value) {
-    const room = UI.E.cfg.benchMax - me().bench.length;
+    const room = UI.E.benchCap() - me().bench.length;
     const pool = me().deck.filter(x => {
       const c = CARD_DB[x.id];
       return c.kind === 'pokemon' && c.stage === 'Basic';
@@ -5049,6 +5057,79 @@ function forfeitMatch() {
   render();
 }
 
+// ------------------------------------------------------- the Stadium strip --
+// WHAT A GYM DOES, IN ONE LINE, DERIVED FROM THE DESCRIPTOR. Not a map keyed by
+// card id: the engine already reduces seven cards to five rule kinds plus their
+// parameters, and a second hand-written table keyed by the card would be a copy
+// that falls behind the first time a Stadium is reprinted. Gym Challenge reprints
+// several of these. `n`, `who` and `names` come straight off `state.stadium`.
+//
+// The wording is the rule's EFFECT rather than the card's printed paragraph. The
+// printed text is one hover away on the card face, and a strip that quotes four
+// sentences is a strip nobody reads mid-turn.
+function gymLine(st) {
+  const who = st.who || '';
+  switch (st.kind) {
+    case 'STADIUM_TRAINER_TOLL':
+      return `${(st.names || []).join(' / ')} costs ${st.n} extra cards to play`;
+    case 'STADIUM_RETREAT_TAX':
+      return `everyone pays ${st.n} more to retreat`;
+    case 'STADIUM_RETREAT_DISCOUNT_NAMED':
+      return `${who}'s Pokemon pay ${st.n} less to retreat`;
+    case 'STADIUM_NO_RESISTANCE_NAMED':
+      return `${who}'s attacks ignore Resistance`;
+    case 'STADIUM_BENCH_CAP':
+      return `no Bench may hold more than ${st.n}`;
+    case 'STADIUM_HEAL_STATUS_NAMED':
+      return `discard an Energy to clear ${who}'s status`;
+    case 'STADIUM_ATTACK_BONUS_NAMED':
+      return `${who}'s attacks may flip: +${st.n}, or ${st.n} to self`;
+    // A kind nobody here has a sentence for. Named rather than blanked, because a
+    // strip that silently prints the card alone still tells the player a rule is
+    // running, which is the whole job — and this is the branch a new Stadium
+    // arrives through. selftest asserts the two ends of `gym:` match; it cannot
+    // assert that somebody wrote a sentence.
+    default: return 'a rule is in play — hover for the card';
+  }
+}
+
+// THE STADIUM IS BOARD STATE AND IT LIVES IN THE RAIL ANYWAY — Trevor, 15 Sep
+// 2026. It belongs on the mat: it is a card in play, face up, that both players
+// are subject to. It is here instead because putting a card-sized thing on the
+// mat is a sizing change, and sizing is Job 18's whole subject — three documents
+// exist to fight the resizing problem and the board is locked until that job
+// unlocks it. So this is a deliberate placeholder with a known successor.
+//
+//   JOB 18: move this to the mat. The strip can stay as the overflow for what
+//   a tile has no room to say.
+//
+// Between the tabs and the body ON PURPOSE. A Gym rewrites retreat cost, bench
+// size, Resistance and damage — rules you need while you are reading the LOG,
+// not rules you go to a tab for. Tab-independent means it cannot be the case
+// that a player has a bench cap of 4 and no way to see why.
+//
+// It renders NOTHING when no Stadium is out, which is every game in four of the
+// five live sets. Returning null rather than an empty node keeps the rail's
+// flex column exactly as it was before Gym Heroes for those games.
+function renderStadium() {
+  const st = S().stadium;
+  if (!st) return null;
+  const box = el('div', 'gymstrip');
+  const head = el('div', 'gymhead');
+  head.appendChild(el('span', 'gymtag', 'IN PLAY'));
+  // Whose it was still matters — it goes back to that player's discard when the
+  // next Stadium lands, and a Gym you laid down is a card you are not getting
+  // back. Player 0 is always the human; see the coordinate note in board.js.
+  head.appendChild(el('span', 'gymwho', st.owner === 0 ? 'yours' : 'theirs'));
+  box.appendChild(head);
+  box.appendChild(el('div', 'gymname', st.name));
+  box.appendChild(el('div', 'gymeff', gymLine(st)));
+  // Same contract as every other card on screen: hover peeks the real face into
+  // the rail. `peekOn` is a targeted DOM swap rather than a render() — see
+  // railPeek, and INTERACTION.md on why that distinction is load-bearing.
+  return peekOn(box, st.id);
+}
+
 // ------------------------------------------------------------------- rail --
 function renderRail() {
   const rail = el('div', 'rail');
@@ -5059,6 +5140,8 @@ function renderRail() {
     tabs.appendChild(b);
   });
   rail.appendChild(tabs);
+  const gym = renderStadium();
+  if (gym) rail.appendChild(gym);
   const body = UI.devTab === 'card' ? renderPreview()
     : UI.devTab === 'dev' ? renderDev()
     : UI.devTab === 'cards' ? renderCoverage()

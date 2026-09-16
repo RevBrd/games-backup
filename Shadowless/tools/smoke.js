@@ -920,6 +920,78 @@ T('preview panel handles having nothing selected', () => {
   return true;
 });
 
+// --- the Stadium strip ---------------------------------------------------
+// A PLACEHOLDER WITH A GUARD, which is the only kind worth shipping. The strip
+// lives in the rail because the mat is locked until Job 18; when that job moves
+// it, these three rows are the statement of what it has to keep doing.
+//
+// The smoke stub has no layout engine, so none of this is about how it LOOKS —
+// #41 shot it at 1191x684 and probed the board zoom against a control before
+// believing that half. What a stubbed DOM CAN see is presence, absence, and
+// which tab it survives, and all three have a way of silently breaking.
+const GYM_VERMILION = { inst: null, id: 'gym1-120', owner: 1, name: 'Vermilion City Gym',
+                        kind: 'STADIUM_ATTACK_BONUS_NAMED', n: 10, who: 'Lt. Surge' };
+
+T('no Stadium in play means no strip at all', () => {
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth'; UI.seedDraft = '73'; UI.flipDelay = 0;
+  startMatch(); UI.E.setupAuto(0);
+  UI.devTab = 'log'; render();
+  UI.flipDelay = 2000;
+  // Four of the five live sets never play one. The rail's flex column has to be
+  // exactly what it was before Gym Heroes for those games, so this asserts an
+  // ABSENCE and is the more important of the two directions.
+  return !UI.railEl.children.some(c => c.className === 'gymstrip');
+});
+
+T('a Stadium in play names itself and says what it does, on every tab', () => {
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth'; UI.seedDraft = '73'; UI.flipDelay = 0;
+  startMatch(); UI.E.setupAuto(0);
+  UI.E.state.stadium = GYM_VERMILION;
+  let ok = true;
+  for (const tab of ['log', 'card', 'dev', 'cards']) {
+    UI.devTab = tab; render();
+    const strip = UI.railEl.children.find(c => c.className === 'gymstrip');
+    // Tab-independent ON PURPOSE: a Gym rewrites retreat cost, bench size and
+    // damage, which are rules you need while reading the LOG rather than rules
+    // you go to a tab for.
+    if (!strip) { ok = false; break; }
+    // THE STUB'S textContent IS PER-NODE, not a subtree walk — this file says so
+    // in two other places and #41 walked into it anyway, which is the argument
+    // for the helper existing rather than the warning. The strip's words live in
+    // four child nodes, so reading the root returns the empty string and the row
+    // fails for a reason that has nothing to do with the strip.
+    const deepText = (n) => (n._text || '') + (n.children || []).map(deepText).join(' ');
+    const txt = deepText(strip);
+    // The NAME and the EFFECT, not the printed paragraph. "theirs" because the
+    // fixture's owner is player 1 and a Gym you laid down is a card you are not
+    // getting back.
+    if (!/Vermilion City Gym/.test(txt) || !/Lt\. Surge/.test(txt) || !/theirs/.test(txt)) { ok = false; break; }
+  }
+  UI.E.state.stadium = null;
+  UI.devTab = 'log'; render();
+  UI.flipDelay = 2000;
+  return ok;
+});
+
+T('the strip survives a peek and comes back with it', () => {
+  UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth'; UI.seedDraft = '73'; UI.flipDelay = 0;
+  startMatch(); UI.E.setupAuto(0);
+  UI.E.state.stadium = GYM_VERMILION;
+  UI.devTab = 'log'; render();
+  // railPeek swaps the BODY and nothing else. If it ever swapped the strip out
+  // instead, hovering any card would hide the rule you are playing under — and
+  // that is a targeted replaceChild on a node held in UI.railBody, so it is
+  // exactly the kind of thing a later refactor breaks without noticing.
+  ctx.railPeek('base1-4');
+  const duringPeek = UI.railEl.children.some(c => c.className === 'gymstrip');
+  ctx.railPeek(null);
+  const afterPeek = UI.railEl.children.some(c => c.className === 'gymstrip');
+  UI.E.state.stadium = null;
+  render();
+  UI.flipDelay = 2000;
+  return duringPeek && afterPeek;
+});
+
 // --- play mat zones + motion --------------------------------------------
 T('the mat renders prize, deck and discard zones for both sides', () => {
   UI.myDeck = 'Brushfire'; UI.foeDeck = 'Overgrowth'; UI.seedDraft = '81'; UI.flipDelay = 0;

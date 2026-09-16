@@ -116,20 +116,30 @@ ahead never scrolls away. **Why this screen and no other** — the ladder gains 
 set goes live — is [PROGRESSION.md](PROGRESSION.md); the instrument that found all four is
 [INSPECTION.md](INSPECTION.md).
 
-## Four pickers that exist and CANNOT BE LOOKED AT YET — 9 Sep 2026, Job 16
+## The gym1 pickers — the block is GONE and the looking is still owed
 
-**Secret Mission, Blaine's Gamble, Energy Flow and Erika's Maids each open a picker**, and none of
-them is reachable by `shot.js`, `probe.js`, or a human, because **gym1 is not live**: the deck
-validator refuses any deck holding an unimplemented card, so no gym1 card can be put on a board at
-all until the set's last card is scripted. The code is written, the gate is green, and the panels
-have never been rendered once.
+**Written 9 Sep 2026 (Job 16) as "four pickers that cannot be looked at yet". Re-headed 15 Sep by
+#41, because the reason they could not be looked at expired on the 14th and nothing said so.**
 
-**This is not the usual "a green suite proves nothing visual" — it is one step worse.** The usual
-case is an instrument that could look and did not. Here no instrument *can* look, so the normal
-discipline in this file silently does not apply, and the gap reads as covered.
+The original block was real: the deck validator refuses any deck holding an unimplemented card, so
+while gym1 was incomplete **no** gym1 card could be put on a board by `shot.js`, `probe.js` or a
+human. That was one step worse than the usual "a green suite proves nothing visual" — the usual case
+is an instrument that could look and did not, and here no instrument *could*, so the normal
+discipline in this file silently did not apply and the gap read as covered.
 
-Three specific things to check the day gym1 goes live, chosen because each is a way these differ
-from every picker shipped before them:
+**gym1 went live on 14 Sep 2026 and every panel below is reachable now.** Only Recall has actually
+been looked at. The rest are ordinary owed work, and this list is no longer a note about a blocker —
+**it is the work order.**
+
+> **The general shape, because this will happen again at every set.** A deferral whose reason is a
+> *condition* rather than a *decision* stops being true without anybody editing it, and it goes on
+> reading like a live exemption. **The set going live is the moment to re-read whatever was parked
+> on "the set is not live", and nothing automatic performs that read.** The same day cost this tree
+> two stale promo counts and a hand-written live-set list in `wants.js` that hid 122 notes.
+
+Each bullet is a way these differ from every picker shipped before them, which is why each is worth
+a look rather than a glance. **They are not counted here** — the header said "four" while the list
+held seven, because three were added after it was written:
 
 - **`min: 0` renders sanely.** `pickerReady` is a range test, so a zero floor makes the confirm
   button live with nothing chosen — which is correct ("decline entirely" is a legal play) and looks
@@ -159,6 +169,49 @@ from every picker shipped before them:
 - **Erika's Perfume (added 12 Sep 2026) reveals, then picks, with a ceiling of THEIR Bench room.** The
   failure to look for is a picker offering more tiles than they have room for: the engine skips the
   overflow quietly and correctly, which would read to a player as their choice being ignored.
+
+## The Stadium strip — a rail placeholder with a named successor
+
+**Built 15 Sep 2026, Job 17a, #41. Trevor's call on where it goes.**
+
+Gym Heroes shipped seven Gym cards on 14 Sep and **the Stadium zone had no UI at all** — no element
+in `ui.js`, no rule in `style.css`. A board-wide rule that rewrites bench size, retreat cost,
+Resistance, a Trainer toll and attack damage was visible only as one line in the log when it landed,
+and nothing anywhere recorded that as deferred. It read as built because everything else about
+Stadiums was, and `ENGINE.md` even described a mis-wired Gym as one that "plays, installs, shows on
+the board and does nothing" — a sentence nobody could act on, because there was no board to show on.
+
+**It belongs on the mat and it is in the rail instead, on purpose.** Putting a card-sized thing on
+the mat is a sizing change, sizing is Job 18's entire subject, and the board is locked until that job
+unlocks it. So this is a deliberate placeholder:
+
+> **JOB 18: move the Stadium to the mat.** The strip can stay as the overflow for whatever a tile has
+> no room to say. `renderStadium()` and `gymLine()` in `ui.js` are the whole of it, and the three
+> `smoke.js` rows under "the Stadium strip" are the statement of what a mat version still has to do.
+
+**Where it sits is the only interesting decision in it.** Between the tabs and the rail body, which
+makes it **tab-independent** — a Gym rewrites rules you need while you are reading the LOG, not rules
+you would go to a tab for. It renders nothing at all when no Stadium is out, which is every game in
+four of the five live sets, so the rail's flex column is exactly what it was before Gym Heroes for
+those. Verified with `probe.js --size 1191x684` against a control: board zoom 0.892 with and without,
+nothing moved.
+
+**What it says is DERIVED from the descriptor, not a table keyed by card.** The engine already
+reduces seven cards to five rule kinds plus their parameters; a second hand-written table keyed by
+card id would be a copy that falls behind the first reprint, and Gym Challenge reprints several of
+these. `gymLine()` switches on `kind` and reads `n`, `who` and `names` off `state.stadium`, with a
+default branch that still prints the card rather than going blank.
+
+**It takes board ink, and that is the opposite of Recall one screen up.** The rule is the surface
+underneath: Recall's switcher sits on the card's cream stock so it takes `--ink`, and a pass that
+reached for `--txt` there made the selected tab vanish. This sits on the rail's near-black, so
+`--txt`/`--dim`/`--amber` are right here and `--ink` would be the invisible one. **Check what a thing
+is lying on before you colour it.**
+
+**The bench still draws five zones under Narrow Gym, and that is the same lock.** The mat has five
+silk-screened bench slots; a Gym imposes a rule and does not repaint cloth. The engine refuses the
+fifth Pokemon through `benchCap()` and the strip says *"no Bench may hold more than 4"* in words,
+which is most of why the strip earns its place before Job 18 rather than after.
 
 ## A screen that does not exist yet: Misty's Duel
 

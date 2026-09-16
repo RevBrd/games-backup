@@ -367,6 +367,67 @@ if (finished.length) console.log(`  ${finished.join(', ')} now complete `
       orphan.join(', '));
   }
 
+  // ...AND THE THIRD END OF THE SAME STRING: does the BOT know what the Gym does?
+  // Added 15 Sep 2026 by #41. The pair above guards effects.js against engine.js
+  // and catches a Gym that does nothing. It cannot catch a Gym that WORKS and is
+  // never played, which is what Vermilion City Gym and Celadon City Gym were for a
+  // day — `scoreTrainer`'s T_STADIUM chain priced five of the seven kinds and the
+  // other two fell off the end of the if/else, scoring a flat zero.
+  //
+  // That is the unscored-verb surface one level down: not a verb with no case, but
+  // a case with no branch for half its parameters. It fails silently in the worse
+  // direction of the two — the card is legal, the bot can see it, and it simply
+  // never has a reason to lay it down.
+  {
+    const declared = new Set([...effSrc.matchAll(/\bgym:\s*'([A-Z_0-9]+)'/g)].map(m => m[1]));
+    const aiSrc = fs.readFileSync(path.join(__dirname, '../src/ai.js'), 'utf8');
+    const i = aiSrc.indexOf("case 'T_STADIUM'");
+    const chain = i < 0 ? '' : aiSrc.slice(i, i + 6000);
+    const unpriced = [...declared].filter(k => !chain.includes(`'${k}'`)).sort();
+    check(i >= 0 && unpriced.length === 0,
+      'every Stadium kind a card can declare is priced by ai.js',
+      unpriced.length ? `${unpriced.join(', ')} would be played for a score of zero` : '');
+  }
+
+  // THE GUARD engine.js HAS BEEN CLAIMING SINCE JOB 16, written 15 Sep 2026 by
+  // #41. `benchCap()`'s own comment reads "One doorway; a selftest assertion
+  // keeps the twelfth caller from reading cfg directly" — and no such assertion
+  // existed. By the time anybody looked there were NINE direct reads outside the
+  // engine: five in ai.js, four in ui.js.
+  //
+  // A claimed guard is worse than an absent one, because the next person to add a
+  // bench-room calculation reads that sentence and believes they are covered. The
+  // tree's own name for this shape is a correction that leaves a human instruction
+  // behind; this is the same thing one step earlier, an instruction that was never
+  // true. Grep the symbol, not the file.
+  //
+  // WHAT IT COSTS TO BE WRONG. `cfg.benchMax` is 5 always; `benchCap()` is 4 while
+  // Narrow Gym is out. Nothing throws. The bot prices a Bench search or a Challenge
+  // as if it had a slot it cannot fill, and a picker offers a tile the engine will
+  // refuse — the whole family of bug this project keeps finding, where the wrong
+  // answer is a plausible one.
+  //
+  // THE TWO PERMITTED READS ARE DRAWING, NOT DECIDING. The mat has five bench zones
+  // printed on it and Narrow Gym does not repaint cloth. Those two loops are matched
+  // by shape here rather than exempted by a list, so a third one has to be a
+  // deliberate act of writing the same loop.
+  {
+    const DRAWS_THE_ZONES = /for \(let i = 0; i < UI\.E\.cfg\.benchMax; i\+\+\)/;
+    const offenders = [];
+    for (const f of ['ai.js', 'ui.js']) {
+      const src = fs.readFileSync(path.join(__dirname, '../src/', f), 'utf8');
+      src.split(/\r?\n/).forEach((line, i) => {
+        if (!/cfg\.benchMax/.test(line)) return;
+        if (/^\s*(\/\/|\*)/.test(line)) return;          // prose about the rule
+        if (DRAWS_THE_ZONES.test(line)) return;          // painting the mat
+        offenders.push(`${f}:${i + 1}`);
+      });
+    }
+    check(offenders.length === 0,
+      'the bench cap is read through benchCap() everywhere outside engine.js',
+      offenders.length ? `${offenders.join(', ')} — Narrow Gym does not reach these` : '');
+  }
+
   // --------------------------------------------------------------------------
   // SILENT-FAILURE SURFACE #5: a subset verb whose scorer forgets to fill opts.
   //

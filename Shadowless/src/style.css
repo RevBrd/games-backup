@@ -492,6 +492,35 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .tabs{display:flex;border-bottom:1px solid var(--line);flex:0 0 auto}
 .tab{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;padding:8px 0;cursor:pointer;color:var(--dim);letter-spacing:.12em;font-size:10.5px}
 .tab.on{color:var(--amber);border-bottom-color:var(--amber)}
+
+/* ---- the Stadium strip ----
+   Sits between the tabs and the rail body, so it is visible whichever tab is up.
+   Present only while a Gym is in play, which is no games at all outside gym1.
+
+   IT TAKES BOARD INK, NOT CARD INK, and that is the opposite of Recall's attack
+   switcher one screen over. The rule is the surface underneath: Recall's tabs sit
+   on the card's cream stock so they take `--ink`, and a pass that reached for
+   `--txt` there made the selected tab vanish (SCREENS.md). This strip sits on the
+   rail's near-black, so `--txt`/`--dim`/`--amber` are correct here and `--ink`
+   would be the invisible one. Check what a thing is lying on before you colour it.
+
+   PLACEHOLDER FOR JOB 18 — this belongs on the mat and is here because the board
+   is locked until sizing is solved. ui.js's renderStadium says why. */
+.gymstrip{
+  flex:0 0 auto; padding:7px 10px 8px; cursor:default;
+  border-bottom:1px solid var(--line); background:var(--panel);
+  /* The amber edge is the same signal the turn flag and the active tab use:
+     something of yours is live. A Gym is the only board-wide rule in the game. */
+  border-left:2px solid var(--amber);
+}
+.gymhead{display:flex;align-items:baseline;gap:8px}
+.gymtag{color:var(--dim);letter-spacing:.12em;font-size:9.5px}
+.gymwho{color:var(--dim);font-size:9.5px;margin-left:auto}
+.gymname{color:var(--amber);font-size:12px;font-weight:700;margin-top:1px}
+/* Wraps rather than truncating. The rail is 324px and two of these lines do not
+   fit on one; an ellipsis on a rule the player is subject to is worse than a
+   second line, and the strip is the only thing in the column that can grow. */
+.gymeff{color:var(--txt);font-size:10.5px;line-height:1.35;margin-top:2px}
 .logbox{flex:1;overflow:auto;padding:8px 10px;font-size:11px}
 .logline{display:flex;gap:8px;padding:1px 0;border-left:2px solid transparent;padding-left:6px}
 .lt{color:#4C5661;min-width:18px;text-align:right}

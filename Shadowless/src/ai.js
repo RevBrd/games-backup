@@ -4406,7 +4406,7 @@ class AI {
         case 'P_SEARCH_BENCH': {
           // Priced as benching that many Basics, which is what it is — the same
           // weights `callFamily` uses, and for the same reason.
-          const room = Math.max(0, E.cfg.benchMax - me.bench.length);
+          const room = Math.max(0, E.benchCap() - me.bench.length);
           const want = Math.min(v.n || 1, room);
           const wants = c => c && c.kind === 'pokemon' && c.stage === (v.stage || 'Basic');
           const pool = me.deck.filter(x => wants(this.db[x.id]));
@@ -4496,7 +4496,7 @@ class AI {
   // DO NOT "FIX" THIS BY LETTING IT LOOK. The restriction is the design.
   challengeGain(pi, known) {
     const E = this.E, pl = E.state.players[pi];
-    const room = E.cfg.benchMax - pl.bench.length;
+    const room = E.benchCap() - pl.bench.length;
     if (room <= 0) return 0;
     if (!known) return room;      // visible only: assume they can fill the room
     const wants = x => { const c = this.db[x.id]; return c && c.kind === 'pokemon' && c.stage === 'Basic'; };
@@ -4771,7 +4771,7 @@ class AI {
           // Declining is not a failure: it draws two, which is the floor and is
           // why the card is always legal.
           s += Math.max(2 * W.drawCard, (mine - theirs) * W.benchMore);
-          const room = E.cfg.benchMax - me.bench.length;
+          const room = E.benchCap() - me.bench.length;
           const wants = x => { const cc = this.db[x.id]; return cc && cc.kind === 'pokemon' && cc.stage === 'Basic'; };
           a.opts.myPicks = me.deck.filter(wants).slice(0, room).map(x => x.uid);
           break;
@@ -5355,6 +5355,12 @@ class AI {
           // Deliberately NOT modelled yet, and named so the next pass can find
           // them: denying the opponent THEIR Gym, and the tempo cost of spending
           // a Trainer play on a rule rather than on a board change.
+          //
+          // EVERY KIND GETS A BRANCH, and the chain below is checked against the
+          // engine by selftest — not because seven kinds is hard to hold in the
+          // head, but because two of them were missing for a day and nothing could
+          // see it. A kind with no branch is not an error anywhere: the card plays,
+          // installs, works perfectly for a human, and scores zero forever.
           const gymKind = v.gym;
           const mine  = this.gymNamed(pi, v.who);
           const yours = this.gymNamed(1 - pi, v.who);
@@ -5376,6 +5382,37 @@ class AI {
           } else if (gymKind === 'STADIUM_BENCH_CAP') {
             // Narrow Gym helps the side with the smaller board.
             s += (you.bench.length - me.bench.length) * 5;
+          } else if (gymKind === 'STADIUM_ATTACK_BONUS_NAMED') {
+            // VERMILION CITY GYM. Added 15 Sep 2026 by #41; between 14 and 15 Sep
+            // this kind and the one below fell off the end of this chain and were
+            // worth exactly nothing, so the bot would lay either one down only when
+            // the "replace a Gym helping them" term below happened to fire.
+            //
+            // Name-scoped like the two at the top, so it takes the same shape — but
+            // priced BELOW them, and the reason is in the card rather than in a
+            // feeling. "He or she MAY flip": the bonus is an option, never a cost,
+            // and its two faces are +10 to them and 10 to ourselves. A player who
+            // only takes it when the upside is live collects more than half of it,
+            // and a player who takes it every time collects zero. So it is worth a
+            // real amount per matching Pokemon and less than a retreat discount,
+            // which is unconditional. PROVISIONAL, like everything around it.
+            s += (mine - yours) * 3;
+          } else if (gymKind === 'STADIUM_HEAL_STATUS_NAMED') {
+            // CELADON CITY GYM. Its USE is scored properly in scoreStadiumAction;
+            // this branch is the decision to put the card down, which is a different
+            // question — it is worth having the outlet at all, not worth one use of
+            // it. Two things gate that and both are already on the board: matching
+            // Pokemon to use it on, and a status worth paying an Energy to clear.
+            //
+            // Scored as the margin like the other NAMED gyms, then scaled by whether
+            // anything is actually afflicted right now. A Gym that can heal nothing
+            // is not worth a Trainer play this turn, and it stays playable next turn
+            // when something is. PROVISIONAL.
+            const afflicted = E.allSlots(pi).filter(sl =>
+              E.stadiumNameMatch(sl, v.who)
+              && (sl.status.asleep || sl.status.confused || sl.status.paralyzed || sl.status.poisoned)
+            ).length;
+            s += (mine - yours) * 2 + afflicted * 6;
           }
           // Replacing a Gym that is currently helping THEM is worth doing on its
           // own, and this is the only term here that is not about our own card.
@@ -5565,7 +5602,7 @@ class AI {
           const cands = me.discard.filter(x => {
             const c = this.db[x.id]; return c.kind === 'pokemon' && c.stage === 'Basic';
           });
-          if (!cands.length || me.bench.length >= E.cfg.benchMax) return -Infinity;
+          if (!cands.length || me.bench.length >= E.benchCap()) return -Infinity;
           let best = cands[0];
           for (const c of cands) if (this.db[c.id].hp > this.db[best.id].hp) best = c;
           a.opts.pickUid = best.uid;
@@ -5577,7 +5614,7 @@ class AI {
           const cands = you.discard.filter(x => {
             const c = this.db[x.id]; return c.kind === 'pokemon' && c.stage === 'Basic';
           });
-          if (!cands.length || you.bench.length >= E.cfg.benchMax) return -Infinity;
+          if (!cands.length || you.bench.length >= E.benchCap()) return -Infinity;
           let best = cands[0];
           for (const c of cands) if (this.db[c.id].hp < this.db[best.id].hp) best = c;
           a.opts.pickUid = best.uid;

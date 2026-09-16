@@ -276,12 +276,33 @@ Gym as though it were a Pokémon Power, which it caught within a minute of the f
 rewrites it, so every read now goes through `benchCap()` — one doorway, the same technique as
 `enterPlay` and `takeEnergy`.
 
+**The guard on that doorway did not exist until 15 Sep 2026, and the comment beside it said it did.**
+`benchCap()` read *"a selftest assertion keeps the twelfth caller from reading cfg directly"*;
+nothing asserted anything, and by the time anybody grepped there were **nine** direct `cfg.benchMax`
+reads outside the engine — five in `ai.js`, four in `ui.js`. The engine itself was clean throughout,
+which is exactly why it went unnoticed: the doorway worked, and the callers who walked around it were
+in other files. **A claimed guard is worse than an absent one**, because the next person to write a
+bench-room calculation reads the sentence and believes they are covered. It is real now, it names the
+offending `file:line`, and it was watched going red before being trusted.
+
+**Two reads survive and they are DRAWING rather than DECIDING.** The mat has five bench zones
+printed on it and a Gym does not repaint cloth, so `ui.js`'s two rendering loops still read
+`cfg.benchMax` and the guard matches them by shape rather than exempting them by name. Anything
+computing *room* uses `benchCap()`. *[Why the zones stay at five, and what says so to the player
+→](SCREENS.md)*
+
 **The silent failure this system introduces has its own guard.** A Gym declares a `gym:` string and
-the engine consults it by that string; get either end wrong and the card plays, installs, shows on
-the board and does nothing — no throw, no red suite. `selftest.js` asserts the two ends match in
-**both** directions, because they fail differently: a declared kind nobody reads is a dead card, and
-a consulted kind nobody declares is a rule waiting for a card that will never come. It was watched
-going red before being trusted.
+the engine consults it by that string; get either end wrong and the card plays, installs and does
+nothing — no throw, no red suite. `selftest.js` asserts the two ends match in **both** directions,
+because they fail differently: a declared kind nobody reads is a dead card, and a consulted kind
+nobody declares is a rule waiting for a card that will never come. It was watched going red before
+being trusted.
+
+*(This sentence said the card "shows on the board" until 15 Sep 2026. It did not — until that day
+there was no Stadium UI anywhere, in `ui.js` or in `style.css`. The phrase is the reason the gap
+survived a week: a doc describing a thing as visible is the last place anybody looks for the reason
+it is invisible. There is a rail strip now, and the mat is Job 18.
+[SCREENS.md](SCREENS.md))*
 
 **One clause needed a choice and it needed nobody's permission.** Narrow Gym's on-play Bench return
 belongs to the player whose Bench it is — half the time the person who did not play the card — and it
@@ -300,6 +321,14 @@ through Weakness and Resistance.
 `default: return -Infinity`, so an `a.t` nobody scores is never played by anything, ever — and no
 suite covers action types the way they cover verbs, Power kinds and Stadium kinds.
 *[The item, and what a guard would cost →](AI.md)*
+
+**And there is a THIRD end to the Stadium string, found 15 Sep 2026: does the BOT know what the Gym
+does?** The pair above guards `effects.js` against `engine.js` and catches a Gym that does nothing.
+It cannot catch a Gym that works perfectly and is **never played** — which is what Celadon City Gym
+and Vermilion City Gym were, because `scoreTrainer`'s `T_STADIUM` chain priced five of the seven
+kinds and the other two fell off the end of the `if`/`else` and scored a flat zero. That is the
+unscored-verb surface one level down: not a verb with no case, but a case with no branch for half its
+parameters. Both are priced now, and a third assertion holds the chain against the card corpus.
 
 *[The four rulings that came with building it →](Rulings/STADIUM-ZONE.md)*
 
