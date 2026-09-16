@@ -385,7 +385,13 @@ it** — that is the point of the tree, and the links here go to the owner rathe
   #1 omitted with Trevor, `gen_cards.js` says why), the Stadium zone, Recall's attack-source model, and
   Trevor's roster plus the four Gym Heroes theme decks. Every new AI weight is `PROVISIONAL` by the
   job's own scope. [CREDITS.md](CREDITS.md) #40 · [ROSTERS.md](ROSTERS.md)
-- **Job 17+** - Additional packs.
+- **Job 17a** - Post set-addition quality pass, AI validation backlog.
+- **Job 17b** - AI validation passes.
+- **Job 18** - Unlocking and revisiting the layout and solving our resizing problems forever.
+- **Job 19** - AI validation passes.
+- **Job 20** - Card additions and logic for gym2.
+- **Job 21+** - TBD
+
 
 
 - **Base Set 2 and Legendary Collection are canceled except for cards that exist nowhere else, and the reason is that they are cheap
