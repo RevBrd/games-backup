@@ -301,6 +301,49 @@ apart.
 good reading, the bound belongs on one side only. Worth checking any other "normal range" in this
 tree against that.
 
+## A backgrounded `abtest` measures the tree you had when you LAUNCHED it — 15 Sep 2026
+
+**`tools/abtest.js` `require`s the working `src/` at module load** (lines 126–129, beside the
+`git show` that materialises the baseline). Node caches modules, so the working half of the
+comparison is a snapshot taken at process start and nothing re-reads it.
+
+That is correct and unremarkable for a foreground run. **It is a trap for a backgrounded one**, which
+is how a long full-pool run is normally done here — 41,600 games a side takes minutes, so you start
+it and carry on working. Carry on *editing `src/`*, and the number that arrives describes a working
+tree that no longer exists. **The output is identical either way**: same header, same pool line, same
+interval. Nothing in it names a commit for the working half, because there isn't one.
+
+**How it surfaced.** A full-pool run launched after one `ai.js` fix reported **1.5% ± 0.1**. A
+subsampled run launched after three more fixes reported **3.8% ± 0.7**. The intervals do not overlap,
+so it read as an instrument disagreeing with itself — and the resolution is that they measured
+*different working trees against the same baseline*, which is a perfectly coherent pair of answers to
+two different questions nobody had written down.
+
+**THE SUBSAMPLE WAS INNOCENT, and suspecting it first was the wrong instinct.** `--pairs 400` carries
+its own warning — *"quote the interval below, not the rate alone"* — so it is the visible suspect, and
+a session that stopped there would have "resolved" this by re-running with more pairs and finding the
+same 3.8%. The re-run on the full 4,160 pairs returned **3.7% ± 0.2**, which overlaps the subsample
+cleanly. **The loud caveat was not the problem; the silent snapshot was.** When two runs disagree,
+check what each was pointed AT before you go looking at how each was sampled.
+
+**It resolved into a better result than either number alone**, which is the part worth keeping. The
+exposure arithmetic makes both fall out:
+
+| change | decks running an affected card (of 65) | share of ordered pairs exposed | divergence |
+|---|---|---|---|
+| the `base` drop | 2 | ~6% | 1.5% |
+| that plus the three strip fixes | 14 | ~39% | 3.8% |
+
+Divergence per *exposed* game is ~25% and ~10% respectively — one card that changes how a slot is
+valued every turn against eight printings that change one rider. **Neither raw figure means anything
+without the denominator**, and `abtest`'s own header prints the pool size but not the exposure.
+
+**The rule.** *If you background an `abtest`, do not touch `src/` until it returns* — or accept that
+you have measured a snapshot and say which one. When two runs disagree, check what each one was
+pointed at before you go looking for a bug in either. And **quote the exposure alongside the rate**:
+`--card` prints it (`restricted to decks holding X: 2 of 65`) and a plain run does not, which is the
+difference between a number and a fact.
+
 ## The break-test that silently did not break — 11 Sep 2026
 
 **The discipline in this repo is to revert a fix and watch the assertion go red.** It has caught a

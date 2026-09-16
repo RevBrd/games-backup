@@ -172,7 +172,24 @@ for (const f of FILES) {
   if (r.limit === null) {
     fail(`${rel(f)} is a live register and states NO threshold in its own header. Two files have been caught this way and both would have crossed unremarked`);
   } else if (n > r.limit) {
-    fail(`${rel(f)} is ${n} lines against the ~${r.limit} written in its own header`);
+    // THE FIX IS ARCHIVING, AND THE MESSAGE HAS TO SAY SO — Trevor, 15 Sep 2026,
+    // written into LOGBOOK.md's own header after #41 shortened its own entry to
+    // get back under this line: "Do not worry about fitting your own entries or
+    // addendums under any line limits. Future sessions can organize and archive."
+    //
+    // He is right and the bare overrun message was pointing at the wrong person.
+    // An append-only register going over does not mean somebody wrote too much;
+    // it means an ARCHIVE IS DUE, and the session that trips the check is almost
+    // always the one that has just appended — i.e. the one least able to act,
+    // since nothing already written may be shortened. A check whose only
+    // available fix is forbidden teaches people to ignore it.
+    //
+    // Still a FAIL rather than a FLAG, because it is exact and it is actionable;
+    // only the instruction changed, and it now names the action and the actor.
+    fail(`${rel(f)} is ${n} lines against the ~${r.limit} in its own header`
+       + ` — an ARCHIVE IS DUE. Do not shorten anything: move the oldest entries`
+       + ` whose work is CLOSED into the newest archive still short enough, or`
+       + ` start a new one. If you have just appended, this is for the next pass`);
   } else if (n > r.limit * 0.92) {
     flag(`${rel(f)} is ${n} of ~${r.limit} — close, so plan the next archive now rather than at the overrun`);
   }

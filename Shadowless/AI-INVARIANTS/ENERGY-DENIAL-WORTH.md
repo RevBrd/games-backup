@@ -78,10 +78,29 @@ replaced** — it would have been a confident number about a decision nobody was
 
 ## Measured
 
-`abtest 8 HEAD --pairs 400`: **3.8% ± 0.7** of games come out different across the ladder pool, which
-is about what eight printings in 65 decks should reach. Win rate unmoved, and that figure is ~50% by
-construction in a symmetric self-play pool, so it is not evidence either way — this instrument can
-say the change fires and does not destabilise anything, and cannot say whether it plays better.
+**Corrected 16 Sep 2026, and the first number in this file was the wrong one.** It read
+*"`abtest 8 HEAD --pairs 400`: 3.8% ± 0.7 ... about what eight printings in 65 decks should reach"* —
+real, but the **combined** figure for these fixes plus the `base` drop shipped beside them, attributed
+here to the strip alone because that is what had just been built. *[Why the two runs appeared to
+disagree, and the rule that comes out of it →](../MISREADINGS.md)*
+
+Full pool, 41,600 games a side, against the commit before each:
+
+| change | decks running an affected card, of 65 | ordered pairs exposed | diverged |
+|---|---|---|---|
+| the `base` drop alone | 2 | ~6% | **1.5% ± 0.1** |
+| that plus these three fixes | 14 | ~39% | **3.7% ± 0.2** |
+| **these three, marginal** | | | **2.2 points** |
+
+**Read the denominator, not the rate.** `abtest` prints the pool size and not the exposure, so 1.5%
+across 65 decks is really *a quarter of every game involving that one card*, and 2.2 points across
+fourteen decks is about a tenth of every game involving a stripper. One card whose slot is revalued
+every turn against eight printings that change one rider — which is the right relative size, and is
+the only thing here that reads as confirmation rather than as noise.
+
+Win rate unmoved at 49.7% either side, and stalls flat at 10. That figure is ~50% by construction in
+a symmetric self-play pool, so it is **not evidence either way**: this instrument says the change
+fires and destabilises nothing, and cannot say whether it plays better.
 
 **Three of the six claim rows written for Trevor's note go RED against the commit before this**, and
 the two Rapids rows both read `31.00` there — the flatness printed in one place.

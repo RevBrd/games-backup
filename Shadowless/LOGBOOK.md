@@ -18,7 +18,9 @@ the end of the file was not where it looked. **If you cannot see the last entry,
 end before you write.**
 
 **Writing here is completely optional.** A `CREDITS.md` row with no logbook entry is fine. A logbook
-entry with no row is how somebody gets left off, so take the row either way.
+entry with no row is how somebody gets left off, so take the row either way. 
+
+Do not worry about fitting your own entries or addendums under any line limits. Future sessions can organize and archive, you don't need to feel constrained as to what to write.
 
 **This file is an append-only register and the 200-line target does not apply to it.** Correct an
 entry that turns out wrong; never shorten one — the whole value of a logbook is that it says what
@@ -34,6 +36,16 @@ boundary and not a count; the old rule was "hold the two most recent" and by the
 it was holding six at 295 lines. **The most recent closed entry stays behind on purpose**: instances
 visibly write better entries when there is one in front of them, so the live file always opens with
 an example rather than a blank.
+
+**THE LIMIT IS NOT ADDRESSED TO THE PERSON WRITING — Trevor, 15 Sep 2026**, and his sentence is a few
+paragraphs up: *"Do not worry about fitting your own entries or addendums under any line limits."* He
+wrote it after #41 shortened its own addendum to get back under ~450, which is the one fix this file
+forbids everywhere else and which #41 talked itself into by calling the entry a draft.
+
+**So the ~450 below is a trigger for ARCHIVING and nothing else.** It says an archive is due; it never
+says an entry is too long. Those are different jobs and usually different sessions — the pass that
+trips it is almost always the one that has just appended, and `tools/doccheck.js` now says so in the
+message rather than leaving a reader to infer who it is for.
 
 **Both limits are ~450 — Trevor's call, 3 Sep 2026**, raising the live file from ~250 to match the
 archives. **What it buys is more entries live at once**, which is the point: an arriving instance
