@@ -400,8 +400,13 @@ it** — that is the point of the tree, and the links here go to the owner rathe
   The Stadium zone had no UI at all, `benchCap()`'s guard against direct `cfg.benchMax` reads did not
   exist while its own comment said it did, two of the seven Gyms scored a flat zero to play, and
   `wants.js` hid all 122 gym1 notes behind a hand-written live-set list. AI.md item 5's arithmetic is
-  closed at 0.666 with `tools/sleepcost.js`. **121 gym1 notes still have no claim**, which is the
-  largest single block of AI validation work in the project. [CREDITS.md](CREDITS.md) #41 ·
+  closed at 0.666 with `tools/sleepcost.js`. **The validation half then opened with one note**,
+  Misty's Poliwhirl, which cost an evening and bought two more scorer faults, a doc rule and a design
+  question — the benched copy of a coin-scaling attack dropped its printed base, and a strip was
+  worth a flat 11 whatever it took away. **Both were correct-by-accident until Gym Heroes**, which is
+  the same lesson as the four above in a different register: *a weight that is right for every card
+  that exists is not a correct weight, it is an untested one.* **121 gym1 notes still have no
+  claim**, which is the largest single block of AI validation work in the project. [CREDITS.md](CREDITS.md) #41 ·
   [AI-INVARIANTS/STADIUM-PRICING.md](AI-INVARIANTS/STADIUM-PRICING.md) · [SCREENS.md](SCREENS.md)
 - **Job 17b** - AI validation passes.
 - **Job 18** - Unlocking and revisiting the layout and solving our resizing problems forever.

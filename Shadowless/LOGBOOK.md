@@ -395,3 +395,56 @@ editing a weight in the same session is how an unmeasured number becomes load-be
   an Over-Attach cap, an energy-denial valuation, and an explicit "let the bot sort it out."
 
 — #41 (Shadowless 41, Opus 5)
+
+**Addendum — the validation half, and what one note was sitting on.**
+
+Misty's Poliwhirl, for its last clause: *"I don't know which move should be primary. Let the bot sort
+it out."* Every other note in that workbook tells the bot what to do. **Working out how to TEST a note
+that hands the bot a decision is what found both faults**, neither anywhere near what the note is
+about.
+
+**Both were correct-by-accident until Gym Heroes landed on them, and that is now three for three
+today.** The morning's four stale statements were conditioned on "gym1 is not live". These two are
+conditioned on *which cards exist*:
+
+- `slotPrintedDamage` **assigned** where `rawOutcomes` **adds**, so `DMG_PER_ENERGY_HEADS` lost its
+  printed base. Right for every card that existed — Big Eggsplosion is `20×`, Continuous Fireball is
+  `50×`, and the leading number *is* the per. Water Punch is `30+`, the only printing in fourteen
+  sets with a real base, and still the only one.
+- `flags.stripEnergy` was the literal `1` with `v.flip` read nowhere. All three coin-flip strippers arrived with Gym Heroes; every one in the first five sets is guaranteed.
+
+**A weight that is correct for every card that exists is not a correct weight. It is an untested
+one**, and the test arrives with the set that breaks it. #40 said it from the other side — *"if you
+add a set, expect the old sets to break under you"* — and the scorer half is worse than the rules
+half, because nothing goes red.
+
+**Both tells were visible and neither was printed.** The attach curve ran 32.00, −2.00, −2.00, 13.50
+as the Water count rose: the bot refusing the Energy worth +25 damage and taking the one worth +5.
+Rapids scored 51.00 against a Zapdos on one Lightning, and 51.00 on two, three and four — flat, with
+a cliff at zero, on a quantity that is entirely about proximity to an edge. **The worked example of
+that second shape is twenty lines below the bug in the same function**, the recoil comment from
+13 August. Learned once and not carried across a blank line.
+
+**Three faults, and the ORDER of the fixes mattered more than any of them.** The bot was also not
+choosing *which* Energy to strip on an attack — `ENERGY-STRIP-ORDER.md` settled that on 30 Aug for
+the two Trainers and never reached the eight attacks — and that had to go in **first**. Pricing a
+strip at the best Energy available, on top of a bot that takes a bad one, is a confident number about
+a decision nobody is making: **worse than the flat weight it replaced.** Before you make a term read
+the board, check that the bot is making the choice you are pricing.
+
+**What I did not build, and why it is the most interesting thing here.** Clause 2 wants the
+Over-Attach capped at four, *because Misty's Poliwrath only takes four*. The cap is real and it is
+**not on this card**, and `OVER-ATTACH.md`'s standing rule is that a cap comes off the card. The
+honest version is that it should be readable from the **evolution** and only **while that road is
+live** — with no Poliwrath coming, the fifth Water is worth a real +5. `roadLive` already answers
+exactly that question for wall-ness and nothing connects it to this. Filed as an `open:` row with the
+measurement: the attach score is flat at 13.50 for the 4th through 7th Water, so the bot has no
+opinion about where to stop and there is nothing to make worse.
+
+**Six rows, three of which go red against the commit before them.** Both Rapids rows read `31.00`
+against the old bot — the same number on two boards that should differ by a lot, which is the
+flatness printed in one place. That is what `--baseline` is for and I would not have trusted the rows
+without it. **121 gym1 notes left**, and if one of them cost an evening and bought two engine-level
+faults, a doc rule and a design question, that backlog is not a chore list.
+
+— #41
