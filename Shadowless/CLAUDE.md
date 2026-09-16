@@ -98,8 +98,10 @@ set-gating rule that Team Rocket's three special Energy would have been the firs
 **The promos are collectible without being a set, and the distinction is load-bearing.** 28 of the 53
 Wizards Black Star Promos are playable and each carries its own gate — a bracket that must be open
 before that card can turn up, rather than a set going live all at once. They arrive only through the
-pack **intrusion** roll, as a bonus ninth card, and 21 of the 28 are reachable today — `node -e` the
-gate table rather than trusting that number, because Job 15a moved it and two files did not notice. A promo is
+pack **intrusion** roll, as a bonus ninth card, and 23 of the 28 are reachable today — `node -e` the
+gate table rather than trusting that number, because **Job 15a moved it and two files did not notice,
+and then Job 16 moved it again and the same two files did not notice a second time.** The instruction
+was already here and was already right; nobody ran it. A promo is
 never a ladder bracket, never a pack of its own, and never in a **generated** deck. So there are now
 two pools where there used to be one: `LIVE_DB` is the *set* pool and `collectibleDb(save)` is what
 you may *own*. *[Which promos, and why the gate is per card →](PACKS.md)* · *[What the split changes
@@ -211,6 +213,8 @@ node tools/aiduel.js --checkpin --baseline --gbc   # ...and is that pin still RU
 node tools/aiduel.js 8                   # ...vs HEAD, which resets every commit; --control first
 node tools/abtest.js 8 HEAD~1            # a SYMMETRIC change vs a commit: how many games came
                                          # out different. --pairs 400 for a tenth of the run
+node tools/sleepcost.js                  # how many turns ONE Asleep denies. 0.666, and it prints the
+                                         # weight that implies, then STOPS. AI.md item 5
 node tools/openercheck.js --control      # what the opening-Active rule promotes — CONTROL FIRST,
                                          # the headline reads 0.0% either way it is broken
 node tools/pressure.js                   # what each set can THREATEN with — run before a roster
@@ -220,14 +224,18 @@ node tools/decksim.js 30 6 data/base1_decks.json data/base2_decks.json   # ...an
                                          # one number that measures the AI. See MEASUREMENT.md
 ```
 
-**The last six are NOT pass/fail and every one of them has lied at least once.** `aitest`, `aiduel`
+**The ones below the gate are NOT pass/fail and every one of them has lied at least once.** `aitest`, `aiduel`
 and `abtest` measure whether the bot plays *well* or whether a change did anything, which no
 suite can see — and **which of `abtest` and `aiduel` you want is decided by whether the change lands
 on both seats, not by whether it is a rules change**; a scorer change is symmetric too, and `aiduel`
-cancels it. *[The dividing line →](MEASUREMENT.md)* `openercheck`, `pressure` and `decksim` measure a rule, a set and a roster. Run
-`--control` first where there is one — skipping it has already produced one confident wrong answer.
-**Named rather than counted from the end of the list**, because that sentence used to say "the last
-two" and quietly stopped being true. See [MEASUREMENT.md](MEASUREMENT.md).
+cancels it. *[The dividing line →](MEASUREMENT.md)* `openercheck`, `pressure`, `decksim` and `sleepcost` measure a rule, a set, a roster and a status.
+Run `--control` first where there is one — skipping it has already produced one confident wrong
+answer.
+**Named rather than counted from the end of the list**, because that sentence said "the last two",
+was corrected to "the last six", and stopped being true a second time on 15 Sep 2026 when
+`sleepcost.js` was added. **A positional count is a hand-list wearing a different hat** — it goes
+stale on exactly the same event, somebody adding one. It is a boundary now ("below the gate") rather
+than a number. See [MEASUREMENT.md](MEASUREMENT.md).
 
 **The match log is the one instrument that shows the hidden half** — the
 opponent's hand, both Prize piles, every option the AI weighed and what it passed over, and a seed
@@ -385,7 +393,16 @@ it** — that is the point of the tree, and the links here go to the owner rathe
   #1 omitted with Trevor, `gen_cards.js` says why), the Stadium zone, Recall's attack-source model, and
   Trevor's roster plus the four Gym Heroes theme decks. Every new AI weight is `PROVISIONAL` by the
   job's own scope. [CREDITS.md](CREDITS.md) #40 · [ROSTERS.md](ROSTERS.md)
-- **Job 17a** - Post set-addition quality pass, AI validation backlog.
+- **Job 17a** - Post set-addition quality pass, AI validation backlog. **The quality half is done,
+  15 Sep 2026; the validation backlog is open and is the bulk of it.** Four things had been
+  invalidated by gym1 going live and none had been noticed, all four the same shape — **a deferral
+  whose reason was a CONDITION rather than a decision stops being true without anybody editing it.**
+  The Stadium zone had no UI at all, `benchCap()`'s guard against direct `cfg.benchMax` reads did not
+  exist while its own comment said it did, two of the seven Gyms scored a flat zero to play, and
+  `wants.js` hid all 122 gym1 notes behind a hand-written live-set list. AI.md item 5's arithmetic is
+  closed at 0.666 with `tools/sleepcost.js`. **121 gym1 notes still have no claim**, which is the
+  largest single block of AI validation work in the project. [CREDITS.md](CREDITS.md) #41 ·
+  [AI-INVARIANTS/STADIUM-PRICING.md](AI-INVARIANTS/STADIUM-PRICING.md) · [SCREENS.md](SCREENS.md)
 - **Job 17b** - AI validation passes.
 - **Job 18** - Unlocking and revisiting the layout and solving our resizing problems forever.
 - **Job 19** - AI validation passes.

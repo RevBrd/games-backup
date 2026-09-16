@@ -111,14 +111,27 @@ progression question. `PROMO_GATES` maps a card id to the **bracket key** that m
 `unlockedPromos(save, ladder, isPlayable)` resolves it against the same derived `unlockedSets` as
 everything else — so it stores nothing, exactly like unlock itself.
 
-**Three of the eight keys name brackets that do not exist**, and they fail closed. `gym1` and `gym2`
-resolve for free the day those sets go live; `challenge2` needs the second Challenge bracket.
+**Two of the eight keys name brackets that do not exist**, and they fail closed. `gym2` resolves for
+free the day that set goes live; `challenge2` needs the second Challenge bracket. *(This said THREE
+until 15 Sep 2026, counting `gym1` — which went live on the 14th and resolved exactly as the sentence
+below promised it would.)*
 
 **`challenge1` resolved on 1 Sep 2026 and it cost nothing.** Building the bracket turned on four
 promos — Venusaur CH, Cool Porygon, Flying Pikachu and Surfing Pikachu — with **no change to
 `PROMO_GATES`, no change to `packs.js`, and no code at all**. The prediction that this would be the
 whole step was written here in Job 13b and it held exactly: pick the key deliberately, and the gate
-opens itself. `unlockedPromos` now returns 21 of the 28 on a fully cleared ladder, up from 17.
+opens itself.
+
+**`gym1` resolved the same way on 14 Sep 2026, and that is the prediction holding a SECOND time** —
+two more promos, again with no change to `PROMO_GATES` and no code. `unlockedPromos` now returns **23
+of the 28** on a fully cleared ladder: 17 → 21 → 23. **The number above was not updated either time
+by the job that moved it**, which is the part worth keeping. A design that costs nothing to extend
+also produces no moment at which anybody is obliged to look, so the only thing that catches it is
+somebody running the check this file already tells them to run. Derive it, do not read it:
+
+```bash
+node -e "const{CARD_DB,SET_INFO,LADDER,DECKS,OPPONENT_DECKS}=require('./src/cards.js');const{EFFECTS}=require('./src/effects.js');const P=require('./src/progress.js');const L=P.buildLadder(P.liveSets(CARD_DB,EFFECTS,SET_INFO),LADDER,{hasDeck:r=>r.startsWith('theme:')?!!DECKS[r.slice(6)]:!!OPPONENT_DECKS[r]});const b=new Set(L.map(x=>x.set));const g=P.PROMO_GATES;console.log(Object.keys(g).filter(c=>CARD_DB[c]&&b.has(g[c])).length+' of '+Object.keys(g).length)"
+```
 
 **The second filter is not optional.** `isPlayable` is the caller's own test, and the game passes
 "does this card have an effect script" — `basep` is half-scripted and stays that way for a long
