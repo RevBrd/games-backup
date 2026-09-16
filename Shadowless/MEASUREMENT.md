@@ -257,12 +257,37 @@ real decks were never balanced against each other either, so a wide spread may s
 anything from before 11 Aug 2026 — those were measured at 12 Prizes and the ordering *reverses* at
 the correct length, because Zap is a fast deck that wins a short game and loses a grind.
 
-## Three more that are not about the AI at all
+## The ones that are not about the AI at all
 
 Same rule — **none of these returns pass or fail** — but they answer questions about a *rule*, a
-*set* and a *roster* rather than about how well the bot plays. They moved here from
+*set*, a *roster* and now a *status* rather than about how well the bot plays. They moved here from
 [TOOLING.md](TOOLING.md) on 19 Aug 2026 for that one reason: everything in that file has a verdict
-and none of these does.
+and none of these does. **Named rather than counted** — this heading read "Three more" on 15 Sep 2026
+with four sections under it, which is the same rot the tool list in `CLAUDE.md` had to be cured of.
+
+### `sleepcost.js` — how many turns one Asleep actually denies
+
+**Not pass/fail, and it is the cheapest instrument in this file — forty lines, and it settled a
+two-week disagreement in one run.** It applies a single Asleep to a real Active in a real `Engine`
+and steps `endTurn()` until that player gets a turn they can act on, counting the ones they could
+not. Nothing re-applies the status, which is the entire design.
+
+```bash
+node tools/sleepcost.js          # 40,000 applications, ~2s
+node tools/sleepcost.js 3000     # a quick look
+```
+
+**The question it was built for is [AI.md](AI.md)'s open item 5**, which had three answers and no two
+alike: 0.67 from reading `endTurn`, 1.20 from a 130-game board sample, 0.85 implied by the shipped
+weights. It reports **0.6659** against a closed form of 2/3, so the reading was right — and the
+sample was wrong in exactly the way that item had predicted in writing, by counting one Good Night
+twice when the coin kept coming up tails.
+
+**READ THE LAST LINE IT PRINTS BEFORE USING THE NUMBER.** It prints the weight its ratio implies
+(17.3 against a shipped 22) and then stops, on purpose. It settles the *arithmetic* — one flip stands
+between a Good Night and their next turn, so the first missed attack is 50% and not 25% — and it says
+nothing about what a denied turn is *worth*, which is not constant across a game. Deriving a ratio
+and editing a weight in the same session is how an unmeasured number becomes load-bearing.
 
 ### `openercheck.js` — the opening Active, measured
 

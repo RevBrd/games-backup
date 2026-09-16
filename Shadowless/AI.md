@@ -345,6 +345,38 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
    board — the crude one cannot separate a re-application from a persistence — run wide enough to
    carry an interval. *[The rest of that thread →](Playbook/ATTACK-CHOICE.md)*
 
+   **MEASURED, 15 Sep 2026, #41 — the instrument this item asked for was three lines long, and the
+   answer is 0.666.** 40,000 applications, each one a real `Engine` stepped through the real
+   `betweenTurns` loop, counting turns lost per application exactly as written above:
+
+   ```
+   mean turns denied by ONE Asleep: 0.6659
+     missed 0 turns: 50.07%   missed 1: 37.43%   missed 2: 9.35%   missed 3: 2.38%
+   paralysis denies exactly 1.000 by construction.
+   ```
+
+   **So the reading was right and the sample was wrong, and the sample was wrong in the direction the
+   item predicted.** 0.6659 against a closed form of 0.5/(1−0.25) = 2/3, agreeing to three decimals.
+   The 1.20 is disposed of: it came from twenty applications sampled off the board, and this item had
+   already said that instrument cannot separate a re-application from a persistence — it was counting
+   one Good Night twice. **The prediction of the failure mode was written down before the measurement
+   existed, which is the whole argument for writing predictions down.**
+
+   **What the number does and does not settle.** It settles the RULE — one flip stands between a Good
+   Night and their next turn, so the first missed attack is 50% and not 25%; two flips stand between
+   their turn and the one after, so a second consecutive miss is 25% *given* the first. Scaled off
+   `paralyze: 26` that implies a `sleep` of **17.3** against a shipped **22**, which is ~27% high.
+
+   It does NOT settle the WEIGHT, and the instruction above still holds: **do not retune off this
+   number either.** A denied turn is not worth the same at every point in a game, Sleep also blocks
+   retreat where Paralysis does too, and no `abtest` has been run. What has changed is that the
+   disagreement is now between two numbers instead of three, and the remaining gap is a question
+   about value rather than a question about arithmetic. That is a much cheaper thing to settle.
+
+   *(Trevor's own note on `gym1-59` Sabrina's Jynx was the thread that led here, and he had since
+   withdrawn the sequencing argument in it himself. The record was already straight — `tools/claims/gym1.js`
+   says so in its header and the code never moved either way.)*
+
 6. **A status is a free cure away, and the bot does not know — measured at 6.2%, so it was not
    built.** `engine.js` clears status on evolution, so any afflicted Pokemon whose evolution is in
    hand escapes for nothing. Half of all Active observations can evolve, but the evolution is
