@@ -26,3 +26,13 @@ Reformat and clean up at will, and even add it to with comments or other notes i
 * Shiny - 3 - Raticate, Kadabra, Magmar (Fossil)
 * No higher tiers
 
+
+
+
+
+\*\* Pre-Job 16 \*\*  (Expansion to Gym Heroes):
+
+* 110 wins, 228 packs
+* 290 of 311 cards, 1 of 21 Promo cards
+* 1st Edition - Lost track, no counter
+
