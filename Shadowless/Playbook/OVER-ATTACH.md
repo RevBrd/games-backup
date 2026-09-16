@@ -54,6 +54,12 @@ Verbatim and append-only. Ten cards across all four live sets; the family is not
 >
 > **Dark Charizard.** Wants Coin Luck for Continuous Fireball, and to Over-Attach as many energies as
 > possible (though maybe not more than 8 or so) for additional chances at Coin Luck.
+>
+> **Misty's Poliwhirl.** Rapids is a 50/50 chance at Energy Denial, and Energy Denial is
+> disproportionately valuable (though still dampened by the coin flip). However, Water Punch calls for
+> Over-Attach with an unlimited cap, but this card's evolution only takes 4 energies max. Therefore,
+> this card should probably be capped at 4 since the benefit of more isn't very good. I don't know
+> which move should be primary. Let the bot sort it out
 
 **Two more notes use the word and are NOT this pattern.** One note, one home:
 
@@ -72,7 +78,18 @@ Verbatim and append-only. Ten cards across all four live sets; the family is not
 | Verb | Cards | What a spare buys |
 |---|---|---|
 | `DMG_PER_SPARE_ENERGY` | thirteen printings — every Water Gun, Hydro Pump, Hydrocannon | +`per` damage, capped by `maxSpare` |
-| `DMG_PER_ENERGY_HEADS` | three — Big Eggsplosion, Continuous Fireball | another coin, so `per / 2` expected, **uncapped** |
+| `DMG_PER_ENERGY_HEADS` | Big Eggsplosion, both Continuous Fireballs, and three that arrived with Gym Heroes | another coin, so `per / 2` expected, **uncapped** |
+
+**AND THE SECOND VERB HAS A `base`, WHICH THE BENCHED COPY THREW AWAY — 15 Sep 2026.** Every card in
+that row prints `20x`, `30x` or `50x`, where the leading number IS the per — so `slotPrintedDamage`
+*assigned* over the parsed damage and was right to. **Misty's Poliwhirl's Water Punch is `30+`**, the
+only printing in fourteen sets with a real base, and it is still the only one. The benched bot valued
+it at `5 x waters` with the 30 missing, which is under the card's OTHER attack until the fifth Water,
+so the attach curve ran backwards: it refused the Energy worth +25 damage and took the one worth +5.
+An ACTIVE Poliwhirl was fine throughout, because that path goes through `rawOutcomes`, which has
+always added the base. **Add, never assign.**
+*[The third drift between those two copies, and why no agreement test catches any of them
+→](../AI-INVARIANTS/OVER-ATTACH-BASE.md)*
 
 **No card is named anywhere in the code.** `slotPrintedDamage` walks the effect script and asks
 whether either verb is present; every other attack in the game returns `aiParseDamage` exactly as
@@ -175,6 +192,26 @@ would pass every positive row in both files.
 | Poliwag's surplus Grass still held (`powertest.js`) | the surplus rule being switched off rather than informed |
 
 ## Still open
+
+**Misty's Poliwhirl wants a cap that is not printed on it, and that is a NEW SHAPE for this
+pattern.** Trevor: *"this card's evolution only takes 4 energies max. Therefore, this card should
+probably be capped at 4."* Misty's Poliwrath's Water Ring is `WWCC`, and extra Energy on Poliwrath
+does nothing at all.
+
+**The standing rule in this file is that the cap comes off the card and never off a number somebody
+picked.** Four *is* off a card — just not this one. So the honest build is not `maxSpare: 4` on
+Poliwhirl; it is the cap being readable from the evolution, **and only while the road to that
+evolution is live.** With no Poliwrath coming, the fifth Water is worth a real +5 expected damage and
+capping it would be wrong.
+
+**`roadLive` already answers exactly that question** — three states, in hand / in deck / nowhere — and
+it is used for wall-ness and nothing else. *[The invariant →](../AI-INVARIANTS/WALL-ROAD-LIVE.md)*
+Nothing connects it to the Over-Attach cap.
+
+**Measured 15 Sep 2026, and the measurement is the argument for doing it:** the attach score for the
+4th, 5th, 6th and 7th Water is **flat at 13.50**. The bot does not think the fifth is worth less than
+the fourth — it has no opinion about where to stop at all, so there is nothing here to make worse.
+Filed as the `open:` row on `gym1-53` in `tools/claims/gym1.js`.
 
 **Omastar takes one of its two spares and refuses the other, and the cause is the OTHER attack.**
 Spike Cannon prints "30×" and `aiParseDamage` reads 30, so at two Water the slot's `best` is already

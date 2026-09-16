@@ -353,8 +353,30 @@ class AI {
       // this counted every Energy attached — so on 2 Fire plus 2 Double Colorless
       // it enumerated four coins against the two the card throws and expected 100
       // damage where the truth is 50. Measured, not reasoned about.
+      //
+      // AND THE BASE, which this dropped on the floor until 15 Sep 2026 — it
+      // ASSIGNS rather than adds, so whatever `aiParseDamage` read off the print
+      // is thrown away. That was right for every card that existed: "20x", "50x"
+      // and "30x" print the PER and no base at all, so the parsed number was the
+      // per and keeping it would have double-counted.
+      //
+      // Misty's Poliwhirl is the first printing in fourteen sets with a real
+      // base — Water Punch is "30+", 30 damage plus 10 per heads — and it is
+      // still the only one. So the benched bot valued Water Punch at `5 x W`
+      // with the 30 missing, which is under Rapids' flat 20 until the FIFTH
+      // Water. The visible symptom was a non-monotonic attach curve: the third
+      // Water, the one that makes Water Punch payable at all and takes the slot
+      // from 20 damage to 45, scored -2.00 and was refused — while the fourth,
+      // worth +5 expected damage, scored +13.50 and was taken.
+      //
+      // `rawOutcomes` has always had this right (`(v.base || 0) + v.per * h`),
+      // which is why an ACTIVE Poliwhirl was fine and only the Bench was wrong.
+      // Two copies of one card's arithmetic, agreeing for five cards and
+      // disagreeing on the sixth. Same shape as the `maxSpare` drift recorded
+      // above, and the same fix: make them read the same way.
       else if (v.v === 'DMG_PER_ENERGY_HEADS')
-        base = v.per * slot.energy.filter(e => aiEnergyIsType(this.db, e, v.t)).length / 2;
+        base = (v.base || 0)
+             + v.per * slot.energy.filter(e => aiEnergyIsType(this.db, e, v.t)).length / 2;
     }
     return base;
   }
@@ -719,7 +741,15 @@ class AI {
           // Poison at v.n per turn rather than the usual 10, so scale the weight
           // rather than treating it as ordinary Poison.
           statuses.Poisoned = Math.max(1, v.n / 10); break;
-        case 'DISCARD_DEF_ENERGY': flags.stripEnergy = 1; break;
+        // A COIN-FLIP STRIP IS HALF A STRIP, and until 15 Sep 2026 this was the
+        // literal 1 with `v.flip` read nowhere. That was right for the whole live
+        // pool by accident: every energy-denial attack in Base through Team Rocket
+        // is guaranteed, and ALL THREE coin versions arrived with Gym Heroes —
+        // Rapids, Removal Pulse and Removal Beam. A weight that is correct for
+        // every card that exists is not a correct weight, it is an untested one.
+        // Trevor's note on Misty's Poliwhirl says the value is "still dampened by
+        // the coin flip"; this is that dampening.
+        case 'DISCARD_DEF_ENERGY': flags.stripEnergy = v.flip ? 0.5 : 1; break;
         case 'BENCH_SPLASH_OWN': flags.benchSplashOwn = v.n; break;
         case 'ATTACK_LOCK': flags.attackLock = true; break;
         case 'BARRIER_ON_FLIP': flags.shield = 0.5; break;
@@ -1179,7 +1209,33 @@ class AI {
       // Amnesia. Shuts off one attack rather than making them flip for all of
       // them, so it is worth somewhat less than a jam.
       if (f.flags.attackLock) s += W.confuse * 0.6 * survives;
-      if (f.flags.stripEnergy && you.active && you.active.energy.length) s += W.stripEnergy * survives;
+      // WHAT A STRIP IS WORTH IS WHAT IT TURNS OFF — 15 Sep 2026, from Trevor's
+      // note on Misty's Poliwhirl: "Energy Denial is disproportionately valuable."
+      //
+      // This was `s += W.stripEnergy * survives` gated on `energy.length` used as
+      // a BOOLEAN, so taking one Fire off a Charizard that needs all four for Fire
+      // Spin scored exactly what taking one off a Charizard holding a spare did.
+      // Measured before the change: 51.00 at one Energy, 51.00 at two, three and
+      // four. Flat, with a cliff at zero.
+      //
+      // THAT IS THE SNIFF TEST THIS FILE ALREADY NAMES, and the worked example is
+      // twenty lines below — "RECOIL IS PRICED ON HOW CLOSE IT LEAVES YOU, NOT ON
+      // ITS SIZE ... a flat charge with a cliff at the very end". Same shape, same
+      // function, learned once already.
+      //
+      // The scale is `denied / AVG_ATTACK`, which is the file's standing currency
+      // for a share of a turn, and the floor is `W.stripEnergy * 0.3` — not a new
+      // number, but the one `potentialOf` already uses for this exact idea, where
+      // it is commented "a tempo nuisance, no more". So a strip that denies one
+      // average attack scores 11, EXACTLY the old constant: the old flat weight was
+      // the average board written down once, and this reproduces it there while
+      // reading the board everywhere else. Same discipline as the paralyze and
+      // barrier fixes above.
+      if (f.flags.stripEnergy && you.active && you.active.energy.length) {
+        const cut = Math.min(this.stripDenial(pi), this.remainingHP(you.active));
+        s += W.stripEnergy * Math.max(0.3, cut / AVG_ATTACK)
+           * f.flags.stripEnergy * survives;
+      }
     }
     // DRAG IS DELIBERATELY NOT DISCOUNTED and it is the one exception in the
     // block above. Every other rider needs the defender alive to land on. A drag
@@ -1890,6 +1946,47 @@ class AI {
       }
     });
     return worst;
+  }
+
+  // HOW MUCH DOES TAKING ONE ENERGY OFF THEM ACTUALLY COST THEM? — 15 Sep 2026.
+  //
+  // Defined as a difference in `threatAgainst` rather than as a rule about costs,
+  // for the reason `spareEnergyFor` lives in the engine: a Double Colorless pays
+  // two symbols, Rainbow pays any, and a second copy of that arithmetic here would
+  // drift. Removing the instance and re-asking the same question is exact by
+  // construction, and it picks up Weakness and Resistance for free because
+  // `threatAgainst` already runs the engine's `computeDamage`.
+  //
+  // THE ATTACKER CHOOSES, so this takes the best strip available rather than the
+  // first — and that is only honest because `scoreAction` now actually fills
+  // `energyUids` for these attacks. It did not until today: eight printings strip
+  // Energy and not one of them chose which, so `takeEnergy` fell through to
+  // `energyPayOrder` and politely took whatever the target needed LEAST. A scorer
+  // that assumes a smart choice on top of a bot that makes a bad one is worse than
+  // the flat weight it replaced. See AI-INVARIANTS/ENERGY-STRIP-ORDER.md, which
+  // found exactly this on the two Trainers and did not reach the attacks.
+  //
+  // Identical Energy strip identically, so the id set keeps this to at most a
+  // handful of re-derivations rather than one per card attached.
+  stripDenial(pi) {
+    const E = this.E, me = E.state.players[pi], you = E.state.players[1 - pi];
+    if (!me.active || !you.active || !you.active.energy.length) return 0;
+    const before = this.threatAgainst(pi, me.active);
+    if (!before) return 0;
+    const pool = you.active.energy;
+    let least = before;
+    const seen = new Set();
+    for (let i = 0; i < pool.length; i++) {
+      const inst = pool[i];
+      if (seen.has(inst.id)) continue;
+      seen.add(inst.id);
+      pool.splice(i, 1);
+      let after;
+      try { after = this.threatAgainst(pi, me.active); }
+      finally { pool.splice(i, 0, inst); }
+      if (after < least) least = after;
+    }
+    return before - least;
   }
 
   // WHAT SENDING THIS ONE UP IS WORTH. One home, shared by the three places that
@@ -3622,6 +3719,23 @@ class AI {
               && this.threatAgainst(pi, me.active) >= this.remainingHP(me.active);
             a.opts = a.opts || {};
             a.opts.returnUids = doomed ? [me.active.uid] : [];
+          }
+        }
+        // WHICH of theirs to strip. The invariant was written on 30 Aug 2026 for
+        // Energy Removal and Super Energy Removal — "which Energy a HOSTILE effect
+        // takes is the AI's decision, and it is the inverse of the order a Pokemon
+        // pays its own costs in" — and it never reached the EIGHT attacks that do
+        // the same thing. With no uids, `takeEnergy` reaches `energyPayOrder` on
+        // the DEFENDER and takes whatever they needed least, which is the precise
+        // failure that entry describes, one card type over.
+        if (me.active && you.active && you.active.energy.length) {
+          const scr = this.script(me.active, a.idx, a.opts);
+          if (scr.some(v => v.v === 'DISCARD_DEF_ENERGY')) {
+            const order = E.energyStripOrder(you.active);
+            if (order.length) {
+              a.opts = a.opts || {};
+              a.opts.energyUids = [order[0].uid];
+            }
           }
         }
         // Electric Current: which of OUR Bench gets the Energy. Same rule as the
