@@ -359,7 +359,8 @@ than to the story.
   2026; the validation backlog is open and is most of it** — 121 gym1 notes have no claim, the largest
   single block of AI validation in the project. *A weight that is right for every card that exists is
   not a correct weight; it is an untested one.* [CREDITS.md](CREDITS.md) #41
-- **Job 17b** - AI validation passes.
+- **Job 17b** - AI.md open item backlog.
+- **Job 17c** - AI validation passes.
 - **Job 18** - Unlocking and revisiting the layout and solving our resizing problems forever.
 - **Job 19** - AI validation passes.
 - **Job 20** - Card additions and logic for gym2.
