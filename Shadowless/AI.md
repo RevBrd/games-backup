@@ -335,47 +335,14 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
    *[The entry →](AI-INVARIANTS/EVOLUTION-READINESS.md)* · *[the original item, and the two clauses
    of Trevor's note still unbuilt →](HISTORY-ARCHIVE-2.md)*
 
-5. **Sleep against Paralysis: two methods disagree and the weight was left alone.** Reading `endTurn`
-   says a Sleep costs **0.67** of a turn — the wake flip runs on both Actives every turn end, so the
-   series is 0.5 + 0.125 + …. Measuring 130 games says **1.20**, against Paralysis' exact 1.00. The
-   current weights say 0.85. **Three answers, no two alike**, and the measurement rests on twenty
-   applications, which is not a sample. Trevor raised it from play (*"even a sleeping opponent has a
-   50/50 chance of waking up before missing a turn"*). **Do not retune `sleep` off either number.**
-   What settles it is an instrument that counts turns lost per *application* rather than sampling the
-   board — the crude one cannot separate a re-application from a persistence — run wide enough to
-   carry an interval. *[The rest of that thread →](Playbook/ATTACK-CHOICE.md)*
-
-   **MEASURED, 15 Sep 2026, #41 — the instrument this item asked for was three lines long, and the
-   answer is 0.666.** 40,000 applications, each one a real `Engine` stepped through the real
-   `betweenTurns` loop, counting turns lost per application exactly as written above:
-
-   ```
-   mean turns denied by ONE Asleep: 0.6659
-     missed 0 turns: 50.07%   missed 1: 37.43%   missed 2: 9.35%   missed 3: 2.38%
-   paralysis denies exactly 1.000 by construction.
-   ```
-
-   **So the reading was right and the sample was wrong, and the sample was wrong in the direction the
-   item predicted.** 0.6659 against a closed form of 0.5/(1−0.25) = 2/3, agreeing to three decimals.
-   The 1.20 is disposed of: it came from twenty applications sampled off the board, and this item had
-   already said that instrument cannot separate a re-application from a persistence — it was counting
-   one Good Night twice. **The prediction of the failure mode was written down before the measurement
-   existed, which is the whole argument for writing predictions down.**
-
-   **What the number does and does not settle.** It settles the RULE — one flip stands between a Good
-   Night and their next turn, so the first missed attack is 50% and not 25%; two flips stand between
-   their turn and the one after, so a second consecutive miss is 25% *given* the first. Scaled off
-   `paralyze: 26` that implies a `sleep` of **17.3** against a shipped **22**, which is ~27% high.
-
-   It does NOT settle the WEIGHT, and the instruction above still holds: **do not retune off this
-   number either.** A denied turn is not worth the same at every point in a game, Sleep also blocks
-   retreat where Paralysis does too, and no `abtest` has been run. What has changed is that the
-   disagreement is now between two numbers instead of three, and the remaining gap is a question
-   about value rather than a question about arithmetic. That is a much cheaper thing to settle.
-
-   *(Trevor's own note on `gym1-59` Sabrina's Jynx was the thread that led here, and he had since
-   withdrawn the sequencing argument in it himself. The record was already straight — `tools/claims/gym1.js`
-   says so in its header and the code never moved either way.)*
+5. **Sleep's arithmetic is settled at 0.666; its WEIGHT is not.** One Asleep denies **0.6659** turns
+   over 40,000 real applications, against a closed form of 2/3 — so the old 1.20 was the crude
+   instrument counting one application twice, exactly as this item had predicted before anything was
+   measured. Scaled off `paralyze: 26`, that implies a `sleep` of **17.3** against a shipped **22**,
+   about 27% high. **Do not retune off that number.** A denied turn is not worth the same at every
+   point in a game, and no `abtest` has been run; what is left is a question about value, not about
+   arithmetic, which is much cheaper to settle. *[The instrument and its output →](MEASUREMENT.md)* ·
+   *[this item as it read, with the measurement in full →](HISTORY-ARCHIVE-3.md)*
 
 6. **A status is a free cure away, and the bot does not know — measured at 6.2%, so it was not
    built.** `engine.js` clears status on evolution, so any afflicted Pokemon whose evolution is in
@@ -536,9 +503,11 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     whole of a status weight either.
 
     **Do not build this before item 5.** Pricing it means reaching for `paralyze`/`sleep`/`confuse`,
-    and item 5 records that Sleep is currently valued by three methods that disagree — 0.67, 1.20 and
-    a shipped 0.85. Adding a second consumer of a number three methods disagree about is how a wrong
-    weight gets load-bearing. *[The row, with the measurement attached →](PLAYBOOK.md)* —
+    and item 5 records that the Sleep weight is still unsettled — its arithmetic now says 17.3 against
+    a shipped 22. Adding a second consumer of a weight nobody has validated is how a wrong weight gets
+    load-bearing. *(Corrected 16 Sep 2026: this said "three methods that disagree — 0.67, 1.20 and a
+    shipped 0.85" for a day after #41 had closed the arithmetic. The blocker survives; the reason for
+    it changed.)* *[The row, with the measurement attached →](PLAYBOOK.md)* —
     `tools/claimtest.js --open`.
 
 15. **The bot could not see the opponent's deck at all — 7 Sep 2026. HALF BUILT the same day.**
@@ -631,19 +600,14 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     pre-evolution in hand), break the ties, express the other three in terms of it, then
     `abtest 8 HEAD~1` — a symmetric change, so `aiduel` would cancel it.
 
-18. **SILENT-FAILURE SURFACE #5 is guarded, and it is the nastiest of the five — 9 Sep 2026,
-    Job 16.** A verb in the "as many as you want" family whose scorer forgets to fill `a.opts`.
-
-    The engine resolves an unanswered subset choice to **zero**, on purpose — it never throws a
-    player's cards away on their behalf. So the failure is invisible from every direction: the card
-    is legal, it is offered, the bot plays it, and it does **nothing**. No exception, no refusal, no
-    log line. Compare item 16, which fails *closed* — an unscored action type is merely absent.
-    This one fails **open and silent**, which is the worse half of both.
-
-    `selftest.js` now checks by source text that every subset verb's scorer contains a
-    `return -Infinity`, watched going red naming the offending verb. **The list is hand-maintained**,
-    which is the guard's own weakness and is written here rather than discovered later: a fifth
-    subset verb added without touching that array is exactly the case it cannot see.
+18. **SILENT-FAILURE SURFACE #5 is guarded — and its guard's list is hand-maintained, which is what
+    is still open.** A subset verb ("as many as you want") whose scorer forgets to fill `a.opts` is
+    legal, offered, played, and does **nothing**, because the engine resolves an unanswered subset to
+    zero on purpose. It fails **open and silent**, where item 16 fails closed. `selftest.js` checks
+    every listed subset scorer returns `-Infinity` on an empty set — **but a fifth subset verb added
+    without touching that array is exactly the case it cannot see.** Deriving the list rather than
+    keeping it is the fix, and it is not built. *[The rule →](Rulings/SUBSET-CHOICES.md)* · *[the
+    mechanism →](ENGINE.md)* · *[this item as it read →](HISTORY-ARCHIVE-3.md)*
 
 19. **`scoreAttack` cannot ask what a card is worth — 11 Sep 2026, Job 16.** A structural limit rather
     than a missing weight, and it cost a stack overflow twice in one session before it was named.

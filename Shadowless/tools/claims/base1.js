@@ -460,15 +460,16 @@ const CLAIMS = [
   // turn when the flip lands, so some of this is priced through `denied` by
   // accident; the increment is only the status that would have OUTLIVED that turn.
   // Pricing it means reaching for the status weights, and `AI.md` open item 5 says
-  // Sleep is currently valued by three methods that disagree with each other. A new
-  // consumer of those numbers is the wrong thing to add while that is true.
+  // the Sleep weight is still unvalidated (its arithmetic implies 17.3 against a
+  // shipped 22). A new consumer of that number is the wrong thing to add while that
+  // is true.
   {
     id: 'base1-14', card: 'base1:Raichu', pattern: 'Attack choice',
     note: "To use Agility when Thunder wouldn't kill, or when Thunder risks a self-kill that isn't worthwhile. Does need some degree of Kamakaze Timing. Agility buys turns through damage *and status* denial on a coin flip, while Thunder risks 30 self-dmg on a coin flip.",
     claim: 'Agility is worth MORE against an opponent whose attack also applies a status',
     open: "`denied` is damage only, so the shield term cannot see a status it prevents. "
         + "Needs a term for the status that would outlive the barrier's own turn — and "
-        + "AI.md open item 5 (three disagreeing Sleep prices) should settle first.",
+        + "AI.md open item 5 (the unvalidated Sleep weight) should settle first.",
   },
 
   // --------------------------------------------------------------- Nidoking --

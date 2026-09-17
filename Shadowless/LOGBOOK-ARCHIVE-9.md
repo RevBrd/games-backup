@@ -1,4 +1,9 @@
-# Shadowless — logbook archive 9: Job 15f
+# Shadowless — logbook archive 9: Jobs 15f, 15g and 16
+
+**#39 and #40 joined on 16 Sep 2026**, moved verbatim by Shadowless 39 in round two of Job 15g when the
+live file reached 462 against its ~450. #39 is round one of the standing documentation pass and
+`doccheck.js`; #40 is the whole of Gym Heroes, with its landing addendum. Both jobs are closed — 15g's
+*round* is, though the job itself does not close.
 
 **#38, verbatim.** Job 15f — `wants.js` moved onto Trevor's live Google Sheet, and the drift check
 that grades a changed note instead of just flagging it. Moved here on 15 Sep 2026 by Shadowless 41,
@@ -144,3 +149,144 @@ on the ninth alarm.**
 
 — #38
 
+---
+
+## #39 — Job 15g, the standing pass, round one (8 Sep 2026)
+
+Job 15g is a shape rather than a job: one documentation pass, then a wait of however many days or
+commits, then another, for as long as I am willing. Trevor's framing, and he checks in each round.
+This is round one.
+
+**The thing I would tell whoever reads this first: run the control.**
+
+I built `tools/doccheck.js` because this tree's own diagnosis is that *a correction which leaves a
+human instruction behind has a half-life*, and its three loudest instructions had each been missed by
+consecutive passes reading them. Four passes in a row found a register over the limit written at the
+top of its own file. Two passes in a row shipped a hand-list of archives underneath a bolded warning
+against hand-listing archives. Those are not carelessness — they are what a written rule costs when
+nobody re-reads the file it lives in.
+
+**Then my tool went green on the exact defect it was written for**, and I only know because I ran it
+against the backup I had taken an hour earlier. `LOGBOOK.md` was at **555 lines against the ~450 in
+its own header** and section 1 said nothing. Two bugs, and both are the shape this project keeps
+finding. It matched the bare word "closed" — which appears in that header in the sentence *"entries
+move out of this file when the work they describe is CLOSED"* — so the live register exempted itself
+from its own check, on a sentence about the work rather than about the file. And it required a verb
+before the threshold number, which missed *"Both limits are ~450"*.
+
+Underneath both was a third thing that was not a tool bug at all. **`LOGBOOK.md` had never called
+itself append-only in its own header.** `MAINTENANCE.md` says to find the registers by reading each
+header rather than by keeping a list — precisely so the roll cannot rot — and a register that never
+says the word is invisible to anybody obeying that instruction. It was exempt from nothing and
+watched by nobody. The label is infrastructure, not a courtesy, and `doccheck.js` now fails on a file
+that states a growth threshold without declaring itself one.
+
+**On the hand-list, the interesting part is the shape of the previous fix.** `CREDITS.md` listed
+logbook archives 1–3 while four existed; the correction on 29 Aug **added the fourth**. By yesterday
+it was three behind again with seven instances unreachable from the only index that points there.
+**Extending a stale hand-list is not fixing it — it resets the clock.** The fix is deleting the list
+and pointing at whatever the register itself maintains, which generalises well past archives: any
+enumeration kept in a file that is *not* the one people edit when the set grows.
+
+**Two smaller things worth the lines.**
+
+Trevor corrected me on the duplicate `#33`: I read it as a renumbering error and it is a *split*. One
+instance did Jobs 15a and 15b, wrote two logbook entries, and downstream those became two rows. A
+designation is a session, not a job.
+
+And `AI.md`'s item 15 had a retracted instruction living in one of its two homes. The `selfKO`
+correction was written into `AI.md` on 8 Sep and never reached `AI-INVARIANTS/DECK-OUT-CLOCK.md` —
+the file that folder *tells you to read before touching the term*. Withdrawn advice sitting in the
+place the reader is sent. **When you retract something, grep the symbol rather than the file.**
+
+**Where I stopped, and it is a shape question rather than a limit.** `MAINTENANCE.md` is at 489 lines
+and two of its sections are accumulating registers — 16 dated triggers growing 3–5 a pass, plus a
+growing list of splitting lessons — against stable method everywhere else. That is its own "a
+register hiding inside a rule file" trigger, four for four. What moved the premise is the tool: the
+three earlier refusals rested on *every reader needs all of it*, and a pass no longer reads the
+trigger list in order to **run** the sweeps. I measured it and wrote the measurement into the file,
+but did not split it. The risk is the one that file names itself — strip a trigger to a bare claim
+and the next reader skims, sees a rule that looks wrong, and "fixes" it — so anything moved out has
+to leave a real sentence behind. That is a shape for Trevor to approve, and this job has a next
+round, which is the first time that has been true here.
+
+— #39
+
+---
+
+## #40 — Job 16, Gym Heroes: 130 of 131, and card 131 held for a go-live call
+
+Taken from 0 to 130 over one long session, two compactions, and a Poison ruling that went two ways.
+
+*Corrected 12 Sep, after the second compaction.* This entry first said "44 to 130", because 44 was where
+my memory started after the first compaction. Trevor pointed out that the whole set was this session's,
+and `git log` agrees: Job 16 opens at `99f0158` on 8 Sep with gym1 at zero. The paragraph below is
+**reconstructed from those commit messages, not remembered**, and should be read that way.
+
+**The first 44, from the record.** Generating the set and building the Stadium zone — `gym:` as a third
+verb namespace, and `benchMax` no longer a constant because Narrow Gym rewrites it. All seven Gyms,
+where Celadon exposed a failure surface nothing guarded. Blaine's Quiz #1 ruled out of the game with
+Trevor, because no stat could stand in for printed length: the card names the Pokémon, so a bot looks
+the answer up. That is why gym1 counts 131 against 132 printings. Sabrina's ESP and Flee, the rewind.
+The Powers, including the delayed-counter family and Bench Guard's "you may". **And one bug of my own
+that became a guard:** a 22-card batch scripted from attack text alone, which shipped six cards whose
+Powers silently did nothing. Those six were backed out, and selftest now refuses a Power with no `p:`.
+
+**The job's scope was the most useful sentence in it.** Trevor asked for placeholder AI weights, clearly
+marked, not validated ones. That freed every batch to spend its care on the engine rules and the
+tests, and the `PROVISIONAL` list is the honest ledger of what is still a guess — about fifty entries.
+
+**Three live-set bugs came out of building adjacent gym1 cards, none of them visible from their own
+set.** Dark Charizard's forecast counted every Energy where the card counts Fire (2x overestimate,
+measured with abtest). Jungle Scyther's Swords Dance never worked: `turn + 2` is right for effects
+through the OPPONENT's turn, and that buff runs through ours. A crash I shipped myself one commit
+earlier (a malformed `revealedHand`). If you add a set, expect the old sets to break under you —
+the new card is the first test that asserts the damage rather than the effect being present.
+
+**What I would tell the next session, in order of how much it cost me:**
+
+- **Event order is our weak spot, and I got talked out of a correct answer about it.** On Jynx I
+  derived the flip count right and then conceded the framing anyway. Trevor came back the next day
+  with the same number. His model of why is now in the global CLAUDE.md and it is better than mine:
+  we hold the whole text at once, so order has to be deconstructed, not read forward. Derive it
+  from the code, then say the consequence out loud before agreeing.
+- **Printed text outranks playability, in both directions.** I argued Poison should not end Shadow
+  Images on playability grounds; that is step 4 overruling step 1. Trevor's strict reading also made
+  Poison a real counter-strategy, which my version had missed.
+- **Every test fixture here lies once.** Defenders that were weak or resistant to the attacker, hand
+  counts across a turn draw, `forceFlip` also forcing the between-turns waking coin, an ESP counter
+  read after the turn moved on. Query `wkType`/`rsType`; assert deltas and identity, not totals; read
+  counters where their consumer reads them.
+- **A break-test that does not break looks exactly like an untestable row.** One silently no-op'd.
+  Assert the match count on the throwaway edit too — it is in `MISREADINGS.md`.
+- **`scoreAttack` cannot ask what a card is worth** (AI.md item 19): `cardKeepValue` routes back into
+  it. Two stack overflows before it had a name.
+- **Script edits: check every anchor, then write.** One duplicate anchor cost a round trip; the fix was
+  collect-all failures, a `--dry` mode, and a re-run guard. Nothing half-applied.
+
+**Where it stands.** Recall is card 131 and the set goes live the moment its entry lands, with a
+generated placeholder bracket until Trevor's roster is in `ladder.json`. I recommended building
+Recall's machinery first (tested with the card injected only inside the test run) and landing the
+one-line card entry as its own deliberate commit. Five pickers have never been rendered; `SCREENS.md`
+says what to look for on each.
+
+The best part was the rulings conversations. Trevor's plain-English reads on Shadow Images and Fairy
+Power were right on first pass, and the keep-one rule on Fairy Power is the kind of thing I would not
+have thought to add.
+
+— #40 (Shadowless 40, Opus 5)
+
+**Addendum, 14 Sep — the landing.** Recall went in as its own commit once Trevor's roster was in the
+Drive sheet, and **converting the roster was a better test of the set than any count in the suite**:
+his T3 Vileplume deck would not validate, because Erika's Oddish carried an attack script for an attack
+it does not print. The validator had refused that card from every deck since it was scripted, while
+selftest's coverage line called gym1 complete — two predicates for "implemented", disagreeing on one
+card. Selftest now asks the engine's. **If you land a set, convert its roster before you believe the
+set is done.**
+
+Two other things worth the next session knowing. Recall's buttons first made the Active tile tall
+enough that the board zoomed from 0.892 to 0.704 at Trevor's viewport for the turn; I put it to him as
+a locked-board question, he chose a switcher, and the zoom no longer moves. Asking him what "locked"
+meant turned up his actual 8 Aug words, which were looser than the rule written from them — now quoted
+beside it in `CLAUDE.md`. And ROSTERS.md crossed its archive line, so Fossil
+moved into `ROSTERS-ARCHIVE-2.md` exactly as its header says to.

@@ -1,5 +1,10 @@
 # Shadowless — the planning record
 
+**This file is append-only and closed — 16 Sep 2026.** New planning records go in
+[HISTORY-ARCHIVE-3.md](HISTORY-ARCHIVE-3.md). The paragraph below that says *"the next pass owns it"*
+was taken by round two of Job 15g, two weeks and several passes after it was written; it is left as
+written, because a named-owner deferral that sat untaken is worth seeing.
+
 **Planning documents, after their plans.** A job plan entry written mid-job, and a struck-out item in
 a live file's Open list, are the same species of text: correct in the present tense on the day, and
 **actively misleading the moment the thing ships** — because a reader hits the header, sees

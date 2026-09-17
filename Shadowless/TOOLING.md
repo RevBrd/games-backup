@@ -328,8 +328,8 @@ always; it reports.
 candidates a human has to check and will always print some — **zero hits there is evidence the grep is
 broken, not that the tree is clean**, and the tool says so itself.
 
-**Run it against the pass's own backup before trusting it**, `node tools/doccheck.js
-backups/pre-docs-cleanup-N`. The first version went **green** on a tree holding a register 105 lines
+**Run it against the commit your pass started from before trusting it**, `node tools/doccheck.js --at
+<rev>` — it reads that tree straight out of git, which replaced the `backups/` copy on 16 Sep 2026. The first version went **green** on a tree holding a register 105 lines
 over its own limit, because two of its own rules were wrong — it matched the word "closed" in a
 sentence about *work* being closed, and it required a verb before the threshold number that one header
 does not use. Only the control found that. Same doctrine as `claimtest.js`: **a verifier that has only

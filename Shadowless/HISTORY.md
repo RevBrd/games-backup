@@ -22,13 +22,14 @@ material trimmed out of the live files — see [MAINTENANCE.md](MAINTENANCE.md).
 **Here is what is in it.** Grep a heading to jump. Index added 16 Aug 2026; no entry was touched to
 make it.
 
-**Two archives sit behind this file and they were split on different criteria**, which is worth one
+**The archives behind this file were split on different criteria**, which is worth one
 table because the second one is not what the rule anticipated.
 
 | File | Holds | Split on |
 |---|---|---|
 | [HISTORY-ARCHIVE-1.md](HISTORY-ARCHIVE-1.md) | Jobs 1–10 — the build era, the pack research, the rarity table's three passes, the tooling provenance | **era**, 22 Aug 2026 at 461 lines |
 | [HISTORY-ARCHIVE-2.md](HISTORY-ARCHIVE-2.md) | the job plans as they read mid-job, and Open-list items after they closed | **state**, 2 Sep 2026 |
+| [HISTORY-ARCHIVE-3.md](HISTORY-ARCHIVE-3.md) | the same, continued, plus method text rewritten in the 16 Sep documentation pass. **Closed** — the next record starts archive 4 | **size**, 16 Sep 2026 |
 
 **The second split is by state and the rule above asked for an era, so say why rather than leaving it
 looking like a slip.** What was left after archive 1 is not chronological — it is a pile of

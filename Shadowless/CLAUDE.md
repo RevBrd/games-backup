@@ -63,9 +63,9 @@ the tree and not orientation.
 | [OPPONENTS.md](OPPONENTS.md) | Building an opponent deck or a bracket's roster — the **content** of the ladder against `PROGRESSION.md`'s machinery. The four silent tiers, why the Prize count selects an archetype rather than a difficulty, the intro→body→gate→boss pattern, and **the Challenge brackets, which ignore it on purpose**. Two siblings: `ROSTERS.md` is the report card, `CHALLENGES.md` is what is still unbuilt |
 | [TOOLING.md](TOOLING.md) | Regenerating cards, widening a set, or wondering what a suite covers. Everything in it returns **pass or fail**. **Its sibling `INSPECTION.md` is how you LOOK at it** — `shot.js`, `probe.js`, the DEV tab, and the four classes of bug a green suite cannot see |
 | [HISTORY.md](HISTORY.md) | An idea is about to be proposed again. Rejected ideas and superseded reasoning, each with the reason it lost, plus how this doc tree got its shape. **The build era — the whole job history for Jobs 1–10 — is in `HISTORY-ARCHIVE-1.md`** |
-| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md` and its three archives, where each instance's own account of its work is kept verbatim |
+| [CREDITS.md](CREDITS.md) | Adding yourself, or wondering who built a thing. One table, two or three lines per row — and it points at `LOGBOOK.md`, where each instance's own account of its work is kept verbatim and whose own table is the roll of its archives |
 | [MAINTENANCE.md](MAINTENANCE.md) | These files drift and a dedicated instance is brought in to reorganise. How to decide what moves, what gets cut, and what must never be |
-| [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one. **Its register is `GRABHIST.md`**, three archives deep: what each item actually turned out to be, which has often not been what the note said |
+| [GRABBAG.md](GRABBAG.md) | **Trevor's.** The running list of small bugs and wishes from his playtest runs. Notes, not a work order — read [PLAYTEST.md](PLAYTEST.md) before taking one. **Its register is `GRABHIST.md`**, with archives behind it: what each item actually turned out to be, which has often not been what the note said |
 | [PLAYBOOK.md](PLAYBOOK.md) | **The highest-value list in the tree.** How the cards are *supposed* to be played, from Trevor's plain English, as testable claims — every AI fault found on 21 Aug 2026 came from a sentence of his and none from a tag, a sweep or a duel. **A directory: the unit is the PATTERN, one file each in `Playbook/`.** His inbox is his **live Google Sheet**, read through a published CSV and cached at `data/wants-index.csv` — `node tools/wants.js` reads it and `--sync` moves it forward; the claims live in `tools/claims/`. **One note is several claims** |
 
 ## Status
@@ -74,41 +74,34 @@ the tree and not orientation.
 challengers, beat a bracket's boss to open the next set, earn packs of whatever set you are on, open
 them, browse what you own, and build decks from it — and all of it persists.
 
-**A bracket is no longer always a set, as of 1 Sep 2026.** Challenge 1 sits between Fossil and Team
-Rocket, belongs to no set, and pays in a pack drawn from every booster set before it. So there are
-now **five brackets over four sets**, and `bracket.set` is an identity rather than a pool — anything
-reaching for it to answer a question about *cards* wants `bracket.packSets`.
+**A bracket is not always a set.** Challenge 1 sits between Fossil and Team Rocket, belongs to no
+set, and pays in a pack drawn from every booster set before it — so `bracket.set` is an identity
+rather than a pool, and anything asking it a question about *cards* wants `bracket.packSets`.
 *[The split, and the four questions it was answering →](PROGRESSION.md)* **Done and shipped,
 none of it a stub:** the rules engine and every card in the live sets, the four-tier AI, the
 collection, packs, dex, save file and deck builder, and the ladder with its named opponents. Each has
 a row in the table above naming the file that owns it. *[How each job got there →](HISTORY.md)*
 
-**Five sets are live and complete: Base, Jungle, Fossil, Team Rocket and Gym Heroes — 442 of 442
-printings** (Gym Heroes went live 14 Sep 2026, Job 16), and **every bracket on the ladder** — six of
-them, over those five sets — is built from Trevor's own hand-made decks or authentic theme decks rather
-than from placeholders. *(This said "all four
-brackets" three lines above its own "five brackets over four sets" until 2 Sep 2026. Sets and
-brackets stopped being the same count on 1 Sep and one sentence did not hear.)* Run `node tools/selftest.js` for the live figures rather than trusting a number in
-prose; it prints coverage per set. **There is one unit now and there used to be two**, so an older
-figure — Base Set as 95, the three sets as 221 — is measuring the smaller one rather than disagreeing
-with this one. `selftest.js` counts printings; it used to exclude Energy, which was a hole in the
-set-gating rule that Team Rocket's three special Energy would have been the first to fall through.
+**Base, Jungle, Fossil, Team Rocket and Gym Heroes are live and complete**, and every bracket on the
+ladder is built from Trevor's own hand-made decks or authentic theme decks rather than placeholders.
+**No counts here, on purpose** — this paragraph contradicted itself about brackets against sets twice.
+`node tools/selftest.js` prints coverage per set. It counts *printings*, Energy included; an older
+figure such as Base Set at 95 is the smaller unit that left Energy out, not a disagreement.
 *[The guard that was blind, and the three others found with it →](HISTORY-ARCHIVE-1.md)*
 
 **The promos are collectible without being a set, and the distinction is load-bearing.** 28 of the 53
 Wizards Black Star Promos are playable and each carries its own gate — a bracket that must be open
 before that card can turn up, rather than a set going live all at once. They arrive only through the
-pack **intrusion** roll, as a bonus ninth card, and 23 of the 28 are reachable today — `node -e` the
-gate table rather than trusting that number, because **Job 15a moved it and two files did not notice,
-and then Job 16 moved it again and the same two files did not notice a second time.** The instruction
-was already here and was already right; nobody ran it. A promo is
+pack **intrusion** roll, as a bonus ninth card, and how many are reachable depends on how far
+the ladder is open. **Read `PROMO_GATES` rather than quoting a figure** — one quoted here went stale in
+two files, twice. A promo is
 never a ladder bracket, never a pack of its own, and never in a **generated** deck. So there are now
 two pools where there used to be one: `LIVE_DB` is the *set* pool and `collectibleDb(save)` is what
 you may *own*. *[Which promos, and why the gate is per card →](PACKS.md)* · *[What the split changes
 →](COLLECTION.md)*
 
-**Not built: audio, at all**, and nothing has been decided about it. **The other ten sets** are
-unblocked rather than started — all fourteen generate cleanly.
+**The sets not yet live are unblocked rather than started** — every set in the corpus generates
+cleanly. *(This said "the other ten" for three sets after it stopped being ten.)*
 
 ## Layout
 
@@ -119,9 +112,8 @@ src/  engine.js   the whole ruleset. Pure logic, no DOM
       cards.js    CARD_DB + the theme deck lists. GENERATED
       effects.js  one effect script per card. Its DSL verb reference is the
                   comment block at the top, guarded by selftest.js, which prints
-                  the live count — this line carried one for weeks and it was 16
-                  low. Read it before adding cards, and before concluding the DSL
-                  cannot express something
+                  the live count. Read it before adding cards, and before
+                  concluding the DSL cannot express something
       collection.js  what the player owns + the save file. Pure data
       packs.js    booster generation. PACK_ODDS is the whole rarity table
       progress.js the opponent ladder. Brackets DERIVED from the live sets —
@@ -140,17 +132,13 @@ data/             the card corpus, the deck lists the game reads, and the quaran
                   GENERATED by `wants.js --sync` — the gate reads it, so commit it
 assets/cards/<set>/  the real printed card faces. GITIGNORED and DERIVED —
                   `node tools/fetch_art.js base1` rebuilds them
-backups/          pre-job safety copies, including the ten Claude Chat snapshots
+backups/          pre-job copies up to 16 Sep 2026, when the convention was retired. NOT
+                  all clutter — preserved artifacts live here. MAINTENANCE.md says which
 tools/            two generators, six suites, THE GATE that runs them (test.js),
                   a screenshotter, a geometry probe, an art fetcher
-       lib/       shared harness machinery — sheet.js, which reads Trevor's LIVE
-                  workbook off a published-CSV URL and checks its own staleness
-                  against the Drive mtime; a dependency-free .xlsx reader behind
-                  it as the fallback; the
-                  board builder that makes a position out of card NAMES, the
-                  headless-Chrome plumbing shot.js and probe.js share, and
-                  owed.js: WHO the engine is waiting for, which every game loop
-                  in this folder answered slightly differently until Job 15d
+       lib/       shared harness machinery — sheet.js (Trevor's LIVE workbook),
+                  board.js (a position built from card NAMES), the headless-Chrome
+                  plumbing, and owed.js: WHO the engine is waiting for. TOOLING.md
        claims/    Trevor's card notes as rows the bot can be held to. One file
                   per set. ADDING A CLAIM IS A ROW, NOT A FIXTURE — that is the
                   point of it. See PLAYBOOK.md, then TOOLING.md
@@ -197,15 +185,12 @@ node tools/probe.js --size 1191x684      # ...and whether it MOVES between two s
 node tools/wants.js base1 --todo         # Trevor's card notes, and which have no claim yet
 node tools/wants.js --sync               # ...re-fetch them from the LIVE sheet. The only command
                                          # in the project that opens a socket; commit the snapshot
-node tools/doccheck.js                   # the DOC lint: every register against the threshold in its
-                                         # OWN header, links, newlines, quantifiers, hand-listed
-                                         # archives, duplicate designations, silently-ended tables.
-                                         # Deliberately NOT in test.js. FAIL is wrong; FLAG is
-                                         # "go and look". Run it against backups/pre-docs-cleanup-N
-                                         # first — it went green once on a 105-line overrun
+node tools/doccheck.js                   # the DOC lint, NOT in the gate. FAIL is wrong, FLAG is look.
+                                         # --at <rev> is its control. See MAINTENANCE.md
 node tools/claimtest.js Arcanine --explore   # what the bot ACTUALLY does on a built board
 node tools/claimtest.js                  # assert the playbook claims — RED IS A FAULT REPORT,
                                          # not a broken build, so it is NOT in tools/test.js
+# ── MEASUREMENTS, not pass/fail. Every one below has lied at least once. ──
 node tools/aitest.js 6 --gbc              # AI behaviour counts — not pass/fail; --gbc for ladder decks
 node tools/aiduel.js 8 --baseline --gbc  # AI vs a PINNED commit — the only form that accumulates
 node tools/aiduel.js --checkpin --baseline --gbc   # ...and is that pin still RUNNABLE? Run after
@@ -224,18 +209,14 @@ node tools/decksim.js 30 6 data/base1_decks.json data/base2_decks.json   # ...an
                                          # one number that measures the AI. See MEASUREMENT.md
 ```
 
-**The ones below the gate are NOT pass/fail and every one of them has lied at least once.** `aitest`, `aiduel`
+**Everything under the MEASUREMENTS divider is not pass/fail.** `aitest`, `aiduel`
 and `abtest` measure whether the bot plays *well* or whether a change did anything, which no
 suite can see — and **which of `abtest` and `aiduel` you want is decided by whether the change lands
 on both seats, not by whether it is a rules change**; a scorer change is symmetric too, and `aiduel`
 cancels it. *[The dividing line →](MEASUREMENT.md)* `openercheck`, `pressure`, `decksim` and `sleepcost` measure a rule, a set, a roster and a status.
 Run `--control` first where there is one — skipping it has already produced one confident wrong
-answer.
-**Named rather than counted from the end of the list**, because that sentence said "the last two",
-was corrected to "the last six", and stopped being true a second time on 15 Sep 2026 when
-`sleepcost.js` was added. **A positional count is a hand-list wearing a different hat** — it goes
-stale on exactly the same event, somebody adding one. It is a boundary now ("below the gate") rather
-than a number. See [MEASUREMENT.md](MEASUREMENT.md).
+answer. **A new instrument goes under the divider**, which is what keeps this paragraph true without
+anybody re-counting it. See [MEASUREMENT.md](MEASUREMENT.md).
 
 **The match log is the one instrument that shows the hidden half** — the
 opponent's hand, both Prize piles, every option the AI weighed and what it passed over, and a seed
@@ -283,7 +264,13 @@ decisions are in [COLLECTION.md](COLLECTION.md); ideas that were tried and lost 
   sigil on the bench cards is perfect. We can lock this design in for a while." The rule below is our
   reading of that; it constrains how the board LOOKS, not how it sizes.* Don't restyle the mat, the hand face or the
   bench tiles without asking. Every variant treatment is confined to collectible surfaces for
-  exactly this reason. 
+  exactly this reason.
+- **Base Set 2 and Legendary Collection are canceled except for cards that exist nowhere else, and
+  the reason is that they are cheap rather than despite it.** 124 printings for **zero** new
+  behaviours and 110 for twenty. They add collectibles the player already owns, which is the worst
+  version of the chase — Trevor's call, 15 Aug 2026, to bring one back later as an *improvement* to
+  progression rather than as structure. *(Moved here from the job plan 16 Sep 2026: it is a standing
+  decision, and it was sitting under "TBD".)*
 
 ## Working on it
 
@@ -344,10 +331,11 @@ else in `data/` is in **[DATA.md](DATA.md)**.
 
 The current ordering, decided collaboratively. Trevor is explicit that it is yours to rearrange and to break into sub-jobs.
 
-**Jobs 1 through 15f are done** — everything below except 15g, which is standing. One line each; **what each left behind is in
-[HISTORY-ARCHIVE-2.md](HISTORY-ARCHIVE-2.md)**, moved there on 2 Sep 2026 when this section had
-reached 105 lines of which 90 described finished work. **Every finding is also in the file that owns
-it** — that is the point of the tree, and the links here go to the owner rather than to the story.
+**Every job in the table is done; the list under it is standing, open or next.** A job moves into the
+table **when it closes**, as one line, and the plan as it read mid-job moves verbatim to the open
+`HISTORY-ARCHIVE` (`HISTORY.md`'s table says which) — this section has had to be collapsed twice for letting finished narratives pile
+up here. **Every finding is also in the file that owns it**, and the links go to the owner rather
+than to the story.
 
 | Job | Left behind, and where it lives |
 |---|---|
@@ -359,82 +347,35 @@ it** — that is the point of the tree, and the links here go to the owner rathe
 | **14b** | AI validation in [PLAYBOOK.md](PLAYBOOK.md)'s shape. Printed damage is a *function of the Energy attached*; an evolution road runs to the attack it is trying to **reach**; the plan is the whole **line**. Closed 2 Sep 2026 — the work continues, sprinkled through later jobs rather than blocking on one |
 | **15a** | The **Challenge 1 bracket** — the first ladder bracket belonging to no set, and the first pack type that is not a set's. [PROGRESSION.md](PROGRESSION.md) · [OPPONENTS.md](OPPONENTS.md) |
 | **15b** | The pack odds: four cosmetic axes back at their pre-shrink pacing, and a Challenge pack rolls the rarity jump at 4x. [PACKS.md](PACKS.md) |
+| **15c** | The eleventh documentation pass: three registers archived, and `AI-INVARIANTS` made a directory on a measurement rather than an instinct. [CREDITS.md](CREDITS.md) #34 |
+| **15d** | The suite audit. Not bloat but duplication that had **diverged** — fourteen copies of the owed-choice dispatch in three versions — plus the one-command gate. [TOOLING.md](TOOLING.md) · [MISREADINGS.md](MISREADINGS.md) |
+| **15e** | The GBC 2 seam, then the attack road: a bigger attack had been unreachable on **35 terminal cards** in every game ever played. [AI-INVARIANTS/ATTACK-ROAD.md](AI-INVARIANTS/ATTACK-ROAD.md) |
+| **15f** | `wants.js` reads Trevor's live sheet — the tool built to prevent a stale read had been making one for eleven days. [PLAYBOOK.md](PLAYBOOK.md) |
+| **16** | Gym Heroes, all 131 cards (Blaine's Quiz #1 omitted with Trevor), the Stadium zone, Recall's attack-source model, and Trevor's roster. Every new AI weight is `PROVISIONAL` by the job's own scope. [ROSTERS.md](ROSTERS.md) · [CREDITS.md](CREDITS.md) #40 |
 
-- **Job 15c** - Document pass, AI validation, grab bag. **Done 2 Sep 2026** — the eleventh
-  documentation pass. Three registers archived and `AI-INVARIANTS` made a directory on a
-  measurement rather than an instinct. [CREDITS.md](CREDITS.md) #34
-- **Job 15d** - Test suite revamp. **Done 2 Sep 2026, and its premise did not survive the first
-  hour.** The job was framed on `powertest.js` being 6,572 lines against `smoke.js`'s 2,171 — but
-  that is 446 assertions against 161, which is 14.7 lines each against 13.5. The density is the same;
-  `powertest` is simply bigger. Nor was it bloated: **zero dead declarations across fifteen tools**,
-  and only five scorer assertions pinned to a literal, four of which are fixture-sanity pins that
-  *should* be. #34's advice not to start by migrating the AI wing to `claimtest.js` was right, and
-  for a reason worth keeping — that wing asserts `scoreAction`, `rawOutcomes` and `threatAgainst`,
-  which `board.js`'s probes cannot reach.
-  **What was actually wrong was duplication that had DIVERGED, and instruments with no control.**
-  Fourteen copies of the owed-choice dispatch in three versions; a suite that was not deterministic;
-  a gate that could pass against a stale build; two tools reporting a perfect number nobody could
-  check. *[The gate, and `owed.js` →](TOOLING.md)* · *[which of `abtest` and `aiduel`, and the new
-  controls →](MEASUREMENT.md)* · *[the four things that lied →](MISREADINGS.md)* · *[why the fixtures
-  were left alone a second time →](HISTORY.md)*
-- **Job 15e** - AI validation, grab bag. **Done 2–5 Sep 2026 over two sessions.** The GBC 2 seam and
-  Potion timing, then the attack road — `potential().short` had pinned at zero the moment any attack
-  was payable, making a bigger attack unreachable on **35 terminal cards** in every game ever played.
-  [CREDITS.md](CREDITS.md) #36 and #37
-- **Job 15f** - Integrating the live Google Drive index sheets into the current process, AI.md open
-  items. **Done 7 Sep 2026.** `wants.js` reads Trevor's live sheet through a published CSV; the tool
-  built to prevent a stale read had been making one for eleven days. [CREDITS.md](CREDITS.md) #38
-- **Job 15g** - Persistent document pass. **Standing, and it does not close** — one pass, then a wait
-  of however many days or commits, then another, for as long as the instance holding it is willing.
-  Opened 8 Sep 2026 by #39. **What makes it different from 15c is that the cheap sweeps are now a
-  tool** rather than an instruction somebody has to remember: `node tools/doccheck.js`.
-  *[What it checks, and the three findings it was built out of →](MAINTENANCE.md)*
-- **Job 16** - Card additions and logic for gym1. **Done 14 Sep 2026** — all 131 cards (Blaine's Quiz
-  #1 omitted with Trevor, `gen_cards.js` says why), the Stadium zone, Recall's attack-source model, and
-  Trevor's roster plus the four Gym Heroes theme decks. Every new AI weight is `PROVISIONAL` by the
-  job's own scope. [CREDITS.md](CREDITS.md) #40 · [ROSTERS.md](ROSTERS.md)
-- **Job 17a** - Post set-addition quality pass, AI validation backlog. **The quality half is done,
-  15 Sep 2026; the validation backlog is open and is the bulk of it.** Four things had been
-  invalidated by gym1 going live and none had been noticed, all four the same shape — **a deferral
-  whose reason was a CONDITION rather than a decision stops being true without anybody editing it.**
-  The Stadium zone had no UI at all, `benchCap()`'s guard against direct `cfg.benchMax` reads did not
-  exist while its own comment said it did, two of the seven Gyms scored a flat zero to play, and
-  `wants.js` hid all 122 gym1 notes behind a hand-written live-set list. AI.md item 5's arithmetic is
-  closed at 0.666 with `tools/sleepcost.js`. **The validation half then opened with one note**,
-  Misty's Poliwhirl, which cost an evening and bought two more scorer faults, a doc rule and a design
-  question — the benched copy of a coin-scaling attack dropped its printed base, and a strip was
-  worth a flat 11 whatever it took away. **Both were correct-by-accident until Gym Heroes**, which is
-  the same lesson as the four above in a different register: *a weight that is right for every card
-  that exists is not a correct weight, it is an untested one.* **121 gym1 notes still have no
-  claim**, which is the largest single block of AI validation work in the project. [CREDITS.md](CREDITS.md) #41 ·
-  [AI-INVARIANTS/STADIUM-PRICING.md](AI-INVARIANTS/STADIUM-PRICING.md) · [SCREENS.md](SCREENS.md)
+- **Job 15g** - Persistent document pass. **Standing, and it does not close** — a pass, a wait of however
+  many days or commits, another pass. Start each one with `node tools/doccheck.js`. [MAINTENANCE.md](MAINTENANCE.md)
+- **Job 17a** - Post set-addition quality pass, AI validation backlog. **The quality half is done, 15 Sep
+  2026; the validation backlog is open and is most of it** — 121 gym1 notes have no claim, the largest
+  single block of AI validation in the project. *A weight that is right for every card that exists is
+  not a correct weight; it is an untested one.* [CREDITS.md](CREDITS.md) #41
 - **Job 17b** - AI validation passes.
 - **Job 18** - Unlocking and revisiting the layout and solving our resizing problems forever.
 - **Job 19** - AI validation passes.
 - **Job 20** - Card additions and logic for gym2.
 - **Job 21+** - TBD
 
-
-
-- **Base Set 2 and Legendary Collection are canceled except for cards that exist nowhere else, and the reason is that they are cheap
-  rather than despite it.** 124 printings for **zero** new behaviours and 110 for twenty. They add
-  collectibles the player already owns, which is the worst version of the chase — Trevor's call,
-  15 Aug 2026, to bring one back later as an *improvement* to progression rather than as structure.
-
-
 ## Open
 
 The per-area open lists live in the files that own them; this is the index to them.
 
-1. **The AI** — the Bench cannot say "I could take a Prize", the bot evolves as soon as it *can*
-   rather than as soon as it is *ready*, and a Sleep is priced by three methods that disagree. The
-   live list, with what each would cost, is at the bottom of [AI.md](AI.md).
+1. **The AI** — the longest open list in the tree, at the bottom of [AI.md](AI.md), with what each
+   item would cost. Clearing it is a scheduled priority. *(This line used to name three examples; by
+   16 Sep two of them had been built.)*
 2. **Blueprints have no dedicated screen** — a "this deck is four cards away" view over your saved
    layouts. The mechanism exists; see [COLLECTION.md](COLLECTION.md).
 3. **One pack question left, and Southern Islands is it.** Its fixed 18-card distribution against
-   our probabilistic intrusion model is unsettled and always was. **Progression-gating the
-   intrusion pool is BUILT** (Job 13b) and gated per card rather than per era, which is further
-   than that item asked for. See [PACKS.md](PACKS.md).
+   our probabilistic intrusion model is unsettled and always was. See [PACKS.md](PACKS.md).
 4. **Opponents do not speak, and nothing reads `progress.lost`.** Both in
    [PROGRESSION.md](PROGRESSION.md), both small, neither started.
 5. **Audio: none.** Nothing has been decided about it.
