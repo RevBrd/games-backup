@@ -98,7 +98,7 @@ input tests covering all of this.
 - `snek.html` — the whole game, self-contained, runs by double-clicking.
 - `validate.js` — headless Node harness, 125 checks. Run before delivering:
   `node validate.js`
-- `backups/` — pre-job safety copies, per the collection convention.
+- `backups/` — pre-job safety copies, from before the collection retired that convention on 16 Sep 2026 (see `Games/CLAUDE.md`).
 - `snake.html` — the untouched original from a Claude Chat session, kept as a reference for what
   the mechanics were before the reskin. Nothing loads it. Worth preserving.
 

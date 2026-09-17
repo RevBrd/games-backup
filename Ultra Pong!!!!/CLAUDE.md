@@ -284,7 +284,7 @@ accumulator loop with `dt` clamped at 100ms, so backgrounded tabs don't fast-for
 ULTRA PONG!!!! — and the stale name survived into the first commit. Renamed via `git mv`, so
 history follows. The pre-rename backup in `backups/` keeps the old name; that's history, leave it.
 
-`backups/` holds dated snapshots. Take one before any substantial pass.
+`backups/` holds dated snapshots from before 16 Sep 2026, when the collection retired the convention in favour of git history — see `Games/CLAUDE.md`.
 
 ---
 

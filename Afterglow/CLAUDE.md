@@ -5,7 +5,7 @@ Ordnance comes down; you put blooming clouds in front of it. **This game is sinc
 there are no authored defects. Its bugs are real bugs, fix them freely.**
 
 `afterglow.html` is the game, single self-contained file, runs by double-clicking.
-`backups/` holds pre-job snapshots. Back up before any major pass.
+`backups/` holds pre-job snapshots from before 16 Sep 2026, when the collection retired the convention in favour of git history — see `Games/CLAUDE.md`.
 
 ## The thesis — read this before changing anything
 

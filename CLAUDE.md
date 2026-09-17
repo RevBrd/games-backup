@@ -45,7 +45,16 @@ If known, please credit the Claude model that assisted in its creation within th
   after the second split there. Read it before reorganising any game's docs, not just that one.
 - **The code lives in the game folder**, not in `~/.claude/reference/`. See **Git** below for
   which repository that folder belongs to — it is not always the one you're standing in.
-- **Create a backup periodically.** Before every major job (can be skipped for minor ones and the very first turn), save a backup copy in a dedicated sub-folder.
+- **No more `backups/` folders — retired 16 Sep 2026, with Trevor.** This line used to say to copy a
+  game into a `backups/` sub-folder before every major job. Git history plus the pushed `backup`
+  remote (see **Git** below) now hold every committed state, and a copy tracked *inside* the repo is a
+  third copy that git also keeps forever — 55 MB of it in Shadowless alone, against about 1 MB across
+  every other game. **What replaces it: start a big job on a clean tree** — commit or stash first —
+  and note the commit. That commit is the backup; `git show <commit>:path` restores any file. It
+  protects what has been *committed*, and off this machine only what has been *pushed* to `backup`.
+  **Existing `backups/` folders stay until somebody decides otherwise**, because several hold preserved
+  history other docs link to — Chat-era originals, one instance's own credit log. Clearing one frees
+  disk but not repository size, since history keeps it.
 - **Games are stylistically independent on purpose.** Do not carry a look, a palette, or a tone
   from one game into another. Variety across the collection is the point, and reaching for
   something adjacent to an existing game is the wrong move even when it feels safe.
