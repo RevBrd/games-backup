@@ -8377,7 +8377,9 @@ class AI {
           break;
         case 'SWITCH_DEFENDER_CHOOSE': flags.drag = true; break;
         case 'PREVENT_ALL_DMG_SELF_ON_FLIP': flags.shield = 0.5; break;
-        case 'BARRIER': flags.shield = 1; break;
+        // effectShield: this barrier stops a status too, not only damage. Withdraw,
+        // Stiffen, Scrunch and Shadow Images stop damage alone. AI.md item 14.
+        case 'BARRIER': flags.shield = 1; flags.effectShield = 1; break;
         case 'HARDEN': flags.harden = v.threshold; break;
         case 'DESTINY_BOND': flags.destinyBond = true; break;
         case 'JAM_DEFENDER': flags.jam = true; break;
@@ -8421,7 +8423,7 @@ class AI {
             ? [[0.5, v.base + v.bonus], [0.5, 0]]
             : [[0.5, v.base + v.bonus], [0.5, v.base]]);
           selfDmg += v.recoil * 0.5; selfWorst += v.recoil; pSelfWorst *= 0.5;
-          if (v.barrierOnHeads) flags.shield = 0.5;
+          if (v.barrierOnHeads) { flags.shield = 0.5; flags.effectShield = 0.5; }
           if (v.benchSplashOnHeads) {
             flags.benchSplash = v.benchSplashOnHeads.n * 0.5;
             flags.benchSplashSide = v.benchSplashOnHeads.side || 'both';
@@ -8445,7 +8447,7 @@ class AI {
         case 'DISCARD_DEF_ENERGY': flags.stripEnergy = v.flip ? 0.5 : 1; break;
         case 'BENCH_SPLASH_OWN': flags.benchSplashOwn = v.n; break;
         case 'ATTACK_LOCK': flags.attackLock = true; break;
-        case 'BARRIER_ON_FLIP': flags.shield = 0.5; break;
+        case 'BARRIER_ON_FLIP': flags.shield = 0.5; flags.effectShield = 0.5; break;
         case 'WHIRLWIND': flags.dragWeak = true; break;
 
         // ---- Job 6d ----
@@ -9158,6 +9160,18 @@ class AI {
     if (f.flags.shield) {
       s += f.flags.shield * (1.4 * shieldFrac * W.shieldSelf + shieldFrac * shieldFrac * W.selfKO);
     }
+    // A BARRIER ALSO STOPS THE STATUS — #42, 17 Sep 2026, AI.md item 14. Trevor
+    // on Raichu: "Agility buys turns through damage *and status* denial." Both
+    // terms above are damage, so an Agility against a Thunderpunch priced exactly
+    // like one against a Low Kick (35.75 and 35.75).
+    //
+    // THE WHOLE STATUS, NOT AN INCREMENT, and that corrects the item as filed. It
+    // said the damage term already bought their turn, so only a status outliving
+    // it was new. Follow the order: we barrier on our turn; their attack lands on
+    // theirs; a Paralysis it carried takes OUR next attack. That is our turn, not
+    // theirs, and nothing above prices it. So it is priced as a status landing on
+    // us: the same weight, scaled by the attack of ours it would deny.
+    if (f.flags.effectShield) s += f.flags.effectShield * this.statusThreatAgainst(pi, atkSlot);
     // HARDEN'S THRESHOLD IS NOT A CLIFF AND MUST NOT BE GRADED. Harden absorbs
     // an attack of N or less and does nothing at all against N+1, so the step is
     // in the card rather than in the model. Checked while fixing the line above.
@@ -10748,6 +10762,36 @@ class AI {
     const range = this.W.deckOutRange;
     if (left >= range) return 0;
     return (range - left) / range;
+  }
+
+  // WHAT THEIR ATTACK'S STATUS WOULD COST US — the mirror of `statusWorthAgainst`,
+  // for a barrier to be worth preventing. AI.md item 14, #42.
+  //
+  // Their WORST attack by this measure, the same snapshot stance `threatAgainst`
+  // takes for damage. A turn-denying status costs what our slot's next attack is
+  // worth, in `bestAffordableDamage`'s printed currency — never `scoreAttack`,
+  // which is what is calling us. Poison is a clock and keeps its flat weight, as
+  // it does on the other side. Novelty is read on OUR slot: a second Sleep on a
+  // sleeping Pokemon costs nothing to prevent.
+  statusThreatAgainst(pi, mySlot) {
+    const E = this.E, W = this.W;
+    const you = E.state.players[1 - pi];
+    if (!you.active || !mySlot) return 0;
+    const ours = this.bestAffordableDamage(pi, mySlot);
+    let worst = 0;
+    (this.top(you.active).attacks || []).forEach((a, i) => {
+      if (!E.costSatisfied(you.active, a.cost)) return;
+      const raw = this.rawOutcomes(you.active, mySlot, i);
+      let cost = 0;
+      for (const st in raw.statuses) {
+        const key = STATUS_VALUE[st];
+        if (!key) continue;
+        const scale = DENIES_A_TURN[st] ? ours / AVG_ATTACK : 1;
+        cost += raw.statuses[st] * W[key] * scale * this.statusNovelty(st, mySlot);
+      }
+      if (cost > worst) worst = cost;
+    });
+    return worst;
   }
 
   statusWorthAgainst(pi, st, aliveFactor, ourSlot) {

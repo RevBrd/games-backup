@@ -259,6 +259,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 3 Sep | **What a card is FOR is partly a question about the board.** Wall-ness scales with `1 - roadLive`, and the old terminal-Basic gate is DERIVED rather than removed — a terminal Basic is a card whose road is permanently dead, and the equivalence is asserted over the whole pool | `roadLive`, `wallHere`, `wallShape` |
 | 17 Sep | **A Doll is not a Prize.** Three scorers priced one — the worst read a KO on their Fossil as our winning Prize — and no bot had ever discarded one, because the action type had no case. Discard only for an attacker that swings this turn | `discardInPlay`, `givesPrize` |
 | 17 Sep | **One answer to what a card is worth keeping, and Energy in hand is a queue** — counted at the END of the turn, so this turn's attachment is never a spare. Every discard order goes through `handDiscardOrder`, which reprices after each pitch | `cardKeepValue`, `energyKeepValue`, `handDiscardOrder` |
+| 17 Sep | **A barrier that stops effects stops the status too, and that status is OUR next turn** — not an increment on the turn the damage term bought. Withdraw-type barriers stop damage only and get nothing | `effectShield`, `statusThreatAgainst` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -494,7 +495,15 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     rather than a card; `survivesCharge` already discounts an investment by whether the carrier lives
     to spend it. The missing piece is the *comparison across branches*, not the per-branch facts.
 
-14. **A barrier denies a status as well as damage, and the shield term cannot see it — 7 Sep 2026.**
+14. ~~**A barrier denies a status as well as damage, and the shield term cannot see it.**~~ **BUILT
+    17 Sep 2026 (#42), and the sizing paragraph below had the turn order wrong.** The status a barrier
+    prevents is not an increment on the turn the damage term already bought. It lands on *our* next
+    turn, which nothing priced. So it is the whole status, priced as landing on us. Only barriers that
+    stop **effects** get it; Withdraw-type barriers stop damage alone. Raichu's Agility against a
+    paralyser is 40.75 now, against a plain hitter 35.75; the claim row is red against the commit
+    before. *[The entry →](AI-INVARIANTS/BARRIER-STATUS.md)* What follows is the item as it read.
+
+    **A barrier denies a status as well as damage, and the shield term cannot see it — 7 Sep 2026.**
     `denied` is `Math.min(incomingThreat, hpLeft)`, so `f.flags.shield` is a pure function of damage
     prevented. An Agility against a Pokemon whose attack would **paralyse** prices identically to one
     against a Pokemon that would only hit, and the equality is exact rather than close:

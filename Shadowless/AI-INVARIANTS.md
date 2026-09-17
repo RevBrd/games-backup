@@ -132,3 +132,4 @@ open the entry.
 | 15 Sep 2026 | **`slotPrintedDamage` ASSIGNED where the forecast ADDS, so a coin-scaling attack lost its printed base** | `slotPrintedDamage` (`DMG_PER_ENERGY_HEADS`) | [OVER-ATTACH-BASE](AI-INVARIANTS/OVER-ATTACH-BASE.md) |
 | 17 Sep 2026 | **a Doll is not a Prize, and nothing had ever discarded one** | `discardInPlay`, `givesPrize`, `promoteValue` | [DOLL-NO-PRIZE](AI-INVARIANTS/DOLL-NO-PRIZE.md) |
 | 17 Sep 2026 | **one hand-quality opinion, and Energy in hand is a queue** | `cardKeepValue`, `energyKeepValue`, `handDiscardOrder` | [ENERGY-QUEUE](AI-INVARIANTS/ENERGY-QUEUE.md) |
+| 17 Sep 2026 | **a barrier that stops effects stops the status too, and that status is our turn** | `effectShield`, `statusThreatAgainst` | [BARRIER-STATUS](AI-INVARIANTS/BARRIER-STATUS.md) |

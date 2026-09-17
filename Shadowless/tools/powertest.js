@@ -9523,6 +9523,13 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
     b.E.state.players[0].energyAttached = true;
     return eq(order(b.E)[0].name, 'Fire Energy', 'the basic goes first');
   });
+  T('only a barrier that stops EFFECTS is credited with the status it blocks (AI.md item 14)', () => {
+    // Withdraw prevents damage alone, so a Paralysis still lands through it.
+    const sq = setup({ me: { card: 'base1:Squirtle', energy: '2 Water' }, them: { card: 'base1:Machop' } }).E;
+    eq(!!new AI(sq, {}).forecast(0, 1).flags.effectShield, false, 'Withdraw');
+    const rai = setup({ me: { card: 'base1:Raichu', energy: '3 Lightning' }, them: { card: 'base1:Machop' } }).E;
+    return eq(new AI(rai, {}).forecast(0, 0).flags.effectShield, 0.5, 'Agility, on its coin');
+  });
   T('an evolution whose Basic is IN HAND is live — the fact junkiestInHand had alone', () => {
     const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
       myHand: ['base1:Charmeleon', 'base1:Charmander', 'base1:Bill'] });

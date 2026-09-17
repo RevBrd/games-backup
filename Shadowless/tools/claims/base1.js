@@ -467,9 +467,21 @@ const CLAIMS = [
     id: 'base1-14', card: 'base1:Raichu', pattern: 'Attack choice',
     note: "To use Agility when Thunder wouldn't kill, or when Thunder risks a self-kill that isn't worthwhile. Does need some degree of Kamakaze Timing. Agility buys turns through damage *and status* denial on a coin flip, while Thunder risks 30 self-dmg on a coin flip.",
     claim: 'Agility is worth MORE against an opponent whose attack also applies a status',
-    open: "`denied` is damage only, so the shield term cannot see a status it prevents. "
-        + "Needs a term for the status that would outlive the barrier's own turn — and "
-        + "AI.md open item 5 (the unvalidated Sleep weight) should settle first.",
+    // CLOSED 17 Sep 2026 (#42), AI.md item 14. Was `open:` while the shield term
+    // was damage-only and the Sleep weight unsettled. The control is the other
+    // board: same Raichu, same threat of 40, an attacker with no status line.
+    board: {
+      me:   { card: 'base1:Raichu', energy: '3 Lightning' },
+      them: { card: 'base1:Electabuzz', energy: '2 Lightning' },
+    },
+    sane: b => b.ai.incomingThreat(0) === 40,
+    expect: b => {
+      const plain = require('../lib/board.js').setup({
+        me:   { card: 'base1:Raichu', energy: '3 Lightning' },
+        them: { card: 'base1:Machop', energy: '2 Fighting' },
+      });
+      return plain.ai.incomingThreat(0) === 40 && b.score('Agility') > plain.score('Agility');
+    },
   },
 
   // --------------------------------------------------------------- Nidoking --
