@@ -35,4 +35,8 @@ Reformat and clean up at will, and even add it to with comments or other notes i
 * 110 wins, 228 packs
 * 290 of 311 cards, 1 of 21 Promo cards
 * 1st Edition - Lost track, no counter
+* Difficult to track due to no variant counter yet and multiple variant cards used in decks are missing from the collection view due to being in decks. 
+* Shiny - \~10
+* 1st Ed. Shiny - 1
+* Shadowless - 1
 
