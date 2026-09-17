@@ -2,6 +2,7 @@
 //
 //   node tools/doccheck.js              the live tree
 //   node tools/doccheck.js --verbose    list every hit, not just the count
+//   node tools/doccheck.js --at <rev>   lint the tree as it stood at a commit -- THE CONTROL
 //   node tools/doccheck.js <dir>        lint some other copy of the tree
 //
 // WHY THIS EXISTS. MAINTENANCE.md's own diagnosis is that "a correction which
@@ -39,22 +40,56 @@
 //
 // THIS TOOL WAS WATCHED GOING RED BEFORE IT WAS TRUSTED, which is claimtest.js's
 // doctrine one folder over and the reason MAINTENANCE.md distrusts the link
-// checker that cried wolf. Run it against the backup taken before this pass:
+// checker that cried wolf. Run it against the commit your pass started from:
 //
-//   node tools/doccheck.js backups/pre-docs-cleanup-12
+//   node tools/doccheck.js --at <the commit before your first edit>
 //
-// That copy holds LOGBOOK at 555 over its own 450, CREDITS' stale hand-list, its
-// duplicate #33 and its stray one-cell table row. Every check below fires there
-// and is quiet on the live tree. A verifier that has only ever been green proves
-// nothing about itself.
+// The control used to be a backups/ folder copied by hand before each pass. That
+// convention was retired on 16 Sep 2026: git history plus the pushed `backup`
+// remote already hold every committed state, so a tracked copy of the tree was a
+// third copy of it. `--at` reads the files straight out of git into a scratch
+// directory -- the same control, with nothing left behind in the repo.
+//
+// The canonical red run is `--at a6e9112`, the tree before round one of Job 15g:
+// LOGBOOK at 555 against its own 450, CREDITS' stale hand-list, its duplicate #33
+// and its stray one-cell table row. A verifier that has only ever been green
+// proves nothing about itself.
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
-const VERBOSE = process.argv.includes('--verbose');
-const argDir = process.argv.slice(2).find(a => !a.startsWith('--'));
-const ROOT = path.resolve(argDir || path.join(__dirname, '..'));
 const SUBS = ['Rulings', 'Playbook', 'AI-INVARIANTS', 'data'];
+const HERE = path.join(__dirname, '..');
+const VERBOSE = process.argv.includes('--verbose');
+const argv = process.argv.slice(2);
+const atIdx = argv.indexOf('--at');
+const AT = atIdx >= 0 ? argv[atIdx + 1] : null;
+const argDir = argv.find((a, i) => !a.startsWith('--') && i !== atIdx + 1);
+const ROOT = AT ? checkout(AT) : path.resolve(argDir || HERE);
+
+// Materialise this folder's markdown as it stood at `rev` into a scratch
+// directory, straight out of git. Only what this tool reads is extracted -- the
+// root .md files and the SUBS folders -- so it is seconds, not a clone.
+function checkout(rev) {
+  const git = (...a) => spawnSync('git', a, { cwd: HERE, encoding: 'utf8', maxBuffer: 1 << 26 });
+  const ls = git('ls-tree', '-r', '--name-only', rev, '--', '.');
+  if (ls.status !== 0 || !rev) {
+    console.error(`doccheck: cannot read ${rev}: ${(ls.stderr || 'no revision given').trim()}`);
+    process.exit(2);
+  }
+  const want = ls.stdout.split('\n').filter(f => f.endsWith('.md') &&
+    (!f.includes('/') || (f.split('/').length === 2 && SUBS.includes(f.split('/')[0]))));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'doccheck-'));
+  for (const f of want) {
+    const body = git('show', `${rev}:./${f}`);
+    if (body.status !== 0) continue;
+    fs.mkdirSync(path.join(out, path.dirname(f)), { recursive: true });
+    fs.writeFileSync(path.join(out, f), body.stdout);
+  }
+  return out;
+}
 
 // The line target is 200; the truncation zone starts around 400, and a working
 // session stops reading all of a file somewhere above 300. Registers are exempt
@@ -123,7 +158,20 @@ function registerOf(f) {
   // "closed" has to be about the FILE. Matching the bare word caught LOGBOOK's
   // "entries move out of this file when the work they describe is CLOSED",
   // which is about the work, and the live file was then exempted from itself.
-  const closed = isArchive || /this file is (?:an? )?[\w -]*closed\b/i.test(head);
+  //
+  // AND AN ARCHIVE IS NOT CLOSED BECAUSE OF ITS FILENAME. The first version
+  // assumed it was, so it never looked at HISTORY-ARCHIVE-2.md -- the live
+  // destination for finished job plans, at 482 against its own ~450, with "The
+  // next pass owns it" in its header for two weeks and nobody taking it.
+  //
+  // Nor is it closed because its header SAYS so -- measured 16 Sep 2026, eight
+  // of twenty-one archives carried the word and the rest did not, with no
+  // pattern. The rule that cannot rot is structural: THE NEWEST ARCHIVE IN A
+  // SERIES IS THE ONE STILL RECEIVING, and every earlier one is closed by the
+  // existence of the next. A label can still close the newest one early.
+  const series = isArchive && path.basename(f).match(/^(.*)-ARCHIVE-(\d+)\.md$/);
+  const superseded = series && fs.existsSync(path.join(path.dirname(f), `${series[1]}-ARCHIVE-${+series[2] + 1}.md`));
+  const closed = superseded || /this file is (?:an? )?[\w -]*closed\b|\bclosed at #/i.test(head);
   // The threshold is stated in prose that varies -- "growing this one past ~450",
   // "when this file passes ~450", "Both limits are ~450". Matching a verb before
   // the number missed the third, so take the largest ~NNN in the header instead.
@@ -154,7 +202,7 @@ function registerOf(f) {
   return r;
 }
 
-console.log('\nShadowless doc lint  ' + (argDir ? rel(ROOT) || argDir : 'live tree'));
+console.log('\nShadowless doc lint  ' + (AT ? `as of ${AT}` : argDir ? argDir : 'live tree'));
 
 // 1 -- REGISTERS AGAINST THE LIMIT IN THEIR OWN HEADER.
 console.log('\nRegisters against their own stated threshold');
@@ -222,7 +270,11 @@ for (const f of FILES) {
   for (const m of read(f).matchAll(/\]\(([A-Za-z0-9_./#-]+\.md)(?:#[A-Za-z0-9_-]*)?\)/g)) {
     const target = m[1].split('#')[0];
     links++;
-    if (!fs.existsSync(path.join(dir, target))) { fail(`${rel(f)} links to ${target}, which is not there`); broken++; }
+    if (fs.existsSync(path.join(dir, target))) continue;
+    // Under --at only the markdown this tool reads is extracted, so a link into
+    // anything else is asked of git rather than of the scratch directory.
+    if (AT && spawnSync('git', ['cat-file', '-e', `${AT}:./${path.relative(ROOT, path.join(dir, target)).replace(/\\/g, '/')}`], { cwd: HERE }).status === 0) continue;
+    fail(`${rel(f)} links to ${target}, which is not there`); broken++;
   }
 }
 if (!broken) pass(`${links} links, all resolving — subfolder links resolved relative to their own file`);
