@@ -803,6 +803,53 @@ T('Revive cannot reach one in the discard — there it is a Trainer again', () =
   return true;
 });
 
+// A DOLL OR A FOSSIL, SEEN BY THE BOT — #42, 17 Sep 2026. `discardInPlay` had no
+// case in scoreAction, so no bot had ever discarded one; and two scorers charged
+// or paid a Prize that the engine never awards for it.
+console.log('\nDoll and Fossil — the bot');
+T('the bot discards an Active Fossil to put a READY attacker in front', () => {
+  const E = board('base3-62', ['base1-58']);
+  const p = E.state.players[0];
+  attach(E, p.bench[0], 'base1-100', 2);                    // Thunder Jolt paid
+  p.hand = [];
+  const ai = new (require('../src/ai.js').AI)(E, { mode: 'expert' });
+  const a = E.legalActions(0).find(x => x.t === 'discardInPlay');
+  const sc = ai.scoreAction(0, a);
+  if (!(sc > 0)) throw new Error(`scored ${sc}`);
+  return true;
+});
+T('...but stays behind it while nothing on the Bench can swing this turn', () => {
+  const E = board('base3-62', ['base1-2']);                 // Blastoise, WWW, holding none
+  E.state.players[0].hand = [];
+  const ai = new (require('../src/ai.js').AI)(E, { mode: 'expert' });
+  const a = E.legalActions(0).find(x => x.t === 'discardInPlay');
+  eq(ai.scoreAction(0, a), -Infinity, 'a free stall is not traded for a body that stands there');
+  return true;
+});
+T('...and one Energy short counts as ready only with an attachment still to make', () => {
+  const E = board('base3-62', ['base1-2']);                 // Blastoise, WWW, holding two
+  const p = E.state.players[0];
+  attach(E, p.bench[0], 'base1-102', 2);
+  p.hand = [{ id: 'base1-102', uid: E.uid++ }];
+  const ai = new (require('../src/ai.js').AI)(E, { mode: 'expert' });
+  const a = () => E.legalActions(0).find(x => x.t === 'discardInPlay');
+  if (!(ai.scoreAction(0, a()) > -Infinity)) throw new Error('refused with the attachment available');
+  p.energyAttached = true;
+  eq(ai.scoreAction(0, a()), -Infinity, 'refused once the attachment is spent');
+  return true;
+});
+T('a KO on their Fossil is not our last Prize — it concedes none', () => {
+  const E = board('base1-58', [], 'base3-62');
+  const p = E.state.players[0], o = E.state.players[1];
+  attach(E, p.active, 'base1-100', 2);
+  o.bench = [E.mkSlot({ id: 'base1-58', uid: E.uid++ })];   // so the board is not emptied
+  p.prizes = p.prizes.slice(0, 1);
+  const ai = new (require('../src/ai.js').AI)(E, { mode: 'expert' });
+  const sc = ai.scoreAttack(0, 0);
+  if (!(sc < ai.W.lastPrize)) throw new Error(`Gnaw on a Fossil scored ${sc}, as if it won`);
+  return true;
+});
+
 // ------------------------------------------------------------------- AI usage
 console.log('\nAI');
 

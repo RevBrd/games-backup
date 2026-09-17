@@ -1091,7 +1091,14 @@ class AI {
       // 2. Emptying their board. Knocking out their only Pokemon wins on the
       //    spot whatever the Prize count says, and nothing in the AI knew this
       //    win condition existed at all.
-      const takesLastPrize = me.prizes.length <= 1;
+      // A DOLL OR A FOSSIL IS NOT A PRIZE — #42, 17 Sep 2026. The engine awards
+      // nothing for Knocking one Out (`c.playsAs === 'pokemon'`), so on our last
+      // Prize this priced a KO on their Mysterious Fossil as winning the game.
+      // Emptying their board still wins, because that keys on the board.
+      // (What the ordinary `W.knockout` below is worth on a Doll is a separate,
+      // open question: the Prize is gone but the forced promote is not.)
+      const givesPrize = !(you.active && E.playsAsPokemon(you.active));
+      const takesLastPrize = givesPrize && me.prizes.length <= 1;
       const emptiesTheirBoard = you.bench.length === 0;
       s += f.pLethal * ((takesLastPrize || emptiesTheirBoard) ? W.lastPrize : W.knockout);
 
@@ -2053,7 +2060,10 @@ class AI {
       const invested = b.energy.length * W.retreatSaveEnergy
         + (this.top(b).stage !== 'Basic' ? W.retreatSaveEvolved : 0);
       const left = Math.max(1, you.prizes.length);
-      s -= Math.min(W.dangerSwap, invested) + W.retreatPrize / (left * left);
+      // A Doll or a Fossil concedes no Prize when it falls, so only the Energy on
+      // it is lost — #42. Charging the Prize made every Fossil look worth fleeing.
+      const prize = E.playsAsPokemon(b) ? 0 : W.retreatPrize / (left * left);
+      s -= Math.min(W.dangerSwap, invested) + prize;
     }
     return s;
   }
@@ -4438,6 +4448,36 @@ class AI {
         const b = me.bench[a.bench];
         if (!b) return -Infinity;
         return this.promoteValue(pi, b);
+      }
+
+      // CLEFAIRY DOLL AND MYSTERIOUS FOSSIL — #42, 17 Sep 2026. "At any time
+      // during your turn before your attack, you may discard" one. There was no
+      // case here at all, so the default returned -Infinity and no bot ever did
+      // it: a Fossil sent up Active could not retreat, could not attack, and sat
+      // there until the opponent chose to Knock it Out. Three roster decks run
+      // four. Found by the action-type guard in selftest.js on its first run.
+      //
+      // ONLY THE ACTIVE, and only as a way to put an attacker in front NOW. It
+      // is a free Switch, so it is priced by `bestSelfSwitch` exactly as Switch
+      // is — but a Doll is also the one wall that concedes nothing when it falls,
+      // so leaving it for a Pokemon that cannot swing this turn gives up a free
+      // stall for a body that just stands there instead. Trevor's item-1 answer
+      // is the reason: sitting behind a tank while the Bench powers up is fine.
+      //
+      // A BENCHED one is -Infinity on purpose. Discarding it only frees a slot,
+      // which matters on a full Bench with a Basic waiting and is not priced yet.
+      // And never while its own evolution is in hand, which is the other exit.
+      case 'discardInPlay': {
+        const sl = me.active && me.active.uid === a.uid ? me.active : null;
+        if (!sl || !me.bench.length) return -Infinity;
+        if (this.evolutionInHand(pi, sl)) return -Infinity;
+        const sw = this.bestSelfSwitch(pi);
+        if (!sw || sw.bench < 0) return -Infinity;
+        const dest = me.bench[sw.bench];
+        const short = this.potential(pi, dest, null).short;
+        const canAttach = !me.energyAttached && me.hand.some(x => (this.db[x.id] || {}).kind === 'energy');
+        if (!(short === 0 || (short === 1 && canAttach))) return -Infinity;
+        return sw.gain * W.selfSwitchGain;
       }
 
       case 'playTrainer': return this.scoreTrainer(pi, a);

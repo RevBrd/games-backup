@@ -444,10 +444,53 @@ if (finished.length) console.log(`  ${finished.join(', ')} now complete `
   // by source text, like the Stadium pair, because the alternative is building a
   // board per verb and the thing being guarded is somebody adding a fifth verb
   // to this family in a hurry.
+  //
+  // THE LIST IS DERIVED, NOT KEPT — #42, 17 Sep 2026, AI.md item 18. It was four
+  // hand-typed names, and a fifth verb added without touching the array was the
+  // one case it could not see. It had already missed two: Sleight of Hand and
+  // the attack that returns our own Active are the same family, attack-shaped.
+  //
+  // The derivation is the engine's own idiom for "an unanswered choice is empty":
+  // `opts.<key>) || []` inside a case body. That idiom is WIDER than the family,
+  // because a WHICH verb reads its choice the same way and then falls back to
+  // picking something. So the opt-out runs the safe direction: every candidate is
+  // treated as a subset verb unless it is on WHICH_NOT_WHETHER with a reason. A
+  // new verb nobody classified goes RED, never quietly green.
+  //
+  // Its remaining blind spot, named: a subset verb that reads its choice through
+  // some other idiom is invisible to this, exactly as the list was.
   {
-    const SUBSET = ['T_PEEK_CYCLE', 'T_GAMBLE_DISCARD', 'T_ENERGY_RETURN', 'T_PERFUME'];
+    const WHICH_NOT_WHETHER = {
+      T_DIG: 'keeps the first N when nobody chooses',
+      T_TRADE_FOR_NAMED: 'the 2 are traded whatever happens; only WHICH is open',
+      SEARCH_TO_HAND: 'fills from the pool when nobody chooses',
+      BENCH_SNIPE: 'damage lands somewhere; the target is the only question',
+      CHALLENGE: 'the unattended fallback fills the Bench, seeded',
+    };
+    const engCases = [...engSrc.matchAll(/case '([A-Z][A-Z_0-9]+)'/g)];
+    const candidates = new Map();   // verb -> the opts keys it reads as "empty = none"
+    engCases.forEach((m, k) => {
+      const end = k + 1 < engCases.length ? engCases[k + 1].index : m.index + 3000;
+      for (const h of engSrc.slice(m.index, end).matchAll(/opts\.(\w+)\)\s*\|\|\s*\[\]/g)) {
+        if (!candidates.has(m[1])) candidates.set(m[1], new Set());
+        candidates.get(m[1]).add(h[1]);
+      }
+    });
+    const staleWhich = Object.keys(WHICH_NOT_WHETHER).filter(v => !candidates.has(v));
+    check(staleWhich.length === 0, 'every WHICH_NOT_WHETHER entry still reads a choice in engine.js',
+      staleWhich.length ? `${staleWhich.join(', ')} no longer match — delete them` : '');
+    const SUBSET = [...candidates.keys()].filter(v => !WHICH_NOT_WHETHER[v]).sort();
     const aiSrc = fs.readFileSync(path.join(__dirname, '../src/ai.js'), 'utf8');
-    const unguarded = SUBSET.filter(v => {
+    // ATTACK-SHAPED members cannot refuse by returning -Infinity — declining the
+    // choice still leaves the attack's damage, so -Infinity would be wrong. What
+    // they owe is the fill itself: somebody in ai.js must write the key.
+    const unfilled = SUBSET.filter(v => !v.startsWith('T_'))
+      .filter(v => [...candidates.get(v)].some(key => !new RegExp(`\\b${key}\\s*[:=]`).test(aiSrc)));
+    check(unfilled.length === 0,
+      'every attack-shaped "any number" verb has its choice filled by ai.js',
+      unfilled.length ? `${unfilled.join(', ')} would resolve to nothing, every time` : '');
+    console.log(`  subset family, derived: ${SUBSET.join(', ')}`);
+    const unguarded = SUBSET.filter(v => v.startsWith('T_')).filter(v => {
       const i = aiSrc.indexOf(`case '${v}'`);
       if (i < 0) return true;
       // The case body, to the next case label. Long enough to hold the guard and
@@ -458,6 +501,36 @@ if (finished.length) console.log(`  ${finished.join(', ')} now complete `
     check(unguarded.length === 0,
       'every "as many as you want" verb can refuse to do nothing',
       unguarded.length ? `${unguarded.join(', ')} would play a card for no effect` : '');
+  }
+
+  // --------------------------------------------------------------------------
+  // SILENT-FAILURE SURFACE: an ACTION TYPE the scorer has no case for — #42,
+  // 17 Sep 2026, AI.md item 16.
+  //
+  // `scoreAction` ends in `default: return -Infinity`, so an `a.t` nobody scored
+  // is not misplayed, it is NEVER PLAYED, by the bot, forever. It fails closed,
+  // which is why it survived: absent from every log rather than wrong in one.
+  //
+  // The item predicted this would go in green because "the existing action types
+  // are few and all scored". It went in RED on its first run: `discardInPlay` had
+  // no case, so no bot ever discarded a Mysterious Fossil — three roster decks run
+  // four of them, and a Fossil stuck Active cannot retreat or attack.
+  //
+  // Source-text, both sides: what `legalActions` and `powerActions` emit, against
+  // the case labels of `scoreAction`'s own switch. An entry on the opt-out is a
+  // decision with a reason; there are none today.
+  {
+    const aiSrc = fs.readFileSync(path.join(__dirname, '../src/ai.js'), 'utf8');
+    const PRICED_AT_NEG_INFINITY_ON_PURPOSE = {};
+    const emitted = new Set([...engSrc.matchAll(/(?:\{\s*|\n\s*)t: '([a-zA-Z]+)'/g)].map(m => m[1]));
+    const i = aiSrc.indexOf('  scoreAction(pi, a) {');
+    const j = aiSrc.indexOf('\n  }\n', i);
+    const body = i < 0 ? '' : aiSrc.slice(i, j);
+    const scored = new Set([...body.matchAll(/^ {6}case '([a-zA-Z]+)':/gm)].map(m => m[1]));
+    const unscored = [...emitted].filter(t => !scored.has(t) && !PRICED_AT_NEG_INFINITY_ON_PURPOSE[t]).sort();
+    check(i >= 0 && emitted.size > 5 && unscored.length === 0,
+      'every action type the engine offers has a case in scoreAction',
+      unscored.length ? `${unscored.join(', ')} would never be played by the bot` : '');
   }
 
   // Two sources, deliberately. What the ENGINE dispatches catches a verb built

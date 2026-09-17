@@ -257,6 +257,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 2 Sep | **A heal buys a rescue only if it CROSSES the line**, and the target is chosen by what the heal is worth rather than by damage counters — the bonus was flat across the boundary where the card stops working, and the selection could suppress its own correction | `healRescues`, `T_HEAL` |
 | 3 Sep | **A Switch is worth how much you WANT to move.** The gain was computed to pick a target and thrown away, so the card scored a flat -4.00 on every board that was not an emergency. The retreat cost it nullifies is deliberately NOT priced — it is already in the comparison against retreating, and a second rate is what this project keeps diagnosing | `T_SWITCH_OWN`, `bestSelfSwitch` |
 | 3 Sep | **What a card is FOR is partly a question about the board.** Wall-ness scales with `1 - roadLive`, and the old terminal-Basic gate is DERIVED rather than removed — a terminal Basic is a card whose road is permanently dead, and the equivalence is asserted over the whole pool | `roadLive`, `wallHere`, `wallShape` |
+| 17 Sep | **A Doll is not a Prize.** Three scorers priced one — the worst read a KO on their Fossil as our winning Prize — and no bot had ever discarded one, because the action type had no case. Discard only for an attacker that swings this turn | `discardInPlay`, `givesPrize` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -541,7 +542,17 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     **The offensive half — mill effects gaining value as their deck shrinks — is not built and should
     not be opened by tuning Wildfire**, which Trevor has declined and is right to.
 
-16. **An ACTION TYPE is a third silent-failure surface, and it is the one nothing guards — 8 Sep
+16. ~~**An ACTION TYPE is a third silent-failure surface, and it is the one nothing guards.**~~
+    **GUARDED 17 Sep 2026 (#42) — and the prediction below was wrong, which is the part to keep.** It
+    said the guard would go in green. **It went in red on its first run**: `discardInPlay` had no
+    case, so no bot had ever discarded a Mysterious Fossil or a Clefairy Doll, and three roster decks
+    run four Fossils. Scored now, and the same fact turned out to be missing twice more — neither
+    scorer knew a Doll concedes **no Prize**.
+    *[The entry →](AI-INVARIANTS/DOLL-NO-PRIZE.md)* · the guard is in `selftest.js`, beside the
+    subset one. **What follows is the item as it read**, kept because `scoreStadiumAction`'s weights
+    paragraph is still open.
+
+    **An ACTION TYPE is a third silent-failure surface, and it is the one nothing guards — 8 Sep
     2026, Job 16.** This file's opening line is about a *verb* the scorer cannot price, and
     `selftest.js` covers that, plus Power kinds, plus (since Gym Heroes) Stadium kinds. **None of
     them sees a new `a.t`.**
@@ -600,7 +611,15 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     pre-evolution in hand), break the ties, express the other three in terms of it, then
     `abtest 8 HEAD~1` — a symmetric change, so `aiduel` would cancel it.
 
-18. **SILENT-FAILURE SURFACE #5 is guarded — and its guard's list is hand-maintained, which is what
+18. ~~**Its guard's list is hand-maintained.**~~ **DERIVED 17 Sep 2026 (#42).** The subset family
+    is now read out of `engine.js` — every case that treats a missing choice as `|| []` — and the
+    opt-out runs the safe way: a verb is a subset verb unless `WHICH_NOT_WHETHER` says otherwise,
+    with a reason. **The derivation found two members the list never had**, both attack-shaped
+    (Sleight of Hand, and the attack returning our own Pokémon), which cannot refuse by `-Infinity`
+    and are held to the other half of the contract instead: ai.js must write the key. Both were
+    already filled. **Named blind spot:** a subset verb reading its choice through a different idiom.
+
+    **SILENT-FAILURE SURFACE #5 is guarded — and its guard's list is hand-maintained, which is what
     is still open.** A subset verb ("as many as you want") whose scorer forgets to fill `a.opts` is
     legal, offered, played, and does **nothing**, because the engine resolves an unanswered subset to
     zero on purpose. It fails **open and silent**, where item 16 fails closed. `selftest.js` checks
