@@ -332,6 +332,10 @@ console.log(`        ${closed} in live files. Some are corrections that must sta
 console.log('\nHand-listed archives');
 let rolls = 0;
 for (const f of FILES) {
+  // A register may hold a VERBATIM snapshot of an old roll -- HISTORY-ARCHIVE-3
+  // preserves LOGBOOK's retired header, table and all -- and cannot be edited to
+  // remove it. The failure this section exists for was always a live file.
+  if (registerOf(f).isReg) continue;
   const own = path.basename(f).replace(/(-ARCHIVE-\d+)?\.md$/, '');
   const byRegister = new Map();
   for (const m of read(f).matchAll(/([A-Z][A-Z-]*)-ARCHIVE-\d+\.md/g)) {
