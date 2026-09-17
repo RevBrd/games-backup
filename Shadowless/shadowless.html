@@ -7978,7 +7978,14 @@ class AI {
     const c = this.db[inst.id];
     if (!c) return 0;
     if (c.kind === 'energy') {
-      return inPlay.some(sl => this.potential(pi, sl).short > 0) ? 4 : 1;
+      // `shortfallFor`, NOT `potential().short` — #42, 17 Sep 2026, AI.md item
+      // 19. The two are the same loop (min over attacks of the symbols missing),
+      // so the answer cannot differ: 16,593 comparisons over 60 ladder games, zero
+      // disagreements. But `potential` scores every attack on the slot to get
+      // there, and scoring an attack is `scoreAttack` — so asking what a card is
+      // worth from inside `scoreAttack` recursed until the stack died. Now
+      // nothing in this function reaches the scorer, and it is safe everywhere.
+      return inPlay.some(sl => this.shortfallFor(sl, this.top(sl)) > 0) ? 4 : 1;
     }
     if (c.kind === 'pokemon' && c.evolvesFrom) {
       return inPlay.some(sl => this.top(sl).name === c.evolvesFrom) ? 9 : 1.5;

@@ -628,7 +628,16 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     keeping it is the fix, and it is not built. *[The rule →](Rulings/SUBSET-CHOICES.md)* · *[the
     mechanism →](ENGINE.md)* · *[this item as it read →](HISTORY-ARCHIVE-3.md)*
 
-19. **`scoreAttack` cannot ask what a card is worth — 11 Sep 2026, Job 16.** A structural limit rather
+19. ~~**`scoreAttack` cannot ask what a card is worth.**~~ **LIFTED 17 Sep 2026 (#42), and it needed
+    no cheap mode.** The only branch of `cardKeepValue` reaching the scorer was the Energy one, asking
+    `potential().short > 0` — and `potentialOf` computes `short` with the **same loop** as
+    `shortfallFor`, which reads costs and scores nothing. Swapped: 16,593 live comparisons over 60
+    ladder games disagreed zero times, and `abtest 8 HEAD --pairs 400` diverged 0 of 3,200.
+    **`cardKeepValue` is now safe to call from anywhere**, which is what item 17 needed.
+    **The lesson survives the fix and is kept below**: nothing that `scoreAttack` can reach may ask a
+    question whose answer is `scoreAttack`. What follows is the item as it read.
+
+    **`scoreAttack` cannot ask what a card is worth — 11 Sep 2026, Job 16.** A structural limit rather
     than a missing weight, and it cost a stack overflow twice in one session before it was named.
 
     ```
