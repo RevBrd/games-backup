@@ -20,7 +20,10 @@ const AI_WEIGHTS = {
   benchDamageFoe: 0.7,  // splash onto their bench
   benchDamageMine: 0.9, // splash onto mine
   paralyze: 26,         // costs them a turn
-  sleep: 22,            // ~50% they stay down, plus they can't attack
+  sleep: 17.3,          // paralyze x 0.666: one Asleep denies 0.6659 turns
+                        // (tools/sleepcost.js, 40k applications). Was 22 until
+                        // #42, 17 Sep 2026 — duelled at 50.0% +/- 1.1, no
+                        // claim row moved. AI.md item 5
   confuse: 15,          // ~50% their attack fails and they self-hit
   poison: 12,           // 10/turn until they switch
   energyDiscard: 7,     // per Energy burned as an attack cost

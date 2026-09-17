@@ -114,7 +114,11 @@ const POOL = GBC ? OPPONENT_DECKS : DECKS;
 
 // Pull the baseline out of git rather than keeping a copy around to rot.
 const baseSrc = execSync(`git show ${REF}:Shadowless/src/ai.js`, { cwd: path.join(ROOT, '..'), maxBuffer: 1 << 24 }).toString();
-const tmp = path.join(os.tmpdir(), `shadowless-ai-${REF.replace(/[^\w]/g, '_')}.js`);
+// THE PID IS IN THE NAME — #42, 17 Sep 2026. Without it, parallel runs (the
+// AIDUEL_WEIGHTS use case) all wrote one temp file and read each other's
+// half-written copy: three of five threshold variants died mid-run.
+const tmp = path.join(os.tmpdir(), `shadowless-ai-${REF.replace(/[^\w]/g, '_')}-${process.pid}.js`);
+process.on('exit', () => { try { fs.unlinkSync(tmp); } catch (e) { /* already gone */ } });
 fs.writeFileSync(tmp, baseSrc);
 
 const NewAI = require('../src/ai.js').AI;

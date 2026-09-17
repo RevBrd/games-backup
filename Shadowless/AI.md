@@ -337,7 +337,16 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
    *[The entry →](AI-INVARIANTS/EVOLUTION-READINESS.md)* · *[the original item, and the two clauses
    of Trevor's note still unbuilt →](HISTORY-ARCHIVE-2.md)*
 
-5. **Sleep's arithmetic is settled at 0.666; its WEIGHT is not.** One Asleep denies **0.6659** turns
+5. ~~**Sleep's WEIGHT is not settled.**~~ **SETTLED 17 Sep 2026 (#42): `sleep: 17.3`**, the value the
+   arithmetic implies. The objection below — that a denied turn is not worth the same at every point
+   in a game — turned out to be **already priced**: `statusWorthAgainst` scales every turn-denying
+   status by the damage it denies (`denied / AVG_ATTACK`) and floors it with the deck-out clock. So
+   the weight only carries the share of a turn, which is arithmetic. Measured before shipping:
+   `abtest --pairs 400` **5.4% ± 0.8 diverged** (the decision is reached), `AIDUEL_WEIGHTS` 17.3 vs
+   22 **50.0% ± 1.1**, and **no claim row moved**. A null with exposure, shipped on the arithmetic.
+   What follows is the item as it read.
+
+   **Sleep's arithmetic is settled at 0.666; its WEIGHT is not.** One Asleep denies **0.6659** turns
    over 40,000 real applications, against a closed form of 2/3 — so the old 1.20 was the crude
    instrument counting one application twice, exactly as this item had predicted before anything was
    measured. Scaled off `paralyze: 26`, that implies a `sleep` of **17.3** against a shipped **22**,
@@ -589,7 +598,21 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
 
     **STILL OPEN: the two thresholds.** `energyScarceAt: 1` and `energyCheapAt: 3` are Trevor's first
     guesses and he asked for them to be duelled rather than trusted. `AIDUEL_WEIGHTS` exists for exactly
-    this — results go here when they land. What follows is the item as it read.
+    this. **Measured 17 Sep 2026, and the instrument cannot see them:** every variant against the
+    committed (1, 3) read inside ±1.1 of 50%, over 8,450 mirrored games each —
+
+    | energyScarceAt, energyCheapAt | vs (1, 3) |
+    |---|---|
+    | 1, 2 | 50.3% |
+    | 1, 4 | 50.0% |
+    | 2, 3 | 50.1% |
+    | 2, 4 | 50.1% |
+    | **0, 1 — Energy always cheap, the extreme** | **50.0%** |
+
+    **The extreme row is the one to read.** It is roughly the old `rankHandJunk` stance and it is not
+    distinguishable either, so the finding is not that (1, 3) is best — it is that **win rate is blind
+    to this decision at ladder scale**. Trevor's (1, 3) stays, and the seven `powertest` rows are the
+    instrument that can actually judge it. What follows is the item as it read.
 
     **Four hand-quality opinions, and they disagree — 9 Sep 2026, Job 16.** Found while building the
     "as many as you want" cluster, which needed a read of hand quality and turned out to have a
