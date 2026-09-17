@@ -258,6 +258,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 3 Sep | **A Switch is worth how much you WANT to move.** The gain was computed to pick a target and thrown away, so the card scored a flat -4.00 on every board that was not an emergency. The retreat cost it nullifies is deliberately NOT priced — it is already in the comparison against retreating, and a second rate is what this project keeps diagnosing | `T_SWITCH_OWN`, `bestSelfSwitch` |
 | 3 Sep | **What a card is FOR is partly a question about the board.** Wall-ness scales with `1 - roadLive`, and the old terminal-Basic gate is DERIVED rather than removed — a terminal Basic is a card whose road is permanently dead, and the equivalence is asserted over the whole pool | `roadLive`, `wallHere`, `wallShape` |
 | 17 Sep | **A Doll is not a Prize.** Three scorers priced one — the worst read a KO on their Fossil as our winning Prize — and no bot had ever discarded one, because the action type had no case. Discard only for an attacker that swings this turn | `discardInPlay`, `givesPrize` |
+| 17 Sep | **One answer to what a card is worth keeping, and Energy in hand is a queue** — counted at the END of the turn, so this turn's attachment is never a spare. Every discard order goes through `handDiscardOrder`, which reprices after each pitch | `cardKeepValue`, `energyKeepValue`, `handDiscardOrder` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -581,7 +582,16 @@ is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 l
     `prizeIndex` (item 3), `wallRoadInDeck` (item 11) and `W.deckOutRange` (item 15) for the same
     reason.
 
-17. **Four hand-quality opinions, and they disagree — 9 Sep 2026, Job 16.** Found while building the
+17. ~~**Four hand-quality opinions, and they disagree.**~~ **ONE OPINION as of 17 Sep 2026 (#42)** —
+    `cardKeepValue`, with Trevor's Energy queue built in and the other three expressed through it.
+    **Shipped on a measured null** (`aiduel` 50.3% ± 1.1 over 8,450 games, control 50.0%) with 34.4% of
+    games diverging: real decisions, small at ladder scale. *[The entry →](AI-INVARIANTS/ENERGY-QUEUE.md)*
+
+    **STILL OPEN: the two thresholds.** `energyScarceAt: 1` and `energyCheapAt: 3` are Trevor's first
+    guesses and he asked for them to be duelled rather than trusted. `AIDUEL_WEIGHTS` exists for exactly
+    this — results go here when they land. What follows is the item as it read.
+
+    **Four hand-quality opinions, and they disagree — 9 Sep 2026, Job 16.** Found while building the
     "as many as you want" cluster, which needed a read of hand quality and turned out to have a
     choice of three existing ones.
 

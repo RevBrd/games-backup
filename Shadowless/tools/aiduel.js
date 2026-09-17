@@ -97,6 +97,19 @@ const ROOT = path.join(__dirname, '..');
 // unbalanced across four sets and are further from each other than the four
 // theme decks are, so a row means very little without --control beside it.
 const GBC = process.argv.includes('--gbc');
+
+// AIDUEL_WEIGHTS — a JSON object of AI_WEIGHTS overrides for the CHALLENGER seat
+// only. #42, 17 Sep 2026, for AI.md item 17: Trevor asked for the Energy-queue
+// thresholds to be duelled at other values rather than trusted, and editing
+// src/ai.js per variant would mean one run at a time. With this, the committed
+// file is the baseline and each variant is the same file with one number moved,
+// so any number of variants can run side by side:
+//
+//   AIDUEL_WEIGHTS='{"energyCheapAt":4}' node tools/aiduel.js 1 HEAD --gbc
+//
+// Against HEAD with a clean tree, this is a pure weight A/B. It does not apply
+// under --control, which must stay the baseline against itself.
+const CHALLENGER_WEIGHTS = process.env.AIDUEL_WEIGHTS ? JSON.parse(process.env.AIDUEL_WEIGHTS) : null;
 const POOL = GBC ? OPPONENT_DECKS : DECKS;
 
 // Pull the baseline out of git rather than keeping a copy around to rot.
@@ -108,6 +121,7 @@ const NewAI = require('../src/ai.js').AI;
 const OldAI = require(tmp).AI;
 
 console.log(`\nAI duel — working tree vs ${REF}`);
+if (CHALLENGER_WEIGHTS && !CONTROL) console.log(`  challenger weights: ${JSON.stringify(CHALLENGER_WEIGHTS)}`);
 console.log(`  pool ${Object.keys(POOL).length} decks${GBC ? ' (ladder)' : ' (theme)'}, ${N} seeds a matchup\n`);
 // NORMALISE THE LINE ENDINGS BEFORE COMPARING. `git show` hands back the blob as
 // stored; the working copy has whatever the checkout filter put there, and this
@@ -128,9 +142,10 @@ function playGame(deckA, deckB, seed, newSeat) {
   E.setupAuto(0); E.setupConfirm(0);
   E.setupAuto(1); E.setupConfirm(1);
   const Challenger = CONTROL ? OldAI : NewAI;
+  const challengerOpts = (CHALLENGER_WEIGHTS && !CONTROL) ? { mode: 'expert', weights: CHALLENGER_WEIGHTS } : { mode: 'expert' };
   const bots = [
-    new (newSeat === 0 ? Challenger : OldAI)(E, { mode: 'expert' }),
-    new (newSeat === 1 ? Challenger : OldAI)(E, { mode: 'expert' }),
+    new (newSeat === 0 ? Challenger : OldAI)(E, newSeat === 0 ? challengerOpts : { mode: 'expert' }),
+    new (newSeat === 1 ? Challenger : OldAI)(E, newSeat === 1 ? challengerOpts : { mode: 'expert' }),
   ];
   let acts = 0;
   while (E.state.winner === null && acts++ < 8000) {

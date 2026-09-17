@@ -47,7 +47,14 @@ const AI_WEIGHTS = {
   attachOnType: 4,      // the card pays a TYPED symbol this Pokemon actually
                         // needs, not just its Colorless. Breaks the tie toward
                         // Fire-on-Arcanine over Grass-on-Arcanine
-  ammoTurns: 2,         // extra shots to stock on an attack that eats its own
+  // THE ENERGY QUEUE — Trevor, 17 Sep 2026, AI.md item 17. Counted in useful
+  // Energy left in hand at the END of this turn, after its attachment. At or
+  // below `energyScarceAt` the bot sweats; at or above `energyCheapAt` an Energy
+  // is cheap and gets cheaper past it. Both are his first guesses and both are
+  // meant to be DUELLED at other values rather than trusted — see item 17.
+  energyScarceAt: 1,
+  energyCheapAt: 3,
+  ammoTurns: 2,       // extra shots to stock on an attack that eats its own
                         // Energy to fire. Charizard: RRRR + 2 discarded x 2 = 8
   attachSurplus: -2,    // attaching to a Pokemon that needs nothing. Negative so
                         // it falls under `threshold` and the card is HELD
@@ -457,27 +464,183 @@ class AI {
   // so the Prize picker could reuse it instead of growing a second opinion.
   // Trevor's rule, 16 Aug: evolutions you can use, Energy you are short of, and
   // Trainers are all real cards; the same card with nothing to attach to is not.
-  cardKeepValue(pi, inst, inPlay) {
+  // WHAT A CARD IS WORTH KEEPING — the ONE hand-quality opinion, #42, 17 Sep
+  // 2026, AI.md item 17. There were four and they disagreed; the sharpest case
+  // was Energy, which `rankHandJunk` filed near-junk unconditionally while this
+  // called it the most valuable card in hand. `rankHandJunk`, `junkiestInHand`
+  // and `handCycleChoice` are now all expressed in terms of this function.
+  //
+  // `opts.without` is a Set of uids to treat as already gone — which is how a
+  // two-card discard makes the SECOND Energy dearer than the first. `opts.ctx`
+  // is the per-board Energy read, built once by callers that loop.
+  //
+  // Nothing in here may reach `scoreAttack` (item 19): costs are read with
+  // `shortfallFor`/`attackShortfalls`, never with `potential`.
+  cardKeepValue(pi, inst, inPlay, opts) {
     const E = this.E, me = E.state.players[pi];
     const c = this.db[inst.id];
     if (!c) return 0;
+    const without = (opts && opts.without) || null;
     if (c.kind === 'energy') {
-      // `shortfallFor`, NOT `potential().short` — #42, 17 Sep 2026, AI.md item
-      // 19. The two are the same loop (min over attacks of the symbols missing),
-      // so the answer cannot differ: 16,593 comparisons over 60 ladder games, zero
-      // disagreements. But `potential` scores every attack on the slot to get
-      // there, and scoring an attack is `scoreAttack` — so asking what a card is
-      // worth from inside `scoreAttack` recursed until the stack died. Now
-      // nothing in this function reaches the scorer, and it is safe everywhere.
-      return inPlay.some(sl => this.shortfallFor(sl, this.top(sl)) > 0) ? 4 : 1;
+      const ctx = (opts && opts.ctx) || this.energyKeepCtx(pi, inPlay);
+      return this.energyKeepValue(pi, inst, c, ctx, without);
     }
     if (c.kind === 'pokemon' && c.evolvesFrom) {
-      return inPlay.some(sl => this.top(sl).name === c.evolvesFrom) ? 9 : 1.5;
+      // Live if its base is in play OR in hand — `junkiestInHand` knew the
+      // second and this did not. A Charmeleon beside its Charmander is a plan.
+      if (inPlay.some(sl => this.top(sl).name === c.evolvesFrom)) return 9;
+      if (me.hand.some(x => x.uid !== inst.uid && !(without && without.has(x.uid))
+        && (this.db[x.id] || {}).name === c.evolvesFrom)) return 9;
+      // Dead for now. Dead for GOOD if no base is left in the deck either —
+      // which also breaks the 1.5 tie with a crowded Basic below.
+      return me.deck.some(x => (this.db[x.id] || {}).name === c.evolvesFrom) ? 1.5 : 0.75;
     }
-    if (c.kind === 'pokemon') return me.bench.length < 3 ? 4 : 1.5;
+    if (c.kind === 'pokemon') {
+      if (me.bench.length >= E.benchCap()) return 1;     // cannot be played at all
+      return me.bench.length < 3 ? 4 : 2;
+    }
     return 2.5;   // a Trainer. Playable ones are worth more, but scoring every
                   // one of them here would recurse into this scorer.
   }
+
+  // Per attack, symbols still missing — `shortfallFor` without the min, so the
+  // road to the BIGGEST attack is visible too. Reads costs; scores nothing.
+  attackShortfalls(slot, card) {
+    const pool = this.E.slotSymbols(slot).slice();
+    return (card.attacks || []).map(a => {
+      const need = a.cost.split('').filter(x => x !== 'C');
+      const generic = a.cost.length - need.length;
+      const used = new Array(pool.length).fill(false);
+      let short = 0;
+      for (const t of need) {
+        const k = pool.findIndex((x, j) => !used[j] && x === t);
+        if (k === -1) short++; else used[k] = true;
+      }
+      const spare = pool.filter((x, j) => !used[j]).length;
+      if (spare < generic) short += generic - spare;
+      return short;
+    });
+  }
+
+  // How many symbols this slot still wants: the road to its biggest attack.
+  slotEnergyDemand(slot) {
+    const s = this.attackShortfalls(slot, this.top(slot));
+    return s.length ? Math.max(...s) : 0;
+  }
+
+  // How much of the board's demand ONE copy of this Energy would pay, on its
+  // best slot. Asked of the engine by attaching it for real and taking it off,
+  // the `potential` push/pop shape — so a Double Colorless is 2, a Fire on
+  // Charizard under Energy Burn is what Energy Burn says, and a Grass on a
+  // board of Water Pokemon with no Colorless left to pay is 0.
+  energyPays(pi, id, inPlay) {
+    let best = 0;
+    for (const sl of inPlay) {
+      const before = this.slotEnergyDemand(sl);
+      if (!before) continue;
+      sl.energy.push({ id, uid: -1 });
+      let after;
+      try { after = this.slotEnergyDemand(sl); } finally { sl.energy.pop(); }
+      best = Math.max(best, before - after);
+    }
+    return best;
+  }
+
+  // The per-board half of an Energy's value, built once per question.
+  energyKeepCtx(pi, inPlay) {
+    const me = this.E.state.players[pi];
+    let demand = 0;
+    for (const sl of inPlay) demand += this.slotEnergyDemand(sl);
+    const pays = new Map();
+    const paysOf = id => {
+      if (!pays.has(id)) pays.set(id, this.energyPays(pi, id, inPlay));
+      return pays.get(id);
+    };
+    const isE = x => (this.db[x.id] || {}).kind === 'energy';
+    const inDeck = me.deck.filter(isE).length;
+    // Draws per Energy off the top, capped as `energyRefillTurns` caps it.
+    const refill = inDeck ? Math.min(4, me.deck.length / inDeck) : 4;
+    return { demand, paysOf, refill };
+  }
+
+  // THE QUEUE. Trevor, 17 Sep 2026: *"In any turn after the bot has already
+  // attached its allotted energy, if it still has one energy left in its hand,
+  // it should feel insecure... if it has 3 or more energies in hand after that
+  // turn's energy allowance is already attached, then energies should be
+  // considered cheap, scaling up in cheapness past 3."*
+  //
+  // WHY THE CURVE IS RIGHT and not just his taste: one attachment a turn makes
+  // the Energy in hand a queue. The Nth spare is not needed for N turns, so it
+  // is worth less the further back it stands — the project's own "an Energy is
+  // a turn" rule, read along the queue.
+  //
+  // END OF TURN, EXPLICITLY. The attachment is played LAST in a turn (see
+  // PLAY-ORDER), so when a discard card asks, this turn's Energy is usually
+  // still in hand. It is spoken for: counting it as a spare would gamble away
+  // the only guaranteed Energy for next turn. Trevor's call, 17 Sep.
+  //
+  // Only Energy that PAYS something counts toward the queue, and demand caps it:
+  // three spares are not cheap on a board that still wants seven.
+  energyKeepValue(pi, inst, c, ctx, without) {
+    const W = this.W, me = this.E.state.players[pi];
+    const pays = ctx.paysOf(inst.id);
+    if (!pays || !ctx.demand) return 1;                    // pays for nothing here
+    let inHand = 0;
+    let self = false;
+    for (const x of me.hand) {
+      if (without && without.has(x.uid)) continue;
+      if ((this.db[x.id] || {}).kind !== 'energy' || !ctx.paysOf(x.id)) continue;
+      inHand++;
+      if (x.uid === inst.uid) self = true;
+    }
+    if (!self) inHand++;                                   // a card joining the hand
+    const n = Math.max(1, inHand - (me.energyAttached ? 0 : 1));
+    // Others already cover everything the board wants: this one is surplus.
+    // (This turn's attachment spends one card AND one symbol, so it cancels.)
+    if (inHand - 1 >= ctx.demand) return 1;
+    const S = W.energyScarceAt, C = Math.max(W.energyCheapAt, S + 1);
+    let v;
+    if (n <= S) {
+      // THE SWEAT, and it is scaled by the deck: the last Energy in a hand is
+      // precious in proportion to how long the deck takes to produce another.
+      v = 4 + 1.5 * Math.max(0, Math.min(1, (ctx.refill - 1) / 3));
+    } else if (n < C) {
+      v = 4 - 2 * (n - S) / (C - S);
+    } else {
+      v = Math.max(1, 2 * C / n);
+    }
+    // A Double Colorless costs a little more to lose, by exactly how much more
+    // of THIS board it pays — "situation-dependent", so it is 1x where it pays one.
+    return v * (1 + 0.25 * Math.max(0, pays - 1));
+  }
+
+  // THE DISCARD ORDER, cheapest first, built one card at a time so that each
+  // removal reprices what is left. `excludeUid` is the card being played.
+  handDiscardOrder(pi, excludeUid, limit) {
+    const E = this.E, me = E.state.players[pi];
+    const inPlay = E.allSlots(pi);
+    const ctx = this.energyKeepCtx(pi, inPlay);
+    const without = new Set();
+    if (excludeUid != null) without.add(excludeUid);
+    const out = [];
+    const max = limit == null ? me.hand.length : limit;
+    while (out.length < max) {
+      let best = null;
+      for (const x of me.hand) {
+        if (without.has(x.uid)) continue;
+        const keep = this.cardKeepValue(pi, x, inPlay, { without, ctx });
+        // Ties go by card id, never by hand position — the positional tiebreak
+        // Cat Punch exists to kill.
+        if (!best || keep < best.keep || (keep === best.keep && x.id < best.id))
+          best = { uid: x.uid, id: x.id, keep };
+      }
+      if (!best) break;
+      out.push(best);
+      without.add(best.uid);
+    }
+    return out;
+  }
+
 
   // What a card in hand is actually worth keeping, for the two cards that throw
   // a hand away. Trevor's rule, 16 Aug: don't pitch evolutions you can use,
@@ -507,8 +670,9 @@ class AI {
     const E = this.E, me = E.state.players[pi];
     if (!me.deck.length) return 0;
     const inPlay = E.allSlots(pi);
+    const ctx = this.energyKeepCtx(pi, inPlay);
     let v = 0;
-    for (const inst of me.deck) v += this.cardKeepValue(pi, inst, inPlay);
+    for (const inst of me.deck) v += this.cardKeepValue(pi, inst, inPlay, { ctx });
     return v / me.deck.length;
   }
 
@@ -524,14 +688,17 @@ class AI {
   // not a tidy-up to smuggle into a set addition.
   handCycleChoice(pi, excludeUid) {
     const E = this.E, me = E.state.players[pi];
-    const inPlay = E.allSlots(pi);
     const bar = this.deckDrawValue(pi);
     const uids = [];
     let given = 0;
-    for (const inst of me.hand) {
-      if (inst.uid === excludeUid) continue;
-      const keep = this.cardKeepValue(pi, inst, inPlay);
-      if (keep < bar) { uids.push(inst.uid); given += keep; }
+    // In discard order, so each pitch reprices the rest: the third spare Energy
+    // may go under the bar where the last one does not. Stop at the first card
+    // worth keeping. The simulation already treats
+    // everything before it as gone, so continuing past it would price the rest
+    // against a hand we are not going to have.
+    for (const x of this.handDiscardOrder(pi, excludeUid)) {
+      if (x.keep >= bar) break;
+      uids.push(x.uid); given += x.keep;
     }
     // The gain is what the replacements are worth minus what we handed over.
     // Positive by construction whenever the list is non-empty, which is exactly
@@ -4671,35 +4838,25 @@ class AI {
   // Returns {uid, score} where score is roughly "how much better an unknown card
   // would be" — 0 for something the board wants, up to 1 for a dead card.
   junkiestInHand(pi) {
-    const me = this.E.state.players[pi];
-    if (!me.hand.length) return null;
-    const need = new Set();
-    for (const sl of this.E.allSlots(pi)) {
-      const c = this.top(sl);
-      for (const at of (c.attacks || [])) for (const ch of String(at.cost || '')) need.add(ch);
-    }
-    let best = null;
-    for (const inst of me.hand) {
-      const c = this.db[inst.id];
-      let junk;
-      if (!c) junk = 1;
-      // A Rainbow is wanted by anything that wants a typed symbol at all, and
-      // the first draft of this line filed it at 0.9 — the junkiest thing in
-      // hand — because '*' is in no needs set.
-      else if (c.kind === 'energy') {
-        junk = (c.provides === AI_WILD ? need.size > 0 : need.has(c.provides)) ? 0.15 : 0.9;
+    // Now the cheapest card in `handDiscardOrder` (AI.md item 17), with the keep
+    // value translated onto the 0..1 junk scale the two callers already price
+    // with. The anchors are this function's OWN old answers at the keep values
+    // that used to produce them, so the callers' weights did not have to move:
+    // live evolution 9 -> 0.1, a Basic with room 4 -> 0.2, a Trainer 2.5 -> 0.4,
+    // a crowded or dead card 1.5 -> 0.75, an Energy nothing needs 1 -> 0.9.
+    const first = this.handDiscardOrder(pi, null, 1)[0];
+    if (!first) return null;
+    const pts = [[0.75, 0.95], [1, 0.9], [1.5, 0.75], [2.5, 0.4], [4, 0.2], [9, 0.1]];
+    const k = first.keep;
+    let score = k <= pts[0][0] ? pts[0][1] : pts[pts.length - 1][1];
+    for (let i = 1; i < pts.length; i++) {
+      if (k <= pts[i][0]) {
+        const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+        score = y0 + (y1 - y0) * (k - x0) / (x1 - x0);
+        break;
       }
-      else if (c.kind === 'trainer') junk = 0.4;
-      else if (c.stage === 'Basic') junk = me.bench.length >= 4 ? 0.7 : 0.2;
-      else {
-        // An Evolution whose pre-evolution is nowhere is a dead card in hand.
-        const have = this.E.allSlots(pi).some(sl => this.top(sl).name === c.evolvesFrom)
-                  || me.hand.some(x => this.db[x.id] && this.db[x.id].name === c.evolvesFrom);
-        junk = have ? 0.1 : 0.8;
-      }
-      if (!best || junk > best.score) best = { uid: inst.uid, score: junk };
     }
-    return best;
+    return { uid: first.uid, score };
   }
 
   // Also fills in a.opts, so the engine never has to pick targets at random.
@@ -5129,9 +5286,7 @@ class AI {
           // fallback takes the first two cards in hand, which is the positional
           // tiebreak Cat Punch exists to kill. Fill it anyway.
           const inPlay = E.allSlots(pi);
-          const ranked = me.hand.filter(x => x.uid !== inst.uid)
-            .map(x => ({ uid: x.uid, keep: this.cardKeepValue(pi, x, inPlay) }))
-            .sort((x, y) => x.keep - y.keep);
+          const ranked = this.handDiscardOrder(pi, inst.uid);
           const cost = v.cost || 2;
           if (ranked.length < cost) return -Infinity;
           const pay = ranked.slice(0, cost);
@@ -5862,21 +6017,10 @@ class AI {
   // Cards we'd least mind pitching: spare Energy beyond what we can attach,
   // then evolutions with no pre-evolution in play, then duplicates.
   rankHandJunk(pi, excludeUid) {
-    const E = this.E, me = E.state.players[pi];
-    const inPlay = new Set(E.allSlots(pi).map(s => this.top(s).name));
-    const scored = me.hand
-      .filter(x => x.uid !== excludeUid)
-      .map(x => {
-        const c = this.db[x.id];
-        let junk = 0;
-        if (c.kind === 'energy') junk = 3;
-        else if (c.kind === 'pokemon' && c.evolvesFrom && !inPlay.has(c.evolvesFrom)) junk = 5;
-        else if (c.kind === 'pokemon' && c.stage === 'Basic') junk = 2;
-        else junk = 1;
-        return { uid: x.uid, junk };
-      })
-      .sort((a, b) => b.junk - a.junk);
-    return scored.map(x => x.uid);
+    // AI.md item 17: no longer an opinion of its own. It rated Energy near-junk
+    // unconditionally; the order now comes from `cardKeepValue`, built one
+    // discard at a time so the second pitch is priced after the first.
+    return this.handDiscardOrder(pi, excludeUid).map(x => x.uid);
   }
   worstHandCard(pi, excludeUid) {
     const r = this.rankHandJunk(pi, excludeUid);

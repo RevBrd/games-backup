@@ -131,3 +131,4 @@ open the entry.
 | 15 Sep 2026 | **a strip is worth what it turns off, a coin-flip strip is half of one, and the bot was not choosing which** | `stripDenial`, `flags.stripEnergy`, `energyUids` on attacks | [ENERGY-DENIAL-WORTH](AI-INVARIANTS/ENERGY-DENIAL-WORTH.md) |
 | 15 Sep 2026 | **`slotPrintedDamage` ASSIGNED where the forecast ADDS, so a coin-scaling attack lost its printed base** | `slotPrintedDamage` (`DMG_PER_ENERGY_HEADS`) | [OVER-ATTACH-BASE](AI-INVARIANTS/OVER-ATTACH-BASE.md) |
 | 17 Sep 2026 | **a Doll is not a Prize, and nothing had ever discarded one** | `discardInPlay`, `givesPrize`, `promoteValue` | [DOLL-NO-PRIZE](AI-INVARIANTS/DOLL-NO-PRIZE.md) |
+| 17 Sep 2026 | **one hand-quality opinion, and Energy in hand is a queue** | `cardKeepValue`, `energyKeepValue`, `handDiscardOrder` | [ENERGY-QUEUE](AI-INVARIANTS/ENERGY-QUEUE.md) |

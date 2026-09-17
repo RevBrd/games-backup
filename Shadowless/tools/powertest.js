@@ -9472,5 +9472,64 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
   });
 }
 
+// ---------------------------------------------------------------------------
+// ONE HAND-QUALITY OPINION — #42, 17 Sep 2026, AI.md item 17. Trevor's Energy
+// queue, as rows. A thirsty board: Blastoise (WWW) Active, Squirtle and Lapras
+// behind it, holding nothing — five symbols wanted.
+{
+  const { setup } = require('./lib/board.js');
+  const { AI } = require('../src/ai.js');
+  const thirsty = (hand, attached) => {
+    const b = setup({ me: { card: 'base1:Blastoise' }, them: { card: 'base1:Machop' },
+      myBench: [{ card: 'base1:Seel' }, { card: 'base1:Poliwag' }], myHand: hand });
+    b.E.state.players[0].energyAttached = attached;
+    return b.E;
+  };
+  const order = E => new AI(E, {}).handDiscardOrder(0, null)
+    .map(x => ({ name: E.db[E.state.players[0].hand.find(h => h.uid === x.uid).id].name, keep: x.keep }));
+  const W = 'base1-102';
+
+  console.log('\nHand quality — the Energy queue');
+  T('the only Energy for next turn is not gambled: two in hand, attachment unspent', () => {
+    const o = order(thirsty([W, W, 'base1:Bill'], false));
+    return eq(o[0].name, 'Bill', 'the Trainer goes before either Water');
+  });
+  T('...but a pile of spares after the attachment is cheap', () => {
+    const o = order(thirsty([W, W, W, W, W, 'base1:Bill'], true));
+    return eq(o[0].name, 'Water Energy', 'a fifth spare Water goes before Bill');
+  });
+  T('...and the second pitch costs more than the first', () => {
+    const o = order(thirsty([W, W, W, W, W, 'base1:Bill'], true));
+    eq(o[1].name, 'Water Energy', 'second pitch is also Water');
+    return eq(o[1].keep > o[0].keep, true, `first ${o[0].keep}, second ${o[1].keep}`);
+  });
+  T('demand caps it: spares on a board that wants almost nothing are surplus', () => {
+    const b = setup({ me: { card: 'base1:Blastoise', energy: '2 Water' }, them: { card: 'base1:Machop' },
+      myHand: [W, W, 'base1:Bill'] });
+    b.E.state.players[0].energyAttached = true;
+    return eq(order(b.E)[0].name, 'Water Energy', 'one symbol wanted, two in hand');
+  });
+  T('an Energy that pays for nothing on this board is junk', () => {
+    const E = thirsty([W, 'base1-99', 'base1:Bill'], false);   // Grass, on WWW / W / W — no Colorless to pay
+    const ai = new AI(E, {});
+    const hand = E.state.players[0].hand, inPlay = E.allSlots(0);
+    const grass = hand.find(x => x.id === 'base1-99'), water = hand.find(x => x.id === W);
+    eq(ai.cardKeepValue(0, grass, inPlay), 1, 'Grass');
+    return eq(ai.cardKeepValue(0, water, inPlay) > 1, true, 'Water is not junk');
+  });
+  T('a Double Colorless is dearer than a basic where it pays two', () => {
+    const b = setup({ me: { card: 'base2-5' }, them: { card: 'base1:Machop' },
+      myHand: ['base1-96', 'base1-98'] });                    // DCE, Fire, on Comet Punch CCCC
+    b.E.state.players[0].energyAttached = true;
+    return eq(order(b.E)[0].name, 'Fire Energy', 'the basic goes first');
+  });
+  T('an evolution whose Basic is IN HAND is live — the fact junkiestInHand had alone', () => {
+    const b = setup({ me: { card: 'base1:Machop' }, them: { card: 'base1:Machop' },
+      myHand: ['base1:Charmeleon', 'base1:Charmander', 'base1:Bill'] });
+    const o = order(b.E);
+    return eq(o[o.length - 1].name, 'Charmeleon', 'kept longest');
+  });
+}
+
 console.log(`\n=========== ${pass} passed, ${fail} failed ===========\n`);
 process.exit(fail === 0 ? 0 : 1);
