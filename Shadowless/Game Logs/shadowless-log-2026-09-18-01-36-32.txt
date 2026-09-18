@@ -1,0 +1,579 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-09-18 01:36:32
+decks    you: New deck 3   opponent: Oona — Riptide
+opponent expert
+seed     1241354255   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Misty's Poliwrath, Misty's Cloyster, Water Energy, Good Manners, Water Energy, Misty's Poliwag, Water Energy
+  HIDDEN  your opening hand: Fighting Energy, Fighting Energy, Fighting Energy, Fighting Energy, Mysterious Fossil, Fighting Energy, Diglett
+  HIDDEN  opponent's Prizes: Misty's Tentacool, Misty's Shellder, Misty's Poliwag, Misty's Tentacruel, Rocket's Snorlax, Full Heal Energy
+  HIDDEN  your Prizes: Onix, Pokémon Trader, Poké Ball, Fighting Energy, Fighting Energy, Fighting Energy
+  HIDDEN  opponent's opening board: Misty's Poliwag active, empty bench
+  HIDDEN  your opening board: Diglett active, empty bench
+          New game. Seed 1241354255.
+          Oona has no Basic Pokemon - mulligan.
+          Coin flip (who goes first): HEADS
+          You will go first.
+          You draws 1 extra (opponent mulligans).
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (45 left)
+          You benches Mysterious Fossil.
+          Illegal: No such benched Pokemon
+          You attaches Fighting Energy to Diglett.
+          Diglett uses Dig.
+          Misty's Poliwag takes 10. (40/50 left)
+
+--- Turn 2 — Oona ------------------------------
+          Oona draws a card. (46 left)
+  AI      trainer — played before attach, which can only get better for it   [5]
+          holding: Misty's Poliwrath, Misty's Cloyster, Water Energy, Good Manners, Water Energy, Water Energy, Misty's Duel
+          Oona plays Good Manners.
+          Good Manners: Misty's Shellder shown and taken into hand.
+  AI      bench   [26]
+          holding: Misty's Poliwrath, Misty's Cloyster, Water Energy, Water Energy, Water Energy, Misty's Duel, Misty's Shellder
+          passed over: attach 24.2, attach 24.2, attach 24.2, trainer 0
+          Oona benches Misty's Shellder.
+  AI      attach   [25]
+          holding: Misty's Poliwrath, Misty's Cloyster, Water Energy, Water Energy, Water Energy, Misty's Duel
+          passed over: attach 25, attach 25, attach 24.2, attach 24.2, attach 24.2
+          Oona attaches Water Energy to Misty's Shellder.
+  AI      trainer   [3]
+          holding: Misty's Poliwrath, Misty's Cloyster, Water Energy, Water Energy, Misty's Duel
+          Oona plays Misty's Duel.
+          Coin flip (Misty's Duel): HEADS
+          Misty's Duel: Oona wins, shuffles 4 card(s) away and draws 5.
+  AI      bench   [7]
+          holding: Potion Energy, Professor Oak, Blaine's Tauros, Misty's Cloyster, Water Energy
+          passed over: trainer -2.9
+          Oona benches Blaine's Tauros.
+  AI      trainer   [4.3]
+          holding: Potion Energy, Professor Oak, Misty's Cloyster, Water Energy
+          Oona plays Professor Oak.
+          Oona discards 3 card(s) and draws 7.
+  AI      trainer   [30.2]
+          holding: Misty's Wrath, Water Energy, Misty's Tentacool, Bill, Gust of Wind, Water Energy, Professor Oak
+          passed over: trainer 9.3, bench 7, trainer 1.1, trainer -14.7
+          Oona plays Gust of Wind.
+          You's Mysterious Fossil is dragged into the Active spot.
+  AI      trainer   [9.3]
+          holding: Misty's Wrath, Water Energy, Misty's Tentacool, Bill, Water Energy, Professor Oak
+          passed over: bench 7, trainer 1.1, trainer -8.3
+          Oona plays Bill.
+          Oona draws 2.
+  AI      bench   [7]
+          holding: Misty's Wrath, Water Energy, Misty's Tentacool, Water Energy, Professor Oak, Water Energy, Water Energy
+          passed over: trainer 0, trainer -17.4
+          Oona benches Misty's Tentacool.
+  AI      pass — no attack available — Hypnotic Stare: Not enough Energy; Tail Rap: Not enough Energy   [0]
+          holding: Misty's Wrath, Water Energy, Water Energy, Professor Oak, Water Energy, Water Energy
+          Oona ended the turn without attacking.
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (44 left)
+          You attaches Fighting Energy to Diglett.
+          You ended the turn without attacking.
+
+--- Turn 4 — Oona ------------------------------
+          Oona draws a card. (34 left)
+  AI      attach   [22]
+          holding: Misty's Wrath, Water Energy, Water Energy, Professor Oak, Water Energy, Water Energy, Misty
+          passed over: attach 22, attach 22, attach 22, attach 18, attach 18
+          Oona attaches Water Energy to Misty's Shellder.
+  AI      pass — no attack available — Hypnotic Stare: Not enough Energy; Tail Rap: Not enough Energy   [0]
+          holding: Misty's Wrath, Water Energy, Professor Oak, Water Energy, Water Energy, Misty
+          Oona ended the turn without attacking.
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (43 left)
+          You attaches Fighting Energy to Diglett.
+          You ended the turn without attacking.
+
+--- Turn 6 — Oona ------------------------------
+          Oona draws a card. (33 left)
+  AI      attach   [18]
+          holding: Misty's Wrath, Water Energy, Professor Oak, Water Energy, Water Energy, Misty, Potion
+          passed over: attach 18, attach 18, attach 15, attach 15, attach 15
+          Oona attaches Water Energy to Blaine's Tauros.
+  AI      pass — no attack available — Hypnotic Stare: Not enough Energy; Tail Rap: Not enough Energy   [0]
+          holding: Misty's Wrath, Professor Oak, Water Energy, Water Energy, Misty, Potion
+          Oona ended the turn without attacking.
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (42 left)
+          You ended the turn without attacking.
+
+--- Turn 8 — Oona ------------------------------
+          Oona draws a card. (32 left)
+  AI      attach   [15]
+          holding: Misty's Wrath, Professor Oak, Water Energy, Water Energy, Misty, Potion, Water Energy
+          passed over: attach 15, attach 15, attach 15, attach 15, attach 15
+          Oona attaches Water Energy to Misty's Poliwag.
+  AI      retreat   [4.4]
+          holding: Misty's Wrath, Professor Oak, Water Energy, Misty, Potion, Water Energy
+          passed over: retreat -0.3, trainer -0.5, trainer -2, trainer -10.5, retreat -27
+          Oona retreats Misty's Poliwag; Misty's Shellder is now Active.
+  AI      attack:Tackle   [65]
+          holding: Misty's Wrath, Professor Oak, Water Energy, Misty, Potion, Water Energy
+          passed over: attack:Clamp 32.5
+          Misty's Shellder uses Tackle.
+          Mysterious Fossil takes 10. (0/10 left)
+          Mysterious Fossil is Knocked Out!
+          Mysterious Fossil doesn't count as a Knocked Out Pokemon - no Prize.
+          You promotes Diglett to Active.
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (41 left)
+          You plays Defender.
+          Defender attached to Diglett (-20 damage until the end of the opponent's next turn).
+          You plays Energy Removal.
+          Water Energy discarded from Misty's Shellder.
+          You attaches Fighting Energy to Diglett.
+          Diglett uses Mud Slap.
+          Misty's Shellder takes 30. (10/40 left)
+
+--- Turn 10 — Oona ------------------------------
+          Oona draws a card. (31 left)
+  AI      attach   [20]
+          holding: Misty's Wrath, Professor Oak, Water Energy, Misty, Potion, Water Energy, Water Energy
+          passed over: attach 20, attach 20, attach 15, attach 15, attach 15
+          Oona attaches Water Energy to Misty's Shellder.
+  AI      trainer   [7]
+          holding: Misty's Wrath, Professor Oak, Misty, Potion, Water Energy, Water Energy
+          passed over: retreat 6.5, retreat -1.5, retreat -1.5, trainer -2.7, trainer -11.3
+          Oona plays Potion.
+          Misty's Shellder heals 20. (10 damage left)
+  AI      retreat   [6.5]
+          holding: Misty's Wrath, Professor Oak, Misty, Water Energy, Water Energy
+          passed over: retreat -1.5, retreat -1.5, trainer -2.7, trainer -4.9
+          Oona retreats Misty's Shellder; Blaine's Tauros is now Active.
+  AI      trainer   [13.3]
+          holding: Misty's Wrath, Professor Oak, Misty, Water Energy, Water Energy
+          passed over: trainer -2.7, trainer -4.9
+          Oona plays Misty.
+          Misty attached to Blaine's Tauros (+20 this turn, if a Misty Pokemon attacks).
+  AI      attack:3-Pronged Tail   [1.3]
+          holding: Water Energy, Water Energy
+          Blaine's Tauros uses 3-Pronged Tail.
+          Coin flip (coin 1/3): TAILS
+          Coin flip (coin 2/3): TAILS
+          Coin flip (coin 3/3): TAILS
+          0 head(s) -> 0 damage.
+          Defender is discarded.
+          Misty is discarded.
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (40 left)
+          You plays Bill.
+          You draws 2.
+          You plays Professor Oak.
+          You discards 6 card(s) and draws 7.
+          You benches Mysterious Fossil.
+          You attaches Fighting Energy to Mysterious Fossil.
+          Diglett uses Mud Slap.
+          Weakness: Blaine's Tauros takes double -> 60.
+          Blaine's Tauros takes 60. (10/70 left)
+
+--- Turn 12 — Oona ------------------------------
+          Oona draws a card. (30 left)
+  AI      attach   [22]
+          holding: Water Energy, Water Energy, Water Energy
+          passed over: attach 22, attach 22, attach 15, attach 15, attach 15
+          Oona attaches Water Energy to Misty's Shellder.
+  AI      attack:3-Pronged Tail   [21.9]
+          holding: Water Energy, Water Energy
+          Blaine's Tauros uses 3-Pronged Tail.
+          Coin flip (coin 1/3): HEADS
+          Coin flip (coin 2/3): TAILS
+          Coin flip (coin 3/3): HEADS
+          2 head(s) -> 20 damage.
+          Diglett takes 20. (10/30 left)
+
+--- Turn 13 — You -------------------------------
+          You draws a card. (30 left)
+          You benches Mysterious Fossil.
+          You retreats Diglett; Mysterious Fossil B is now Active.
+          You attaches Fighting Energy to Mysterious Fossil A.
+          You ended the turn without attacking.
+
+--- Turn 14 — Oona ------------------------------
+          Oona draws a card. (29 left)
+  AI      attach   [15]
+          holding: Water Energy, Water Energy, Misty's Poliwag
+          passed over: attach 15, attach 14, attach 14, attach 12, attach 12
+          Oona attaches Water Energy to Misty's Tentacool.
+  AI      bench   [2]
+          holding: Water Energy, Misty's Poliwag
+          Oona benches Misty's Poliwag.
+  AI      attack:3-Pronged Tail   [56.9]
+          holding: Water Energy
+          Blaine's Tauros uses 3-Pronged Tail.
+          Coin flip (coin 1/3): HEADS
+          Coin flip (coin 2/3): HEADS
+          Coin flip (coin 3/3): HEADS
+          3 head(s) -> 30 damage.
+          Mysterious Fossil takes 30. (0/10 left)
+          Mysterious Fossil is Knocked Out!
+          Mysterious Fossil doesn't count as a Knocked Out Pokemon - no Prize.
+          You promotes Mysterious Fossil to Active.
+
+--- Turn 15 — You -------------------------------
+          You draws a card. (29 left)
+          You benches Hitmonchan.
+          You attaches Fighting Energy to Hitmonchan.
+          You ended the turn without attacking.
+
+--- Turn 16 — Oona ------------------------------
+          Oona draws a card. (28 left)
+  AI      attach   [32]
+          holding: Water Energy, Misty's Poliwrath
+          passed over: attach 14, attach 12, attach 12, attach -2
+          Oona attaches Water Energy to Misty's Tentacool.
+  AI      attack:3-Pronged Tail   [56.9]
+          holding: Misty's Poliwrath
+          Blaine's Tauros uses 3-Pronged Tail.
+          Coin flip (coin 1/3): TAILS
+          Coin flip (coin 2/3): TAILS
+          Coin flip (coin 3/3): TAILS
+          0 head(s) -> 0 damage.
+
+--- Turn 17 — You -------------------------------
+          You draws a card. (28 left)
+          You attaches Fighting Energy to Hitmonchan.
+          You ended the turn without attacking.
+
+--- Turn 18 — Oona ------------------------------
+          Oona draws a card. (27 left)
+  AI      attach   [14]
+          holding: Misty's Poliwrath, Water Energy
+          passed over: attach 12, attach 12, attach -2, attach -2
+          Oona attaches Water Energy to Blaine's Tauros.
+  AI      attack:3-Pronged Tail   [56.9]
+          holding: Misty's Poliwrath
+          Blaine's Tauros uses 3-Pronged Tail.
+          Coin flip (coin 1/3): HEADS
+          Coin flip (coin 2/3): HEADS
+          Coin flip (coin 3/3): TAILS
+          2 head(s) -> 20 damage.
+          Mysterious Fossil takes 20. (0/10 left)
+          Mysterious Fossil is Knocked Out!
+          Mysterious Fossil doesn't count as a Knocked Out Pokemon - no Prize.
+          You promotes Hitmonchan to Active.
+
+--- Turn 19 — You -------------------------------
+          You draws a card. (27 left)
+          You benches Mysterious Fossil.
+          You attaches Fighting Energy to Mysterious Fossil.
+          Hitmonchan uses Jab.
+          Weakness: Blaine's Tauros takes double -> 40.
+          Blaine's Tauros takes 40. (0/70 left)
+          Blaine's Tauros is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [46.5]
+          holding: Misty's Poliwrath
+          passed over: promote 39.5, promote 30, promote 26.5
+          Oona promotes Misty's Tentacool to Active.
+
+--- Turn 20 — Oona ------------------------------
+          Oona draws a card. (26 left)
+  AI      trainer   [3]
+          holding: Misty's Poliwrath, Misty's Duel
+          passed over: retreat -19, retreat -38, retreat -38
+          Oona plays Misty's Duel.
+          Coin flip (Misty's Duel): TAILS
+          Misty's Duel: You wins, shuffles 3 card(s) away and draws 5.
+  AI      attack:Crystal Beam   [20.9]
+          holding: Misty's Poliwrath
+          Misty's Tentacool uses Crystal Beam.
+          Hitmonchan takes 20. (50/70 left)
+          Coin flip (Crystal Beam): TAILS
+
+--- Turn 21 — You -------------------------------
+          You draws a card. (24 left)
+          You attaches Fighting Energy to Hitmonchan.
+          You plays Bill.
+          You draws 2.
+          You plays Potion.
+          Hitmonchan heals 20. (0 damage left)
+          You benches Sandshrew.
+          Hitmonchan uses Special Punch.
+          Misty's Tentacool takes 40. (10/50 left)
+
+--- Turn 22 — Oona ------------------------------
+          Oona draws a card. (25 left)
+  AI      evolve   [23]
+          holding: Misty's Poliwrath, Misty's Tentacruel
+          passed over: retreat -6.6, retreat -7.6, retreat -25.6
+          Misty's Tentacool evolves into Misty's Tentacruel. Special Conditions removed.
+  AI      retreat   [29.4]
+          holding: Misty's Poliwrath
+          passed over: retreat 28.4, retreat 10.4
+          Oona retreats Misty's Tentacruel; Misty's Shellder is now Active.
+  AI      attack:Clamp   [25]
+          holding: Misty's Poliwrath
+          passed over: attack:Tackle 10
+          Misty's Shellder uses Clamp.
+          Coin flip (attack succeeds?): HEADS
+          Hitmonchan takes 20. (50/70 left)
+          Hitmonchan is now Paralyzed.
+
+--- Turn 23 — You -------------------------------
+          You draws a card. (21 left)
+          You benches Hitmonlee.
+          You attaches Fighting Energy to Hitmonlee.
+          You ended the turn without attacking — Paralyzed.
+          Hitmonchan is no longer Paralyzed.
+
+--- Turn 24 — Oona ------------------------------
+          Oona draws a card. (24 left)
+  AI      attach   [20]
+          holding: Misty's Poliwrath, Water Energy
+          passed over: attach 12, attach 12, attach -2, retreat -11.8, retreat -29.8
+          Oona attaches Water Energy to Misty's Tentacruel.
+  AI      attack:Clamp   [25]
+          holding: Misty's Poliwrath
+          passed over: attack:Tackle 10
+          Misty's Shellder uses Clamp.
+          Coin flip (attack succeeds?): HEADS
+          Hitmonchan takes 20. (30/70 left)
+          Hitmonchan is now Paralyzed.
+
+--- Turn 25 — You -------------------------------
+          You draws a card. (20 left)
+          You attaches Fighting Energy to Hitmonlee.
+          You ended the turn without attacking — Paralyzed.
+          Hitmonchan is no longer Paralyzed.
+
+--- Turn 26 — Oona ------------------------------
+          Oona draws a card. (23 left)
+  AI      trainer   [8.1]
+          holding: Misty's Poliwrath, Bill
+          passed over: retreat -11.8, retreat -29.8, retreat -29.8
+          Oona plays Bill.
+          Oona draws 2.
+  AI      trainer   [16]
+          holding: Misty's Poliwrath, Misty's Poliwag, Cerulean City Gym
+          passed over: bench -7, retreat -11.8, retreat -29.8, retreat -29.8
+          Oona plays Cerulean City Gym.
+          Cerulean City Gym is in play.
+  AI      attack:Clamp   [25]
+          holding: Misty's Poliwrath, Misty's Poliwag
+          passed over: attack:Tackle 10
+          Misty's Shellder uses Clamp.
+          Coin flip (attack succeeds?): HEADS
+          Hitmonchan takes 20. (10/70 left)
+          Hitmonchan is now Paralyzed.
+
+--- Turn 27 — You -------------------------------
+          You draws a card. (19 left)
+          You plays Gust of Wind.
+          Oona's Misty's Poliwag B is dragged into the Active spot.
+          You ended the turn without attacking — Paralyzed.
+          Hitmonchan is no longer Paralyzed.
+
+--- Turn 28 — Oona ------------------------------
+          Oona draws a card. (20 left)
+  AI      pass — no attack available — Hypnotic Stare: Not enough Energy; Tail Rap: Not enough Energy   [0]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath
+          Oona ended the turn without attacking.
+
+--- Turn 29 — You -------------------------------
+          You draws a card. (18 left)
+          Mysterious Fossil evolves into Aerodactyl. Special Conditions removed.
+          You attaches Fighting Energy to Hitmonlee.
+          Hitmonchan uses Special Punch.
+          Misty's Poliwag takes 40. (10/50 left)
+
+--- Turn 30 — Oona ------------------------------
+          Oona draws a card. (19 left)
+  AI      attach   [42]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Water Energy
+          passed over: attach 24.2, attach 12, retreat 5.8, attach -2, bench -7
+          Oona attaches Water Energy to Misty's Tentacruel.
+  AI      retreat   [10.4]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath
+          passed over: retreat 5.8, bench -7, retreat -11.6
+          Oona retreats Misty's Poliwag B; Misty's Tentacruel is now Active.
+  AI      attack:Jellyfish Poison   [65]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath
+          Misty's Tentacruel uses Jellyfish Poison.
+          Hitmonchan takes 30. (0/70 left)
+          Coin flip (Poisoned or Confused?): TAILS
+          Hitmonchan is now Confused.
+          Hitmonchan is Knocked Out!
+          Oona takes a Prize. (5 left)
+          You promotes Hitmonlee to Active.
+
+--- Turn 31 — You -------------------------------
+          You draws a card. (17 left)
+          You attaches Fighting Energy to Aerodactyl.
+          Hitmonlee uses High Jump Kick.
+          Misty's Tentacruel takes 50. (0/70 left)
+          Flee: switch Misty's Tentacruel out and prevent the rest of that attack?
+  AI      answer   [4]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy
+          passed over: answer 0, answer 0, answer -35
+          Oona: Switch to Misty's Shellder
+          Flee: the moment is taken back.
+          Hitmonlee uses High Jump Kick.
+          Misty's Tentacruel takes 50. (0/70 left)
+          Flee: Misty's Tentacruel slips away and Misty's Shellder comes up.
+          Misty's Tentacruel is Knocked Out!
+          You takes a Prize. (4 left)
+
+--- Turn 32 — Oona ------------------------------
+          Oona draws a card. (18 left)
+  AI      attach   [12]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy, Water Energy
+          passed over: attach 12, attach 1.4, attach 1.4, bench -2, attach -2
+          Oona attaches Water Energy to Misty's Poliwag A.
+  AI      attack:Clamp   [25]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy
+          passed over: attack:Tackle 10
+          Misty's Shellder uses Clamp.
+          Coin flip (attack succeeds?): TAILS
+          The attack does nothing.
+
+--- Turn 33 — You -------------------------------
+          You draws a card. (16 left)
+          You plays Poké Ball.
+          Coin flip (Poke Ball finds something?): HEADS
+          Poke Ball: found Dugtrio.
+          You attaches Fighting Energy to Aerodactyl.
+          Hitmonlee uses High Jump Kick.
+          Misty's Shellder takes 50. (0/40 left)
+          Misty's Shellder is Knocked Out!
+          You takes a Prize. (3 left)
+  AI      promote   [25.3]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy
+          passed over: promote 9.3
+          Oona promotes Misty's Poliwag A to Active.
+
+--- Turn 34 — Oona ------------------------------
+          Oona draws a card. (17 left)
+  AI      attach   [15]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy, Water Energy
+          passed over: attach 12, attach 11, attach 1.4, bench -2, retreat -11.4
+          Oona attaches Water Energy to Misty's Poliwag A.
+  AI      attack:Hypnotic Stare   [36.9]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy
+          passed over: attack:Tail Rap 20
+          Misty's Poliwag uses Hypnotic Stare.
+          Coin flip (Paralyzed or Asleep?): HEADS
+          Hitmonlee is now Paralyzed.
+
+--- Turn 35 — You -------------------------------
+          You draws a card. (14 left)
+          You attaches Fighting Energy to Sandshrew.
+          You ended the turn without attacking — Paralyzed.
+          Hitmonlee is no longer Paralyzed.
+
+--- Turn 36 — Oona ------------------------------
+          Oona draws a card. (16 left)
+  AI      attach   [12]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy, Water Energy
+          passed over: attach 1.4, bench -2, attach -2, attach -2, retreat -16.4
+          Oona attaches Water Energy to Misty's Poliwag B.
+  AI      attack:Hypnotic Stare   [36.9]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy
+          passed over: attack:Tail Rap 20
+          Misty's Poliwag uses Hypnotic Stare.
+          Coin flip (Paralyzed or Asleep?): TAILS
+          Hitmonlee is now Asleep.
+          Coin flip (Hitmonlee waking): HEADS
+          Hitmonlee woke up.
+
+--- Turn 37 — You -------------------------------
+          You draws a card. (13 left)
+          You plays Pokémon Trader.
+          Traded Hitmonchan for Kabuto.
+          Hitmonlee uses High Jump Kick.
+          Misty's Poliwag takes 50. (0/50 left)
+          Misty's Poliwag is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [6.5]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy
+          Oona promotes Misty's Poliwag to Active.
+
+--- Turn 38 — Oona ------------------------------
+          Oona draws a card. (15 left)
+  AI      attach   [34.8]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Full Heal Energy, Misty's Poliwhirl
+          passed over: bench 26
+          Oona attaches Full Heal Energy to Misty's Poliwag.
+          Full Heal Energy: Misty's Poliwag is no longer affected by Special Conditions.
+  AI      bench   [26]
+          holding: Misty's Poliwrath, Misty's Poliwag, Misty's Poliwrath, Misty's Poliwhirl
+          Oona benches Misty's Poliwag.
+  AI      attack:Tail Rap   [20]
+          holding: Misty's Poliwrath, Misty's Poliwrath, Misty's Poliwhirl
+          passed over: attack:Hypnotic Stare 9.2
+          Misty's Poliwag uses Tail Rap.
+          Coin flip (coin 1/2): HEADS
+          Coin flip (coin 2/2): HEADS
+          2 head(s) -> 40 damage.
+          Hitmonlee takes 40. (20/60 left)
+
+--- Turn 39 — You -------------------------------
+          You draws a card. (12 left)
+          Hitmonlee uses High Jump Kick.
+          Misty's Poliwag takes 50. (0/50 left)
+          Misty's Poliwag is Knocked Out!
+          You takes a Prize. (1 left)
+  AI      promote   [-30]
+          holding: Misty's Poliwrath, Misty's Poliwrath, Misty's Poliwhirl
+          Oona promotes Misty's Poliwag to Active.
+
+--- Turn 40 — Oona ------------------------------
+          Oona draws a card. (14 left)
+  AI      attach   [64.2]
+          holding: Misty's Poliwrath, Misty's Poliwrath, Misty's Poliwhirl, Water Energy
+          Oona attaches Water Energy to Misty's Poliwag.
+  AI      attack:Hypnotic Stare   [46.2]
+          holding: Misty's Poliwrath, Misty's Poliwrath, Misty's Poliwhirl
+          Misty's Poliwag uses Hypnotic Stare.
+          Coin flip (Paralyzed or Asleep?): TAILS
+          Hitmonlee is now Asleep.
+          Coin flip (Hitmonlee waking): HEADS
+          Hitmonlee woke up.
+
+--- Turn 41 — You -------------------------------
+          You draws a card. (11 left)
+          Hitmonlee uses High Jump Kick.
+          Misty's Poliwag takes 50. (0/50 left)
+          Misty's Poliwag is Knocked Out!
+          You takes a Prize. (0 left)
+          GAME OVER - You wins: You took all Prizes
+
+==========================================================
+RESULT   You wins — You took all Prizes
+         41 turns
+
+==========================================================
+PACKS OPENED
+
+  Gym Heroes
+    Brock's Graveler  Uncommon   NEW
+    Minion of Team Rocket  Uncommon   NEW
+    Brock's Geodude  Common
+    Erika's Bellsprout  Common   NEW
+    Misty's Goldeen  Common
+    Erika's Bellsprout  Common
+    Trash Exchange  Common
+    Misty  Rare
+
+  Gym Heroes
+    Blaine's Kangaskhan  Uncommon   NEW
+    Misty's Starmie  Uncommon
+    Misty's Staryu  Common
+    Trash Exchange  Common
+    Blaine's Charmander  Common   NEW
+    Brock's Mankey  Common
+    Blaine's Growlithe  Common
+    Eevee  Promo   NEW
+    Brock's Rhyhorn  Rare   NEW
