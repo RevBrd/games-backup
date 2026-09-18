@@ -134,11 +134,43 @@ const CLAIMS = [
     // it** — one printing, against a `k`-loop inside `potential()`, which is on
     // the hottest path in the scorer. Not worth it for one card.
     //
-    // **And the plateau is a SYMPTOM of the variance fault above, not a separate
-    // thing.** If a guaranteed 30 outranked a two-coin 30, `best` would rise at
-    // 2->3 Water on its own and the plateau would not exist. Fixing the cause
-    // fixes this card for free; fixing this card leaves the cause. **Do not build
-    // the lookahead for Omastar.**
+    // **THE SWEEP WAS RE-RUN ON 18 SEP 2026 AND HOLDS** — #43, after Gym Heroes
+    // went live on the 14th, because a sweep is a quantifier over a set that has
+    // since grown and this one was quoted as a property. Sixteen cards plateau in
+    // the loose sense, and fifteen of them are ordinary upgrade roads: the second
+    // attack is simply unaffordable at the plateau point, which `upShort` sees.
+    // Filtering to the Omastar shape — `short === 0` AND `upShort === 0`, so
+    // nothing unaffordable exists to road toward — returns **1**. Still Omastar,
+    // still alone. A re-checked claim that survives is worth as much as one that
+    // does not; this one nearly went unchecked because it read as settled.
+    //
+    // **AND THE DIAGNOSIS BELOW IS WRONG. MEASURED 18 SEP 2026, #43.** It said
+    // the plateau is a symptom of the Active/Bench unit split, so closing AI.md
+    // item 1 would fix this card for free. It would not. Omastar was put in the
+    // ACTIVE spot on this very board — where the full expected-value currency
+    // applies, item 1's fix already in effect by definition — and it plateaus
+    // identically:
+    //
+    //   against a FULL-HP Hitmonchan (this row's board)
+    //     2 Water  Water Gun 20.00   Spike Cannon 30.00   -> best 30
+    //     3 Water  Water Gun 30.00   Spike Cannon 30.00   -> best 30   <- plateau
+    //     4 Water  Water Gun 40.00   Spike Cannon 30.00   -> best 40
+    //
+    // **Expected value does not rank a guaranteed 30 above a two-coin 30, because
+    // that is what expected value means.** The variance only pays where the
+    // distribution crosses something, and on a full-HP 70 Hitmonchan neither
+    // attack crosses anything. Put damage on the defender and the currencies come
+    // apart violently — at 30 HP left the Active scores 270 where the Bench still
+    // reads 30 — which is item 1 being real, and separately real from this row.
+    //
+    // **So this is a THIRD fault, and it is the shape the tree keeps re-learning:
+    // two faults producing the same wrong number on the same board are not one
+    // fault.** That is the Poliwag lesson, arriving on the card it was first
+    // written about. What is actually missing here is a road measured in SPARE
+    // ENERGY rather than in unaffordable attacks — Water Gun's headroom is a
+    // property of the card (`slotPrintedDamage` already knows the cap), not a
+    // lookahead. It is AI.md open item 21. **Do not build the lookahead for
+    // Omastar, and do not expect item 1 to close this row.**
     board: {
       me:   { card: 'Hitmonchan', energy: '3 Fighting' },
       myBench: [{ card: 'Omastar', energy: '2 Water' }],

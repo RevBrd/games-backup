@@ -104,6 +104,18 @@ const AI_WEIGHTS = {
   promoteReady: 25,     // sending up something that can attack NOW, divided by
                         // one plus how many Energy it is short — 25 ready, 12.5
                         // one away, 5 at four or more. Was a flat 25-or-nothing
+  promoteKO: 27,        // ...and this much more if what it can do is take a
+                        // PRIZE, times the chance of it — AI.md item 1, the term
+                        // a benched Pokemon had no way to express at all. Priced
+                        // at half of `knockout: 55` rather than invented: the
+                        // dominant caller is the promote after a Knock Out, where
+                        // the body cannot swing until our next turn and they get
+                        // one in between to retreat, heal or kill it. LINEAR in
+                        // the chance on purpose — it is already a probability of
+                        // an event, not a quantity about proximity, so the cliff
+                        // table does not apply. UNMEASURED first guess; it is not
+                        // an effect verb so it cannot go on PROVISIONAL and is
+                        // recorded in AI.md's open list instead
   drawCard: 5,          // per card drawn
   deckBurn: 250,        // cost of spending deck, over the SQUARE of the share of
                         // what remains that the play consumes. Tuned with Trevor
@@ -1186,10 +1198,25 @@ class AI {
   }
 
   // Run each raw outcome through the engine's own damage maths.
-  forecast(pi, idx, vopts) {
+  //
+  // `fromSlot` ASKS THE SAME QUESTION ABOUT A SLOT THAT IS NOT ACTIVE — 18 Sep
+  // 2026, AI.md item 1. Everything below already took the attacker as a slot;
+  // only this line pinned it to the Active one, and `rawOutcomes` and
+  // `computeDamage` have been slot-parameterised for months. So "what would
+  // this do if it were up there" costs a parameter rather than the refactor
+  // that item had been budgeting for.
+  //
+  // IT IS SAFE TO CALL FROM INSIDE `scoreAttack`, and that is the point.
+  // Nothing on this path scores anything — `rawOutcomes` reads the effect
+  // script, `computeDamage` is the engine's own arithmetic — so this is the
+  // "one level lower" shape item 19 asks for, sitting between
+  // `bestAffordableDamage` (printed) and `scoreAttack` (score). Until now those
+  // were the only two rungs, which is most of why the Bench was stuck on
+  // printed damage.
+  forecast(pi, idx, vopts, fromSlot) {
     const E = this.E;
     const me = E.state.players[pi], you = E.state.players[1 - pi];
-    const atkSlot = me.active, defSlot = you.active;
+    const atkSlot = fromSlot || me.active, defSlot = you.active;
     if (!atkSlot || !defSlot) return null;
     const raw = this.rawOutcomes(atkSlot, defSlot, idx, vopts);
     const hpLeft = this.remainingHP(defSlot);
@@ -2318,7 +2345,18 @@ class AI {
     const hp = this.remainingHP(b);
     let s = hp * 0.35
           + W.promoteReady / (1 + Math.min(pot.short, 4))
-          + Math.max(0, pot.best) * 0.2;
+          + Math.max(0, pot.best) * 0.2
+          // "I COULD TAKE A PRIZE IF YOU PROMOTED ME" — AI.md item 1. `pot.best`
+          // above is printed damage and says how HARD this body hits; it cannot
+          // say whether that is enough. Both terms stay: one is capability, one
+          // is the outcome against the body actually standing opposite.
+          //
+          // IT PROJECTS THEIR CURRENT ACTIVE FORWARD, which is the same hedge
+          // `incomingThreat` makes and is worth saying out loud: after a Knock
+          // Out they may promote something else before this body ever swings.
+          // The snapshot is the honest one available — the alternative is
+          // scoring every promotion against a Pokemon nobody has chosen yet.
+          + this.slotKOChance(pi, b) * W.promoteKO;
     // `slotLossCost` is the same bill, shared with the Knock Out path so the two
     // cannot disagree. A Doll or a Fossil concedes no Prize and it knows that.
     if (this.threatAgainst(pi, b) >= hp) s -= this.slotLossCost(pi, b);
@@ -3590,6 +3628,77 @@ class AI {
       // printed number rather than scoring every attack at zero.
       const d = def ? E.computeDamage(slot, def, base).dmg : base;
       if (d > best) best = d;
+    });
+    return best;
+  }
+
+  // COULD THIS SLOT TAKE A PRIZE IF IT WERE UP THERE? — 18 Sep 2026, AI.md
+  // item 1. The best chance of a Knock Out on their CURRENT Active, over the
+  // attacks this slot can already pay for, as a probability.
+  //
+  // THIS IS THE SENTENCE THE BENCH COULD NOT SAY. `potential()` prices a benched
+  // Pokemon in printed damage, so the whole knockout half of an attack's value
+  // was invisible off the Active spot — measured on Trevor's own Omastar board,
+  // a slot the Active currency scores at 270 reads as a flat 30 from the Bench.
+  // The gap is not a calibration difference, it is a missing term.
+  //
+  // A PROBABILITY, NOT A SCORE, AND DELIBERATELY SO. `promoteValue` is reachable
+  // from `scoreAttack` through `bestSelfSwitch`, so it may not ask what an attack
+  // is worth (item 19). It may ask what an attack DOES, which is `forecast`, and
+  // the caller prices it. That keeps one notion of "would this kill" rather than
+  // a second one grown beside `bestAffordableDamage`.
+  //
+  // WHY NOT `bestAffordableDamage(...) >= remainingHP(def)`, which is right
+  // there and already answers a similar question: because printed damage cannot
+  // flip a coin. Omastar's Spike Cannon PRINTS 30 and reaches 60 a quarter of
+  // the time, so against a 40 HP defender the printed test says "cannot kill"
+  // and the truth is 25%. The printed test is a `>=` against a number that is
+  // an average of outcomes it never enumerated.
+  //
+  // Costs are asked of the engine and the attack index is the engine's, so
+  // Weakness, Resistance, a Gym and every per-slot override are all inherited
+  // from `computeDamage` rather than re-derived here.
+  // NET OF WHAT TAKING IT COSTS US, and that clause is Trevor's — 18 Sep 2026,
+  // within hours of the first version shipping without it. *"A tank isn't really
+  // built to attack even if it has an attack move. Sending Chansey in for a quick
+  // kill also gets 80 recoil damage, so Chansey's dead on the following turn and
+  // both players are 1 prize better off with nothing else really gained."*
+  //
+  // A Chansey on 60 HP reported a **1.00** chance of a Prize through Double-edge,
+  // which deals 80 to itself. One Prize for one Prize is not a Prize.
+  //
+  // THE FIRST SWEEP SAID THIS NEVER HAPPENS AND THE SWEEP WAS THE PROBLEM: 0 of
+  // 188 printings, because every card in it was benched at FULL HP, where recoil
+  // is survivable almost by definition. A fixture that puts every subject in the
+  // same state cannot see a fault that only exists in another one. Damage the
+  // slot and Chansey is the first card you hit.
+  //
+  // STILL A PROBABILITY — the chance we take the Prize AND keep the body — so
+  // this stays callable from inside `scoreAttack` (item 19) and the caller does
+  // the pricing. `selfWorst` is the worst case rather than a distribution over
+  // self-damage, so an attack whose MIDDLE outcomes kill us reads optimistic;
+  // no card in the live pool has that shape, and it is the thing to check first
+  // if one arrives.
+  //
+  // WHAT IS DELIBERATELY NOT HERE, in his words, because it needs the value of
+  // THEIR body and this function has no currency for one: *"the exception might
+  // be if it kamikazes a very strong pokemon to ruin the other player's large
+  // active threat."* A trade is a trade only while the two bodies are worth the
+  // same. See AI.md item 1.
+  slotKOChance(pi, slot) {
+    const E = this.E;
+    if (!slot) return 0;
+    const def = E.state.players[1 - pi].active;
+    if (!def) return 0;
+    const hp = this.remainingHP(slot);
+    let best = 0;
+    (this.top(slot).attacks || []).forEach((a, i) => {
+      if (!E.costSatisfied(slot, a.cost)) return;
+      const f = this.forecast(pi, i, undefined, slot);
+      if (!f || !f.pLethal) return;
+      const pSelfKO = (f.selfWorst || 0) >= hp ? (f.pSelfWorst == null ? 1 : f.pSelfWorst) : 0;
+      const net = f.pLethal * (1 - pSelfKO);
+      if (net > best) best = net;
     });
     return best;
   }

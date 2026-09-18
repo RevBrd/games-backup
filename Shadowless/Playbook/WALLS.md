@@ -22,6 +22,31 @@ Verbatim and append-only. The analysis below them is not.
 > in one turn** — then you can land a surprise kamikaze on the attacker, at the cost of the opponent
 > going first with the new Pokémon in play.
 
+**18 Sep 2026, asked whether a wall should retreat to bring up something that can take a Prize** —
+the question arose while `slotKOChance` was being wired into `promoteValue`:
+
+> **I wouldn't retreat a wall to bring up a killer unless the opponent was low on prizes.**
+>
+> A tank isn't really built to attack even if it has an attack move. Sending Chansey in for a quick
+> kill also gets 80 recoil damage, so Chansey's dead on the following turn and both players are 1
+> prize better off with nothing else really gained. The exception might be if it kamikazes a very
+> strong pokemon to ruin the other player's large active threat.
+
+**Both halves are the same claim measured from different ends, and neither is new — they sharpen the
+Chansey note above.** *"Very few circumstances where it would ever retreat"* now has its circumstance:
+**the opponent being close to winning.** And the Double Edge clause gains its condition: a kamikaze is
+worth it when what it kills is worth more than the wall.
+
+**The first half is implementable with arithmetic that already exists and the second is not.**
+`retreatPrize` already prices "they are close to winning" as 60 over the *square* of the Prizes they
+still need — 1.7 at six left, 60 at one — so the wall suppression lifting as their pile empties is
+that curve, not a new threshold. The kamikaze clause needs the value of *their* body, which is the
+quantity `AI.md` item 1 has never had.
+
+**The second half also found a live fault the day it was said.** `slotKOChance` shipped that morning
+crediting a benched Chansey on 60 HP a full 1.00 chance of a Prize through an attack that kills it.
+*[The fix, and the sweep that missed it →](../AI-INVARIANTS/SLOT-KO-CHANCE.md)*
+
 From the workbook's `Wants` column:
 
 > **Chansey** — Power up Scrunch and then tank

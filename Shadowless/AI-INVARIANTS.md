@@ -135,3 +135,4 @@ open the entry.
 | 17 Sep 2026 | **a barrier that stops effects stops the status too, and that status is our turn** | `effectShield`, `statusThreatAgainst` | [BARRIER-STATUS](AI-INVARIANTS/BARRIER-STATUS.md) |
 | 17 Sep 2026 | **an exposure cost is only a cost if an alternative avoids it** | `benchThreatAgainst`, `slotLossCost`, `commitExposure` | [COMMIT-EXPOSURE](AI-INVARIANTS/COMMIT-EXPOSURE.md) |
 | 17 Sep 2026 | **nothing inside `scoreAttack` may ask what a card is worth** — filed 18 Sep, when the rule moved into `AI.md`'s body | `scoreAttack`, `bestAttackScore`, `cardKeepValue`, `shortfallFor` | [SCORE-ATTACK-REENTRY](AI-INVARIANTS/SCORE-ATTACK-REENTRY.md) |
+| 18 Sep 2026 | **a benched Pokemon can say "I could take a Prize"**, and `forecast` is the safe middle rung that lets it | `forecast(…, fromSlot)`, `slotKOChance`, `promoteKO` | [SLOT-KO-CHANCE](AI-INVARIANTS/SLOT-KO-CHANCE.md) |

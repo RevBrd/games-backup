@@ -365,3 +365,73 @@ a no-op *break* produces a **false reassurance** and no symptom at all.
 break-test comes back green, suspect the edit before suspecting the test — the second run here
 printed `sites with +3: 2` and turned three rows red immediately, including two on other cards that
 shared the constant and would have gone unexamined.
+
+## `teamReadiness` swings 5.6x on the OPPONENT's HP, and it is not a bug — 18 Sep 2026
+
+**Chased while closing AI.md item 1, on the reasoning that if a benched Pokemon is priced in printed
+damage and an Active in expected value, a function that ADDS them across every slot must be broken.**
+It looks broken from outside, and a probe makes it look worse. Two identical Omastars, four Water
+each, one Active and one benched:
+
+| their Active | Active `pot.best` | the identical Bench copy | `teamReadiness` |
+|---|---|---|---|
+| Hitmonchan, 70 HP | 40 | 40 | **20** |
+| Hitmonchan, 30 HP | **270** | 40 | **112** |
+
+Nothing on our side of the board changed. A function whose name says *our team* moved 5.6x on a
+damage counter belonging to them, because a lethal attack makes `scoreAttack` return knockout scale
+and the Active's term carries a x4 weight.
+
+**It cancels, because the absolute value is never read.** `teamReadiness` has exactly two call sites
+and they are `before` and `after` around an Energy Trans move, four lines apart, with the opponent
+untouched between them. Only `after - before` reaches a score. The 92-point baseline that looks like
+a fault appears identically on both sides of the subtraction.
+
+**The transferable part is the check, not the result.** *Find every call site before you price a
+quantity that looks mis-scaled.* A number used only as a difference has no scale to be wrong about,
+and the probe that makes it look most damning — printing the absolute value on two boards — is the
+one that cannot see that. It took two minutes and would have been a day's work to "fix", with a
+measurement that could never have shown the fix helping.
+
+**What is genuinely unmeasured, stated so it is not re-suspected as the same thing:** the *difference*
+is still in mixed currency. An Energy Trans that arms a lethal attack on the Active moves `after` by
+roughly `4 x 0.1 x (KO scale)`, which `attachBuild: 3.5` then multiplies, while the same Energy
+leaving a benched slot costs only its printed-damage delta. Whether that is correctly enormous — it
+IS a great play — or a calibration accident is not known, and no board in the claims harness reaches
+it. **That is a question about `attachBuild`'s scale, not about `teamReadiness`.**
+
+## A sweep where every subject is in the SAME state cannot see a state-dependent fault — 18 Sep 2026
+
+**The sweep said 0 of 188 and the answer was Chansey.** `slotKOChance` shipped crediting a benched
+Pokémon the full chance of a Prize with no regard for whether taking it kills the attacker. Trevor
+named the hole within the hour — *"sending Chansey in for a quick kill also gets 80 recoil damage, so
+Chansey's dead on the following turn and both players are 1 prize better off"* — and the sweep written
+to check exactly that had already come back clean:
+
+```
+benched printings whose best affordable attack can Knock Out: 188
+  ...where taking it KILLS the attacker outright:  0  (0.0%)
+```
+
+**Every card in it was benched at FULL HP.** Recoil is survivable from full almost by definition — a
+120 HP Chansey takes 80 from Double-edge and lives on 40. Damage the slot and the same probe reads:
+
+| Chansey | `slotKOChance` before the fix |
+|---|---|
+| 120 HP | 1.00 — and correct, it survives |
+| 80 HP | **1.00 — it dies** |
+| 60 HP | **1.00 — it dies** |
+
+**The transferable shape: a fixture that holds one variable constant across every subject is blind to
+any fault that lives in that variable**, and it does not fail — it returns a confident zero, which is
+the most persuasive result a sweep can produce. The zero was not wrong about the boards it ran; it was
+wrong about the question it was asked.
+
+**What makes it nastier than an ordinary bad fixture:** the constant was never chosen. Nobody decided
+to test at full HP. `makeSlot` leaves `dmg` at 0 unless a board says otherwise, so the default state
+of the harness silently became the scope of the finding. **Ask what your fixture is holding still, and
+whether the fault could live there** — `tools/lib/board.js` takes `dmg` on any slot and the second
+probe was one line longer than the first.
+
+**And the check that would have caught it costs nothing: sweep the same pool twice at different
+values of the thing you are not varying.** Full HP and half HP disagree here on the first card.

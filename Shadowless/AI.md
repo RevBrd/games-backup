@@ -328,6 +328,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 17 Sep | **A barrier that stops effects stops the status too, and that status is OUR next turn** — not an increment on the turn the damage term bought. Withdraw-type barriers stop damage only and get nothing | `effectShield`, `statusThreatAgainst` |
 | 17 Sep | **Their BENCH is a threat only where something forces their Active out, and the only thing the bot can force is its own Knock Out** — so the exposure is priced where a body is COMMITTED. A measured null at every magnitude, and the Knock Out charge it was built as measured WORSE | `benchThreatAgainst`, `slotLossCost`, `commitExposure` |
 | 17 Sep | **Nothing inside `scoreAttack` may ask what a card is worth**, because that question is answered by `scoreAttack`. The lift needed no cheap mode — the one branch that reached the scorer was already computing its answer twice. **The rule survives the lift and is a section of this file**, because three entries cite it | `scoreAttack`, `bestAttackScore`, `cardKeepValue`, `shortfallFor` |
+| 18 Sep | **`forecast` takes the attacker as a parameter, so "what would this do if it were up there" is one question with one answer.** It reads the board and scores nothing, which makes it the rung between printed damage and the scorer — and the absence of that rung is most of why the Bench was stuck. A promotion is priced on the CHANCE of a Prize; the caller prices it, never `forecast` | `forecast(…, fromSlot)`, `slotKOChance`, `promoteKO` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -390,27 +391,60 @@ of the old text underneath it, every time for a reason that looked good on its o
 of the list had already been tried and did not work. *[What did work, and what the habit costs
 →](DOC-DRIFT.md)*
 
-1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
-   damage while an Active gets full expected value; the measured size is in *The Active and the Bench
-   are scored in different units* above. Closing it means making expected value computable for a slot
-   that is not Active, which is a real refactor of `scoreAttack`'s relationship with engine state,
-   against a measured prize of one in six comparisons in a direction that is partly correct already.
-   **If you take it on, duel it, and read the tail rather than the mean.**
+1. **HALF BUILT 18 Sep 2026 (#43) — the Bench can say "I could take a Prize", at the one site that
+   decides who goes up.** `slotKOChance` is the sentence, `promoteValue` reads it, and the refactor
+   this item budgeted for did not exist: `forecast` pinned the attacker to `me.active` in **one
+   line**, while `rawOutcomes` and `computeDamage` had taken slots as parameters for months. The cost
+   was a parameter. **A scope estimate is a measurement with an expiry date, and nothing re-derives
+   one** — three other jobs had moved the substrate under this item without anybody going back to look.
+   **It measures BETTER, which most changes here do not:** `aiduel 8 HEAD --gbc` **50.8% ± 0.4** over
+   67,578 games against a control of **exactly 50.0% ± 0.4**, with **27.8% ± 1.6** of games diverging.
+   Small, and not a disappointment — a term that only fires when a promotion is live cannot move a
+   ladder win rate far. **Read the control against the subject; that is what makes +0.8 a result.**
+   *[The entry, the weight, and the 23% of the pool printed damage cannot describe
+   →](AI-INVARIANTS/SLOT-KO-CHANCE.md)*
 
-   **The cheapest statement of it is a card, not a measurement — 1 Sep 2026.** A benched **Omastar**
-   takes one of the two Over-Attaches its note asks for and refuses the other, because *Spike Cannon*
-   prints "30×" and `aiParseDamage` reads 30, so a third Water brings Water Gun **level** with it
-   rather than past it and the surplus rule refuses. **A guaranteed 30 and a coin-flip 30 are equal in
-   the printed-damage currency and they are not equal.** It is a red row in `tools/claims/base3.js`
-   with the diagnosis attached, and it goes green when this item does.
+   **STILL OPEN: three more sites, and the retreat case is the loudest.** Its own comment says both
+   sides are printed damage *"because that is the only currency they share"* — no longer true. Then
+   `STEP_IN`, which compares a bench slot in printed damage against the Active in score. Then
+   `teamReadiness`, which **adds** the two with a ×4 on the Active — **chased and cleared rather than
+   fixed**, because it is only ever read as a difference and the baseline cancels; what is genuinely
+   unmeasured there is `attachBuild`'s scale.
+   *[The probe, and the rule it produced →](MISREADINGS.md)*
 
-   **Do not re-absorb the Poliwag case.** It shared this symptom and was a different fault — printed
-   damage being wrong *about itself*, a fact that shipped in an afternoon — and it sat filed under
-   this refactor for a fortnight because of the shared number. **Two faults producing the same wrong
-   number on the same board are not one fault.**
-   *[Both, and what the conflation cost →](Playbook/OVER-ATTACH.md)*
-   *(The promotion half of this entry is closed — a wall is preferred when promoting now, on survival
-   rather than on stickiness.)*
+   **And the retreat site has its rule already, from Trevor on 18 Sep 2026** — *"I wouldn't retreat a
+   wall to bring up a killer unless the opponent was low on prizes."* So the wall suppression lifts as
+   **their** pile empties, on `retreatPrize`'s existing squared curve rather than a new threshold.
+   Build it that way or the two rules will disagree about what "close to winning" means.
+   *[His note in full →](Playbook/WALLS.md)*
+
+   **STILL OPEN, and it is the sharper half: a trade is only a trade while the two bodies are worth
+   the same.** `slotKOChance` now refuses to credit a Prize that kills the attacker — Trevor's
+   Chansey, which reported 1.00 through a Double-edge that ends it — but his exception is unbuilt:
+   *"the exception might be if it kamikazes a very strong pokemon to ruin the other player's large
+   active threat."* Pricing **their** body is the currency this item has never had, and it is the same
+   quantity item 20 wants for the 2–5 Prizes he puts a ready attacker at.
+
+   **It was never a calibration difference.** The two currencies agree exactly while nothing is in
+   reach and come apart by 7x the moment a Prize is — **a term that only exists on one side of the
+   board.** The tail table in *The Active and the Bench are scored in different units* above measures
+   that spread without naming its cause; read them together.
+
+   **Item 20's open half asked for this quantity and this is not the whole of it.** What shipped is
+   the chance of *one* Prize *now*. Trevor puts a ready, undamaged attacker at 2–5 Prizes over its
+   life, which is a stream rather than an event, and pricing a stream is item 13's planner.
+
+   **Do not re-absorb the Poliwag case, and do not re-absorb OMASTAR either.** Poliwag shared this
+   symptom and was printed damage being wrong *about itself*; it sat filed here for a fortnight
+   because of the shared number. **Omastar is the same mistake made a second time on this very item**
+   — it was this entry's "cheapest statement" for a fortnight, and the Active currency plateaus on
+   its board identically, so the fix above cannot close that row. It is item 21 now. **Two faults
+   producing the same wrong number on the same board are not one fault**, and this item has now
+   attracted two of them.
+   *[Poliwag, and what the conflation cost →](Playbook/OVER-ATTACH.md)* · *[Omastar, measured
+   →](tools/claims/base3.js)*
+   *(The promotion half of the original entry was already closed — a wall is preferred when promoting
+   now, on survival rather than on stickiness.)*
 
 2. **Nothing has re-tuned the weights as a set.** Every AI change since 13 Aug has been one term at a
    time, each with a reason and a measurement. A sweep over `AI_WEIGHTS` as a whole has never been
@@ -665,3 +699,22 @@ of the list had already been tried and did not work. *[What did work, and what t
     killed"*); the **benefit** side — forcing their charged attacker up while our answer waits — is
     unbuilt; and pricing a ready attacker as the 2–5 Prizes Trevor puts it at is **item 1's**
     quantity, not a number to invent here.
+
+21. **An attack that scales with SPARE ENERGY has a road, and no road measure can see it — 18 Sep
+    2026. This is the Omastar claim row, re-filed off item 1.** Water Gun grows by 10 per spare Water
+    to a cap of +20, so at two Water it is two Energy from a 40 it will certainly reach — but the
+    three roads in `potentialOf` all measure distance in **unaffordable attacks**, every attack the
+    card owns is already payable, and all three read zero.
+
+    **Item 1 will not close it, measured rather than argued:** put Omastar in the **Active** spot on
+    the row's own board, where item 1's fix applies by definition, and it plateaus identically at 30,
+    30, 40. Expected value does not rank a guaranteed 30 above a two-coin 30, because that is what
+    expected value means.
+
+    **Build headroom, not lookahead.** The cap is a property of the card — `slotPrintedDamage`
+    already knows it — exactly as `ammoSymbols` derives a stockpile from the discard verb, and it
+    covers the whole Over-Attach family. The two-step lookahead would also work and covers **one
+    card**: the plateau sweep was re-run after Gym Heroes went live and of sixteen loose plateaus,
+    fifteen are ordinary upgrade roads `upShort` already sees. **Read the three-road comment in
+    `potentialOf` before adding a fourth.**
+    *[The row, both measurements and the re-run sweep →](tools/claims/base3.js)*
