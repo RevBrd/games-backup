@@ -305,7 +305,8 @@ at a time, each time for a reason that looked good on its own. #39's logbook ent
 exactly this: *"its Open list keeps growing because AI jobs append a finished account where a live
 claim should go"*, and said a note at the top of the list would not change it. **It did not.** What
 worked was doing the move: four items' bodies went verbatim into their entry files under *The AI.md
-item as it read*, leaving the claim, the measurement and a pointer here — back to 662 in ten minutes.
+item as it read*, leaving the claim, the measurement and a pointer here — back to 662 in ten minutes,
+and then to **671**, because writing this paragraph cost nine lines of the ninety-three it saved.
 **So the instruction for whoever closes the next one is not "be brief". It is: write the entry, move
 the item's text into it, and check the line count before you commit.** `doccheck.js` prints it.
 
