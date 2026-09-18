@@ -297,6 +297,8 @@ short"*, because the items are not short any more. **The remedy stays the same a
 list keeps needing: when an item ships, its account belongs in `AI-INVARIANTS/`, and what stays here
 is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 lines down to 36.
 
+When an item is removed, don't collapse the numbers. Many reference points might refer to that item by name, and a new item by the same name can cause confusion. Numbers should always iterate, never repeat. If you remove the last item in line, let's leave a temporary note saying something like "item [x] - completed" for the next person numbering items.
+
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
    damage while an Active gets full expected value; the measured size is in *The Active and the Bench
    are scored in different units* above. Closing it means making expected value computable for a slot
