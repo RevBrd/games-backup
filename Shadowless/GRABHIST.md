@@ -58,6 +58,35 @@ confused is presumably how this happened.
 
 ---
 
+### No way to discard a Fossil — the note was literally true, and it was two actions — 17 Sep 2026 (#42)
+
+> *"Might not be UI to discard a Mysterious Fossil from the active spot/bench (and I assume Clefairy
+> Doll too)"*
+
+**Exactly right, on both counts, and rarely for this file — no diagnosis gap at all.** `ui.js`
+contained **no reference to `discardInPlay`** anywhere. The engine had always offered the action; the
+human had no control for it. A Fossil sent up Active cannot retreat and cannot attack, so Trevor was
+stuck in front of it until the opponent chose to Knock it Out — and against an opponent content to
+build its Bench instead, indefinitely.
+
+**It was two unreachable actions rather than one.** `stadiumAction` — Celadon City Gym's
+discard-an-Energy-to-heal — had no control either. The Gym strip states the rule in words and offered
+no way to use it, which is the more embarrassing half: that strip was built one job earlier.
+
+**So the fix is an exclusion list, not two buttons.** The action bar now renders any board action
+nothing else owns; the types the hand, the Active card, the pickers and the bar already handle are
+named in `OWNED_ELSEWHERE`. A type nobody wires up gets a generic button instead of vanishing, and
+`selftest.js` asserts every name on that list really is handled somewhere else in `ui.js` — watched
+red by putting `stadiumAction` on it. **Discarding asks twice**, because it cannot be taken back and
+everything attached goes with it.
+
+**THE SAME DAY, FROM THE OTHER DIRECTION.** [AI.md](AI.md) item 16 is this surface on the bot's side —
+an action type with no scoring case is never played by the bot, forever — and the guard for it went in
+red on `discardInPlay` a few hours before Trevor wrote this note, for the same card. Neither of us
+knew about the other. **Two failures, one shape: an action that exists, is legal, works, and is
+unreachable — and nothing anywhere says it is missing.** Trevor found the half a human can see; a
+lint found the half a human cannot. *[the bot's half →](AI-INVARIANTS/DOLL-NO-PRIZE.md)*
+
 ### Long-Distance Hypnosis — the job that halved itself — 6 Sep 2026 (#37)
 
 > GBC 2 uses (base5) Drowzee's Long Distance Hypnosis like a wrecking ball… I think our bot should

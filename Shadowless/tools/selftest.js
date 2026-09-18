@@ -531,6 +531,28 @@ if (finished.length) console.log(`  ${finished.join(', ')} now complete `
     check(i >= 0 && emitted.size > 5 && unscored.length === 0,
       'every action type the engine offers has a case in scoreAction',
       unscored.length ? `${unscored.join(', ')} would never be played by the bot` : '');
+
+    // THE SAME SURFACE ON THE HUMAN'S SIDE — #42, 17 Sep 2026, from Trevor's grab
+    // bag: there was no way to discard a Mysterious Fossil, and none to use
+    // Celadon City Gym either. An action type with no control is unreachable for
+    // the player exactly as an unscored one is for the bot, and it is just as
+    // quiet about it.
+    //
+    // The bar now renders anything it does not otherwise own, so reachability is
+    // structural. What still needs guarding is the EXCLUSION list: a name on it
+    // is a promise that some other control handles that type, and this checks the
+    // promise by looking for the name somewhere else in `ui.js`.
+    const uiSrc = fs.readFileSync(path.join(__dirname, '../src/ui.js'), 'utf8');
+    const owned = [...uiSrc.matchAll(/const OWNED_ELSEWHERE = new Set\(\[([^\]]+)\]/g)]
+      .flatMap(m => [...m[1].matchAll(/'([a-zA-Z]+)'/g)].map(x => x[1]));
+    const unhandled = owned.filter(t => {
+      const hits = [...uiSrc.matchAll(new RegExp(`'${t}'`, 'g'))].length;
+      return hits < 2;               // its own entry, and nothing else
+    });
+    check(owned.length > 5 && unhandled.length === 0,
+      'every action type the bar excludes is handled elsewhere in ui.js',
+      owned.length <= 5 ? 'OWNED_ELSEWHERE not found — did the bar move?'
+        : unhandled.length ? `${unhandled.join(', ')} excluded from the bar and owned by nothing` : '');
   }
 
   // Two sources, deliberately. What the ENGINE dispatches catches a verb built

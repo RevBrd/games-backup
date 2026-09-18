@@ -23577,6 +23577,9 @@ const UI = {
   sel: null,          // {kind:'hand', idx} | null
   paused: false,      // the pause menu is up
   forfeitArmed: false,// ...and the forfeit is one click from happening
+  boardConfirm: null, // a board action armed for its second press — see the
+                      // action bar's board-action strip. Same shape as
+                      // forfeitArmed, one key deep rather than a boolean
   inspect: null,      // card id shown in the preview panel
   lastTab: 'log',
   fx: {},             // key -> expiry timestamp; drives one-shot animations
@@ -26021,6 +26024,48 @@ function renderActionBar() {
 
   // Retreat is not here any more — it is a row on the Active card, under the
   // attacks, next to the retreat cost it charges. See retreatRow().
+
+  // EVERY BOARD ACTION NOTHING ELSE OWNS, AS AN EXCLUSION LIST — #42, 17 Sep
+  // 2026, from Trevor's note: *"Might not be UI to discard a Mysterious Fossil
+  // from the active spot/bench (and I assume Clefairy Doll too)."* Exactly right,
+  // and it was TWO actions rather than one: `stadiumAction` — Celadon City Gym's
+  // discard-an-Energy-to-heal — had no control either. The Gym strip states the
+  // rule and offered no way to use it.
+  //
+  // THIS IS AI.md ITEM 16 ON THE HUMAN'S SIDE. There, an action type with no
+  // scoring case is never played by the bot; here, one with no control is
+  // unreachable for the player. Both fail CLOSED and silently — the card works,
+  // the action is legal, and nothing anywhere says it is missing.
+  //
+  // SO IT IS WRITTEN AS AN EXCLUSION, NOT AS A LIST OF BUTTONS. Every type the
+  // bar, the hand, the Active card or a picker already owns is named below; a
+  // type nobody wired up falls through to a generic button here rather than
+  // vanishing. `selftest.js` asserts each name below is really handled elsewhere
+  // in this file, so the list cannot become a way of hiding one.
+  const OWNED_ELSEWHERE = new Set(['attack', 'attachEnergy', 'evolve', 'playBasic',
+    'playTrainer', 'power', 'retreat', 'pass', 'answer', 'promote', 'switchIn', 'takePrize']);
+  const IRREVERSIBLE = new Set(['discardInPlay']);
+  const seenBoard = new Set();
+  myLegal().forEach(a => {
+    if (OWNED_ELSEWHERE.has(a.t)) return;
+    const key = a.t + ':' + (a.uid === undefined ? '' : a.uid) + (a.kind || '');
+    if (seenBoard.has(key)) return;
+    seenBoard.add(key);
+    // Discarding a Pokemon from play cannot be taken back and everything
+    // attached goes with it, so it asks twice. The second press is the same
+    // button, relabelled — no dialog, because the board is what you are looking
+    // at while you decide.
+    const armed = UI.boardConfirm === key;
+    const label = a.label || a.t;
+    const b = el('button', 'btn' + (armed ? ' end' : ''), armed ? `${label} — confirm` : label);
+    b.onclick = () => {
+      if (IRREVERSIBLE.has(a.t) && !armed) { UI.boardConfirm = key; render(); return; }
+      UI.boardConfirm = null;
+      dispatch(0, a);
+    };
+    bar.appendChild(b);
+  });
+  if (UI.boardConfirm && !seenBoard.has(UI.boardConfirm)) UI.boardConfirm = null;
 
   const end = el('button', 'btn end', 'End turn');
   end.onclick = () => dispatch(0, { t: 'pass' });

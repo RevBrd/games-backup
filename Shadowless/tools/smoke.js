@@ -2328,6 +2328,38 @@ T('a second win over the same boss pays the plain rate', () => {
   return UI.reward.packs === 2 && UI.reward.bonus === 0 && UI.reward.unlocks === null;
 });
 
+// TREVOR CANNOT DISCARD A MYSTERIOUS FOSSIL — grab bag, 17 Sep 2026, and the note
+// was literally true: `ui.js` contained no reference to `discardInPlay` at all.
+// The bar renders any board action nothing else owns now, so this is really a
+// test that the strip exists. AI.md item 16 is the same surface on the bot's side.
+T('a Mysterious Fossil in the Active spot can be discarded, and it asks twice', () => {
+  UI.seedDraft = '7'; UI.flipDelay = 0; startMatch(); UI.E.setupAuto(0);
+  const E = UI.E, s = E.state;
+  s.active = 0; s.phase = 'main'; s.pendingPromote = null; s.promoteQueue = [];
+  s.players[0].active = E.mkSlot({ uid: 70101, id: 'base3-62' });     // Mysterious Fossil
+  s.players[0].bench = [E.mkSlot({ uid: 70102, id: 'base1-58' })];    // somewhere to promote
+  s.players[1].active = E.mkSlot({ uid: 70103, id: 'base1-65' });
+  // Earlier tests can leave a targeting prompt armed, and the bar returns early
+  // while one is up — which is how this test first read as 'no control'.
+  UI.sel = null; UI.boardConfirm = null; UI.targeting = null; UI.retreatArmed = false;
+  UI.picker = null; UI.powerMode = null; UI.reveal = null; UI.pres = null; UI.view = null;
+  UI.energyPick = null;
+  render();
+  // The LAST action bar in the stub tree: render() appends, and a search from the
+  // top finds a bar from an earlier test with earlier state in it.
+  const bar = () => { const all = allByClass(document.getElementById('app'), 'actionbar'); return all[all.length - 1]; };
+  const first = findByText(bar(), 'Discard Mysterious Fossil');
+  if (!first) throw new Error('no discard control in the action bar');
+  first.onclick();
+  render();
+  if (!UI.boardConfirm) throw new Error('an irreversible action fired on one press');
+  const armed = findByText(bar(), 'Discard Mysterious Fossil — confirm');
+  if (!armed) throw new Error('the confirm state does not render');
+  armed.onclick();
+  UI.flipDelay = 2000;
+  return s.players[0].active === null || s.players[0].active.uid !== 70101;
+});
+
 T('the newly opened bracket is now on screen and clickable', () => {
   backToDeckSelect();
   const app = document.getElementById('app');

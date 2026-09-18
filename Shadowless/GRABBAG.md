@@ -81,6 +81,7 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
 ## Other
 
 - Opponent variant rolls aren't rolling. 
+- Something strange might have happened (or I don't understand the in-game log terminology) at turn 31 in terms of Misty's Tentacruel using it's Flee power - log# 01-36-32
 
 
 ### Parked and kept
