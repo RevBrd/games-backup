@@ -76,6 +76,7 @@ Presentation and screens. Two are marked *medium* and one grows to large the mom
   offer to find some is the unblocker. See [GRABHIST.md](GRABHIST.md).)*
 - When using Gengar's pokemon power, I was able to select the power and get the prompt to select an opponent pokemon, but was not able to select any of the injured bench pokemon to move damage from.
 - Variant counter on the collection screen.
+- A way to view all collected cards rather than all available, so variants in decks are visible as well.
 
 
 ## Other
