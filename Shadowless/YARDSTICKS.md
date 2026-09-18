@@ -197,15 +197,25 @@ anyone has written down against the old one.
 | Pin | Set | Retired | Why it was retired | Last reading against it |
 |---|---|---|---|---|
 | `e23c747` | 21 Aug 2026 | **28 Aug 2026** | Predates the 25 Aug fix for three PROVISIONAL Power crashes. The Team Rocket roster then fielded one and `--baseline --gbc` began dying inside the baseline | **51.4% ±0.5**, 23 Aug 2026 |
-| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified with `--checkpin` against the live ladder before the pin was moved | **55.6% ±0.4**, 18 Sep 2026 — taken BEFORE that day's self-cost clause, so a lower bound on the tree that shipped (53.2% ±0.9 on 5 Sep; 51.5% ±0.9 on 3 Sep; 50.1% ±0.5 on 28 Aug) |
+| `582761b` | **28 Aug 2026** | — | current. First commit whose `ai.js` carries that fix; verified with `--checkpin` against the live ladder before the pin was moved | **55.5% ±0.4**, 18 Sep 2026 (53.2% ±0.9 on 5 Sep; 51.5% ±0.9 on 3 Sep; 50.1% ±0.5 on 28 Aug) |
 
-**+5.6 points in three weeks, on the tightest interval this pin has ever been read at — 18 Sep 2026.**
-55.6% ±0.4 over **67,570 games**, `--checkpin` clean at 65 of 65 matchups. Between 5 Sep and here sit
+**+5.5 points in three weeks, on the tightest interval this pin has ever been read at — 18 Sep 2026.**
+55.5% ±0.4 over **67,570 games**, `--checkpin` clean at 65 of 65 matchups. Between 5 Sep and here sit
 Gym Heroes and its roster, Job 17a's quality pass, #42's six AI changes and #43's Bench Prize term.
 **Attributable to none of them individually**, and it is worth noticing that the two sessions whose
 own changes measured *null* against their own start are both inside this rise. The ±0.4 is the sample,
 not a new precision: 8 seeds across a 65-deck ladder is the biggest run anybody has pointed at this
 pin.
+
+**It was read TWICE that day, four hours apart, and the pair is a free lesson about what this
+instrument can see.** The first run — **55.6% ±0.4** — measured the tree before #43's self-cost clause,
+which stops a Chansey being credited a Prize for an attack that kills it. The second, on the tree that
+shipped, read **55.5% ±0.4**. **A correctness fix, invisible.** That is the expected shape rather than
+a disappointment: the clause fires only where a promotion is live AND the promoted body's best lethal
+attack would kill it, and the pin is a whole-ladder average. **Do not conclude a fix did nothing
+because the yardstick cannot resolve it** — this file's other pairing makes the same point from the
+other end, and the same session's isolating `aiduel` against `HEAD` read 50.8% against a 50.0%
+control.
 
 **The pin moved +1.4 points between 28 Aug and 3 Sep 2026, and the yardstick is doing its job.**
 50.1% ±0.5 to **51.5% ±0.9**, `--checkpin` clean, 11,656 games. That is the accumulated work of

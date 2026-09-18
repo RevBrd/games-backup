@@ -174,9 +174,12 @@ live, on a board where one bench body can take a Prize and another cannot, is no
 ladder win rate far. **28% of games changing tells you it is reached; the duel tells you the changes
 were right.** Neither number answers the other's question.
 
-**Not yet measured against the pin.** The 18 Sep reading of **55.6% ± 0.4** in
-[YARDSTICKS.md](../YARDSTICKS.md) was taken on the tree *before* the self-cost clause, so it describes
-the version that credited a dying Chansey a full Prize. It is a lower bound on the current one.
+**Against the pin: 55.5% ± 0.4**, up from 53.2% on 5 Sep — accumulated work, attributable to nobody
+in particular. **The pair of readings taken that day is the useful part:** the version *before* the
+self-cost clause read 55.6% ± 0.4 and the version that shipped read 55.5%. **The correctness fix is
+invisible to the yardstick**, which is the expected shape for a clause that fires only where a
+promotion is live and the promoted body's best lethal attack would kill it.
+*[Both readings, and what the pin can and cannot resolve →](../YARDSTICKS.md)*
 
 ## The stress sweep, and why it is not a guard
 
