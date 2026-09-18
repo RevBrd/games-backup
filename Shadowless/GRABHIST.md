@@ -34,7 +34,9 @@ This paragraph used to end *"the owner is whoever takes Job 15c"*; Job 15c archi
 already sitting at the top of the file being read by people who then did not act on it.
 **A deferral with a named owner is a decision; one without is a limit quietly becoming advisory.**
 [Archive 3](GRABHIST-ARCHIVE-3.md) took Job 14a and everything older, which is the cut that header
-proposed. **[Archive 4](GRABHIST-ARCHIVE-4.md) took Jobs 14b and 15a on 17 Sep 2026** — one appended entry put this file at 458, and the lint caught it in the same session that caused it. **When this file passes ~450 again, start `GRABHIST-ARCHIVE-5.md` at a job boundary.**
+proposed. **[Archive 4](GRABHIST-ARCHIVE-4.md) took Jobs 14b and 15a on 17 Sep 2026** — one
+appended entry put this file at 458, and the lint caught it in the same session that caused it.
+**When this file passes ~450 again, start `GRABHIST-ARCHIVE-5.md` at a job boundary.**
 
 **Two entries had drifted out of this file's own index, and how they did it is worth thirty seconds.**
 The 30 Aug Ninetales entry and the 31 Aug GBC-sequel entry were appended at the **bottom** of the file
