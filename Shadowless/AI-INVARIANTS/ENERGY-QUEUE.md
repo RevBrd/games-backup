@@ -21,8 +21,8 @@ reprices after every pitch.**
 
 Four opinions that disagreed, the sharpest on Energy: `rankHandJunk` filed an Energy one step off the
 junkiest thing in hand *unconditionally*, while `cardKeepValue` called it the most valuable card in
-hand once anything was short. Which answer you got depended only on which card asked. The table as it
-stood is in AI.md item 17.
+hand once anything was short. Which answer you got depended only on which card asked.
+The table of all four is in the verbatim item at the foot of this file.
 
 What `junkiestInHand` alone knew was folded in rather than lost: **an evolution whose Basic is in
 hand is live**, and **an Energy that pays nothing on this board is junk** — the second now asked of
@@ -84,7 +84,44 @@ asked for them to be duelled.
 
 **Shipped on the null, on correctness**, the same call EVOLUTION-READINESS made: four disagreeing
 answers became one, and the rules are rows. A third of games moving with no change in who wins says
-these decisions are real but small at ladder scale. The threshold variants are in AI.md item 17.
+these decisions are real but small at ladder scale. The threshold variants, and the finding that the win rate cannot see them, are in AI.md item 17.
 
 `powertest.js`, *Hand quality — the Energy queue*: seven rows. They call a function that did not
 exist before, so there is no pre-change control for them; the claims harness was unchanged at 155/1.
+
+## The AI.md item as it read, verbatim
+
+Moved out of [AI.md](../AI.md)'s open list on 17 Sep 2026 by #42, once the item closed — that
+file's own rule is that a shipped item leaves the live claim and a pointer behind, and six
+closures in one session had instead left their full text in place (644 lines to 737). Indentation
+is the list's; nothing else is changed.
+
+    **Four hand-quality opinions, and they disagree — 9 Sep 2026, Job 16.** Found while building the
+    "as many as you want" cluster, which needed a read of hand quality and turned out to have a
+    choice of three existing ones.
+
+    | | shape | knows about |
+    |---|---|---|
+    | `cardKeepValue` | a value per card, high = keep | Energy shortfall (`potential`), whether an evolution's base is **in play**, bench room |
+    | `rankHandJunk` | an **ordering** of uids, high = pitch | in-play names only. Rates Energy **near-junk unconditionally** |
+    | `junkiestInHand` | the single worst uid | the attack **cost symbols** actually needed, and the pre-evolution being **in hand** |
+    | `handCycleChoice` | a **subset**, built on `cardKeepValue` | whatever `cardKeepValue` knows, against the deck average |
+
+    **The sharpest disagreement is Energy.** `rankHandJunk` files it one step off the junkiest thing
+    in hand no matter what; `cardKeepValue` calls it the *most* valuable thing in hand the moment
+    anything on the board is short of it. Those are opposite answers to the same question, and which
+    one you get depends only on which card asked. `junkiestInHand` is the only one that reads the
+    symbols the board actually needs, and the only one that notices a Charmeleon is live because its
+    Charmander is *also in hand*.
+
+    **This is the Sleep problem (item 1's neighbour) in a different room**: one question, several
+    scorers, no single owner. It is also the reason the fourth one was added rather than
+    `rankHandJunk` being reused — **consolidating them changes four shipped Base and Jungle Trainers,
+    which is a measurement job with `abtest`, not a tidy-up to smuggle into a set addition.**
+
+    **What it would cost:** `cardKeepValue` is the best-informed of the three and the natural
+    survivor, but it is not directly usable as an ordering — it ties a dead evolution and a Basic
+    with a full bench at 1.5, and a tie in an ordering is the positional tiebreak Cat Punch exists to
+    kill. So the job is: give `cardKeepValue` the two facts only `junkiestInHand` has (cost symbols,
+    pre-evolution in hand), break the ties, express the other three in terms of it, then
+    `abtest 8 HEAD~1` — a symmetric change, so `aiduel` would cancel it.

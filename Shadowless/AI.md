@@ -298,6 +298,17 @@ short"*, because the items are not short any more. **The remedy stays the same a
 list keeps needing: when an item ships, its account belongs in `AI-INVARIANTS/`, and what stays here
 is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 lines down to 36.
 
+**And the habit beat the rule again ten days later — 17 Sep 2026, #42, which is the point worth
+keeping.** Closing six items in one session took this file from 644 lines to **737**, because each
+closure struck its item through and then kept the whole of the old text underneath it, one paragraph
+at a time, each time for a reason that looked good on its own. #39's logbook entry had predicted
+exactly this: *"its Open list keeps growing because AI jobs append a finished account where a live
+claim should go"*, and said a note at the top of the list would not change it. **It did not.** What
+worked was doing the move: four items' bodies went verbatim into their entry files under *The AI.md
+item as it read*, leaving the claim, the measurement and a pointer here — back to 662 in ten minutes.
+**So the instruction for whoever closes the next one is not "be brief". It is: write the entry, move
+the item's text into it, and check the line count before you commit.** `doccheck.js` prints it.
+
 When an item is removed, don't collapse the numbers. Many reference points might refer to that item by name, and a new item by the same name can cause confusion. Numbers should always iterate, never repeat. If you remove the last item in line, let's leave a temporary note saying something like "item [x] - completed" for the next person numbering items.
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
@@ -348,7 +359,7 @@ When an item is removed, don't collapse the numbers. Many reference points might
    the weight only carries the share of a turn, which is arithmetic. Measured before shipping:
    `abtest --pairs 400` **5.4% ± 0.8 diverged** (the decision is reached), `AIDUEL_WEIGHTS` 17.3 vs
    22 **50.0% ± 1.1**, and **no claim row moved**. A null with exposure, shipped on the arithmetic.
-   What follows is the item as it read.
+   The item itself is one hop away.
 
    **Sleep's arithmetic is settled at 0.666; its WEIGHT is not.** One Asleep denies **0.6659** turns
    over 40,000 real applications, against a closed form of 2/3 — so the old 1.20 was the crude
@@ -504,34 +515,9 @@ When an item is removed, don't collapse the numbers. Many reference points might
     turn, which nothing priced. So it is the whole status, priced as landing on us. Only barriers that
     stop **effects** get it; Withdraw-type barriers stop damage alone. Raichu's Agility against a
     paralyser is 40.75 now, against a plain hitter 35.75; the claim row is red against the commit
-    before. *[The entry →](AI-INVARIANTS/BARRIER-STATUS.md)* What follows is the item as it read.
+    before. *[The entry →](AI-INVARIANTS/BARRIER-STATUS.md)* The item itself is one hop away.
 
-    **A barrier denies a status as well as damage, and the shield term cannot see it — 7 Sep 2026.**
-    `denied` is `Math.min(incomingThreat, hpLeft)`, so `f.flags.shield` is a pure function of damage
-    prevented. An Agility against a Pokemon whose attack would **paralyse** prices identically to one
-    against a Pokemon that would only hit, and the equality is exact rather than close:
-    `base1:Electabuzz` at threat 40 and `base1:Machop` at threat 40 both score Agility **35.75**.
-
-    **The file says so itself without noticing.** The comment above that term reads *"TWO TERMS
-    BECAUSE THERE ARE TWO THINGS BEING PREVENTED"* — damage, linear, and the Knock Out, squared.
-    Both of them are damage. The same block quotes Trevor calling Agility *"the same shape as Ice
-    Beam… instead of inflicting paralysis it has a coin flip that prevents all damage"*, which was
-    the right model in August and is the half-model his own note has now outgrown: **"Agility buys
-    turns through damage *and status* denial on a coin flip."**
-
-    **It is smaller than it looks and that is the reason to size it before building it.** The barrier
-    already denies their whole turn when the flip lands, so the damage term is picking up most of the
-    value by accident. The genuine increment is only the status that would have **outlived** that
-    turn — a Sleep or Paralysis still on you the turn after. That is not nothing, and it is not the
-    whole of a status weight either.
-
-    **Do not build this before item 5.** Pricing it means reaching for `paralyze`/`sleep`/`confuse`,
-    and item 5 records that the Sleep weight is still unsettled — its arithmetic now says 17.3 against
-    a shipped 22. Adding a second consumer of a weight nobody has validated is how a wrong weight gets
-    load-bearing. *(Corrected 16 Sep 2026: this said "three methods that disagree — 0.67, 1.20 and a
-    shipped 0.85" for a day after #41 had closed the arithmetic. The blocker survives; the reason for
-    it changed.)* *[The row, with the measurement attached →](PLAYBOOK.md)* —
-    `tools/claimtest.js --open`.
+    *[The item as it read, verbatim →](AI-INVARIANTS/BARRIER-STATUS.md)*
 
 15. **The bot could not see the opponent's deck at all — 7 Sep 2026. HALF BUILT the same day.**
     `deckRisk` read `players[pi].deck`, ours, and priced running *itself* out as a loss; nothing in
@@ -571,30 +557,9 @@ When an item is removed, don't collapse the numbers. Many reference points might
     run four Fossils. Scored now, and the same fact turned out to be missing twice more — neither
     scorer knew a Doll concedes **no Prize**.
     *[The entry →](AI-INVARIANTS/DOLL-NO-PRIZE.md)* · the guard is in `selftest.js`, beside the
-    subset one. **What follows is the item as it read**, kept because `scoreStadiumAction`'s weights
-    paragraph is still open.
+    subset one. **One paragraph of the item is still open and stays here** — the Stadium weights.
 
-    **An ACTION TYPE is a third silent-failure surface, and it is the one nothing guards — 8 Sep
-    2026, Job 16.** This file's opening line is about a *verb* the scorer cannot price, and
-    `selftest.js` covers that, plus Power kinds, plus (since Gym Heroes) Stadium kinds. **None of
-    them sees a new `a.t`.**
-
-    `scoreAction` ends in `default: return -Infinity`. So an action type nobody scored is not
-    misplayed — it is **never played at all**, by anything, forever. The Stadium zone added
-    `stadiumAction` for Celadon City Gym, and until it was scored the bot owned a card it could not
-    reach for, with every suite green and the card working perfectly for the human.
-
-    **It fails CLOSED, which is why it has survived unnoticed and why it is item 16 rather than a
-    bug.** An unscored verb is played badly and shows up in a log; an unscored action type is absent
-    from every log there has ever been. That is strictly harder to find and strictly less harmful,
-    and the two properties are the same property.
-
-    **What it would cost:** `legalActions()` can emit an `a.t` and `scoreAction`'s switch can be
-    read for its cases, both statically, so this is the same shape as the three guards that already
-    exist — walk one list, assert the other covers it, with an opt-out set for anything deliberately
-    priced at `-Infinity`. The existing action types are few and all scored, so it goes in green;
-    **write it before the next one is added, not after**, since a guard added after the fact cannot
-    tell you what it would have caught.
+    *[The item as it read, verbatim →](AI-INVARIANTS/DOLL-NO-PRIZE.md)*
 
     **`scoreStadiumAction`'s weights are a first guess** and are deliberately priced off
     `T_FULL_HEAL`'s shipped numbers rather than off a fresh invention — same effect, same target, so
@@ -624,37 +589,9 @@ When an item is removed, don't collapse the numbers. Many reference points might
     **The extreme row is the one to read.** It is roughly the old `rankHandJunk` stance and it is not
     distinguishable either, so the finding is not that (1, 3) is best — it is that **win rate is blind
     to this decision at ladder scale**. Trevor's (1, 3) stays, and the seven `powertest` rows are the
-    instrument that can actually judge it. What follows is the item as it read.
+    instrument that can actually judge it. The item itself is one hop away.
 
-    **Four hand-quality opinions, and they disagree — 9 Sep 2026, Job 16.** Found while building the
-    "as many as you want" cluster, which needed a read of hand quality and turned out to have a
-    choice of three existing ones.
-
-    | | shape | knows about |
-    |---|---|---|
-    | `cardKeepValue` | a value per card, high = keep | Energy shortfall (`potential`), whether an evolution's base is **in play**, bench room |
-    | `rankHandJunk` | an **ordering** of uids, high = pitch | in-play names only. Rates Energy **near-junk unconditionally** |
-    | `junkiestInHand` | the single worst uid | the attack **cost symbols** actually needed, and the pre-evolution being **in hand** |
-    | `handCycleChoice` | a **subset**, built on `cardKeepValue` | whatever `cardKeepValue` knows, against the deck average |
-
-    **The sharpest disagreement is Energy.** `rankHandJunk` files it one step off the junkiest thing
-    in hand no matter what; `cardKeepValue` calls it the *most* valuable thing in hand the moment
-    anything on the board is short of it. Those are opposite answers to the same question, and which
-    one you get depends only on which card asked. `junkiestInHand` is the only one that reads the
-    symbols the board actually needs, and the only one that notices a Charmeleon is live because its
-    Charmander is *also in hand*.
-
-    **This is the Sleep problem (item 1's neighbour) in a different room**: one question, several
-    scorers, no single owner. It is also the reason the fourth one was added rather than
-    `rankHandJunk` being reused — **consolidating them changes four shipped Base and Jungle Trainers,
-    which is a measurement job with `abtest`, not a tidy-up to smuggle into a set addition.**
-
-    **What it would cost:** `cardKeepValue` is the best-informed of the three and the natural
-    survivor, but it is not directly usable as an ordering — it ties a dead evolution and a Basic
-    with a full bench at 1.5, and a tie in an ordering is the positional tiebreak Cat Punch exists to
-    kill. So the job is: give `cardKeepValue` the two facts only `junkiestInHand` has (cost symbols,
-    pre-evolution in hand), break the ties, express the other three in terms of it, then
-    `abtest 8 HEAD~1` — a symmetric change, so `aiduel` would cancel it.
+    *[The item as it read, verbatim →](AI-INVARIANTS/ENERGY-QUEUE.md)*
 
 18. ~~**Its guard's list is hand-maintained.**~~ **DERIVED 17 Sep 2026 (#42).** The subset family
     is now read out of `engine.js` — every case that treats a missing choice as `|| []` — and the
@@ -680,7 +617,7 @@ When an item is removed, don't collapse the numbers. Many reference points might
     ladder games disagreed zero times, and `abtest 8 HEAD --pairs 400` diverged 0 of 3,200.
     **`cardKeepValue` is now safe to call from anywhere**, which is what item 17 needed.
     **The lesson survives the fix and is kept below**: nothing that `scoreAttack` can reach may ask a
-    question whose answer is `scoreAttack`. What follows is the item as it read.
+    question whose answer is `scoreAttack`. The item itself is one hop away.
 
     **`scoreAttack` cannot ask what a card is worth — 11 Sep 2026, Job 16.** A structural limit rather
     than a missing weight, and it cost a stack overflow twice in one session before it was named.
@@ -729,25 +666,6 @@ When an item is removed, don't collapse the numbers. Many reference points might
     which is half of Trevor's rule (*"do as much damage as possible with the current active before
     it's killed"*); the **benefit** side — forcing their charged attacker up while our answer waits —
     is unbuilt; and pricing a ready attacker as the 2–5 Prizes Trevor puts it at is **item 1's**
-    quantity, not a number to invent here. What follows is the item as it read.
+    quantity, not a number to invent here. The item itself is one hop away.
 
-    **The bot cannot see who comes up when their Active leaves — Trevor, 17 Sep 2026 (#42).** Split
-    out of item 1 because it is a different fault and a cheaper one. His example: *"Bringing in
-    Blastoise to finish off a stalling Kangaskhan while the opponent has a Charizard that's able to
-    attack next turn on the bench is a bad idea, because then the opponent just switches in the
-    Charizard and kills your Blastoise before Blastoise could do any real damage."*
-
-    **The order makes it sharper than "switches in".** Blastoise knocks Kangaskhan out, and **the
-    Knock Out itself hands them a free promotion** — no retreat cost, no Switch card. Charizard comes
-    up and knocks Blastoise out. Taking the Prize is what opened the door. (to limit confusion, "promote" is what I meant by "switches in" in this context - T)
-
-    **Why nothing sees it:** `threatAgainst` and `incomingThreat` read `you.active` and nothing else.
-    A charged Charizard on their Bench is invisible to every scorer until the turn it is already
-    Active. So "don't be the first to expose the big gun" — his fodder-against-fodder standoff, where
-    whoever commits their attacker first loses it — cannot be expressed.
-
-    **This is a ONE-PLY read, not item 13's planner:** *if their Active leaves, who comes up, and what
-    does it do to mine?* The replacement is predictable from public information (`promoteValue` from
-    their seat reads their Bench, which is face up). Where it lands — the lethal branch, the promote
-    and Switch destination, or both — is the open design question, and **Trevor's "Prize should
-    usually come first" is the constraint**: the answer must not make the bot refuse Knock Outs.
+    *[The item as it read, verbatim →](AI-INVARIANTS/COMMIT-EXPOSURE.md)*

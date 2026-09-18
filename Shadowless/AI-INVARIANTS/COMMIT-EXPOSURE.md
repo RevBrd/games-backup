@@ -102,3 +102,31 @@ the next thing to try**, and it is a comparison between two promotions rather th
   slot is worth if it lives — and it is not invented here.
 - **The standoff itself is item 13's planner.** Trading jabs while counting whose wall arrives first
   is a comparison across turn sequences, not a term.
+
+## The AI.md item as it read, verbatim
+
+Moved out of [AI.md](../AI.md)'s open list on 17 Sep 2026 by #42, once the item closed — that
+file's own rule is that a shipped item leaves the live claim and a pointer behind, and six
+closures in one session had instead left their full text in place (644 lines to 737). Indentation
+is the list's; nothing else is changed.
+
+    **The bot cannot see who comes up when their Active leaves — Trevor, 17 Sep 2026 (#42).** Split
+    out of item 1 because it is a different fault and a cheaper one. His example: *"Bringing in
+    Blastoise to finish off a stalling Kangaskhan while the opponent has a Charizard that's able to
+    attack next turn on the bench is a bad idea, because then the opponent just switches in the
+    Charizard and kills your Blastoise before Blastoise could do any real damage."*
+
+    **The order makes it sharper than "switches in".** Blastoise knocks Kangaskhan out, and **the
+    Knock Out itself hands them a free promotion** — no retreat cost, no Switch card. Charizard comes
+    up and knocks Blastoise out. Taking the Prize is what opened the door. (to limit confusion, "promote" is what I meant by "switches in" in this context - T)
+
+    **Why nothing sees it:** `threatAgainst` and `incomingThreat` read `you.active` and nothing else.
+    A charged Charizard on their Bench is invisible to every scorer until the turn it is already
+    Active. So "don't be the first to expose the big gun" — his fodder-against-fodder standoff, where
+    whoever commits their attacker first loses it — cannot be expressed.
+
+    **This is a ONE-PLY read, not item 13's planner:** *if their Active leaves, who comes up, and what
+    does it do to mine?* The replacement is predictable from public information (`promoteValue` from
+    their seat reads their Bench, which is face up). Where it lands — the lethal branch, the promote
+    and Switch destination, or both — is the open design question, and **Trevor's "Prize should
+    usually come first" is the constraint**: the answer must not make the bot refuse Knock Outs.

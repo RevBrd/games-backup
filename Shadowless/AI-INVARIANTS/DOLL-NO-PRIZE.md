@@ -58,3 +58,32 @@ change, and exactly equal is a coincidence recorded rather than explained.
 `powertest.js` holds four rows under *Doll and Fossil — the bot*. **Three of the four were watched
 failing against the pre-change `ai.js`**; the fourth — stay behind the wall — passed there too,
 because the old answer was `-Infinity` for everything.
+
+## The AI.md item as it read, verbatim
+
+Moved out of [AI.md](../AI.md)'s open list on 17 Sep 2026 by #42, once the item closed — that
+file's own rule is that a shipped item leaves the live claim and a pointer behind, and six
+closures in one session had instead left their full text in place (644 lines to 737). Indentation
+is the list's; nothing else is changed.
+
+    **An ACTION TYPE is a third silent-failure surface, and it is the one nothing guards — 8 Sep
+    2026, Job 16.** This file's opening line is about a *verb* the scorer cannot price, and
+    `selftest.js` covers that, plus Power kinds, plus (since Gym Heroes) Stadium kinds. **None of
+    them sees a new `a.t`.**
+
+    `scoreAction` ends in `default: return -Infinity`. So an action type nobody scored is not
+    misplayed — it is **never played at all**, by anything, forever. The Stadium zone added
+    `stadiumAction` for Celadon City Gym, and until it was scored the bot owned a card it could not
+    reach for, with every suite green and the card working perfectly for the human.
+
+    **It fails CLOSED, which is why it has survived unnoticed and why it is item 16 rather than a
+    bug.** An unscored verb is played badly and shows up in a log; an unscored action type is absent
+    from every log there has ever been. That is strictly harder to find and strictly less harmful,
+    and the two properties are the same property.
+
+    **What it would cost:** `legalActions()` can emit an `a.t` and `scoreAction`'s switch can be
+    read for its cases, both statically, so this is the same shape as the three guards that already
+    exist — walk one list, assert the other covers it, with an opt-out set for anything deliberately
+    priced at `-Infinity`. The existing action types are few and all scored, so it goes in green;
+    **write it before the next one is added, not after**, since a guard added after the fact cannot
+    tell you what it would have caught.
