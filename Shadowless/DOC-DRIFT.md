@@ -340,3 +340,40 @@ file that knows. The two passages removed, verbatim:
 > gate table rather than trusting that number, because **Job 15a moved it and two files did not notice,
 > and then Job 16 moved it again and the same two files did not notice a second time.** The instruction
 > was already here and was already right; nobody ran it. A promo is
+
+### A REGISTER hiding in source code, not in a doc — 18 Sep 2026, #43
+
+**The five silent-failure surfaces existed as a roster only in a comment inside `selftest.js`.**
+`AI.md`'s header promises *"where it can fail without anything going red"*; its body described surface
+1, and the other four sat scattered across two struck-through items at the bottom of its own Open
+list. The count was inconsistent wherever it appeared — `selftest.js` called the subset verb *#5* and
+listed the other four, `ai.js` called the action type *"a THIRD silent-failure surface"*, and `AI.md`
+never counted at all.
+
+**This is `MAINTENANCE.md`'s "a REGISTER hiding inside a rule file" trigger with the register in a
+`.js` file instead**, which is why no doc pass had found it. The trigger reads *dated entries
+accumulating in a file whose subject is not chronological* — worth widening: **a family that grows by
+one every few jobs is a register wherever it lives, and a guard's comment block is a file nobody lints
+for drift.** Fixed as a five-row table in `AI.md`'s body, with the guard named per row; the two newest
+surfaces had each been discovered by somebody writing a guard rather than by anybody reading the
+model, which is the cost.
+
+**The related tell, and the cheaper one to look for: a live file describing a gap that a later job
+closed.** `ENGINE.md` still said Celadon's action type *"found the one silent-failure surface nothing
+guards"* — true on 15 Sep, false on the 17th, and it reads as a live gap rather than as history.
+**A sentence that counts an open problem goes stale the moment somebody fixes one**, and it does not
+look stale, because it is a statement about the world rather than about the code.
+
+### A closing item leaves its text behind because each paragraph has a reason — 17–18 Sep 2026
+
+**Closing six items in one session grew `AI.md` from 644 lines to 737.** Not one of those closures was
+careless: each struck its item through and then kept the old text underneath because that paragraph,
+considered alone, still said something true. The aggregate is what nobody was looking at.
+
+**A note at the top of the list had already been tried and did not work** — #39 predicted the growth
+in its own logbook entry and added the warning; the next session read it and grew the list anyway.
+**What worked was writing the destination down as a rule with a table**: which home an item's account
+goes to, decided by *how it closed* rather than by judgement. Three items had stayed at full length
+purely because nobody had said where they should go — a guard-closed item had no obvious home at all,
+and "somewhere" is not a destination. **A convention that requires a judgement call on every use gets
+skipped by the person in a hurry, which is always the person who just shipped something.**

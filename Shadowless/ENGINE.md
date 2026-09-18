@@ -317,10 +317,11 @@ used it is not a card in anybody's hand. Vermilion City Gym rides an *attack*, c
 resolved after `res.dealt` is known, because the card conditions it on damage that has already been
 through Weakness and Resistance.
 
-**Celadon's action type found the one silent-failure surface nothing guards.** `scoreAction` ends in
-`default: return -Infinity`, so an `a.t` nobody scores is never played by anything, ever — and no
-suite covers action types the way they cover verbs, Power kinds and Stadium kinds.
-*[The item, and what a guard would cost →](AI.md)*
+**Celadon's action type found what was then the one silent-failure surface nothing guards.**
+`scoreAction` ends in `default: return -Infinity`, so an `a.t` nobody scores is never played by
+anything, ever. **It is guarded as of 17 Sep 2026** — it is surface 4 of the five, and the guard went
+in red on a Mysterious Fossil that no bot had ever discarded. *[All five surfaces, and which guard
+watches each →](AI.md)*
 
 **And there is a THIRD end to the Stadium string, found 15 Sep 2026: does the BOT know what the Gym
 does?** The pair above guards `effects.js` against `engine.js` and catches a Gym that does nothing.

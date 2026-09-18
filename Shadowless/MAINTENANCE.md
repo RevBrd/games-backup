@@ -62,6 +62,13 @@ Each line is a rule and the reason it exists. **The full account of each, with w
 - **A CLOSED item sitting inside a LIVE one.** Look inside items, not only at their heads.
 - **A REGISTER hiding inside a rule file.** Dated entries accumulating in a file whose subject is not
   chronological. This file was the fourth.
+- **A REGISTER hiding in SOURCE CODE.** A family that grows by one every few jobs is a register
+  wherever it lives, and a guard's comment block is a file no doc pass lints. The five silent-failure
+  surfaces were rostered only inside `selftest.js`.
+- **A sentence that COUNTS an open problem.** "The one surface nothing guards" goes stale the moment
+  somebody guards it, and does not look stale, because it reads as a statement about the world.
+- **A convention that needs a judgement call on every use.** It gets skipped by whoever is in a hurry,
+  which is always whoever just shipped something. Name the destination in a table instead.
 - **A SHAPE decision has an expiry date.** Re-measure the thing the old argument was about, and write
   the measurement into the file rather than only the conclusion.
 - **A "fix" that EXTENDS a stale hand-list.** It resets the clock. Delete the list and point at what the

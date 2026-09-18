@@ -167,6 +167,25 @@ third and fourth tier are a numbers change rather than an architecture change. T
 already the right shape for an outcome we have not had to decide yet. Build the decks first and find
 out whether the AI needs to move at all.
 
+**DECIDED, 18 Sep 2026 — difficulty runs through the DECK, and the ladder tells the AI nothing.**
+Trevor, asked directly, closing what had been an open question in `AI.md` since the ladder was built:
+*"for now, let's try to let it run through the deck."* So `progress.lost`, the bracket, and everything
+else the ladder knows stay invisible to `ai.js`, and every opponent plays at the tier deck select
+hands it. **The decks were built first, as the paragraph above said to — this is the answer that
+found.**
+
+**Changing it later is cheap, and the mechanism is already in the file.** Trevor's original design,
+from the very start of the project, was to make weaker opponents *choose worse* — "x% of decisions
+take a subpar option". **That is what `novice` already is:** ±6 of score noise and the second-best
+sensible line 22% of the time. So a third and fourth setting are two constants, not a system, exactly
+as the 15 Aug reasoning predicted. **What would have to be built is the wiring, not the behaviour** —
+something on the bracket that selects a tier, which is the part deliberately not built.
+
+**And read the order of those two paragraphs before reopening it.** The decision is not that the AI
+*cannot* be a dial; it is that deck construction is tried first and has not yet run out. Bring evidence
+that the decks have stopped separating the tiers — `decksim.js` is the instrument — rather than the
+observation that a rival and a Club Master play alike, which is the intended state.
+
 **`greedy` is retained on purpose and is not dead code.** Trevor proposed deleting it in an earlier
 session; it stayed because `selftest.js` and `smoke.js` drive games with it. If it ever *is* wanted as
 a difficulty setting, it is already there. See [HISTORY.md](HISTORY.md).

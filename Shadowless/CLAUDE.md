@@ -52,7 +52,7 @@ the tree and not orientation.
 | File | Read it when |
 |---|---|
 | [ENGINE.md](ENGINE.md) | Adding or changing cards. The machinery built for the awkward ones — `runAttack`, `lastAttackResult`, the four owed choices, `playsAs`, the `baseCard`/`topCard` split, `takeEnergy`, `selfDamage`. **Its sibling `POWERS.md` holds the three kinds of Pokémon Power**, which are three mechanisms rather than three flavours |
-| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, the silent-failure surface where an unscored verb is misplayed forever, the cliff sniff test, and the current `Open` list. **The register is a directory — one file per shipped change in `AI-INVARIANTS/`**, indexed by `AI-INVARIANTS.md`, with two archives behind it. `AI.md`'s own table is the only place the folder and both archives are indexed together |
+| [AI.md](AI.md) | Touching `ai.js`. How the bot scores, **the five silent-failure surfaces and the guard watching each** — an unscored verb is only the first — the rule that nothing inside `scoreAttack` may ask what a card is worth, the cliff sniff test, and the current `Open` list. **The register is a directory — one file per shipped change in `AI-INVARIANTS/`**, indexed by `AI-INVARIANTS.md`, with two archives behind it. `AI.md`'s own table is the only place the folder and both archives are indexed together |
 | [MEASUREMENT.md](MEASUREMENT.md) | **Before you believe any number.** Every instrument that is not pass/fail, how to read a saved match log, and the standing figures. Two siblings: **`MISREADINGS.md` is every way one of them has lied** — read it before believing a null result — and **`YARDSTICKS.md` is the two measurements that ACCUMULATE**, the benchmark deck and the pinned commit, both of which rot by the world moving |
 | [LAYOUT.md](LAYOUT.md) | Touching **the board**, the mat, the hand, or anything **sized** on it. `fitBoard()`, `chooseLayout()`, the fan, the measured card heights, the coordinate-space trap. Several rules look wrong until you know what they protect, and a compacted read of this file has cost a session before. **Its sibling `SCREENS.md` is every other sized screen** — the pack reveal, deck select, the title screen |
 | [INTERACTION.md](INTERACTION.md) | Any moment the board stops and **talks to the player**. The coin toss and why it lands on the centre line, the Energy picker and the opponent's Trainer sharing its strip, the opening flip, the opening-setup screen, the action bar and the retreat gate, and the rail's hover peek that must never call `render()` |
@@ -377,8 +377,10 @@ The per-area open lists live in the files that own them; this is the index to th
    layouts. The mechanism exists; see [COLLECTION.md](COLLECTION.md).
 3. **One pack question left, and Southern Islands is it.** Its fixed 18-card distribution against
    our probabilistic intrusion model is unsettled and always was. See [PACKS.md](PACKS.md).
-4. **Opponents do not speak, and nothing reads `progress.lost`.** Both in
-   [PROGRESSION.md](PROGRESSION.md), both small, neither started.
+4. **Opponents do not speak.** In [PROGRESSION.md](PROGRESSION.md), small, not started. *(This line
+   also said nothing reads `progress.lost`. It still does not, and that is now a decision rather than
+   a gap — difficulty runs through the deck and the ladder tells the AI nothing. Trevor, 18 Sep 2026;
+   see [OPPONENTS.md](OPPONENTS.md).)*
 5. **Audio: none.** Nothing has been decided about it.
 
 **Every figure quoted anywhere before 11 Aug 2026 was measuring a 12-Prize game** — twice the

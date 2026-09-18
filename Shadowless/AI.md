@@ -72,6 +72,38 @@ with a comment saying why. That is a live declaration in the file that does the 
 entry on an opt-out list in a file that does not. *[The ruling behind it →](Rulings/PEEK-CLAIRVOYANCE.md)*;
 don't "fix" it by moving it.
 
+### There are five of them, and this file did not say so until 18 Sep 2026
+
+**The roster lived only in a comment inside `selftest.js`** — the file that guards them — while this
+file, whose header promises *"where it can fail without anything going red"*, described one and left
+the other four scattered across two closed items in its own Open list. That is a register hiding in
+source code, and it is the reason the two newest surfaces were each found by somebody writing a guard
+rather than by anybody reading this.
+
+**They are all guarded, and every guard is in `selftest.js`.** Read the guard before adding to the
+family it watches; each one carries its own account of what it cost.
+
+| # | The gap | How it fails | What the guard reads |
+|---|---|---|---|
+| 1 | A **verb** `ai.js` has no case for | Scores as plain base damage. Misvalued forever | every verb in `effects.js`, against `ai.js` and `UNSCORED_ON_PURPOSE` |
+| 2 | A **Power kind** no scorer consults | An interactive Power the bot never weighs | every interactive Power kind, against `ai.js` |
+| 3 | A **Stadium kind** nobody consults | Declared by a card, priced by nobody | the three-way round trip: `effects.js` declares, `engine.js` consults, `ai.js` prices |
+| 4 | An **action type** with no `scoreAction` case | Fails **closed** — never played, by any bot, ever | what `legalActions` and `powerActions` emit, against `scoreAction`'s case labels |
+| 5 | A **subset verb** whose scorer never fills `a.opts` | Fails **open** — legal, offered, played, resolves to nothing | the engine's own `opts.<key>) \|\| []` idiom, opted out of by `WHICH_NOT_WHETHER` with a reason |
+
+**4 and 5 fail in opposite directions and that is the thing to hold on to.** A closed failure is
+absent from every log rather than wrong in one, which is why #4 survived until a guard went looking;
+an open one is a card that visibly plays and does nothing. **Both were predicted green and both went
+in red**, which is the argument for writing the guard rather than reasoning about whether you need it.
+
+**Surface 5's guard is derived; the other four read a set.** None of them is a hand-kept list, and
+that was the last of them to stop being one. **A new member of any of these families goes red unless
+somebody classifies it** — which is the whole design, and the reason to add to the opt-out rather
+than to the guard.
+
+*[Why an unanswered subset resolves to zero →](Rulings/SUBSET-CHOICES.md)* · *[the two that were
+found by their own guards →](AI-INVARIANTS/DOLL-NO-PRIZE.md)*
+
 ### Triggered Powers: the surface where a Power is free
 
 Job 10c added Powers that **fire whether or not anything scored them**, which is the silent-failure
@@ -148,6 +180,40 @@ wrong is that **a benched Pokémon has no way to say "I could take a Prize if yo
 
 Left unfixed on purpose; it is Open #1 below. **If you take it on, duel it — and read the tail, not
 the mean, or you will conclude there was never a problem.**
+
+## Nothing inside `scoreAttack` may ask what a card is worth
+
+**Because that question is answered by `scoreAttack`.** A structural limit of the scorer's shape
+rather than a missing weight, and it cost a stack overflow twice in one session before it was named.
+
+```
+scoreAttack -> cardKeepValue -> potential -> potentialOf
+            -> scoreAttackHypothetical -> scoreAttack
+```
+
+`cardKeepValue` is the right question for a tutor, a discard or anything that moves a card. But it
+reads `potential()` to decide whether an Energy is wanted, `potential` evaluates every attack the slot
+could make, and evaluating an attack is this function. The same shape bit `bestAttackScore` an hour
+earlier: Tunneling's self-lock priced *next* turn's attack by asking for *this* turn's best, and
+`bestAttackScore` scores every attack.
+
+**The tell is that it fails LOUDLY and somewhere else.** Both times the gate reported
+`Maximum call stack size exceeded` from a test three files away — a Stadium row, then the evolution
+destination row. **Read the trace before believing the test that failed is the test that is wrong.**
+
+**The two safe shapes**, both used here now:
+
+- price it **one level lower**, in a function that reads the board but not the scorer —
+  `bestAffordableDamage` is printed damage where `bestAttackScore` is score;
+- or price it **structurally and flatly**, with no board read at all. A tutor is *a draw you get to
+  choose*, so it is worth somewhat more than a draw and nothing cleverer than that.
+
+**The one live exception is narrow and you should know why it is allowed.** `cardKeepValue` itself is
+now safe to call from anywhere, because its only branch that reached the scorer — *is an Energy
+wanted* — was swapped to `shortfallFor`, which reads costs and scores nothing. **That does not lift
+the rule**; it removes one caller from under it. `scoreAction` is not `scoreAttack`, and the
+distinction is what makes the Sleight of Hand pitch legal where the same call inside `scoreAttack`
+would not be. *[The lift, and what it measured →](AI-INVARIANTS/SCORE-ATTACK-REENTRY.md)*
 
 ## The cliff: a quantity about proximity, written as an equality check
 
@@ -261,6 +327,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 17 Sep | **One answer to what a card is worth keeping, and Energy in hand is a queue** — counted at the END of the turn, so this turn's attachment is never a spare. Every discard order goes through `handDiscardOrder`, which reprices after each pitch | `cardKeepValue`, `energyKeepValue`, `handDiscardOrder` |
 | 17 Sep | **A barrier that stops effects stops the status too, and that status is OUR next turn** — not an increment on the turn the damage term bought. Withdraw-type barriers stop damage only and get nothing | `effectShield`, `statusThreatAgainst` |
 | 17 Sep | **Their BENCH is a threat only where something forces their Active out, and the only thing the bot can force is its own Knock Out** — so the exposure is priced where a body is COMMITTED. A measured null at every magnitude, and the Knock Out charge it was built as measured WORSE | `benchThreatAgainst`, `slotLossCost`, `commitExposure` |
+| 17 Sep | **Nothing inside `scoreAttack` may ask what a card is worth**, because that question is answered by `scoreAttack`. The lift needed no cheap mode — the one branch that reached the scorer was already computing its answer twice. **The rule survives the lift and is a section of this file**, because three entries cite it | `scoreAttack`, `bestAttackScore`, `cardKeepValue`, `shortfallFor` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -280,37 +347,48 @@ on it.**
 
 ## Open
 
-**This list is NOT becoming a directory, it was compacted instead, and both halves were decided
-rather than skipped — 7 Sep 2026.** Items 1, 8 and 9 carried long accounts already told in
-[`Playbook/`](Playbook/) and [HISTORY-ARCHIVE-2.md](HISTORY-ARCHIVE-2.md) and now carry the live claim
-and a pointer. **Item 13 was left at full length on purpose** — Trevor's worked arithmetic is the
-proposal rather than a story about it, and this is its only copy in the tree. **Do not "finish the
-job" on it.** *[Why a directory was the wrong instrument here →](MAINTENANCE.md)*
+**Read these four rules before you edit this list. They are the whole of how it is kept, and three of
+them exist because somebody broke them first.**
 
-**That decision's own measurement expired the same day it was written, which is worth more than the
-decision — 8 Sep 2026.** It refused the directory on *"thirteen items, median ten lines, five of them
-eight or fewer"*, and items 14 and 15 landed hours later at 25 and 83 lines, taking the list to 334
-of this file's 611. `MAINTENANCE.md` says a shape decision has an expiry date and nothing re-checks
-one; this is the shortest expiry on record here. **The answer is still no** — the list is cited by
-number from `CLAUDE.md`, `GRABBAG.md` and four invariant files, so a structure inviting renaming
-invites repointing — but the grounds are now *"renumbering is the cost"* rather than *"the items are
-short"*, because the items are not short any more. **The remedy stays the same and it is the one this
-list keeps needing: when an item ships, its account belongs in `AI-INVARIANTS/`, and what stays here
-is the live claim and a pointer.** Items 12 and 15 went that way on 8 Sep, 123 lines down to 36.
+**1. The numbers are permanent. They are addresses, not positions.** Fourteen places outside this
+file cite an item by number — `CLAUDE.md`'s own Open index, `GRABBAG.md`'s AI section, and entries
+throughout [`AI-INVARIANTS/`](AI-INVARIANTS/) saying things like *"that is AI.md item 1's quantity."*
+**New items go at the bottom. A closed one keeps its number forever and is never reused**, so a
+citation written today still resolves in a year. If you close the last item on the list, leave
+*"item N — closed, see …"* in place rather than deleting the line, or the next person numbers on
+top of it. Trevor's rule, 18 Sep 2026, made explicit; items 4 and 10 already worked this way.
 
-**And the habit beat the rule again ten days later — 17 Sep 2026, #42, which is the point worth
-keeping.** Closing six items in one session took this file from 644 lines to **737**, because each
-closure struck its item through and then kept the whole of the old text underneath it, one paragraph
-at a time, each time for a reason that looked good on its own. #39's logbook entry had predicted
-exactly this: *"its Open list keeps growing because AI jobs append a finished account where a live
-claim should go"*, and said a note at the top of the list would not change it. **It did not.** What
-worked was doing the move: four items' bodies went verbatim into their entry files under *The AI.md
-item as it read*, leaving the claim, the measurement and a pointer here — back to 662 in ten minutes,
-and then to **671**, because writing this paragraph cost nine lines of the ninety-three it saved.
-**So the instruction for whoever closes the next one is not "be brief". It is: write the entry, move
-the item's text into it, and check the line count before you commit.** `doccheck.js` prints it.
+**2. A closed item shrinks to a stub.** The live claim, the measurement if there was one, and a
+pointer. **Its account and its own text go to its home, verbatim, under a heading saying so** — which
+is what makes rule 1 safe, because the address still resolves and lands one hop from the full story.
 
-When an item is removed, don't collapse the numbers. Many reference points might refer to that item by name, and a new item by the same name can cause confusion. Numbers should always iterate, never repeat. If you remove the last item in line, let's leave a temporary note saying something like "item [x] - completed" for the next person numbering items.
+**3. Which home, decided by how it closed.** This is the part that was never written down, and the
+absence is why three closed items had no home at all and stayed here at full length.
+
+| Closed by | Its account goes to | Because |
+|---|---|---|
+| a **code change** | its entry in [`AI-INVARIANTS/`](AI-INVARIANTS/) | that folder is the register of shipped changes and each entry already states an invariant |
+| a **decision or a decline** | [HISTORY.md](HISTORY.md), or whichever `HISTORY-ARCHIVE` is open | rejections keep their why, or they come back as fresh ideas |
+| a **guard**, with the account already in the guard's own comments | nowhere — point at the guard | the code is read before the decision; a second copy would be the duplication this tree keeps diagnosing |
+
+**And if the rule it left is cited from outside, it is not a closed item at all — promote it into
+this file's body.** Item 19's re-entry rule was cited by three entries in the invariants folder while
+living in a struck-through list entry. It is now a section above.
+
+**4. This list is not becoming a directory, and the reason is rule 1.** Refused 7 Sep 2026 on *"the
+items are short"*, which expired within hours when two landed at 25 and 83 lines. **The answer is
+still no and the grounds are now renumbering:** a structure that invites renaming invites repointing
+fourteen citations. *[Why a directory was the wrong instrument →](MAINTENANCE.md)*
+
+**Item 13 is the one exception to rule 2 and is left at full length on purpose** — Trevor's worked
+arithmetic is the proposal rather than a story about it, and this is its only copy in the tree. **Do
+not "finish the job" on it.**
+
+**Check the line count before you commit; `doccheck.js` prints it.** Closing six items on 17 Sep 2026
+took this file from 644 lines to 737, because each closure struck its item through and kept the whole
+of the old text underneath it, every time for a reason that looked good on its own. A note at the top
+of the list had already been tried and did not work. *[What did work, and what the habit costs
+→](DOC-DRIFT.md)*
 
 1. **The Bench cannot say "I could take a Prize."** `potential()` prices a benched Pokémon in printed
    damage while an Active gets full expected value; the measured size is in *The Active and the Bench
@@ -344,32 +422,17 @@ When an item is removed, don't collapse the numbers. Many reference points might
    but nothing has duelled it either. It cannot go on `selftest.js`'s `PROVISIONAL` list, which holds
    effect verbs, so it is recorded here instead.
 
-4. ~~**`evolve` cannot see readiness, and fixing that ALONE would make the bot worse.**~~ **BUILT
-   28 Aug 2026**, both halves in one commit, from Trevor's account of how the GBC game does it — the
-   bot now evolves at one Energy short of the evolution's cheapest attack rather than as soon as it
-   legally may. **The coupling it warned about was real and it named the wrong function**: the
-   refusal came from the surplus rule above `attachValue`, not from `attachValue`. **It shipped on a
-   measured null and that is recorded rather than explained away.**
-   *[The entry →](AI-INVARIANTS/EVOLUTION-READINESS.md)* · *[the original item, and the two clauses
-   of Trevor's note still unbuilt →](HISTORY-ARCHIVE-2.md)*
+4. ~~**`evolve` cannot see readiness.**~~ **BUILT 28 Aug 2026**, on a measured null — the bot evolves
+   at one Energy short of the evolution's cheapest attack rather than as soon as it legally may.
+   *[The entry →](AI-INVARIANTS/EVOLUTION-READINESS.md)* · *[the original item, and the two clauses of
+   Trevor's note still unbuilt →](HISTORY-ARCHIVE-2.md)*
 
-5. ~~**Sleep's WEIGHT is not settled.**~~ **SETTLED 17 Sep 2026 (#42): `sleep: 17.3`**, the value the
-   arithmetic implies. The objection below — that a denied turn is not worth the same at every point
-   in a game — turned out to be **already priced**: `statusWorthAgainst` scales every turn-denying
-   status by the damage it denies (`denied / AVG_ATTACK`) and floors it with the deck-out clock. So
-   the weight only carries the share of a turn, which is arithmetic. Measured before shipping:
-   `abtest --pairs 400` **5.4% ± 0.8 diverged** (the decision is reached), `AIDUEL_WEIGHTS` 17.3 vs
-   22 **50.0% ± 1.1**, and **no claim row moved**. A null with exposure, shipped on the arithmetic.
-   The item itself is one hop away.
-
-   **Sleep's arithmetic is settled at 0.666; its WEIGHT is not.** One Asleep denies **0.6659** turns
-   over 40,000 real applications, against a closed form of 2/3 — so the old 1.20 was the crude
-   instrument counting one application twice, exactly as this item had predicted before anything was
-   measured. Scaled off `paralyze: 26`, that implies a `sleep` of **17.3** against a shipped **22**,
-   about 27% high. **Do not retune off that number.** A denied turn is not worth the same at every
-   point in a game, and no `abtest` has been run; what is left is a question about value, not about
-   arithmetic, which is much cheaper to settle. *[The instrument and its output →](MEASUREMENT.md)* ·
-   *[this item as it read, with the measurement in full →](HISTORY-ARCHIVE-3.md)*
+5. ~~**Sleep's WEIGHT is not settled.**~~ **SETTLED 17 Sep 2026 (#42): `sleep: 17.3`**, the value
+   `sleepcost.js`'s 0.666 implies off `paralyze: 26`. The objection — that a denied turn is not worth
+   the same at every point in a game — was **already priced** by `statusWorthAgainst`, so the weight
+   carries only the share of a turn. `abtest --pairs 400` 5.4% ± 0.8 diverged, `AIDUEL_WEIGHTS`
+   17.3 vs 22 read 50.0% ± 1.1, no claim row moved. *[The instrument →](MEASUREMENT.md)* · *[the item
+   as it read, with the measurement in full →](HISTORY-ARCHIVE-3.md)*
 
 6. **A status is a free cure away, and the bot does not know — measured at 6.2%, so it was not
    built.** `engine.js` clears status on evolution, so any afflicted Pokemon whose evolution is in
@@ -379,10 +442,13 @@ When an item is removed, don't collapse the numbers. Many reference points might
    whether a card has an evolution, so this could be priced without ever reading their hand, and
    `namesWithAnEvolution` already exists. Revisit if a set arrives with far denser evolution lines.
 
-7. **The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder knows.**
-   Every opponent plays at the tier deck select hands them. Whether a named rival should play better
-   than a Club Master is an unasked design question — see [PROGRESSION.md](PROGRESSION.md) and
-   [OPPONENTS.md](OPPONENTS.md), which argues the AI probably should *not* be the dial.
+7. ~~**The AI is not told about `progress.lost`, difficulty per bracket, or anything the ladder
+   knows.**~~ **DECIDED 18 Sep 2026 by Trevor, and it is a decision to keep it that way** —
+   *"for now, let's try to let it run through the deck."* Difficulty is deck construction; the ladder
+   tells `ai.js` nothing and every opponent plays at the tier deck select hands it. **Reopening it is
+   cheap and the mechanism already exists** — `novice` is his original "x% of decisions take a subpar
+   option" idea, so a third setting is two constants. *[The decision, and what evidence would reopen
+   it →](OPPONENTS.md)*
 
 8. **The failing rows in `tools/claims/` are open AI faults, and they are not listed here on
    purpose.** From 23 Aug 2026 a claim out of Trevor's workbook is a row the bot is held to, and a red
@@ -405,46 +471,39 @@ When an item is removed, don't collapse the numbers. Many reference points might
    *[All three, and Trevor's answers →](HISTORY-ARCHIVE-2.md)* · *[how a note becomes a row
    →](PLAYBOOK.md)* · *[the harness and its control →](TOOLING.md)*
 
-9. **"Energy is a resource with somewhere else to be."** The forward-looking arm needs two things:
-   *who else wants this Energy*, and *what is it worth to them*. `evolutionRoadFor` answered the first
-   on 31 Aug 2026 — it names the copy that will actually arrive — so what remains is a rate, and
-   `attachValue` already prices an attachment per slot rather than needing a new weight. The
-   card-sized test case is Trevor's Charmeleon rule, two rows in `tools/claims/base1.js`.
-   *[The decomposition, and the tension underneath it →](Playbook/AMMO.md)*
+9. **"Energy is a resource with somewhere else to be." REOPENED FROM THE CODE, at Trevor's request
+   — 18 Sep 2026.** Asked about the remaining clauses, he asked to start over rather than answer
+   against his own eleven-day-old notes: *"let's ignore the notes about what I said for now and start
+   where the code and the open questions from that actually are."* **So the next pass derives the live
+   question from `attachValue`, `evolutionRoadFor` and `evolutionPlan`, states what is genuinely
+   undecided, and takes that to him fresh.** His 1 Sep account is preserved and is deliberately not
+   the starting point. *[His words in full, and the framing they were given
+   →](Playbook/EVOLUTION-TIMING.md)* · *[the decomposition and the tension under it →](Playbook/AMMO.md)*
 
-   **MEASURED 28 Aug 2026, and the item exists mainly to stop it being re-scoped as one large job.**
-   Trevor's sentence decomposes into three arms in very different states:
+   **What is measured, and what a fresh derivation should not re-derive.** The sentence decomposes
+   into three arms in very different states — 28 Aug 2026, and the item exists mainly to stop it being
+   re-scoped as one large job:
 
    | Arm | State |
    |---|---|
    | **(a)** putting the card on the wrong slot | **Effectively solved — 0.26%.** Read that null carefully; it is partly tautological, and no local counter can say the routing is *strategically* right |
    | **(b)** holding the card when Energy is scarce | **Real and near-inert**, ~0.1% of attachments. Build it for correctness; do not expect it to move a win rate |
-   | **(c)** attaching toward a card not yet in play | **Half built.** `evolutionInHand` + `potentialAs` give one card of lookahead, and only while the evolution is *in hand* |
+   | **(c)** attaching toward a card not yet in play | **Half built.** `evolutionInHand` + `potentialAs` give one card of lookahead, and only while the evolution is *in hand*. Evolutions in the **deck** are unread by anything in `ai.js` |
 
-   **And the neighbouring quantity is 27x larger than any of them**: 7% of attachments go onto an
-   Active that dies before spending them. Whether that is waste or simply what attaching under
-   pressure looks like is **unmeasured**, and it is where to look if you go hunting.
+   **The neighbouring quantity is 27x larger than any of them**: 7% of attachments go onto an Active
+   that dies before spending them, and whether that is waste or simply what attaching under pressure
+   looks like is **unmeasured**. It is where to look if you go hunting.
    *[The full measurements, and why the small probe that found (a) read zero →](HISTORY-ARCHIVE-2.md)*
 
-   **Two clauses are still open and neither follows automatically from (c) landing.** **Evolutions in
-   the DECK** look like they need probability rather than fact — **and Trevor's own account of what he
-   wants is not a probability model, 1 Sep 2026.** He described *"in hand"* and *"in deck"* as both
-   green lights with the first weighted much higher, the second yielding to bench slots already being
-   powered up or prepped for a nearer evolution. **That is a priority ordering, not a likelihood** —
-   an in-deck road is a real claim on Energy that takes the surplus rather than a share. Still not
-   small, and his "favorable conditions" clause is unspecified, but **do not inherit the scope
-   estimate from the word "probability".** **The duplicates rule** shipped on 28 Aug on a release
-   condition the board already knows rather than on the scarcity clause, because (b) had measured that
-   clause near-inert hours earlier. **Raise the deck arm with Trevor rather than assuming it follows.**
-   *[His words in full, and the framing →](Playbook/EVOLUTION-TIMING.md)*
+   **The arms come apart rather than following each other, and there is evidence:** the duplicates
+   rule shipped 28 Aug on a release condition the board already knows rather than on the scarcity
+   clause, because (b) had measured that clause near-inert hours earlier.
 
 10. ~~**The evolution road cannot see whether its carrier will live to travel it.**~~ **BUILT
-    31 Aug 2026, and not where this item said to look.** It pointed at the survival DISCOUNT, and no
-    discount could have fixed it — `evolutionRoadFor` ranked by investment alone, so a cheaper road is
-    still the same road. **The fix was in the SELECTION.** And the "off-by-one" it named turned out to
-    be a deliberate hedge whose removal flips three claim rows.
-    *[The entry →](AI-INVARIANTS/SURVIVES-CHARGE-HEDGE.md)* · *[the original item and the board it
-    was measured on →](HISTORY-ARCHIVE-2.md)*
+    31 Aug 2026, and not where this item said to look** — the fix was in the SELECTION, not in a
+    survival discount, and the "off-by-one" it named is a deliberate hedge.
+    *[The entry →](AI-INVARIANTS/SURVIVES-CHARGE-HEDGE.md)* · *[the original item and the board it was
+    measured on →](HISTORY-ARCHIVE-2.md)*
 
 11. **`wallRoadInDeck` is a guess, and it is the only one in `roadLive` — 3 Sep 2026.** In-hand and
     nowhere are facts about the board; **0.5** for an evolution still in the deck is a first stab at
@@ -462,14 +521,8 @@ When an item is removed, don't collapse the numbers. Many reference points might
     and 10 already do.
 
 12. ~~**Should a card that ALREADY threatens be charged toward a bigger attack?**~~ **CLOSED
-    7 Sep 2026 by Trevor — and the question turned out to be built on his own wording rather than on
-    his intent.** The attack road's fifth surplus exception reads `destShort`, which pins the moment
-    any *threatening* attack is payable, so it frees a Fossil Moltres (Wildfire `R`, no damage) and
-    does nothing for **Hitmonchan** or **Raichu**. Both of those are **already charged by
-    `attachAmortise`**, measured; and the cell that made the item look open — *"only if the bench
-    doesn't have better options"* — was written as a gate and meant as a comparison, which the bot
-    has always done.
-    **The boundary stands where `destShort` put it. The live part is the reason not to reopen it
+    7 Sep 2026 by Trevor.** The boundary stands where `destShort` put it — Hitmonchan and Raichu were
+    already charged by `attachAmortise`, measured. **The live part is the reason not to reopen it
     casually:** widening the rule hands the wall gate weight it was never sized for, and starts
     Magneton charging toward a Selfdestruct that belongs to the unbuilt Kamikaze Timing pattern.
     *[How it closed, verbatim, and the 35 cards the road did reach →](AI-INVARIANTS/ATTACK-ROAD.md)*
@@ -511,24 +564,17 @@ When an item is removed, don't collapse the numbers. Many reference points might
     to spend it. The missing piece is the *comparison across branches*, not the per-branch facts.
 
 14. ~~**A barrier denies a status as well as damage, and the shield term cannot see it.**~~ **BUILT
-    17 Sep 2026 (#42), and the sizing paragraph below had the turn order wrong.** The status a barrier
-    prevents is not an increment on the turn the damage term already bought. It lands on *our* next
-    turn, which nothing priced. So it is the whole status, priced as landing on us. Only barriers that
-    stop **effects** get it; Withdraw-type barriers stop damage alone. Raichu's Agility against a
-    paralyser is 40.75 now, against a plain hitter 35.75; the claim row is red against the commit
-    before. *[The entry →](AI-INVARIANTS/BARRIER-STATUS.md)* The item itself is one hop away.
+    17 Sep 2026 (#42), and the item's own sizing had the turn order wrong** — the status lands on
+    *our* next turn, so it is the whole status rather than an increment on the turn the damage term
+    bought. Effect-stopping barriers only. Raichu's Agility is 40.75 against a paralyser, 35.75
+    against a plain hitter. *[The entry, and the item verbatim →](AI-INVARIANTS/BARRIER-STATUS.md)*
 
-    *[The item as it read, verbatim →](AI-INVARIANTS/BARRIER-STATUS.md)*
-
-15. **The bot could not see the opponent's deck at all — 7 Sep 2026. HALF BUILT the same day.**
-    `deckRisk` read `players[pi].deck`, ours, and priced running *itself* out as a loss; nothing in
-    `ai.js` had ever read `players[1 - pi].deck`. **The stalling half shipped**: `deckOutClock` floors
-    both copies of `turnScale`, so a turn bought off a *harmless* opponent — worth exactly zero
-    before, because `denied` is damage — is worth having while their clock runs. 3.4% of ladder games
-    diverge; win rate unmoved, as a symmetric change should be.
-    **The transferable part is why nothing had ever scored it: a turn passing is progress toward that
-    win, and it is not an action.** Any win or loss condition that ticks on its own is invisible to an
-    action scorer by construction rather than by oversight.
+15. **The bot could not see the opponent's deck at all — 7 Sep 2026. HALF BUILT the same day.** The
+    stalling half shipped: `deckOutClock` floors both copies of `turnScale`, so a turn bought off a
+    *harmless* opponent is worth having while their clock runs. 3.4% of ladder games diverge, win rate
+    unmoved. **The transferable part is why nothing had ever scored it: a turn passing is progress
+    toward that win, and it is not an action** — any win condition that ticks on its own is invisible
+    to an action scorer by construction rather than by oversight.
     *[The entry, the measurement, and the two copies of `turnScale` →](AI-INVARIANTS/DECK-OUT-CLOCK.md)*
 
     **STILL OPEN: risk aversion, the larger half — and read the entry before you start, because the
@@ -551,18 +597,13 @@ When an item is removed, don't collapse the numbers. Many reference points might
     **The offensive half — mill effects gaining value as their deck shrinks — is not built and should
     not be opened by tuning Wildfire**, which Trevor has declined and is right to.
 
-16. ~~**An ACTION TYPE is a third silent-failure surface, and it is the one nothing guards.**~~
-    **GUARDED 17 Sep 2026 (#42) — and the prediction below was wrong, which is the part to keep.** It
-    said the guard would go in green. **It went in red on its first run**: `discardInPlay` had no
-    case, so no bot had ever discarded a Mysterious Fossil or a Clefairy Doll, and three roster decks
-    run four Fossils. Scored now, and the same fact turned out to be missing twice more — neither
-    scorer knew a Doll concedes **no Prize**.
-    *[The entry →](AI-INVARIANTS/DOLL-NO-PRIZE.md)* · the guard is in `selftest.js`, beside the
-    subset one. **One paragraph of the item is still open and stays here** — the Stadium weights.
+16. ~~**An ACTION TYPE is a silent-failure surface and nothing guards it.**~~ **GUARDED 17 Sep 2026
+    (#42) — and the item predicted the guard would go in green. It went in RED on its first run**:
+    `discardInPlay` had no case, so no bot had ever discarded a Mysterious Fossil, and three roster
+    decks run four. It is surface 4 in the table above. *[The entry, and the item verbatim
+    →](AI-INVARIANTS/DOLL-NO-PRIZE.md)*
 
-    *[The item as it read, verbatim →](AI-INVARIANTS/DOLL-NO-PRIZE.md)*
-
-    **`scoreStadiumAction`'s weights are a first guess** and are deliberately priced off
+    **STILL OPEN: `scoreStadiumAction`'s weights are a first guess** and are deliberately priced off
     `T_FULL_HEAL`'s shipped numbers rather than off a fresh invention — same effect, same target, so
     two unmeasured guesses that agree are at least consistent and will move together when either is
     measured. It cannot go on `PROVISIONAL`, which holds effect verbs; it is recorded here beside
@@ -590,83 +631,37 @@ When an item is removed, don't collapse the numbers. Many reference points might
     **The extreme row is the one to read.** It is roughly the old `rankHandJunk` stance and it is not
     distinguishable either, so the finding is not that (1, 3) is best — it is that **win rate is blind
     to this decision at ladder scale**. Trevor's (1, 3) stays, and the seven `powertest` rows are the
-    instrument that can actually judge it. The item itself is one hop away.
+    instrument that can actually judge it.
+    *[The entry, and the item verbatim →](AI-INVARIANTS/ENERGY-QUEUE.md)*
 
-    *[The item as it read, verbatim →](AI-INVARIANTS/ENERGY-QUEUE.md)*
-
-18. ~~**Its guard's list is hand-maintained.**~~ **DERIVED 17 Sep 2026 (#42).** The subset family
-    is now read out of `engine.js` — every case that treats a missing choice as `|| []` — and the
-    opt-out runs the safe way: a verb is a subset verb unless `WHICH_NOT_WHETHER` says otherwise,
-    with a reason. **The derivation found two members the list never had**, both attack-shaped
-    (Sleight of Hand, and the attack returning our own Pokémon), which cannot refuse by `-Infinity`
-    and are held to the other half of the contract instead: ai.js must write the key. Both were
-    already filled. **Named blind spot:** a subset verb reading its choice through a different idiom.
-
-    **SILENT-FAILURE SURFACE #5 is guarded — and its guard's list is hand-maintained, which is what
-    is still open.** A subset verb ("as many as you want") whose scorer forgets to fill `a.opts` is
-    legal, offered, played, and does **nothing**, because the engine resolves an unanswered subset to
-    zero on purpose. It fails **open and silent**, where item 16 fails closed. `selftest.js` checks
-    every listed subset scorer returns `-Infinity` on an empty set — **but a fifth subset verb added
-    without touching that array is exactly the case it cannot see.** Deriving the list rather than
-    keeping it is the fix, and it is not built. *[The rule →](Rulings/SUBSET-CHOICES.md)* · *[the
-    mechanism →](ENGINE.md)* · *[this item as it read →](HISTORY-ARCHIVE-3.md)*
+18. ~~**The subset guard's list is hand-maintained.**~~ **DERIVED 17 Sep 2026 (#42).** Surface 5 in
+    the table above. The family is read out of `engine.js` — every case treating a missing choice as
+    `|| []` — and the opt-out runs the safe way: a verb is a subset verb unless `WHICH_NOT_WHETHER`
+    says otherwise, with a reason. **The derivation found two members the list never had**, both
+    attack-shaped, which cannot refuse by `-Infinity` and owe the fill instead; both were already
+    filled. **Named blind spot: a subset verb that reads its choice through a different idiom.**
+    The guard and its full account are in `selftest.js`. *[The rule →](Rulings/SUBSET-CHOICES.md)* ·
+    *[this item as it read →](HISTORY-ARCHIVE-3.md)*
 
 19. ~~**`scoreAttack` cannot ask what a card is worth.**~~ **LIFTED 17 Sep 2026 (#42), and it needed
-    no cheap mode.** The only branch of `cardKeepValue` reaching the scorer was the Energy one, asking
-    `potential().short > 0` — and `potentialOf` computes `short` with the **same loop** as
-    `shortfallFor`, which reads costs and scores nothing. Swapped: 16,593 live comparisons over 60
-    ladder games disagreed zero times, and `abtest 8 HEAD --pairs 400` diverged 0 of 3,200.
-    **`cardKeepValue` is now safe to call from anywhere**, which is what item 17 needed.
-    **The lesson survives the fix and is kept below**: nothing that `scoreAttack` can reach may ask a
-    question whose answer is `scoreAttack`. The item itself is one hop away.
-
-    **`scoreAttack` cannot ask what a card is worth — 11 Sep 2026, Job 16.** A structural limit rather
-    than a missing weight, and it cost a stack overflow twice in one session before it was named.
-
-    ```
-    scoreAttack -> cardKeepValue -> potential -> potentialOf
-                -> scoreAttackHypothetical -> scoreAttack
-    ```
-
-    `cardKeepValue` is the right question for a tutor, a discard or anything that moves a card — it is
-    what the Prize picker and the cycle Trainers ask, and AI.md item 17 is an argument for using it
-    *more*. But it reads `potential()` to decide whether an Energy is wanted, `potential` evaluates
-    every attack the slot could make, and evaluating an attack is this function. **Nothing reachable
-    from inside `scoreAttack` may ask what a card is worth, because that question is answered by
-    `scoreAttack`.**
-
-    The same shape bit `bestAttackScore` an hour earlier: Tunneling's self-lock priced next turn's
-    attack by asking for this turn's best, and `bestAttackScore` scores every attack.
-
-    **The tell is that it fails LOUDLY and somewhere else.** Both times the gate reported
-    `Maximum call stack size exceeded` from a test three files away — a Stadium row, then the
-    evolution-destination row — so the stack trace, not the failing test name, is what points at the
-    cause. Read the trace before believing the test that failed is the test that is wrong.
-
-    **The two safe shapes**, both now used here:
-    - price it one level lower, in a function that reads the board but not the scorer —
-      `bestAffordableDamage` is printed damage where `bestAttackScore` is score;
-    - or price it structurally and flatly, with no board read at all. A tutor is *a draw you get to
-      choose*, so it is worth somewhat more than a draw and nothing cleverer than that.
-
-    **What it would cost to lift:** giving `cardKeepValue` a cheap mode that skips the `potential`
-    read — the Energy branch is the only one that reaches it — which would make the natural valuation
-    available everywhere. Worth doing when the second card needs it; one flat weight is not yet
-    evidence of a problem.
+    no cheap mode** — the only branch of `cardKeepValue` reaching the scorer computed `short` with the
+    same loop as `shortfallFor`, which reads costs and scores nothing. 16,593 live comparisons
+    disagreed zero times; `abtest` diverged 0 of 3,200. **The rule it left was cited by three entries
+    in the invariants folder, so it is now a section of this file's body** rather than a struck-through
+    list item. *[The entry, the measurement, and the item verbatim
+    →](AI-INVARIANTS/SCORE-ATTACK-REENTRY.md)*
 
 20. **HALF BUILT 17 Sep 2026 (#42), and the built half is a measured null — `commitExposure: 1`.**
-    The bot can now see their Bench (`benchThreatAgainst`), and declines to commit a body that would
-    Knock their Active out while a ready reply sits behind it. It duels at **49.8% ± 0.6** over 25,341
-    games against **exactly 50.0%** with the gate switched off, and **4x and 8x the bill do not move
-    it**, which refutes the obvious "too small to matter" reading. **The version built in the lethal
-    branch first measured WORSE (49.7%), and the rule that came out of it is the transferable part:
-    an exposure cost is only a cost if some alternative avoids it.**
-    *[The entry, both measurements and the live hypothesis →](AI-INVARIANTS/COMMIT-EXPOSURE.md)*
+    The bot sees their Bench (`benchThreatAgainst`) and declines to commit a body that would Knock
+    their Active out while a ready reply sits behind it: 49.8% ± 0.6 over 25,341 games against exactly
+    50.0% with the gate off, unmoved at 4x and 8x the bill. **The version built in the lethal branch
+    first measured WORSE, and the rule that came out of it is the transferable part: an exposure cost
+    is only a cost if some alternative avoids it.**
+    *[The entry, both measurements, the live hypothesis and the item verbatim
+    →](AI-INVARIANTS/COMMIT-EXPOSURE.md)*
 
-    **What is still open:** the gate ignores whether the body that goes up *instead* can do anything,
-    which is half of Trevor's rule (*"do as much damage as possible with the current active before
-    it's killed"*); the **benefit** side — forcing their charged attacker up while our answer waits —
-    is unbuilt; and pricing a ready attacker as the 2–5 Prizes Trevor puts it at is **item 1's**
-    quantity, not a number to invent here. The item itself is one hop away.
-
-    *[The item as it read, verbatim →](AI-INVARIANTS/COMMIT-EXPOSURE.md)*
+    **STILL OPEN:** the gate ignores whether the body that goes up *instead* can do anything, which is
+    half of Trevor's rule (*"do as much damage as possible with the current active before it's
+    killed"*); the **benefit** side — forcing their charged attacker up while our answer waits — is
+    unbuilt; and pricing a ready attacker as the 2–5 Prizes Trevor puts it at is **item 1's**
+    quantity, not a number to invent here.

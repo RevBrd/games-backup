@@ -350,5 +350,8 @@ until you know what they protect**, and one of them is a `min-height` that must 
    decks, 8 Gym Leader decks and 8 GB2 flavour decks, ID-mapped and count-verified but read by
    nothing. `data/OPPONENT_DECK_POOL.md` is the tracker; see [DATA.md](DATA.md) for what is in each
    file and what "quarantined" means here.
-3. **Nothing reads `progress.lost` yet.** It is recorded, and a "this one keeps beating you" surface
-   is the obvious use.
+3. **Nothing reads `progress.lost` yet, and the AI never will.** It is recorded, and a "this one keeps
+   beating you" *presentation* surface is the obvious use. **What it is not is a difficulty input** —
+   Trevor decided 18 Sep 2026 that difficulty runs through the deck and the ladder tells `ai.js`
+   nothing, so a use for this field has to be something the player sees rather than something the bot
+   knows. *[The decision, and what would reopen it →](OPPONENTS.md)*
