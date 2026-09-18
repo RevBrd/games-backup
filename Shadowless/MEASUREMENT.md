@@ -60,10 +60,29 @@ and is not.
 | **one seat gets the change** | `aiduel` | win rate |
 
 A rules change is symmetric, so a win rate sits at 50% however large it is — that much was always
-written down. **What was not: a change to what the bot PERCEIVES is symmetric too.** It ships to
-whoever is playing, both seats play under it, and `aiduel` cancels it exactly as it cancels a retreat
-ruling. `PLAY-ORDER`, `DRAG-TARGET` and `EVOLUTION-PLAN` are all scorer changes measured here, and
-correctly.
+written down.
+
+**CORRECTED 17 Sep 2026 (#42), and it overturns a paragraph that was deliberately blessed rather
+than drifted into.** The blessed version said *"a change to what the bot PERCEIVES is symmetric too
+... and `aiduel` cancels it exactly as it cancels a retreat ruling."* **The second half is false, and
+the reason is which FILE each tool swaps:**
+
+| | takes from the ref | so it can see |
+|---|---|---|
+| `aiduel` | **`src/ai.js` only**, onto ONE seat | any change to the scorer — the other seat still plays the old one. A rules change it cannot see at all, because both seats share the working-tree engine |
+| `abtest` | **the whole of `src/`**, onto BOTH seats | whether anything changed anywhere, rules included; never who is better |
+
+**The internal contradiction is the clincher: `--baseline` pins a commit so a reading
+ACCUMULATES — "how far has the AI come".** Every change it accumulates is a scorer change. If
+`aiduel` cancelled those, the pin and both yardsticks in [YARDSTICKS.md](YARDSTICKS.md) would measure
+nothing.
+
+**What stays true from the blessed version:** measuring a scorer change with `abtest` is correct and
+is not drift. `PLAY-ORDER`, `DRAG-TARGET` and `EVOLUTION-PLAN` wanted *divergence* — "did this reach
+any game at all", the exposure question — and that is `abtest`'s. The two tools answer different
+questions about a scorer change rather than one being wrong for it; **a scorer change can be run
+through both, and #42 ran six that way.** What you may not do is read a 50% from `aiduel` on a scorer
+change as "cancelled by construction": it is a real null, which is a finding.
 
 `aiduel` is the one that **manufactures** an asymmetry — new bot on one seat, committed bot on the
 other — which is what makes a win rate mean anything at all. Its `--baseline` pin is the other half:

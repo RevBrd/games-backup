@@ -260,6 +260,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 17 Sep | **A Doll is not a Prize.** Three scorers priced one — the worst read a KO on their Fossil as our winning Prize — and no bot had ever discarded one, because the action type had no case. Discard only for an attacker that swings this turn | `discardInPlay`, `givesPrize` |
 | 17 Sep | **One answer to what a card is worth keeping, and Energy in hand is a queue** — counted at the END of the turn, so this turn's attachment is never a spare. Every discard order goes through `handDiscardOrder`, which reprices after each pitch | `cardKeepValue`, `energyKeepValue`, `handDiscardOrder` |
 | 17 Sep | **A barrier that stops effects stops the status too, and that status is OUR next turn** — not an increment on the turn the damage term bought. Withdraw-type barriers stop damage only and get nothing | `effectShield`, `statusThreatAgainst` |
+| 17 Sep | **Their BENCH is a threat only where something forces their Active out, and the only thing the bot can force is its own Knock Out** — so the exposure is priced where a body is COMMITTED. A measured null at every magnitude, and the Knock Out charge it was built as measured WORSE | `benchThreatAgainst`, `slotLossCost`, `commitExposure` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -715,7 +716,22 @@ When an item is removed, don't collapse the numbers. Many reference points might
     available everywhere. Worth doing when the second card needs it; one flat weight is not yet
     evidence of a problem.
 
-20. **The bot cannot see who comes up when their Active leaves — Trevor, 17 Sep 2026 (#42).** Split
+20. **HALF BUILT 17 Sep 2026 (#42), and the built half is a measured null — `commitExposure: 1`.**
+    The bot can now see their Bench (`benchThreatAgainst`), and declines to commit a body that would
+    Knock their Active out while a ready reply sits behind it. It duels at **49.8% ± 0.6** over 25,341
+    games against **exactly 50.0%** with the gate switched off, and **4x and 8x the bill do not move
+    it**, which refutes the obvious "too small to matter" reading. **The version built in the lethal
+    branch first measured WORSE (49.7%), and the rule that came out of it is the transferable part:
+    an exposure cost is only a cost if some alternative avoids it.**
+    *[The entry, both measurements and the live hypothesis →](AI-INVARIANTS/COMMIT-EXPOSURE.md)*
+
+    **What is still open:** the gate ignores whether the body that goes up *instead* can do anything,
+    which is half of Trevor's rule (*"do as much damage as possible with the current active before
+    it's killed"*); the **benefit** side — forcing their charged attacker up while our answer waits —
+    is unbuilt; and pricing a ready attacker as the 2–5 Prizes Trevor puts it at is **item 1's**
+    quantity, not a number to invent here. What follows is the item as it read.
+
+    **The bot cannot see who comes up when their Active leaves — Trevor, 17 Sep 2026 (#42).** Split
     out of item 1 because it is a different fault and a cheaper one. His example: *"Bringing in
     Blastoise to finish off a stalling Kangaskhan while the opponent has a Charizard that's able to
     attack next turn on the bench is a bad idea, because then the opponent just switches in the
@@ -723,7 +739,7 @@ When an item is removed, don't collapse the numbers. Many reference points might
 
     **The order makes it sharper than "switches in".** Blastoise knocks Kangaskhan out, and **the
     Knock Out itself hands them a free promotion** — no retreat cost, no Switch card. Charizard comes
-    up and knocks Blastoise out. Taking the Prize is what opened the door.
+    up and knocks Blastoise out. Taking the Prize is what opened the door. (to limit confusion, "promote" is what I meant by "switches in" in this context - T)
 
     **Why nothing sees it:** `threatAgainst` and `incomingThreat` read `you.active` and nothing else.
     A charged Charizard on their Bench is invisible to every scorer until the turn it is already

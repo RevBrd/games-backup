@@ -157,8 +157,21 @@ function parseEnergy(spec) {
 // 'Dewgong' | { card, energy, dmg, status, stack }
 // `card: 'Seel > Dewgong'` builds the real evolution stack, which matters for
 // anything reading `baseCard` — Devolution, and the played-from-hand rule.
+// A KEY THIS DOES NOT KNOW IS A REFUSAL, NOT A SHRUG — #42, 17 Sep 2026. Written
+// after `{ damage: 60 }` was accepted in silence: the Pokemon stayed at full HP,
+// the claim under it still ran, and the row measured a board nobody had written.
+// That is the same failure mode as this file's refusal to guess between two
+// printings, one level along — a green test about the wrong position.
+const SLOT_KEYS = new Set(['card', 'stack', 'energy', 'dmg', 'status', 'poisonDamage']);
+
 function makeSlot(E, spec) {
   const o = typeof spec === 'string' ? { card: spec } : { ...spec };
+  for (const k of Object.keys(o)) {
+    if (!SLOT_KEYS.has(k)) {
+      throw new Error(`no slot key "${k}" — ${[...SLOT_KEYS].join(', ')}`
+        + (k === 'damage' ? ' (damage counters are `dmg`)' : ''));
+    }
+  }
   const chain = String(o.stack ? o.stack : o.card).split('>').map(x => x.trim()).filter(Boolean);
   const ids = chain.map(resolve);
   for (const id of ids) {

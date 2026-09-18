@@ -7573,6 +7573,9 @@ const AI_WEIGHTS = {
   // meant to be DUELLED at other values rather than trusted — see item 17.
   energyScarceAt: 1,
   energyCheapAt: 3,
+  // How many times the plain loss bill it costs to commit a body that their
+  // Bench can answer. See `promoteValue`'s commit gate and AI.md item 20.
+  commitExposure: 1,
   ammoTurns: 2,       // extra shots to stock on an attack that eats its own
                         // Energy to fire. Charizard: RRRR + 2 discarded x 2 = 8
   attachSurplus: -2,    // attaching to a Pokemon that needs nothing. Negative so
@@ -8797,6 +8800,25 @@ class AI {
       const emptiesTheirBoard = you.bench.length === 0;
       s += f.pLethal * ((takesLastPrize || emptiesTheirBoard) ? W.lastPrize : W.knockout);
 
+      // NO EXPOSURE CHARGE ON THE KNOCK OUT ITSELF, AND THIS IS THE FINDING —
+      // #42, 17 Sep 2026, AI.md item 20. It was built here first and measured
+      // worse: 49.7% +/- 0.6 over 25,000 duels, the same point estimate at two
+      // sample sizes, with 17% of lethal looks paying an average bill of 20.5.
+      //
+      // WHY IT IS WRONG, AS A RULE AND NOT AS A NUMBER: **an exposure cost is
+      // only a cost if some alternative avoids it.** Declining the Knock Out does
+      // not keep their Bench killer benched — it arrives the moment their Active
+      // dies, which it will, while their Active goes on attacking us in the
+      // meantime. So this charged a bill that no other action escapes, and the
+      // capped `slotLossCost` charged a fodder attacker nearly as much as an
+      // invested one, which is the opposite of the point.
+      //
+      // AND IT IS THE WRONG SIGN ON TREVOR'S OWN BOARD. *"If Charizard comes in
+      // first, then Blastoise gets to jump in and hit for weakness and kill it."*
+      // Forcing their big card up while OUR answer is still on the Bench is the
+      // good half of the standoff. The cost lives at the moment a body is
+      // COMMITTED — `promoteValue` — and that is where it is.
+
       // Job 10c. KILLING A DARK GYARADOS COSTS SOMETHING, and until this was
       // written nothing in the forecast could say so — every term here prices
       // what an attack DOES and none of them priced what the corpse does back.
@@ -9646,20 +9668,70 @@ class AI {
   // which is why `promote` had no idea it was feeding a 40 HP Voltorb to an
   // Arcanine that had just dealt 80.
   threatAgainst(pi, mySlot) {
+    return this.threatFrom(this.E.state.players[1 - pi].active, mySlot);
+  }
+
+  // The same question with the ATTACKER named, so it can be asked about a slot
+  // that is not Active yet — #42, 17 Sep 2026, AI.md item 20. Extracted rather
+  // than copied: `threatAgainst` is now one line of this.
+  threatFrom(theirSlot, mySlot) {
     const E = this.E;
-    const you = E.state.players[1 - pi];
-    if (!you.active || !mySlot) return 0;
+    if (!theirSlot || !mySlot) return 0;
     let worst = 0;
-    const c = this.top(you.active);
+    const c = this.top(theirSlot);
     (c.attacks || []).forEach((a, i) => {
-      if (!E.costSatisfied(you.active, a.cost)) return;
-      const raw = this.rawOutcomes(you.active, mySlot, i);
+      if (!E.costSatisfied(theirSlot, a.cost)) return;
+      const raw = this.rawOutcomes(theirSlot, mySlot, i);
       for (const o of raw.outcomes) {
-        const r = E.computeDamage(you.active, mySlot, o.dmg);
+        const r = E.computeDamage(theirSlot, mySlot, o.dmg);
         if (r.dmg > worst) worst = r.dmg;
       }
     });
     return worst;
+  }
+
+  // WHAT COMES UP IF THEIR ACTIVE LEAVES — AI.md item 20, from Trevor's
+  // Blastoise/Charizard standoff, 17 Sep 2026.
+  //
+  // The hardest hit any of their BENCHED Pokemon could land on `mySlot` if it
+  // were promoted, counting only ones that can already pay for an attack. Their
+  // Bench is face up, so this is public information and no self-restriction is
+  // involved (unlike `prizeIndex`, which is about a face-DOWN pile).
+  //
+  // THE TRIGGER IS A KNOCK OUT, and that is the narrow claim this supports. A
+  // promotion after a Knock Out is FREE: no retreat cost, no Switch. Trevor's
+  // correction, 17 Sep: outside that, they should not usually be paying a retreat
+  // cost to ambush, so an unconditional fear of their Bench would be wrong.
+  benchThreatAgainst(pi, mySlot) {
+    const you = this.E.state.players[1 - pi];
+    let worst = 0;
+    for (const b of you.bench) {
+      const d = this.threatFrom(b, mySlot);
+      if (d > worst) worst = d;
+    }
+    return worst;
+  }
+
+  // WHAT DIES WITH THIS POKEMON, in the retreat rule's own arithmetic — the same
+  // bill `promoteValue` reads, extracted so the Knock Out path cannot disagree
+  // with it. The Energy invested, capped as an escape is capped, plus the Prize
+  // conceded over the square of how few they still need.
+  //
+  // KNOWN UNDER-COUNT, and it is Trevor's own figure: *"a Blastoise entering the
+  // game ready and undamaged might be worth anywhere between 2-5 prizes before
+  // it's killed or wins the game."* This bill prices the CARD, not the stream of
+  // Prizes a ready attacker takes while it lives. Pricing the stream is the same
+  // quantity as AI.md item 1 (the Bench cannot say "I could take a Prize"), so it
+  // is not invented here. See item 20.
+  slotLossCost(pi, slot) {
+    const W = this.W, E = this.E;
+    if (!slot) return 0;
+    const you = E.state.players[1 - pi];
+    const invested = slot.energy.length * W.retreatSaveEnergy
+      + (this.top(slot).stage !== 'Basic' ? W.retreatSaveEvolved : 0);
+    const left = Math.max(1, you.prizes.length);
+    const prize = E.playsAsPokemon(slot) ? 0 : W.retreatPrize / (left * left);
+    return Math.min(W.dangerSwap, invested) + prize;
   }
 
   // HOW MUCH DOES TAKING ONE ENERGY OFF THEM ACTUALLY COST THEM? — 15 Sep 2026.
@@ -9763,14 +9835,34 @@ class AI {
     let s = hp * 0.35
           + W.promoteReady / (1 + Math.min(pot.short, 4))
           + Math.max(0, pot.best) * 0.2;
-    if (this.threatAgainst(pi, b) >= hp) {
-      const invested = b.energy.length * W.retreatSaveEnergy
-        + (this.top(b).stage !== 'Basic' ? W.retreatSaveEvolved : 0);
-      const left = Math.max(1, you.prizes.length);
-      // A Doll or a Fossil concedes no Prize when it falls, so only the Energy on
-      // it is lost — #42. Charging the Prize made every Fossil look worth fleeing.
-      const prize = E.playsAsPokemon(b) ? 0 : W.retreatPrize / (left * left);
-      s -= Math.min(W.dangerSwap, invested) + prize;
+    // `slotLossCost` is the same bill, shared with the Knock Out path so the two
+    // cannot disagree. A Doll or a Fossil concedes no Prize and it knows that.
+    if (this.threatAgainst(pi, b) >= hp) s -= this.slotLossCost(pi, b);
+    // DO NOT BE THE ONE WHO COMMITS FIRST — AI.md item 20, Trevor 17 Sep 2026.
+    // "Bringing in Blastoise to finish off a stalling Kangaskhan while the
+    // opponent has a Charizard that's able to attack next turn on the bench is a
+    // bad idea, because then the opponent just switches in the Charizard and
+    // kills your Blastoise before Blastoise could do any real damage."
+    //
+    // THE CONDITION IS THAT WE WOULD KILL, and that is what keeps this narrow.
+    // Their Bench only arrives for free if their Active leaves, and what makes it
+    // leave is our own Knock Out. A Pokemon sent up into a stalemate is not
+    // exposed to their Bench at all, which is why this is gated rather than a
+    // standing fear of whatever is behind them.
+    //
+    // Printed damage both sides, never the scorer: `promoteValue` is reachable
+    // from `scoreAttack` through `bestSelfSwitch` (see the re-entry guard there).
+    //
+    // `commitExposure` MULTIPLIES THE BILL, and it exists because the bill is
+    // known to be the wrong size rather than because a knob is nice to have.
+    // `slotLossCost` prices the card — Energy plus the Prize — while Trevor puts
+    // a ready, undamaged Blastoise at *"anywhere between 2-5 prizes before it's
+    // killed or wins the game"*. Pricing that stream is AI.md item 1's quantity,
+    // so until it exists this is a scalar somebody has duelled.
+    if (you.active && you.bench.length
+      && this.bestAffordableDamage(pi, b) >= this.remainingHP(you.active)
+      && this.benchThreatAgainst(pi, b) >= hp) {
+      s -= W.commitExposure * this.slotLossCost(pi, b);
     }
     return s;
   }

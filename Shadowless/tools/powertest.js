@@ -9523,6 +9523,43 @@ T('...but an UNREADY one does not, or the ordering rule would overrule readiness
     b.E.state.players[0].energyAttached = true;
     return eq(order(b.E)[0].name, 'Fire Energy', 'the basic goes first');
   });
+  // TREVOR'S STANDOFF — AI.md item 20, 17 Sep 2026. A ready Blastoise is sent up
+  // to finish a stalling Kangaskhan; behind it sits a Charizard that is paid up.
+  // The Knock Out hands them a FREE promotion, and Charizard answers.
+  T('sending the big attacker up is worth less when a ready killer sits on their Bench', () => {
+    const land = (theirBench) => {
+      const b = setup({
+        me:   { card: 'base1:Machop' },                          // fodder, about to die
+        them: { card: 'base2-5', dmg: 60 },                      // Kangaskhan, 30 HP left
+        myBench:    [{ card: 'base1:Blastoise', energy: '3 Water' }],
+        theirBench: [theirBench],
+      });
+      return new AI(b.E, {}).promoteValue(0, b.E.state.players[0].bench[0]);
+    };
+    const armed = land({ card: 'base1:Charizard', energy: '4 Fire' });
+    const asleep = land({ card: 'base1:Charmander' });            // nothing ready behind
+    if (!(armed < asleep)) throw new Error(`armed ${armed.toFixed(2)}, harmless ${asleep.toFixed(2)}`);
+    return true;
+  });
+  T('...and it is not worth less when the promotion would NOT be a Knock Out', () => {
+    // Same Charizard, but Kangaskhan is untouched, so Blastoise cannot kill it and
+    // nothing forces a promotion. Their Bench is not a threat to a stalemate.
+    const b = setup({
+      me:   { card: 'base1:Machop' },
+      them: { card: 'base2-5' },                                  // 90 HP, unhurt
+      myBench:    [{ card: 'base1:Blastoise', energy: '3 Water' }],
+      theirBench: [{ card: 'base1:Charizard', energy: '4 Fire' }],
+    });
+    const c = setup({
+      me:   { card: 'base1:Machop' },
+      them: { card: 'base2-5' },
+      myBench:    [{ card: 'base1:Blastoise', energy: '3 Water' }],
+      theirBench: [{ card: 'base1:Charmander' }],
+    });
+    const withZard = new AI(b.E, {}).promoteValue(0, b.E.state.players[0].bench[0]);
+    const without = new AI(c.E, {}).promoteValue(0, c.E.state.players[0].bench[0]);
+    return eq(withZard, without, 'a stalemate exposes nothing');
+  });
   T('only a barrier that stops EFFECTS is credited with the status it blocks (AI.md item 14)', () => {
     // Withdraw prevents damage alone, so a Paralysis still lands through it.
     const sq = setup({ me: { card: 'base1:Squirtle', energy: '2 Water' }, them: { card: 'base1:Machop' } }).E;
