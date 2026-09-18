@@ -341,3 +341,85 @@ the half a person can see by playing; the guard found the half nobody can see by
 needed finding, and I do not think either of us would have found the other's.
 
 — #42
+
+## #43 — Job 17b: the Open list, and item 1 (18 Sep 2026)
+
+Two halves, and the second one only worked because of the first.
+
+## The doc half, which Trevor proposed and I argued down
+
+He suggested an `AI-HISTORY.md`: closed items move there, a one-line pointer stays in `AI.md`, numbers
+never repeat. The numbering rule is his and it is right — I grepped and found **fourteen citations of
+`AI.md` item numbers from outside the file**, so those numbers are addresses.
+
+I pushed back on the file. Every closed item already had a home, and four literally contained the
+`AI.md` text under a heading saying so. A new archive would have been a third copy of most of them,
+and a *longer* hop than what existed. He took the counter-proposal.
+
+**But the thing that actually made it work was not the shape, it was the table.** Three closed items
+had stayed at full length not because anybody preferred them there but because **nobody had ever
+written down which home an account goes to.** A convention that needs a judgement call on every use
+gets skipped by whoever is in a hurry, which is always whoever just shipped something. So the rule is
+now a table: code change → its `AI-INVARIANTS/` entry, decision → `HISTORY.md`, guard-closed → point
+at the guard. #39 predicted the growth and added a warning note; #42 read the note and grew the list
+anyway. The note was not the missing piece.
+
+**The find of that half was a register hiding in `selftest.js`.** The five silent-failure surfaces
+existed as a roster only inside the guard that watches them, while `AI.md` — whose header promises
+*"where it can fail without anything going red"* — described one and scattered four across two
+struck-through items in its own Open list. The count disagreed in three places. Both of the newest
+surfaces were found by somebody writing a guard rather than by anybody reading the model, which is
+what that costs.
+
+## Item 1, and the lesson I would most want passed on
+
+**The refactor it had been budgeting for since 13 August did not exist.** `forecast` pinned the
+attacker to `me.active` in one line. `rawOutcomes` and `computeDamage` had taken slots as parameters
+for months — the Over-Attach and drag-target jobs did that for their own reasons and nobody went back
+to look. **A scope estimate written into an open item is a measurement with an expiry date exactly
+like any other, and nothing in this tree re-derives one.** That is the most transferable thing I found
+all session and it is not about this item.
+
+The other half of why it had sat: `forecast` reads the board and scores nothing, so it is safe inside
+`scoreAttack`, and until now the only two rungs were `bestAffordableDamage` (printed) and
+`scoreAttack` (score). Anything forbidden the scorer had **nowhere else to go**. The missing rung is
+most of the explanation.
+
+## Trevor found a hole in it within the hour, and I want to be precise about how
+
+I asked him a design question about walls and retreat. **He misread it** and answered about Chansey
+*attacking* instead — and his misread answer named a live fault in code I had shipped an hour
+earlier: a Chansey on 60 HP reported a 1.00 chance of a Prize through a Double-edge that kills it.
+One Prize for one Prize is not a Prize.
+
+**And the sweep I had written to check exactly that had already come back clean — 0 of 188
+printings.** Every card in it was benched at full HP, where recoil is survivable almost by definition.
+Nobody chose full HP: `makeSlot` leaves `dmg` at 0 unless a board says so, so the harness's **default
+state silently became the scope of the finding**. The zero was not wrong about the boards it ran. It
+was wrong about the question, and a confident zero is the most persuasive result a sweep can produce.
+
+If you take one thing from this entry: **ask what your fixture is holding still, and whether the fault
+could live there.** The second probe was one line longer than the first.
+
+## What I left, and one thing I would tell whoever takes it
+
+Three more sites price the Bench in printed damage and the retreat case is the loudest — its own
+comment says printed damage is *"the only currency they share"*, which stopped being true this
+morning. Trevor's rule for it is already recorded: the wall suppression lifts as **their** Prize pile
+empties, on `retreatPrize`'s existing squared curve rather than a new threshold.
+
+I also re-filed the Omastar claim row off item 1 as item 21, and I think that matters more than it
+looks. It had been item 1's *"cheapest statement of it anybody has written down"* for a fortnight. It
+is a third fault — put Omastar in the Active spot, where item 1's fix applies by definition, and it
+plateaus identically, because expected value does not rank a guaranteed 30 above a two-coin 30. **That
+is the Poliwag lesson arriving a second time on the same item**, and the item had the warning written
+in it: *two faults producing the same wrong number on the same board are not one fault.* Having the
+rule written down did not stop it happening again. I do not know what would have, other than the two
+minutes it took to put the card in the other slot and look.
+
+One shape observation I did not act on: `AI.md` is two documents. The model — how it scores, the five
+surfaces, the cliff table, the re-entry rule — and the open list. Different readers, and it passes
+`MAINTENANCE.md`'s split test cleanly. The numbering objection does not apply, because the list would
+move whole rather than be restructured. Left for whoever does the next 15g round.
+
+— #43
