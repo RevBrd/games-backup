@@ -32,6 +32,45 @@ the question arose while `slotKOChance` was being wired into `promoteValue`:
 > prize better off with nothing else really gained. The exception might be if it kamikazes a very
 > strong pokemon to ruin the other player's large active threat.
 
+**Shown a board where the rule fired anyway — Chansey walling on one Energy, a charged Hitmonchan
+benched, their Active on 20 HP — he gave the reason, and the reason is not about walls at all:**
+
+> In most cases (assuming not later in the game and an opponent low on prizes), it's usually better
+> to still buy time (but probably some variance depending on what it's buying), and the reason is
+> worth explaining. The question becomes what is beyond the Hitmonchan and what is beyond the
+> opponent's pokemon? If it's just the Chansey and Hitmonchan and the opponent has a few bench
+> pokemon regardless of powerup (since we're looking a few turns out and things can be powered or
+> evolved in that time), then you risk losing the Hitmonchan afterward and be at risk of having
+> nothing to go to. The better option is often to keep stalling, draw more cards, and try to get
+> something even stronger ready on the bench. You don't have to worry too much about the
+> Charizard/Blastoise example from one of the AI.md items if you have two Blastoises, and a deep
+> bench once all the actual blows start landing can be a big asset. If the opponent is low on bench
+> pokemon (maybe one unpowered/underpowered one) and knocking out the Chansey might realistically
+> lead to winning by leaving the opponent with no pokemon remaining rather than prize-out or
+> deck-out.
+
+**19 Sep 2026, on how the wall eventually gets powered** — offered as planning rather than a work
+order:
+
+> I think they just made it hard for Chansey to retreat, that way the bench built up naturally behind
+> it. If Chansey somehow survived a really long time, like if the opponent also had a Chansey or
+> something, it would eventually power up Chansey as the last pokemon once all or most others had
+> already been powered. Then Chansey naturally gets Double-Edge in a couple turns and even if it's
+> taken out itself after, the entire reason it was able to finish getting powered was the bench is
+> deep.
+>
+> The thing we'd have to guard for is the bot powering it beyond Scrunch in the early game when it
+> might be better to save those energies for future bench pokemon/evolutions you haven't drawn yet
+> and not take yourself out with Double-Edge when you have nothing to replace it with.
+
+**Both guards he names are already built, and the third clause is not.** `wallPlanFloor` holds a wall
+back from charging toward its big attack at all — its comment names Chansey and Kangaskhan as exactly
+the two cards it catches — and `scoreAttack` prices a self-Knock Out that empties our board at
+`lastPrize` rather than `selfKO`, so Double-edge with nothing behind it is a 240-point mistake rather
+than a 70-point one. **What is missing is the eventual release**: the gate is fixed, so Chansey is
+refused on turn 3 and on turn 30 alike and never arrives at Double-edge at all.
+*[The open item, and why the denominator matters more than a turn number →](../AI.md)*
+
 **Both halves are the same claim measured from different ends, and neither is new — they sharpen the
 Chansey note above.** *"Very few circumstances where it would ever retreat"* now has its circumstance:
 **the opponent being close to winning.** And the Double Edge clause gains its condition: a kamikaze is

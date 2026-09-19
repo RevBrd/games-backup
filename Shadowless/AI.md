@@ -329,6 +329,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 17 Sep | **Their BENCH is a threat only where something forces their Active out, and the only thing the bot can force is its own Knock Out** — so the exposure is priced where a body is COMMITTED. A measured null at every magnitude, and the Knock Out charge it was built as measured WORSE | `benchThreatAgainst`, `slotLossCost`, `commitExposure` |
 | 17 Sep | **Nothing inside `scoreAttack` may ask what a card is worth**, because that question is answered by `scoreAttack`. The lift needed no cheap mode — the one branch that reached the scorer was already computing its answer twice. **The rule survives the lift and is a section of this file**, because three entries cite it | `scoreAttack`, `bestAttackScore`, `cardKeepValue`, `shortfallFor` |
 | 18 Sep | **`forecast` takes the attacker as a parameter, so "what would this do if it were up there" is one question with one answer.** It reads the board and scores nothing, which makes it the rung between printed damage and the scorer — and the absence of that rung is most of why the Bench was stuck. A promotion is priced on the CHANCE of a Prize; the caller prices it, never `forecast` | `forecast(…, fromSlot)`, `slotKOChance`, `promoteKO` |
+| 18 Sep | **A Prize is not "hitting harder", so the retreat comparison carries two currencies.** A wall suppresses the Prize half by default and steps aside on whichever exception is nearer — their Prizes on `retreatPrize`'s own curve, or their Bench, which is the board-out win seen one move early. **Only the positive half**, exactly as `delta` does | `koGain`, `urgent` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -404,19 +405,18 @@ of the list had already been tried and did not work. *[What did work, and what t
    *[The entry, the weight, and the 23% of the pool printed damage cannot describe
    →](AI-INVARIANTS/SLOT-KO-CHANCE.md)*
 
-   **STILL OPEN: three more sites, and the retreat case is the loudest.** Its own comment says both
-   sides are printed damage *"because that is the only currency they share"* — no longer true. Then
-   `STEP_IN`, which compares a bench slot in printed damage against the Active in score. Then
-   `teamReadiness`, which **adds** the two with a ×4 on the Active — **chased and cleared rather than
-   fixed**, because it is only ever read as a difference and the baseline cancels; what is genuinely
-   unmeasured there is `attachBuild`'s scale.
-   *[The probe, and the rule it produced →](MISREADINGS.md)*
+   **THE RETREAT SITE IS DONE TOO — 18 Sep 2026**, and it measured **51.0% ± 0.4 against a 49.9%
+   control** with 41.1% of games diverging. Its comment used to justify printed damage on both sides
+   *"because that is the only currency they share"*; there are two now. A wall suppresses the Prize
+   half by default and steps aside on whichever of Trevor's two exceptions is nearer — their Prizes,
+   or their Bench, which is the board-out win seen one move early.
+   *[The entry, the grid, and the two mistakes it cost →](AI-INVARIANTS/WALL-STEPS-ASIDE.md)*
 
-   **And the retreat site has its rule already, from Trevor on 18 Sep 2026** — *"I wouldn't retreat a
-   wall to bring up a killer unless the opponent was low on prizes."* So the wall suppression lifts as
-   **their** pile empties, on `retreatPrize`'s existing squared curve rather than a new threshold.
-   Build it that way or the two rules will disagree about what "close to winning" means.
-   *[His note in full →](Playbook/WALLS.md)*
+   **STILL OPEN: two sites.** `STEP_IN`, which compares a bench slot in printed damage against the
+   Active in score. And `teamReadiness`, which **adds** the two with a ×4 on the Active — **chased and
+   cleared rather than fixed**, because it is only ever read as a difference and the baseline cancels;
+   what is genuinely unmeasured there is `attachBuild`'s scale.
+   *[The probe, and the rule it produced →](MISREADINGS.md)*
 
    **STILL OPEN, and it is the sharper half: a trade is only a trade while the two bodies are worth
    the same.** `slotKOChance` now refuses to credit a Prize that kills the attacker — Trevor's
@@ -718,3 +718,38 @@ of the list had already been tried and did not work. *[What did work, and what t
     fifteen are ordinary upgrade roads `upShort` already sees. **Read the three-road comment in
     `potentialOf` before adding a fourth.**
     *[The row, both measurements and the re-run sweep →](tools/claims/base3.js)*
+
+22. **A wall is charged LAST, not never — Trevor, 19 Sep 2026, and the input already exists.**
+    `wallPlanFloor` gates the charging exception on `wallHere(pi, slot) <= 0.5`, which is fixed: a
+    Chansey is refused a charge toward Double-edge on turn 3 and on turn 30 alike, so **it never
+    arrives at its big attack at all.** His account of the GBC game is the opposite — *"it would
+    eventually power up Chansey as the last pokemon once all or most others had already been
+    powered … the entire reason it was able to finish getting powered was the bench is deep."*
+    *[His note in full →](Playbook/WALLS.md)*
+
+    **Both guards he names are already built** — `wallPlanFloor` holds the early charge, and a
+    self-Knock Out that empties our board is priced at `lastPrize` rather than `selfKO`, so
+    Double-edge with nothing behind it is a 240-point mistake. **What is missing is only the
+    release.**
+
+    **The denominator is the whole question, and it is why he reached for a turn count.**
+    `slotEnergyDemand` is `Math.max(...attackShortfalls)` — the distance to a slot's *biggest*
+    attack — so a benched Hitmonchan happily using Jab still reports demand 2 for Special Punch
+    forever, and a strict "nothing else wants Energy" test would never fire. **`destShort` is the
+    measure that means what he means**: the cheapest attack worth arriving for, already computed in
+    `potentialOf`, already the answer to "is this card functional". Reuse it rather than adding a
+    fourth road, and read the three-road comment first.
+
+    **A turn number or a deck-remaining threshold was his proposal and is the fallback, not the
+    plan.** It is the least derivable quantity available and it is the cliff sniff test's own shape;
+    `deckOutRange: 15` exists but prices a real clock rather than proxying board development.
+    **Measure first:** how often each candidate denominator actually reaches zero in real games, and
+    at what turn. If the `destShort` version fires around where he pictures it, the proxy is
+    unnecessary; if it never fires either, the proxy has earned its place and should be recorded as
+    having earned it.
+
+    **A separable third clause of his, worth building on its own merits:** once a ready evolved copy
+    sits on the Bench, a road should not stay open for another copy of the same evolution that is not
+    in hand. `evolutionRoadFor` rations a road to the most-invested twin but does not close one for a
+    card that has already arrived. That is phantom demand, so it helps twice — better attachment
+    ordering, and it brings this item's condition closer to firing.

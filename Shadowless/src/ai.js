@@ -4670,7 +4670,12 @@ class AI {
         // What the swap does to our offence THIS turn. The replacement can still
         // attack after retreating, so what matters is the difference between the
         // two, not the whole of the current attack — and both sides are measured
-        // in printed damage because that is the only currency they share.
+        // in printed damage, which says how HARD the arriving body hits.
+        //
+        // It cannot say whether that is ENOUGH, and until 18 Sep 2026 this
+        // comment ended "because that is the only currency they share" and that
+        // was the end of it. There is a second one now; the Prize half is priced
+        // below, after the wall clause, because it needs a rule of its own.
         //
         // SYMMETRIC on purpose. Swapping down costs; swapping UP pays, and it
         // has to, or bringing a charged attacker off the Bench to replace a
@@ -4705,6 +4710,66 @@ class AI {
           delta *= (1 - wall * W.wallStick);
         }
         s += delta * W.retreatTempo;
+
+        // A PRIZE IS NOT "HITTING HARDER", AND IT IS THE OTHER HALF OF THIS
+        // COMPARISON — 18 Sep 2026, AI.md item 1. The `delta` above is printed
+        // damage both sides, and its own comment used to justify that with
+        // "because that is the only currency they share." **That stopped being
+        // true when `forecast` took the attacker as a parameter.** They now
+        // share a second one, and it answers a question printed damage cannot:
+        // not how hard the arriving body hits, but whether it takes a Prize.
+        //
+        // SYMMETRIC for the same reason `delta` is — a retreat that gives up a
+        // Prize chance is charged for it, or a spent attacker walks away from a
+        // Knock Out it could have had.
+        const koGain = this.slotKOChance(pi, b) - this.slotKOChance(pi, me.active);
+        let koTerm = koGain * W.promoteKO;
+
+        // THE WALL CLAUSE IS TREVOR'S AND IT HAS TWO CONDITIONS — 18 Sep 2026.
+        // *"I wouldn't retreat a wall to bring up a killer unless the opponent
+        // was low on prizes."* Asked to look at a board, he gave the reason, and
+        // **the reason is not about walls at all**:
+        //
+        //   "What is beyond the Hitmonchan and what is beyond the opponent's
+        //   pokemon? ... then you risk losing the Hitmonchan afterward and be at
+        //   risk of having nothing to go to. The better option is often to keep
+        //   stalling, draw more cards, and try to get something even stronger
+        //   ready on the bench."
+        //
+        // So the default is HOLD, and the lift is whichever exception is nearer.
+        // Both are graded, both squared, and neither is a threshold:
+        //
+        //   THEIR PRIZES — his first clause, on `retreatPrize`'s own curve.
+        //   1/36 at six to 1 at one. Reusing that arithmetic rather than
+        //   inventing a second notion of "close to winning", which this function
+        //   already prices twenty lines down.
+        //
+        //   THEIR BENCH — his second, and it is the one a board test misses.
+        //   *"If the opponent is low on bench pokemon ... knocking out the
+        //   Chansey might realistically lead to winning by leaving the opponent
+        //   with no pokemon remaining rather than prize-out or deck-out."*
+        //   `scoreAttack` already knows emptying their board wins outright; this
+        //   is the same win condition seen one move earlier, from the decision
+        //   that puts the attacker up there.
+        //
+        // WHY THE BENCH READ IS NOT OPTIONAL: the first version of this had only
+        // the Prize half, and the board it was tested on gave the opponent no
+        // bench at all — so it looked like the Prize clause misfiring when it was
+        // the bench clause, unbuilt, firing correctly. **A rule with a missing
+        // input does not read as missing. It reads as the input you did build
+        // being wrong.**
+        //
+        // ONLY THE POSITIVE HALF, matching `delta` exactly. Walking a wall away
+        // FROM a Knock Out it could land is not wall behaviour being protected;
+        // it is a loss, and it costs full price.
+        if (koTerm > 0) {
+          const wall = this.wallHere(pi, me.active);
+          const left = Math.max(1, you.prizes.length);
+          const deep = 1 + you.bench.length;
+          const urgent = Math.max(1 / (left * left), 1 / (deep * deep));
+          koTerm *= (1 - wall * W.wallStick * (1 - urgent));
+        }
+        s += koTerm;
 
         // Job 10c. RETREATING INTO A SINKHOLE COSTS MORE THAN THE ENERGY. Dark
         // Dugtrio takes a coin at whoever just retreated, and several of them
