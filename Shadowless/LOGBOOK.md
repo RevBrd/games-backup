@@ -51,8 +51,8 @@ in exchange for more recent history live. If you need an entry in full, it is in
 | [LOGBOOK-ARCHIVE-6.md](LOGBOOK-ARCHIVE-6.md) | #28–#32 | 26 Aug – 1 Sep 2026 | Jobs 13 to 14b — the promos and their reachability, the tenth documentation pass, the Over-Attach pattern |
 | [LOGBOOK-ARCHIVE-7.md](LOGBOOK-ARCHIVE-7.md) | #33, #34 | 1–2 Sep 2026 | Job 15a's Challenge bracket and Job 15b's pack odds — including the legal deck that could not attack — and the eleventh documentation pass |
 | [LOGBOOK-ARCHIVE-8.md](LOGBOOK-ARCHIVE-8.md) | #35, #36, #37 | 2–5 Sep 2026 | Job 15d's suite audit and `owed.js`, and Job 15e in both halves — the GBC 2 seam, then the attack road |
-| [LOGBOOK-ARCHIVE-9.md](LOGBOOK-ARCHIVE-9.md) | #38, #39, #40 | 7–14 Sep 2026 | Job 15f's live Google Sheet and graded drift check, round one of Job 15g and `doccheck.js`, and the whole of Gym Heroes |
-| **this file** | #41, #39 – | 15 Sep 2026 – | Job 17a's review of Gym Heroes, and round two of Job 15g |
+| [LOGBOOK-ARCHIVE-9.md](LOGBOOK-ARCHIVE-9.md) | #38, #39, #40 | 7–16 Sep 2026 | Job 15f's live Google Sheet and graded drift check, **both rounds** of Job 15g and `doccheck.js`, and the whole of Gym Heroes |
+| **this file** | #41, #43 – | 15 Sep 2026 – | Job 17a's review of Gym Heroes, and Job 17b — the Open list archived by rule, then the Bench learning to say "I could take a Prize" |
 
 **#15, #18 and #27 wrote no entry and are not missing.** **This table is the only roll of the
 archives**; anything else that lists them by hand falls behind it.
@@ -250,98 +250,6 @@ faults, a doc rule and a design question, that backlog is not a chore list.
 — #41
 
 
-## #39 — Job 15g, round two (16 Sep 2026)
-
-A week and forty-eight commits after round one, most of them #40 taking Gym Heroes from nothing to
-live. From my side of it no time passed at all, which turned out to be useful: I arrived with round
-one's reasoning intact and the tree moved underneath it, so every gap between the two was visible
-rather than remembered.
-
-**The best thing in the log was not mine.** #41's commit reads *"my own doc lint caught me at 460 of
-~450"*, and somebody had rewritten the tool's FAIL message to say what to actually do about it. A tool
-that gets used and then improved by the people using it is the whole argument for having built it
-instead of writing a fourth paragraph.
-
-**Then I found what it could not see, and it was the thing round one was for.** `HISTORY-ARCHIVE-2.md`
-had been over its own ~450 since the day it was created, with *"The next pass owns it"* in its header.
-Round one was the next pass. I did not take it, and my tool could not tell me to, because I had
-written it to assume every archive was closed. The obvious repair — read "closed" off each header —
-measured badly: eight archives of twenty-one say it. **The rule that holds is structural: the newest
-archive in a series is the one still receiving.** Nobody has to write that down for it to be true.
-
-**The control moved into git**, because Trevor retired the backup convention on advice from a Chat
-instance, and I agreed once I had measured it: Shadowless's `backups/` is 55 MB against about 1 MB for
-every other game together, and each copy of it is tracked, so git was already keeping the backups of
-the backups. `doccheck.js --at <rev>` reads the tree straight out of history into a scratch directory.
-Same control, nothing left behind.
-
-**`CLAUDE.md` had five quantifier faults, and one of them was a fix for a quantifier fault.** "The last
-six" had been corrected to "below the gate", which was wrong on the day it was written — every suite
-also sits below the gate line. The fix that works is a divider *inside* the code block, so a new
-instrument inherits the claim by where it is put. Each of the other four came out by deleting the
-number rather than correcting it.
-
-**The split Trevor approved went the way round one worried it might not.** The risk was stripping each
-trigger to a bare rule that a skimming reader "fixes". What made it safe was the house style's own
-pattern — one line of why, then the link — applied to all eighteen, with the full accounts moved
-verbatim to `DOC-DRIFT.md`. `MAINTENANCE.md` is 269 lines now and reads as a procedure again.
-
-**One thing I nearly repeated.** Filling `HISTORY-ARCHIVE-3.md` took it to 431 against its own 450 on
-the day I opened it — exactly the archive-2 situation I had spent the morning criticising. I closed it
-by label instead of leaving nineteen lines of room and a sentence about who owns the overflow.
-
-**For whoever is next, including me:** `AI.md` is still 644 lines and is about to become a scheduled
-priority. Its Open list keeps growing because AI jobs append a finished account where a live claim
-should go. I compacted two items again this round and I do not think another note at the top of the
-list will change the habit. If a structural fix exists, it is probably the same shape as the archive
-rule — something the file's layout enforces rather than something a reader has to remember.
-
-— #39
-
-### Six open items, five nulls, and one charge that was not a cost — 17 Sep 2026
-
-I came in to clear AI.md's open list and expected the hard part to be the logic. It was not. The
-logic was mostly Trevor answering questions in plain English and me writing down what fell out of
-his answers. The hard part was **telling a change that works from a change that merely moves games**,
-and I got that wrong once in a way worth writing down.
-
-**The finding I would tell the next session.** I built item 20's exposure cost in the lethal branch
-of `scoreAttack`, because a Knock Out hands the opponent a free promotion and that is plainly a cost
-the attack creates. It measured 49.7% twice, at 8,450 and 25,000 games. The reason is not a weight:
-**declining the Knock Out does not avoid the exposure.** Their Bench killer arrives when their Active
-dies, which it will, and their Active attacks you in the meantime. I had priced a bill no alternative
-escapes. Before pricing a risk an action creates, ask what the board looks like if the action is
-declined — if the risk is there too, it is a fact about the position and not a cost of the action.
-
-Then I did it again in miniature: I guessed the surviving gate was *too small* to express Trevor's
-rule, tested 4x and 8x, and both read exactly what 1x read. A knob that does nothing at eight times
-its value is not mis-sized. The `AIDUEL_WEIGHTS` hook I added for the threshold work is what made
-that a ten-minute question, and it is the thing from today I would reach for first.
-
-**On nulls.** Five of today's measurements came back at 50%. Two of them I shipped anyway, on
-correctness — the four hand-quality opinions becoming one, and Sleep at the value its own arithmetic
-implies — and both of those had an argument that did not depend on the win rate. One (the Energy
-thresholds) turned out to be a statement about the *instrument*: the extreme setting, where Energy is
-always cheap, is indistinguishable from Trevor's, so the ladder win rate simply cannot see that
-decision. That reading only exists because the extreme was in the batch. **Put an absurd variant in
-every sweep.** It is the cheapest way to find out whether your instrument is awake.
-
-**On the tree.** I grew `AI.md` from 644 lines to 737 while closing items, exactly as #39's entry
-predicted, each time for a locally good reason. Their entry also said another note at the top of the
-list would not fix it. They were right about that too: what fixed it was moving four item bodies
-verbatim into their entry files, which took ten minutes and could have been done at any point in the
-six hours I spent adding to them. If you are closing an item, write the entry first and move the text
-into it as you go, rather than leaving a tidy-up for the end of the session where it becomes optional.
-
-**The nicest thing that happened was not mine.** Trevor's grab bag landed mid-session with *"might
-not be UI to discard a Mysterious Fossil"* — the human half of the exact fault a lint had found on the
-bot's side a few hours earlier, same card, neither of us knowing about the other. An action that
-exists, is legal, works, and is unreachable, failing silently in both directions at once. He found
-the half a person can see by playing; the guard found the half nobody can see by playing. Both halves
-needed finding, and I do not think either of us would have found the other's.
-
-— #42
-
 ## #43 — Job 17b: the Open list, and item 1 (18 Sep 2026)
 
 Two halves, and the second one only worked because of the first.
@@ -421,5 +329,51 @@ One shape observation I did not act on: `AI.md` is two documents. The model — 
 surfaces, the cliff table, the re-entry rule — and the open list. Different readers, and it passes
 `MAINTENANCE.md`'s split test cleanly. The numbering objection does not apply, because the list would
 move whole rather than be restructured. Left for whoever does the next 15g round.
+
+— #43
+
+## #43 addendum — the second half (19 Sep 2026)
+
+Three more things landed and two of them were mine being wrong first, which is the reason to write
+this down rather than leave it at the entries.
+
+**The retreat site, and a rule that arrived in pieces.** Trevor said a wall should not retreat to
+bring up a killer *"unless the opponent was low on prizes"*. I built the Prize clause, tested it, and
+watched it fire on a board where it clearly should not have. I tried three reformulations of the
+suppression curve before I noticed two things: the retreat was **never chosen** — Scrunch beat it —
+and the board I was testing on gave the opponent **no bench at all**, which is the second clause of
+his rule, unbuilt.
+
+**So the built half was absorbing the blame for the missing half, and every "fix" I was reaching for
+would have made it permanently wrong.** That is the thing I would most want passed on from this half:
+*a rule with a missing input does not read as missing; it reads as the input you did build being
+wrong.* Both sit in `MISREADINGS.md` now, along with the flatter one — a score is not a decision, and
+`explain()` is one call.
+
+**Then his grab bag item, which was a fault fixed once already.** `T_SWITCH_OWN` has carried a comment
+since 3 Sep saying the bot promoting one Pokemon and spending a Switch to undo it is what happens when
+two formulas pick different bodies. That fix aligned two of **three** formulas. The retreat case ranks
+destinations on damage and death alone, tied two unpowered Basics at exactly −2.10, and picked by
+bench index.
+
+**My first fix for that was wrong and his own harness caught it in one run.** A blanket veto on
+switching after a retreat went red on this card's own control row, written three weeks earlier against
+a different fix. What shipped instead was the third clause of his Switch note, which had sat
+unimplemented while the two either side of it were built. **Read the note again when you think you
+have found the fault — the sentence you need may already be in it.**
+
+**On the ruling.** Trevor brought a Gemini answer for Blaine's Charizard and asked whether to keep it.
+It calls the card's confusing middle clause future-proofing for cards that did not exist. It names
+Buzzap, which was three sets old, and our engine has modelled it since Job 1 — `asEnergy = type +
+type`, one card, two symbols. **The clause reads as noise until you find the card it names**, and the
+whole diagnosis was one grep. I kept the answer at the foot of the file with the corrections, because
+a wrong answer with a reason attached is worth more than a deleted one, and the part it got right is
+the part the card states plainly.
+
+**What I would tell whoever takes item 23.** The arbitrary destination choice is still there; the card
+is just no longer spent correcting it. Do not add `promoteValue` to the retreat score — it
+double-counts printed damage — and do not re-implement half of it either, which is the *two copies*
+failure in the exact function that keeps producing it. Decide which formula owns the ranking and
+delete the other. And run the cheap probe first: how often do two retreat destinations tie exactly?
 
 — #43

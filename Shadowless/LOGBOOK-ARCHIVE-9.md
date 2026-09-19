@@ -290,3 +290,97 @@ a locked-board question, he chose a switcher, and the zoom no longer moves. Aski
 meant turned up his actual 8 Aug words, which were looser than the rule written from them — now quoted
 beside it in `CLAUDE.md`. And ROSTERS.md crossed its archive line, so Fossil
 moved into `ROSTERS-ARCHIVE-2.md` exactly as its header says to.
+
+---
+
+## #39 — Job 15g, round two (16 Sep 2026)
+
+A week and forty-eight commits after round one, most of them #40 taking Gym Heroes from nothing to
+live. From my side of it no time passed at all, which turned out to be useful: I arrived with round
+one's reasoning intact and the tree moved underneath it, so every gap between the two was visible
+rather than remembered.
+
+**The best thing in the log was not mine.** #41's commit reads *"my own doc lint caught me at 460 of
+~450"*, and somebody had rewritten the tool's FAIL message to say what to actually do about it. A tool
+that gets used and then improved by the people using it is the whole argument for having built it
+instead of writing a fourth paragraph.
+
+**Then I found what it could not see, and it was the thing round one was for.** `HISTORY-ARCHIVE-2.md`
+had been over its own ~450 since the day it was created, with *"The next pass owns it"* in its header.
+Round one was the next pass. I did not take it, and my tool could not tell me to, because I had
+written it to assume every archive was closed. The obvious repair — read "closed" off each header —
+measured badly: eight archives of twenty-one say it. **The rule that holds is structural: the newest
+archive in a series is the one still receiving.** Nobody has to write that down for it to be true.
+
+**The control moved into git**, because Trevor retired the backup convention on advice from a Chat
+instance, and I agreed once I had measured it: Shadowless's `backups/` is 55 MB against about 1 MB for
+every other game together, and each copy of it is tracked, so git was already keeping the backups of
+the backups. `doccheck.js --at <rev>` reads the tree straight out of history into a scratch directory.
+Same control, nothing left behind.
+
+**`CLAUDE.md` had five quantifier faults, and one of them was a fix for a quantifier fault.** "The last
+six" had been corrected to "below the gate", which was wrong on the day it was written — every suite
+also sits below the gate line. The fix that works is a divider *inside* the code block, so a new
+instrument inherits the claim by where it is put. Each of the other four came out by deleting the
+number rather than correcting it.
+
+**The split Trevor approved went the way round one worried it might not.** The risk was stripping each
+trigger to a bare rule that a skimming reader "fixes". What made it safe was the house style's own
+pattern — one line of why, then the link — applied to all eighteen, with the full accounts moved
+verbatim to `DOC-DRIFT.md`. `MAINTENANCE.md` is 269 lines now and reads as a procedure again.
+
+**One thing I nearly repeated.** Filling `HISTORY-ARCHIVE-3.md` took it to 431 against its own 450 on
+the day I opened it — exactly the archive-2 situation I had spent the morning criticising. I closed it
+by label instead of leaving nineteen lines of room and a sentence about who owns the overflow.
+
+**For whoever is next, including me:** `AI.md` is still 644 lines and is about to become a scheduled
+priority. Its Open list keeps growing because AI jobs append a finished account where a live claim
+should go. I compacted two items again this round and I do not think another note at the top of the
+list will change the habit. If a structural fix exists, it is probably the same shape as the archive
+rule — something the file's layout enforces rather than something a reader has to remember.
+
+— #39
+
+### Six open items, five nulls, and one charge that was not a cost — 17 Sep 2026
+
+I came in to clear AI.md's open list and expected the hard part to be the logic. It was not. The
+logic was mostly Trevor answering questions in plain English and me writing down what fell out of
+his answers. The hard part was **telling a change that works from a change that merely moves games**,
+and I got that wrong once in a way worth writing down.
+
+**The finding I would tell the next session.** I built item 20's exposure cost in the lethal branch
+of `scoreAttack`, because a Knock Out hands the opponent a free promotion and that is plainly a cost
+the attack creates. It measured 49.7% twice, at 8,450 and 25,000 games. The reason is not a weight:
+**declining the Knock Out does not avoid the exposure.** Their Bench killer arrives when their Active
+dies, which it will, and their Active attacks you in the meantime. I had priced a bill no alternative
+escapes. Before pricing a risk an action creates, ask what the board looks like if the action is
+declined — if the risk is there too, it is a fact about the position and not a cost of the action.
+
+Then I did it again in miniature: I guessed the surviving gate was *too small* to express Trevor's
+rule, tested 4x and 8x, and both read exactly what 1x read. A knob that does nothing at eight times
+its value is not mis-sized. The `AIDUEL_WEIGHTS` hook I added for the threshold work is what made
+that a ten-minute question, and it is the thing from today I would reach for first.
+
+**On nulls.** Five of today's measurements came back at 50%. Two of them I shipped anyway, on
+correctness — the four hand-quality opinions becoming one, and Sleep at the value its own arithmetic
+implies — and both of those had an argument that did not depend on the win rate. One (the Energy
+thresholds) turned out to be a statement about the *instrument*: the extreme setting, where Energy is
+always cheap, is indistinguishable from Trevor's, so the ladder win rate simply cannot see that
+decision. That reading only exists because the extreme was in the batch. **Put an absurd variant in
+every sweep.** It is the cheapest way to find out whether your instrument is awake.
+
+**On the tree.** I grew `AI.md` from 644 lines to 737 while closing items, exactly as #39's entry
+predicted, each time for a locally good reason. Their entry also said another note at the top of the
+list would not fix it. They were right about that too: what fixed it was moving four item bodies
+verbatim into their entry files, which took ten minutes and could have been done at any point in the
+six hours I spent adding to them. If you are closing an item, write the entry first and move the text
+into it as you go, rather than leaving a tidy-up for the end of the session where it becomes optional.
+
+**The nicest thing that happened was not mine.** Trevor's grab bag landed mid-session with *"might
+not be UI to discard a Mysterious Fossil"* — the human half of the exact fault a lint had found on the
+bot's side a few hours earlier, same card, neither of us knowing about the other. An action that
+exists, is legal, works, and is unreachable, failing silently in both directions at once. He found
+the half a person can see by playing; the guard found the half nobody can see by playing. Both halves
+needed finding, and I do not think either of us would have found the other's.
+
+— #42
