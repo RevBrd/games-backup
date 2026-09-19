@@ -5800,6 +5800,39 @@ class AI {
           // Dodrio's Retreat Aid is already in it.
           if (!me.retreated && E.canRetreat(me.active) && E.retreatCostOf(me.active) === 0)
             return -Infinity;
+          // YOU CHOOSE YOUR ACTIVE ONCE A TURN — 19 Sep 2026, from Trevor's log
+          // `06-38-17`. Turn 8, Wren retreats Misty's Horsea A for Horsea B, and
+          // then immediately spends a Switch to make Staryu Active. Two moves,
+          // one destination, and a card gone.
+          //
+          // **Nothing changes between those two actions.** The retreat scorer
+          // has just ranked every Bench slot on this exact board and picked one.
+          // A Switch that moves the Active again is not a second opportunity; it
+          // is the bot overruling itself with a card in its hand, and if the
+          // second answer is better then the FIRST choice was wrong and that is
+          // where the fault is.
+          //
+          // READ THIS AGAINST THE GATE ABOVE, WHICH ALSO MENTIONS `retreated`
+          // AND MEANS SOMETHING ELSE. There, `!me.retreated` narrows the
+          // free-retreat veto: once the retreat is spent, a free retreat cost is
+          // no longer a reason to refuse the card, because the card has become
+          // the only way out. That is about a veto. **This is a separate rule**,
+          // and the case it protects — needing to move again, later, when
+          // retreating is impossible — is a different turn or a different reason,
+          // never the turn we just chose on.
+          //
+          // A BLANKET VETO ON `me.retreated` WAS THE FIRST FIX AND IT WAS WRONG.
+          // It went red on this card's own CONTROL row — a Rattata Active with a
+          // fully charged Hitmonchan behind it and the retreat already spent,
+          // where the card plainly IS the move. **The control was written to catch
+          // exactly the over-reach I wrote**, three weeks before I wrote it.
+          //
+          // What actually separates the two boards is not the retreat; it is
+          // whether the move is worth anything. Wren's Switch gained 1.3 and the
+          // turn ended with no attack available either way; the control's gains a
+          // charged attacker. So the rule is the one already in Trevor's own note
+          // and never implemented: *"Should not be played just because it exists
+          // in the bot's hand."*
           // Same yardstick as promoting, deliberately. When these were two
           // formulas they picked different Pokemon, and the visible symptom was
           // the bot promoting one and then spending a Switch to undo it.
@@ -5819,6 +5852,25 @@ class AI {
           if (!sw) return -Infinity;
           a.opts.bench = sw.bench;
           s += sw.gain * W.selfSwitchGain;
+          // THE CARD IS NOT FREE, and that sentence is Trevor's own: *"Should not
+          // be played just because it exists in the bot's hand."* It sat in his
+          // note, unimplemented, while the two halves either side of it were
+          // built.
+          //
+          // Found from his log `06-38-17` on 19 Sep 2026. Turn 8: Wren retreats
+          // Misty's Horsea A for Horsea B, then spends a Switch to make Staryu
+          // Active, then **passes with no attack available**. Two moves, one
+          // destination, and a card gone for a gain of 1.3 against a `threshold`
+          // of 0.5.
+          //
+          // `cardKeepValue` rather than a constant, because this project already
+          // has ONE answer to what a card is worth keeping and a second opinion
+          // here is the failure it keeps diagnosing. A Trainer is flat there, so
+          // the arithmetic is the same today — what differs is that it moves when
+          // that function does. **Safe to call from here**: `scoreTrainer` is not
+          // reachable from `scoreAttack`, and item 19's lift made the function
+          // safe from anywhere regardless.
+          s -= this.cardKeepValue(pi, inst, E.allSlots(pi));
           // THE RETREAT COST IS DELIBERATELY NOT PRICED, and this closes the
           // `open:` row that has been asking about it since 30 Aug 2026.
           //

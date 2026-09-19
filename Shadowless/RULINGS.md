@@ -58,6 +58,7 @@ enough to settle a call in plain English, so ask him — he can be a resource on
 | Fairy Power — a mass Scoop Up that must leave one Pokemon in play, chosen before its coin | [FAIRY-POWER.md](Rulings/FAIRY-POWER.md) |
 | Crystal Beam — what "attach" covers (not "move"), and a Benched Pokemon is no longer the Defending Pokemon | [CRYSTAL-BEAM.md](Rulings/CRYSTAL-BEAM.md) |
 | Recall — attacking from the cards underneath, and whether a lock reaches a same-named attack printed below | [RECALL.md](Rulings/RECALL.md) |
+| Roaring Flames — the confusing clause names Buzzap, and it is reachable today | [ROARING-FLAMES.md](Rulings/ROARING-FLAMES.md) |
 
 **The unit is the *call*, not the card.** Four of these are not about a card at all, and two cover a
 pair that was one decision — Peek and Clairvoyance share a panel, Do the Wave and Boyfriends were
@@ -173,6 +174,8 @@ ruling that lives only in a spreadsheet gets re-derived by whoever opens the car
 | **A substitution needs the substituted value to carry the same INFORMATION, not merely the same type** — a stat is only a quiz answer while it is unknown to the guesser, so a declared constant cannot stand in for a hidden one | [Blaine's Quiz #1](Rulings/BLAINES-QUIZ.md) |
 | **Omitting a card is the STRICT reading of the set-gating rule, not an exception to it** — the rule exists so nobody collects an unplayable card, and a card that does not exist cannot be collected. An absence must announce itself | [Blaine's Quiz #1](Rulings/BLAINES-QUIZ.md) |
 | **Record a rule that needed no code, and say what would break it** — the absence of an implementation cannot be told apart from nobody having thought about it | [owner's Pokémon](Rulings/OWNERS-POKEMON.md) |
+| **A clause that reads as unreachable is worth one grep before it is modelled as hypothetical** — the pool is 1,251 cards, and the card a "future-proofing" clause was really written for is usually already in it | [Roaring Flames, Buzzap](Rulings/ROARING-FLAMES.md) |
+| **An Energy card by EFFECT is not an Energy card by CLASS** — a Buzzap'd Electrode provides Energy and fails every `kind === 'energy'` test, which is what a second clause on a card is usually there to catch | [Roaring Flames](Rulings/ROARING-FLAMES.md) |
 | **A question that DISSOLVES beats a question answered** — two readings that differ only where the timing cannot reach are one reading, and the implementation takes the one with fewer conditions | [Defender, consumption](Rulings/DEFENDER-BLUNTS-SELF-HARM.md) |
 
 ## What *settled with Trevor* means

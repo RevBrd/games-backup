@@ -58,6 +58,34 @@ confused is presumably how this happened.
 
 ---
 
+### Retreat then Switch — the retreat was free, and the third formula was the fault — 19 Sep 2026 (#43)
+
+> *"On turn 7, bot pays a retreat cost to retreat its active pokemon, promotes a new one, then
+> immediately uses a Switch to remove the new one - log# 06-38-17"*
+
+**Turn 8 in the log rather than turn 7, and the retreat cost nothing** — Misty's Horsea retreats
+free, and there is no Energy discard on that line. So the waste is the card, not the cost. That is
+the usual shape and it did not change the job: the two moves and the wasted Switch are exactly as
+reported, and the turn ended in *"pass — no attack available"*.
+
+**The cause was a fault fixed once already, on a different path.** `T_SWITCH_OWN` has carried a
+comment since 3 Sep saying this symptom is what happens when two formulas pick different Pokemon —
+that fix aligned Switch with promote. **There are three formulas**, and the retreat case ranks
+destinations on damage-this-turn and death-on-arrival alone. Two unpowered Basics scored **exactly
+−2.10** each, so the retreat picked by Bench index and the Switch paid a card to correct it.
+
+**The first fix was wrong and the claims harness caught it in one run** — a blanket veto on
+switching after a retreat took `claimtest` 156/1 → 155/2, red on this card's own control row, which
+was written three weeks earlier against a different fix and still landed. What shipped instead is the
+third clause of Trevor's own Switch note, never built: *"Should not be played just because it exists
+in the bot's hand."*
+
+**Shipped on a measured null with 15.6% exposure.** The arbitrary destination choice is still there
+and is [AI.md](AI.md) item 23 — the card is no longer spent, so what is left is the bot standing on
+the wrong body for free.
+*[The entry, both boards, and the generalisation not taken →](AI-INVARIANTS/SWITCH-COSTS-A-CARD.md)*
+
+
 ### No way to discard a Fossil — the note was literally true, and it was two actions — 17 Sep 2026 (#42)
 
 > *"Might not be UI to discard a Mysterious Fossil from the active spot/bench (and I assume Clefairy

@@ -330,6 +330,7 @@ rules in it. The table indexes *terms*; the folder indexes *entries*, and they a
 | 17 Sep | **Nothing inside `scoreAttack` may ask what a card is worth**, because that question is answered by `scoreAttack`. The lift needed no cheap mode — the one branch that reached the scorer was already computing its answer twice. **The rule survives the lift and is a section of this file**, because three entries cite it | `scoreAttack`, `bestAttackScore`, `cardKeepValue`, `shortfallFor` |
 | 18 Sep | **`forecast` takes the attacker as a parameter, so "what would this do if it were up there" is one question with one answer.** It reads the board and scores nothing, which makes it the rung between printed damage and the scorer — and the absence of that rung is most of why the Bench was stuck. A promotion is priced on the CHANCE of a Prize; the caller prices it, never `forecast` | `forecast(…, fromSlot)`, `slotKOChance`, `promoteKO` |
 | 18 Sep | **A Prize is not "hitting harder", so the retreat comparison carries two currencies.** A wall suppresses the Prize half by default and steps aside on whichever exception is nearer — their Prizes on `retreatPrize`'s own curve, or their Bench, which is the board-out win seen one move early. **Only the positive half**, exactly as `delta` does | `koGain`, `urgent` |
+| 19 Sep | **A card is not free, and no Trainer in `scoreTrainer` pays for itself.** Switch does now — through `cardKeepValue`, because one answer to what a card is worth beats a second opinion. **A measured null with 15.6% exposure**, shipped on correctness. Charging every Trainer is a one-line change and a very large behavioural one | `T_SWITCH_OWN`, `cardKeepValue` |
 
 **Where the next ones come from.** Every AI fault found on 21 and 22 Aug 2026 came from Trevor
 describing how a card is meant to be played, in plain English — the wall retreat, the Energy-is-a-turn
@@ -753,3 +754,28 @@ of the list had already been tried and did not work. *[What did work, and what t
     in hand. `evolutionRoadFor` rations a road to the most-invested twin but does not close one for a
     card that has already arrived. That is phantom demand, so it helps twice — better attachment
     ordering, and it brings this item's condition closer to firing.
+
+23. **THREE formulas choose which body comes up, and the September fix aligned two — 19 Sep 2026,
+    from Trevor's log `06-38-17`.** `promote` ranks by `promoteValue`; `T_SWITCH_OWN` ranks by
+    `bestSelfSwitch`, which is `promoteValue`; **the retreat case ranks by its own terms** — damage
+    this turn and death on arrival — and consults the shared yardstick nowhere.
+
+    **The symptom is not a wrong choice, it is an ARBITRARY one.** On Wren's board two unpowered
+    Basics both scored **exactly −2.10**, because neither could attack and neither died on arrival,
+    so the retreat picked by Bench index. `promoteValue` separates them — HP remaining, and readiness
+    through `promoteReady / (1 + short)` — and the Switch that followed paid a card to correct the
+    coin-flip. **The card is no longer spent** (the Switch charge shipped the same day), **so what is
+    left is the bot standing on the wrong body for free.**
+    *[The log, the boards, and the fix that was wrong first →](AI-INVARIANTS/SWITCH-COSTS-A-CARD.md)*
+
+    **Why this is not a ten-minute change.** Adding `promoteValue(b) - promoteValue(active)` to the
+    retreat score double-counts: `promoteValue` carries `pot.best * 0.2`, which is printed damage,
+    and `delta` is already printed damage at `retreatTempo`. Re-implementing only the non-overlapping
+    half — HP and readiness — is the *two copies that will diverge* failure this tree keeps
+    diagnosing, in the exact function that keeps producing it. **The honest version is to decide
+    which one owns the destination ranking and delete the other**, and that is a rework of a heavily
+    tuned function with its own measurement.
+
+    **A cheap probe worth running first:** how often do two retreat destinations tie exactly? If the
+    answer is "rarely", this is a curiosity; if it is "most boards where nothing is charged", it is
+    the whole early game.
