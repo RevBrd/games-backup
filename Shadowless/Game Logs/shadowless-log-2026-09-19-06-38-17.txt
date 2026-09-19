@@ -1,0 +1,198 @@
+SHADOWLESS — match log
+==========================================================
+when     2026-09-19 06:38:17
+decks    you: New deck 6   opponent: Wren — Cerulean Gym
+opponent novice
+seed     571738326   (deck select accepts this — the match replays exactly)
+
+Lines marked HIDDEN were never shown on screen. That is the point of
+this file: the opponent's hand, both Prize piles, and what the AI
+thought each of its options was worth.
+
+  HIDDEN  opponent's opening hand: Misty's Horsea, Misty's Tentacool, Water Energy, Water Energy, Misty's Staryu, Water Energy, Misty's Poliwag
+  HIDDEN  your opening hand: Kakuna, Bill, Ekans, Ekans, Beedrill, Grass Energy, Energy Removal
+  HIDDEN  opponent's Prizes: Water Energy, Misty, Poké Ball, Misty's Tentacruel, Water Energy, Water Energy
+  HIDDEN  your Prizes: Grass Energy, Dark Arbok, Super Potion, Grass Energy, PlusPower, Grass Energy
+  HIDDEN  opponent's opening board: Misty's Tentacool active, bench Misty's Staryu, Misty's Poliwag, Misty's Horsea
+  HIDDEN  your opening board: Ekans active, empty bench
+          New game. Seed 571738326.
+          Coin flip (who goes first): HEADS
+          You will go first.
+
+--- Turn 1 — You -------------------------------
+          You draws a card. (46 left)
+          You attaches Grass Energy to Ekans.
+          You plays Bill.
+          You draws 2.
+          Ekans uses Spit Poison.
+          Coin flip (Poisoned?): HEADS
+          Misty's Tentacool is now Poisoned.
+          Misty's Tentacool takes 10 from Poison. (10 total)
+
+--- Turn 2 — Wren ------------------------------
+          Wren draws a card. (46 left)
+  AI      attach   [14.7]
+          holding: Water Energy, Water Energy, Water Energy, Water Energy
+          Wren attaches Water Energy to Misty's Staryu.
+  AI      pass — no attack available — Crystal Beam: Not enough Energy   [0]
+          holding: Water Energy, Water Energy, Water Energy
+          Wren ended the turn without attacking.
+          Misty's Tentacool takes 10 from Poison. (20 total)
+
+--- Turn 3 — You -------------------------------
+          You draws a card. (43 left)
+          You attaches Grass Energy to Ekans.
+          You benches Ekans.
+          Ekans uses Wrap.
+          Misty's Tentacool takes 20. (10/50 left)
+          Coin flip (Paralyzed?): HEADS
+          Misty's Tentacool is now Paralyzed.
+          Misty's Tentacool takes 10 from Poison. (50 total)
+          Misty's Tentacool is Knocked Out!
+          You takes a Prize. (5 left)
+  AI      promote   [31.8]
+          holding: Water Energy, Water Energy, Water Energy
+          passed over: promote 31.5, promote 27.6
+          Wren promotes Misty's Poliwag to Active.
+
+--- Turn 4 — Wren ------------------------------
+          Wren draws a card. (45 left)
+  AI      attach   [21.9]
+          holding: Water Energy, Water Energy, Water Energy, Misty's Horsea
+          Wren attaches Water Energy to Misty's Horsea.
+  AI      bench   [4.8]
+          holding: Water Energy, Water Energy, Misty's Horsea
+          Wren benches Misty's Horsea.
+  AI      pass — no attack available — Hypnotic Stare: Not enough Energy; Tail Rap: Not enough Energy   [0]
+          holding: Water Energy, Water Energy
+          Wren ended the turn without attacking.
+
+--- Turn 5 — You -------------------------------
+          You draws a card. (42 left)
+          Ekans A evolves into Dark Arbok. Special Conditions removed.
+          You attaches Grass Energy to Dark Arbok.
+          Dark Arbok uses Poison Vapor.
+          Weakness: Misty's Poliwag takes double -> 20.
+          Misty's Poliwag takes 20. (30/50 left)
+          Misty's Poliwag is now Poisoned.
+          Misty's Staryu takes 10. (40/50 left)
+          Misty's Horsea takes 10. (30/40 left)
+          Misty's Horsea takes 10. (30/40 left)
+          10 to each of Wren's Benched Pokemon.
+          Misty's Poliwag takes 10 from Poison. (30 total)
+
+--- Turn 6 — Wren ------------------------------
+          Wren draws a card. (44 left)
+  AI      attach   [27.6]
+          holding: Water Energy, Water Energy, Water Energy
+          Wren attaches Water Energy to Misty's Poliwag.
+  AI      retreat   [2.6]
+          holding: Water Energy, Water Energy
+          passed over: retreat 0.4, retreat -3.9
+          Wren retreats Misty's Poliwag; Misty's Horsea A is now Active.
+  AI      attack:Tackle   [9.4]
+          holding: Water Energy, Water Energy
+          Misty's Horsea uses Tackle.
+          Dark Arbok takes 10. (50/60 left)
+
+--- Turn 7 — You -------------------------------
+          You draws a card. (41 left)
+          You plays Energy Removal.
+          Water Energy discarded from Misty's Staryu.
+          You attaches Grass Energy to Ekans.
+          Dark Arbok uses Poison Vapor.
+          Misty's Horsea takes 10. (20/40 left)
+          Misty's Horsea A is now Poisoned.
+          Misty's Staryu takes 10. (30/50 left)
+          Misty's Horsea takes 10. (20/40 left)
+          Misty's Poliwag takes 10. (10/50 left)
+          10 to each of Wren's Benched Pokemon.
+          Misty's Horsea A takes 10 from Poison. (30 total)
+
+--- Turn 8 — Wren ------------------------------
+          Wren draws a card. (43 left)
+  AI      attach   [27.3]
+          holding: Water Energy, Water Energy, Switch
+          passed over: attach 27.3, attach 26.3, attach 25.4, attach 20.2, attach 15.4
+          Wren attaches Water Energy to Misty's Horsea A.
+  AI      retreat   [1.4]
+          holding: Water Energy, Switch
+          passed over: retreat 1.4, retreat -20.6
+          Wren retreats Misty's Horsea A; Misty's Horsea B is now Active.
+  AI      trainer   [1.3]
+          holding: Water Energy, Switch
+          Wren plays Switch.
+          Misty's Staryu is now Active.
+  AI      pass — no attack available — Swift: Not enough Energy   [0]
+          holding: Water Energy
+          Wren ended the turn without attacking.
+
+--- Turn 9 — You -------------------------------
+          You draws a card. (40 left)
+          You attaches Grass Energy to Ekans.
+          Dark Arbok uses Poison Vapor.
+          Misty's Staryu takes 10. (20/50 left)
+          Misty's Staryu is now Poisoned.
+          Misty's Poliwag takes 10. (0/50 left)
+          Misty's Horsea takes 10. (0/40 left)
+          Misty's Horsea takes 10. (10/40 left)
+          10 to each of Wren's Benched Pokemon.
+          Misty's Horsea is Knocked Out!
+          You takes a Prize. (4 left)
+          Misty's Poliwag is Knocked Out!
+          You takes a Prize. (3 left)
+          Misty's Staryu takes 10 from Poison. (40 total)
+
+--- Turn 10 — Wren ------------------------------
+          Wren draws a card. (42 left)
+  AI      attach   [25.8]
+          holding: Water Energy, Water Energy
+          passed over: attach 20.2, attach 18.7, attach 15.7
+          Wren attaches Water Energy to Misty's Horsea.
+  AI      pass — no attack available — Swift: Not enough Energy   [0]
+          holding: Water Energy
+          Wren ended the turn without attacking.
+          Misty's Staryu takes 10 from Poison. (50 total)
+          Misty's Staryu is Knocked Out!
+          You takes a Prize. (2 left)
+  AI      promote   [5.6]
+          holding: Water Energy
+          Wren promotes Misty's Horsea to Active.
+
+--- Turn 11 — You -------------------------------
+          You draws a card. (39 left)
+          You attaches Grass Energy to Ekans.
+          Dark Arbok uses Poison Vapor.
+          Misty's Horsea takes 10. (0/40 left)
+          Misty's Horsea is now Poisoned.
+          10 to each of Wren's Benched Pokemon.
+          Misty's Horsea is Knocked Out!
+          You takes a Prize. (1 left)
+          GAME OVER - You wins: Wren has no Pokemon left
+
+==========================================================
+RESULT   You wins — Wren has no Pokemon left
+         11 turns
+
+==========================================================
+PACKS OPENED
+
+  Gym Heroes
+    Misty's Seaking  Uncommon
+    Erika's Maids  Uncommon  [sh]
+    Sabrina's Mr. Mime  Common   NEW
+    Sabrina's Venonat  Common
+    Misty's Shellder  Common
+    Sabrina's Slowpoke  Common
+    Lt. Surge's Magnemite  Uncommon   NEW
+    Misty's Tentacool  Rare   NEW
+
+  Gym Heroes
+    Sabrina's Slowbro  Uncommon
+    Misty's Tentacool  Uncommon
+    Erika's Oddish  Common
+    Blaine's Growlithe  Common
+    Lt. Surge's Spearow  Common
+    Lt. Surge's Voltorb  Common
+    Misty's Horsea  Common
+    Erika's Clefairy  Rare

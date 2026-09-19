@@ -37,6 +37,8 @@ Faults and behaviour, from Trevor's play. [AI.md](AI.md) has what the scorer alr
   that used to sit above was the same sentence, and the fault turned out to be in a different slot
   entirely: the bot could not feed the card that wanted the Energy, so the one that did not was all
   that was left. Same for the base5 Charmander note. [GRABHIST.md](GRABHIST.md))*
+- Bot attaches energy to a bench pokemon rather than its active most games on its first turn. I don't want to just say "this is wrong" outright but it is a rate higher than where it probably should be to be most effective. Let's not overcorrect but measure first to try to see what's causing this.
+- On turn 7, bot pays a retreat cost to retreat its active pokemon, promotes a new one, then immediately uses a Switch to remove the new one - log# 06-38-17 (note the shiny pull in the packs :P)
 
 
 ### The screen

@@ -363,7 +363,7 @@ than to the story.
 - **Job 17c** - AI validation passes.
 - **Job 18** - Unlocking and revisiting the layout and solving our resizing problems forever.
 - **Job 19** - AI validation passes.
-- **Job 20** - Card additions and logic for gym2.
+- **Job 20** - Card additions and logic for gym2. See Rulings/ROARING-FLAMES.md before starting this job.
 - **Job 21+** - TBD
 
 ## Open
