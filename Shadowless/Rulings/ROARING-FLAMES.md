@@ -99,6 +99,8 @@ Electrode fails to catch one in every realistic board. The argument for *all*, w
 implemented that way: it is what the card says, and this tree has been bitten before by deciding what
 a card probably meant.
 
+My response to previous paragraph, please treat it as a point of discussion rather than a ruling. I think this card might be niche enough that we can get away with treating all special energies for it as a case by case basis. Right now only Buzzap applies to this (as far as I know) so we can maybe hard code it in, and then in the event of any future energy types creating a conflict we'll talk each one through at the time. I don't think this will happen very often, if at all. Pushback, comments, or caveats are welcome either here in this doc or at the time we actually handle it.
+
 ## For whoever builds it — Job 20
 
 **The DSL has no verb for this yet and the nearest two are both wrong.** `COST_DISCARD_ALL_ENERGY`
